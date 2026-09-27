@@ -1,14 +1,14 @@
 # Balatro — full research dossier
 
-**G42 · Complete research pass, September 26, 2026.** This dossier covers the shipped base game and its currently visible cross-platform/mobile/cosmetic-update state. It does **not** invent a shipped “2.0” or major gameplay expansion that could not be verified in the official announcement history available during this pass. The prior chapter and detailed scoring-operators study remain preserved owners for earlier examples and low-level activation analysis.
+**G42 · Research pass and targeted audit remedies, September 26, 2026.** This dossier covers the shipped base-game grammar and separately identified platform/mobile/cosmetic releases. It does **not** invent a shipped “2.0” or major gameplay expansion that could not be verified in the official announcement history available during the research. The audit corrects target selection and platform chronology and replaces untraceable reception generalizations with actually inspected accounts. The prior chapter and detailed scoring-operators study remain preserved owners for earlier examples and low-level activation analysis. OpenLegend adaptations below are research interpretations, not accepted implementation requirements; no gameplay or compatibility test is claimed.
 
-[Preserved overview](../games/balatro.md) · [Detailed mechanics study](../mechanics/balatro-scoring-operators-risk-and-readable-combinations.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
+[Preserved overview](../games/balatro.md) · [Detailed mechanics study](../mechanics/balatro-scoring-operators-risk-and-readable-combinations.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
 Balatro demonstrates how a **small, inspectable rules vocabulary** can create a huge strategy space when effects modify one another's timing, target, eligibility, duplication and scale. The game is not deep because it has thousands of unrelated cards. It is deep because a manageable set of operators composes.
 
 ## 1. Identity, scope and player promise
 
-Balatro is a single-player poker-inspired roguelike deckbuilder by solo developer LocalThunk, published by Playstack. It launched February 20, 2024 on PC and major consoles; mobile versions followed September 26, 2024, including Apple Arcade. [BA-A](#ba-a) [BA-B](#ba-b)
+Balatro is a single-player poker-inspired roguelike deckbuilder by solo developer LocalThunk, published by Playstack. Its PC/console launch was February 20, 2024; mobile versions followed September 26, 2024, including Apple Arcade. The current Steam listing supports Windows and macOS, but that is not proof of a simultaneous three-desktop-platform launch. The corrected chronology and later Switch 2 release are in §21. [BA-A](#ba-a) [BA-B](#ba-b)
 
 The player does not play poker against another person. Each run asks the player to:
 - draw from a deck;
@@ -24,7 +24,7 @@ The player does not play poker against another person. Each run asks the player 
 
 Poker supplies familiar syntax. The actual game is about **building a scoring machine**.
 
-The currently verified official announcement history shows core balance/maintenance, mobile launch, four “Friends of Jimbo” cosmetic collaboration packs through February 2025 and continued promotion/community support. No verified shipped large-scale rules expansion was found that would justify replacing the established base-game analysis. [BA-C](#ba-c)
+The verified official announcement history in the original pass shows core balance/maintenance, mobile launch, four “Friends of Jimbo” cosmetic collaboration packs through February 2025 and continued promotion/community support. No verified shipped large-scale rules expansion was found that would justify replacing the established base-game analysis. A later platform version is likewise not automatically a new rules expansion. [BA-C](#ba-c) [BA-U](#ba-u)
 
 ## 2. The run structure: escalating tests around one evolving machine
 
@@ -138,9 +138,11 @@ Two copying Jokers illustrate how small selector changes create different spatia
 
 **Blueprint** copies a compatible Joker immediately to its right. Adjacency matters; moving Blueprint changes the target; not every Joker is compatible; the copy does not simply clone the entire object's identity.
 
-**Brainstorm** copies the leftmost compatible Joker. Edge position matters; moving the target Joker can retarget Brainstorm even if Brainstorm itself stays put.
+**Brainstorm** targets the **leftmost Joker**, and copies its ability only when that target is compatible. It does **not** search past an incompatible first slot for the leftmost compatible candidate. Moving the intended target into the first slot can therefore be necessary; putting Brainstorm itself first produces no useful self-copy. Its tooltip exposes compatibility. [BA-Q](#ba-q)
 
-The two effects sound similar — “copy a Joker” — but they create different decision geometry. [BA-D](#ba-d)
+The two effects sound similar — “copy a Joker” — but they create different decision geometry. The preserved scoring study already uses the correct leftmost-target rule; this correction makes the dossier agree with it. [BA-D](#ba-d)
+
+**Constructed counterexample:** a compatible scoring Joker sits second while an incompatible utility Joker occupies the left edge. Buying Brainstorm does not automatically select the scoring Joker. The player must rearrange the layout, choose another target or accept that this copy is presently unproductive. Selection and eligibility are different operations.
 
 **OpenLegend application:** a copying spell/device/procedure should specify target binding, copied facet, duration, exclusions, ownership and cost. “Copy object” is too broad to be a useful primitive.
 
@@ -403,7 +405,9 @@ The core approach was not “ship the math and trust it.” It was: watch how re
 
 Playstack provided publishing, launch planning, public-facing support, localization and platform help. Maarten De Meyer helped with porting.
 
-Balatro launched on Windows/macOS/Linux via Steam, PlayStation, Xbox and Switch, then mobile on iOS/Android/Apple Arcade on September 26, 2024. [BA-A](#ba-a) [BA-B](#ba-b)
+The February 20, 2024 launch covered Windows and the contemporary PlayStation, Xbox and Switch platforms. A March 1 report confirms macOS availability by then. [BA-T](#ba-t) Today's Steam requirements list **Windows and macOS**, not a native Linux build. Steam Deck/Linux compatibility must therefore not be relabelled as proof that all three desktop versions launched together. This research did not test a compatibility layer. [BA-A](#ba-a)
+
+Mobile followed on iOS/Android/Apple Arcade on September 26, 2024. Nintendo's separate **Switch 2** product lists a February 25, 2026 release. Neither date is the original PC launch, and the new storefront record does not by itself establish universal save transfer or new gameplay content. [BA-B](#ba-b) [BA-U](#ba-u)
 
 LocalThunk's timeline explicitly says publisher/platform work was substantial; the success story should not be reduced to “anonymous solo dev uploads a file and goes viral.”
 
@@ -475,9 +479,9 @@ The review explicitly notes the lack of conventional combat/story as non-problem
 
 ### 5. Nintendo Life — Ollie Reynolds, March 1, 2024
 
-**Praised:** deeply compelling rule-breaking card play and polished Switch implementation.
+**Full review body reopened for the audit.** Reynolds praises the accessible hand-reference menu, combinations that change which hand is worthwhile, and the clear separation of cards, score, targets and remaining resources. He finds handheld sessions particularly suitable and compares three inputs: stick cursor, D-pad selection and touchscreen, preferring the D-pad personally. Visual effects and the music reinforce the loop for him. [BA-N](#ba-n)
 
-**Criticism/boundary:** the review was published amid the European ratings/removal issue, highlighting that external distribution rules can become part of practical availability even when gameplay itself is unchanged. [BA-N](#ba-n)
+**Criticism/boundary:** the conclusion supplies no substantive design objection, so none is invented. The European ratings/removal discussion is a separately marked **editor's note**, not Reynolds' gameplay criticism. His simplified scoring illustrations also should not replace the detailed activation rules in BA-D. This is a North American Switch review, not testing of the later mobile or Switch 2 versions.
 
 ### Review synthesis
 
@@ -487,25 +491,19 @@ The recurring caution is that probability and hard counters can make some losses
 
 ## 25. Steam player evidence
 
-Steam's aggregate review surface is overwhelmingly positive, but qualitative evidence matters more than the percentage.
+The English **Most Helpful (All Time)** general and **Negative Only** surfaces were actually reopened on September 26, 2026. Their visible accounts are a ranked convenience sample, not representative polling. Displayed present hours, later edits and helpful-vote totals are not publication-time measurements.
 
-Positive accounts repeatedly value:
-- “one more run” pull;
-- discovering new synergies;
-- tiny rules producing giant score consequences;
-- portable/Steam Deck/mobile-friendly sessions;
-- long mastery curve despite simple controls.
+**Identified positive accounts:** Quzga (March 10, 2024) describes early curiosity becoming increasingly elaborate interest and scoring plans. jonche10 (September 2, 2024) describes successive discoveries about decks, Stakes and economic choices. Zarok (November 24, 2024) initially avoided the poker/gambling imagery but valued the accessible score-and-shop loop. These support the earlier themes of replay pull, synergy discovery and a long learning curve; jokes and rhetorical probability claims on the same page are not treated as rules evidence. [BA-R](#ba-r)
 
-The smaller negative/mixed corpus includes complaints around:
-- RNG;
-- unlock grind;
-- balance between strategies;
-- Boss Blinds invalidating builds;
-- preference against repetitive score-chasing.
+**Identified negative contrast:** relja (December 27, 2025), who reports completing Completionist++, objects to all-or-nothing Blind losses, little immediate recovery after certain mistakes, and perceived convergence toward Pairs/Blue Seals. The author distinguishes early enjoyment from later dissatisfaction. This is a player's argument about recovery and variety, not proof that only one strategy wins. Other displayed historical accounts raise RNG, unlock grind and repetitive score-chasing; they retain their dates and are not asserted to describe every later balance state. [BA-S](#ba-s)
+
+**Interpretation:** “one more run” can coexist with disliking how losing feels. The meaningful question is whether a player values discovering a more reliable plan or wants more improvisational rescue after a mistake. Portable-session suitability is supported separately by the Nintendo Life review, not invented as a finding from these three Steam accounts. [BA-N](#ba-n)
 
 Those are meaningful **audience-fit** issues. A player who wants narrative, social roleplay or spatial exploration may simply not want what Balatro offers.
 
 ## 26. Concrete situations
+
+These are constructed rules-based illustrations, not a claim of personal play.
 
 ### Situation A — two effects are useful only in the correct order
 
@@ -527,7 +525,7 @@ Those are meaningful **audience-fit** issues. A player who wants narrative, soci
 
 **Result:** the target effect is copied under Blueprint's rules.
 
-**Counterexample:** wrong adjacency or incompatible Joker yields no intended combination.
+**Counterexample:** wrong adjacency or incompatible Joker yields no intended combination. Brainstorm has a different failure: it still targets the left edge even when a compatible alternative sits farther right (§7).
 
 **Lesson:** copying should expose target/boundary semantics.
 
@@ -602,18 +600,18 @@ Balatro's content-limited replayable demo showed the actual discovery loop. An O
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / mechanics | §§2–17 |
+| R01 identity / scope / promise | §§1–2; platform chronology in §21 |
+| R02 player actions / mechanics | §§2–17; corrected selector and counterexample in §7 |
 | R03 items / entities / composition | §§3–13, 15 |
 | R04 progression / economy / time | §§2, 9–17, 23 |
-| R05 concrete interactions | §26 |
+| R05 concrete interactions | §26 and §7's targeting counterexample |
 | R06 people / AI / social / multiplayer | §18 |
-| R07 art / audio / interface / feel | §19 |
+| R07 art / audio / interface / feel | §19 and the specific Switch review |
 | R08 story / narrative | §18 |
 | R09 production / development | §§20–21 |
 | R10 marketing / distribution / virality | §§21–22 |
 | R11 commercial / participation | §23 |
-| R12 reviews / player feedback | §§24–25 |
+| R12 reviews / player feedback | §§24–25; identified positive and negative accounts |
 | R13 inspiration / limits | §27 |
 | R14 sources / preservation / navigation | this section + sources |
 
@@ -621,13 +619,15 @@ Balatro's content-limited replayable demo showed the actual discovery loop. An O
 
 **Preservation check:** [the original Balatro chapter](../games/balatro.md) remains intact, including LocalThunk's wishlist/demo chronology and early sales source. [The granular scoring study](../mechanics/balatro-scoring-operators-risk-and-readable-combinations.md) remains the canonical detailed owner for Photograph/Hanging Chad, Blueprint/Brainstorm, activation-order arithmetic and modifier-layer examples; this dossier summarizes and links rather than replacing it.
 
+**Audit remedies applied:** corrected Brainstorm's selection/compatibility distinction; removed the false simultaneous native-Linux release claim; separated initial, mobile, macOS and Switch 2 availability; supplied the actual Nintendo Life argument instead of treating an editor's note as criticism; and replaced unsourced Steam generalizations with identified, dated account evidence. Earlier critic, creator, economic and mechanics sources remain. The baseline audit is historical; current status belongs to the progress ledger. This is a targeted source/document correction, not a new playthrough, exhaustive source reread, or packet-wide certification.
+
 ## Sources
 
-<a id="ba-a"></a>**BA-A — [Balatro on Steam](https://store.steampowered.com/app/2379780/Balatro/).** LocalThunk / Playstack / Valve, accessed 2026-09-26. Current PC product/reception surface.
+<a id="ba-a"></a>**BA-A — [Balatro on Steam](https://store.steampowered.com/app/2379780/Balatro/).** LocalThunk / Playstack / Valve, accessed 2026-09-26. Current PC product/reception surface; Windows/macOS requirement tabs reopened for the platform correction. Compatibility with a device is not proof of a native Linux release.
 
 <a id="ba-b"></a>**BA-B — [Balatro mobile release](https://www.gamespot.com/articles/balatro-is-coming-to-mobile-devices-so-get-your-important-tasks-done-now/1100-6526293/).** GameSpot, 2024-09. September 26 iOS/Android/Apple Arcade boundary; corroborated by Apple's Arcade announcement and current App Store listing.
 
-<a id="ba-c"></a>**BA-C — [Balatro official announcements](https://steamcommunity.com/app/2379780/announcements/?l=english).** LocalThunk/Playstack via Steam, accessed 2026-09-26. Current official update history including Friends of Jimbo 1–4 and 2025–2026 announcements.
+<a id="ba-c"></a>**BA-C — [Balatro official announcements](https://steamcommunity.com/app/2379780/announcements/?l=english).** LocalThunk/Playstack via Steam, accessed 2026-09-26. Original pass's official update history including Friends of Jimbo 1–4 and 2025–2026 announcements; not a claim that every newly announced feature is released.
 
 <a id="ba-d"></a>**BA-D — [Balatro scoring operators, risk, and readable combinations](../mechanics/balatro-scoring-operators-risk-and-readable-combinations.md).** Internal detailed study with adjacent mechanic sources for activation sequence, card modifiers, Photograph/Hanging Chad and Blueprint/Brainstorm.
 
@@ -649,8 +649,18 @@ Balatro's content-limited replayable demo showed the actual discovery loop. An O
 
 <a id="ba-m"></a>**BA-M — [Balatro Review](https://www.heypoorplayer.com/2024/03/08/balatro-review-pc/).** Hey Poor Player, 2024-03-08. Original professional review emphasizing strategy-balance differences.
 
-<a id="ba-n"></a>**BA-N — [Balatro Review](https://www.nintendolife.com/reviews/switch-eshop/balatro).** Ollie Reynolds, Nintendo Life, 2024-03-01. Switch review with contemporaneous ratings/distribution context.
+<a id="ba-n"></a>**BA-N — [Balatro Review](https://www.nintendolife.com/reviews/switch-eshop/balatro).** Ollie Reynolds, Nintendo Life, 2024-03-01. Full substantive body reopened for the audit remedy: input choices, layout, accessibility and handheld fit. Separate ratings editor's note is not a design objection; simplified illustrative scoring is not the rules authority.
 
 <a id="ba-o"></a>**BA-O — [Balatro creator interview](https://rogueliker.com/balatro-interview/).** Rogueliker / LocalThunk, 2024-03-07. Preserved creator account of theme, risk/balance and design process.
 
 <a id="ba-p"></a>**BA-P — [Balatro interview: ports, updates and demo feedback](https://toucharcade.com/2024/03/18/balatro-interview-mobile-port-localthunk-dlc-plans-updates-new-jokers-demo-feedback/).** TouchArcade / LocalThunk, 2024-03-18. Historical plans are treated as dated plans, not automatically shipped features.
+
+<a id="ba-q"></a>**BA-Q — [Brainstorm](https://balatrogame.fandom.com/wiki/Brainstorm), Balatro Wiki, accessed 2026-09-26.** Indexed card text and compatibility explanation inspected. The leftmost position is the selector; incompatible targets are not skipped. Community reference and game-text transcription, not proprietary source-code inspection or a new executable test.
+
+<a id="ba-r"></a>**BA-R — [English Most Helpful (All Time) Steam reviews](https://steamcommunity.com/app/2379780/reviews/?browsefilter=toprated&l=english), accessed 2026-09-26.** Actual bodies for Quzga, jonche10 and Zarok read, with dates in §25. Later edits, present hours and humor are not silently converted into original-play telemetry.
+
+<a id="ba-s"></a>**BA-S — [English Most Helpful (All Time), Negative Only](https://steamcommunity.com/app/2379780/negativereviews/?browsefilter=toprated&l=english), accessed 2026-09-26.** Actual relja body and other displayed historical accounts read. Qualitative arguments about loss/variety, not a representative sample or verified optimal-strategy theorem.
+
+<a id="ba-t"></a>**BA-T — Zack Zwiezen, [contemporaneous report](https://kotaku.com/balatro-nintendo-switch-eshop-removed-gambling-1851301756), March 1, 2024.** Used narrowly for macOS availability by that date.
+
+<a id="ba-u"></a>**BA-U — Nintendo/Playstack, [Switch 2 product record](https://www.nintendo.com/us/store/products/balatro-switch-2/), accessed 2026-09-26.** Primary platform and February 25, 2026 release metadata. Single-system one-player and supported play modes do not establish cross-platform saves; no performance benchmark is inferred.
