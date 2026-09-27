@@ -46,9 +46,29 @@ The player is often choosing among **fight, flee, redirect, bribe, wait, hide, o
 
 Rain World has no universal crouch-stealth skill or detection meter, but concealment is still a real systemic verb. Pipes, darkness, room geometry, distance and creature attention can break pursuit or let the slugcat wait for a safer route. Creature AI explicitly tracks threats, prey, friends and discomfort rather than treating the player as an always-known target. The Watcher extends this more directly with camouflage/ripple abilities described by the developers, making concealment an avatar capability in addition to ordinary hiding and route manipulation. The important boundary is that stealth emerges through creature perception and world geometry, not a generic RPG stealth statistic. [Unity interview](https://unity.com/blog/exploring-procedural-design-rain-world).
 
+### Downpour bodies are authored playstyles, not a class tree
+
+Downpour's five slugcats are separate campaign bodies with different verbs and constraints, not classes chosen from a shared character creator:
+
+- **Rivulet** is built around speed, swimming and extended underwater breathing.
+- **Gourmand** is heavier and object-focused. The developers describe an explicit **crafting mechanic** added after playtesting showed that Gourmand's original random stomach-item ability was too uncontrollable; crafting lets otherwise poor pulls be repurposed into more useful objects.
+- **Artificer** is a combat-oriented pyrotechnics/explosives specialist.
+- **Spearmaster** has no mouth and produces needle-like spears from its body for combat/feeding.
+- **Saint** forgoes ordinary weapon use and instead uses a long tongue to grip distant objects/platforms.
+
+These are campaign-specific identities with authored stories/world states; they are not a permanent skill tree layered onto Survivor. [Downpour Steam page](https://store.steampowered.com/app/1933390/Rain_World_Downpour/) · [Game Developer Downpour interview](https://www.gamedeveloper.com/design/channeling-the-calm-and-the-co-op-in-rain-world-downpour).
+
 ### Modes
 
 Base Arena provides competitive and sandbox play for up to four local players. Downpour adds Challenge, Expedition and Jolly Co-Op. Expedition randomizes context and assigns challenge goals; Challenge uses fixed test scenarios. Jolly's original base-campaign scope was expanded by Watcher 1.5 to the five More Slugcats campaigns and The Watcher campaign. These modes reuse the creature/world grammar under different goals rather than becoming a separate online progression game.
+
+### Useful absences and equivalents
+
+Base Rain World has no blank-slate character creator, attribute allocation, conventional level/perk tree or equipment paper doll. Downpour's bodies supply different authored capabilities instead. Gourmand has real crafting, but crafting is **not** a universal base-game progression profession shared by every slugcat.
+
+There is also no conventional loot-rarity treadmill: food, spears, rocks, pearls, masks and other objects matter because of immediate affordances, social value and survival context. Rewards are often knowledge, route access, karma/passages, narrative discovery or a useful carried object rather than tiered drops.
+
+Scavenger reputation creates a substantial social relationship, but the player does not join and manage a general political-faction/territory system. There is no romance layer or settlement/base-building loop. Shelter use is survival infrastructure the player finds rather than construction they own. Supernatural/campaign abilities exist, especially in later bodies, but Rain World has no general spellbook/mana-school system.
 
 ## R03 — items, entities, and composition
 
@@ -229,7 +249,8 @@ The transferable principle is not "make everything brutally hard." It is **give 
 - [Unity developer interview, 2025](https://unity.com/blog/exploring-procedural-design-rain-world) — modular creature AI and Watcher production; its 25-creature statement differs from current publisher's 27.
 - [Game Developer — ecosystem interview](https://www.gamedeveloper.com/design/crafting-the-complex-chaotic-ecosystem-of-i-rain-world-i-) — autonomy, terrain mediation, unwinnable outcomes.
 - [Game Developer — IGF interview](https://www.gamedeveloper.com/business/road-to-the-igf-videocult-s-i-rain-world-i-) — origins, tooling, audio and development duration.
-- [Game Developer — Downpour interview](https://www.gamedeveloper.com/design/channeling-the-calm-and-the-co-op-in-rain-world-downpour) — expansion design and calmer modes.
+- [Game Developer — Downpour interview](https://www.gamedeveloper.com/design/channeling-the-calm-and-the-co-op-in-rain-world-downpour) — expansion design, calmer modes and direct developer account of Gourmand's crafting redesign after playtesting.
+- [Steam — Downpour](https://store.steampowered.com/app/1933390/Rain_World_Downpour/) — official/storefront descriptions of the five campaign bodies and their high-level ability identities.
 - [Steam — Remix announcement](https://store.steampowered.com/news/posts/?appids=312520&enddate=1666295457&feed=steam_community_announcements) — accessibility/customization/tutorial intent.
 - [Kickstarter](https://www.kickstarter.com/projects/rain-world/project-rain-world) — funding and original pitch.
 
@@ -252,8 +273,8 @@ G123 is newly curated in the G111–G130 expansion. Direct path checks found no 
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Base/Downpour/Remix/Watcher identity and boundaries |
-| R02 | Traversal, cycles, karma, combat/evasion, stealth/perception and modes |
-| R03 | Objects, carrying and situational composition |
+| R02 | Traversal, cycles, karma, combat/evasion, stealth/perception, Downpour body verbs, modes and useful absences |
+| R03 | Objects, carrying, Gourmand crafting and non-loot-treadmill composition |
 | R04 | Knowledge, karma/passages, reputation economy and return loops |
 | R05 | Eight worked interactions |
 | R06 | Modular creature AI, reputation/taming and multiplayer |
