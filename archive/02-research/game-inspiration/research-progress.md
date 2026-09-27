@@ -1,18 +1,18 @@
 # Full research progress and resume ledger
 
-**Read first:** [requirements / R01–R14](research-requirements.md), [130-subject roster](research-roster.md) and [G81–G100 audit findings](coverage-audit-g81-g100.md). Repository `Macrofold/OpenLegend`; existing branch `docs/game-inspiration-games-81-100`, originally branched from `docs/game-inspiration-library`. Research-only state, not an engine-maintainer backlog.
+**Read first:** [requirements / R01–R14](research-requirements.md), [130-subject roster](research-roster.md) and [G81–G100 audit findings and closure evidence](coverage-audit-g81-g100.md). Repository `Macrofold/OpenLegend`; existing branch `docs/game-inspiration-games-81-100`, originally branched from `docs/game-inspiration-library`. Research-only state, not an engine-maintainer backlog.
 
 ## Resume here
 
-**Corrective research active: G93 — Final Fantasy XVI.** Retain the documented failed Steam access and add the researched alternative direct-player layer, explicitly identifying PS5, dates and sample limitations. Then perform the final changed-file, source-anchor/navigation and preservation review; reconcile this audit and the documentation changelog.
+**All identified G81–G100 audit repairs are complete and committed. No game remains active in this slice.** The eleven reopened dossiers, G81–G90 and G93, now contain the listed corrections and missing research. The nine other dossiers retain the substantive-coverage judgments from the audit and are unchanged. Do not restart the batch or silently advance into another parallel slice.
 
-**Latest completed repair: G90**, `0ad79c25513dd07993221cc1f808acc0e3fa907c`. Added HP/no-MP versus ATB/TP/consumable budgets, Retry and rating distinctions, shrouds/Libra, named Blazefire and Axis weapon chains, seven complete situations, direct Hamauzu/Mina and Kamikokuryo accounts, and pause-qualified Lightning Returns time including the Ultimate Lair exception. Replaced the generic commercial locator with visually inspected slide 9 of Square Enix's May 18, 2010 presentation. Original sections, five example sequences, sequel contrasts and FFXIII01–34 identities remain; FFXIII35–42 annotate added evidence. Principal committed diff inspected; final source-tail/local-link checks remain pending.
+**Latest completed game repair: G93 — Final Fantasy XVI**, `1443965701e5dc7ef632a99855b40c91516bdabc`. Section 13 adds three dated PS5 player-review bodies and explicit sample limitations while preserving the failed Steam-access record. The alternative evidence is not a Steam helpfulness ranking, verified-purchase survey or PC performance test.
 
-The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
+The final scoped manual source-tail, navigation, actual-diff and preservation review is complete. The [audit closure](coverage-audit-g81-g100.md#verification-and-remaining-review) records the evidence and limits; commit `2873c2236779ff5d6aeeafdad866db6733178359` closes that record. The old blanket twenty-of-twenty statement was too strong before these repairs: headings and source counts alone did not establish substantive coverage. Completion here means the identified audit gaps have been closed, not that every historical source, current client or possible mechanic has been independently retested.
 
 ## Completed slice register
 
-Heading retained for inbound links. **Needs repair** is not complete. **Coverage present** means no substantive missing dimension was identified, not that every external source or current client was independently retested.
+Heading retained for inbound links. **Repair complete** means the specific audit findings were addressed with documented evidence and committed changes. **Coverage present** means no substantive missing dimension was identified in the audit, not that every external source or current client was independently retested.
 
 | ID | Dossier | Current state / corrective commit |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Repair complete — `0ad79c25513dd07993221cc1f808acc0e3fa907c` |
 | G91 | [Final Fantasy XIV](dossiers/final-fantasy-xiv.md) | Coverage present; unchanged |
 | G92 | [Final Fantasy XV](dossiers/final-fantasy-xv.md) | Coverage present; unchanged |
-| G93 | [Final Fantasy XVI](dossiers/final-fantasy-xvi.md) | Corrective player-evidence pass active |
+| G93 | [Final Fantasy XVI](dossiers/final-fantasy-xvi.md) | Repair complete — `1443965701e5dc7ef632a99855b40c91516bdabc` |
 | G94 | [Warcraft: Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) | Coverage present; unchanged |
 | G95 | [Warcraft II](dossiers/warcraft-ii.md) | Coverage present; unchanged |
 | G96 | [Warcraft III](dossiers/warcraft-iii.md) | Coverage present; unchanged |
@@ -39,11 +39,17 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 
 ## Slice completion review — September 26, 2026
 
-The earlier review established twenty files and navigation, not uniform compliance. The later substantive audit found the gaps being repaired. Complete prior completion/checkpoint identifiers, evidence limits and base history remain in the [pre-repair ledger at 4ca994c](https://github.com/Macrofold/OpenLegend/blob/4ca994c83a432b0d764a19f0478f27fa9927a589/archive/02-research/game-inspiration/research-progress.md), [verbose ledger at 50578c3](https://github.com/Macrofold/OpenLegend/blob/50578c3e04c12f46712b1e6185f78edaa825abaa/archive/02-research/game-inspiration/research-progress.md), and [first repair ledger at 36d3c88](https://github.com/Macrofold/OpenLegend/blob/36d3c88ce0f3146c522d53c2337f8a66f9c9ebc4/archive/02-research/game-inspiration/research-progress.md). These are historical records, not competing current task lists.
+The earlier review established twenty files and navigation, not uniform compliance. The later substantive audit found eleven dossiers needing repairs. The [audit](coverage-audit-g81-g100.md) preserves the original 280-cell matrix and per-game closure criteria beside actual corrective commits and evidence; the old gap markers remain historical findings rather than being erased.
 
-**Preservation baseline:** `games/` tree `2276af0e8a9e4d6dc4dec70d10211356dbf3c12b`; `mechanics/` `752d3ef188f702472beaa5c6d6c88339b2eaaad3`; `references/` `c31f2747b9b49285f53a97f861bcbb915350fd7e`; `essays/` `8c397c72fa86854fa301dc834434487b25b07ad5`. Confirm unchanged at final repair review. Unchanged owners do not certify the earlier seven-file packet split.
+Complete prior completion/checkpoint identifiers, evidence limits and base history remain in the [pre-repair ledger at 4ca994c](https://github.com/Macrofold/OpenLegend/blob/4ca994c83a432b0d764a19f0478f27fa9927a589/archive/02-research/game-inspiration/research-progress.md), [verbose ledger at 50578c3](https://github.com/Macrofold/OpenLegend/blob/50578c3e04c12f46712b1e6185f78edaa825abaa/archive/02-research/game-inspiration/research-progress.md), [first repair ledger at 36d3c88](https://github.com/Macrofold/OpenLegend/blob/36d3c88ce0f3146c522d53c2337f8a66f9c9ebc4/archive/02-research/game-inspiration/research-progress.md), and [last active-game ledger at 617323a](https://github.com/Macrofold/OpenLegend/blob/617323a02c1da371fcfd56c977984e2c91c3c08f/archive/02-research/game-inspiration/research-progress.md). These are historical records, not competing current task lists.
 
-G81–G85 principal diffs were inspected in the preceding continuation. Per-game source, coverage and actual-diff review accompanies completion. Final all-changed-files, source-tail and local-link review remains pending. No automated game tests, benchmark, personal playthrough, watched footage or soundtrack listening is claimed.
+**Preservation verified:** `games/` tree `2276af0e8a9e4d6dc4dec70d10211356dbf3c12b`; `mechanics/` `752d3ef188f702472beaa5c6d6c88339b2eaaad3`; `references/` `c31f2747b9b49285f53a97f861bcbb915350fd7e`; `essays/` `8c397c72fa86854fa301dc834434487b25b07ad5`. These original-owner trees and the nine unaffected dossier blobs match the audit baseline. This proves they were preserved during the repair, not that the earlier seven-file packet split was complete.
+
+At game-content head `1443965701e5dc7ef632a99855b40c91516bdabc`, the connector comparison against the audit baseline contained only the eleven repaired dossiers, the audit and this ledger. The subsequent documentation-changelog commit `b2f135954f98f875a37d97571fc7db020e0bf70c` adds one coherent audit/correction entry; its actual diff was checked for preservation of earlier history. Final status writes affect only the audit and ledger. No runtime file or unrelated dossier was changed, and no merge or main-branch write was made.
+
+Principal per-game diffs, corrected coverage sections, source-register tails and new reference identities were inspected. Truncated reads were followed with narrower ranges. Local paths and new heading references were checked against actual files/headings. The existing README already links all twenty dossiers and this review, so it was retained rather than unnecessarily rewritten. The original analyses, examples and source identities remain beside the additions and explicit corrections.
+
+This is a **scoped manual static review**, not an automated whole-repository or external-link crawl, fresh reading of every inherited source, gameplay test or benchmark. No watched footage or soundtrack listening is claimed. G90's primary commercial chart was actually rendered and visually inspected. Per-dossier notes that the final slice review was pending describe their individual completion checkpoints; this final record resolves those scoped source-tail/navigation checks without resolving the separately stated global gates.
 
 ## Base-branch state at branch point
 
@@ -59,10 +65,10 @@ The earlier merge preserved the 130-subject roster, G01–G20 state and addition
 | --- | --- |
 | P01 — Seven-file packet preservation | Compare all original passages, examples, reviews, annotations, economic dates and viewing recommendations with repository owners; [provenance](references/packet-provenance.md) is not a completeness audit. |
 | P02 — Earlier conversation coverage | Recover accessible original scope and identify inaccessible conversation-only material. |
-| P03 — Full roster review | Verify all 130 subjects and edition/combined boundaries, mechanics, reviews, direct players and franchise requirements. This ledger covers only actual slice work. |
-| P04 — Navigation and links | Reconcile whole-library navigation after integration; separately review this repair's local links. |
-| P05 — Evidence/diff review | Audit integrated dates, access limits, unsupported claims and preservation. No unseen media is represented as viewed. |
+| P03 — Full roster review | Verify all 130 subjects and edition/combined boundaries, mechanics, reviews, direct players and franchise requirements. This ledger closes only the identified G81–G100 audit repairs. |
+| P04 — Navigation and links | Reconcile whole-library navigation after cross-branch integration. The scoped manual local-link review for these repairs is complete; it is not a whole-library automated crawl. |
+| P05 — Evidence/diff review | Audit the integrated whole-library dates, access limits, unsupported claims and preservation. This slice's scoped review is complete, with its stated limits. |
 
 ## Recovery rules
 
-Use connector commits on this existing branch, at least every five minutes with substantive work. Read current remote files before shared writes; preserve concurrent changes. Finish/review/commit one subject, then advance here. Continue all authorized repairs, not an arbitrary batch cutoff. Research findings are not accepted engine tasks. No new branch, merge, main change, paid execution or background work is implied. File counts and elapsed effort never substitute for completion.
+Use connector commits on this existing branch for any further authorized work, at least every five minutes with substantive changes. Read current remote files before shared writes and preserve concurrent changes. No identified game-specific audit repair remains active; reopen a finding only for a concrete new issue, and do not silently start another parallel slice. Research findings are not accepted engine tasks. No new branch, merge, main change, paid execution or background work is implied. File counts and elapsed effort never substitute for completion.
