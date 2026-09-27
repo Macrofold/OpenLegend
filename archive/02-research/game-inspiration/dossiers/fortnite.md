@@ -297,6 +297,27 @@ These are reference lessons, not an instruction for OpenLegend to copy Fortnite'
 
 ## 18. Reading routes, coverage and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory confirms that Fortnite must be treated as a **family of finished modes plus a creator platform**, not one universal ruleset:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Battle Royale/Reload use match-local equipment rather than RPG classes; Save the World has Hero classes/rosters and longer-term account progression; creator islands define their own systems (§§1–8).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** BR/Reload weapons, ammo, consumables, seasonal items and limited loadouts; Save the World weapons/traps/schematics/crafting; LEGO and creator modes have different persistent inventories. These are mode-scoped, not interchangeable.
+- **Magic / spells / powers:** seasonal/licensed items and creator-authored abilities can act like powers, but there is no single platform-wide spell system.
+- **Traversal / environmental and object interaction:** sprint/slide/mantle, vehicles, building/Zero Build utilities, ziplines/moving systems, LEGO exploration and creator-defined devices provide distinct traversal contracts (§§2–9).
+- **Activities / minigames:** Battle Royale, Zero Build, Reload, Blitz, Save the World, Festival, LEGO experiences and creator islands are separate finished activities. Retired/scheduled-for-retirement modes remain historical boundaries (§1).
+- **Combat / stealth / loot / rewards:** competitive/co-op combat, looting, recovery and seasonal reward systems vary by mode; no one damage/loot table describes Fortnite as a whole.
+- **Death / failure / recovery:** elimination, Reboot Vans/Cards, Reload automatic reboots, Save the World revival and LEGO survival rules are distinct recovery contracts (§§2, 4, 6–7).
+- **Economy / trading:** V-Bucks/pass/Crew/item-shop and creator payouts/in-island transactions are commercial/account systems; each island's fictional economy is separate (§15).
+- **Story / relationships / romance / reputation / party / companions:** seasonal narratives, licensed events, human squads, Save the World Defenders and LEGO villagers provide different social/narrative layers; there is no universal romance/reputation system.
+- **NPC/AI behavior and schedules / factions:** mode-specific enemies, Defenders, villagers and creator-authored NPCs have bounded behaviors; UEFN AI/conversation tooling does not imply one autonomous social simulation across Fortnite.
+- **World map / quests / events:** BR islands/seasons, Save the World missions, LEGO worlds, Festival sets and creator islands each own their maps/objectives/events.
+- **Building / settlements / management:** BR construction is tactical; Save the World defenses and LEGO villages/worlds provide more persistent construction; creator modes can define others.
+- **Multiplayer / social / endgame / return loops:** squads, creator islands, persistent account identity/cosmetics, seasonal events/passes and mode-specific progression create return loops without one universal endgame.
+
+**Current boundary check:** Epic's official news still identifies **Chapter 7 Season 4: Override** as the current Battle Royale season, with the September 17, 2026 Kingdom Hearts content delivered. Rocket Racing remains scheduled for removal in **October 2026**, so this audit does not describe it as already gone. The September 22 Global Championship material is competitive/event context rather than a new gameplay ruleset. [FN01](#fn01) [FN05](#fn05) [FN07](#fn07) [FN09](#fn09)
+
+
 Start with the official current mode descriptions and the historical construction review, then compare the LEGO/Save the World update histories. For creation, inspect direct event binding before the more advanced persona and structured-output documentation. This makes the distinction between a working component, a conversational interpretation and a committed game effect concrete.
 
 **Viewing route:** [Developing the Art of Fortnite — GDC](https://www.youtube.com/watch?v=498KToofNf8), officially linked by Game Developer, is a production-oriented companion to Austinat's written session report. [Fortnite OG's official page](https://www.fortnite.com/news/fortnite-og-is-back-and-here-to-stay) embeds a gameplay-oriented starting trailer. Both are identified reference routes, not footage claimed watched in full. The art report and the written gameplay sources, not invented timestamps, support this dossier's findings. [FN46](#fn46) [FN23](#fn23)
