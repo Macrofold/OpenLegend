@@ -1,6 +1,6 @@
 # G57 — Divinity: Original Sin II
 
-**Status: completed research pass, September 26, 2026.** Reference research and conditional inspiration, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Original Sin I](divinity-original-sin.md).
+**Status: original research September 26, 2026; identified build/authoring gaps addressed September 27.** Reference research and conditional inspiration, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Original Sin I](divinity-original-sin.md) · [Builds and authorship supplement](../mechanics/divinity-original-sin-ii-builds-and-authorship.md).
 
 ## 1. Identity, scope, and the player promise
 
@@ -15,7 +15,7 @@ The fiction makes that promise personal: a world frightened of Source imprisons 
 | 2017 original PC campaign | Launch reviews, early combat and quest-friction accounts. Their bugs are historical reports, not tests of today's build. |
 | Definitive Edition, 2018 | A substantial revision rather than a cosmetic label: journal and encounter work, narrative revisions, Story difficulty and console-oriented interface work. Original and revised PC versions are distinct. [S03, S04] |
 | PS4 Definitive review | Evidence about that reviewer's controller, loading and split-screen experience, not an all-platform performance conclusion. [C06] |
-| Gift Bag modifiers | Optional alterations to rules; Source-restoring and resurrection bedrolls are not the unmodified baseline. [S05] |
+| Gift Bag modifiers | Optional alterations to rules; Source-restoring and resurrection bedrolls are not the unmodified baseline. Gift Bag 4 is specifically Sourceror Secrets, January 23, 2020. [S05, S13] |
 | The Four Relics of Rivellon, June 14, 2020 | Free quest/equipment content automatically included in newly started post-update games. Larian distinguished this from individually enabled Gift Bag modifications. [S06] |
 | iPad edition | A distinct device/input context. Historical player reports are useful but do not certify current hardware compatibility or performance. [P03] |
 | Switch 2, PS5 and Xbox Series X/S, December 15, 2025 | Actually released, not merely announced. Larian explicitly describes these as ports, not a remake or remaster. Its upgrade announcement includes platform/territory qualifications. [S07] |
@@ -39,6 +39,8 @@ The attribute vocabulary includes Strength, Finesse, Intelligence, Constitution,
 Learning a skill, meeting its requirements, preparing it and having the resources to use it are different stages. Combining disciplines supports hybrid characters, but breadth can impose a cost in memory, purchasing and turn economy. The return loop therefore contains experimentation as well as accumulation. The later respecialization opportunity reduces permanent build lock-in without making every early decision costless. [C01, C05]
 
 **Interpretation:** a useful progression system distinguishes possession of knowledge from readiness to deploy it. Otherwise collecting more abilities inevitably becomes equivalent to carrying every solution at once. Readable preparation costs can preserve meaningful alternatives without requiring arbitrary prohibitions.
+
+**Additional build rules:** the [supplement's talent and ancestry sections](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#1-talents-change-the-rules-a-build-operates-under) explain scarce talent allocation, Executioner/Pawn, Glass Cannon, Lone Wolf, racial actions, corpse knowledge and undead care/disguise/tool requirements. These fill the audit's missing operational layer without treating the original general build paragraphs as an exhaustive account.
 
 ### 2.3 Action points, positioning and turn-based commitment
 
@@ -66,7 +68,7 @@ Objects can have several kinds of value: a container to search, goods to sell, s
 
 Source is a separate constraint from ordinary learned skills. Removing the collar, gaining access to stronger Source use and replenishing spent points are not the same accomplishment. Player accounts describe collecting Source, using replenishment locations and later reducing the inconvenience with teleportation-pyramid routines. Those are concrete reports of how a supposedly scarce resource can become a travel-management problem. [P04, P05]
 
-Optional **Source Meditation** restores Source through a bedroll. Optional **From the Ashes** changes out-of-combat resurrection. These features must not be silently attributed to the original rules; Larian presented them as selectable Gift Bag changes in January 2020. [S05]
+Optional **Source Meditation** restores Source through a bedroll. Optional **From the Ashes** changes out-of-combat resurrection. These features must not be silently attributed to the original rules; Larian presented them as selectable Gift Bag changes in January 2020. The [source-identity reconciliation](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#6-gift-bag-identity-and-source-precision) supplies the exact title/date and stable co-developer corroboration. [S05, S13]
 
 **Interpretation:** a resource is not meaningfully scarce merely because it has a small displayed capacity. If refilling is repeatable and safe, its practical price may be inconvenience. That can encourage hoarding or repetitive transport rather than a satisfying decision about when to spend power.
 
@@ -81,6 +83,8 @@ Weapons and armor provide combat capability; skillbooks expand the action vocabu
 Crafting connects collected ingredients to consumables and other useful outputs. Unlike Original Sin I's separate crafting/blacksmith investment, Vitale describes a recipe-and-ingredient approach and hybrid skillbook combinations. The important distinction is between knowing a recipe, owning compatible inputs and producing an action the party can actually exploit. The dossier does not invent a complete recipe list from an inaccessible wiki. [C05]
 
 **Interpretation:** a recipe is most interesting when its result changes a possible plan rather than merely increasing sale value. Ingredient clutter is the corresponding cost. A design can expose promising combinations or remember discovered recipes without turning every miscellaneous object into compulsory inventory homework.
+
+**Rune composition:** [supplement §3](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#3-runes-separate-reusable-equipment-from-irreversible-modification) explains actual sockets, slot-dependent effects, size/dust upgrades, frames and the difference between reversible equipment placement and irreversible rune modification. It preserves disagreements in detailed tables rather than inventing an exhaustive numerical catalog.
 
 ### 2.9 Sneaking, theft, persuasion and civil specialization
 
@@ -124,6 +128,8 @@ Players can separate rather than moving as one indivisible unit. The developer d
 
 **Interpretation:** shared presence, shared information and shared preferences are three different things. A party may occupy the same world while one participant is reading, another is optimizing loot and a third is initiating combat. More independence can produce discovery and comic disruption, but also deprive someone of a conversation or decision. Explicit group norms and legible consequence ownership are part of the experience, even when they live outside the formal rules.
 
+**Other participation contracts:** [supplement §§4–5](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#4-game-master-mode-is-a-human-run-adventure-not-another-autonomous-campaign) explain preparing and running a GM campaign, scenes, vignettes, entity/dice/reward controls, human adjudication and the separate Arena objectives, presets, loot and host-selected mutators. The linked source notes distinguish an unfinished documentation page from an unshipped feature and retain platform limitations.
+
 ### Spoiler-light narrative structure
 
 The Source persecution and Godwoken premise put identity under institutional pressure. Origin stories give the larger struggle personal stakes; smaller conversations make the world more than a collection of fights. Brown's reported encounter with a proud mother after he had killed her son demonstrates retrospective significance: the social meaning of an earlier action changed after the mechanical outcome was settled. [S02, C01]
@@ -132,7 +138,7 @@ The design is neither wholly scripted nor wholly emergent. Authored people and s
 
 ## 4. Ten concrete interaction studies
 
-**Method:** cases 1–8 are constructed illustrations of documented mechanics, not claims that this researcher played them. Cases 9–10 are explicitly attributed player accounts. Each includes a limitation rather than presenting a universal exploit.
+**Method:** cases 1–8 are constructed illustrations of documented mechanics, not claims that this researcher played them. Cases 9–10 are explicitly attributed player accounts. Each includes a limitation rather than presenting a universal exploit. [Five additional build/authoring cases](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#7-five-additional-constructed-interactions) supplement rather than replace this original set.
 
 ### 1. Break the protection that matters
 
@@ -220,7 +226,7 @@ The researched sources do **not** establish a synchronized September 2026 lifeti
 
 ## 8. Six substantive written reviews from five independent publications
 
-These articles were read for their arguments, not counted from score snippets. Five publications supply independent editorial perspectives; two RPG Site articles are separate version assessments, not two independent organizations.
+These articles were read for their arguments in the original pass, not counted from score snippets. Five publications supply independent editorial perspectives; two RPG Site articles are separate version assessments, not two independent organizations. September 27's targeted supplement preserves these readings rather than claiming six new reviews.
 
 ### C01 — Fraser Brown, PC Gamer, September 21, 2017
 
@@ -287,17 +293,18 @@ Videos below were identified through metadata/descriptions, **not watched in ful
 | [Definitive Edition developer interview][S03] | Read the journal, party-inventory, multiplayer-save and revision discussion before comparing editions. |
 | [Combat design interview][S09] | Read the intended predictability, pacing and encounter-counter arguments, then contrast them with the critics and negative player sample. |
 | [Helpful and negative Steam pages][P01] | Follow the player-story route, then deliberately read the contrasting [negative page][P02] rather than treating helpful anecdotes as a satisfaction census. |
+| [Builds and authorship: written rules and source register](../mechanics/divinity-original-sin-ii-builds-and-authorship.md#8-annotated-sources-and-coverage) | Read actual talent, ancestry, rune, GM and Arena operations before treating an unviewed tutorial as researched coverage. |
 
 ## 12. Evidence register, preservation and completion map
 
-**Access date for this pass:** September 26, 2026. Primary product/campaign/developer sources establish supported features and attributed intent. Original criticism establishes a reviewer's experience. Player accounts establish testimony, not universal behavior. All causal explanations of success and proposed adaptations are the researcher's analysis.
+**Access dates:** original pass September 26, 2026; targeted build/authoring research September 27, separately annotated in the supplement. Primary product/campaign/developer sources establish supported features and attributed intent. Original criticism establishes a reviewer's experience. Player accounts establish testimony, not universal behavior. All causal explanations of success and proposed adaptations are the researcher's analysis.
 
 | IDs | Source type and important boundary |
 | --- | --- |
 | S01–S02 | Current developer-authored product pages; marketing claims and platform lists are not independent criticism. |
 | S03 | Bryan Vitale's July 5, 2018 interview with Larian's Michael Douse; primary attributed account, with then-current platform boundaries. |
 | S04 | June 21, 2018 report linking the developer's Kickstarter update; secondary announcement, not independent testing. |
-| S05–S06 | Larian's January/June 2020 announcements and staff clarification; distinguish optional modifications from newly integrated content. |
+| S05, S13 and S06 | Anshar's stable co-developer account plus Larian's specifically identified January 23/June 14, 2020 announcement bodies and staff clarification. Optional modifications differ from integrated new-game content. September 27 recovered the source identity; a separate January event URL remained unavailable. |
 | S07 | Larian's December 15, 2025 release announcement; resolves the newer-console release versus rumor boundary. |
 | S08 | Community attribute reference, indexed excerpt only; full fetch failed. Used for the limited attribute inventory, not exact formulas. |
 | S09 | Alex Wiltshire's February 12, 2018 interview with systems designer Nick Pechenin; primary design-intent testimony, not source-code inspection. |
@@ -308,32 +315,32 @@ Videos below were identified through metadata/descriptions, **not watched in ful
 | P03 | Developer iPad listing and dated direct user reviews; not current hardware testing. |
 | P04–P07 | Direct community discussions about Source, theft and allocation; suggestions, anecdotes and disagreements, not developer guarantees. |
 
-**Preservation:** before creating this dossier, the target dossier and same-named `games/` chapter were absent. The existing [mechanics index](../mechanics/README.md), earlier chapters, reviews and [packet provenance](../references/packet-provenance.md) remain intact. This completed pass retains the checkpoint's four review assessments, scope distinction and access qualifications while resolving the missing fifth publication and helpful Steam access. It does not claim a new line-by-line reconciliation of the entire seven-file historical packet or completion of all 130 subjects.
+**Preservation:** before creating this dossier, the target dossier and same-named `games/` chapter were absent. The existing [mechanics index](../mechanics/README.md), earlier chapters, reviews and [packet provenance](../references/packet-provenance.md) remain intact. The original pass retained its checkpoint's four review assessments, scope distinction and access qualifications while resolving the fifth publication and helpful Steam access. The later [builds and authorship supplement](../mechanics/divinity-original-sin-ii-builds-and-authorship.md) now supplies the audit's previously missing talents, ancestry, rune and participation-mode operations, while retaining all original ten cases and review evidence. Neither pass claims a new line-by-line reconciliation of the entire seven-file historical packet or completion of all 130 subjects.
 
-**Verification boundary:** sources and the manuscript were reviewed as documentation. No gameplay session, watched-video analysis, authenticated multiplayer test, proprietary implementation audit or runtime/build test occurred. The official manual fetch exceeded the web tool's size limit; several mechanics sites also failed. Those unavailable documents are not represented as read.
+**Verification boundary:** sources and the manuscript were reviewed as documentation. No gameplay session, watched-video analysis, authenticated multiplayer test, proprietary implementation audit or runtime/build test occurred. The original official-manual fetch exceeded the web tool's size limit; several mechanics sites also failed. Those unavailable documents are not represented as read. New accessible rules and Larian-hosted authoring documentation are independently annotated in the supplement, not retroactively credited to those failed reads.
 
 | Requirement | Substantive owner |
 | --- | --- |
 | R01 | Section 1, edition/platform table |
-| R02 | Section 2, twelve mechanics groups |
-| R03 | Sections 2.5–2.10 and interaction cases 2–8 |
-| R04 | Sections 2.2, 2.6–2.8, 2.11–2.12; fictional economy separated from section 7 |
-| R05 | Section 4, ten causal/attributed cases |
-| R06 | Section 3 and cases 5, 6, 10 |
+| R02 | Section 2, twelve mechanics groups; supplement §§1–5 adds missing build and mode operations |
+| R03 | Sections 2.5–2.10 and cases 2–8; supplement §§1–3 adds talents, ancestry and rune composition |
+| R04 | Sections 2.2, 2.6–2.8, 2.11–2.12; supplement's investment and mode-persistence boundaries; business remains separate |
+| R05 | Section 4, ten preserved cases, plus five supplementary cases |
+| R06 | Section 3 and cases 5, 6, 10; supplement §§4–5 explains GM and Arena participation |
 | R07 | Section 5 and version-specific review C06 |
 | R08 | Sections 1 and 3, named places/people and consequence analysis |
 | R09 | Section 6, documented iteration and platform work |
-| R10 | Section 6, distribution and explicitly hypothetical discovery analysis |
+| R10 | Section 6, distribution and explicitly hypothetical discovery analysis; supplementary authoring workflow |
 | R11 | Section 7, dated measures and missing-financial-data boundary |
 | R12 | Sections 8–9, six reviews and contrasting direct player samples |
-| R13 | Section 10, conditional patterns, dependencies and alternatives |
-| R14 | Sections 11–12, annotated sources, access limits, preservation and navigation |
+| R13 | Section 10 and supplementary interpretations; conditional patterns, dependencies and alternatives |
+| R14 | Sections 11–12 and supplement, annotated sources, precise Gift Bag identity, access limits and navigation |
 
 [S01]: https://store.steampowered.com/app/435150/Divinity_Original_Sin_2__Definitive_Edition/
 [S02]: https://divinity.com/original-sin-ii
 [S03]: https://www.rpgsite.net/interview/7428-divinity-original-sin-ii-definitive-edition-interview-bringing-2017s-co-op-crpg-to-consoles
 [S04]: https://www.rpgsite.net/news/7381-divinity-original-sin-ii-definitive-edition-details-revealed-on-kickstarter
-[S05]: https://store.steampowered.com/news/?appgroupname=Divinity%3A+Original+Sin+2+-+Definitive+Edition&appids=435150&feed=steam_community_announcements
+[S05]: https://ansharstudios.com/codename-potato/
 [S06]: https://forums.larian.com/ubbthreads.php?Number=668160&page=all&ubb=showflat
 [S07]: https://larian.com/news/divinity-original-sin-2-is-now-available-on-switch-2-ps5-and-xbox-series-x-s_147
 [S08]: https://divinityoriginalsin2.wiki.fextralife.com/Attributes
@@ -341,6 +348,7 @@ Videos below were identified through metadata/descriptions, **not watched in ful
 [S10]: https://www.kickstarter.com/projects/larianstudios/divinity-original-sin-2
 [S11]: https://www.pcgamer.com/divinity-original-sin-2-has-sold-one-million-copies/
 [S12]: https://larian.com/press
+[S13]: https://steamcommunity.com/app/435150/announcements/
 [C01]: https://www.pcgamer.com/divinity-original-sin-2-review/
 [C02]: https://www.destructoid.com/reviews/review-divinity-original-sin-2/
 [C03]: https://www.rpgfan.com/review/divinity-original-sin-ii/

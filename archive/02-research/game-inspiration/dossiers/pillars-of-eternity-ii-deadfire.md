@@ -1,8 +1,8 @@
 # Pillars of Eternity II: Deadfire — research dossier
 
-**G55 · Completed research pass, September 26, 2026.** Scope: Obsidian's 2018 computer RPG, its three major expansions, the 2019 turn-based/5.0 changes and subsequent console edition. This incorporates and preserves the five-review and Steam-evidence checkpoint at `1fd2a4a`. No firsthand game execution, watched footage, audio audition or current-platform performance benchmark is claimed.
+**G55 · Original research pass September 26, 2026; identified operational gaps addressed September 27.** Scope: Obsidian's 2018 computer RPG, its three major expansions, the 2019 turn-based/5.0 changes and subsequent console edition. This incorporates and preserves the five-review and Steam-evidence checkpoint at `1fd2a4a`. The [expedition and relationship rules supplement](../mechanics/deadfire-expedition-and-relationship-rules.md) supplies the subsequently audited naval, romance and recovery gaps. No firsthand game execution, watched footage, audio audition or current-platform performance benchmark is claimed.
 
-[Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Library](../README.md) · [Previous: Veilguard](dragon-age-the-veilguard.md)
+[Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Library](../README.md) · [Previous: Veilguard](dragon-age-the-veilguard.md) · [Operational supplement](../mechanics/deadfire-expedition-and-relationship-rules.md)
 
 **Spoilers:** sections 1 and 5 explain the opening; the faction, weapon and expansion examples reveal later possibilities. The key research question is how a game makes a traveling party consequential to a region without making that party omnipotent.
 
@@ -32,6 +32,8 @@ The original computer release was **May 8, 2018**; the PS4/Xbox One Ultimate Edi
 | Recovery and return | Rest, treat accumulating injuries, replenish relevant resources, revisit merchants or the ship, retry defeat and replay a different build/history. | Ordinary knockouts and death are distinct. The late challenge modes deliberately alter normal safety assumptions. [R5](#r5) [S5](#s5) |
 
 There is no native cooperative campaign, universal player-run commodity exchange, unrestricted construction system, comprehensive farming/fishing career or generational household simulator in the scope established here. Food and ship upkeep are real but do not establish a universal hunger model for all NPCs. World-map time, attack recovery, rest and an authored story's pacing are also not interchangeable clocks.
+
+**Operational depth added after audit:** [supplement §§1–2](../mechanics/deadfire-expedition-and-relationship-rules.md#1-a-vessel-is-a-loadout-and-a-workplace) explain fitted ships, jobs, naval commands, range, ammunition, repair and boarding; [§4](../mechanics/deadfire-expedition-and-relationship-rules.md#4-knockout-injury-healing-and-death) explains individual recovery and difficulty boundaries. These are the detailed owners for the ship/recovery rows, not claims that the original short inventory already contained those rules.
 
 ### A build is a set of tradeoffs, not merely a role label
 
@@ -91,7 +93,7 @@ Silverfin has a personal Intellect benefit and a positive crew-morale contributi
 
 ## 4. Ten concrete interactions and their limits
 
-These are constructed examples of documented rules unless explicitly identified as a critic's observed play. They are not fabricated accounts of the researcher's own sessions.
+These are constructed examples of documented rules unless explicitly identified as a critic's observed play. They are not fabricated accounts of the researcher's own sessions. [Four additional operational cases](../mechanics/deadfire-expedition-and-relationship-rules.md#5-four-additional-constructed-cases) extend this set with named cannon ranges, injured staffing, Maia/Ishiza and individual injury recovery; the original cases below are preserved.
 
 ### C01 — A diplomat benefits from people who never speak
 
@@ -150,6 +152,8 @@ These are constructed examples of documented rules unless explicitly identified 
 The main companions are **Edér, Aloth, Pallegina, Xoti, Serafen, Maia Rua and Tekēhu**. Returning people's availability can depend on imported history. Their alternative class configurations let a preferred personality fill more than one combat role. Sidekicks add distinctive bodies and some contextual material without promising every full companion's relationship depth. The DLCs also show why a launch-era statement that a sidekick has nothing further to say should not be applied indiscriminately to later content. [M1](#m1) [D1](#d1) [D3](#d3)
 
 The relationship interface records reactions to topics and conduct. Importantly, people react to **each other**, not only to the protagonist. This allows a party to feel like a group whose members have standards independently of whether they approve of the Watcher. Public disposition, faction standing and an individual relationship remain separate abstractions. Their visibility helps the player understand change, but does not establish that every offscreen conversation is independently simulated. [M6](#m6)
+
+**Romance and continuity:** the [dedicated relationship explanation](../mechanics/deadfire-expedition-and-relationship-rules.md#3-romance-is-not-synonymous-with-party-approval) distinguishes the four sustained routes, Serafen's casual encounter, non-romanceable companions/sidekicks, personal quest conditions, companion-to-companion relationships and political loyalty. A relationship meter alone does not discharge those separate systems.
 
 The regional political contest involves the **Huana**, **Royal Deadfire Company**, **Vailian Trading Company** and **Principi**. Indigenous sovereignty, caste hierarchy, colonial ambition, trade and piracy intersect rather than dividing neatly into good and evil colors. A trading concession or a local intervention can carry a different meaning to the people who need it, the institution financing it and a companion tied to that institution. The best interpretation is not that all sides are equally justified, but that each has concrete interests the player can investigate. [R2](#r2) [R3](#r3) [R4](#r4)
 
@@ -221,7 +225,7 @@ A 2018 revenue estimate extrapolated from one crowdfunding investor's return wou
 
 ## 9. Reception: five independent critics and bounded player evidence
 
-All five substantive written review bodies were inspected in this pass, and their checkpoint summaries are preserved here. Launch, pre-release and 2019 experiences are not interchangeable. A reviewer's own completion time is not the game's universal length.
+All five substantive written review bodies were inspected in the original pass, and their checkpoint summaries are preserved here. Launch, pre-release and 2019 experiences are not interchangeable. A reviewer's own completion time is not the game's universal length. The September 27 supplement does not claim five fresh review readings.
 
 **Andy Kelly — PC Gamer, May 8, 2018.** Kelly values descriptive writing, Neketaka, varied quests and customization. Crew needs give travel consequences, but map sailing and resupply can feel routine. He is more positive about ship combat than several other critics. His stolen-horn example exposes an intuitive interaction that the scripted scene does not support. [R1](#r1)
 
@@ -270,11 +274,11 @@ For an initial session, compare the creator's class/history choices with the fir
 | [Official soundtrack listing](https://www.gog.com/en/game/pillars_of_eternity_ii_deadfire_soundtrack) | Compare travel songs, regional music and combat cues through an authorized listening route. | Credits/listing inspected; no audition or invented musical timestamps. |
 | [Origin Story interview/transcript](https://www.originstory.show/episodes/josh-sawyer) | Read the 11:55 discussion of post-Deadfire work and eventual profitability in context. | Relevant transcript read; not an audio-listening claim; visible year unresolved. |
 
-Recommended written contrast: R3 against R4 for launch technical experiences; R1 against R5 for ship combat; D2 against D4 for whether arena encounters demand adaptation. Read a mechanic's actual conditions before treating an entertaining anecdote as a generally reproducible rule.
+Recommended written contrast: R3 against R4 for launch technical experiences; R1 against R5 for ship combat; D2 against D4 for whether arena encounters demand adaptation. Read a mechanic's actual conditions before treating an entertaining anecdote as a generally reproducible rule. For the previously missing systems, use the [operational supplement and its source register](../mechanics/deadfire-expedition-and-relationship-rules.md#6-sources-access-and-coverage).
 
 ## 12. Annotated evidence and completion check
 
-All sources retrieved September 26, 2026. Community pages are guides/reference records rather than primary claims about proprietary internals. “Official” in the wiki's title does not turn its community prose into a developer statement.
+Original sources below were retrieved September 26, 2026; new operational research is separately dated September 27 in its supplement. Community pages are guides/reference records rather than primary claims about proprietary internals. “Official” in the wiki's title does not turn its community prose into a developer statement.
 
 <a id="s1"></a>**S1 — Steven Messner, PC Gamer, February 7, 2017.** [Interview with Sawyer and Urquhart](https://www.pcgamer.com/pillars-of-eternity-2-features-a-new-world-revamped-combat-and-an-angry-god/). Substantive interview body read; historical intent, not a blanket released-feature certification.
 
@@ -349,18 +353,18 @@ All sources retrieved September 26, 2026. Community pages are guides/reference r
 | Requirement | Location and evidence |
 | --- | --- |
 | R01 identity/scope | Section 1, S1–S3 and edition/date caveats. |
-| R02 actions | Section 2 inventory, control/resource analysis and actual verbs. |
-| R03 entities/items/composition | Section 3, M4–M13 and item-related causal cases. |
-| R04 progression/economy/time | Sections 1–3, ship/preparation/recovery and mode distinctions. |
-| R05 concrete scenarios | Ten cases in section 4, with intentions, conditions, consequences and limits. |
-| R06 people/AI/social | Section 5, companion relationships, faction distinctions and S4's actual AI conditions. |
+| R02 actions | Section 2 inventory, control/resource analysis and actual verbs; operational supplement §§1–2 supplies naval mechanics. |
+| R03 entities/items/composition | Section 3, M4–M13 and item-related causal cases; supplement's fitted-ship and ammunition relationships. |
+| R04 progression/economy/time | Sections 1–3; supplement §§1–2 and 4 supplies operational ship/recovery rules and qualifications. |
+| R05 concrete scenarios | Ten preserved cases in section 4 plus four additional cases in supplement §5. |
+| R06 people/AI/social | Section 5, companion relationships, faction distinctions and S4's actual AI conditions; supplement §3 supplies romance/continuity. |
 | R07 art/audio/interface | Section 6, readable command/state issues and credited soundtrack. |
 | R08 narrative | Sections 1, 5 and 7; named places/people, authored limits and historical spaces. |
 | R09 production | Section 8, creator interview and dated patch responses. |
 | R10 promotion/distribution | Fig, beta, mode/Ultimate presentations and annotated routes. |
 | R11 commercial context | Defined 2017 funding milestone, attributed later profitability and missing financial data. |
 | R12 reception | Five independent full written reviews, three full expansion reviews, contrasting additional assessment, actual helpful Steam sample and negative alternative. |
-| R13 transfer/limits | Section 10 plus the explicit interpretations attached to mechanics and cases. |
-| R14 sources/preservation | Sections 11–12, dated access, navigable links and checkpoint incorporation. |
+| R13 transfer/limits | Section 10 plus the explicit interpretations attached to mechanics and cases, including the supplement's dependency limits. |
+| R14 sources/preservation | Sections 11–12 and linked supplement; dated access, navigable links and checkpoint incorporation. |
 
-The target dossier and same-named `games/` path did not exist before this continuation. This is an independent post-packet addition, not an overwrite of an earlier chapter. Every substantive finding and all five critic summaries from checkpoint `1fd2a4a` are retained or expanded; the initially missing negative-player contrast and remaining system/expansion work are now supplied. Existing game chapters, mechanics and packet provenance remain untouched. Textual coverage and source-anchor review were performed. No repository-wide automated link crawler, local game/build test or whole-130-subject completion is claimed.
+The target dossier and same-named `games/` path did not exist before the original continuation. This is an independent post-packet addition, not an overwrite of an earlier chapter. Every substantive finding and all five critic summaries from checkpoint `1fd2a4a` are retained or expanded; the initially missing negative-player contrast and system/expansion work were supplied in that pass. The subsequent manuscript audit identified narrower naval, romance and recovery gaps, now addressed in the directly linked operational supplement. Existing game chapters, mechanics and packet provenance remain untouched by this dossier integration. Textual coverage and source-anchor review were performed. No repository-wide automated link crawler, local game/build test or whole-130-subject completion is claimed.

@@ -4,11 +4,11 @@
 
 The [library index](../README.md) retains the complete comparative research. The game chapters retain earlier conclusions, reception, economic context, and video recommendations; this directory adds detailed system studies without replacing that material.
 
-**Looking for a particular design problem?** Start with the [cross-game interaction lookup](interaction-lookup.md): named examples organized around composition, work, bodies, relationships, perception, home, progression, and shared creations. It points into the studies rather than maintaining a second copy of their analysis.
+**Looking for a particular design problem?** Start with the [cross-game interaction lookup](interaction-lookup.md): named examples organized around composition, work, bodies, relationships, perception, home, progression, and shared creations. It points into the studies rather than maintaining a second copy of their analysis. The [operational supplements below](#audit-remediation-operational-supplements) extend the original twenty-five-study collection with G55/G57/G58/G59 research; their main dossiers remain the full-game entry points.
 
 ## Detailed system studies
 
-Each of the twenty-five studies connects concrete rules and items to player choices, review disagreements, presentation, and available production evidence. Each has its own annotated sources. This is deeper coverage of selected systems, not a claim to exhaust every mechanic in every game.
+Each of the original twenty-five studies connects concrete rules and items to player choices, review disagreements, presentation, and available production evidence. Each has its own annotated sources. This is deeper coverage of selected systems, not a claim to exhaust every mechanic in every game.
 
 | Study | Concrete systems and interactions | Central design tension |
 | --- | --- | --- |
@@ -38,6 +38,19 @@ Each of the twenty-five studies connects concrete rules and items to player choi
 | [Core Keeper: resource circuits and inhabited discovery](core-keeper-resource-circuits-food-and-inhabited-discovery.md) | Finite boulders, drills / arms / smelters, blocked outputs, Heart Berry / Glow Tulip meals, authored scenes, Scene Makers | Exploration becoming useful infrastructure versus inventory and maintenance burden |
 | [PEAK: shared burdens, rescue, and spatial tools](peak-shared-burdens-rescue-and-spatial-tools.md) | Stamina capacity, backpacks, Pitons, Rope / Anti-Rope, temporary boosts, proximity communication, bounded production | Cooperative reliance and comic failure versus group dependency and costly loss |
 
+## Audit-remediation operational supplements
+
+These four September 27, 2026 studies close specific explanatory gaps identified in G40–G60's manuscript audit. They contain nineteen additional constructed cases in total. Their main dossiers preserve the original cases, review bodies/summaries, expansions and wider evidence. The [progress ledger](../research-progress.md) records applied remedies and retained limitations; historical audit findings are not a competing current tracker.
+
+| Supplement and main dossier | Newly explained operations | Additional cases |
+| --- | --- | --- |
+| [Deadfire: expedition and relationship rules](deadfire-expedition-and-relationship-rules.md) · [G55 dossier](../dossiers/pillars-of-eternity-ii-deadfire.md) | Ships, crew jobs, commands, range/ammunition, repair/boarding, romance and individual injury recovery | Four: mismatched gun ranges, injured staffing, Maia/Ishiza and food-assisted recovery |
+| [DOS2: builds and authorship](divinity-original-sin-ii-builds-and-authorship.md) · [G57 dossier](../dossiers/divinity-original-sin-ii.md) | Talents, ancestry, undead care/tool rules, sockets/frames, GM preparation/adjudication, Arena and Gift Bag identity | Five: Glass Cannon, Lone Wolf, undead lockpicking, framing and an off-menu GM request |
+| [Kingmaker: party rules and kingdom operations](kingmaker-party-rules-and-kingdom-operations.md) · [G58 dossier](../dossiers/pathfinder-kingmaker.md) | Actions, defenses, prepared/spontaneous casting, gear/skills/camping, recovery, adviser events versus projects, ranks, BP/unrest and artisans | Five: Ray of Enfeeblement, Outflank, a curse deadline, the Signed Scroll and Bokken |
+| [Wrath: mythic paths and crusade battles](wrath-mythic-paths-and-crusade-battles.md) · [G59 dossier](../dossiers/pathfinder-wrath-of-the-righteous.md) | Early-path operations, army slots/recruitment, turns/general abilities, healing/infirmary and campaign versus combat morale | Five: Demon timing, Aeon support, Trickster identification, Master of Maneuver and a Hospital |
+
+These are source-backed explanations with explicit edition/access limits, not newly played campaigns or proof that all external references are error-free. Inquisition's separate build/multiplayer remedy remains in its already-linked [completion-evidence supplement](../references/dragon-age-inquisition-completion-evidence.md), not duplicated here.
+
 ## Read by the question you are investigating
 
 | Question | Existing reference chapters |
@@ -52,8 +65,10 @@ Each of the twenty-five studies connects concrete rules and items to player choi
 | When do individually strong components make a poor combination? | [Balatro](../games/balatro.md), [Slay the Spire](../games/slay-the-spire.md) |
 | What remains interesting after routine work or attacks become automatic? | [Vampire Survivors](../games/vampire-survivors.md), [Core Keeper](../games/core-keeper.md), [Against the Storm](../games/against-the-storm.md) |
 | How can limited tools make a repeated group outing meaningfully different? | [PEAK](../games/peak.md), [Among Us / Lethal Company](../games/among-us-and-lethal-company.md) |
+| Which decisions belong to a person, their group or an author? | [Deadfire operations](deadfire-expedition-and-relationship-rules.md), [DOS2 authorship](divinity-original-sin-ii-builds-and-authorship.md) |
+| How do personal preparation and strategic responsibility interact? | [Kingmaker operations](kingmaker-party-rules-and-kingdom-operations.md), [Wrath army battles](wrath-mythic-paths-and-crusade-battles.md) |
 
-The earlier chapters and field guides remain the broader entry points, including the games not yet given a dedicated granular study. A new study supplements its linked chapter rather than superseding it.
+The earlier chapters and field guides remain the broader entry points, including the games not yet given a dedicated granular study. A new study supplements its linked chapter or dossier rather than superseding it.
 
 ## How to interpret a system study
 
