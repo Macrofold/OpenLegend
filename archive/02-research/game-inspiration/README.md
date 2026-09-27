@@ -83,7 +83,7 @@ These ten imported dossiers have completed initial research and the full require
 
 ## Full dossiers — survival expansion G131–G140
 
-These ten full passes cover the requested first half of the September 27 survival expansion. Each dossier owns its current/version boundary, mechanics inventory, worked interactions, reception evidence and source limitations. The [progress ledger](research-progress.md#survival-expansion--g131g148) remains the completion owner; G141–G148 are still separate pending subjects rather than implicitly covered here.
+These ten full passes cover the requested first half of the September 27 survival expansion, and the September 27 follow-up requirements/corrections audit is complete for all ten. Each dossier owns its current/version boundary, mechanics inventory, worked interactions, reception evidence, follow-up corrections and source limitations. The [progress ledger](research-progress.md#survival-expansion--g131g148) remains the completion owner; G141–G148 are still separate pending subjects rather than implicitly covered here.
 
 | Roster ID | Dossier | Useful starting question |
 | --- | --- | --- |

@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — G131–G140 survival-game full passes and requirements audit
+
+Completed independent R01–R14 research dossiers for Rust, DayZ, ARK: Survival Evolved, ARK: Survival Ascended, 7 Days to Die, Conan Exiles, The Forest, Sons of the Forest, Subnautica and Don't Starve Together, then re-audited every dossier against the explicit mechanics inventory, current-version boundaries, five-review/player-evidence requirement and preservation rules. The [survival progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) records per-game completion and audit commits; the [library index](../archive/02-research/game-inspiration/README.md#full-dossiers--survival-expansion-g131g140) owns navigation.
+
+The second pass added substantive missing systems across every game and corrected false no-progression claims in The Forest and Sons of the Forest. Notable additions include Rust's public infrastructure/Workbench upgrades, DayZ base persistence, both ARKs' Cross-ARK continuity and modern activities, 7 Days to Die's Drone/injury/electrical systems, Conan's Journeys/Siptah loop, Subnautica Time Capsules, and DST's fishing/Woby/Pearl/regrowth systems. Conflicting/inaccessible evidence remains explicit. This is research/reference work only: no OpenLegend runtime contract changed, G141–G148 remain pending, and global P01–P05 gates are still open.
+
 ## 2026-09-27 — G121–G130 game-inspiration requirements audit
 
 Re-audited the ten research-only dossiers from Battle Brothers through S.T.A.L.K.E.R. 2 against the full [R01–R14 assignment and explicit mechanics inventory](../archive/02-research/game-inspiration/research-requirements.md), with per-game corrections and a second-pass cross-game completeness matrix recorded in the [G121–G130 coverage audit](../archive/02-research/game-inspiration/coverage-audit-g121-g130.md). Material corrections include Rain World's current Jolly/Downpour-body and Gourmand-crafting boundaries, Persona 5 Royal's mandatory Maruki semester gate, XCOM 2's retired 2K launcher, current/future Crusader Kings III content, Dragon's Dogma 2 Title Update 3.2, Ultima VII identity/recovery and Exult preservation boundaries, Oxygen Not Included's explicit noncombat/social absences, and S.T.A.L.K.E.R. 2's current A-Life/version and return-loop boundaries.
