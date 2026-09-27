@@ -477,7 +477,7 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 7 / 18 complete; G138 Sons of the Forest in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 8 / 18 complete; G139 Subnautica in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
@@ -488,8 +488,8 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 | G135 | 7 Days to Die | **Complete** — [dossier](dossiers/7-days-to-die.md); V3.2 stable/V3.3 Experimental boundary, full destructible-building/structural-integrity/horde/trader/vehicle/progression pass, twelve worked cases and five current/post-1.0 reviews plus historical-console contrast | Not started |
 | G136 | Conan Exiles | **Complete** — [dossier](dossiers/conan-exiles.md); Steam Enhanced UE5.8.2/Legacy-console split, full build/follower/sorcery/religion/Purge/Siptah pass, ten worked cases, five independent reviews and current Steam evidence | Not started |
 | G137 | The Forest | **Complete** — [dossier](dossiers/the-forest.md); original-game survival/building/traps/cannibal-AI/caves/story/co-op pass, ten worked cases, five final reviews plus current Steam, sequel mechanics excluded | Not started |
-| G138 | Sons of the Forest | **In progress** — sequel free-form construction, Kelvin/Virginia companions, current updates, survival/enemy/cave/story/equipment/co-op and original-game boundary underway | Not started |
-| G139 | Subnautica | Pending | Not started |
+| G138 | Sons of the Forest | **Complete** — [dossier](dossiers/sons-of-the-forest.md); sequel physical construction/Kelvin/Virginia/seasons/traversal/story/Artifact/current-patch pass, twelve worked cases, five independent reviews plus current Steam, original-game rules kept separate | Not started |
+| G139 | Subnautica | **In progress** — original game's oxygen/depth/ecology/tools/vehicles/bases/crafting/discovery/story progression plus Below Zero/Subnautica 2/multiplayer-mod boundaries underway | Not started |
 | G140 | Don't Starve Together | Pending | Not started |
 | G141 | Raft | Pending | Not started |
 | G142 | Grounded | Pending | Not started |
