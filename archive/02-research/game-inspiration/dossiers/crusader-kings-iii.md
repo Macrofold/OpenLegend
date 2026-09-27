@@ -54,11 +54,13 @@ Cultures and faiths define traditions, innovations, doctrines, marriage/crime ru
 
 War requires valid cause/claims under relevant rules. Players raise levies and Men-at-Arms, appoint knights/commanders, siege holdings and fight armies. War score resolves the political claim rather than rewarding unbounded annihilation. Gold, supply/attrition and military quality constrain campaigns.
 
-### Useful absences: crafting and stealth
+### Useful absences: crafting, stealth and an adventuring party
 
 CK3 has extensive **construction**—holdings, buildings, special structures, monuments through content—and artifact acquisition/management, but it does **not** use a general player-controlled material-crafting profession where the ruler personally gathers ingredients and forges ordinary equipment. Artifact creation is event/court/content mediated rather than a survival-crafting loop.
 
-Likewise, hostile schemes use secrecy, agents, intrigue skill and discovery risk, but there is no avatar-scale crouch/line-of-sight stealth mode. Calling Murder or Abduction "stealth gameplay" would import an action-game concept the interface does not implement. These absences are useful because CK3 places hidden action at the **social/informational** layer instead.
+Likewise, hostile schemes use secrecy, agents, intrigue skill and discovery risk, but there is no avatar-scale crouch/line-of-sight stealth mode. Calling Murder or Abduction "stealth gameplay" would import an action-game concept the interface does not implement.
+
+The ruler also has **no persistent controllable adventuring/combat party**. Councilors, courtiers, knights, travel entourages, spouses and family are persistent people with roles, but warfare is issued through armies/commanders and social life through character interactions rather than a four-to-six-person RPG squad. These absences are useful because CK3 places hidden action and "party composition" at the **social/institutional** layer instead.
 
 ## R03 — entities, resources and composition
 
@@ -95,9 +97,11 @@ Succession law is one of the game's strongest anti-snowball mechanics. Early par
 
 Counties and holdings generate taxes/levies; buildings specialize development/economy/military output. Gold is continuously consumed by armies, construction, activities, gifts and events. Prestige/piety/renown constrain different action classes rather than collapsing all power into money.
 
-### Time
+### Time and endgame / return loop
 
 Time runs continuously at adjustable speed, pausing for events or player choice. Pregnancy, education, travel, schemes, truces, construction and cultural innovation unfold over months/years. The game therefore makes delayed consequences normal: a marriage made today may decide a succession crisis decades later.
+
+There is no single "win the campaign" objective analogous to a strategy-game score victory. The default historical campaign has a **1453 end date**, while a pre-game **No End Date** rule can remove that clock on supported versions/configurations. A run can also end earlier if the player's dynasty no longer has a valid playable continuation. Return value instead comes from choosing another historical ruler/bookmark, dynasty, government, religion/culture or self-imposed objective and watching the same social systems produce a different history. [Current extracted game-rule reference](https://github.com/kimo1000g-cell/ck3-text-files/blob/main/Game%20rules.txt).
 
 ## R05 — worked situations
 
@@ -259,9 +263,9 @@ G126 is a newly curated subject. Direct branch-path checks found no prior dedica
 | R01 | launch/current PC, console and expansion boundaries |
 | R02 | traits/stress, schemes/hooks, vassals/factions, culture/faith, war, plus explicit crafting/stealth absences |
 | R03 | people, titles, claims, currencies, artifacts and political composition |
-| R04 | life/dynasty progression, succession, economy and long time horizons |
+| R04 | life/dynasty progression, succession, economy, long time horizons and 1453/no-end-date return loop |
 | R05 | eight worked dynastic/political/travel examples |
-| R06 | relationship graph, factions, AI and shared-campaign multiplayer |
+| R06 | relationship graph, factions, AI, explicit no-adventuring-party boundary and shared-campaign multiplayer |
 | R07 | 3D characters, nested UI, cultural presentation and friction |
 | R08 | procedural dynastic narrative and mechanical causality |
 | R09 | accessibility-focused sequel and long-tail production |
