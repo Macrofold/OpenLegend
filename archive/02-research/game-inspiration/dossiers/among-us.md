@@ -218,6 +218,26 @@ For OpenLegend, the strongest transferable principle is a **small understandable
 
 ## 15. Reading routes, completion and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier substantively complete and confirms these boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** classic Among Us has configurable round roles rather than persistent RPG classes, attributes or character levels. Account XP/cosmetic progression does not increase role power (§§3–5, 8).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** cosmetics/pets and role abilities are the meaningful persistent item/ability families; there is no equipment inventory, armor progression or crafting/upgrade economy (§8).
+- **Magic / spells / powers:** absent as a fantasy progression system; role abilities such as venting, tracking, protection, shapeshifting, invisibility and Overrule are finite configured permissions (§§3–5).
+- **Traversal / environmental and object interaction:** map movement, vents/ladders/ziplines/moving platforms, tasks, sabotage repair, doors, sensors, cameras/Admin/Vitals and meetings are covered in §§1–7.
+- **Activities / minigames:** task interactions are deliberately lightweight minigames supporting alibis/attention; Hide n Seek is a separate native mode with altered permissions (§§2, 7).
+- **Combat / stealth / loot / rewards:** Impostor kills, hiding/deception and role survival tools exist, but there is no conventional weapon combat, gear loot or persistent combat build.
+- **Death / failure / recovery / economy / trading:** death changes communication/task participation for a round; rounds reset roles/outcomes. Beans, Stars, Pods and Cosmicubes are account/cosmetic economies rather than an in-fiction trading market (§8).
+- **Story / relationships / romance / reputation / party / companions:** the fiction supplies a thin crew/impostor frame; the meaningful relationships, trust and reputation are human-social and persist in the players' memories, not a native romance/companion system (§§9–10).
+- **NPC/AI behavior and schedules / factions:** native core play is human multiplayer; practice/tutorial material does not create an autonomous crew society. Crewmate/Impostor are hidden teams, not a persistent political-faction simulation.
+- **World map / environment / quests / events:** five principal maps, their information/traversal differences, sabotages and temporary presentation/collaboration events are covered in §§6–10.
+- **Building / settlements / management:** absent. Players do not construct or govern a persistent settlement.
+- **Multiplayer / social / endgame / return loops:** 4–15-player online/local-Wi-Fi social play is the core; new roles, maps/modes, cosmetics/Cosmicubes and friend-group social continuity provide return reasons without a stat-driven endgame.
+
+**Current boundary check:** Innersloth's official game/news pages still present **Judge / v18.0.0 (August 18, 2026)** as the newest shipped role update; the September 9 post is a design retrospective, not another content patch. The August roadmap said two roles were planned for the rest of 2026, with Judge arriving first, so the other planned role remains future scope unless separately released. [AU32](#au32) This does not convert the Among Us Show or **Among Us Story: On Guard** into classic-game mechanics.
+
+
 Start with the official game overview, the two independent reviews and the March 2025 matchmaking explanation to distinguish the core activity from its social access conditions. The **Behind the Beans** articles on Judge and Tracker/Noisemaker give unusually concrete accounts of design alternatives. The official Hide n Seek release includes a linked trailer and a complete written how-to guide; the Shapeshifter announcement includes an illustrative capture. These are viewing pointers, not claims to have watched full footage or checked particular timestamps.
 
 | Requirement | Coverage |
@@ -304,3 +324,5 @@ Start with the official game overview, the two independent reviews and the March
 <a id="au30"></a>**AU30 — [Nostalgia Mode](https://www.innersloth.com/nostalgia-mode-arrives-for-april-fools/), April 1, 2026.** Primary temporary presentation event. Ended April 8; not represented as an always-available mode.
 
 <a id="au31"></a>**AU31 — [Twitch and Discord mobile integrations](https://www.innersloth.com/twitch-discord-mobile-integrations/), May 10, 2021.** Primary distribution/social-entry work. Account eligibility applies; no independently measured conversion claim.
+
+<a id="au32"></a>**AU32 — [Among Us official game/news index](https://www.innersloth.com/games/among-us/) and [2026 Roadmap Part 2](https://www.innersloth.com/2026-roadmap-part-2/), checked September 27, 2026.** Primary current boundary: Judge/v18.0.0 remains the newest shipped role update visible on the official game feed; another 2026 role was roadmap intent, not yet treated as delivered. Separate show/story products are not imported into classic Among Us.
