@@ -12,20 +12,24 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G123 — Rain World.** G121–G122 have been reread against the complete standard and corrected where needed.
+**Active: G124 — Persona 5 Royal.** G121–G123 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
 | G121 | Battle Brothers | **Audited** | `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef` — R01–R14 and explicit mechanics inventory were already substantive. Audit replaced the latest-version dependency on a third-party GOG mirror with directly inspected June/July 2026 Steam primary announcements, explicitly pinning v1.5.2.3 as the newest published Steam patch found and preserving platform-parity limits. |
 | G122 | Cataclysm: Dark Days Ahead | **Audited** | `a916e8e76b77f8808544728c797daaa0247e234c` — mechanics/reception coverage was already substantive; audit added a September 27 primary check that the official releases page still names 0.I Ito as latest stable while keeping experimental builds separate. |
-| G123 | Rain World | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G124 | Persona 5 Royal | Pending | — |
+| G123 | Rain World | **Audited** | `fbd32f6956bfed39e7acf93e49851ee260703af5` — corrected the stale Downpour-era Jolly boundary using Watcher 1.5: official local co-op now covers all five More Slugcats campaigns and The Watcher. Added explicit stealth/perception coverage and current 1.11.7/1.11.8 patch chronology. |
+| G124 | Persona 5 Royal | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G125 | XCOM 2 | Pending | — |
 | G126 | Crusader Kings III | Pending | — |
 | G127 | Dragon's Dogma 2 | Pending | — |
 | G128 | Ultima VII: The Black Gate | Pending | — |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G123 — Rain World closure evidence
+
+The audit found a substantive version error rather than a missing major system. The dossier still repeated the original Downpour store wording that Jolly Co-Op was limited to base campaigns. Primary Watcher 1.5 announcements show that September 25, 2025 retroactively added official Jolly support to all five More Slugcats campaigns and The Watcher campaign. The dossier now records that current local-co-op boundary, adds explicit stealth/concealment/perception coverage, and pins the inspected 2026 gameplay-patch chronology through 1.11.8. Original reviews, eight worked cases, Steam sampling and source limits remain.
 
 ## G122 — Cataclysm: Dark Days Ahead closure evidence
 
