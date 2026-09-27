@@ -34,8 +34,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G14 — Project Spark | **Audited** | `62ae3e91121b5c4f69930958320e2f7717b02ec3` — explicit creator-platform mechanics closure; preserved 2016 online-service shutdown versus limited local/offline artifact survival. |
 | G15 — Worlds Adrift | **Audited** | `ecfb2164e0ca076956ca794d47b0a196369289dd` — explicit mechanics-inventory closure; preserved 2019 MMO shutdown versus separate Lost Skies 1.0 and unofficial reconstruction projects. |
 | G16 — Spore | **Audited** | `58495e5efa10c522b0d032456846a6f6aed71e00` — explicit stage-relative mechanics closure; freshly verified live Sporepedia and September 2026 official creation activity. |
-| G17 — No Man's Sky | **In progress** | Recheck current major-update/expedition/platform boundaries and full mechanics inventory. |
-| G18 — EverQuest Next | Pending | — |
+| G17 — No Man's Sky | **Audited** | `0d02834da3d8c3706743085e4462247b800393bb` — explicit mechanics-inventory closure; advanced current boundary from Cosmos 7.0 launch to 7.04 maintenance plus the live anniversary Expedition. |
+| G18 — EverQuest Next | **In progress** | Recheck cancelled/unreleased boundary and all documented-design mechanics categories without fabricating shipped evidence. |
 | G19 — Ultima Online | Pending | — |
 | G20 — Minecraft | Pending | — |
 | G21 — RimWorld | Pending | — |
