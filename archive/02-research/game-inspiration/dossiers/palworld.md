@@ -1072,7 +1072,7 @@ Current 1.0 feedback that human NPCs remain thin is a warning for OpenLegend: sy
 
 <a id="pal-h"></a>**PAL-H — [Palworld review](https://www.gamesradar.com/palworld-review/).** Joel Franey, GamesRadar+, 2024-01. Early Access review: automation/community strengths versus tactical AI, bottlenecks, tonal/world-design concerns.
 
-<a id="pal-i"></a>**PAL-I — [Palworld: 25 million players after one month](https://www.pocketpair.jp/news/%E3%80%8Epalworld-%E3%83%91%E3%83%AB%E3%83%AF%E3%83%BC%E3%83%AB%E3%83%89%E3%80%8F%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E3%81%8B%E3%82%891-2/).** Pocketpair, 2024-02-23. Primary: ~15M Steam copies and ~10M Xbox players; measures differ.
+<a id="pal-i"></a>**PAL-I — [Palworld: 25 million players after one month](https://www.pocketpair.jp/en/news/palworld-blasts-past-25-million-total-players-just-one-month-after-early-access-launch/).** Pocketpair, 2024-02-23. Primary: ~15M Steam units and ~10M Xbox players; measures differ. The audit's final link check recovered and read this current English publisher page after the inherited encoded Japanese locator failed. The historical milestone is preserved, not inferred from present storefront counts.
 
 <a id="pal-j"></a>**PAL-J — [Palworld Blasts Past 32 Million Players](https://www.pocketpair.jp/en/news/palworld-blasts-past-32-million-players/).** Pocketpair, 2025-02-19. Primary developer milestone; players ≠ paid copies.
 
