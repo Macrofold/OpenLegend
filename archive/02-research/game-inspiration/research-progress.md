@@ -61,8 +61,8 @@ RuneScape and Old School RuneScape are independent subjects G48/G49; their impor
 | G20 — Minecraft | **Audited** | `30d71e1d540309fbaa4e75a2719f790501aa55a0` — explicit mechanics-inventory closure; rechecked Wilderness Bound as Java 26.3/Bedrock 26.50, Bedrock maintenance through 26.52, and Java 26.4 as snapshot-only. |
 | G21 — RimWorld | **Audited** | `8f714940f43ff5b81990f3fc2cc017c09a29f925` — explicit mechanics-inventory closure; rechecked 1.6/Odyssey as current PC generation with console/mod boundaries preserved. |
 | G22 — Hades I | **Audited** | `7bba29b816a515af52a0e6569ba4427d49967b64` — explicit mechanics-inventory closure; rechecked current PC/console availability and preserved the retired Netflix iOS route as historical only. |
-| G23 — Dwarf Fortress | **In progress** | Recheck current Steam/Classic mode/version and expansion-roadmap boundaries plus full mechanics inventory. |
-| G24 — The Sims | Pending | — |
+| G23 — Dwarf Fortress | **Audited** | `489b63f08f50524084d47a9de56623b9e735a35d` — explicit mechanics-inventory closure; rechecked 53.16 as current and kept procedural magic in development rather than shipped. |
+| G24 — The Sims | **In progress** | Recheck current Sims 4/Legacy/product-support boundaries and full franchise mechanics inventory. |
 | G25 — Wildermyth | Pending | — |
 
 ## Requirements-and-corrections audit — G26 through G40
