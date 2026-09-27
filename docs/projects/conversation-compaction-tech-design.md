@@ -74,21 +74,25 @@ The row is rebuildable derived state. Full speech and awareness remain authorita
 
 ## 4. Model-facing persistence rubric
 
-The rolling summary is free prose generated under a compact, explicit rubric rather than a large structured ontology.
+The rolling summary is free prose generated under a compact, explicit rubric rather than a large structured ontology. The research synthesis maps classic dialogue-state/common-ground ideas to three OpenLegend-friendly concerns:
 
-Preserve only what is useful to continue the exchange:
+- **Established conversational context:** earlier attributed claims, explanations, decisions, constraints, shared labels and relevant relationships that later turns still rely on.
+- **Active issues and focus:** what is still being asked, discussed, negotiated, explained, disputed, decided or deferred, plus enough context to understand follow-ups.
+- **Updates and repairs:** explicit corrections, clarifications, reversals, retractions, resolutions and later changes that supersede or qualify earlier conversational state.
 
-- established context the current conversation still relies on;
-- current threads still being discussed/asked/negotiated/decided;
-- material changes such as corrections, clarifications, reversals and resolutions;
-- explicit interaction state that still matters, such as acceptance, refusal, preference, boundary, apology or disagreement;
-- attribution and uncertainty where losing them would change meaning.
+Cross-cutting rules:
 
-Prefer the latest clarified state while retaining the fact of disagreement/uncertainty when it remains relevant. Compress repetition, greetings, filler, superseded wording and resolved detail that no longer affects the exchange.
+- preserve speaker/source and actor perspective when losing them changes meaning;
+- preserve explicit acceptance, disagreement and uncertainty when material, and never infer mutual agreement from mere utterance or silence;
+- preserve useful temporal, spatial, attributive and comparative relationships that identify conversational referents;
+- prefer the latest explicitly clarified state while retaining disagreement/uncertainty or the fact of a correction when needed to interpret the exchange;
+- never decide objective truth, infer hidden motives, invent a correction from contradiction alone, or upgrade hearsay into observed evidence.
 
-Do not infer hidden motives or turn attributed speech into objective truth.
+Compress repetition, greetings, filler, duplicated explanation, clearly superseded wording whose replacement is retained, and resolved detail that no longer affects interpretation. Initial tuning should bias toward **recall before brevity**; summary elegance is less important than continuity.
 
-These are summarization instructions, not separately writable engine records.
+These are summarization instructions, not separately writable engine records. Do not add QUD records, dialogue-act labels, a common-ground store, per-topic rows or grounding-status fields in v1.
+
+Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
 
 ## 5. Compaction algorithm
 
@@ -117,6 +121,8 @@ The input contains:
 - the prior summary when valid;
 - newly compacted actor-perspective turns in chronological order;
 - the concise persistence rubric above.
+
+The compaction instruction should frame the model as a **reporter of the supplied conversation, not an adjudicator**: maintain continuity, preserve material attribution/uncertainty/reference relationships, and do not critique, correct, interpret or presume beyond what the dialogue establishes. This is a prompt rule, not a claim that the generated summary is semantically infallible.
 
 It does not need current world state, inventory, hidden conversation rows or unrelated memory.
 
@@ -211,14 +217,15 @@ The single entry point is the intentional extension seam.
 
 Potential future strategies can implement the same contract:
 
-- source-backed hierarchical summaries if recursive drift is measured;
-- a different summarization model;
-- deterministic extraction for particular conversation types;
-- retrieval from older verbatim turns for a rare exact-quote need.
+- periodic rebuild from source-backed chunks if recursive drift is measured;
+- topic-coherent source-backed segments if old topics are repeatedly lost when revisited;
+- targeted retrieval from older permitted verbatim turns if the current trigger requires detail absent from the rolling summary;
+- source-backed hierarchical/temporal summaries if conversations become long enough to justify them;
+- a different summarization model or deterministic extraction for a demonstrated conversational family.
 
 None requires cognition callers to know how compaction works.
 
-Extraction is warranted only when a measured scenario cannot be solved cleanly by the rolling strategy.
+Prefer that order of escalation before introducing a general conversation graph. Extraction or retrieval is warranted only when measured scenarios cannot be solved cleanly by the rolling strategy.
 
 ## 14. Implementation stages
 
@@ -228,7 +235,7 @@ Extraction is warranted only when a measured scenario cannot be solved cleanly b
 
 **NC16 — lifecycle and consumers.** Integrate correction/forgetting/restore invalidation, response-context rendering and authorized inspection; keep existing mandatory semantic context separate.
 
-**NC17 — qualification.** Exercise long conversations across planning, negotiation, correction, disagreement, personal disclosure and multi-party/overhearing cases; measure context size, compaction frequency and continuity failures before tuning policy.
+**NC17 — qualification.** Exercise long conversations across planning, negotiation, correction, disagreement, personal disclosure, relational reference, self/other perspective, implicit callback, old-topic return, abstention and multi-party/overhearing cases; measure context size, compaction frequency and continuity failures before tuning policy.
 
 ## 15. Verification criteria
 
@@ -238,8 +245,14 @@ Verify at minimum:
 - long conversation continuation under the request allowance;
 - exact current trigger and recent-turn preservation;
 - actor-specific partial-hearing and late-join privacy;
-- attributed disputed claims and successive correction/reversal;
-- current thread persistence without special promise/task records;
+- attributed disputed claims without silent promotion to agreement;
+- successive correction/reversal without inventing a repair from contradiction alone;
+- active-issue persistence without special promise/task records;
+- temporal/spatial/attributive/comparative reference continuity among similar entities;
+- self/other perspective in relational references;
+- natural implicit use of older context without an explicit memory question;
+- return to an old topic after many intervening turns, recorded as the main trigger for a richer future strategy if flat compaction fails;
+- abstention when the relevant detail was unheard, indistinct or unresolved;
 - stale-summary rejection after correction/forgetting/restore;
 - compactor failure without silent truncation;
 - restart reuse of valid derived compaction without model dispatch during restore;
@@ -251,7 +264,7 @@ Live model quality, deterministic privacy fixtures and storage/performance measu
 
 The rolling summary can accumulate semantic drift across many generations. That is an accepted v1 tradeoff because hierarchical provenance would add complexity before evidence shows it is needed. Raw history remains available for rebuilding and future strategies.
 
-The summary rubric is intentionally broad rather than a fixed conversation ontology. This makes the first version adaptable to ordinary dialogue while relying on existing semantic owners for mechanically important obligations and corrections.
+The summary rubric is intentionally broad rather than a fixed conversation ontology. Classic dialogue-state work motivates established context, active issues/focus and recent moves, while grounding/repair work motivates explicit handling of updates and uncertainty; none requires new authoritative dialogue records. This keeps v1 adaptable while relying on existing semantic owners for mechanically important obligations and corrections.
 
 **Blocking implementation decisions:** exact byte allocation and selected configured cleanup model should be chosen against the actual request budget/provider at implementation time. They do not change the architecture.
 
@@ -261,3 +274,4 @@ The summary rubric is intentionally broad rather than a fixed conversation ontol
 - Limits and constraints: [Narration and conversations inventory](../limits/narration.md).
 - Related behavior: [Feature specification](conversation-compaction-feature-spec.md).
 - Current semantic owners: [Memory architecture](../memory-architecture.md) and [Narration, agent responses and conversations](../narration-and-conversations.md).
+- Research: [Conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) · [Long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
