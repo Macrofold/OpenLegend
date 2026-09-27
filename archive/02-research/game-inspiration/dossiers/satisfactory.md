@@ -8,7 +8,7 @@
 
 Coffee Stain Studios' first-person factory game makes its industrial network a landscape the player inhabits. The Pioneer explores, gathers, builds, configures, transports, climbs and fights while working for FICSIT. Machines continue their configured work while attention moves elsewhere. Walking under a conveyor, riding a train or surveying an illuminated plant provides a different relationship to the production graph than an exclusively overhead editor. Native third-person presentation in vehicles and Hyper Tubes does not make ordinary construction third-person. [S1][S2]
 
-The Early Access releases were Epic Games Store in March 2019 and Steam in June 2020; **1.0 arrived September 10, 2024**. Console editions followed on **November 4, 2025**, not at the PC 1.0 launch. **1.2 shipped June 2, 2026** across PC, PlayStation 5 and Xbox Series X/S. Controller and later quality-of-life support mean that launch criticism about missing controls cannot automatically describe the current product. The shared June update does not establish universal cross-play. [S1][S3][S4]
+The Early Access releases were Epic Games Store in March 2019 and Steam in June 2020; **1.0 arrived September 10, 2024**. Console editions followed on **November 4, 2025**, not at the PC 1.0 launch. **1.2 shipped June 2, 2026** across PC, PlayStation 5 and Xbox Series X/S. Controller and later quality-of-life support mean that launch criticism about missing controls cannot automatically describe the current product. Current official support explicitly separates the ecosystems: PlayStation and Xbox can cross-play with one another through Epic Online Services, while PC/console cross-play and console access to PC dedicated servers are not supported. [S1][S3][S4][S41]
 
 The map is authored rather than a newly generated terrain for every save. Starting areas place the player in different parts of it; they are not separate campaign maps. Version 1.2's optional new-game resource randomization changes selected resource properties, not the entire terrain into a procedural world. Creative Mode and new-game rules are separate contracts: the former disables achievements, while the new-game modifiers have their own restrictions. This pass does not claim to have tested all combinations or the latest hotfix. [S4]
 
@@ -94,7 +94,7 @@ These are **constructed sequences based on documented mechanics**, except the ex
 
 ## 8. Cooperation, mods and different kinds of participation
 
-Native multiplayer is cooperative, with shared HUB/MAM/Space Elevator/AWESOME progression and friendly fire. The published PC recommendation is four players, not a guarantee that arbitrary larger groups perform well. Steam/Epic players can play together; console cross-play is a separate pool, without PC/console cross-play in the accessed documentation. Dedicated-server support is PC-specific. Shared progress is not automatically a personal campaign copied to every participant's account. [S31]
+Native multiplayer is cooperative, with shared HUB/MAM/Space Elevator/AWESOME progression and friendly fire. The published PC recommendation is four players, not a guarantee that arbitrary larger groups perform well. Steam/Epic PC players can play together; PlayStation/Xbox console cross-play is a separate pool, and Coffee Stain's current support page explicitly says PC/console cross-play is not planned and consoles cannot join dedicated servers. Shared progress is not automatically a personal campaign copied to every participant's account. [S31][S41]
 
 The prior Cook account of one person maintaining production while another explores and connects sites remains intact. The group can benefit from different preferences without formal character classes. **Interpretation:** the difficult coordination problem is often explanation—why a line exists, which reserves are intentional and what a teammate was trying to make. An unsolicited “optimization” can improve output while removing another person's understandable work. [P2]
 
@@ -154,6 +154,26 @@ The older negative placement account in the original chapter is therefore preser
 
 ## 13. Coverage, preservation and source limits
 
+### September 26 requirements-and-corrections audit
+
+A fresh pass against the explicit mechanics inventory confirms the dossier covers the full requested surface and makes the meaningful absences explicit:
+
+- **Identity / classes / attributes / skills / leveling / perk or tech trees:** the Pioneer has no class/attribute/skill-XP build. HUB milestones, MAM research, Project Assembly, equipment and infrastructure form the progression stack (§§1, 5–6).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** §§2, 4–5 cover hand/machine crafting, transport/storage, the Build Gun, weapons, ammunition, protection gear, traversal equipment, Somersloops, alternate recipes and reusable blueprints.
+- **Magic / spells / powers:** absent natively; unusual alien technology and late-game machinery remain authored technology, not a spell system.
+- **Traversal / environmental and object interaction:** §5 covers Blade Runners, Jetpack, Hoverpack, parachute, Zipline, jump pads and Hyper Tubes; §§2–4 cover placement, snapping, dismantling, resource scanning, fluids, power, vehicles, trains, drones and terrain/elevation constraints.
+- **Activities / minigames:** exploration, crash-site/Hard Drive discovery, factory design, transport planning, combat, collection, decoration and seasonal FICSMAS are activities around the production loop. There is no separate native card/sport/casino-style minigame economy.
+- **Combat / stealth / loot and rewards:** §5 covers creature combat and manufactured weapons. There is no conventional stealth system. Crash sites, alien artifacts, Power Slugs/Hard Drives and exploration discoveries are rewards, but enemies are not a randomized equipment-loot ladder.
+- **Death / failure / recovery / economy / trading:** §§3–5 and 7 cover power/logistics failures, death crates/revival and reversible building. The resource/throughput economy and earned AWESOME coupons are separate from real-money sales; ordinary Freeplay has no merchant-price market.
+- **Story / relationships / romance / reputation / party / companions:** §6 covers ADA/FICSIT and artifact narrative. Native romance, companion approval, recruitable party members and a relationship-reputation simulation are absent.
+- **NPC/AI behavior and schedules / factions:** hostile/passive creature families have authored behavior (§5); FICSIT is narrative framing rather than a competing-faction simulation, and there is no daily NPC worker schedule or recruitable settlement population.
+- **World map / environment / quests / events:** the authored world, biome/resource placement, starting areas and optional resource randomization are covered in §§1–6. HUB/MAM/Project Assembly objectives substitute for a conventional quest log; FICSMAS is a distinct seasonal event.
+- **Building / settlements / management:** world-scale factory/architecture construction is the core system, but there is no NPC settlement-governance layer.
+- **Multiplayer / social / endgame / return loops:** §8 covers co-op, platform pools and mods; §6 covers Project Assembly completion followed by continued building, collecting, decorating and optimization rather than a forced seasonal reset.
+
+The multiplayer reread also replaces an earlier intentionally cautious formulation with the current official boundary: console cross-play is PlayStation ↔ Xbox only; Coffee Stain says PC and console remain separate ecosystems and console clients do not join dedicated servers. [S41]
+
+
 R01: §1; R02–R03: §§2–5; R04: §§4–6 and §10; R05: §7; R06: §§5–6 and §8; R07: §9; R08: §6; R09: §9; R10–R11: §10; R12: §11; R13: §12; R14: here and source register. Applicable absent systems, version boundaries and untested claims are stated rather than silently filled with another game's behavior.
 
 Both earlier owners were read fully and remain **unchanged**. This preserves the full placement/alignment criticism, embodied-place interpretation, cliff-route and power cases, Ray Knight's historical rod example, Adam Cook's complementary roles, and the entire Factorio half of the two shared files. Their source annotations and dates remain intact. The [Satisfactory 1.0 trailer](https://www.youtube.com/watch?v=Jt4XOPiPJHs) is a retained viewing route, **not footage watched** here; no timestamps are invented. This relevant-owner comparison does not certify the separate seven-file packet-wide P01 gate.
@@ -172,6 +192,7 @@ Accessed September 26, 2026. Official wiki pages are community-maintained docume
 - **S36–S37:** Contemporary reported sales/engine/release history. Holiday video was not watched; discrepancies are bounded rather than concealed.
 - **S38:** Primary August 5, 2026 group report. Product commentary is attributed to management; consolidated financials are not title financials.
 - **S39–S40:** Actual English helpful-ranked positive and negative Steam surfaces, with historical dates and later edits distinguished.
+- **S41:** Coffee Stain's current Satisfactory Support/FAQ, retrieved September 26, 2026. Primary platform and multiplayer boundary: PlayStation/Xbox console cross-play, no PC/console cross-play, and no console dedicated-server joining.
 - **R1–R5:** Five independently credited full written reviews; publication dates/languages specified above.
 - **P1–P2:** Existing repository owners, preserved rather than replaced.
 
@@ -215,6 +236,7 @@ Accessed September 26, 2026. Official wiki pages are community-maintained docume
 [S38]: https://coffeestain.com/release/coffee-stain-group-interim-report-q1-april-june-2026-net-sales-amounted-to-sek-253-million/
 [S39]: https://steamcommunity.com/app/526870/reviews/?browsefilter=toprated
 [S40]: https://steamcommunity.com/app/526870/negativereviews/?browsefilter=toprated
+[S41]: https://www.satisfactorygame.com/support/
 [R1]: https://godisageek.com/reviews/satisfactory-review/
 [R2]: https://www.shacknews.com/article/141372/satisfactory-reivew-score
 [R3]: https://multiplayer.it/recensioni/satisfactory-recensione.html
