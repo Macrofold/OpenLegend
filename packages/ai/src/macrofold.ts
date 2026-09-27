@@ -12,6 +12,8 @@ export class MacrofoldHttpError extends Error {
   get admissionRejected(): boolean {
     return (
       this.code === 'execution_disabled' ||
+      // Macrofold rejects insufficient credit before creating a Run or reserving spend.
+      (this.status === 402 && this.code === 'insufficient_credit') ||
       [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );
   }
