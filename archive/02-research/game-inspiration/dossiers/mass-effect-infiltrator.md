@@ -105,7 +105,7 @@ The later platform releases should not be treated as a remaster that includes ev
 
 ## 8. Art, sound, interface and tactile feel
 
-The presentation aims for a recognizable third-person science-fiction scene rather than Galaxy's comic panels. Armor, alien prisoners and Cerberus interiors preserve franchise identity at a smaller scale. Critics could admire the visuals while finding the voice performance and narrative staging unconvincing. Visual fidelity is therefore not a substitute for character credibility or dependable action feedback. [S2](#s2) [S4](#s4)
+The presentation aims for a recognizable third-person science-fiction scene rather than Galaxy's comic panels. Armor, alien prisoners and Cerberus interiors preserve franchise identity at a smaller scale. Game Informer specifically noted recognizable Mass Effect music and full voice acting while criticizing some of that acting; reviewers elsewhere similarly praised the visuals while finding the narrative staging or voices unconvincing. IronMonkey also described this engine iteration as adding post-processing and a more advanced material system to support larger, more varied environments. Visual fidelity is therefore not a substitute for character credibility or dependable action feedback. [S2](#s2) [S4](#s4) [S25](#s25)
 
 Touch placement creates a physical design problem: moving a hand from a comfortable grip to tap a target can interrupt the player's control of the device itself. Gamezebo notices that tradeoff even while enjoying the resulting action. More freedom to aim is not universally less work, and more assistance is not universally easier when targeting chooses an unwanted surface. These observations motivate comparison between tap and manual modes rather than an assumption that the update solved every individual's problem. [S4](#s4) [S19](#s19)
 
@@ -113,7 +113,7 @@ Range colors, weak-point aiming, shield effects and end-of-segment scores make t
 
 ## 9. Production, distribution and commercial evidence
 
-In Caleb Bridge's April 6, 2012 interview, IronMonkey design director **Jarrad Trudgen** explains that BioWare helped establish the character, setting and story constraints, while IronMonkey developed much of the script, casting and recording. The game reused the studio's mobile Dead Space engine. Dialogue selection was deliberately omitted in favor of shorter play sessions, with story delivered around ongoing action. These are a developer's stated production choices, not proof that all players prefer short sessions or agree with that omission. [S10](#s10)
+In Caleb Bridge's April 6, 2012 interview, IronMonkey design director **Jarrad Trudgen** explains that BioWare helped establish the character, setting and story constraints, while IronMonkey developed much of the script, casting and recording. A separate launch-day interview adds useful specificity: Casey Hudson and Mac Walters helped set the high-level goals during pre-production; after those pillars were agreed, IronMonkey handled most production and content creation while sending scripts and builds back for feedback. Trudgen also says the full core team from the studio's mobile Dead Space worked on Infiltrator, and describes the engine as an evolved iteration rather than an unchanged reuse. Dialogue selection was deliberately omitted in favor of combat and short-burst mobile play. These are developers' stated production choices, not proof that all players prefer short sessions or agree with that omission. [S10](#s10) [S25](#s25)
 
 The same-day Mass Effect 3 launch, mobile platform rollouts and the Galaxy at War connection supplied concrete promotional links. The developer's account of mobile Dead Space introducing some people to its console counterpart is an anecdote about that earlier game, not measured Infiltrator conversion. No independent influencer attribution, viral-growth estimate or title-specific marketing budget was established. [S10](#s10) [S11](#s11)
 
@@ -130,7 +130,7 @@ Five distinct written reviews were inspected beyond verdict snippets. They are f
 | Bryan Vore, Game Informer, March 7, 2012 | Enjoys weapon variety, demanding encounters and replay; criticizes thin characterization, awkward close-range inputs and the early upgrade grind. [S1](#s1) |
 | Alec Meer, Macworld, June 8, 2012 | Admires the mobile visual achievement and some precision-shooting ideas, but finds unreliable controls and repetition too damaging. [S2](#s2) |
 | Jon Denton, Pocket Gamer, March 14, 2012 | Finds an effective cover rhythm in suitable arenas; the same controls become less persuasive when surrounded, while voices and story disappoint. [S3](#s3) |
-| Gamezebo, original-release review | More accepting of the action-focused adaptation and upgrade loop; notes that hand movement and touch targeting can undermine comfortable control. Byline and exact date were not recovered. [S4](#s4) |
+| Dan Zuccarelli, Gamezebo, original-release review | More accepting of the action-focused adaptation and upgrade loop; notes that hand movement and touch targeting can undermine comfortable control. The current page exposes Zuccarelli's byline, but not a reliable original publication date in the retrieved body. [S4](#s4) |
 | Rob Rich, 148Apps, March 6, 2012 | Finds the combat flow engaging and generally intuitive, with specific targeting/melee failures and poor voice work rather than a universally broken control scheme. [S5](#s5) |
 
 ### Retired stores and direct-player testimony
@@ -138,6 +138,8 @@ Five distinct written reviews were inspected beyond verdict snippets. They are f
 There is **no native Steam release**, so Steam helpful reviews are inapplicable. The old iTunes link from BioWare's announcement failed to load, and no usable historical helpful-review ranking from the retired mobile stores was recovered. The accessible Metacritic page provides named alternatives rather than a fabricated store sample. [S19](#s19) [S24](#s24)
 
 **GuerrillaDawg** (March 9, 2012) appreciates the iPad presentation but finds chaotic fights and limited story less convincing. **glen44** (June 19, 2012) thinks the price and weak narrative outweigh the graphics. **Bjorn77** (May 6, 2013) reports enjoying it on a Galaxy S2, despite difficulty with controls under pressure. That last account is explicitly Android self-reporting even though the aggregator's page may display an iOS heading. These small qualitative samples are not verified purchase histories or representative platform statistics. [S24](#s24)
+
+IronMonkey also acknowledged the launch criticism rather than leaving the post-release changes uninterpreted. In March 2012 the studio told Pocket Gamer that the forthcoming update was being built to address issues raised in reviews as well as add content; BioWare's April release notes then documented manual aiming and improved tap-to-aim responsiveness among the shipped changes. This establishes a concrete developer-response loop without proving that the update resolved every control complaint. [S26](#s26) [S19](#s19)
 
 **Synthesis — interpretation:** the important divide is not simply “mobile versus console.” Players differ about how much imprecision they tolerate for a compact action loop, and how much story the franchise name led them to expect. Both expectation and actual input reliability belong in an assessment of the adaptation.
 
@@ -188,7 +190,7 @@ Capture: **September 26, 2026**. Indexed passages were inspected where stated; b
 
 <a id="s3"></a>**S3.** Jon Denton, [Infiltrator review](https://www.pocketgamer.com/mass-effect-infiltrator/review/), Pocket Gamer, March 14, 2012. Full substantive body read. Its loose war-asset wording is not used as the mechanical authority.
 
-<a id="s4"></a>**S4.** [Infiltrator review](https://www.gamezebo.com/reviews/mass-effect-infiltrator-review/), Gamezebo. Full substantive body read; byline/exact date not recovered. Repeated introduction text is not additional evidence.
+<a id="s4"></a>**S4.** Dan Zuccarelli, [Infiltrator review](https://www.gamezebo.com/reviews/mass-effect-infiltrator-review/), Gamezebo. Full substantive body read; the current page exposes Zuccarelli's byline but not a reliable original publication date in the retrieved body. Repeated introduction text is not additional evidence.
 
 <a id="s5"></a>**S5.** Rob Rich, [Infiltrator review](https://www.148apps.com/mass-effect-infiltrator/mass-effect-infiltrator-review/), 148Apps, March 6, 2012. Substantive full review read through indexing; direct reader mainly exposed metadata.
 
@@ -229,3 +231,8 @@ Capture: **September 26, 2026**. Indexed passages were inspected where stated; b
 <a id="s23"></a>**S23.** Mass Effect Wiki, [Turian — Infiltrator](https://masseffect.fandom.com/wiki/Turian_%28Mass_Effect%3A_Infiltrator%29). Indexed bonus-protagonist equipment, absent biotics and ending inspected; major spoilers.
 
 <a id="s24"></a>**S24.** [Infiltrator user reviews](https://www.metacritic.com/game/mass-effect-infiltrator/user-reviews/), Metacritic. Named, dated qualitative statements inspected. Platform self-reporting is preserved; no retired-store ranking or representative population is claimed.
+
+
+<a id="s25"></a>**S25.** Mark Brown, [IronMonkey Studios talks Mass Effect Infiltrator — the lessons from Dead Space and working with BioWare](https://www.pocketgamer.com/mass-effect-infiltrator/ironmonkey-studios-talks-mass-effect-infiltrator-the-lessons-from-dead-space-and/), Pocket Gamer, March 6, 2012. Full primary interview body freshly read during the September 27 audit; covers BioWare pre-production involvement, IronMonkey production ownership, the returning Dead Space core team, control iteration, engine improvements and deliberate omission of dialogue systems.
+
+<a id="s26"></a>**S26.** James Gilmour, [iOS shooter Mass Effect Infiltrator set to receive 'MASSIVE update'](https://www.pocketgamer.com/articles/039042/ios-shooter-mass-effect-infiltrator-set-to-receive-massive-update/), Pocket Gamer, March 21, 2012. Full report freshly read during the audit; includes IronMonkey's direct statement that the planned update addressed issues raised in reviews. Used only to establish the developer-response loop, with shipped changes checked separately against BioWare's release notes.
