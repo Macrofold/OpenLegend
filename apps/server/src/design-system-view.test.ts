@@ -5,6 +5,8 @@ import { describeEntity } from './entity-description.js';
 import { commandFacts } from './action-descriptions.js';
 it('native fixture: look-closer prose and berry facts describe actual resource mechanics', () => {
   const world = createWorld();
+  // Exercise a stocked resource independently of the bundled starting scarcity.
+  world.entities['berries-west']!.resource!.quantity = 36;
   const observation = observeActor(world, PLAYER_ID)!;
   expect(commandFacts({ type: 'gather', targetId: 'berries-west' }, observation)).toEqual([
     ['Yields', '2 Wild berries'],

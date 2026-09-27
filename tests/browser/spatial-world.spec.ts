@@ -11,11 +11,15 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
   // Hosted software rendering spends ~18s on the two screenshots alone.
   // Bound the complete journey separately from its unchanged assertion deadlines.
   test.setTimeout(120_000);
+  // This graphics fixture advances world time manually. Slow software-rendered
+  // clicks must not expire presence; heartbeat expiry has separate service coverage.
+  const now = Date.now();
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
     store: await testRepository(),
     production: true,
     tick: false,
+    now: () => now,
   });
   await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   const address = game.server.address();

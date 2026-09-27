@@ -1,6 +1,7 @@
 import { testRepository } from '../../../tests/fixtures/database.js';
+import { editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
-import { allItems, itemFor } from '@open-legend/domain';
+import { allItems, itemFor, createItemLot } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
@@ -201,6 +202,9 @@ describe('local HTTP boundary', () => {
     const { post, game } = await start();
     await post('/api/presence', { clientId: 'test-client', visible: true });
     expect(game.service.paused).toBe(false);
+    await editWorld(game.service, (world) =>
+      createItemLot(world, PLAYER_ID, 'berries', 3, 'fixture-food'),
+    );
     const food = allItems(game.service.world).find(
       (item) => item.ownerId === PLAYER_ID && item.definitionId === 'berries',
     )!;

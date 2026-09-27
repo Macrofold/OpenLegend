@@ -46,7 +46,10 @@ it('keeps coalesced evidence in context without adding it to the literal trigger
     );
     expect(decision.context['stimulus']).toBe(stimulus);
     const actions = await selectDecisionActions(decision, async (request) => {
-      expect(request.state).toHaveProperty('decisionContext', decision.context);
+      // Selection keeps evidence but omits generative instructions and duplicate offers.
+      const { knowledgeInstructions, navigation, planOffers, ...evidenceContext } =
+        decision.context;
+      expect(request.state).toHaveProperty('decisionContext', evidenceContext);
       expect(JSON.stringify(request.state)).not.toContain('Return {"operations":[]}');
       return {
         answers: Object.fromEntries(

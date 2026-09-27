@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createWorld, executeCommand, inventoryFor } from '@open-legend/domain';
+import { createWorld, createItemLot, executeCommand, inventoryFor } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 
@@ -68,6 +68,7 @@ describe('PostgreSQL committed world boundary', () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
+    createItemLot(initial.world, PLAYER_ID, 'berries', 3, 'fixture-food');
     expect(await store.load()).toBeNull();
     const revision = await store.commit(0, initial);
     const food = inventoryFor(initial.world, PLAYER_ID).find(
