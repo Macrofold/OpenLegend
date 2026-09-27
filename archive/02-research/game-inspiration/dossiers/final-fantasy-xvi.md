@@ -1,8 +1,8 @@
 # G93 — Final Fantasy XVI
 
-**Research pass:** September 26, 2026. **Scope:** the original PS5 game, later platform releases and free updates, Echoes of the Fallen, The Rising Tide and their distinct challenge modes. **Purpose:** research and possible inspiration, not an approved OpenLegend architecture or implementation backlog.
+**Research pass and corrective player-evidence review:** September 26, 2026. **Scope:** the original PS5 game, later platform releases and free updates, Echoes of the Fallen, The Rising Tide and their distinct challenge modes. **Purpose:** research and possible inspiration, not an approved OpenLegend architecture or implementation backlog.
 
-[Library](../README.md) · [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Previous: Final Fantasy XV](final-fantasy-xv.md)
+[Library](../README.md) · [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md) · [Previous: Final Fantasy XV](final-fantasy-xv.md)
 
 ## 1. Identity, promise, and versions
 
@@ -223,7 +223,19 @@ The recurring distinction is **excellent moments versus the structure joining th
 
 On **September 26, 2026**, both the ordinary and negative community-review pages returned a content-preference gate rather than readable review bodies. Helpful-sort and English-language variants failed as well. Search excerpts were not counted as full player-review readings. Professional critics were not relabeled as Steam users, and a positive/negative sample was not invented. [S16](#s16)
 
-Consequently this pass has the five required substantive critical readings but an explicitly limited player-review layer. It makes no claim about the prevalence of a Steam complaint, current aggregate sentiment or typical performance on users' machines. A future accessible helpful-review sample should supplement this section without replacing the already documented critical disagreement.
+The original pass stopped at that access limitation; the corrective pass adds alternative direct testimony below. It still makes no claim about Steam complaint prevalence, current aggregate sentiment or typical PC performance. A later accessible Steam sample would add a platform perspective, not replace this evidence or retroactively make the failed retrieval successful.
+
+### Alternative direct-player evidence — PlayStation 5
+
+Three dated Metacritic review bodies were read September 26, 2026. They are not a Steam helpfulness ranking, verified-purchase sample or PC compatibility test. [S42](#s42)
+
+**Bach741, July 13, 2026:** enjoys Eikonic action and fast travel, but criticizes repeated errands, low challenge and assistance that unexpectedly changes the active Eikon set.
+
+**Davidzeus, July 15, 2026:** finds combat insufficiently demanding and dialogue excessive. The review does not establish which difficulty, equipment or assistance settings produced that experience.
+
+**Risu91130, April 7, 2026:** reports roughly 110 PS5 hours and platinum completion; praises battles, music and emotional payoff while finding exploration, enemy variety and side-story writing weaker. Those playtime/completion claims are the writer's, not independently verified telemetry. [S42](#s42)
+
+**Interpretation:** affection for the major fights can coexist with dissatisfaction about repetition. Agreement that combat feels easy does not prove identical settings or reasons. The accounts supply concrete disagreement, not prevalence estimates or verified technical defects.
 
 ## 14. OpenLegend implications — hypotheses and limits
 
@@ -249,11 +261,11 @@ Consequently this pass has the five required substantive critical readings but a
 
 **Knowledge/production route:** read Takai's interview alongside the State of Play text and the full relevant localization answers. Follow the premature-name example rather than assuming an encyclopedia is only a writing task. Soken's interview provides a separate example of automation supporting authored presentation.
 
-**Reception route:** compare Black and Rodriguez on sidequest tradeoffs, then the critics' differing music and companion judgments. The Steam section records a real access limit, not a completed representative audience analysis.
+**Reception route:** compare Black and Rodriguez on sidequest tradeoffs, then the critics' differing music and companion judgments. Section 13 preserves a real Steam access limit and adds dated PS5 testimony; neither layer is a representative audience analysis.
 
 **Viewing pointers:** official Eikon demonstrations, State of Play, PAX East and the trailers linked from the release sites are useful subsequent viewing routes. No timestamps, watched duration, firsthand game testing or unseen frame analysis are claimed.
 
-**Preservation:** this new roster dossier supplements existing `games/`, `mechanics/` and packet material. The [packet-provenance map](../references/packet-provenance.md) retains the supplied-file identities. Checkpoint findings, contrary criticism and access/version qualifications are incorporated. This subject's completion does not certify the global seven-file audit, all 130 subjects or another branch's work.
+**Preservation:** this new roster dossier supplements existing `games/`, `mechanics/` and packet material. The [packet-provenance map](../references/packet-provenance.md) retains the supplied-file identities. Checkpoint findings, contrary criticism and access/version qualifications are incorporated. The corrective pass retains all original sections, eight worked situations and sources S1–S41, adding S42 for the missing direct-player layer. Earlier source readings are not falsely presented as all repeated by this correction. This subject's completion does not certify the global seven-file audit, all 130 subjects or another branch's work.
 
 | Requirement | Coverage |
 | --- | --- |
@@ -268,9 +280,9 @@ Consequently this pass has the five required substantive critical readings but a
 | R09 development | Sections 9–10; firsthand intent and process separated from outcome. |
 | R10 distribution/community | Section 11; actual demos/events and causal limits. |
 | R11 economics | Defined milestone and unavailable private measures in section 11. |
-| R12 reception | Five written bodies in 12; explicit unavailable Steam body sample in 13. |
+| R12 reception | Five written bodies in 12; failed Steam attempts and alternative dated PS5 player bodies in 13. |
 | R13 implications | Section 14; hypotheses, not adopted engineering decisions. |
-| R14 evidence/navigation | This section and the annotated register below. |
+| R14 evidence/navigation | This section and the annotated register below; original routes retained. |
 
 ### Annotated source register
 
@@ -306,7 +318,7 @@ All accessed **September 26, 2026**. Official live pages are snapshots; old guid
 
 <a id="s15"></a>**S15.** Square Enix, [three-million announcement](https://na.finalfantasy.com/news/2281), June 29, 2023. Shipments plus digital sales; demo structure without conversion data.
 
-<a id="s16"></a>**S16.** [Steam reviews](https://steamcommunity.com/app/2515020/reviews/) and [negative reviews](https://steamcommunity.com/app/2515020/negativereviews/). Content gates rather than readable bodies; sorted/language routes failed too.
+<a id="s16"></a>**S16.** [Steam reviews](https://steamcommunity.com/app/2515020/reviews/) and [negative reviews](https://steamcommunity.com/app/2515020/negativereviews/). Content gates rather than readable bodies; sorted/language routes failed too. Corrective alternative S42 is not a successful retry of these pages.
 
 <a id="s17"></a>**S17.** Square Enix, [PC release announcement](https://na.finalfantasy.com/news/2640), September 17, 2024. Actual release, stores and edition contents; old bonus deadlines not current offers.
 
@@ -357,3 +369,5 @@ All accessed **September 26, 2026**. Official live pages are snapshots; old guid
 <a id="s40"></a>**S40.** Game8, [Final Fantasy Mode](https://game8.co/games/Final-Fantasy-XVI/archives/416944). Indexed carryover, enemies and upgrades; base cap and weapon ranking version-qualified.
 
 <a id="s41"></a>**S41.** Square Enix, [Characters](https://na.finalfantasyxvi.com/characters). Clive/Cid premise sections; malformed Joshua/Torgal text not adopted as fact.
+
+<a id="s42"></a>**S42.** [Metacritic — PS5 player reviews](https://www.metacritic.com/game/final-fantasy-xvi/user-reviews/). Bach741, Davidzeus and Risu91130 dated bodies read September 26, 2026. Self-selected testimony; settings, playtime and technical claims unverified. Not Steam rankings or PC tests.
