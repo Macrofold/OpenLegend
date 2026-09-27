@@ -349,6 +349,23 @@ Infrastructure includes:
 
 Food storage therefore converts present abundance into seasonal resilience.
 
+### Woby — modern follower delegation and courier logistics
+
+The 2025 Walter Skill Spotlight substantially expanded **Woby**, and the initial pass did not capture how relevant she now is as a follower/delegation system.
+
+Woby can already serve as Walter's storage/mount companion. With current Walter skills she can additionally:
+- Stay at a selected place;
+- sprint/dash with mobility upgrades;
+- carry a drying-rack attachment;
+- forage;
+- be called back;
+- use **Woby Here, Woby There** to deliver items to another mapped player or a previously marked location;
+- deposit delivered items into eligible nearby containers and return to Walter.
+
+[Klei 2025 skill release](https://store.steampowered.com/news/posts/?appids=322330&enddate=1743552403&feed=steam_community_announcements) · [Woby](https://dontstarve.wiki.gg/wiki/Woby) · [Walter skills](https://dontstarve.wiki.gg/wiki/Special_Treat).
+
+The courier action is particularly relevant to OpenLegend: it delegates **physical logistics** rather than abstractly teleporting items. Travel time depends on distance, the recipient/container must be resolvable through the map/marking rules, and Woby remains an embodied companion with hunger/mobility.
+
 ### Followers, animal relationships and domestication
 
 DST has multiple nonhuman relationship systems:
@@ -372,6 +389,19 @@ DST has multiple nonhuman relationship systems:
 - mounted movement/combat.
 
 A domesticated Beefalo can become transport, weapon and damage buffer rather than cosmetic pet. [Beefalo](https://dontstarve.wiki.gg/wiki/Beefalo/DST).
+
+### Freshwater and ocean fishing — activities audit
+
+The initial pass treated fishing as a food source but never explained the actual activity systems.
+
+**Freshwater fishing** uses a Fishing Rod at Ponds. The player casts, waits for a bite, actively hooks and then reels; depleted ponds take longer to bite and later replenish. The Oasis can also produce Crumpled Packages containing trinkets/rare blueprints. [Freshwater Fishing Rod](https://dontstarve.wiki.gg/wiki/Fishing_Rod/DST).
+
+**Ocean fishing**, introduced through Return of Them, is a different mechanic rather than "the same rod at sea." The **Sea Fishing Rod** has dedicated Float and Lure slots. Floats affect casting; lure choice/freshness/species preference affects attraction; the player must alternate reeling and relaxing tension according to the fish's struggle. Ocean fish have species-specific behavior and randomized **Weight**, which matters for Pearl/Crabby Hermit tasks and some reward logic. [Sea Fishing Rod](https://dontstarve.wiki.gg/wiki/Sea_Fishing_Rod) · [Lures](https://dontstarve.wiki.gg/wiki/Lures) · [Weight](https://dontstarve.wiki.gg/wiki/Weight).
+
+Later infrastructure adds **Ocean Trawlers**: automated four-slot nets that can be baited near fish schools. Overfilling creates an increasing chance the net snaps and loses its catch, so automation still has supervision/risk. [Ocean Trawler](https://dontstarve.wiki.gg/wiki/Ocean_Trawler).
+
+Fishing therefore spans:
+manual timing → species/lure knowledge → weight/relationship objectives → automated boat infrastructure.
 
 ### Ocean exploration and boat building
 
@@ -686,7 +716,32 @@ Unless otherwise attributed, these are rules-based examples.
 **Result:** long-lived worlds remain relevant rather than requiring seasonal wipes.  
 **Cost:** migrations/performance/content clutter become cumulative production obligations.
 
-### Case 12 — September 2026 beta content must stay beta
+### Case 12 — Woby makes delivery a delegated trip, not item teleportation
+
+**Intention:** send supplies from Walter's expedition to a teammate/base without personally walking back.  
+**Conditions:** Walter has the Woby courier skill and a valid mapped player or marked storage destination.  
+**Actions:** load Woby, select Deliver/target and let her travel.  
+**Interaction:** follower path/travel time, map knowledge and containers replace direct player hauling.  
+**Result:** multiplayer logistics can continue in parallel with Walter's own task.  
+**Limit:** this remains embodied delegation, so pathing/time/state matter.
+
+### Case 13 — Pearl turns relationship work into endgame access
+
+**Intention:** earn Pearl's Pearl for the lunar progression chain.  
+**Conditions:** Crabby Hermit friendship tasks/home improvements are incomplete.  
+**Actions:** perform distinct favors, improve/decorate her environment and meet fishing/other requirements.  
+**Interaction:** a named NPC relationship is advanced by world actions rather than dialogue-point spending.  
+**Result:** relationship level unlocks exchange tiers/rewards and eventually an item used in boss/progression content.
+
+### Case 14 — ocean fishing makes one fish a behavior/quality problem
+
+**Intention:** catch a sufficiently heavy seasonal Ocean Fish for Pearl.  
+**Conditions:** Sea Fishing Rod, suitable Float/Lure, correct fish season/area.  
+**Actions:** attract a species, manage reeling versus line struggle, weigh/check the catch and repeat if too light.  
+**Interaction:** species behavior, lure choice and randomized weight all affect whether the catch satisfies the relationship objective.  
+**Result:** fishing connects manual skill, ecology and NPC progression.
+
+### Case 15 — September 2026 beta content must stay beta
 
 **Intention:** document the current final shadow boss.  
 **Conditions:** Klei's Sep. 25 build shows final phase/loot, but update index labels it Test and developer says work remains.  
@@ -738,6 +793,22 @@ The most-helpful Steam corpus is full of relationship jokes/stories; the game be
 Steam lists online/LAN PvP, and server configuration can enable competitive play.
 
 DST's dominant cultural/product identity is cooperative survival, but PvP capability is real. It should not be described as a Rust-like competitive economy by default.
+
+### Pearl / Crabby Hermit — explicit NPC relationship progression
+
+DST does have one significant relationship/reputation-like system that the initial pass under-covered: **Pearl, the Crabby Hermit**.
+
+Players perform distinct help tasks on Hermit Island. First-time completion raises **friendship level** up to 10, changing her behavior/presentation and progressively unlocking Bottle Exchange recipes/rewards. Tasks include improving her home, decorating/maintaining the island, fishing requests and other environmental chores. At maximum friendship/house progress she gives **Pearl's Pearl**, which is mechanically tied to Crab King/Celestial progression. [Crabby Hermit](https://dontstarve.wiki.gg/wiki/Crabby_Hermit) · [Pearl's Pearl](https://dontstarve.wiki.gg/wiki/Pearl%27s_Pearl).
+
+This is not romance or a party approval simulation, but it is a real **persistent NPC relationship state** where helping a named person changes dialogue/behavior, shop access, structures and endgame progression.
+
+### World regrowth and renewable ecology
+
+DST's persistent worlds do not rely entirely on one-time worldgen. The **Regrowth** system can replace selected destroyed resources over long timescales; Offspring Regrowth lets forests reclaim space; Endless/Wilderness also include Resource Renewal around spawn areas so newly arriving/respawning players are not permanently denied basic materials. [Regrowth](https://dontstarve.wiki.gg/wiki/Regrowth).
+
+The current world-customization interface exposes regrowth speed and many individual resource-renewal controls. [World Customization](https://dontstarve.wiki.gg/wiki/World_Customization/Don%27t_Starve_Together).
+
+This matters for long-lived public worlds: extraction can scar the world, but the ecosystem has **configurable recovery mechanics** rather than requiring a full wipe for every missing sapling/flower.
 
 ### Non-player social/ecology systems
 
@@ -1049,6 +1120,12 @@ It recommends friends over strangers because scarcity rewards coordination.
 
 The review identifies a durable DST strength: characters' positives and negatives create a team-composition problem rather than making extra players pure additive power.
 
+### Additional accessible Early Access review — Cubed3, August 23, 2015
+
+[Full review](https://www.cubed3.com/games/reviews/pc/dont-starve-together).
+
+Cubed3's collaborative Early Access review is a stronger historical body than an index excerpt and increases the accessible-review corpus beyond the four Metacritic-tracked launch entries. It praises the core Don't Starve survival loop becoming easier to share/coordinate with friends while still finding the opening opaque and punishing. Because it predates full release, Reign-of-Giants integration and the decade of later content, it is **production/reception history**, not evidence for modern mechanics.
+
 ### 3. Playcritik — Aymen Sakouhi — long-form written review
 
 [Full review](https://playcritik.com/en/review/dont-starve-together).
@@ -1267,6 +1344,10 @@ This dossier does **not** claim the separate global P01 packet reconciliation is
 ### Maintained mechanics references
 
 - **Don't Starve Wiki — [DST](https://dontstarve.wiki.gg/wiki/Don%27t_Starve_Together), [Version History](https://dontstarve.wiki.gg/wiki/Don%27t_Starve_Together/Version_History), accessed September 2026.**
+- **Don't Starve Wiki — [Freshwater Fishing Rod](https://dontstarve.wiki.gg/wiki/Fishing_Rod/DST), [Sea Fishing Rod](https://dontstarve.wiki.gg/wiki/Sea_Fishing_Rod), [Lures](https://dontstarve.wiki.gg/wiki/Lures), [Ocean Trawler](https://dontstarve.wiki.gg/wiki/Ocean_Trawler), [Weight](https://dontstarve.wiki.gg/wiki/Weight), accessed September 27, 2026.** Follow-up operational fishing/activity evidence.
+- **Klei — [Walter/Wendy/Wortox Skill Spotlight](https://store.steampowered.com/news/posts/?appids=322330&enddate=1743552403&feed=steam_community_announcements), February 27, 2025; Don't Starve Wiki — [Woby](https://dontstarve.wiki.gg/wiki/Woby), [Walter skills](https://dontstarve.wiki.gg/wiki/Special_Treat).** Current embodied courier/follower-delegation mechanics.
+- **Don't Starve Wiki — [Crabby Hermit](https://dontstarve.wiki.gg/wiki/Crabby_Hermit), [Pearl's Pearl](https://dontstarve.wiki.gg/wiki/Pearl%27s_Pearl), [Regrowth](https://dontstarve.wiki.gg/wiki/Regrowth), accessed September 27, 2026.** Named NPC friendship and persistent-world resource-renewal evidence.
+
 - **[Insight/Skill](https://dontstarve.wiki.gg/wiki/Skill).**
 - **[Seasons](https://dontstarve.wiki.gg/wiki/Seasons).**
 - **[Telltale Heart](https://dontstarve.wiki.gg/wiki/Telltale_Heart).**
@@ -1289,6 +1370,8 @@ These are community-maintained technical references. Current Klei release/test n
 - **Wanderer — [2026 long-form review](https://playwanderer.online/game-reviews/dont-starve-together), August 2026.**
 - **Pocket Gamer — [Pocket Edition review](https://www.pocketgamer.com/dont-starve-together/review/), Jupiter Hadley, July 21, 2026.** Mobile-port-specific performance/UI claims.
 - **Metacritic — [critic index](https://www.metacritic.com/game/dont-starve-together/critic-reviews/?platform=pc).** Used to establish the four-review launch pool and inaccessible Riot Pixels/CD-Action limits, not as a substitute for their missing bodies.
+
+- **Cubed3 — [Early Access collaborative review](https://www.cubed3.com/games/reviews/pc/dont-starve-together), August 23, 2015.** Full accessible pre-release review; used as dated historical reception, not current mechanics.
 
 ### Current player evidence
 
@@ -1315,7 +1398,7 @@ No video scene or timestamp is represented as watched.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 interactions | R05, twelve cases |
+| R05 interactions | R05, fifteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -1328,6 +1411,10 @@ No video scene or timestamp is represented as watched.
 
 ### Explicit mechanics-inventory closure
 
-Character selection/asymmetric roles; modern persistent Insight/skill trees rather than conventional XP levels; Health/Hunger/Sanity/temperature/wetness; items/inventory/durability/perishability; weapons/armor; science/magic/ancient/celestial/shadow crafting; magic as item/character/world systems rather than universal mana spellbook; land/ocean/Beefalo/boat traversal; interactive procedural ecology; farming/cooking/fishing/domestication; combat/kiting/bosses/practical avoidance; looting/resource gathering; Ghost death/revival/mode-specific world reset; barter/NPC exchanges plus separate cosmetic/Spool meta-economy; environmental/interactive lore arcs; no conventional romance system, but highly distinct character/follower social roles; creature/follower/boss AI; procedural surface + cave shards + ocean/lunar spaces; recurring seasonal attacks/endgame arcs; base building/storage/farming/boat construction; dedicated/public/private/co-op/PvP/modded play; and Ancient/lunar/shadow endgame plus persistent-world live updates are all covered.
+Character selection/asymmetric roles; modern persistent Insight/skill trees rather than conventional XP levels; Health/Hunger/Sanity/temperature/wetness; items/inventory/durability/perishability; weapons/armor; science/magic/ancient/celestial/shadow crafting; magic as item/character/world systems rather than universal mana spellbook; land/ocean/Beefalo/boat traversal; interactive procedural ecology with configurable regrowth; farming/cooking plus explicit freshwater/ocean fishing/trawling and domestication; combat/kiting/bosses/practical avoidance; looting/resource gathering; Ghost death/revival/mode-specific world reset; barter/NPC exchanges plus Pearl friendship and separate cosmetic/Spool meta-economy; environmental/interactive lore arcs; no conventional romance system, but named NPC relationship progression and highly distinct character/follower roles including Woby's physical courier delegation; creature/follower/boss AI; procedural surface + cave shards + ocean/lunar spaces; recurring seasonal attacks/endgame arcs; base building/storage/farming/boat construction; dedicated/public/private/co-op/PvP/modded play; and Ancient/lunar/shadow endgame plus persistent-world live updates are all covered.
 
 **Research boundary:** current PC stable state is the Release stream through August 13, 2026, with June 11 Cursed Confrontation Part 1 as the latest major stable gameplay update located. September 2026 final shadow-arc boss work remains in Test/Beta and is explicitly excluded from stable mechanics. Platform/mobile build timing can differ.
+
+### Follow-up audit — September 27, 2026
+
+The second pass preserved the stable-vs-September-beta boundary and found four under-covered applicable areas: **fishing as a real manual/automated activity system**, Walter's modern **Woby courier/delegation** mechanics, Pearl/Crabby Hermit's explicit **friendship progression**, and persistent-world **resource regrowth**. Three new worked cases close those gaps. The reception audit also adds Cubed3's accessible 2015 Early Access review, so the evidence set no longer depends as heavily on later reviews/mobile coverage to supplement the unusually small four-review 2016 Metacritic pool. Riot Pixels/CD-Action full-body access limits remain explicit rather than being represented as read.
