@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G85 — Final Fantasy VIII.** Correct weapon-magazine eligibility and the FFVII Item-command comparison; finish Quistis learning, Chocobo World boundaries, named resource transformations, musical evidence and spoiler handling. Then continue G86–G90 and G93. The audit owner records exact closure criteria.
+**Corrective research active: G86 — Final Fantasy IX.** Correct Eiko's Trance; develop Tetra Master, frog-catching and Mognet; add complete equipment, synthesis, activity and cooperative situations and spoiler warnings. Then continue G87–G90 and G93. The audit owner records exact closure criteria.
 
-**Latest completed repair: G84**, `32eda3c24ff979f993d4d760076eaa1833e78344`. Actual diff reviewed: original examples and FFVII01–33 preserved; §30 adds operative Battle Square/Fort Condor, Remake pressure/proficiency/Hard Mode, Rebirth synergy/crafting/Queen's Blood and eleven complete situations. Sources FFVII34–45 distinguish direct and indexed access. Qualitative Steam testimony is no longer treated as measured causal attribution. G81–G83 actual content diffs were also inspected; final source-tail/link review is pending.
+**Latest completed repair: G85**, `4479ef42a6c29b9907c8ed1ec96af2216e190ed0`. Actual principal diff read: magazine/Item-command errors corrected; Quistis, Chocobo World, named transformations, six complete situations and music added; original written Kitase interview replaces weak motion-capture metadata evidence. Original examples and FFVIII01–24 remain. G81–G84 principal diffs were also inspected. Final source-tail/local-link review remains pending.
 
 The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
 
@@ -20,8 +20,8 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G82 | [Final Fantasy V](dossiers/final-fantasy-v.md) | Repair complete — `7e43906456a8f74eaa99bca49f16f403e1376889` |
 | G83 | [Final Fantasy VI](dossiers/final-fantasy-vi.md) | Repair complete — `93f69afaa403863dbda1db32eaad7625954e6f59` |
 | G84 | [Final Fantasy VII](dossiers/final-fantasy-vii.md) | Repair complete — `32eda3c24ff979f993d4d760076eaa1833e78344` |
-| G85 | [Final Fantasy VIII](dossiers/final-fantasy-viii.md) | Corrective research active |
-| G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Needs repair |
+| G85 | [Final Fantasy VIII](dossiers/final-fantasy-viii.md) | Repair complete — `4479ef42a6c29b9907c8ed1ec96af2216e190ed0` |
+| G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Corrective research active |
 | G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Needs repair |
 | G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Needs repair |
 | G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Needs repair |
