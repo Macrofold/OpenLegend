@@ -8,7 +8,7 @@ Each game is reread against the full R01–R14 requirements, the explicit mechan
 
 ## Current audit state
 
-**Active: G148 — Abiotic Factor.** G141–G147 are audited; Abiotic Factor is now being checked against current 1.4/future-DLC-mod boundaries, exact jobs/traits/skills, equipment/loot/stealth/death/trading/quest/social mechanics, post-1.0 companions/chemistry and current player evidence.
+**Game-by-game audit complete: G141–G148.** Final cross-game mechanics matrix, navigation/preservation and branch diff verification are in progress.
 
 | ID | Subject | Audit status | Audit commit / findings |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@ Each game is reread against the full R01–R14 requirements, the explicit mechan
 | G145 | Enshrouded | **Audited** | `353e3ee3ed1dac1d7761feb2a9700beafbf1fc30` — corrected default-food wording because World Settings can enable Starvation Mode; added character creation/six attributes/open skill paths, actual sneak skills, configurable tombstone death loss, chest/rune/gem loot, 148-quest structure, survivor day/night routines, husbandry/fishing and soundtrack evidence; pinned latest live hotfix found to v0.9.1.2 while keeping October 1.0 changes future. |
 | G146 | V Rising | **Audited** | `301e2c7053a7516132074e0e5d2afbfe6697d4b0` — updated live boundary to Hot Fix 12 (Sep. 11, 2026); added character customization/derived attributes, equipment/inventory, Human Form disguise stealth, Journal/fishing/gardening/arena activities, vendor currencies, current servant Hunt semantics, configurable death settings, faction/party absences and primary soundtrack production evidence. |
 | G147 | Once Human | **Audited** | `7329baad9b52d701687bc06618677b1f148a39e5` — added current character/body/level rules, rebuilt April-2026 Tech progression, direct-Starchrom blueprint/star progression, dropped-gear loot, quests/activities, RaidZone crouch stealth, downed/respawn and explicit mode-specific death contracts, faction/companion boundaries, audio evidence limit and precise current monetization; retained Sep. 28 appearance/three-animal changes as future. |
-| G148 | Abiotic Factor | **In progress** | Full dossier/mechanics/current-version audit underway. |
+| G148 | Abiotic Factor | **Audited** | `c5ee670a4a64b9a20635beae18ab44443fbb9ed9` — pinned current build to 1.4.0.28206; added appearance vs Job/Traits and IS-0017 respecialization, attributes absence, inventory/armor/weight, loot harvesting, Repair/Salvage + Enhancement Bench upgrading and Chemistry coatings, objectives/factions/social absences, sound/music credits and >1.4m Steam sales milestone attributed to Playstack via GameDiscoverCo. |
 
 ## Verification boundary
 
