@@ -28,8 +28,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G08 — League of Legends | **Audited** | `188b6a11e56c487e0faedab9c9a8324819258bb3` — explicit mechanics-inventory closure; rechecked Patch 26.19 as latest live and kept Patch 26.20 announcement language future-facing. |
 | G09 — Dota 2 | **Audited** | `36164bbc7fe9a34f6138bcfb9a4dce61e13e6398` — explicit mechanics-inventory closure; rechecked 7.41f as the latest numbered gameplay patch. |
 | G10 — Path of Exile | **Audited** | `7621869bf17c0f445876acf1a3d391b23ae131c9` — explicit mechanics-inventory closure; corrected current league boundary to 3.29 Curse of the Allflame, launched July 24, with 3.29.1 follow-up content. |
-| G11 — Path of Exile 2 | **In progress** | Recheck current Early Access league/build/full-release boundary and full mechanics inventory. |
-| G12 — Diablo IV | Pending | — |
+| G11 — Path of Exile 2 | **Audited** | `9e53dfe501f6a9c5277595fffe8821bcb71fbb12` — explicit mechanics-inventory closure; confirmed current Early Access/Forbidden Rites state and kept December 11 full release future. |
+| G12 — Diablo IV | **In progress** | Recheck current season/expansion/class boundaries and full mechanics inventory. |
 | G13 — Dreams | Pending | — |
 | G14 — Project Spark | Pending | — |
 | G15 — Worlds Adrift | Pending | — |
