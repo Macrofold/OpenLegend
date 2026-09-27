@@ -2,7 +2,7 @@
 
 **Full research pass, September 26, 2026.** Original BioWare game, not KOTOR II, The Old Republic MMO or a remake. Research hypotheses here are not approved OpenLegend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
 
-Seven substantive written reviews across four editorial sites were read, spanning original and port editions. The default Steam Community page yielded a small **Most Helpful (Week), English** sample after other review endpoints failed. The six worked situations below are constructed from documented rules, not personally observed playtests. Major ending spoilers have their own section.
+Seven substantive written reviews across four editorial sites were read, spanning original and port editions. The initial Steam pass yielded a small **Most Helpful (Week), English** sample; the September 27 audit additionally recovered Steam's indexed English **Most Helpful (All Time)** surface, while retaining the weekly positive/negative bodies as contrasting current testimony. The six worked situations below are constructed from documented rules, not personally observed playtests. Major ending spoilers have their own section.
 
 ## Identity, versions and the player promise
 
@@ -136,11 +136,15 @@ Interface needs change by platform. The iPad review values large dialogue target
 
 The original **December 2003 development postmortem**, republished by Game Developer in 2017, credits BioWare's experience while describing difficulties with interface iteration and player expectations. Early action-like presentation encouraged repeated button presses that interrupted intended actions. The team revised the interface repeatedly, and the retrospective argues for earlier playable prototypes and a less concentrated tutorial. It also describes encounter-level balancing and the importance of recording useful test data rather than relying on impressions alone. Those are primary retrospective lessons, not proprietary code independently inspected for this dossier. [S13](#s13)
 
+Casey Hudson's 2004 GDC talk gives the production arc more scale. He describes a project that peaked at roughly **75 BioWare team members**, spent a little over **16 months in full production**, used early Aurora/Omen prototypes to test party/camera questions, and maintained roughly three years of public-facing promotion after the 2000 announcement. He also recounts a risky public E3 2002 build that exposed the cost of demoing before systems were sufficiently final. These numbers and lessons are Hudson's retrospective account, not a reconstructed budget or source-control history. [S35](#s35)
+
 In a **July 5, 2003 interview**, BioWare's Teresa Cotesta describes PC and Xbox work proceeding in parallel, with different input/UI needs. She emphasizes customization, alternative resolutions and a sortable journal that helps people return after interruption. She also identifies the three minigames and discusses planned Xbox Live content. These are dated pre-release intentions; broad promises about choices or power counts are not substituted for a shipped-game inventory. [S10](#s10)
 
 The ancient setting gave BioWare space to create a cast while retaining Star Wars recognition. Distribution combined console and PC releases, then later mobile and handheld ports. These are documented access channels; their individual acquisition contribution is unknown. The GameBanshee reviewer's changed impression between an early showing and the finished game is one attributed marketing encounter, not a measurement of how the wider audience was converted. [S24](#s24) [S09](#s09)
 
-The commercial structure is premium software purchase, not an intrinsic recurring subscription or randomized-item service. The contemporaneous postmortem reports Microsoft's then-current fastest-selling-Xbox-title claim. That is a dated attributed superlative, **not** a verified unit count or a present-day lifetime total. This pass did not establish title-level budget, net revenue, profitability or retention. Later paid ports and an enduring storefront demonstrate continued distribution, not a financial return that can be calculated from review enthusiasm. [S13](#s13) [S01](#s01)
+Post-release port support also matters when comparing criticism across editions. Aspyr's January 2022 Switch patch explicitly **reduced the combat message box**, restored certain missing NPC voice lines, corrected tutorial button icons and fixed several display/crash issues. That directly addresses some defects visible in the 2021 Switch review without proving that every quest glitch or interface complaint was resolved. [S34](#s34)
+
+The commercial structure is premium software purchase, not an intrinsic recurring subscription or randomized-item service. Contemporary reporting supplies a harder launch measure than the postmortem's superlative: Microsoft executive Robbie Bach said the Xbox version sold **250,000 copies in four days**. Hudson's 2004 GDC talk later described **more than 1.5 million copies sold worldwide** and said the title was then tracking toward roughly two million lifetime sales. These are historical snapshots, not a present-day lifetime total; the latter is a developer presentation rather than audited financial disclosure. This pass did not establish title-level budget, net revenue, profitability or retention. Later paid ports and an enduring storefront demonstrate continued distribution, not a financial return that can be calculated from review enthusiasm. [S36](#s36) [S35](#s35) [S01](#s01)
 
 Companion quotations, personal build choices, surprising quest outcomes and the central plot revelation are plausible sharing units. The inspected reviews and player accounts establish that people discuss them; they do not identify a causal percentage of sales from word of mouth, franchise recognition, critics or particular creators. Preserving that distinction makes the lesson more useful than labeling every lasting game “viral.”
 
@@ -164,13 +168,13 @@ All seven main bodies were read. Four RPGFan pieces are distinct authored review
 
 **Interpretation:** atmosphere and useful decisions can reinforce one another while their interfaces remain in tension. A pause is deliberation for one player and interruption for another. A beloved companion can justify a less efficient party. These differences are not adequately explained by assigning one timeless “good combat” or “bad UI” label.
 
-## Direct Steam players and actual access limits
+## Direct Steam players and current access limits
 
-The top-rated query URL and appreviews JSON endpoint failed. A later request to the default Community page succeeded and showed **Most Helpful (Week), English**, including names, bodies, dates and helpful counts. Capture date: September 26, 2026. The displayed September posting dates omitted the year; displayed playtime is not assumed to be playtime at publication. This is not the all-time most-helpful ranking or a representative player survey. [S11](#s11)
+The September 27 audit recovered Steam's indexed English **Most Helpful (All Time)** surface. Its highest-ranked material is unusually useful for separating affection for the game from the condition of the old Windows build: **Sami**'s December 2015 review is primarily a crash-workaround warning, while **Chrodon**'s August 2022 review recommends community/compatibility steps before play. Longer highly ranked reviews praise story, companions and tactical RPG structure while still reporting crashes, camera friction or companion pathing. Current helpful order is dynamic, and player fixes are not official compatibility guarantees. [S33](#s33)
 
-**Dudedafool** (September 19, one helpful vote) describes nearly annual returns. **Epp** (September 19, one helpful vote, not recommended) knows auto-pause exists but still finds combat opaque and companion control frustrating. **G-43** (September 25, no helpful votes yet) values the world, reading and meaningful statistics. **Snakeman** (September 19, no helpful votes yet, not recommended) reports crashes and visual defects without enough hardware detail to diagnose them. These are separate replay, preference, onboarding and compatibility signals—not evidence that criticism is always ignorance. [S11](#s11)
+The prior **Most Helpful (Week), English** capture remains preserved as contrasting recent testimony. **Dudedafool** describes nearly annual returns. **Epp**, not recommending the game, knows auto-pause exists but still finds combat opaque and companion control frustrating. **G-43** values the world, reading and meaningful statistics. **Snakeman**, not recommending it, reports crashes and visual defects without enough hardware detail to diagnose them. These are separate replay, preference, onboarding and compatibility signals—not evidence that criticism is always ignorance. [S11](#s11)
 
-StrategyWiki returned 403, several historical links failed, and unavailable review pages were not counted as read. Wikipedia was used for citation discovery, not as the sole mechanics authority. A failed container network attempt yielded no additional evidence. The successful Steam route explicitly supersedes the earlier blanket access limitation without erasing the failed attempts.
+StrategyWiki returned 403, several historical links failed, and unavailable review pages were not counted as read. Wikipedia was used for citation discovery, not as the sole mechanics authority. A failed container network attempt yielded no additional evidence. The all-time Steam surface supersedes the earlier top-rated-access limitation; the failed attempts remain part of provenance rather than a current research gap.
 
 ## Transferable patterns and limits
 
@@ -188,7 +192,7 @@ StrategyWiki returned 403, several historical links failed, and unavailable revi
 
 ## Annotated sources and reading/viewing routes
 
-All access dates: September 26, 2026. Main text was inspected unless a limitation is explicit. Primary manuals, developer statements, editorial criticism, guide contributions and direct players remain different evidence types. No footage or personal gameplay is represented as watched.
+Initial source access was September 26, 2026; the all-time Steam surface, Aspyr patch notes and additional production/commercial evidence were freshly checked September 27, 2026. Main text was inspected unless a limitation is explicit. Primary manuals, developer statements, editorial criticism, guide contributions and direct players remain different evidence types. No footage or personal gameplay is represented as watched.
 
 <a id="s01"></a> **S01 — [Steam storefront](https://store.steampowered.com/app/32370/STAR_WARS__Knights_of_the_Old_Republic/).** Primary credits, Windows date, mode and product offering; dynamic prices/ratings are not commercial history.
 
@@ -254,6 +258,14 @@ All access dates: September 26, 2026. Main text was inspected unless a limitatio
 
 <a id="s32"></a> **S32 — [Sand People enclave](https://www.gamebanshee.com/starwarskotor/locations/sandpeopleenclave.php).** Entry, negotiation, goods and property restrictions read. Peace is conditional, not a claim that a disguise universally prevents hostility.
 
+<a id="s33"></a> **S33 — [Steam English Most Helpful (All Time) reviews](https://steamcommunity.com/app/32370/reviews/?browsefilter=toprated&l=english).** Indexed ranked surface freshly inspected September 27, 2026. Sampled compatibility-focused and long-form positive/mixed reviews; dynamic helpful counts/order are not prevalence measures and community workarounds are not official support instructions.
+
+<a id="s34"></a> **S34 — [January Update: KOTOR (Nintendo Switch)](https://support.aspyr.com/hc/en-us/articles/4421911062797-January-Update-STAR-WARS-Knights-of-The-Old-Republic-Nintendo-Switch).** Aspyr Support. Official January 2022 patch notes freshly inspected; used for the reduced combat message box, restored voice lines, tutorial-icon corrections and listed crash/display fixes.
+
+<a id="s35"></a> **S35 — [Podcast transcript: BioWare on “Creating a Monster RPG”](https://www.gamedeveloper.com/game-platforms/podcast-transcript-bioware-on-creating-a-monster-rpg-).** Game Developer transcript of Casey Hudson's 2004 GDC presentation, published November 29, 2006. Freshly read for team/production scale, prototyping, PR/demo lessons and the then-current 1.5M+ worldwide sales statement.
+
+<a id="s36"></a> **S36 — [KOTOR sets Xbox sales records](https://www.gamespot.com/articles/kotor-sets-xbox-sales-records/1100-6072390/).** GameSpot, July 25, 2003, reporting Microsoft executive Robbie Bach's statement that 250,000 Xbox copies sold in four days. A contemporary attributed unit snapshot, not lifetime audited revenue.
+
 **Reading/viewing route:** start with S10 for the original promise and S13 for retrospective production lessons, then compare the 2003 and port reviews. Read S16 to see a rule as presented in the actual game interface. S08's embedded video is a metadata-only route for studying touch presentation; no timestamps or watched duration are claimed. Delay S23/S28 until spoilers are acceptable.
 
 ## Preservation and completion review
@@ -270,10 +282,10 @@ The inherited `games/` and `mechanics/` inventories contain no dedicated origina
 | R06 | Nine-person roster, party roles, authored relationships, scripts and autonomy boundaries |
 | R07 | Cinematic combat, voice/place identity and platform-specific UI friction |
 | R08 | Planet contrasts, small hub stories, investigation and spoiler-marked allegiance consequences |
-| R09 | Primary pre-release interview and development postmortem; iteration/testing limits |
-| R10 | Franchise positioning, original/port distribution and evidence limits on sharing causes |
-| R11 | Premium model, dated attributed commercial claim and explicitly unestablished finances |
-| R12 | Seven authored reviews and actual contrasting weekly-helpful Steam sample |
+| R09 | Primary pre-release interview, postmortem and GDC production account; iteration/testing/prototyping limits |
+| R10 | Franchise positioning, long pre-release PR/demo arc, original/port distribution and evidence limits on sharing causes |
+| R11 | Premium model, 250k/4-day and 1.5M+ historical unit snapshots, and explicitly unestablished finances |
+| R12 | Seven authored reviews, all-time helpful Steam material and contrasting weekly positive/negative sample |
 | R13 | Transferable patterns, prerequisites and failure modes; not accepted requirements |
 | R14 | Annotated sources, access limits, viewing routes, navigation and preservation |
 
