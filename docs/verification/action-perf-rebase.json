@@ -1,0 +1,20 @@
+{
+  "old": "67875877f9c1dd2ea753ab50129cd3156c3fcde2",
+  "main": "fc01e19b30060e6c7213b1c5405be13df209297e",
+  "mergeBase": "d0918b0a2c4357c3be304bc3152c106064849b4d",
+  "rebaseExit": 0,
+  "message": "Successfully rebased and updated detached HEAD.\n",
+  "conflicts": [],
+  "rebased": "9a05d7d1e27c69835f04afa142e5f694b177ebba",
+  "buildExit": 0,
+  "scope": "Actual rebase of consolidated completed feature changes onto pinned main; production build, no automated test suite.",
+  "backup": "backup/action-capabilities-before-main-20260924",
+  "run": "35961820994",
+  "decisions": [
+    "Preserve main in-place world upgrades and generic status effects",
+    "Preserve current evidence snapshot semantics and removal of cognition cooldowns",
+    "Retain main item actions, observer identities, knowledge and short-reference response binding",
+    "Retain native move/follow, partial-fulfillment approval, private exposure and cooperative stepping",
+    "Consolidate temporary-runner commit history; original tip retained on backup branch"
+  ]
+}

@@ -416,27 +416,19 @@ Original recommendation: **Replace**.
 
 ## LA072
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Very safe.**
 
-A character can retain 4 unresolved action intentions; one interpretation call can translate at most 4 intentions into sequences of up to 8 executable actions each.
+An actor retains at most four unresolved/revised action intentions. One response grounds at most four proposals sequentially, each into at most eight native commands. Full pending storage refuses new paid interpretation; exact free forms and explicit retry of an existing slot remain possible. This is a storage/admission bound, not four provider calls: generated candidates can require classification, generation and fulfillment review.
 
-**Reason / tradeoff:** Allow more stored intentions while limiting the number interpreted or executed in a single request.
-
-[Implementation starting point](../../packages/domain/src/agency.ts).
-
-Original recommendation: **Replace**.
+**Reason / tradeoff:** Bound pending negotiation and per-response inference. Larger retained intent sets remain a candidate for expansion under [AC03](../maintainers/action-capabilities.md#ac03--bounded-action-grounding); no increase is approved here. [Grounding](../../apps/server/src/action-grounding.ts), [agency](../../packages/domain/src/agency.ts).
 
 ## LA073
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Very safe.**
 
-The stored normalized description of an unresolved action intention is limited to 1,000 characters.
+Input/stored intention text is 1–500 characters. Fulfillment descriptions/reasons permit 1,000; supported and omitted lists each permit eight entries with 500-character clauses/reasons. Oversize input/output is refused rather than silently rewritten. These replace the historical claim of a 1,000-character stored intention.
 
-**Reason / tradeoff:** Ensure the interpreted description preserves the original method and target, with consistent text limits across the interpretation workflow.
-
-[Implementation starting point](../../packages/domain/src/agency.ts).
-
-Original recommendation: **Expand**.
+**Reason / tradeoff:** Keep negotiation payloads bounded while disclosing material differences. Exact optimal values are unqualified. [Validator](../../packages/domain/src/action-capabilities.ts), [grounding](../../apps/server/src/action-grounding.ts).
 
 ## LA074
 
@@ -583,3 +575,11 @@ Original recommendation: **Keep**.
 **Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
 **Implemented mitigation:** Candidate formatting rejects more than 8,192 combined visible/inventory/recipe/note items or more than 4 MiB of note text before constructing their strings. Observation and resident-world preparation still precede this guard. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
+
+## CG02
+
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+
+Grounding preserves all permitted single-command handles and visible follow choices; it refuses context above 100,000 encoded bytes before inference. This retains main's byte envelope and removes the older action branch's first-48-handle/first-16-follow truncation. Optional entity detail includes 64 visible entities with explicit available/included counts; an explicit selected target is first. Complete deterministic forms bypass inference. Jev's winning-choice threshold is 0.8; lower certainty takes the generated/reviewed or unresolved path, with no automatic paid retry.
+
+**Reason / tradeoff:** Avoid losing existing actions through catalogue order while bounding model input. The entity-detail cap can still omit optional context, and the threshold is not a calibrated semantic guarantee. Expansion/calibration belongs to [AC03](../maintainers/action-capabilities.md#ac03--bounded-action-grounding), not a silent limit change. [Source](../../apps/server/src/action-grounding.ts).

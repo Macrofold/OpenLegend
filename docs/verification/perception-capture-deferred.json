@@ -1,0 +1,20 @@
+{
+  "scope": "Rejected optional copying experiment, not implemented behavior or capacity evidence.",
+  "qualifiedImplementation": "cb830dbce0f475b442b8417c5d3a1bf9b529eb37",
+  "experimentRun": "35959611757",
+  "productionBuild": "passed",
+  "nativeTrace": {
+    "steps": 200,
+    "completeTransitionDigestsEqual": true
+  },
+  "failedWorkload": {
+    "scenario": "gems",
+    "warmup": 30,
+    "stepsRequested": 600,
+    "timeoutSeconds": 30,
+    "exitCode": 124,
+    "lastStage": "measured steps"
+  },
+  "decision": "Do not adopt the per-entity capture patch. Retain the verified whole-roster capture until the warm-path regression is understood.",
+  "paidModelCalls": 0
+}

@@ -116,6 +116,15 @@ export function actionCatalogue(
       intent: { kind: 'command', command },
     });
   };
+  if (selected?.actor?.alive && selected.id !== scope.actorId)
+    add(
+      `follow:${selected.id}`,
+      `Follow ${selected.name}`,
+      'Movement',
+      { type: 'follow', targetId: selected.id },
+      ['follow', 'accompany'],
+      selected.id,
+    );
   const missing = (
     family: keyof typeof ACTION_DESCRIPTIONS,
     label: string,

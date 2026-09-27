@@ -197,3 +197,19 @@ Pending world mutations: 256; pending operations per SQL read/write lane: 512; p
 A native advance accepts at most one game day, at most 4,096 intervals and at most 4,096 motion slices per call. A publication interval contains at most 32 motion slices; the server requests one interval and can stop earlier at a coherent slice boundary after its existing eight-millisecond batch budget. These are ceilings, not a latency guarantee. The bundled-world idle horizon is 60 game seconds; sight motion is limited to one metre or one quarter of a potentially interacting observer’s smaller positive non-hearing sense radius, using conservative reachable envelopes. Unsupported serial/coupled clamped rates retain a one-second fallback. A 0.000001-second numerical guard handles strict threshold departures; it is not a biological tick or a cure for a stuck boundary.
 
 **Reason / tradeoff:** Bound work and sampled-perception error using finite native families. Private motion deadlines can reuse predictions and avoid repeated publication; continuous state still synchronizes globally at occurrences. The 32-slice ceiling bounds an offline caller that supplies no earlier stop request. Exact fleeting contact/LOS crossings, independent regional rates and pathological deadline qualification remain PF13.11/PF13.16. Main's contributions, reservation expiries and appraisal deadlines use their existing owners and budgets. [Base time policy](../worlds/base/time.md), [boundary catalogue](../maintainers/simulation-boundaries.md), [RP06](../maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits).
+
+## NW13
+
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+
+Private visual acquisition batches flush after 128 records; contact acquisition cooperatively yields every 64 candidates. These are construction/yield sizes, not evidence or actor quotas. Finalization still seals owned records through the shared domain owner, and a single indivisible operation may exceed the host's yield target.
+
+**Reason / tradeoff:** Reduce repeated allocation and permit I/O between coherent pieces of native work without discarding evidence. [Events](../../packages/domain/src/events.ts), [contacts](../../packages/domain/src/contact-acquisition.ts); broader incremental perception remains [EPR](../maintainers/events-perception-and-reactions.md).
+
+## NW14
+
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+
+Cognition and maintenance intake select at most 64 ready eligible actors before asynchronous schedule reads. Successful inspection rotates the ticket after dependency/generation validation; ineligible or incomplete spatial queries cannot occupy the thought batch. The refresh and eligibility scan still traverse the mind roster, so this is a database fan-out bound, not a total CPU bound.
+
+**Reason / tradeoff:** Bound simultaneous preparation without losing wakeups or starving later eligible actors. [ActorWork](../../apps/server/src/actor-work.ts), [director](../../apps/server/src/ai-director.ts); [PF03](../maintainers/performance.md) retains broader scheduling qualification.

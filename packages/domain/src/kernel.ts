@@ -30,6 +30,7 @@ import {
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { objectExposureQuery } from './object-exposure.js';
+import { actionTargetsCurrent } from './action-targets.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
 import {
@@ -59,6 +60,10 @@ import {
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
 import { gatheringYield } from './gathering.js';
+import { visibleFeature } from './perception-frame.js';
+import { FOLLOW_RULES, updateFollowPath, followUnavailable } from './follow.js';
+import { updateContactEpisodes } from './contact-acquisition.js';
+import { confirmActionRevision } from './agency.js';
 import { current, isDraft } from 'immer';
 import {
   canWalkSegment,
@@ -118,14 +123,7 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import {
-  appendMemory,
-  canonicalJson,
-  emit,
-  recordVisualAcquisition,
-  finish,
-  outcome,
-} from './events.js';
+import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -134,13 +132,11 @@ import {
   visionQuery,
   sensesFor,
   contactViews,
-  bodiesTouch,
   directProbe,
 } from './perception.js';
 import {
   distance,
   findPath,
-  hasLineOfSight,
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
@@ -357,6 +353,12 @@ export function navigationBlocked(world: WorldState, actorIds?: readonly string[
       entity.actor.incapacitated ||
       !request ||
       request.failure
+    )
+      return false;
+    // Lost follow authority must reach native cancellation without waiting for an obsolete route.
+    if (
+      entity.actor.action?.type === 'follow' &&
+      followUnavailable(world, entity, entity.actor.action)
     )
       return false;
     const body = bodyProfile(entity);
@@ -633,8 +635,9 @@ function executeCommandNative(
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup'].includes(command.type) &&
-          'targetId' in command
+      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
+            command.type,
+          ) && 'targetId' in command
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
@@ -766,6 +769,25 @@ function executeCommandNative(
       const reason = dropItems(world, actor, command.itemId, command.quantity, events);
       if (reason) return reject('cannot-drop', reason);
       result = outcome(true, 'dropped', 'Items dropped on the ground.');
+      break;
+    }
+    case 'follow': {
+      const desiredDistance = command.distance ?? FOLLOW_RULES.defaultDistance;
+      if (
+        command.targetId === actor.id ||
+        !Number.isFinite(desiredDistance) ||
+        desiredDistance < FOLLOW_RULES.minimumDistance ||
+        desiredDistance > FOLLOW_RULES.maximumDistance
+      )
+        return reject(
+          'invalid-follow',
+          'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
+        );
+      action = createAction(world, 'follow', 0);
+      action.targetId = command.targetId;
+      action.follow = { distance: desiredDistance, nextRepathAt: 0 };
+      const error = updateFollowPath(world, actor, action);
+      if (error) return reject('follow-unavailable', error);
       break;
     }
     case 'move': {
@@ -996,6 +1018,23 @@ function executeCommandNative(
       );
       break;
     }
+    case 'confirm-attempt': {
+      const alternative = component.agency.attempts.find(
+        (attempt) => attempt.id === command.attemptId,
+      )?.alternative;
+      const first = alternative?.commands[0];
+      if (first && alternative?.mode === 'replace') {
+        // Disposable native admission, just like menu preview: no effects or RNG are published.
+        const preview = executeCommand(original, {
+          ...first,
+          actorId: actor.id,
+          id: `${command.id}:preview`,
+        });
+        if (!preview.outcome.ok) return reject(preview.outcome.code, preview.outcome.message);
+      }
+      result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
+      break;
+    }
     case 'withdraw-attempt': {
       result = withdrawAttempt(component, command.attemptId);
       break;
@@ -1128,7 +1167,7 @@ function executeCommandNative(
       const error = approach(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
     }
-    if (action.stage === 'working') {
+    if (action.stage === 'working' && action.type !== 'follow') {
       const error = startWork(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
     }
@@ -1525,6 +1564,29 @@ function advanceAction(
   ) {
     failAction(world, actor, events, 'the strike definition is unavailable or changed.');
     return;
+  }
+  if (action.type === 'follow') {
+    if (
+      capabilityBlocked(world, actor, 'actions') ||
+      capabilityBlocked(world, actor, 'locomotion')
+    ) {
+      failAction(world, actor, events, 'following is no longer available to this body.');
+      return;
+    }
+    const wasApproaching = action.stage === 'approaching';
+    const error = updateFollowPath(world, actor, action);
+    if (error) {
+      failAction(world, actor, events, error);
+      return;
+    }
+    if (
+      wasApproaching &&
+      action.stage === 'approaching' &&
+      !action.navigation &&
+      !moveAlongPath(world, actor, action.path, nativeMovementSpeed(actor) * seconds)
+    )
+      failAction(world, actor, events, 'the following route became physically blocked.');
+    return; // Holding is still an active activity, never a completed arrival.
   }
   if (action.stage === 'approaching') {
     if (action.navigation?.failure) {
@@ -2010,7 +2072,17 @@ function* advanceWorldNative(
         const stepId = step.id;
         const command = resolvePlanCommand(component.agency.plan!, step);
         const transition = command
-          ? executeCommand(world, command)
+          ? actionTargetsCurrent(world, actorId, [command], step.targetEpisodes)
+            ? executeCommand(world, command)
+            : {
+                world,
+                events: [],
+                outcome: outcome(
+                  false,
+                  'stale-encounter',
+                  'The queued target encounter changed. Revise the plan.',
+                ),
+              }
           : {
               world,
               events: [],
@@ -2036,12 +2108,22 @@ function* advanceWorldNative(
           finishPlanAction(world, actorId, started.actionId, transition.outcome);
       }
 
+      const priorFollowStage =
+        component.action?.type === 'follow' ? component.action.stage : undefined;
+      const priorFollowPath =
+        component.action?.type === 'follow' ? component.action.path : undefined;
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
         component.action?.type === 'status-effect' ||
-        component.action?.type === 'pickup'
+        component.action?.type === 'pickup' ||
+        component.action?.type === 'follow'
       )
         advanceAction(world, actor, 0, events);
+      if (
+        priorFollowStage &&
+        (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
+      )
+        mechanics = undefined;
     }
     if (world.nextId !== beforeDecisions) mechanics = undefined;
     let occupancy: LandingOccupancy | undefined;
@@ -2109,7 +2191,8 @@ function* advanceWorldNative(
         const actor = world.entities[id]?.actor;
         return (
           actor &&
-          (actor.agency.plan ||
+          (actor.action?.type === 'follow' ||
+            actor.agency.plan ||
             (actor.controller === 'npc' &&
               ((hasWildernessNeeds(actor) &&
                 actor.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) ||
@@ -2238,7 +2321,12 @@ function* advanceWorldNative(
         reconcileBody(world, actor, events, 'needs');
       if (!component.alive || component.incapacitated) continue;
       advanceReservoirs(world, actor, seconds, events);
-      if (working.get(id) === component.action?.id) advanceAction(world, actor, seconds, events);
+      if (working.get(id) === component.action?.id) {
+        const following = component.action?.type === 'follow';
+        const stage = component.action?.stage;
+        advanceAction(world, actor, following ? 0 : seconds, events);
+        if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
+      }
     }
     for (const id of participants.ambient) {
       const entity = world.entities[id];
@@ -2249,6 +2337,7 @@ function* advanceWorldNative(
           emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
         }
       }
+      yield;
     }
     for (const id of statusIds) {
       const entity = world.entities[id];
@@ -2311,9 +2400,18 @@ function* updateEncounters(
   events: WorldEvent[],
   actorIds: readonly string[],
 ): Generator<void> {
-  if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
-    return;
-  const hadObjectExposures = original.visibleObjects !== undefined;
+  const encounter = encounterEmitter(world, events);
+  // Loss of sensory/memory participation cannot retain a recognition grant.
+  for (const id of actorIds) {
+    const observer = world.entities[id];
+    if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
+    if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
+    if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
+    if (Object.keys(world.perceptionEpisodes?.[id] ?? {}).length)
+      world.perceptionEpisodes![id] = {};
+    if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
+      observer.actor.contacts = {};
+  }
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
   const entities = worldRootEntities(world, true)
@@ -2330,6 +2428,7 @@ function* updateEncounters(
         alive: !!entity.actor?.alive,
         memory: hasMemory(entity),
         object: !entity.actor && !entity.animal,
+        ...visibleFeature(entity),
       };
     });
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
@@ -2341,6 +2440,17 @@ function* updateEncounters(
   const maximumBodyRadius = entities.reduce(
     (largest, entity) => Math.max(largest, entity.radius),
     0,
+  );
+  const featureState = world.perceptionFeatures;
+  const previousFeatures = isDraft(featureState) ? current(featureState) : featureState;
+  const changedFeatures = new Map(
+    entities
+      .filter(
+        (source) =>
+          previousFeatures[source.id] !== undefined &&
+          previousFeatures[source.id] !== source.feature,
+      )
+      .map((source) => [source.id, source.detail]),
   );
   const changedExposure = exposureChanges(world, original, spatialMap(world), entities);
   const objectsFor = objectExposureQuery(
@@ -2359,96 +2469,36 @@ function* updateEncounters(
     const touchRadius =
       Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
       SPATIAL_LIMITS.epsilon;
-    const movingContacts = Object.values(actor.entity.actor!.contacts ?? {}).some(
-      (contact) => contact.detail === 'moving',
-    );
-    const signature = `${radius}:${bodyProfile(actor.entity).eyeHeight}:${touch?.id ?? ''}:${touchRadius}:${movingContacts}`;
+    const contacts = Object.values(actor.entity.actor!.contacts ?? {});
+    const movingContacts = contacts.some((contact) => contact.detail === 'moving');
+    const blocked = capabilityBlocked(world, actor.entity, 'perception');
+    const signature = `${radius}:${bodyProfile(actor.entity).eyeHeight}:${touch?.id ?? ''}:${touchRadius}:${movingContacts}:${blocked}:${world.moduleManifest.revision}`;
     if (
       !changedExposure(actor, Math.max(radius + 2, touch ? touchRadius : 0), signature) &&
       !movingContacts
     )
       continue;
-    if (touch) {
-      nearbyAll ??= spatialCandidates(entities);
-      const prior = actor.entity.actor!.contacts ?? {};
-      const contacts: NonNullable<ActorComponent['contacts']> = {};
-      // Source IDs stay in private state; acquisition is owner-scoped, never a public encounter.
-      // docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling owns intake.
-      for (const source of nearbyAll(
-        actor.position,
-        Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
-          SPATIAL_LIMITS.epsilon,
-      ).filter(
-        (e) =>
-          e.id !== actor.id &&
-          bodiesTouch(actor.entity, e.entity) &&
-          hasLineOfEffect(world, actor.entity, e.entity),
-      )) {
-        const oldPosition = original.positions.get(source.id);
-        const detail =
-          oldPosition && distance(oldPosition, source.position) > 0.001 ? 'moving' : 'present';
-        const previous = prior[source.id];
-        contacts[source.id] =
-          previous && previous.detail === detail
-            ? previous
-            : {
-                id: previous?.id ?? nextId(world, 'contact'),
-                senseId: touch.id,
-                detail,
-                enteredAt: previous?.enteredAt ?? world.simTime,
-                changedAt: world.simTime,
-              };
-        if (!previous || previous.detail !== detail)
-          emit(
-            world,
-            events,
-            'contact',
-            detail === 'moving'
-              ? 'I feel an unidentified moving contact.'
-              : 'I feel an unidentified contact.',
-            actor.entity,
-            undefined,
-            {
-              contactId: contacts[source.id]!.id,
-              senseId: touch.id,
-              detail,
-              change: previous ? 'detail' : 'onset',
-              semanticTrigger: true,
-              importance: 6,
-            },
-            'private',
+    // Captured entities are read-only phase snapshots; contact writes belong to the live draft.
+    if (touch || contacts.length)
+      yield* updateContactEpisodes(
+        world,
+        original.positions,
+        world.entities[actor.id]!,
+        events,
+        () => {
+          // Size the optional contact grid from physical extents, never visual range.
+          nearbyAll ??= spatialCandidates(
+            entities,
+            Math.max(maximumBodyRadius * 2, maximumBodyHeight) + SPATIAL_LIMITS.epsilon,
           );
-      }
-      for (const [id, episode] of Object.entries(prior))
-        if (!contacts[id])
-          emit(
-            world,
-            events,
-            'contact',
-            'A contact is no longer present.',
-            actor.entity,
-            undefined,
-            {
-              contactId: episode.id,
-              senseId: episode.senseId,
-              change: 'end',
-              semanticTrigger: true,
-              importance: 6,
-            },
-            'private',
-          );
-      if (
-        Object.keys(contacts).length !== Object.keys(prior).length ||
-        Object.entries(contacts).some(([id, c]) => c !== prior[id])
-      )
-        world.entities[actor.id]!.actor!.contacts = contacts;
-    }
-    if (radius === 0) {
-      if (
-        world.perceptionEpisodes?.[actor.id] &&
-        Object.keys(world.perceptionEpisodes[actor.id]!).length
-      )
-        world.perceptionEpisodes[actor.id] = {};
+          return nearbyAll(actor.position, touchRadius);
+        },
+      );
+    if (radius === 0 || blocked) {
+      if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
+      if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+      if (Object.keys(world.perceptionEpisodes?.[actor.id] ?? {}).length)
+        world.perceptionEpisodes![actor.id] = {};
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
@@ -2504,23 +2554,45 @@ function* updateEncounters(
           .flatMap((m) => m.entityIds),
       );
       for (const id of newlySeen) {
-        if (!recent.has(id)) recordVisualAcquisition(world, events, actor.entity, id, true);
+        if (!recent.has(id)) encounter(actor.entity, id, true);
         yield;
       }
+    }
+    for (const id of seen) {
+      const detail = changedFeatures.get(id);
+      if (detail && (samePeople || previouslySeen!.has(id)))
+        encounter(actor.entity, id, true, detail);
     }
     if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
     if (!sameObjects) {
       // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
       // Captions/speech still resolve event-time evidence independently of this visual cache.
-      const priorObjects = new Set(previousObjects ?? (hadObjectExposures ? [] : objectIds));
+      const priorObjects = new Set(previousObjects ?? []);
       for (const id of objectIds) {
-        if (!priorObjects.has(id)) recordVisualAcquisition(world, events, actor.entity, id, false);
+        if (!priorObjects.has(id)) encounter(actor.entity, id, false);
         yield;
       }
       (world.visibleObjects ??= {})[actor.id] = objectIds;
     }
+    if (changedFeatures.size) {
+      const priorObjects = sameObjects ? undefined : new Set(previousObjects);
+      for (const id of objectIds) {
+        const detail = changedFeatures.get(id);
+        if (detail && (sameObjects || priorObjects!.has(id)))
+          encounter(actor.entity, id, false, detail);
+      }
+    }
+    encounter.flush();
   }
+  encounter.flush();
+  if (
+    entities.length !== Object.keys(previousFeatures).length ||
+    entities.some((source) => previousFeatures[source.id] !== source.feature)
+  )
+    world.perceptionFeatures = Object.fromEntries(
+      entities.map((source) => [source.id, source.feature]),
+    );
 }
 
 /** Private records are returned only for the supplied actor; bind this ID to authorization in the application. */
@@ -2604,6 +2676,7 @@ export function observeActor(
       if (copy.actor?.action) {
         delete copy.actor.action.destination;
         delete copy.actor.action.navigation;
+        delete copy.actor.action.follow;
       }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.

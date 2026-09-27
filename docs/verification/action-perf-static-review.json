@@ -1,0 +1,25 @@
+{
+  "scope": "Static changed-file/link audit, not an automated gameplay suite. Existing main link defects are separated from newly introduced ones.",
+  "main": "fc01e19b30060e6c7213b1c5405be13df209297e",
+  "run": "35967043420",
+  "newBrokenLinks": {},
+  "inheritedBrokenLinks": {},
+  "duplicateLevelTwoHeadings": {},
+  "retiredRuntimeReferenceCandidates": [
+    {
+      "path": "apps/server/src/upgrade-world.ts",
+      "line": 44,
+      "text": "      .cooldownSeconds;"
+    },
+    {
+      "path": "apps/server/src/upgrade-world.ts",
+      "line": 69,
+      "text": "        elapsedSeconds: actor.rest?.sleepingSeconds ?? 0,"
+    },
+    {
+      "path": "apps/server/src/upgrade-world.ts",
+      "line": 75,
+      "text": "    delete actor.rest;"
+    }
+  ]
+}

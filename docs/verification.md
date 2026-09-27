@@ -1336,3 +1336,27 @@ A separate manual execution loaded a copy of the blocked snapshot into disposabl
 ## Elapsed-time integration
 
 [Cadence evidence](verification/simulation-cadence.md) records actual clock progress, integration counts, finite boundary probes and short running-server workloads. [PF13](maintainers/simulation-time.md) distinguishes implementation from the combined sound-branch, regional and sustained scale gates. The older per-second 8x reports remain historical measurements, not a mandatory cadence.
+
+## Native action integration
+
+[Current reconciliation evidence](verification/native-action-integration.md) records the integration onto `f551e3d8`, actual runtime/static observations and remaining performance/acceptance limits. Earlier action reports below are historical and do not qualify this merged code.
+
+## Action capability native slice
+
+Historical native action and follow observations: [initial report](verification/action-capability-smoke.json). Current scope and qualification are in [the integration record](verification/native-action-integration.md).
+
+## Action capability review
+
+Historical [final review](verification/action-review-final.json) and [closeout](verification/action-review-closeout.json) retain their original workloads. [Recovered requirements](maintainers/action-regressions.md#action-capability-slice-and-review) remain separate from manual observations.
+
+## Perception performance implementation
+
+Historical [private batching](verification/perception-private-batching.json), [cooperative execution](verification/perception-cooperative.json) and [native measurements](verification/perception-final-performance.json) predate current cadence/storage integration. [Current implementation](architecture.md#private-perception-and-evidence-batches) and [EPR acceptance](maintainers/events-perception-and-reactions.md) govern ongoing work.
+
+## Rebased action and perception performance
+
+Historical [action/performance review](verification/action-perf-final-review.json), [server summary](verification/action-server-summary.json) and [physical-contact/PostgreSQL narrative](verification/action-reconciliation.md) are source-specific evidence, not a matched comparison with current main.
+
+## Dense persistence implementation
+
+Historical [persistence review](verification/persistence-final-review.json), [PostgreSQL exercise](verification/persistence-postgres.json) and [worker summary](verification/persistence-worker-summary.json) support the earlier branch. Current integration retains main's canonical records, checkpoint capture, cold memory and commit hooks; [DP regressions](maintainers/action-regressions.md#dense-persistence-regression-coverage) remain open.

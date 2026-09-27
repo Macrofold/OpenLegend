@@ -23,6 +23,7 @@ import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
+import { prepareHistory } from './history-preparation.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
@@ -90,6 +91,7 @@ export interface WorldChanges {
 }
 export interface JobRecord extends AiJobView {
   authority?: RequestScope;
+  responseReady?: boolean;
   diagnosticTrigger?: string;
   diagnosticTriggerType?: string;
   retryOf?: string;
@@ -100,6 +102,13 @@ export interface JobRecord extends AiJobView {
   createdAt: number;
   request: {
     text: string;
+    action?: {
+      mode: 'enqueue' | 'replace';
+      targetId?: string;
+      expectedPlan: number;
+      targetEpisodes?: import('@open-legend/domain').ActionTargetEpisodes;
+      timelineId: string;
+    };
     npcId?: string;
     invention?: {
       candidate?: unknown;
@@ -766,6 +775,23 @@ export class SqliteStore implements GameRepository {
       this.memories.committed(changes, !!historyProjection?.restore);
     };
     let publicationDeferred = false;
+    const historyBefore = historyProjection?.before ?? this.acceptedState?.world;
+    const historyAfter = historyProjection?.after ?? state.world;
+    // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
+    // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
+    const preparedHistory =
+      this.readyHistoryWorlds.has(state.world.id) &&
+      !historyProjection?.restore &&
+      Object.isFrozen(historyAfter) &&
+      (!historyBefore || Object.isFrozen(historyBefore))
+        ? prepareHistory(
+            historyBefore,
+            historyAfter,
+            historyBefore
+              ? provenAppendCount(historyBefore.events, historyAfter.events)
+              : undefined,
+          )
+        : undefined;
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
         for (const binding of historyProjection?.authorityBindings ?? [])
@@ -838,16 +864,19 @@ export class SqliteStore implements GameRepository {
         const historyKey = `history-schema:${state.world.id}`;
         const historyReady =
           this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
-        await this.history.project(
-          historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
-          historyProjection?.after ?? state.world,
-          historyReady
-            ? provenAppendCount(
-                (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
-                (historyProjection?.after ?? state.world).events,
-              )
-            : undefined,
-          !!historyProjection?.restore,
+        await timed('history.project', () =>
+          this.history.project(
+            historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+            historyProjection?.after ?? state.world,
+            historyReady
+              ? provenAppendCount(
+                  (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
+                  (historyProjection?.after ?? state.world).events,
+                )
+              : undefined,
+            !!historyProjection?.restore,
+            preparedHistory,
+          ),
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
         const outcomes = new Map<

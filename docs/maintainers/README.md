@@ -40,6 +40,7 @@ This page is the master navigation index for active implementation work.
 | Production data, persistence and scale                                 | [Production data](production-data.md)                                 | [Production data model](../../archive/07-technical-architecture/production-data-model.md), [queries](../../archive/07-technical-architecture/data-queries-and-mcp.md) and [delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) |
 | Persistent objects and containment (DF01 / BW07 child)                 | [Persistent objects](persistent-objects.md)                           | Approved [feature specification](../projects/persistent-objects-feature-spec.md) and [technical design](../projects/persistent-objects-tech-design.md); current data/action/INV owners remain controlling                                                      |
 
+- [Action branch reconciliation and recovery](action-reconciliation.md) — AR01–AR08 integration tasks, source checkpoints and recovery order beneath the existing AC/PF owners.
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).

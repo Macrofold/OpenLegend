@@ -1,0 +1,265 @@
+{
+  "scope": "Native/manual runtime exercise with loopback HTTP and injected semantic outputs; no external provider calls. Not a unit/browser suite or live-model quality evidence.",
+  "node": "v22.23.2",
+  "run": "35949420195",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "exact-point-movement",
+      "semanticCalls": 0,
+      "outcome": {
+        "ok": true,
+        "code": "responded",
+        "message": "Response completed."
+      },
+      "position": {
+        "x": 11.5,
+        "y": 0,
+        "z": 13
+      },
+      "plan": "completed"
+    },
+    {
+      "name": "uncertain-revision-held",
+      "questionKinds": ["route", "fulfillment"],
+      "outcome": {
+        "ok": false,
+        "code": "response-rejected",
+        "message": "No response component was accepted. action: Accept revised action? Follow Ada at 3 world units until cancelled, interrupted or lost from sight. No stealth or sunset stop. Not fulfilled: without being noticed"
+      },
+      "pending": "awaiting-confirmation",
+      "physicalAction": null,
+      "fulfillment": {
+        "requested": "Follow Ada without being noticed.",
+        "executableDescription": "Follow Ada at 3 world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.",
+        "verdict": "confirm",
+        "supported": ["Follow the selected actor"],
+        "omitted": [
+          {
+            "requirement": "without being noticed",
+            "reason": "No stealth implementation is available."
+          }
+        ],
+        "reason": "The initiator should decide whether ordinary visible following meets the purpose."
+      }
+    },
+    {
+      "name": "pending-serialization",
+      "schema": 10,
+      "pending": "awaiting-confirmation"
+    },
+    {
+      "name": "accepted-revision-runs",
+      "outcome": {
+        "ok": true,
+        "code": "queued",
+        "message": "Native work queued; it has not completed.",
+        "planId": "smoke-accept"
+      },
+      "physicalAction": "follow",
+      "pending": 0
+    },
+    {
+      "name": "private-follow-state",
+      "privateCursorPresentInOtherObservation": false
+    },
+    {
+      "name": "lost-sight-stops",
+      "visibleBeforeAdvance": false,
+      "physicalAction": null,
+      "plan": "blocked"
+    },
+    {
+      "name": "explicit-cancel",
+      "outcome": {
+        "ok": true,
+        "code": "cancelled",
+        "message": "Stopped. Materials already used in work remain consumed."
+      },
+      "physicalAction": null
+    },
+    {
+      "name": "strict-provider-schema",
+      "optionalPropertyIssues": []
+    },
+    {
+      "name": "http-action-request",
+      "submission": {
+        "ok": true,
+        "code": "queued",
+        "message": "Resolving your action.",
+        "jobId": "ce0e28ed-6a12-4f3d-9c49-0c91f8904a0a"
+      },
+      "job": {
+        "status": "completed",
+        "message": "Native work queued; it has not completed.",
+        "result": {
+          "outcome": {
+            "ok": true,
+            "code": "queued",
+            "message": "Native work queued; it has not completed.",
+            "planId": "ce0e28ed-6a12-4f3d-9c49-0c91f8904a0a:action"
+          },
+          "fulfillment": {
+            "requested": "go to x=11.5, z=13 on terrain",
+            "executableDescription": "go to x=11.5, z=13 on terrain",
+            "verdict": "exact",
+            "supported": ["go to x=11.5, z=13 on terrain"],
+            "omitted": [],
+            "reason": "Complete native form bound without inference."
+          }
+        }
+      }
+    },
+    {
+      "name": "http-restart-pending",
+      "before": 1,
+      "after": 1,
+      "status": "awaiting-confirmation"
+    },
+    {
+      "name": "http-accept-revision",
+      "confirm": {
+        "ok": true,
+        "code": "queued",
+        "message": "Native work queued; it has not completed."
+      },
+      "action": "follow"
+    }
+  ],
+  "stress": {
+    "followers": {
+      "actors": 50,
+      "steps": 180,
+      "totalMs": 892.9294049999992,
+      "p50Ms": 4.68940299999997,
+      "p95Ms": 7.148633000000018,
+      "maxMs": 10.241446999999994,
+      "activeAtEnd": 50,
+      "description": "One moving fixture leader, fifty native followers, no cognitive or paid calls. Not a population scalability claim."
+    },
+    "mixed": {
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["food"],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["fuel"]
+            }
+          }
+        ]
+      },
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "steps": 180,
+      "totalMs": 1001.546083,
+      "p50Ms": 2.348172000000204,
+      "p95Ms": 3.4162130000000843,
+      "maxStepMs": 558.1238659999999,
+      "heapUsedBytes": 43535368,
+      "finalWorldDigest": "c1fe3cf35808a7e9c1abcf8ed059ed67e34d71c4c2c20bdea6d13b8856934335"
+    },
+    "gems": {
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "steps": 180,
+      "totalMs": 751.700352,
+      "p50Ms": 3.392646999999897,
+      "p95Ms": 6.231508999999988,
+      "maxStepMs": 77.48428200000001,
+      "heapUsedBytes": 45096104,
+      "finalWorldDigest": "ca8b21ad0d40b77ce8c5932b6af54d3fb62fa91670b4cf1819731baac920a970"
+    }
+  },
+  "explicitTargetAdmission": {
+    "run": "35950355436",
+    "scope": "Native runtime exercise; no provider calls or test framework.",
+    "mismatch": {
+      "ok": false,
+      "code": "target-mismatch",
+      "message": "The explicit target does not match the resolved native action."
+    },
+    "mismatchPlan": null,
+    "matching": {
+      "ok": true,
+      "code": "responded",
+      "message": "Response completed."
+    },
+    "matchingAction": "follow",
+    "contradictoryApproval": {
+      "ok": false,
+      "code": "target-mismatch",
+      "message": "The explicit target does not match the resolved native action."
+    },
+    "pendingAfterContradiction": 0
+  }
+}

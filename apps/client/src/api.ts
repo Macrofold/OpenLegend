@@ -20,6 +20,8 @@ export function clearAccess(): void {
       )
         localStorage.removeItem(key);
     sessionStorage.removeItem('open-legend:composer-draft:v2');
+    for (const key of Object.keys(sessionStorage))
+      if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
     localStorage.removeItem('open-legend:private-owner');
   } catch {
     /* Browser storage is optional. */
@@ -43,6 +45,8 @@ export function acceptAccess(view: GameView): void {
         )
           localStorage.removeItem(key);
       sessionStorage.removeItem('open-legend:composer-draft:v2');
+      for (const key of Object.keys(sessionStorage))
+        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
       localStorage.setItem('open-legend:private-owner', owner);
     }
     const key = `open-legend:save-timeline:${view.worldId}`;
@@ -51,6 +55,8 @@ export function acceptAccess(view: GameView): void {
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
       localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
       sessionStorage.removeItem('open-legend:composer-draft:v2');
+      for (const key of Object.keys(sessionStorage))
+        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
     }
     if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);
   } catch {

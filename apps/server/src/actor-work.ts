@@ -21,7 +21,9 @@ interface Work {
   dependencies?: readonly Dependency[];
 }
 
-/** Coalesced cognitive work; see docs/architecture.md#performance-critical-path for wakeup rules. */
+/** Existing coalesced intake; no separate event queue or model loop.
+ * docs/architecture.md#change-driven-exposure-and-reaction-intake
+ */
 export class ActorWork {
   private worldId?: string;
   private scope?: string;
@@ -34,7 +36,6 @@ export class ActorWork {
       this.worldId = world.id;
       this.scope = scope;
     }
-    // Minds are initialized by startup/spawn, so ordinary animals never enter this scan.
     const present = new Set<string>();
     for (const id of Object.keys(world.minds ?? {})) {
       const entity = world.entities[id];
@@ -63,10 +64,14 @@ export class ActorWork {
     for (const id of this.tickets.keys()) if (!present.has(id)) this.tickets.delete(id);
   }
 
-  ready(now: number, simTime: number): string[] {
-    return [...this.tickets]
-      .filter(([, t]) => now >= t.wallAt && (t.dirty || simTime >= t.simAt))
-      .map(([id]) => id);
+  ready(now: number, simTime: number, eligible: (id: string) => boolean = () => true): string[] {
+    const ready: string[] = [];
+    for (const [id, ticket] of this.tickets) {
+      if (now >= ticket.wallAt && (ticket.dirty || simTime >= ticket.simAt) && eligible(id))
+        ready.push(id);
+      if (ready.length === 64) break; // Bound schedule reads before any asynchronous fan-out.
+    }
+    return ready;
   }
 
   defer(id: string, wallAt: number): void {
@@ -116,6 +121,8 @@ export class ActorWork {
       ticket.dependencies = capture.dependencies;
       ticket.dirty = false;
       ticket.simAt = simAt;
+      this.tickets.delete(id);
+      this.tickets.set(id, ticket);
       return true;
     }
     if (ticket) ticket.dirty = true;

@@ -1,0 +1,25 @@
+{
+  "scope": "Ad hoc synchronous/cooperative native runtime, no automated suite or live models.",
+  "node": "v22.23.2",
+  "run": "35958124905",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "cooperative-cold-step",
+      "elapsedMs": 76.83613499999996,
+      "cpuMs": 60.61444999999998,
+      "maxSliceMs": 23.344179999999994,
+      "yields": 4,
+      "timerCallbacks": 4,
+      "fullTransitionEqual": true,
+      "inputUnchanged": true,
+      "events": 1024
+    },
+    {
+      "name": "cooperative-warm-step",
+      "cpuMs": 3.0103020000000242,
+      "yields": 0,
+      "fullTransitionEqual": true
+    }
+  ]
+}

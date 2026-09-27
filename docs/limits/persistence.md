@@ -56,15 +56,11 @@ Original recommendation: **Keep**.
 
 ## LA174
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
 
-A database write batch is limited to 262,144 bytes or 900 query parameters.
+History construction flushes at 262,144 parameter bytes or 900 parameters per table, before retaining more rows. A single oversized row retains prior behavior and may exceed the byte target. Flushes stay inside the same transaction; source rows precede audiences/perspectives, with no evidence omission.
 
-**Reason / tradeoff:** Keep manageable database statements and process remaining rows in subsequent batches without losing transaction correctness.
-
-[Implementation starting point](../../apps/server/src/http.ts).
-
-Original recommendation: **Keep**.
+**Reason / tradeoff:** Bound intermediate allocation and individual statements without splitting the authoritative commit. [HistoryBatch](../../apps/server/src/history-batch.ts); full-server PostgreSQL qualification remains [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).
 
 ## LA175
 
@@ -383,3 +379,11 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 **Reason / tradeoff:** Immutable copied files avoid overwriting a different slot, but filesystem publication is outside the database transaction. Cleanup/reconciliation ownership is missing; inspect isolated failed targets rather than treating leftover files as proof of a completed restore.
 
 [Implementation](../../scripts/restore-world.ts).
+
+## SB19
+
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+
+SQLite uses one writer worker and a lazy read-only WAL worker. Each read/write lane retains main's 512-operation/five-second admission bound. Each worker connection admits at most 128 outstanding RPCs and caches 128 prepared statements; overflow refuses work and cache eviction only recompiles. No automatic worker restart or write replay. In-memory databases serialize snapshots on the writer because separate connections cannot share that database.
+
+**Reason / tradeoff:** Isolate native SQLite CPU without changing transaction/publication authority. Workers do not cap total process memory or make PostgreSQL faster. [Source](../../apps/server/src/sqlite-database.ts), [worker](../../apps/server/src/sqlite-worker.mjs).

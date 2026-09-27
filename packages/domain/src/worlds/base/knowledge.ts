@@ -35,6 +35,23 @@ export function recognizesSubject(
         identity.encounterId === world.perceptionEpisodes?.[observerId]?.[subjectId]))
   );
 }
+/** Existing creator-authored acquaintances persist across encounters; other identities do not.
+ * docs/worlds/base/knowledge.md#identity-and-recognition
+ */
+export function subjectReferenceCurrent(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  expectedEncounter: string | null | undefined,
+): boolean {
+  return (
+    observerId === subjectId ||
+    world.observerIdentities?.[observerId]?.[subjectId]?.authored === true ||
+    (expectedEncounter !== undefined &&
+      expectedEncounter === (world.perceptionEpisodes?.[observerId]?.[subjectId] ?? null))
+  );
+}
+
 export function observerGivenName(
   world: WorldState,
   observerId: string,

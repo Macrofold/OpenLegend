@@ -47,3 +47,11 @@ Native promise admission recognizes committed self-attributed English speech beg
 Native objective relations support only **parent and sibling**. The creator API records immutable facts; there is no correction/deletion operation or client family panel. General relation vocabulary and a player-facing disclosure policy are not implemented by this primitive. The creator operation can grow the stored fact collection; its duplicate/parent-cycle validation scans those facts and declares no local total-fact cap. The rating above describes the restricted vocabulary, not a qualified growth envelope. BW16 must assess reachable graph size and bounded projection/validation work before expanding use.
 
 **Reason / tradeoff:** Preserve a small objective-fact slice independently of personal opinions; its fixed vocabulary/topology are v1 world specializations, not universal engine rules. Source: [social.ts](../../packages/domain/src/social.ts). [BW16](../maintainers/base-world.md#bw16--family-authoring-and-inspection) owns proposed UI and boundary review; correction/disclosure require a decision first.
+
+## BW06
+
+**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Medium.**
+
+Visual follow defaults to three world units, accepts 1.5–12 units, resumes after a 0.75-unit margin, and refreshes a moved target's route after four game seconds and one unit of displacement. Empty paths can request a route immediately. It requires current sight and a living active actor, ends on lost support/capability/target, and has no stealth, scent or time-of-day termination. Follow must be the last generated step because it has no promised natural completion.
+
+**Reason / tradeoff:** A finite authored proximity activity with hysteresis avoids route churn. These are base-world tuning choices, not universal pursuit laws. [Authored rules](../../packages/domain/src/worlds/base/navigation.ts), [AC05](../maintainers/action-capabilities.md#ac05--target-relative-ongoing-navigation).

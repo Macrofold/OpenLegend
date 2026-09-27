@@ -1,3 +1,4 @@
+import { worldPosition, worldSupport } from '@open-legend/domain';
 import { knowledgePolicyInstructions } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
@@ -30,6 +31,7 @@ import {
 import { attentionRequest } from './attention-request.js';
 import { attentionIncludes } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
+import { NAVIGATION_INSTRUCTIONS } from './navigation-contracts.js';
 
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
   return [
@@ -180,11 +182,27 @@ export async function prepareDecision(
       ...candidate,
       id: `p${index}`,
     }));
-  const intentActions = observed.actor.actor!.agency.attempts.map((attempt, index) => ({
-    id: `w${index}`,
-    description: `Withdraw my pending intent: ${attempt.description}`,
-    command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
-  }));
+  const intentActions = observed.actor.actor!.agency.attempts.flatMap((attempt, index) => [
+    {
+      id: `w${index}`,
+      description: `Decline/withdraw pending intent: ${attempt.description}`,
+      command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
+    },
+    ...(attempt.alternative
+      ? [
+          {
+            id: `c${index}`,
+            description: `Accept this revised action? ${attempt.alternative.fulfillment.executableDescription}. Not fulfilled: ${attempt.alternative.fulfillment.omitted.map((o) => o.requirement).join('; ')}. ${attempt.alternative.fulfillment.reason}`,
+            command: {
+              type: 'confirm-attempt' as const,
+              id: jobId,
+              actorId,
+              attemptId: attempt.id,
+            },
+          },
+        ]
+      : []),
+  ]);
   const candidates = await recall.candidates(
     world,
     actorId,
@@ -210,6 +228,13 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(world.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
+    navigation: NAVIGATION_INSTRUCTIONS,
+    currentPosition: worldPosition(observed.actor),
+    currentSupport: worldSupport(observed.actor),
+    publicSurfaces:
+      world.map.spatial.disclosure === 'public'
+        ? world.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
+        : [],
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: [],
     references: responseReferences(
@@ -391,6 +416,13 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
+    navigation: NAVIGATION_INSTRUCTIONS,
+    currentPosition: worldPosition(currentObserved.actor),
+    currentSupport: worldSupport(currentObserved.actor),
+    publicSurfaces:
+      currentWorld.map.spatial.disclosure === 'public'
+        ? currentWorld.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
+        : [],
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     identity: `I am ${entityLabel(currentWorld, currentObserved.actor, actorId)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(currentWorld, actorId)
@@ -481,7 +513,12 @@ export async function prepareDecision(
       .flatMap((c) => c.sourceIds ?? [c.id]),
     entityIds: Object.values(entityReferences),
     entityEpisodes: Object.fromEntries(
-      Object.values(entityReferences).flatMap((id) => {
+      [
+        ...new Set([
+          ...Object.values(entityReferences),
+          ...currentObserved.visibleEntities.map((entity) => entity.id),
+        ]),
+      ].flatMap((id) => {
         const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
         return episode ? [[id, episode]] : [];
       }),
@@ -677,10 +714,11 @@ export function fallbackDecisionActions(
   const candidates = fitActionCandidates(prepared.context, prepared.actionCandidates);
   const actions = {
     ...Object.fromEntries(
-      // Optional relevance failure must preserve explicitly offered intent withdrawal.
+      // Optional relevance failure cannot retract explicit accept/withdraw choices.
+      // Acceptance still revalidates the stored revision through native admission.
       // docs/architecture.md#actor-agency-foundation
       Object.entries(prepared.binding.actions).filter(
-        ([id]) => id.startsWith('p') || id.startsWith('w'),
+        ([id]) => id.startsWith('p') || id.startsWith('w') || id.startsWith('c'),
       ),
     ),
     ...Object.fromEntries(
