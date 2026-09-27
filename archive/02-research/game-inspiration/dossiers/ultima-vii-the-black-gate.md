@@ -60,11 +60,13 @@ Combat is real-time and substantially less praised than the simulation around it
 
 Magic uses spellbook access, mana/stat capacity and reagents. Magic is also narratively compromised: Britannian magic is malfunctioning, tying a mechanical system directly to the central mystery.
 
-### Useful absences: general crafting and stealth
+### Useful absences: general crafting, stealth and base building
 
 The Black Gate supports **specific world-object transformations and production actions**—the breadmaking example is the clearest—but it does **not** expose a general crafting profession/recipe tree comparable to a modern survival RPG. Baking or otherwise combining authored objects should therefore be described as systemic object interaction, not inflated into a universal crafting subsystem.
 
 Likewise, theft is possible because property is physically present, but the game has no dedicated crouch/concealment/detection-meter stealth skill loop. Avoiding witnesses, manipulating objects and entering spaces are world-interaction consequences; "stealing things" is not evidence for a modern stealth system.
+
+And although furniture, crates and other objects can be moved and stacked freely, this is **not** a player-owned base/settlement construction system. The Avatar does not found towns, place persistent production buildings from blueprints or manage settlers. The distinction is important: physical object freedom can make an authored world feel editable without turning it into a building game.
 
 ## R03 — objects, inventory, party, equipment, and composition
 
@@ -393,7 +395,7 @@ G128 is a newly curated subject. Direct branch checks found no prior dedicated B
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Avatar name/gender identity plus Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries |
-| R02 | Real-time world, object verbs, dialogue knowledge, combat/magic, plus explicit limited-crafting/stealth absences |
+| R02 | Real-time world, object verbs, dialogue knowledge, combat/magic, plus explicit limited-crafting/stealth/base-building absences |
 | R03 | Object ecology, containers/equipment and eight-person party composition |
 | R04 | Training, economy, hunger, sleep/schedules, death/recovery and campaign knowledge progression |
 | R05 | Eight worked investigation/object/schedule/social/combat cases |
