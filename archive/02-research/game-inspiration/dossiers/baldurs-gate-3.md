@@ -8,7 +8,7 @@
 
 Baldur's Gate 3 is Larian's party role-playing game in the Forgotten Realms, combining freely navigated three-dimensional spaces, turn-based encounters and cinematic conversations. The ordinary campaign is playable alone or cooperatively; a flexible overhead/third-person camera is not a first-person requirement. It is a finite, authored adventure with systemic interactions, not an unlimited tabletop referee or a continuously simulated online world. Its full PC release was August 3, 2023, after a multi-year Early Access period. The original chapter retains the earlier history and dated platform evidence. [B5][B8]
 
-The verified version boundary is important. Larian's April 15, 2025 **Patch 8** was the final major content update: twelve subclasses, cross-play, photo mode and Xbox Series S split-screen support. **Hotfix 36, March 26, 2026**, subsequently addressed crashes, save-loading performance and platform-specific problems. “Final major patch” therefore does not mean that all maintenance ended in April 2025. Launch reviews below are evidence of those reviewers' 2023 experiences, not proof of September 2026 defects. [B1][B2]
+The verified version boundary is important. Larian's April 15, 2025 **Patch 8** was the final major content update: twelve subclasses, cross-play, photo mode and Xbox Series S split-screen support. **Hotfix 36, March 26, 2026**, subsequently addressed crashes, save-loading performance and platform-specific problems. “Final major patch” therefore does not mean that all maintenance ended in April 2025. Larian's support index still lists Hotfixes 30–36 after Patch 8; as of this September 26, 2026 audit, Hotfix 36 is the latest listed BG3 maintenance item, without implying that maintenance can never continue. Launch reviews below are evidence of those reviewers' 2023 experiences, not proof of September 2026 defects. [B1][B2][B40]
 
 **Interpretation of the central promise:** form an identity, encounter people who want incompatible things, and choose a method as well as an outcome. A player can enjoy the same place as a dialogue puzzle, tactical arena, stealth route, equipment opportunity or companion turning point. The pleasure is not merely that many buttons exist. Those buttons affect situations whose participants and stakes have been made recognizable.
 
@@ -158,6 +158,24 @@ Public Steam top-rated positive/all-review and negative-review routes, plus the 
 
 ## 13. Coverage and preservation audit
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory closes categories that were already present across the dossier but not named together:
+
+- **Identity / character construction / attributes / skills / classes / feats / power trees / leveling:** §2; XP-driven character levels and class levels culminate at the level-12 cap described in §5, with respec as a recovery tool rather than a rewrite of narrative history.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading / loot and rewards:** §4 covers equipment families, alchemy, the Adamantine Forge, storage and trading. Quest, exploration and encounter rewards feed the same inventory/equipment economy; there is no separate randomized endgame loot-tier treadmill.
+- **Magic / powers / traversal / environmental and object interaction / combat / stealth:** §3 and worked situations 1–6 cover spell resources, jumping, hiding, shoving, throwing, visibility, utility magic, object use and nonlethal execution limits. Environmental affordances are authored/systemic combinations, not unrestricted free-text physics.
+- **Activities / puzzles / minigame-like play:** dialogue checks, exploration puzzles, lock/trap handling, performance-capable classes/instruments and Patch 8 Photo Mode add activities around the core quest/combat loop, but BG3 does not expose a separate persistent minigame economy comparable to a casino, sports league or crafting profession.
+- **Death / failure / recovery / economy / time:** §§4–5 distinguish gold/trade, rests, downed/death/revival, save/load, respec, difficulty and Honour's run commitment.
+- **Story / relationships / romance / reputation-like approval / party / companions:** §6 and §8. Companion approval is individual; there is no universal faction-reputation meter that substitutes for authored quest state and character relationships. [B31][B32]
+- **NPC/AI behavior and schedules / factions:** §6 distinguishes authored companion motives, tactical enemy behavior and camp-event queues from a continuously simulated daily-schedule world. Grove refugees/druids, goblins and later groups are consequential factions in authored quest state, not a free-standing systemic faction-simulation layer.
+- **World map / environment / quests / events:** §§1, 3 and 6–7 cover the three-act world, traversal, environmental access, quest intersections and camp/story events.
+- **Building / settlements / management:** explicitly **absent as a native player system**. Camp is an authored social/logistics hub; there is no settlement construction, housing market, farming business or colony-management loop (§4).
+- **Multiplayer / social systems / endgame / return loops:** §8 and §5 cover four-player co-op, host-owned campaign continuity, cross-play/mod compatibility and replay through different Origins, alliances, builds, difficulties and Honour attempts. The campaign has authored endings rather than an endlessly escalating postgame.
+
+This closure does not add new claimed playtesting. It makes the existing evidence legible against the assignment's full inventory and preserves the narrower source limitations already recorded below.
+
+
 | Requirement | Where addressed |
 | --- | --- |
 | R01 identity/version | §1; final-major-update versus hotfix boundary |
@@ -196,6 +214,7 @@ All new source retrievals: **September 26, 2026**. Wiki entries are community-ma
 - **B36 — William D'Angelo, VGChartz, December 16, 2025.** Search-retrieved report attributes twenty-million-plus sales to a Bloomberg interview. Full-page access failed; underlying interview not newly read. No revenue/profit extrapolation.
 - **B37 — Zehnpae and commenters, patientgamers, November 2024.** Original player account and disagreement, not representative polling or helpful-ranked Steam evidence.
 - **B38–B39 — Steam community review routes.** Attempted retrieval only; mature-content gate/errors prevented body sampling. Not counted as read reviews.
+- **B40 — Larian BG3 support index, retrieved September 26, 2026.** Primary maintenance index listing Patch 8 and subsequent Hotfixes 30–36; useful for the current maintenance boundary, not a promise that Hotfix 36 is permanently final.
 - **P1–P2 — Existing repository owners.** Prior research retained without changing its original dates, economic metrics, source annotations or viewing claims.
 
 [B1]: https://baldursgate3.game/news/the-final-patch-new-subclasses-photo-mode-and-cross-play_138
@@ -237,5 +256,6 @@ All new source retrievals: **September 26, 2026**. Wiki entries are community-ma
 [B37]: https://www.reddit.com/r/patientgamers/comments/1gmj2hu/baldurs_gate_3_the_good_the_bad_the_ugly/
 [B38]: https://steamcommunity.com/app/1086940/reviews/?browsefilter=toprated&filterLanguage=english
 [B39]: https://steamcommunity.com/app/1086940/negativereviews/?browsefilter=toprated&filterLanguage=english
+[B40]: https://larian.com/support/baldur-s-gate-3
 [P1]: ../games/baldur-s-gate-3.md
 [P2]: ../mechanics/baldurs-gate-3-utility-magic-identities-and-consequential-choice.md
