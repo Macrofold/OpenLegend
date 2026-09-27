@@ -181,6 +181,17 @@ Tools often change **what interactions are possible**, not just efficiency:
 - Seaglide extends oxygen-limited range;
 - Beacon makes remembered geography explicit.
 
+### Air pumps and pipe networks — audit addition
+
+The initial pass overemphasized tanks/vehicles and omitted the game's earliest **constructed oxygen infrastructure**. A Floating Air Pump at the surface, or a Base-attached Air Pump on a powered habitat, can feed a chain of **Pipes**. Swimming near an active pipe replenishes the player's oxygen tank. [Pipes](https://subnautica.fandom.com/wiki/Pipes_%28Subnautica%29).
+
+This gives a third answer to an oxygen-gated location:
+- carry more oxygen;
+- use a vehicle/base as a breathable refuge;
+- **build a literal air route** into the water.
+
+Pipes are awkward enough that many experienced players prefer tanks/vehicles, but they demonstrate an important design pattern: the player can **alter the survivability of geography itself** rather than only upgrading the avatar.
+
 ### Navigation without a world map
 
 Original Subnautica deliberately lacks a conventional world map/minimap.
@@ -313,6 +324,16 @@ Power controls:
 - lighting and other systems.
 
 Solar becomes weaker with depth, encouraging different power architecture in deep bases.
+
+### Base utilities retire early survival logistics — audit addition
+
+Several important habitat modules make a mature base qualitatively different from Lifepod survival:
+
+- **Water Filtration Machine** consumes base power to desalinate seawater into Large Filtered Water and Salt. It also costs Hull Integrity, so reliable hydration has both structural and energy cost. [Water Filtration Machine](https://subnautica.fandom.com/wiki/Water_Filtration_Machine_%28Subnautica%29).
+- **Battery Charger** recharges up to four tool batteries from base/Cyclops power. [Battery Charger](https://subnautica.fandom.com/wiki/Battery_Charger_%28Subnautica%29).
+- **Power Cell Charger** recharges vehicle-scale Power Cells; it moves energy rather than creating it, so placing one in a Cyclops does not make free power. [Power Cell Charger](https://subnautica.fandom.com/wiki/Power_Cell_Charger_%28Subnautica%29).
+
+These systems strengthen an important progression principle already present in the dossier: **home infrastructure retires repetitive scavenging** but creates new power/hull dependencies.
 
 ### Scanner Room
 
@@ -703,7 +724,33 @@ Creative/free-form base building offers replay after story knowledge.
 **Interaction:** the marker gets the player near content; observation explains what happened.  
 **Result:** authored story becomes exploration rather than checklist completion.
 
-### Case 12 — the Sea Emperor resolves survival, ecology and story together
+### Case 12 — an air pipe makes one dangerous descent locally breathable
+
+**Intention:** repeatedly work in an underwater cave before better vehicles are available.  
+**Conditions:** surface/base air source and enough Pipes can reach the route.  
+**Actions:** deploy a Floating/Base Air Pump and extend pipe segments toward the work area.  
+**Interaction:** crafted infrastructure changes the oxygen topology of the environment.  
+**Result:** the same diver/tank can remain deeper longer without an avatar-stat upgrade.  
+**Limit:** pipe placement is cumbersome and is later outclassed for many uses by vehicles/bases.
+
+### Case 13 — filtration converts base power into freedom from water scavenging
+
+**Intention:** stop repeatedly hunting bladderfish/salt-based water ingredients.  
+**Conditions:** powered compatible room and Water Filtration Machine blueprint/materials.  
+**Actions:** build the machine and supply enough base generation.  
+**Interaction:** power and Hull Integrity are exchanged for renewable water/salt.  
+**Result:** an early survival chore becomes infrastructure maintenance instead of daily scavenging.
+
+### Case 14 — another real player leaves a gift in a solitary world
+
+**Intention:** leave evidence/help when escaping 4546B.  
+**Conditions:** Neptune Time Capsule is configured with allowed message/image/items and submitted through the system.  
+**Actions:** launch the rocket; capsule enters the moderated backend/approval pool.  
+**Interaction:** a single-player ending produces a possible future object in another player's single-player save.  
+**Result:** the recipient discovers human-authored text/image/items without a live multiplayer session.  
+**Boundary:** not every submitted capsule is guaranteed to be approved or encountered, and current approval cadence is not verified here.
+
+### Case 15 — the Sea Emperor resolves survival, ecology and story together
 
 **Intention:** escape the planet.  
 **Conditions:** quarantine/infection prevents leaving; player has reached deepest alien facility.  
@@ -736,6 +783,21 @@ Leviathans create territory-scale fear through:
 
 The player learns to recognize spaces by creatures.
 
+### Time Capsules — asynchronous player-to-player traces
+
+The original game is still **not native real-time multiplayer**, but the initial dossier overstated its social isolation by omitting **Time Capsules**.
+
+When constructing the Neptune Escape Rocket, a player can configure a Time Capsule with:
+- a written message;
+- optional screenshot;
+- up to a small set of eligible items.
+
+The capsule is jettisoned at launch. Approved capsules can then be downloaded/spawned into **other players' single-player worlds** at predefined seabed locations. Finding one adds its contents and preserves its message/image in the PDA. Certain progression-breaking items are blacklisted from new capsules. [Time Capsule](https://subnautica.fandom.com/wiki/Time_Capsule?page=5).
+
+Unknown Worlds' 2018 developer forum explanation says capsules were voted on, screened, downloaded on the fly, and could appear at random predefined locations; the public **Time Capsule voting backend is still reachable in 2026**, although this pass does not independently establish the current human approval cadence. [Unknown Worlds forum](https://forums.unknownworlds.com/discussion/153839/time-capsule-voting) · [current backend](https://subnautica.unknownworlds.com/time-capsules).
+
+This is a rare form of **moderated asynchronous multiplayer artifact** inside an otherwise solitary campaign. The player never meets another live survivor, but another real person's image, message and chosen gift can arrive as archaeological evidence.
+
 ### No humanoid social simulation
 
 For most of the campaign, the protagonist is alone.
@@ -744,8 +806,10 @@ There is:
 - no recruitable party;
 - no romance;
 - no faction reputation;
-- no multiplayer;
+- no native real-time multiplayer;
 - no settlement NPC workforce.
+
+Time Capsules are the important exception: they provide moderated asynchronous player-created messages/items without making another player a live actor in the world.
 
 Human connection comes through recordings/logs and the traces of dead/missing survivors.
 
@@ -1098,6 +1162,8 @@ The seven-file packet predates this expansion. Global P01 preservation remains p
 - **Unknown Worlds — [mobile announcement](https://unknownworlds.com/en/news/subnautica-mobile-announce), May 27, 2025.** Primary mobile port/UI/platform scope.
 - **Unknown Worlds — [Subnautica 2 clarification](https://unknownworlds.com/en/news/subnautica-community-letter), July 3, 2025.** Primary sequel multiplayer/monetization boundary; used only to prevent importing sequel co-op.
 - **Subnautica Wiki — [Depth Levels](https://subnautica.fandom.com/wiki/Depth_Levels), [Upgrade Modules](https://subnautica.fandom.com/wiki/Upgrade_Modules), [Fauna](https://subnautica.fandom.com/wiki/Fauna), [Alien Containment](https://subnautica.fandom.com/wiki/Alien_Containment_%28Subnautica%29), [Seamoth](https://subnautica.fandom.com/wiki/Seamoth), accessed September 2026.** Detailed community technical references; version-specific numbers are subordinate to the maintained current final game.
+- **Subnautica Wiki — [Pipes](https://subnautica.fandom.com/wiki/Pipes_%28Subnautica%29), [Water Filtration Machine](https://subnautica.fandom.com/wiki/Water_Filtration_Machine_%28Subnautica%29), [Battery Charger](https://subnautica.fandom.com/wiki/Battery_Charger_%28Subnautica%29), [Power Cell Charger](https://subnautica.fandom.com/wiki/Power_Cell_Charger_%28Subnautica%29), accessed September 27, 2026.** Follow-up operational evidence for oxygen and base-logistics infrastructure.
+- **Subnautica Wiki — [Time Capsule](https://subnautica.fandom.com/wiki/Time_Capsule?page=5), accessed September 27, 2026; Unknown Worlds — [Time Capsule voting explanation](https://forums.unknownworlds.com/discussion/153839/time-capsule-voting), January 2018; [current voting backend](https://subnautica.unknownworlds.com/time-capsules), accessed September 2026.** Asynchronous player-artifact mechanics. The backend is currently reachable; this dossier does not claim a verified 2026 human-review cadence.
 
 ### Production/commercial sources
 
@@ -1141,7 +1207,7 @@ No video scene or timestamp is represented as watched.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 interactions | R05, twelve cases |
+| R05 interactions | R05, fifteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -1154,6 +1220,10 @@ No video scene or timestamp is represented as watched.
 
 ### Explicit mechanics-inventory closure
 
-Fixed protagonist; no character creation/classes/attributes/XP/perk tree; oxygen/food/water/health; items/grid inventory/equipment; tools/fabrication/modification; no spell/magic system; swimming/Seaglide/Seamoth/Prawn/Cyclops; environmental/scanner/resource interactions; farming/cooking/filtration/Alien Containment; limited avoidance-focused combat/practical stealth; wreck/fragment/material loot; death/recovery/Hardcore permadeath; no currency/trading economy; authored environmental/radio/PDA story; no romance/companions/factions/multiplayer; authored fauna/ecology behaviors; hand-authored ocean biomes/depth; radio signals/wrecks/alien facilities as quest/event structure; extensive Seabase/power/hull integrity/Scanner Room management; single-player modes; and cure/Neptune ending plus Creative/base replay loops are covered above.
+Fixed protagonist; no character creation/classes/attributes/XP/perk tree; oxygen/food/water/health; items/grid inventory/equipment; tools/fabrication/modification; no spell/magic system; swimming/Seaglide/Seamoth/Prawn/Cyclops plus buildable oxygen Pipe routes; environmental/scanner/resource interactions; farming/cooking/filtration/Alien Containment and battery/power-cell charging; limited avoidance-focused combat/practical stealth; wreck/fragment/material loot; death/recovery/Hardcore permadeath; no currency/trading economy; authored environmental/radio/PDA story; no romance/companions/factions or native live multiplayer, but **Time Capsules provide asynchronous moderated player-to-player artifacts**; authored fauna/ecology behaviors; hand-authored ocean biomes/depth; radio signals/wrecks/alien facilities as quest/event structure; extensive Seabase/power/hull integrity/Scanner Room management; single-player modes; and cure/Neptune ending plus Creative/base replay loops are covered above.
 
 **Research boundary:** original Subnautica remains a separate single-player game despite code backports, sequels and community mods. Current maintenance evidence is the August 2025 PC/console patch plus July 2026 Switch 2 platform patch. Specific community-wiki values are used for operational understanding and not treated as developer intent.
+
+### Follow-up audit — September 27, 2026
+
+The second pass found the depth/vehicle/base/story progression strong, but three applicable systems were missing: **Air Pump/Pipe oxygen infrastructure**, mature-base filtration/energy-recharging utilities, and the **Time Capsule asynchronous social system**. The last point corrects the overly broad initial statement that Subnautica had no multiplayer/social player layer: it still has no native real-time multiplayer, but approved player-created capsules can enter other solo worlds. The public voting backend is reachable in 2026; current approval staffing/cadence remains an explicit evidence limit.
