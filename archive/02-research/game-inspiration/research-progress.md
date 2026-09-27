@@ -4,18 +4,19 @@
 
 ## Integrated branch state — September 27, 2026
 
-This library now contains the five parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
+This library now contains the six parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
 
 | Source branch | Merged source head | Range status and detailed owner |
 | --- | --- | --- |
-| `docs/game-inspiration-library` | `8f714940f43f` | [G01–G40 initial passes retained; requirements-and-corrections audits are complete for G01–G39. G40 is excluded from these two audit passes and also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
+| `docs/game-inspiration-library` | `3bf94c5f2f7a` | [G01–G40 initial passes retained; requirements-and-corrections audits are complete for G01–G39. G40 is excluded from these two audit passes and also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
 | `docs/game-inspiration-games-40-60` | `5ac2beb1b447` | [All identified G40–G60 manuscript-audit remedies applied; four subjects retain coverage-present judgments and evidence limits.](#g40g60-branch-research-state) |
 | `docs/game-inspiration-games-61-80` | `c0394e436836` | [All twenty G61–G80 follow-up audits and scoped final verification complete, with evidence limits retained.](#g61g80-branch-research-state) |
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
+| `docs/game-inspiration-games-121-end` | `b79a6fd69135` | [G121–G130 initial passes complete; follow-up audit has G121–G122 audited and G123 active.](#g121g130-branch-research-state) |
 
-G121–G130 remain outside these merged research ranges. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
+All G01–G130 initial research is now present. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
 For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
@@ -442,6 +443,35 @@ The [audit-start snapshot](research-progress-audit-start-2026-09-26.md) is the *
 The earlier [frozen base-branch ledger](research-progress-base-2026-09-26.md) remains blob `0b9d170bc5486d59eb8a8ce49250273f84398270`. It preserves inherited G01–G30 completion records, G31 resume state, earlier scope and reconciliation history. Those states describe the branch's base, not parallel branches' current progress. This snapshot is also immutable.
 
 The original range pass produced ten dossiers with eight worked situations each, five reviews for G111–G119 and a qualified critical-perspectives collection for G120. It also added README navigation with zero deletions. Its known G114 Steam-body gap and G120 genuine-review concern were reopened for the follow-up: G114 now has qualified recovered bodies, and G120 now has five genuine reviews plus its preserved supplemental perspectives. Original completion is not erased; follow-up verification is tracked separately. No earlier dedicated G111–G120 owners were identified in the inspected base tree/roster/navigation. Prior packet chapters, selective studies, reviews and viewing recommendations remain untouched.
+
+## G121–G130 branch research state
+
+Imported from `docs/game-inspiration-games-121-end` at `b79a6fd6913519cf1f9c7f71a63bfd096a8fcdb0`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/b79a6fd6913519cf1f9c7f71a63bfd096a8fcdb0/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
+
+### Requirements-and-corrections audit — G121 through G130
+
+**Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
+
+**Current audit state: G121–G122 audited; G123 Rain World active; G124–G130 pending.** Reconciled against the newer [audit evidence](coverage-audit-g121-g130.md#current-audit-state) at this merged source head; its G122 closure supersedes the source progress ledger’s stale G122-active pointer. Global P01–P05 gates remain separate and pending.
+
+### Initial G121–G130 research completion
+
+**Initial research complete: G121–G130.** All ten subjects have R01–R14 dossiers and initial per-game completion commits. The separate follow-up audit above remains active; this initial-pass record does not close it or the global P01–P05 gates.
+
+**This branch's authorized range: G121–G130 inclusive; 10 / 10 completed.** G121–G130 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+
+| Subject | State | Canonical output / completion commit | Exact remaining work |
+| --- | --- | --- | --- |
+| G121 — Battle Brothers | Complete | [Dossier](dossiers/battle-brothers.md); `f1924325cfc0a63709e2649956acb59de1f003b1` | Full systems/expansion pass, eight worked cases, five written reviews and helpful Steam bodies. Helpful-negative endpoint unavailable; contrasting recent negative body retained with sampling limit. Earlier owners unchanged. |
+| G122 — Cataclysm: Dark Days Ahead | Complete | [Dossier](dossiers/cataclysm-dark-days-ahead.md); `9a6dea642c0ce588cc95cb3c625a47f8f545b476` | Stable 0.I primary help/FAQ, eight cases, five written critical accounts (one shorter firsthand-impressions article), Steam helpful indexed and positive/negative permalink evidence. Direct access limits explicit; separate co-op fork and unused faction fields not confused with upstream implemented behavior. |
+| G123 — Rain World | Complete | [Dossier](dossiers/rain-world.md); `d2dae3fc6768d27a82557a43bc460e6cf643e22d` | Base/Downpour/Remix/Watcher separated; eight worked interactions, modular creature-AI evidence, five written reviews and current/all-time Steam sampling. Third-party sales estimates excluded from official commercial claims; no inherited dedicated Rain World owner existed. |
+| G124 — Persona 5 Royal | Complete | [Dossier](dossiers/persona-5-royal.md); `4569330cad6eae87a3726023eeac98df65451ebb` | Royal/original/spin-off boundaries, eight worked cross-system cases, full calendar/Confidant/Palace/Mementos/Persona pass, five written reviews and current Steam sampling; Royal-only versus combined-series sales metrics separated. |
+| G125 — XCOM 2 | Complete | [Dossier](dossiers/xcom-2.md); `42d9279bde9647ed2ab027efe5c90896a187af39` | Base/WotC/DLC/mod boundaries, eight tactical-strategic cases, bonds/fatigue/roster attachment, five independent base-game reviews plus WotC/Steam evidence; Steam multiplayer retirement dated. |
+| G126 — Crusader Kings III | Complete | [Dossier](dossiers/crusader-kings-iii.md); `f1b04b87520f56527a09e367d219e5b2e2b35345` | Current PC/console/expansion boundaries, eight dynastic/political cases, trait/stress/relationship/succession/faction systems, five launch reviews plus current Steam; Paradox 3m/4m base-game milestones separated from DLC. |
+| G127 — Dragon's Dogma 2 | Complete | [Dossier](dossiers/dragons-dogma-2.md); `b36d70cb9b794fc003a1863c468048637dd37ddc` | Current base/update/future Dark Arisen boundaries, eight worked cases, Pawn asynchronous knowledge/inclinations/Dragonsplague, six reviews and current Steam evidence; DD2 4.20m separated from 14m series sales. |
+| G128 — Ultima VII: The Black Gate | Complete | [Dossier](dossiers/ultima-vii-the-black-gate.md); `edc5dc31082b8f5af7d67f8bc0683cdaa39c04fc` | Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries, eight worked object/schedule cases, five contemporary/retrospective critical accounts plus GOG/MobyGames player evidence; no lifetime sales invented. |
+| G129 — Oxygen Not Included | Complete | [Dossier](dossiers/oxygen-not-included.md); `714ab6cbff9036294504ba8651258279d9e5ee0c` | Base/Spaced Out/Frosty/Bionic/Prehistoric/Neutronium/Aquatic boundaries, eight causal engineering cases, five written reviews plus current Steam evidence; no unsupported lifetime sales claimed. |
+| G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Complete | [Dossier](dossiers/stalker-2-heart-of-chornobyl.md); `12ca0a145cdf4357a498124c9f4744c6175779e6` | Launch/current 2.0/2.0.6 and Cost of Hope boundaries; versioned A-Life evidence, eight worked cases, five independent launch reviews and September 2026 Steam samples; one-million sales and six-million players kept distinct. |
 
 ## Final integration gates — pending
 
