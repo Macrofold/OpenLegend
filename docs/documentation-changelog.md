@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-26 — G81–G100 substantive research audit and corrections
+
+Reopened eleven game dossiers after reviewing their actual content against R01–R14 rather than accepting their completion tables. The corrective passes add missing activity and acquisition rules, named item/ability chains, complete cross-system situations, edition and spoiler boundaries, and specific production/art/audio evidence. They also correct erroneous mechanics and unsupported reception attribution, pinpoint Final Fantasy XIII's primary commercial disclosure, and add alternative dated PS5 player testimony for Final Fantasy XVI while preserving the failed Steam-access record.
+
+The [audit](../archive/02-research/game-inspiration/coverage-audit-g81-g100.md) retains the original 280-cell findings and records closure evidence; the [progress ledger](../archive/02-research/game-inspiration/research-progress.md) owns current status and per-game commits. Existing analyses, examples and source identities were retained rather than replaced with summaries. The nine unaffected dossiers and original chapter/mechanics/essay/reference trees remain unchanged. Verification is a scoped manual document/diff/navigation review, not a fresh reading of every inherited external source, gameplay testing or an automated external-link crawl. This research adopts no engine requirements and does not close the separate whole-library integration or seven-file packet-preservation gates.
+
 ## 2026-09-26 — Game mechanics inspiration corpus expansion
 
 Expanded the research-only game-inspiration program from 57 to 130 individually tracked subjects on `docs/game-inspiration-library-expansion`. The roster preserves all previously promised cases, adds the requested RPG/action/open-world/strategy franchises and titles, and adds twenty curated high-signal systemic references for simulation, NPC behavior, emergent narrative, environment interaction, relationships and creator mechanics. The completion standard now requires five substantive written-review summaries from multiple sources for every researchable game, top/helpful Steam review sampling where applicable, and an explicit comprehensive mechanics inventory. This changes research scope and navigation only; it does not adopt gameplay requirements or change runtime behavior.
