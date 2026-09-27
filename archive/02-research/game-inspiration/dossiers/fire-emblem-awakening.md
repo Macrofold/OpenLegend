@@ -896,6 +896,17 @@ Absent/not major:
 
 Before G62, the inherited reference packet and existing game/mechanics indexes were searched for Awakening/Fire Emblem-specific prior owners. The roster addition establishes G62 as a new independent pass; no inherited full Awakening dossier existed on the branch. Existing cross-game references remain preserved in their owners rather than duplicated wholesale.
 
+### Reading / viewing routes
+
+For a compact verification path:
+1. **AW14 + AW08** for primary developer intent behind the “ultimate culmination,” character attachment, marriage and generations.
+2. **AW01 + AW11 + AW20** for three independent launch reviews covering Pair Up, accessibility, story and social systems.
+3. **AW05 + AW07 + AW09** for Dual-system, support and child-inheritance mechanics.
+4. **AW13** for the current 3DS purchase/online/StreetPass-versus-SpotPass boundary.
+5. **AW21–AW23** for qualitative player and retrospective disagreement about social/build freedom versus tighter tactics.
+
+No video or footage is represented as watched in this audit.
+
 ### Current-access boundary
 
 As of September 2026:
