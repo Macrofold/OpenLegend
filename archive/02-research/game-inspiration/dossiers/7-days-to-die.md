@@ -217,6 +217,40 @@ Players can build generators/battery/solar-like systems as current content permi
 
 V3.0 added an M60 Turret to late-game defense.
 
+### Robotic Drone — bounded companion automation
+
+Modern 7 Days to Die includes a **Robotic Drone**, which the initial pass omitted. It is a deployable follower that can follow/stay, carry inventory and take mods. Current official-wiki documentation lists a default 16-slot storage inventory and mods that can expand cargo, add a headlamp, increase nearby stamina regeneration or automatically use carried first-aid supplies on the player. [Robotic Drone](https://7daystodie.wiki.gg/wiki/Robotic_Drone).
+
+The Drone is not an authored personality/romance companion and does not replace human co-op roles. It is a **portable support device with spatial presence**: storage, light and healing move with the survivor, but its value depends on crafted quality/mods and it can be told to stay or follow.
+
+### Injuries, infection and treatment — audit expansion
+
+The initial dossier compressed current bodily consequences into "injuries/status effects." Applicable current systems include distinct problems such as:
+- Bleeding;
+- Infection;
+- Sprained/Broken Leg;
+- Concussion;
+- Laceration and other critical injuries.
+
+These are not one generic debuff. A Broken Leg sharply reduces mobility/jump capability and can worsen/heal more slowly if the player keeps sprinting/jumping; splints/casts improve treatment. A Concussion lowers effective capacity and is treated differently. Infection can progress toward lethal consequences without appropriate medicine. [Health](https://7daystodie.wiki.gg/wiki/Health) · [Broken Leg](https://7daystodie.wiki.gg/wiki/Broken_Leg) · [Concussion](https://7daystodie.wiki.gg/wiki/Concussion).
+
+This makes combat/falls affect **future route and labor choices**: an injured miner may stop sprinting home, a concussed looter may abandon the POI, and medical preparation is qualitatively different from carrying only raw HP restoration.
+
+### Electricity as explicit topology
+
+The initial pass listed electrical items but not the actual network model. Electricity uses a **single-input, multi-output connection graph** wired with the Wire Tool. Sources include Generator Banks, Battery Banks and Solar Banks; switches/sensors/relays then feed doors, lights and traps. Devices have connection-distance/power-draw limits. [Electricity](https://7daystodie.wiki.gg/wiki/Electricity).
+
+Generator fuel consumption depends on active power draw; Battery Banks can be charged by upstream sources; Solar Banks generate only from installed Solar Cells and daylight. This means horde defenses have a real **power architecture**, not an abstract "electricity unlocked" flag.
+
+### Challenges, treasure maps and lockpicking — activities audit
+
+Modern structured activities include:
+- **Challenges**, grouped objectives that award XP and can culminate in Trader reward items; the initial Basics group doubles as onboarding before broader challenges unlock. [Challenges](https://7daystodie.wiki.gg/wiki/Challenges);
+- **Treasure Quests**, initiated by found maps that mark a search region and require physically digging for a buried locked cache. [Treasure Quest](https://7daystodie.wiki.gg/wiki/Treasure_Quest);
+- **lockpicking**, where consumable Lockpicks attempt to open eligible locked containers with failure/break chance; current lockpicking perks can reduce time/breakage and alter related magazine/book discovery. [Lockpick](https://7daystodie.wiki.gg/wiki/Lockpick).
+
+These systems close a gap in the activities/minigames inventory: not every objective is a Trader POI job or Blood Moon.
+
 ### Multiplayer and customization
 
 Solo, peer/co-op, dedicated servers and PvP settings are possible. V3.0 added more than 150 sandbox options, and V3.1 split several density/respawn settings further. Settings can alter:
@@ -235,7 +269,7 @@ This makes **world configuration itself part of the game's design surface**.
 
 ### Useful absences
 
-There is no conventional magic system, romance system or authored companion-approval party. Traders are service NPCs rather than deeply scheduled simulated residents. Story/lore exists but the game is not driven by cinematic quests. Character identity is build/perk/equipment-driven rather than a fixed class.
+There is no conventional magic system, romance system or authored companion-approval party. **The Robotic Drone is a real deployable support follower**, but it is a tool-like storage/healing/light companion rather than an authored social character. Traders are service NPCs rather than deeply scheduled simulated residents. Story/lore exists but the game is not driven by cinematic quests. Character identity is build/perk/equipment-driven rather than a fixed class.
 
 ## R03 — items, inventory, qualities and composition
 
@@ -437,7 +471,31 @@ Unless attributed otherwise, these are rules-based examples.
 **Interaction:** a formerly field-loot resource becomes another home-production chain.  
 **Result:** base self-sufficiency increases while adding another workstation/resource routine.
 
-### Case 12 — Experimental backpack evidence must stay experimental
+### Case 12 — injury changes the optimal route home
+
+**Intention:** finish a distant loot run after a fall.  
+**Conditions:** survivor suffers a Broken Leg.  
+**Actions:** treat with an available splint/cast, stop sprinting/jumping unnecessarily and choose a safer return path or vehicle.  
+**Interaction:** injury duration/mobility penalties convert a local mistake into a travel/logistics problem.  
+**Result:** medical supplies and route knowledge become progression value, not just combat healing.
+
+### Case 13 — the Drone converts equipment into a moving support role
+
+**Intention:** extend a solo expedition without giving up too much inventory/medical margin.  
+**Conditions:** crafted/deployed Robotic Drone with appropriate mods.  
+**Actions:** load cargo/medical supplies, set it to follow and use its storage/light/medic support.  
+**Interaction:** an equipment item becomes a persistent follower with inventory and automatic support behavior.  
+**Result:** solo play gains a bounded companion-like role without adding a human/NPC relationship system.
+
+### Case 14 — power topology determines whether a trap lane works
+
+**Intention:** run sensors, electric fences/doors and traps during Blood Moon.  
+**Conditions:** source wattage, wire distances and device draw must fit the circuit.  
+**Actions:** connect generator/battery/solar sources through relays/switches/sensors to defenses and test the chain.  
+**Interaction:** base architecture and electrical graph become one defense design.  
+**Result:** a severed/mis-budgeted electrical dependency can disable multiple downstream defenses.
+
+### Case 15 — Experimental backpack evidence must stay experimental
 
 **Intention:** document current inventory capacity.  
 **Conditions:** V3.2 stable and V3.3 Experimental both exist on September 27.  
@@ -787,6 +845,8 @@ The original packet predates G135. This dossier therefore becomes the per-game r
 - **Steam/The Fun Pimps — [V2.0 stable announcement](https://store.steampowered.com/news/posts/?appids=251570&enddate=1753493924&feed=steam_community_announcements), June 27, 2025.** Primary Biome Progression/Dynamic Storms/crossplay-era scope.
 - **7dtd.tools — [V3.1 notes](https://www.7dtd.tools/versions/v3.1), July 27, 2026.** Structured mirror of official Henpocalypse stable release; used for chicken-farming/sandbox update boundary.
 - **Official 7 Days to Die Wiki — [Structural Integrity](https://7daystodie.wiki.gg/wiki/Structural_Integrity) and [Building Structures](https://7daystodie.wiki.gg/wiki/Building_Structures), accessed September 27, 2026.** Maintained current technical mechanics documentation.
+- **Official 7 Days to Die Wiki — [Robotic Drone](https://7daystodie.wiki.gg/wiki/Robotic_Drone), [Electricity](https://7daystodie.wiki.gg/wiki/Electricity), [Health](https://7daystodie.wiki.gg/wiki/Health), [Broken Leg](https://7daystodie.wiki.gg/wiki/Broken_Leg), [Concussion](https://7daystodie.wiki.gg/wiki/Concussion), accessed September 27, 2026.** Follow-up operational evidence for follower support, power topology and distinct injury states.
+- **Official 7 Days to Die Wiki — [Challenges](https://7daystodie.wiki.gg/wiki/Challenges), [Quests](https://7daystodie.wiki.gg/wiki/Quests), [Treasure Quest](https://7daystodie.wiki.gg/wiki/Treasure_Quest), [Lockpick](https://7daystodie.wiki.gg/wiki/Lockpick), accessed September 27, 2026.** Structured activity/treasure/lockpicking evidence added in the follow-up audit.
 - **GameSpot — [1.0 starter guide](https://www.gamespot.com/gallery/7-days-to-die-tips/2900-5588/), July 2024.** Current-generation/legacy-console transition and 1.0 systems.
 - **Steam announcement archive — [1.0 release notes](https://store.steampowered.com/news/posts/?appids=251570&enddate=1721866113&feed=steam_community_announcements), June/July 2024.** Primary 1.0 transition.
 
@@ -824,7 +884,7 @@ No video scene or timestamp is represented as watched in this pass.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 worked interactions | R05, twelve cases |
+| R05 worked interactions | R05, fifteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -837,6 +897,10 @@ No video scene or timestamp is represented as watched in this pass.
 
 ### Explicit mechanics-inventory closure
 
-Character creation; attributes/perks; XP/levels; magazine/book crafting progression; items/inventory/quality/mods; weapons/armor; crafting/workstations/upgrading/repair; no magic system; walking/vehicles/gyrocopter; destructible terrain/object interaction; farming/cooking/chicken husbandry; combat/practical stealth/traps/turrets; looting/POIs; death/recovery/death-rule customization; Dukes/traders/jobs; environmental narrative rather than authored campaign; no romance or companion party; trader NPCs/zombie/animal AI; no universal faction-reputation simulation; Navezgane/random worlds/biome progression/weather; quests/Blood Moon/world events; voxel building/structural integrity/electricity/base management; solo/co-op/dedicated/PvP/crossplay and extensive sandbox configuration; late-game horde engineering/mods/new worlds as return loops are all covered.
+Character creation; attributes/perks; XP/levels; magazine/book crafting progression; items/inventory/quality/mods; weapons/armor; crafting/workstations/upgrading/repair; no magic system; walking/vehicles/gyrocopter; destructible terrain/object interaction; farming/cooking/chicken husbandry; combat/practical stealth/traps/turrets; injuries/infection and distinct treatment; looting/POIs/lockpicking/treasure Challenges; death/recovery/death-rule customization; Dukes/traders/jobs; environmental narrative rather than authored campaign; no romance/approval party but a deployable Robotic Drone support follower; trader NPCs/zombie/animal AI; no universal faction-reputation simulation; Navezgane/random worlds/biome progression/weather; Challenges/quests/Blood Moon/world events; voxel building/structural integrity/explicit electrical circuits/base management; solo/co-op/dedicated/PvP/crossplay and extensive sandbox configuration; late-game horde engineering/mods/new worlds as return loops are all covered.
 
 **Research boundary:** current stable evidence is V3.2.0 on September 27, 2026. V3.3.0 backpack changes are opt-in Experimental and explicitly separated. Server presets can alter so much of survival, AI and death that exact timing/damage/density rules must be verified against a world's SandboxCode rather than assumed from a generic guide.
+
+### Follow-up audit — September 27, 2026
+
+The second pass confirmed the V3.2 stable/V3.3 Experimental boundary and structural/progression research, but found four under-covered applicable areas: **Robotic Drone companionship**, distinct injuries/treatment, actual electrical-network topology, and non-Trader structured activities (Challenges/treasure/lockpicking). Those gaps are now closed above with three additional worked interactions. The correction also prevents the prior "no companion party" sentence from being misread as "no follower exists."
