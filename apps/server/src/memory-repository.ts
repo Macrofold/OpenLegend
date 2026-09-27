@@ -54,9 +54,50 @@ const sourceColumnNames = [
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 const sourceRevision = (payload: string) => createHash('sha256').update(payload).digest('hex');
 export const MEMORY_HISTORY_TABLES = ['mind_source_versions', 'mind_source_annotations'] as const;
-// Paid derived artifacts follow operational backup, not gameplay rewind. SQLite
-// can preserve them during a portable restore even though it cannot rank vectors.
+// Paid derived artifacts follow operational backup, not gameplay rewind.
 export const MEMORY_CACHE_TABLES = ['memory_vector_cache'] as const;
+/** Request-owned body reuse; keys include actor, generation-independent source revision
+ * and storage identity. Metadata eligibility is always read in the current SQL snapshot.
+ * The bounded cache can evict bodies without narrowing retrieval or transcript coverage. */
+export class MemoryReadCache {
+  private values = new Map<string, { value: RetrievedMemory; bytes: number }>();
+  private bytes = 0;
+  private key(row: Record<string, unknown>): string {
+    return JSON.stringify([
+      row['world_id'],
+      row['actor_id'],
+      row['source_kind'],
+      row['record_id'],
+      row['revision'],
+    ]);
+  }
+  get(row: Record<string, unknown>) {
+    return this.values.get(this.key(row));
+  }
+  put(row: Record<string, unknown>, value: RetrievedMemory, bytes: number) {
+    const key = this.key(row);
+    if (this.values.has(key)) return;
+    while (
+      this.values.size &&
+      (this.bytes + bytes > RETRIEVAL_BYTES || this.values.size >= RETRIEVAL_ROWS)
+    ) {
+      const oldest = this.values.keys().next().value!;
+      this.bytes -= this.values.get(oldest)!.bytes;
+      this.values.delete(oldest);
+    }
+    if (bytes <= RETRIEVAL_BYTES) {
+      this.values.set(key, { value, bytes });
+      this.bytes += bytes;
+    }
+  }
+}
+
+export interface CognitionPreparation {
+  scope: MemoryScope;
+  bodies: MemoryReadCache;
+  conversation: Awaited<ReturnType<MemoryRepository['context']>>;
+}
+
 export interface MemoryScope {
   worldId: string;
   actorId: string;
@@ -192,14 +233,11 @@ export class MemoryRepository {
         PRIMARY KEY(world_id,actor_id,source_id,source_revision,model,dimensions));
     `);
     await this.db.transaction(async () => {
-      const columns =
-        this.db.dialect === 'postgres'
-          ? await this.db
-              .prepare(
-                "SELECT column_name AS name FROM information_schema.columns WHERE table_schema='open_legend' AND table_name='recall_sources'",
-              )
-              .all()
-          : await this.db.prepare('PRAGMA table_info(recall_sources)').all();
+      const columns = await this.db
+        .prepare(
+          "SELECT column_name AS name FROM information_schema.columns WHERE table_schema='open_legend' AND table_name='recall_sources'",
+        )
+        .all();
       if (!columns.some((row) => row['name'] === 'sequence')) {
         await this.db.exec(
           'ALTER TABLE recall_sources ADD COLUMN sequence BIGINT NOT NULL DEFAULT 0',
@@ -238,10 +276,7 @@ export class MemoryRepository {
         const backfill = async () => {
           for (const [kind, table] of Object.entries(sourceTables)) {
             const field = kind === 'memory' ? 'summary' : 'text';
-            const value =
-              this.db.dialect === 'postgres'
-                ? `t.payload::jsonb ->> '${field}'`
-                : `json_extract(t.payload,'$.${field}')`;
+            const value = `t.payload::jsonb ->> '${field}'`;
             const scopes = new Map<string, Record<string, unknown>[]>();
             for (const row of batch.filter((row) => row['source_kind'] === kind)) {
               const key = JSON.stringify([row['world_id'], row['actor_id']]);
@@ -271,38 +306,20 @@ export class MemoryRepository {
         }
         if (batch.length) await backfill();
       }
-      if (this.db.dialect === 'postgres') {
-        if (!columns.some((row) => row['name'] === 'search_vector'))
-          await this.db.exec(
-            "ALTER TABLE recall_sources ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED",
-          );
+
+      if (!columns.some((row) => row['name'] === 'search_vector'))
         await this.db.exec(
-          'CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector)',
+          "ALTER TABLE recall_sources ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED",
         );
-      } else {
-        const existing = await this.db
-          .prepare("SELECT name FROM sqlite_master WHERE name='recall_text_search'")
-          .get();
-        await this.db
-          .exec(`CREATE VIRTUAL TABLE IF NOT EXISTS recall_text_search USING fts5(search_text,actor_id,world_id,content='recall_sources',content_rowid='rowid');
-          CREATE TRIGGER IF NOT EXISTS recall_text_insert AFTER INSERT ON recall_sources BEGIN
-            INSERT INTO recall_text_search(rowid,search_text,actor_id,world_id) VALUES(new.rowid,new.search_text,new.actor_id,new.world_id); END;
-          CREATE TRIGGER IF NOT EXISTS recall_text_delete AFTER DELETE ON recall_sources BEGIN
-            INSERT INTO recall_text_search(recall_text_search,rowid,search_text,actor_id,world_id) VALUES('delete',old.rowid,old.search_text,old.actor_id,old.world_id); END;
-          CREATE TRIGGER IF NOT EXISTS recall_text_update AFTER UPDATE OF search_text ON recall_sources WHEN old.search_text<>new.search_text BEGIN
-            INSERT INTO recall_text_search(recall_text_search,rowid,search_text,actor_id,world_id) VALUES('delete',old.rowid,old.search_text,old.actor_id,old.world_id);
-            INSERT INTO recall_text_search(rowid,search_text,actor_id,world_id) VALUES(new.rowid,new.search_text,new.actor_id,new.world_id); END;`);
-        if (!existing)
-          await this.db.exec(
-            "INSERT INTO recall_text_search(recall_text_search) VALUES('rebuild')",
-          );
-      }
+      await this.db.exec(
+        'CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector)',
+      );
+
       await this.db
         .exec(`CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
         CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC)`);
     });
-    if (this.db.dialect === 'postgres')
-      await this.db.exec(`
+    await this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,generation TEXT NOT NULL,source_id TEXT NOT NULL,
         source_revision TEXT NOT NULL,model TEXT NOT NULL,dimensions BIGINT NOT NULL,embedding public.vector NOT NULL,
@@ -508,13 +525,12 @@ export class MemoryRepository {
         if (page.length < 1000) break;
       }
 
-      if (this.db.dialect === 'postgres')
-        await this.db
-          .prepare(
-            `DELETE FROM memory_vectors AS v WHERE v.world_id=? AND v.actor_id=? AND NOT EXISTS
+      await this.db
+        .prepare(
+          `DELETE FROM memory_vectors AS v WHERE v.world_id=? AND v.actor_id=? AND NOT EXISTS
           (SELECT 1 FROM recall_sources r WHERE r.world_id=v.world_id AND r.actor_id=v.actor_id AND r.id=v.source_id AND r.revision=v.source_revision AND r.eligible=1)`,
-          )
-          .run(worldId, actorId);
+        )
+        .run(worldId, actorId);
       await this.refreshQueue(worldId, actorId, null);
     }
     // An action can create observations for hundreds of actors. Batch their indexed
@@ -527,14 +543,7 @@ export class MemoryRepository {
           UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND s.source_id=c.id)`;
       const params = [...pairs.flat(), worldId, worldId, worldId];
       const target = '(r.actor_id,r.id) IN (SELECT actor_id,id FROM affected)';
-      if (this.db.dialect !== 'postgres') {
-        await this.db
-          .prepare(
-            `${cte} UPDATE recall_sources AS r SET eligible=CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END WHERE r.world_id=? AND ${target}`,
-          )
-          .run(...params);
-        continue;
-      }
+
       // One snapshot computes eligibility and the wanted queue for this affected set.
       // DML CTEs cannot read one another's table updates: all consumers use `desired`,
       // including removed sources. Queue delete/upsert sets are deliberately disjoint.
@@ -572,7 +581,6 @@ export class MemoryRepository {
   }
 
   private async refreshQueue(worldId: string, actorId: string, ids: Set<string> | null) {
-    if (this.db.dialect !== 'postgres') return;
     const values = ids ? [...ids] : [];
     for (let offset = 0; offset < Math.max(1, values.length); offset += 250) {
       const batch = values.slice(offset, offset + 250),
@@ -622,9 +630,7 @@ export class MemoryRepository {
   /** SQL counterpart of hasLinguisticSpeech: no-word cues remain recallable evidence,
    * but cannot crowd the automatic dialogue or protected verbatim pool. */
   private get linguisticSpeech(): string {
-    return this.db.dialect === 'postgres'
-      ? "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'"
-      : "json_extract(a.payload,'$.speech.intelligibility') IN ('partial','clear') AND json_extract(a.payload,'$.speech.perception')<>'seen'";
+    return "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'";
   }
   async context(
     scope: MemoryScope,
@@ -677,8 +683,10 @@ export class MemoryRepository {
   ): Promise<ConversationSource[]> {
     // Restrict history by conversation, then check actor-scoped sources by key.
     // A multiway join multiplied scans with cold PostgreSQL statistics; starting
-    // at recall instead scanned unrelated personal history.
-    // docs/verification.md#conversation-compaction
+    // at recall instead scanned unrelated personal history. The scalar awareness
+    // probe keeps cold-statistics plans from rescanning/parsing the actor's entire
+    // speech history once per turn (rather than using the exact source key).
+    // docs/verification.md#postgresql-only-storage-and-shared-preparation
     const permittedSource =
       "r.world_id=e.world_id AND r.actor_id=? AND r.id=e.id AND r.eligible=1 AND r.source_kind='awareness'";
     const rows = await this.db
@@ -689,8 +697,8 @@ export class MemoryRepository {
         (SELECT c.payload FROM mind_corrections c WHERE c.world_id=e.world_id AND c.actor_id=? AND c.source_id=e.id) AS correction
         FROM history_events e WHERE e.world_id=? AND e.conversation_id=?
         AND (SELECT generation FROM world_head WHERE id=1)=?
-        AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech'
-        AND EXISTS (SELECT 1 FROM mind_awareness a WHERE a.world_id=e.world_id AND a.actor_id=? AND a.source_id=e.id AND ${this.linguisticSpeech})
+        AND (e.payload::jsonb->>'type')='speech'
+        AND (SELECT 1 FROM mind_awareness a WHERE a.world_id=e.world_id AND a.actor_id=? AND a.source_id=e.id AND ${this.linguisticSpeech} LIMIT 1)=1
         AND (SELECT 1 FROM recall_sources r WHERE ${permittedSource})=1
         ORDER BY sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
       )
@@ -728,7 +736,7 @@ export class MemoryRepository {
   ): Promise<void> {
     const key = conversationCompactionKey(scope.worldId, scope.actorId, conversationId);
     await this.db.transaction(async () => {
-      // Serialize with gameplay commits, including restore, on both SQL backends.
+      // Serialize with gameplay commits, including restore, with the PostgreSQL writer.
       const head = await this.db
         .prepare(
           'UPDATE world_head SET generation=generation WHERE id=1 AND world_id=? AND generation=? RETURNING generation',
@@ -947,8 +955,7 @@ export class MemoryRepository {
       const from = mode === 'daily' ? (review?.day ?? -1) * 86400 : -Number.MAX_VALUE;
       const to = mode === 'daily' ? from + 86400 : simTime - EXPERIENCE_LIMITS.rawHours * 3600;
       const after = review?.after ?? { at: -Number.MAX_VALUE, sequence: 0, id: '' };
-      const payloadBytes =
-        this.db.dialect === 'postgres' ? 'octet_length(payload)' : 'length(CAST(payload AS BLOB))';
+      const payloadBytes = 'octet_length(payload)';
       const rows = await this.db
         .prepare(
           `SELECT ${sourceColumns}, CASE r.source_kind ${Object.entries(sourceTables)
@@ -1080,32 +1087,16 @@ export class MemoryRepository {
       const terms = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])];
       let matched: Record<string, unknown>[] = [];
       if (terms.length) {
-        if (this.db.dialect === 'postgres') {
-          const expression = terms.map((term) => `'${term}':*`).join(' | ');
-          matched = await this.db
-            .prepare(
-              `SELECT ${sourceColumns},
+        const expression = terms.map((term) => `'${term}':*`).join(' | ');
+        matched = await this.db
+          .prepare(
+            `SELECT ${sourceColumns},
             ts_rank(r.search_vector,to_tsquery('simple',?)) AS score
             FROM recall_sources r WHERE ${this.eligible}
             AND r.search_vector @@ to_tsquery('simple',?)
             ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
-            )
-            .all(expression, ...this.params(scope), expression, limit);
-        } else {
-          const phrase = (value: string) => '"' + value.replaceAll('"', '""') + '"';
-          const expression = `world_id:${phrase(scope.worldId)} AND actor_id:${phrase(scope.actorId)} AND search_text:(${terms.map((term) => `"${term}"*`).join(' OR ')})`;
-          // Ordering by the native rank alone lets FTS stream its ranked matches;
-          // adding required/recency sorting forces all hits through a temporary sort.
-          // Required sources are selected separately below, with no newest-only prefilter.
-          matched = await this.db
-            .prepare(
-              `SELECT ${sourceColumns}, -rank AS score
-            FROM recall_text_search CROSS JOIN recall_sources r ON r.rowid=recall_text_search.rowid
-            WHERE ${this.eligible} AND recall_text_search MATCH ?
-            ORDER BY rank LIMIT ?`,
-            )
-            .all(...this.params(scope), expression, limit);
-        }
+          )
+          .all(expression, ...this.params(scope), expression, limit);
       }
       const fallback = await this.db
         .prepare(
@@ -1134,18 +1125,27 @@ export class MemoryRepository {
       return this.hydrate(rows);
     });
   }
-  private async hydrate(rows: Record<string, unknown>[]): Promise<RetrievedMemory[]> {
+  private async hydrate(
+    rows: Record<string, unknown>[],
+    cache?: MemoryReadCache,
+  ): Promise<RetrievedMemory[]> {
     if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     // Check serialized source bytes in SQL before bringing bodies into the host. One
     // read snapshot binds the check and hydration to the same versions.
-    let bytes = 0;
+    const reused = rows.flatMap((row) => {
+      const cached = cache?.get(row);
+      return cached ? [{ row, ...cached }] : [];
+    });
+    let bytes = reused.reduce((sum, entry) => sum + entry.bytes, 0);
+    if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+    const missing = rows.filter((row) => !cache?.get(row));
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
-      const selected = rows.filter((row) => row['source_kind'] === kind);
+      const selected = missing.filter((row) => row['source_kind'] === kind);
       for (let offset = 0; offset < selected.length; offset += 350) {
         const batch = selected.slice(offset, offset + 350);
         const size = await this.db
           .prepare(
-            `SELECT SUM(${this.db.dialect === 'postgres' ? 'octet_length(payload)' : 'length(CAST(payload AS BLOB))'}) AS bytes
+            `SELECT SUM(octet_length(payload)) AS bytes
           FROM ${sourceTables[kind]} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
           )
           .get(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
@@ -1153,9 +1153,12 @@ export class MemoryRepository {
         if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
       }
     }
-    const result: RetrievedMemory[] = [];
+    const result: RetrievedMemory[] = reused.map(({ row, value }) => ({
+      ...value,
+      ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+    }));
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
-      const selected = rows.filter((row) => row['source_kind'] === kind);
+      const selected = missing.filter((row) => row['source_kind'] === kind);
       for (let offset = 0; offset < selected.length; offset += 800) {
         const batch = selected.slice(offset, offset + 800);
         const values = await this.db
@@ -1200,16 +1203,28 @@ export class MemoryRepository {
               sequence: summary.sequence,
             };
           } else memory = JSON.parse(payload) as MemoryRecord;
-          result.push({
+          const value: RetrievedMemory = {
             memory,
             awareness,
             revision: String(row['revision']),
+          };
+          cache?.put(row, value, Buffer.byteLength(payload));
+          result.push({
+            ...value,
             ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
           });
         }
       }
     }
-    return result;
+    // Reuse must not change the previous kind/selection order or duplicate grouping.
+    const order = new Map(
+      Object.keys(sourceTables)
+        .flatMap((kind) =>
+          rows.filter((row) => row['source_kind'] === kind).map((row) => String(row['id'])),
+        )
+        .map((id, index) => [id, index]),
+    );
+    return result.sort((a, b) => order.get(a.memory.id)! - order.get(b.memory.id)!);
   }
   async count(scope: MemoryScope): Promise<number> {
     const row = await this.db
@@ -1218,7 +1233,7 @@ export class MemoryRepository {
     return Number(row?.['count'] ?? 0);
   }
   async current(scope: MemoryScope, sources: { id: string; revision: string }[]): Promise<boolean> {
-    return this.snapshot(async () => {
+    const read = async () => {
       for (let offset = 0; offset < sources.length; offset += 500) {
         const batch = sources.slice(offset, offset + 500);
         const rows = await this.db
@@ -1230,8 +1245,37 @@ export class MemoryRepository {
         if (batch.some((source) => versions.get(source.id) !== source.revision)) return false;
       }
       return true;
-    });
+    };
+    return sources.length > 500 ? this.snapshot(read) : read();
   }
+  /** One fresh SQL snapshot validates conversation membership/corrections and all
+   * other selected evidence. Covered sources need no duplicate revision query. */
+  async validatePreparation(
+    scope: MemoryScope,
+    conversation: { id: string; sequence: number; sources: ConversationSource[] } | undefined,
+    sources: { id: string; revision: string }[],
+  ): Promise<boolean> {
+    const covered = new Map(conversation?.sources.map((source) => [source.id, source.revision]));
+    const remaining = new Map<string, { id: string; revision: string }>();
+    for (const source of sources) {
+      const previous = covered.get(source.id) ?? remaining.get(source.id)?.revision;
+      if (previous && previous !== source.revision) return false;
+      if (!previous) remaining.set(source.id, source);
+    }
+    const read = async () => {
+      if (conversation) {
+        const current = (await this.conversationSources(scope, conversation.id)).filter(
+          (source) => source.sequence <= conversation.sequence,
+        );
+        if (JSON.stringify(current) !== JSON.stringify(conversation.sources)) return false;
+      }
+      return this.current(scope, [...remaining.values()]);
+    };
+    // A lone SELECT already has a coherent snapshot; only combined reads need
+    // explicit BEGIN/COMMIT. Never skip fresh membership/revision checks after awaits.
+    return conversation && remaining.size ? this.snapshot(read) : read();
+  }
+
   async coverage(scope: MemoryScope, model: MemoryModel) {
     // A cached committed count needs no BEGIN/COMMIT. Explicit transactions instead
     // use their own snapshot, which may predate the cache or include tentative writes.
@@ -1253,27 +1297,28 @@ export class MemoryRepository {
   }
   private async readCoverage(scope: MemoryScope, model: MemoryModel) {
     const eligible = await this.count(scope);
-    const row =
-      this.db.dialect === 'postgres'
-        ? await this.db
-            .prepare(
-              `SELECT COUNT(*) AS count FROM memory_vectors
+    const row = await this.db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM memory_vectors
       WHERE world_id=? AND actor_id=? AND generation=? AND model=? AND dimensions=? AND (SELECT generation FROM world_head WHERE id=1)=?`,
-            )
-            .get(
-              scope.worldId,
-              scope.actorId,
-              scope.generation,
-              model.model,
-              model.dimensions,
-              scope.generation,
-            )
-        : undefined;
+      )
+      .get(
+        scope.worldId,
+        scope.actorId,
+        scope.generation,
+        model.model,
+        model.dimensions,
+        scope.generation,
+      );
     const indexed = Number(row?.['count'] ?? 0);
     return { eligible, indexed, missing: Math.max(0, eligible - indexed) };
   }
   /** Exact event-time evidence for pending work, including sources evicted from RAM. */
-  async evidence(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+  async evidence(
+    scope: MemoryScope,
+    ids: string[],
+    cache?: MemoryReadCache,
+  ): Promise<RetrievedMemory[]> {
     return this.snapshot(async () => {
       const unique = [...new Set(ids)];
       if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
@@ -1288,7 +1333,7 @@ export class MemoryRepository {
             .all(...this.params(scope), ...batch)),
         );
       }
-      return this.hydrate(rows);
+      return this.hydrate(rows, cache);
     });
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.
@@ -1307,10 +1352,18 @@ export class MemoryRepository {
       ),
     );
   }
-  async required(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
-    return this.snapshot(() => this.readRequired(scope, ids));
+  async required(
+    scope: MemoryScope,
+    ids: string[],
+    cache?: MemoryReadCache,
+  ): Promise<RetrievedMemory[]> {
+    return this.snapshot(() => this.readRequired(scope, ids, cache));
   }
-  private async readRequired(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+  private async readRequired(
+    scope: MemoryScope,
+    ids: string[],
+    cache?: MemoryReadCache,
+  ): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
     if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     const rows = await this.db
@@ -1340,39 +1393,46 @@ export class MemoryRepository {
       for (const row of matches) selected.set(`${row['source_kind']}:${row['id']}`, row);
       if (selected.size > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     }
-    return this.hydrate([...selected.values()]);
+    return this.hydrate([...selected.values()], cache);
   }
 
   async select(
     scope: MemoryScope,
     limit: number,
     semantic?: MemoryModel & { query: number[] },
+    excludedIds: string[] = [],
+    cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
-    return this.snapshot(() => this.readSelection(scope, limit, semantic));
+    return this.snapshot(() => this.readSelection(scope, limit, semantic, excludedIds, cache));
   }
   private async readSelection(
     scope: MemoryScope,
     limit: number,
     semantic?: MemoryModel & { query: number[] },
+    excludedIds: string[] = [],
+    cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid memory selection size.');
+    if (excludedIds.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    // Apply before LIMIT and body hydration; grouping cannot reintroduce covered turns.
+    const optional = `NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))`;
     const fallback = await this.db
       .prepare(
-        `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
+        `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${optional} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
       )
-      .all(...this.params(scope), limit);
-    if (!semantic || this.db.dialect !== 'postgres') return this.hydrate(fallback);
+      .all(...this.params(scope), excludedIds, excludedIds, limit);
+    if (!semantic) return this.hydrate(fallback, cache);
     this.validateVector(semantic, semantic.query);
     const rows = await this.db
       .prepare(
         `WITH matches AS MATERIALIZED (
           SELECT source_id,source_revision,1-(embedding OPERATOR(public.<=>) ?::public.vector) AS score
           FROM memory_vectors WHERE world_id=? AND actor_id=? AND generation=? AND model=? AND dimensions=?
-            AND (SELECT generation FROM world_head WHERE id=1)=?
+            AND (SELECT generation FROM world_head WHERE id=1)=? AND source_id <> ALL(?::text[])
           ORDER BY embedding OPERATOR(public.<=>) ?::public.vector,source_id LIMIT ?)
         SELECT ${sourceColumns},m.score FROM matches m JOIN recall_sources r ON r.id=m.source_id AND r.revision=m.source_revision
-        WHERE ${this.eligible} ORDER BY m.score DESC,r.id`,
+        WHERE ${this.eligible} AND ${optional} ORDER BY m.score DESC,r.id`,
       )
       .all(
         JSON.stringify(semantic.query),
@@ -1382,9 +1442,12 @@ export class MemoryRepository {
         semantic.model,
         semantic.dimensions,
         scope.generation,
+        excludedIds,
         JSON.stringify(semantic.query),
         limit,
         ...this.params(scope),
+        excludedIds,
+        excludedIds,
       );
     const combined = [
       ...new Map([...rows, ...fallback].map((row) => [row['id'], row])).values(),
@@ -1392,10 +1455,9 @@ export class MemoryRepository {
     // Map above must prefer the semantic row when its fallback copy is also present.
     const scores = new Map(rows.map((row) => [row['id'], row['score']]));
     for (const row of combined) if (scores.has(row['id'])) row['score'] = scores.get(row['id']);
-    return this.hydrate(combined);
+    return this.hydrate(combined, cache);
   }
   async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {
-    if (this.db.dialect !== 'postgres') return [];
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid indexing batch size.');
     const registration = JSON.stringify([
@@ -1479,7 +1541,6 @@ export class MemoryRepository {
     });
   }
   async putVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
-    if (this.db.dialect !== 'postgres') return;
     return this.db.transaction(() => this.publishVectors(scope, model, values));
   }
   private async publishVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
@@ -1533,7 +1594,6 @@ export class MemoryRepository {
   /** A restored identical source may reuse paid derived data. Publication still checks
    * the new generation, and dispatched/uncertain attempts stay outside gameplay rewind. */
   async reuseVectors(worldId: string, changed?: MemoryChanges) {
-    if (this.db.dialect !== 'postgres') return;
     this.vectorRevision++;
     this.db.afterCommit?.(() => this.vectorRevision++);
     const pairs = changed

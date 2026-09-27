@@ -1,16 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 
-/** A profile can create/drop only its own fresh database. Normal application database
+/** Fixtures and profiles create/drop only their own fresh database. Normal application database
  * configuration is never inherited. docs/maintainers/performance-profiling.md
  */
-export async function createProfileDatabase(connectionString) {
-  if (!connectionString) return { url: '', details: { adapter: 'sqlite' }, close: async () => {} };
+export async function createDisposableDatabase(connectionString) {
   let adminUrl;
   try {
     adminUrl = new URL(connectionString);
   } catch {
-    throw new Error('Profiling requires an explicit loopback PostgreSQL admin URL.');
+    throw new Error(
+      'Disposable database creation requires an explicit loopback PostgreSQL admin URL.',
+    );
   }
   if (
     !['postgres:', 'postgresql:'].includes(adminUrl.protocol) ||
@@ -18,11 +19,13 @@ export async function createProfileDatabase(connectionString) {
     adminUrl.search ||
     adminUrl.hash
   )
-    throw new Error('Profiling accepts only loopback PostgreSQL URLs without query overrides.');
+    throw new Error(
+      'Disposable database creation accepts only loopback PostgreSQL URLs without query overrides.',
+    );
 
-  const require = createRequire(new URL('../../apps/server/package.json', import.meta.url));
+  const require = createRequire(new URL('../apps/server/package.json', import.meta.url));
   const { Client } = require('pg');
-  const database = 'openlegend_profile_' + randomUUID().replaceAll('-', '');
+  const database = 'openlegend_fixture_' + randomUUID().replaceAll('-', '');
   const withAdmin = async (stage, operation) => {
     const client = new Client({
       connectionString: adminUrl.toString(),

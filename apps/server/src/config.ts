@@ -19,6 +19,19 @@ function numberSetting(
 
 /** Trusted operator configuration. Secrets and arbitrary endpoints never come from the browser. */
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
+  const databaseUrl = env['OPEN_LEGEND_DATABASE_URL']?.trim() ?? '';
+  try {
+    const url = databaseUrl ? new URL(databaseUrl) : undefined;
+    if (
+      !url ||
+      !['postgres:', 'postgresql:'].includes(url.protocol) ||
+      !url.hostname ||
+      url.pathname.length < 2
+    )
+      throw new Error();
+  } catch {
+    throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
+  }
   const macrofoldBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
   if (macrofoldBillingMode !== 'byok' && macrofoldBillingMode !== 'managed')
     throw new Error('MACROFOLD_BILLING_MODE must be byok or managed.');
@@ -108,7 +121,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       sessionMs: numberSetting(env, 'OPEN_LEGEND_SESSION_HOURS', 8, 0.1, 24) * 3_600_000,
     },
     worldPreset,
-    databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
+    databaseUrl,
     embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',
     embeddingDimensions: numberSetting(env, 'EMBEDDING_DIMENSIONS', 512, 64, 3072),
@@ -122,7 +135,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port: numberSetting(env, 'PORT', 3210, 1024, 65535),
-    databasePath: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data', 'world.sqlite'),
+    dataDirectory: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data'),
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,

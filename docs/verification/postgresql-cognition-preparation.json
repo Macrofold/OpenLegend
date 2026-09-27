@@ -1,0 +1,1183 @@
+{
+  "date": "2026-09-27",
+  "baseline": "059c636000456476459b1c190c1965b3870ee646",
+  "runtime": "Node 22.23.2; PostgreSQL 14.17; pgvector 0.8.6; local macOS arm64",
+  "scope": "Explicit zero-cost fixtures through actual AiDirector and CognitionMaintenance. SQL counts include transactions; hydration counts actual mind body rows/bytes returned by pg. Heap deltas are samples, not peaks or allocation totals. No live provider or hosted capacity claim.",
+  "runs": {
+    "short": {
+      "before": {
+        "turns": 5,
+        "samples": [
+          {
+            "cpuMs": 86.7,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19258
+              }
+            ],
+            "round": 0,
+            "ms": 196.35016700000006,
+            "sqlMs": 151.35970500000053,
+            "statements": 122,
+            "hydratedRows": 16,
+            "hydratedBytes": 29342,
+            "heapDelta": 14300408,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 61.792,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19510
+              }
+            ],
+            "round": 1,
+            "ms": 128.44837499999994,
+            "sqlMs": 103.10617599999932,
+            "statements": 114,
+            "hydratedRows": 20,
+            "hydratedBytes": 32598,
+            "heapDelta": 12040320,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 56.692,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19762
+              }
+            ],
+            "round": 2,
+            "ms": 68.31258400000002,
+            "sqlMs": 46.53653899999995,
+            "statements": 113,
+            "hydratedRows": 24,
+            "hydratedBytes": 35854,
+            "heapDelta": 11339744,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 57.948,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 20014
+              }
+            ],
+            "round": 3,
+            "ms": 62.69449999999961,
+            "sqlMs": 47.87424799999826,
+            "statements": 114,
+            "hydratedRows": 28,
+            "hydratedBytes": 39110,
+            "heapDelta": 11147944,
+            "compactions": 0,
+            "status": "completed"
+          }
+        ],
+        "compactions": 0,
+        "responses": 4
+      },
+      "after": {
+        "turns": 5,
+        "samples": [
+          {
+            "cpuMs": 83.451,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19258
+              }
+            ],
+            "round": 0,
+            "ms": 94.72404199999983,
+            "sqlMs": 50.433375999999726,
+            "statements": 109,
+            "hydratedRows": 7,
+            "hydratedBytes": 13893,
+            "heapDelta": 13341696,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 71.186,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19510
+              }
+            ],
+            "round": 1,
+            "ms": 82.73570800000016,
+            "sqlMs": 64.5330829999998,
+            "statements": 102,
+            "hydratedRows": 9,
+            "hydratedBytes": 15521,
+            "heapDelta": 11902976,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 49.659,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 19762
+              }
+            ],
+            "round": 2,
+            "ms": 59.894209000000046,
+            "sqlMs": 38.859460000001036,
+            "statements": 101,
+            "hydratedRows": 11,
+            "hydratedBytes": 17149,
+            "heapDelta": 12019784,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 53.887,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 20014
+              }
+            ],
+            "round": 3,
+            "ms": 47.08112499999993,
+            "sqlMs": 32.244918000000325,
+            "statements": 102,
+            "hydratedRows": 13,
+            "hydratedBytes": 18777,
+            "heapDelta": 10830368,
+            "compactions": 0,
+            "status": "completed"
+          }
+        ],
+        "compactions": 0,
+        "responses": 4
+      }
+    },
+    "capacity": {
+      "before": {
+        "turns": 350,
+        "samples": [
+          {
+            "cpuMs": 330.698,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 9458
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33610
+              }
+            ],
+            "round": 0,
+            "ms": 12931.787042,
+            "sqlMs": 12862.731131000006,
+            "statements": 193,
+            "hydratedRows": 654,
+            "hydratedBytes": 844629,
+            "heapDelta": 4735032,
+            "compactions": 4,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 136.185,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 33862
+              }
+            ],
+            "round": 1,
+            "ms": 6117.504292000001,
+            "sqlMs": 6078.890120999995,
+            "statements": 117,
+            "hydratedRows": 367,
+            "hydratedBytes": 472831,
+            "heapDelta": 3999680,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 123.211,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34114
+              }
+            ],
+            "round": 2,
+            "ms": 5974.3136669999985,
+            "sqlMs": 5940.284837000017,
+            "statements": 116,
+            "hydratedRows": 369,
+            "hydratedBytes": 474459,
+            "heapDelta": 3346344,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 256.793,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 10304
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33517
+              }
+            ],
+            "round": 3,
+            "ms": 13271.915709000004,
+            "sqlMs": 13233.279546999987,
+            "statements": 187,
+            "hydratedRows": 660,
+            "hydratedBytes": 849513,
+            "heapDelta": 1646936,
+            "compactions": 4,
+            "status": "completed"
+          }
+        ],
+        "compactions": 8,
+        "responses": 4
+      },
+      "after": {
+        "turns": 350,
+        "samples": [
+          {
+            "cpuMs": 163.449,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 9458
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33610
+              }
+            ],
+            "round": 0,
+            "ms": 924.3544999999999,
+            "sqlMs": 860.2994919999996,
+            "statements": 179,
+            "hydratedRows": 352,
+            "hydratedBytes": 454556,
+            "heapDelta": 8309648,
+            "compactions": 4,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 79.056,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 33862
+              }
+            ],
+            "round": 1,
+            "ms": 173.95095900000024,
+            "sqlMs": 149.16637799999944,
+            "statements": 102,
+            "hydratedRows": 65,
+            "hydratedBytes": 82758,
+            "heapDelta": 3130712,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 83.54,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34114
+              }
+            ],
+            "round": 2,
+            "ms": 123.71379100000013,
+            "sqlMs": 101.70187400000123,
+            "statements": 103,
+            "hydratedRows": 67,
+            "hydratedBytes": 84386,
+            "heapDelta": 3902792,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "cpuMs": 109.853,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 10304
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33517
+              }
+            ],
+            "round": 3,
+            "ms": 218.83424999999988,
+            "sqlMs": 189.41191399999934,
+            "statements": 170,
+            "hydratedRows": 358,
+            "hydratedBytes": 459440,
+            "heapDelta": 5600648,
+            "compactions": 4,
+            "status": "completed"
+          }
+        ],
+        "compactions": 8,
+        "responses": 4
+      }
+    },
+    "reflection": {
+      "before": {
+        "reflection": true,
+        "samples": [
+          {
+            "round": 0,
+            "ms": 3259.8371659999993,
+            "cpuMs": 113.899,
+            "sqlMs": 3202.979916999995,
+            "statements": 140,
+            "hydratedRows": 328,
+            "hydratedBytes": 806228,
+            "heapDelta": 10077424,
+            "compactions": 4,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 23701
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 23707
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 23712
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 12958
+              },
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": false
+          },
+          {
+            "round": 1,
+            "ms": 115.31787499999973,
+            "cpuMs": 71.887,
+            "sqlMs": 93.08124599999883,
+            "statements": 79,
+            "hydratedRows": 203,
+            "hydratedBytes": 499522,
+            "heapDelta": 2849280,
+            "compactions": 0,
+            "inputs": [
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": false
+          },
+          {
+            "round": 2,
+            "ms": 91.53629199999978,
+            "cpuMs": 67.507,
+            "sqlMs": 67.93137200000183,
+            "statements": 96,
+            "hydratedRows": 203,
+            "hydratedBytes": 499522,
+            "heapDelta": 6499784,
+            "compactions": 0,
+            "inputs": [
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": true
+          }
+        ],
+        "reflections": 3
+      },
+      "after": {
+        "reflection": true,
+        "samples": [
+          {
+            "round": 0,
+            "ms": 262.3811659999999,
+            "cpuMs": 79.719,
+            "sqlMs": 218.3221250000006,
+            "statements": 125,
+            "hydratedRows": 177,
+            "hydratedBytes": 435250,
+            "heapDelta": 4629256,
+            "compactions": 4,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 23701
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 23707
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 23712
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 12958
+              },
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": false
+          },
+          {
+            "round": 1,
+            "ms": 122.24295799999982,
+            "cpuMs": 64.819,
+            "sqlMs": 105.44320599999969,
+            "statements": 65,
+            "hydratedRows": 52,
+            "hydratedBytes": 128544,
+            "heapDelta": 12052680,
+            "compactions": 0,
+            "inputs": [
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": false
+          },
+          {
+            "round": 2,
+            "ms": 124.4446660000001,
+            "cpuMs": 64.979,
+            "sqlMs": 103.75004199999944,
+            "statements": 86,
+            "hydratedRows": 52,
+            "hydratedBytes": 128544,
+            "heapDelta": 2832224,
+            "compactions": 0,
+            "inputs": [
+              {
+                "task": "background_reflection",
+                "bytes": 30970
+              }
+            ],
+            "staleRejected": true
+          }
+        ],
+        "reflections": 3
+      }
+    },
+    "repeatedWarm": {
+      "before": {
+        "turns": 350,
+        "samples": [
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 386.859,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 9458
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33610
+              }
+            ],
+            "round": 0,
+            "ms": 15895.604625,
+            "sqlMs": 15829.698292000025,
+            "statements": 193,
+            "hydratedRows": 654,
+            "hydratedBytes": 844629,
+            "heapDelta": 4880488,
+            "compactions": 4,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 135.888,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 33862
+              }
+            ],
+            "round": 1,
+            "ms": 7548.359333,
+            "sqlMs": 7502.743369999993,
+            "statements": 117,
+            "hydratedRows": 367,
+            "hydratedBytes": 472831,
+            "heapDelta": 5330160,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 138.963,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34114
+              }
+            ],
+            "round": 2,
+            "ms": 8770.386625,
+            "sqlMs": 8718.88950100002,
+            "statements": 116,
+            "hydratedRows": 369,
+            "hydratedBytes": 474459,
+            "heapDelta": 3496592,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 124.286,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34366
+              }
+            ],
+            "round": 3,
+            "ms": 6256.0825419999965,
+            "sqlMs": 6219.126994000035,
+            "statements": 117,
+            "hydratedRows": 371,
+            "hydratedBytes": 476087,
+            "heapDelta": 5402064,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 152.001,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34618
+              }
+            ],
+            "round": 4,
+            "ms": 6238.744166999997,
+            "sqlMs": 6203.240623000005,
+            "statements": 116,
+            "hydratedRows": 373,
+            "hydratedBytes": 477715,
+            "heapDelta": 1318224,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 127.622,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34870
+              }
+            ],
+            "round": 5,
+            "ms": 6380.424167000005,
+            "sqlMs": 6342.161496999972,
+            "statements": 117,
+            "hydratedRows": 375,
+            "hydratedBytes": 479343,
+            "heapDelta": 3635504,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 142.611,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35122
+              }
+            ],
+            "round": 6,
+            "ms": 6681.213541999998,
+            "sqlMs": 6652.508122000036,
+            "statements": 116,
+            "hydratedRows": 377,
+            "hydratedBytes": 480971,
+            "heapDelta": 3612144,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 109.816,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35374
+              }
+            ],
+            "round": 7,
+            "ms": 2805.3941669999986,
+            "sqlMs": 2770.2945880000407,
+            "statements": 114,
+            "hydratedRows": 379,
+            "hydratedBytes": 482599,
+            "heapDelta": 2813904,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 107.531,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35626
+              }
+            ],
+            "round": 8,
+            "ms": 130.16920799999934,
+            "sqlMs": 103.60337399994751,
+            "statements": 115,
+            "hydratedRows": 381,
+            "hydratedBytes": 484227,
+            "heapDelta": 8676768,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 106.079,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35878
+              }
+            ],
+            "round": 9,
+            "ms": 132.03995900000155,
+            "sqlMs": 105.63403699995979,
+            "statements": 114,
+            "hydratedRows": 383,
+            "hydratedBytes": 485855,
+            "heapDelta": 9014448,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 98.997,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 36130
+              }
+            ],
+            "round": 10,
+            "ms": 132.1220420000027,
+            "sqlMs": 105.9484239999947,
+            "statements": 115,
+            "hydratedRows": 385,
+            "hydratedBytes": 487483,
+            "heapDelta": 8511184,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 150.21,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 12278
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33552
+              }
+            ],
+            "round": 11,
+            "ms": 273.7541249999995,
+            "sqlMs": 256.4737110000133,
+            "statements": 182,
+            "hydratedRows": 676,
+            "hydratedBytes": 862537,
+            "heapDelta": 8485224,
+            "compactions": 4,
+            "status": "completed"
+          }
+        ],
+        "compactions": 8,
+        "responses": 12,
+        "spoken": [
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet."
+        ]
+      },
+      "after": {
+        "turns": 350,
+        "samples": [
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 159.421,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 9458
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33610
+              }
+            ],
+            "round": 0,
+            "ms": 819.1311660000001,
+            "sqlMs": 758.5658350000001,
+            "statements": 178,
+            "hydratedRows": 352,
+            "hydratedBytes": 454556,
+            "heapDelta": 8378992,
+            "compactions": 4,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 88.235,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 33862
+              }
+            ],
+            "round": 1,
+            "ms": 135.78304199999957,
+            "sqlMs": 105.25203800000008,
+            "statements": 103,
+            "hydratedRows": 65,
+            "hydratedBytes": 82758,
+            "heapDelta": 4030024,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 88.354,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34114
+              }
+            ],
+            "round": 2,
+            "ms": 122.01666700000033,
+            "sqlMs": 97.95266899999979,
+            "statements": 102,
+            "hydratedRows": 67,
+            "hydratedBytes": 84386,
+            "heapDelta": 2886968,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 83.797,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34366
+              }
+            ],
+            "round": 3,
+            "ms": 118.58266699999967,
+            "sqlMs": 96.06816499999786,
+            "statements": 102,
+            "hydratedRows": 69,
+            "hydratedBytes": 86014,
+            "heapDelta": 3897712,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 78.616,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34618
+              }
+            ],
+            "round": 4,
+            "ms": 132.8574580000004,
+            "sqlMs": 109.84400200000027,
+            "statements": 103,
+            "hydratedRows": 71,
+            "hydratedBytes": 87642,
+            "heapDelta": 3885984,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 80.197,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 34870
+              }
+            ],
+            "round": 5,
+            "ms": 118.41404199999988,
+            "sqlMs": 98.1690890000009,
+            "statements": 102,
+            "hydratedRows": 73,
+            "hydratedBytes": 89270,
+            "heapDelta": 4047880,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 82.457,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35122
+              }
+            ],
+            "round": 6,
+            "ms": 116.64816699999983,
+            "sqlMs": 96.66133300000047,
+            "statements": 102,
+            "hydratedRows": 75,
+            "hydratedBytes": 90898,
+            "heapDelta": 3982776,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 89.671,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35374
+              }
+            ],
+            "round": 7,
+            "ms": 122.37962500000003,
+            "sqlMs": 100.29708700000356,
+            "statements": 103,
+            "hydratedRows": 77,
+            "hydratedBytes": 92526,
+            "heapDelta": 3896944,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 80.338,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35626
+              }
+            ],
+            "round": 8,
+            "ms": 121.49250000000029,
+            "sqlMs": 98.66245799999979,
+            "statements": 102,
+            "hydratedRows": 79,
+            "hydratedBytes": 94154,
+            "heapDelta": 3889192,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 90.405,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 35878
+              }
+            ],
+            "round": 9,
+            "ms": 116.87354199999982,
+            "sqlMs": 96.89386799999829,
+            "statements": 103,
+            "hydratedRows": 81,
+            "hydratedBytes": 95782,
+            "heapDelta": 4145440,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 85.306,
+            "inputs": [
+              {
+                "task": "npc_response",
+                "bytes": 36130
+              }
+            ],
+            "round": 10,
+            "ms": 124.94029200000023,
+            "sqlMs": 106.6857109999969,
+            "statements": 102,
+            "hydratedRows": 83,
+            "hydratedBytes": 97410,
+            "heapDelta": 3980864,
+            "compactions": 0,
+            "status": "completed"
+          },
+          {
+            "derived": {
+              "rows": "1",
+              "bytes": "481"
+            },
+            "cpuMs": 135.55,
+            "inputs": [
+              {
+                "task": "conversation_compaction",
+                "bytes": 24031
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24107
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 24122
+              },
+              {
+                "task": "conversation_compaction",
+                "bytes": 12278
+              },
+              {
+                "task": "npc_response",
+                "bytes": 33552
+              }
+            ],
+            "round": 11,
+            "ms": 239.3048749999998,
+            "sqlMs": 211.66603399999985,
+            "statements": 170,
+            "hydratedRows": 374,
+            "hydratedBytes": 472464,
+            "heapDelta": 6138456,
+            "compactions": 4,
+            "status": "completed"
+          }
+        ],
+        "compactions": 8,
+        "responses": 12,
+        "spoken": [
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet.",
+          "The river inn at dusk, if the rain stops. I have not accepted the trade yet."
+        ]
+      },
+      "measurementNote": "Ten warm replies between cold setup and restore. Summary row/byte measurement follows each timed caller; its one metadata read is excluded from SQL counts but included in wall time. Rows/bytes stay 1/481. Heap deltas do not measure total allocation or peak memory."
+    }
+  }
+}

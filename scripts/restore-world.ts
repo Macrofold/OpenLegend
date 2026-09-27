@@ -5,16 +5,15 @@ import { randomUUID } from 'node:crypto';
 import type { CommandEpoch } from '../apps/server/src/command-receipts.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import type { WorldEvent } from '@open-legend/domain';
-import { readFileSync, statSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { statSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 import {
   readOperationalBackup,
   restoreBackupSlots,
-  type OperationalBackup,
   BACKUP_TABLES,
 } from '../apps/server/src/operational-backup.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqlGameRepository, digest, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
 import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
@@ -24,37 +23,17 @@ await initializeCollisionRuntime();
 const file = process.argv[2];
 if (!file)
   throw new Error(
-    'Usage: restore-world.ts BACKUP_DIRECTORY_OR_LEGACY_JSON. Stop the server first. This restores world state while preserving current paid attempts and forgetting records.',
+    'Usage: restore-world.ts BACKUP_DIRECTORY. Stop the server first. This restores world state while preserving current paid attempts and forgetting records.',
   );
-let legacyBackup: OperationalBackup | undefined;
-if (!statSync(file).isDirectory()) {
-  if (statSync(file).size > 64 * 1024 * 1024)
-    throw new Error('Legacy backup exceeds 64 MiB. Use a streamed backup directory.');
-  const legacy = JSON.parse(readFileSync(file, 'utf8')) as {
-    version: number;
-    digest: string;
-    tables: Record<string, Record<string, unknown>[]>;
-  };
-  if (
-    legacy.version !== 1 ||
-    digest(legacy.tables) !== legacy.digest ||
-    legacy.tables['world']?.length !== 1 ||
-    !['jobs', 'attempts', 'meta'].every((table) => Array.isArray(legacy.tables[table]))
-  )
-    throw new Error('Invalid or incomplete legacy backup.');
-  legacyBackup = {
-    state: JSON.parse(String(legacy.tables['world'][0]!['payload'])) as SavedWorld,
-    tables: legacy.tables,
-  };
-}
+if (!statSync(file).isDirectory())
+  throw new Error(
+    'Current-format backup directory required; legacy JSON is unsupported. Source retained.',
+  );
 const config = readConfig();
-const store = new SqlGameRepository(
-  config.databasePath,
-  config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
-);
+const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
 try {
   await store.ready;
-  const backup = legacyBackup ?? (await readOperationalBackup(file, store.db));
+  const backup = await readOperationalBackup(file, store.db);
   let current = await store.load();
   const state = backup.state;
   upgradeWorldState(state.world);
@@ -86,7 +65,7 @@ try {
         throw new Error('Target is not empty; full restore refused.');
     if (await store.db.prepare("SELECT key FROM meta WHERE key<>'schema' LIMIT 1").get())
       throw new Error('Target has existing operational metadata; full restore refused.');
-    await restoreBackupSlots(backup, dirname(config.databasePath));
+    await restoreBackupSlots(backup, config.dataDirectory);
     await store.db.transaction(async () => {
       for (const table of [...tables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
@@ -114,14 +93,14 @@ try {
       await store.commit(0, state);
     });
     current = await store.load();
-    if (!current || digest(current.state) !== digest(state))
+    if (!current || !isDeepStrictEqual(current.state, state))
       throw new Error('Restored world recovery digest mismatch.');
     await store.recoverInterruptedWork();
     console.log(
       'Full backup restored into an empty target; identities, jobs and accounting retained.',
     );
   } else {
-    await restoreBackupSlots(backup, dirname(config.databasePath));
+    await restoreBackupSlots(backup, config.dataDirectory);
     migrateActors(state.world);
     migrateCognition(state.world);
     await store.authority.restoreBindings(state.world);
@@ -197,7 +176,7 @@ try {
     }
     await store.recoverInterruptedWork();
     const recovered = await store.load();
-    if (!recovered || digest(recovered.state) !== digest(state))
+    if (!recovered || !isDeepStrictEqual(recovered.state, state))
       throw new Error('Restore recovery digest mismatch.');
     console.log('World restored paused; present-day spending and forgetting retained.');
   }

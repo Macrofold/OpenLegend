@@ -89,19 +89,13 @@ export class WorldRecords {
   needsHotPrune = false;
   private readSchema = WORLD_RECORD_SCHEMA;
   private currentContributionsPredicate(alias = ''): string {
-    const json = (field: string) =>
-      this.db.dialect === 'postgres'
-        ? `${alias}payload::jsonb ->> '${field}'`
-        : `json_extract(${alias}payload, '$.${field}')`;
+    const json = (field: string) => `${alias}payload::jsonb ->> '${field}'`;
     // Only explicit terminal independent instances leave the current working set;
     // singleton cooldowns remain present. Complete capture validates cold rows too.
     return `(${json('contribution')} IS NULL OR ${json('active')} IS NULL OR CAST(${json('active')} AS TEXT) NOT IN ('false','0'))`;
   }
   private get legacyAwarenessPredicate(): string {
-    const field = (name: string) =>
-      this.db.dialect === 'postgres'
-        ? `(payload::jsonb ->> '${name}')`
-        : `json_extract(payload, '$.${name}')`;
+    const field = (name: string) => `(payload::jsonb ->> '${name}')`;
     return `(${field('eventType')} IS NULL OR ${field('triggerKind')} IS NULL OR (CAST(${field('intelligible')} AS TEXT) IN ('true','1') AND ${field('content')} IS NULL))`;
   }
   async initialize() {
@@ -109,14 +103,11 @@ export class WorldRecords {
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
       revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
-    const columns =
-      this.db.dialect === 'postgres'
-        ? await this.db
-            .prepare(
-              "SELECT column_name AS name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='sim_placements'",
-            )
-            .all()
-        : await this.db.prepare('PRAGMA table_info(sim_placements)').all();
+    const columns = await this.db
+      .prepare(
+        "SELECT column_name AS name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='sim_placements'",
+      )
+      .all();
     const legacyObjects =
       columns.length > 0 && !columns.some((column) => column['name'] === 'placement_mode');
     const create = (node: RecordNode, parent?: RecordNode): string => {
@@ -139,10 +130,7 @@ export class WorldRecords {
         .join('\n')}`;
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
-    const lineageCustodian =
-      this.db.dialect === 'postgres'
-        ? "(payload::jsonb ->> 'custodianId')"
-        : "json_extract(payload, '$.custodianId')";
+    const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
     if (legacyObjects) {
@@ -210,10 +198,7 @@ export class WorldRecords {
     await this.db.exec(
       `CREATE INDEX IF NOT EXISTS mind_awareness_legacy_trigger ON mind_awareness(world_id,source_id) WHERE ${this.legacyAwarenessPredicate}`,
     );
-    const appraisalState =
-      this.db.dialect === 'postgres'
-        ? "payload::jsonb ->> 'state'"
-        : "json_extract(payload, '$.state')";
+    const appraisalState = "payload::jsonb ->> 'state'";
     await this.db.exec(
       `CREATE INDEX IF NOT EXISTS mind_appraisals_current ON mind_appraisals(world_id,parent_id,position) WHERE ${appraisalState}='active' OR ${appraisalState} IS NULL`,
     );
@@ -477,10 +462,7 @@ export class WorldRecords {
         const batch: unknown[][] = [];
         const create = rows[offset]!.create;
         let bytes = 0;
-        while (
-          offset < rows.length &&
-          (batch.length + 1) * columns.length <= parameterBatchLimit(this.db)
-        ) {
+        while (offset < rows.length && (batch.length + 1) * columns.length <= parameterBatchLimit) {
           const row = rows[offset]!;
           if (row.create !== create) break;
           if (batch.length && bytes + Buffer.byteLength(row.payload) > 262144) break;
@@ -558,26 +540,20 @@ export class WorldRecords {
         groups.set(table, new Map());
         continue;
       }
-      const eventId =
-        this.db.dialect === 'postgres'
-          ? "(t.payload::jsonb ->> 'id')"
-          : "json_extract(t.payload, '$.id')";
+      const eventId = "(t.payload::jsonb ->> 'id')";
       const partial = active && HISTORY_TABLES.has(table);
       const objectPredicate = !active
         ? ''
         : table === 'sim_status_effects'
           ? ` AND ${this.currentContributionsPredicate('t.')}`
           : table === 'mind_appraisals'
-            ? ` AND (${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'state'" : "json_extract(t.payload, '$.state')"}='active' OR ${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'state'" : "json_extract(t.payload, '$.state')"} IS NULL)`
+            ? ` AND (t.payload::jsonb ->> 'state'='active' OR t.payload::jsonb ->> 'state' IS NULL)`
             : ['sim_object_lineage', 'sim_object_retirements'].includes(table)
               ? ' AND 1=0'
               : ['sim_entities', 'sim_entity_geometry', 'sim_declared_owners'].includes(table)
                 ? ` AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired WHERE retired.world_id=t.world_id AND retired.parent_id=t.${table === 'sim_entities' ? 'id' : 'parent_id'})`
                 : '';
-      const json = (field: string) =>
-        this.db.dialect === 'postgres'
-          ? `payload::jsonb ->> '${field}'`
-          : `json_extract(payload, '$.${field}')`;
+      const json = (field: string) => `payload::jsonb ->> '${field}'`;
       const predicate =
         table === 'mind_memories'
           ? `(at>=? OR (kind='commitment' AND COALESCE(CAST(${json('resolved')} AS TEXT),'false') IN ('false','0')))`
@@ -605,7 +581,7 @@ export class WorldRecords {
           .prepare(
             `SELECT id,parent_id,slot,position,payload FROM mind_awareness
           WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
-          (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)`,
+          (SELECT payload::jsonb ->> 'id' FROM world_hot_events WHERE world_id=?)`,
           )
           .all(head.worldId, head.worldId);
         rows = [...new Map([...rows, ...legacy].map((row) => [row['id'], row])).values()];
@@ -655,18 +631,15 @@ export class WorldRecords {
     if (active) {
       const missing = await this.db
         .prepare(
-          `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'id'" : "json_extract(t.payload, '$.id')"} WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
+          `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
         )
         .get(head.worldId);
       if (missing) throw new Error('Active history references a missing source; recovery refused.');
       const ids = [...hotEventDependencies(state.world)];
-      const selector =
-        this.db.dialect === 'postgres'
-          ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
-          : 'SELECT value FROM json_each(?)';
+      const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
       const rows = await this.db
         .prepare(
-          `SELECT t.position,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'id'" : "json_extract(t.payload, '$.id')"} WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
+          `SELECT t.position,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
         )
         .all(head.worldId, head.worldId, JSON.stringify(ids));
       state.world.events = rows.map((row) => JSON.parse(String(row['payload'])));
@@ -691,10 +664,7 @@ export class WorldRecords {
     return { revision: head.revision, state };
   }
   async pruneActiveEvents(state: SavedWorld): Promise<void> {
-    const selector =
-      this.db.dialect === 'postgres'
-        ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
-        : 'SELECT value FROM json_each(?)';
+    const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
     await this.db
       .prepare(`DELETE FROM world_hot_events WHERE world_id=? AND id NOT IN (${selector})`)
       .run(
@@ -903,10 +873,7 @@ export class WorldRecords {
   /** Cold historical identities stay outside the live simulation set. Current request
    * authority is checked by the service; this query requires occurrence-time custody. */
   async objectHistory(worldId: string, actorId: string, after = '', objectId?: string) {
-    const custodian =
-      this.db.dialect === 'postgres'
-        ? "(l.payload::jsonb ->> 'custodianId')"
-        : "json_extract(l.payload, '$.custodianId')";
+    const custodian = "(l.payload::jsonb ->> 'custodianId')";
     const rows = await this.db
       .prepare(
         `SELECT l.payload, e.payload AS entity

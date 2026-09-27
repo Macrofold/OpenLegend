@@ -6,9 +6,9 @@ The native-only profiler runs disposable deterministic scenarios without a datab
 
 **Use the full PostgreSQL-backed server as the primary production-performance baseline.** Include the real timer, command admission and durable acknowledgement, history projection, SSE, and representative cognition/maintenance load with paid dispatch disabled. Record database version/topology, actual workload, cold versus warm behavior, achieved simulation speed, debt, latency and memory. Native-only profiles remain useful for isolating engine CPU costs, but do not establish whole-server capacity.
 
-SQLite is the local-development fallback. Retain correctness, recovery and lightweight local usability checks, but stop SQLite-specific optimization unless the owner explicitly prioritizes a local-development blocker. The existing SQLite worker is not a production-scaling improvement. Shared native/history optimizations apply to both adapters; their production benefit must be measured on PostgreSQL rather than inferred from SQLite timings.
+PostgreSQL is required locally and in production. All database-dependent profiling uses owned disposable PostgreSQL databases. Historical SQLite measurements remain evidence of the version exercised, not current backend acceptance.
 
-The full-server script now accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback development PostgreSQL service. It creates a uniquely named database for each run; it never resets or profiles the database named by that administrative URL, and never inherits `OPEN_LEGEND_DATABASE_URL`. Without the profiling URL it uses disposable SQLite. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use the existing [PF00/PF11 tasks](performance.md) and [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
+The full-server script now accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback development PostgreSQL service. It creates a uniquely named database for each run; it never resets or profiles the database named by that administrative URL, and never inherits `OPEN_LEGEND_DATABASE_URL`. Missing the profiling URL fails clearly. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use the existing [PF00/PF11 tasks](performance.md) and [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
 
 ## Native CPU isolation
 
@@ -47,7 +47,7 @@ For cadence comparisons, record offered and actually integrated game seconds, in
 
 ## Full-server workload
 
-Run a generated disposable scene through the real server timer, durable commands, SSE and a separate-process client. SQLite is the secondary local default; explicitly select PostgreSQL for the primary baseline.
+Run a generated disposable scene through the real server timer, durable commands, SSE and a separate-process client. Set `OPEN_LEGEND_PROFILE_POSTGRES_URL` to a loopback administrative database.
 
 ```sh
 pnpm run build
@@ -73,7 +73,7 @@ The first phase includes acquisition after ordinary bootstrap. Later phases reus
 
 Report nominal elapsed-time achieved speed together with admitted/requested clock counters, pending debt and excluded gaps. Pending debt excludes elapsed wall time that an in-progress timer operation has not yet admitted. Existing >2-second callback-gap detection can misclassify long synchronous persistence as absence; the dense case does not qualify that boundary. Metric totals/counts are phase deltas, while `cumulativeMaxMs` is explicitly since startup. Keep initial presence-expiry runs separate from continuous-presence capacity evidence.
 
-The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification.md#dense-persistence-implementation). The [action reconciliation observations](../verification/action-reconciliation.md) separately record current-source full-server PostgreSQL diagnostics and their failed throughput/dense-tail targets. Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, remote database topology, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads, and the SQLite worker reports its own sampled heap gauge. None of these phase-end values is a measured peak.
+The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification.md#dense-persistence-implementation). The [action reconciliation observations](../verification/action-reconciliation.md) separately record current-source full-server PostgreSQL diagnostics and their failed throughput/dense-tail targets. Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, remote database topology, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads. None of these phase-end values is a measured peak.
 
 ## Contact candidate isolation
 
@@ -89,7 +89,9 @@ For accelerated-play qualification, copy a scenario outside the repository and s
 node --import tsx scripts/stress-hearing.ts /tmp/hearing-run-unique 60 10 8
 ```
 
-The output directory must not exist; its parent must exist. Arguments are wall seconds (1–120), added people (0–100), and scheduled speech per real second (0–20). The fixed seed-73 fixture also adds 20 animals and 300 objects. It constructs the real WorldService with a private disk-backed SQLite world and zero provider budget, runs at 8×, keeps presence alive, commits alternating whisper/normal/shout, and generates/encodes complete public views. It neither loads `.env` nor opens an existing game database. The setup population is outside the measured interval. Invalid/unavailable speech aborts the run rather than being counted as accepted.
+Set `OPENLEGEND_STRESS_DATABASE_URL` to a loopback administrative PostgreSQL database for `stress-hearing.ts`, `stress-data.ts`, `stress-world-data.ts`, `stress-checkpoints.ts` and `profile-server.ts`. These tools create a fresh owned database and drop it on exit; the URL’s named database is never reset. Checkpoint/report output remains available for inspection.
+
+The output directory must not exist; its parent must exist. Arguments are wall seconds (1–120), added people (0–100), and scheduled speech per real second (0–20). The fixed seed-73 fixture also adds 20 animals and 300 objects. It constructs the real WorldService with an owned disposable PostgreSQL world and zero provider budget, runs at 8×, keeps presence alive, commits alternating whisper/normal/shout, and generates/encodes complete public views. It neither loads `.env` nor opens an existing game database. The setup population is outside the measured interval. Invalid/unavailable speech aborts the run rather than being counted as accepted.
 
 `report.json` records scheduled versus accepted utterances, actual wall/simulation time, final clock debt, native/SQL metrics, commit/projection distributions, view bytes and final heap. The final drain and flush count toward wall time. Native catch-up and the speech producer run independently, with at most one speech request in flight; overload still appears as lateness or unattempted demand. A drained queue alone is not a pass. Check both achieved speed and accepted work. Output snapshots/profile data remain private and untracked. This runner has bounded inputs, not a parent-process hard timeout; use an external process deadline for hostile or pathological workloads.
 
@@ -97,7 +99,7 @@ This is a service/persistence workload with an independently scheduled bounded s
 
 ## Full-server scene profiler
 
-`node --expose-gc --import tsx scripts/profile-server.ts /tmp/NEW-scene-report.json 30` runs a disposable SQLite game with real HTTP commands, presence heartbeats, SSE and the server timer at 3×. The initial player view has 20 other agents, 20 animals and 100 objects; one additional seeded animal begins outside view. Populations move naturally, so initial visibility is not a guarantee of sustained density.
+`node --expose-gc --import tsx scripts/profile-server.ts /tmp/NEW-scene-report.json 30` runs a disposable PostgreSQL game with real HTTP commands, presence heartbeats, SSE and the server timer at 3×. The initial player view has 20 other agents, 20 animals and 100 objects; one additional seeded animal begins outside view. Populations move naturally, so initial visibility is not a guarantee of sustained density.
 
 For PostgreSQL, set `OPENLEGEND_STRESS_DATABASE_URL` to a **new disposable database**, then drop that database afterward. Existing OpenLegend schemas are refused before migrations. The script never loads `.env`; provider transports are local fixtures and embedding credentials are empty. `OPENLEGEND_PROFILE_COGNITION=1` exercises native-route Jev decisions with zero-cost receipts; it does not measure real model quality or latency. Otherwise spending is disabled. `OPENLEGEND_CPU_PROFILE=1` additionally writes a private CPU profile next to the report. Duration is 3–120 seconds; use an external watchdog for blocked startup/shutdown.
 

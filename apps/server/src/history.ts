@@ -152,7 +152,7 @@ export class HistoryRepository {
   async hasResponse(worldId: string, responseId: string): Promise<boolean> {
     return !!(await this.db
       .prepare(
-        "SELECT id FROM history_events WHERE world_id=? AND json_extract(payload, '$.data.responseId')=? LIMIT 1",
+        "SELECT id FROM history_events WHERE world_id=? AND (payload::jsonb #>> '{data,responseId}')=? LIMIT 1",
       )
       .get(worldId, responseId));
   }
@@ -968,18 +968,9 @@ export class HistoryRepository {
     const storyFilter = options.conversationId ? ' AND conversation_id=?' : '';
     const args = options.conversationId ? [options.conversationId] : [];
     // Filter before pagination so journal activity cannot crowd speech out of the page.
-    const identity = (key: 'sourceId' | 'targetId') =>
-      this.db.dialect === 'postgres'
-        ? `(p.payload::jsonb #>> '{evidence,${key}}')`
-        : `json_extract(p.payload, '$.evidence.${key}')`;
-    const responseId =
-      this.db.dialect === 'postgres'
-        ? `(e.payload::jsonb #>> '{data,responseId}')`
-        : `json_extract(e.payload, '$.data.responseId')`;
-    const relevant =
-      this.db.dialect === 'postgres'
-        ? `(e.payload::jsonb #>> '{data,conversationRelevant}')='true'`
-        : `json_extract(e.payload, '$.data.conversationRelevant')=1`;
+    const identity = (key: 'sourceId' | 'targetId') => `(p.payload::jsonb #>> '{evidence,${key}}')`;
+    const responseId = `(e.payload::jsonb #>> '{data,responseId}')`;
+    const relevant = `(e.payload::jsonb #>> '{data,conversationRelevant}')='true'`;
     if (options.participantId) {
       const speechParticipants = `((${identity('sourceId')}=? AND ${identity('targetId')}=?) OR (${identity('sourceId')}=? AND (${identity('targetId')}=? OR ${identity('targetId')} IS NULL)))`;
       if (options.responseActions) {

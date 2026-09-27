@@ -65,7 +65,7 @@ Delivered: unchanged-exposure reuse, incremental expiry, a bounded resident awar
 
 ### C17
 
-**P1. Soon to sustained: recurring dialogue, observation and mature recall.** Repeated full-corpus work delays cognition; SQLite/full hydration can block the host or exhaust memory.
+**P1. Soon to sustained: recurring dialogue, observation and mature recall.** Repeated full-corpus work delays cognition; full hydration can block the host or exhaust memory.
 
 Bound work before memory/context materialization; qualify exact/lexical retrieval as corpora grow.
 

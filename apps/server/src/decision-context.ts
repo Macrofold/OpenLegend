@@ -1,3 +1,4 @@
+import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { knowledgePolicyInstructions } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
@@ -110,9 +111,10 @@ export async function prepareDecision(
   const evidenceScope = head
     ? { worldId: world.id, actorId, generation: head.generation }
     : undefined;
+  const bodies = new MemoryReadCache();
   const retainedEvidence =
     service.store.memories && evidenceScope
-      ? await service.store.memories.evidence(evidenceScope, evidenceIds)
+      ? await service.store.memories.evidence(evidenceScope, evidenceIds, bodies)
       : undefined;
   const evidence = retainedEvidence
     ? retainedEvidence.flatMap((entry) => (entry.awareness ? [entry.awareness] : []))
@@ -126,6 +128,19 @@ export async function prepareDecision(
       actorId,
     );
   includeConversation ||= evidence.some((entry) => entry.eventType === 'speech');
+  const preparation: CognitionPreparation | undefined =
+    service.store.memories && evidenceScope
+      ? {
+          scope: evidenceScope,
+          bodies,
+          conversation: await service.store.memories.context(
+            evidenceScope,
+            evidenceIds,
+            includeConversation,
+            world.conversations?.active[actorId],
+          ),
+        }
+      : undefined;
   const planning = planningCandidates(service, actorId);
   const availableActions = distinctActions([...npcCandidates(service, actorId), ...planning]);
   let planOffers = [...planning]
@@ -166,6 +181,7 @@ export async function prepareDecision(
     `${jobId}:attempt:${attempt}`,
     signal,
     budgetCeiling,
+    preparation,
   );
   const snapshotActor = observed.actor.actor!;
   const requiredContext: Record<string, unknown> = {
@@ -270,6 +286,7 @@ export async function prepareDecision(
     signal,
     attempt,
     ...(compact ? { generate: compact } : {}),
+    preparation,
   });
   const awarenessSequence = conversation.awarenessSequence;
   requiredContext['conversation'] = conversation.lines;
@@ -338,17 +355,12 @@ export async function prepareDecision(
   // Attention can outlive a simulation transition. Refresh current state after
   // it returns; later actions still validate their authoritative prerequisites.
   await service.flushMemorySources(actorId, false);
-  await recall.validateSources(candidates, selection.selected);
-  await conversation.validate();
-  if (
-    retainedEvidence &&
-    evidenceScope &&
-    !(await service.store.memories!.current(
-      evidenceScope,
-      retainedEvidence.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
-    ))
-  )
-    throw new Error('Trigger evidence changed during attention; discard this decision.');
+  const sources = [
+    ...recall.selectedSources(candidates, selection.selected),
+    ...(retainedEvidence ?? []).map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+  ];
+  const validatePrepared = (flush = true) => conversation.validate(flush, sources);
+  await validatePrepared(false);
   const currentWorld = service.world;
   if (generation !== service.generation)
     throw new Error('World restored during attention; discard this decision.');
@@ -548,7 +560,7 @@ export async function prepareDecision(
     offered,
     actionCandidates: availableActions,
     awarenessSequence,
-    validateConversation: conversation.validate,
+    validateConversation: validatePrepared,
     attemptBindings: [...attempts.values()],
     entityReferences,
     visibleEntityReferences: entityReferenceMap(

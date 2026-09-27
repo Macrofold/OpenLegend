@@ -25,7 +25,7 @@ The eventual experience is: a player or NPC expresses an intent; the system find
 
 ### Contracts to establish early, without building a universal framework
 
-Keep these as small typed application/domain interfaces with in-process implementations first. SQLite can remain the repository; Macrofold remains one replaceable execution adapter. Exact field names are implementation decisions, not a new frozen public API.
+Keep these as small typed application/domain interfaces with in-process implementations first. PostgreSQL remains the implemented repository; Macrofold remains one replaceable execution adapter. Exact field names are implementation decisions, not a new frozen public API.
 
 | Contract                         | Owns                                                                                                                                              | Must remain separate from                                    |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |

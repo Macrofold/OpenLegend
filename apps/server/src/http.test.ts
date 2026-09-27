@@ -1,9 +1,9 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems, itemFor } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
-import { readConfig } from './config.js';
-import { SqlGameRepository } from './store.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 import type { GameView } from '@open-legend/protocol';
 
 const cleanup: Array<() => Promise<void>> = [];
@@ -13,7 +13,7 @@ afterEach(async () => {
 async function start(godMode = false) {
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: String(godMode) }),
-    store: new SqlGameRepository(':memory:'),
+    store: await testRepository(),
     production: true,
     tick: false,
   });

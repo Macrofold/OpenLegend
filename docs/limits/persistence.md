@@ -58,11 +58,11 @@ Original recommendation: **Keep**.
 
 **Current — source inspected · Restrictiveness: Safe.**
 
-Write batches use at most 10,000 PostgreSQL parameters or 900 SQLite parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows, writing source rows before audiences/perspectives inside the same transaction. Other record batches use the shared parameter limit and their existing encoded-byte bounds.
+Write batches use at most 10,000 PostgreSQL parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows, writing source rows before audiences/perspectives inside the same transaction. Other record batches use the shared parameter limit and their existing encoded-byte bounds.
 
 Compatible new/updated record rows are grouped within their table before batching; alternating observer updates no longer force separate statements per observer. Secondary-unique-index tables retain original row order. Duplicate-create checks, parent ordering and atomic commit remain unchanged.
 
-**Reason / tradeoff:** Larger PostgreSQL batches reduce local round trips; SQLite retains the portable parameter floor. The byte bound prevents one huge multi-row statement. The former shared 900-parameter ceiling was replaced only for PostgreSQL; this is not a cap on saved records or permission to split authoritative commits.
+**Reason / tradeoff:** Larger PostgreSQL batches reduce local round trips. SQLite support and its portable parameter floor were removed on 2026-09-27. The byte bound prevents one huge multi-row statement. The former shared 900-parameter ceiling was replaced only for PostgreSQL; this is not a cap on saved records or permission to split authoritative commits.
 
 [Shared parameter limit](../../apps/server/src/sql-rows.ts) · [HistoryBatch](../../apps/server/src/history-batch.ts) · [Measurement limits](../verification/three-times-scene-performance.md) · [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).
 
@@ -70,7 +70,7 @@ Compatible new/updated record rows are grouped within their table before batchin
 
 **Current — source inspected at `af1eb02` · Restrictiveness: Safe.**
 
-PostgreSQL connection/read statements have a 5-second timeout; write transactions set a 30-second statement timeout. SQLite busy-lock waiting is up to 3 seconds. These are not end-to-end queue deadlines, scan-count caps or SQLite CPU-query interruption.
+PostgreSQL connection/read statements have a 5-second timeout; write transactions set a 30-second statement timeout. These are not end-to-end queue deadlines or scan-count caps. The former three-second SQLite busy-lock wait was removed with that adapter.
 
 **Reason / tradeoff:** Bound external storage stalls while permitting larger atomic extraction/restore writes; report genuine storage failure. The original audit’s blanket 5-second statement claim is superseded.
 
@@ -358,7 +358,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
 
-**Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong SQLite WAL retention or PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; it does not guarantee a deadline for final filesystem writes/sync/rename or a stalled operation.
+**Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; it does not guarantee a deadline for final filesystem writes/sync/rename or a stalled operation.
 
 **Reason / tradeoff:** Preserve one consistent cut without copying the world into RAM; database version retention trades against output speed. The gameplay barrier ending is not the read snapshot ending. This is source-based risk analysis, not a measured storage-growth result.
 
@@ -386,8 +386,6 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 ## SB19
 
-**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+**Removed — PostgreSQL-only storage, 2026-09-27.**
 
-SQLite uses one writer worker and a lazy read-only WAL worker. Each read/write lane retains main's 512-operation/five-second admission bound. Each worker connection admits at most 128 outstanding RPCs and caches 128 prepared statements; overflow refuses work and cache eviction only recompiles. No automatic worker restart or write replay. In-memory databases serialize snapshots on the writer because separate connections cannot share that database.
-
-**Reason / tradeoff:** Isolate native SQLite CPU without changing transaction/publication authority. Workers do not cap total process memory or make PostgreSQL faster. [Source](../../apps/server/src/sqlite-database.ts), [worker](../../apps/server/src/sqlite-worker.mjs).
+The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/postgresql-cognition-preparation.md).

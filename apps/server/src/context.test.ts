@@ -1,8 +1,9 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { advanceWorld, inventoryFor, quantityOf, type DeclarationDraft } from '@open-legend/domain';
-import { readConfig } from './config.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
   CONTEXT_BYTE_LIMIT,
@@ -15,7 +16,7 @@ import { WorldService } from './world-service.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
-  const store = new SqlGameRepository(':memory:');
+  const store = await testRepository();
   stores.push(store);
   const service = new WorldService(
     store,

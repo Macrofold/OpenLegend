@@ -189,7 +189,7 @@ Player narration privacy applies to API reads, streams, indexes, backups/exports
 
 ## 11. Delivery boundaries and deferred invention
 
-Use existing module responsibilities: domain validates response components, expressive events, mechanical rules and conversation transitions; server assembles awareness, persists projections, schedules/narrates, authorizes queries and owns spending; AI executes generic typed requests; protocol carries scoped intentions/results; React renders transcript/narration/impact UI. PostgreSQL owns durable normalized story records. Keep the current repository adapter boundary and an explicit SQLite capability/current-format policy; do not pretend a snapshot-only adapter supports these tables.
+Use existing module responsibilities: domain validates response components, expressive events, mechanical rules and conversation transitions; server assembles awareness, persists projections, schedules/narrates, authorizes queries and owns spending; AI executes generic typed requests; protocol carries scoped intentions/results; React renders transcript/narration/impact UI. PostgreSQL owns durable normalized story records. Keep the repository boundary and PostgreSQL current-format contracts; storage availability alone does not establish query/publication acceptance.
 
 Preserve known speech, event-time audiences, source order and separately scoped reflection presentation through same-version capture/restore. Missing associations remain explicit gaps; never infer participants, private thoughts or unseen speech. Verify atomic restoration, rollback and current revocation/forgetting without model dispatch or lost accounting. Development compatibility follows the [root policy](../AGENTS.md#development-save-policy).
 

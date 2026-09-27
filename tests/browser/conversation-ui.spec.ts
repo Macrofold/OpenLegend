@@ -1,14 +1,14 @@
+import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { expect, test } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
-import { readConfig } from '../../apps/server/src/config.js';
-import { SqlGameRepository } from '../../apps/server/src/store.js';
+import { readConfig } from '../fixtures/database.js';
 
 test('conversation UI grows from one line and uses message-local dots and failure only', async ({
   page,
 }) => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqlGameRepository(':memory:'),
+    store: await testRepository(),
     production: true,
     tick: false,
   });
@@ -64,3 +64,5 @@ test('conversation UI grows from one line and uses message-local dots and failur
     await game.close();
   }
 });
+
+test.afterAll(closeTestDatabases);

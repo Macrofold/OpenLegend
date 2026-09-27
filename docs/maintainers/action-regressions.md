@@ -41,15 +41,15 @@ The early scalar-capture experiment that timed out was superseded by the later i
 
 ## Dense persistence regression coverage
 
-PostgreSQL is the production baseline. SQLite cases below preserve correctness of already delivered local behavior; they do not authorize further SQLite-only performance work.
+PostgreSQL is the only backend. Historical SQLite observations retain their original scope; future storage qualification uses disposable PostgreSQL.
 
 - [ ] **DP-R01:** Indexed perspective first-match/fallback semantics, forgotten audiences, append plus prior-awareness edits, correction/story revocation, empty audiences and new observers. Compare complete durable tables, not just counts.
 - [ ] **DP-R02:** Rollback/retry and journal/head compare-and-swap failures with commit-local preparation. Rolled-back rows/readiness must not become authority; uncertain writes are not automatically replayed.
 - [ ] **DP-R03:** Row/byte/parameter chunk boundaries, oversized singletons, SQL ordering, field types and bounded measurement attribution.
 - [ ] **DP-R04:** Prepared inputs versus changed/mutable snapshots, first history/backfill, restore, interleaved edits, audience/recognition text and duplicate IDs. Failed compare-and-swap/COMMIT invalidates any claimed prepared authority.
 - [ ] **DP-R05:** Native acquisition text with quoted/punctuated/duplicate names, object descriptions and outward-feature changes. Preserve event order/private recipients; direct first-person templates are not a generic user-supplied effect shortcut.
-- [ ] **DP-R06:** Existing SQLite worker initialization/query/transaction failures, lost replies, thread exit, pending bounds, statement-cache/DDL behavior, nested transactions, detached callbacks and shutdown. No retry duplicates an uncertain durable write.
-- [ ] **DP-R07:** Unrelated reads wait for full commit/rollback; compare real SQL state after failure, HTTP/SSE snapshot isolation, long-result backpressure, portable SQLite/PostgreSQL semantics and close/drain behavior.
+- [x] **DP-R06:** SQLite worker-specific qualification retired with removal of that adapter. PostgreSQL transaction/lane/close guarantees remain DP-R07; uncertain durable writes must never be automatically replayed.
+- [ ] **DP-R07:** Unrelated reads wait for full commit/rollback; compare real SQL state after failure, HTTP/SSE snapshot isolation, long-result backpressure, PostgreSQL snapshot semantics and close/drain behavior.
 - [ ] **DP-R08:** Worker exit during queued shutdown, admission saturation/release, rejection after close, nested close rejection and detached transaction continuations. Distinguish queue limits from corruption.
 - [ ] **DP-R09:** Duplicate changed-event IDs across flush boundaries, oversized-singleton accounting, prepared-index lifetime, exact first-match perspective and duplicate audiences.
 - [ ] **DP-R10:** Long-run process RSS versus per-isolate heap, saturation, slow reads, main-thread encoding/finalization and suspension accounting. Short samples do not establish leak freedom or dense throughput.

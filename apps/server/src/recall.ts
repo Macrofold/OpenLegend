@@ -1,6 +1,6 @@
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { worldPosition } from '@open-legend/domain';
-import type { RetrievedMemory, MemoryScope } from './memory-repository.js';
+import type { RetrievedMemory, MemoryScope, CognitionPreparation } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
 import {
@@ -559,21 +559,15 @@ export class RecallService {
     AttentionCandidate[],
     { scope: MemoryScope; sources: Map<string, string> }
   >();
-  async validateSources(
-    candidates: AttentionCandidate[],
-    selected: AttentionCandidate[],
-  ): Promise<void> {
+  selectedSources(candidates: AttentionCandidate[], selected: AttentionCandidate[]) {
     const binding = this.sourceBindings.get(candidates);
-    if (!binding || !this.service.store.memories) return;
-    // A grouped candidate can display its newest member's text while keeping the
-    // first member's ID. Every contributing source must still match after attention.
+    if (!binding) return [];
+    // Every member contributes to a grouped candidate's text and freshness binding.
     const ids = new Set(selected.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]));
-    const sources = [...ids].flatMap((id) => {
+    return [...ids].flatMap((id) => {
       const revision = binding.sources.get(id);
       return revision ? [{ id, revision }] : [];
     });
-    if (!(await this.service.store.memories.current(binding.scope, sources)))
-      throw new Error('Selected memory changed during attention; discard this decision.');
   }
   async candidates(
     world: WorldState,
@@ -586,13 +580,18 @@ export class RecallService {
     requestId: string,
     signal: AbortSignal,
     budgetCeiling: number,
+    preparation?: CognitionPreparation,
   ): Promise<AttentionCandidate[]> {
     const generation = this.service.generation;
     const repository = this.service.store.memories;
-    const head = await this.service.store.records?.head();
+    const head = preparation?.scope ?? (await this.service.store.records?.head());
     if (!repository || !head)
       return candidateSet(world, actorId, observed, requiredIds, automaticIds, conversationIds);
-    const scope: MemoryScope = { worldId: world.id, actorId, generation: head.generation };
+    const scope: MemoryScope = preparation?.scope ?? {
+      worldId: world.id,
+      actorId,
+      generation: head.generation,
+    };
     const current = () => this.recallCurrent(world, actorId, generation, signal);
     const config = this.service.config;
     const coverage = await repository.coverage(scope, {
@@ -658,17 +657,19 @@ export class RecallService {
         }
       } else status = 'structured fallback: spending cap';
     }
-    const required = await repository.required(scope, [
-      ...requiredIds,
-      ...automaticIds,
-      ...conversationIds,
-    ]);
+    const required = await repository.required(
+      scope,
+      [...requiredIds, ...automaticIds, ...conversationIds],
+      preparation?.bodies,
+    );
     const optional = await repository.select(
       scope,
       300,
       vector
         ? { query: vector, model: config.embeddingModel, dimensions: config.embeddingDimensions }
         : undefined,
+      preparation?.conversation.sources.map((source) => source.id),
+      preparation?.bodies,
     );
     signal.throwIfAborted();
     if ((await this.service.store.records?.head())?.generation !== scope.generation)

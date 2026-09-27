@@ -10,9 +10,7 @@ game.server.on('error', (error) => {
 });
 game.server.listen(config.port, config.host, () => {
   console.log(`Open Legend · http://${config.host}:${config.port}`);
-  console.log(
-    config.databaseUrl ? 'Persistence: PostgreSQL' : `Local save: ${config.databasePath}`,
-  );
+  console.log('Persistence: PostgreSQL');
   console.log(
     config.macrofoldKey || (config.jevKey && config.llmKey)
       ? `Live AI enabled with a $${config.budgetUsd.toFixed(2)} per-agent monthly spending cap.`

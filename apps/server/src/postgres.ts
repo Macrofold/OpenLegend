@@ -6,9 +6,8 @@ import type { SqlDatabase } from './store.js';
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
-  readonly dialect = 'postgres';
   get checkpointSource() {
-    return { kind: 'postgres' as const, url: this.connectionString };
+    return { url: this.connectionString };
   }
   private client: pg.Client;
   private ready: Promise<void>;
@@ -160,14 +159,7 @@ export class PostgresDatabase implements SqlDatabase {
       if (this.failed)
         throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
       let index = 0;
-      const translated = sql
-        .replace(/\?/g, () => `$${++index}`)
-        .replace(/BEGIN IMMEDIATE/g, 'BEGIN')
-        .replace(/\browid\b/g, 'id')
-        .replace(
-          /json_extract\(payload, '\$\.([A-Za-z.]+)'\)/g,
-          (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
-        );
+      const translated = sql.replace(/\?/g, () => `$${++index}`);
       try {
         const result = await timed('postgres.statement', () =>
           (this.transactionContext.getStore()?.active

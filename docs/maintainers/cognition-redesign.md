@@ -161,7 +161,7 @@ Owner: server scheduler/repository and generic summarizer; pure acceptance rules
 - [x] After reflection, pull and validate allowed files, flatten them deterministically into one text value, and publish one current PostgreSQL `mind.inner_world` row per world/actor. Bind revision, source snapshot and job IDs in server metadata; include that text in every decision context.
 - [x] Keep the previous accepted text readable while reflection runs. Handle partial/failed export, unsafe paths/symlinks, oversized files, stale publication, duplicate completion and workspace/database disagreement without exposing half-written content.
 - [x] Preserve essential identity and native obligation authority. Workspace prose cannot grant capabilities, edit world state or fabricate witnessed evidence. Keep old sessions, scratch and audit exports outside actor recall.
-- [ ] Verify Macrofold scoped file and snapshot capabilities before relying on them. Provisioning a workspace alone is not working workspace reflection; a SQLite adapter is an interim step, not PostgreSQL acceptance.
+- [ ] Verify Macrofold scoped file and snapshot capabilities before relying on them. Provisioning a workspace alone is not working workspace reflection; storage availability alone does not establish workspace reflection acceptance.
 
 - [x] Preserve authored self-understanding and external knowledge in their respective accepted document authorities (CR13); any query index derives from that revision. Keep native skills, obligations and mechanical appraisals independently authoritative.
 

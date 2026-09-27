@@ -1,7 +1,8 @@
+import { PostgresDatabase } from '../apps/server/src/postgres.js';
 /** Reproducible, idempotent workspace-only provisioning. No model or compute calls.
  * Run: node --env-file=.env --import tsx scripts/macrofold-seed.ts
  * Creates /v1/workspaces once per saved NPC, with no presets or tool permissions.
- * Durable operation IDs/results live beside the world in SQLite; uncertain attempts
+ * Durable operation IDs/results live beside the world in PostgreSQL; uncertain attempts
  * stop for reconciliation instead of creating duplicates. Never prints credentials.
  */
 import { readConfig } from '../apps/server/src/config.js';
@@ -11,7 +12,7 @@ import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 
 await initializeCollisionRuntime();
 const config = readConfig();
-const store = new SqlGameRepository(config.databasePath);
+const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
 try {
   const saved = await store.load();
   if (!saved) throw new Error('Start Open Legend once to create a local world first.');

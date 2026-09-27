@@ -41,7 +41,7 @@ export class HistoryBatch {
     if (
       this.bytes &&
       (this.bytes + size > MAX_PARAMETER_BYTES ||
-        this.parameters[table] + row.length > parameterBatchLimit(this.db))
+        this.parameters[table] + row.length > parameterBatchLimit)
     )
       return this.flush().then(append);
     append();

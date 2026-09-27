@@ -29,10 +29,7 @@ const validPosition = (p: Position) =>
 
 export function perspectiveField(db: SqlDatabase, name: 'order' | 'type', alias = ''): string {
   const column = `${alias ? `${alias}.` : ''}payload`;
-  const value =
-    db.dialect === 'postgres'
-      ? `(${column}::jsonb->>'${name}')`
-      : `json_extract(${column}, '$.${name}')`;
+  const value = `(${column}::jsonb->>'${name}')`;
   return name === 'order' ? `CAST(${value} AS BIGINT)` : value;
 }
 /** Index the existing perspective, not all world events; the same expressions drive reads.
@@ -79,10 +76,7 @@ export async function readPerceivedEvents(
   const limit = Math.max(1, Math.min(100, Math.floor(options.limit ?? 50)));
   const position = perspectiveField(db, 'order', 'p');
   const eventType = perspectiveField(db, 'type', 'p');
-  const field = (name: string) =>
-    db.dialect === 'postgres'
-      ? `(e.payload::jsonb->>'${name}')`
-      : `json_extract(e.payload, '$.${name}')`;
+  const field = (name: string) => `(e.payload::jsonb->>'${name}')`;
   // Private thoughts, plans and diagnostics do not become world events. Own sensed body/contact
   // episodes are permitted observations, even though their acquisition is receiver-private.
   const where =
@@ -101,7 +95,7 @@ export async function readPerceivedEvents(
     if (!row) return { events: [] };
     watermark = { order: Number(row['position']), id: String(row['id']) };
   }
-  // The scalar ceiling enables SQLite range seeks as well as tuple tie-breaking.
+  // The scalar ceiling bounds the range before tuple tie-breaking.
   let boundary = ` AND ${position}<=? AND (${position},p.event_id)<=(?,?)`;
   const positions: unknown[] = [watermark.order, watermark.order, watermark.id];
   if (cursor) {

@@ -1,3 +1,5 @@
+import { createDisposableDatabase } from './disposable-postgres.mjs';
+import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { executeCommand } from '../packages/domain/src/index.js';
@@ -26,12 +28,14 @@ const rate = integer(rateArgument, 0, 20);
 const directory = resolve(destination);
 // Never open an existing/live world. This run owns one disposable zero-provider database.
 await mkdir(directory, { mode: 0o700 });
+const disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
 const config = readConfig({
+  OPEN_LEGEND_DATABASE_URL: disposable.url,
   AI_BUDGET_USD: '0',
   WORLD_SEED: '73',
   OPEN_LEGEND_DATA_DIR: directory,
 });
-const store = new SqlGameRepository(config.databasePath);
+const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
 const service = new WorldService(store, config);
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let heartbeatWork: Promise<unknown> | undefined;
@@ -221,5 +225,9 @@ try {
   await speechWork;
   if (heartbeat) clearInterval(heartbeat);
   await heartbeatWork;
-  await store.close();
+  try {
+    await store.close();
+  } finally {
+    await disposable.close();
+  }
 }

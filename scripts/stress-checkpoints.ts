@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { mkdtemp, stat, writeFile } from 'node:fs/promises';
 import { tmpdir, cpus, totalmem } from 'node:os';
@@ -10,7 +12,7 @@ import {
   worldPosition,
   type WorldState,
 } from '@open-legend/domain';
-import { SqlGameRepository, digest } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { WorldService } from '../apps/server/src/world-service.js';
 import { performanceSnapshot, startRuntimeMonitoring } from '../apps/server/src/performance.js';
@@ -40,11 +42,9 @@ if (
     'Usage: AI_BUDGET_USD=0 pnpm exec tsx scripts/stress-checkpoints.ts NEW_REPORT.json [SOURCES=100000] [ROUNDS=3] [cold|active]',
   );
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-checkpoint-stress-'));
-const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqlGameRepository(
-  join(directory, 'world.sqlite'),
-  url ? new PostgresDatabase(url) : undefined,
-);
+const disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
+const url = disposable.url;
+const store = new SqlGameRepository(directory, new PostgresDatabase(url));
 const samples: Record<string, number[]> = {};
 const stopMonitoring = startRuntimeMonitoring();
 const measure = async <T>(name: string, run: () => Promise<T>) => {
@@ -80,7 +80,12 @@ try {
   });
   const service = new WorldService(
     store,
-    readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory, WORLD_SEED: '73' }),
+    readConfig({
+      OPEN_LEGEND_DATABASE_URL: url,
+      AI_BUDGET_USD: '0',
+      OPEN_LEGEND_DATA_DIR: directory,
+      WORLD_SEED: '73',
+    }),
   );
   await service.ready;
   await service.setPresence('stress', true);
@@ -170,10 +175,10 @@ try {
       }),
       0.5,
     ).world;
-  const expectedContinuation = digest(continuation(payload.state.world));
+  const expectedContinuation = continuation(payload.state.world);
   await measure('restore', () => service.restoreSave(last.id, randomUUID(), payload));
   const restored = await store.records.load();
-  if (!restored || digest(continuation(restored.state.world)) !== expectedContinuation)
+  if (!restored || !isDeepStrictEqual(continuation(restored.state.world), expectedContinuation))
     throw new Error('Native continuation differs after restore.');
   await store.saves.read(service.world.id, 'before-load');
   const distribution = (values: number[]) => {
@@ -186,7 +191,7 @@ try {
     platform: `${process.platform}/${process.arch}`,
     cpu: cpus()[0]?.model,
     memory: totalmem(),
-    adapter: url ? 'postgres' : 'sqlite',
+    adapter: 'postgres',
     directory,
     sources: size,
     residency,
@@ -206,5 +211,9 @@ try {
   console.log(`Checkpoint stress report: ${output}`);
 } finally {
   stopMonitoring();
-  await store.close();
+  try {
+    await store.close();
+  } finally {
+    await disposable.close();
+  }
 }

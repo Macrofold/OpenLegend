@@ -1,3 +1,4 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,13 +8,12 @@ import { expect, it } from 'vitest';
 import { advanceWorld } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
-import { readConfig } from './config.js';
-import { SqlGameRepository } from './store.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 
 it('requires exact 3D surface intentions and preserves the HTTP retry boundary', async () => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqlGameRepository(':memory:'),
+    store: await testRepository(),
     production: true,
     tick: false,
   });
@@ -78,12 +78,12 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
   }
 });
 
-it('restores a saved elevated route and native flight through SQLite and manual slots', async () => {
+it('restores a saved elevated route and native flight through PostgreSQL and manual slots', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-spatial-'));
   const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
   let game = await createGameServer({
     config,
-    store: new SqlGameRepository(config.databasePath),
+    store: await testRepository(config.dataDirectory),
     production: true,
     tick: false,
   });
@@ -111,7 +111,7 @@ it('restores a saved elevated route and native flight through SQLite and manual 
     await game.close();
     game = await createGameServer({
       config,
-      store: new SqlGameRepository(config.databasePath),
+      store: await testRepository(config.dataDirectory),
       production: true,
       tick: false,
     });

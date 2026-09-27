@@ -75,12 +75,9 @@ export class CognitionMaintenance {
     if (current?.reason === reason) return;
     await this.service.store.putIntegration(this.key(actorId), request);
     this.work.wake(actorId);
-    const unavailable =
-      this.service.store.persistence !== 'postgres'
-        ? 'PostgreSQL is required for accepted workspace publication.'
-        : !this.service.config.macrofoldKey
-          ? 'Reflection harness is not configured.'
-          : undefined;
+    const unavailable = !this.service.config.macrofoldKey
+      ? 'Reflection harness is not configured.'
+      : undefined;
     await this.log.save({
       id: `reflection-queued:${world.id}:${actorId}`,
       kind: 'Reflection opportunity',
@@ -255,12 +252,7 @@ export class CognitionMaintenance {
           !history.rawDue &&
           !(dreamReady && day > 0) &&
           !reflectionDue &&
-          !(
-            safe &&
-            !actor.action &&
-            this.service.config.macrofoldKey &&
-            this.service.store.persistence === 'postgres'
-          )
+          !(safe && !actor.action && this.service.config.macrofoldKey)
         )
           continue;
         if (
@@ -305,8 +297,7 @@ export class CognitionMaintenance {
           !actor.action &&
           queued &&
           previousKind === 'consolidation' &&
-          this.service.config.macrofoldKey &&
-          this.service.store.persistence === 'postgres';
+          this.service.config.macrofoldKey;
         if (
           dreamReady &&
           reviewDay >= 0 &&
@@ -365,14 +356,7 @@ export class CognitionMaintenance {
           );
           return;
         }
-        if (
-          !safe ||
-          actor.action ||
-          !queued ||
-          !this.service.config.macrofoldKey ||
-          this.service.store.persistence !== 'postgres'
-        )
-          continue;
+        if (!safe || actor.action || !queued || !this.service.config.macrofoldKey) continue;
         const attemptKey = `reflection-attempt:${world.id}:${entity.id}`;
         const attempt = (await this.readSchedule(() =>
           this.service.store.getIntegration(attemptKey),

@@ -1,3 +1,9 @@
+import { writeOperationalBackup } from '../apps/server/src/operational-backup.js';
+import { createDisposableDatabase } from './disposable-postgres.mjs';
+import { PostgresDatabase } from '../apps/server/src/postgres.js';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { dreamPolicy } from '../packages/domain/src/index.js';
 /** Explicit paid acceptance, never run by test/check or on startup.
  * node --env-file=.env --import tsx scripts/verify-live-memory.ts
@@ -6,7 +12,6 @@ import { dreamPolicy } from '../packages/domain/src/index.js';
  * Worker compute is separately funded/limited by its owner and is never destroyed here.
  */
 import { randomUUID } from 'node:crypto';
-import { resolve } from 'node:path';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqlGameRepository, digest } from '../apps/server/src/store.js';
 import { WorldService } from '../apps/server/src/world-service.js';
@@ -18,84 +23,101 @@ import {
   fullCognitionJsonSchema,
 } from '../apps/server/src/cognition.js';
 import { commitCognition, mindFor } from '@open-legend/domain';
-const config = { ...readConfig(), databasePath: resolve('.data/live-memory-acceptance.sqlite') };
+const config = readConfig({
+  ...process.env,
+  OPEN_LEGEND_DATABASE_URL: process.env['OPENLEGEND_TEST_DATABASE_URL'],
+});
 if (!config.macrofoldKey || config.budgetUsd <= 0 || !config.macrofoldWorkerId)
   throw new Error('Explicit backend credentials, Run caps and MACROFOLD_WORKER_ID required.');
-let store = new SqlGameRepository(config.databasePath);
-let service = new WorldService(store, config);
-await service.ready;
-await service.setPresence('live-acceptance', true, 1);
-await service.control({ paused: false });
-if (!service.world.id.startsWith('live-memory-'))
-  await service.transition((world) => ({
-    world: { ...world, id: `live-memory-${randomUUID()}` },
-    events: [],
-    outcome: { ok: true, code: 'verification-world', message: 'Isolated acceptance identity.' },
-  }));
-const backend = new MacrofoldBackend(service);
-const id = randomUUID();
-const speech = await service.say(
-  `encounter-${id}`,
-  service.controlledEntityId,
-  'I would like us to help each other survive. I have noticed you working here. What do you make of me?',
-  service.defaultResidentEntityId,
-);
-if (!speech.ok) throw new Error(speech.message);
-const sessions: string[] = [];
-const worktrees: string[] = [];
-async function deliberate(
-  backend: MacrofoldBackend,
-  service: WorldService,
-  instructions: string,
-  purpose: 'thought' | 'reflection' | 'dream' = 'thought',
-) {
-  const id = randomUUID();
-  const prepared = cognitionContext(service, service.defaultResidentEntityId, id, purpose, 'full');
-  if (!(await service.store.reserve(id, 'openai', config.macrofoldRunUsd, config.budgetUsd)))
-    throw new Error('Acceptance run budget exhausted.');
-  const result = await backend.generate<unknown>({
-    requestId: id,
-    actorScope: service.defaultResidentEntityId,
-    execution: 'full',
-    task: 'npc_cognition',
-    instructions: COGNITION_INSTRUCTIONS + ' ' + instructions,
-    context: prepared.context,
-    schema: fullCognitionJsonSchema,
-  });
-  await service.store.settle(id, result.receipt);
-  console.log(
-    JSON.stringify({
-      requestId: id,
-      outcome: result.outcome,
-      runId: result.receipt.providerRequestId,
-      latencyMs: result.receipt.latencyMs,
-      costUsd: result.receipt.estimatedCostUsd,
-      ...(result.outcome !== 'value' ? { reason: result.reason } : {}),
-    }),
-  );
-  if (result.outcome !== 'value')
-    throw new Error('Live harness did not return a valid proposal. No retry.');
-  const proposal = proposalSchema.parse(result.value);
-  const committed = await service.transition((world) =>
-    commitCognition(world, prepared.binding, proposal),
-  );
-  if (!committed.ok) throw new Error(committed.message);
-  const prefix = `macrofold:${digest(config.macrofoldUrl)}:${service.world.id}:${service.timelineId}:`;
-  const lane = (await service.store.getIntegration(
-    `${prefix}lane:${service.defaultResidentEntityId}`,
-  )) as { session?: string; worktree?: string } | undefined;
-  const completed = (await service.store.getIntegration(
-    `${prefix}result:${result.receipt.providerRequestId}`,
-  )) as { status?: { worker_id?: string } } | undefined;
-  if (!lane?.session || !lane.worktree || completed?.status?.worker_id !== config.macrofoldWorkerId)
-    throw new Error('Missing or unexpected execution identities.');
-  sessions.push(lane.session);
-  worktrees.push(lane.worktree);
-  if (new Set(sessions).size !== sessions.length || new Set(worktrees).size !== 1)
-    throw new Error('Fresh Session / retained Worktree acceptance failed.');
-  return mindFor(service.world, service.defaultResidentEntityId);
-}
+const disposable = await createDisposableDatabase(config.databaseUrl);
+config.databaseUrl = disposable.url;
+let store: SqlGameRepository | undefined;
 try {
+  config.dataDirectory = await mkdtemp(join(tmpdir(), 'openlegend-memory-'));
+  store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+  let service = new WorldService(store, config);
+  await service.ready;
+  await service.setPresence('live-acceptance', true, 1);
+  await service.control({ paused: false });
+  if (!service.world.id.startsWith('live-memory-'))
+    await service.transition((world) => ({
+      world: { ...world, id: `live-memory-${randomUUID()}` },
+      events: [],
+      outcome: { ok: true, code: 'verification-world', message: 'Isolated acceptance identity.' },
+    }));
+  const backend = new MacrofoldBackend(service);
+  const id = randomUUID();
+  const speech = await service.say(
+    `encounter-${id}`,
+    service.controlledEntityId,
+    'I would like us to help each other survive. I have noticed you working here. What do you make of me?',
+    service.defaultResidentEntityId,
+  );
+  if (!speech.ok) throw new Error(speech.message);
+  const sessions: string[] = [];
+  const worktrees: string[] = [];
+  async function deliberate(
+    backend: MacrofoldBackend,
+    service: WorldService,
+    instructions: string,
+    purpose: 'thought' | 'reflection' | 'dream' = 'thought',
+  ) {
+    const id = randomUUID();
+    const prepared = cognitionContext(
+      service,
+      service.defaultResidentEntityId,
+      id,
+      purpose,
+      'full',
+    );
+    if (!(await service.store.reserve(id, 'openai', config.macrofoldRunUsd, config.budgetUsd)))
+      throw new Error('Acceptance run budget exhausted.');
+    const result = await backend.generate<unknown>({
+      requestId: id,
+      actorScope: service.defaultResidentEntityId,
+      execution: 'full',
+      task: 'npc_cognition',
+      instructions: COGNITION_INSTRUCTIONS + ' ' + instructions,
+      context: prepared.context,
+      schema: fullCognitionJsonSchema,
+    });
+    await service.store.settle(id, result.receipt);
+    console.log(
+      JSON.stringify({
+        requestId: id,
+        outcome: result.outcome,
+        runId: result.receipt.providerRequestId,
+        latencyMs: result.receipt.latencyMs,
+        costUsd: result.receipt.estimatedCostUsd,
+        ...(result.outcome !== 'value' ? { reason: result.reason } : {}),
+      }),
+    );
+    if (result.outcome !== 'value')
+      throw new Error('Live harness did not return a valid proposal. No retry.');
+    const proposal = proposalSchema.parse(result.value);
+    const committed = await service.transition((world) =>
+      commitCognition(world, prepared.binding, proposal),
+    );
+    if (!committed.ok) throw new Error(committed.message);
+    const prefix = `macrofold:${digest(config.macrofoldUrl)}:${service.world.id}:${service.timelineId}:`;
+    const lane = (await service.store.getIntegration(
+      `${prefix}lane:${service.defaultResidentEntityId}`,
+    )) as { session?: string; worktree?: string } | undefined;
+    const completed = (await service.store.getIntegration(
+      `${prefix}result:${result.receipt.providerRequestId}`,
+    )) as { status?: { worker_id?: string } } | undefined;
+    if (
+      !lane?.session ||
+      !lane.worktree ||
+      completed?.status?.worker_id !== config.macrofoldWorkerId
+    )
+      throw new Error('Missing or unexpected execution identities.');
+    sessions.push(lane.session);
+    worktrees.push(lane.worktree);
+    if (new Set(sessions).size !== sessions.length || new Set(worktrees).size !== 1)
+      throw new Error('Fresh Session / retained Worktree acceptance failed.');
+    return mindFor(service.world, service.defaultResidentEntityId);
+  }
   const first = await deliberate(
     backend,
     service,
@@ -108,7 +130,7 @@ try {
     throw new Error('Encounter did not produce the required relationship and belief.');
   const revision = first.revision;
   await store.close();
-  store = new SqlGameRepository(config.databasePath);
+  store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
   service = new WorldService(store, config);
   await service.ready;
   await service.setPresence('live-acceptance-restart', true, 1);
@@ -172,9 +194,22 @@ try {
       mindRevision: second.revision,
       relationshipCount: second.records.filter((r) => r.kind === 'relationship').length,
       beliefCount: second.records.filter((r) => r.kind === 'belief').length,
-      database: config.databasePath,
+      database: config.dataDirectory,
     }),
   );
 } finally {
-  await store.close();
+  // Keep paid-attempt/accounting evidence before removing the disposable database.
+  // A failed backup leaves that owned database intact for explicit recovery.
+  if (store) {
+    try {
+      await writeOperationalBackup(
+        store.db,
+        config.dataDirectory,
+        join(config.dataDirectory, 'backup'),
+      );
+    } finally {
+      await store.close();
+    }
+  }
+  await disposable.close();
 }

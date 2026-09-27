@@ -1,7 +1,7 @@
+import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
-import { readConfig } from '../../apps/server/src/config.js';
-import { SqlGameRepository } from '../../apps/server/src/store.js';
+import { readConfig } from '../fixtures/database.js';
 
 test('time settings persist and distinguish background play, manual pause and disconnect', async ({
   page,
@@ -10,7 +10,7 @@ test('time settings persist and distinguish background play, manual pause and di
   const clock = { now: Date.now() };
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqlGameRepository(':memory:'),
+    store: await testRepository(),
     production: true,
     tick: false,
     now: () => clock.now,
@@ -110,3 +110,5 @@ test('time settings persist and distinguish background play, manual pause and di
     await game.close();
   }
 });
+
+test.afterAll(closeTestDatabases);

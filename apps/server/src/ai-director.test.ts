@@ -1,3 +1,4 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems } from '@open-legend/domain';
@@ -14,8 +15,8 @@ import { type DeclarationDraft, type WorldState } from '@open-legend/domain';
 import { AiDirector } from './ai-director.js';
 import { buildContext } from './context.js';
 import { declarationSchema } from './ai-schemas.js';
-import { readConfig, type AppConfig } from './config.js';
-import { SqlGameRepository } from './store.js';
+import type { AppConfig } from './config.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 import { WorldService } from './world-service.js';
 
 // Explicit specimens for orchestration verification, never production seeds or evidence of model quality.
@@ -130,7 +131,7 @@ async function harness(
     }),
     ...options.config,
   };
-  const store = new SqlGameRepository(':memory:');
+  const store = await testRepository();
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
@@ -221,7 +222,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await h.submit('invention', 'same-id', 'A sling.');
     expect((await h.submit('invention', 'same-id', 'A sling.')).ok).toBe(true);
     expect((await h.submit('invention', 'same-id', 'A bow.')).code).toBe('idempotency-conflict');
-    expect(h.calls.judges).toHaveLength(1);
+    await expect.poll(() => h.calls.judges.length).toBe(1);
     wait.resolve(judgment(h.calls.judges[0]!, 'swing'));
     await h.director.idle();
     await h.submit('invention', 'same-id', 'A sling.');

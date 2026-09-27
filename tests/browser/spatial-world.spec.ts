@@ -1,16 +1,16 @@
+import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { advanceWorld } from '../../packages/domain/src/index.js';
 import { createGameServer } from '../../apps/server/src/http.js';
-import { readConfig } from '../../apps/server/src/config.js';
-import { SqlGameRepository } from '../../apps/server/src/store.js';
+import { readConfig } from '../fixtures/database.js';
 
 test('playable elevated world, mixed artwork, camera controls and exact surface picking', async ({
   page,
 }, info) => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqlGameRepository(':memory:'),
+    store: await testRepository(),
     production: true,
     tick: false,
   });
@@ -100,3 +100,5 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await game.close();
   }
 });
+
+test.afterAll(closeTestDatabases);

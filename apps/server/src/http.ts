@@ -332,10 +332,7 @@ async function initializeGameServer(
   const config = options.config ?? readConfig();
   const store =
     options.store ??
-    new SqlGameRepository(
-      config.databasePath,
-      config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
-    );
+    new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
   if (!options.store) onFailure(() => store.close());
   const service = new WorldService(store, config, options.now);
   onFailure(() => service.releaseHostWork());

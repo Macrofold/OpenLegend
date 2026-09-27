@@ -1,5 +1,7 @@
 # Implementation status
 
+PostgreSQL is now the sole local/production backend. Decision and reflection preparation share scoped metadata/bodies and filter conversation-covered optional recall before hydration. [DF03](../../docs/maintainers/production-data.md#df03--postgresql-only-runtime), [PF14](../../docs/maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost) and [local evidence](../../docs/verification.md#postgresql-only-storage-and-shared-preparation) own delivery and qualification.
+
 Current runtime performance follow-through: [3× scene implementation and evidence](../../docs/verification/three-times-scene-performance.md), tracked under PF00/PF03–06/PF08–09/PF12. Source-specific saves, query routing and redundant cognition/diagnostic work are reduced; smooth sustained 3× acceptance remains open.
 
 ## Gameplay availability

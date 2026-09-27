@@ -1,3 +1,4 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -9,8 +10,8 @@ import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 
 const opened = new Set<SqlGameRepository>();
 const directories: string[] = [];
-function open(path = ':memory:'): SqlGameRepository {
-  const store = new SqlGameRepository(path);
+async function open(path?: string): Promise<SqlGameRepository> {
+  const store = await testRepository(path);
   opened.add(store);
   return store;
 }
@@ -21,7 +22,7 @@ async function close(store: SqlGameRepository): Promise<void> {
 function diskPath(): string {
   const directory = mkdtempSync(join(tmpdir(), 'open-legend-store-test-'));
   directories.push(directory);
-  return join(directory, 'world.sqlite');
+  return directory;
 }
 function save(): SavedWorld {
   return { world: createWorld(73), speed: 1, manuallyPaused: false };
@@ -62,10 +63,10 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
-describe('SQLite committed world boundary', () => {
+describe('PostgreSQL committed world boundary', () => {
   it('persists state and command receipts together across close/reopen', async () => {
     const path = diskPath();
-    let store = open(path);
+    let store = await open(path);
     const initial = save();
     expect(await store.load()).toBeNull();
     const revision = await store.commit(0, initial);
@@ -76,7 +77,7 @@ describe('SQLite committed world boundary', () => {
     const changed = executeCommand(initial.world, command).world;
     const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
     await close(store);
-    store = open(path);
+    store = await open(path);
     expect(await store.load()).toEqual({
       revision: savedRevision,
       state: { ...initial, world: changed, speed: 3 },
@@ -87,27 +88,25 @@ describe('SQLite committed world boundary', () => {
       inventoryFor(restored, PLAYER_ID).find((item) => item.definitionId === 'berries')!.quantity,
     ).toBe(2);
   });
-  it('rejects a stale writer without overwriting the winner and remains usable', async () => {
+  it('rejects a second writer and rejects stale revisions on the active writer', async () => {
     const path = diskPath();
-    const first = open(path);
+    const first = await open(path);
     await first.ready;
-    const second = open(path);
-    await second.ready;
+    const second = await open(path);
+    await expect(second.ready).rejects.toThrow(/writer|owns/i);
+    await close(second);
     const revision = await first.commit(0, save());
-    const stale = (await second.load())!;
-    const winning = { ...stale.state, speed: 8 };
+    const winning = { ...save(), speed: 8 };
     const nextRevision = await first.commit(revision, winning);
-    await expect(
-      async () => await second.commit(stale.revision, { ...stale.state, speed: 3 }),
-    ).rejects.toThrow(/conflict/i);
-    expect(await second.load()).toEqual({ revision: nextRevision, state: winning });
-    expect(await second.commit(nextRevision, winning)).toBe(nextRevision + 1);
+    await expect(first.commit(revision, { ...winning, speed: 3 })).rejects.toThrow(/conflict/i);
+    expect(await first.load()).toEqual({ revision: nextRevision, state: winning });
+    expect(await first.commit(nextRevision, winning)).toBe(nextRevision + 1);
   });
 });
 
 describe('durable AI allowances outside simulated time', () => {
   it('counts outstanding reservations against one ceiling and settles only once', async () => {
-    const store = open();
+    const store = await open();
     expect(await store.reserve('jev-route', 'jev', 0.02, 0.1)).toBe(true);
     expect(await store.reserve('generation', 'openai', 0.08, 0.1)).toBe(true);
     expect(await store.reserve('over-ceiling', 'openai', 0.000001, 0.1)).toBe(false);
@@ -128,7 +127,7 @@ describe('durable AI allowances outside simulated time', () => {
     expect(await store.reserve('fits-after-release', 'openai', 0.05, 0.1)).toBe(true);
   });
   it('releases an undispatched attempt and conservatively charges missing usage', async () => {
-    const store = open();
+    const store = await open();
     await store.reserve('local-rejection', 'openai', 0.08, 1);
     await store.settle(
       'local-rejection',
@@ -149,7 +148,7 @@ describe('durable AI allowances outside simulated time', () => {
     expect((await store.usage(1)).budget.reservedUsd).toBe(0);
   });
   it('does not erase paid usage when a world snapshot is restored', async () => {
-    const store = open();
+    const store = await open();
     const original = save();
     let revision = await store.commit(0, original);
     await store.reserve('paid', 'openai', 0.08, 1);
@@ -169,13 +168,13 @@ describe('durable AI allowances outside simulated time', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-19T12:00:00Z'));
     const path = diskPath();
-    let store = open(path);
+    let store = await open(path);
     await store.reserve('in-flight', 'openai', 0.08, 0.1);
     await store.putJob(job('in-flight'));
     await store.putJob(job('already-complete', 'completed'));
     await close(store);
     vi.setSystemTime(new Date('2026-09-20T12:00:00Z'));
-    store = open(path);
+    store = await open(path);
     await store.recoverInterruptedWork();
     await store.recoverInterruptedWork();
     expect((await store.getJob('in-flight'))!.status).toBe('stale');
@@ -192,7 +191,7 @@ describe('durable AI allowances outside simulated time', () => {
     expect(await store.reserve('too-much', 'openai', 0.03, 0.1)).toBe(false);
   });
   it('reconciles a late definitive receipt after restart without spending twice', async () => {
-    const store = open();
+    const store = await open();
     await store.reserve('late', 'openai', 0.08, 0.1);
     await store.recoverInterruptedWork();
     await store.settle('late', receipt('late', { estimatedCostUsd: 0.09 }));
@@ -203,7 +202,7 @@ describe('durable AI allowances outside simulated time', () => {
     expect(await store.reserve('overspend', 'openai', 0.02, 0.1)).toBe(false);
   });
   it('retains immutable job request identity across status updates', async () => {
-    const store = open();
+    const store = await open();
     const original = job('same-id', 'queued');
     await store.putJob(original);
     await store.putJob({ ...original, status: 'generating' });

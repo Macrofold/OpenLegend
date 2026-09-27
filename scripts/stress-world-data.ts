@@ -1,3 +1,4 @@
+import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { worldPosition } from '@open-legend/domain';
 import { mkdtemp, writeFile } from 'node:fs/promises';
@@ -33,11 +34,9 @@ if (
     'Usage: AI_BUDGET_USD=0 pnpm exec tsx scripts/stress-world-data.ts NEW_REPORT.json [world|scene] [STEPS=20]',
   );
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-world-data-stress-'));
-const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqlGameRepository(
-  join(directory, 'world.sqlite'),
-  url ? new PostgresDatabase(url) : undefined,
-);
+const disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
+const url = disposable.url;
+const store = new SqlGameRepository(directory, new PostgresDatabase(url));
 const timings: Record<string, number[]> = {};
 const statements = new Map<string, { calls: number; milliseconds: number }>();
 const prepare = store.db.prepare.bind(store.db);
@@ -237,5 +236,9 @@ try {
   await writeFile(output, JSON.stringify(report, null, 2), { flag: 'wx', mode: 0o600 });
   console.log(JSON.stringify(report, null, 2));
 } finally {
-  await store.close();
+  try {
+    await store.close();
+  } finally {
+    await disposable.close();
+  }
 }

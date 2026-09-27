@@ -4,6 +4,33 @@ Historical migration/recovery observations below describe the pinned implementat
 
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
+## PostgreSQL-only storage and shared preparation
+
+September 27, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14.17 / pgvector 0.8.6. All databases were newly created disposable fixtures. No provider requests or spending. [Raw matched samples](verification/postgresql-cognition-preparation.json) compare `059c6360` cognition owners with the current preparation path on the same seed, fixture transports and conversation workloads. This qualifies [DF03](maintainers/production-data.md#df03--postgresql-only-runtime) and [PF14](maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost) locally; it does not establish model quality or hosted/population capacity.
+
+| Complete caller / phase              | SQL before → after | Hydrated bodies before → after | Hydrated bytes before → after | Sample wall time before → after |
+| ------------------------------------ | ------------------ | ------------------------------ | ----------------------------- | ------------------------------- |
+| AiDirector, 5-turn first reply       | 122 → 109          | 16 → 7                         | 29,342 → 13,893               | 196 → 95 ms                     |
+| AiDirector, 350-turn cold summary    | 193 → 179          | 654 → 352                      | 844,629 → 454,556             | 12,932 → 924 ms                 |
+| AiDirector, 350-turn warm summary    | 117 → 102          | 367 → 65                       | 472,831 → 82,758              | 6,118 → 174 ms                  |
+| AiDirector, 350-turn restore rebuild | 187 → 170          | 660 → 358                      | 849,513 → 459,440             | 13,272 → 219 ms                 |
+| Reflection, 150-turn cold summary    | 140 → 125          | 328 → 177                      | 806,228 → 435,250             | 3,260 → 262 ms                  |
+| Reflection, 150-turn warm summary    | 79 → 65            | 203 → 52                       | 499,522 → 128,544             | 115 → 122 ms                    |
+
+Counts include actual PostgreSQL statements, including transaction boundaries, from admission through native reply/reflection publication. Context byte counts, compactor inputs' byte counts, call counts and admitted fixture replies agree for the matched runs. Four compactor calls prepare the long workloads; warm calls reuse the summary; restore rebuilds it. The raw samples include local process CPU, SQL duration and heap deltas. These are small samples on a shared host, not stable percentiles: warm reflection latency did not improve despite less database work. Provider latency/quality is excluded by explicit local transports; CPU and SQL durations may overlap and must not be summed as independent latency components.
+
+A second 350-turn run sampled ten warm replies between cold preparation and restore: wall-time p50/p95/max was 6,239/8,770/8,770 ms before and 121/136/136 ms after. SQL counts ranged from 114–117 before to 102–103 after. Both implementations retained one 481-byte derived summary row throughout; ten warm replies generated no compactions, and restore required four. The per-round row-size read is outside SQL counts but included in that run's wall time. These small-sample percentiles do not establish tail latency or long-session allocation stability; heap deltas remain samples, not allocation totals or peaks.
+
+`EXPLAIN ANALYZE` attributed the large cold-statistics tail to repeated scans of an actor's speech rows inside the conversation membership predicate (152 inner loops, about 76 rows parsed per loop in the 150-turn reproduction). An exact-source scalar probe prevents that plan. Remaining work includes complete permitted-conversation metadata reads at freshness boundaries and request/native/SQL scheduling; no new cross-request freshness cache or higher limit was introduced.
+
+Native lifecycle checks passed: short/raw and warm/compacted context, restart reuse, lazy restore rebuild and generation fencing, failed/oversized/cancelled generation, concurrent compactor publication, correction/forgetting, stale completion, partial hearing, duplicate groups and independently required trigger/correction evidence. A source edit during a read rejects; an ordinary append retries once and remains valid. A history-only conversation membership edit rejects even with an unchanged actor-source revision. Reflection publishes valid fixture files and rejects forgetting during generation. A 1,300-turn cold backlog fails explicitly before any compactor/response call.
+
+All 64 focused tests in the 11 migrated server files passed, covering PostgreSQL restart, writer exclusion, CAS rejection, accounting, speech/context, HTTP and cognition. The focused browser time-settings/persistence scenario passed against the production build; the pinned headless Chromium binary was installed after the first launch reported it missing. TypeScript, production build, guidance and changed-file formatting checks passed. The build retains its existing large-bundle/PlayCanvas worker warnings. Full CI remains a merge gate; unfiltered suites were not run locally. A 1,000-source checkpoint drill preserves continuation while native ticks advance during capture. The comparison uses complete structural state equality: JSON property order can change during reconstruction without changing a value. The operational CLI backup/restore drill exercises empty and existing targets, preserves accounting and retained save slots, refuses an existing backup destination and rejects legacy JSON without modifying it. Missing/invalid PostgreSQL configuration fails clearly. Current-format backup and checkpoint contracts remain unchanged.
+
+A 500-source/two-round native data drill passed structured/vector retrieval, complete recovery and stale-write rejection. A vector-selection exclusion check removed 25 previously selected source IDs while retaining at least 100 other candidates; none of the excluded bodies was returned. A three-second full-server profiler smoke completed with no storage failure or provider calls and cleaned up its owned database; this verifies the migrated runner, not a throughput target.
+
+Historical SQLite measurements elsewhere on this page remain evidence for their recorded revisions. SQLite is no longer an implemented runtime or verification target.
+
 ## Explicit narration failure
 
 September 27, 2026, on `codex/narration-failure-cleanup` from `origin/main` at

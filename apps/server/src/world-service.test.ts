@@ -1,3 +1,4 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from '@open-legend/domain';
@@ -5,18 +6,17 @@ import { worldPosition } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { quantityOf } from '@open-legend/domain';
-import { readConfig } from './config.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository } from './store.js';
 import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
 
 const stores = new Set<SqlGameRepository>();
 const directories: string[] = [];
-async function setup(path = ':memory:', existingClock?: { now: number }) {
-  const store = new SqlGameRepository(path);
+async function setup(path: string | undefined = undefined, existingClock?: { now: number }) {
+  const store = await testRepository(path);
   stores.add(store);
   const clock = existingClock ?? { now: 1_800_000_000_000 };
   const config = readConfig({
@@ -83,21 +83,13 @@ describe('world presence, time and durable commands', () => {
     expect(service.world.simTime).toBe(90);
   });
 
-  it('migrates the earlier profile table and preserves independent settings and half speed across restart', async () => {
+  it('preserves independent settings and half speed across PostgreSQL restart', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-time-migration-'));
     directories.push(directory);
-    const path = join(directory, 'world.sqlite');
-    const old = new DatabaseSync(path);
-    old.exec(`CREATE TABLE player_profiles (id TEXT PRIMARY KEY, revision INTEGER NOT NULL,
-      show_unavailable_actions INTEGER NOT NULL CHECK (show_unavailable_actions IN (0, 1)));
-      INSERT INTO player_profiles VALUES ('local-player', 7, 1);`);
-    old.close();
+    const path = directory;
     const initial = await setup(path);
     await initial.service.ready;
-    expect(initial.service.profile).toMatchObject({
-      revision: 7,
-      preferences: { showUnavailableActions: true, pauseWhenHidden: true },
-    });
+    await initial.service.setPreferences({ showUnavailableActions: true });
     await initial.service.setPreferences({ pauseWhenHidden: false });
     await initial.service.setPreferences({ showUnavailableActions: false });
     await initial.service.control({ speed: 0.5 });
@@ -247,7 +239,7 @@ describe('world presence, time and durable commands', () => {
   it('restores work and pause preferences without repeating commands or elapsed real time', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-world-test-'));
     directories.push(directory);
-    const path = join(directory, 'world.sqlite');
+    const path = directory;
     const clock = { now: 1_800_000_000_000 };
     const initial = await setup(path, clock);
     await activate(initial.service);
@@ -339,7 +331,9 @@ describe('public projection', () => {
         worldSupport(world.entities[NPC_ID]!),
       );
     });
-    expect((await service.say('unheard', NPC_ID, 'secret-unheard-speech')).ok).toBe(true);
+    expect(
+      (await service.say('unheard', NPC_ID, 'secret-unheard-speech', undefined, 'whisper')).ok,
+    ).toBe(true);
     await editWorld(service, (world) => {
       setSpatialPosition(
         world,
@@ -378,7 +372,10 @@ describe('public projection', () => {
     ])
       expect(serialized).not.toContain(secret);
     expect(serialized).not.toContain('commandReceipts');
-    expect(view.conversation).toHaveLength(0);
+    // Sight of speaking is public; the unheard words remain absent.
+    expect(view.conversation).toMatchObject([
+      { speech: { perception: 'seen', intelligibility: 'none', segments: [] } },
+    ]);
     expect(
       service.observe(NPC_ID)!.memories.some((memory) => memory.summary === 'secret-inner-history'),
     ).toBe(false); // Legacy unbounded authored notes are audit-only.

@@ -14,7 +14,7 @@ import { readConfig } from '../../apps/server/src/config.ts';
 import { performanceSnapshot } from '../../apps/server/src/performance.ts';
 import { SqlGameRepository } from '../../apps/server/src/store.ts';
 import { PostgresDatabase } from '../../apps/server/src/postgres.ts';
-import { createProfileDatabase } from './profile-database.mjs';
+import { createDisposableDatabase } from '../disposable-postgres.mjs';
 
 const percentile = (values, p) =>
   values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : null;
@@ -225,7 +225,7 @@ async function main() {
   const config = readConfig({
     ...process.env,
     OPEN_LEGEND_DATA_DIR: dir,
-    OPEN_LEGEND_DATABASE_URL: '',
+    OPEN_LEGEND_DATABASE_URL: process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL,
     AI_BUDGET_USD: '0',
     OPENAI_API_KEY: '',
     JEV_API_KEY: '',
@@ -253,8 +253,8 @@ async function main() {
   // failure otherwise leaves the database socket/worker alive with no returned handle.
   const startGame = async (tick) => {
     const store = new SqlGameRepository(
-      config.databasePath,
-      config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
+      config.dataDirectory,
+      new PostgresDatabase(config.databaseUrl),
     );
     try {
       return await createGameServer({ config, production: true, tick, store });
@@ -264,7 +264,7 @@ async function main() {
     }
   };
   try {
-    database = await createProfileDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
+    database = await createDisposableDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
     config.databaseUrl = database.url;
     report.database = database.details;
     game = await startGame(false);

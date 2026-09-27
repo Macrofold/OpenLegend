@@ -1,3 +1,4 @@
+import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { commitCognition, mindFor, type MindProposal } from '@open-legend/domain';
 import { validateMacrofoldValue } from '@open-legend/ai';
-import { readConfig } from './config.js';
+import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import {
@@ -31,8 +32,8 @@ afterEach(async () => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
   vi.unstubAllGlobals();
 });
-async function service(path = ':memory:', god = true) {
-  const store = new SqlGameRepository(path);
+async function service(path: string | undefined = undefined, god = true) {
+  const store = await testRepository(path);
   opened.push(store);
   const config = readConfig({
     AI_BUDGET_USD: '100',
@@ -97,10 +98,10 @@ function proposal(s: WorldService, id = 'fixture-decision') {
   return { prepared, p };
 }
 describe('fixture: cognition vertical slice', () => {
-  it('accepts schema-valid bundles, survives SQLite restart, and supplies accepted mind to later decisions', async () => {
+  it('accepts schema-valid bundles, survives PostgreSQL restart, and supplies accepted mind to later decisions', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'ol-mind-'));
     dirs.push(dir);
-    const path = join(dir, 'world.sqlite');
+    const path = dir;
     const s = await service(path);
     const { prepared, p } = proposal(s);
     expect(validateMacrofoldValue(fullCognitionJsonSchema, p)).toEqual(p);
@@ -156,7 +157,7 @@ describe('fixture: cognition vertical slice', () => {
     await s.transition((w) => commitCognition(w, prepared.binding, p));
     expect((await inspectGodMind(s, NPC_ID)).legacyThoughts?.[0]?.text).toBe(p.thought);
     expect(JSON.stringify(await projectView(s, 'test-fixture'))).not.toContain(p.thought);
-    const disabled = await service(':memory:', false);
+    const disabled = await service(undefined, false);
     await expect(inspectGodMind(disabled, NPC_ID)).rejects.toThrow('disabled');
   });
   it('rejects covert mind changes in fast schemas', () => {

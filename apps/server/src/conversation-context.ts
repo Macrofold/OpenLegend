@@ -1,3 +1,4 @@
+import type { CognitionPreparation } from './memory-repository.js';
 import { z } from 'zod';
 import { observerDescription, recognizesSubject, type WorldState } from '@open-legend/domain';
 import type { GenerateRequest } from '@open-legend/ai';
@@ -95,15 +96,16 @@ export async function buildConversationContext(input: {
   signal: AbortSignal;
   attempt: number;
   generate?: ConversationGenerate;
+  preparation?: CognitionPreparation;
 }) {
   const { service, actorId, requiredIds, signal } = input;
   const world = service.world;
   const generation = service.generation;
   const repository = service.store.memories;
-  const head = await service.store.records?.head();
-  const scope: MemoryScope | undefined = head
-    ? { worldId: world.id, actorId, generation: head.generation }
-    : undefined;
+  const head = input.preparation?.scope ?? (await service.store.records?.head());
+  const scope: MemoryScope | undefined =
+    input.preparation?.scope ??
+    (head ? { worldId: world.id, actorId, generation: head.generation } : undefined);
   const required = new Set(requiredIds);
   const resident = world.experience?.awareness[actorId] ?? [];
   const residentSources = (state: WorldState, conversationId: string | undefined) => {
@@ -137,13 +139,14 @@ export async function buildConversationContext(input: {
   const fallbackConversation =
     active ?? (trigger && service.worldEvent(trigger.eventId)?.conversationId);
   const snapshot =
-    repository && scope
+    input.preparation?.conversation ??
+    (repository && scope
       ? await repository.context(scope, requiredIds, input.includeConversation, active)
       : {
           sequence: resident.reduce((maximum, entry) => Math.max(maximum, entry.sequence), 0),
           conversationId: input.includeConversation ? fallbackConversation : undefined,
           sources: input.includeConversation ? residentSources(world, fallbackConversation) : [],
-        };
+        });
   if (snapshot.sources.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
   const { conversationId, sources, sequence } = snapshot;
   const maxBytes = Math.max(0, Math.min(CONVERSATION_BYTES, Math.floor(input.maxBytes)));
@@ -172,6 +175,7 @@ export async function buildConversationContext(input: {
         ? await repository.evidence(
             scope,
             selected.map((source) => source.id),
+            input.preparation?.bodies,
           )
         : selected.flatMap((source) => {
             const aware = residentById?.get(source.id);
@@ -276,21 +280,28 @@ export async function buildConversationContext(input: {
       checkedWorld = service.world;
     }
   };
-  const check = async (flush = true) => {
+  const check = async (
+    flush = true,
+    additionalSources: { id: string; revision: string }[] = [],
+  ) => {
     signal.throwIfAborted();
     if (flush) await service.flushMemorySources(actorId, false);
     assertCurrent();
-    if (repository && scope && conversationId) {
-      // An edit can commit while the read lane returns an older SQL snapshot.
-      // Read again once on actor-source publication; ordinary appends remain valid
-      // when the captured prefix matches. Never dispatch from an unstable read.
+    if (repository && scope && (conversationId || additionalSources.length)) {
+      // Every await gets a fresh snapshot. Actor publication detects a read/write
+      // race, while SQL membership and assertCurrent cover history and perspective.
       for (let read = 0; read < 2; read++) {
         const revision = repository.actorRevision(actorId);
-        const current = await repository.conversationSources(scope, conversationId);
+        const historyEpoch = service.historyEpoch;
+        const valid = await repository.validatePreparation(
+          scope,
+          conversationId ? { id: conversationId, sequence, sources } : undefined,
+          additionalSources,
+        );
         assertCurrent();
-        if (sourceDigest(current, sequence) !== expectedSources)
-          throw new Error('Conversation sources changed during compaction.');
-        if (repository.actorRevision(actorId) === revision) return;
+        if (!valid) throw new Error('Conversation or recall sources changed during preparation.');
+        if (repository.actorRevision(actorId) === revision && service.historyEpoch === historyEpoch)
+          return;
       }
       throw new Error('Conversation sources changed during validation.');
     }

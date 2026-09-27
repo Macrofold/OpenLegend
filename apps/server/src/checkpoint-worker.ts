@@ -1,15 +1,11 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { SqliteDatabase } from './sqlite-database.js';
 import { PostgresDatabase } from './postgres.js';
 import { writeCheckpoint } from './checkpoint.js';
 import { SaveFiles } from './save-files.js';
 import type { CheckpointSource, CheckpointRequest } from './checkpoint-worker-client.js';
 
 const source = workerData as CheckpointSource;
-const db =
-  source.kind === 'sqlite'
-    ? new SqliteDatabase(source.path, true)
-    : new PostgresDatabase(source.url, true);
+const db = new PostgresDatabase(source.url, true);
 const port = parentPort;
 if (!port) throw new Error('Checkpoint worker requires an owner.');
 let busy = false;

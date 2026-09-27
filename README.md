@@ -40,13 +40,17 @@ Hearing uses pinned acoustic/sense descriptors and persists event-time fragments
 
 ## Run locally
 
-Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline; its built-in SQLite module may print an experimental warning. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).
+Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).
 
 ```sh
 pnpm install --frozen-lockfile
 cp .env.example .env
+# Create a PostgreSQL database with pgvector available, then set
+# OPEN_LEGEND_DATABASE_URL=postgresql://localhost/openlegend in .env.
 pnpm run dev
 ```
+
+PostgreSQL with pgvector is required for local development and production. The configured role needs access to the game database and permission to initialize its schemas; install/enable the vector extension beforehand if that role cannot create extensions. Missing `OPEN_LEGEND_DATABASE_URL` fails startup clearly. No SQLite fallback or conversion is provided. Database-dependent checks require `OPENLEGEND_TEST_DATABASE_URL` pointing to a loopback PostgreSQL administrative database: fixtures create and drop their own uniquely named databases, never the named administrative database.
 
 Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Current full NPC conversation requires Macrofold with explicit model/compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.
 
@@ -68,7 +72,7 @@ Select a resource and Gather. Your character approaches it, completes the work, 
 
 Pause and **0.5× / 1× / 3× / 8×** controls use one simulation clock. At **1×, one real second advances one game minute**: a full game day takes 24 real minutes (48 minutes at 0.5×, 8 minutes at 3×, 3 minutes at 8×). Open **Time settings** beside the speed buttons to change **Pause game when hidden**. It is checked by default and saved to your local player profile. Checked, hiding the tab or moving focus away pauses the game; unchecked, the server continues while a game tab remains connected, even if background heartbeats are throttled. Manual pause always wins. Closing all game connections pauses progression after disconnect detection; server downtime and computer sleep produce no offline catch-up. An already dispatched model request may still incur usage, but a paused world cannot accept its effects.
 
-World creators and authorized operators can open **Game**, directly below **World agent** on the right rail, to save the shared world or choose a checkpoint to load paused. Ordinary players have no save controls; their gameplay persists through database commits. Each named save appears in the menu's Saved games list. Saves live in `.data/saves/<save-id>/` as `metadata.json` and streamed `world.jsonl` (older `world.json` slots remain readable); `.data/` is gitignored. Named manual saves have no fixed count ceiling. The server keeps three rolling world autosaves at five-minute intervals of running wall time, and “Before last load” points to a durable recovery package. The menu shows autosave completion and failures. New packages have explicit record/work limits and a 256 MiB total bound; loading large worlds pauses play and uses more memory than capture. Stop the server before copying the whole `.data` directory for a local backup, including the save folder. Use another `OPEN_LEGEND_DATA_DIR` for a separate world and save folder. There is no silent save reset or destructive reset button. For a production client build served locally:
+World creators and authorized operators can open **Game**, directly below **World agent** on the right rail, to save the shared world or choose a checkpoint to load paused. Ordinary players have no save controls; their gameplay persists through database commits. Each named save appears in the menu's Saved games list. Saves live in `.data/saves/<save-id>/` as `metadata.json` and streamed `world.jsonl` (older `world.json` slots remain readable); `.data/` is gitignored. Named manual saves have no fixed count ceiling. The server keeps three rolling world autosaves at five-minute intervals of running wall time, and “Before last load” points to a durable recovery package. The menu shows autosave completion and failures. New packages have explicit record/work limits and a 256 MiB total bound; loading large worlds pauses play and uses more memory than capture. Stop the server and use `scripts/backup-world.ts NEW_BACKUP_DIRECTORY` for a consistent operational backup of PostgreSQL records and retained save files. Copying `.data` alone does not back up the running world. A separate world requires a separate PostgreSQL database URL and `OPEN_LEGEND_DATA_DIR`; the latter selects checkpoint files only. There is no silent save reset or destructive reset button. For a production client build served locally:
 
 ```sh
 pnpm run build

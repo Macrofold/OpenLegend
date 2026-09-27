@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import type { SaveFileMetadata } from './save-files.js';
-export type CheckpointSource = { kind: 'sqlite'; path: string } | { kind: 'postgres'; url: string };
+export type CheckpointSource = { url: string };
 export interface CheckpointRequest {
   directory: string;
   id: string;

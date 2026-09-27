@@ -1,3 +1,4 @@
+import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { mkdtemp, writeFile, stat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -17,13 +18,12 @@ import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { candidateSet } from '../apps/server/src/recall.js';
 
 // Operational benchmark: disposable storage, native data, no provider calls or test runner.
-// A PostgreSQL target must be explicitly supplied and empty. Keep report/profile output
+// Supply an explicit loopback admin URL for an owned disposable database. Keep report/profile output
 // outside the repository; this is component evidence, not multiplayer qualification.
 // Initialize native geometry before constructing or validating recovered world state.
 await initializeCollisionRuntime();
 
-const [output, sizeArgument = '5000', roundsArgument = '30', resumeArgument] =
-  process.argv.slice(2);
+const [output, sizeArgument = '5000', roundsArgument = '30'] = process.argv.slice(2);
 const size = Number(sizeArgument),
   rounds = Number(roundsArgument);
 if (
@@ -40,11 +40,9 @@ if (
   );
 if (process.env['AI_BUDGET_USD'] !== '0') throw new Error('Set AI_BUDGET_USD=0.');
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-data-stress-'));
-const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqlGameRepository(
-  join(directory, 'world.sqlite'),
-  url ? new PostgresDatabase(url) : undefined,
-);
+const disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
+const url = disposable.url;
+const store = new SqlGameRepository(directory, new PostgresDatabase(url));
 const durations: Record<string, number[]> = {};
 const measure = async <T>(name: string, run: () => Promise<T>): Promise<T> => {
   const at = performance.now();
@@ -66,29 +64,15 @@ const source = (index: number): MemoryRecord => ({
 });
 try {
   await store.ready;
-  const existing = await store.load();
-  if (existing && resumeArgument !== '--resume')
-    throw new Error('Refusing to benchmark a nonempty world.');
-  if (resumeArgument && resumeArgument !== '--resume')
-    throw new Error('Unknown benchmark argument.');
-  if (
-    existing &&
-    (existing.state.world.id !== 'wilderness-73' ||
-      existing.state.world.memories[NPC_ID]?.length !== size ||
-      !existing.state.world.memories[NPC_ID]!.every((value, index) =>
-        isDeepStrictEqual(value, source(index)),
-      ))
-  )
-    throw new Error('Resume is only allowed for this exact synthetic fixture.');
-  const world = existing?.state.world ?? createWorld(73);
-  if (!existing) world.memories[NPC_ID] = Array.from({ length: size }, (_, index) => source(index));
-  let state: SavedWorld = existing?.state ?? {
+  if (await store.load()) throw new Error('Refusing to benchmark a nonempty world.');
+  const world = createWorld(73);
+  world.memories[NPC_ID] = Array.from({ length: size }, (_, index) => source(index));
+  let state: SavedWorld = {
     world: freezeWorld(world),
     speed: 1,
     manuallyPaused: true,
   };
-  let revision =
-    existing?.revision ?? (await measure('initialCommit', () => store.commit(0, state)));
+  let revision = await measure('initialCommit', () => store.commit(0, state));
   const restored = await measure('recovery', () => store.load());
   const recoveredExactly = isDeepStrictEqual(restored?.state, JSON.parse(JSON.stringify(state)));
   if (!recoveredExactly) throw new Error('Recovery changed canonical source data.');
@@ -107,37 +91,30 @@ try {
     { length: model.dimensions },
     (_, index) => (index + 1) / model.dimensions,
   );
-  if (url) {
-    await measure('syntheticIndexBuild', async () => {
-      while (true) {
-        const batch = await store.memories.pending(scope, model, 128);
-        if (!batch.length) break;
-        await store.memories.putVectors(
-          scope,
-          model,
-          batch.map((entry, offset) => ({
-            id: entry.memory.id,
-            revision: entry.revision,
-            vector: query.map((value, index) => value + ((offset + index) % 7) / 10),
-          })),
-        );
-      }
-    });
-  }
+  await measure('syntheticIndexBuild', async () => {
+    while (true) {
+      const batch = await store.memories.pending(scope, model, 128);
+      if (!batch.length) break;
+      await store.memories.putVectors(
+        scope,
+        model,
+        batch.map((entry, offset) => ({
+          id: entry.memory.id,
+          revision: entry.revision,
+          vector: query.map((value, index) => value + ((offset + index) % 7) / 10),
+        })),
+      );
+    }
+  });
   for (let index = 0; index < rounds; index++) {
     await measure('top100Structured', () => store.memories.select(scope, 100));
-    if (url)
-      await measure('top100Vector', () => store.memories.select(scope, 100, { ...model, query }));
+    await measure('top100Vector', () => store.memories.select(scope, 100, { ...model, query }));
     await measure('localRetrievalTop100', async () => {
       const observed = observeActor(state.world, NPC_ID, { includeMemories: false })!;
       await store.memories.context(scope, [], false);
       await store.memories.coverage(scope, model);
       const required = await store.memories.required(scope, []);
-      const selected = await store.memories.select(
-        scope,
-        100,
-        url ? { ...model, query } : undefined,
-      );
+      const selected = await store.memories.select(scope, 100, { ...model, query });
       return candidateSet(state.world, NPC_ID, observed, [], [], [], [...selected, ...required]);
     });
     state = {
@@ -184,7 +161,6 @@ try {
     platform: `${process.platform}/${process.arch}`,
     database: store.persistence,
     directory,
-    resumed: !!existing,
     sources: size,
     rounds,
     counts,
@@ -192,12 +168,16 @@ try {
     checkpointBytes,
     recoveredExactly,
     staleWrite,
-    dimensions: url ? model.dimensions : undefined,
+    dimensions: model.dimensions,
     milliseconds: summary,
     memory: process.memoryUsage(),
   };
   await writeFile(output, JSON.stringify(report, null, 2), { flag: 'wx', mode: 0o600 });
   console.log(JSON.stringify(report, null, 2));
 } finally {
-  await store.close();
+  try {
+    await store.close();
+  } finally {
+    await disposable.close();
+  }
 }

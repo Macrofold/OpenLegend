@@ -94,7 +94,9 @@ Original recommendation: **Keep**.
 
 **Changed — current SQL path checked · Restrictiveness: Liberal.**
 
-The former 512-raw-record preselection is bypassed by repository-backed recall. PostgreSQL ranks current eligible indexed sources, returns 300 optional results, and supplements required sources; unindexed/SQLite fallback uses importance and recency. Repository selection accepts 1–1,000. The legacy in-memory 512 setting still exists.
+Decision/reflection preparation reuses source bodies only within its actor/generation request. The cache retains at most the existing 8,192-row / 4 MiB preparation allowance and evicts on pressure; eviction causes rereading, never evidence truncation. Reused bytes still count against each hydration admission. Conversation-covered optional sources are excluded before SQL selection limits; independently required evidence and the complete conversation retain their separate admission guarantees.
+
+The former 512-raw-record preselection is bypassed by repository-backed recall. PostgreSQL ranks current eligible indexed sources, returns 300 optional results, and supplements required sources; unindexed fallback uses importance and recency. Repository selection accepts 1–1,000. The legacy in-memory 512 setting still exists.
 
 **Reason / tradeoff:** Search retained eligible history before limiting returned results; keep model context bounded. This does not guarantee semantic recall of unindexed sources.
 
@@ -540,9 +542,9 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 **Changed · Restrictiveness: Liberal.**
 
-**Indexed lexical recall has no total match-work cap.** selectContext(query != null) uses a derived text projection with SQLite FTS5 or PostgreSQL stored tsvector/GIN. Unique query tokens match word prefixes with OR semantics; native text rank replaces historical arbitrary substring-count scoring. Protected required records precede matches, then importance/recent fallback fills the optional limit (maximum 300). The null-query branch remains recent-history selection. Exact vector recall is separate and unchanged.
+**Indexed lexical recall has no total match-work cap.** selectContext(query != null) uses a derived text projection with PostgreSQL stored tsvector/GIN. Unique query tokens match word prefixes with OR semantics; native text rank replaces historical arbitrary substring-count scoring. Protected required records precede matches, then importance/recent fallback fills the optional limit (maximum 300). The null-query branch remains recent-history selection. Exact vector recall is separate and unchanged.
 
-**Exposure / consequence:** Ordinary invention/world-assistant context reads on a mature actor can scan growing text. PostgreSQL can delay other read-lane work; synchronous SQLite query execution can stall native timers despite a logically separate read connection.
+**Exposure / consequence:** Ordinary invention/world-assistant context reads on a mature actor can scan growing text. PostgreSQL can delay other read-lane work; bounded output alone does not bound scan work.
 
 **Reason / tradeoff:** Keep all eligible history discoverable. Use an indexed lexical search and bounded preparation with explicit coverage, not a fixed newest-record prefilter that loses relevant older evidence.
 

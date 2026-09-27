@@ -49,6 +49,12 @@ Development compatibility follows the [root policy](../../AGENTS.md#development-
 
 No new retention policy drops routine movement or protects punches by a newly invented classification. Existing semantics are unchanged; retired source bodies remain non-recallable provenance until an explicit future retention policy is accepted. D3–D6 remain separate phases. MP01/MP04 now add verified OIDC accounts, explicit grants/control, private projections and absence/return. Hosted operations, additional specialized roles and regional residency remain separate.
 
+## DF03 — PostgreSQL-only runtime
+
+Implemented and locally qualified under the [PostgreSQL/preparation plan](../projects/postgresql-cognition-preparation.md). [Evidence](../verification.md#postgresql-only-storage-and-shared-preparation) records focused PostgreSQL fixtures, current-format recovery, native failure checks and static/build verification. PostgreSQL with pgvector is required locally and in production. The SQLite adapter, worker, fallback, dialect branches and importer are removed. `SqlGameRepository` retains repository authority and current-format save/load guarantees. Checkpoint files remain under the configured data directory; a separate world needs a separate database as well as that directory. Fixtures/profilers create and drop only owned disposable PostgreSQL databases. Existing development saves are neither converted nor deleted. Historical both-adapter measurements below remain historical evidence.
+
+Exit: missing configuration fails clearly, current PostgreSQL startup/reopen/checkpoint/recovery and relevant failure cases pass, migrated fixtures and static checks pass, and current docs/CI require PostgreSQL. Broader D5/SL/NC12 qualification remains separately tracked.
+
 ## Delivery slices and exit evidence
 
 The slices below remain the target and acceptance map. Current implemented scope and evidence are recorded above; broader qualification is not automatically complete. Existing gameplay branches are inputs to integration, not evidence that these gates are complete. Keep D0–D6 as the phase owners; the sequence below specifies useful end-to-end slices rather than creating a second project.
