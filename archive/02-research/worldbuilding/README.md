@@ -112,4 +112,4 @@ The packet separates fictional content, documented production history, critical 
 
 It does **not** claim a complete fresh rereading or viewing of every primary work, an exhaustive survey of current franchise canon, or empirical proof that a particular technique caused commercial success. Statements about a work's invitation or emotional effect are argued readings, not universal claims about audiences. The roster is broad but selective, and the source base is predominantly accessible English-language material.
 
-For the exact completion and review state, see [research-progress.md](research-progress.md). The documents live in `main` under `archive/02-research/worldbuilding/`, imported from `docs/worldbuilding-research-library` in one squash commit.
+For the exact completion and review state, see [research-progress.md](research-progress.md). The documents are maintained on `docs/worldbuilding-research-library` under `archive/02-research/worldbuilding/`.
