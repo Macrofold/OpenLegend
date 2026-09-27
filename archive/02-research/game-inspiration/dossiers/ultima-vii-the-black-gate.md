@@ -8,6 +8,8 @@ Ultima VII: The Black Gate is one of the clearest early demonstrations that a ro
 
 Origin Systems released **Ultima VII: The Black Gate** for MS-DOS in 1992. It is the first half of the broader Ultima VII story, but this dossier treats The Black Gate as the canonical subject rather than silently folding every product carrying "Ultima VII" into one ruleset.
 
+**Character identity boundary:** the player is always the authored returning **Avatar**, not a class-selected blank slate. The original reference manual's new-game flow lets the player set the Avatar's **name and gender**; it does not ask for a class, starting attributes or a perk build. Character differentiation during play therefore comes from training, equipment, spells and party composition rather than a creation-time build tree. [Original player guide transcription](https://bootstrike.com/Ultima7bg/Online/umanual.php).
+
 Important boundaries:
 
 - **Ultima VII: The Black Gate (1992)** — the original DOS game researched here.
@@ -108,6 +110,12 @@ Party members need food and will complain when hungry. The design intent is not 
 The world has a day/night cycle and NPC schedules. People work, eat, socialize and sleep at different times. Raymond Benson later recalled that the day/night schedule was built deeply enough that the Avatar also had to sleep, and described the overall cast/schedule complexity as something he could hardly imagine reproducing again. [Benson interview](https://ultimacodex.com/interviews/we-wanted-the-game-to-last-forever-an-interview-with-raymond-benson/).
 
 Time therefore changes **who can be found where**, whether a shop is effectively available, and what behavior the player can observe.
+
+### Death, recovery and campaign continuation
+
+The Black Gate handles death unusually for a 1992 RPG. Community mechanics references documenting the original rules report that when the **Avatar** is killed after leaving Trinsic, the party disperses and the Avatar awakens at the Fellowship shelter for the poor in Paws rather than entering a permanent game-over state. Fallen companions can be restored through several in-world routes, including the **Resurrect** spell and help from characters such as Lord British/healers under the appropriate rules. The original manual independently documents the Resurrect spell itself. [Original manual route](https://bootstrike.com/Ultima7bg/Online/umanual.php) · [Ultima Codex death reference](https://wiki.ultimacodex.com/wiki/Character_death).
+
+This means failure recovery is partially **diegetic** instead of only "reload save," although saving/reloading remains available and edge cases differ. It is another example of world institutions participating in what many games leave to an external menu.
 
 ### Early, middle and late purpose
 
@@ -360,7 +368,8 @@ The transferable principle is **build consistency beneath the fiction**: residen
 ### Primary/historical/developer sources read
 
 - [Ultima VII lead writer Raymond Benson interview](https://ultimacodex.com/interviews/we-wanted-the-game-to-last-forever-an-interview-with-raymond-benson/) — writing process, NPC individuality, schedules, team collaboration.
-- [Original/reference-document routes](https://bootstrike.com/Ultima7bg/manuals.php) — preserved Black Gate/Forge manuals and player documentation; community hosting of original documentation.
+- [Original/reference-document routes](https://bootstrike.com/Ultima7bg/manuals.php) and [online player-guide transcription](https://bootstrike.com/Ultima7bg/Online/umanual.php) — preserved Black Gate/Forge manuals and player documentation; used in the audit for name/gender character creation, core interaction controls and spell/recovery rules. Community-hosted transcription of original documentation, not a modern redesign.
+- [Ultima Codex — Character death](https://wiki.ultimacodex.com/wiki/Character_death) — community mechanics reference used with the original manual to document Avatar/companion recovery behavior; treated as secondary rather than primary design intent.
 - [Computer Gaming World #97 archive](https://library.gamehistory.org/repositories/2/archival_objects/9040) and [scan](https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/magazines/computer_gaming_world/Computer%20Gaming%20World-1992_08_issue97.pdf) — contemporary Scorpia review.
 - [Computer Gaming World #98 scan](https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/magazines/computer_gaming_world/Computer%20Gaming%20World-1992_09_issue98.pdf) — contemporary Ardai counter-review.
 
@@ -383,10 +392,10 @@ G128 is a newly curated subject. Direct branch checks found no prior dedicated B
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 | Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries |
+| R01 | Avatar name/gender identity plus Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries |
 | R02 | Real-time world, object verbs, dialogue knowledge, combat/magic, plus explicit limited-crafting/stealth absences |
 | R03 | Object ecology, containers/equipment and eight-person party composition |
-| R04 | Training, economy, hunger, sleep/schedules and campaign knowledge progression |
+| R04 | Training, economy, hunger, sleep/schedules, death/recovery and campaign knowledge progression |
 | R05 | Eight worked investigation/object/schedule/social/combat cases |
 | R06 | Individually authored NPCs, schedules, companions, Fellowship social order |
 | R07 | Mouse-first pop-up UI, audio atmosphere, original/modern technical friction |
