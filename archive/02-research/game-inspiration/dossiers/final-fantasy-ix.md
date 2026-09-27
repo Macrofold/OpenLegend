@@ -1,8 +1,8 @@
 # Final Fantasy IX — full research dossier
 
-**G86 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 2000 PlayStation *Final Fantasy IX*. Later mobile/PC/PS4/Switch/Xbox releases are separated where UI, autosave, boosters, graphics or technical behavior differ. The roster focus is equipment-taught abilities, fixed character identities, ATB/Trance, synthesis, exploration, minigames and narrative. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G86 · Research pass and corrective coverage review, September 26, 2026.** Primary mechanics baseline: the 2000 PlayStation *Final Fantasy IX*. Later mobile/PC/PS4/Switch/Xbox releases are separated where UI, autosave, boosters, graphics or technical behavior differ. The roster focus is equipment-taught abilities, fixed character identities, ATB/Trance, synthesis, exploration, minigames and narrative. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough is claimed. Mechanics examples are reconstructed from the original manual, developer interviews, written reviews and version-specific reference material.
+No personal playthrough is claimed. Mechanics examples are reconstructed from the original manual, developer interviews, written reviews and version-specific reference material. **Spoilers:** section 17 discusses character origins and mortality; the Mognet subsection and worked situations disclose optional-quest solutions. The corrective pass preserves the original research and sources while expanding the previously incomplete side-system and interaction coverage.
 
 ## 1. Identity, scope and player promise
 
@@ -169,6 +169,8 @@ The item lifecycle is therefore:
 
 That is far more interesting than a linear vendor-trash pipeline.
 
+The named Butterfly Sword recipe additionally costs **300 gil** at a shop offering it. Its teaching repertoire includes **What's That!?** and **Protect Girls**, so synthesizing it changes both the weapon and future learning opportunities. A recipe becoming affordable does not imply the consumed teaching items have finished their educational role. [FFIX10](#ffix10) [FFIX31](#ffix31)
+
 ## 8. Steal reinforces Zidane's social/role identity
 
 Zidane's thief role is mechanically persistent.
@@ -197,7 +199,8 @@ Examples:
 - Zidane gains Dyne skills;
 - Vivi gains Double Black;
 - Steiner gains enhanced physical output;
-- Garnet/Eiko's summon behavior changes;
+- Garnet gains Eidolon, changing her summoning behavior;
+- **Eiko gains Double White**, allowing two White Magic spells in one turn; her equipment-dependent changes to some summons are a separate system, not her Trance effect. [FFIX23](#ffix23)
 - other characters receive role-specific upgrades.
 
 The key distinction from FFVII/VIII Limit Breaks is control.
@@ -213,6 +216,8 @@ The design lesson is clear:
 ## 10. Steiner + Vivi: abilities can depend on another person being present
 
 Steiner's Sword Magic becomes available when Vivi is in the active party, allowing Vivi's black magic to modify Steiner's sword techniques.
+
+Presence alone is insufficient: Vivi must have the corresponding spell available through mastery or currently equipped teaching gear, and conditions such as Silence or incapacitation can prevent his participation. **Steiner pays the Sword Magic MP cost; Vivi does not pay a second casting charge.** The dependency is a usable repertoire and state, not simply a party-slot check. [FFIX30](#ffix30)
 
 This is a small but important composition rule.
 
@@ -267,6 +272,14 @@ This is a highly causal learning loop:
 
 The mechanic is fantastical/comedic, but the general principle is powerful:
 - learning can come from interacting with the world rather than opening a skill menu.
+
+### Frog catching: harvesting now changes a later visit
+
+With Quina present, the marsh offers a catching activity: approach frogs when they are on land rather than treating them as ordinary battle targets. The cumulative catch count survives leaving. Emptying the population delays another useful harvest; leaving a male and female supports regrowth, with a golden frog providing another growth benefit. Regeneration occurs while outside the catching area, so repeatedly watching an empty marsh is not the same as doing another activity and returning. [FFIX26](#ffix26)
+
+This count has two separate payoffs. **Frog Drop**, learned by eating a suitable Gigan Toad, uses Quina's level multiplied by the accumulated frog count for its ordinary damage calculation. Quale also awards milestone prizes. At 99 catches, the next reward is a **battle with Quale**; winning that confrontation earns the Gastro Fork. Reaching a collection threshold and winning its unlocked encounter are different accomplishments. [FFIX27](#ffix27)
+
+**Interpretation:** a seemingly self-contained pastime becomes persistent combat development, equipment and a reason to revisit a place. Its small population rules create a harvest-versus-replenishment decision, not evidence of a general ecosystem simulation. The possibility of maximizing a counter should not erase the player's choice to pursue another activity instead.
 
 ## 13. Active Time Events make off-screen people visible
 
@@ -328,6 +341,12 @@ Cards have:
 - physical/magic defense;
 - probabilistic battle resolution. [FFIX16](#ffix16)
 
+### Placement, contests and material stakes
+
+Choose five owned cards, then place them alternately with the opponent on a **4×4 board** whose blocked spaces constrain placement. An arrow aimed at an adjacent opposing card captures it without a contest if no arrow points back. Opposed arrows instead produce a stat-dependent, uncertain card battle. Winning that battle can turn further neighboring cards through the defeated card's arrows; an unopposed capture does not trigger that combo. More arrows can consequently become a liability when a card is lost. [FFIX24](#ffix24)
+
+The end-of-board ownership count determines the winner, not how many captures were made earlier. Normally the winner takes one of the opponent's cards they ended up controlling; a Perfect takes the entire opposing hand. A draw does not automatically award a new card. The inventory cap makes keeping duplicates compete with collecting different types. Cards persist between games and can also be found or won from monsters; ordinary matches do not transform them into RPG materials through an equivalent of Card Mod. The story tournament is a separate exception to a claim that card play never supplies a main-game reward. [FFIX25](#ffix25)
+
 The system is more opaque and less directly integrated into character progression than FFVIII's Card Mod economy.
 
 This is an instructive contrast.
@@ -363,7 +382,17 @@ The world also distinguishes:
 
 Choco's upgrades convert old terrain barriers into later routes, giving side progression geographic meaning.
 
+### Mognet: a delivery network becomes a repair investigation
+
+**Optional-quest spoilers.** Ordinary moogle conversations let the player accept letters and deliver them to named recipients, revealing other characters' travels and concerns. The late repair chain runs **Kupo → Atla → Mogryo → Kumool → Mois → Noggy → Kupo**, connecting Alexandria, Burmecia, the Black Mage Village, Ipsen's Castle, the Fossil Roo entrance and Daguerreo. Quina is needed to reach the relevant Fossil Roo contact. These are authored delivery flags, not a procedurally routed postal economy. [FFIX28](#ffix28)
+
+The relay identifies **Superslick**, obtained from Ruby in Alexandria and delivered to Artemicion at Mognet Central to repair the machinery and receive a Protect Ring. Reaching Central involves a mountain crack, a Dead Pepper and suitable Choco traversal. Guide shorthand disagrees about the minimum chocobo form, so a convenient ocean route is not asserted to be the only route. Kupo Nut exchanges are supplementary, not mandatory trips between every repair letter. [FFIX28](#ffix28) [FFIX29](#ffix29)
+
+**Interpretation:** a service first encountered as incidental conversation becomes a world-sized problem with particular participants and a material solution. It connects familiar places instead of inventing an unrelated dungeon solely for the reward. The limitation is repeated delivery travel: a meaningful network can still feel like a checklist when the next contact is only a destination marker.
+
 ## 17. Story themes: identity, mortality and chosen life
+
+**Major character and identity spoilers follow.**
 
 FFIX begins with theatrical comedy and a planned kidnapping, then steadily moves into:
 - war;
@@ -383,7 +412,7 @@ Zidane faces a different version:
 - origin does not dictate personhood;
 - chosen relationships matter more than intended function.
 
-Director Hiroyuki Ito's anniversary reflection says concepts such as “what it really means to be human,” circumstances, kindness and hatred became central to his understanding of the game's “return to roots.” [FFIX02](#ffix02)
+Director Hiroyuki Ito's anniversary reflection says concepts such as “what it really means to be human,” circumstances, kindness, and hatred became central to his understanding of the game's “return to roots.” [FFIX02](#ffix02)
 
 This is highly aligned with OpenLegend's broader goal: personhood should be expressed by behavior, memory, relationship and choice, not only by origin metadata.
 
@@ -499,6 +528,34 @@ Helpful negative evidence shows two different complaint classes:
 
 Those are qualitative examples, not prevalence estimates.
 
+## Worked cross-system situations
+
+**Constructed rules-based illustrations, not personal play reports.** The earlier explanations remain above; these cases make their conditions, consequences and limitations explicit.
+
+### A. A new weapon can consume an unfinished lesson
+
+**Intention:** improve Zidane without losing access to something still being learned. **Conditions:** a shop offers Butterfly Sword, and the party owns Dagger, Mage Masher and 300 gil. **Actions:** inspect the old items' teaching progress, finish relevant mastery or retain another teaching source, then synthesize. **Interaction:** upgrading consumes possessions that also enable learning. **Result:** the new weapon opens its own repertoire without automatically preserving every unmastered old ability. **Next choice:** use it for immediate strength or train its abilities. **Limit:** being able to pay is not proof that now is the best moment to consume the inputs. [FFIX07](#ffix07) [FFIX10](#ffix10) [FFIX31](#ffix31)
+
+### B. A silent partner can remove someone else's action
+
+**Intention:** have Steiner use Fire Sword against a suitable target. **Conditions:** Vivi has Fire available, both are participating, and Steiner can pay the cost. **Actions:** select the cooperative attack; if Vivi is Silenced first, remove that condition or choose another action. **Interaction:** one person's condition changes another's available repertoire. **Result:** curing Vivi can restore two participants' options, not only his next spell. **Next choice:** spend the recovery turn or exploit a different attack. **Limit:** more MP on Steiner cannot solve his partner's inability to participate. [FFIX30](#ffix30)
+
+### C. Leave something behind to make the next harvest useful
+
+**Intention:** increase Quina's long-term frog count. **Conditions:** a marsh contains catchable frogs and a potential breeding pair. **Actions:** catch a portion, retain the useful population and leave for another objective before revisiting. **Interaction:** immediate collection competes with replenishment and travel scheduling. **Result:** the existing count is retained while another visit can become productive. **Next choice:** pursue the next Quale milestone or use the improved Frog Drop if learned. **Limit:** clearing everything for one more immediate catch can slow the later goal; possessing many catches does not itself teach the spell. [FFIX26](#ffix26) [FFIX27](#ffix27)
+
+### D. Avoid a duel rather than trusting a stronger number
+
+**Intention:** capture a useful Tetra Master position with less uncertainty. **Conditions:** a neighboring enemy card has an unguarded side. **Actions:** aim an arrow into that side instead of forcing opposed arrows. **Interaction:** placement can bypass the uncertain card battle. **Result:** the card flips without a battle-driven combo. **Next choice:** protect the new position or prepare another capture. **Limit:** the safer local flip may leave an unfavorable final board; winning this placement is not winning the match. [FFIX24](#ffix24)
+
+### E. Finish the delivery chain, then finish the repair
+
+**Intention:** restore Mognet Central. **Conditions:** the late relay is available and the party can reach its contacts. **Actions:** carry the requested letters, bring Quina for the Fossil Roo contact, obtain Ruby's Superslick and take it to Artemicion. **Interaction:** information, party composition, travel and a material object jointly resolve the problem. **Result:** a network investigated across several places receives its repair and reward. **Next choice:** return to other unfinished exploration. **Limit:** identifying or obtaining the missing material does not complete the final hand-in. [FFIX28](#ffix28) [FFIX29](#ffix29)
+
+### F. A learned defense is not an active defense
+
+**Intention:** prepare for an enemy known to inflict a dangerous status. **Conditions:** the character has mastered the relevant protective support ability but has spent the available Magic Stones elsewhere. **Actions:** inspect the active set, disable a less relevant effect and allocate the required stones. **Interaction:** permanent knowledge and current capacity are distinct. **Result:** equipment can change while the mastered defense remains selectable, but only the enabled set governs the encounter. **Next choice:** keep the defensive plan or restore the previous setup afterward. **Limit:** a full mastery bar does not prove that the protection was switched on. [FFIX09](#ffix09)
+
 ## 24. Comprehensive mechanics inventory
 
 | Category | FFIX implementation / absence |
@@ -509,23 +566,24 @@ Those are qualitative examples, not prevalence estimates.
 | Ability learning | Equipment teaches compatible Action/Support abilities; mastery persists |
 | Build activation | Support abilities consume finite Magic Stones |
 | Equipment | Character-compatible weapons/armor/add-ons; each can teach abilities and alter elements/stats |
-| Crafting | Synthesis combines equipment + gil into new equipment |
-| Items | Consumables, key items, synthesis inputs, equipment, cards, Chocographs |
-| Magic | MP-based, character-role-specific; summons and Blue Magic variants |
+| Crafting | Synthesis combines equipment + gil into new equipment; old teaching sources can be consumed |
+| Items | Consumables, key items, synthesis inputs, equipment, cards, Chocographs and delivered letters |
+| Magic | MP-based, character-role-specific; summons and Blue Magic variants; Eiko's Double White differs from Garnet's Eidolon |
 | Combat | Four-person ATB, Trance, role-specific commands, status/elemental rules |
-| Cooperative capability | Steiner Sword Magic depends on Vivi's presence |
+| Cooperative capability | Steiner Sword Magic depends on Vivi's available repertoire and condition; Steiner pays the MP |
 | Enemy interaction | Steal; Quina Eat/Blue Magic; status/element exploitation |
 | Traversal | Ships/airships, Choco, Chocobo ability upgrades |
-| Minigames | Hot & Cold, Tetra Master, jump rope, racing, auctions, hunts and others |
+| Minigames | Hot & Cold, Tetra Master placement/card stakes, frog catching, jump rope, racing, auctions, hunts and others |
+| Persistent side systems | Frog count and marsh replenishment; Mognet letter/repair flags; card collection distinct from combat equipment |
 | Economy | Gil, shops, synthesis costs, auction systems, minigame points |
-| Death/failure | KO/revival and save/modern autosave recovery |
+| Death/failure | KO/revival and save/modern autosave recovery; card losses have their own stakes |
 | Story | Authored journey with strong identity/mortality themes |
 | Relationships | Authored interpersonal development; no generic affinity simulation |
 | Off-screen world | Active Time Events expose parallel scripted character/NPC scenes |
 | NPCs/factions | Dense authored NPCs/kingdoms, no general autonomous simulation |
-| Multiplayer | Single-player |
+| Multiplayer | The studied modern ports are single-player; Tetra Master NPC matches are not a native online card service |
 | Building/settlements | No player construction/management |
-| Endgame/optional | Chocograph chain, ultimate gear, Ozma/Hades, Friendly Monsters, Stellazzio, Excalibur II challenge |
+| Endgame/optional | Chocograph chain, ultimate gear, Ozma/Hades, Friendly Monsters, Stellazzio, Mognet repair, Quale and Excalibur II challenge |
 
 ## 25. OpenLegend transferable lessons and limits
 
@@ -583,32 +641,34 @@ FFIX invests writing in non-protagonists.
 
 ## 26. Preservation and requirement audit
 
-No FFIX-specific prior game/mechanics/dossier owner existed on this branch before G86, so this dossier is additive.
+No FFIX-specific prior game/mechanics/dossier owner existed on this branch before G86, so this dossier is additive. The corrective pass retains all FFIX01–22 sources and the original examples, corrects the Eiko/Garnet conflation, adds side-system operations and six complete situations, and makes meaningful spoilers explicit. Recommendations remain research interpretations, not adopted OpenLegend requirements.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity/scope/promise | §§1–3 |
-| R02 actions/major mechanics | §§4–18, 24 |
-| R03 items/entities/composition | §§4–10, 14–16 |
-| R04 progression/economy/time | §§4–9, 14, 21 |
-| R05 concrete interactions | §§4–10, 13–15 |
-| R06 people/AI/social/multiplayer | §§10, 13, 17–18, 24 |
+| R02 actions/major mechanics | §§4–18, 24; expanded frog, card and Mognet operations |
+| R03 items/entities/composition | §§4–10, 12, 14–16; named synthesis and letter chains |
+| R04 progression/economy/time | §§4–9, 12, 14–16, 21; collection, replenishment and card stakes |
+| R05 concrete interactions | [Six fully worked situations](#worked-cross-system-situations), retaining §§4–10, 13–15 examples |
+| R06 people/AI/social/multiplayer | §§10, 13, 16–18, 24 |
 | R07 art/audio/interface/feel | §§3, 20, 22–23 |
-| R08 story/narrative/play | §§13, 17–18 |
+| R08 story/narrative/play | §§13, 16–18, with spoiler boundaries |
 | R09 production/development | §§19–20 |
 | R10 marketing/distribution/virality | §21 |
 | R11 commercial/participation | §§21, 23 |
 | R12 reviews/player feedback | §§22–23 |
-| R13 transferable inspiration/limits | §25 |
-| R14 sources/viewing/preservation/navigation | §§2–3, 26 + sources |
+| R13 transferable inspiration/limits | §25 and labeled interpretation beside the added systems |
+| R14 sources/viewing/preservation/navigation | §§2–3, 26 + annotated sources; original headings retained |
 
 ### Evidence limits
 
 - Original PlayStation and modern mobile/PC/console ports are separated where relevant.
-- Five independent written reviews were inspected.
-- Steam evidence is self-selected and current port/mod ecosystem affects it.
-- The “over five million” figure is the current Steam/Square Enix product claim and does not expose a detailed sales breakdown.
-- No claim depends on unwatched footage.
+- Five independent written reviews were inspected in the original pass; that inherited reading is not falsely presented as repeated by this corrective pass.
+- Steam evidence is self-selected and the current port/mod ecosystem affects it; the prior snapshot is retained, not refreshed here.
+- The “over five million” figure is the original pass's Steam/Square Enix product claim and does not expose a detailed sales breakdown.
+- New guide passages were inspected for the named rules. They are not a current-mod audit or a personally reproduced playthrough.
+- No claim depends on unwatched footage. Useful viewing targets include a Tetra Master opposed-arrow combo, marsh harvesting and return, the synthesis/AP interface, and Sword Magic becoming unavailable after a partner's status changes. The linked guides provide reading routes; no invented playback timestamps are supplied.
+- The separate seven-file packet audit and 130-subject integration remain open; untouched original owners are not proof of a completed packet comparison.
 
 ## 27. Completion conclusion
 
@@ -667,3 +727,25 @@ For OpenLegend, the most useful principle is:
 <a id="ffix21"></a>**FFIX21 — [FINAL FANTASY IX most-helpful Steam reviews](https://steamcommunity.com/app/377840/reviews/?browsefilter=toprated&l=english).** Steam users, inspected 2026-09-26. Qualitative current/long-tail player evidence.
 
 <a id="ffix22"></a>**FFIX22 — [Helpful negative FINAL FANTASY IX Steam review](https://steamcommunity.com/profiles/76561197983399633/recommended/377840) and [top helpful review surface](https://steamcommunity.com/app/377840/reviews/?browsefilter=toprated&l=english&snr=1_5_9_).** Individual player testimony on battle/Steal/resource friction and port-quality criticism; self-selected, not prevalence evidence.
+
+### Corrective-pass sources
+
+The following passages were inspected September 26, 2026. Community guides establish their documented rules, not proprietary implementation or personally tested behavior. Original source IDs above are preserved.
+
+<a id="ffix23"></a>**FFIX23 — [Eiko Carol](https://www.gamerguides.com/final-fantasy-ix/guide/introduction/characters/eiko-carol).** Gamer Guides, authored character reference. Double White and equipment-dependent summon passages read; the writer's character ranking is not adopted. Corrects the original conflation with Garnet.
+
+<a id="ffix24"></a>**FFIX24 — [Tetra Master](https://gamefaqs.gamespot.com/ps/197338-final-fantasy-ix/faqs/71891/tetra-master).** bover_87, guide v2.01, June 20, 2023. Placement, contested capture, combos and result rules read; no exact probability simulation claimed.
+
+<a id="ffix25"></a>**FFIX25 — [Introduction to Tetra Master](https://www.gamerguides.com/final-fantasy-ix/guide/side-quests/tetra-master/introduction-to-tetra-master).** Gamer Guides. Entry, collection limit and card-stakes passages read; normal matches are distinguished from the story tournament. Numerical shorthand is not treated as a complete internal formula.
+
+<a id="ffix26"></a>**FFIX26 — [Journey to Burmecia: frog-catching section](https://www.gamerguides.com/final-fantasy-ix/guide/walkthrough/disc-1/burmecia).** Gamer Guides. Quina, land catches, retained breeding population and outside-area regrowth inspected. Other walkthrough sections are not represented as played.
+
+<a id="ffix27"></a>**FFIX27 — [Frog Catching](https://www.hellandheavennet.com/final-fantasy-9/side-quests/frog-catching.php).** Hell and Heaven Net, community guide. Named learning source, Frog Drop relationship and Quale reward sequence read. Exact growth-time formulas are not certified.
+
+<a id="ffix28"></a>**FFIX28 — [Moogle FAQ](https://gamefaqs.gamespot.com/ps/197338-final-fantasy-ix/faqs/23306).** Ornitier, authored original-game guide. Mognet repair route, Quina access and material hand-in passages read. Conflicting minimum-chocobo shorthand is not adopted; optional Kupo Nut detours are not mandatory prerequisites.
+
+<a id="ffix29"></a>**FFIX29 — [Side Questing Finale](https://www.gamerguides.com/final-fantasy-ix/guide/walkthrough/disc-4/side-questing-finale).** Gamer Guides. Substantive indexed Superslick/Ruby/Artemicion and reward text inspected. Its convenient ocean route is not asserted as the only route to Central.
+
+<a id="ffix30"></a>**FFIX30 — [Abilities: Sword Magic](https://gamefaqs.gamespot.com/ps/197338-final-fantasy-ix/faqs/71891/abilities).** bover_87, v2.01. Substantive Sword Magic repertoire, partner-condition and MP rules inspected; exact current mod behavior is outside scope.
+
+<a id="ffix31"></a>**FFIX31 — [Butterfly Sword](https://finalfantasy.fandom.com/wiki/Butterfly_Sword_%28Final_Fantasy_IX%29).** Community item reference. Recipe, cost and teaching properties inspected and recipe cross-checked against FFIX10. No arbitrary recipe invention or inventory duplication implied.
