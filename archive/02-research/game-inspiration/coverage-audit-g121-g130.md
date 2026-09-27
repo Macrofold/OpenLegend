@@ -12,13 +12,13 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G122 — Cataclysm: Dark Days Ahead.** G121 has been reread against the complete standard and corrected where needed.
+**Active: G123 — Rain World.** G121–G122 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
 | G121 | Battle Brothers | **Audited** | `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef` — R01–R14 and explicit mechanics inventory were already substantive. Audit replaced the latest-version dependency on a third-party GOG mirror with directly inspected June/July 2026 Steam primary announcements, explicitly pinning v1.5.2.3 as the newest published Steam patch found and preserving platform-parity limits. |
-| G122 | Cataclysm: Dark Days Ahead | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G123 | Rain World | Pending | — |
+| G122 | Cataclysm: Dark Days Ahead | **Audited** | `a916e8e76b77f8808544728c797daaa0247e234c` — mechanics/reception coverage was already substantive; audit added a September 27 primary check that the official releases page still names 0.I Ito as latest stable while keeping experimental builds separate. |
+| G123 | Rain World | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G124 | Persona 5 Royal | Pending | — |
 | G125 | XCOM 2 | Pending | — |
 | G126 | Crusader Kings III | Pending | — |
@@ -26,6 +26,12 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G128 | Ultima VII: The Black Gate | Pending | — |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G122 — Cataclysm: Dark Days Ahead closure evidence
+
+The dossier already covered the explicit inventory deeply: creation/professions/attributes, skills and proficiencies, pockets/layered armor, crafting and interrupted work, vehicles/boats/electricity, mutations/bionics, traversal, needs and disease, NPC/faction state, trade, construction, single-player/co-op-fork boundaries and late self-directed play. Eight worked situations and five written accounts plus positive/negative Steam evidence were retained.
+
+The audit's only material change was current-version certification. The project's current September 27 Releases page independently confirms 0.I Ito is still the latest stable while experimental builds continue separately. No historical Steam-distribution criticism or evidence limit was erased.
 
 ## G121 — Battle Brothers closure evidence
 
