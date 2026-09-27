@@ -500,6 +500,16 @@ Imported from `docs/game-inspiration-games-121-end` at `28cc5a5fc0c13e0789e82475
 | G147 | Once Human | **Complete** | [Dossier](dossiers/once-human.md); `df0c73d2f06228e3bc1e3e322d8ad3b448df09bf`. Current 3.0.6 scenario/permanent-server/Visional/custom-server/class/cross-platform state separated from NDA-only Isles of Abyss testing; full contamination/survival/build/weapon/Deviation/class/PvE-PvP/inheritance inventory, eight worked interactions, five full launch reviews plus current Steam evidence, first-party reset/population evolution and commercial-participation metrics. Scoped compare shows only the dossier changed. |
 | G148 | Abiotic Factor | **Complete** | [Dossier](dossiers/abiotic-factor.md); `2234fcdee8881458c9cd2b4298520a667eba4f20`. Early Access→1.0→current 1.4/community-update and paid-Home-World boundaries; Entropic Break Q1 2027 and Community Update #5/mod support remain explicitly future. Full jobs/traits/use-skill/needs/power/base/portal/combat/pet/co-op inventory, eight worked interactions, five substantive written reviews including one version-limited Early Access review, current helpful Steam positive/negative evidence, production/sales history and explicit evidence limits. Scoped compare shows only the dossier changed; repository search found no prior dedicated Abiotic Factor owner. |
 
+### G141–G148 range verification — September 27, 2026
+
+**Scoped range complete: 8 / 8. No active game remains on this branch.** Every G141–G148 dossier was reread after authoring and contains explicit R01–R14 coverage, eight worked interactions, an annotated source register, current version/edition boundaries, comprehensive mechanics coverage, reception/player evidence and declared evidence limits. Final static checks confirmed all eight dossier links from the library README and all eight completion rows in this ledger.
+
+Raft's final review caught one evidence-quality issue: a Checkpoint Gaming assessment was only available through an index, so it was demoted to supplemental evidence and replaced in the counted minimum by a fully read HitPoint Reviews article (`b7bbc3ea5584572c27a260af03a057a341cf1007`). The final five-review claim therefore does not count an unavailable review body.
+
+The source branch `docs/game-inspiration-library` advanced by five commits during this work with the completed G121–G130 audit. This range branch remains a separate Git lineage (**24 commits ahead / 5 behind at the final pre-ledger comparison**) because no merge/rebase was requested. Its shared README, progress ledger and changelog were rebuilt from the current library versions before reapplying the G141–G148 changes, preserving the concurrent G121–G130 status. The compare reports only the expected eight new dossiers plus the README, this ledger and the documentation changelog as branch-side changes; the roster and requirements files are unchanged.
+
+Verification is scoped documentation/static review. No game executable, multiplayer server, automated gameplay suite or audiovisual source was represented as tested/watched; no full external-link crawler or P01–P05 packet/full-roster audit is claimed. G131–G140 remain pending.
+
 ## Final integration gates — pending
 
 | Gate | Work still required |
