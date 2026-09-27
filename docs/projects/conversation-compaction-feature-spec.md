@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — feature specification
 
-**Status:** proposed design only; no runtime implementation is authorized by this document. [Technical design](conversation-compaction-tech-design.md) owns the mechanism. [NC14–NC17](../maintainers/narration-and-conversations.md) track delivery if the design is approved for implementation.
+**Status:** proposed design only; no runtime implementation is authorized by this document. [Technical design](conversation-compaction-tech-design.md) owns the mechanism. [NC14–NC18](../maintainers/narration-and-conversations.md) track delivery and conditional follow-up if the design is approved for implementation.
 
 ## 1. Outcome
 
@@ -125,7 +125,7 @@ V1 intentionally does **not** add:
 - transcript deletion;
 - new fictional forgetting behavior.
 
-A simple rolling actor-specific summary is sufficient until measured quality shows otherwise.
+A simple rolling actor-specific summary is sufficient until measured quality shows otherwise. Richer research-backed approaches remain explicit conditional future work under [NC18](../maintainers/narration-and-conversations.md), not untracked ideas and not pre-approved v1 scope.
 
 ## 8. Staged capability
 
@@ -169,7 +169,7 @@ The summary format and prompt are implementation policy behind that boundary. Th
 
 ## Maintained records
 
-- Implementation: [Narration and conversation tasks, NC14–NC17](../maintainers/narration-and-conversations.md).
+- Implementation: [Narration and conversation tasks, NC14–NC18](../maintainers/narration-and-conversations.md).
 - Limits and constraints: [Narration and conversations inventory](../limits/narration.md).
 - Related design: [Technical design](conversation-compaction-tech-design.md).
 - Current semantic owners: [Memory architecture](../memory-architecture.md) and [Narration, agent responses and conversations](../narration-and-conversations.md).
