@@ -251,6 +251,12 @@ OpenLegend should use:
 
 to make possession spatial.
 
+### Stealth: crouch, awareness, and quiet tools
+
+The original pass covered witnesses and hunting but under-described **stealth** as a reusable combat/infiltration layer. Arthur can crouch and approach unaware enemies from behind for takedowns; the bow and throwing knives provide quiet ranged options, and the Weapons Expert challenge set explicitly includes killing unaware enemies from behind with the bow. [R2-12](#r2-12)
+
+This is a meaningful but bounded system rather than a full immersive-sim detection model. Stealth is frequently supported by mission layouts and unaware-enemy states, but disguise, light/shadow simulation and long-term guard knowledge remain limited. Its strongest composition is with the wider world: a quiet kill can prevent immediate escalation, while a discovered body or surviving witness can still push the encounter into the law/witness chain described below.
+
 ## 8. Dead Eye: progression in perception and execution
 
 Dead Eye returns as a player-time control system.
@@ -853,15 +859,15 @@ The service therefore converts frontier activity into a long-tail economy unlike
 
 ### Current support state
 
-As of 2026, Rockstar still rotates:
+As of September 2026, Rockstar still rotates:
 - role bonuses;
 - featured series;
 - discounted items;
 - seasonal rewards.
 
-Current reporting and official event feeds show regular monthly promotions rather than the large story/role expansion cadence of the earlier years. [R2-11](#r2-11)
+The audit re-read Rockstar's live Newswire rather than inferring activity from community traffic. Official 2026 posts show monthly Red Dead Online rotations through **September 1, 2026**—including role-wide bonuses in June, Bounty Hunter bonuses in late June, Telegram Mission bonuses in August, and a September Moonshiner event with triple rewards. [R2-11](#r2-11) Rockstar's service-status page also listed Red Dead Online operational on PS4, Xbox One and PC when checked in late September. [R2-13](#r2-13)
 
-This is **active service**, but not evidence of major expansion-level development.
+This is **active service**, but not evidence of a return to the large story/Role-expansion cadence of the earlier years. The distinction matters: operational servers and recurring economy events are not the same thing as substantial new authored systems.
 
 ## 30. Red Dead Online social benefits and failure modes
 
@@ -1036,6 +1042,7 @@ Covered:
 - camp;
 - horse bonding;
 - weapons/condition;
+- crouch/takedown/bow/throwing-knife stealth;
 - Dead Eye;
 - hunting/tracking/pelts;
 - wildlife;
@@ -1070,6 +1077,17 @@ This pass preserves:
 
 No current Online event is described as a major content expansion without evidence.
 
+### Reading / viewing routes
+
+For a compact verification route:
+1. **R2-01/R2-05/R2-02/R2-09/R2-10** for five substantive reviews spanning console and PC.
+2. **R2-03/R2-06/R2-07** for horse design, living-world production goals and the attributed labor/scale context.
+3. **R2-12** for the omitted stealth-action vocabulary alongside the dossier's weapon/witness systems.
+4. **R2-04** for direct current Steam/player evidence; **R2-11/R2-13** for the September 2026 Red Dead Online event/operational boundary.
+5. **R2-08** for the dated 87m+ sold-in milestone.
+
+No video or footage is represented as watched in this audit.
+
 ## Sources
 
 <a id="r2-01"></a>**R2-01 — [Red Dead Redemption II Review: An Open-World Western for the Ages](https://gameinformer.com/review/red-dead-redemption-ii/an-open-world-western-for-the-ages).** Matt Bertz, Game Informer, October 25, 2018. Full review; camp, horse, care systems and world.
@@ -1092,5 +1110,9 @@ No current Online event is described as a major content expansion without eviden
 
 <a id="r2-10"></a>**R2-10 — [Red Dead Redemption 2 review](https://www.gamesradar.com/red-dead-redemption-2-review/).** GamesRadar+, 2018. Full review.
 
-<a id="r2-11"></a>**R2-11 — [Red Dead Online / Rockstar Newswire](https://www.rockstargames.com/newswire/tags/red-dead-online).** Rockstar current official event feed; used to establish continuing 2026 monthly rotations, not major-expansion cadence.
+<a id="r2-11"></a>**R2-11 — [Red Dead Online / Rockstar Newswire](https://www.rockstargames.com/newswire/tags/red-dead-online).** Rockstar current official event feed, re-audited September 27, 2026. Used to establish monthly 2026 rotations through September 1 (including Roles, Bounty Hunter, Telegram and Moonshiner promotions), not major-expansion cadence.
+
+<a id="r2-12"></a>**R2-12 — [Weapons Expert Challenges](https://reddead.fandom.com/wiki/Weapons_Expert_Challenges) and [Throwing Knife (RDR 2)](https://reddead.fandom.com/wiki/Throwing_Knife_%28RDR_2%29).** Red Dead Wiki community mechanics references, audited September 27, 2026. Used narrowly for crouch/unaware-target stealth challenges and the bow/throwing-knife quiet-kill vocabulary; community rules evidence, not developer intent.
+
+<a id="r2-13"></a>**R2-13 — [Rockstar Games Service Status](https://support.rockstargames.com/servicestatus).** Rockstar Support current operational-status surface, checked September 27, 2026. Used only to establish that Red Dead Online service was operational on PS4, Xbox One and PC at the audit checkpoint; status is inherently time-sensitive.
 
