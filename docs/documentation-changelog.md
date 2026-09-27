@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Shared repertoire priorities and action tables
+
+Merged the updated research library at `cb3d85f32d669dd617b505efbaf8c75db967c6d3` with ordinary Git ancestry, retaining incoming research and this branch's proposals. The [shared repertoire guide](repertoires/README.md#criticality) now defines five Criticality tiers, seed-world recommendations and the Level label replacing Route. Criticality supplies a proposed roadmap order; Level preserves F/U/C/D realization semantics and remains distinct from engineering build scope. The 27 introductory pattern catalogues await their separate concrete-inventory expansions.
+
+Updated all 384 [action examples](repertoires/actions.md) with seed worlds and Criticality, sorted within the existing 32 domains by Criticality, Level and stable ID. Preserved every intent, ID, F/U/C/D classification and semantic distinction; removed repeated mechanics prefixes and HTML row anchors. The [source atlas](repertoires/source-atlas.md) uses native headings preserving its 158 citation targets, links the now-merged G121–G130 dossiers locally, and distinguishes the original synthesis from newer research and eighteen planned additions. Verification covers content preservation, metadata/order, local links/anchors and formatting. No runtime behavior, accepted contract or maintainer acceptance state changes; [ACT and its parent owners](maintainers/action-capabilities.md#ownership-and-dependencies) retain implementation work. Priority estimates have not been playtested.
+
 ## 2026-09-27 — Cross-world repertoire proposal library
 
 Added a [master idea library](repertoires/README.md) with 270 proposal cards across 27 catalogues, 16 worked combinations and four optional world settings containing eight original characters each. The existing 384 action examples retain their IDs and meanings. Broad world-fit, play/simulation, potential and implementation-gap labels are dated design estimates, not a live support matrix. The [source atlas](repertoires/source-atlas.md) maps all 130 game and 28 world subjects to takeaways and cautions, recording immutable research snapshots so the active source branches can continue independently.

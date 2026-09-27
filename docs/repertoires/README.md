@@ -1,8 +1,8 @@
 # Repertoires for inhabited worlds
 
-**A proposal library, not an implementation list, approved roadmap or fixed world canon.** These are ideas for worlds people might invent, inhabit, care for, investigate and change. Selecting a proposal does not install a capability. Accepted contracts remain in their existing owners; the engine must not acquire one world's laws merely because a proposal is appealing.
+**A prioritized proposal library and input to an implementation roadmap.** These are ideas for worlds people might invent, inhabit, care for, investigate and change. Priorities guide selection; they are not an approved delivery commitment or fixed world canon. Selecting a proposal does not install a capability. Accepted contracts remain in their existing owners; the engine must not acquire one world's laws merely because a proposal is appealing.
 
-The library contains **270 new idea cards in 27 catalogues**, the existing **384 stable action examples**, **16 worked combinations**, and **four optional world proposals with eight characters each**. It draws on the 130-game and 28-world research corpus. The [source atlas](source-atlas.md) records an individual takeaway and caution for every subject, including the research snapshots used. All new ideas are our design synthesis; none has been playtested by this work.
+The library contains **270 introductory pattern cards in 27 catalogues**, **384 stable action examples**, **16 worked combinations**, and **four optional world proposals with eight characters each**. The patterns are starting points for much larger inventories of concrete ideas; those inventories have not yet been filled out. The action catalogue already uses the shared table labels below. It draws on the original 130-game and 28-world research corpus; the game roster's eighteen newly planned additions are not yet covered by this synthesis. The [source atlas](source-atlas.md) records an individual takeaway and caution for the original subjects, including the research snapshots used. All new ideas are our design synthesis; none has been playtested by this work.
 
 Start with [selection and scale](selection-and-scale.md) for the strongest candidates, contrasting audiences and cost tradeoffs. Use [combinations](combinations.md) to see concrete situations with several viable approaches. Then browse by the thing you want to create.
 
@@ -50,11 +50,53 @@ These are mutually adaptable proposals, not four accepted canonical worlds. A cr
 | **SC** | [Veyra Reach — planetary science fiction](worlds/planetary-scifi.md) | Meet unfamiliar peoples, adapt useful technology and connect ground settlements |
 | **FA** | [The Borrowed Dawn — living fantasy](worlds/living-fantasy.md)       | Learn a small magical grammar and change daily life as well as adventures       |
 
-**ALL** means adaptable to all four, with different fictional explanations. A more restricted code names the most natural fit, not an engine prohibition. The science-fiction family excludes playable ship piloting, space navigation and dogfighting: ships are inhabited locations and crew/capability spaces; journeys are abstract transitions.
+The **Seed worlds** column recommends the most natural homes for an idea: MD, MO, SC and FA may be combined. **ALL** means a natural fit in all four, with appropriate local details; mere theoretical reskinning is not enough. **—** means an idea is retained for other possible worlds but is outside these four proposals. These recommendations are not engine prohibitions. The science-fiction family excludes playable ship piloting, space navigation and dogfighting: ships are inhabited locations and crew/capability spaces; journeys are abstract transitions.
 
 ## Reading the labels
 
-Every new catalogue card gives world fit, purpose, potential and a broad build estimate. Labels are deliberately few and readable. The existing action catalogue retains its F/U/C/D routing and stable IDs; those routes are different from these estimates.
+Use the following shared definitions when reading or extending an inventory. The older pattern cards retain the build labels explained below.
+
+### Criticality
+
+Criticality estimates how important an entry is to a playable, enjoyable version of its intended experience. It provides a proposed implementation order within each domain, independent of Level and the engineering work currently missing.
+
+| Criticality     | Selection meaning                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1 Basics**    | Basic must-have capabilities or representative content needed to make the intended experience playable and fun.                            |
+| **2 Expected**  | Required for parity with reasonable expectations of that world or activity once its basic loop works.                                      |
+| **3 Enriching** | Adds worthwhile fun, expression, variety or depth beyond the expected experience.                                                          |
+| **4 Advanced**  | Adds fun and interesting possibilities with more ambitious breadth or integration; suitable for later expansion.                           |
+| **5 Frontier**  | Very ambitious possibilities, such as unusual world constitutions or broad transformations, for a distant expansion or focused experiment. |
+
+Judge the entry against its described role and natural seed-world fits. A basic hunting bow can be **1 Basics / C** when realizing it composes crafting, materials and ranged combat. This does not make every weapon variant a must-have. Several rows can be alternatives for meeting one basic need; a chosen world still needs a coherent small selection. Specialist appeal or a Lab label alone does not imply Frontier, and an expensive dependency does not demote a basic need.
+
+Within **each domain**, sort by **Criticality 1 → 2 → 3 → 4 → 5**, then **Level F → U → C → D**, then stable ID for ties. Preserve IDs when sorting. This puts foundational and simpler forms of realization first within a priority tier, while the actual engineering gap remains a separate consideration. An entry's optional priority never makes its correctness constraints optional: when a selected feature is enabled, its permissions, cancellation, accounting and other required behavior must work.
+
+### Level
+
+**Level** replaces the catalogue label **Route**, retaining F/U/C/D and their existing action classifications. It describes the form of realization under available prerequisites, not a measured engineering difficulty, implementation status, permission level or replacement for G0–G3.
+
+| Level | Meaning when prerequisites are implemented, enabled and available to the actor                                                                                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F** | Foundation: a supplied, reusable grounding/control/agency operation. It needs no new definition, but still depends on compatible body, senses, topology and controller policy.                 |
+| **U** | Use: invoke an existing world-specific capability or known technique. No new invention on this invocation; the supporting mechanic might itself be native, configured, or previously invented. |
+| **C** | Compose: combine existing calls, scoped observations, constraints and ongoing activities. No new world rule is inherently needed. A missing constituent can still block execution.             |
+| **D** | Define: intentionally propose, specialize, install, or change reusable mechanics/policies through the appropriate invention or owner-authoring route. Proposal is not admission or execution.  |
+
+For actions, classify resolution of the stated attempt, as explained in [the action catalogue](actions.md#reading-and-extending-the-catalogue). For other inventories, classify realization of the entry's **defining behavior** under its stated prerequisites. A bow assembled from supported material, crafting and combat capabilities can be C, while firing an existing bow can be U. If realizing an idea needs a new reusable world rule, use D. If it instead needs an unavailable trusted engine capability, record that engineering gap explicitly; a D proposal cannot supply arbitrary executable code or grant itself authority.
+
+### Catalogue tables
+
+Keep a brief introduction to the category's archetypes or patterns, followed by domain sections containing tables of **specific usable ideas**. The [action tables](actions.md#domain-index) demonstrate plain IDs, seed-world recommendations and the shared sort order. Other inventories can use this common shape, adding category-specific detail where needed:
+
+| ID  | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | ---- | ----------- | --- | ----------- | ----- | ---------------------------- | ----------------- | ----------- |
+
+Name concrete objects, situations, powers, relationships or other entries in their own rows; an archetype introduction is not the inventory. Preserve useful existing pattern prose and linked headings as context. Use native Markdown headings and links, with plain row IDs and no HTML anchors. Explain mechanics concept references once in the file rather than prefixing every concept. The Inspiration column points to research sources; Seed worlds points to our proposed settings. These are different relationships.
+
+### Existing pattern labels and build scope
+
+The 270 introductory cards still use the legacy labels below until their catalogues are expanded. Their numeric **1/2/3 build estimates are not Criticality**. In new inventory tables, spell build scope **Small / Moderate / Large** and describe the missing work, retaining Compose/Extend/New when useful. Do not infer Criticality or Level mechanically from the older labels.
 
 | Label       | Meaning                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
