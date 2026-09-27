@@ -17,6 +17,18 @@
 - **[Implications for OpenLegend](essays/implications-for-openlegend.md):** research hypotheses, not accepted requirements.
 - **[Study itinerary](essays/prioritized-study-itinerary.md)** and **[YouTube watchlist](references/youtube-watchlist.md)**.
 
+## Expanded per-game dossiers
+
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 130-subject assignment or packet-wide preservation audit is finished.
+
+**G40–G47 — language-driven play, combinations and shared pressure:** [AI Dungeon](dossiers/ai-dungeon.md) · [Palworld](dossiers/palworld.md) · [Balatro](dossiers/balatro.md) · [Slay the Spire](dossiers/slay-the-spire.md) · [Vampire Survivors](dossiers/vampire-survivors.md) · [Against the Storm](dossiers/against-the-storm.md) · [Core Keeper](dossiers/core-keeper.md) · [PEAK](dossiers/peak.md).
+
+**G48–G50 — distinct RuneScape experiences:** [RuneScape / RS3](dossiers/runescape.md) · [Old School RuneScape](dossiers/old-school-runescape.md) · [RuneScape: Dragonwilds](dossiers/runescape-dragonwilds.md).
+
+**G51–G54 — Dragon Age's changing party, combat and choice structures:** [Origins](dossiers/dragon-age-origins.md) · [Dragon Age II](dossiers/dragon-age-ii.md) · [Inquisition](dossiers/dragon-age-inquisition.md) · [The Veilguard](dossiers/dragon-age-the-veilguard.md). The [series supplement](dossiers/dragon-age-series.md) owns the smaller-game and Keep comparisons, not another combined replacement for the four mainline passes.
+
+**G55–G60 — party composition, world consequences and tactical relationships:** [Pillars of Eternity II: Deadfire](dossiers/pillars-of-eternity-ii-deadfire.md) · [Divinity: Original Sin](dossiers/divinity-original-sin.md) · [Divinity: Original Sin II](dossiers/divinity-original-sin-ii.md) · [Pathfinder: Kingmaker](dossiers/pathfinder-kingmaker.md) · [Pathfinder: Wrath of the Righteous](dossiers/pathfinder-wrath-of-the-righteous.md) · [Fire Emblem: The Blazing Blade](dossiers/fire-emblem-the-blazing-blade.md).
+
 ## Game studies
 
 ### People, relationships, place, and systemic stories
