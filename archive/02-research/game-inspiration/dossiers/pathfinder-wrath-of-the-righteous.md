@@ -1,6 +1,6 @@
 # G59 — Pathfinder: Wrath of the Righteous
 
-**Independent R01–R14 research pass completed September 26, 2026.** [Roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Requirements](../research-requirements.md) · [Library](../README.md).
+**Original R01–R14 research September 26, 2026; identified path/battle gaps addressed September 27.** [Roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Requirements](../research-requirements.md) · [Library](../README.md) · [Mythic paths and crusade battles](../mechanics/wrath-mythic-paths-and-crusade-battles.md).
 
 Research, not an OpenLegend implementation proposal. Historical observations, shipped rules, publisher promises and this dossier's interpretations are distinguished below. Mechanics are scoped to the unmodded computer game and its identified additions, not automatically to tabletop Pathfinder, Kingmaker or every console patch. Story/path spoilers appear in §§3–6 and the worked situations.
 
@@ -10,7 +10,7 @@ Owlcat's single-player party CRPG adapts Pathfinder First Edition and the Worldw
 
 **Interpretation:** the unusual promise is not merely “become stronger.” It is “become a different kind of being, and make that change matter to friends, institutions and the campaign.” This creates two tests for the design: whether character construction supports the imagined identity, and whether the authored world notices it. A mathematically powerful build and a satisfying role-play are related but not identical outcomes.
 
-This is an independent sequel study. The target dossier and same-named legacy `games/` chapter were absent at the G59 resume point. The [Kingmaker dossier](pathfinder-kingmaker.md), existing chapters, thematic studies, sources and fork-baseline evidence remain unchanged. This document incorporates the earlier G59 checkpoint, including its specific reception examples and edition corrections; it does not replace unique pre-existing research with a short summary.
+This is an independent sequel study. The target dossier and same-named legacy `games/` chapter were absent at the G59 resume point. The [Kingmaker dossier](pathfinder-kingmaker.md), existing chapters, thematic studies, sources and fork-baseline evidence remain unchanged by this dossier's creation. This document incorporates the earlier G59 checkpoint, including its specific reception examples and edition corrections; it does not replace unique pre-existing research with a short summary. The later [operational supplement](../mechanics/wrath-mythic-paths-and-crusade-battles.md) extends the audited path and battle explanations while preserving the original ten cases, six expansions and review evidence below.
 
 ## 2. Release and edition boundaries
 
@@ -59,6 +59,8 @@ Mythic ranks arrive at authored story milestones rather than from ordinary grind
 
 **Interpretation:** “ten paths” does not mean ten equally long parallel games. Some reshape much of the campaign, some transform its final stretch, and some exchange relationships for power. Comparing only the number of exclusive abilities conceals those very different costs. A late identity should also be evaluated by how much meaningful time remains to inhabit it.
 
+**Operational extension:** [supplement §1](../mechanics/wrath-mythic-paths-and-crusade-battles.md#1-early-paths-change-the-activity-not-just-its-name) explains Demonic Rage/Charge/aspects, Aeon gazes and Bane, Azata superpowers/Aivu, Trickster's tiered skill exceptions, and Lich powers/skeleton/repertoire. It supplies the audited gap between the fantasy labels above and the actions those paths actually change. The existing Angel and late-path distinctions remain substantive owners, not replaced by another count of path names.
+
 ### 3.4 Magic is layered rather than a single damage contest
 
 Wizard spell access depends on Intelligence, spellbook progression and preparation; a spell level is not a character level. Prepared resources make advance information valuable. School specialization and archetypes further change access and tradeoffs. [M11]
@@ -93,6 +95,8 @@ This is a coverage inventory of substantive action families, not a reproduction 
 | Manage the crusade | Recruit stacks, assign generals, fight separate tactical battles, issue decrees and raise Leadership, Military, Logistics and Diplomacy. | This is a second ruleset, not large-scale resolution of the party's normal attacks. [M08] |
 | Construct and defend infrastructure | Spend Finance, Materials and Energy on outposts, recruitment and support buildings; placement can matter, and construction takes days. | Enemy armies can threaten settlements. A Shelter creates a protected-rest option, linking the strategic and expedition layers. [M09] |
 | Adjust difficulty or automate | Granular settings and optional assistance let players reduce particular burdens. | Automation should not be described as preserving all manual-mode decisions, rewards or achievements; verify the exact option before treating it as equivalent. [C04; S06] |
+
+**Army rules added after audit:** [supplement §§2–5](../mechanics/wrath-mythic-paths-and-crusade-battles.md#2-the-army-is-not-the-adventuring-party-at-larger-scale) explains recruitment versus stack capacity, map travel, initiative and unit commands, general intervention/Energy, battlefield healing, infirmary losses, Hospitals and the campaign-versus-combat morale distinction. It gives operational depth to the strategic rows without conflating them with the six-person party.
 
 ### 4.1 Economy, time and failure
 
@@ -156,7 +160,7 @@ The sixth and final premium DLC returns the party to rebuilt Kenabres for celebr
 
 ## 7. Worked cross-system situations
 
-Except the two explicitly attributed incidents, these are **constructed analytical examples**, not claimed play sessions. They demonstrate documented interactions without guaranteeing a particular encounter outcome or prescribing an optimal build.
+Except the two explicitly attributed incidents, these are **constructed analytical examples**, not claimed play sessions. They demonstrate documented interactions without guaranteeing a particular encounter outcome or prescribing an optimal build. [Five additional path/army cases](../mechanics/wrath-mythic-paths-and-crusade-battles.md#6-five-additional-constructed-situations) extend the original ten below rather than replacing them.
 
 ### A. Win the fight by changing the question
 
@@ -233,7 +237,7 @@ Do not transfer Kingmaker's separately reported two-million-copy milestone to Wr
 
 ## 11. Five independent written reviews
 
-The bodies of the following five substantive reviews were read. They are not five aggregate scores or syndicated copies. Their different dates and playthrough limits matter more than averaging their ratings.
+The bodies of the following five substantive reviews were read in the original pass. They are not five aggregate scores or syndicated copies. Their different dates and playthrough limits matter more than averaging their ratings. The September 27 supplement adds rules research, not a claim of five new review readings.
 
 ### C01. PC Gamer — Jody Macgregor, September 13, 2021
 
@@ -285,7 +289,7 @@ These are research hypotheses, not accepted product requirements or claims that 
 
 ## 14. Annotated source map and study routes
 
-All sources accessed September 26, 2026. Full review bodies were read; long mechanical references were inspected at the relevant sections, not exhaustively copied. Developer/store statements establish advertised or released scope, not independent quality. Community references describe observed rules and can contain patch-specific errors; exact edge cases should be reproduced before becoming implementation requirements. No video below is claimed watched, no timestamps were fabricated, and no original art assets are copied into this repository.
+Original sources below were accessed September 26, 2026. The September 27 [operational supplement](../mechanics/wrath-mythic-paths-and-crusade-battles.md#7-annotated-evidence-and-resolution) independently annotates its newly read path, army and building evidence. Original full review bodies were read; long mechanical references were inspected at relevant sections, not exhaustively copied. Developer/store statements establish advertised or released scope, not independent quality. Community references describe observed rules and can contain patch-specific errors; exact edge cases should be reproduced before becoming implementation requirements. No video below is claimed watched, no timestamps were fabricated, and no original art assets are copied into this repository.
 
 ### Primary identity, production and commercial sources
 
@@ -339,17 +343,17 @@ M01–M08 and M11–M12 are separately navigable sections of **chris-williams's 
 - **U01 — [GOG product and visible helpful reviews](https://www.gog.com/en/game/pathfinder_wrath_of_the_righteous).** Actual displayed user-review text was read, not just the aggregate. Historical trust complaints and a fantasy-fit critique are analyzed with sampling limits in §12.
 - **U02 — [Steam helpful-review route](https://steamcommunity.com/app/1184370/reviews/?browsefilter=toprated).** Attempted; returned a content-preference gate. Language-filter attempts also failed to expose bodies; not counted as sampled reviews.
 
-**Reading route:** identity/editions → §3 plus M02/M05 → §7 cases → contrasting C01/C04/C05 → S05 production interview → §6 expansion comparisons. **Viewing route:** official site's path media → S07 combat trailer and community-story trailer → S02 Enhanced trailer → one survivor-DLC and one mythic-DLC product trailer. Look for what the camera/UI communicates about power, vulnerability and party membership. No conclusion in this dossier depends on unviewed footage.
+**Reading route:** identity/editions → §3 plus M02/M05 → [supplement's early-path and army operations](../mechanics/wrath-mythic-paths-and-crusade-battles.md) → §7 cases → contrasting C01/C04/C05 → S05 production interview → §6 expansion comparisons. **Viewing route:** official site's path media → S07 combat trailer and community-story trailer → S02 Enhanced trailer → one survivor-DLC and one mythic-DLC product trailer. Look for what the camera/UI communicates about power, vulnerability and party membership. No conclusion in this dossier depends on unviewed footage.
 
 ## 15. Completion and evidence audit
 
-| Requirement | Canonical coverage in this dossier |
+| Requirement | Canonical coverage in this dossier and linked supplement |
 | --- | --- |
 | R01 identity and scope | §§1–2; base, Enhanced, console/cloud and expansion boundaries |
-| R02 mechanics breadth | §§3–4; construction, combat, exploration, camp, equipment, social and strategic actions |
-| R03 entities/items/composition | §§3–5; feats, magic, animals, named weapons, skills and interacting economies |
-| R04 progression/economy/time/failure | §§3.1–3.4, 4.1 and strategic rows in §4 |
-| R05 worked situations | §7 A–J, including conditions, decisions, results, next questions and limits |
+| R02 mechanics breadth | §§3–4; supplement §§1–5 supplies early-path and army-battle operations |
+| R03 entities/items/composition | §§3–5; supplement's path operators, general/stack capacity and recovery infrastructure |
+| R04 progression/economy/time/failure | §§3.1–3.4, 4.1 and supplement §§2–5: recruitment, commands, losses and two morale scales |
+| R05 worked situations | §7 A–J plus five additional constructed path/army cases in supplement §6 |
 | R06 social/AI/relationships | §5 and path/party boundaries; no invented simulation or multiplayer |
 | R07 presentation/UI/audio | §8, with specific developer and critic evidence |
 | R08 story/play | §§3, 5–7; spoilers marked, path/ordinary-survivor contrasts |
@@ -357,7 +361,7 @@ M01–M08 and M11–M12 are separately navigable sections of **chris-williams's 
 | R10 marketing/distribution | §10; observable campaign mechanisms, no invented virality attribution |
 | R11 commercial evidence | §10; defined Kickstarter and unit milestones, explicit financial limits |
 | R12 critical/player reception | §§11–12; five independent written bodies, Steam attempt, actual GOG sample and biases |
-| R13 lessons/counter-lessons | §13; hypotheses, prerequisites, failure modes and alternatives |
-| R14 evidence/navigation/preservation | §14 sources and study routes; §1 preservation; canonical ledger records commits |
+| R13 lessons/counter-lessons | §13 and supplementary interpretations; hypotheses, prerequisites, failure modes and alternatives |
+| R14 evidence/navigation/preservation | §14 and supplement's dated annotations; §1 preservation; canonical ledger records commits |
 
-**Verification boundary:** source-backed desk research completed; no original game playthrough, benchmark, source-code inspection, asset reproduction or runtime tests claimed. The remaining possibilities—testing exact mod/patch interactions, watching the linked footage, or a new platform performance comparison—are optional deeper research, not silently completed evidence. Completion here is for G59's dossier, not the packet-wide cross-game reconciliation or all 130 roster entries.
+**Verification boundary:** source-backed documentary research and the identified operational remedies are complete; no original game playthrough, benchmark, source-code inspection, asset reproduction or runtime tests claimed. The remaining possibilities—testing exact mod/patch interactions, watching linked footage, or a new platform performance comparison—are optional deeper research, not silently completed evidence. This closes G59's identified manuscript gaps, not the packet-wide cross-game reconciliation or all 130 roster entries. Inaccessible and indexed-only sources remain explicitly classified, and inherited review readings are not claimed as newly repeated.
