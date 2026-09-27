@@ -94,6 +94,19 @@ These are summarization instructions, not separately writable engine records. Do
 
 Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
 
+### Research-to-runtime mapping
+
+The compaction rubric is a deliberately small adaptation of established dialogue architectures:
+
+- **Dialogue Gameboard / information state:** the entire model-facing conversation projection is an incrementally maintained information state rather than an ever-growing transcript.
+- **Common ground / grounding → established conversational context:** preserve what this actor's continuation can rely on, without promoting an utterance to objective truth or silently assuming mutual acceptance.
+- **Questions Under Discussion (QUD) + discourse focus/Centering Theory → active issues and focus:** preserve what currently organizes the exchange and enough referential context for follow-ups.
+- **Conversational repair / clarification → updates and repairs:** explicit corrections, clarifications, reversals, retractions and resolutions update the compact representation.
+- **LatestMove / local discourse coherence → recent verbatim tail + exact Trigger:** do not summarize away the newest turns whose wording, pronouns and local structure matter directly.
+- **Persistent referential grounding → reference continuity:** preserve actor-relative temporal, spatial, attributive and comparative relationships needed for later references.
+
+These mappings are conceptual guidance for the summarizer and verification suite, **not new authoritative runtime record families**. The implementation remains one rolling derived summary plus recent exact turns behind one entry point.
+
 ## 5. Compaction algorithm
 
 The entry point receives an explicit byte allowance from the surrounding context builder. V1 uses bytes rather than turn counts.
