@@ -207,6 +207,27 @@ These are gameplay and product comparisons, not instructions to implement the sa
 
 ## 14. Reading routes, completion and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier substantively complete and confirms the following boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** player identity centers on the persistent collection/base and rebirth progression; there is no conventional class, attribute, skill-XP or perk tree.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** Brainrots, mutations, traits, Lucky Blocks, gear, machines, ritual inputs and traded stakes are covered in §§1–7. Gear affects mobility/control/defense rather than forming an armor-stat ladder.
+- **Magic / spells / powers:** absent as a spell system; special effects come from gear, pets/characters, mutations, rituals and live-event mechanics.
+- **Traversal / environmental and object interaction:** buying from the conveyor, carrying vulnerable possessions, entering rival bases, locking/defending bases, using gear, fishing/event interactions and moving between trade/duel interfaces form the action vocabulary.
+- **Activities / minigames:** acquisition, theft/defense, rebirth, fusion/crafting cycles, rituals, trading, duels, fishing and event participation are distinct activities around the same ownership economy.
+- **Combat / stealth / loot / rewards:** knockdowns, traps, movement/control gear and sneaking into bases support player conflict; rewards are primarily collectible/income-producing characters and variants rather than conventional weapon loot.
+- **Death / failure / recovery:** character death is not the central persistent-loss contract; failure is losing a carried/owned collectible, missing a purchase, consuming inputs, losing a duel stake or resetting through rebirth.
+- **Economy / trading:** passive income, purchases, rebirth costs, native trade, historical vendors/machines and Robux-linked products are explicitly separated in §§1–7 and §11.
+- **Story / relationships / romance / reputation / party / companions:** human trust, betrayal and collaboration supply most social meaning; there is no authored romance/reputation campaign or RPG companion party.
+- **NPC/AI behavior and schedules / factions:** bounded helpers/pursuers and shop/service characters do not establish autonomous social schedules or faction politics.
+- **World map / environment / quests / events:** the central conveyor/base space, special machines, Trade/Duel interfaces and scheduled/admin events structure play; there is no conventional quest campaign.
+- **Building / settlements / management:** players manage and protect a persistent collection/base with slots/floors/locks, but there is no worker-population settlement simulation.
+- **Multiplayer / social / endgame / return loops:** public/private servers, stealing, rituals, trade/duels and visible collections are the core social loop. Rebirth, rarity/variant collecting and recurring events provide late goals instead of a finite story ending.
+
+**Current boundary check:** the correct Roblox experience page still describes the core loop as **buy Brainrots → steal from other players → generate money → rebirth → use slaps/troll gear**. Its current title carries a rotating event marker rather than a stable public version number. [SB01](#sb01) The audit therefore does not infer that every historical machine, merchant, event or balance value is simultaneously live.
+
+
 Begin with the official experience identity and Phillips's illustrated firsthand account. Read the equipment and carrying rules before studying elaborate item rankings; they explain the practical contest. Then compare mutation/trait and ritual documentation, followed by the native trade and duel contracts. Roblox's year-end report provides dated reach, not an explanation of each individual's enjoyment.
 
 The critic's article supplies visual orientation and an attributed experience of the audio/effects. No full footage was watched for this pass. A retrieved video-summary page had a title mismatch between its search entry and destination; it was rejected rather than presented as a verified mechanics tutorial. Linked community images and official experience media remain viewing routes, not claims that their entire footage was analyzed.
