@@ -35,6 +35,20 @@ Continue on the existing `docs/game-inspiration-games-61-80` branch. Do not recr
 
 Source additions and corrections belong in each canonical dossier. Existing sources remain attributed to the original pass unless freshly checked; this audit does not imply every original source was re-read. Global P01–P05 remain out of this range-local completion claim.
 
+## Final follow-up verification — September 27, 2026
+
+**Range audit complete: G61–G80 = 20 / 20.** Every canonical dossier in this assigned range was reread against R01–R14 and the explicit mechanics/reception requirements, then either corrected or confirmed with substantive audit notes above. No game remains pending or active.
+
+The audit-start snapshot commit is `f0bf87f7c79110a79285a77a0c64c2e2de521451`. Comparing that checkpoint to the completed audit head is ahead-only with the checkpoint as merge base and no behind commits. The changed path set is exactly:
+- all **20 G61–G80 canonical dossier files**;
+- this **single current progress ledger**.
+
+No runtime source, tests, roster, requirements, mechanics cross-game owner, README/navigation owner or unrelated research file changed during the follow-up audit. The pre-audit snapshot itself was created immediately before the follow-up and remains immutable.
+
+The content changes were targeted rather than ceremonial: examples include correcting Path of Radiance biorhythm visibility, the 3DS StreetPass/SpotPass boundaries, Cyberpunk's 2.31-versus-2026 PS5 Pro update wording, Fallout 4's Switch 2 Creations-menu exception, Skyrim Survival Mode, Expedition 33's newly retrievable Steam evidence, and FFII/FFIII remake-lineage mechanics. Every per-game substantive commit listed above had its actual diff inspected.
+
+**Verification limits remain explicit.** This was a documentation/research audit, not gameplay reproduction, binary/source-code inspection, audiovisual completion pass or exhaustive re-fetch of every historical external URL. Dated storefront/service/review counts are snapshots. Community mechanics sources remain labeled as such. The whole-library P01–P05 integration gates below remain open.
+
 ## Preserved original range state
 
 The immutable [pre-audit snapshot](research-progress-audit-start-2026-09-27.md) is the exact ledger present when this audit began. It preserves all original G61–G80 completion hashes, range closeout/navigation evidence, source qualifications, reconciliation history and whole-library gate state. Its old `COMPLETE — 20/20` status is historical only.
