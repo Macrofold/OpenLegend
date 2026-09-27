@@ -216,6 +216,8 @@ No test files or suites were written or run for this change, as requested. [Iden
 
 ## Deferred regression coverage — persistence and owner editors
 
+The 2026-09-27 [history checks](../verification.md#history-storage-efficiency) found the unchanged `store.test.ts` persistence fixture still assumes a `berries` item in the initial `PLAYER_ID` inventory. Update that fixture to the current authored world/actor setup; retain its command-receipt restart assertion. Focused writer/restart checks and current-world ad-hoc history/save coverage passed, which does not qualify the full suite.
+
 - [ ] Cover the distinct person-creation and Person-editor schemas: creation keeps initial goals, editing round-trips description/current goals, the first goal drives native planning, and identity context receives every authored field without leaking it to another actor.
 - [ ] Cover Person-editor stat snapshots, manual refresh, 0–100 validation, fill-to-100, preservation of unedited simulation drift, and explicit stat overrides after drift.
 - [ ] Finish current opaque actor bindings and runtime fixture migration, then qualify the test gate. Async API/optional-need typing now passes the full typecheck; no suites were run during [hardening](../verification.md#data-runtime-hardening).

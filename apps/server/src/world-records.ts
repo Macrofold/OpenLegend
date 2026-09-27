@@ -11,11 +11,9 @@ import {
   historyMapPositions,
 } from './history-residency.js';
 import { randomUUID, createHash } from 'node:crypto';
-import { upgradeWorldState } from './upgrade-world.js';
 import {
   EXPERIENCE_LIMITS,
   updateWorld,
-  validateWorldModules,
   appendedRecordCount,
   entityChangesBetween,
   completeAppraisalHistory,
@@ -30,7 +28,7 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import {
   RECORD_NODES,
   WORLD_RECORD_SCHEMA,
-  legacyObjectRecordSchema,
+  RECORD_PARENTS,
   type JsonRecord,
   type RecordNode,
 } from './world-record-schema.js';
@@ -84,34 +82,28 @@ function put(object: Value, key: string, value: Value) {
 /** Canonical current records. Domain objects are an active simulation working set;
  * only the existing world transaction publishes their changed records.
  */
+function recordIndexName(table: string, columns: string[], unique = false): string {
+  const name = `${table}_${columns.join('_')}_${unique ? 'key' : 'idx'}`;
+  return name.length <= 63
+    ? name
+    : `${name.slice(0, 50)}_${createHash('sha256').update(name).digest('hex').slice(0, 12)}`;
+}
+
 export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
   needsHotPrune = false;
-  private readSchema = WORLD_RECORD_SCHEMA;
   private currentContributionsPredicate(alias = ''): string {
     const json = (field: string) => `${alias}payload::jsonb ->> '${field}'`;
     // Only explicit terminal independent instances leave the current working set;
     // singleton cooldowns remain present. Complete capture validates cold rows too.
     return `(${json('contribution')} IS NULL OR ${json('active')} IS NULL OR CAST(${json('active')} AS TEXT) NOT IN ('false','0'))`;
   }
-  private get legacyAwarenessPredicate(): string {
-    const field = (name: string) => `(payload::jsonb ->> '${name}')`;
-    return `(${field('eventType')} IS NULL OR ${field('triggerKind')} IS NULL OR (CAST(${field('intelligible')} AS TEXT) IN ('true','1') AND ${field('content')} IS NULL))`;
-  }
   async initialize() {
     await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
       revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
-    const columns = await this.db
-      .prepare(
-        "SELECT column_name AS name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='sim_placements'",
-      )
-      .all();
-    const legacyObjects =
-      columns.length > 0 && !columns.some((column) => column['name'] === 'placement_mode');
     const create = (node: RecordNode, parent?: RecordNode): string => {
-      const rebuilding = legacyObjects && ['sim_items', 'sim_placements'].includes(node.table);
       const extra = Object.entries(node.columns ?? {})
         .map(([name, column]) => `,${name} ${column.sql}`)
         .join('');
@@ -123,8 +115,8 @@ export class WorldRecords {
         parent_id TEXT NOT NULL, slot TEXT NOT NULL, position BIGINT NOT NULL,
         revision BIGINT NOT NULL, payload TEXT NOT NULL${extra}, PRIMARY KEY(world_id,id)${foreign}${node.constraints?.length ? ',' + node.constraints.join(',') : ''}
       ); CREATE INDEX IF NOT EXISTS ${node.table}_parent ON ${node.table}(world_id,parent_id,position);
-      ${(rebuilding ? [] : (node.uniqueIndexes ?? [])).map((columns, index) => `CREATE UNIQUE INDEX IF NOT EXISTS ${node.table}_identity${index} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
-      ${(rebuilding ? [] : (node.indexes ?? [])).map((columns, index) => `CREATE INDEX IF NOT EXISTS ${node.table}_query${index} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
+      ${(node.uniqueIndexes ?? []).map((columns) => `CREATE UNIQUE INDEX IF NOT EXISTS ${recordIndexName(node.table, columns, true)} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
+      ${(node.indexes ?? []).map((columns) => `CREATE INDEX IF NOT EXISTS ${recordIndexName(node.table, columns)} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
       ${Object.values(node.children ?? {})
         .map((child) => create(child.node, node))
         .join('\n')}`;
@@ -133,71 +125,13 @@ export class WorldRecords {
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
-    if (legacyObjects) {
-      // Read and validate before replacing either physical table. A failure rolls back
-      // the whole schema/data cutover; no stale inventory representation is left writable.
-      this.readSchema = legacyObjectRecordSchema();
-      try {
-        await this.db.transaction(async () => {
-          const previous = await this.load(false);
-          const state = previous && {
-            ...previous.state,
-            world: updateWorld(previous.state.world, upgradeWorldState),
-          };
-          if (state) validateWorldModules(state.world);
-          await this.db.exec('DROP TABLE sim_items; DROP TABLE sim_placements;');
-          // Recreate only the two changed ownership boundaries. Existing actor/entity
-          // rows and unrelated history/authority/accounting remain in their tables.
-          const entity = RECORD_NODES.get('sim_entities')!;
-          for (const name of ['item', 'placement']) {
-            const child = entity.children![name]!.node;
-            await this.db.exec(create(child, entity));
-            for (const [index, cols] of (child.uniqueIndexes ?? []).entries())
-              await this.db.exec(
-                `CREATE UNIQUE INDEX IF NOT EXISTS ${child.table}_identity${index} ON ${child.table}(world_id,${cols.join(',')})`,
-              );
-            for (const [index, cols] of (child.indexes ?? []).entries())
-              await this.db.exec(
-                `CREATE INDEX IF NOT EXISTS ${child.table}_query${index} ON ${child.table}(world_id,${cols.join(',')})`,
-              );
-          }
-          if (previous && state) {
-            const revision = await this.advance(state.world.id, previous.revision);
-            // This full physical cutover also upgrades positional appraisal rows.
-            // Remove those old identities inside the same rollback boundary before
-            // inserting their stable replacements; no second writable store remains.
-            if (Object.values(previous.state.world.appraisals ?? {}).some(Array.isArray))
-              await this.db
-                .prepare('DELETE FROM mind_appraisals WHERE world_id=?')
-                .run(state.world.id);
-            const changes = this.prepare(undefined, state);
-            for (const rows of changes.writes.values()) for (const row of rows) row.create = false;
-            await this.write(state.world.id, revision, changes);
-            const checksum = (value: unknown) =>
-              createHash('sha256').update(JSON.stringify(value)).digest('hex');
-            await this.db
-              .prepare(
-                'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
-              )
-              .run(
-                `integration:object-placement-conversion:${state.world.id}`,
-                JSON.stringify({
-                  sourceRevision: previous.revision,
-                  revision,
-                  sourceChecksum: checksum(previous.state),
-                  resultChecksum: checksum(state),
-                  entities: Object.keys(state.world.entities).length,
-                }),
-              );
-          }
-        });
-      } finally {
-        this.readSchema = WORLD_RECORD_SCHEMA;
-      }
-    }
-    await this.db.exec(
-      `CREATE INDEX IF NOT EXISTS mind_awareness_legacy_trigger ON mind_awareness(world_id,source_id) WHERE ${this.legacyAwarenessPredicate}`,
-    );
+    await this.db.exec(`
+      CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
+      CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
+      CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
+      CREATE INDEX IF NOT EXISTS mind_corrections_world_evidence ON mind_corrections(world_id,correction_id,actor_id);
+      CREATE INDEX IF NOT EXISTS mind_corrections_evidence ON mind_corrections(world_id,actor_id,correction_id);
+    `);
     const appraisalState = "payload::jsonb ->> 'state'";
     await this.db.exec(
       `CREATE INDEX IF NOT EXISTS mind_appraisals_current ON mind_appraisals(world_id,parent_id,position) WHERE ${appraisalState}='active' OR ${appraisalState} IS NULL`,
@@ -516,14 +450,6 @@ export class WorldRecords {
   ): Promise<{ revision: number; state: SavedWorld } | null> {
     const head = await this.head();
     if (!head) return null;
-    if (active) {
-      const experience = await this.db
-        .prepare('SELECT payload FROM experience_state WHERE world_id=?')
-        .get(head.worldId);
-      // Legacy perspective migration needs every source once; subsequent boots are scoped.
-      if (!experience || JSON.parse(String(experience['payload'])).perspectiveVersion !== 1)
-        active = false;
-    }
     const settings = active
       ? await this.db
           .prepare('SELECT payload FROM world_settings WHERE world_id=?')
@@ -553,38 +479,29 @@ export class WorldRecords {
               : ['sim_entities', 'sim_entity_geometry', 'sim_declared_owners'].includes(table)
                 ? ` AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired WHERE retired.world_id=t.world_id AND retired.parent_id=t.${table === 'sim_entities' ? 'id' : 'parent_id'})`
                 : '';
-      const json = (field: string) => `payload::jsonb ->> '${field}'`;
-      const predicate =
-        table === 'mind_memories'
-          ? `(at>=? OR (kind='commitment' AND COALESCE(CAST(${json('resolved')} AS TEXT),'false') IN ('false','0')))`
-          : '1=0';
-      // Migration must precede eviction. Keep only legacy records whose source event
-      // is still available to the existing domain migration; the partial index avoids
-      // parsing every cold payload at each boot. Migration commits before release.
-      const migrateAwareness = partial && table === 'mind_awareness';
       let rows: JsonRecord[] = [];
-      if (migrateAwareness) {
-        // Seek one indexed tail per actor. A correlated LIMIT for each historical row
-        // repeats the same tail lookup throughout the entire retained corpus.
-        for (const actor of await this.db
-          .prepare('SELECT DISTINCT actor_id FROM mind_awareness WHERE world_id=?')
-          .all(head.worldId))
-          rows.push(
-            ...(await this.db
-              .prepare(
-                `SELECT id,parent_id,slot,position,payload FROM mind_awareness
-            WHERE world_id=? AND actor_id=? ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}`,
-              )
-              .all(head.worldId, actor['actor_id'])),
-          );
-        const legacy = await this.db
+      if (partial && table === 'mind_awareness') {
+        // Owner rows are independent of retained history size; each lateral read seeks
+        // one actor's indexed tail. docs/performance.md#inactive-history-residency
+        rows = await this.db
           .prepare(
-            `SELECT id,parent_id,slot,position,payload FROM mind_awareness
-          WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
-          (SELECT payload::jsonb ->> 'id' FROM world_hot_events WHERE world_id=?)`,
+            `SELECT a.id,a.parent_id,a.slot,a.position,a.payload
+          FROM mind_awareness_owners o CROSS JOIN LATERAL (
+            SELECT id,parent_id,slot,position,payload FROM mind_awareness
+            WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}
+          ) a WHERE o.world_id=?`,
           )
-          .all(head.worldId, head.worldId);
-        rows = [...new Map([...rows, ...legacy].map((row) => [row['id'], row])).values()];
+          .all(head.worldId);
+      } else if (partial && table === 'mind_memories') {
+        rows = await this.db
+          .prepare(
+            `
+          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND at>=?
+          UNION ALL
+          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND unresolved=1 AND at<?
+          ORDER BY parent_id,position`,
+          )
+          .all(head.worldId, cutoff, head.worldId, cutoff);
       } else if (!partial && !objectPredicate && table !== 'world_hot_events') {
         // Full recovery remains explicit, but each database transfer stays bounded.
         // Large PostgreSQL histories must not become one timeout-sized result.
@@ -594,9 +511,9 @@ export class WorldRecords {
           .prepare(
             table === 'world_hot_events'
               ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''} ORDER BY parent_id,position`,
+              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
           )
-          .all(head.worldId, ...(partial && table === 'mind_memories' ? [cutoff] : []));
+          .all(head.worldId);
       }
       const parents = new Map<string, JsonRecord[]>();
       for (const row of rows) {
@@ -616,7 +533,9 @@ export class WorldRecords {
       for (const table of [...HISTORY_TABLES, ...HISTORY_MAP_TABLES]) {
         for (const row of await this.db
           .prepare(
-            `SELECT parent_id,MAX(position)+1 AS next FROM ${table} WHERE world_id=? GROUP BY parent_id`,
+            `SELECT o.id AS parent_id,t.position+1 AS next FROM ${RECORD_PARENTS.get(table)!} o
+             CROSS JOIN LATERAL (SELECT position FROM ${table} WHERE world_id=o.world_id AND parent_id=o.id ORDER BY position DESC LIMIT 1) t
+             WHERE o.world_id=?`,
           )
           .all(head.worldId))
           nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
@@ -626,7 +545,7 @@ export class WorldRecords {
       head.worldId,
       active,
       nextPositions,
-      this.readSchema,
+      WORLD_RECORD_SCHEMA,
     );
     if (active) {
       const missing = await this.db

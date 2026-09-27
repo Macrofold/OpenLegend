@@ -24,9 +24,20 @@ Coordinate module dependency capture and load validation with [EWF07](extensible
 
 ## Current delivery boundary
 
-D0's current consuming identity/time/privacy/revision contract is recorded in [Architecture](../architecture.md#current-consuming-data-contracts). The D1/D2 supported-gameplay implementation is present: independent canonical records, scoped recall/editor queries, source history and annotations, durable index intent, atomic migration and save/restore integration. SQL source eligibility and exact vector search replace whole-history memory candidate preparation. Native simulation retains current physical state and recent evidence; inactive actor sources stay in SQL with bounded selected-source materialization for maintenance and explicit full-history owner edits. Complete saves include cold evidence. Regional physical-state loading is not implemented.
+D0's current consuming identity/time/privacy/revision contract is recorded in [Architecture](../architecture.md#current-consuming-data-contracts). The D1/D2 supported-gameplay implementation is present: independent canonical records, scoped recall/editor queries, source history and annotations, durable index intent, atomic migration and save/restore integration. SQL source eligibility and exact vector search replace whole-history memory candidate preparation. Native simulation retains current physical state and recent evidence; inactive actor sources stay in SQL with bounded selected-source materialization for maintenance and indexed affected-dependency preparation for creator edits. Complete saves include cold evidence. Regional physical-state loading is not implemented.
 
 ### Remaining D1/D2 implementation and evidence
+
+- [x] **D1/D2 history query and storage efficiency.** Delivered the approved
+      [history storage plan](../projects/history-storage-efficiency.md): owner-driven
+      startup selection/positions, specialized descriptive indexes, response and
+      permitted-participant lookups, indexed actor deletion, combined event/observer
+      perspectives, selective creator edits and measured event-count treatment.
+      Preserve privacy, dependent corrections and current-format recovery; reject
+      incompatible development formats without conversion or deletion. Exit: actual
+      PostgreSQL caller/failure checks and matched growing-history measurements, full
+      affected-diff review, current docs/limits and required static checks. PF08 owns
+      broader natural-aging/capacity qualification. [Measured caller/failure evidence](../verification.md#history-storage-efficiency) records the current scope, storage tradeoff and existing fixture gap.
 
 Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). The earlier older-table startup migration task is retired by the [policy restoration](../documentation-changelog.md#2026-09-27--development-save-policy-restored); it was not completed or verified. The checked migration items below record delivered historical work.
 
@@ -84,4 +95,4 @@ DF02 remains open for integration of the other branches. This task inspected the
 
 ## Limits growth review inputs
 
-D2’s retention and explicit dependency-edit work should use [MH06/MH07](../limits/memory.md#mh06) and [C20/C21](limits-audit.md#c20): canonical history/vector/provenance has no aggregate retention quota, and exceptional owner edits can load complete scoped history. These source findings do not imply that ordinary startup loads all cold memories or that a new deletion policy is accepted. Existing D2/PF08/SL qualification gates remain unchanged.
+D2’s retention and explicit dependency-edit work should use [MH06/MH07](../limits/memory.md#mh06) and [C20/C21](limits-audit.md#c20): canonical history/vector/provenance has no aggregate retention quota, and exceptional owner edits can still load large affected dependency sets and all appraisals for affected actors. These source findings do not imply that ordinary startup loads all cold memories or that a new deletion policy is accepted. Existing D2/PF08/SL qualification gates remain unchanged.

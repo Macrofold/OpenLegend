@@ -217,16 +217,8 @@ export async function readOperationalBackup(
       tables[table]!.push(row);
     }
   }
-  if (index !== OPERATION_TABLES.length - 1) {
-    if (
-      !payload.legacyRecordLayout ||
-      index !== OPERATION_TABLES.length - AUTHORITY_TABLES.length - 1
-    )
-      throw new Error('Incomplete backup external authority.');
-    // Before foundations, no account/control tables existed. Never infer empty
-    // current authority from an incomplete package using the new record layout.
-    for (const table of AUTHORITY_TABLES) tables[table] = [];
-  }
+  if (index !== OPERATION_TABLES.length - 1)
+    throw new Error('Incomplete backup external authority.');
   validateRecoveryReferences(tables['game_saves']!, manifest.worldId, manifest.saves);
   const retained = new SaveFiles(join(directory, 'saves'));
   for (const id of manifest.saves) {

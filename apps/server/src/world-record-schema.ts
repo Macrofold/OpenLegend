@@ -153,10 +153,12 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
 };
 
 export const RECORD_NODES = new Map<string, RecordNode>();
-function register(node: RecordNode) {
+export const RECORD_PARENTS = new Map<string, string>();
+function register(node: RecordNode, parent?: RecordNode) {
   if (RECORD_NODES.has(node.table)) throw new Error(`Duplicate record table: ${node.table}`);
   RECORD_NODES.set(node.table, node);
-  for (const child of Object.values(node.children ?? {})) register(child.node);
+  if (parent) RECORD_PARENTS.set(node.table, parent.table);
+  for (const child of Object.values(node.children ?? {})) register(child.node, node);
 }
 register(WORLD_RECORD_SCHEMA);
 function columns(table: string, value: NonNullable<RecordNode['columns']>, indexes: string[][]) {
@@ -246,12 +248,21 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       event_id: textColumn('eventId'),
       kind: textColumn('kind'),
       sequence: { ...numberColumn('sequence'), sql: 'BIGINT' },
+      ...(table === 'mind_memories'
+        ? {
+            unresolved: {
+              sql: 'BIGINT NOT NULL',
+              value: (value: JsonRecord) =>
+                Number(value['kind'] === 'commitment' && !value['resolved']),
+            },
+          }
+        : {}),
     },
     [
       ['actor_id', 'at', 'source_id'],
       ['actor_id', 'source_id'],
-      ['actor_id', 'event_id'],
-      ['actor_id', 'sequence'],
+      ...(table === 'mind_memories' ? [['actor_id', 'event_id']] : []),
+      ...(table === 'mind_awareness' ? [['actor_id', 'sequence']] : []),
       ['actor_id', 'position'],
     ],
   );
@@ -277,26 +288,3 @@ columns(
 );
 
 export const WORLD_RECORD_TABLES = ['world_head', ...RECORD_NODES.keys()] as const;
-
-/** Only the checked one-time record conversion reads the retired topology. */
-export function legacyObjectRecordSchema(): RecordNode {
-  const clone = (node: RecordNode): RecordNode => ({
-    ...node,
-    children:
-      node.children &&
-      Object.fromEntries(
-        Object.entries(node.children).map(([key, value]) => [
-          key,
-          { ...value, node: clone(value.node) },
-        ]),
-      ),
-  });
-  const schema = clone(WORLD_RECORD_SCHEMA),
-    world = schema.children!['world']!.node.children!,
-    entities = world['entities']!.node.children!;
-  entities['position'] = entities['placement']!;
-  delete entities['placement'];
-  world['items'] = { mode: 'map', node: { table: 'sim_items' } };
-  delete entities['item'];
-  return schema;
-}

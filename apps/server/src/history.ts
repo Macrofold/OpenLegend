@@ -33,10 +33,10 @@ export const HISTORY_TABLES = [
   'story_context_sources',
   'story_milestones',
   'history_events',
-  'history_audiences',
   'story_narrations',
   'story_event_sources',
   'story_transition_sources',
+  'history_totals',
 ] as const;
 export type NarratorVoice = 'restrained' | 'lyrical' | 'wry';
 export interface StorySource {
@@ -91,6 +91,20 @@ function eventEvidence(awareness: EventEvidence): EventEvidence {
     urgency,
   };
 }
+/** Only observer-permitted identities enter participant indexes. */
+function perspectiveColumns(source: StorySource, actorId: string): unknown[] {
+  const { sourceId, targetId } = source.evidence;
+  const peer =
+    source.type !== 'speech'
+      ? null
+      : sourceId === actorId && targetId
+        ? targetId
+        : targetId === actorId || targetId == null
+          ? (sourceId ?? null)
+          : null;
+  return [source.order, source.type, sourceId ?? null, targetId ?? null, peer];
+}
+
 const narrationFailed = 'Narration failed.';
 /** Older failures retain their source evidence in storage, never substitute prose in the UI. */
 function projectNarration(item: TranscriptItem): TranscriptItem {
@@ -142,7 +156,23 @@ export class HistoryRepository {
       .get(worldId);
     return Number(row?.['count'] ?? 0);
   }
-  /** Rare owner edits require the complete dependency graph, including cold references. */
+  async retainedEventCount(worldId: string): Promise<number> {
+    const row = await this.db
+      .prepare('SELECT event_count FROM history_totals WHERE world_id=?')
+      .get(worldId);
+    if (!row) throw new Error('Retained history count is missing; recovery refused.');
+    return Number(row['event_count']);
+  }
+  /** Explicit physical audit: checkpoint capture/recovery already visits all retained data.
+   * Normal startup uses the transactionally maintained count instead of a lifetime scan.
+   * docs/save-and-load.md#current-history-capture-boundary */
+  async auditEventCount(worldId: string): Promise<number> {
+    const actual = await this.eventCount(worldId);
+    if (actual !== (await this.retainedEventCount(worldId)))
+      throw new Error('Retained history count disagrees with physical records; recovery refused.');
+    return actual;
+  }
+  /** Full reconstruction is reserved for explicit offline recovery. */
   async allEvents(worldId: string): Promise<WorldEvent[]> {
     const rows = await this.db
       .prepare('SELECT payload FROM history_events WHERE world_id=? ORDER BY position,id')
@@ -151,13 +181,13 @@ export class HistoryRepository {
   }
   async hasResponse(worldId: string, responseId: string): Promise<boolean> {
     return !!(await this.db
-      .prepare(
-        "SELECT id FROM history_events WHERE world_id=? AND (payload::jsonb #>> '{data,responseId}')=? LIMIT 1",
-      )
+      .prepare('SELECT id FROM history_events WHERE world_id=? AND response_id=? LIMIT 1')
       .get(worldId, responseId));
   }
   async initialize() {
     await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS history_totals (
+        world_id TEXT PRIMARY KEY, event_count BIGINT NOT NULL CHECK(event_count>=0));
       CREATE TABLE IF NOT EXISTS story_banners (
         world_id TEXT NOT NULL, owner_id TEXT NOT NULL, id TEXT NOT NULL, position BIGINT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(world_id,owner_id,id));
@@ -167,6 +197,8 @@ export class HistoryRepository {
         PRIMARY KEY(world_id,owner_id));
       CREATE TABLE IF NOT EXISTS history_perspectives (
         world_id TEXT NOT NULL,event_id TEXT NOT NULL,actor_id TEXT NOT NULL,payload TEXT NOT NULL,
+        position BIGINT NOT NULL,event_type TEXT NOT NULL,source_id TEXT,target_id TEXT,
+        speech_peer_id TEXT,response_action BOOLEAN NOT NULL,
         PRIMARY KEY(world_id,event_id,actor_id));
       CREATE TABLE IF NOT EXISTS story_context_sources (
         world_id TEXT NOT NULL,narration_id TEXT NOT NULL,owner_id TEXT NOT NULL,event_id TEXT NOT NULL,
@@ -182,13 +214,12 @@ export class HistoryRepository {
         PRIMARY KEY(world_id,owner_id,milestone));
       CREATE TABLE IF NOT EXISTS history_events (
         world_id TEXT NOT NULL, id TEXT NOT NULL, conversation_id TEXT, position BIGINT NOT NULL,
-        payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
+        payload TEXT NOT NULL,response_id TEXT,data_references TEXT[] NOT NULL,
+        PRIMARY KEY(world_id,id));
+      CREATE INDEX IF NOT EXISTS history_events_response ON history_events(world_id,response_id) WHERE response_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS history_events_references ON history_events USING GIN(data_references);
       CREATE INDEX IF NOT EXISTS history_events_order ON history_events(world_id,position,id);
       CREATE INDEX IF NOT EXISTS history_events_conversation ON history_events(world_id,conversation_id,position,id);
-      CREATE TABLE IF NOT EXISTS history_audiences (
-        world_id TEXT NOT NULL, event_id TEXT NOT NULL, actor_id TEXT NOT NULL,
-        PRIMARY KEY(world_id,event_id,actor_id));
-      CREATE INDEX IF NOT EXISTS history_actor ON history_audiences(world_id,actor_id,event_id);
       CREATE TABLE IF NOT EXISTS story_narrations (
         world_id TEXT NOT NULL, id TEXT NOT NULL, owner_id TEXT NOT NULL, conversation_id TEXT,
         position BIGINT NOT NULL, revision BIGINT NOT NULL, payload TEXT NOT NULL,
@@ -240,10 +271,11 @@ export class HistoryRepository {
     await this.db
       .prepare('DELETE FROM history_perspectives WHERE world_id=? AND event_id=?')
       .run(worldId, id);
-    await this.db
-      .prepare('DELETE FROM history_audiences WHERE world_id=? AND event_id=?')
-      .run(worldId, id);
-    await this.db.prepare('DELETE FROM history_events WHERE world_id=? AND id=?').run(worldId, id);
+    return (await this.db
+      .prepare('DELETE FROM history_events WHERE world_id=? AND id=? RETURNING id')
+      .get(worldId, id))
+      ? 1
+      : 0;
   }
   /** Runs inside the authoritative commit transaction. No paid work and no imagined legacy sources. */
   async project(
@@ -280,7 +312,8 @@ export class HistoryRepository {
         ? prepared
         : prepareHistory(previous, world, appendCount);
     const { fastAppend, changed, removed, previousIds, forgotten, perspective } = inputs;
-    for (const id of removed) await this.removeEvent(world.id, id);
+    let removedEvents = 0;
+    for (const id of removed) removedEvents += await this.removeEvent(world.id, id);
     const candidates: {
       event: WorldEvent;
       position: number;
@@ -309,7 +342,7 @@ export class HistoryRepository {
               String(row['actor_id']),
               JSON.parse(String(row['payload'])) as StorySource,
             );
-        await this.removeEvent(world.id, event.id);
+        removedEvents += await this.removeEvent(world.id, event.id);
       }
       const perspectives = new Map<string, StorySource>();
       const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
@@ -319,12 +352,18 @@ export class HistoryRepository {
         event.conversationId ?? null,
         position,
         encoded,
+        typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
+        [
+          ...new Set(
+            Object.values(event.data ?? {}).filter(
+              (value): value is string => typeof value === 'string' && value !== event.id,
+            ),
+          ),
+        ],
       ]);
       if (eventFlush) await eventFlush;
       for (const actorId of new Set(event.audience)) {
         if (forgotten(actorId).has(event.id)) continue;
-        const audienceFlush = batch.add('history_audiences', [world.id, event.id, actorId]);
-        if (audienceFlush) await audienceFlush;
         const awareness = perspective(actorId, event.id);
         let evidence = awareness ? eventEvidence(awareness) : undefined;
         const retained = retainedPerspectives.get(actorId);
@@ -364,6 +403,8 @@ export class HistoryRepository {
           event.id,
           actorId,
           JSON.stringify(source),
+          ...perspectiveColumns(source, actorId),
+          event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
         ]);
         if (perspectiveFlush) await perspectiveFlush;
       }
@@ -390,6 +431,20 @@ export class HistoryRepository {
     }
     // Persist sources before scheduling; selection follows docs/narration-and-conversations.md#replaceable-story-selection.
     await batch.flush();
+    if (!previous)
+      await this.db
+        .prepare(
+          'INSERT INTO history_totals(world_id,event_count) VALUES (?,0) ON CONFLICT DO NOTHING',
+        )
+        .run(world.id);
+    if (batch.insertedEvents !== removedEvents) {
+      const total = await this.db
+        .prepare(
+          'UPDATE history_totals SET event_count=event_count+? WHERE world_id=? RETURNING event_count',
+        )
+        .get(batch.insertedEvents - removedEvents, world.id);
+      if (!total) throw new Error('Retained history count is missing; commit refused.');
+    }
     recordDuration(
       'history.sourceBuild',
       Math.max(0, performance.now() - buildStarted - batch.writeMilliseconds),
@@ -425,9 +480,6 @@ export class HistoryRepository {
       const old = new Set(reapplyForgetting ? [] : previous?.experience?.forgotten[actorId]);
       for (const id of ids)
         if (!old.has(id)) {
-          await this.db
-            .prepare('DELETE FROM history_audiences WHERE world_id=? AND event_id=? AND actor_id=?')
-            .run(world.id, id, actorId);
           await this.db
             .prepare(
               'DELETE FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
@@ -469,9 +521,15 @@ export class HistoryRepository {
           source.revision = revisionOf(JSON.stringify(entry));
           await this.db
             .prepare(
-              'UPDATE history_perspectives SET payload=? WHERE world_id=? AND event_id=? AND actor_id=?',
+              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=? WHERE world_id=? AND event_id=? AND actor_id=?',
             )
-            .run(JSON.stringify(source), world.id, entry.eventId, actorId);
+            .run(
+              JSON.stringify(source),
+              ...perspectiveColumns(source, actorId),
+              world.id,
+              entry.eventId,
+              actorId,
+            );
           for (const principal of this.principals.filter((p) => p.actorId === actorId))
             await this.revokeStories(world.id, entry.eventId, principal.ownerId);
         }
@@ -772,7 +830,7 @@ export class HistoryRepository {
   async optionalSources(worldId: string, job: StoryJob): Promise<StorySource[]> {
     const rows = await this.db
       .prepare(
-        'SELECT p.payload FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id WHERE p.world_id=? AND p.actor_id=? AND e.position<=? ORDER BY e.position DESC LIMIT 12',
+        'SELECT payload FROM history_perspectives WHERE world_id=? AND actor_id=? AND position<=? ORDER BY position DESC,event_id DESC LIMIT 12',
       )
       .all(worldId, job.actorId, job.item.order);
     return rows
@@ -894,11 +952,19 @@ export class HistoryRepository {
       .run(worldId, id, ownerId, record.id);
   }
   async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER, actorId?: string) {
-    const rows = await this.db
-      .prepare(
-        `SELECT payload,position FROM history_events WHERE world_id=? AND position<?${actorId ? ' AND id IN (SELECT event_id FROM history_audiences WHERE world_id=? AND actor_id=?)' : ''} ORDER BY position DESC,id DESC LIMIT 101`,
-      )
-      .all(worldId, before, ...(actorId ? [worldId, actorId] : []));
+    const rows = actorId
+      ? await this.db
+          .prepare(
+            `SELECT e.payload,p.position FROM history_perspectives p
+          JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
+          WHERE p.world_id=? AND p.actor_id=? AND p.position<? ORDER BY p.position DESC,p.event_id DESC LIMIT 101`,
+          )
+          .all(worldId, actorId, before)
+      : await this.db
+          .prepare(
+            'SELECT payload,position FROM history_events WHERE world_id=? AND position<? ORDER BY position DESC,id DESC LIMIT 101',
+          )
+          .all(worldId, before);
     const page = rows.slice(0, 100);
     return {
       events: page.map((row) => JSON.parse(String(row['payload'])) as WorldEvent),
@@ -950,8 +1016,7 @@ export class HistoryRepository {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
     const limit = Math.max(1, Math.min(100, options.limit ?? 40));
-    const position = perspectiveField(this.db, 'order', 'p');
-    const eventType = perspectiveField(this.db, 'type', 'p');
+    const position = perspectiveField('order', 'p');
     // Talk and Journal share the actor-scoped index; unseen global history must not
     // turn each message-page read into a world-size scan.
     const maximum = await this.db
@@ -964,46 +1029,53 @@ export class HistoryRepository {
       Number(maximum?.['position'] ?? 0),
     );
     const boundary = Math.min(options.before ?? watermark + 1, watermark + 1);
-    let filter = options.conversationId ? ' AND e.conversation_id=?' : '';
     const storyFilter = options.conversationId ? ' AND conversation_id=?' : '';
     const args = options.conversationId ? [options.conversationId] : [];
-    // Filter before pagination so journal activity cannot crowd speech out of the page.
-    const identity = (key: 'sourceId' | 'targetId') => `(p.payload::jsonb #>> '{evidence,${key}}')`;
-    const responseId = `(e.payload::jsonb #>> '{data,responseId}')`;
-    const relevant = `(e.payload::jsonb #>> '{data,conversationRelevant}')='true'`;
+    const select = (
+      filter: string,
+    ) => `SELECT p.position,p.event_id,e.payload,p.payload AS perspective
+      FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
+      WHERE p.world_id=? AND p.actor_id=? AND p.position<?${options.conversationId ? ' AND e.conversation_id=?' : ''}${filter}
+      ORDER BY p.position DESC,p.event_id DESC LIMIT ?`;
+    const params = [worldId, actorId, boundary, ...args];
+    let events: Record<string, unknown>[];
     if (options.participantId) {
-      const speechParticipants = `((${identity('sourceId')}=? AND ${identity('targetId')}=?) OR (${identity('sourceId')}=? AND (${identity('targetId')}=? OR ${identity('targetId')} IS NULL)))`;
-      if (options.responseActions) {
-        filter += ` AND ((${eventType}='speech' AND ${speechParticipants}) OR ((${responseId} IS NOT NULL OR ${relevant}) AND ${identity('sourceId')}=?))`;
-        args.push(
-          actorId,
-          options.participantId,
-          options.participantId,
-          actorId,
-          options.participantId,
-        );
-      } else {
-        filter += ` AND ${eventType}='speech' AND ${speechParticipants}`;
-        args.push(actorId, options.participantId, options.participantId, actorId);
-      }
-    } else if (options.speechOnly) {
-      filter += options.responseActions
-        ? ` AND (${eventType}='speech' OR ${responseId} IS NOT NULL OR ${relevant})`
-        : ` AND ${eventType}='speech'`;
+      // Seek two indexed streams before merging: permitted dialogue with this person,
+      // and that person's conversation-related actions. UNION removes their overlap.
+      // docs/performance.md#compact-transactional-persistence
+      const speech = select(' AND p.speech_peer_id=?');
+      events = options.responseActions
+        ? await this.db
+            .prepare(
+              `(${speech}) UNION (${select(' AND p.source_id=? AND p.response_action')}) ORDER BY position DESC,event_id DESC LIMIT ?`,
+            )
+            .all(
+              ...params,
+              options.participantId,
+              limit + 1,
+              ...params,
+              options.participantId,
+              limit + 1,
+              limit + 1,
+            )
+        : await this.db.prepare(speech).all(...params, options.participantId, limit + 1);
+    } else if (options.speechOnly && options.responseActions) {
+      events = await this.db
+        .prepare(
+          `(${select(" AND p.event_type='speech'")}) UNION (${select(' AND p.response_action')}) ORDER BY position DESC,event_id DESC LIMIT ?`,
+        )
+        .all(...params, limit + 1, ...params, limit + 1, limit + 1);
+    } else {
+      events = await this.db
+        .prepare(
+          select(
+            options.speechOnly
+              ? " AND p.event_type='speech'"
+              : ' AND NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?)',
+          ),
+        )
+        .all(...params, ...(options.speechOnly ? [] : [ownerId]), limit + 1);
     }
-    const events = await this.db
-      .prepare(
-        `SELECT ${position} AS position,e.payload,p.payload AS perspective FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id JOIN history_audiences a ON a.world_id=p.world_id AND a.event_id=p.event_id AND a.actor_id=p.actor_id WHERE p.actor_id=? AND p.world_id=? AND ${position}<?${filter} AND (?=1 OR NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?)) ORDER BY ${position} DESC,p.event_id DESC LIMIT ?`,
-      )
-      .all(
-        actorId,
-        worldId,
-        boundary,
-        ...args,
-        options.speechOnly || options.participantId ? 1 : 0,
-        ownerId,
-        limit + 1,
-      );
     const stories =
       options.speechOnly || options.participantId
         ? []

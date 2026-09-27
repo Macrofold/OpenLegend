@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-09-27 — Indexed history startup and selective creator edits
+
+Delivered the [history storage plan](projects/history-storage-efficiency.md): startup seeks actor tails/list maxima and recent/unresolved memories; character-reply lookup and dialogue participants use indexed columns; exact actor-parent lookup replaces prefix deletion scans; record indexes have stable descriptive names and omit redundant source-family indexes. Event perspectives now combine access and complete perceived evidence, removing duplicate audience rows without deduplicating text against mutable events.
+
+Creator event/character-memory edits, correction and forgetting prepare transitive affected dependencies outside the mutation queue and reject stale preparation. Affected actors’ terminal appraisals remain included for privacy cleanup. The memory endpoint now returns a refused forgetting transition instead of incorrectly reporting success, and correction uses the domain owner’s complete invalidation list. A transactionally maintained event total replaces startup’s physical recount after measured cost; checkpoint capture/full recovery retain explicit audits. This moves detection of out-of-band count drift, and adds projection/index write costs. [Save/load](save-and-load.md#current-history-capture-boundary) owns these guarantees. Database format 2 and checkpoint encoding 2 reject incompatible development data without migration or deletion, replacing the preceding-layout reader under the unchanged root policy.
+
+D1/D2/PF08 track broader qualification; [MH07](limits/memory.md#mh07) records remaining affected-set growth. The owner's exact unambiguous-reference paragraph was added to AGENTS.md; this is instruction delivery, not universal agent-compliance evidence.
+
 ## 2026-09-27 — Minimal hunting context and compatible weapon options
 
 At the owner's request, controlled removals replaced numeric combat descriptions with short world-owned hunt labels and equipment-derived melee, ranged and unarmed options. The base-world configuration owns food species, allowed methods, purpose and finite scope; existing native actions own equipment, ammunition, movement, chance, damage and feedback. Ada's explicit acceptance of hunting and food-preparation paragraph are removed; general characterization and empty goals remain. This reverses the earlier decision to repeat exact combat statistics and promote hunting through her biography. The v10 generic question rubric stays after shorter/shared variants weakened reconsideration.

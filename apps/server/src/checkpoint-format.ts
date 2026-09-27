@@ -6,4 +6,4 @@ export const CHECKPOINT_LIMITS = {
   rows: 2_000_000,
   page: 64,
 };
-export const CHECKPOINT_ENCODING = 'records-jsonl-1';
+export const CHECKPOINT_ENCODING = 'records-jsonl-2';

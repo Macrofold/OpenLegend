@@ -18,7 +18,10 @@ export async function* tableRows(db: SqlDatabase, table: string, worldId?: strin
       )
       .all(table)
   ).map((r) => String(r['name']));
-  const columns = primary.filter((name) => worldId === undefined || name !== 'world_id');
+  const scoped = primary.filter((name) => worldId === undefined || name !== 'world_id');
+  // Per-world scalar owners (such as retained-event totals) have only world_id as
+  // their primary key. Keep it for their one-row page instead of rejecting capture.
+  const columns = scoped.length ? scoped : primary;
   if (!columns.length) throw new Error(`Checkpoint table ${table} needs a stable primary key.`);
   columns.forEach(identifier);
   let cursor: unknown[] | undefined;

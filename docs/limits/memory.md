@@ -582,15 +582,15 @@ Resident awareness: latest 256 records/actor, targeting 1 MiB while always prese
 
 ## MH07
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Liberal.**
 
-**Explicit owner edits can materialize complete history.** No source-count/byte cap when WorldRecords.withHistory is called without sourceIds. It loads full source and terminal appraisal/contribution histories for selected actors, or the world when actorIds is absent. savePersonEditor, saveWorldEventsEditor and correctMemory use the full-dependency owner path. Bounded consolidation supplies sourceIds and is a different path.
+**Explicit edits prepare the full affected dependency set, with no source-count/byte cap.** Creator event edits, character-memory edits, correction and forgetting follow indexed source/event aliases, summary dependencies and correction links outside the mutation queue. Only requested event bodies and affected source bodies are loaded. All appraisals for affected actors are included because privacy invalidation clears terminal records too. Publication rejects a changed world rather than using stale preparation. No automatic retry is added.
 
-**Exposure / consequence:** A normal creator edit or correction on a mature world can occupy the mutation lane and consume substantial RAM. Large editor request limits do not bound pre-existing dependencies loaded for one small edit.
+**Exposure / consequence:** Ordinary small edits avoid unrelated lifetime memory/event bodies. A heavily referenced event or an actor with many appraisals can still require substantial RAM and work. The existing five-second read statement deadline can reject a large dependency query; affected records are never silently skipped. Full recovery and explicitly requested full actor-history maintenance still materialize complete scoped history.
 
-**Reason / tradeoff:** Corrections must reach all dependent evidence. Replace full materialization with indexed dependency closures and resumable preparation plus atomic publication; never skip affected history just to fit a page.
+**Reason / tradeoff:** Preserve complete correction/forgetting semantics while reducing unnecessary reads and mutation-lane occupancy. The former whole-world creator-edit preparation is removed. Resumable preparation remains a future response to measured large dependency closures, rather than speculative infrastructure.
 
-**Evidence:** Rare explicit owner operations, not every tick or the bounded consolidation path. [Implementation](../../apps/server/src/world-records.ts) (`withHistory; readHistory; world-service.ts withActorHistory`). [Revisit C21](../maintainers/limits-audit.md#c21).
+**Evidence:** [Implementation](../../apps/server/src/history-edit.ts), [verification](../verification.md#history-storage-efficiency). [Revisit C21](../maintainers/limits-audit.md#c21); D2/PF08 retain larger dependency and hosted qualification.
 
 ## KG01
 
