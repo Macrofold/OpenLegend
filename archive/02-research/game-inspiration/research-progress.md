@@ -19,9 +19,9 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | Subject | Audit status | Audit commit / correction boundary |
 | --- | --- | --- |
 | G01 — Hades II | **Audited** | `c10f00e47a12b5e691c1627cd7a682da7ac31ddc` — explicit mechanics-inventory closure; September 25, 2026 anniversary post rechecked as community/documentary/concert context, not a new gameplay expansion. |
-| G02 — Among Us | **In progress** | Recheck current modes/platform/update boundary and full mechanics inventory. |
-| G03 — Animal Crossing: New Horizons | Pending | — |
-| G04 — Roblox | Pending | — |
+| G02 — Among Us | **Audited** | `ec71ae3278a367e18375a1115e87a0425a604efc` — explicit mechanics-inventory closure; Judge/v18.0.0 remains the newest shipped role update and the second roadmap role remains future scope. |
+| G03 — Animal Crossing: New Horizons | **Audited** | `ec985d8787ff4fd5d9fc504e6bdfadf2023f18d6` — explicit mechanics-inventory closure; rechecked Ver. 3.0.3 as the latest Nintendo support version and preserved free 3.0 versus paid Switch 2 Edition boundaries. |
+| G04 — Roblox | **In progress** | Recheck current platform/business/safety/creation boundaries and full mechanics inventory. |
 | G05 — Grow a Garden | Pending | — |
 | G06 — Steal a Brainrot | Pending | — |
 | G07 — Fortnite | Pending | — |
