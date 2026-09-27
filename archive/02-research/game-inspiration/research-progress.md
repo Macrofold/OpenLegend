@@ -4,17 +4,36 @@ Read [requirements / R01–R14](research-requirements.md) and the [canonical 130
 
 ## Branch scope and resume point
 
-**Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike originally assigned **G101–G120**, sequentially, with a commit after each game and substantive checkpoints at least every five minutes. **Latest instruction, September 26: continue, but stop after G110.** The existing branch is retained; do not recreate it or advance into G111–G120 in this continuation. Other range branches are outside this assignment.
+**Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike originally assigned **G101–G120**, sequentially, with a commit after each game and substantive checkpoints at least every five minutes. The revised range stops at **G110**. The existing branch is retained; do not recreate it or advance into G111–G120. Other range branches are outside this assignment.
 
-**Completed: 10 / 10 in the revised G101–G110 scope. Active: none. STOP at G110.** KOTOR II's full pass, mechanics review and scoped navigation/changelog integration are complete. Its original campaign, later ports, separately installed restoration and canceled Switch DLC remain distinct. G101–G109 completion records are retained; the final continuation completed G110 rather than re-researching those nine games. Do not interpret this range's completion as the global 130-subject or seven-file packet audit.
+**Initial passes: 10 / 10. Requested second-pass audit: 0 / 10; active G101 — Mass Effect.** Mike subsequently requested checking every aspect of the instructions for every game in the batch, correcting mistakes and completing missing research. This new audit supersedes the previous stop/acceptance statement for G101–G110 only. The earlier completion records below remain historical evidence, not proof that the new review has passed. The audit starts from verified branch head `bc65d9234874c195c7937ba38f524b360262b533`; no rebase, merge, history rewrite or work on other range branches is part of this documentation-only correction task.
 
 Inherited G01–G20 completion claims and the former G21 assignment are **not re-audited here**. G21–G100 and G111–G130 remain outside the revised scope. All original completion SHAs, earlier resume instructions and scope history remain available in the [immutable parent ledger](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Last inherited completion: Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`; original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
-## G101–G120 completion records
+## G101–G110 second-pass audit
 
-Completion requires substantive R01–R14 coverage, evidence/access review, preservation/link review and a successful connector commit. Unavailable evidence is documented, never fabricated or counted as read. Rows G111–G120 preserve the original assignment inventory but are not authorized continuation work after Mike's stop-at-G110 instruction.
+**Plan and completion gate:** read each full dossier against R01–R14 and the explicit mechanics inventory, including all five substantive review summaries and player-evidence qualifications. Recheck disputed or weakly supported rules, editions, dates, source attributions and commercial definitions against substantive external sources. Add missing researched detail to the existing dossier, preserve earlier examples and source history, and clearly supersede errors. Inspect each changed diff, source anchors and relative links before committing the game. Commit substantive checkpoints within five minutes while work is ongoing. Finish with range-wide navigation, preservation/diff checks and one reconciled documentation-changelog entry. Estimated runtime logic changed: **zero**; risks are factual accuracy, loss of earlier research and misleading acceptance claims, not engine behavior. No game execution, paid service or automated test suite is required for these documentation changes.
 
-| ID | Subject / canonical output | Status | Completion commit |
+| Subject | Audit status | Audit completion commit |
+| --- | --- | --- |
+| G101 — Mass Effect | In progress: full dossier and evidence review | — |
+| G102 — Mass Effect 2 | Pending | — |
+| G103 — Mass Effect 3 | Pending | — |
+| G104 — Mass Effect: Andromeda | Pending | — |
+| G105 — Mass Effect Galaxy | Pending | — |
+| G106 — Mass Effect: Infiltrator | Pending | — |
+| G107 — Octopath Traveler | Pending | — |
+| G108 — Octopath Traveler II | Pending | — |
+| G109 — Knights of the Old Republic | Pending | — |
+| G110 — Knights of the Old Republic II | Pending | — |
+
+The previous range integration did **not** freshly reread G101–G109. This audit explicitly includes all ten. Public evidence limits may remain, but a missing researchable category must not be relabeled as an access limitation. The global seven-file packet and 130-subject audits are separate gates; this task must not claim to finish them merely by reviewing this range.
+
+## G101–G120 initial completion records
+
+Initial completion required substantive R01–R14 coverage, evidence/access review, preservation/link review and a successful connector commit. Unavailable evidence is documented, never fabricated or counted as read. These records predate the new audit above. Rows G111–G120 preserve the original assignment inventory but are not authorized continuation work after Mike's stop-at-G110 instruction.
+
+| ID | Subject / canonical output | Initial status | Initial completion commit |
 | --- | --- | --- | --- |
 | G101 | [Mass Effect](dossiers/mass-effect.md) | Complete; Steam ranking inaccessible, alternatives documented | `f88cbf88dd4b99e0c2804859db147d9d6f9daffb` |
 | G102 | [Mass Effect 2](dossiers/mass-effect-2.md) | Complete; Steam ranking inaccessible, alternatives documented | `244f4d82dd4440b7494886690ead1035c095221c` |
@@ -61,20 +80,20 @@ Completion requires substantive R01–R14 coverage, evidence/access review, pres
 
 ## Preservation and integration gates
 
-Baseline `games/`, `mechanics/` and `dossiers/` inventories were fully inspected by the preceding continuation: no dedicated G101–G120 owner existed. The current continuation rechecked the complete `games/` and `mechanics/` inventories at resume: neither contains a dedicated Octopath or KOTOR chapter. These are additive roster subjects, not replacements for original chapters. Existing essays, packet owners, reviews, sources, economic dates, video recommendations and incidental references remain unchanged. Rules-based illustrations are not observed playtests.
+Baseline `games/`, `mechanics/` and `dossiers/` inventories were fully inspected by the preceding continuation: no dedicated G101–G120 owner existed. The previous continuation rechecked the complete `games/` and `mechanics/` inventories: neither contained a dedicated Octopath or KOTOR chapter. These are additive roster subjects, not replacements for original chapters. Existing essays, packet owners, reviews, sources, economic dates, video recommendations and incidental references must remain intact. Rules-based illustrations are not observed playtests.
 
 | Gate | State / remaining work |
 | --- | --- |
 | P01 — Seven-file packet preservation | Global audit pending. [Provenance](references/packet-provenance.md) is not a completeness certificate. |
 | P02 — Earlier conversation coverage | Global audit pending; distinguish recovered scope from unavailable conversation-only material. |
-| P03 — Full roster review | Global 130-game gate pending. This branch's revised scope is G101–G110 only; inherited G101–G109 were not re-researched in the final continuation. |
-| P04 — Navigation and links | Complete for G101–G110: ten dossier paths checked against the repository inventory and linked from the library; six G110 situations linked from the interaction lookup. Existing navigation retained, including the corrected Vampire Survivors path. |
-| P05 — Evidence and diff review | Complete for the final continuation's G110 content and scoped integration: requirement/source anchors, edition/date boundaries, attributed criticism, source-access limits and changed-file scope reviewed. Earlier G101–G109 source bodies were not freshly re-read; their prior completion evidence above is retained. No claim of watched footage or runtime testing. |
+| P03 — Full roster review | Global 130-game gate pending; the current audit is G101–G110 only. |
+| P04 — Navigation and links | Initial range integration complete; recheck affected links and anchors after the second-pass corrections. |
+| P05 — Evidence and diff review | Reopened for all G101–G110 by the latest request. Per-game audit table above owns current progress. No claim of watched footage or runtime testing. |
 
-### Final integration record
+### Initial integration record
 
-The library index owns the ten-title navigation; the interaction lookup owns six direct G110 question-to-example routes. Detailed evidence stays in each dossier rather than being copied into the older review/economics ledgers. The documentation changelog records the scope closure. Roster and requirements are unchanged. Review is documentation-only: source/content and relative-link/anchor inspection, not a game build, automated test suite, port replay or accessibility audit. Global preservation gates P01–P03 remain open.
+At `bc65d9234874c195c7937ba38f524b360262b533`, the library index linked all ten dossiers and the interaction lookup linked six G110 situations. The documentation changelog recorded the initial scope closure. Roster and requirements remained unchanged. That review covered G110 and integration rather than freshly rereading G101–G109. Its source/content and relative-link/anchor checks were documentation-only, not a game build, automated test suite, port replay or accessibility audit. Global preservation gates P01–P03 remained open.
 
 ## Recovery rules
 
-Use GitHub connector commits; re-read shared-file blobs before writes and preserve concurrent changes. Finish the active subject before advancing. Checkpoints name exact remaining work and are not completion. No background execution is implied. Roster and requirements remain canonical and unchanged. Research authorizes no runtime implementation or accepted new product requirements. This continuation has reached its stop point: do not begin G111 without a new instruction.
+Use GitHub connector commits; re-read shared-file blobs before writes and preserve concurrent changes. Complete and commit each game's audit before advancing. Checkpoints name exact remaining work and are not completion. No background execution is implied. Roster and requirements remain canonical and unchanged. Research authorizes no runtime implementation or accepted new product requirements. Finish the new G101–G110 audit and scoped integration, then stop; do not begin G111 without a new instruction.
