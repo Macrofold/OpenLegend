@@ -1,6 +1,6 @@
 # Whole-world reassessment: progress and evidence
 
-**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 17, The Culture. Completed dossier revisions: 16/28. Shared synthesis reconciliation: pending the dossier pass.**
+**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 19, Narnia. Completed dossier revisions: 18/28. Shared synthesis reconciliation: pending the dossier pass.**
 
 This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet and its integration history; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
 
@@ -28,9 +28,9 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [14. One Piece](worlds/14-one-piece.md) | Revised | `a03e644227feff64110116c69c5d361ca90437bf`; rivalry, music, celebration, happy household, working infrastructure and consequential defeat. |
 | [15. The Expanse](worlds/15-the-expanse.md) | Revised | `d9275c952c23f7373cdd5d9770578b5ac53105f1`; retirement, adult intimacy, scientific wonder, deliberate experiments, costly military victory and permanent separation. |
 | [16. Foundation](worlds/16-foundation.md) | Revised | `4bee03439849b6a5427c2fc1a49c74b5825ec3f6`; travel, music, useful services, martial ambition, induced loyalty and Bayta's lethal intervention. |
-| [17. The Culture](worlds/17-the-culture.md) | In progress | Dossier-specific evidence and commit pending. |
-| [18. The Broken Earth](worlds/18-the-broken-earth.md) | Pending | — |
-| [19. Narnia](worlds/19-narnia.md) | Pending | — |
+| [17. The Culture](worlds/17-the-culture.md) | Revised | `b8918fadeacc754fcbba5555cd0d8ff97592d1cc`; bodily pleasure, recital, artistic ambition, deliberate cruelty, coercion and unequal resolutions. |
+| [18. The Broken Earth](worlds/18-the-broken-earth.md) | Revised | `071c5accb752e62a4f819619425fc88235f09e46`; chosen intimacy, divergent ambitions, piracy, civic provision and an enduring change that does not erase loss. |
+| [19. Narnia](worlds/19-narnia.md) | In progress | Dossier-specific evidence and commit pending. |
 | [20. His Dark Materials](worlds/20-his-dark-materials.md) | Pending | — |
 | [21. The Wire](worlds/21-the-wire.md) | Pending | — |
 | [22. The Sopranos](worlds/22-the-sopranos.md) | Pending | — |
