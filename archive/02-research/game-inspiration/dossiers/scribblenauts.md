@@ -144,9 +144,9 @@ Tringali's November 16, 2009 published postmortem excerpts discuss the self-fund
 | **February 3, 2010:** GameSpot reports Warner Bros.' announcement of more than one million units worldwide. [B1] | Original **DS game**, not Unlimited, revenue or profit. The same article documents contemporary E3 awards; awards are exposure, not acquisition attribution. |
 | **October 8, 2015:** Nintendo Everything reports developer 5th Cell's figure of over 13 million copies. [B2] | **Series-wide** reported units. The linked Polygon source could not be fetched in this pass, so this remains attributed secondary reporting, not a new primary financial verification. |
 | **September 2018:** Xbox announces Mega Pack and credits Shiver. [P7] | A later distribution/compilation effort and additional content; not evidence that all old platforms received identical updates. |
-| **Current retrieval:** Steam retains the paid PC listing. [P1] | A purchase-based product, not a charge per noun or generated action. Current discounts are not used to reconstruct historical economics. |
+| **September 26, 2026 retrieval:** Steam retains the paid Windows PC listing at **$19.99**, displaying **5,353 English reviews at 93% positive** and **23 recent reviews at 95% positive** in the captured page. [P1] | A purchase-based product, not a charge per noun or generated action. Review populations are not owners, active users, retention or revenue, and the current list price is not retroactively applied to historical sales. |
 
-Unlimited-specific lifetime units, development budget, profit, retention and channel-attributed revenue were not established. Review counts and achievement percentages cannot substitute for those metrics. Reusable objects, humorous solutions and play accounts are plausible sharing units; no measured virality coefficient is claimed.
+Unlimited-specific lifetime units, development budget, profit, retention and channel-attributed revenue were not established. The current Steam review populations above and achievement percentages cannot substitute for those metrics. Reusable objects, humorous solutions and play accounts are plausible sharing units; no measured virality coefficient is claimed. Steam still advertises Workshop sharing for the PC Object Creator, but this audit did not upload/download an object or independently test current Workshop service health. [P1]
 
 **Service boundaries:** Nintendo's product page says Wii U/3DS eShop purchases ended March 27, 2023. Nintendo's current support notice records online-service discontinuation on April 8, 2024 and distinguishes surviving local StreetPass from online SpotPass. Therefore old sharing promises are historical capabilities, not blanket assurances that every original online route still works. Offline play and the general ability to redownload prior purchases are separately described by Nintendo; this pass did not test a specific account or Workshop upload. [P6] [P8]
 
@@ -186,6 +186,26 @@ The original chapter's universal-solution warning, toy-mode counterpoint, interf
 
 ## 10. Coverage, preservation and viewing route
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the full mechanics inventory confirms that the existing category table in §2 is broad, while these remaining boundaries make every requested item explicit:
+
+- **Identity / classes / attributes / skills / leveling / perk/tech trees:** Maxwell, appearance/property modification and sibling-avatar collection are covered in §§1–2 and 4. Unlimited has no conventional race/class build, attribute allocation, XP leveling or skill/perk/technology tree.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** summoned objects can be carried, worn, given, operated and reused through the Magic Backpack; weapons/armor/tools exist as vocabulary and contextual objects. The Object Creator composes reusable objects, but this is not a resource-cost crafting/gear-upgrade economy (§§2–3).
+- **Magic / spells / powers:** Maxwell's notebook, adjectives, fantasy objects and transformations provide authorial power. This is constrained vocabulary/behavior support rather than a mana-priced learned spell tree (§2).
+- **Traversal / environmental and object interaction:** walking plus created ladders, ropes, mounts, flying objects, vehicles, switches, containers, barriers, size/property changes and target-specific tool use are covered in §§2 and 5.
+- **Activities / minigames:** local errands, multistage Starite missions, object-shard riddles, collections and voluntary sandbox experiments are covered in §§2 and 4–5; no separate persistent competitive minigame economy is implied.
+- **Combat / stealth / loot / rewards:** created weapons/allies and environmental hazards support contextual combat; invisibility/disguise/opening containers can solve particular scenes. There is no deep combat-build system, universal stealth-detection model or randomized equipment-loot ladder (§2).
+- **Death / failure / recovery / economy / trading:** scene failure/reset, mutually exclusive objectives and reversible experimentation are covered in §§4–5. Currency/shops can exist inside puzzles, but Unlimited has no core player-run market/trading/production economy.
+- **Story / relationships / romance / reputation / party / companions:** Lily/family and local inhabitants supply the rescue frame and social puzzle context (§6). There is no persistent romance/affinity system, reputation ladder or commandable companion party; Unmasked's reputation system remains edition-specific (§§1–2).
+- **NPC/AI behavior and schedules / factions:** scene inhabitants can act, react and accept solutions, but the research does not support autonomous daily schedules, persistent institutions or a systemic faction-politics simulation. Summoning “doctor,” “parent,” “guard” or similar identities does not create a career/society simulator (§2).
+- **World map / environment / quests / events:** themed authored locations, map unlocks, Starite/Shards, Merit Board hints and staged local objectives form the campaign structure (§§4–6). The “open world” label does not mean a continuously simulated geography.
+- **Building / settlements / management:** objects/buildings can be summoned or edited, but there is no persistent settlement construction, population management or production-chain governance system.
+- **Multiplayer / social / endgame / return loops:** PC Unlimited is single-player with Workshop sharing; Wii U's local Sidekick Mode and 3DS StreetPass are platform-specific historical features (§1). Lily's rescue is a campaign milestone, while remaining Starites/shards, siblings, saved creations and experimentation provide optional completion/replay (§4).
+
+The service audit also revalidates edition-specific present-day availability: **Windows PC remains on sale through Steam and still advertises Workshop sharing**; Wii U/3DS eShop purchases ended March 27, 2023, and Nintendo's network-wide online communication ended April 8, 2024. Offline software remains playable, prior purchases can still be redownloaded for the foreseeable future, and 3DS StreetPass remains available because it is local communication. These platform facts do not prove that every game-specific historical sharing endpoint is healthy, and no unofficial replacement service is treated as native support. [P1][P8]
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Section 1: player promise, platform/regional/series boundaries. |
@@ -213,7 +233,7 @@ The original chapter's universal-solution warning, toy-mode counterpoint, interf
 
 Accessed September 26, 2026. Primary developer/platform descriptions establish advertised capabilities, not a performance or accessibility test. Reviews and walkthroughs are attributed firsthand accounts. All source bodies used for detailed new claims were inspected; limits below remain explicit.
 
-- **P1:** Steam PC listing, undated live page; platform/features and release date, not independently tested service uptime.
+- **P1:** Steam Windows PC listing, live September 26 capture; platform/features, release date, $19.99 offer and filtered review populations, not independently tested Workshop uptime or owner/active-user counts.
 - **P2:** Brittany Aubert interviewed by Mike Mason, September 24, 2012; primary production/mode testimony, including pre-release claims.
 - **P3:** Jeremiah Slaczka interviewed by Jared Rosenberg, September 15, 2009; original-game design/tooling/promotion testimony.
 - **P4:** Joseph Tringali, November 16, 2009; published postmortem excerpts only, not the complete magazine article.
