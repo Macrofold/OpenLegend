@@ -8,13 +8,13 @@ Mike requested a substantive full-requirements audit, corrections and completion
 
 Continue on the existing `docs/game-inspiration-games-61-80` branch. Do not recreate/reset the branch, switch ranges, commit to main or merge automatically. Audit one game at a time against R01–R14, the explicit mechanics inventory, the five-substantive-written-review minimum where available, Steam/player testimony where applicable, version/edition boundaries, preservation, citations and actual source-access limits. Correct factual errors and fill real gaps in place. Commit after each game and at least every five minutes with truthful substantive checkpoints.
 
-**Follow-up status: 1 / 20 audited. Active subject: G62 Fire Emblem Awakening.**
+**Follow-up status: 2 / 20 audited. Active subject: G63 Fire Emblem Fates.**
 
 | Subject | Follow-up state | Actual evidence / next action |
 | --- | --- | --- |
 | G61 — Fire Emblem: Path of Radiance | Audited | `d50c2b6e9df0ad66899aec8d8d7a83f4d8a623f6`: full dossier and R01–R14 review. Corrected biorhythm from an inaccurate “invisible modifier” characterization to its inspectable portrait/status-wave state; added its Hit/Avoid/Tempest/Serenity mechanics. Added the omitted chest/door/key/village/hidden-item/Steal interaction loop and constraints, with freshly checked community mechanics evidence. Five-plus written reviews, non-Steam player testimony, six worked interactions, Base/BEXP/support/laguz/forging/partner-AI/production/distribution coverage and version boundaries retained. Actual diff inspected. |
-| G62 — Fire Emblem Awakening | In progress | Read the complete dossier and applicable prior material; verify R01–R14, Pair Up/marriage/children/class/skill systems, full mechanics inventory, five-review provenance, player evidence and version/DLC boundaries. |
-| G63 — Fire Emblem Fates | Pending audit | Full dossier audit after G62. |
+| G62 — Fire Emblem Awakening | Audited | `742c606caf948de64cb9884f22efcc3df1fb8b5e`: full dossier/R01–R14 audit. Added omitted locked-door/chest/key/Locktouch interactions and glowing Event Tiles that compose item, EXP, weapon-EXP and support rewards with tactical routing. Corrected the 2026 service boundary: Nintendo explicitly keeps local StreetPass available while SpotPass/online data distribution is retired; Double Duel remains local and eShop acquisition remains closed. Five written reviews, Pair Up/Dual systems, supports/marriage/children/inheritance, class/skill graph, world-map economy, DLC and production/commercial context retained. Actual diff inspected. |
+| G63 — Fire Emblem Fates | In progress | Read full dossier and applicable prior material; verify Birthright/Conquest/Revelation availability, Pair Up revisions, My Castle, children, maps, economy/DLC, full mechanics inventory, review/player evidence and preservation boundaries. |
 | G64 — Fire Emblem: Three Houses | Pending audit | Full dossier audit after G63. |
 | G65 — Fire Emblem Heroes | Pending audit | Full dossier audit after G64, including live-service/economy/current-boundary claims. |
 | G66 — Disco Elysium | Pending audit | Full dossier audit after G65. |
