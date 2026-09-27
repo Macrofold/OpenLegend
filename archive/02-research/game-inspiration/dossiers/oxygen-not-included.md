@@ -19,6 +19,8 @@ The current 2026 product has several paid-content boundaries that older reviews 
 
 [Current Steam DLC index](https://store.steampowered.com/dlc/457140/Oxygen_Not_Included/) · [Aquatic Pack](https://store.steampowered.com/app/4310080/).
 
+**September 27, 2026 audit check:** Klei's current product page and Steam DLC catalog still end the gameplay-pack list at **Aquatic Planet Pack**; the visible official announcement stream after its June release contains bug-fix/game updates through July rather than another paid gameplay pack. Neutronium remains a cosmetics pack rather than a hidden systems expansion. [Klei current game page](https://www.klei.com/games/oxygen-not-included) · [Steam announcement stream](https://store.steampowered.com/oldnews/?appgroupname=Oxygen+Not+Included&appids=457140&feed=steam_community_announcements&headlines=1).
+
 The base fantasy is not simply "build a base." It is **design an ecology of machines and labor that can keep correcting the consequences of its own operation**.
 
 ## R02 — player actions and major mechanics
@@ -66,6 +68,14 @@ Duplicants consume calories. Plants need specific atmosphere, temperature and re
 ### Research, industry and space
 
 Research unlocks progressively deeper plumbing, power, automation, materials, transit and space systems. Refined metals, plastics and high-temperature materials enable designs that early resources cannot tolerate. The base game culminates in rocketry/space goals; Spaced Out restructures this into active multi-planetoid logistics with modular rocket interiors and colonies distributed across worlds.
+
+### Useful absences: conventional combat, stealth and factions
+
+ONI's pressure does **not** come from a conventional controllable combat party. Duplicants can interact with critters and later content includes hazards/defensive engineering, but the base colony loop has no weapon-loadout/tactical-combat campaign analogous to RimWorld or XCOM. Resource extraction, ranching and environmental control are the meaningful equivalents of "defeating" many obstacles.
+
+There is likewise no avatar-scale stealth system: no crouch/detection meter, infiltration class or hidden-state progression. Visibility is primarily an information/overlay problem for the **player**, not a stealth relationship between Duplicants and enemies.
+
+Finally, Gravitas and other lore groups exist in the fiction, but the colony does **not** participate in a joinable political-faction reputation/territory system. Duplicants have traits/needs and critters have ecological roles; that is distinct from social factions. These absences help explain why ONI can be extremely deep physically while comparatively light socially.
 
 ## R03 — Duplicants, resources, buildings and composition
 
@@ -393,6 +403,7 @@ The most transferable principle is **conservation with consequences**: matter, e
 - [Steam base game](https://store.steampowered.com/app/457140/Oxygen_Not_Included/) — July 30, 2019 release, current single-player feature listing and review counts.
 - [Steam DLC index](https://store.steampowered.com/dlc/457140/Oxygen_Not_Included/) — current dated Spaced Out, Frosty, Bionic, Prehistoric, Neutronium and Aquatic catalog.
 - [Steam Aquatic Planet Pack](https://store.steampowered.com/app/4310080/) — June 11, 2026 release and marine/swimming content.
+- [Steam Community Announcements](https://store.steampowered.com/oldnews/?appgroupname=Oxygen+Not+Included&appids=457140&feed=steam_community_announcements&headlines=1) — inspected September 27, 2026; Aquatic launch plus subsequent June/July maintenance-update chronology, with no later gameplay pack visible in the official stream.
 - [Game Developer — Klei designer Johann Seidenz, June 2017](https://www.gamedeveloper.com/design/behind-the-design-of-hit-sim-game-i-oxygen-not-included-i-) — simulation-design discovery, tutorial tradeoffs and Early Access feedback process.
 
 ### Critical/player sources read
@@ -416,11 +427,11 @@ G129 is a newly curated G111–G130 subject. Direct branch checks found no prior
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Base game and all current gameplay/cosmetic DLC boundaries through Aquatic 2026 |
-| R02 | Indirect labor, gases, liquids, heat, power, automation, food, research and space |
+| R02 | Indirect labor, gases, liquids, heat, power, automation, food, research/space and explicit combat/stealth absences |
 | R03 | Duplicants, materials, germs/heat and building-network composition |
 | R04 | Skills/morale, research, non-currency economy, cycles and failure cascades |
 | R05 | Eight worked cross-system engineering/labor cases |
-| R06 | Duplicant autonomy/personality limits, priorities, critters, disease and no multiplayer |
+| R06 | Duplicant autonomy/personality limits, priorities, critters, disease, explicit faction-simulation absence and no multiplayer |
 | R07 | cartoon readability, overlays, audio, tutorial/complexity tradeoff |
 | R08 | light authored lore plus causal colony stories |
 | R09 | Early Access iteration, 1.0 and long post-launch DLC/support history |
