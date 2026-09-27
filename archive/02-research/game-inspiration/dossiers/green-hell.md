@@ -24,6 +24,10 @@ Difficulty settings can remove or soften selected threats, so a punishing normal
 
 ## R02 — player actions and major mechanics
 
+### Character identity and progression baseline
+
+In the original Story Mode the player is **Jake Higgins**, a fixed authored protagonist rather than a custom RPG avatar. Survival/co-op reuse the same underlying human capability model rather than offering races, stat allocation or character classes. There is no Strength/Dexterity attribute sheet or global character level; capability grows through **use-based skills, learned notebook knowledge, crafted equipment, established camps and player knowledge**.
+
 ### Body inspection turns health into an investigation
 
 The player can explicitly inspect Jake's limbs. Visible problems can include:
@@ -133,13 +137,37 @@ Green Hell therefore does not primarily progress from "weak survivor" to "combat
 
 ### Skills improve through use
 
-Action skills improve through repeated performance—examples include archery, fishing, harvesting/crafting-oriented proficiencies and weapon use. This is not a conventional character-level/class tree. The player's behavior gradually improves associated efficiency while the more important progression remains knowledge, equipment, camps and map familiarity.
+Green Hell has a broad use-based skill roster rather than a conventional character-level/class tree. The current community reference lists **Animal Harvesting, Archery, Axes, Blades, Cooking, Crafting, Fire Starting, Fishing, Fists, Spears, Spear Fishing, Throwing and Pottery**. Using the associated action raises that skill and improves relevant efficiency, damage, stamina/time cost or crafting outcomes. [Skills](https://greenhell.fandom.com/wiki/Skills).
+
+**Crafting** is especially important because higher skill both unlocks recipes and increases the starting durability of newly made tools/weapons; repeatedly crafting the same item can further improve the next item's durability. [Crafting skill](https://greenhell.fandom.com/wiki/Crafting_%28skill%29). This is a form of upgrading through expertise rather than an item-enchantment tree.
+
+The player's behavior gradually improves associated efficiency while the more important progression remains knowledge, equipment, camps and map familiarity.
 
 ### Navigation uses map, compass and landmarks
 
 The watch includes compass/GPS-style coordinate information, but map use does not simply place an omniscient player icon with a quest arrow. Reviews repeatedly describe getting lost and using rivers, terrain and discovered maps to reconstruct position.
 
 Dense vegetation intentionally makes orientation difficult. That turns navigation into another survival skill: knowing *where home is* can matter more than owning another weapon.
+
+### Armor, protection and equipment progression
+
+Armor is attached **per limb**, so protection is physically localized rather than one abstract chest-slot defense number. Current armor families include **Leaf, Stick, Bamboo, Bone, Armadillo and Metal Armor**. Higher tiers absorb more damage and can prevent some wounds; armor condition/durability matters, and some hazards such as venom/infection still bypass ordinary protection. [Armor](https://greenhell.fandom.com/wiki/Armor).
+
+Metal Armor is deliberately infrastructure-heavy: it requires iron ore or empty cans, a mud mixer, a mud forge, baked molds/casts and then the final crafted armor piece. Crafting skill affects the durability of finished armor. [Metal Armor](https://greenhell.fandom.com/wiki/Metal_Armor) · [Armor Mold](https://greenhell.fandom.com/wiki/Armor_Mold).
+
+This gives Green Hell a real equipment progression curve without turning it into rarity-colored loot or an RPG upgrade-tree treadmill.
+
+### Activities, blueprints and challenge loops
+
+Green Hell's activity vocabulary extends beyond gathering/combat:
+
+- **rod fishing** has a timing interaction and its own use-based Fishing skill; spear fishing is tracked separately. [Fishing](https://greenhell.fandom.com/wiki/Fishing)
+- **pottery** and metal forging convert mud/ore infrastructure into containers, molds and equipment.
+- the notebook acquires **building blueprints, recipes, flora, wounds/ailments and skill information** as the player discovers them. [Notebook](https://greenhell.fandom.com/wiki/Notebook)
+- **Challenges** provide bounded goal/time-rule variants distinct from Story and endless Survival.
+- Spirits of Amazonia uses **tribal quests, Trust points, ritual visions and figurines** as a separate campaign progression layer.
+
+There is no separate casino/arcade economy; these activities consume the same time, stamina, materials, nutrition and map knowledge as the survival loop.
 
 ### Animal Husbandry
 
@@ -161,14 +189,15 @@ It does not add MMO economies, public persistent servers, formal classes or PvP 
 
 Green Hell has no:
 - class-selection system;
-- conventional XP level ladder;
-- large fantasy magic/spell system;
+- conventional global XP level ladder;
+- large fantasy magic/spell/power system;
+- dedicated stealth skill/perk tree (crouching, line-of-sight, foliage and avoiding threats still support behavioral stealth);
 - romance simulator;
-- joinable political faction reputation tree;
+- recruitable humanoid companion/party system;
 - loot-rarity treadmill;
-- town/colony NPC management layer.
+- autonomous town/colony NPC management layer.
 
-Story relationships exist, but survival systems are predominantly physical, environmental and informational.
+The faction/reputation boundary is mode-specific rather than absent. Ordinary Survival has no joinable political-reputation campaign, but **Spirits of Amazonia explicitly tracks Trust with tribes**: completing tribal quests grants Trust, reaching 800 Trust with a tribe unlocks a ritual vision/figurine, and ritual/tribal progression gates later areas. [Spirits of Amazonia mode](https://greenhell.fandom.com/wiki/Spirits_of_Amazonia_Game_Mode).
 
 ## R03 — items, entities and composition
 
@@ -197,6 +226,18 @@ Spoilage means the pack is a changing state, not permanent stored power.
 ### Medical items preserve contingencies
 
 A clean bandage or medicinal dressing is best understood as **a future answer**. The player chooses which possible disaster to be prepared for. Carrying everything increases weight; carrying nothing creates brittle efficiency.
+
+### Loot, rewards and blueprint knowledge
+
+Green Hell has no randomized rarity loot treadmill. Useful rewards are contextual:
+
+- animal bodies yield meat, bones, hides/shells and crafting/treatment materials;
+- camps/locations can reveal tools, resources and **new notebook blueprints**;
+- story/Spirits exploration yields maps, ritual progress and campaign-specific objectives;
+- Spirits tribal quests yield **Trust**, culminating in ritual/figurine progression rather than gold/XP loot;
+- skill use yields better efficiency/durability over time.
+
+This keeps "loot" grounded in survival affordances and learned capability.
 
 ### Tools and weapons wear/use scarce materials
 
@@ -270,6 +311,8 @@ Established play can pursue:
 - self-imposed exploration/build projects.
 
 Because content expansion ended in 2024, this is now a bounded complete sandbox rather than an endlessly expanding seasonal service.
+
+There is no formal New Game+ or escalating post-story gear ladder. Return play comes from Survival longevity, higher/custom difficulties, Challenges, co-op, the separate Spirits of Amazonia campaign, achievement/completion goals, and building/husbandry projects.
 
 ## R05 — worked interactions and concrete situations
 
@@ -355,9 +398,17 @@ The narrative's treatment of outside contact, the Yabahuca and the consequences 
 
 Spirits of Amazonia is a prequel built around earning trust, learning Tribal Legends and interacting with more structured social goals. It does not become a freeform faction/reputation simulator across all modes; its trust/story systems belong to that campaign.
 
+### Tribal Trust is campaign-specific social progression
+
+Spirits of Amazonia introduces a genuine reputation-like structure absent from normal Survival. After meeting a masked elder, the player completes tribe quests for **Trust points** recorded in the notebook. At 800 Trust with a tribe, a ritual vision unlocks and yields a figurine; multiple villages/rituals then gate progression through the prequel. [Spirits of Amazonia Game Mode](https://greenhell.fandom.com/wiki/Spirits_of_Amazonia_Game_Mode).
+
+This is authored faction progression, not a freeform diplomacy simulator: the player cannot dynamically join arbitrary hostile groups, negotiate territory or build a party of tribe NPCs.
+
 ### Hostile humans and animals are threats, not loot piñatas
 
 Predators, venomous animals and hostile warriors respond through combat/territorial encounter logic. Dense foliage and strong audio cues make detection important. Avoidance is often better than fighting because one hit can trigger bleeding/venom/medical costs.
+
+The dossier found no evidence of a rich individual NPC daily-schedule simulation in ordinary play; hostile humans function primarily as encounter/patrol threats and story/campaign actors. That absence matters when comparing Green Hell with simulation-heavy NPC worlds.
 
 ### Domesticated animals create care routines
 
@@ -385,6 +436,12 @@ The **watch** is an especially coherent diegetic interface: time/compass/GPS-lik
 The backpack creates a tactile spatial inventory, but that same embodiment creates friction. Capsule Computers criticizes awkward camera/item manipulation while handling bowls/crafting and finds portable crafting more cumbersome than the elegant structure-blueprint system. That tension is useful: diegetic interfaces can improve fiction while adding interaction cost.
 
 Audio is part of survival literacy. Experienced players can recognize animal cues, while imperfect distance/direction mixing in the launch review sometimes made danger harder to judge. [Capsule Computers](https://www.capsulecomputers.com.au/2019/09/green-hell-review/).
+
+### Music and sound production
+
+Creepy Jar's official 2023 soundtrack release credits **Adam Skorupa, Krzysztof Wierzynkiewicz and Michał Cielecki** and contains **39 tracks / 78 minutes** spanning the original story, Spirits of Amazonia and later activity/trailer material. Track identities such as *Living in the Rainforest*, *Ayahuasca*, *Mia Where Are You*, *Village Life*, *Fishing*, *Hunting* and *Planting* show the score covering both authored narrative and ordinary survival activity. [Official Steam soundtrack](https://store.steampowered.com/app/2564710/Green_Hell_Official_Soundtrack/).
+
+This does not prove how often each cue is dynamically triggered, but it gives primary production/credit evidence missing from the initial dossier.
 
 The completed product offers extensive difficulty customization, allowing players to reduce/remove threats and use a more exploratory "tourist" experience. This is important accessibility-by-rules even though it is not a substitute for all input/visual accessibility needs.
 
@@ -484,7 +541,7 @@ Creepy Jar's final 2025 summary reports PLN 29.8m sales revenue and PLN 17.2m ne
 
 ### Current Steam/player evidence — September 2026
 
-Current Steam Community review surfaces were inspected for recent player testimony. Themes include:
+Current Steam Community review surfaces were inspected for recent player testimony, including the **Most Helpful (Year)** and negative helpful-year surfaces rather than only the latest posts. [Helpful-year](https://steamcommunity.com/app/815370/reviews/?browsefilter=trendyear&l=english&p=1) · [helpful-year negatives](https://steamcommunity.com/app/815370/negativereviews/?browsefilter=trendyear&l=english&p=1). Themes include:
 
 **Positive**
 - high satisfaction from learning the body's cause/effect systems;
@@ -498,7 +555,8 @@ Current Steam Community review surfaces were inspected for recent player testimo
 - repetitive stick/log gathering and base-construction labor;
 - frustration when death/save recovery wipes a long expedition;
 - controls/UI on portable devices/controllers historically causing friction;
-- isolated co-op/bug reports.
+- co-op/save-corruption and freeze reports from some high-vote recent players;
+- disagreement about timers/spoilage and whether harsh survival maintenance respects limited play time.
 
 One detailed recent Steam account changed from a negative Steam Deck/control impression to a positive recommendation after a February 2026 control fix and more co-op play; it still records a serious one-off reload/bug experience. This is useful evidence of continued technical support after the 2024 content freeze, but one anecdote cannot establish overall defect rates. [Steam current reviews](https://steamcommunity.com/app/815370/reviews/) · [Helpful-year surface](https://steamcommunity.com/app/815370/reviews/?browsefilter=trendyear&l=english&p=1).
 
@@ -628,6 +686,25 @@ https://cogconnected.com/review/green-hell-review-2/
 https://steamcommunity.com/app/815370/reviews/  
 https://steamcommunity.com/app/815370/reviews/?browsefilter=trendyear&l=english&p=1
 
+**S17 — Green Hell community mechanics references: Armor, Metal Armor, Armor Mold, Skills, Crafting skill, Fishing and Notebook.** Current operational references for limb armor, forge progression, use-based skills, recipe durability, fishing interaction and discovery/blueprint tracking. Used for mechanics rather than developer intent.  
+https://greenhell.fandom.com/wiki/Armor  
+https://greenhell.fandom.com/wiki/Metal_Armor  
+https://greenhell.fandom.com/wiki/Armor_Mold  
+https://greenhell.fandom.com/wiki/Skills  
+https://greenhell.fandom.com/wiki/Crafting_%28skill%29  
+https://greenhell.fandom.com/wiki/Fishing  
+https://greenhell.fandom.com/wiki/Notebook
+
+**S18 — Spirits of Amazonia Game Mode, community mechanics reference.** Operational Trust/quest/ritual progression: tribe Trust points, 800-Trust ritual threshold and figurine/area gates.  
+https://greenhell.fandom.com/wiki/Spirits_of_Amazonia_Game_Mode
+
+**S19 — Green Hell Official Soundtrack, Steam, Sep. 1, 2023.** Primary Creepy Jar soundtrack product; 39 tracks / 78 minutes and composer credits for Adam Skorupa, Krzysztof Wierzynkiewicz and Michał Cielecki.  
+https://store.steampowered.com/app/2564710/Green_Hell_Official_Soundtrack/
+
+**S20 — Steam Community helpful-year and negative helpful-year surfaces, Sep. 2026.** Direct player testimony; includes high-vote Steam Deck/control updates, save-corruption/co-op reports and survival-maintenance criticism. Qualitative, not prevalence evidence.  
+https://steamcommunity.com/app/815370/reviews/?browsefilter=trendyear&l=english&p=1  
+https://steamcommunity.com/app/815370/negativereviews/?browsefilter=trendyear&l=english&p=1
+
 ### Useful reading route
 
 1. Read **S11 (Capsule Computers)** for the most granular launch-era systems critique.
@@ -661,6 +738,7 @@ https://steamcommunity.com/app/815370/reviews/?browsefilter=trendyear&l=english&
 - No game or console build was installed/executed.
 - No video/trailer or soundtrack is represented as watched/listened to.
 - Exact recipes, ailment magnitudes and skill formulas can vary by difficulty/version; this dossier emphasizes stable mechanisms and cites source/version boundaries.
+- Community mechanics pages are used for current operational armor/skill/Trust rules and are not represented as first-party design intent.
 - Steam review samples are qualitative direct testimony, not defect or sentiment prevalence.
 - Creepy Jar's financial figures use the company's stated accounting/platform scope and are not recomputed into an unsupported title-profit figure.
 - VR adaptations are acknowledged as separate products but not used to infer flat-screen control/mechanics.
