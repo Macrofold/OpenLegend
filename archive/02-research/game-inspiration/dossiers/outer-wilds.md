@@ -10,7 +10,7 @@ Outer Wilds is an authored first-person exploration mystery by Mobius Digital, p
 
 The practical promise is: **notice something, formulate a question, travel to test an explanation, and remember what happened**. There is physical piloting and danger, not only reading. There is no conventional character creator, class, experience tree, loot rarity ladder, merchant economy, crafting bench, base-construction progression or combat build. Equipment is chiefly an investigative vocabulary already available to the explorer, not a succession of stronger rewards. This absence is central to the experience, not missing coverage in this inventory. [R2] [R4]
 
-Mobius' news page most recently displayed June 24, 2025 when accessed: Patch 16 had completed its rollout across the listed PC, PlayStation and Xbox routes, with a Steam hotfix. May's announcement excluded Switch from that rollout and only discussed considering Switch 2. No subsequent Switch 2 release or new expansion was established. The primary wording describes maintenance priorities, not an irrevocable promise never to fix another bug. Historical review complaints remain historical unless independently reproduced. [P1]
+Mobius' news page still most recently displays **June 24, 2025** at this September 26, 2026 audit: Patch 16 completed its rollout across Epic, PC Windows Store, PlayStation 4/5 and Xbox One/Series X|S, with a Steam hotfix. The May announcement excluded Nintendo Switch from Patch 16 and said Mobius would reconsider it after deciding whether to bring Outer Wilds to Switch 2; the current official archive does not establish a delivered Switch 2 edition. Mobius also says no more **major** Outer Wilds or Echoes updates are planned because its next game is the priority, while leaving open the possibility of smaller fixes. Historical review complaints therefore remain historical unless independently reproduced, and “no major updates planned” is not rewritten as a guarantee of zero future maintenance. [P1]
 
 ## 2. Action and object inventory
 
@@ -186,6 +186,26 @@ Negative-only Community routes and the review API repeatedly failed retrieval; a
 
 ## 11. Coverage, preservation and reading route
 
+### September 26 requirements-and-corrections audit
+
+A fresh pass against the assignment's explicit mechanics inventory finds the dossier substantively complete and makes the important absences explicit:
+
+- **Identity / classes / attributes / skills / leveling / trees:** the astronaut has a fixed broad role rather than a class/attribute/XP build. Progress is principally player knowledge plus learned routes and a small number of discovered conveniences such as meditation (§§1–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** the suit, ship, Scout, Signalscope, translator and ship log form the persistent investigative toolkit. Portable Nomai puzzle objects are contextual tools; there is no weapon/armor rarity ladder, crafting economy or gear-upgrade tree (§2).
+- **Magic / spells / powers:** absent as a player progression system. Quantum behavior and Nomai technology are authored world rules to understand, not spells learned by the astronaut.
+- **Traversal / environmental and object interaction:** walking, jetpack movement, swimming, ship piloting/repair, Scout deployment, signal tracking, portable stones/scrolls, gravity/warp mechanisms and time-dependent terrain are central (§§2–5).
+- **Activities / minigames:** hide-and-seek, the model ship, marshmallow roasting, conversations, log completion and achievements provide side activity around exploration. They are not a separate persistent competitive or monetized minigame economy (§3).
+- **Combat / stealth / loot / rewards:** the base game has **no conventional combat system** or equipment loot ladder. Echoes of the Eye adds authored pursuit/avoidance and darkness-based stealth pressure, still without weapon progression (§4 spoiler block).
+- **Death / failure / recovery / economy / trading:** oxygen, fuel, health, ship damage and the loop define failure/recovery (§§2, 4–5). There is no merchant economy, trading market or carried material progression.
+- **Story / relationships / romance / reputation / party / companions:** Hearthian travelers, Nomai records and Echoes characters provide authored relationships and social identity, but there is no romance, approval/reputation meter or recruitable adventuring party (§3–4).
+- **NPC/AI behavior and schedules / factions:** travelers and most conversational characters are authored presences rather than an autonomous daily-schedule society; Echoes pursuers implement bounded chase/avoidance behavior. Hearthians/Nomai/Stranger inhabitants are cultures in the fiction, not a systemic faction-diplomacy layer.
+- **World map / environment / quests / events:** the finite authored solar system, changing planets, signals, ship-log rumor graph, time loop and DLC habitat form the exploration structure (§§3–5). There is no conventional quest log issuing a linear campaign.
+- **Building / settlements / management:** absent natively. The ship can be repaired and camps visited, but the player does not construct settlements, production chains or managed populations.
+- **Multiplayer / social / endgame / return loops:** native play is single-player; Quantum Space Buddies, NomaiVR and New Horizons are explicitly third-party modifications (§7). Completion is knowledge-driven and finite, with optional discoveries, achievements, observing another player's first run and community creations providing later reasons to return rather than a renewable loot endgame.
+
+The version audit also confirms that Mobius' **June 24, 2025 Patch 16 post remains the newest official Outer Wilds news entry** visible on its site at this checkpoint. No Switch 2 edition, second expansion or later major patch is silently inferred from backward compatibility or storefront availability. [P1]
+
+
 | Requirement | Owner within this dossier |
 | --- | --- |
 | R01 identity, edition and promise | §1; native/modified boundaries in §7 |
@@ -211,7 +231,7 @@ The earlier chapter and granular study were read in full and left unchanged. The
 
 Accessed September 26, 2026 unless explicitly described as a preserved earlier capture. Bracket labels below resolve to original pages; specific limitations take precedence over generic source prestige.
 
-- **P1 — [Mobius news][P1].** Primary maintenance/version wording; latest displayed post June 24, 2025. Not proof that no later information exists anywhere.
+- **P1 — [Mobius news][P1].** Primary maintenance/version wording; latest displayed Outer Wilds post remains June 24, 2025 at the September 26, 2026 audit. Patch 16 platform rollout, explicit no-more-major-updates plan and unresolved Switch 2 consideration are current official boundaries, not proof that a smaller future maintenance fix is impossible.
 - **P2 — [Steam storefront][P2].** Current captured offer, feature and filtered review displays; Steam debut distinguished from original release. Dynamic price and review counts are dated observations.
 - **P3 — [Alex Beachum's text-adventure release][P3].** Primary 2014 prototype history and collaboration; program not played.
 - **P4 — [Demaking Outer Wilds][P4], July 30, 2015.** Primary paper/Processing method, journal observation and pacing findings; prototype rules are not automatically shipped rules.
