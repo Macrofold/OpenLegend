@@ -222,6 +222,27 @@ These are research hypotheses, not newly accepted engine requirements.
 
 ## 11. Preservation, coverage, and evidence limits
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the original-game dossier complete and confirms these boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Zagreus is a fixed authored protagonist rather than a custom class avatar. Permanent configuration comes through the Mirror, weapon/aspect access, Keepsakes/Companions and Contractor/favor progression; run-local power comes from Boons/Hammers (§§1–5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** the six Infernal Arms, Aspects, temporary Hammer modifications, Keepsakes, Companions and resource currencies are covered in §§2–5. There is no conventional armor-slot loot treadmill or freeform crafting economy.
+- **Magic / spells / powers:** Cast, Calls, divine Boons, weapon effects and Companion summons form bounded supernatural capability systems.
+- **Traversal / environmental and object interaction:** dash/dash-strike, weapon-specific movement, traps/walls/columns, chamber routing, fishing spots and House interactions are covered throughout.
+- **Activities / minigames:** escape attempts, optional Trials/Chaos/Erebus, fishing, prophecy completion, gifting and Contractor projects diversify the loop without becoming separate persistent minigame economies.
+- **Combat / stealth / loot / rewards:** real-time combat and run rewards are central; conventional stealth is absent as a major system. Reward choice is chamber/run-structure driven rather than a randomized armor-loot ladder.
+- **Death / failure / recovery:** death returns Zagreus home while preserving selected resources, upgrades, relationships, story and knowledge; God Mode/Hell Mode/Pact conditions change challenge rather than the basic continuity contract (§§1, 4).
+- **Economy / trading:** Obols are run-local; Darkness/Keys/Gems/Diamonds/Nectar/Ambrosia/Titan Blood persist; Charon and the Broker operate on different horizons (§4).
+- **Story / relationships / romance / reputation / party / companions:** authored family/social arcs, gifts, romance/platonic outcomes, Keepsakes and limited Companion summons are covered in §5. There is no freely commandable adventuring party or faction-reputation sandbox.
+- **NPC/AI behavior and schedules / factions:** enemies/bosses have authored combat behavior and the House cast has authored encounter/dialogue availability; there is no autonomous daily-schedule or political-faction simulation.
+- **World map / environment / quests / events:** Tartarus, Asphodel, Elysium and Styx plus Fated Prophecies, Contractor work and repeated escape/story events provide the progression structure.
+- **Building / settlements / management:** House Contractor projects alter the hub/Underworld and relationships, but there is no settlement population or production management.
+- **Multiplayer / social / endgame / return loops:** Hades remains **single-player**. Post-escape story resolution, Heat/Pact challenges, weapon/aspect experimentation, relationships, collections and prophecies provide continuing purpose.
+
+**Current boundary check:** Supergiant's current FAQ still lists Hades on **Steam, Epic Games Store, Nintendo Switch, Xbox and PlayStation**. The Netflix iOS edition launched in March 2024 but was discontinued in **July 2025**; Supergiant does not list Android or another current mobile route. No later Hades I gameplay expansion or post-2021 major content line is promoted as current. [S1]
+
+
 The original chapter and its embedded field guide were read and remain unchanged. The granular study was read and remains unchanged. Preserved material includes the spear throw/reposition/recall situation, failed escape followed by a meaningful return, boon-altered weapons, selective Dionysus/Ares callbacks, historical Merciful End challenge-run discussion, prerequisite/description fixes, dialogue-priority corrections and contrasting Quarter To Three testimony. Hades II's ending disputes and commercial figures remain in the sequel's scope; they are not relabeled as original-Hades evidence.
 
 The [packet reading map](../references/packet-provenance.md) remains the provenance owner. This pass supplements those preserved owners; it does not claim a fresh byte-level or line-by-line audit of all seven original packets. Earlier unsuccessful wiki retrieval remains historical evidence. Most detailed Fandom/wiki.gg pages and the attempted TrueAchievements walkthroughs did not load in this pass; the accessible indexed Chambers and Encounters text is identified separately as S33 rather than implying the other pages were read.

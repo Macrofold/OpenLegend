@@ -4,10 +4,12 @@
 
 ## Start here
 
-- **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
+- **[Full 148-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
+- **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
+- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [progress](research-progress.md#survival-expansion--g131g148) records the pending research.
 - **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
@@ -21,13 +23,15 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 130-subject assignment or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 148-subject assignment or packet-wide preservation audit is finished.
+
+**September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 
 **G40–G47 — language-driven play, combinations and shared pressure:** [AI Dungeon](dossiers/ai-dungeon.md) · [Palworld](dossiers/palworld.md) · [Balatro](dossiers/balatro.md) · [Slay the Spire](dossiers/slay-the-spire.md) · [Vampire Survivors](dossiers/vampire-survivors.md) · [Against the Storm](dossiers/against-the-storm.md) · [Core Keeper](dossiers/core-keeper.md) · [PEAK](dossiers/peak.md).
 
 **G48–G50 — distinct RuneScape experiences:** [RuneScape / RS3](dossiers/runescape.md) · [Old School RuneScape](dossiers/old-school-runescape.md) · [RuneScape: Dragonwilds](dossiers/runescape-dragonwilds.md).
 
-**G51–G54 — Dragon Age's changing party, combat and choice structures:** [Origins](dossiers/dragon-age-origins.md) · [Dragon Age II](dossiers/dragon-age-ii.md) · [Inquisition](dossiers/dragon-age-inquisition.md) · [The Veilguard](dossiers/dragon-age-the-veilguard.md). The [series supplement](dossiers/dragon-age-series.md) owns the smaller-game and Keep comparisons, not another combined replacement for the four mainline passes.
+**G51–G54 — Dragon Age's changing party, combat and choice structures:** [Origins](dossiers/dragon-age-origins.md) · [Dragon Age II](dossiers/dragon-age-ii.md) · [Inquisition](dossiers/dragon-age-inquisition.md) · [The Veilguard](dossiers/dragon-age-the-veilguard.md). The [series supplement](dossiers/dragon-age-series.md) owns the smaller-game and Keep comparisons, not another combined replacement for the four mainline passes. Inquisition's [linked build/multiplayer supplement](references/dragon-age-inquisition-completion-evidence.md) supplies its additional operational rules while preserving the original access evidence.
 
 **G55–G60 — party composition, world consequences and tactical relationships:** [Pillars of Eternity II: Deadfire](dossiers/pillars-of-eternity-ii-deadfire.md) · [Divinity: Original Sin](dossiers/divinity-original-sin.md) · [Divinity: Original Sin II](dossiers/divinity-original-sin-ii.md) · [Pathfinder: Kingmaker](dossiers/pathfinder-kingmaker.md) · [Pathfinder: Wrath of the Righteous](dossiers/pathfinder-wrath-of-the-righteous.md) · [Fire Emblem: The Blazing Blade](dossiers/fire-emblem-the-blazing-blade.md).
 
@@ -41,11 +45,11 @@ These independent per-game passes supplement the original chapters and mechanics
 
 **Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 
-The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 130-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 148-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
 
 ## Full dossiers — curated references G111–G120
 
-These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other 120 subjects or the packet-wide preservation audit.
+These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other rostered subjects or the packet-wide preservation audit.
 
 | Roster ID | Dossier |
 | --- | --- |
@@ -59,6 +63,23 @@ These per-subject studies supplement the original chapters below. Each contains 
 | G118 | [Prey (2017)](dossiers/prey-2017.md) |
 | G119 | [Dishonored 2](dossiers/dishonored-2.md) |
 | G120 | [Starsector](dossiers/starsector.md) |
+
+## Full dossiers — curated references G121–G130
+
+These ten imported dossiers have initial research passes. The separate follow-up audit and its current evidence limits are tracked in the [progress ledger](research-progress.md#g121g130-branch-research-state).
+
+| Roster ID | Dossier |
+| --- | --- |
+| G121 | [Battle Brothers](dossiers/battle-brothers.md) |
+| G122 | [Cataclysm: Dark Days Ahead](dossiers/cataclysm-dark-days-ahead.md) |
+| G123 | [Rain World](dossiers/rain-world.md) |
+| G124 | [Persona 5 Royal](dossiers/persona-5-royal.md) |
+| G125 | [XCOM 2](dossiers/xcom-2.md) |
+| G126 | [Crusader Kings III](dossiers/crusader-kings-iii.md) |
+| G127 | [Dragon's Dogma 2](dossiers/dragons-dogma-2.md) |
+| G128 | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md) |
+| G129 | [Oxygen Not Included](dossiers/oxygen-not-included.md) |
+| G130 | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
 
 ## Game studies
 
@@ -103,17 +124,21 @@ These additive dossiers retain the earlier chapters and mechanics studies. Each 
 
 ## Deeper reading by system
 
-The [granular study index](mechanics/README.md#detailed-system-studies) links twenty-five extended studies. They supplement, rather than replace, the game chapters above. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression. Additional studies examine injury and rescue, equipment combinations, redstone and auto-crafting, production orders, reusable contraptions and game modes, authored character callbacks, configurable offscreen autonomy, and information-changing spells.
+The [granular study index](mechanics/README.md#detailed-system-studies) retains the original twenty-five extended studies and now also routes to [four targeted operational supplements](mechanics/README.md#audit-remediation-operational-supplements). They supplement, rather than replace, the game chapters and dossiers. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression. Additional studies examine injury and rescue, equipment combinations, redstone and auto-crafting, production orders, reusable contraptions and game modes, authored character callbacks, configurable offscreen autonomy, and information-changing spells.
 
 The expanded set also covers ordered scoring and copy effects in Balatro; deck compatibility and information tradeoffs in Slay the Spire; automated targeting and different cooperative modes in Vampire Survivors; recipe substitution and settlement pressure in Against the Storm; resource circuits and authored discoveries in Core Keeper; and shared burdens, spatial tools, and rescue in PEAK. Their production and reception sections explain the supporting evidence and its limits rather than presenting one universal success formula.
 
-Start with a game chapter for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Use the [interaction lookup](mechanics/interaction-lookup.md) when the starting point is a design question rather than a game name. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
+The new focused owners are [Deadfire's naval/relationship/recovery rules](mechanics/deadfire-expedition-and-relationship-rules.md), [DOS2's builds and human-run authorship](mechanics/divinity-original-sin-ii-builds-and-authorship.md), [Kingmaker's party and kingdom operations](mechanics/kingmaker-party-rules-and-kingdom-operations.md), and [Wrath's mythic paths and army battles](mechanics/wrath-mythic-paths-and-crusade-battles.md). Together they add nineteen worked cases, while the main dossiers preserve their original case and review bodies. Each supplies adjacent source annotations and an explicit requirement-coverage resolution.
+
+Start with a game chapter or dossier for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Use the [interaction lookup](mechanics/interaction-lookup.md) when the starting point is a design question rather than a game name, and the [supplement index](mechanics/README.md#audit-remediation-operational-supplements) for the newest operational cases. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
 
 ## Evidence and preservation
 
 [Evidence interpretation](essays/how-to-interpret-the-evidence.md) · [Review notebook](references/review-evidence.md) · [Popularity/economics ledger](references/popularity-and-economics.md) · [Source annotations](references/sources-01.md) · [Original bibliography](references/master-bibliography.md) · [Earlier additional findings](references/earlier-additional-findings.md) · [Supplied packet provenance](references/packet-provenance.md).
 
 The previous master has been divided into game chapters and cross-game essays without turning it into a summary. Reviews, named features, concrete examples, creator accounts, videos, economic history, cautions, and conclusions are retained. Earlier paragraphs absent verbatim from the enriched edition are retained separately to avoid silent information loss. The standalone field guide remains available as a convenient reading route.
+
+That paragraph records the earlier import's preservation approach. The later G40–G60 audit/remediation is not a new line-by-line certification of all seven supplied inputs; that independent packet-wide reconciliation remains outside this scoped completion. Its limitations are retained in the [provenance record](references/packet-provenance.md) and [current ledger](research-progress.md#verification-boundaries).
 
 Historical figures keep their measurement dates. Imported research claims are not a fresh synchronized market census; source availability and confidence vary. A player story is an attributed report, a mechanic description is not necessarily a source-code audit, and a proposed explanation of success is not controlled causal evidence. Videos were identified from titles/descriptions, not watched in full; do not invent timestamps. See each source's limitations.
 

@@ -218,6 +218,27 @@ These are hypotheses and design questions, not instructions to copy a particular
 
 ## 11. Preservation, coverage and evidence limits
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the comparative franchise dossier complete and confirms the edition/pack boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** households/Sims use appearance, traits, aspirations, skills, careers, life stages and expansion-specific systems rather than combat classes. Sims 3 traits/lifetime wishes and Sims 4 aspirations/emotions must not be merged as one rule set (§§1–5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** household objects, inventories, appliances, skill/craft objects, repair/upgrade parts, collectibles/ingredients and pack-specific crafts are covered in §§2–4. There is no universal tactical armor/weapon progression loop.
+- **Magic / spells / powers:** absent from the base domestic simulation as a universal system; Realm of Magic/Makin' Magic/Supernatural introduce distinct edition-specific supernatural mechanics (§4).
+- **Traversal / environmental and object interaction:** movement/routing, lot/neighborhood travel, object use, Build/Buy construction, room placement, repair/crafting and world interactions are central. Sims 3's open neighborhood differs materially from Sims 4's lot travel (§§1–3).
+- **Activities / minigames:** careers, hobbies/crafts, parties, dating/family care, retail/businesses, gardening/fishing, holidays and pack activities form the activity vocabulary rather than a single campaign.
+- **Combat / stealth / loot / rewards:** ordinary household play has little conventional combat/stealth/loot structure. Pack-specific duels/fights exist; rewards are money, skills, relationships, aspiration Satisfaction, objects and narrative outcomes rather than a loot rarity ladder.
+- **Death / failure / recovery:** need failure, career/social setbacks, death/ghost states, Ambrosia, Life & Death/rebirth and player-controlled aging/neighborhood policies are distinct continuity contracts.
+- **Economy / trading:** Simoleons, careers/business income, household purchases and pack-specific commerce operate in fiction; Marketplace **Moola** is a separate real-money creator-content layer (§8).
+- **Story / relationships / romance / reputation / party / companions:** friendship/romance tracks, family dynamics, autonomy, generations, Neighborhood Stories and pack-specific dynasty/reputation systems are major mechanics; player-authored interpretation remains central (§§3–6).
+- **NPC/AI behavior and schedules / factions:** autonomous Sims choose daily actions subject to needs/traits/context and player policy; current autonomy fixes are a maintained system. The dossier does not inflate this into unconstrained cognition or a universal faction simulator.
+- **World map / environment / quests / events:** neighborhoods/worlds, venues, holidays/events, careers and pack-specific worlds provide context; there is no mandatory main quest across the franchise.
+- **Building / settlements / management:** Build/Buy, homes, lots, businesses and household management are core; this is domestic/community authorship rather than colony-worker production management.
+- **Multiplayer / social / endgame / return loops:** the studied desktop games remain **single-player**; Gallery/Marketplace/mod/community sharing is asynchronous social participation. Families, generations, building, collections, packs/challenges and player-authored stories provide continuing purpose rather than a formal endgame.
+
+**Current boundary check:** EA's latest Sims 4 game update remains **September 22, 2026**: PC **1.128.90.1030**, Mac **1.128.90.1230**, console **2.39**. It focuses on autonomy, conversation facing, sink choice, stability and relationship-autonomy tuning while still acknowledging unresolved interaction-reset/freezing work. The Maker Program/Marketplace remains an additional creator-content layer, not replacement of the free Gallery or the household simulation. [S1][S19]
+
+
 Both earlier owners remain unchanged. They retain Frasca's critique, the Alice and Kev framing, ordinary-needs/ambition tension, Myshunosun's exact rotational and mod distinctions, cook-and-talk and routing examples, emotional affordances, meaningful home construction, Gallery reuse and the reactions to Neighborhood Stories. This dossier broadens scope rather than silently replacing their evidence.
 
 The [packet provenance map](../references/packet-provenance.md) remains the reading map. Preserving these owners is not a new line-by-line audit of all seven original source packets. This is a functional franchise comparison, not a complete asset catalogue, every expansion's numerical balance guide or a claim that all combinations were tested.

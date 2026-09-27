@@ -199,6 +199,27 @@ These are research hypotheses, not new engine requirements, a mandate to copy re
 
 ## 11. Preservation, coverage and verification
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms these base/Omenroad/platform boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** heroes begin as Warrior, Hunter or Mystic and develop through offered abilities, equipment, themes/transformations, relationships and campaign history rather than an unrestricted class editor (§§1–5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** weapons, offhands, armor branches, augments and five campaign resource materials are covered in §3. Equipment allocation is deliberately constrained rather than a freely shared party inventory.
+- **Magic / spells / powers:** Mystic Interfusion and source-dependent scenery actions plus transformation/class abilities form bounded power systems (§§3, 5–6).
+- **Traversal / environmental and object interaction:** overland scouting/travel/jobs, bridges/passes, battle movement/cover/flanking and interfused scenery actions are covered across §§2–6.
+- **Activities / minigames:** overland campaign work, tactical battles, authored/random events, Legacy recruitment and Omenroad's combat-focused node map are distinct activity structures.
+- **Combat / stealth / loot / rewards:** turn-based tactical combat, armor/ward/pierce/shred, reactions, scenery powers and battle rewards are central; conventional stealth is not a major standalone progression system.
+- **Death / failure / recovery:** wounds, healing time, maiming/mortal choices, retirement/death and Legacy retelling create continuing consequences rather than a simple reload-only contract (§§4–6).
+- **Economy / trading:** Ingots/Hide/Fabric/Heartwood/Spellthread and Legacy Points fund equipment/infrastructure/recruitment/calamity responses; there is no open player market or auction economy.
+- **Story / relationships / romance / reputation / party / companions:** friendship, lovers, rivalry, family, campaign events and authored role casting are major mechanics; co-op players share one hero party rather than inhabit a persistent MMO (§§5–7).
+- **NPC/AI behavior and schedules / factions:** enemies and event actors use authored tactical/event logic; Deepists/Drauven/Gorgons/Morthagi/Thrixl are narrative/opposition families rather than a simulated political-faction economy.
+- **World map / environment / quests / events:** campaign regions, scouting/secure jobs, defenses, infestations, authored campaigns and event-casting conditions are covered; Omenroad intentionally replaces ordinary overland structure.
+- **Building / settlements / management:** bridges, passes, defenses, resource stations and overland jobs create strategic infrastructure, but there is no persistent settlement population-management layer.
+- **Multiplayer / social / endgame / return loops:** PC supports solo, online/LAN co-op and Workshop creation. Legacy heroes, campaigns, procedural events, transformations and Omenroad provide replay/continuity rather than one permanent chronological world.
+
+**Current boundary check:** Worldwalker still describes **active development as complete** after Omenroad, while retaining critical support/community infrastructure. The latest official PC patch visible in the Steam announcement feed is **1.16+562 (January 28, 2025)**, a bug/localization/support release rather than a return to active content development. PC retains online/LAN co-op, Workshop and Omenroad; **Console Edition has local co-op and does not include Omenroad/Armors & Skins under its published launch contract**. [W25][W28] Hibernation therefore does not mean the game was shut down or delisted.
+
+
 The original chapter and granular study remain unchanged. Their lamp/plant/metal cases, transformations, distinct relationship types, mortal choices, Legacy explanation, Shay/Uvwane account, 2019 creator interview and 2024 hibernation qualification retain their original sources and limits. The [packet provenance map](../references/packet-provenance.md) remains a reading map, not a new audit of all seven supplied packets.
 
 | Requirement | Coverage |
@@ -281,3 +302,5 @@ Accessed September 26, 2026. The developer-hosted wiki is editable documentation
 [W25]: https://www.reddit.com/r/wildermyth/comments/1d3ia8l/an_important_update_on_worldwalker_games/
 [W26]: https://store.steampowered.com/app/2935580/Wildermyth__Omenroad/
 [W27]: https://store.steampowered.com/app/2139130/Wildermyth__Armors_and_Skins/
+
+<a id="w28"></a>**W28 — [Wildermyth official Steam announcements](https://steamcommunity.com/app/763890/announcements/) and [Steam product page](https://store.steampowered.com/app/763890/Wildermyth/), checked September 27, 2026.** Current support boundary: latest official PC patch visible is 1.16+562 (January 28, 2025); base game remains sold with PC online/LAN co-op and Workshop. Official console announcement material separates its local-co-op/DLC contract from PC. No post-hibernation new-content roadmap is inferred.
