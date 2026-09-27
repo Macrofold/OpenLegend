@@ -477,12 +477,12 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 0 / 18 complete; G131 Rust in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 1 / 18 complete; G132 DayZ in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
-| G131 | Rust | **In progress** — full R01–R14 pass, mechanics inventory, five-review reception and Steam evidence underway | Not started |
-| G132 | DayZ | Pending | Not started |
+| G131 | Rust | **Complete** — [dossier](dossiers/rust.md); full R01–R14 pass, ten worked interactions, five independent written reviews, current Steam sampling and 2026 live-service boundaries | Not started |
+| G132 | DayZ | **In progress** — standalone/current-version pass, bodily survival/condition/persistence/server boundaries and reception underway | Not started |
 | G133 | ARK: Survival Evolved | Pending | Not started |
 | G134 | ARK: Survival Ascended | Pending | Not started |
 | G135 | 7 Days to Die | Pending | Not started |
