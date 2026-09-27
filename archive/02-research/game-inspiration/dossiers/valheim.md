@@ -8,7 +8,7 @@
 
 Valheim is Iron Gate's Norse-themed survival, exploration and building game, published by Coffee Stain. A fallen warrior enters a hostile afterlife, establishes shelter and production, ventures into progressively more demanding regions and confronts the Forsaken. Its commercial promise includes solo play and small-group cooperation, a generated world, craftable equipment, construction and sailing. It is not an MMO or a conventional dialogue-heavy party RPG. [STORE]
 
-**Version 1.0 and Deep North shipped September 9, 2026.** They are delivered content, not a pending roadmap. The announcement adds northern creatures, equipment, food, construction and crafting pieces, upgradeable pockets and achievements; it also identifies hammer/serving-tray menu changes, an Ashlands spawn rebalance and a Unity upgrade. These are developer release claims, not a personally reproduced feature census. [V1]
+**Version 1.0 and Deep North shipped September 9, 2026.** They are delivered content, not a pending roadmap. The announcement adds northern creatures, equipment, food, construction and crafting pieces, upgradeable pockets and achievements; it also identifies hammer/serving-tray menu changes, an Ashlands spawn rebalance and a Unity upgrade. Maintenance continued rapidly after launch: Iron Gate's latest posted patch at this audit is **1.0.16, September 25**, which fixes Deep North terrain persistence, raid over-spawning, achievements and platform issues and notes that rollout can lag by platform while cross-play remains functional. “1.0 shipped” therefore does not freeze launch-day bugs as current rules. [V1][V4]
 
 The 1.0 FAQ allows existing saves; a fresh world is a recommendation rather than a mandatory wipe. New terrain-dependent content requires unexplored areas. Unofficial mods may need repair after updates; neither Steam Workshop nor console software mods are promised. Continued fixes and quality-of-life work are stated without a guaranteed duration or another expansion. July prelaunch achievement/cheat explanations should not override later patch-specific rules. [V2]
 
@@ -223,6 +223,26 @@ These are research interpretations, not adopted OpenLegend requirements.
 
 ## 12. Evidence, preservation and navigation
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the assignment's mechanics inventory confirms substantive coverage and makes the absences explicit:
+
+- **Identity / classes / attributes / skills / leveling:** appearance is customizable without a class system; use-based skills, death penalties, food loadouts, equipment and boss/material gates provide progression (§§2–3).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** §§3–5 cover weapon families, shields, armor, trinkets, tools, storage/weight, stations, repair, upgrading, smelting and Deep North production.
+- **Magic / spells / powers:** eitr foods and magical staves, blood/elemental magic and Forsaken powers are covered in §3; these are bounded authored systems, not freeform spell invention.
+- **Traversal / environment / object interaction:** walking, swimming, sneaking, sailing, portals, carts, terrain/building, smoke, fire, farms and environmental hazards appear in §§3–5.
+- **Activities / minigames:** building, farming/taming, fishing, sailing, boss hunts, trader requests and optional exploration objectives diversify the loop. There is no separate casino/card/sport minigame economy.
+- **Combat / stealth / loot / rewards:** combat/block/dodge, sneaking/noise, boss drops, materials, valuables and trader unlocks are covered in §§2–7. Loot is preparation/progression material rather than an endlessly randomized rarity treadmill.
+- **Death / failure / recovery / economy / trading:** use-skill loss, corpse recovery, repair, raids and transport loss are covered; coins/traders coexist with material production (§§2, 4–5).
+- **Story / relationships / romance / reputation / party / companions:** mythic framing, ravens, traders and Hildir quests are covered in §6. Native romance, marriage, recruitable dialogue companions and a universal reputation meter are absent.
+- **NPC/AI schedules / factions:** traders and dvergr have authored behaviors/hostility conditions, but there is no daily civilian schedule or systemic political-faction simulation (§6).
+- **World map / environment / quests / events:** generated worlds, biomes, map/pins, bosses, raids and Hildir's request are covered across §§2, 5–6.
+- **Building / settlements / management:** shelter, comfort, production, defenses, farms and animal keeping are major systems; there is no recruitable population-management layer.
+- **Multiplayer / social / endgame / return loops:** §6 covers up-to-ten-player co-op, host/world continuity, optional PvP and progression coordination; §§1–2 cover the finished 1.0 campaign plus continued building/exploration/new seeds.
+
+The version audit also adds the post-launch maintenance boundary: **1.0.16 (September 25, 2026)** is the latest patch listed by Iron Gate at this checkpoint. Because Iron Gate says some platforms receive it a few days later, the dossier does not pretend every platform necessarily displayed an identical build number on September 26. [V4]
+
+
 The earlier chapter and the entire shared Valheim/Project Zomboid mechanics study were read and left unchanged. Their food-versus-starvation explanation, silver/cart/ship account, interpreted Odin sighting, historical stamina disagreement, original economics and video route remain in their original owners. This dossier supplements rather than replaces them. The Project Zomboid half is not counted as its later full pass.
 
 The original video route, **Valheim Is A Gateway Drug | Valheim Early Access Review** (February 2021), remains linked in the [chapter](../games/valheim.md). It is useful for the early expedition/home rhythm, not for certifying 1.0 content. No footage or transcript was inspected in this pass; no timestamps or observed scenes are invented. For current northern spoilers, read G1/G2 after the spoiler-light official announcement and the review comparison.
@@ -253,6 +273,7 @@ All accessed September 26, 2026. References to community pages describe the retr
 - **V1 — Iron Gate, September 9, 2026.** [1.0 release][V1]. Primary delivered scope; collapsed detailed notes are not claimed as read from this page.
 - **V2 — Iron Gate, July 1, 2026.** [1.0 FAQ][V2]. Primary save/mod/support policy; prelaunch achievement details qualified.
 - **V3 — Iron Gate.** [General FAQ][V3]. Primary company, visual and multiplayer explanations; mixed-age entries are not a current exhaustive boat/content list.
+- **V4 — Iron Gate, September 25, 2026.** [Patch 1.0.16][V4]. Primary current maintenance boundary; fixes terrain, raid, achievement and platform issues and explicitly notes staggered platform rollout with cross-play preserved.
 - **STORE — Iron Gate/Coffee Stain.** [Steam product description][STORE]. First-party scope and purchase model, not independent reception.
 - **P-PLAT — Iron Gate, June 7, 2026.** [Release/platform announcement][P-PLAT]. Crossplay/platform promise, distinguished from port reviews.
 - **P-ARMS — Iron Gate, September 9, 2025.** [Call to Arms notes, SteamDB mirror][P-ARMS]. Developer patch text, especially adrenaline, dodge/block changes and powers.
@@ -268,6 +289,7 @@ All accessed September 26, 2026. References to community pages describe the retr
 [V1]: https://www.valheimgame.com/news/valheim-1-0-has-arrived-/
 [V2]: https://www.valheimgame.com/support/valheim-1-0-faq/
 [V3]: https://www.valheimgame.com/faq/
+[V4]: https://www.valheim.com/news/patch-1-0-16/
 [STORE]: https://store.steampowered.com/app/892970/Valheim/
 [P-PLAT]: https://valheim.com/news/valheim-has-a-release-date-/
 [P-ARMS]: https://steamdb.info/patchnotes/19825864/
