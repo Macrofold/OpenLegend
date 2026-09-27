@@ -213,6 +213,26 @@ These are research interpretations, not accepted OpenLegend architecture or impl
 
 ## 12. Preservation, coverage and source access
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the full mechanics inventory found no material version correction: the official announcement archive still ends with the **January 25, 2025** modding-tag-limit change, so the dossier's post-Epilogue-2 maintenance boundary remains appropriately cautious. [P3] The explicit category closure is:
+
+- **Identity / classes / attributes / skills / leveling / trees:** no conventional character creator, class tree or XP-level ladder; run identity comes from health, perks, wands/spells, items, discoveries and selected persistent unlocks (§§1–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** four wand slots and four item slots, potions/material containers, tablets/stones, wand chassis and spell composition are covered in §§2–3. There is no armor-set crafting/equipment ladder comparable to an RPG.
+- **Magic / spells / powers:** wand construction, modifiers, triggers/timers, utility spells, healing and perks are the central compositional system (§3).
+- **Traversal / environment / object interaction:** levitation, digging, teleportation, kicking/throwing, fluids, fire/electricity, alchemy, stains, fungal shifts and destructible terrain are covered across §§2–5.
+- **Activities / minigames:** exploration, wand experimentation, alchemy, secrets, Daily Run/Practice, Nightmare and long-form quests constitute the activity set. There is no separate settlement/crafting minigame economy.
+- **Combat / stealth / loot / rewards:** projectile/melee-like magical combat, environmental/trick kills, invisibility, gold/perks/spells and unlocks are covered in §§2–5. Invisibility is a bounded perk mechanic rather than a full social-stealth simulation.
+- **Death / failure / recovery / economy / trading:** permadeath, limited healing, persistent knowledge/unlocks, gold, Holy Mountain shops and perk rerolls are covered in §4.
+- **Story / relationships / romance / reputation / party / companions:** tablets, Sampo/Work, bosses and environmental mystery provide narrative (§5). Conventional dialogue relationships, romance, recruitable party members and reputation systems are absent.
+- **NPC/AI schedules / factions:** creatures have hostility relationships, can fight each other and may use dropped wands, but there is no daily schedule, civic faction politics or settlement population simulation (§5).
+- **World map / environment / quests / events:** recognizable biome/world geography coexists with procedural local generation; parallel worlds, Orbs, endings and Sun Quest provide authored secret objectives (§5).
+- **Building / settlements / management:** absent as a native progression pillar; terrain can be destroyed/transformed but the game is not a persistent base-building/settlement manager.
+- **Multiplayer / social / endgame / return loops:** vanilla is single-player; Workshop/Twitch integration and community knowledge sharing are separate social layers (§6). Endings, NG+, Nightmare, Daily modes, secrets and persistent unlock flags support return loops.
+
+The audit therefore strengthens completeness without pretending the absence of a newer announcement proves development has permanently ended.
+
+
 The prior chapter and granular study were read and left unchanged. Their trigger/plasma/gold testimony, Chainsaw and mana discussions, Suskie's incident, Duncan's disclosures, original references and videos retain their original owners. The expanded indexed mechanics evidence here does not retroactively change the earlier researcher's access claims.
 
 **Viewing route:** begin with the [official 1.0 overview and Chainsaw tutorial in the earlier chapter](../games/noita.md), then read this dossier's safe introductory systems before the world/ending sections. Purho's GDC abstract is useful for the technical premise. No linked recording was watched in this pass, no precise scenes were newly observed, and no timestamps are invented.
