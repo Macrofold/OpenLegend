@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — technical design
 
-**Status:** proposed design only; no runtime implementation is authorized by this document. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) track implementation if approved.
+**Status:** approved for implementation by the developer on 2026-09-26. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) track implementation and qualification.
 
 ## 1. Architectural decision
 
@@ -267,6 +267,20 @@ The rolling summary can accumulate semantic drift across many generations. That 
 The summary rubric is intentionally broad rather than a fixed conversation ontology. Classic dialogue-state work motivates established context, active issues/focus and recent moves, while grounding/repair work motivates explicit handling of updates and uncertainty; none requires new authoritative dialogue records. This keeps v1 adaptable while relying on existing semantic owners for mechanically important obligations and corrections.
 
 **Blocking implementation decisions:** exact byte allocation and selected configured cleanup model should be chosen against the actual request budget/provider at implementation time. They do not change the architecture.
+
+## Maintained records
+
+## Implementation plan — 2026-09-26
+
+Scope is NC14–NC17, approximately 700–1,100 changed logic lines. The privacy, asynchronous publication and persistence contracts make this substantial work. The refreshed base is `Macrofold/OpenLegend` `origin/main` at `45210d41075dc1db09dbd48f562b76b8b39bcc10`; this detached checkout already descends from it, so no history rewrite is required.
+
+1. Add a single server conversation-context owner and reuse the existing actor-perspective speech renderer. Give it the remaining conversation byte allowance before optional recall/action selection. Route immediate cognition and reflection through it; keep current trigger and mandatory semantic records separate.
+2. Read bounded actor-scoped conversation metadata from the memory repository, hydrate only uncovered speech, and store one derived rolling row per actor/conversation. Bind cached coverage to source revisions, perspective, compactor version and restore generation. Revalidate and install atomically; concurrent competing publication must fail explicitly.
+3. Generate bounded prose with the existing cleanup execution route through the caller's admitted/accounted AI boundary. Use stable attempt/chunk identities, cancellation and explicit failure with no retry. Split large permitted prefixes into bounded chronological inputs; retain the existing 8,192-row/4-MiB preparation ceilings and fail visibly at capacity rather than omit evidence.
+4. Reuse cognition diagnostics for full/compacted mode, source/summary/recent bytes, coverage and exact projection. Preserve full speech storage. Reconcile the persistent owners, limits, tracker, implementation snapshot and decision history.
+5. Verify with pinned formatting, TypeScript and production build; exercise disposable SQLite worlds and downstream context assembly with short, long, corrected, disputed, private and partial-hearing input, failed/cancelled generation, stale publication, restart and restore. Measure bounded history preparation. No automated test suites are authorized by default. Live continuity qualification needs configured authorized credentials and a credible bound within the shared $10 task ceiling; report unavailable evidence separately.
+
+Completion means integrated NC14–NC16 behavior, all feasible NC17 scenarios exercised, full diff reviewed and in-scope findings fixed. Keep unverified live quality acceptance open rather than claiming deterministic fixture output proves model quality.
 
 ## Maintained records
 

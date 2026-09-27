@@ -842,6 +842,7 @@ export class SqliteStore implements GameRepository {
         if (historyProjection?.restore) {
           if (!this.acceptedState) throw new Error('No active world to replace.');
           await this.saves.install(this.acceptedState, historyProjection.restore);
+          await this.memories.invalidateConversationCompactions(state.world.id);
         }
         if (historyProjection?.receipt)
           await this.commands.save(state.world.id, historyProjection.receipt);

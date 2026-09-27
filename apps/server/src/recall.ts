@@ -73,7 +73,7 @@ export function gameTime(at: number): string {
   const hour = (8 + Math.floor(at / 3600)) % 24;
   return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${Math.floor(at / 60) % 60 < 10 ? '0' : ''}${Math.floor(at / 60) % 60}`;
 }
-function memoryCandidate(
+export function memoryCandidate(
   memory: MemoryRecord,
   world: WorldState,
   actorId: string,

@@ -239,5 +239,7 @@ Actor awareness captures intended-recipient identity only for the speaker, the r
 
 ## Maintained records
 
+Approved implementation target: [actor-scoped conversation compaction](projects/conversation-compaction-feature-spec.md), tracked by NC14–NC17, bounds model-facing dialogue without changing durable transcripts, event-time hearing, current triggers or native commitments. Failed compaction must fail the response explicitly; the target is not yet a claim of runtime delivery.
+
 - Implementation: [Feature tasks](maintainers/narration-and-conversations.md).
 - Limits and constraints: [Narration and conversations inventory](limits/narration.md).

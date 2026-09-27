@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — feature specification
 
-**Status:** proposed design only; no runtime implementation is authorized by this document. [Technical design](conversation-compaction-tech-design.md) owns the mechanism. [NC14–NC17](../maintainers/narration-and-conversations.md) track delivery if the design is approved for implementation.
+**Status:** approved for implementation by the developer on 2026-09-26. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) track delivery and qualification; approval is not evidence of runtime completion.
 
 ## 1. Outcome
 

@@ -62,6 +62,17 @@ export interface MemoryScope {
   actorId: string;
   generation: string;
 }
+export interface ConversationSource {
+  id: string;
+  revision: string;
+  sequence: number;
+  correction: string;
+}
+export const conversationCompactionKey = (
+  worldId: string,
+  actorId: string,
+  conversationId: string,
+) => `conversation-compaction:${JSON.stringify([worldId, actorId, conversationId])}`;
 export interface RetrievedMemory {
   memory: MemoryRecord;
   awareness?: Awareness;
@@ -305,6 +316,7 @@ export class MemoryRepository {
     archive = true,
   ): Promise<MemoryChanges> {
     const affected: MemoryChanges = new Map();
+    const invalidateConversations = new Set<string>();
     const touch = (actor: string, id: string) => {
       if (affected.get(actor) === null) return;
       const ids = affected.get(actor) ?? new Set<string>();
@@ -344,7 +356,10 @@ export class MemoryRepository {
             `SELECT id,actor_id,source_id,payload FROM ${table} WHERE world_id=? AND id IN (${placeholders})`,
           )
           .all(worldId, ...batch);
-        for (const row of old) touch(String(row['actor_id']), String(row['source_id']));
+        for (const row of old) {
+          touch(String(row['actor_id']), String(row['source_id']));
+          if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
+        }
         await insertRows(
           this.db,
           'mind_source_versions',
@@ -413,12 +428,19 @@ export class MemoryRepository {
       for (const row of changes.writes.get(table) ?? []) {
         const path = JSON.parse(row.id) as string[];
         affected.set(path[3]!, null);
+        invalidateConversations.add(path[3]!);
       }
-      for (const id of changes.deletes.get(table) ?? [])
+      for (const id of changes.deletes.get(table) ?? []) {
         affected.set((JSON.parse(id) as string[])[3]!, null);
-      for (const id of changes.deletes.get(`${table}_owners`) ?? [])
+        invalidateConversations.add((JSON.parse(id) as string[])[3]!);
+      }
+      for (const id of changes.deletes.get(`${table}_owners`) ?? []) {
         affected.set((JSON.parse(id) as string[])[3]!, null);
+        invalidateConversations.add((JSON.parse(id) as string[])[3]!);
+      }
     }
+    for (const actorId of invalidateConversations)
+      await this.invalidateConversationCompactions(worldId, actorId);
     if (changes.deletes.has('experience_state'))
       for (const row of await this.db
         .prepare('SELECT DISTINCT actor_id FROM recall_sources WHERE world_id=?')
@@ -632,9 +654,10 @@ export class MemoryRepository {
         includeConversation && conversation
           ? await this.db
               .prepare(
-                `SELECT a.source_id FROM history_events e
+                `SELECT a.source_id,r.revision,a.sequence,c.payload AS correction FROM history_events e
         JOIN mind_awareness a ON a.world_id=e.world_id AND a.source_id=e.id
         JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.id=a.source_id AND r.source_kind='awareness'
+        LEFT JOIN mind_corrections c ON c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id
         WHERE ${this.eligible} AND e.conversation_id=? AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech' AND ${this.linguisticSpeech}
         ORDER BY a.sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
               )
@@ -644,11 +667,64 @@ export class MemoryRepository {
       const required = new Set(requiredIds);
       return {
         sequence: Number(watermark?.['sequence'] ?? 0),
+        conversationId: includeConversation ? conversation : undefined,
+        sources: rows.map(
+          (row): ConversationSource => ({
+            id: String(row['source_id']),
+            revision: String(row['revision']),
+            sequence: Number(row['sequence']),
+            correction: String(row['correction'] ?? ''),
+          }),
+        ),
         conversationIds: rows
           .map((row) => String(row['source_id']))
           .filter((id) => !required.has(id)),
       };
     });
+  }
+  /** Compare the entire permitted snapshot, including removals, before replacing
+   * derived context. Ordinary later speech may append without invalidating it.
+   */
+  async publishConversationCompaction(
+    scope: MemoryScope,
+    conversationId: string,
+    sequence: number,
+    sources: ConversationSource[],
+    key: string,
+    expected: unknown,
+    value: unknown,
+  ): Promise<void> {
+    await this.db.transaction(async () => {
+      // Serialize with gameplay commits, including restore, on both SQL backends.
+      const head = await this.db
+        .prepare(
+          'UPDATE world_head SET generation=generation WHERE id=1 AND world_id=? AND generation=? RETURNING generation',
+        )
+        .get(scope.worldId, scope.generation);
+      if (!head) throw new Error('Conversation compaction generation changed.');
+      const current = await this.context(scope, [], true, conversationId);
+      if (
+        JSON.stringify(current.sources.filter((source) => source.sequence <= sequence)) !==
+        JSON.stringify(sources)
+      )
+        throw new Error('Conversation compaction sources changed.');
+      const stored = await this.db
+        .prepare('SELECT value FROM meta WHERE key=?')
+        .get(`integration:${key}`);
+      if (stored?.['value'] !== (expected === undefined ? undefined : JSON.stringify(expected)))
+        throw new Error('Conversation compaction was superseded.');
+      await this.db
+        .prepare(
+          'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        )
+        .run(`integration:${key}`, JSON.stringify(value));
+    });
+  }
+  async invalidateConversationCompactions(worldId: string, actorId?: string): Promise<void> {
+    const prefix = `integration:conversation-compaction:${JSON.stringify(actorId ? [worldId, actorId] : [worldId]).slice(0, -1)},`;
+    await this.db
+      .prepare('DELETE FROM meta WHERE substr(key,1,?)=?')
+      .run([...prefix].length, prefix);
   }
   async entry(scope: MemoryScope, key: string): Promise<ExperienceEntry | undefined> {
     const separator = key.indexOf(':');

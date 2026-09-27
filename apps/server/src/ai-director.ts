@@ -1444,6 +1444,7 @@ export class AiDirector {
       speech,
       attempt,
       triggerEvidenceId,
+      (request, operation) => this.generate<unknown>(run, request, operation),
     );
     this.current(run);
     await this.log.record(
@@ -1637,6 +1638,7 @@ export class AiDirector {
     // Private proposal context shares the existing total bound; it does not buy a larger prompt.
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
+    await prepared.validateConversation();
     const value = await this.generate<unknown>(
       run,
       {
@@ -1741,6 +1743,10 @@ export class AiDirector {
         },
         undefined,
         run.job.id,
+        async () => {
+          await prepared.validateConversation(false);
+          return true;
+        },
       );
     const authorizedCommit = () =>
       run.job.authority

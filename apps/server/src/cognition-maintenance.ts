@@ -665,6 +665,17 @@ export class CognitionMaintenance {
           ),
         controller.signal,
         Math.max(0, this.service.config.budgetUsd - interactiveAllowance(this.service.config)),
+        false,
+        0,
+        undefined,
+        (request, operation) =>
+          this.paid(`${job.id}:${operation}`, 'openai', () =>
+            this.client.generate<unknown>({
+              ...request,
+              requestId: `${job.id}:${operation}`,
+              signal: controller.signal,
+            }),
+          ),
       );
       controller.signal.throwIfAborted();
       if (generation !== this.service.generation)
@@ -783,7 +794,10 @@ export class CognitionMaintenance {
         },
         undefined,
         undefined,
-        appraisals.current,
+        async () => {
+          await prepared.validateConversation(false);
+          return appraisals.current();
+        },
       );
       if (!accepted.ok) throw new Error(accepted.message);
       await this.log.record(

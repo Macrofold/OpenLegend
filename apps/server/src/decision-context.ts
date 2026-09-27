@@ -10,7 +10,6 @@ import {
 import { digest } from './store.js';
 import { contextSections } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
-import { hasLinguisticSpeech } from './speech-recall.js';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
 import { bodyContext, hasWildernessNeeds, supportsManualWork, canSpeak } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
@@ -33,6 +32,7 @@ import { attentionRequest } from './attention-request.js';
 import { attentionIncludes } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { NAVIGATION_INSTRUCTIONS } from './navigation-contracts.js';
+import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
 
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
   return [
@@ -77,39 +77,6 @@ function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
   ];
 }
 
-function currentConversationEvidenceIds(
-  service: WorldService,
-  actorId: string,
-  requiredIds: string[],
-): string[] {
-  const world = service.world;
-  const required = new Set(requiredIds);
-  const awareness = world.experience?.awareness[actorId] ?? [];
-  const trigger = [...awareness]
-    .reverse()
-    .find(
-      (entry) =>
-        required.has(entry.eventId) && service.worldEvent(entry.eventId)?.type === 'speech',
-    );
-  const conversationId =
-    world.conversations?.active[actorId] ??
-    (trigger && service.worldEvent(trigger.eventId)?.conversationId);
-  // Include the whole permitted conversation at this snapshot, including replies after the trigger.
-  // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
-  if (!conversationId) return [];
-  return awareness
-    .filter((entry) => {
-      if (!hasLinguisticSpeech(entry)) return false;
-      const event = service.worldEvent(entry.eventId);
-      return (
-        event?.type === 'speech' &&
-        event.conversationId === conversationId &&
-        !required.has(entry.eventId)
-      );
-    })
-    .sort((a, b) => a.sequence - b.sequence)
-    .map((entry) => entry.eventId);
-}
 export async function prepareDecision(
   service: WorldService,
   recall: RecallService,
@@ -123,6 +90,7 @@ export async function prepareDecision(
   includeCurrentConversation = false,
   attempt = 0,
   triggerEvidenceId?: string,
+  compact?: ConversationGenerate,
 ) {
   await service.flushMemorySources(actorId);
   const world = service.world;
@@ -157,25 +125,6 @@ export async function prepareDecision(
       actorId,
     );
   includeConversation ||= evidence.some((entry) => entry.eventType === 'speech');
-  const memoryContext =
-    service.store.memories && head
-      ? await service.store.memories.context(
-          { worldId: world.id, actorId, generation: head.generation },
-          requiredIds,
-          includeConversation,
-          world.conversations?.active[actorId],
-        )
-      : undefined;
-  const awarenessSequence =
-    memoryContext?.sequence ??
-    (world.experience?.awareness[actorId] ?? []).reduce(
-      (maximum, entry) => Math.max(maximum, entry.sequence),
-      0,
-    );
-  const conversation =
-    memoryContext?.conversationIds ??
-    (includeConversation ? currentConversationEvidenceIds(service, actorId, requiredIds) : []);
-  const automaticIds = conversation;
   const planning = planningCandidates(service, actorId);
   const availableActions = distinctActions([...npcCandidates(service, actorId), ...planning]);
   let planOffers = [...planning]
@@ -210,15 +159,14 @@ export async function prepareDecision(
     actorId,
     observed,
     requiredIds,
-    automaticIds,
-    conversation,
+    [],
+    [],
     stimulus,
     `${jobId}:attempt:${attempt}`,
     signal,
     budgetCeiling,
   );
   const snapshotActor = observed.actor.actor!;
-  const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     capabilities: {
       speech: canSpeak(observed.actor),
@@ -277,15 +225,7 @@ export async function prepareDecision(
       plan: snapshotActor.agency.plan,
       attempts: snapshotActor.agency.attempts,
     },
-    conversation: candidates
-      .filter(
-        (candidate) =>
-          candidate.kind === 'conversation' &&
-          candidate.automatic &&
-          !triggerIdSet.has(candidate.id),
-      )
-      .sort((a, b) => a.at - b.at || a.id.localeCompare(b.id))
-      .map((candidate) => candidate.text),
+    conversation: [],
     surroundings: [],
     possessions: [],
   };
@@ -310,6 +250,37 @@ export async function prepareDecision(
     Buffer.byteLength(readableDecisionContext(requiredContext, largestActionOffers, true)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   const actionReserveBytes = Math.min(50000, Math.max(0, actionPromptBytes - requiredBytes));
+  const mandatoryRecallBytes = candidates
+    .filter((candidate) => candidate.required)
+    .reduce(
+      (sum, candidate) =>
+        sum +
+        Buffer.byteLength(candidate.text.replace(/\n/g, '\n  ')) +
+        Buffer.byteLength(candidate.id) +
+        8,
+      0,
+    );
+  const conversation = await buildConversationContext({
+    service,
+    actorId,
+    requiredIds: evidenceIds,
+    includeConversation,
+    maxBytes: 100000 - requiredBytes - actionReserveBytes - mandatoryRecallBytes,
+    signal,
+    attempt,
+    ...(compact ? { generate: compact } : {}),
+  });
+  const awarenessSequence = conversation.awarenessSequence;
+  requiredContext['conversation'] = conversation.lines;
+  requiredBytes =
+    Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
+    Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+  // Conversation has its own mandatory projection; optional recall must not
+  // reintroduce an arbitrary older transcript subset alongside its summary.
+  const conversationIds = new Set(conversation.sourceIds);
+  for (let index = candidates.length - 1; index >= 0; index--)
+    if (!candidates[index]!.required && conversationIds.has(candidates[index]!.id))
+      candidates.splice(index, 1);
   if (requiredBytes + actionReserveBytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');
   // Plan vocabulary is optional: retain every option that fits, not an ID-count prefix.
@@ -360,6 +331,7 @@ export async function prepareDecision(
   // it returns; later actions still validate their authoritative prerequisites.
   await service.flushMemorySources(actorId, false);
   await recall.validateSources(candidates, selection.selected);
+  await conversation.validate();
   if (
     retainedEvidence &&
     evidenceScope &&
@@ -452,9 +424,7 @@ export async function prepareDecision(
     agency: { goals: actor.agency.goals, plan: actor.agency.plan, attempts: actor.agency.attempts },
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
   };
-  context['conversation'] = selection.selected
-    .filter((entry) => entry.kind === 'conversation' && !triggerIdSet.has(entry.id))
-    .map((entry) => entry.text);
+  context['conversation'] = conversation.lines;
   Object.assign(
     context,
     contextSections(currentSelection.filter((candidate) => candidate.kind !== 'conversation')),
@@ -485,6 +455,7 @@ export async function prepareDecision(
             candidate.kind === 'knowledge',
         )
         .flatMap((candidate) => candidate.entityIds),
+      ...conversation.entityIds,
       ...socialEntityIds(currentWorld, actorId),
     ],
     evidence,
@@ -564,6 +535,7 @@ export async function prepareDecision(
     offered,
     actionCandidates: availableActions,
     awarenessSequence,
+    validateConversation: conversation.validate,
     attemptBindings: [...attempts.values()],
     entityReferences,
     visibleEntityReferences: entityReferenceMap(
@@ -572,6 +544,7 @@ export async function prepareDecision(
       actorId,
     ),
     diagnostics: {
+      conversation: conversation.diagnostics,
       instructionsVersion: COGNITION_VERSION,
       snapshot: currentWorld.sequence,
       sourceTime: currentWorld.simTime,
