@@ -181,6 +181,8 @@ The sequel was announced around the inversion "the aliens won," a compact narrat
 
 DLC sustained the game through 2016–2018, especially War of the Chosen. Steam Workshop support created a second longevity channel: cosmetic packs, balance changes and total conversions extended play beyond official campaigns. Long War 2's Workshop page alone shows thousands of ratings and a historically large audience; its current visibility/status and WotC compatibility must be treated separately from official support.
 
+A later PC-distribution change matters to current usability: **2K removed the 2K Launcher from XCOM 2 on Steam in November 2024.** Steam now exposes direct launch choices for base XCOM 2, War of the Chosen and mod-launcher routes. This means older launcher complaints remain historical reception evidence but are not a correct description of the September 2026 default Steam launch flow. [2K Launcher sunset](https://support.2k.com/hc/en-us/articles/34845053169939-2K-Launcher-Complete-Sunset) · [XCOM 2 Steam announcement](https://store.steampowered.com/oldnews/?appgroupname=XCOM%C2%AE+2&appids=268500&enddate=1748761200&feed=steam_community_announcements).
+
 XCOM's strongest sharing unit is the **war story**. A screenshot of a named soldier or a text account of a catastrophic 95%-miss can be understood by another player because the systems create repeatable grammar but unique outcomes. That is an observed design property; exact acquisition impact from anecdotes/mods is not publicly attributable.
 
 ## R11 — commercial and participation context
@@ -212,13 +214,13 @@ Participation evidence is stronger:
 
 Current helpful-week Steam reviews praise research/enemy/progression variety, procedural replay and tense probability while still describing the game as difficult/unfair at times. A current negative account with substantial playtime criticizes hidden attributes/damage caps as undermining informed planning. [Current reviews](https://steamcommunity.com/app/268500/reviews/).
 
-The all-time helpful surface contains detailed positive reviews alongside practical complaints about launcher friction. [All-time helpful](https://steamcommunity.com/app/268500/reviews/?browsefilter=toprated).
+The all-time helpful surface contains detailed positive reviews alongside older practical complaints about launcher friction. Those complaints are valid for their posting-era experience, but the 2K Launcher itself was removed from Steam/Epic in November 2024; they should not be read as evidence that the same launcher is still mandatory in September 2026. [All-time helpful](https://steamcommunity.com/app/268500/reviews/?browsefilter=toprated) · [2K support](https://support.2k.com/hc/en-us/articles/34845053169939-2K-Launcher-Complete-Sunset).
 
 **Sampling limit:** Steam ranking is not representative prevalence; current displayed hours do not establish hours at original posting unless explicitly supplied.
 
 ### Synthesis
 
-Praise converges on tactical consequence, squad attachment, class synergy, destructible maps and the two-layer campaign. Criticism clusters around difficulty opacity, timers for players who prefer slower tactics, campaign snowball/failure states, UI/pathing/launch performance and external launcher friction.
+Praise converges on tactical consequence, squad attachment, class synergy, destructible maps and the two-layer campaign. Criticism clusters around difficulty opacity, timers for players who prefer slower tactics, campaign snowball/failure states, UI/pathing and launch-era performance. Historical external-launcher friction is retained in dated player evidence but is **not** a current Steam platform defect after the November 2024 launcher sunset.
 
 ## R13 — transferable inspiration and limits
 
@@ -238,6 +240,7 @@ Praise converges on tactical consequence, squad attachment, class synergy, destr
 ### Primary/developer/mechanics sources
 - [War of the Chosen manual](https://assets.2k.com/1a6ngf98576c/6LIsXornIgRpO5WnGoU1oS/d99b534548498ac045f80e5888d2c3f3/XCOM2_WOTC_ONLINE_MANUAL_SHEET_ENG.pdf) — official bonds, Will/fatigue, negative traits and resistance mechanics.
 - [Official Steam multiplayer retirement announcement](https://store.steampowered.com/oldnews/?appgroupname=XCOM%C2%AE+2&appids=268500&feed=steam_community_announcements&headlines=0&l=english) — Steam mode retirement.
+- [2K Support — Launcher Complete Sunset](https://support.2k.com/hc/en-us/articles/34845053169939-2K-Launcher-Complete-Sunset) and [XCOM 2 Steam announcement](https://store.steampowered.com/oldnews/?appgroupname=XCOM%C2%AE+2&appids=268500&enddate=1748761200&feed=steam_community_announcements) — November 2024 removal of the 2K Launcher and current direct/base/WotC/mod-launch options; used in the September 27 audit to qualify older launcher complaints.
 - [GameSpot developer interview](https://www.gamespot.com/articles/xcom-2-how-firaxis-crafted-a-superior-sequel/1100-6434134/) — production/iteration with Firaxis producer/designer.
 - [Long War 2 Workshop](https://steamcommunity.com/workshop/filedetails/?id=844674609) and [Long War of the Chosen](https://steamcommunity.com/sharedfiles/filedetails/?id=2683996590) — mod authors' scope descriptions; explicitly non-vanilla.
 
