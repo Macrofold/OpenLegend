@@ -1,1200 +1,502 @@
 # RuneScape (modern / RuneScape 3) — full research dossier
 
-**G48 · Complete research pass, September 26, 2026.** This dossier covers the continuously evolved modern game now branded simply **RuneScape**, not Old School RuneScape and not RuneScape: Dragonwilds. “RuneScape 3” is useful historical shorthand for the 2013 modernization, but current Jagex materials call the game RuneScape. The reference point is September 26, 2026: Treasure Hunter is gone; Havenhythe Part I, Hunter 110, the player-avatar refresh, rebuilt Player-Owned Housing/Construction 120 and Leagues II have shipped; Havenhythe Part II remains previewed rather than represented as released.
+**G48 · Research and identified audit remedies completed September 26, 2026.** Scope: the continuously evolved modern **RuneScape**, not Old School RuneScape or Dragonwilds. The earlier pass's 2026 release evidence is retained; newly researched operational details are separately sourced. Historical guides are qualified by the March 2026 DailyScape changes, and proposed November changes remain future. No hands-on play, watched footage, soundtrack audition, live-network test or exhaustive re-verification of every inherited claim occurred.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md)
 
-RuneScape is one of the strongest references for OpenLegend's desired “live a life in a world rather than choose a class” structure. The same persistent character can mine, cook, build, boss, farm, trade, quest, raise animals, excavate archaeology, practice magic, invent machines and return after a decade without selecting a new class. Its counterexamples are equally valuable: twenty-five years of accumulated systems create dead content, onboarding/UI debt, monetization distrust, visual inconsistency and social spaces that can feel less social than their population suggests.
+The central comparison is one persistent person learning many roles. The counterexample is equally important: accumulated systems can create obsolete activities, confusing interfaces, commercial distrust and crowded places with little actual interaction. Interpretations below are research proposals, not accepted OpenLegend requirements.
 
 ## 1. Identity, lineage and current boundary
 
-RuneScape began publicly in 2001 as a Java/browser MMORPG by Andrew and Paul Gower and Jagex.
-
-The continuous mainline game evolved through:
-- RuneScape Classic;
-- RuneScape 2 (2004);
-- Evolution of Combat (2012);
-- RuneScape 3 branding/HTML5-interface-era launch (2013);
-- downloadable modern client;
-- Steam (2020);
-- iOS/Android cross-play;
-- current 2026 “Road to Restoration.”
-
-Old School RuneScape is a **separate service/game** forked from a 2007 backup in 2013. G49 covers it independently.
-
-Modern RuneScape currently runs on:
-- Jagex launcher/client;
-- Steam;
-- iOS;
-- Android;
-
-with cross-platform progression/play across PC/mobile. [RS-A](#rs-a)
-
-Jagex reports the broader RuneScape franchise has welcomed **300M+ player accounts**. That is a cumulative franchise/account measure, not current RuneScape MAU. [RS-A](#rs-a)
-
-## 2. The player promise: one persistent adventurer, no fixed class
-
-RuneScape does not begin by locking the player into:
-- warrior;
-- mage;
-- crafter;
-- healer.
-
-One character can train all skills.
-
-Identity instead emerges from:
-- skill levels;
-- quest history;
-- equipment;
-- titles/cosmetics;
-- achievements;
-- wealth/items;
-- home/farm/port/Fort;
-- friends/clan;
-- chosen activities;
-- accumulated history.
-
-This lets a person be:
-- elite boss fighter;
-- master fisher;
-- clue hunter;
-- merchant;
-- completionist;
-- quest/lore player;
-
-without rolling another avatar.
-
-The strongest OpenLegend implication:
-> let roles be things a person **learns, owns, joins and practices**, not engine-exclusive identity slots.
-
-## 3. Twenty-nine skills create a parallel progression lattice
-
-Modern RuneScape currently has **29 skills** across combat, gathering, artisan/support and specialized systems.
-
-Combat-related skills include:
-- Attack;
-- Strength;
-- Defence;
-- Constitution;
-- Ranged;
-- Magic;
-- Prayer;
-- Summoning;
-- Necromancy.
-
-Other major skills include:
-- Mining;
-- Smithing;
-- Woodcutting;
-- Fishing;
-- Cooking;
-- Firemaking;
-- Crafting;
-- Fletching;
-- Runecrafting;
-- Construction;
-- Agility;
-- Herblore;
-- Thieving;
-- Slayer;
-- Farming;
-- Hunter;
-- Dungeoneering;
-- Divination;
-- Invention;
-- Archaeology.
-
-Caps differ by skill/content era rather than one universal 99:
-- many retain 99;
-- several extend to 110 or 120;
-- Hunter reached **110** with Havenhythe in March 2026;
-- Construction reached **120** with the July housing rebuild. [RS-B](#rs-b) [RS-C](#rs-c)
+RuneScape began in 2001 with Andrew and Paul Gower and Jagex. The mainline evolved through Classic, RuneScape 2, the 2012 Evolution of Combat, 2013 RuneScape 3 branding/interface changes, later clients, Steam and mobile. OSRS is a separately operated branch originating in a 2007 backup, not an old mode within this character's save. “RS3” remains useful shorthand, but current marketing calls the modern service RuneScape. [RS-O](#rs-o)
 
-### Why this structure lasts
+The preserved September 2026 boundary includes Treasure Hunter's January removal, Havenhythe Part I and Hunter 110, the player-avatar refresh, rebuilt Player-Owned Housing/Construction 120 and Leagues II. Havenhythe Part II was previewed September 22, not established as released. PC/client, Steam and mobile share modern-game progression under supported account rules; that does not merge an OSRS character into it. [RS-A](#rs-a) [RS-B](#rs-b) [RS-G](#rs-g) [RS-L](#rs-l) [RS-V](#rs-v)
 
-A new activity can reward:
-- direct XP;
-- a resource;
-- an unlock;
-- equipment;
-- another skill's input;
-- a quest requirement.
+Jagex's **300-million-plus accounts** statement concerns the franchise cumulatively, not current modern-RuneScape monthly active users. [RS-O](#rs-o)
 
-The skills form a network rather than isolated minigames.
+## 2. One adventurer, many learned roles
 
-### Failure mode
+Creation does not permanently select warrior, fisher, mage or craftsperson. One character can develop all skills. Identity also accumulates through quests, possessions, titles, achievements, homes, friends and chosen activities. A boss specialist and a clue collector can therefore inhabit the same character framework while valuing different rewards. [RS-F](#rs-f)
 
-Twenty-five years of progression also creates:
-- obsolete training methods;
-- confusing optimal routes;
-- overlapping rewards;
-- “dead” minigames;
-- large gaps between new-player and veteran mental models.
+**Interpretation:** roles can be things a person practices, owns and joins rather than mutually exclusive identity slots. The risk is an indistinguishable master of everything; investment, opportunity and personal preference still need to make specialization meaningful.
 
-The 2026 integrity roadmap explicitly targets early/midgame skilling and dailyscape because the accumulated system needs active pruning/repair. [RS-D](#rs-d)
+## 3. The skill lattice and progression
 
-## 4. Gathering → processing → equipment/use chains
+The dossier's modern-game roster has **29 skills**, not OSRS's separately evolved roster:
 
-RuneScape repeatedly uses understandable production chains.
+| Family | Skills |
+| --- | --- |
+| Combat and supernatural support | Attack, Strength, Defence, Constitution, Ranged, Magic, Prayer, Summoning, Necromancy |
+| Gathering and production | Mining, Smithing, Woodcutting, Fishing, Cooking, Firemaking, Crafting, Fletching, Runecrafting, Herblore, Farming, Hunter |
+| Other activity and progression structures | Construction, Agility, Thieving, Slayer, Dungeoneering, Divination, Invention, Archaeology |
 
-Examples:
-- mine ore → smelt bars → smith equipment;
-- cut trees → logs → fletch/burn/build;
-- fish → cook food → combat sustain;
-- farm herbs → combine ingredients → potions;
-- hunt creatures → resources/equipment;
-- divination energy → invention/other uses;
-- archaeology materials/artifacts → restore collections/relic powers.
+Experience, equipment requirements, quest prerequisites and access permissions are different forms of advancement. Caps are not universally 99: Hunter reached 110 with Havenhythe; the documented July housing update raised Construction to 120. Higher caps do not mean every intermediate level grants an equally significant verb. [RS-B](#rs-b) [RS-C](#rs-c)
 
-The economy connects these chains because most ordinary accounts can trade.
+A new activity can supply experience, an ingredient, equipment, an unlock or another skill's prerequisite. **Interpretation:** that network is more useful than twenty-nine disconnected minigames. Its maintenance problem is equally clear: old methods and rewards can lose relevance while remaining visible enough to confuse newcomers. [RS-D](#rs-d)
 
-This makes “skilling” economically meaningful beyond its XP bar.
+## 4. Material chains connect professions
 
-### OpenLegend lesson
+Ore becomes bars and equipment; trees supply logs for burning, fletching and building; fish become food; herbs and secondary ingredients become potions; Divination materials feed Invention; excavated objects require restoration materials. Ordinary-account trade connects people who perform different parts of these chains. [RS-F](#rs-f)
 
-Resources should have:
-- origin;
-- transformation;
-- users;
-- sinks.
+**Interpretation:** origin, transformation, consumer and sink are a useful test for an invented object. A generated noun is not yet an economic participant. Market access also changes a profession's value: self-production is a choice, not always the only route to a needed ingredient.
 
-An AI-generated object becomes more believable when its material history matters to other systems.
+## 5. Mining and Smithing preserve an activity through redesign
 
-## 5. Mining and Smithing: resource extraction becomes equipment production
+The modern reworked loop includes extraction, efficiency/stamina management, ore storage, metal tiers, smelting and work on unfinished equipment. Its practical identity remains “obtain metal and make useful gear” even though input and competition rules changed over the service's history. [RS-F](#rs-f)
 
-Modern Mining/Smithing were substantially reworked before the current period.
+**Interpretation:** preserving a meaningful activity does not require freezing its original click burden. An enduring world needs migration of learned expectations as well as saved items. A faster operation can be an improvement without making every related accomplishment worthless.
 
-The important design:
-- ore extraction;
-- stamina/efficiency systems;
-- ore boxes/storage conveniences;
-- metal tiers;
-- smelting;
-- smithing unfinished items toward completion.
+## 6. Gathering and Hunter 110
 
-A skill rework can therefore preserve:
-> “I mine metal and smith gear”
+Gathering differs in location, attention, tools, node behavior and downstream uses. Havenhythe Part I adds Hunter 110, clockwork trapping, new Big Game Hunter encounters, high-level ranged-equipment materials and fish farming. Its stealth/detection-oriented hunts are more than a larger number on the same resource node. [RS-B](#rs-b)
 
-while replacing obsolete click/competition/friction rules.
+**Interpretation:** a new level range is strongest when it changes preparation or action structure. Extra repetition alone is a weaker expansion, particularly when autonomous labor would make human click-time scarcity an unsuitable baseline for OpenLegend.
 
-This is relevant to OpenLegend's future evolution policy:
-- preserve semantic contract;
-- migrate implementation/UX.
+## 7. Farming, breeding and deliberate return
 
-## 6. Woodcutting, Fishing, Hunter and gathering variety
+Crop patches use seeds, growth, care and harvesting; the Player-Owned Farm adds living stock, breeding, health/happiness and sale decisions. Growth gives a reason to return, but need not become an obligation to check every possible timer. [RS-W](#rs-w)
 
-Gathering activities differ in:
-- node competition/sharing;
-- movement;
-- attention;
-- random events/resources;
-- equipment;
-- associated processing.
+At Manor Farm, Granny Potterington's introduction connects the relevant Farming/Construction entry requirements to pens and livestock. **Beans** purchase farm-related options; they are not the same currency as ordinary coins. Feeding, disease treatment, traits and breeding shape output. Selling an adolescent for a favorable bean return can conflict with keeping an animal through later growth for experience, produce or other benefits. [RS-W](#rs-w)
 
-### Hunter 110 / Havenhythe
+Farmhands can alter that rhythm. A babysitter can hold animals at the adolescent stage, while other helpers support collection or acquisition. These are specific services, not general-purpose autonomous farmers. [RS-X](#rs-x)
 
-Havenhythe Part I (March 23, 2026) raises Hunter to **110** and adds:
-- new Big Game Hunter encounters requiring stealth/detection avoidance;
-- clockwork trapping;
-- materials for high-level ranged armor;
-- fish farming as a new skill-adjacent activity. [RS-B](#rs-b)
+**Interpretation:** elapsed time is useful when it changes the next decision. A system that rewards checking many unrelated timers can instead become a chore schedule. Care and optimization may also point to different actions; visible animals make that tension more expressive than a generic production multiplier.
 
-The important lesson is that a level-cap increase is strongest when it adds **new action structure**, not only “same click at a larger number.”
+## 8. Archaeology: history becomes an activity
 
-## 7. Farming: time creates return loops
+Excavation yields damaged artifacts and materials; restoration, collections and mysteries lead to progress and Relic powers. Place, object and authored history thus feed a persistent mechanical reward rather than remain a detached lore screen. [RS-F](#rs-f)
 
-Farming uses:
-- patches;
-- seeds;
-- growth time;
-- harvesting;
-- animals through Player-Owned Farm;
-- other specialized farming systems.
+**Interpretation:** OpenLegend could extend the pattern with actual provenance—maker, owners, damage and burial—rather than assume a long generated description proves that history happened. Archaeology also needs useful discovery feedback; an artifact that only fills an inventory slot creates administration instead of curiosity.
 
-This makes offline/elapsed time part of the economy.
+## 9. Invention, augmentation and several kinds of consumption
 
-The player returns because:
-- something changed while absent.
+Invention combines discovery, disassembly, components, devices, augmentation and item experience. Gizmos install supported perks in eligible equipment. An augmented tool can contribute to an ordinary activity while simultaneously developing an additional progression resource. [RS-Y](#rs-y)
 
-OpenLegend can use real/simulated time similarly, but must be careful:
-- return opportunity;
-not
-- compulsory notification treadmill.
+Many augmented items draw from the **charge pack**, replenished through Divine Charges; depleted fuel can sharply reduce their usefulness. This is not ordinary coin-paid repair. Divine Charges themselves connect energy and components to equipment operation. Some high-end augmented armor instead has its own charge/repair contract: the documented augmented tectonic example explicitly does not use the universal pack. Therefore “all augmented equipment drains one shared battery” would be false. [RS-Y](#rs-y) [RS-Z](#rs-z)
 
-The 2026 “dailyscape” cleanup is evidence that recurring timers become burdensome when they accumulate into perceived chores. [RS-D](#rs-d)
+An **equipment siphon** extracts Invention experience and resets the item's experience without destroying it. Disassembly consumes the item for its applicable returns. Siphoning has level/experience tradeoffs and requires the appropriate discovered device; it is not unrestricted free preservation of every investment. [RS-AA](#rs-aa)
 
-## 8. Archaeology: knowledge + collection + place
+**Interpretation:** improving, powering, repairing, siphoning and destroying are different verbs. Their distinction can preserve attachment to an object while maintaining meaningful resource demand. A system that casually calls all of them “upgrade” hides the decision the player actually needs to make.
 
-Archaeology is unusually relevant to OpenLegend.
+## 10. Dungeoneering as a bounded game within the world
 
-The player:
-- excavates sites;
-- discovers damaged artifacts;
-- gathers materials;
-- restores objects;
-- completes collections;
-- advances mysteries;
-- unlocks Relic powers.
+Dungeoneering assembles floors containing rooms, combat, puzzles, resources and bosses. Its temporary local equipment/progression context feeds a persistent skill and rewards outside that context. A repeated generated challenge can therefore coexist with a long-lived identity. [RS-F](#rs-f)
 
-The loop connects:
-- place;
-- material;
-- historical object;
-- lore;
-- persistent mechanical reward.
+Its group and reward relevance can age. The inherited player evidence describes deserted older activities; that is a warning about participation, not proof every floor is unplayable or that all group play has disappeared. [RS-E](#rs-e)
 
-### OpenLegend opportunity
+**Interpretation:** a reusable activity needs continuing reasons and a practical way to participate. Merely retaining its entrance in the world is not enough.
 
-OpenLegend can go farther because artifacts can have **actual simulated provenance**:
-- who made it;
-- who used it;
-- where it broke;
-- who buried it.
+## 11. Quests are named adventures, not generic quotas
 
-RuneScape shows that players already enjoy archaeology when the history is authored. A persistent agent world can make history partly causal rather than decorative.
+Quests combine conversations, item interactions, puzzles, travel, combat and prerequisites into finite authored stories. A chain can supply a reason to develop several otherwise unrelated capabilities. Reviewers particularly value this specificity rather than a constant sequence of interchangeable kill counts. [RS-F](#rs-f)
 
-## 9. Invention: items become material for another system
+**One Piercing Note** is a concrete counterexample to reducing advancement to combat. The player investigates a murder at the Citharede Abbey near Al Kharid, questions its religious community and the minstrels outside, and interprets a conflict involving sacred and secular music. It is documented as a novice, noncombat quest; its original 2011 members-only announcement and later free-access status are different historical facts. [RS-AB](#rs-ab) [RS-AC](#rs-ac)
 
-Invention is an “elite” skill built around:
-- augmenting equipment;
-- leveling augmented items;
-- discovering blueprints;
-- disassembling objects into components;
-- creating devices/perks.
+**Interpretation:** a small local mystery can make the world feel consequential without a cosmic threat. Its authored evidence is not a general engine that can infer any perpetrator from arbitrary clues.
 
-This is an excellent compositional economy pattern:
-> old items are not only vendor trash; they become input categories for another progression system.
+## 12. Geography and transportation are progression systems
 
-For OpenLegend:
-- broken sword → scrap/components;
-- obsolete machine → reusable mechanism;
-- magical artifact → study/invention knowledge.
+The world contains cities, kingdoms, islands, the Wilderness, archaeological sites, Anachronia, Morytania, Menaphos and Fort Forinthry. Players can retain personal memories of familiar routes while the service changes around them. Havenhythe I adds Amberfell, the Sanguine/vampyre storyline, new hunts, fishing-related activity and quests including *Visions of Havenhythe* and *Hearts of Sanguine*. Part II's eastern villages, ruins and *Heralds of Crimson* remain a preview at this research date. [RS-B](#rs-b) [RS-G](#rs-g)
 
-Cross-system reclamation can reduce inventory dead ends.
+### Different travel tools remove different constraints
 
-## 10. Dungeoneering: generated activity inside the larger world
+**Home Teleport** uses activated lodestones without an ordinary Magic-level requirement, but channeling, combat and location restrictions matter. It is not an instant universal escape. March 2026 introduced purchasing quick-teleport charges with **five Law Runes each** after removing the Rune Goldberg Machine/renewable Vis Wax production; existing Vis Wax remained usable. Old instructions about obtaining fresh daily wax are not a current production route. [RS-AD](#rs-ad) [RS-AE](#rs-ae)
 
-Dungeoneering uses procedurally assembled dungeon floors with:
-- rooms;
-- combat;
-- puzzles;
-- resources;
-- bosses;
-- party roles.
+Spell teleports, charged jewelry, transport NPCs, Agility shortcuts, spirit trees and fairy rings provide other access patterns. The **Fairy Tale** quest sequence establishes fairy-ring permission and later removes the ordinary staff requirement. Farming can expand spirit-tree access. These are different prerequisites, not a single fast-travel unlock. Exact network size and every exception are not frozen from an old guide. [RS-AF](#rs-af)
 
-It behaves almost like a game-within-game but still awards a persistent skill/currency/rewards.
+**Interpretation:** knowing a destination, qualifying to use a route, possessing its item and being able to activate it now are separate states. Logistical unlocks make growth visible in familiar places; a mandatory commute that only becomes slightly shorter is a weaker reward.
 
-This demonstrates one path for repeatable generated challenges inside a persistent MMO.
+## 13. Combat and delegated execution
 
-The downside is aging population:
-- older group activities can become hard to form once rewards/players move elsewhere.
+Evolution of Combat introduced abilities, action bars and adrenaline with threshold/ultimate and defensive decisions. Players can input abilities manually, configure **Revolution** to execute compatible routines, or use **Legacy Combat Mode**, which follows a different auto-attack/special-attack contract without the modern ability/adrenaline system. These are not three identical presentations of one input workload. [RS-H](#rs-h)
 
-Current Steam criticism explicitly names deserted minigames as a persistent-world failure mode. [RS-E](#rs-e)
+**Interpretation:** a delegation spectrum is more useful than a binary choice between micromanaging everything and surrendering all control. The player may automate routine actions while retaining defensive timing, targets, priorities and emergency decisions. The analogy does not establish that Revolution reasons about personal goals or uses an LLM.
 
-## 11. Quests are authored adventures, not generic task logs
+## 14. Combat styles and supernatural support
 
-RuneScape's quest tradition is distinctive.
+Melee, Ranged, Magic and Necromancy require different tools, resources and preparation. The character can develop all of them, but a current equipment/action setup is not every possible capability simultaneously. [RS-F](#rs-f)
 
-Many quests are:
-- named;
-- finite;
-- story-driven;
-- puzzle-heavy;
-- humorous;
-- world-changing;
-- prerequisites for later stories/content.
+### Magic books and utility
 
-Quest series build continuity across years.
+Modern Magic has **standard, Ancient Magicks and Lunar** repertoires, with quest-gated access and further additions. Do not insert OSRS's Arceuus book into this list. Damage, transport, enchantment, production and assistance coexist; runes and unlocks connect spell use to gathering, manufacture and trade. Choosing a repertoire affects ordinary work as well as damage. [RS-AG](#rs-ag)
 
-This differs from an MMO quest log dominated by:
-- “kill 10 wolves.”
+### Prayer is a draining resource, not an unlimited passive trait
 
-MMORPG.com's 2023 re-review praises the game's questing/lore breadth while acknowledging the world can overwhelm a newcomer. [RS-F](#rs-f)
+Compatible active prayers consume Prayer points, with combined drain and equipment modifiers. Altars and suitable potions restore the resource. The Prayer bonus addresses ordinary drain rather than necessarily countering an enemy's separate drain attack. Quick-prayer configuration reduces repeated selection; it does not eliminate the resource cost. [RS-AH](#rs-ah)
 
-### OpenLegend lesson
+**Ancient Curses** require *The Temple at Senntisten* and a book-switching opportunity. Later quests add further options. A high Prayer level alone is therefore insufficient. **Soul Split** illustrates a distinct offensive/recovery bargain: eligible damage supports healing, but damage by a familiar or conjure is not automatically the player's own qualifying damage. [RS-AI](#rs-ai) [RS-AJ](#rs-aj)
 
-Procedural/agent-generated tasks should not replace authored narrative structure entirely.
+### Summoning has its own ownership and duration
 
-A meaningful “quest” can encode:
-- character intent;
-- mystery;
-- choice;
-- location;
-- consequences;
+A familiar uses an appropriate pouch, skill eligibility and Summoning resources. One familiar is ordinarily active at a time. Pouches set a duration; relevant scrolls trigger special moves. Obelisks or suitable consumables restore Summoning points, which are separate from the remaining familiar lifetime. Combat helpers, skill support, foraging and burden-carrying are different roles. Pouch manufacture connects charms, shards and secondary items to those roles. [RS-AK](#rs-ak)
 
-rather than being just an objective tuple.
+### Necromancy is not simply another Magic book
 
-## 12. The world: Gielinor accumulates rather than resets
+The 2023 skill has rituals, equipment development, conjures, quests and an associated area. Incantations use spirit, bone, flesh and miasma runes, whose production involves ritual-created impure essence. Some offer travel or protection rather than attacks. **Bone Shield**, for example, can substitute for a carried shield for eligible defensive abilities at a rune cost; it is not a universal physical shield with every ordinary shield property. [RS-AL](#rs-al) [RS-AM](#rs-am)
 
-The world contains:
-- cities;
-- kingdoms;
-- Wilderness;
-- islands;
-- dungeons;
-- archaeological sites;
-- Anachronia;
-- Morytania;
-- Menaphos;
-- Fort Forinthry;
-- many expansion-era areas.
+**Interpretation:** related magical systems can share a world without sharing every resource or permission. An assistant must identify the actual prerequisite instead of accepting “I know magic” as authority for every effect.
 
-The map is valuable partly because players have:
-- childhood memories;
-- old quests;
-- old routes;
-- items associated with places.
+## 15. Bossing, Slayer and different participation costs
 
-Persistent geography becomes autobiographical.
+Slayer assignments, solo/group bosses, raids and scaling encounters create different goals. Preparation can involve equipment switches, defensives, food and specialized supplies. Routine Revolution combat and high-input bossing consequently impose very different interface demands. The inherited mobile accounts describe action-bar space and precision costs; shared progression does not make every activity equally comfortable on a phone. [RS-I](#rs-i)
 
-### 2026 Havenhythe
+The March DailyScape overhaul also changes access incentives: **Soul Reaper is no longer limited to one task per day**, but its Reaper-point rewards have a weekly cap. That is a different contract from making every reward unlimited. [RS-AE](#rs-ae)
 
-Part I launched March 23 as Jagex's largest area-expansion start:
-- Amberfell/Havenhythe region;
-- Sanguine/vampyre storyline;
-- Hunter 110;
-- fish farming;
-- early/mid-level bosses;
-- quests including *Visions of Havenhythe* and *Hearts of Sanguine*. [RS-B](#rs-b)
-
-As of September 22, Jagex is **previewing** Havenhythe Part II:
-- eastern region;
-- villages/ruins;
-- *Heralds of Crimson* continuation.
-
-This dossier does not claim Part II is already playable. [RS-G](#rs-g)
-
-## 13. Combat: abilities, adrenaline and multiple control contracts
-
-The 2012 Evolution of Combat changed modern RuneScape from older auto-attack-centric combat into:
-- abilities;
-- action bars;
-- adrenaline;
-- thresholds/ultimates/specials;
-- defensive tools;
-- richer boss mechanics.
-
-Modern players can use:
-- manual ability input;
-- **Revolution**, which automatically fires configured abilities;
-- Legacy Combat Mode, which approximates older auto-attack/special-attack combat and disables the modern ability/adrenaline system. [RS-H](#rs-h)
-
-### Revolution is especially relevant
-
-It creates a spectrum:
-- delegate low-level rotations;
-- intervene for important abilities;
-- go fully manual for optimization.
-
-That is nearly the same design problem as OpenLegend's autonomous agents.
-
-A strong delegation system should allow:
-- “handle routine combat/work”
-while preserving:
-- emergency intervention;
-- explicit priorities;
-- important cooldown decisions.
-
-## 14. Melee, Ranged, Magic and Necromancy
-
-Modern combat supports distinct styles.
-
-### Melee
-
-Uses Attack/Strength and close-range weapon families.
-
-### Ranged
-
-Uses distance/projectiles/armor/equipment with style-specific abilities.
-
-### Magic
-
-Uses spells, runes, abilities and utility.
-
-### Necromancy
-
-Added in 2023 as a new standalone combat skill, with:
-- rituals;
-- conjures;
-- gear progression;
-- dedicated quests/areas;
-- modernized combat onboarding.
-
-Necromancy is useful because a live game can add a new high-level system that also tries to teach its own grammar rather than assuming decades of player knowledge.
-
-## 15. Bossing, Slayer and group combat
-
-RuneScape endgame/combat includes:
-- Slayer assignments;
-- solo bosses;
-- group bosses;
-- raids;
-- enrage/scaling/high-difficulty encounters;
-- gear switches/defensives/consumables.
-
-The combat experience varies drastically:
-- casual Revolution skilling/combat;
-- high-input endgame bossing.
-
-This breadth is a strength but creates UI/input pressure.
-
-Mobile App Store reviewers specifically describe:
-- action-bar/button scarcity;
-- precision issues;
-- harder bossing disadvantage compared with PC. [RS-I](#rs-i)
-
-Cross-platform persistence does not imply equal interface suitability for every activity.
+**Interpretation:** challenge, input effort and calendar availability should be evaluated independently. A large reward behind a recurring attendance requirement can create pressure without creating an interesting encounter.
 
 ## 16. Death and recovery
 
-Modern RuneScape death is generally recoverable rather than classic full-loss catastrophe.
-
-Death systems have evolved repeatedly:
-- item protection;
-- Death's Office/fees;
-- gravestone/retrieval rules;
-- special exceptions.
-
-The exact current fee/exception tables are version-sensitive.
-
-The durable design point:
-> the MMO reduced catastrophic item-loss friction while keeping death economically/temporally meaningful.
-
-OpenLegend should similarly separate:
-- dramatic consequence;
-from
-- irreversible destruction of hundreds of hours.
-
-Worlds can choose harsher contracts when intentionally authored.
-
-## 17. Items, bank and persistent ownership
-
-RuneScape's item vocabulary is enormous:
-- resources;
-- equipment;
-- food;
-- potions;
-- runes;
-- quest items;
-- clue items;
-- cosmetics;
-- pets;
-- skilling tools;
-- artifacts;
-- invention components.
-
-The Bank is a central persistent storage system.
-
-This long history demonstrates both:
-- joy of persistent possessions;
-- severe inventory/bank/search complexity.
-
-OpenLegend's generated-object ambitions therefore require:
-- semantic search;
-- categories;
-- provenance;
-- cleanup/recycling;
-- favorites;
-- storage rules.
-
-Otherwise generated abundance becomes clutter.
-
-## 18. Grand Exchange and player economy
-
-The **Grand Exchange** supports asynchronous item trading.
-
-Most normal-account resources therefore have:
-- self-use value;
-- opportunity-cost market value.
-
-A player may:
-- gather;
-- craft;
-- boss;
-- flip/trade;
-- buy ingredients;
-- sell output.
-
-Ironman accounts largely cannot use normal Grand Exchange trade; current wiki documentation notes narrow exceptions such as Bonds/certain cosmetic tokens. [RS-J](#rs-j)
-
-This is an important experimental contrast:
-- open market economy;
-versus
-- self-sufficient progression.
-
-## 19. Ironman and self-imposed economic law
-
-Ironman modes restrict:
-- trading;
-- assistance;
-- other convenience.
-
-The same world therefore supports a different value system:
-- a fish is something you caught;
-- an herb is something you grew/earned;
-- equipment documents personal capability.
-
-OpenLegend can make world rules or character vows similarly explicit:
-- oath;
-- profession code;
-- faction law;
-- self-sufficiency challenge.
-
-The restriction changes meaning without needing new item art.
-
-## 20. Construction and Player-Owned Housing: 2026 rebuilt current state
+Modern ordinary death generally preserves protected items and provides recovery through Death or grave-related routes, rather than deleting all accumulated possessions. Fees, item-specific treatment, activity rules and account variants matter. Exact current fee tables are not reconstructed from old reviews. [RS-AN](#rs-an)
 
-The July 13/14, 2026 housing update is a major current-version boundary.
+PvP-enabled Wilderness death is a different contract; a skull and the mode's rules can change what is lost even when a monster deals the final damage. It is unsafe to assume ordinary non-PvP recovery everywhere. The interface should expose that distinction before a player risks valued equipment. [RS-AN](#rs-an)
 
-It:
-- raises Construction to **120**;
-- rebuilds Player-Owned Houses;
-- supports freer room/furniture layout;
-- adds hundreds of customization options;
-- lets achievements/adventures inspire furniture unlocks;
-- adds utility;
-- creates shared **Homestead** communities with friends. [RS-C](#rs-c)
+**Interpretation:** dramatic consequence is not synonymous with destroying years of progress. Recovery can still cost time, resources and another expedition. Harsher worlds need explicit, chosen rules rather than surprising exceptions.
 
-This is highly relevant to OpenLegend:
-> achievements can become **physical place**.
+## 17. Items, storage and persistent ownership
 
-A house can display:
-- identity;
-- history;
-- utility;
-- social group.
+Resources, equipment, food, potions, runes, clues, quest objects, cosmetics, pets, tools, artifacts and components have different purposes. The Bank supports persistent organization and repeated activity, but abundance creates search and cleanup burdens. An obsolete tool can remain emotionally valuable through its giver or history even when a better tool is easy to buy. [RS-T](#rs-t)
 
-OpenLegend should make important accomplishments leave visible world artifacts rather than only profile badges.
+**Interpretation:** a generated-object world needs provenance, favorites, meaningful categories and reclamation as much as it needs novel loot. More possessions can increase administration without increasing choice.
 
-## 21. Other management/home systems
+## 18. Grand Exchange and the market
 
-Across its history RuneScape also includes systems such as:
-- Player-Owned Farm;
-- Player-Owned Port;
-- Fort Forinthry;
-- Kingdom management;
-- invention machines;
-- clan citadels.
+The Grand Exchange matches asynchronous player offers. Most ordinary tradable resources therefore have both a use value and an opportunity-cost market value. Gathering, processing, fighting and trading can each finance another activity. Ironman accounts have narrow exceptions such as permitted Bond access rather than ordinary unrestricted exchange. [RS-J](#rs-j)
 
-These vary in current relevance.
+**Interpretation:** market convenience creates specialization, while also allowing players to bypass the personal history of an item. Neither structure is inherently more meaningful; the player needs to know which economic rules define the chosen account or world.
 
-The broad design lesson:
-> persistent identity benefits from places/institutions the player can return to.
+## 19. Ironman as a chosen economic constraint
 
-The failure mode is system archipelago:
-- each subsystem with separate currency/UI/timer;
-- few meaningful interactions.
+Ironman restricts exchange and assistance, making an ingredient or equipment upgrade evidence of the account's own permitted acquisition. The same herb can mean an inexpensive purchase to one account and an expedition or harvest to another. This changes value without changing the ingredient's ordinary use. [RS-J](#rs-j)
 
-OpenLegend should prefer shared:
-- people;
-- items;
-- time;
-- resources;
-- geography
+**Interpretation:** vows or world laws can alter a familiar activity's meaning. Their limits must be explicit. Silently denying a previously permitted trade is not meaningful self-sufficiency or roleplay.
 
-over disconnected management minigames.
+## 20. Construction and the 2026 house
 
-## 22. Social systems: clans, friends, trade and shared activity
+The documented July 13/14 housing release rebuilds Player-Owned Houses, raises Construction to **120**, adds freer room/furniture arrangement and connects achievements to customization. **Homesteads** supply a shared-neighborhood route. This is modern RuneScape's update, not OSRS Construction. [RS-C](#rs-c)
 
-RuneScape supports:
-- friends/ignore;
-- chat;
-- clans;
-- clan citadels;
-- grouping;
-- trading;
-- bosses;
-- public skilling;
-- social hubs.
+**Interpretation:** achievement can become visible place rather than only a profile number. A home can express usefulness, history and a social group simultaneously. That does not establish a general simulation of autonomous tenants or every visitor's memories.
 
-The Grand Exchange and portable/community-skilling traditions have historically concentrated players.
+## 21. Management systems: actual work rather than a list of names
 
-But current Steam criticism observes:
-- many old activities are empty;
-- visible players may be AFK/not chatting;
-- public chat/scam/troll concerns reduce social interaction. [RS-E](#rs-e)
+### Player-Owned Ports
 
-This is a crucial OpenLegend lesson:
-> population density is not social density.
+Choose a voyage, fit a ship, assign a captain and a suitable crew, then await the result. Morale, Combat and Seafaring demands make different personnel useful; speed changes another aspect of the commitment. Returned resources improve the port and ships, while trade goods and discoveries connect to production outside it. A successful voyage is not an independently simulated journey observed moment by moment. [RS-AO](#rs-ao) [RS-AP](#rs-ap)
 
-To feel social, a world needs reasons to:
-- communicate;
-- depend;
-- remember;
-- cooperate;
-- conflict.
+**Interpretation:** delegation becomes interesting when a scarce specialist improves one task at the expense of availability for another. A timer without a legible choice would be a weaker system.
 
-## 23. PvP and the Wilderness
+### Managing Miscellania
 
-RuneScape historically made the Wilderness a major PvP/risk space.
+After the relevant quests, fund coffers and assign subjects to resource categories through Advisor Ghrim. Approval and available funding affect returns. Helping residents can improve approval; theft or violence can undermine it. Further quest progress expands the kingdom's operation. This is a management abstraction, not a full labor market where every subject consumes the delivered resources. [RS-AQ](#rs-aq)
 
-Modern RuneScape has repeatedly reworked it, and PvP has less central participation than in Old School.
+**Interpretation:** authority creates recurring responsibility, but frequent approval servicing can become a chore if the best action never varies. Social legitimacy and treasury money are different requirements.
 
-Do not transfer OSRS's current PvP ecosystem to modern RuneScape.
+### Fort Forinthry
 
-The historical lesson:
-- a dangerous region can be defined by different social law;
-- but population and incentive structure determine whether it remains alive.
+Construction turns materials and building work into a functional hub, with quests and tiers gating development. The **Command Centre** brings access to Ports, Miscellania, Anachronia and Archaeology research into one place. Other buildings support distinct activities. That is concrete consolidation of previously scattered interfaces, not merely another decorative headquarters. [RS-AR](#rs-ar)
 
-OpenLegend can use:
-- lawless frontier;
-- faction war zone;
-- duel jurisdiction;
+Invention machines and clan citadels are additional management/social infrastructure, with their own constraints. Their existence does not mean the entire world uses one unified citizen economy.
 
-as **world rules**, not just a combat toggle.
+**Interpretation:** the failure mode is an archipelago of currencies and timers. Shared people, objects, places and accessible operations can connect systems without pretending that every abstraction is literal physical simulation.
 
-## 24. Activities, minigames and “dead content”
+## 22. Social infrastructure and social density
 
-RuneScape accumulated:
-- minigames;
-- Distractions & Diversions;
-- daily/weekly/monthly activities;
-- old bosses;
-- old training methods.
+Friends, ignore lists, chat, clans, citadels, groups, trading, shared skilling and bosses create several kinds of association. The Grand Exchange and historical portable-skilling gatherings concentrate people. Yet the inherited player evidence describes silent/AFK crowds, scams and deserted older group activities. These are bounded accounts, not a population census. [RS-E](#rs-e) [RS-T](#rs-t)
 
-Some remain valued.
+**Interpretation:** population density is not social density. Useful dependence, communication, memory, shared work and conflict supply reasons for interaction. A busy scene can lack those reasons; a two-person project can possess them.
 
-Others lack enough players/reward relevance.
+## 23. Wilderness: inspect the current risk contract
 
-This is one of the clearest warnings for OpenLegend:
-> every new mechanic creates a maintenance and attention cost.
+The **2022 Wilderness Reborn** change made PvP opt-in. Vala provides the voluntary route, and PvP-enabled players are skulled; eligible combat requires the other player's corresponding participation. Wilderness depth, teleport restrictions, specific items and death exceptions still matter. Opting out of PvP is not immunity from dangerous monsters. [RS-AS](#rs-as) [RS-AN](#rs-an)
 
-A world can have infinite possible content while still needing:
-- retirement;
-- consolidation;
-- reward migration;
-- discovery filtering.
+The 2022 announcement also described a Threat system, but that historical description is not adopted as the complete current system. Similarly, **Warbands and Wilderness Flash Events were disabled in the March 2026 overhaul**; their former schedules must not be listed as current return loops. [RS-AE](#rs-ae)
 
-The 2026 restoration program's willingness to remove obsolete MTX items is a useful live-ops example of reopening reward space. [RS-K](#rs-k)
+**Interpretation:** different jurisdictions can change social law and risk. That is richer than a hidden damage toggle, but it requires reliable communication of entry, consent and consequences. OSRS's Wilderness is not evidence for this game's present rules.
 
-## 25. Leagues: temporary altered law
+## 24. Activity retirement and DailyScape
 
-Modern RuneScape began adopting a Leagues-style limited-time mode.
+The service accumulated minigames, daily/weekly/monthly activities, older bosses and training methods. Some remain meaningful; others lose participation or reward relevance. The 2026 overhaul demonstrates selective redesign rather than a universal removal of recurring play: Guthixian Cache becomes player-triggered through collected memories, while other services are removed or rewards redistributed. Existing stock and the ability to create more of it can have different migration rules. [RS-AE](#rs-ae)
 
-Leagues II: **Equilibrium** launched August 10, 2026, using:
-- accelerated progression;
-- region/constraint structure;
-- altered powers;
-- task-based advancement;
-- temporary rules.
+**Interpretation:** every new mechanic consumes maintenance and attention. A world can support broad choice while retiring an obsolete attendance requirement. Removing an activity also requires handling its rewards and existing possessions honestly; a new roadmap is not permission to erase them without a contract.
 
-This is separate from permanent Gielinor progression.
+## 25. Leagues and bounded alternative rules
 
-The pattern is valuable:
-> explore extreme alternate laws in a bounded mode instead of destabilizing the canonical persistent world.
+The preserved 2026 research records **Leagues II: Equilibrium**, launched August 10, with accelerated progression, tasks and altered constraints. It is a temporary mode, not a silent reset of the permanent modern-RuneScape character. The announcement history and roadmap frame the mode separately from ordinary Gielinor. [RS-L](#rs-l) [RS-V](#rs-v)
 
-OpenLegend can support:
-- experimental shards;
-- dream worlds;
-- tournament realities;
-- creator scenarios
+**Interpretation:** experimental shards, challenge worlds or dream scenarios can test extreme rules without destabilizing existing lives. The mode's rewards and persistence should be explicit rather than inferred from shared art and locations.
 
-without silently mutating existing worlds.
+## 26. Art, sound and the interface
 
-## 26. Visuals, audio and interface
+The long-lived world places different visual eras beside one another. July 2026's avatar refresh makes modernization visible, and the inherited reviews contain both approval and resistance to the changed style. A newer mesh is not automatically better continuity for every veteran. [RS-L](#rs-l) [RS-E](#rs-e)
 
-RuneScape's 25-year continuity creates strong visual inconsistency.
+The customizable PC interface supports expert workflows but can overwhelm newcomers; mobile compresses the same activity into smaller targets and fewer immediately visible controls. Progressive disclosure should reduce the need to reorganize everything before understanding one useful action. [RS-I](#rs-i)
 
-New areas/assets can sit beside:
-- older geometry;
-- older animations;
-- different art eras.
+### Sound can participate in both place and play
 
-The July 8, 2026 player-avatar refresh was explicitly part of the restoration roadmap. [RS-L](#rs-l)
+RuneScape's music interface historically supports collecting, selecting and arranging unlocked tracks rather than only playing an anonymous background score. Historical playlist capacities should not be mistaken for a verified current limit. [RS-AT](#rs-at)
 
-Current Steam feedback proves visual change can itself be contentious:
-- some players praise modernization;
-- some September 2026 reviews dislike the new character mesh/style. [RS-E](#rs-e)
+*Citharede Requiem* is tied to the abbey quest, combines previously encountered song material and is credited to Mod Bond and Mod Lord in the inspected track reference. The 2011 release explanation explicitly connects recorded music and voiced characters to the mystery. Sound was designed to enrich it, but the official text also says it can be completed without audio. No music was newly auditioned here, and no lyrics are reproduced. [RS-AU](#rs-au) [RS-AB](#rs-ab)
 
-### Interface
+**Interpretation:** a familiar musical fragment can become remembered evidence and a marker of place. Accessibility requires distinguishing the emotional contribution from information that would become unavailable without hearing it.
 
-PC supports a deeply customizable multi-panel/action-bar interface.
+## 27. Story, tone and named consequences
 
-That power creates:
-- personalized workflows;
-- overwhelming new-player complexity.
+The world accommodates absurd humor, village problems, political conflicts, gods and cosmic threats. The player's role can be helper, opportunist or troublemaker, while some major arcs grant exceptional status. The original suggestion that the game never makes the player a chosen figure would overstate the local-adventure contrast. Havenhythe's grounded focus is a dated direction, not the whole franchise's timeless premise. [RS-B](#rs-b) [RS-F](#rs-f)
 
-Mobile must compress the same game and current/historical reviews cite:
-- small buttons;
-- limited action-bar capacity;
-- precision/performance issues. [RS-I](#rs-i)
+*The Temple at Senntisten* connects Azzanadra, religious history, relic acquisition and access to Ancient Curses. Its **Barrows icon** supplies a particularly useful precision lesson: the relic's narrative description of absorbing prayer is not evidence that taking it removes the Barrows area's Prayer-drain behavior. Quest prose and operational dependencies must actually agree before the player can infer that outcome. [RS-AI](#rs-ai) [RS-AV](#rs-av)
 
-OpenLegend needs progressive disclosure:
-- novice surface;
-- expert customization;
-- same underlying world semantics.
+**Interpretation:** named stories can change the available toolkit, but a symbolic explanation is not a universal simulation rule. A stronger generative world would need to make a claimed causal dependency real or state its narrower meaning.
 
-## 27. Story and tone
+## 28. Monetization as accumulated design debt
 
-RuneScape's narrative identity mixes:
-- absurd British humor;
-- mundane village problems;
-- political/faction stories;
-- gods;
-- cosmic threats;
-- archaeology/history;
-- self-aware quests.
+Historically the service combined membership, Bonds, cosmetic commerce and Treasure Hunter keys/progression rewards. The preserved Jagex account records **124,985 votes** supporting the removal outcome and a January 19, 2026 change removing Treasure Hunter and more than 225 directly sold progression/skilling items. Vote count, turnout and current satisfaction are different measures. [RS-M](#rs-m) [RS-V](#rs-v)
 
-The game often gives the player a role that is:
-- adventurer;
-- opportunist;
-- helper;
-- accidental troublemaker;
+The September 24 plan continues legacy-stock cleanup toward **November 23, 2026**, including proposed removal/revision of Proteans, training dummies and portable stations. Some effects may reappear through ordinary play. Those future changes are not all completed merely because the shop already stopped selling the items. [RS-K](#rs-k)
 
-rather than a single fixed “chosen one.”
+**Interpretation:** selling a workaround for bad friction can make improving the underlying game commercially painful. Monetization occupies reward and progression space, not only a billing screen. The documentation supports this design concern; it does not establish a complete causal model of revenue or player trust.
 
-Havenhythe's 2026 direction explicitly shifts toward:
-- local inhabitants;
-- vampyre threat;
-- early/mid-level bosses;
-- grounded questing
+## 29. Membership, free access and Bonds
 
-rather than only world-ending god stakes. [RS-B](#rs-b)
+Free access provides part of the game; membership opens much broader content. Bonds connect real-money purchase, player exchange and supported benefits such as membership. That permits a playing-to-membership route while also connecting demand for cash purchases to the gold economy. Current regional prices are not frozen from historical reviews. [RS-J](#rs-j)
 
-OpenLegend can learn from the tonal breadth:
-> a persistent world needs room for “help a child become a wizard” alongside existential threats.
+Bonds are not the removed Treasure Hunter key mechanic. Shared account/membership arrangements across the franchise do not mean character progression transfers between the two MMOs. **Interpretation:** access, exchangeable tokens and randomized progression sales have different effects and should not be collapsed into one generic monetization label.
 
-## 28. 2026 integrity reset: monetization became game design debt
+## 30. Production and technological continuity
 
-For years modern RuneScape included:
-- subscription;
-- Bonds;
-- cosmetics/Marketplace;
-- **Treasure Hunter** keys with XP/progression rewards.
+The service evolved from browser Java through later clients, HTML5-era experiments, NXT, Steam/mobile and newer infrastructure work. The September 2026 API/plugin presentation remains a **preview**, including helper/interface ideas, rather than proof every proposed plugin shipped. [RS-N](#rs-n)
 
-Player criticism of gameplay-impacting MTX became deeply entangled with the game's identity.
+**Interpretation:** players' meaningful continuity lives in people, possessions, history and learned activities, not necessarily the old rendering substrate. Replacing infrastructure still requires preserving those contracts. This research does not reconstruct proprietary server architecture, staffing or budget from the world's age.
 
-In October/November 2025 Jagex held a vote.
+## 31. Community participation and authority
 
-**124,985 votes** supported the removal threshold/outcome.
+Forums, social channels, betas, surveys, RuneFest, creators and votes offer different participation routes. The Treasure Hunter vote demonstrates community influence over a commercial decision; it does not make modern RuneScape governed by OSRS's routine content-poll constitution. [RS-M](#rs-m)
 
-On January 19, 2026:
-- Treasure Hunter was removed;
-- more than 225 direct-XP/skilling items stopped being sold;
-- the Road to Restoration began. [RS-M](#rs-m)
+**Interpretation:** explain which decisions players genuinely control and which remain operational responsibilities. Calling every feedback channel co-development can conceal how little authority a participant actually has.
 
-### September 24, 2026 current status
+## 32. Commercial and participation definitions
 
-Jagex is still removing/revising legacy stockpiled items.
+The preserved record includes the historical 200-million-account milestone around the RS3 era, later **300-million-plus franchise accounts**, Steam's October 2020 distribution and broad mobile launch in 2021. Jagex's promotional descriptions of a large or active franchise community are not a separately published current modern-RuneScape MAU figure. [RS-O](#rs-o)
 
-The current plan says:
-- final cleanup date: November 23, 2026;
-- Proteans/training dummies/portable stations and many gameplay-skipping items are slated for removal;
-- some useful effects may be redesigned into normal gameplay;
-- reward space is explicitly a design concern. [RS-K](#rs-k)
+Registered accounts, installs, subscriptions, active people, concurrency and revenue are not interchangeable. Steam is one client slice; multiplying its reviews by an assumed conversion factor is not a defensible whole-service business model. No independently established current title-level profit, retention dataset, cost-per-player or channel attribution is supplied.
 
-This is one of the best live-service lessons in the corpus:
-> monetization can consume **mechanical design space**.
+## 33. Five attributable substantive written assessments
 
-If a paid convenience solves:
-- bad training;
-- tedious banking;
-- slow progression;
+The first four preserve the original pass's substantive readings. The fifth is a newly read, identified mobile-launch hands-on report. These are **not five scored current-version reviews**: two are formal reviews/re-reviews, two are reflective essays and one is limited-duration firsthand criticism. Historical perspectives are explicitly useful for development and audience differences, not current balance certification.
 
-the product can become financially dependent on keeping the underlying friction.
+| Assessment | Specific appreciation | Criticism and access boundary |
+| --- | --- | --- |
+| **Kanishka Thakur, MMORPG.com, March 7, 2023** | Fresh-account freedom, activity breadth, combat options, authored quests and returning after absence. | Overwhelming systems and dated presentation; before Necromancy and the 2026 changes. [RS-F](#rs-f) |
+| **Matt Kamen, Observer/Guardian, August 4, 2013** | Accessibility, community, gradually revealed depth and presentation/audio upgrade. | Slow movement, restrained initial combat and a stilted first impression. RS3 launch context, not a test of today's advanced combat. [RS-P](#rs-p) |
+| **Tyler Wilde, PC Gamer, October 30, 2020** | The world's accumulated strangeness and unusually independent evolutionary history. | Esoteric rules/interfaces for a returning outsider. Substantive return feature, not a scored full-game review. [RS-Q](#rs-q) |
+| **Cameron Sherrill, Esquire, June 16, 2021** | Long progression and a skill cape carry emotional history; old habits survive years. | Nostalgia shapes the account, limiting conclusions about onboarding for a stranger. Firsthand return essay. [RS-R](#rs-r) |
+| **Gabriel Daros, Vida Celular, June 17, 2021** | Classless everyday roles and the substantial shared PC/mobile game remain appealing. | Reports four crashes during his Android tutorial and missed/small touch controls. Limited mobile hands-on, not a completed campaign or current reliability test. The article's loose RS3/OSRS lineage wording is not accepted as factual authority. [RS-AW](#rs-aw) |
 
-OpenLegend should avoid that trap.
+The prior **unidentified App Store corpus is no longer counted as the fifth assessment**. Its historical observations about broad activity, progression, small controls, action-bar pressure and performance are retained as additional player evidence. They do not become a single independently attributable review merely because several themes were summarized. [RS-I](#rs-i)
 
-## 29. Membership, free-to-play, Bonds and current economy
+MMORPG.com's 2010/2011 review archive remains a further historical route, not current mechanics evaluation or two additional independent organizations. [RS-S](#rs-s)
 
-RuneScape offers:
-- free-to-play;
-- membership for much broader content;
-- Bonds purchasable with real money and tradeable in-game for membership/other supported benefits;
-- cosmetic/Marketplace commerce.
+**Synthesis:** continuity can be a powerful reward while the work of learning and controlling the accumulated game remains expensive. One player's lifelong attachment and another's poor first mobile session can both be genuine.
 
-One membership/account ecosystem historically covers access across RuneScape/OSRS under Jagex account rules, though pricing/packages change and should not be frozen from old reviews.
+## 34. Helpful Steam testimony and temporal limits
 
-Because Bonds are tradeable:
-- real-money demand can enter the gold economy through a controlled item.
+The earlier inspected helpful surface values content breadth, distinctive quests, classlessness, return after absence and social history. The account of retaining a gifted Rune pickaxe/hatchet for nearly twenty years is particularly useful: provenance can matter after mechanical usefulness has faded. It remains that player's story, not newly verified item telemetry. [RS-T](#rs-t)
 
-This creates:
-- legitimate membership-by-playing path;
-- exchange-rate/economy effects.
+Historical 2025 negative accounts object to membership changes, survey proposals, Treasure Hunter and cosmetic coherence. January 2026's removal changes the current factual context. The earlier September sample instead includes grind, deserted activities, onboarding, account friction, platform problems, avatar dislike and quest instancing that limits cooperation. These are self-selected reports, not measured prevalence or a new sample collected during this remediation. [RS-E](#rs-e) [RS-U](#rs-u)
 
-Do not confuse Bonds with the removed Treasure Hunter system:
-- the latter sold randomized/gameplay-skipping progression;
-- Bonds are a distinct tradable token system.
-
-## 30. Production and technological evolution
-
-RuneScape is a rare 25-year continuously operated world.
-
-It evolved:
-- browser Java;
-- new engines/clients;
-- HTML5-era experiments;
-- NXT/downloadable client;
-- Steam/mobile;
-- current Vulkan/API/plugin work.
-
-The 2026 roadmap includes:
-- modern infrastructure;
-- API/plugin support;
-- Quest Helper/tile/menu-style community plugins in preview;
-- visual/UX modernization. [RS-N](#rs-n)
-
-This is relevant to OpenLegend:
-> preserve world continuity while replacing technical substrate.
-
-Players care more about:
-- items;
-- history;
-- mechanics;
-- identity
-
-than whether the renderer/network/client internals remain unchanged.
-
-## 31. Community co-development
-
-RuneScape has used:
-- forums/Reddit/Discord;
-- betas;
-- surveys;
-- RuneFest;
-- creator programs;
-- community votes;
-- limited-time modes.
-
-The 2025 Treasure Hunter vote demonstrates meaningful governance over a commercial system.
-
-But modern RuneScape is **not** governed by OSRS's routine content-poll model.
-
-Do not transfer OSRS voting rules into G48.
-
-A useful OpenLegend principle:
-- identify which decisions are legitimately community-owned;
-- do not pretend every design choice is a referendum.
-
-## 32. Commercial and participation context
-
-Public measures include:
-- 200M+ accounts by the RuneScape 3 era;
-- Jagex now describes the franchise as having welcomed **300M+ player accounts**;
-- Steam launched in October 2020;
-- mobile launched broadly in 2021;
-- Jagex describes the 2026 RuneScape community as its largest/most active franchise community, but does not publish a directly comparable modern-RuneScape MAU in the cited release. [RS-O](#rs-o)
-
-Do not treat:
-- registered accounts;
-- installations;
-- active players;
-- subscribers;
-- concurrent players
-
-as interchangeable.
-
-The current Steam page/review corpus is only one client slice; many long-time players use the Jagex launcher/mobile.
-
-## 33. Five substantive written reviews / re-reviews
-
-Because RuneScape is continuous, reviews from different years describe **different games**.
-
-### 1. MMORPG.com — Kanishka Thakur, March 7, 2023
-
-**Fresh-account re-review.**
-
-**Praised:** no fixed classes; enormous activity variety; modern combat freedom; quests/story; ability to return after long breaks.
-
-**Criticized:** overwhelming quantity/complexity and dated presentation compared with newer MMOs.
-
-This is the strongest relatively modern independent review before the 2026 reset. [RS-F](#rs-f)
-
-### 2. The Observer/Guardian — Matt Kamen, August 4, 2013
-
-**RuneScape 3 launch-era review.**
-
-**Praised:** accessibility, community, depth that reveals itself with investment, orchestral/presentation upgrade.
-
-**Criticized:** slow click movement, restrained/boring combat for a newcomer, stilted first impression.
-
-This describes 2013, not current Necromancy/Revolution/bossing. [RS-P](#rs-p)
-
-### 3. PC Gamer — Tyler Wilde, October 30, 2020
-
-A substantial return/feature rather than a scored review.
-
-**Praised/observed:** extraordinary weirdness/history and breadth; RuneScape feels like a separate evolutionary lineage of PC game rather than a generic MMO.
-
-**Critique/limit:** its accumulated interfaces/rules are esoteric to an outsider.
-
-Included because genuine modern-RuneScape scored-review coverage is sparse; it is labeled accordingly. [RS-Q](#rs-q)
-
-### 4. Esquire — Cameron Sherrill, June 16, 2021
-
-A first-person return/review essay around mobile launch.
-
-**Praised:** skill-cape/long progression has unusual emotional force; old habits/identity persist across years.
-
-**Critique/boundary:** nostalgia is inseparable from the author's experience; not a clean new-user quality measurement. [RS-R](#rs-r)
-
-### 5. App Store — substantive player/mobile review corpus, 2021
-
-Not professional criticism, but multiple long-form direct users independently report:
-- huge activity breadth;
-- satisfying progression;
-- PC-quality game on mobile;
-
-alongside:
-- small controls;
-- action-bar shortage;
-- performance/precision problems;
-- EoC/interface complexity. [RS-I](#rs-i)
-
-**Evidence limit:** there are fewer independent modern professional reviews than for a new boxed game. This fifth slot is transparently direct player criticism rather than pretending another historical MMO.com article is independent.
-
-### Historical review archive
-
-MMORPG.com also preserves substantive 2011 and 2010 re-reviews, but those precede:
-- EoC;
-- RuneScape 3;
-- Invention;
-- Archaeology;
-- Necromancy;
-- current world.
-
-They are useful product-history evidence, not current mechanics evaluation. [RS-S](#rs-s)
-
-## 34. Steam positive and negative player evidence
-
-### Helpful positives
-
-Highly helpful Steam reviews praise:
-- sheer amount of content;
-- distinct authored quests/lore;
-- no class locks;
-- long-term attachment;
-- returning after years;
-- friendship/history.
-
-One player's story about keeping a Rune pickaxe/hatchet gifted by a stranger for nearly twenty years is especially relevant:
-> persistent objects can become social memory because **who gave it to you** matters. [RS-T](#rs-t)
-
-### Helpful negatives / 2025–2026 shift
-
-A major 2025 negative review wave focused on:
-- membership price;
-- survey/monetization fears;
-- Treasure Hunter/gameplay MTX;
-- visual cosmetic incoherence.
-
-The 2026 Treasure Hunter removal materially changes that historical complaint and must be noted. [RS-T](#rs-t) [RS-M](#rs-m)
-
-Current September 2026 negatives instead include:
-- grind/repetition;
-- dead group minigames;
-- new-player disorganization;
-- account/subscription friction;
-- mobile/Steam Deck performance;
-- dislike of the new avatar art;
-- quest instancing limiting co-op. [RS-E](#rs-e)
-
-Current positives still include:
-- returning after 10+ years;
-- ongoing progression;
-- “continue my story” persistence. [RS-U](#rs-u)
+**Interpretation:** service stewardship, interface failure and dislike of repetitive progression are different problems. An average review score does not identify which caused a particular person's departure.
 
 ## 35. Concrete situations
 
-### Situation A — one person changes professions without changing identity
+The six earlier cases are preserved and clarified, with four new named operational cases. All are constructed examples except B's attributed player memory and F's analysis of a documented policy change. No scenario is claimed personally played.
 
-**Morning:** mine ore.
+### A. Change roles without replacing the person
 
-**Later:** smith equipment.
+A character mines material, uses the appropriate smelting/smithing facilities, then equips a developed combat setup for another activity. The next choice may be another resource chain, quest or farm visit. **Limit:** classlessness does not remove skill requirements, tool access or the cost of developing those alternatives. [RS-F](#rs-f)
 
-**Evening:** equip Magic/Necromancy setup and boss.
+### B. Keep an obsolete gift
 
-**Next day:** complete a quest or farm herbs.
+The inherited player account preserves a stranger's tool long after better equipment exists. Its value lies in remembered help rather than current efficiency. **Next question:** which provenance deserves explicit storage and display? **Limit:** the player's memory does not establish that the game automatically recorded a complete transfer biography. [RS-T](#rs-t)
 
-**Result:** one persistent person accumulates multiple competencies.
+### C. Delegate a routine, retain an intervention
 
-**Lesson:** role should often be contextual capability, not class identity.
+With Revolution configured, a player lets ordinary eligible abilities execute and manually responds to a dangerous mechanic. **Next decision:** revise priorities or keep the routine. **Limit:** the bar cannot execute an unavailable ability or decide every encounter goal; automation is not unlimited tactical understanding. [RS-H](#rs-h)
 
-### Situation B — a gifted object accumulates social history
+### D. Give the same ingredient different acquisition meaning
 
-**State:** another player gives a valuable tool to a struggling newcomer.
+A normal account purchases a missing herb; an Ironman must obtain it through permitted self-sufficient activity. Both may later use the same preparation. **Next decision:** invest in a renewable supply or change the activity. **Limit:** an optional account restriction should not be described as a universal world law. [RS-J](#rs-j)
 
-**Years later:** the object may be mechanically obsolete but emotionally irreplaceable.
+### E. Make achievement visitable
 
-**Lesson:** store provenance/creator/giver/history on meaningful OpenLegend objects.
+A supported quest/achievement-linked furniture unlock becomes part of a rebuilt home or Homestead. **Result:** past activity changes a place other people can visit. **Next decision:** emphasize practical utility or personal expression. **Limit:** an unlock is not proof that visitors independently remember its origin. [RS-C](#rs-c)
 
-### Situation C — use Revolution for routine, intervene for danger
+### F. Distinguish an announced retirement from a completed removal
 
-**State:** action bar configured.
+Treasure Hunter sales end in January, while legacy-item cleanup still has a November deadline. Designers can plan ordinary rewards for the space being reopened, but existing stock has not vanished merely because a roadmap says it will. **Limit:** a commercial intention is not yet a shipped migration. [RS-K](#rs-k) [RS-V](#rs-v)
 
-**Routine:** Revolution triggers normal abilities.
+### G. Extract experience without destroying a valued tool
 
-**Boss mechanic:** player manually uses defensive/utility action.
+A player with the discovered siphon and an eligible augmented item chooses to extract its accumulated experience rather than disassemble it. The item survives with its item experience reset. **Next decision:** keep using it or choose a different investment. **Limit:** the alternative has its own eligibility and experience tradeoff; preservation is not free duplication. [RS-AA](#rs-aa)
 
-**Lesson:** delegation should expose an intervention gradient, not only manual versus full autonomy.
+### H. A farmhand changes when attention is needed
 
-### Situation D — choose market economy versus self-sufficiency
+A breeder wants adolescent bean-sale value but cannot check growth continuously. A suitable babysitter changes the growth-management contract. **Next decision:** sell, breed or allow later development for another benefit. **Limit:** this is a bounded service, not a worker reasoning about arbitrary animal welfare and market goals. [RS-X](#rs-x)
 
-**Normal account:** buy missing resource on Grand Exchange.
+### I. A familiar supplies a state-dependent intervention
 
-**Ironman:** must acquire/craft it through permitted personal play.
+A qualified summoner with the Phoenix and its appropriate scroll considers **Rise From the Ashes** near ashes. The move combines the familiar's condition with a particular environmental resource and an area effect. **Next decision:** use the opportunity now or preserve supplies. **Limit:** merely owning an unrelated pet does not supply the same capability, and an invalid setup does not authorize imagined healing. [RS-AX](#rs-ax)
 
-**Result:** identical item gains a different story/value.
+### J. A central office saves travel without unifying ownership
 
-**Lesson:** authored social/economic constraints change meaning without changing ontology.
+After constructing the Fort's Command Centre, the player reaches several established management operations from one location. **Result:** the interface journey shortens while the underlying crews, coffers and research remain separate systems. **Next decision:** allocate work in each according to its actual resources. **Limit:** one building is not proof of one globally shared labor pool or simulated organization. [RS-AR](#rs-ar)
 
-### Situation E — achievement becomes furniture/place
+## 36. Transferable inspiration and counter-lessons
 
-**State:** player earns quest/achievement-linked housing unlock.
+**One body, many learned roles.** Capabilities, tools and relationships can define a profession without requiring a different character. Preserve meaningful specialization rather than guaranteeing universal mastery.
 
-**Action:** build/display it in rebuilt 2026 house/Homestead.
+**Make skills networks.** Material origin, processing, consumers and sinks connect ordinary work. Social expertise can likewise connect teaching, trust and organization instead of living in an isolated dialogue statistic.
 
-**Result:** profile history becomes visitable physical expression.
+**Keep objects long enough to gain history.** Repair, adaptation, gifts and retrieval can matter alongside new loot. Describe which transformations preserve identity and which destroy it.
 
-**Lesson:** surface biography in world state.
+**Make achievements physical.** Homes, clothing and artifacts can express a biography, but should not infer private knowledge in every observer automatically.
 
-### Situation F — remove paid shortcut and reopen design space
+**Offer a delegation spectrum.** Automate understood execution while retaining purposes, priorities, budgets and emergency intervention. Reliable low-level work matters more than fluent explanations of work that never happened.
 
-**State:** portable/protean MTX previously bundles training benefits.
+**Design for return after absence.** Help people recover their goals, relationships and changes in the rules without erasing prior identity. A returning veteran and a new player need different explanations.
 
-**2026 action:** Jagex removes or redesigns it.
+**Avoid disconnected system islands.** Shared places and interfaces can reduce administration while preserving distinct ownership and resource contracts.
 
-**Result:** future ordinary rewards/training improvements can occupy that space.
+**Retire carefully as well as add.** Obsolete systems consume attention; migration should distinguish new production, existing stock, promised replacement and actual delivered behavior.
 
-**Lesson:** monetization architecture constrains game architecture.
+**Do not finance the game by preserving bad friction.** A sold workaround can constrain future improvements. This is a design warning, not a claim that every paid convenience is harmful or that RuneScape's private finances were reconstructed.
 
-## 36. Transferable inspiration for OpenLegend
+## 37. Requirement, preservation and access review
 
-### A. One body, many learned roles
-
-Do not force:
-- blacksmith;
-- hunter;
-- mage;
-- farmer
-
-into mutually exclusive class slots unless a world specifically wants that law.
-
-### B. Make skills networks
-
-Mining should feed:
-- building;
-- trade;
-- equipment;
-- invention.
-
-Social skills should similarly connect:
-- trust;
-- teaching;
-- persuasion;
-- organization.
-
-### C. Preserve objects long enough to acquire history
-
-A persistent-world item can become valuable because:
-- maker;
-- owner chain;
-- battle;
-- gift;
-- repair.
-
-### D. Give achievements physical expression
-
-Homes, clothes, titles, monuments and tools can remember.
-
-### E. Offer a delegation spectrum
-
-Revolution is a useful analogy:
-- automate routine;
-- allow manual high-level intervention.
-
-### F. Design for return after absence
-
-A persistent world should help answer:
-- what changed?
-- what was I doing?
-- who do I know?
-- which possessions matter?
-
-without invalidating old identity.
-
-### G. Avoid “system archipelago”
-
-New features should reuse:
-- people;
-- economy;
-- items;
-- geography;
-- time.
-
-### H. Prune aggressively enough to protect the future
-
-Twenty-five years proves that no live system can only add.
-
-### I. Never fund the game by preserving bad friction
-
-If monetization sells a workaround, improving the underlying problem becomes commercially painful.
-
-## 37. Requirement and preservation check
-
-| Requirement | Coverage |
+| Requirement | Substantive owner |
 | --- | --- |
-| R01 identity / exact modern-RS boundary | §§1–3 |
-| R02 player actions / mechanics | §§3–25 |
-| R03 items / entities / composition | §§4–9, 14–21 |
-| R04 progression / economy / time | §§3–10, 17–25, 29 |
-| R05 concrete situations | §35 |
-| R06 people / AI / social / multiplayer | §§20–23, 31 |
-| R07 art / audio / interface / feel | §26 |
-| R08 story / narrative | §§11–12, 27 |
-| R09 production / development | §§28, 30–31 |
-| R10 marketing / distribution / community | §§30–32 |
-| R11 commercial / participation | §§29, 32 |
-| R12 reviews / player feedback | §§33–34 |
-| R13 inspiration / limits | §36 |
-| R14 sources / preservation / navigation | this section + sources |
+| R01 identity and version | §§1–3; modern/OSRS/Dragonwilds and dated updates |
+| R02 operational actions | §§4–25; travel, casting, support, management and recovery |
+| R03 items and composition | §§4, 7–9, 12, 14, 17–21 |
+| R04 progression, economy and time | §§3–10, 12–19, 21, 24–25, 29 |
+| R05 concrete situations | §35, ten preserved/extended cases |
+| R06 people, AI and multiplayer | §§14, 20–23, 31; explicit abstraction boundaries |
+| R07 presentation and audio | §26 and named platform criticism |
+| R08 narrative and gameplay | §§8, 11–12, 27; named quest/item connections |
+| R09 production and iteration | §§24, 28, 30–31; official chronology and limits |
+| R10 distribution and community | §§1, 25, 29–32; no invented attribution |
+| R11 commercial definitions | §§29, 32; accounts, active users and revenue distinguished |
+| R12 criticism and player evidence | §§33–34; five attributable texts and inherited sampling limits |
+| R13 conditional lessons | §36 and case-specific limits |
+| R14 sources and preservation | this section and annotated register |
 
-**Mechanics-inventory check:** 29-skill classless progression; gathering/processing; combat styles/EoC/Revolution/Legacy; Necromancy; bossing/Slayer; items/bank; trade/Grand Exchange; Ironman; quests; housing/Farm/Port/Fort examples; social/clans; PvP boundary; D&D/minigames; Leagues; death; mobile/PC; current MTX state are covered. Exact tables for thousands of items/quests are intentionally not reproduced.
+**Inventory:** classless skills, material production, combat modes/styles, Magic/Prayer/Summoning/Necromancy, progression, items/storage/charges, trade, account restrictions, travel, authored quests, managed property, social/PvP access, recurring modes, loss, mobile/PC and monetization history are addressed. No exhaustive recipe, boss, price or coefficient catalog is implied.
 
-**Preservation check:** G48 was added after the original packet and has no prior full chapter to overwrite. Shared franchise history is repeated only where necessary to establish the modern-game boundary; G49 independently researches OSRS rather than treating it as a mode.
+**Preservation:** this post-packet roster addition has no identified older full chapter to overwrite. The original four written assessments, player themes, six situations, commercial definitions and historical/2026 sources remain, with corrections and additional depth rather than replacement by unsupported claims. The App Store material is retained outside the five-text count. G49 and G50 are not merged into this scope. The packet-wide reconciliation remains separate.
 
-## Sources
+**Access:** new community/reference sources were often available only as substantive indexed text because wiki bodies were blocked. Primary-authored update mirrors are labelled. That supports the described rule relationships, not a claim that every full wiki page or current executable was tested. No audio or video inspection is implied by linking music or a trailer.
 
-<a id="rs-a"></a>**RS-A — [Player-Owned Housing update / current RuneScape availability](https://www.jagex.com/news/runescape-launches-highly-anticipated-player-owned-housing-update).** Jagex, 2026-07-14. PC/Steam/iOS/Android cross-platform statement and current housing scope.
+**Study route:** first compare a gathering chain, a travel unlock and one prepared combat/support setup. Then examine a farmer's sale-versus-growth choice, a voyage assignment and item siphoning. Compare the five historically different critics before treating long-term attachment as evidence of frictionless onboarding. The One Piercing Note release/track pages and Jagex's update media provide optional listening/viewing routes, not watched evidence in this pass.
 
-<a id="rs-b"></a>**RS-B — [RuneScape's biggest area expansion begins: Havenhythe Part I](https://www.jagex.com/news/runescape-s-biggest-area-expansion-in-its-25-year-history-begins-today).** Jagex, 2026-03-23. Hunter 110, Big Game Hunter, fish farming, quests and mid-level bosses.
+## Annotated sources
 
-<a id="rs-c"></a>**RS-C — [Player-Owned Housing update](https://www.jagex.com/news/runescape-launches-highly-anticipated-player-owned-housing-update).** Jagex, 2026-07-14. Construction 120/Homestead/free-layout current boundary.
+### Preserved sources
 
-<a id="rs-d"></a>**RS-D — [The Roadmap That Changes RuneScape Forever](https://runescape.wiki/w/Update%3AThe_Roadmap_That_Changes_RuneScape_Forever).** Official RuneScape news mirrored by RuneScape Wiki, 2026-01-19. Road to Restoration scope; mirror used because some secure site routes vary.
+<a id="rs-a"></a>**RS-A — Jagex, July 14, 2026.** [Housing release and platform statement](https://www.jagex.com/news/runescape-launches-highly-anticipated-player-owned-housing-update). Earlier primary-body research retained; supported modern account/platform scope.
 
-<a id="rs-e"></a>**RS-E — [RuneScape current Steam reviews](https://steamcommunity.com/app/1343400/reviews/).** Steam Community, accessed 2026-09-26. Current self-selected player criticism/praise.
+<a id="rs-b"></a>**RS-B — Jagex, March 23, 2026.** [Havenhythe Part I](https://www.jagex.com/news/runescape-s-biggest-area-expansion-in-its-25-year-history-begins-today). Earlier primary evidence for region, Hunter 110, activities and quests.
 
-<a id="rs-f"></a>**RS-F — [RuneScape — The Re-Review 2023 Edition](https://www.mmorpg.com/reviews/runescape-the-re-review-2023-edition-2000127460).** Kanishka Thakur, MMORPG.com, 2023-03-07. Fresh-account modern re-review.
+<a id="rs-c"></a>**RS-C — [Housing release](https://www.jagex.com/news/runescape-launches-highly-anticipated-player-owned-housing-update).** Same July 14 Jagex source as RS-A, not independent corroboration. Construction 120, layout and Homestead.
 
-<a id="rs-g"></a>**RS-G — [Beyond The Bridge — Exploring Havenhythe Part II](https://secure.runescape.com/m=news/beyond-the-bridge---exploring-havenhythe-part-ii).** RuneScape/Jagex, 2026-09-22. Preview only; Part II not represented as shipped.
+<a id="rs-d"></a>**RS-D — Jagex, January 19, 2026.** [Roadmap mirror](https://runescape.wiki/w/Update%3AThe_Roadmap_That_Changes_RuneScape_Forever). Primary-authored planning, not automatic release evidence for every listed future feature.
 
-<a id="rs-h"></a>**RS-H — [Legacy Mode](https://runescape.wiki/w/Legacy_Mode).** RuneScape Wiki, current rules reference. Used to distinguish Legacy Combat from modern EoC/Revolution, not as proprietary implementation evidence.
+<a id="rs-e"></a>**RS-E — [Steam review feed](https://steamcommunity.com/app/1343400/reviews/).** Earlier September 26 qualitative capture; self-selected, not freshly resampled here.
 
-<a id="rs-i"></a>**RS-I — [RuneScape App Store ratings & reviews](https://apps.apple.com/us/app/runescape/id1332022656?see-all=reviews).** Direct mobile player testimony, primarily 2021 launch-era; version limits explicit.
+<a id="rs-f"></a>**RS-F — Kanishka Thakur, MMORPG.com, March 7, 2023.** [Re-review](https://www.mmorpg.com/reviews/runescape-the-re-review-2023-edition-2000127460). Inherited substantive fresh-account assessment, historically bounded.
 
-<a id="rs-j"></a>**RS-J — [Grand Exchange](https://runescape.wiki/w/Grand_Exchange).** RuneScape Wiki current rules reference, including Ironman restrictions.
+<a id="rs-g"></a>**RS-G — Jagex, September 22, 2026.** [Havenhythe II preview](https://secure.runescape.com/m=news/beyond-the-bridge---exploring-havenhythe-part-ii). Preview retained as preview.
 
-<a id="rs-k"></a>**RS-K — [What's happening with MTX Items in RuneScape](https://secure.runescape.com/m=news/whats-happening-with-mtx-items-in-runescape).** Jagex, 2026-09-24. Current legacy-item removal/revision schedule and design rationale.
+<a id="rs-h"></a>**RS-H — [Legacy Mode](https://runescape.wiki/w/Legacy_Mode).** Community rules reference used in the earlier pass; distinguishes modes, not proprietary implementation.
 
-<a id="rs-l"></a>**RS-L — [Jagex news archive](https://www.jagex.com/news).** Jagex, current archive; records July 8, 2026 player-avatar update alongside other 2026 milestones.
+<a id="rs-i"></a>**RS-I — [Apple user reviews](https://apps.apple.com/us/app/runescape/id1332022656?see-all=reviews).** Earlier primarily 2021 mobile accounts; an unidentified corpus is not counted as an attributable fifth review.
 
-<a id="rs-m"></a>**RS-M — [The Players Have Spoken — Treasure Hunter removal](https://www.jagex.com/news/the-players-have-spoken-runescape-treasure-hunter-microtransactions-to-be-removed-january-19th).** Jagex, 2025-11-12. 124,985 vote/result and January 19, 2026 removal commitment.
+<a id="rs-j"></a>**RS-J — [Grand Exchange](https://runescape.wiki/w/Grand_Exchange).** Community current-at-original-access trade/account reference; not OSRS's tax or exception table.
 
-<a id="rs-n"></a>**RS-N — [API & Plugins September Preview](https://secure.runescape.com/m=news/api--plugins-september-preview).** RuneScape/Jagex, 2026-09-11. Quest Helper/tile/menu/drop/ritual plugin preview; preview status retained.
+<a id="rs-k"></a>**RS-K — Jagex, September 24, 2026.** [Legacy MTX item plan](https://secure.runescape.com/m=news/whats-happening-with-mtx-items-in-runescape). Future November deadline remains future; existing stock and removed sales distinguished.
 
-<a id="rs-o"></a>**RS-O — [RS25 25th anniversary programme](https://www.jagex.com/news/jagex-marks-runescape%E2%80%99s-25th-year-with-rs25-delivering-record-investment-a-dedicated-game-integrity-roadmap-new-game-modes-player-first-design-and-franchise-expansion).** Jagex, 2026-01-15. 25-year/current franchise/community context.
+<a id="rs-l"></a>**RS-L — [Jagex news archive](https://www.jagex.com/news).** Earlier dated 2026 announcement discovery, including avatar refresh and mode history; mutable index, not every body freshly reread.
 
-<a id="rs-p"></a>**RS-P — [RuneScape 3 — review](https://www.theguardian.com/technology/2013/aug/04/runescape-3-jagex-review).** Matt Kamen, The Observer/Guardian, 2013-08-04. Historical RS3-launch review only.
+<a id="rs-m"></a>**RS-M — Jagex, November 12, 2025.** [Treasure Hunter vote/removal commitment](https://www.jagex.com/news/the-players-have-spoken-runescape-treasure-hunter-microtransactions-to-be-removed-january-19th). Vote outcome and commitment, with later delivery supported by RS-V.
 
-<a id="rs-q"></a>**RS-Q — [RuneScape is a lot weirder than I remembered](https://www.pcgamer.com/runescape-is-a-lot-weirder-than-i-remembered/).** Tyler Wilde, PC Gamer, 2020-10-30. Substantive Steam-era return feature, not a scored formal review.
+<a id="rs-n"></a>**RS-N — Jagex, September 11, 2026.** [API/plugin preview](https://secure.runescape.com/m=news/api--plugins-september-preview). Not an assertion that all previews shipped.
 
-<a id="rs-r"></a>**RS-R — [On the all-consuming emotion of earning a Skill Cape in RuneScape](https://www.esquire.com/lifestyle/a36731002/runescape-review-mobile-game-release/).** Cameron Sherrill, Esquire, 2021-06-16. First-person return/review essay with nostalgia limitation.
+<a id="rs-o"></a>**RS-O — Jagex, January 15, 2026.** [RS25 program](https://www.jagex.com/news/jagex-marks-runescape%E2%80%99s-25th-year-with-rs25-delivering-record-investment-a-dedicated-game-integrity-roadmap-new-game-modes-player-first-design-and-franchise-expansion). Franchise/account and production context; no separately published modern MAU inferred.
 
-<a id="rs-s"></a>**RS-S — [RuneScape reviews archive](https://www.mmorpg.com/runescape/reviews).** MMORPG.com. Historical 2010/2011 and 2023 reviews; older pieces used only as history.
+<a id="rs-p"></a>**RS-P — Matt Kamen, Observer/Guardian, August 4, 2013.** [RS3 review](https://www.theguardian.com/technology/2013/aug/04/runescape-3-jagex-review). Inherited full historical criticism.
 
-<a id="rs-t"></a>**RS-T — [RuneScape most helpful Steam reviews](https://steamcommunity.com/app/1343400/reviews/?browsefilter=toprated).** Steam Community, accessed 2026-09-26. Historical long-form player testimony and 2025 MTX protest; 2026 removal changes the latter's current factual context.
+<a id="rs-q"></a>**RS-Q — Tyler Wilde, PC Gamer, October 30, 2020.** [Return feature](https://www.pcgamer.com/runescape-is-a-lot-weirder-than-i-remembered/). Inherited substantive essay, not a formal scored review.
 
-<a id="rs-u"></a>**RS-U — [RuneScape Steam community current surface](https://steamcommunity.com/app/1343400).** Accessed 2026-09-26. Current September positive/negative player testimony and update feed.
+<a id="rs-r"></a>**RS-R — Cameron Sherrill, Esquire, June 16, 2021.** [Skill-cape/mobile essay](https://www.esquire.com/lifestyle/a36731002/runescape-review-mobile-game-release/). Inherited firsthand reflective criticism; nostalgia limitation preserved.
 
-<a id="rs-v"></a>**RS-V — [An Ambitious New Era Dawns for RuneScape](https://www.jagex.com/news/an-ambitious-new-era-dawns-for-runescape-as-it-marks-its-25th-anniversary).** Jagex, 2026-01-19. Current roadmap, Treasure Hunter removal, avatar/housing/Havenhythe/Leagues framing.
+<a id="rs-s"></a>**RS-S — [MMORPG.com review archive](https://www.mmorpg.com/runescape/reviews).** Earlier 2010/2011/2023 routes, not separate independent organizations or current rules evidence.
+
+<a id="rs-t"></a>**RS-T — [Most helpful Steam reviews](https://steamcommunity.com/app/1343400/reviews/?browsefilter=toprated).** Original dated qualitative sample; gifted-object story and historical service criticism remain attributed.
+
+<a id="rs-u"></a>**RS-U — [Steam community](https://steamcommunity.com/app/1343400).** Earlier September 26 current-at-capture posts, not a new review sample.
+
+<a id="rs-v"></a>**RS-V — Jagex, January 19, 2026.** [Anniversary/restoration release](https://www.jagex.com/news/an-ambitious-new-era-dawns-for-runescape-as-it-marks-its-25th-anniversary). Primary delivered Treasure Hunter change and plans; different evidence states retained.
+
+### New operational and critical evidence, accessed September 26, 2026
+
+<a id="rs-w"></a>**RS-W — [Player-Owned Farm](https://runescape.wiki/w/Player-owned_farm).** Substantive indexed community description: entry, pens, beans, growth, breeding and differing rewards. Exact profit/experience optimization not adopted.
+
+<a id="rs-x"></a>**RS-X — RuneHQ, [Player-Owned Farms](https://www.runehq.com/special/playerowned-farms).** Indexed farmhand services and growth decisions; advice is not a universal optimal strategy.
+
+<a id="rs-y"></a>**RS-Y — RuneHQ, [Invention](https://blog.runehq.com/skill/invention).** Substantive indexed charge-pack, augmentation and component sections; guide rather than game-source inspection. Historical capacity/price tables omitted.
+
+<a id="rs-z"></a>**RS-Z — [Augmented tectonic robe top, Soul variant](https://runescape.wiki/w/Augmented_tectonic_robe_top_%28Soul%29).** Indexed item-specific charge exception and supported gizmos. This named counterexample prevents universalizing charge-pack behavior; dye prices and loss-value tables are not reproduced.
+
+<a id="rs-aa"></a>**RS-AA — [Equipment siphon](https://runescape.wiki/w/Equipment_siphon) and [in-game interface transcript](https://runescape.wiki/w/Transcript%3AEquipment_siphon).** Indexed device eligibility and actual reset/consumption distinction. Related pages are one mechanism, not independent reviews.
+
+<a id="rs-ab"></a>**RS-AB — Jagex/Mod John A, November 7, 2011.** [One Piercing Note release mirror](https://runescape.fandom.com/wiki/Update%3AOne_Piercing_Note). Primary-authored music, voice, investigation and reward description; historical members requirement not presented as current.
+
+<a id="rs-ac"></a>**RS-AC — [One Piercing Note](https://runescape.wiki/w/One_peircing).** Indexed community quest body through an exposed alias; noncombat, characters and later free-access boundary. Not the similarly named private-server wiki or a new playthrough.
+
+<a id="rs-ad"></a>**RS-AD — [Home Teleport](https://runescape.wiki/w/Lodestone_teleport).** Indexed lodestone/access and channeling rules; old Vis Wax wording qualified by RS-AE.
+
+<a id="rs-ae"></a>**RS-AE — Jagex, March 16, 2026.** [DailyScape patch mirror](https://runescape.wiki/w/Update%3APatch_Notes%3A_Dailyscape_Overhaul), [readable reproduction](https://patchtracker.gg/runescape/patch-notes-dailyscape-overhaul). Substantive primary-authored sections inspected through indexed/reproduced text; quick travel, selected retirement and new access contracts. These are the same patch, not independent sources, and not a claim every daily/weekly activity was removed.
+
+<a id="rs-af"></a>**RS-AF — [Teleportation](https://runescape.wiki/w/One_click_teleport).** Indexed travel-network and quest/tool requirements via exposed alias. Historical node totals and every exception not asserted current.
+
+<a id="rs-ag"></a>**RS-AG — [Magic](https://runescape.wiki/w/Magic).** Substantive indexed modern three-book and utility structure. OSRS's separate book roster excluded.
+
+<a id="rs-ah"></a>**RS-AH — [Prayer points](https://runescape.wiki/w/Prayer_points).** Indexed drain, restoration and equipment distinction; precise current optimization formulas not reproduced.
+
+<a id="rs-ai"></a>**RS-AI — [Ancient Curses](https://runescape.wiki/w/Prayerbook_switch).** Indexed book/quest/switching descriptions. No user-sandbox page or joke text used as rules authority.
+
+<a id="rs-aj"></a>**RS-AJ — [Soul Split](https://runescape.wiki/w/Soulplit).** Indexed eligibility and damage-source boundaries via exposed alias. A described effect is not proof every other source of damage triggers it.
+
+<a id="rs-ak"></a>**RS-AK — RuneHQ, [Summoning](https://runescape.runehq.com/skill/summoning), with [familiar reference](https://runescape.wiki/w/Summoning_familiars).** Substantive indexed pouch, points, lifetime and special-move rules; no exhaustive current table or owner-independent general intelligence claim.
+
+<a id="rs-al"></a>**RS-AL — [Necromancy](https://runescape.wiki/w/Necromancy).** Indexed Incantations section, necrotic runes and ritual supply chain; old total spell count omitted.
+
+<a id="rs-am"></a>**RS-AM — [Lesser Bone Shield](https://runescape.wiki/w/Lesser_Bone_Shield).** Indexed shield-prerequisite substitution. Not an unqualified replacement of every shield effect.
+
+<a id="rs-an"></a>**RS-AN — [Player-versus-player rules/history](https://runescape.wiki/w/Player_vs._player).** Indexed current opt-in/skull and contrasting loss descriptions; obsolete Warbands triggers excluded through RS-AE. Exact fee/protection exception tables not claimed audited.
+
+<a id="rs-ao"></a>**RS-AO — Jagex, [Player-Owned Ports release mirror](https://runescape.wiki/w/Update%3APlayer-Owned_Ports).** Indexed primary-authored voyage/crew/reward structure; historical launch, not a current daily-cap specification.
+
+<a id="rs-ap"></a>**RS-AP — RuneHQ, [Player-Owned Ports](https://www.runehq.com/minigame/player-owned-ports).** Substantive indexed ship/crew stat and commitment rules. Strategy recommendations are not mandatory engine roles.
+
+<a id="rs-aq"></a>**RS-AQ — [Managing Miscellania](https://runescape.wiki/w/Managing_Miscellania).** Indexed quests, coffers, assignments and approval; exact yield/pricing tables and every remote-access exception omitted.
+
+<a id="rs-ar"></a>**RS-AR — RuneHQ, [Fort Forinthry](https://www.runehq.com/area/fort-forinthry).** Actual body and Command Centre section read. Construction/materials and access to named management systems; not an inferred unified economy.
+
+<a id="rs-as"></a>**RS-AS — Jagex, August 1, 2022.** [Wilderness Reborn announcement mirror](https://runescape.wiki/w/Update%3AWilderness_Reborn_%26_New_Quest_-_This_Week_In_RuneScape). Indexed primary opt-in explanation. Other historical systems described by this launch post are not assumed unchanged.
+
+<a id="rs-at"></a>**RS-AT — [Music playlist](https://runescape.fandom.com/wiki/Music_playlist).** Indexed historical player-controlled selection/ordering. Old capacity is not a current guarantee; no music audition claimed.
+
+<a id="rs-au"></a>**RS-AU — [Citharede Requiem](https://runescape.wiki/w/Citharede_Requiem).** Indexed track, quest association and credits; lyrics not reproduced and instrumentation beyond documented credits not invented.
+
+<a id="rs-av"></a>**RS-AV — [Barrows icon](https://runescape.wiki/w/Barrows_icon).** Indexed narrative purpose and explicit non-removal of the area's Prayer drain. An object description is not universal physical causality.
+
+<a id="rs-aw"></a>**RS-AW — Gabriel Daros, Vida Celular, June 17, 2021.** [Mobile-launch hands-on report](https://vidacelular.com.br/en/2021/06/17/runescape-finalmente-esta-disponivel-para-ios-e-android/). Full substantive firsthand text read; Android tutorial experience and limitations, not a current full-game review. Loose lineage/tutorial wording excluded from mechanical claims.
+
+<a id="rs-ax"></a>**RS-AX — [Phoenix familiar](https://runescape.wiki/w/Phoenix_%28familiar%29).** Indexed Rise From the Ashes resource/effect relationship. Exact damage, durations and optimal use not independently reproduced.
