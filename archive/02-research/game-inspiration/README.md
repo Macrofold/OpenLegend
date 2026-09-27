@@ -9,7 +9,7 @@
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
-- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [progress](research-progress.md#survival-expansion--g131g148) records the pending research.
+- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G141–G148 dossiers](#full-dossiers--survival-references-g141g148) are complete on their range branch, while [progress](research-progress.md#survival-expansion--g131g148) keeps G131–G140 pending.
 - **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
@@ -80,6 +80,23 @@ These ten imported dossiers have initial research passes. The separate follow-up
 | G128 | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md) |
 | G129 | [Oxygen Not Included](dossiers/oxygen-not-included.md) |
 | G130 | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
+
+<a id="full-dossiers--survival-references-g141g148"></a>
+
+## Full dossiers — survival references G141–G148
+
+These eight September 27 survival passes are independent full R01–R14 studies with explicit version boundaries, comprehensive mechanics inventories, eight worked interactions each, five substantive written reviews, current player evidence where applicable, production/commercial context and declared evidence limits. They do **not** imply that G131–G140 or the separate P01–P05 whole-library gates are complete.
+
+| Roster ID | Dossier | Useful starting question |
+| --- | --- | --- |
+| G141 | [Raft](dossiers/raft.md) | How does one moving home become shelter, vehicle, production graph, social space and visible progression? |
+| G142 | [Grounded](dossiers/grounded.md) | How can authored scale, ecology, observation and player-built routes make one backyard stay surprising? |
+| G143 | [The Long Dark](dossiers/the-long-dark.md) | How do time, weather, injury, scarcity and geographic knowledge make ordinary expeditions consequential? |
+| G144 | [Green Hell](dossiers/green-hell.md) | How does diagnosis turn bodily survival from generic meters into specific causes, symptoms and treatments? |
+| G145 | [Enshrouded](dossiers/enshrouded.md) | How can a handcrafted RPG world remain deeply editable while preserving authored geography and shared progression? |
+| G146 | [V Rising](dossiers/v-rising.md) | What changes when bosses embody the tech tree and vampire identity rewrites blood, sunlight, servants and castles? |
+| G147 | [Once Human](dossiers/once-human.md) | How can scenario-specific world laws coexist with portable identity, selective inheritance and persistent communities? |
+| G148 | [Abiotic Factor](dossiers/abiotic-factor.md) | How can scientists repurpose authored infrastructure, grow through use and turn renewable portal expeditions into survival progression? |
 
 ## Game studies
 
