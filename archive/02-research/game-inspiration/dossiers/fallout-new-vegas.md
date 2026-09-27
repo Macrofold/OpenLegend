@@ -1,6 +1,6 @@
 # G112 — Fallout: New Vegas
 
-**Full research pass — September 26, 2026.** [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md). Reference research, not an implementation specification. Five independent written reviews, an additional full review, creator interviews, concrete quest documentation and identified Steam accounts inform this study. No gameplay execution, source-code audit or video playback is claimed. **Quest resolutions, faction paths and expansion premises below contain spoilers.**
+**Full research pass — September 26, 2026; follow-up requirement audit the same day.** [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md). Reference research, not an implementation specification. Five independent written reviews, an additional full review, creator interviews, concrete quest documentation and identified Steam accounts inform this study. The original source-reading record is preserved; the follow-up read the entire dossier and researched the additions expressly identified below, not every original source a second time. No gameplay execution, source-code audit or video playback is claimed. **Quest resolutions, faction paths and expansion premises below contain spoilers.**
 
 ## Identity, scope and the player promise
 
@@ -24,6 +24,10 @@ Traits impose distinctive tradeoffs rather than simply awarding a level-up bonus
 
 Experience and level gains supply skill investment; ordinary level-up perks arrive every second level. Perk prerequisites combine level, attributes and skills, so planning is more than choosing the next item on a universally available tree. [RPGamer](#r-rpgamer) **Jury Rigging**, for example, requires level 14 and Repair 90; **Chemist** requires Medicine 60; **Light Step** uses Perception and Agility requirements. The distinctions can turn an apparently noncombat investment into a durable logistical advantage. [Perks](#s-perks)
 
+### Implants turn money and physiology into another advancement route
+
+At the New Vegas Medical Clinic, Doctor Usanagi offers one-point SPECIAL improvements, **Sub-Dermal Armor** and the regenerating **Monocyte Breeder**. The number of clinic implants is limited by Endurance, including Intense Training increases but **not an increase supplied by an implant itself**. Purchasing the Endurance implant does not create an extra clinic slot. The two special implants cost 8,000 and 12,000 caps respectively in the guide; these are in-game expenditures, not real-money purchases. The choice adds another use for savings alongside weapons and repairs. This describes the clinic's system, not an assertion that all later Old World Blues surgery shares that limit. The guide's Intelligence-discount detail was not independently reconciled and is omitted. [Clinic](#s-clinic)
+
 ## What the player actually does
 
 ### Combat, movement and tactical time
@@ -34,6 +38,8 @@ Iron sights make manual aim a more direct option. Weapon choice involves handlin
 
 The action inventory includes close-range and long-range attacks, mines and thrown explosives, crouched approaches, aimed body damage, companion support and retreat. Damage, ammunition expenditure and equipment wear connect combat to later supply decisions. Sterling's examples include a **Recharger Rifle**, a grenade machinegun and alternate ammunition; these offer different resource and encounter rhythms, not simply cosmetic skins. [Destructoid](#r-destructoid)
 
+**Ammunition is a situational tool, not just another damage tier.** In the documented .308 example, armor-piercing ammunition lowers the target's Damage Threshold by 15 while slightly reducing the damage multiplier; hollow-point ammunition increases damage but magnifies the protection provided by DT. JSP hand loads instead increase damage and wear the weapon faster. These distinctions explain why “use the most powerful bullet” is inadequate: target protection, maintenance and supply matter. The values are specific to that caliber and documented patched state, not universal constants for all ammunition or real-world ballistics. The guide's claim that JSP is the best all-round option is not adopted as a measured universal ranking. [Ammunition comparison](#s-ammo)
+
 ### Equipment, storage and crafting
 
 Weapons, armor, ammunition, chems, food, magazines, ingredients and miscellaneous salvage share inventory attention. Carry capacity makes loot selection meaningful. The player can equip, consume, sell, repair or retain an object for a later recipe; “junk” is therefore contextual rather than universally worthless. Skill magazines provide temporary boosts, distinct from permanent character investment. Weapon condition also means finding another gun can be useful even when its combat role is already covered. [Attributes](#s-attributes), [Destructoid](#r-destructoid), [RPG Site](#r-rpgsite)
@@ -41,6 +47,8 @@ Weapons, armor, ammunition, chems, food, magazines, ingredients and miscellaneou
 Weapon modifications can change scopes, magazine capacity or firing behavior. Avellone's base-game account explicitly distinguishes ordinary modifiable weapons from unique weapons that do not accept those modifications; later add-on-specific equipment should not be flattened into that pre-release rule. [Avellone](#s-avellone)
 
 **Workbenches, reloading benches and campfires** organize different production activities. Science, Repair and Survival matter to different recipes rather than one generic crafting level. Useful salvage can become ammunition, technical supplies or meals; required skills and ingredients limit access. This is menu-based recipe production and repair, not freeform object construction. It has no Fallout 4-style player settlement economy. [Skills](#s-skills), [RPG Site](#r-rpgsite)
+
+For a concrete production loop, standard .308 rounds use cases, lead, rifle powder and primers at a reloading bench with Repair 25. Their JSP counterpart adds a Repair 50 and Hand Loader requirement. Breaking ammunition down recovers components rather than guaranteeing a lossless conversion. Our interpretation: crafting alters what a surplus caliber is worth, while specialization can change the cost of sustaining a favored weapon. [Ammunition production](#s-ammo)
 
 A repaired **ED-E** provides a particularly useful connection between inventory and character relationships: spare electronics or sufficiently strong technical skills can turn a broken object into an ally. **Jury Rigging** changes which equipment can serve as repair material, widening useful salvage without making all objects interchangeable. Both are worked through below. [ED-E](#s-ede), [perks](#s-perks)
 
@@ -58,11 +66,15 @@ Early play develops basic equipment, money, food, technical access and a chosen 
 
 Bottle caps and casino play supply monetary goals, but quests also reward experience, faction standing, equipment, access and relationships. **Caravan** is a separate card game, while casinos offer another use for money and luck. Brother None criticizes the abundance of money and the eventual lightness of resource pressure. That is evidence of a particular experienced economy, not proof that every build or difficulty faces no scarcity. [GameBanshee review](#r-gb)
 
+**Caravan's actual play:** wager caps, choose at least thirty cards and build three opposing columns toward values of 21–26. Number ordering and matching suits constrain additions. Face cards make the board interactive: a Jack removes a card and its attachments, a Queen changes direction, a King increases a card's value, and a Joker removes other matching numbers or a suit according to its target. Cards can therefore strengthen one's own position or sabotage another. Found/bought cards expand deck choices. This is an NPC minigame inside a single-player RPG, not networked competitive play. The aim is to win the majority when the three competing caravans are sold; “two good piles always end the game immediately” is not a sufficient rule. The guide's guaranteed-win shortcut and exact repeated-King arithmetic are not independently verified here. [Caravan](#s-caravan)
+
 Repairs, purchases, medical help and consumables create sinks. Selling salvage can finance immediate needs while sacrificing a repair component. A temporary skill boost can enable an immediate conversation; permanent skill investment can improve repeated access. These are different time horizons for value. The salvage/repair and temporary-magazine behaviors are documented; the time-horizon framing is our analysis. [Perks](#s-perks), [Destructoid](#r-destructoid)
 
 ### Hardcore is a ruleset, not simply a larger health multiplier
 
 Bergman's description adds food, water, sleep, ammunition weight, slower Stimpak healing and mortal companions. The mode can be disabled, but that forfeits its uninterrupted-completion trophy. Fast travel is not categorically removed; it is restricted when the resulting needs would be fatal. The original base-game level cap was 30, and the base ending does not allow continued play in the resolved world. These are pre-release producer statements corroborated where applicable by the launch reviews; his oversimplified limb-healing wording is not reproduced as an exclusive rule. [Producer](#s-producer)
+
+**Limb recovery deserves its own explanation.** A Doctor's Bag addresses damaged limbs, either across them or focused through the status interface. In Hardcore, a doctor, Hydra and an owned bed are other documented routes; Honest Hearts adds relevant remedies. Thus “only a Doctor's Bag heals limbs” would be false, and recovering general health is not interchangeable with treating every condition. A bag can itself be crafted from medical tools with Medicine 40 at a workbench. This addition uses a clearly labeled indexed community-body excerpt because direct article access failed; it does not establish every healing edge case or import a mod's changed rules. [Doctor's Bag](#s-bag)
 
 Normal companion defeat and Hardcore companion death are materially different attachment risks. The Courier's death returns play to a save rather than founding a persistent multiplayer corpse economy. A successful quest can nevertheless leave a named civilian dead or an organization hostile. Saving and reloading can explore alternatives, but technical crashes are not intended dramatic consequences and should not be romanticized as “emergent difficulty.” [RPGamer](#r-rpgamer), [Goodsprings](#s-goodsprings), [GamesRadar](#r-gamesradar)
 
@@ -91,6 +103,8 @@ This is not a general romance-tree game, dynasty simulator or cooperative campai
 The personal search leading through settlements gives way to decisions about authority and resource distribution. HELIOS One turns technical repair into a political allocation problem. The Ultra-Luxe turns an elite institution's hidden practices into investigation, disguise and moral choice. Novac ties a companion's private tragedy to a local person's secret. These are authored situations with multiple recognized interventions, not procedurally generated plots. [HELIOS](#s-helios), [Beyond the Beef](#s-beef), [Boone](#s-boone)
 
 **A useful limit:** the Beyond the Beef walkthrough explicitly notes that a threatened trade blockade does not become an actual simulated blockade. A line of dialogue can express a character's intention without the world executing a complete economic model. Preserving this distinction prevents the reference's narrative richness from being mistaken for unlimited simulation depth. [Beyond the Beef](#s-beef)
+
+**Care work also changes access — High Times spoilers.** Julie Farkas asks for help with Bill Ronte and Jacob Hoff. Dealing with Dixon can use payment, Speech or violence; subsequent Science checks reduce requested medicines, while Speech offers another route. Completion yields faction standing and access to a daily medicine choice. The analytical pattern is recovery of a person unlocking an institution's capacity to help others. These are particular scripted quest treatments, not universal addiction mechanics, a medical model, or real-world health advice. [High Times](#s-high)
 
 ## Eight concrete situations
 
@@ -147,6 +161,12 @@ Big MT converts the Courier into the subject of grotesque scientific experimenta
 The Divide and Ulysses concentrate attention on the Courier's past and responsibility. Traversal through wreckage and frequent combat produce a more linear journey than the base game's broad faction web. Eric Schwarz's September 23, 2011 discussion values the confrontation but identifies limited noncombat approaches and the burden of high-health enemies. Its high-level context belongs to the expanded game, not the original cap. **Reference value:** an authored reckoning can gain focus by constraining routes, but can also clash with an identity the player believed was self-authored. [Lonesome Road](#s-lr)
 
 These are substantive edition contrasts, not four additional independent reviews counted toward the base game's five-review requirement. Courier's Stash and Gun Runners' Arsenal belong to equipment/provisioning scope rather than four more full campaigns. [GOG](#s-gog)
+
+### Courier's Stash and Gun Runners' Arsenal
+
+**Courier's Stash** combines the former preorder Caravan, Classic, Mercenary and Tribal packs. Its immediate equipment changes the opening rather than adding another quest region: examples include the Sturdy Caravan Shotgun and repair kits, the Weathered 10mm Pistol and Vault 13 Canteen, a grenade rifle with medical supplies, and a machete with throwing spears. Our interpretation is that bundled early resources can soften scarcity and blur comparisons with an unassisted launch-era opening. The publisher's indexed Steam description was retrieved; direct access hit an age gate, so no live review-body sample from this DLC is claimed. [Stash](#s-stash)
+
+**Gun Runners' Arsenal** expands equipment and completion activities. The publisher advertises 27 weapons, 40 modifications, 29 ammunition types, 18 recipes and more than twenty challenges; named examples include Dragon's Breath shells and plasma grenades. These are advertised content counts, not a deduplicated item-data audit. Unlike the Stash's immediate starting help, this package offers more acquisition, customization and challenge goals across existing play. Its store wording does not establish that every new modification fits every similarly named base weapon; compatibility must remain item-specific. A whole-game balance mod or a mod merging GRA/base variants is not evidence for vanilla behavior. [Arsenal](#s-gra)
 
 ## Art, audio, interface and production
 
@@ -218,7 +238,7 @@ These hypotheses neither authorize OpenLegend implementation nor propose copying
 
 ## Annotated sources and reading routes
 
-All accessed **September 26, 2026**. Quest guides are documented play rules, not source-code proof. Full base-review bodies were read; expansion sections used below were read, without claiming every linked page or footage was inspected. Scores are not substituted for criticism. Failed wiki/manual/store routes were not counted as evidence.
+All accessed **September 26, 2026**, in the original pass or the explicitly identified follow-up. Quest guides are documented play rules, not source-code proof. Full base-review bodies were read in the original pass; expansion sections used below were read, without claiming every linked page or footage was inspected. Scores are not substituted for criticism. Failed wiki/manual/store routes were not counted as fully read pages; indexed excerpts used in the audit are specifically labeled.
 
 <a id="s-producer"></a>**Jason Bergman, PlayStation Blog, October 14, 2010.** Primary producer Q&A; pre-release vault-count and exclusive limb-healing simplifications excluded. [Source](https://blog.playstation.com/2010/10/14/your-fallout-new-vegas-ps3-questions-answered-hardcore-mode-morality-combat-and-more/).
 
@@ -274,19 +294,41 @@ All accessed **September 26, 2026**. Quest guides are documented play rules, not
 
 <a id="s-cobra"></a>**Cobra, Steam PCR app 22490, May 9, 2024.** Separately retrieved negative body; one helpful vote and unknown overall rank. [Source](https://steamcommunity.com/id/scobra1cz/recommended/22490).
 
+### Follow-up audit sources
+
+<a id="s-clinic"></a>**GameBanshee, northeastern Mojave locations, undated; clinic subsection read in full.** Usanagi, Endurance allowance and distinct implant functions. Unrelated location descriptions and a suspect Intelligence discount are not treated as verified mechanics. [Source](https://www.gamebanshee.com/falloutnewvegas/locations/mojavewasteland-ne.php).
+
+<a id="s-ammo"></a>**Fallout Wiki, .308 round (New Vegas).** Production, breakdown, variants and comparison body retrieved; patch-dependent community documentation, not an executable-data audit. [Source](https://fallout.fandom.com/wiki/.308_round_(Fallout:_New_Vegas)).
+
+<a id="s-caravan"></a>**Nathan Garvin, Gamer Guides, Caravan; guide release October 31, 2015, updated December 7, 2020.** Full article body read. Its opening-draw exploit/guaranteed-win claim and repeated-King arithmetic are not adopted as universal tested rules. [Source](https://www.gamerguides.com/fallout-new-vegas/guide/introduction/guide-information/caravan).
+
+<a id="s-bag"></a>**Fallout Wiki, Doctor's Bag (New Vegas).** Indexed characteristics/crafting excerpt retrieved; repeated direct opens failed. Explicit partial-access provenance, no claim of a full live-page read. [Source](https://fallout.fandom.com/wiki/Doctor%27s_bag_%28Fallout%3A_New_Vegas%29).
+
+<a id="s-high"></a>**GameBanshee, High Times, undated.** Full quest body read; named people, alternative interventions and daily-reward consequence. Scripted treatment is not a general simulation or health claim. [Source](https://www.gamebanshee.com/falloutnewvegas/walkthrough/hightimes.php).
+
+<a id="s-stash"></a>**Bethesda/Obsidian, Steam Courier's Stash, app 22470, released September 27, 2011.** Indexed publisher description and pack inventory retrieved; direct page age-gated. No price or reception inference. [Source](https://store.steampowered.com/app/22470/).
+
+<a id="s-gra"></a>**Bethesda/Obsidian, Steam Gun Runners' Arsenal, app 72840.** Indexed publisher feature body retrieved; direct access age-gated/failed. Counts are publisher descriptions, not independently counted records. [Source](https://store.steampowered.com/app/72840/Fallout_New_Vegas_Gun_Runners_Arsenal/).
+
+### Suggested reading route
+
+Read the [producer Q&A](#s-producer) for the launch promise, then [Goodsprings](#s-goodsprings) and [HELIOS One](#s-helios) for contrasting small/large decisions. Compare [Pearson](#r-pcg) with [Nagata](#r-gamesradar) on Hardcore rather than collapsing them into consensus. Use [Caravan](#s-caravan) for a noncombat activity and the four DLC sections for how a familiar build meets different constraints. Quest and DLC links spoil resolutions. The written creator interview is an inspected reading route; no unwatched video is represented as an analyzed source.
+
 ## Coverage, preservation and limits
 
 | Requirement | Substantive location |
 | --- | --- |
 | R01 | Identity, camera/platform/mode, base and Ultimate/expansion boundaries. |
-| R02–R03 | Actual actions, SPECIAL/skills/traits/perks, combat, access, equipment and production. |
-| R04 | Progression, cap changes, inventory value, Hardcore, economy, death and finite conclusion. |
-| R05 | Eight cross-system situations with conditions, outcomes, next decisions and limits. |
+| R02–R03 | Actual actions, SPECIAL/skills/traits/perks/implants, combat and ammunition tradeoffs, access, equipment and concrete production. |
+| R04 | Progression, cap changes, inventory value, Hardcore/limb recovery, Caravan/economy, death and finite conclusion. |
+| R05 | Eight cross-system situations with conditions, outcomes, next decisions and limits; additional care-work example. |
 | R06–R08 | Factions, party rules, routines, named stories, world boundaries, presentation and audio. |
-| R09–R11 | Creator accounts, iteration/reliability, distribution/mod separation and dated shipment/retail evidence. |
-| R12 | Five independent full reviews, additional criticism and bounded Steam positive/negative evidence. |
-| R13–R14 | Transfer hypotheses, source annotations, navigation and this preservation statement. |
+| R09–R11 | Creator accounts, iteration/reliability, distribution/mod separation, equipment-pack effects and dated shipment/retail evidence. |
+| R12 | Five independent full reviews, additional criticism and bounded Steam positive/negative evidence, with original provenance preserved. |
+| R13–R14 | Transfer hypotheses, source annotations, explicit reading route, navigation and this preservation statement. |
 
 This curated addition does not overwrite prior Fallout references, original chapters, selective studies, review notebooks or video recommendations. No earlier dedicated G112 dossier owner was found in the inspected inherited roster, library navigation and dossier tree. The initial checkpoint's review/creator/player findings are retained and expanded, with misleading source simplifications explicitly qualified.
 
-Remaining evidence limitations are specific: no fresh hands-on or accessibility benchmark, no exhaustive patch/mod audit, no primary original financial release, no representative Steam survey and no complete global packet reconciliation. They do not imply a missing major-system section. The all-130-subject and original-seven-file integration gates **P01–P05 remain open**; completion of G112 does not certify unrelated work.
+The follow-up read the entire original dossier and checked all R01–R14 plus the explicit mechanics categories. It fills thin implant, ammunition, crafting-example, Caravan, limb-recovery and equipment-DLC coverage while preserving every earlier scenario, review disagreement, source qualification and commercial distinction. The new access failures are not disguised as successful full-page reads. A newly inspected generic statistics page also contained oversimplified values; it was not used to overwrite the more specific mechanics sources.
+
+Remaining evidence limitations are specific: no fresh hands-on or accessibility benchmark, no exhaustive patch/mod audit, no primary original financial release, no representative Steam survey and no complete global packet reconciliation. The indexed Doctor's Bag and equipment-DLC evidence is labeled, not counted as a new fully read review. The all-130-subject and original-seven-file integration gates **P01–P05 remain open**; completion of G112 does not certify unrelated work.
