@@ -8,7 +8,7 @@ Mike requested a substantive full-requirements audit, corrections and completion
 
 Continue on the existing `docs/game-inspiration-games-61-80` branch. Do not recreate/reset the branch, switch ranges, commit to main or merge automatically. Audit one game at a time against R01–R14, the explicit mechanics inventory, the five-substantive-written-review minimum where available, Steam/player testimony where applicable, version/edition boundaries, preservation, citations and actual source-access limits. Correct factual errors and fill real gaps in place. Commit after each game and at least every five minutes with truthful substantive checkpoints.
 
-**Follow-up status: 18 / 20 audited. Active subject: G79 Final Fantasy II.**
+**Follow-up status: 19 / 20 audited. Active subject: G80 Final Fantasy III.**
 
 | Subject | Follow-up state | Actual evidence / next action |
 | --- | --- | --- |
