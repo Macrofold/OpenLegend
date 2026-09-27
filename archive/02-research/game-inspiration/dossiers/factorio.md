@@ -28,7 +28,7 @@ There is no native class selection, spellbook, companion approval, romance, dial
 
 **Belts and inserters.** Belts move solids without an electricity bill and have two lanes. Yellow, red and blue belts provide successively higher throughput; Space Age adds green turbo belts. Underground sections cross obstacles, splitters distribute or filter flows, and inserters transfer between the ground, belts, machines and containers. Faster transport does not manufacture absent inputs. Nor does an apparently full lane prove that every consumer receives enough: direction, lane use, access and local consumption matter. [F11][F6]
 
-**Fluid networks and power.** The prior study preserves oil's important asymmetry: advanced processing has coupled heavy-oil, light-oil and petroleum outputs, so a full unwanted output can halt the wanted one. Basic processing is different. Pipes, tanks, pumps, cracking and consumption create flow and control decisions. Electricity is another network: early fuel-to-steam production, solar panels with night-time storage, and more advanced generation have different dependencies. Exact solar ratios are planet- and rules-dependent; a figure for Nauvis is not a universal ratio for every Space Age surface. [P2][F12]
+**Fluid networks and power.** The prior study preserves oil's important asymmetry: advanced processing has coupled heavy-oil, light-oil and petroleum outputs, so a full unwanted output can halt the wanted one. Basic processing is different. Factorio 2.0 also replaced 1.1's per-pipe propagation with pipeline segments, but the shipped design is **not** the unlimited "omni-pipe" prototype described in the first June 2024 reveal. Wube's final prelaunch design caps one connected pipeline to a 250×250-tile extent; exceeding it stops flow until the network is split, normally with a pump. Pumps provide 1,200 fluid/s at normal quality, and each individual fluid-flow operation has a 100-fluid/tick (6,000/s) ceiling further affected by source/sink fullness even though the pipeline does not have one total per-tick throughput budget. Inside a reasonable setup the abstraction is deliberately close to "connect it and it works"; long-distance links and pump stations still create direction and throughput decisions. Pipes, tanks, pumps, cracking and consumption therefore remain meaningful without importing 1.1's distance-loss model or the discarded unlimited June prototype. Electricity is another network: early fuel-to-steam production, solar panels with night-time storage, and more advanced generation have different dependencies. Exact solar ratios are planet- and rules-dependent; a figure for Nauvis is not a universal ratio for every Space Age surface. [P2][F12][F36]
 
 **Rail.** Fueled locomotives, cargo or fluid wagons, train stops, schedules and wait conditions make repeated delivery possible. Departure can depend on time, cargo, inactivity or a circuit condition rather than only a fixed timetable. Signals divide connected tracks into blocks and constrain automatic travel direction; chain signals consider the onward route so a train need not enter a junction it cannot leave. Track connectivity, stop orientation and signal placement therefore matter independently of locomotive speed. Elevated rails add grade separation but do not supply a correct schedule or unloading system. [F13][F14][F15][F16]
 
@@ -154,6 +154,27 @@ The following substantive article bodies were read through their conclusions. Th
 
 ## 13. Coverage, evidence and preservation
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the assignment's explicit mechanics inventory confirms the following boundaries rather than relying only on the R01–R14 shorthand:
+
+- **Identity / classes / attributes / skills:** standard Freeplay has one engineer identity, not RPG classes, attributes, skill checks, romance traits or companion builds. Capability comes primarily from researched technology, equipment, machines and player knowledge (§§2, 4).
+- **Leveling / progression / tech trees:** manufactured science packs drive a branching technology tree; early, middle, late and Space Age progression are described in §§2, 5–6. There is no character-XP leveling ladder analogous to an RPG.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** §§2 and 4 cover hand crafting, machine recipes, personal inventory, armor/equipment grids, weapons/ammunition, modules, quality and reusable blueprints.
+- **Magic / spells / powers:** absent natively. The closest capability layers are technology, equipment and automation; mods/scenarios must not be backported into standard Freeplay.
+- **Traversal / environment / object interaction:** walking, cars, tanks, Spidertron, trains, rockets/space platforms and remote construction coexist with mining, placing, rotating, configuring, wiring, deconstructing and recovering entities (§§2–6).
+- **Activities / minigames:** the factory, exploration, combat and logistics are the main activities. Tutorial/scenario objectives, the map editor, modded scenarios and Galaxy of Fame provide alternate formats; there is no separate persistent native minigame economy.
+- **Combat / stealth / loot / rewards:** weapons, ammunition, turrets, walls and enemies are covered in §§4–5. Standard Freeplay has no conventional stealth system. Defeated enemies are pressure on territory rather than a randomized gear-loot ladder; the material reward loop is primarily extraction, production, research and reclaimed/recovered construction.
+- **Death / failure / recovery:** §5 distinguishes respawn/corpse recovery, damaged factories, lost platforms and save/load. The 2.0.7 corpse-persistence change prevents recycling the old despawn timer as current advice.
+- **Economy / trading:** the simulated economy is resource extraction, conversion, stock, throughput and scarcity; there is no ordinary merchant-price/trading market in Freeplay. Premium game/expansion pricing is separately documented in §10.
+- **Story / relationships / romance / reputation / companions / NPC schedules / factions:** deliberately sparse or absent in standard Freeplay. The crash premise and planetary ruins frame play, while autobiographical factory stories emerge from player actions (§8). Enemy populations have authored rules, not conversational faction reputation or daily NPC schedules.
+- **World map / quests / events:** generated surfaces, map-generation rules, planets and scenarios are covered in §§5–6. Standard Freeplay is self-directed rather than a conventional quest-log campaign; tutorials/scenarios can supply explicit objectives.
+- **Building / settlements / management:** building and managing production infrastructure is the central activity, but it is **factory management rather than NPC settlement governance**.
+- **Multiplayer / social / endgame / return loops:** §8 covers cooperative division of labor, servers/mods/blueprint sharing; §5 covers rocket/Space Age formal objectives, repeatable research, self-imposed optimization and restarts.
+
+The fluid-network reread also corrects an easy version trap: FFF-416's first 2.0 prototype allowed continent-spanning effectively unlimited pipelines, but Wube changed that before launch. FFF-430 documents the 250×250 extent, pump throughput and per-operation flow limits and explicitly says that revised system is the one intended for the 2.0 launch. [F36]
+
+
 R01 is addressed in §1; R02–R03 in §§2–6; R04 in §§4–6 and §10; R05 in §7; R06 in §8; R07 in §9; R08 in §§5–6 and §8; R09 in §9; R10–R11 in §10; R12 in §11; R13 in §12; R14 here and below. Native absences, historical port evidence, experimental documentation, qualitative selection and untested accessibility are explicitly bounded.
 
 Both earlier owners were read completely and remain **unchanged**. They retain the electronic-circuit, oil-output, conditional cracking, pulse/hold, blueprint, pollution/evolution and historical belt-optimization passages, plus the separate Satisfactory examples, reviewer annotations and both trailer routes. The [Factorio 2020 trailer](https://www.youtube.com/watch?v=J8SBp4SyvLc) remains a viewing route, not footage watched for this pass. There are no invented timestamps. Preservation of these relevant files is not completion of the separate seven-file packet-wide P01 gate.
@@ -172,6 +193,7 @@ All new retrievals September 26, 2026. Wiki pages are maintained documentation, 
 - **F26–F31:** Primary launch statistics and planet/spoilage documentation, with resource and environmental distinctions.
 - **F32:** Color Blind Ultimate's own published project description; mod-based features, not native coverage or medical efficacy.
 - **F33–F35:** Developer soundtrack, 2.1 strategy and anniversary/port accounts; creator assessments and dated reported sales.
+- **F36:** Wube Friday Facts #430, September 27, 2024. Primary final prelaunch Fluids 2.0 design: 250×250 pipeline extents, pump and flow-operation limits, and explicit correction of the earlier unlimited prototype.
 - **R1–R5:** Five independently credited substantive base-game reviews, authors/dates/platforms specified in §11; full bodies read.
 - **R6:** Additional Space Age review by Lane; not a sixth independent author.
 - **S1–S4:** Actual Steam review bodies. Positive helpful-all-time/week routes read; negative bodies individually found, their global helpful ranking not established.
@@ -212,6 +234,7 @@ All new retrievals September 26, 2026. Wiki pages are maintained documentation, 
 [F33]: https://www.factorio.com/blog/post/fff-435
 [F34]: https://factorio.com/blog/post/fff-440
 [F35]: https://www.factorio.com/blog/post/fff-439
+[F36]: https://www.factorio.com/blog/post/fff-430
 [R1]: https://www.pcgamer.com/factorio-review/
 [R2]: https://www.gamer.no/artikler/et-spill-jeg-aldri-gar-lei-av/497604
 [R3]: https://www.nintendolife.com/reviews/switch-eshop/factorio
