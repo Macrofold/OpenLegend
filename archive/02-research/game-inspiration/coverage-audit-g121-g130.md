@@ -12,7 +12,7 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G128 — Ultima VII: The Black Gate.** G121–G127 have been reread against the complete standard and corrected where needed.
+**Active: G129 — Oxygen Not Included.** G121–G128 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
@@ -23,9 +23,13 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G125 | XCOM 2 | **Audited** | `284cd3bebd2f6bff7a7d9c69d48cdc86affe9de0` — all major mechanics were covered; corrected present-tense launcher-friction language because 2K removed the launcher from Steam/Epic in Nov. 2024, while preserving older complaints as dated reception. |
 | G126 | Crusader Kings III | **Audited** | `29455348aa9f7c6d486225c627ab07790b83b00a` — pinned By God Alone to Sept. 30, 2026 as future scope and Silk & Silver as later roadmap, added the current optional content subscription, and explicitly closed the absent general crafting/avatar-stealth categories. |
 | G127 | Dragon's Dogma 2 | **Audited** | `16c8837cc5a6e5a7f4a389885050978dae19faea` — integrated the shipped Sept. 1 Title Update 3.2 into core mechanics: three Arisen save slots with Autosave/Interim/Inn Rest data, six skill slots, Dragonsplague cure/behavior changes and performance work. Added explicit stealth and dynamic-faction-system absences; Dark Arisen remains future Oct. 9 content. |
-| G128 | Ultima VII: The Black Gate | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G129 | Oxygen Not Included | Pending | — |
+| G128 | Ultima VII: The Black Gate | **Audited** | `7aa2c107c4253e864c37a4519c2c9253479b687f` — explicit limited-crafting and absent dedicated-stealth boundaries added; current preservation route verified as Exult 1.12.1 stable (Windows 1.12.1-1 packaging reissue) versus 1.13.x snapshots. |
+| G129 | Oxygen Not Included | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G128 — Ultima VII: The Black Gate closure evidence
+
+The original dossier already covered the signature world simulation—object manipulation, nested inventory, party equipment, schedules, conversation knowledge, spells/reagents, vehicles, hunger, economy/training, NPC social structure, eight situations and five historical/retrospective critical accounts. The audit closes two explicit mechanics-inventory edges: breadmaking and similar authored transformations are not inflated into a general crafting profession, and theft/object access are not mislabeled as a dedicated stealth subsystem. Exult's current preservation boundary is now verified as stable 1.12.1 (Windows 1.12.1-1 packaging reissue) versus separate 1.13.x snapshots.
 
 ## G127 — Dragon's Dogma 2 closure evidence
 
