@@ -221,6 +221,26 @@ These are research interpretations, not adopted OpenLegend requirements.
 
 ## 12. Preservation, source limits and coverage
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the September 23/24 **211.55** boundary still current and the February Switch announcement still describes the first future expansion pack as work in progress rather than delivered scope. [P6][P2] Coverage is explicit as follows:
+
+- **Identity / classes / attributes / skills / leveling / trees:** genotype, castes/callings, six attributes, skill trees, levels, mutant powers and True Kin cybernetics are covered in §§1–3.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** anatomy-bound equipment, artifacts, energy cells, weapons, mods, tinkering, bits, recipes and implants are covered in §§2–4.
+- **Magic / spells / powers:** mutations such as Domination, Precognition, force fields, elemental effects and mental powers provide bounded supernatural verbs; they are constrained by cooldowns, bodies and resistance (§3).
+- **Traversal / environment / object interaction:** overworld/local-zone travel, Wayfaring, recoilers, phasing/burrowing/flight-like mutations, terrain interaction and local hazards appear in §§3–5.
+- **Activities / minigames:** exploration, tinkering, cooking, ritual/social exchange, investigation and quest solving are integrated activities. There is no separate casino/sport-style minigame economy.
+- **Combat / stealth / loot / rewards:** turn-based melee/ranged combat, dodge/armor/penetration, dismemberment, mental control, artifacts, trade goods and quest rewards are covered in §§3–7. Sneak-like positioning/information does not amount to a separate universal stealth subsystem.
+- **Death / failure / recovery / economy / trading:** Classic/Roleplay/Wander/Daily loss contracts, limb/status recovery, fresh-water currency and merchant pricing are covered in §§1 and 4.
+- **Story / relationships / romance / reputation / party / companions:** authored quests, faction reputation, water ritual, Beguiling/recruitment and followers are covered in §§5–7. Romance/marriage are not a native progression pillar.
+- **NPC/AI schedules / factions:** faction membership, generated relationships, hostility, teachers, traders and companion orders are substantial; there is no claim that every inhabitant follows a human-like daily schedule or emergent political simulation (§5).
+- **World map / environment / quests / events:** authored landmarks plus generated villages/history, overworld/strata navigation, investigation and main/side quests are covered in §§5–7.
+- **Building / settlements / management:** portable camps, settlement services and terrain interaction exist, but player-driven base/colony construction is **not** the game's progression backbone (§5).
+- **Multiplayer / social / endgame / return loops:** the game is single-player; community/mod sharing is external. Multiple loss modes, generated worlds/builds, late quests, golem construction and continued exploration support replay (§§1, 6–7).
+
+No correction upgrades the experimental localization branch or future expansion work into released content.
+
+
 Both prior owners were read in full and left unchanged. Their detailed body-slot aggregation, fear-to-frost cooking, legendary-reputation misconception, eigenrifle collateral, developer-paper annotations and viewing recommendations remain in place. This dossier adds the full-game pass rather than replacing those studies with a shorter survey.
 
 The earlier chapter's videos and the official press kit's procedural-history/village/worldbuilding talks remain the viewing route. No footage was watched here, no timestamps were invented, and a talk description is not represented as its transcript. Search-result snippets from inaccessible reviews were not counted among the six full reads.
