@@ -583,3 +583,17 @@ Original recommendation: **Keep**.
 Grounding preserves all permitted single-command handles and visible follow choices; it refuses context above 100,000 encoded bytes before inference. This retains main's byte envelope and removes the older action branch's first-48-handle/first-16-follow truncation. Optional entity detail includes 64 visible entities with explicit available/included counts; an explicit selected target is first. Complete deterministic forms bypass inference. Jev's winning-choice threshold is 0.8; lower certainty takes the generated/reviewed or unresolved path, with no automatic paid retry.
 
 **Reason / tradeoff:** Avoid losing existing actions through catalogue order while bounding model input. The entity-detail cap can still omit optional context, and the threshold is not a calibrated semantic guarantee. Expansion/calibration belongs to [AC03](../maintainers/action-capabilities.md#ac03--bounded-action-grounding), not a silent limit change. [Source](../../apps/server/src/action-grounding.ts).
+
+## Routine animal acquisition
+
+**Current · Restrictiveness: Medium.**
+
+Visual onset of a native animal without memory capability is ordinary private evidence (importance/urgency zero), not an automatic semantic reasoning trigger. Mind-bearing encounters remain social opportunities. Existing interests and meaningful separate events or detail changes can still initiate consideration; visibility, episode identity and raw acquisition remain intact.
+
+**Reason / tradeoff:** A repeatedly passing bird should not purchase fresh reasoning for every observer. This replaces the former blanket significant-living-source onset. The current benign native fauna make this a useful minimal policy; qualify richer salience before adding predators or authored conspicuous features. [Contract](../memory-architecture.md#encounters-sensory-detail-and-reminder-continuity) · [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance).
+
+## Maintenance read backoff
+
+**Implemented · Restrictiveness: Medium.** A failed advisory maintenance scheduling read defers another scheduling attempt for 60 real seconds. Gameplay continues if authoritative saves succeed; background maintenance reports the failure. No automatic paid retry or source deletion is introduced.
+
+**Reason / tradeoff:** A transient read failure should not stop the world or create a query retry storm. Cleanup can lag during the delay; retained history and ordinary durability remain intact. Reconsider the interval if operational measurements show delayed maintenance causing pressure. [Owner](../memory-architecture.md#maintenance-storage-failures).

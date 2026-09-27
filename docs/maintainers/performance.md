@@ -85,6 +85,12 @@ An injected slow database may exceed normal latency budgets. Correct behavior is
 
 PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is dense first-exposure work and extended qualification of PF08 with naturally aging worlds; synthetic cold-history growth is measured. PF04/PF07/PF10 remain gated on residual measured cost.
 
+## Current 3× local scene follow-through
+
+[Plan](../projects/three-times-scene-performance.md) · [Evidence](../verification/three-times-scene-performance.md). PF00/PF03/PF04/PF05/PF06/PF08/PF09/PF12.3–8: source-specific flushes, durable-snapshot maintenance checks, early spending preflight, profile caching, plain-SELECT read routing, joined publication fences, PostgreSQL batching, narrower cognitive wake dependencies, root-only snapshots and coalesced bounded diagnostics are implemented. Routine animal acquisition no longer automatically creates semantic reasoning work; raw acquisition and interest-driven attention remain. Continued merged-build work shares observer sight setup, reconciles each small memory batch in one PostgreSQL statement, skips impossible maintenance work and isolates advisory-read failures with a bounded backoff.
+
+Acceptance remains open: the final 60-second PostgreSQL sample reached 2.998× with the requested visible populations at both endpoints and no storage error, but retained a 1.461-second cold gap and 367-ms warm maximum. Earlier PostgreSQL runs hit storage timeouts under severe host CPU/memory contention. Targeted memory reconciliation preserved identical stored results with 16→4 statements per 1,000 changed sources. Repeat the maintained full-server fixture on a quiet host, including funded local cognition, natural history growth and browser input. Under PF09/PF12.3, moving sources still cause affected observers to rescan visible membership, and cognition separately evaluates visibility. Prefer a shared dependency-valid visibility query/changed-target path over another unscoped cache. Ordinary known-ID reads and legitimate startup/migration scans need no blanket abstraction.
+
 ## PF00 — Baseline and attribution
 
 Proposed [EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) consume this profiler and the PF acceptance budgets.
@@ -160,7 +166,7 @@ Exit: native CPU and event-loop budgets pass with mature tiny-world history; rec
 Dependencies: PF01/PF02 and measured remaining contention.
 
 - [ ] Give diagnostics a separate database connection only if production measurements still show gameplay or inference persistence waiting on inspection reads after polling and query fixes.
-- [ ] Generalize that one bounded auxiliary lane only to appropriate history reads, diagnostics and independent job bookkeeping. Keep one world-writer/advisory owner. No second `PostgresDatabase` instance that acquires the same ownership lock; define connection purpose explicitly.
+- [x] Route ordinary single SELECTs to the existing bounded read connection; explicit read transactions retain snapshots, locking reads and all writes retain the sole writer. No extra owner/pool. Broader contention/failure acceptance remains below.
 - [ ] Bound query/transaction time and concurrency, preserve privacy/source revision validation across connections, and measure SQL lock contention. Authoritative world writes cannot enter the auxiliary path. Keep SQLite serialization explicit.
 - [ ] Verify an optional-query timeout, diagnostics failure and slow history reader cannot delay or alter world/accounting outcomes beyond the contention budget; reject stale cross-connection results.
 
@@ -183,7 +189,7 @@ Exit: publication/input budgets pass; no history reads for unrelated movement or
 
 Dependencies: PF00; use PF04 only when its contention gate is met.
 
-- [ ] Add bounded diagnostic-write backpressure or batching only if observed pending writes grow during sustained tracing or shutdown flushes become material. The current implementation relies on asynchronous ordered writes and the database lane rather than adding another batching system preemptively.
+- [x] Add bounded diagnostic-write backpressure or batching only if observed pending writes grow during sustained tracing or shutdown flushes become material. The 3× investigation added per-ID coalescing and a 1,000-ID/16-MiB pending bound after measuring redundant writes; sustained overload and finite shutdown qualification remain open.
 - [ ] Preserve enqueue-time sanitization/immutability, distinct trace identities, latest terminal snapshots and explicit capture gaps. Batch pending records by age/bytes/count, coalesce superseded versions of the same ID, and keep old versions from overwriting newer persisted values. Accounting receipts are never lossy diagnostics.
 - [ ] Bound capture/serialization CPU as well as queue memory; stream large exports and keep checkpoint work outside long SQL transactions. Drain within a finite shutdown policy and report any optional capture loss honestly.
 

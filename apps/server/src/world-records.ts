@@ -1,3 +1,4 @@
+import { parameterBatchLimit } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
@@ -464,7 +465,10 @@ export class WorldRecords {
         const batch: unknown[][] = [];
         const create = rows[offset]!.create;
         let bytes = 0;
-        while (offset < rows.length && (batch.length + 1) * columns.length <= 900) {
+        while (
+          offset < rows.length &&
+          (batch.length + 1) * columns.length <= parameterBatchLimit(this.db)
+        ) {
           const row = rows[offset]!;
           if (row.create !== create) break;
           if (batch.length && bytes + Buffer.byteLength(row.payload) > 262144) break;

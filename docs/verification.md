@@ -1,5 +1,7 @@
 # Verification
 
+Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
+
 ## Spatial/cadence integration with current main
 
 The [September 26 integration record](verification/spatial-cadence-main-integration.md) pins the refreshed main/source commits, semantic reconciliation, fresh native/service/browser observations and matched performance comparison. The local rebase preserves main’s authority, record persistence, state/object and work-budget owners. The owner-authorized selective fixture cleanup resolves the stale navigation type errors and restores the local CI command. The linked record gives current automated evidence; hosted CI and broader sustained 8×/graphics qualification remain open. Historical records below apply to their own revisions.

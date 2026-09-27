@@ -34,6 +34,7 @@ interface ReflectionRequest {
   reason: string;
   at: number;
 }
+class MaintenanceReadFailure extends Error {}
 export class CognitionMaintenance {
   private readonly work = new ActorWork();
   private readonly lastStarted = new Map<string, number>();
@@ -62,9 +63,9 @@ export class CognitionMaintenance {
     const world = this.service.world;
     const actor = world.entities[actorId]?.actor;
     if (!actor?.alive) return;
-    const current = (await this.service.store.getIntegration(this.key(actorId))) as
-      | ReflectionRequest
-      | undefined;
+    const current = (await this.readSchedule(() =>
+      this.service.store.getIntegration(this.key(actorId)),
+    )) as ReflectionRequest | undefined;
     const request = {
       actorId,
       origin,
@@ -97,10 +98,43 @@ export class CognitionMaintenance {
     });
   }
   private scheduling = false;
+  private readRetryAt = 0;
   private schedulingTask: Promise<void> | null = null;
+  /** Only advisory reads use this boundary. Admission writes, source preparation
+   * and publication keep their existing authoritative failure handling. */
+  private async readSchedule<T>(read: () => Promise<T>): Promise<T> {
+    try {
+      return await read();
+    } catch (cause) {
+      throw new MaintenanceReadFailure('Maintenance scheduling read failed.', { cause });
+    }
+  }
   async tick(interactiveBusy: boolean): Promise<void> {
-    if (this.schedulingTask) return;
-    this.schedulingTask = this.schedule(interactiveBusy);
+    if (this.schedulingTask || this.now() < this.readRetryAt) return;
+    this.schedulingTask = this.schedule(interactiveBusy).catch(async (error) => {
+      if (!(error instanceof MaintenanceReadFailure)) throw error;
+      // No provider was dispatched by the failed read. Back off this scheduler;
+      // paid-attempt guards and ordinary world-save failures remain unchanged.
+      // docs/memory-architecture.md#maintenance-storage-failures
+      this.readRetryAt = this.now() + 60000;
+      const message =
+        'Memory maintenance scheduling could not read storage; the next scheduling check is in 60 seconds.';
+      console.warn(message);
+      await this.log.save({
+        id: `maintenance-read-failed:${this.service.generation}`,
+        worldId: this.service.world.id,
+        kind: 'Memory maintenance unavailable',
+        status: 'failed',
+        startedAt: new Date(this.now()).toISOString(),
+        input: { retryAfterMs: 60000 },
+        output: {
+          message,
+          reason: error.cause instanceof Error ? error.cause.message : 'Unknown read failure',
+        },
+        exchanges: [],
+      });
+      this.service.notify();
+    });
     try {
       await this.schedulingTask;
     } finally {
@@ -116,7 +150,7 @@ export class CognitionMaintenance {
       timedSync('cognition.maintenanceRefresh', () =>
         this.work.refresh(
           current,
-          (id) => {
+          (id, current) => {
             const actor = current.entities[id]!.actor!;
             return [
               actor.controller,
@@ -132,6 +166,7 @@ export class CognitionMaintenance {
               current.innerWorlds?.[id],
               current.cognitionPolicy,
               this.service.memoryBacklog,
+              this.service.store.memories?.actorRevision(id),
             ];
           },
           this.service.generation,
@@ -140,6 +175,10 @@ export class CognitionMaintenance {
       const actors = this.work
         .ready(this.now(), current.simTime)
         .map((id) => current.entities[id]!);
+      // Advisory maintenance need not reread SQL for every fresh sighting. Keep
+      // changed actors dirty, but admit at most one inspection per real second.
+      const nextReadAt = this.now() + 1000;
+      for (const entity of actors) this.work.defer(entity.id, nextReadAt);
       const generations = new Map(
         actors.map((entity) => [entity.id, this.work.capture(current, entity.id)]),
       );
@@ -153,7 +192,9 @@ export class CognitionMaintenance {
           this.work.defer(entity.id, times.get(entity.id)! + 60000);
           continue;
         }
-        const history = await this.service.memoryMaintenanceStatus(entity.id);
+        const history = await this.readSchedule(() =>
+          this.service.memoryMaintenanceStatus(entity.id),
+        );
         const world = this.service.world;
         const actor = world.entities[entity.id]?.actor;
         // Owner edits can remove an actor while schedule records are loading.
@@ -165,7 +206,7 @@ export class CognitionMaintenance {
           !actor.incapacitated &&
           (!actor.action || actor.action.type === 'status-effect');
         const mind = mindFor(world, entity.id);
-        // Sim-time deadlines follow pause/speed naturally; wall time only gates paid admission.
+        // Sim-time deadlines follow pause/speed; wall time bounds inspections and paid admission.
         const future = [
           (Math.floor(world.simTime / 3600) + 1) * 3600,
           mind.lastReflectionAt + 3600,
@@ -202,13 +243,29 @@ export class CognitionMaintenance {
         const day = Math.floor(world.simTime / 86400);
         const reflectedToday =
           mind.lastReflectionAt > 0 && Math.floor(mind.lastReflectionAt / 86400) === day;
-        if (
+        const reflectionDue =
           safe &&
           !actor.action &&
           hasMemories &&
           !reflectedToday &&
-          !(await this.service.store.getIntegration(this.key(entity.id))) &&
-          world.simTime - mind.lastReflectionAt >= 3600
+          world.simTime - mind.lastReflectionAt >= 3600;
+        // No source cleanup, completed dream day, new reflection or executable
+        // queued reflection means there is no maintenance metadata to inspect.
+        if (
+          !history.rawDue &&
+          !(dreamReady && day > 0) &&
+          !reflectionDue &&
+          !(
+            safe &&
+            !actor.action &&
+            this.service.config.macrofoldKey &&
+            this.service.store.persistence === 'postgres'
+          )
+        )
+          continue;
+        if (
+          reflectionDue &&
+          !(await this.readSchedule(() => this.service.store.getIntegration(this.key(entity.id))))
         )
           await this.enqueue(
             entity.id,
@@ -219,7 +276,9 @@ export class CognitionMaintenance {
         // Dream maintenance reviews a completed day in bounded, resumable partitions.
         // It is separate from intentional idle reflection and never marks memories reflected.
         const reviewKey = `memory-review:${world.id}:${entity.id}`;
-        const savedReview = (await this.service.store.getIntegration(reviewKey)) as
+        const savedReview = (await this.readSchedule(() =>
+          this.service.store.getIntegration(reviewKey),
+        )) as
           | {
               day: number;
               completed?: boolean;
@@ -235,11 +294,11 @@ export class CognitionMaintenance {
             : savedReview;
         const reviewDay =
           review?.completed === false && review.failed === false ? review.day : day - 1;
-        const queued = (await this.service.store.getIntegration(this.key(entity.id))) as
-          | ReflectionRequest
-          | undefined;
-        const previousKind = await this.service.store.getIntegration(
-          `maintenance-kind:${world.id}:${entity.id}`,
+        const queued = (await this.readSchedule(() =>
+          this.service.store.getIntegration(this.key(entity.id)),
+        )) as ReflectionRequest | undefined;
+        const previousKind = await this.readSchedule(() =>
+          this.service.store.getIntegration(`maintenance-kind:${world.id}:${entity.id}`),
         );
         const prioritizeReflection =
           safe &&
@@ -280,9 +339,9 @@ export class CognitionMaintenance {
           }
         }
         const cleanupKey = `cleanup:${world.id}:${entity.id}`;
-        const savedCleanup = (await this.service.store.getIntegration(cleanupKey)) as
-          | { hour: number; sourceDigest: string; timeline?: string }
-          | undefined;
+        const savedCleanup = (await this.readSchedule(() =>
+          this.service.store.getIntegration(cleanupKey),
+        )) as { hour: number; sourceDigest: string; timeline?: string } | undefined;
         const previous =
           savedCleanup?.timeline && savedCleanup.timeline !== this.service.timelineId
             ? undefined
@@ -315,9 +374,9 @@ export class CognitionMaintenance {
         )
           continue;
         const attemptKey = `reflection-attempt:${world.id}:${entity.id}`;
-        const attempt = (await this.service.store.getIntegration(attemptKey)) as
-          | { day?: number }
-          | undefined;
+        const attempt = (await this.readSchedule(() =>
+          this.service.store.getIntegration(attemptKey),
+        )) as { day?: number } | undefined;
         if (attempt?.day === day) continue;
         await this.service.store.putIntegration(attemptKey, { day });
         await this.service.store.putIntegration(this.key(entity.id), null);
@@ -333,7 +392,10 @@ export class CognitionMaintenance {
   private async last(actorId: string): Promise<number> {
     const key = `maintenance-at:${this.service.world.id}:${actorId}`;
     if (!this.lastStarted.has(key))
-      this.lastStarted.set(key, Number((await this.service.store.getIntegration(key)) ?? 0));
+      this.lastStarted.set(
+        key,
+        Number((await this.readSchedule(() => this.service.store.getIntegration(key))) ?? 0),
+      );
     return this.lastStarted.get(key)!;
   }
   private async start(

@@ -1,3 +1,4 @@
+import { decisionAllowance } from './cognition-budget.js';
 import { spatialQuery } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
@@ -30,7 +31,7 @@ import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { seesEntity, visionRadius } from '@open-legend/domain';
+import { entityVisionQuery, visionRadius } from '@open-legend/domain';
 import { decisionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { retrieveActions } from './action-retrieval.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
@@ -1154,23 +1155,7 @@ export class AiDirector {
     const config = this.service.config;
     // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
     // Exact provider invoices remain external; custom prices must match the selected model.
-    const prices = provider === 'jev' ? config.jevPrices : config.llmPrices;
-    const boundedEstimate =
-      (500_000 *
-        Math.max(
-          prices.inputUsdPerMillion,
-          provider === 'openai' ? config.llmPrices.cacheWriteInputUsdPerMillion : 0,
-        ) +
-        8192 * prices.outputUsdPerMillion) /
-      1e6;
-    const reserve = config.macrofoldKey
-      ? provider === 'jev'
-        ? config.jevReserveUsd
-        : config.macrofoldRunUsd
-      : Math.max(
-          provider === 'jev' ? config.jevReserveUsd : Math.max(0.25, config.llmReserveUsd),
-          boundedEstimate,
-        );
+    const reserve = decisionAllowance(config, provider);
     if (
       !(await this.service.store.reserve(
         id,
@@ -1349,6 +1334,22 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
+    // A known spending shortfall cannot produce a decision. Skip retrieval and its
+    // source flushes; the paid call still performs the authoritative reservation.
+    // Display totals are invalidated by accounting writes and month rollover.
+    const { budget } = await this.service.store.usage(this.service.config.budgetUsd);
+    const account = budget.accounts?.[actorId];
+    if (
+      (account?.spentUsd ?? 0) +
+        (account?.reservedUsd ?? 0) +
+        decisionAllowance(this.service.config, 'jev') >
+      budget.limitUsd
+    )
+      throw new StopJob(
+        'failed',
+        'AI spending cap reached. Existing survival actions and learned recipes still work.',
+      );
+
     run.responseWatch = {
       actorId,
       afterSequence: (this.service.world.experience?.awareness[actorId] ?? []).reduce(
@@ -1877,13 +1878,14 @@ export class AiDirector {
       timedSync('cognition.thoughtRefresh', () =>
         this.thoughtWork.refresh(
           world,
-          (id) => {
+          (id, world) => {
             const entity = world.entities[id]!,
               actor = entity.actor!;
             const query = spatialQuery(world, worldPosition(entity), visionRadius(world, entity));
             if (query.status !== 'complete') return [query.status];
+            const sees = entityVisionQuery(world, entity);
             const ids = query.values
-              .filter((other) => other.id !== id && seesEntity(world, entity, other))
+              .filter((other) => other.id !== id && sees(other))
               .map((other) => other.id);
             visible.set(id, ids);
             return [
@@ -1901,6 +1903,15 @@ export class AiDirector {
                 .map((v) => v.id)
                 .join('|'),
               ids.join('\0'),
+              // Interest predicates use kind/resource definition, not pose. Detect
+              // an edited target even when visible membership itself is unchanged.
+              ids
+                .map(
+                  (id) =>
+                    `${world.entities[id]!.kind}:${world.entities[id]!.resource?.definitionId ?? ''}`,
+                )
+                .join('\0'),
+              world.recipes,
               world.memories[id],
               world.experience?.awareness[id],
               world.experience?.summaries[id],

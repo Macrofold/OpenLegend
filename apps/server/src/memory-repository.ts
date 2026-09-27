@@ -499,34 +499,47 @@ export class MemoryRepository {
           UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND s.source_id=c.id)`;
       const params = [...pairs.flat(), worldId, worldId, worldId];
       const target = '(r.actor_id,r.id) IN (SELECT actor_id,id FROM affected)';
+      if (this.db.dialect !== 'postgres') {
+        await this.db
+          .prepare(
+            `${cte} UPDATE recall_sources AS r SET eligible=CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END WHERE r.world_id=? AND ${target}`,
+          )
+          .run(...params);
+        continue;
+      }
+      // One snapshot computes eligibility and the wanted queue for this affected set.
+      // DML CTEs cannot read one another's table updates: all consumers use `desired`,
+      // including removed sources. Queue delete/upsert sets are deliberately disjoint.
+      // docs/architecture.md#performance-critical-path
       await this.db
         .prepare(
-          `${cte} UPDATE recall_sources AS r SET eligible=CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END WHERE r.world_id=? AND ${target}`,
+          `${cte}, desired AS MATERIALIZED (
+          SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision,r.importance,r.at,
+            CASE WHEN ${this.sourceEligibility} THEN 1 ELSE 0 END AS next_eligible
+          FROM recall_sources r WHERE r.world_id=? AND ${target}
+        ), updated AS (
+          UPDATE recall_sources r SET eligible=d.next_eligible FROM desired d
+          WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind
+          AND r.eligible<>d.next_eligible
+        ), discarded_vectors AS (
+          DELETE FROM memory_vectors v WHERE v.world_id=? AND (v.actor_id,v.source_id) IN (SELECT actor_id,id FROM affected)
+          AND NOT EXISTS (SELECT 1 FROM desired d WHERE d.actor_id=v.actor_id AND d.id=v.source_id AND d.revision=v.source_revision AND d.next_eligible=1)
+        ), wanted AS MATERIALIZED (
+          SELECT r.world_id,r.actor_id,r.id AS source_id,r.revision AS source_revision,m.model,m.dimensions,r.importance,r.at
+          FROM desired r JOIN memory_index_models m ON m.world_id=r.world_id AND m.actor_id=r.actor_id
+          WHERE r.next_eligible=1
+          AND NOT EXISTS (SELECT 1 FROM memory_vectors v WHERE v.world_id=r.world_id AND v.actor_id=r.actor_id AND v.source_id=r.id AND v.source_revision=r.revision AND v.model=m.model AND v.dimensions=m.dimensions)
+          AND NOT EXISTS (SELECT 1 FROM memory_index_attempts a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_id=r.id AND a.source_revision=r.revision AND a.model=m.model AND a.dimensions=m.dimensions)
+        ), discarded_queue AS (
+          DELETE FROM memory_index_queue q WHERE q.world_id=? AND (q.actor_id,q.source_id) IN (SELECT actor_id,id FROM affected)
+          AND NOT EXISTS (SELECT 1 FROM wanted w WHERE w.actor_id=q.actor_id AND w.source_id=q.source_id AND w.model=q.model AND w.dimensions=q.dimensions)
+        ) INSERT INTO memory_index_queue SELECT * FROM wanted
+        ON CONFLICT (world_id,actor_id,source_id,model,dimensions) DO UPDATE
+        SET source_revision=excluded.source_revision,importance=excluded.importance,at=excluded.at
+        WHERE (memory_index_queue.source_revision,memory_index_queue.importance,memory_index_queue.at)
+          IS DISTINCT FROM (excluded.source_revision,excluded.importance,excluded.at)`,
         )
-        .run(...params);
-      if (this.db.dialect !== 'postgres') continue;
-      await this.db
-        .prepare(
-          `${cte} DELETE FROM memory_vectors AS v WHERE v.world_id=? AND (actor_id,source_id) IN (SELECT actor_id,id FROM affected) AND NOT EXISTS
-        (SELECT 1 FROM recall_sources r WHERE r.world_id=v.world_id AND r.actor_id=v.actor_id AND r.id=v.source_id AND r.revision=v.source_revision AND r.eligible=1)`,
-        )
-        .run(...params);
-      await this.db
-        .prepare(
-          `${cte} DELETE FROM memory_index_queue WHERE world_id=? AND (actor_id,source_id) IN (SELECT actor_id,id FROM affected)`,
-        )
-        .run(...params);
-      await this.db
-        .prepare(
-          `${cte} INSERT INTO memory_index_queue
-        SELECT r.world_id,r.actor_id,r.id,r.revision,m.model,m.dimensions,r.importance,r.at
-        FROM recall_sources r JOIN memory_index_models m ON m.world_id=r.world_id AND m.actor_id=r.actor_id
-        WHERE r.world_id=? AND r.eligible=1 AND ${target}
-        AND NOT EXISTS (SELECT 1 FROM memory_vectors v WHERE v.world_id=r.world_id AND v.actor_id=r.actor_id AND v.source_id=r.id AND v.source_revision=r.revision AND v.model=m.model AND v.dimensions=m.dimensions)
-        AND NOT EXISTS (SELECT 1 FROM memory_index_attempts a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_id=r.id AND a.source_revision=r.revision AND a.model=m.model AND a.dimensions=m.dimensions)
-        ON CONFLICT DO NOTHING`,
-        )
-        .run(...params);
+        .run(...params, worldId, worldId);
     }
   }
 
@@ -758,32 +771,39 @@ export class MemoryRepository {
     );
   }
   /** Indexed scheduling facts only; a wakeup must not reconstruct an actor's past. */
-  async maintenanceStatus(scope: MemoryScope, simTime: number) {
-    return this.snapshot(async () => {
-      const hasMemories = !!(await this.db
-        .prepare(`SELECT 1 AS present FROM recall_sources r WHERE ${this.eligible} LIMIT 1`)
-        .get(...this.params(scope)));
-      const cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
-      let rawDue = false,
-        pressure = false;
-      for (const table of ['mind_awareness', 'mind_memories']) {
-        rawDue ||= !!(await this.db
-          .prepare(
-            `SELECT 1 AS present FROM ${table} WHERE world_id=? AND actor_id=? AND at<=?${table === 'mind_memories' ? " AND kind='episode'" : ''} LIMIT 1`,
-          )
-          .get(scope.worldId, scope.actorId, cutoff));
-        pressure ||= !!(await this.db
-          .prepare(
-            `SELECT 1 AS present FROM ${table} WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?`,
-          )
-          .get(
-            scope.worldId,
-            scope.actorId,
-            EXPERIENCE_LIMITS.consolidationPressure + (table === 'mind_memories' ? 16 : 0) - 1,
-          ));
-      }
-      return { hasMemories, rawDue, pressure };
-    });
+  async maintenanceStatus(scope: Pick<MemoryScope, 'worldId' | 'actorId'>, simTime: number) {
+    const cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+    // One statement supplies one coherent snapshot and avoids five round trips per mind.
+    const row = await this.db
+      .prepare(
+        `SELECT
+      CASE WHEN EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND r.eligible=1) THEN 1 ELSE 0 END AS memories,
+      CASE WHEN EXISTS (SELECT 1 FROM mind_awareness WHERE world_id=? AND actor_id=? AND at<=?)
+        OR EXISTS (SELECT 1 FROM mind_memories WHERE world_id=? AND actor_id=? AND at<=? AND kind='episode') THEN 1 ELSE 0 END AS due,
+      CASE WHEN EXISTS (SELECT 1 FROM mind_awareness WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?)
+        OR EXISTS (SELECT 1 FROM mind_memories WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?) THEN 1 ELSE 0 END AS pressure`,
+      )
+      .get(
+        scope.worldId,
+        scope.actorId,
+        scope.worldId,
+        scope.actorId,
+        cutoff,
+        scope.worldId,
+        scope.actorId,
+        cutoff,
+        scope.worldId,
+        scope.actorId,
+        EXPERIENCE_LIMITS.consolidationPressure - 1,
+        scope.worldId,
+        scope.actorId,
+        EXPERIENCE_LIMITS.consolidationPressure + 15,
+      );
+    return {
+      hasMemories: Number(row?.['memories']) === 1,
+      rawDue: Number(row?.['due']) === 1,
+      pressure: Number(row?.['pressure']) === 1,
+    };
   }
   /** A bounded chronological prefix, never a truncated claim about the whole backlog.
    * Daily cursors exclude summaries written by earlier partitions of this review.

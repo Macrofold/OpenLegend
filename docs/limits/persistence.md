@@ -56,11 +56,13 @@ Original recommendation: **Keep**.
 
 ## LA174
 
-**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
+**Current — source inspected · Restrictiveness: Safe.**
 
-History construction flushes at 262,144 parameter bytes or 900 parameters per table, before retaining more rows. A single oversized row retains prior behavior and may exceed the byte target. Flushes stay inside the same transaction; source rows precede audiences/perspectives, with no evidence omission.
+Write batches use at most 10,000 PostgreSQL parameters or 900 SQLite parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows, writing source rows before audiences/perspectives inside the same transaction. Other record batches use the shared parameter limit and their existing encoded-byte bounds.
 
-**Reason / tradeoff:** Bound intermediate allocation and individual statements without splitting the authoritative commit. [HistoryBatch](../../apps/server/src/history-batch.ts); full-server PostgreSQL qualification remains [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).
+**Reason / tradeoff:** Larger PostgreSQL batches reduce local round trips; SQLite retains the portable parameter floor. The byte bound prevents one huge multi-row statement. The former shared 900-parameter ceiling was replaced only for PostgreSQL; this is not a cap on saved records or permission to split authoritative commits.
+
+[Shared parameter limit](../../apps/server/src/sql-rows.ts) · [HistoryBatch](../../apps/server/src/history-batch.ts) · [Measurement limits](../verification/three-times-scene-performance.md) · [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).
 
 ## LA175
 

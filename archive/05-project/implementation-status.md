@@ -1,5 +1,7 @@
 # Implementation status
 
+Current runtime performance follow-through: [3× scene implementation and evidence](../../docs/verification/three-times-scene-performance.md), tracked under PF00/PF03–06/PF08–09/PF12. Source-specific saves, query routing and redundant cognition/diagnostic work are reduced; smooth sustained 3× acceptance remains open.
+
 ## Gameplay availability
 
 Source-reviewed against `56b8c383` (2026-09-26). This is the current exposure summary, not a second task or limits inventory. **Native support**, **automatic NPC use**, **player controls**, **creator controls** and **verified acceptance** are independent. A registered definition, API or completed foundation does not establish all five. This documentation pass adds no runtime qualification.

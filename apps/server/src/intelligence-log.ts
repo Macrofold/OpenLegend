@@ -85,7 +85,10 @@ export class IntelligenceLog {
   }
   private context = new AsyncLocalStorage<IntelligenceCall>();
   constructor(private store: GameRepository) {}
-  private lane: Promise<void> = Promise.resolve();
+  private pending = new Map<string, { call: IntelligenceCall; bytes: number }>();
+  private pendingBytes = 0;
+  private draining?: Promise<void>;
+  private dropped = false;
   private latest = new Map<string, IntelligenceCall>();
   private closed = false;
   /** Workflow updates use log-owned state; durable diagnostics are eventually consistent. */
@@ -107,25 +110,57 @@ export class IntelligenceLog {
           };
       }
       this.latest.delete(captured.id);
-      this.latest.set(captured.id, structuredClone(captured));
+      this.latest.set(captured.id, captured);
       // Preserve running workflow roots while bounding completed diagnostic lookup state.
       if (this.latest.size > 1000) {
         const completed = [...this.latest].find(([, value]) => value.status !== 'running');
         if (completed) this.latest.delete(completed[0]);
       }
-      this.lane = this.lane.then(async () => {
-        try {
-          await this.store.putIntelligenceCall(captured);
-        } catch {
-          console.error('Could not persist intelligence diagnostics.');
-        }
-      });
+      const previous = this.pending.get(captured.id);
+      if (previous) this.pendingBytes -= previous.bytes;
+      this.pending.delete(captured.id);
+      const bytes = Buffer.byteLength(JSON.stringify(captured));
+      this.pending.set(captured.id, { call: captured, bytes });
+      this.pendingBytes += bytes;
+      // Diagnostics are replaceable snapshots, not accounting or command receipts.
+      // Bound stalled-storage capture and retain the newest update for each call.
+      // docs/limits/observability.md#diagnostic-write-backlog
+      while (this.pending.size > 1000 || this.pendingBytes > 16 * 1024 * 1024) {
+        const first = this.pending.entries().next().value!;
+        this.pending.delete(first[0]);
+        this.pendingBytes -= first[1].bytes;
+        if (!this.dropped)
+          console.error('Intelligence diagnostic backlog full; oldest capture omitted.');
+        this.dropped = true;
+      }
+      this.startDrain();
     } catch {
       console.error('Could not capture intelligence diagnostics.');
     }
   }
+  private startDrain(): void {
+    if (this.draining || !this.pending.size) return;
+    this.draining = (async () => {
+      // Same-turn start/finish updates share one write. Distinct call IDs remain distinct.
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      while (this.pending.size) {
+        const [id, entry] = this.pending.entries().next().value!;
+        this.pending.delete(id);
+        this.pendingBytes -= entry.bytes;
+        try {
+          await this.store.putIntelligenceCall(entry.call);
+        } catch {
+          console.error('Could not persist intelligence diagnostics.');
+        }
+      }
+      this.dropped = false;
+    })().finally(() => {
+      this.draining = undefined;
+      this.startDrain();
+    });
+  }
   async flush(): Promise<void> {
-    await this.lane;
+    while (this.draining) await this.draining;
   }
   async close(): Promise<void> {
     this.closed = true;

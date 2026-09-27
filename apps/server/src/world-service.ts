@@ -1,4 +1,4 @@
-import { advanceWorldSlices } from '@open-legend/domain';
+import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
 import { WorkLane, OverloadError } from './work-lane.js';
 import {
@@ -234,6 +234,7 @@ export class WorldService {
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
   private persistedEvents: WorldEvent[] = [];
+  private persistedMemorySources?: Pick<WorldState, 'memories' | 'experience'>;
   private epoch: CommandEpoch = { generation: 0, openedAt: 0, token: '' };
   get commandEpoch(): string {
     return this.epoch.token;
@@ -316,9 +317,25 @@ export class WorldService {
       });
     });
   }
+  private readonly profiles = new Map<string, Promise<PlayerProfile>>();
   async profileFor(scope: RequestScope): Promise<PlayerProfile> {
     this.assertScope(scope);
-    const profile = await this.store.getProfile(scope.accountId);
+    // Preferences change through setPreferences, not with every simulation frame.
+    // Bound retained accounts by the same capacity as their connected views.
+    let pending = this.profiles.get(scope.accountId);
+    if (!pending) {
+      while (this.profiles.size >= this.config.capacity.connections)
+        this.profiles.delete(this.profiles.keys().next().value!);
+      pending = this.store.getProfile(scope.accountId);
+      this.profiles.set(scope.accountId, pending);
+      const captured = pending;
+      void pending.catch(() => {
+        if (this.profiles.get(scope.accountId) === captured) this.profiles.delete(scope.accountId);
+      });
+    }
+    const loaded = await pending;
+    const latest = this.profiles.get(scope.accountId);
+    const profile = latest && latest !== pending ? await latest : loaded;
     this.assertScope(scope);
     return profile;
   }
@@ -460,6 +477,7 @@ export class WorldService {
     }
     if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
     freezeWorld(this.saved.world);
+    this.rememberPersistedMemorySources();
     this.persistedEvents = this.saved.world.events;
     this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
     this.epoch =
@@ -528,6 +546,12 @@ export class WorldService {
       const priorPauseWhenHidden =
         this.connectionPreferences.get(scope.accountId) ?? this.pauseWhenHidden;
       const profile = await this.store.setPreferences(scope.accountId, preferences);
+      if (
+        !this.profiles.has(scope.accountId) &&
+        this.profiles.size >= this.config.capacity.connections
+      )
+        this.profiles.delete(this.profiles.keys().next().value!);
+      this.profiles.set(scope.accountId, Promise.resolve(profile));
       this.assertScope(scope);
       if (this.config.authentication.mode === 'local') this.currentProfile = profile;
       const pausePolicyChanged = priorPauseWhenHidden !== profile.preferences.pauseWhenHidden;
@@ -773,6 +797,7 @@ export class WorldService {
         for (const event of saved.world.events.slice(this.worldEventsById.size))
           this.worldEventsById.set(event.id, event);
       this.persistedEvents = saved.world.events;
+      this.rememberPersistedMemorySources();
       this.unpersisted = false;
       this.lastRoutinePersistAt = this.now();
       this.notify(false);
@@ -833,6 +858,34 @@ export class WorldService {
     });
   }
 
+  private rememberPersistedMemorySources(): void {
+    const { memories, experience } = this.world;
+    this.persistedMemorySources = { memories, experience };
+  }
+
+  /** Persist sources needed by SQL, not unrelated pose/need progression. Appends
+   * cannot change a previously selected source; edits and revocations still flush.
+   * docs/architecture.md#performance-critical-path */
+  async flushMemorySources(actorId: string, includeAppends = true): Promise<void> {
+    return this.mutate(async () => {
+      await this.ready;
+      if (!this.unpersisted) return;
+      const before = this.persistedMemorySources,
+        after = this.world;
+      const unchanged = (a: unknown[] | undefined, b: unknown[] | undefined) =>
+        a === b || (!includeAppends && !!a && !!b && appendedRecordCount(a, b) !== undefined);
+      if (
+        !before ||
+        !unchanged(before.memories[actorId], after.memories[actorId]) ||
+        !unchanged(before.experience?.awareness[actorId], after.experience?.awareness[actorId]) ||
+        !unchanged(before.experience?.summaries[actorId], after.experience?.summaries[actorId]) ||
+        before.experience?.forgotten[actorId] !== after.experience?.forgotten[actorId] ||
+        before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId]
+      )
+        await this.flush();
+    });
+  }
+
   /** Cold actor history is scoped to one serialized operation, then released. */
   async withActorHistory<T>(
     actorIds: string[] | undefined,
@@ -879,6 +932,18 @@ export class WorldService {
     return selected.map((entry) => entry.memory);
   }
   async awarenessEvidence(actorId: string, eventIds: string[]) {
+    if (!this.world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
+    if (!eventIds.length) return [];
+    const ids = new Set(eventIds);
+    const forgotten = new Set(this.world.experience?.forgotten[actorId] ?? []);
+    for (const id of forgotten) ids.delete(id);
+    const recent = (this.world.experience?.awareness[actorId] ?? []).filter((entry) =>
+      ids.has(entry.eventId),
+    );
+    // Newly observed triggers already belong to the immutable authoritative world.
+    // Do not save/reload the world just to recover evidence still resident in it.
+    // Missing (cold) sources retain the persisted selection and revision checks below.
+    if (recent.length === ids.size) return recent;
     await this.flush();
     const world = this.world,
       generation = this.generation;
@@ -943,14 +1008,14 @@ export class WorldService {
     };
   }
   async memoryMaintenanceStatus(actorId: string) {
-    await this.flush();
+    // Scheduling can use the last durable snapshot. Flushing here made every idle
+    // actor force a world save. Actual maintenanceBatch flushes before selecting
+    // sources; the next committed actor revision wakes this advisory check again.
     const world = this.world;
-    const head = await this.store.records?.head();
-    if (this.store.memories && head)
-      return this.store.memories.maintenanceStatus(
-        { worldId: world.id, actorId, generation: head.generation },
-        world.simTime,
-      );
+    // These booleans grant no source access. ActorWork fences the scheduling
+    // snapshot, and actual batch selection checks the current database generation.
+    if (this.store.memories)
+      return this.store.memories.maintenanceStatus({ worldId: world.id, actorId }, world.simTime);
     const all = experiences(world, actorId, true);
     return {
       hasMemories: all.length > 0,

@@ -128,6 +128,7 @@ import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
   seesEntity,
+  entityVisionQuery,
   visionRadius,
   visionQuery,
   sensesFor,
@@ -2554,7 +2555,12 @@ function* updateEncounters(
           .flatMap((m) => m.entityIds),
       );
       for (const id of newlySeen) {
-        if (!recent.has(id)) encounter(actor.entity, id, true);
+        if (!recent.has(id))
+          // Keep batched private evidence; routine animal onset needs no semantic
+          // reasoning unless an interest matches. Mind-bearing encounters also
+          // offer social cognition. Meaningful detail changes remain separate.
+          // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
+          encounter(actor.entity, id, hasMemory(world.entities[id]));
         yield;
       }
     }
@@ -2635,8 +2641,9 @@ export function observeActor(
     .map((record) => world.recipes[record.recipeId])
     .filter((recipe) => !!recipe);
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
+  const sees = entityVisionQuery(world, actor);
   const visibleEntities = nearbyEntities(world, worldPosition(actor), visionRadius(world, actor))
-    .filter((entity) => entity.id !== actorId && visible(world, actor, entity))
+    .filter((entity) => entity.id !== actorId && sees(entity))
     .map((entity) => {
       // Shape the permitted view before its one final deep copy. Cloning a private plan or
       // long future route just to erase it wastes work proportional to invisible state.

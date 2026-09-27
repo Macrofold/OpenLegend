@@ -7,6 +7,7 @@ export {
   PERCEPTION_RULES,
   sensesFor,
   seesEntity,
+  entityVisionQuery,
   hearsEntity,
   visionRadius,
   contactViews,

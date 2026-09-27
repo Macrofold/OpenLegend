@@ -86,15 +86,34 @@ export class PostgresDatabase implements SqlDatabase {
   }
   readTransaction<T>(operation: () => Promise<T>): Promise<T> {
     if (this.transactionContext.getStore()?.active) return operation();
+    return this.read(operation, true);
+  }
+  private read<T>(operation: () => Promise<T>, snapshot: boolean): Promise<T> {
     const queuedAt = performance.now();
     return this.readLane.run(async () => {
       recordDuration('postgres.readWait', performance.now() - queuedAt);
       this.readReady ??= this.ready.then(async () => {
         await this.reader.connect();
-        await this.reader.query('SET search_path TO open_legend');
+        await this.reader.query(
+          'SET search_path TO open_legend; SET default_transaction_read_only=on',
+        );
       });
       await this.readReady;
-      return this.inTransaction(this.reader, true, operation);
+      if (snapshot) return this.inTransaction(this.reader, true, operation);
+      // A single SELECT already has an atomic PostgreSQL snapshot. It needs neither
+      // a writer slot nor BEGIN/COMMIT; explicit multi-query reads still use both.
+      const scope = {
+        active: true,
+        client: this.reader,
+        readOnly: true,
+        committed: [] as (() => void)[],
+        rolledBack: [] as (() => void)[],
+      };
+      try {
+        return await this.transactionContext.run(scope, operation);
+      } finally {
+        scope.active = false;
+      }
     });
   }
   private inTransaction<T>(
@@ -167,9 +186,15 @@ export class PostgresDatabase implements SqlDatabase {
     await this.query(sql);
   }
   prepare(sql: string) {
+    const select = (...params: unknown[]) =>
+      !this.transactionContext.getStore()?.active &&
+      /^\s*SELECT\b/i.test(sql) &&
+      !/\bFOR\s+(UPDATE|NO\s+KEY\s+UPDATE|SHARE|KEY\s+SHARE)\b/i.test(sql)
+        ? this.read(() => this.query(sql, params), false)
+        : this.query(sql, params);
     return {
-      get: async (...params: unknown[]) => (await this.query(sql, params)).rows[0],
-      all: async (...params: unknown[]) => (await this.query(sql, params)).rows,
+      get: async (...params: unknown[]) => (await select(...params)).rows[0],
+      all: async (...params: unknown[]) => (await select(...params)).rows,
       run: (...params: unknown[]) => this.query(sql, params),
     };
   }

@@ -340,11 +340,19 @@ export class AuthorityRepository {
   /** Re-read in the world publication transaction, including session expiry after any await. */
   async assertFence(fence: AuthorityFence): Promise<void> {
     const { scope, capability, controlling, now } = fence;
+    // One publication snapshot validates all three fences. Separate round trips
+    // amplified command latency; cache refresh belongs to the committed owners.
     const session = await this.db
-      .prepare('SELECT account_id,revision,expires_at FROM auth_sessions WHERE id=?')
-      .get(scope.sessionId);
-    const grant = await this.grant(scope.worldId, scope.accountId);
-    const control = controlling ? await this.control(scope.worldId, scope.actorId) : undefined;
+      .prepare(
+        `SELECT s.account_id,s.revision,s.expires_at,
+      g.actor_id AS grant_actor,g.revision AS grant_revision,g.capabilities,
+      c.generation,c.account_id AS control_account,c.session_id,c.connection_id
+      FROM auth_sessions s
+      LEFT JOIN auth_grants g ON g.world_id=? AND g.account_id=?
+      LEFT JOIN auth_controls c ON c.world_id=? AND c.actor_id=?
+      WHERE s.id=?`,
+      )
+      .get(scope.worldId, scope.accountId, scope.worldId, scope.actorId, scope.sessionId);
     if (
       !session ||
       session['account_id'] !== scope.accountId ||
@@ -353,19 +361,22 @@ export class AuthorityRepository {
     )
       throw new AuthorityError('session');
     if (
-      !grant ||
-      grant.revision !== scope.grantRevision ||
-      grant.actorId !== scope.actorId ||
-      !grant.capabilities.includes(capability)
+      session['grant_revision'] === null ||
+      Number(session['grant_revision']) !== scope.grantRevision ||
+      session['grant_actor'] !== scope.actorId ||
+      !z
+        .array(capabilitySchema)
+        .parse(JSON.parse(String(session['capabilities'])))
+        .includes(capability)
     )
       throw new AuthorityError('forbidden');
     if (
       controlling &&
-      (!control ||
-        control.generation !== scope.controlGeneration ||
-        control.accountId !== scope.accountId ||
-        control.sessionId !== scope.sessionId ||
-        control.connectionId !== scope.connectionId)
+      (session['generation'] === null ||
+        Number(session['generation']) !== scope.controlGeneration ||
+        session['control_account'] !== scope.accountId ||
+        session['session_id'] !== scope.sessionId ||
+        session['connection_id'] !== scope.connectionId)
     )
       throw new AuthorityError('control-changed');
   }

@@ -1,10 +1,10 @@
+import { parameterBatchLimit } from './sql-rows.js';
 import type { SqlDatabase } from './store.js';
 import { gaugeMetric, timed } from './performance.js';
 
 type Table = 'history_events' | 'history_audiences' | 'history_perspectives';
 const TABLES: readonly Table[] = ['history_events', 'history_audiences', 'history_perspectives'];
 const MAX_PARAMETER_BYTES = 262144;
-const MAX_PARAMETERS = 900;
 
 /** Bound construction, not just the eventual SQL. Flush source rows before their dependent
  * rows, inside the caller's existing transaction. An oversize singleton retains prior behavior.
@@ -41,7 +41,7 @@ export class HistoryBatch {
     if (
       this.bytes &&
       (this.bytes + size > MAX_PARAMETER_BYTES ||
-        this.parameters[table] + row.length > MAX_PARAMETERS)
+        this.parameters[table] + row.length > parameterBatchLimit(this.db))
     )
       return this.flush().then(append);
     append();

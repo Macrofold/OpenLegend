@@ -41,21 +41,22 @@ export function worldRootEntities(world: WorldState, snapshot = false): Entity[]
   const base = original(world)!;
   const ids = snapshotRoots(base.entities),
     changed = draftMembership.get(world);
-  // Read-only phases need current values without creating proxies for every static root.
-  // The snapshot is private to that phase; mutations still go through the live world.
-  const entities = snapshot ? current(world.entities) : world.entities;
+  // Snapshot only physical roots, not contained inventory or retired records.
+  // The copy is private to that phase; mutations still go through the live world.
+  const entities = world.entities;
+  const value = (entity: Entity) => (snapshot && isDraft(entity) ? current(entity) : entity);
   const result: Entity[] = [];
   // Membership hooks cover every native root insertion/removal. Unchanged roots do
   // not need repeated placement proxy walks for every emitted event in this phase;
   // values still come from the current draft, including replaced entity records.
   for (const id of ids) {
     const entity = entities[id];
-    if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(entity);
+    if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(value(entity));
   }
   if (changed)
     for (const id of changed)
       if (!physicalRoot(base.entities[id]) && physicalRoot(entities[id]))
-        result.push(entities[id]!);
+        result.push(value(entities[id]!));
   return result;
 }
 /** The draft's exact entity write set routes membership maintenance. No serialized

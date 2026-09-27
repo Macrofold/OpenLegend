@@ -123,3 +123,11 @@ Original recommendation: **Keep**.
 **Reason / tradeoff:** Keep a disposable local run finite and practical; exact values are engineering choices. Change the tooling envelope only for a named qualification workload, preserving zero-provider spending and explicit report output. No expansion task is justified solely by the existence of these bounds.
 
 [Implementation](../../scripts/stress-checkpoints.ts).
+
+## Diagnostic write backlog
+
+**Current · Restrictiveness: Very safe.**
+
+Queued intelligence diagnostics retain the latest snapshot per call ID, with at most 1,000 pending IDs or 16 MiB of encoded records, plus the active write. Updates waiting in the same turn or behind storage coalesce. Distinct IDs stay distinct until capacity is exhausted; overflow omits the oldest pending diagnostic and reports a warning. Graceful shutdown drains pending records.
+
+**Reason / tradeoff:** A slow database must not create an unlimited promise/payload backlog or save every superseded inspector state. This changes diagnostic completeness during overload, never command receipts, spending records, source evidence or accepted effects. The former write promise chain had no backlog bound. Revisit if ordinary supported workloads overflow; no higher value is recommended without evidence.

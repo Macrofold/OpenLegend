@@ -122,7 +122,7 @@ export async function prepareDecision(
   attempt = 0,
   triggerEvidenceId?: string,
 ) {
-  await service.flush();
+  await service.flushMemorySources(actorId);
   const world = service.world;
   const generation = service.generation;
   stimulus = projectEntityMarkers(stimulus, world, actorId);
@@ -356,7 +356,7 @@ export async function prepareDecision(
     });
   // Attention can outlive a simulation transition. Refresh current state after
   // it returns; later actions still validate their authoritative prerequisites.
-  await service.flush();
+  await service.flushMemorySources(actorId, false);
   await recall.validateSources(candidates, selection.selected);
   if (
     retainedEvidence &&

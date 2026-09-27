@@ -181,16 +181,24 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
   };
 }
 export function seesEntity(world: WorldState, observer: Entity, source: Entity): boolean {
-  if (!activelyParticipates(source)) return false;
-  const position = worldPosition(source);
-  return visionQuery(
-    world,
-    observer,
-  )({
-    id: source.id,
-    position: isDraft(position) ? current(position) : position,
-    height: bodyProfile(source).height,
-  });
+  return entityVisionQuery(world, observer)(source);
+}
+/** Bind once for a read-only query phase. Each target still supplies its current
+ * participation, transform and body; do not retain this across observer/geometry changes. */
+export function entityVisionQuery(
+  world: WorldState,
+  observer: Entity,
+): (source: Entity) => boolean {
+  const sees = visionQuery(world, observer);
+  return (source) => {
+    if (!activelyParticipates(source)) return false;
+    const position = worldPosition(source);
+    return sees({
+      id: source.id,
+      position: isDraft(position) ? current(position) : position,
+      height: bodyProfile(source).height,
+    });
+  };
 }
 export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
   return (

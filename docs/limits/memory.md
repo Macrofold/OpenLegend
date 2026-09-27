@@ -332,9 +332,9 @@ Original recommendation: **Review**.
 
 ## LA084
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Implemented · Restrictiveness: Safe.**
 
-The maintenance scheduler normally checks hourly for raw experiences older than 6 game hours that can be summarized.
+The maintenance scheduler checks simulation deadlines and changed actor sources for raw experiences older than 6 game hours that can be summarized. Advisory checks read the last durable snapshot instead of forcing a save per actor. New sources can wait until the next routine commit (normally one real second). Advisory SQL inspections are also limited to once per actor per real second; unchanged actors retain their simulation deadlines. Actual maintenance selection flushes first.
 
 **Reason / tradeoff:** Keep summarization grouped into useful batches, while allowing the scheduler to respond when retained history grows too quickly.
 
