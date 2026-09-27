@@ -18,6 +18,17 @@ The Switch 2 Edition released June 5, 2025. Nintendo identifies improved resolut
 
 Walking, sprinting, jumping, swimming, climbing, gliding, riding and shield surfing offer different costs and lines through the same landscape. Climbing makes height an attainable resource; gliding spends that height to cross horizontal distance. Stamina means a direct line is not necessarily a feasible line. Rain, exposed slopes and water can change the route calculation. Horse travel trades some freedom of climbing for speed on suitable terrain. Rafts make water an interactive surface rather than merely a border. [B5](#b5) [B7](#b7)
 
+### Horses: taming becomes a small persistent relationship
+
+Riding is not only a disposable mount action. Link must **sneak up, mount and soothe** a wild horse; more difficult temperaments demand more stamina to tame. A chosen horse can then be taken to a stable, registered for a rupee fee, **named**, equipped with a saddle/bridle and recalled through the stable network. Nintendo's own guide states that up to **five** horses can be registered. [B24](#b24)
+
+Bond changes control rather than existing as flavor text: feeding/soothing a horse increases its bond, and a better-bonded horse obeys Link more reliably. Registered horses also have persistent strength/speed/stamina/temperament records and can die. The Horse God **Malanya** can revive a registered horse after the player discovers/unlocks that service, so death is meaningful without being necessarily permanent. [B25](#b25)
+
+This is much lighter than RDR2's horse-care simulation, but it still composes:
+> stealth/stamina to acquire → naming/registration → repeated riding/soothing → improved obedience → possible loss/recovery.
+
+That sequence matters for OpenLegend because a utility entity becomes memorable through **identity + repeated interaction + vulnerability**, even without dialogue or a huge relationship system.
+
 The game's practical environmental vocabulary includes movable objects, cuttable trees, fire, wind, water, electricity and temperature. The visually simplest question—what material is this?—can matter more than an item's damage statistic. This is bounded interaction, not universal real-world simulation. A rock is not automatically a crafting ingredient in an unlimited construction system, and a tree is not automatically attachable to every other object. Nintendo's documented development goal was to connect object reactions to the world and Link, not to implement every conceivable action. [B9](#b9)
 
 ### Slate tools: reusable capabilities, selective targets
@@ -163,7 +174,7 @@ This closes the assignment's explicit mechanics inventory against the sourced se
 
 - **Identity, attributes, progression, jobs/trees:** Link is a fixed protagonist rather than a created avatar or party leader. There is no class/job/perk tree; durable growth is distributed across hearts, stamina, inventory capacity, armor enhancement, Champion abilities and player knowledge (§§1–3).
 - **Items, equipment, crafting/upgrading, powers:** weapons, bows, shields, armor, materials and key items are covered in §§2–3. Cooking/elixirs are bounded production systems, Great Fairies upgrade armor, and runes/Champion abilities provide reusable powers. There is no unrestricted recipe-construction or spell-invention system.
-- **Traversal, environment, object interaction, activities/minigames:** walking, sprinting, jumping, swimming, climbing, gliding, riding, shield surfing and rafts are covered in §2 alongside fire, wind, water, electricity, temperature and selectively manipulable objects. Shrines, photography/Compendium work, horse tasks, treasure searches, errands and traversal challenges are covered in §4; the dossier does not invent a separate minigame engine where the game reuses ordinary verbs.
+- **Traversal, environment, object interaction, activities/minigames:** walking, sprinting, jumping, swimming, climbing, gliding, riding, shield surfing and rafts are covered in §2 alongside fire, wind, water, electricity, temperature and selectively manipulable objects. Horse taming, stamina cost, naming/registration, bonding/obedience, stable storage and registered-horse revival are also covered there. Shrines, photography/Compendium work, horse tasks, treasure searches, errands and traversal challenges are covered in §4; the dossier does not invent a separate minigame engine where the game reuses ordinary verbs.
 - **Combat, stealth, loot/rewards, failure/recovery:** melee/ranged combat, guarding, evasion, parries, stealth and equipment attrition are covered in §2. Chests, quests, shrines, materials and service unlocks provide distinct reward types; §3 covers saves/autosaves, Blood Moon resets and the difference between retrying and persistent world change.
 - **Economy/trading, story, relationships/reputation, party:** rupees, shops, material sale/retention and upgrade spending are covered in §3; story and authored communities are in §4. There is no general romance/reputation ladder or conventional controllable party. Optional Wolf Link support is not native co-op.
 - **NPC/AI, factions, world, quests/events:** §4 covers authored NPCs/services, regional communities, side quests and Tarrey Town. Enemy behavior and world-state recurrence are discussed in §§2–3. Communities are not a player-switchable faction-alignment system, and NPCs are not represented as having a universal persistent schedule simulation.
@@ -218,3 +229,7 @@ Accessed September 26, 2026. Written bodies or relevant sections were read unles
 <a id="b22"></a>**B22 —** [GDC Vault: Change and Constant](https://www.gdcvault.com/play/1024562/Change-and-Constant-Breaking-Conventions), GDC 2017. Official session/speaker metadata and a viewing route; not a watched transcript.
 
 <a id="b23"></a>**B23 —** [Nintendo IR: top-selling Switch software](https://www.nintendo.co.jp/ir/en/finance/software/switch.html), reporting date June 30, 2026. Primary consolidated unit totals and accounting footnotes; not revenue or active-user data.
+
+<a id="b24"></a>**B24 —** [Nintendo Breath of the Wild Explorer's Guide](https://zelda.nintendo.com/breath-of-the-wild/assets/pdfs/ExplorersGuide.pdf), official Nintendo guide. Audited September 27, 2026 for wild-horse acquisition, stamina-based taming, friendship, gear and the five-horse stable registration/name boundary; primary player-facing guidance, not implementation evidence.
+
+<a id="b25"></a>**B25 —** [Zelda Dungeon: Horse (Breath of the Wild)](https://www.zeldadungeon.net/wiki/Horse_%28Breath_of_the_Wild%29) and [Malanya](https://www.zeldadungeon.net/wiki/Malanya). Community mechanics references audited September 27, 2026. Used for bond/obedience, persistent horse stats, stable retrieval, registered-horse death and Malanya revival; community rules evidence, not developer intent.

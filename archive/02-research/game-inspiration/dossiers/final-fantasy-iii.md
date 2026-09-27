@@ -84,6 +84,8 @@ A **Golem Staff** can supply an item-use petrification effect and an **Elder Sta
 
 Potions and Hi-Potions restore HP; Phoenix Downs address KO. Gold Needles, Echo Herbs, Maiden's Kisses and other remedies target particular conditions. Offensive objects such as **Antarctic Wind**, **Zeus's Wrath** and **Bomb Fragment** supply effects without requiring a learned spell. Magic Keys address doors; Gnomish Bread supplies a map function; Gysahl Greens have a chocobo-related use. The historical inventory distinguishes field-only, battle-only and shared uses rather than assuming every object works everywhere. [J15]
 
+That Chocobo use is more concrete than the original pass recorded. In the 2D/Pixel Remaster lineage, using **Gysahl Greens at a Chocobo Woods calls the Fat Chocobo**, which stores spare inventory for later retrieval. [J36] This is a small but meaningful logistics primitive: an item can unlock **external storage tied to a recurring world entity/location** instead of merely healing or opening a door. It should not be confused with the ordinary rideable Chocobo or with a player-built warehouse.
+
 FFIII does **not** have the ordinary Ether-and-Tent recovery pattern a veteran of other installments might expect. Inns, restoration points and rare Elixirs therefore matter to sustained spell use. Calling this “no MP” is misleading shorthand: it lacks the common pooled meter, not a finite magical resource. [J9]
 
 The **Wheel of Time**, **Noah's Lute** and four **Fangs** advance transport, awaken a necessary ally or open a route. They are authored access objects, not replaceable equipment tiers. Treasure, a quest object, a job unlock and a vehicle are all rewards, but they change different parts of the possibility space. [J24]
@@ -105,6 +107,10 @@ The Invincible combines recovery, shops and transport. Boarding its interior is 
 Sara, Cid, Desch, Aria, Alus, Doga and Unei connect particular regions, problems and capabilities. In the 2D version, temporary companions follow and comment rather than becoming a fifth player-controlled combat slot. The original designer explicitly preferred that separation to inventing a reason every narratively powerful guest fought at the protagonists' current strength. [J24][J28]
 
 The 3D remake gives its core protagonists names and more personal framing. Its historical **Mognet** letter exchanges could unlock optional material, including interactions involving other DS players. That is not cooperative control of the campaign, nor evidence that every original online function is currently available. Pixel Remaster does not gain the DS social surface by association. [J4][J5]
+
+The optional-content boundary is materially larger than “some letters.” In the DS remake, Mognet-linked sidequests can unlock the remake's **secret Onion Knight job**, a wandering Legendary Smith/Ultima Weapon chain, and the hidden **??? Dungeon / Iron Giant** superboss after the relevant letter conditions. [J37] Those are 3D-remake systems layered on top of the 1990 structure. The 2D Pixel Remaster uses Onion Knight as the **starting job** and does **not** inherit the DS mail-gated secret dungeon simply because both releases are called Final Fantasy III.
+
+This difference is exactly the kind of remake boundary the audit is meant to preserve: “newer version” does not mean cumulative union of all earlier extras.
 
 There is no general relationship-rank economy, marriage, romance selection, faction reputation, player trading, city management or authored-world editing in the studied core. The 3D development interview's proposed favorability-based dialogue system was **discarded**; it must not be cited as a shipped social mechanic. [J6]
 
@@ -220,6 +226,12 @@ The English **Most Helpful (All Time)** surface for app **1173790** was readable
 
 An additional readable 2024 discussion concerns whether job changes and their remaining consequences are sufficiently explained. It supplies a direct example of information needs, not authority for the posters' broader claims that games no longer have manuals. [J34]
 
+### September 2026 current-store cross-check
+
+The September 27 audit re-read the live Steam product/review surface. The English Pixel Remaster corpus is **Very Positive** at about **93% positive across roughly 1.7k English reviews**, with the recent 30-day sample about **91% positive**. The current product page explicitly advertises encounter toggling and 0×–4× experience multipliers, while the separately checked 1.2.0 patch history adds an independent **Job Level growth** multiplier. [J10][J8][J38]
+
+That split reinforces an important progression distinction already present in the dossier: character EXP and job proficiency are different owners. A modern assist can accelerate one, the other, or both without turning job switching into a cosmetic choice or importing the DS remake's Mognet extras.
+
 ## 10. Transferable patterns and failure modes — R13
 
 **Switching roles is only meaningful when roles change useful decisions.** Dependency: distinct verbs and comprehensible situations. Failure mode: cosmetic differences or a single dominant final package make the apparent variety superficial.
@@ -257,13 +269,13 @@ These are research interpretations, not requests to copy protected characters, a
 | R13 | §10 patterns, dependencies and failure modes |
 | R14 | This map, source annotations, preservation and navigation |
 
-G80 is an expanded-roster addition, not a replacement for an original packet chapter. The checkpoint's J1–J8 identities and findings survive; the formerly pending patch reading is now complete. The whole-library P01–P05 gates remain separately owned by the progress ledger.
+G80 is an expanded-roster addition, not a replacement for an original packet chapter. The checkpoint's J1–J8 identities and findings survive; the formerly pending patch reading is now complete. The audit adds the Fat Chocobo storage loop and makes the DS-only Mognet/Onion Knight/Legendary Smith/Iron Giant content explicit rather than silently treating Pixel Remaster as cumulative. The whole-library P01–P05 gates remain separately owned by the progress ledger.
 
 For audiovisual study, use the remaster trailer routed from the official console announcement and the original/3D comparisons embedded in the official interviews. The written pages were inspected; their videos were not watched in full and no timestamps are invented. Compare [Final Fantasy I](final-fantasy.md) for initial role commitment, [Final Fantasy II](final-fantasy-ii.md) for use-shaped development and [Expedition 33](clair-obscur-expedition-33.md) for individually distinct resource models within one party.
 
 ## Sources and access notes
 
-All accessed September 26, 2026. Original review bodies and relevant guide sections were read. Entire walkthroughs, databases and linked videos are not claimed exhaustively inspected or enacted. Historical formulas remain version-labeled; community sources are not proprietary-code verification. Ranges refer to the individually annotated entries below.
+Original-pass sources were accessed September 26, 2026; the current Steam/storefront and added Fat Chocobo/DS-sidequest references were re-checked September 27 during the audit. Original review bodies and relevant guide sections were read. Entire walkthroughs, databases and linked videos are not claimed exhaustively inspected or enacted. Historical formulas remain version-labeled; community sources are not proprietary-code verification. Ranges refer to the individually annotated entries below.
 
 - **J1:** [RPGFan PC review](https://www.rpgfan.com/review/final-fantasy-iii-pixel-remaster/), Zach Wilkerson, July 30, 2021. Complete original body and conclusion.
 - **J2:** [Siliconera PC review](https://www.siliconera.com/review-final-fantasy-iii-pixel-remaster-is-a-piece-of-history/), Jenni Lada, July 28, 2021. Complete original body; historical-access and interface criticism.
@@ -300,5 +312,8 @@ All accessed September 26, 2026. Original review bodies and relevant guide secti
 - **J33:** [Xbox March Game Pass announcement](https://news.xbox.com/en-us/2026/03/03/xbox-game-pass-march-2026-wave-1/), Megan Spurr, March 3, 2026. Primary dated addition, with no inferred subscribers or revenue.
 - **J34:** [Direct player discussion about job explanations](https://steamcommunity.com/app/1173790/discussions/0/4415299330250911332/), July–September 2024. Actual posts inspected, including the reported charge-reset and HP-growth distinction. Posters' unsupported generalizations about manuals are excluded.
 - **J35:** [Launch-era lower-tier job analysis](https://gamefaqs.gamespot.com/pc/323466-final-fantasy-iii-pixel-remaster/faqs/79583/c-to-f-tier-jobs), katieelizabeth, updated October 7, 2021. Read as a conflicting account of Geomancer Backfire, not adopted as current proof.
+- **J36:** [Final Fantasy III Pixel Remaster walkthrough — Gysahl/Fat Chocobo storage](https://gamefaqs.gamespot.com/switch/402302-final-fantasy-iii-pixel-remaster/faqs/64375), GameFAQs guide, re-audited September 27, 2026. Used narrowly for Gysahl Greens summoning the Fat Chocobo and its spare-item storage role; community walkthrough evidence, not proprietary implementation.
+- **J37:** [Final Fantasy III DS Mognet / sidequest guide](https://gamefaqs.gamespot.com/ds/924897-final-fantasy-iii/faqs/63089), GameFAQs guide, re-audited September 27, 2026. Used for the 3D remake's mail-gated Onion Knight, Legendary Smith/Ultima Weapon and secret-dungeon/Iron Giant sidequest boundary; historical DS functionality, not Pixel Remaster content.
+- **J38:** [FINAL FANTASY III on Steam](https://store.steampowered.com/app/1173790/FINAL_FANTASY_III/), Valve/Square Enix current storefront, audited September 27, 2026. Current review snapshot and advertised encounter/EXP assist options; dynamic review counts are not sales, and job-level assist comes from the separately cited official 1.2.0 patch history.
 
 **Access limits:** the general abilities wiki and fresh 3D Steam page requests failed, as did the requested story/Xande pages. Their snippets are not represented as completed readings. The individual job pages, original reviews, primary interviews and relevant walkthrough sections above supply the used evidence. No inaccessible full video, missing manual or exact balance formula is claimed verified.

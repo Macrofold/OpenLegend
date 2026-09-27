@@ -648,7 +648,24 @@ Better:
 - failed/changed quests;
 - state migration.
 
-## 21. Hearthfire: homes as constructed persistent state
+## 21. Survival Mode: optional rules that make climate and routine consequential
+
+The original pass mentioned Skyrim's needs only indirectly and omitted the official **Survival Mode** ruleset. Originally released as a Creation in 2017, Bethesda made Survival Mode—along with Fishing, Saints & Seducers and Rare Curios—**free to all Special Edition owners** as part of the 2021 anniversary rollout; Anniversary Edition also includes it. [SK13](#sk13)
+
+When enabled, Survival Mode changes the same world through a different set of persistent pressures:
+- **Hunger** reduces maximum Stamina as it worsens; cooked food is more effective and raw meat can cause Food Poisoning.
+- **Fatigue** reduces maximum Magicka and eventually weakens potion/recovery effectiveness; proper indoor sleep restores it better than sleeping outside.
+- **Cold** reduces maximum Health, slows movement and harms lockpicking/pickpocketing; sufficiently severe exposure can kill.
+- armor/clothing gain **Warmth** values, so equipment now has environmental meaning beyond armor rating.
+- carry capacity is sharply reduced; arrows and lockpicks gain weight; over-encumbrance drains Stamina and worsens fatigue.
+- diseases are harsher and can progress; lingering **Afflictions** can reduce melee/block, magic/enchantments or bow/lock skills.
+- fast travel is disabled, making carriages, horses, inns, campfires and route planning more important. [SK14](#sk14)
+
+This is an unusually clean example of changing a game's **world contract without rebuilding its geography**. The same mountain road shifts from scenery into a logistics problem because food, rest, warmth and transport now compose with weather, equipment and place.
+
+It is also a scope warning: these needs are **optional Creation/Special Edition-era rules**, not 2011 vanilla behavior.
+
+## 22. Hearthfire: homes as constructed persistent state
 
 Hearthfire lets the player:
 - buy land;
@@ -673,7 +690,7 @@ The system gives:
 
 a shared place.
 
-## 22. Dawnguard and Dragonborn expansion boundaries
+## 23. Dawnguard and Dragonborn expansion boundaries
 
 ### Dawnguard
 Adds:
@@ -696,7 +713,7 @@ Adds:
 
 These are substantial world/mechanic expansions, not minor DLC.
 
-## 23. Mods and Creations: the real longevity engine
+## 24. Mods and Creations: the real longevity engine
 
 Skyrim's longevity is inseparable from:
 - PC mods;
@@ -733,7 +750,7 @@ This is a critical OpenLegend lesson:
 
 A patch that is “correct” for base game can still destroy user-created worlds.
 
-## 24. Art, audio, UI, and atmosphere
+## 25. Art, audio, UI, and atmosphere
 
 Skyrim's identity comes from:
 - cold mountainous scale;
@@ -757,7 +774,7 @@ while criticizing:
 - stiff animation/voices;
 - PC menu issues. [SK01](#sk01) [SK05](#sk05)
 
-## 25. Production: simplifying without shrinking possibility
+## 26. Production: simplifying without shrinking possibility
 
 Bethesda built new Creation Engine technology for Skyrim rather than simply reusing Oblivion's presentation stack; PC Gamer's review notes new lighting/fog and major character improvements. [SK01](#sk01)
 
@@ -771,7 +788,7 @@ Radiant Story extended Bethesda's earlier Radiant AI idea from NPC routines towa
 
 Todd Howard's 2021 retrospective stressed that Skyrim's continuing appeal surprised Bethesda and reinforced the value of games designed for long-lived play. [SK06](#sk06)
 
-## 26. Distribution and commercial context
+## 27. Distribution and commercial context
 
 Skyrim has been released across multiple generations:
 - PC;
@@ -793,7 +810,7 @@ Do not confuse:
 - the Guardian's earlier “60m total players” phrasing;
 - active monthly players.
 
-## 27. Five substantive written reviews
+## 28. Five substantive written reviews
 
 ### 1. PC Gamer — Tom Francis, 2011
 
@@ -833,7 +850,7 @@ The strongest positive through-line is:
 The strongest criticism is:
 > breadth came with bugs, shallow/awkward combat and low social reactivity.
 
-## 28. Current Steam top/helpful player evidence
+## 29. Current Steam top/helpful player evidence
 
 Steam Special Edition is applicable.
 
@@ -864,7 +881,7 @@ August/September 2026 helpful negatives focus heavily on:
 
 This is a **platform/extension compatibility** complaint more than a rejection of Skyrim's base design.
 
-## 29. Worked interactions
+## 30. Worked interactions
 
 ### A. Become a stealth archer without selecting the class
 
@@ -922,7 +939,7 @@ This is a **platform/extension compatibility** complaint more than a rejection o
 
 **OpenLegend lesson:** extensibility requires versioned contracts and migration discipline.
 
-## 30. Transferable inspiration for OpenLegend
+## 31. Transferable inspiration for OpenLegend
 
 ### A. Let practice create identity
 
@@ -952,7 +969,7 @@ The 2026 update backlash is direct evidence.
 
 Storage, crafting, family and identity become stronger when they share a persistent place.
 
-## 31. Limits / do not copy automatically
+## 32. Limits / do not copy automatically
 
 ### Do not make every faction simultaneously compatible
 
@@ -974,23 +991,23 @@ Practice should require real task difficulty/novelty.
 
 Current Skyrim's “what is vanilla?” ambiguity is a warning.
 
-## 32. Requirement and preservation map
+## 33. Requirement and preservation map
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2, 22–23 |
-| R02 player actions / mechanics | §§2–23 |
-| R03 items / entities / composition | §§5–9, 21–23 |
-| R04 progression / economy / time | §§3–4, 8–10, 21 |
-| R05 concrete interactions | §29 |
-| R06 people / AI / social / multiplayer | §§13–18, 21, 23 |
-| R07 art / audio / interface / feel | §24 |
-| R08 story / narrative | §§15–18, 22 |
-| R09 production | §25 |
-| R10 marketing / distribution / virality | §§23, 26 |
-| R11 commercial / participation | §26 |
-| R12 reviews / player feedback | §§27–28 |
-| R13 inspiration / limits | §§30–31 |
+| R01 identity / scope / promise | §§1–2, 23–24 |
+| R02 player actions / mechanics | §§2–24 |
+| R03 items / entities / composition | §§5–9, 21–24 |
+| R04 progression / economy / time | §§3–4, 8–10, 21–22 |
+| R05 concrete interactions | §30 |
+| R06 people / AI / social / multiplayer | §§13–18, 22, 24 |
+| R07 art / audio / interface / feel | §25 |
+| R08 story / narrative | §§15–18, 23 |
+| R09 production | §26 |
+| R10 marketing / distribution / virality | §§24, 27 |
+| R11 commercial / participation | §27 |
+| R12 reviews / player feedback | §§28–29 |
+| R13 inspiration / limits | §§31–32 |
 | R14 sources / preservation / navigation | this section + Sources |
 
 ### Mechanics inventory
@@ -1013,6 +1030,7 @@ Covered:
 - factions/civil war;
 - dragons;
 - death/saves;
+- optional Survival Mode hunger/fatigue/cold/warmth/disease/carry/travel rules;
 - Hearthfire building;
 - Dawnguard/Dragonborn;
 - mods/Creations.
@@ -1025,7 +1043,18 @@ Absent/not major:
 
 ### Preservation check
 
-G71 is a new independent roster pass. No inherited full Skyrim dossier existed on this branch. Edition/content boundaries are explicit, and current 2026 Steam criticism is not projected onto the 2011 release.
+G71 is a new independent roster pass. No inherited full Skyrim dossier existed on this branch. Edition/content boundaries are explicit, and current 2026 Steam criticism is not projected onto the 2011 release. The audit also preserves Survival Mode as a free Special Edition Creation-era ruleset rather than retroactively attributing hunger/cold/fatigue to 2011 vanilla Skyrim.
+
+### Reading / viewing routes
+
+For a compact verification route:
+1. **SK01/SK05/SK08/SK09/SK10** for five independent 2011 reviews.
+2. **SK03** for Radiant Story intent and **SK13–SK14** for the optional Survival Mode content/rules boundary.
+3. **SK02 + SK13** for Special/Anniversary/Switch 2 and included/free Creation layers.
+4. **SK04/SK11/SK12** for the current Steam player/mod-compatibility surface.
+5. **SK02** for the August 20/27, 2026 Creations/mod-storage update; **SK06–SK07** for longevity and the dated 60m+ sales milestone.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -1052,4 +1081,8 @@ G71 is a new independent roster pass. No inherited full Skyrim dossier existed o
 <a id="sk11"></a>**SK11 — [Skyrim Special Edition on Steam](https://store.steampowered.com/app/489830/The_Elder_Scrolls_V_Skyrim_Special_Edition/).** Current store aggregate/current package.
 
 <a id="sk12"></a>**SK12 — [Steam most-helpful Special Edition reviews](https://steamcommunity.com/app/489830/reviews/?browsefilter=toprated).** Qualitative player evidence for replay identity and player-authored routes.
+
+<a id="sk13"></a>**SK13 — [Skyrim Anniversary Edition and Creation Club content first look](https://elderscrolls.bethesda.net/en-US/news/3mxTW4iQYGrVZrWRqVfomQ/skyrim-anniversary-edition-and-creation-club-content-first-look).** Bethesda, October 29, 2021. Primary evidence that Survival Mode, Fishing, Saints & Seducers and Rare Curios were made free to all Special Edition owners and are also included in Anniversary Edition; audited September 27, 2026.
+
+<a id="sk14"></a>**SK14 — [Skyrim Special Edition's Survival Mode](https://elderscrolls.bethesda.net/en-US/news/skyrim-survival-mode-coming-soon).** Bethesda primary rules explanation. Used for Hunger/Fatigue/Cold/Warmth, reduced carry weight, disease/Afflictions and related Survival Mode behavior; optional Creation-era rules, not 2011 vanilla.
 

@@ -184,6 +184,12 @@ The English **Most Helpful (All Time)** surface for app 1173770 was readable aft
 
 The useful contrast is between making a historic structure less laborious and removing the pressures that once gave that structure meaning. The sample establishes that disagreement, not how often all owners share it. [F7]
 
+### September 2026 current-store cross-check
+
+The audit re-read the live Steam surface rather than assuming that the 2021 launch sample still described current reception. On September 27, 2026 the English corpus was still **Overwhelmingly Positive** at about **95% positive across roughly 5.7k English reviews**; the recent snapshot was also strongly positive. Visible June/July 2026 review bodies specifically praise maps, chest/bestiary tracking, auto-battle, EXP/gil boosters and encounter toggles for reducing old friction, while still calling out the historically high encounter rate and obscure route guidance those options mitigate. [F8][F26]
+
+That does not erase the earlier negative helpful review about omitted remake content or easier resource recovery. It strengthens the versioned conclusion: current players often value the remaster **because it lets them modulate the original expedition pressure**, not because the pressure never existed.
+
 ## 10. Transferable patterns and limits — R13
 
 **A small irreversible choice can create ownership.** Starting composition shapes both action availability and expenditure. Dependency: consequences should be explainable to a newcomer. Failure mode: the most consequential choice occurs before the player has enough information to understand it.
@@ -225,7 +231,7 @@ For viewing, use the launch trailer embedded in the official 2023 announcement a
 
 ## Sources and access notes
 
-All accessed September 26, 2026. Review bodies and relevant guide sections were read; whole walkthroughs and external linked videos are not claimed exhaustively inspected. Dates below are source publication dates where exposed. Detailed rules from community guides are version-labeled, not source-code audits.
+Original-pass sources were accessed September 26, 2026; the Steam product/community surfaces were re-checked September 27 for the audit. Review bodies and relevant guide sections were read; whole walkthroughs and external linked videos are not claimed exhaustively inspected. Dates below are source publication dates where exposed. Detailed rules from community guides are version-labeled, not source-code audits.
 
 - **F1:** [RPGFan review](https://www.rpgfan.com/review/final-fantasy-pixel-remaster/), Brian Mackenzie, July 28, 2021. Original PC review, full body read.
 - **F2:** [WorthPlaying review](https://worthplaying.com/article/2021/8/4/reviews/127614-pc-review-final-fantasy-pixel-remaster/), Chris DeAngelus, August 4, 2021. Full body and conclusion read; promotion aside corrected against mechanics sources.
@@ -252,3 +258,4 @@ All accessed September 26, 2026. Review bodies and relevant guide sections were 
 - **F23:** [35th-anniversary interview transcription](https://novacrystallis.com/2023/07/final-fantasy-35th-anniversary-special-interview-part-1-of-2-transcription/), Nova Crystallis, July 2023. Transcribed participant conversation; relevant origin passages read, not a claim of watching the full source video.
 - **F24:** [TOSE development credit](https://www.tose.co.jp/en/news/2022622000519.html). First-party statement that it developed the mobile/Steam remaster series, with all six released by February 24, 2022.
 - **F25:** [Official Pixel Remaster soundtrack promotion](https://www.jp.square-enix.com/music/sem/page/ff_pixelremaster_ost_cd/en/), Square Enix. Primary corroboration of the combined six-million milestone; not title-specific sales.
+- **F26:** [Steam Community FINAL FANTASY reviews](https://steamcommunity.com/app/1173770/reviews/), re-audited September 27, 2026. Current visible June/July review bodies used narrowly for modern QoL/encounter-rate/navigation testimony; dynamic ordering and displayed hours are not prevalence estimates.

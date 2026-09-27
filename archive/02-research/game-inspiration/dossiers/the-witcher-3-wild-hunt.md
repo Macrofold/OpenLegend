@@ -551,6 +551,12 @@ This creates a difficulty axis around:
 - preparation scarcity,
 not only enemy HP.
 
+### New Game+: replay as retained capability, not a second infinite ladder
+
+The original pass omitted **New Game+**, the 16th and final item in CDPR's original free-DLC program. After finishing the main storyline, a player can start a new run while retaining the prior Geralt's **skills and items**; Complete/Game of the Year editions embed the DLC rather than requiring a separate install. A New Game+ save cannot itself be used to start another New Game+, so the official loop is one retained-progression replay layer rather than endlessly recursive NG+ cycles. [W3-17](#w3-17)
+
+CDPR explicitly framed the feature as a way to replay the story and see different choice outcomes. That makes it relevant to both progression and narrative structure: accumulated capability persists while authored social/political decisions reset for another causal path.
+
 ## 21. Hearts of Stone
 
 **Hearts of Stone** adds a largely self-contained story around:
@@ -616,7 +622,7 @@ Mods are not canonical base behavior, but extension support is part of the game'
 
 ## 24. Current 2026 boundary: Remastered is still future
 
-On August 25, 2026 CDPR announced **The Witcher 3: Wild Hunt — Remastered** for **September 29, 2026**. [W3-02](#w3-02)
+On August 25, 2026 CDPR announced **The Witcher 3: Wild Hunt — Remastered** for **September 29, 2026**. [W3-02](#w3-02) The September 27 audit confirms that date is still future: current storefront/official material presents Remastered as “Coming September 29th, 2026,” with qualifying PC/PS5/Xbox Series owners receiving the upgrade free, a native Switch 2 release, and Battle.net as a new storefront/platform route. [W3-18](#w3-18)
 
 Announced improvements include:
 - visuals/performance;
@@ -902,7 +908,7 @@ Covered:
 - Ciri segments;
 - factions/politics;
 - Gwent;
-- death/meditation;
+- death/meditation and one-generation New Game+ retained-progression replay;
 - Hearts of Stone;
 - Blood and Wine/property/mutations;
 - next-gen/mod ecosystem;
@@ -910,6 +916,7 @@ Covered:
 
 Absent/not major:
 - multiplayer;
+- general-purpose stealth/infiltration system (Geralt can approach/avoid enemies, but the game has no Skyrim/Cyberpunk-style reusable stealth state/skill loop);
 - settlement building beyond Corvo Bianco upgrades;
 - deep general faction reputation;
 - persistent ambient NPC schedules/memory;
@@ -918,9 +925,20 @@ Absent/not major:
 ### Preservation check
 
 G72 is a new independent pass. No inherited full Witcher 3 dossier existed on this branch. This dossier freezes the current date correctly:
-- Remastered launches September 29, 2026 and is **not yet released**;
+- Remastered launches September 29, 2026 and is **not yet released** as of the September 27 audit;
 - Songs of the Past is **2027 future content**;
 - Hearts of Stone/Blood and Wine are existing content and now free for current base owners.
+
+### Reading / viewing routes
+
+For a compact verification route:
+1. **W3-01/W3-07/W3-05/W3-13/W3-14** for five substantive base-game reviews.
+2. **W3-08/W3-09** for Hearts of Stone and Blood and Wine as distinct expansion reviews.
+3. **W3-17** for the omitted New Game+ return-loop rules and original free-DLC framing.
+4. **W3-15/W3-16/W3-04** for current Steam/player praise and criticism.
+5. **W3-02/W3-03/W3-18** for the exact September 27, 2026 current/future commercial boundary: free expansions now, Remastered on September 29, and Songs of the Past in 2027.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -955,4 +973,8 @@ G72 is a new independent pass. No inherited full Witcher 3 dossier existed on th
 <a id="w3-15"></a>**W3-15 — [Steam current/recent reviews](https://steamcommunity.com/app/292030/reviews/?browsefilter=trendmonth&l=english).** Current September 2026 qualitative player sample.
 
 <a id="w3-16"></a>**W3-16 — [Steam community current page](https://steamcommunity.com/app/292030).** Current player discussion/review surface; remaster/combat and long-tail support evidence.
+
+<a id="w3-17"></a>**W3-17 — [Cannot start New Game+](https://support.cdprojektred.com/en/witcher-3/xbox/gameplay/issue/1093/cannot-start-new-game-4) and [All The Witcher 3 FREE DLCs available now](https://www.thewitcher.com/pl/en/news/1099/all-the-witcher-3-wild-hunt-free-dlcs-available-now).** CD PROJEKT RED primary support/news sources, audited September 27, 2026. Used for the post-main-story start condition, retained skills/items, non-recursive New Game+ boundary, Complete/GOTY embedding and its status as the sixteenth free DLC.
+
+<a id="w3-18"></a>**W3-18 — [The Witcher 3: Wild Hunt — Remastered official page](https://www.thewitcher.com/_next/witcher3).** CD PROJEKT RED current product page, audited September 27, 2026. Used only for the still-future September 29 launch state, qualifying free-upgrade/platform boundary and current packaging; announced Remastered mechanics are not backfilled into today's playable build.
 

@@ -2,13 +2,13 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full-category research pass: September 26, 2026.** This dossier completes the earlier G77 checkpoint; it preserves its review disagreements, production evidence and source-access limits. Research and transferable hypotheses are not accepted OpenLegend designs. Story and late-party spoilers are flagged below. No hands-on play, source-code inspection or full-video viewing is claimed.
+**Full-category research pass: September 26, 2026; follow-up audit September 27, 2026.** This dossier completes the earlier G77 checkpoint; it preserves its review disagreements, production evidence and source-access limits. Research and transferable hypotheses are not accepted OpenLegend designs. Story and late-party spoilers are flagged below. No hands-on play, source-code inspection or full-video viewing is claimed.
 
 ## 1. Identity, scope and the playable promise — R01
 
 Sandfall Interactive's debut, published by Kepler Interactive, launched on April 24, 2025 for Windows PC, PlayStation 5 and Xbox Series X|S. The official launch page links Steam and Epic alongside the console stores. It is an authored, single-player party RPG, not an open-world survival simulation or multiplayer service. Its distinctive promise is to make a carefully chosen turn feel physically performed: you select the skill, but timing, targeting and defense help determine what that choice achieves. [C10][C13]
 
-The baseline here is the released campaign, with the December 12, 2025 free Thank You update and the April 24, 2026 anniversary update identified separately. A launch review is evidence about the launch experience, not automatic proof of the current state. The official news index was checked at the research date; this is not an exhaustive per-platform patch audit. Do not infer that a reported launch bug remains unfixed, or that a reviewer predicting a fix establishes its delivery. [C6][C7][C30]
+The baseline here is the released campaign, with the December 12, 2025 free Thank You update and the April 24, 2026 anniversary update identified separately. A launch review is evidence about the launch experience, not automatic proof of the current state. The official news index was re-checked on **September 27, 2026**; its newest game-news entry remained the April 24 anniversary post (updated April 26), so this dossier does not invent a later summer/fall content patch. This is still not an exhaustive per-platform patch audit. Do not infer that a reported launch bug remains unfixed, or that a reviewer predicting a fix establishes its delivery. [C6][C7][C30]
 
 The repeatable loop is: explore a deliberately staged area; notice a fight, side route or character; choose a party and loadout; alternate resource decisions with enemy-pattern execution; receive growth and equipment; then reconsider the next route or build. An overworld connects authored regions and optional challenges. A camp concentrates equipment services and character scenes rather than a construction or settlement-management layer. [C10][C11]
 
@@ -197,13 +197,19 @@ The five-source minimum is satisfied by the complete written bodies of **PC Game
 
 The consequential disagreement is not simply whether the game is good. It is whether real-time defense continually enriches turn-based planning or eventually becomes the dominant test. The shared praise for presentation does not settle that question. Nor does a player who clears a boss quickly disprove another player's accessibility or cue-reading problem.
 
-### Steam sampling: attempted, blocked, not fabricated
+### Steam sampling: September 26 block preserved; September 27 store surface now readable
 
-The Store page, top-rated Community review surface and public app-review endpoint for app **1903340** were attempted. The Community route returned a content/age gate; alternate review/API requests failed. Specific discussion pages also opened to the gate even when search indexing exposed fragments. No helpful-review ranking, ownership hours, positive/negative review totals or Steam consensus is claimed. Search snippets are not represented as a completed helpful-review sample. [C29]
+The original September 26 pass genuinely could not complete the Steam requirement: the Community route, app-review endpoint and direct discussion paths returned age/content gates or failed. That access history remains preserved in C29 because it explains why the prior dossier did not fabricate a helpful-review sample.
 
-A directly readable alternative is **BMO's Grouvee post**, with a reply by **shinespark**. Both enjoy the combat while criticizing some delayed attacks: BMO describes learning a swish cue that then seems not to match an elemental hit; the reply prefers animation cues whose trickery feels more intelligible. These are two self-selected accounts on one discussion, not two independent representative surveys. The page title/index refers to May 4, 2025 while the rendered update stamp says June 18; that discrepancy is retained rather than silently choosing one date. [C29]
+On the **September 27 audit**, a public Steam **store review surface** for app 1903340 became readable through the web index. The dated snapshot exposed roughly **102.9k English reviews at 96% positive (“Overwhelmingly Positive”)** and about **1.8k recent reviews (“Very Positive”)**. Those counts change continuously and are not sales/ownership totals. [C34]
 
-This alternative captures approval and criticism within actual player statements, but it cannot replace the statistical or helpfulness-ranking properties of Steam reviews. The gate is the remaining **source-access limitation**, not an excuse to claim that review requirements were fulfilled by unread snippets.
+The current **Most Helpful** surface supplies direct positive bodies rather than snippets alone. For example, Akinori (68 hours displayed) emphasizes turn-based combat that became more engaging than expected, fight-specific builds, story and soundtrack; Saya (91 hours displayed) similarly highlights parrying, story, art direction and music. Current negative/recent bodies preserve the counterpoint rather than disappearing inside the aggregate: seskapill (17.7 hours) explicitly argues that maze-like levels without maps and timing-heavy defense overwhelm the strategic side; a same-day negative from shawntastic likewise describes the real-time/parry layer as a slog despite praising music/art/story. [C34]
+
+The displayed hours are profile/store metadata and are not treated as hours-at-review unless Steam explicitly supplies that field. The sample is self-selected and the retrieval route exposed a mixture of “Most Helpful” and recent reviews, not a controlled survey or a separately filtered all-time-negative leaderboard.
+
+A directly readable non-Steam alternative remains **BMO's Grouvee post**, with a reply by **shinespark**. Both enjoy the combat while criticizing some delayed attacks: BMO describes learning a swish cue that then seems not to match an elemental hit; the reply prefers animation cues whose trickery feels more intelligible. These are two self-selected accounts on one discussion, not two independent representative surveys. The page title/index refers to May 4, 2025 while the rendered update stamp says June 18; that discrepancy is retained rather than silently choosing one date. [C29]
+
+The important correction is procedural: **Steam is no longer an unresolved source-access gap for this dossier as of September 27**, but the earlier failed route remains part of the provenance record.
 
 ## 10. Transferable patterns and failure modes — R13
 
@@ -236,7 +242,7 @@ These are research hypotheses, not requested runtime implementation.
 | R09 | §8 prototype, studio, staffing boundary, casting and update work |
 | R10 | §8 showcase/distribution evidence and labeled sharing hypotheses |
 | R11 | §8 dated units/user-metric distinctions and unavailable financials |
-| R12 | §9 five-plus original reviews, disagreement, attempted Steam sample and direct alternative |
+| R12 | §9 five-plus original reviews, September 27 Steam helpful/current sample, disagreement and preserved prior access failure |
 | R13 | §10 patterns, dependencies and failure modes |
 | R14 | This map, source annotations, preserved checkpoint evidence and navigation |
 
@@ -258,7 +264,7 @@ For audiovisual study, follow the **official launch trailer** embedded in C13, t
 
 ## Sources and access notes
 
-All accessed September 26, 2026. Links support nearby numbered citations; ranges such as C15–C18 refer to the individually annotated entries below. Guides describe documented rules, not source-code verification. Where a source's exact update date was not exposed, the access date is the observation date. No source text, protected art or full review is reproduced.
+Original-pass sources were accessed September 26, 2026; C30 and C34 were re-checked/added in the September 27 audit. Links support nearby numbered citations; ranges such as C15–C18 refer to the individually annotated entries below. Guides describe documented rules, not source-code verification. Where a source's exact update date was not exposed, the access date is the observation date. No source text, protected art or full review is reproduced.
 
 - **C1 —** [PC Gamer review](https://www.pcgamer.com/games/rpg/clair-obscur-expedition-33-review/), Justin Wagner, April 23, 2025. Original written criticism; strategic/execution disagreement. Full-body reading recorded in the prior checkpoint and continued here.
 - **C2 —** [GamesRadar review](https://www.gamesradar.com/games/rpg/clair-obscur-expedition-33-review/), Alan Wen, launch review. Full body, including closing relationship/navigation discussion and platform disclosure, read in this continuation.
@@ -288,9 +294,11 @@ All accessed September 26, 2026. Links support nearby numbered citations; ranges
 - **C26 —** [Relationship ranks and rewards](https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/relationships/relationship-guide-all-ranks-and-rewards), Gamer Guides. Camp/story gates, companion challenges and Esquie/Urrie example.
 - **C27 —** [Nevron quests and rewards](https://www.gamerguides.com/clair-obscur-expedition-33/guide/side-quests/nevrons/all-nevron-quests-and-rewards), Gamer Guides. Named authored request chains; Jar reward type cross-checked against C17.
 - **C28 —** [Romance guide](https://www.gamepressure.com/clair-obscur-expedition-33/are-there-any-romances/z51196d), Gamepressure, updated May 8, 2025. Actual optional routes, exclusivity and ordinary-bond distinction; body read.
-- **C29 —** [BMO's post and shinespark's reply](https://www.grouvee.com/status/91568/), Grouvee, 2025; rendered update date differs from title/index date. Direct player text read. [Attempted Steam helpful-review surface](https://steamcommunity.com/app/1903340/reviews/?browsefilter=toprated) and app-review endpoint were blocked/failed; [specific discussion attempt](https://steamcommunity.com/app/1903340/discussions/0/592895445665066225/) also gated. These are access records, not evidence of a completed Steam sample.
-- **C30 —** [Official news index](https://www.expedition33.com/latest-news), checked September 26, 2026. Navigation and dated-update check; not an exhaustive platform patch history.
+- **C29 —** [BMO's post and shinespark's reply](https://www.grouvee.com/status/91568/), Grouvee, 2025; rendered update date differs from title/index date. Direct player text read. [Attempted Steam helpful-review surface](https://steamcommunity.com/app/1903340/reviews/?browsefilter=toprated) and app-review endpoint were blocked/failed on September 26; [specific discussion attempt](https://steamcommunity.com/app/1903340/discussions/0/592895445665066225/) also gated. These remain provenance/access records, not the completed Steam sample.
+- **C30 —** [Official news index](https://www.expedition33.com/latest-news), re-checked September 27, 2026. Newest game-news entry remained the April 24 anniversary post (updated April 26); navigation/current-state evidence only, not an exhaustive platform patch history.
 - **C31 —** [Recoat item description](https://www.gamerguides.com/clair-obscur-expedition-33/database/items/tints-1/recoat), Gamer Guides. Consumed attribute-or-skill reallocation; not the unrelated healing function incorrectly assigned by some aggregators.
 - **C32 —** [Weapon acquisition and duplicate upgrades](https://game8.co/games/Clair-Obscur-Expedition-33/archives/515747), Game8. Indexed written weapon guide supplied acquisition/duplicate behavior; full page failed to render on a later direct request. Used narrowly, not counted as a read review or an exhaustive item census.
 
 - **C33 —** [Game8: Gestral Beach Locations and 100% Guide](https://game8.co/games/Clair-Obscur-Expedition-33/archives/517704), updated May 14, 2025, with its linked Gestral Games guide. Secondary written guide used narrowly to establish the five bounded Gestral side-game/minigame types and their reward role; not primary implementation evidence or a claim that every later patch leaves them unchanged.
+
+- **C34 —** [Clair Obscur: Expedition 33 on Steam](https://store.steampowered.com/app/1903340/Clair_Obscur_Expedition_33/), Valve store/review surface, audited September 27, 2026. Current dated aggregate plus visible Most Helpful/recent review bodies were read through the public store index. Used for the current English/recent sentiment snapshot and direct positive/negative testimony; counts/hours are mutable store metadata, not sales or representative polling.

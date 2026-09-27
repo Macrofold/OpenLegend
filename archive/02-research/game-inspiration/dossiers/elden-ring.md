@@ -20,6 +20,25 @@ Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders 
 
 **Interpretation:** naming these operations matters because “melee combat” conceals several independent decisions. A player can choose when to enter range, whether to spend a scarce resource, and whether to seek a stagger rather than immediately maximize damage. An experimental OpenLegend combat scene should preserve that decision structure before adding dozens of nominally different attacks.
 
+### Stance, poise and critical openings
+
+The original pass named stagger/critical attacks but did not close the rules relationship. Elden Ring distinguishes the **enemy stance-break loop** from the player's **Poise** resistance. Heavy, charged, jumping and guard-counter attacks are especially effective at breaking enemy stance; a broken/exposed enemy can then accept a high-damage critical at the appropriate position, and parries can create the same kind of opening. Some enemies require more than one parry before they become vulnerable. [E28](#e28)
+
+For the player, **Poise** is an equipment-derived resistance to being staggered out of actions. Heavier armor tends to provide more Poise, but its weight can push the character into a slower/heavier dodge state. [E29](#e29) This creates a real build tradeoff between maintaining action under pressure and preserving mobility rather than reducing “defense” to damage resistance alone.
+
+The composition matters more than the terminology:
+> attack choice → stance pressure → temporary opening → positional critical,
+while
+> armor/load → Poise + roll behavior → ability to keep acting when hit.
+
+### Status buildup and resistances
+
+Status effects are also **thresholded state changes**, not ordinary elemental damage with different colors. The interface shows buildup gauges; repeated compatible attacks/items/spells fill them until the effect triggers. Major families include Poison, Scarlet Rot, Blood Loss/Hemorrhage, Frostbite, Sleep, Madness and Death Blight. Their consequences differ: Poison/Rot deal damage over time, Blood Loss removes a burst of HP, Frostbite adds damage plus a temporary vulnerability, Sleep creates helplessness, Madness damages HP and FP, and Death Blight kills when fully triggered. [E28](#e28) [E30](#e30)
+
+The character sheet exposes matching resistance families—**Immunity** against Poison/Rot, **Robustness** against Blood Loss/Frostbite, **Focus** against Sleep/Madness and **Vitality** against Death Blight. Arcane can increase buildup for compatible weapons/effects rather than simply increasing every status's final damage. [E30](#e30)
+
+This explains why greases, boluses, armor, affinities, spells and enemy immunities can all change the same encounter without adding a new combat mode. It also prevents a common oversimplification: “bleed build” means repeatedly crossing a buildup threshold against targets that can be affected, not applying a permanent generic damage multiplier.
+
 ### Equipment and acquired capabilities
 
 | Family | Acquisition, use and consequential limit |
@@ -169,12 +188,12 @@ This closes the assignment's explicit mechanics inventory against the sourced se
 - **Identity, attributes, progression, jobs/trees:** character creation, starting classes, attributes, leveling and build revision are covered in §§1–3. Starting class is an initial package rather than a permanent profession; there is no separate conventional perk tree.
 - **Items, inventory, weapons/armor, crafting/upgrading, magic/powers:** §2 covers weapons, shields, armor, talismans, Ashes of War, Spirit Ashes, sorceries/incantations and consumables; §3 covers smithing access and Rebirth. Cookbooks/materials support bounded item crafting rather than settlement production.
 - **Traversal, environmental/object interaction, activities/minigames:** walking, sprinting, jumping, crouching, ladders, Torrent and Spirit Springs are covered in §2, with authored dungeons/world gates throughout. Optional caves, bosses, NPC routes and arena/community activities provide side goals; there is no central standalone minigame layer comparable to a card or sports game.
-- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers melee/ranged/magic combat, guarding, parrying, dodging and critical actions. Crouching and enemy detection support stealthy approaches without a separate stealth skill tree. Loot/merchant/encounter rewards and rune loss/recovery, Grace and Stakes of Marika are covered in §§2–3.
+- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers melee/ranged/magic combat, guarding, parrying, dodging, enemy stance breaks/critical openings, player Poise, status buildup/resistances and critical actions. Crouching and enemy detection support stealthy approaches without a separate stealth skill tree. Loot/merchant/encounter rewards and rune loss/recovery, Grace and Stakes of Marika are covered in §§2–3.
 - **Economy/trading, story, relationships/romance/reputation, party/companions:** runes, merchants and upgrade access are in §3; story/NPC relationships are in §4. Ranni's route is authored narrative rather than a general approval/romance system. Spirit Ashes and summons are bounded assistance, not a persistent controllable party.
 - **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers NPC quest state, enemy patrol/detection behavior and world-state closures. The world has political/lore factions but no general player faction-reputation economy. NPC opportunity is authored and stateful rather than a universal schedule simulation.
 - **Building/settlements/management, multiplayer/social, endgame/return loops:** settlement construction and household management are absent (§3). Native co-op, invasions, messages and arena play are covered in §4. §3 now closes the base game's Journey 2/New Game Plus retention/reset boundary; §5 separately covers Shadow of the Erdtree progression.
 
-Suggested study sequence: compare a failed early encounter with the route chosen afterward; inspect one weapon/skill compatibility change; follow a bearing from dungeon to shop; then examine Rebirth and an expansion blessing. Narrative study can follow Ranni only after accepting major spoilers. These are proposed observations, not playtests performed in this pass. Martin's linked reveals and Bandai Namco's edition/gameplay videos are **unwatched viewing routes**, without invented timestamps. The earlier packet and selective mechanics studies remain unchanged.
+Suggested study sequence: compare a failed early encounter with the route chosen afterward; inspect one weapon/skill compatibility change; compare a stance-break/critical sequence with a status-buildup sequence; follow a bearing from dungeon to shop; then examine Rebirth and an expansion blessing. **E28–E30** are the compact first-party reading route for the combat-state distinctions added in the audit. Narrative study can follow Ranni only after accepting major spoilers. These are proposed observations, not playtests performed in this pass. Martin's linked reveals and Bandai Namco's edition/gameplay videos are **unwatched viewing routes**, without invented timestamps. The earlier packet and selective mechanics studies remain unchanged.
 
 ## Sources and access notes
 
@@ -231,3 +250,9 @@ Accessed September 26, 2026. Relevant written bodies were read unless described 
 <a id="e26"></a>**E26.** [Shadow of the Erdtree reference overview](https://en.wikipedia.org/wiki/Elden_Ring:_Shadow_of_the_Erdtree). Secondary cross-check for the regional blessing/Torrent boundary and source discovery; primary release, production and sales owners above take precedence. No borrowed review score is counted as a read review.
 
 <a id="e27"></a>**E27.** [Game8: New Game Plus Guide](https://game8.co/games/Elden-Ring/archives/355390), updated June 19, 2024. Secondary community guide used narrowly for the Journey 2 start point, broad carryover/reset boundary and repeat-journey scaling; not primary implementation evidence and not a substitute for the official sources above.
+
+<a id="e28"></a>**E28.** [ELDEN RING Starter Guide](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-starter-guide-tips-know-playing-the-game). Bandai Namco official player guide, audited September 27, 2026. Primary player-facing evidence for parry/guard-counter/jump-attack stance breaking, critical openings and the on-screen abnormal-state gauges.
+
+<a id="e29"></a>**E29.** [ELDEN RING How-To Guide Part 4 — Combat Guide](https://www.bandainamcoent.com/es_mx/news/elden-ring-introduction-part-4-combat-guide). Bandai Namco official combat guide, audited September 27, 2026. Used for the distinction between enemy stance breaks/critical attacks and the player's armor-derived Poise/stagger resistance, including the mobility tradeoff from heavier equipment.
+
+<a id="e30"></a>**E30.** [ELDEN RING How-To Guide Part 1 — Stats](https://www.bandainamcoent.com/es_mx/news/elden-ring-introduction-part-1-stats). Bandai Namco official stats guide, audited September 27, 2026. Used for status-effect families, threshold consequences, Immunity/Robustness/Focus/Vitality mappings and Arcane's compatible status-buildup behavior; player-facing guide rather than engine-level implementation evidence.
