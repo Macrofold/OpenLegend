@@ -12,7 +12,7 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G125 — XCOM 2.** G121–G124 have been reread against the complete standard and corrected where needed.
+**Active: G126 — Crusader Kings III.** G121–G125 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
@@ -20,12 +20,16 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G122 | Cataclysm: Dark Days Ahead | **Audited** | `a916e8e76b77f8808544728c797daaa0247e234c` — mechanics/reception coverage was already substantive; audit added a September 27 primary check that the official releases page still names 0.I Ito as latest stable while keeping experimental builds separate. |
 | G123 | Rain World | **Audited** | `fbd32f6956bfed39e7acf93e49851ee260703af5` — corrected the stale Downpour-era Jolly boundary using Watcher 1.5: official local co-op now covers all five More Slugcats campaigns and The Watcher. Added explicit stealth/perception coverage and current 1.11.7/1.11.8 patch chronology. |
 | G124 | Persona 5 Royal | **Audited** | `ec1844a66a5449206b864cfa909229f48e331d4b` — clarified that Maruki Councillor Rank 9 by Nov. 17, not all three Royal Confidants, is the mandatory third-semester gate; Akechi/Kasumi remain additional-content routes. Added explicit absence of a dynamic faction-reputation system. |
-| G125 | XCOM 2 | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G126 | Crusader Kings III | Pending | — |
+| G125 | XCOM 2 | **Audited** | `284cd3bebd2f6bff7a7d9c69d48cdc86affe9de0` — all major mechanics were covered; corrected present-tense launcher-friction language because 2K removed the launcher from Steam/Epic in Nov. 2024, while preserving older complaints as dated reception. |
+| G126 | Crusader Kings III | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G127 | Dragon's Dogma 2 | Pending | — |
 | G128 | Ultima VII: The Black Gate | Pending | — |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G125 — XCOM 2 closure evidence
+
+The dossier already covered the complete tactical/strategic inventory: classes, two-action combat, concealment, cover/destruction, equipment, research/engineering, facilities, injury/death, economy, bonds/fatigue, procedural identity, factions, retired Steam multiplayer, Workshop/mod boundaries and eight cross-layer cases. The audit corrected only current platform evidence: all-time player complaints about the 2K Launcher are now explicitly historical because 2K removed that launcher from XCOM 2 on Steam/Epic in November 2024. No review or original complaint was deleted.
 
 ## G124 — Persona 5 Royal closure evidence
 
