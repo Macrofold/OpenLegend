@@ -4,12 +4,13 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 
 ## Resume state
 
-- **Branch / scope:** `docs/game-inspiration-games-40-60`, canonical G40–G60. Do not create another branch.
-- **Last completed numbered subject:** **G59 — Pathfinder: Wrath of the Righteous**, `6127d10622e98f9da44af0afd81ae607c9f65dbf`.
-- **Active:** **G60 — Fire Emblem: The Blazing Blade**. Target `dossiers/fire-emblem-the-blazing-blade.md`. Research the original GBA game independently of other Fire Emblem titles: campaigns, recruitment, supports, permanent losses, equipment, map tactics, presentation, production, distribution and five substantive written reviews. Distinguish modern emulation features from original rules.
-- **Next:** Finish and commit G60, then reconcile navigation and verify this branch's G40–G60 completion. Do not advance into G61 on this scoped task.
+- **Branch / scope:** `docs/game-inspiration-games-40-60`, canonical G40–G60. No new branch was created.
+- **Range status:** **Complete — 21 of 21 canonical subjects have committed completed dossiers.** G40–G58 were already complete at this continuation's starting point; G59 and G60 were completed here.
+- **Last completed numbered subject:** **G60 — Fire Emblem: The Blazing Blade**, `bdb055a48f1d93cce0f529d8962c11f55a52c3e9`.
+- **Active:** None within G40–G60.
+- **Next:** This requested range is finished. Do not advance into G61 under this scoped task. The wider 130-subject assignment and packet-wide reconciliation remain separate work, not certified complete by this branch.
 - **Dragon Age family supplement:** [complete](dossiers/dragon-age-series.md), `1eaf76df27c6af52ecafb35f077eae986f0708e9`; includes Journeys, Legends/Remix, The Last Court, Heroes and Keep.
-- **Commit cadence:** after each game or at least every five minutes. Substantive checkpoints remain explicitly incomplete until the full pass is reviewed and committed.
+- **Commit cadence:** checkpoint and completion commits are recorded below. Any future substantive checkpoint must remain explicitly incomplete until its full pass is reviewed and committed.
 - **Evidence date:** September 26, 2026, America/New_York.
 
 ## Canonical G40–G60
@@ -36,7 +37,7 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 | G57 | Divinity: Original Sin II | Committed | [Dossier](dossiers/divinity-original-sin-ii.md), `8acb8f6`; checkpoint `7d2cd3a` incorporated |
 | G58 | Pathfinder: Kingmaker | Committed | [Dossier](dossiers/pathfinder-kingmaker.md), `9b724c6`; checkpoint `679edeb` incorporated |
 | G59 | Pathfinder: Wrath of the Righteous | Committed | [Dossier](dossiers/pathfinder-wrath-of-the-righteous.md), `6127d10`; checkpoint `67c2b80` incorporated |
-| G60 | Fire Emblem: The Blazing Blade | In progress | Target `dossiers/fire-emblem-the-blazing-blade.md` |
+| G60 | Fire Emblem: The Blazing Blade | Committed | [Dossier](dossiers/fire-emblem-the-blazing-blade.md), `bdb055a`; checkpoint `5eb5950` incorporated |
 
 ## Numbering reconciliation and preservation
 
@@ -54,7 +55,15 @@ G58 now contains twelve mechanics groups, nine constructed/attributed cases, ind
 
 G59 now contains the independent ordinary/mythic progression analysis, broad action and strategic inventory, all six premium expansions, ten worked situations and five independently read written reviews. It distinguishes late paths and social costs, base/Enhanced/console/cloud versions, historical patches, Kickstarter pledges and the January 2023 one-million-unit milestone. The Steam helpful-review route was attempted but content-gated; actually inspected GOG accounts are documented with their historical and sampling limits. Primary production/audio interviews and study routes are included without claiming watched footage or gameplay.
 
-Do not claim gameplay, watched footage, authenticated service tests, a local checkout, runtime/build tests or repository-wide link checks that did not occur. Keep every prior chapter, mechanics study, source qualification and packet-provenance owner. A completed G40–G60 branch is not a completed 130-subject roster or a passed packet-wide reconciliation. Each new dossier must map R01–R14 and distinguish sourced observations, interpretations and proposed adaptations.
+G60 now contains sixteen action families, detailed combat/class/equipment/rescue/logistics analysis, twelve worked interactions and five independently read written reviews, including archived GameSpy and Eurogamer originals. Three directly read installments of a contemporary 2003 developer interview support the production and onboarding analysis. Regional mechanics, native saves, Lyn-story losses, Merlinus, supports, recruitment and reissue boundaries are distinguished. Actual Nintendo Life player comments supplement the criticism; the GameSpot helpful listing was inspected but the selected full user-review link failed, and no Steam sample is invented for this non-Steam title. Commercial data gaps and disagreements among specialist references remain explicit.
+
+## Range verification
+
+The complete remote dossier tree `c7a1b0bc977e13d9810ce963ec75081d24f2963e` was inspected after G60's completion and contained all twenty-one canonical G40–G60 filenames plus the Dragon Age series supplement. G59 and G60's remote blob SHAs match their completion writes. The comparison from this continuation's starting commit `e4b6ae89994a96beebafb19e2846249f145ae993` through `bdb055a48f1d93cce0f529d8962c11f55a52c3e9` was strictly additive for the two dossiers, with the progress ledger the only other changed file at that point; no earlier research was replaced.
+
+The [library README](README.md) now provides grouped routes to all twenty-one dossiers (`f41b677`), and the [interaction lookup](mechanics/interaction-lookup.md) connects the new cases on item identity, mythic social costs, recruitment, rescue and support incentives (`be6f6da`). New relative links resolve to the inspected canonical files. These are scoped navigation and preservation checks, not a fresh factual re-audit of G40–G58 or a repository-wide link audit.
+
+Do not claim gameplay, watched footage, authenticated service tests, a local checkout, runtime/build tests or repository-wide link checks that did not occur. Keep every prior chapter, mechanics study, source qualification and packet-provenance owner. A completed G40–G60 branch is not a completed 130-subject roster or a passed packet-wide reconciliation. Each new dossier maps R01–R14 and distinguishes sourced observations, interpretations and proposed adaptations.
 
 <details>
 <summary>Earlier committed research history, preserved by title</summary>
