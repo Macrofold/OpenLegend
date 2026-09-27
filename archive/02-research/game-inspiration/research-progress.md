@@ -2,6 +2,12 @@
 
 **Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch **`docs/game-inspiration-games-121-end`**, created from **`docs/game-inspiration-library`** at Mike's explicit request on September 26, 2026. Research-only tracking, not an implementation backlog. The inherited base-branch history is preserved below; its G26 continuation is not this branch's assignment.
 
+## Requirements-and-corrections audit — G121 through G130
+
+**Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
+
+**Current audit state: G121 audited; G122 active; G123–G130 pending.** G121 correction commit: `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef`. Global P01–P05 gates remain separate and pending.
+
 ## Resume here
 
 **Range complete: G121–G130.** All ten authorized subjects have complete R01–R14 dossiers and per-game completion commits on this branch. No per-game subject remains active here. The next repository-wide work is the separately tracked P01–P05 packet audit/reconciliation; this branch does not claim those global gates are complete.
