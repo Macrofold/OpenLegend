@@ -209,6 +209,15 @@ At high Fame, more people recognize John.
 
 The Guardian highlighted both as integral reputation systems, and Game Informer documented townspeople/law becoming more forgiving toward honorable John while criminals can attract posses/law response. [RD06](#rd06) [RD04](#rd04)
 
+### Fame can create encounters: the duel loop
+
+The original pass described Fame mostly as recognition, but it also feeds a reusable **dueling** system. Preserved contemporary Rockstar tips explain that the more famous John becomes, the more likely aspiring gunfighters are to challenge him in towns. Once accepted, the duel shifts into a timed Dead Eye-style contest: John and the opponent each have a meter; drawing too early gives more time but a worse zoom/aim position; carefully placed marks fill John's meter faster, and the fuller meter wins when the sequence resolves. [RD25](#rd25)
+
+The duel is not forced to end in death. Shooting the opponent's gun/hand can **disarm** eligible challengers; the preserved tips explicitly associate that restraint with additional Honor while the duel itself raises Fame. Cheating at poker while wearing the Elegant Suit is another systemic route into a duel, letting a town minigame spill into social violence. [RD25](#rd25)
+
+This is a stronger reputation pattern than a passive shop discount:
+> public notoriety changes who approaches you, and the encounter can in turn change both Fame and Honor.
+
 ### OpenLegend lesson
 
 Reputation needs multiple axes:
@@ -878,7 +887,7 @@ RDR earns sparse travel with strong landscape/audio/events.
 Covered:
 - fixed protagonist/identity;
 - Dead Eye;
-- firearms/lasso;
+- firearm/lasso combat and the timed duel/disarm system;
 - horse traversal;
 - law/witness/bounty;
 - honor/fame;
@@ -906,6 +915,17 @@ Absent/not major:
 G69 is a new independent pass from the expanded roster. It explicitly preserves the original multiplayer as historical functionality while marking its omission from current single-player ports. Undead Nightmare is a separate alternate-horror story, not a canonical zombie phase inside John's main campaign.
 
 No current-port review is treated as proof of 2010 multiplayer quality; original sources support that historical section.
+
+### Reading / viewing routes
+
+For a compact verification route:
+1. **RD01/RD04/RD06/RD18/RD19** for five substantive launch-era perspectives on the base game.
+2. **RD25** for the Fame → challenge → timed duel → lethal/disarm outcome loop.
+3. **RD08–RD10** for original Free Roam, posses/co-op and Rockstar's early anti-griefing response.
+4. **RD11/RD22–RD24** for the modern single-player-port boundary and current PC player/value feedback.
+5. **RD12** for Undead Nightmare as an alternate rule set; **RD16–RD17** for dated historical commercial evidence.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -956,4 +976,6 @@ No current-port review is treated as proof of 2010 multiplayer quality; original
 <a id="rd23"></a>**RD23 — [Steam top/helpful reviews](https://steamcommunity.com/app/2668510/reviews/?browsefilter=toprated).** Current qualitative player sample: game praise plus price/multiplayer criticism.
 
 <a id="rd24"></a>**RD24 — [Steam current community/review surface](https://steamcommunity.com/app/2668510).** Current September 2026 qualitative port/value review.
+
+<a id="rd25"></a>**RD25 — [RDR Gaming Tips: Dueling](https://www.ireddead.com/rdr/news/rdr-gaming-tips-dueling).** iRedDead preservation of June 2010 Rockstar Games advice, audited September 27, 2026. Used for the Fame-driven challenger loop, duel meters/draw timing, Elegant Suit poker-cheating trigger and optional disarm-for-Honor resolution. This is a preserved mirror/quotation route to Rockstar guidance rather than the original Rockstar host.
 
