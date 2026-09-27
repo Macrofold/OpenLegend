@@ -194,6 +194,27 @@ Do not copy the full competitive contract into OpenLegend. Match resets, buyback
 
 ## 17. Reading routes, coverage and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the following boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** hero selection defines the match identity; hero stats/levels, innate abilities, talents and mode-specific preparation evolve within a match. Account-level systems are separate.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** shop items/components, courier delivery, disassembly, neutral-item/Madstone choices and recipes are covered in §§2–8; there is no persistent player-crafted gear progression between ordinary matches.
+- **Magic / spells / powers:** hero abilities, item actives, copied spells and mode-specific ability combinations are central bounded systems.
+- **Traversal / environmental and object interaction:** pathing, teleportation/mobility items, trees, terrain/elevation, wards, Roshan/Tormentor areas, couriers and map objectives are covered across §§2–8.
+- **Activities / minigames:** standard Dota, Turbo, Ability Draft and Arcade custom games are distinct activities; they must not share one assumed ruleset.
+- **Combat / stealth / loot / rewards:** team combat, fog-of-war/invisibility, lane resources, objectives and item purchases are central; there is no random equipment-loot ladder.
+- **Death / failure / recovery:** death/respawn, buyback and Aegis/Io recovery interactions are distinct recovery contracts (§§3, 5–7).
+- **Economy / trading:** gold, unreliable gold, item purchase/sell/disassembly and courier delivery form the match economy; Dota Plus/cosmetics are account/commercial layers, not a player-to-player market.
+- **Story / relationships / romance / reputation / party / companions:** hero lore exists, but team relationships are human multiplayer; there is no romance/approval campaign.
+- **NPC/AI behavior and schedules / factions:** creeps, neutrals, summons, Roshan/Tormentor and bots have bounded behaviors; they do not form an autonomous social/faction simulation.
+- **World map / quests / events:** lanes, jungle, objectives and event/custom-game structures are covered; there is no conventional quest campaign.
+- **Building / settlements / management:** absent as a player construction system.
+- **Multiplayer / social / endgame / return loops:** team competition, ranked/mastery, balance updates, custom games, cosmetics/events and esports/community identity provide return loops rather than a finite authored ending.
+
+**Current boundary check:** Valve's official update feed lists **7.41f (September 15, 2026)** as the latest numbered gameplay patch at this audit. The International 2026 championship post is esports context, not a newer gameplay ruleset. [DT04](#dt04)
+
+
 Start with the official product description and the historical re-review, then inspect Tango, Blink/Force Staff, Rubick and Io as contrasting compositions. Read the Reborn custom-game and engine accounts for production. The official soundtrack is a separate listening route. None of the linked footage, demonstrations or sound recordings is claimed watched or heard in full; written evidence supports the claims above.
 
 | Requirement | Substantive coverage |
