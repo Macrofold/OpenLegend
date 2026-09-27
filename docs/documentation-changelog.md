@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — G121–G130 game-inspiration requirements audit
+
+Re-audited the ten research-only dossiers from Battle Brothers through S.T.A.L.K.E.R. 2 against the full [R01–R14 assignment and explicit mechanics inventory](../archive/02-research/game-inspiration/research-requirements.md), with per-game corrections and a second-pass cross-game completeness matrix recorded in the [G121–G130 coverage audit](../archive/02-research/game-inspiration/coverage-audit-g121-g130.md). Material corrections include Rain World's current Jolly/Downpour-body and Gourmand-crafting boundaries, Persona 5 Royal's mandatory Maruki semester gate, XCOM 2's retired 2K launcher, current/future Crusader Kings III content, Dragon's Dogma 2 Title Update 3.2, Ultima VII identity/recovery and Exult preservation boundaries, Oxygen Not Included's explicit noncombat/social absences, and S.T.A.L.K.E.R. 2's current A-Life/version and return-loop boundaries.
+
+The audit now records no unaddressed required mechanics category for G121–G130 while preserving source-access and version limitations. This is reference-research correction only: it changes no OpenLegend gameplay contract or runtime behavior and does not close the separate whole-library P01–P05 packet/integration gates.
+
 ## 2026-09-27 — Shared repertoire priorities and action tables
 
 Merged the updated research library at `cb3d85f32d669dd617b505efbaf8c75db967c6d3` with ordinary Git ancestry, retaining incoming research and this branch's proposals. The [shared repertoire guide](repertoires/README.md#criticality) now defines five Criticality tiers, seed-world recommendations and the Level label replacing Route. Criticality supplies a proposed roadmap order; Level preserves F/U/C/D realization semantics and remains distinct from engineering build scope. The 27 introductory pattern catalogues await their separate concrete-inventory expansions.
