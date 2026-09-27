@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { mkdtemp, writeFile, stat } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
@@ -18,6 +19,9 @@ import { candidateSet } from '../apps/server/src/recall.js';
 // Operational benchmark: disposable storage, native data, no provider calls or test runner.
 // A PostgreSQL target must be explicitly supplied and empty. Keep report/profile output
 // outside the repository; this is component evidence, not multiplayer qualification.
+// Initialize native geometry before constructing or validating recovered world state.
+await initializeCollisionRuntime();
+
 const [output, sizeArgument = '5000', roundsArgument = '30', resumeArgument] =
   process.argv.slice(2);
 const size = Number(sizeArgument),

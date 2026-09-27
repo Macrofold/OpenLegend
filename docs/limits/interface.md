@@ -315,3 +315,11 @@ Character-view cursor: **2,048 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../packages/protocol/src/index.ts).
+
+## VP01
+
+**Current after spatial/cadence integration · Restrictiveness: Medium.**
+
+See-through presentation supports off, player-only and nearby authorized targets (default nearby). Radius is 2–12 m, default 6; strength is 0.2–0.95, default 0.7. The UI offers even-metre radius presets and 0.35/0.7/0.9 strength presets. Preferences belong to the account and survive gameplay rewind. They grant no new bodily sight or knowledge. Lighting selects up to eight nearest observed lit stations with an eight-metre visual range; only the nearest fire casts dynamic shadows, using a 512-pixel map. The sun remains separate.
+
+**Reason / tradeoff:** Adjustable local legibility and bounded graphical work. These are presentation approximations, not physical light/sense rules or measured GPU capacity. [Presentation contract](../world-presentation.md), [implementation](../../apps/client/src/world-presentation.ts), [preferences](../../apps/client/src/ui/world-visual-settings.tsx).

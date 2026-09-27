@@ -9,7 +9,7 @@ test('time settings persist and distinguish background play, manual pause and di
   // Native, zero-budget fixture with explicit server ticks, independent of browser speed.
   const clock = { now: Date.now() };
   const game = await createGameServer({
-    config: readConfig({}),
+    config: readConfig({ AI_BUDGET_USD: '0' }),
     store: new SqliteStore(':memory:'),
     production: true,
     tick: false,
@@ -41,7 +41,7 @@ test('time settings persist and distinguish background play, manual pause and di
       '1×: one real second is one game minute. Manual pause always wins.',
     );
     await expect.poll(() => game.service.paused).toBe(false);
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(60);
     await page
       .locator('.ol-radio')
@@ -49,13 +49,15 @@ test('time settings persist and distinguish background play, manual pause and di
       .click();
     await expect.poll(() => game.service.speed).toBe(0.5);
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(90);
     await checkbox.uncheck();
     await expect(checkbox).toBeEnabled();
     await expect.poll(() => game.service.profile.preferences.pauseWhenHidden).toBe(false);
     await page.reload();
     await expect(page.locator('#loading')).toBeHidden();
+    await page.getByRole('button', { name: 'Control here', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Control here', exact: true })).toBeHidden();
     await settings.click();
     await expect(checkbox).not.toBeChecked();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
@@ -76,7 +78,7 @@ test('time settings persist and distinguish background play, manual pause and di
     await focus(false);
     await expect.poll(() => game.service.present).toBe(false);
     clock.now += 60_000;
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(120);
     expect(game.service.paused).toBe(false);
     await focus(true);
@@ -85,20 +87,21 @@ test('time settings persist and distinguish background play, manual pause and di
     await expect(checkbox).toBeEnabled();
     await focus(false);
     await expect.poll(() => game.service.pauseReason).toBe('away');
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(120);
     await focus(true);
     await expect.poll(() => game.service.paused).toBe(false);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
+    await expect.poll(() => game.service.pauseReason).toBe('manual');
     await checkbox.uncheck();
     await expect(checkbox).toBeEnabled();
     await focus(false);
-    expect(game.service.pauseReason).toBe('manual');
+    await expect.poll(() => game.service.pauseReason).toBe('manual');
     await focus(true);
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect.poll(() => game.service.paused).toBe(false);
     expect(errors).toEqual([]);
-    expect(game.service.store.recentJobs()).toEqual([]);
+    expect(await game.service.store.recentJobs()).toEqual([]);
     await page.close();
     clock.now += 12_001;
     await expect.poll(() => game.service.pauseReason).toBe('away');

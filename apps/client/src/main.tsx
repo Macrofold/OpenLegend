@@ -1,3 +1,4 @@
+import { WorldVisualSettings } from './ui/world-visual-settings';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
@@ -790,6 +791,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
               </Button>
             )}
             <InventionSettings view={view} />
+            <WorldVisualSettings view={view} />
             <Section title="Appearance">
               <label>
                 World theme
@@ -824,8 +826,8 @@ function App({ resetApplication }: { resetApplication: () => void }) {
             <Section title="Controls">
               <p>
                 Click ground to walk. Click an object to look closer. Right-click or Control-click
-                for actions. Drag with the primary, right or middle mouse button to pan. Scroll to
-                zoom.
+                for actions. Drag with the primary or middle mouse button to pan. Right-drag
+                smoothly orbits and tilts. Scroll to zoom.
               </p>
               <p>
                 I Inventory · C Crafting · K Character · W World agent · V In view · J Journal · 1–3
@@ -955,7 +957,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                       {String(Math.floor(view.clock.seconds / 60) % 60).padStart(2, '0')}
                     </span>
                     <div className="ol-caption">
-                      {view.clock.paused ? 'Paused' : 'Time in the wilderness'}
+                      {view.clock.paused
+                        ? 'Paused'
+                        : view.clock.preparingNavigation
+                          ? 'Preparing navigation…'
+                          : 'Time in the wilderness'}
                     </div>
                   </div>
                 </div>

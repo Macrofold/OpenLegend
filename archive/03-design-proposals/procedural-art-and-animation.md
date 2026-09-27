@@ -1,5 +1,10 @@
 # Procedural art, 2D models and pixel density
 
+## World presentation ownership
+
+[World presentation](../../docs/world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+
+
 ## Mixed representation in a 3D world
 
 The accepted procedural/painted/2D-rig vocabulary is a representation family, not a planar-world limitation. [Spatial visual bindings](../07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets) place sprites, simple meshes and future models at one authoritative 3D anchor. Camera-facing single-view fallback is explicit; missing rear/pitch views do not automatically trigger generation. Visual skeletons, parts and sockets cannot grant anatomy, flight or reach. Current plain meshes and cached sprite artwork are described in [Architecture](../../docs/architecture.md#spatial-world-foundation); arbitrary rigs and model imports remain separate work.

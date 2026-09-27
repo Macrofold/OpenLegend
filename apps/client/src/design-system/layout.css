@@ -1260,6 +1260,7 @@ body,
 .ol-hud[data-tight='true'] {
   --status-scale: 0.6;
   --dock-top: max(280px, calc(var(--status-bottom) + var(--space-3) + 88px + var(--space-3)));
+  --mobile-tabs-top: calc(var(--dock-top) + var(--space-8) + var(--space-2));
 }
 .ol-hud[data-tight='true'] .ol-timebar {
   display: grid;
@@ -1283,10 +1284,14 @@ body,
   gap: var(--space-1);
 }
 .ol-hud[data-tight='true'] .ol-dock {
-  height: 50%;
+  /* Reserve the launcher row and open-panel tabs at enlarged UI scales. A fixed
+     half-screen sheet otherwise covers the controls needed to switch panels. */
+  top: calc(var(--mobile-tabs-top) + var(--space-8) + 2 * var(--space-1));
+  height: auto;
 }
 .ol-hud[data-tight='true'] .ol-mobile-tabs {
-  bottom: 50%;
+  top: var(--mobile-tabs-top);
+  bottom: auto;
 }
 .ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-quick-position {
   display: none;

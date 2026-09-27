@@ -1,5 +1,9 @@
 # Open Legend UI system
 
+## World presentation ownership
+
+[World presentation](../../../../docs/world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+
 ## Camera and spatial interaction
 
 The [spatial owner](../../../../docs/spatial-world.md#picking-and-controls) defines meanings rather than another camera schema here. The compact camera toolbar uses focusable icon controls with hover/focus labels, a follow toggle beside recenter and a shortcut help icon; drag pans, Shift-drag orbits/tilts, wheel zooms, and focused-canvas arrows/Page Up/Page Down/P/Home control the view. Pointer capture ends without action after a drag. A level selection is not a movement command. The small renderer interface is plain TypeScript; PlayCanvas types stay in scene/art implementation. Multi-touch pinch and assistive-device qualification remain SW09/SW16 work.
@@ -31,7 +35,7 @@ The attached reference instructions are design input. The user's explicit overri
 - Traits are saved domain data, sampled three without replacement from `packages/domain/src/worlds/base/config/traits.json`. They are descriptive starting dispositions, not earned bonuses. The character sheet shows the player's scoped memories and observed history; private NPC cognition stays behind god authorization.
 - Conversation inputs begin at one line and grow with wrapping or explicit newlines. Active replies use an animated three-dot wave on the originating message; successful replies have no status badge, failures retain only a small red label inside the message with the reason on hover/focus, and interrupted replies use narration from the stored cause. Provider-stage and queue text stays out of the conversation UI.
 
-Primary dragging pans, as specified by the reference; secondary/middle dragging also pan. A stationary secondary click opens actions, and a map click that dismisses a picker never walks. Keyboard shortcuts do not intercept text fields. Panels use opening order and collapse older panels when space is insufficient; narrow layouts share one sheet. Theme/scale/reduced-motion preferences stay local and never alter game semantics.
+Primary and middle dragging pan; secondary or Shift-dragging rotates and tilts. A stationary secondary click opens actions, and a map click that dismisses a picker never walks. Keyboard shortcuts do not intercept text fields. Panels use opening order and collapse older panels when space is insufficient; narrow layouts share one sheet. At enlarged UI scales, its top leaves room for the launcher row and open-panel tabs. Theme/scale/reduced-motion preferences stay local and never alter game semantics.
 
 ## Present capability boundaries
 

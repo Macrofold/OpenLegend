@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rapier": "./src/rapier.ts"
+  },
   "types": "./src/index.ts",
-  "license": "AGPL-3.0-only"
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.20.0"
+  }
 }

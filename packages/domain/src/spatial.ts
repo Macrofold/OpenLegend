@@ -16,6 +16,7 @@ import {
   surfaceHeight,
   type BodyProfile,
   type SurfacePoint,
+  type RoutePlan,
 } from '@open-legend/spatial';
 import { bodyProfile, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
@@ -74,13 +75,13 @@ export function findPath(
   fromSurfaceId?: string,
   toSurfaceId?: string,
   profile: BodyProfile = BODY_PROFILES.person,
-): SurfacePoint[] | null {
+): RoutePlan | null {
   const map = spatialMap(world);
   const start = resolveSupport(map, from, fromSurfaceId),
     destination = resolveSupport(map, to, toSurfaceId);
   if (!start || !destination) return null;
   const result = findSurfaceRoute(map, start, destination, profile);
-  return result.status === 'reached' ? result.path : null;
+  return result.status === 'invalid-endpoint' ? null : result;
 }
 /** Try a bounded set of actual interaction stances. A flying target's center is not a
  * ground destination, and a nearby point under a deck is not a reachable upper-floor stance. */
@@ -89,7 +90,7 @@ export function findApproachPath(
   actor: Entity,
   target: Entity,
   reach: number,
-): SurfacePoint[] | null {
+): RoutePlan | null {
   const start = supportedPosition(actor);
   if (!start) return null;
   const map = spatialMap(world),
@@ -139,18 +140,31 @@ export function findApproachPath(
       a.z - b.z ||
       a.x - b.x,
   );
-  let attempted = 0;
+  const destinations: SurfacePoint[] = [];
   for (const candidate of candidates) {
     if (
       !canReachEntity(world, actor, target, reach, candidate) ||
       !canStand(map, candidate, profile)
     )
       continue;
-    if (attempted++ === 12) break;
+    if (destinations.length === 12) break;
+    destinations.push(candidate);
     const route = findSurfaceRoute(map, start, candidate, profile);
-    if (route.status === 'reached') return route.path;
+    if (route.status === 'reached') return route;
   }
-  return null;
+  return destinations.length
+    ? {
+        status: 'pending',
+        path: [],
+        expanded: 0,
+        request: {
+          from: start,
+          destinations,
+          body: { ...profile },
+          geometryRevision: map.spatial.revision,
+        },
+      }
+    : null;
 }
 /** Project a short voluntary movement only onto its existing support, not the floor below. */
 export function sameSurfacePoint(
@@ -168,38 +182,58 @@ export function sameSurfacePoint(
 /** Ephemeral 3D point index for observed entity anchors. Exact body/geometry checks follow it.
  * Large static solids use the separate complete, bounded geometry provider, not this index. */
 export function spatialCandidates<T extends { position: Position }>(entities: T[], cellSize = 28) {
-  const cells = new Map<string, { entity: T; order: number }[]>();
+  type Entry = { entity: T; order: number };
+  type Cell = { x: number; y: number; z: number; entries: Entry[] };
+  const cells = new Map<string, Cell>();
   entities.forEach((entity, order) => {
     const p = entity.position,
-      key = `${Math.floor(p.x / cellSize)},${Math.floor(p.y / cellSize)},${Math.floor(p.z / cellSize)}`;
-    const cell = cells.get(key) ?? [];
-    cell.push({ entity, order });
-    cells.set(key, cell);
+      x = Math.floor(p.x / cellSize),
+      y = Math.floor(p.y / cellSize),
+      z = Math.floor(p.z / cellSize);
+    const key = `${x},${y},${z}`;
+    let cell = cells.get(key);
+    if (!cell) cells.set(key, (cell = { x, y, z, entries: [] }));
+    cell.entries.push({ entity, order });
   });
   return (position: Position, radius: number): T[] => {
-    const found: { entity: T; order: number }[] = [];
-    for (
-      let x = Math.floor((position.x - radius) / cellSize);
-      x <= Math.floor((position.x + radius) / cellSize);
-      x++
-    )
-      for (
-        let y = Math.floor((position.y - radius) / cellSize);
-        y <= Math.floor((position.y + radius) / cellSize);
-        y++
-      )
-        for (
-          let z = Math.floor((position.z - radius) / cellSize);
-          z <= Math.floor((position.z + radius) / cellSize);
-          z++
+    const found: Entry[] = [];
+    const minX = Math.floor((position.x - radius) / cellSize),
+      maxX = Math.floor((position.x + radius) / cellSize),
+      minY = Math.floor((position.y - radius) / cellSize),
+      maxY = Math.floor((position.y + radius) / cellSize),
+      minZ = Math.floor((position.z - radius) / cellSize),
+      maxZ = Math.floor((position.z + radius) / cellSize);
+    const volume = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+    // A large empty envelope should cost occupied cells, not its cubic volume.
+    // Both paths return the same conservative cells in original entity order.
+    if (volume > cells.size) {
+      for (const cell of cells.values()) {
+        chargeWork({ tests: 1 });
+        if (
+          cell.x >= minX &&
+          cell.x <= maxX &&
+          cell.y >= minY &&
+          cell.y <= maxY &&
+          cell.z >= minZ &&
+          cell.z <= maxZ
         ) {
-          const cell = cells.get(`${x},${y},${z}`) ?? [];
-          chargeWork({ tests: 1, candidates: cell.length });
-          found.push(...cell);
+          chargeWork({ candidates: cell.entries.length });
+          found.push(...cell.entries);
         }
+      }
+    } else {
+      for (let x = minX; x <= maxX; x++)
+        for (let y = minY; y <= maxY; y++)
+          for (let z = minZ; z <= maxZ; z++) {
+            const entries = cells.get(`${x},${y},${z}`)?.entries ?? [];
+            chargeWork({ tests: 1, candidates: entries.length });
+            found.push(...entries);
+          }
+    }
     return found.sort((a, b) => a.order - b.order).map(({ entity }) => entity);
   };
 }
+
 const entityIndexes = new WeakMap<
   WorldState['entities'],
   ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>

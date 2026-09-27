@@ -7,7 +7,7 @@ test('conversation UI grows from one line and uses message-local dots and failur
   page,
 }) => {
   const game = await createGameServer({
-    config: readConfig({}),
+    config: readConfig({ AI_BUDGET_USD: '0' }),
     store: new SqliteStore(':memory:'),
     production: true,
     tick: false,

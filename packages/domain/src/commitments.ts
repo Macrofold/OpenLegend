@@ -44,6 +44,13 @@ function commitmentIndex(world: WorldState) {
   indexes.set(memories, index);
   return index;
 }
+/** Reuse the obligation owner's existing sorted deadline index. */
+export function nextCommitmentDeadline(world: WorldState): number {
+  return (
+    commitmentIndex(world).deadlines.find((e) => e.record.obligation!.dueAt! > world.simTime)
+      ?.record.obligation?.dueAt ?? Infinity
+  );
+}
 export interface Obligation {
   revision: number;
   status: 'active' | 'fulfilled' | 'cancelled' | 'overdue';

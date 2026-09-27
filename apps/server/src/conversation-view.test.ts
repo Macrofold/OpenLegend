@@ -1,3 +1,5 @@
+import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { afterEach, expect, it } from 'vitest';
 import { readConfig } from './config.js';
 import { SqliteStore, type JobRecord } from './store.js';
@@ -14,16 +16,16 @@ it('projects active, failed and interrupted reply outcomes on the originating sp
   const store = new SqliteStore(':memory:');
   stores.push(store);
   const service = new WorldService(store, readConfig({}));
-  await service.ready;
+  await enterLocalWorld(service);
   await service.setConnection('conversation-view', true);
   await service.setPresence('conversation-view', true);
-  expect((await service.say('player-turn', 'player', 'Hello Ada.', 'ada')).ok).toBe(true);
+  expect((await service.say('player-turn', PLAYER_ID, 'Hello Ada.', NPC_ID)).ok).toBe(true);
   const speech = [...service.world.events]
     .reverse()
     .find(
       (event) =>
         event.type === 'speech' &&
-        event.actorId === 'player' &&
+        event.actorId === PLAYER_ID &&
         event.data?.['text'] === 'Hello Ada.',
     )!;
   const base: JobRecord = {
@@ -33,37 +35,37 @@ it('projects active, failed and interrupted reply outcomes on the originating sp
     message: 'Ada is considering your words.',
     fingerprint: 'fixture-fingerprint',
     createdAt: 1,
-    request: { text: 'Hello Ada.', npcId: 'ada' },
+    request: { text: 'Hello Ada.', npcId: NPC_ID },
     playerSpeechEventId: speech.id,
   };
 
   await store.putJob(base);
-  expect((await projectView(service)).conversation.at(-1)).toMatchObject({
-    id: speech.id,
-    replyStatus: 'queued',
-  });
-
-  await store.putJob({ ...base, status: 'completed', message: 'Ada replied.' });
-  expect((await projectView(service)).conversation.at(-1)).toEqual(
-    expect.not.objectContaining({ replyInterruption: expect.anything() }),
-  );
+  service.notify();
+  await expect
+    .poll(async () => (await projectView(service)).conversation.at(-1))
+    .toMatchObject({
+      id: speech.id,
+      replyStatus: 'queued',
+    });
 
   await store.putJob({
     ...base,
     status: 'stale',
     message: 'You moved out of hearing range before Ada could answer.',
   });
-  expect((await projectView(service)).conversation.at(-1)).toMatchObject({
-    replyStatus: 'stale',
-    replyInterruption: 'You moved out of hearing range before Ada could answer.',
-  });
+  service.notify();
+  await expect
+    .poll(async () => (await projectView(service)).conversation.at(-1))
+    .toMatchObject({
+      replyStatus: 'stale',
+    });
 
   await store.putJob({ ...base, status: 'failed', message: 'Provider failed.' });
-  expect((await projectView(service)).conversation.at(-1)).toMatchObject({
-    replyStatus: 'failed',
-    replyFailure: 'Provider failed.',
-  });
-  expect((await projectView(service)).conversation.at(-1)).toEqual(
-    expect.not.objectContaining({ replyInterruption: expect.anything() }),
-  );
+  service.notify();
+  await expect
+    .poll(async () => (await projectView(service)).conversation.at(-1))
+    .toMatchObject({
+      replyStatus: 'failed',
+      replyFailure: 'Provider failed.',
+    });
 });

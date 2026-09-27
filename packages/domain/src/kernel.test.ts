@@ -1,9 +1,13 @@
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
+import {
+  advanceWithNavigation as advanceWorld,
+  prepareWorldNavigation,
+} from '../../../tests/fixtures/navigation.js';
 import { describe, expect, it } from 'vitest';
 import {
   admitDeclaration,
-  advanceWorld,
   createWorld,
   executeCommand,
   findPath,
@@ -73,7 +77,7 @@ const arrow = (): DeclarationDraft => ({
 function command(
   world: WorldState,
   body: Omit<Command, 'id' | 'actorId'> | Record<string, unknown>,
-  actorId = 'player',
+  actorId = PLAYER_ID,
 ): WorldState {
   const result = executeCommand(world, {
     ...body,
@@ -83,7 +87,7 @@ function command(
   expect(result.outcome.ok, result.outcome.message).toBe(true);
   return result.world;
 }
-function itemId(world: WorldState, definitionId: string, actorId = 'player'): string {
+function itemId(world: WorldState, definitionId: string, actorId = PLAYER_ID): string {
   const item = inventoryFor(world, actorId).find((value) => value.definitionId === definitionId);
   expect(item, `Expected ${definitionId} in inventory`).toBeDefined();
   return item!.id;
@@ -94,7 +98,7 @@ function addRecipe(
   requestId = 'request-sling',
 ): { world: WorldState; recipeId: string } {
   const result = admitDeclaration(world, draft, {
-    actorId: 'player',
+    actorId: PLAYER_ID,
     requestId,
     source: 'test-fixture',
     authority: { origin: 'player', policyRevision: 1 },
@@ -117,8 +121,8 @@ describe('authoritative pure world', () => {
     const world = createWorld();
     expect(world).toEqual(createWorld());
     expect(world.recipes).toEqual({});
-    expect(world.knowledge.ada).toEqual([]);
-    expect(quantityOf(world, 'player', 'cord')).toBeGreaterThan(0);
+    expect(world.knowledge[NPC_ID]).toEqual([]);
+    expect(quantityOf(world, PLAYER_ID, 'cord')).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(world))).toEqual(world);
   });
   it('does not mutate its input and makes duplicate commands harmless', () => {
@@ -126,13 +130,13 @@ describe('authoritative pure world', () => {
     const snapshot = structuredClone(original);
     const eat: Command = {
       id: 'eat-1',
-      actorId: 'player',
+      actorId: PLAYER_ID,
       type: 'eat',
       itemId: itemId(original, 'berries'),
     };
     const result = executeCommand(original, eat);
     expect(original).toEqual(snapshot);
-    expect(quantityOf(result.world, 'player', 'berries')).toBe(2);
+    expect(quantityOf(result.world, PLAYER_ID, 'berries')).toBe(2);
     expect(executeCommand(result.world, eat).world).toEqual(result.world);
     expect(executeCommand(result.world, { ...eat, itemId: 'other' }).outcome.code).toBe(
       'idempotency-conflict',
@@ -141,19 +145,19 @@ describe('authoritative pure world', () => {
   it('freezes work, needs, random draws and speech while paused', () => {
     let world = command(createWorld(), {
       type: 'status-effect',
-      definitionId: 'rest',
-      targetId: 'player',
+      definitionId: 'wilderness:restorative-rest',
+      targetId: PLAYER_ID,
       operation: 'activate',
     });
     world = { ...world, paused: true };
     expect(advanceWorld(world, 80000).world).toBe(world);
     expect(
-      executeCommand(world, { id: 'speech', actorId: 'ada', type: 'say', text: 'Hello' }).outcome
+      executeCommand(world, { id: 'speech', actorId: NPC_ID, type: 'say', text: 'Hello' }).outcome
         .code,
     ).toBe('paused');
     expect(
       admitDeclaration(world, sling(), {
-        actorId: 'player',
+        actorId: PLAYER_ID,
         requestId: 'paused',
         source: 'test-fixture',
         authority: { origin: 'player', policyRevision: 1 },
@@ -162,15 +166,22 @@ describe('authoritative pure world', () => {
   });
   it('routes around grid obstacles and rejects out-of-bounds ground', () => {
     let world = createWorld();
-    const destination = { y: 0, x: 20, z: 7 };
-    const path = findPath(world, { y: 0, x: 15, z: 7 }, destination)!;
-    expect(path.length).toBeGreaterThan(5);
-    expect(path.every((point) => isWalkable(world, point))).toBe(true);
+    const destination = { y: 0, x: 20, z: 7, surfaceId: 'terrain' };
+    const plan = findPath(world, { y: 0, x: 15, z: 7 }, destination);
+    expect(plan?.status).toBe('pending');
     expect(isWalkable(world, { y: 0, x: -0.2, z: 12 })).toBe(false);
     world = command(world, { type: 'move', destination });
+    world = prepareWorldNavigation(world);
+    const path = world.entities[PLAYER_ID]!.actor!.action!.path;
+    expect(path.length).toBeGreaterThan(0);
+    expect(path.every((point) => isWalkable(world, point))).toBe(true);
     world = advanceWorld(world, 240).world;
-    expect(worldPosition(world.entities.player!)).toEqual(destination);
-    expect(world.entities.player!.actor!.action).toBeNull();
+    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({
+      x: destination.x,
+      y: destination.y,
+      z: destination.z,
+    });
+    expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
   });
   it('resumes in-progress native work exactly after a JSON restore', () => {
     const initial = command(createWorld(), { type: 'gather', targetId: 'branches' });
@@ -185,10 +196,10 @@ describe('bounded invented mechanisms', () => {
     const original = createWorld();
     const admitted = addRecipe(original);
     expect(original.recipes).toEqual({});
-    expect(admitted.world.knowledge.player).toHaveLength(1);
-    expect(admitted.world.knowledge.ada).toHaveLength(0);
+    expect(admitted.world.knowledge[PLAYER_ID]).toHaveLength(1);
+    expect(admitted.world.knowledge[NPC_ID]).toHaveLength(0);
     const repeated = admitDeclaration(admitted.world, sling(), {
-      actorId: 'player',
+      actorId: PLAYER_ID,
       requestId: 'request-sling',
       source: 'test-fixture',
       authority: { origin: 'player', policyRevision: 1 },
@@ -198,7 +209,7 @@ describe('bounded invented mechanisms', () => {
     changed.workSeconds = 70;
     expect(
       admitDeclaration(admitted.world, changed, {
-        actorId: 'player',
+        actorId: PLAYER_ID,
         requestId: 'request-sling',
         source: 'test-fixture',
         authority: { origin: 'player', policyRevision: 1 },
@@ -207,17 +218,17 @@ describe('bounded invented mechanisms', () => {
     expect(
       executeCommand(admitted.world, {
         id: 'unlearned',
-        actorId: 'ada',
+        actorId: NPC_ID,
         type: 'craft',
         recipeId: admitted.recipeId,
       }).outcome.code,
     ).toBe('not-learned');
     const taught = command(admitted.world, {
       type: 'teach',
-      targetId: 'ada',
+      targetId: NPC_ID,
       recipeId: admitted.recipeId,
     });
-    expect(taught.knowledge.ada?.[0]?.source).toBe('taught');
+    expect(taught.knowledge[NPC_ID]?.[0]?.source).toBe('taught');
   });
   it('rejects invented sources, overpowered effects, missing roles and unknown fields atomically', () => {
     const world = createWorld();
@@ -241,7 +252,7 @@ describe('bounded invented mechanisms', () => {
     for (const candidate of candidates) {
       expect(validateDeclaration(world, candidate).length).toBeGreaterThan(0);
       const result = admitDeclaration(world, candidate as DeclarationDraft, {
-        actorId: 'player',
+        actorId: PLAYER_ID,
         requestId: 'bad',
         source: 'test-fixture',
         authority: { origin: 'player', policyRevision: 1 },
@@ -252,54 +263,58 @@ describe('bounded invented mechanisms', () => {
   });
   it('requires actual materials, spends once at work start, and never refunds canceled work', () => {
     const { world: admitted, recipeId } = addRecipe(createWorld());
-    const before = quantityOf(admitted, 'player', 'prepared_fiber');
+    const before = quantityOf(admitted, PLAYER_ID, 'prepared_fiber');
     let world = command(admitted, { type: 'craft', recipeId });
-    expect(quantityOf(world, 'player', 'prepared_fiber')).toBe(before - 2);
-    expect(quantityOf(world, 'player', world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
+    expect(quantityOf(world, PLAYER_ID, 'prepared_fiber')).toBe(before - 2);
+    expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     world = command(world, { type: 'cancel' });
     world = advanceWorld(world, 300).world;
-    expect(quantityOf(world, 'player', 'prepared_fiber')).toBe(before - 2);
-    expect(quantityOf(world, 'player', world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
+    expect(quantityOf(world, PLAYER_ID, 'prepared_fiber')).toBe(before - 2);
+    expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     world = command(world, { type: 'craft', recipeId });
     world = advanceWorld(world, 60).world;
-    expect(quantityOf(world, 'player', world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
+    expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
     expect(
-      executeCommand(world, { id: 'empty', actorId: 'player', type: 'craft', recipeId }).outcome
+      executeCommand(world, { id: 'empty', actorId: PLAYER_ID, type: 'craft', recipeId }).outcome
         .code,
     ).toBe('missing-material');
   });
   it('completes a generated sling → hunt → finite harvest → cook → eat loop', () => {
     let world = makeSling();
-    const ammoBefore = quantityOf(world, 'player', 'stone');
+    const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 24).world;
-    expect(quantityOf(world, 'player', 'stone')).toBe(ammoBefore - 1);
-    expect(world.entities['hare-1']!.animal!.alive).toBe(false);
+    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
+    expect(world.entities['hare-1']!.actor!.alive).toBe(false);
     world = command(world, { type: 'harvest', targetId: 'hare-1' });
     world = advanceWorld(world, 180).world;
-    expect(quantityOf(world, 'player', 'raw_meat')).toBe(2);
-    expect(quantityOf(world, 'player', 'bone')).toBe(2);
+    expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(2);
+    expect(quantityOf(world, PLAYER_ID, 'bone')).toBe(2);
     expect(
-      executeCommand(world, { id: 'again', actorId: 'player', type: 'harvest', targetId: 'hare-1' })
-        .outcome.code,
+      executeCommand(world, {
+        id: 'again',
+        actorId: PLAYER_ID,
+        type: 'harvest',
+        targetId: 'hare-1',
+      }).outcome.code,
     ).toBe('not-harvestable');
     expect(
       executeCommand(world, {
         id: 'raw',
-        actorId: 'player',
+        actorId: PLAYER_ID,
         type: 'eat',
         itemId: itemId(world, 'raw_meat'),
       }).outcome.code,
     ).toBe('not-edible');
     world = command(world, { type: 'cook', itemId: itemId(world, 'raw_meat'), heatId: 'campfire' });
     world = advanceWorld(world, 200).world;
-    expect(quantityOf(world, 'player', 'raw_meat')).toBe(1);
-    expect(quantityOf(world, 'player', 'cooked_meat')).toBe(1);
-    const fullness = world.entities.player!.actor!.fullness;
+    expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
+    expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);
+    const fullness = world.entities[PLAYER_ID]!.actor!.fullness;
     if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
     world = command(world, { type: 'eat', itemId: itemId(world, 'cooked_meat') });
-    expect(world.entities.player!.actor!.fullness).toBeGreaterThan(fullness);
-    expect(quantityOf(world, 'player', 'cooked_meat')).toBe(0);
+    expect(world.entities[PLAYER_ID]!.actor!.fullness).toBeGreaterThan(fullness);
+    expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(0);
   });
   it('uses the same ranged family for a bow with compatible crafted arrows', () => {
     let { world, recipeId } = addRecipe(createWorld(), bow(), 'bow');
@@ -312,19 +327,19 @@ describe('bounded invented mechanisms', () => {
     expect(
       executeCommand(world, {
         id: 'wrong-ammo',
-        actorId: 'player',
+        actorId: PLAYER_ID,
         type: 'hunt',
         targetId: 'hare-1',
       }).outcome.code,
     ).toBe('no-ammunition');
-    createItemLot(world, 'player', 'bone', 2, 'fixture-bone');
+    createItemLot(world, PLAYER_ID, 'bone', 2, 'fixture-bone');
     ({ world, recipeId } = addRecipe(world, arrow(), 'arrow'));
     world = command(world, { type: 'craft', recipeId });
     world = advanceWorld(world, 72).world;
-    expect(quantityOf(world, 'player', world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
+    expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 30).world;
-    expect(quantityOf(world, 'player', world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
+    expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     expect(
       world.events.some((event) => event.type === 'shot' && event.data?.ammunitionKind === 'arrow'),
     ).toBe(true);
@@ -334,7 +349,7 @@ describe('bounded invented mechanisms', () => {
     world.rngState = 12345;
     const weapon =
       world.itemDefinitions[
-        itemFor(world, world.entities.player!.actor!.equippedItemId!)!.definitionId
+        itemFor(world, world.entities[PLAYER_ID]!.actor!.equippedItemId!)!.definitionId
       ]!;
     weapon.launcher!.accuracy = 0.6;
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
@@ -343,8 +358,8 @@ describe('bounded invented mechanisms', () => {
       true,
     );
     expect(world.entities['hare-1']!.animal!.fleeSeconds).toBeGreaterThan(0);
-    expect(world.entities['hare-1']!.animal!.health).toBe(18);
-    expect(quantityOf(world, 'player', 'stone')).toBe(5);
+    expect(world.entities['hare-1']!.actor!.health).toBe(18);
+    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });
   it('resolves competing harvesters once and never duplicates finite remains', () => {
     let world = makeSling();
@@ -353,30 +368,32 @@ describe('bounded invented mechanisms', () => {
     const position = worldPosition(world.entities['hare-1']!);
     setSpatialPosition(
       world,
-      world.entities.player!,
+      world.entities[PLAYER_ID]!,
       { ...position },
-      worldSupport(world.entities.player!),
+      worldSupport(world.entities[PLAYER_ID]!),
     );
     setSpatialPosition(
       world,
-      world.entities.ada!,
+      world.entities[NPC_ID]!,
       { ...position },
-      worldSupport(world.entities.ada!),
+      worldSupport(world.entities[NPC_ID]!),
     );
     world = command(world, { type: 'harvest', targetId: 'hare-1' });
-    world = command(world, { type: 'harvest', targetId: 'hare-1' }, 'ada');
+    world = command(world, { type: 'harvest', targetId: 'hare-1' }, NPC_ID);
     world = advanceWorld(world, 90).world;
-    expect(quantityOf(world, 'player', 'raw_meat') + quantityOf(world, 'ada', 'raw_meat')).toBe(2);
+    expect(quantityOf(world, PLAYER_ID, 'raw_meat') + quantityOf(world, NPC_ID, 'raw_meat')).toBe(
+      2,
+    );
     expect(world.events.filter((event) => event.type === 'harvested')).toHaveLength(1);
   });
   it('revalidates the animal before spending ammunition on a queued shot', () => {
     let world = makeSling();
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
-    world.entities['hare-1']!.animal!.alive = false;
+    world.entities['hare-1']!.actor!.alive = false;
     world = advanceWorld(world, 24).world;
-    expect(quantityOf(world, 'player', 'stone')).toBe(6);
+    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
     expect(world.events.some((event) => event.type === 'shot')).toBe(false);
-    expect(world.entities.player!.actor!.action).toBeNull();
+    expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
     const candidate = arrow();
@@ -398,9 +415,9 @@ describe('bounded invented mechanisms', () => {
     });
     for (let attempt = 0; attempt < 2; attempt++) {
       world = command(world, { type: 'hunt', targetId: 'hare-1' });
-      for (let seconds = 0; seconds < 400 && world.entities.player!.actor!.action; seconds++)
+      for (let seconds = 0; seconds < 400 && world.entities[PLAYER_ID]!.actor!.action; seconds++)
         world = advanceWorld(world, 1).world;
-      expect(world.entities.player!.actor!.action).toBeNull();
+      expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     }
     expect(world.events.filter((event) => event.type === 'shot')).toHaveLength(2);
     expect(
@@ -408,7 +425,7 @@ describe('bounded invented mechanisms', () => {
         (event) => event.type === 'action-stopped' && event.text.includes('out of range'),
       ),
     ).toBe(false);
-    expect(quantityOf(world, 'player', 'stone')).toBe(4);
+    expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(4);
   });
 });
 
@@ -417,71 +434,71 @@ describe('perception, survival and continuity', () => {
     let world = createWorld();
     setSpatialPosition(
       world,
-      world.entities.ada!,
+      world.entities[NPC_ID]!,
       { y: 0, x: 26, z: 22 },
-      worldSupport(world.entities.ada!),
+      worldSupport(world.entities[NPC_ID]!),
     );
     world = command(world, { type: 'say', text: 'The secret is moonflower.' });
     setSpatialPosition(
       world,
-      world.entities.ada!,
+      world.entities[NPC_ID]!,
       { y: 0, x: 12, z: 13 },
-      worldSupport(world.entities.ada!),
+      worldSupport(world.entities[NPC_ID]!),
     );
     expect(
-      queryMemories(world, 'ada').some((record) => record.summary.includes('moonflower')),
+      queryMemories(world, NPC_ID).some((record) => record.summary.includes('moonflower')),
     ).toBe(false);
-    expect(observeActor(world, 'ada')!.recentEvents.some((event) => event.type === 'speech')).toBe(
+    expect(observeActor(world, NPC_ID)!.recentEvents.some((event) => event.type === 'speech')).toBe(
       false,
     );
-    world = command(world, { type: 'say', text: 'I will bring you berries.', targetId: 'ada' });
+    world = command(world, { type: 'say', text: 'I will bring you berries.', targetId: NPC_ID });
     const event = world.events.at(-1)!;
-    world = remember(world, 'ada', {
+    world = remember(world, NPC_ID, {
       kind: 'commitment',
       source: 'heard',
       summary: 'The newcomer promised me berries.',
-      entityIds: ['player'],
+      entityIds: [PLAYER_ID],
       eventId: event.id,
       importance: 10,
     }).world;
-    expect(queryMemories(world, 'ada')[0]!.kind).toBe('commitment');
-    expect(queryMemories(world, 'player').some((record) => record.kind === 'commitment')).toBe(
+    expect(queryMemories(world, NPC_ID)[0]!.kind).toBe('commitment');
+    expect(queryMemories(world, PLAYER_ID).some((record) => record.kind === 'commitment')).toBe(
       false,
     );
     expect(
-      observeActor(world, 'player')!
-        .visibleEntities.find((entity) => entity.id === 'ada')!
+      observeActor(world, PLAYER_ID)!
+        .visibleEntities.find((entity) => entity.id === NPC_ID)!
         .actor!.agency.goals.map((goal) => goal.objective)
         .join('; '),
     ).toBe('');
   });
   it('keeps native NPC foraging and eating functional without a provider', () => {
     let world = createWorld();
-    world.entities.ada!.actor!.fullness = 20;
-    for (const item of inventoryFor(world, 'ada'))
+    world.entities[NPC_ID]!.actor!.fullness = 20;
+    for (const item of inventoryFor(world, NPC_ID))
       if (item.definitionId === 'berries') retireItem(world, item.id, 'fixture');
     world = advanceWorld(world, 300).world;
-    expect(world.entities.ada!.actor!.alive).toBe(true);
-    expect(world.entities.ada!.actor!.fullness).toBeGreaterThan(38);
-    expect(world.events.some((event) => event.actorId === 'ada' && event.type === 'gathered')).toBe(
-      true,
-    );
+    expect(world.entities[NPC_ID]!.actor!.alive).toBe(true);
+    expect(world.entities[NPC_ID]!.actor!.fullness).toBeGreaterThan(38);
+    expect(
+      world.events.some((event) => event.actorId === NPC_ID && event.type === 'gathered'),
+    ).toBe(true);
   });
   it('allows NPC death while preserving separate player recovery and history', () => {
     let world = createWorld();
-    for (const item of inventoryFor(world, 'ada')) retireItem(world, item.id, 'fixture');
+    for (const item of inventoryFor(world, NPC_ID)) retireItem(world, item.id, 'fixture');
     for (const entity of Object.values(world.entities))
       if (entity.resource) entity.resource.quantity = 0;
-    for (const actor of [world.entities.player!, world.entities.ada!]) {
+    for (const actor of [world.entities[PLAYER_ID]!, world.entities[NPC_ID]!]) {
       actor.actor!.fullness = 0;
       actor.actor!.health = 0.01;
     }
     world = advanceWorld(world, 3).world;
-    expect(world.entities.ada!.actor!.alive).toBe(false);
-    expect(world.entities.player!.actor!.incapacitated).toBe(true);
+    expect(world.entities[NPC_ID]!.actor!.alive).toBe(false);
+    expect(world.entities[PLAYER_ID]!.actor!.incapacitated).toBe(true);
     world = command(world, { type: 'recover' });
-    expect(world.entities.player!.actor!.health).toBe(65);
-    expect(world.events.some((event) => event.type === 'death' && event.actorId === 'ada')).toBe(
+    expect(world.entities[PLAYER_ID]!.actor!.health).toBe(65);
+    expect(world.events.some((event) => event.type === 'death' && event.actorId === NPC_ID)).toBe(
       true,
     );
   });

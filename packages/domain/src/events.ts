@@ -1,7 +1,7 @@
 import { chargeWork } from './work-budget.js';
-import { worldRootEntities } from './entity-index.js';
+import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
-import { trackDetachedRecord } from './draft.js';
+import { trackDetachedRecord, trackRecordArray } from './draft.js';
 import {
   observerDescription,
   recognizesSubject,
@@ -15,7 +15,7 @@ import { hasMemory } from './living.js';
 import { finishWorld, cloneValue } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
-import { hearsEntity, seesEntity } from './perception.js';
+import { seesEntity } from './perception.js';
 import { memoryPerspective } from './memory-perspective.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import type { Entity, MemoryRecord, Outcome, Transition, WorldEvent, WorldState } from './types.js';
@@ -96,45 +96,49 @@ function eventAudience(
   type: string,
   source: Entity | undefined,
   scope: 'external' | 'private',
-  candidates?: Entity[],
 ): string[] {
   const audience =
-    scope === 'private' || !source
-      ? []
-      : (candidates ?? worldRootEntities(world))
-          .filter(
-            (entity) =>
-              hasMemory(entity) &&
-              entity.actor?.alive &&
-              !capabilityBlocked(world, entity, 'perception') &&
-              (type === 'speech'
-                ? hearsEntity(world, entity, source)
-                : seesEntity(world, entity, source)),
-          )
-          .map((entity) => entity.id);
+    scope === 'private' || !source ? [] : externalAudience(world, source, type === 'speech');
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   return audience;
 }
 
 const eventEncoder = new TextEncoder();
 
-/** Noticing a source is private evidence, not an outward action others can witness.
+/** Seeing a source is the observer's evidence, not an outward action witnessed by others.
+ * Keep the existing encounter family/importance for living-source reconsideration, but route
+ * acquisition through the same scoped experience owner as all other awareness.
  * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
  */
-export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent =>
-    emit(
-      world,
-      events,
-      'encounter',
-      `${source.name} encountered ${observerDescription(world, source.id, targetId)}.`,
-      source,
-      targetId,
-      meaningful
-        ? { importance: 6, semanticTrigger: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false },
-      'private',
-    );
+export function recordVisualAcquisition(
+  world: WorldState,
+  events: WorldEvent[],
+  observer: Entity,
+  targetId: string,
+  meaningful: boolean,
+): void {
+  if (
+    !hasMemory(observer) ||
+    !observer.actor?.alive ||
+    capabilityBlocked(world, observer, 'perception')
+  )
+    return;
+  recordEvent(
+    world,
+    events,
+    'encounter',
+    `${observer.name} encountered ${observerDescription(world, observer.id, targetId)}.`,
+    [observer.id],
+    observer,
+    targetId,
+    {
+      acquisition: 'visual',
+      importance: meaningful ? 6 : 0,
+      urgency: meaningful ? 2 : 0,
+      semanticTrigger: meaningful,
+    },
+    'private',
+  );
 }
 
 function recordEvent(
@@ -200,8 +204,10 @@ function recordEvent(
   trackDetachedRecord(world, event);
   if (source && conversationId && world.conversations?.records[conversationId])
     world.conversations.records[conversationId]!.lastActivityAt = world.simTime;
-  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
+  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8)) {
     world.events.push(event);
+    trackRecordArray(world, world, 'events');
+  }
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {

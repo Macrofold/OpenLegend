@@ -8,7 +8,7 @@ import {
   clearSegment,
   distance3D,
   resolveSupport,
-  soundTransmission,
+  soundTransmissionAtLeast,
   SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
@@ -114,6 +114,7 @@ interface SightTarget {
   height: number;
 }
 interface SightResult {
+  position: Position;
   height: number;
   seen: boolean;
 }
@@ -121,13 +122,14 @@ interface ObserverSight {
   from: Position;
   radius: number;
   eyeHeight: number;
-  targets: Map<Position, SightResult>;
+  targets: Map<string, SightResult>;
 }
 // Bounded memoization only, never an exposure limit. Uncached targets use exact geometry.
 const SIGHT_CACHE_LIMITS = { observers: 128, targets: 512 } as const;
 const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
+const samePoint = (a: Position, b: Position) => a.x === b.x && a.y === b.y && a.z === b.z;
 /** Bind one stable sensing boundary instead of rereading an observer's Immer proxies per target.
- * Cache only frozen transforms/maps: draft edits and mutable authoring data must query live geometry.
+ * Copy scalar transforms, never retain mutable positions or draft entities. Geometry must be frozen.
  * Radius and both body anchors participate in reuse; future senses must add their own dependencies.
  */
 export function visionQuery(world: WorldState, observer: Entity): (source: SightTarget) => boolean {
@@ -135,17 +137,22 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     return () => false;
   const radius = visionRadius(world, observer);
   const position = worldPosition(observer);
-  const from = isDraft(position) ? current(position) : position;
+  const from = { x: position.x, y: position.y, z: position.z };
   const eyeHeight = bodyProfile(observer).eyeHeight;
   const eye = { x: from.x, y: from.y + eyeHeight, z: from.z };
   const observerId = observer.id;
   const map = spatialMap(world);
-  let cached: Map<Position, SightResult> | undefined;
-  if (Object.isFrozen(map) && Object.isFrozen(from)) {
+  let cached: Map<string, SightResult> | undefined;
+  if (Object.isFrozen(map)) {
     let observers = visibility.get(map);
     if (!observers) visibility.set(map, (observers = new Map()));
     let entry = observers.get(observerId);
-    if (entry?.from !== from || entry.radius !== radius || entry.eyeHeight !== eyeHeight) {
+    if (
+      !entry ||
+      !samePoint(entry.from, from) ||
+      entry.radius !== radius ||
+      entry.eyeHeight !== eyeHeight
+    ) {
       if (!entry && observers.size >= SIGHT_CACHE_LIMITS.observers)
         observers.delete(observers.keys().next().value!);
       entry = { from, radius, eyeHeight, targets: new Map() };
@@ -158,9 +165,8 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     const p = source.position;
     if (radius <= 0 || distance(from, p) > radius) return false;
     if (source.id === observerId) return true;
-    const reusable = Object.isFrozen(p) ? cached : undefined;
-    const old = reusable?.get(p);
-    if (old && old.height === source.height) return old.seen;
+    const old = cached?.get(source.id);
+    if (old && samePoint(old.position, p) && old.height === source.height) return old.seen;
     // Extent samples provide coarse exposure, not recognition or private-state disclosure.
     const seen = [0.85, 0.5, 0.15].some((fraction) =>
       clearSegment(map, eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),
@@ -168,8 +174,8 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     // Keep the admitted stable transforms when a dense scan exceeds capacity. Evicting
     // its first entry on every miss makes a 513-target scan miss all 512 entries forever.
     // docs/performance.md#simulation-cpu-and-growing-history
-    if (reusable && (reusable.has(p) || reusable.size < SIGHT_CACHE_LIMITS.targets)) {
-      reusable.set(p, { height: source.height, seen });
+    if (cached && (cached.has(source.id) || cached.size < SIGHT_CACHE_LIMITS.targets)) {
+      cached.set(source.id, { position: { x: p.x, y: p.y, z: p.z }, height: source.height, seen });
     }
     return seen;
   };
@@ -209,11 +215,11 @@ export function withinHearingRange(world: WorldState, observer: Entity, source: 
   };
   const separation = distance3D(listener, origin);
   if (separation > radius) return false;
-  const transmission = soundTransmission(spatialMap(world), listener, origin);
+  const transmission = soundTransmissionAtLeast(spatialMap(world), listener, origin, 0.65);
   // Current speech consumers assume intelligible words and identity. Until EPR supplies
   // graded auditory contacts, do not put an indistinct sound in that full-text audience.
   // docs/spatial-world.md#seeing-and-hearing-in-3d
-  return transmission >= 0.65 && separation <= radius * transmission;
+  return transmission !== null && separation <= radius * transmission;
 }
 export function contactViews(entity: Entity): ContactView[] {
   return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
@@ -250,6 +256,6 @@ export function canSee(from: Position, to: Position): boolean {
 export function canHear(world: WorldState, from: Position, to: Position): boolean {
   const separation = distance(from, to);
   if (separation > PERCEPTION_RULES.hearingRadius) return false;
-  const transmission = soundTransmission(spatialMap(world), from, to);
-  return transmission >= 0.65 && separation <= PERCEPTION_RULES.hearingRadius * transmission;
+  const transmission = soundTransmissionAtLeast(spatialMap(world), from, to, 0.65);
+  return transmission !== null && separation <= PERCEPTION_RULES.hearingRadius * transmission;
 }

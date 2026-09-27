@@ -568,10 +568,10 @@ export function chargeWork(demand: WorkDemand): void {
 
 /** A deterministic transition may yield private progress without publishing state.
  * Each resume restores the SAME meter; yielding never replenishes its allowance. */
-export function meteredIterator<T>(
+export function meteredIterator<T, Yield = void, Resume = void>(
   limit: WorkDemand,
-  iterator: Generator<void, T>,
-): Generator<void, T> {
+  iterator: Generator<Yield, T, Resume>,
+): Generator<Yield, T, Resume> {
   const meter: WorkMeter = {
     limit: workVector(limit),
     used: workVector(),
@@ -580,7 +580,7 @@ export function meteredIterator<T>(
   };
   requireWork(meter.limit, WORK_LIMITS.group);
   if (meter.depth > WORK_LIMITS.group.depth) throw new WorkBudgetError('work-contract', 'depth');
-  const resume = (operation: () => IteratorResult<void, T>) => {
+  const resume = (operation: () => IteratorResult<Yield, T>) => {
     const previous = activeMeter;
     if (previous !== meter.parent) throw new Error('Native work resumed under a different owner.');
     activeMeter = meter;
@@ -591,7 +591,7 @@ export function meteredIterator<T>(
     }
   };
   return {
-    next: () => resume(() => iterator.next()),
+    next: (...args: [] | [Resume]) => resume(() => iterator.next(...args)),
     return: (value) => resume(() => iterator.return(value)),
     throw: (error) => resume(() => iterator.throw(error)),
     [Symbol.iterator]() {

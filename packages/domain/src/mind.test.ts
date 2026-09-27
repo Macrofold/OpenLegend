@@ -1,3 +1,4 @@
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
 import { describe, it, expect } from 'vitest';
@@ -20,33 +21,33 @@ function encounter() {
   world.paused = false;
   setSpatialPosition(
     world,
-    world.entities.player!,
-    { ...worldPosition(world.entities.ada!) },
-    worldSupport(world.entities.player!),
+    world.entities[PLAYER_ID]!,
+    { ...worldPosition(world.entities[NPC_ID]!) },
+    worldSupport(world.entities[PLAYER_ID]!),
   );
   world = executeCommand(world, {
     id: 'encounter',
-    actorId: 'player',
+    actorId: PLAYER_ID,
     type: 'say',
     text: 'I will share berries with you.',
-    targetId: 'ada',
+    targetId: NPC_ID,
   }).world;
   return world;
 }
 function setup() {
   const world = encounter();
-  const recall = get_memories(world, 'ada', { limit: 300 });
+  const recall = get_memories(world, NPC_ID, { limit: 300 });
   const evidence = recall.entries[0]!.id;
   const binding: CognitionBinding = {
-    actorId: 'ada',
+    actorId: NPC_ID,
     decisionId: 'fixture-decision',
     policy: MIND_POLICY,
     tier: 'full',
     purpose: 'thought',
     watermark: recall.observationWatermark,
     evidenceIds: recall.entries.map((e) => e.id),
-    entityIds: ['ada', 'player'],
-    expectedPlan: world.entities.ada!.actor!.planGeneration,
+    entityIds: [NPC_ID, PLAYER_ID],
+    expectedPlan: world.entities[NPC_ID]!.actor!.planGeneration,
     actions: { continue: null },
     restEpisode: null,
   };
@@ -72,7 +73,7 @@ function setup() {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'relationship',
-        subjectId: 'player',
+        subjectId: PLAYER_ID,
         source: 'inferred',
         confidence: 0.6,
         trust: 0.2,
@@ -84,7 +85,7 @@ function setup() {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'belief',
-        subjectId: 'player',
+        subjectId: PLAYER_ID,
         source: 'inferred',
         confidence: 0.5,
         trust: null,
@@ -101,12 +102,12 @@ describe('fixture: bounded authored minds', () => {
     const { world, binding, proposal } = setup();
     const result = commitCognition(world, binding, proposal);
     expect(result.outcome.ok).toBe(true);
-    expect(mindFor(result.world, 'ada').records.find((r) => r.kind === 'belief')?.source).toBe(
+    expect(mindFor(result.world, NPC_ID).records.find((r) => r.kind === 'belief')?.source).toBe(
       'inferred',
     );
-    expect(mindFor(result.world, 'player').records).toHaveLength(1);
+    expect(mindFor(result.world, PLAYER_ID).records).toHaveLength(1);
     expect(world.minds?.ada).toBeUndefined();
-    expect(mindFor(result.world, 'ada').thoughts).toHaveLength(1);
+    expect(mindFor(result.world, NPC_ID).thoughts).toHaveLength(1);
     expect(result.events).toEqual([]);
   });
   it('is idempotent and rejects identity conflicts', () => {
@@ -119,7 +120,7 @@ describe('fixture: bounded authored minds', () => {
   });
   it('preserves concurrent new experiences', () => {
     const { world, binding, proposal } = setup();
-    appendMemory(world, 'ada', {
+    appendMemory(world, NPC_ID, {
       kind: 'episode',
       source: 'observed',
       summary: 'A later bird flew past.',
@@ -128,11 +129,11 @@ describe('fixture: bounded authored minds', () => {
     });
     const result = commitCognition(world, binding, proposal);
     expect(
-      get_memories(result.world, 'ada', { limit: 300 }).entries.some((m) =>
+      get_memories(result.world, NPC_ID, { limit: 300 }).entries.some((m) =>
         m.summary.includes('bird'),
       ),
     ).toBe(true);
-    expect(mindFor(result.world, 'ada').processedWatermark).toBe(binding.watermark);
+    expect(mindFor(result.world, NPC_ID).processedWatermark).toBe(binding.watermark);
   });
   it.each(['fast', 'complex'] as const)('rejects %s writes', (tier) => {
     const { world, binding, proposal } = setup();
@@ -165,11 +166,11 @@ describe('fixture: bounded authored minds', () => {
     proposal.documents[0]!.text = '界'.repeat(3000);
     expect(wordCount(proposal.documents[0]!.text)).toBe(1);
     expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
-    expect(mindFor(world, 'ada').documents).toHaveLength(1);
+    expect(mindFor(world, NPC_ID).documents).toHaveLength(1);
   });
   it('allows atomic remove/add at ten documents, protects identity', () => {
     const { world, binding, proposal } = setup();
-    const mind = mindFor(world, 'ada');
+    const mind = mindFor(world, NPC_ID);
     for (let i = 0; i < 9; i++)
       mind.documents.push({
         id: `old${i}`,
@@ -179,7 +180,7 @@ describe('fixture: bounded authored minds', () => {
         evidence: [],
         protected: false,
       });
-    world.minds = { ada: mind };
+    world.minds = { [NPC_ID]: mind };
     expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
     proposal.removeDocuments = [{ id: 'old0', expectedRevision: 1 }];
     expect(commitCognition(world, binding, proposal).outcome.ok).toBe(true);
@@ -188,7 +189,7 @@ describe('fixture: bounded authored minds', () => {
   });
   it('rejects coupled invalid actions without committing a thought or mind', () => {
     const { world, binding, proposal } = setup();
-    binding.actions.bad = { id: 'bad', actorId: 'ada', type: 'gather', targetId: 'missing' };
+    binding.actions.bad = { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' };
     proposal.actionId = 'bad';
     const result = commitCognition(world, binding, proposal);
     expect(result.outcome.ok).toBe(false);
@@ -197,56 +198,60 @@ describe('fixture: bounded authored minds', () => {
   });
   it('marks dreams imagined and does not insert them into observed episodes', () => {
     const { world, binding, proposal } = setup();
-    world.entities.ada!.actor!.energy = 60;
+    world.entities[NPC_ID]!.actor!.energy = 60;
     const resting = executeCommand(world, {
       id: 'rest',
-      actorId: 'ada',
+      actorId: NPC_ID,
       type: 'status-effect',
-      definitionId: 'rest',
-      targetId: 'ada',
+      definitionId: 'wilderness:restorative-rest',
+      targetId: NPC_ID,
       operation: 'activate',
     }).world;
     binding.purpose = 'dream';
-    binding.restEpisode = resting.entities.ada!.actor!.action!.id;
+    binding.restEpisode = resting.entities[NPC_ID]!.actor!.action!.id;
     proposal.records.forEach((r) => (r.source = 'imagined'));
     const result = commitCognition(resting, binding, proposal);
     expect(result.outcome.ok).toBe(true);
-    expect(mindFor(result.world, 'ada').thoughts[0]?.source).toBe('imagined');
-    expect(result.world.memories.ada).toEqual(resting.memories.ada);
-    expect(mindFor(result.world, 'ada').lastDreamEpisode).toBe(binding.restEpisode);
+    expect(mindFor(result.world, NPC_ID).thoughts[0]?.source).toBe('imagined');
+    expect(result.world.memories[NPC_ID]).toEqual(resting.memories[NPC_ID]);
+    expect(mindFor(result.world, NPC_ID).lastDreamEpisode).toBe(binding.restEpisode);
   });
   it('records person encounters natively without repeated per-step records', () => {
     let world = createWorld(4);
     world.paused = false;
     setSpatialPosition(
       world,
-      world.entities.player!,
+      world.entities[PLAYER_ID]!,
       { y: 0, x: 100, z: 100 },
-      worldSupport(world.entities.player!),
+      worldSupport(world.entities[PLAYER_ID]!),
     );
     world = advanceWorld(world, 1).world;
     setSpatialPosition(
       world,
-      world.entities.player!,
-      { ...worldPosition(world.entities.ada!) },
-      worldSupport(world.entities.player!),
+      world.entities[PLAYER_ID]!,
+      { ...worldPosition(world.entities[NPC_ID]!) },
+      worldSupport(world.entities[PLAYER_ID]!),
     );
     world = advanceWorld(world, 1).world;
-    const initial = (world.memories.ada ?? []).filter((m) => m.summary.startsWith('I saw ')).length;
+    const initial = (world.experience?.awareness[NPC_ID] ?? []).filter((m) =>
+      world.events.some((event) => event.id === m.eventId && event.type === 'encounter'),
+    ).length;
     expect(initial).toBeGreaterThan(0);
     world = advanceWorld(world, 1).world;
-    expect((world.memories.ada ?? []).filter((m) => m.summary.startsWith('I saw '))).toHaveLength(
-      initial,
-    );
+    expect(
+      (world.experience?.awareness[NPC_ID] ?? []).filter((m) =>
+        world.events.some((event) => event.id === m.eventId && event.type === 'encounter'),
+      ),
+    ).toHaveLength(initial);
   });
 });
 describe('fixture: recall policy', () => {
   it('retains and retrieves 300 bounded episodes, exposes coverage and isolation', () => {
     const world = encounter();
-    world.memories.ada = [];
+    world.memories[NPC_ID] = [];
     for (let i = 0; i < 320; i++) {
       world.simTime = i;
-      appendMemory(world, 'ada', {
+      appendMemory(world, NPC_ID, {
         kind: 'episode',
         source: 'observed',
         summary: `Experience ${i}`,
@@ -254,32 +259,36 @@ describe('fixture: recall policy', () => {
         entityIds: [],
       });
     }
-    const recall = get_memories(world, 'ada', { limit: 300, maxBytes: 400000, strategy: 'recent' });
+    const recall = get_memories(world, NPC_ID, {
+      limit: 300,
+      maxBytes: 400000,
+      strategy: 'recent',
+    });
     expect(recall.entries).toHaveLength(300);
     expect(recall.entries[0]!.summary).toBe('Experience 319');
     expect(recall.entries.some((m) => m.summary === 'Experience 0')).toBe(false);
     expect(
-      get_memories(world, 'player', { limit: 300 }).entries.some(
+      get_memories(world, PLAYER_ID, { limit: 300 }).entries.some(
         (m) => m.summary === 'Experience 319',
       ),
     ).toBe(false);
     expect(
-      get_memories(world, 'ada', { maxBytes: 20, requiredIds: [recall.entries[0]!.id] }).coverage
+      get_memories(world, NPC_ID, { maxBytes: 20, requiredIds: [recall.entries[0]!.id] }).coverage
         .requiredMissing,
     ).toEqual([recall.entries[0]!.id]);
   });
   it('prioritizes entity/lexical memories and active commitments', () => {
     const world = encounter();
-    appendMemory(world, 'ada', {
+    appendMemory(world, NPC_ID, {
       kind: 'commitment',
       source: 'heard',
       summary: 'An active promise',
       importance: 8,
-      entityIds: ['player'],
+      entityIds: [PLAYER_ID],
     });
-    const recall = get_memories(world, 'ada', {
+    const recall = get_memories(world, NPC_ID, {
       intent: 'berries',
-      entityIds: ['player'],
+      entityIds: [PLAYER_ID],
       limit: 1,
     });
     expect(recall.entries[0]!.kind).toBe('commitment');
@@ -289,7 +298,7 @@ describe('fixture: recall policy', () => {
 describe('fixture: evidence and forgetting boundaries', () => {
   it('excludes old model-authored prose from recall without deleting saved audit records', () => {
     const world = encounter();
-    appendMemory(world, 'ada', {
+    appendMemory(world, NPC_ID, {
       kind: 'reflection',
       source: 'inferred',
       summary: 'Legacy private authored text',
@@ -297,9 +306,9 @@ describe('fixture: evidence and forgetting boundaries', () => {
       entityIds: [],
     });
     expect(
-      get_memories(world, 'ada', { limit: 300 }).entries.some((m) => m.summary.includes('Legacy')),
+      get_memories(world, NPC_ID, { limit: 300 }).entries.some((m) => m.summary.includes('Legacy')),
     ).toBe(false);
-    expect(world.memories.ada!.some((m) => m.summary.includes('Legacy'))).toBe(true);
+    expect(world.memories[NPC_ID]!.some((m) => m.summary.includes('Legacy'))).toBe(true);
   });
   it('requires actual self-attributed promises and protects accepted obligations', () => {
     const { world, binding, proposal } = setup();
@@ -307,12 +316,12 @@ describe('fixture: evidence and forgetting boundaries', () => {
     expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
     const spoken = executeCommand(world, {
       id: 'promise',
-      actorId: 'ada',
+      actorId: NPC_ID,
       type: 'say',
       text: 'I promise to help you gather food.',
-      targetId: 'player',
+      targetId: PLAYER_ID,
     }).world;
-    const promise = spoken.memories.ada!.find((m) => m.speakerId === 'ada')!;
+    const promise = spoken.memories[NPC_ID]!.find((m) => m.speakerId === NPC_ID)!;
     binding.evidenceIds.push(promise.id);
     proposal.records[0]!.evidence = [{ id: promise.id, relation: 'supports' }];
     const accepted = commitCognition(spoken, binding, proposal);

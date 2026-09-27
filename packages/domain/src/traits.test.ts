@@ -1,3 +1,4 @@
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { describe, it, expect } from 'vitest';
 import { createActor, createWorld, initializeActorTraits } from './data.js';
 describe('saved character traits (native fixtures)', () => {
@@ -6,7 +7,7 @@ describe('saved character traits (native fixtures)', () => {
       same = createWorld(19);
     expect(world).toEqual(same);
     for (const e of Object.values(world.entities)) {
-      if (!e.actor) continue;
+      if (!e.actor?.capabilities?.innerWorld) continue;
       expect(new Set(e.actor.traits!.map((t) => t.id)).size).toBe(3);
       expect(e.actor.traits!.every((t) => !!t.name && !!t.description)).toBe(true);
     }
@@ -18,15 +19,15 @@ describe('saved character traits (native fixtures)', () => {
   });
   it('migrates missing traits once, preserves saved descriptions and consumes no RNG on reload', () => {
     const world = createWorld(3);
-    const original = world.entities.player!.actor!.traits!;
+    const original = world.entities[PLAYER_ID]!.actor!.traits!;
     original[0]!.description = 'Saved description remains authoritative.';
-    delete world.entities.ada!.actor!.traits;
+    delete world.entities[NPC_ID]!.actor!.traits;
     initializeActorTraits(world);
     const saved = JSON.stringify(world),
       reloaded = JSON.parse(saved);
     initializeActorTraits(reloaded);
     expect(JSON.stringify(reloaded)).toBe(saved);
-    expect(reloaded.entities.player.actor.traits[0].description).toBe(
+    expect(reloaded.entities[PLAYER_ID].actor.traits[0].description).toBe(
       'Saved description remains authoritative.',
     );
   });

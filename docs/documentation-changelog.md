@@ -10,6 +10,18 @@ Added a [current exposure summary](../archive/05-project/implementation-status.m
 
 [Bundled social rules](worlds/base/social.md) now own the current feeling, family and promise specializations, with explicit limits and engine/world seams. [BW16/BW17](maintainers/base-world.md#social-playable-slices) and [ACT09](maintainers/actor-model.md#act09--internal-feeling-process-authoring) record proposed playable journeys, dependencies, exits and [deferred coverage](maintainers/TODO.md#social-playable-slices--future-validation). [D63–D65](../archive/05-project/open-decisions.md#social-exposure-decisions) retain unresolved correction/disclosure, amendment and process-retirement choices. This is documentation-only work: no runtime implementation approval, new mechanics or fresh gameplay qualification.
 
+## 2026-09-26 — Reduce native perception and motion overhead
+
+Implemented the owner-approved [performance follow-through](projects/spatial-cadence-main-integration.md#authorized-performance-follow-through): scalar/region-valid perception reuse, receiver candidates, history sealing and private motion deadlines within the existing transition owner. Small senses constrain potentially interacting movers; all participants remain synchronized at occurrences and publication. Flight evidence now reads synchronized receivers, and a landing cannot grant retroactive animal movement. Silent state changes invalidate through semantic owners. The host can request a coherent stop without putting a wall clock or second scheduler in the domain.
+
+[NW12](limits/native-work.md#nw12) records the private slice ceiling, [simulation time](simulation-time.md) owns the changed phase contract, and [PF12/PF13 evidence](verification/spatial-cadence-main-integration.md#performance-follow-through) separates delivered reductions from remaining regional, coupled-rate and sustained 8× qualification. No save-format, authority, spending or sensory-fidelity limit was relaxed.
+
+## 2026-09-26 — Reconcile spatial cadence with current main
+
+Rebased the spatial/cadence branch onto refreshed main `56b8c383`, preserving current record persistence/recovery, authority, tagged placement, contributions, appraisals, dependency budgets and cooperative scheduling. Existing semantic owners now supply expiry boundaries; movement captures interval-start restrictions, and sensory loss retires visual episodes. Navigation retains computed replies across mutation-lane overload and keeps worker retirement bounded. Main’s departure fade and privacy remain alongside the new presentation.
+
+The [integration plan](projects/spatial-cadence-main-integration.md) and [evidence](verification/spatial-cadence-main-integration.md) separate local reconciliation and authorized validation from broader qualification. The owner approved pruning obsolete and overlapping test fixtures while retaining current boundary checks; retained tests also caught takeoff contact, local control-scope, inventory-description and scaled mobile panel-overlap regressions. PF12/PF13, SW, speech coordination and feature limits are reconciled; cadence’s policy identifier is RP06, preserving main’s RP03–RP05. Matched native work improves substantially but still misses sustained 8×; no production capacity or full graphics pass is inferred. Remote history and main remain untouched.
+
 ## 2026-09-26 — Save/recovery limits and guarantee corrections
 
 Reconciled the additional save/recovery handoff against source: [pre-load capture dependency, retention order, compatibility, snapshot lifetime and operational file recovery](limits/persistence.md#sb13), plus [benchmark-only bounds](limits/observability.md#sv18). Extended existing entries instead of duplicating catalog-scan, retention and status limits. Corrected worker placement and the distinction between file integrity, actual restoration and filesystem quotas in the save contract and operational runbook. [SL08/SL09 follow-ups](maintainers/save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up), D1/D2 file reconciliation and limits candidates C22–C24 retain unimplemented work. Documentation/source review only; no runtime behavior or acceptance claim changed.
@@ -163,9 +175,23 @@ The owner selected shared-world regional priority with independent worlds suppor
 
 Clarified the existing [production data model](../archive/07-technical-architecture/production-data-model.md#database-simulation-and-background-responsibilities): independent operational records and database-side queries, in-memory active simulation, atomic record commits and bounded asynchronous AI/embedding work. Whole-world JSON remains a checkpoint/export format in the target; current snapshot/journal storage is still transitional. [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) now explicitly track missing record/query implementation separately from deferred verification. The [scale design](../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product) distinguishes a million-player ambition from measured concurrency and concentrated interaction workloads. No runtime migration, latency guarantee or capacity qualification is delivered by this documentation update.
 
+## 2026-09-25 — Elapsed time is not a tick requirement
+
+The accepted clock conversion (one real second to one game minute) no longer implies one-game-second integration. The finite native implementation resolves start-state conditions, integrates elapsed rates and existing work, and handles endpoint outcomes before selecting the next bound. Sparse simulation remains independent of browser frame cadence; source memory pressure cannot pause native time. Current status-effect/world ownership and in-place saves are preserved with the new agent guidance.
+
+[Simulation time](simulation-time.md) owns the contract; [base time](worlds/base/time.md) and RP06 (renumbered during current-main reconciliation) own revisitable fidelity choices. [PF13](maintainers/simulation-time.md) owns delivery, the [boundary catalogue](maintainers/simulation-boundaries.md) collects future exact/local bounds, and [sound coordination](maintainers/speech-time-integration.md) prevents reintroducing a fixed-second loop while merging graded speech. Native/application observations are in [evidence](verification/simulation-cadence.md); regional scheduling, exact fleeting exposure and general coupled-flow integration remain future work. This supersedes the previous mandatory 480-ticks-per-second performance premise, not its historical measurements or the existing collision/privacy/durability rules.
+
 ## In-place development updates
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
+
+## Camera-facing sprites and mixed spatial review
+
+Superseded upright-only Y-billboards with fully camera-facing artwork and separate virtual depth, without rotating mechanical bodies or shadow proxies. Recorded color-pass-free shared shadow proxies, batched plank detail, reveal uniform reuse, indexed corridor projection, exact terrain-cell crossings and worker failure/shutdown boundaries. Completed EPR03's initial private visual-acquisition scope correction and preserved the viewer's designated introduction; retained broader EPR exposure work. Updated obsolete audience-cache regression work and added SR21–SR23. Mixed browser/application observations and adverse limits belong in their evidence record, not a scale-certification claim.
+
+## Recast and world-presentation integration
+
+Reconciled the complete movement/visual discussion: continuous arbitrary-angle positions (placement snapping optional), shared round-body clearance, Recast selection over navcat after qualification, selective Rapier without a second dynamics world, bounded worker/time barriers and distinct raster/contact tolerances. Added the canonical world-presentation owner for lit fallback sprites, multi-receiver shadow projection, correct depth, smooth right-drag and configurable local authorized reveal. Superseded native-lattice implementation claims and algorithm-only TODOs while preserving historical evidence and still-valid requirements. SW17–SW19 and SR16–SR20 distinguish delivery, deferred controller/tile/model/crowd work and unrun automation.
 
 ## Spatial scaling continuation and reconciliation
 
@@ -340,3 +366,7 @@ Replaced the proximity-based touch approximation with body-surface contact. The 
 ## Repository limits audit and dependency gate
 
 Imported the full 238-entry limits decision report from its temporary working artifact into `docs/maintainers/limits-audit.md`, preserving stable entry numbers, prior removal completion notes, classifications, recommendations and source references. The maintainer index and TODO link to this single follow-up owner. All remaining audit work is explicitly blocked on completion of the current data foundation, followed by a fresh review of every finding against the resulting implementation.
+
+## Spatial main rebase and eight-times budget
+
+Preserved current-main world/status/item/identity/camera and in-place save semantics while replaying the spatial commits. Removed superseded fresh-save instructions from active spatial guidance and reconciled own-observer story eligibility. Added actual-progress profiling, thresholded acoustic rejection, current runtime evidence and PF12's budgeted optimization direction. Existing task IDs/remaining qualification are retained; historical measurements do not certify the rebased runtime.

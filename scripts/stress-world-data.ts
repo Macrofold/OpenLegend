@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { worldPosition } from '@open-legend/domain';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -14,6 +15,9 @@ import { SqliteStore, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import { isDeepStrictEqual } from 'node:util';
+
+// Initialize native geometry before constructing or validating recovered world state.
+await initializeCollisionRuntime();
 
 const [output, layout = 'world', stepsArgument = '20'] = process.argv.slice(2);
 const steps = Number(stepsArgument);

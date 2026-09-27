@@ -8,15 +8,9 @@ Implementation starting points: [work-budget.ts](../../packages/domain/src/work-
 
 ## LA168
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Removed during spatial/cadence integration · Restrictiveness: — (superseded).**
 
-Native simulation advances in steps no larger than one game second, with the server timer normally running every 50 milliseconds.
-
-**Reason / tradeoff:** Keep small deterministic simulation steps and measure timer frequency before changing the balance between responsiveness and processing cost.
-
-[Implementation starting point](../../apps/server/src/http.ts).
-
-Original recommendation: **Keep**.
+The mandatory one-game-second integration step is removed. The host still wakes at 50 ms, while mechanics integrate boundary-limited elapsed prefixes and rendering uses device cadence. [NW12](#nw12) records the finite replacement bounds; [simulation time](../simulation-time.md) owns semantics.
 
 ## LA169
 
@@ -195,3 +189,11 @@ Exposure membership reuses correctly invalidated derived inputs. Native actor/am
 Pending world mutations: 256; pending operations per SQL read/write lane: 512; pending age: five seconds. Executing work is never cancelled. HTTP simultaneous handlers and projection queue depth: four times player capacity (default 400). Aggregate retained request bodies: 16 MiB, plus existing per-request limits. Publication coalesces for 50 ms and yields between viewers after roughly 8 ms. Overloaded disconnect cleanup retries after one second, bounded by admitted transports. Rejection is explicit `busy`/503 with Retry-After.
 
 **Reason / tradeoff:** Bound queued closures and body memory while preserving atomic writes and durable receipts. Age/depth are overload protection, not an execution deadline. Optional publication retries may refresh later; uncertain mutations are not automatically replayed. [Owner](../performance.md#bounded-admission).
+
+## NW12
+
+**Current · Restrictiveness: Safe.**
+
+A native advance accepts at most one game day, at most 4,096 intervals and at most 4,096 motion slices per call. A publication interval contains at most 32 motion slices; the server requests one interval and can stop earlier at a coherent slice boundary after its existing eight-millisecond batch budget. These are ceilings, not a latency guarantee. The bundled-world idle horizon is 60 game seconds; sight motion is limited to one metre or one quarter of a potentially interacting observer’s smaller positive non-hearing sense radius, using conservative reachable envelopes. Unsupported serial/coupled clamped rates retain a one-second fallback. A 0.000001-second numerical guard handles strict threshold departures; it is not a biological tick or a cure for a stuck boundary.
+
+**Reason / tradeoff:** Bound work and sampled-perception error using finite native families. Private motion deadlines can reuse predictions and avoid repeated publication; continuous state still synchronizes globally at occurrences. The 32-slice ceiling bounds an offline caller that supplies no earlier stop request. Exact fleeting contact/LOS crossings, independent regional rates and pathological deadline qualification remain PF13.11/PF13.16. Main's contributions, reservation expiries and appraisal deadlines use their existing owners and budgets. [Base time policy](../worlds/base/time.md), [boundary catalogue](../maintainers/simulation-boundaries.md), [RP06](../maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits).

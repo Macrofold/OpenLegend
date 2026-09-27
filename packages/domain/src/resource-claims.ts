@@ -855,6 +855,10 @@ export function validateResourceReservations(world: WorldState): void {
 }
 
 /** Rebuildable deadline metadata avoids scanning retained holds on every tick. */
+export function nextResourceReservationDeadline(world: WorldState): number {
+  return reservationIndex(world).deadlines[0]?.at ?? Infinity;
+}
+
 export function reconcileResourceReservations(world: WorldState): void {
   if (!world.resourceReservations) return;
   for (const deadline of reservationIndex(world).deadlines) {

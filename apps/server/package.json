@@ -11,7 +11,8 @@
     "@open-legend/spatial": "workspace:*",
     "openid-client": "6.8.8",
     "pg": "8.16.3",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "recast-navigation": "0.43.1"
   },
   "devDependencies": {
     "@types/pg": "8.15.5"

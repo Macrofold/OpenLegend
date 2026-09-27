@@ -80,27 +80,19 @@ Original recommendation: **Expand**.
 
 ## LA139
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current after spatial/cadence integration · Restrictiveness: Safe.**
 
-The navigation graph used for walking paths can contain at most 16,384 connected locations.
+The existing authored-geometry guard allows at most 16,384 accumulated integer XZ-grid sites across support patches. This remains a conservative map-admission envelope; it is no longer the size of a constructed navigation graph. Recast's actual query/worker bounds are [SP01](#sp01).
 
-**Reason / tradeoff:** Keep a graph-size budget until larger-map construction and search have been measured or improved.
+**Reason / tradeoff:** Retain the admitted geometry envelope until larger-map preparation, memory and perception are qualified. The legacy implementation name `maxGraphNodes` does not imply lattice routing remains installed.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
-
-Original recommendation: **Review**.
+[Implementation](../../packages/spatial/src/validation.ts).
 
 ## LA140
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Removed during spatial/cadence integration · Restrictiveness: — (superseded).**
 
-One walking-path search can examine at most 32,768 connected navigation locations before reporting that its work budget was exceeded.
-
-**Reason / tradeoff:** Keep finite search work and distinguish budget exhaustion from proof that no route exists.
-
-[Implementation starting point](../../packages/spatial/src/types.ts).
-
-Original recommendation: **Review**.
+The 32,768-expansion lattice-search budget is removed with that planner. Recast now uses a 4,096-node query pool and explicit incomplete/budget outcomes under [SP01](#sp01). No-route remains distinct from incomplete computation.
 
 ## LA141
 
@@ -116,15 +108,9 @@ Original recommendation: **Review**.
 
 ## LA142
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Removed during spatial/cadence integration · Restrictiveness: — (superseded).**
 
-A walking-path endpoint considers at most 8 connections to the navigation map within 1.6 world units.
-
-**Reason / tradeoff:** Measure whether this connection cutoff rejects reachable destinations before expanding the number or distance of connections.
-
-[Implementation starting point](../../packages/spatial/src/types.ts).
-
-Original recommendation: **Review**.
+The eight lattice endpoint connectors within 1.6 metres are removed with the old planner. Current nearest-polygon search uses 0.3 m horizontal and 0.2 m vertical half-extents, with physical support identity rechecked. See [SP02](#sp02); this approximation cannot authorize snapping to another floor.
 
 ## LA143
 
@@ -176,27 +162,21 @@ Original recommendation: **Review**.
 
 ## LA147
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current after spatial/cadence integration · Restrictiveness: Medium.**
 
-Geometry uses a 0.00001 numerical tolerance, and standing support or movement arrival uses a 0.015-world-unit tolerance.
+Geometry retains a 0.00001 numerical tolerance and 0.015 m support/seam comparison. Final movement arrival allows a 0.02 m residual; no actor is teleported across that residual. These are numerical tolerances, not placement snapping. [SP02](#sp02) records the independent navigation approximation and body skin.
 
-**Reason / tradeoff:** Keep small numerical tolerances so tiny rounding differences do not prevent standing on a surface or completing a walk.
+**Reason / tradeoff:** Avoid repeated tiny corrections while preserving swept collision, support identity and distance accounting.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
-
-Original recommendation: **Keep**.
+[Implementation](../../packages/spatial/src/types.ts).
 
 ## LA148
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Removed during spatial/cadence integration · Restrictiveness: — (superseded).**
 
-A surface-walking check samples the proposed movement segment four times per horizontal world unit.
+Four terrain samples per horizontal metre are replaced by exact crossed-cell traversal, including conservative diagonal-corner rejection. Swept round-body obstruction and exact named support checks remain separate. This removes gaps between samples rather than widening passable terrain.
 
-**Reason / tradeoff:** Measure collision accuracy and processing cost together before changing the sampling density.
-
-[Implementation starting point](../../packages/spatial/src/types.ts).
-
-Original recommendation: **Review**.
+[Implementation](../../packages/spatial/src/geometry.ts).
 
 ## LA149
 
@@ -253,3 +233,27 @@ Original recommendation: **Review**.
 Spatial query radius: **10,000 world units**.
 
 **Reason / tradeoff:** Bound search extent; independent geometry-position bounds still apply.
+
+## SP01
+
+**Current, source-inspected during integration · Restrictiveness: Safe.**
+
+One navigation worker per application owns at most six body-profile meshes and one active task; its pending queue contains at most 64 admitted action requests. Overflow remains saved/pending. Each query has 4,096 nodes, at most 12 candidate interaction destinations and 2,048 output/corridor points. The worker has a 128 MiB old-generation limit and a 20-second watchdog. Failed/incomplete work is explicit, not proof of unreachability. Native replanning allows two attempts. One completed reply may await mutation-lane admission, retrying publication after one real second without recomputing navigation. Shutdown drains retirement/publication.
+
+**Reason / tradeoff:** Bound CPU/memory and retain admitted intent. Required preparation pauses native time for the whole world while preserving prior debt; region-local blocking is unimplemented. These operating bounds are not latency/capacity certification. [Navigation owner](../../apps/server/src/navigation/coordinator.ts), [backend](../../apps/server/src/navigation/backend.ts), [contract](../../archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation).
+
+## SP02
+
+**Current · Restrictiveness: Medium.**
+
+Recast uses 0.08 m horizontal / 0.05 m vertical cells, 64-cell tiles, contour error 0.1, 0.2 m candidate height projection, 0.01 m body skin and zero physical step height. Exact supports and full-body sweeps validate proposals. Same-support string pulling considers at most 24 future points per pass. Larger simplification work or coarser rasterization is not permission to cross geometry.
+
+**Reason / tradeoff:** Practical worker preparation with continuous placement and demonstrated narrow-passage calibration; broader geometry/profile qualification remains SW17. [Calibration contract](../../archive/07-technical-architecture/spatial-world-runtime.md#movement-calibration).
+
+## SP03
+
+**Current · Restrictiveness: Safe.**
+
+Static-object exposure reuse caches at most 256 observers per immutable map/target set. Overflow computes the complete result, never truncates an audience. Pose, eye/range, target membership/height/position and geometry invalidate reuse; names and recognition remain live. Round-body shape reuse holds at most 32 body shapes, with solid shapes weakly keyed.
+
+**Reason / tradeoff:** Bound derived cache retention while retaining main's unchanged-exposure invalidation. [Exposure cache](../../packages/domain/src/object-exposure.ts), [shape adapter](../../packages/spatial/src/rapier.ts).

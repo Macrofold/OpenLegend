@@ -53,6 +53,11 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
     const first = game.service.world.entities[view.player.id]!.actor!.action!.id;
     expect((await (await post('/api/command', envelope)).json()).ok).toBe(true);
     expect(game.service.world.entities[view.player.id]!.actor!.action!.id).toBe(first);
+    await expect
+      .poll(() => game.service.world.entities[view.player.id]!.actor!.action?.navigation, {
+        timeout: 10_000,
+      })
+      .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 280));
     expect(worldPosition(game.service.world.entities[view.player.id]!)).toEqual({
       x: 24,
@@ -90,6 +95,11 @@ it('restores a saved elevated route and native flight through SQLite and manual 
       type: 'move',
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     });
+    await expect
+      .poll(() => game.service.world.entities[actorId]!.actor!.action?.navigation, {
+        timeout: 10_000,
+      })
+      .toBeUndefined();
     for (let n = 0; n < 250 && worldPosition(game.service.world.entities[actorId]!).y < 0.1; n++)
       await game.service.transition((world) => advanceWorld(world, 1));
     const snapshot = structuredClone(game.service.world.entities[actorId]);

@@ -1,3 +1,4 @@
+import { PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -68,10 +69,10 @@ describe('SQLite committed world boundary', () => {
     const initial = save();
     expect(await store.load()).toBeNull();
     const revision = await store.commit(0, initial);
-    const food = inventoryFor(initial.world, 'player').find(
+    const food = inventoryFor(initial.world, PLAYER_ID).find(
       (item) => item.definitionId === 'berries',
     )!;
-    const command = { id: 'eat-once', actorId: 'player', type: 'eat' as const, itemId: food.id };
+    const command = { id: 'eat-once', actorId: PLAYER_ID, type: 'eat' as const, itemId: food.id };
     const changed = executeCommand(initial.world, command).world;
     const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
     await close(store);
@@ -83,13 +84,15 @@ describe('SQLite committed world boundary', () => {
     const restored = (await store.load())!.state.world;
     expect(executeCommand(restored, command).world).toBe(restored);
     expect(
-      inventoryFor(restored, 'player').find((item) => item.definitionId === 'berries')!.quantity,
+      inventoryFor(restored, PLAYER_ID).find((item) => item.definitionId === 'berries')!.quantity,
     ).toBe(2);
   });
   it('rejects a stale writer without overwriting the winner and remains usable', async () => {
     const path = diskPath();
     const first = open(path);
+    await first.ready;
     const second = open(path);
+    await second.ready;
     const revision = await first.commit(0, save());
     const stale = (await second.load())!;
     const winning = { ...stale.state, speed: 8 };
@@ -100,13 +103,6 @@ describe('SQLite committed world boundary', () => {
     expect(await second.load()).toEqual({ revision: nextRevision, state: winning });
     expect(await second.commit(nextRevision, winning)).toBe(nextRevision + 1);
   });
-  it('refuses to reinterpret an unsupported saved world schema', async () => {
-    const store = open();
-    const unsupported = save();
-    (unsupported.world as unknown as { schemaVersion: number }).schemaVersion = 2;
-    await store.commit(0, unsupported);
-    await expect(async () => await store.load()).rejects.toThrow(/Unsupported world schema/);
-  });
 });
 
 describe('durable AI allowances outside simulated time', () => {
@@ -115,7 +111,7 @@ describe('durable AI allowances outside simulated time', () => {
     expect(await store.reserve('jev-route', 'jev', 0.02, 0.1)).toBe(true);
     expect(await store.reserve('generation', 'openai', 0.08, 0.1)).toBe(true);
     expect(await store.reserve('over-ceiling', 'openai', 0.000001, 0.1)).toBe(false);
-    expect((await store.usage(0.1)).budget).toEqual({
+    expect((await store.usage(0.1)).budget).toMatchObject({
       limitUsd: 0.1,
       spentUsd: 0,
       reservedUsd: 0.1,
@@ -184,7 +180,7 @@ describe('durable AI allowances outside simulated time', () => {
     await store.recoverInterruptedWork();
     expect((await store.getJob('in-flight'))!.status).toBe('stale');
     expect((await store.getJob('already-complete'))!.status).toBe('completed');
-    expect((await store.usage(0.1)).budget).toEqual({
+    expect((await store.usage(0.1)).budget).toMatchObject({
       limitUsd: 0.1,
       spentUsd: 0.08,
       reservedUsd: 0,

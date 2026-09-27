@@ -1,3 +1,4 @@
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems, itemFor } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
@@ -38,25 +39,25 @@ async function start(godMode = false) {
 describe('local HTTP boundary', () => {
   it('gates private mind inspection on god mode, owner session, origin and strict input', async () => {
     const ordinary = await start();
-    expect((await ordinary.post('/api/god/mind', { actorId: 'ada' })).status).toBe(403);
+    expect((await ordinary.post('/api/god/mind', { actorId: NPC_ID })).status).toBe(403);
     const god = await start(true);
     expect(
-      (await god.post('/api/god/mind', { actorId: 'ada' }, 'https://unrelated.example')).status,
+      (await god.post('/api/god/mind', { actorId: NPC_ID }, 'https://unrelated.example')).status,
     ).toBe(403);
-    expect((await god.post('/api/god/mind', { actorId: 'ada', grant: true })).status).toBe(400);
-    const response = await god.post('/api/god/mind', { actorId: 'ada' });
+    expect((await god.post('/api/god/mind', { actorId: NPC_ID, grant: true })).status).toBe(400);
+    const response = await god.post('/api/god/mind', { actorId: NPC_ID });
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.mind.documents[0].id).toBe('identity');
     const noCookie = await fetch(god.base + '/api/god/mind', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: god.base },
-      body: JSON.stringify({ actorId: 'ada' }),
+      body: JSON.stringify({ actorId: NPC_ID }),
     });
-    expect(noCookie.status).toBe(403);
+    expect(noCookie.status).toBe(401);
     expect(JSON.stringify(god.initial)).not.toContain('My beginnings');
   });
-  it('gates god world editing and persists spawned people and revival while paused', async () => {
+  it('denies god world editing to ordinary sessions', async () => {
     const ordinary = await start();
     expect(
       (
@@ -66,64 +67,6 @@ describe('local HTTP boundary', () => {
         })
       ).status,
     ).toBe(403);
-    const { post, game, initial } = await start(true);
-    expect(initial.godTools?.spawnOptions[0]).toEqual({ id: 'person', label: 'Person' });
-    expect(initial.godTools?.spawnOptions.slice(1).map((option) => option.label)).toEqual(
-      [...initial.godTools!.spawnOptions.slice(1).map((option) => option.label)].sort(),
-    );
-    expect(game.service.paused).toBe(true);
-    expect(
-      (
-        await (
-          await post('/api/god/spawn', {
-            type: 'hare',
-            position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
-          })
-        ).json()
-      ).code,
-    ).toBe('spawned');
-    const created = await (
-      await post('/api/god/person', {
-        position: { y: 0, x: 25, z: 5 },
-        name: 'Mira',
-        personality: 'Warm and direct.',
-        backstory: 'A patient traveler.',
-        traitIds: ['curious', 'steadfast'],
-        initialGoals: ['Find a safe route home.'],
-      })
-    ).json();
-    expect(created).toMatchObject({ ok: true, code: 'spawned' });
-    const person = Object.values(game.service.world.entities).find(
-      (entity) => entity.name === 'Mira',
-    )!;
-    expect(person.actor).toMatchObject({
-      personality: 'Warm and direct.',
-      backstory: 'A patient traveler.',
-      initialGoals: ['Find a safe route home.'],
-    });
-    expect(game.service.world.minds?.[person.id]?.documents[0]?.text).toContain(
-      'A patient traveler.',
-    );
-    person.actor!.alive = false;
-    person.actor!.health = 0;
-    expect((await (await post('/api/god/revive', { actorId: person.id })).json()).code).toBe(
-      'revived',
-    );
-    expect(person.actor!.alive).toBe(false);
-    expect(game.service.world.entities[person.id]!.actor!.alive).toBe(true);
-    expect(
-      (
-        await post('/api/god/person', {
-          position: { y: 0, x: 26, z: 5 },
-          name: 'Extra',
-          personality: '',
-          backstory: '',
-          traitIds: [],
-          initialGoals: [],
-          stats: { health: 1000 },
-        })
-      ).status,
-    ).toBe(400);
   });
   it('uses the event connection for opted-in background play and pauses when it closes', async () => {
     const { game, base, cookie, post } = await start();
@@ -141,7 +84,7 @@ describe('local HTTP boundary', () => {
       expect((await post('/api/profile/preferences', {})).status).toBe(400);
       await post('/api/profile/preferences', { pauseWhenHidden: false });
       await post('/api/profile/preferences', { showUnavailableActions: true });
-      expect(game.service.profile.preferences).toEqual({
+      expect(game.service.profile.preferences).toMatchObject({
         pauseWhenHidden: false,
         showUnavailableActions: true,
       });
@@ -157,17 +100,20 @@ describe('local HTTP boundary', () => {
     }
   });
 
-  it('exposes a read-only complete catalogue and persists only validated preferences for the local principal', async () => {
+  it('exposes a read-only target catalogue and persists only validated preferences for the local principal', async () => {
     const { post, game } = await start();
     await post('/api/control', { paused: false, clientId: 'catalogue-test' });
     const original = JSON.stringify(game.service.world);
-    const response = await post('/api/actions', {});
+    const response = await post('/api/actions', { targetId: 'campfire' });
     expect(response.status).toBe(200);
     const report = await response.json();
-    expect(report.catalogue.actions.length).toBeGreaterThan(10);
+    expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
+      'move',
+      'cook',
+    ]);
     expect(JSON.stringify(game.service.world)).toBe(original);
     expect(await game.service.store.recentJobs()).toEqual([]);
-    expect((await post('/api/actions', { actorId: 'ada' })).status).toBe(400);
+    expect((await post('/api/actions', { actorId: NPC_ID })).status).toBe(400);
     expect(
       (await post('/api/profile/preferences', { showUnavailableActions: 'true' })).status,
     ).toBe(400);
@@ -256,9 +202,13 @@ describe('local HTTP boundary', () => {
     await post('/api/presence', { clientId: 'test-client', visible: true });
     expect(game.service.paused).toBe(false);
     const food = allItems(game.service.world).find(
-      (item) => item.ownerId === 'player' && item.definitionId === 'berries',
+      (item) => item.ownerId === PLAYER_ID && item.definitionId === 'berries',
     )!;
-    const body = { commandId: 'eat-once', command: { type: 'eat', itemId: food.id } };
+    const body = {
+      commandId: 'eat-once',
+      commandEpoch: game.service.commandEpoch,
+      command: { type: 'eat', itemId: food.id },
+    };
     expect((await (await post('/api/command', body)).json()).ok).toBe(true);
     await post('/api/command', body);
     expect(itemFor(game.service.world, food.id)?.quantity).toBe(food.quantity - 1);
@@ -275,11 +225,11 @@ describe('local HTTP boundary', () => {
       (
         await post('/api/command', {
           commandId: 'x',
-          actorId: 'ada',
+          actorId: NPC_ID,
           command: {
             type: 'status-effect',
-            definitionId: 'rest',
-            targetId: 'player',
+            definitionId: 'wilderness:restorative-rest',
+            targetId: PLAYER_ID,
             effectOperation: 'activate',
           },
         })

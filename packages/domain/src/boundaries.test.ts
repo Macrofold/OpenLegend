@@ -1,3 +1,4 @@
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot } from './index.js';
 import { describe, expect, it } from 'vitest';
 import {
@@ -48,7 +49,7 @@ describe('untrusted dictionary identifiers', () => {
       expect(validateDeclaration(world, candidate).length).toBeGreaterThan(0);
       expect(
         admitDeclaration(world, candidate, {
-          actorId: 'player',
+          actorId: PLAYER_ID,
           requestId: 'bad-material',
           source: 'test-fixture',
           authority: { origin: 'player', policyRevision: 1 },
@@ -56,7 +57,7 @@ describe('untrusted dictionary identifiers', () => {
       ).toBe('invalid-declaration');
       expect(
         admitDeclaration(world, draft(), {
-          actorId: 'player',
+          actorId: PLAYER_ID,
           requestId: id,
           source: 'test-fixture',
           authority: { origin: 'player', policyRevision: 1 },
@@ -77,7 +78,7 @@ describe('untrusted dictionary identifiers', () => {
 
   it.each(inheritedIds)('rejects command references to %s and returns safe scoped reads', (id) => {
     const world = createWorld();
-    createItemLot(world, 'player', 'raw_meat', 1, 'fixture-raw');
+    createItemLot(world, PLAYER_ID, 'raw_meat', 1, 'fixture-raw');
     const payloads: Record<string, unknown>[] = [
       { type: 'gather', targetId: id },
       { type: 'harvest', targetId: id },
@@ -88,14 +89,14 @@ describe('untrusted dictionary identifiers', () => {
       { type: 'hunt', targetId: 'hare-1', weaponItemId: id },
       { type: 'cook', itemId: 'fixture-raw', heatId: id },
       { type: 'prepare', preparation: id },
-      { type: 'teach', targetId: 'ada', recipeId: id },
+      { type: 'teach', targetId: NPC_ID, recipeId: id },
       { type: 'say', targetId: id, text: 'This should not be spoken.' },
     ];
     for (const [index, payload] of payloads.entries()) {
       const result = executeCommand(world, {
         ...payload,
         id: `malformed-${index}`,
-        actorId: 'player',
+        actorId: PLAYER_ID,
       } as Command);
       expect(result.outcome.ok).toBe(false);
       expect(result.world).toBe(world);
@@ -104,10 +105,10 @@ describe('untrusted dictionary identifiers', () => {
     expect(
       executeCommand(world, {
         id,
-        actorId: 'player',
+        actorId: PLAYER_ID,
         type: 'status-effect',
-        definitionId: 'rest',
-        targetId: 'player',
+        definitionId: 'wilderness:restorative-rest',
+        targetId: PLAYER_ID,
         operation: 'activate',
       }).outcome.code,
     ).toBe('invalid-command');
@@ -116,8 +117,8 @@ describe('untrusted dictionary identifiers', () => {
         id: 'bad-actor',
         actorId: id,
         type: 'status-effect',
-        definitionId: 'rest',
-        targetId: 'player',
+        definitionId: 'wilderness:restorative-rest',
+        targetId: PLAYER_ID,
         operation: 'activate',
       }).outcome.code,
     ).toBe('invalid-command');
@@ -145,7 +146,7 @@ describe('untrusted dictionary identifiers', () => {
     Object.setPrototypeOf(world.entities, { inherited_target: world.entities.branches });
     const result = executeCommand(world, {
       id: 'hidden-inheritance',
-      actorId: 'player',
+      actorId: PLAYER_ID,
       type: 'gather',
       targetId: 'inherited_target',
     });
@@ -155,9 +156,9 @@ describe('untrusted dictionary identifiers', () => {
 
   it('rejects an incapacitated inventor at the pure admission boundary', () => {
     const world = createWorld();
-    world.entities.player!.actor!.incapacitated = true;
+    world.entities[PLAYER_ID]!.actor!.incapacitated = true;
     const result = admitDeclaration(world, draft(), {
-      actorId: 'player',
+      actorId: PLAYER_ID,
       requestId: 'collapsed-invention',
       source: 'test-fixture',
       authority: { origin: 'player', policyRevision: 1 },
@@ -165,6 +166,6 @@ describe('untrusted dictionary identifiers', () => {
     expect(result.outcome.code).toBe('invalid-provenance');
     expect(result.world).toBe(world);
     expect(world.recipes).toEqual({});
-    expect(world.knowledge.player).toEqual([]);
+    expect(world.knowledge[PLAYER_ID]).toEqual([]);
   });
 });

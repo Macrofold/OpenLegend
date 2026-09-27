@@ -9,7 +9,7 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
 import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
-import { knownRecipeAttribution } from '@open-legend/domain';
+import { knownRecipeAttribution, navigationBlocked } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import type {
@@ -670,6 +670,7 @@ export async function projectView(
       baseRatio: service.config.baseRatio,
       paused: paused,
       pauseReason: pauseReason,
+      preparingNavigation: navigationBlocked(world),
     },
     player: {
       participation: actor.participation?.phase ?? 'active',
@@ -690,24 +691,27 @@ export async function projectView(
             id: actor.action.id,
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
-              actor.action.stage === 'working' &&
-              [
-                'gather',
-                'prepare',
-                'craft',
-                'cook',
-                'harvest',
-                'hunt',
-                'strike',
-                'replenish',
-              ].includes(actor.action.type),
+              !!actor.action.navigation ||
+              (actor.action.stage === 'working' &&
+                [
+                  'gather',
+                  'prepare',
+                  'craft',
+                  'cook',
+                  'harvest',
+                  'hunt',
+                  'strike',
+                  'replenish',
+                ].includes(actor.action.type)),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:
               actor.action.stage === 'working'
                 ? actor.action.totalSeconds - actor.action.remainingSeconds
                 : 0,
             advancing: !paused && actor.action.stage === 'working',
-            label: workLabels[actor.action.type] ?? 'Working',
+            label: actor.action.navigation
+              ? 'Preparing route'
+              : (workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching'
                 ? 0

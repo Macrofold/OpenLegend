@@ -83,6 +83,10 @@ export function nextDueAppraisal(world: WorldState): Entry | undefined {
   const first = objectIndexEntries(indexFor(world).due).next().value?.[1];
   return first && first.at! <= world.simTime ? first : undefined;
 }
+/** The same derived order drives both interval selection and due-state consumption. */
+export function nextAppraisalDeadline(world: WorldState): number {
+  return objectIndexEntries(indexFor(world).due).next().value?.[1].at ?? Infinity;
+}
 export function captureAppraisalIndex(world: WorldState): (result: WorldState) => void {
   const pending = drafts.get(world);
   drafts.delete(world);

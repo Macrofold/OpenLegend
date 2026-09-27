@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { WorldRecords } from '../apps/server/src/world-records.js';
 import { SqliteDatabase } from '../apps/server/src/sqlite-database.js';
 import { resolve, dirname } from 'node:path';
@@ -22,6 +23,9 @@ import {
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
 import { migrateActors, migrateCognition } from '@open-legend/domain';
+
+// Initialize native geometry before constructing or validating recovered world state.
+await initializeCollisionRuntime();
 
 const [source, destination] = process.argv.slice(2);
 if (!source || !destination || !process.env['OPEN_LEGEND_DATABASE_URL'])

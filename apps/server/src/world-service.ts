@@ -28,6 +28,9 @@ import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/do
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
+import { completeNavigation, navigationBlocked } from '@open-legend/domain';
+import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
+import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -261,7 +264,9 @@ export class WorldService {
   get localScope(): RequestScope {
     if (this.config.authentication.mode !== 'local' || !this.localRequestScope)
       throw new AuthorityError('forbidden');
-    return { ...this.localRequestScope, timelineId: this.timelineId };
+    // Trusted local composition resolves the current lease for its one connection.
+    // External requests keep their explicit captured scope and stale-result fences.
+    return this.refreshScope({ ...this.localRequestScope, timelineId: this.timelineId });
   }
   currentScope(scope: RequestScope, capability: Capability = 'play', controlling = false): boolean {
     return (
@@ -351,6 +356,7 @@ export class WorldService {
   }
   private async initialize() {
     const { store, config } = this;
+    await initializeCollisionRuntime();
     await store.ready;
     this.currentProfile = await store.getProfile('local-player');
     const existing = await store.load(true);
@@ -1420,7 +1426,7 @@ export class WorldService {
     });
   }
 
-  /** Fixed simulation steps with routine durability coalesced to one real second. */
+  /** Boundary-limited elapsed integration; routine durability retains its real-time policy. */
   async tick(
     elapsedRealSeconds: number,
     suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
@@ -1436,7 +1442,7 @@ export class WorldService {
       await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
-      if (this.paused || this.debtSeconds < 1) return;
+      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
       const yieldedAt = performance.now();
       await new Promise<void>((resolve) => setImmediate(resolve));
@@ -1480,24 +1486,36 @@ export class WorldService {
         this.memoryBacklog = memoryBacklog;
         this.notify(false);
       }
+      // Keep admitted debt, but do not charge the world hunger/action time for CPU preparation.
+      // A canceled action, failed request or completed route releases this technical barrier.
+      // docs/architecture.md#navigation-preparation
+      if (navigationBlocked(this.world)) {
+        countMetric('clock.navigationExcludedRealSeconds', elapsedRealSeconds);
+        gaugeMetric('navigation.blocked', 1);
+        return;
+      }
+      gaugeMetric('navigation.blocked', 0);
       const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
       countMetric('clock.activeRealSeconds', elapsedRealSeconds);
       countMetric('clock.requestedSimSeconds', requested);
       gaugeMetric('clock.requestedSpeed', this.speed);
       this.debtSeconds += requested;
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
-      const steps = Math.floor(this.debtSeconds);
-      if (!steps) return;
+      const offered = Math.min(this.debtSeconds, 86400);
+      if (offered < 1e-6) return;
       let world = this.world;
       const batchStarted = performance.now();
       let nativeMs = 0;
-      let completedSteps = 0;
-      gaugeMetric('tick.dueSteps', steps);
-      // Publish a bounded prefix and release mutation ownership; retain the rest as debt.
+      let advancedSeconds = 0;
+      gaugeMetric('tick.dueSimSeconds', this.debtSeconds);
+      // Game-clock conversion is not an integration frequency. Accept one boundary-limited
+      // interval at a time and retain actual unadvanced time as debt. docs/simulation-time.md
       // A single transition remains atomic even if it exceeds this time budget.
-      for (; completedSteps < steps; ) {
+      while (advancedSeconds < offered) {
+        if (navigationBlocked(world)) break;
         const stepStarted = performance.now();
-        const slices = advanceWorldSlices(world, 1);
+        const startTime = world.simTime;
+        const slices = advanceWorldSlices(world, offered - advancedSeconds, { maxIntervals: 1 });
         let sliceStarted = performance.now(),
           result = slices.next();
         while (!result.done) {
@@ -1505,7 +1523,11 @@ export class WorldService {
             await new Promise<void>((resolve) => setImmediate(resolve));
             sliceStarted = performance.now();
           }
-          result = slices.next();
+          // Local motion deadlines need not force publication, but they provide a
+          // coherent exit when this batch has used its responsiveness budget.
+          result = slices.next(
+            result.value === 'boundary' && performance.now() - batchStarted >= 8,
+          );
         }
         const advanced = result.value;
         if (!advanced.outcome.ok) {
@@ -1514,19 +1536,23 @@ export class WorldService {
           return;
         }
         world = freezeWorld(advanced.world);
+        const delta = world.simTime - startTime;
         const stepMs = performance.now() - stepStarted;
         nativeMs += stepMs;
         recordDuration('native.step', stepMs);
-        completedSteps++;
-        if (performance.now() - batchStarted >= 8) break;
+        recordDuration('native.intervalSimMs', delta * 1000);
+        advancedSeconds += delta;
+        if (delta <= 0 || performance.now() - batchStarted >= 8) break;
       }
       recordDuration('tick.nativeWork', nativeMs);
       const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
-        if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= completedSteps;
+        if (await this.commit(saved, undefined, 'append'))
+          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       } else {
-        if (this.acceptRoutine(saved)) this.debtSeconds -= completedSteps;
+        if (this.acceptRoutine(saved))
+          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       }
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
@@ -1605,6 +1631,22 @@ export class WorldService {
       )
         return { ok: false, code: 'storage', message: this.storageError! };
       return { ...result.outcome };
+    });
+  }
+
+  async preparedNavigation(
+    actorId: string,
+    actionId: string,
+    request: NavigationRequest,
+    result: NavigationResult,
+    map: WorldState['map'],
+    timeline: string,
+  ): Promise<void> {
+    await this.mutate(async () => {
+      if (this.world.map !== map || this.timelineId !== timeline) return;
+      const transition = completeNavigation(this.world, actorId, actionId, request, result);
+      if (transition.world === this.world) return;
+      await this.commit({ ...this.saved, world: transition.world }, undefined, 'unchanged');
     });
   }
 

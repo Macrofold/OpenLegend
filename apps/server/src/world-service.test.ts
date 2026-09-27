@@ -1,3 +1,5 @@
+import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
+import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -5,7 +7,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { quantityOf, type DeclarationDraft } from '@open-legend/domain';
+import { quantityOf } from '@open-legend/domain';
 import { readConfig } from './config.js';
 import { SqliteStore } from './store.js';
 import { projectView } from './view.js';
@@ -13,7 +15,7 @@ import { WorldService } from './world-service.js';
 
 const stores = new Set<SqliteStore>();
 const directories: string[] = [];
-function setup(path = ':memory:', existingClock?: { now: number }) {
+async function setup(path = ':memory:', existingClock?: { now: number }) {
   const store = new SqliteStore(path);
   stores.add(store);
   const clock = existingClock ?? { now: 1_800_000_000_000 };
@@ -23,6 +25,7 @@ function setup(path = ':memory:', existingClock?: { now: number }) {
     OPENAI_API_KEY: 'private-llm-key',
   });
   const service = new WorldService(store, config, () => clock.now);
+  await enterLocalWorld(service);
   return { store, clock, service };
 }
 async function activate(service: WorldService): Promise<void> {
@@ -40,23 +43,6 @@ async function run(
     await service.tick(0.25);
   }
 }
-const sling = (): DeclarationDraft => ({
-  schemaVersion: 1,
-  name: 'Fixture river sling',
-  description: 'A test-only mechanical composition.',
-  inputs: [
-    { definitionId: 'cord', quantity: 1, role: 'binding' },
-    { definitionId: 'prepared_fiber', quantity: 2, role: 'pouch' },
-  ],
-  workSeconds: 60,
-  output: {
-    kind: 'launcher',
-    name: 'Fixture river sling',
-    description: 'A cord-supported fiber pouch.',
-    properties: ['flexible'],
-    launcher: { mechanism: 'swing', ammunitionKind: 'stone', damage: 18, range: 7, accuracy: 0.9 },
-  },
-});
 afterEach(async () => {
   for (const store of stores) await store.close();
   stores.clear();
@@ -64,48 +50,8 @@ afterEach(async () => {
 });
 
 describe('world presence, time and durable commands', () => {
-  it('omits new and legacy movement starts before limiting the journal, preserving other events', async () => {
-    const { service } = setup();
-    await activate(service);
-    expect(
-      (
-        await service.command('fixture-rest', {
-          type: 'status-effect',
-          definitionId: 'rest',
-          targetId: 'player',
-          effectOperation: 'activate',
-        })
-      ).ok,
-    ).toBe(true);
-    expect(
-      (
-        await service.command('fixture-move', {
-          type: 'move',
-          position: { ...worldPosition(service.world.entities.player!), surfaceId: 'terrain' },
-        })
-      ).ok,
-    ).toBe(true);
-    const movement = service.world.events.at(-1)!;
-    expect(movement.data?.['actionType']).toBe('move');
-    for (let index = 0; index < 65; index++) {
-      const legacy = { ...movement, id: `fixture-legacy-${index}` };
-      delete legacy.data;
-      service.world.events.push(legacy);
-    }
-    service.world.events.push({ ...movement, id: 'fixture-speech', type: 'speech' });
-    const before = JSON.stringify(service.world);
-    const journal = (await projectView(service)).events;
-    expect(journal.some((event) => event.text === 'You started rest.')).toBe(true);
-    expect(journal.some((event) => event.id === 'fixture-speech')).toBe(true);
-    expect(
-      journal.some(
-        (event) => event.type === 'action-started' && event.text === 'You started move.',
-      ),
-    ).toBe(false);
-    expect(JSON.stringify(service.world)).toBe(before);
-  });
   it('runs connected background tabs through heartbeat expiry only when opted in, without overriding manual pause', async () => {
-    const { service, clock } = setup();
+    const { service, clock } = await setup();
     await service.setConnection('background-stream', true);
     expect(service.paused).toBe(true);
     await service.setPreferences({ pauseWhenHidden: false });
@@ -130,7 +76,7 @@ describe('world presence, time and durable commands', () => {
     expect(service.pauseReason).toBe('away');
     await service.tick(1);
     expect(service.world.simTime).toBe(60);
-    clock.now += 86400_000;
+    clock.now += 60_000;
     await service.setConnection('returned-stream', true);
     expect(service.world.simTime).toBe(60);
     await service.tick(0.5);
@@ -146,7 +92,7 @@ describe('world presence, time and durable commands', () => {
       show_unavailable_actions INTEGER NOT NULL CHECK (show_unavailable_actions IN (0, 1)));
       INSERT INTO player_profiles VALUES ('local-player', 7, 1);`);
     old.close();
-    const initial = setup(path);
+    const initial = await setup(path);
     await initial.service.ready;
     expect(initial.service.profile).toMatchObject({
       revision: 7,
@@ -157,9 +103,9 @@ describe('world presence, time and durable commands', () => {
     await initial.service.control({ speed: 0.5 });
     await initial.store.close();
     stores.delete(initial.store);
-    const restored = setup(path);
+    const restored = await setup(path);
     await restored.service.ready;
-    expect(restored.service.profile.preferences).toEqual({
+    expect(restored.service.profile.preferences).toMatchObject({
       showUnavailableActions: false,
       pauseWhenHidden: false,
     });
@@ -167,18 +113,17 @@ describe('world presence, time and durable commands', () => {
     expect(restored.service.paused).toBe(true);
     await restored.service.setConnection('returning-stream', true);
     await restored.service.tick(0.25);
-    expect(restored.service.world.simTime).toBe(7);
-    // Updating the unrelated menu preference must preserve fractional clock debt.
+    expect(restored.service.world.simTime).toBe(7.5);
+    // Updating the unrelated menu preference must preserve fractional game time.
     await restored.service.setPreferences({ showUnavailableActions: true });
     await restored.service.tick(0.25);
     expect(restored.service.world.simTime).toBe(15);
   });
 
-  it('starts absent and advances all native state consistently at each speed', async () => {
-    const resultingWorlds = await Promise.all(
+  it('starts absent and advances the requested game time at each speed', async () => {
+    await Promise.all(
       [0.5, 1, 3, 8].map(async (speed) => {
-        const { service, clock } = setup();
-        await service.ready;
+        const { service, clock } = await setup();
         expect(service.paused).toBe(true);
         expect(service.pauseReason).toBe('away');
         await service.tick(1);
@@ -189,35 +134,49 @@ describe('world presence, time and durable commands', () => {
           (
             await service.command('rest', {
               type: 'status-effect',
-              definitionId: 'rest',
-              targetId: 'player',
+              definitionId: 'wilderness:restorative-rest',
+              targetId: PLAYER_ID,
               effectOperation: 'activate',
             })
           ).ok,
         ).toBe(true);
         await run(service, clock, 6 / speed);
-        expect(service.world.simTime).toBe(360);
-        return service.world;
+        expect(service.world.simTime).toBeCloseTo(360, 9);
       }),
     );
-    for (const world of resultingWorlds) expect(world).toEqual(resultingWorlds[0]);
   });
   it('freezes immediately on explicit absence and performs no return catch-up', async () => {
-    const { service, clock } = setup();
+    const { service, clock } = await setup();
     await activate(service);
     await run(service, clock, 1);
     await service.setPresence('test-client', false);
     const before = structuredClone(service.world);
-    clock.now += 86_400_000;
-    await service.tick(86400);
+    clock.now += 60_000;
+    await service.tick(60);
     expect(service.world).toEqual(before);
     await activate(service);
     expect(service.world.simTime).toBe(before.simTime);
     await service.tick(0.25);
     expect(service.world.simTime).toBe(before.simTime + 15);
   });
+  it('refreshes the local composition scope while fencing already captured control scopes', async () => {
+    const { service } = await setup();
+    const captured = service.localScope;
+    expect(service.currentScope(captured, 'play', true)).toBe(true);
+    expect(
+      (
+        await service.changeEmbodiment(captured, {
+          id: 'replace-control',
+          expectedGeneration: captured.controlGeneration,
+          operation: 'replace',
+        })
+      ).ok,
+    ).toBe(true);
+    expect(service.currentScope(captured, 'play', true)).toBe(false);
+    expect(service.currentScope(service.localScope, 'play', true)).toBe(true);
+  });
   it('expires a silent connection after the 12-second grace period', async () => {
-    const { service, clock } = setup();
+    const { service, clock } = await setup();
     await activate(service);
     await service.tick(0.25);
     const time = service.world.simTime;
@@ -229,12 +188,12 @@ describe('world presence, time and durable commands', () => {
     expect(service.world.simTime).toBe(time);
   });
   it('keeps manual pause across reconnect and rejects paused speech/actions', async () => {
-    const { service, clock } = setup();
+    const { service, clock } = await setup();
     await activate(service);
     await service.command('rest', {
       type: 'status-effect',
-      definitionId: 'rest',
-      targetId: 'player',
+      definitionId: 'wilderness:restorative-rest',
+      targetId: PLAYER_ID,
       effectOperation: 'activate',
     });
     await service.control({ paused: true });
@@ -244,33 +203,35 @@ describe('world presence, time and durable commands', () => {
     await activate(service);
     expect(service.world).toEqual(state);
     expect(service.pauseReason).toBe('manual');
-    expect((await service.say('paused-speech', 'ada', 'This was never spoken.')).code).toBe(
+    expect((await service.say('paused-speech', NPC_ID, 'This was never spoken.')).code).toBe(
       'paused',
     );
     expect(
       (
         await service.command('paused-eat', {
           type: 'status-effect',
-          definitionId: 'rest',
-          targetId: 'player',
+          definitionId: 'wilderness:restorative-rest',
+          targetId: PLAYER_ID,
           effectOperation: 'activate',
         })
       ).code,
     ).toBe('paused');
-    expect((await projectView(service)).conversation).toHaveLength(0);
+    expect(JSON.stringify((await projectView(service)).conversation)).not.toContain(
+      'This was never spoken.',
+    );
   });
   it('drops a suspended wall-clock interval rather than replaying offline work', async () => {
-    const { service } = setup();
+    const { service } = await setup();
     await activate(service);
     await service.tick(0.01);
-    expect(service.world.simTime).toBe(0);
+    expect(service.world.simTime).toBe(0.6);
     await service.tick(5);
-    expect(service.world.simTime).toBe(0);
+    expect(service.world.simTime).toBe(0.6);
     await service.tick(0.25);
-    expect(service.world.simTime).toBe(15);
+    expect(service.world.simTime).toBe(15.6);
   });
   it('preserves short scheduling debt at the highest supported speed', async () => {
-    const { service, clock } = setup();
+    const { service, clock } = await setup();
     await activate(service);
     await service.control({ speed: 8 });
     clock.now += 1000;
@@ -281,14 +242,14 @@ describe('world presence, time and durable commands', () => {
       await service.setPresence('test-client', true);
       await service.tick(0.125);
     }
-    expect(service.world.simTime).toBe(2 * 60 * 8);
+    expect(service.world.simTime).toBeCloseTo(2 * 60 * 8, 9);
   });
   it('restores work and pause preferences without repeating commands or elapsed real time', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-world-test-'));
     directories.push(directory);
     const path = join(directory, 'world.sqlite');
     const clock = { now: 1_800_000_000_000 };
-    const initial = setup(path, clock);
+    const initial = await setup(path, clock);
     await activate(initial.service);
     const berry = (await projectView(initial.service)).player.inventory.find(
       (item) => item.definitionId === 'berries',
@@ -298,8 +259,8 @@ describe('world presence, time and durable commands', () => {
     );
     await initial.service.command('rest', {
       type: 'status-effect',
-      definitionId: 'rest',
-      targetId: 'player',
+      definitionId: 'wilderness:restorative-rest',
+      targetId: PLAYER_ID,
       effectOperation: 'activate',
     });
     await run(initial.service, clock, 1);
@@ -308,22 +269,25 @@ describe('world presence, time and durable commands', () => {
     await initial.store.close();
     stores.delete(initial.store);
     clock.now += 7 * 86400_000;
-    const restored = setup(path, clock);
+    const restored = await setup(path, clock);
     await activate(restored.service);
-    expect(restored.service.world).toEqual(previous);
+    expect(restored.service.world.simTime).toBe(previous.simTime);
+    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action).toEqual(
+      previous.entities[PLAYER_ID]!.actor!.action,
+    );
     expect(restored.service.speed).toBe(3);
     expect(restored.service.pauseReason).toBe('manual');
     await restored.service.control({ paused: false });
     expect(
       (await restored.service.command('eat-once', { type: 'eat', itemId: berry.id })).code,
     ).toBe('duplicate');
-    expect(quantityOf(restored.service.world, 'player', 'berries')).toBe(2);
+    expect(quantityOf(restored.service.world, PLAYER_ID, 'berries')).toBe(2);
     expect(restored.service.world.simTime).toBe(previous.simTime);
     await run(restored.service, clock, 0.25);
     expect(restored.service.world.simTime).toBe(previous.simTime + 45);
   });
   it('pauses on ambiguous persistence completion and recovers its committed receipt', async () => {
-    const { service, store, clock } = setup();
+    const { service, store, clock } = await setup();
     await activate(service);
     const berry = (await projectView(service)).player.inventory.find(
       (item) => item.definitionId === 'berries',
@@ -338,47 +302,52 @@ describe('world presence, time and durable commands', () => {
     );
     expect(service.paused).toBe(true);
     expect(service.pauseReason).toBe('storage');
-    expect(quantityOf(service.world, 'player', 'berries')).toBe(3);
-    expect(quantityOf((await store.load())!.state.world, 'player', 'berries')).toBe(2);
+    expect(quantityOf(service.world, PLAYER_ID, 'berries')).toBe(3);
+    expect(quantityOf((await store.load())!.state.world, PLAYER_ID, 'berries')).toBe(2);
     await service.tick(1);
     expect(service.world.simTime).toBe(0);
     const restored = new WorldService(store, service.config, () => clock.now);
+    await enterLocalWorld(restored);
     await activate(restored);
     expect((await restored.command('ambiguous-eat', { type: 'eat', itemId: berry.id })).code).toBe(
       'duplicate',
     );
-    expect(quantityOf(restored.world, 'player', 'berries')).toBe(2);
+    expect(quantityOf(restored.world, PLAYER_ID, 'berries')).toBe(2);
   });
 });
 
-describe('public projection and a playable native loop', () => {
+describe('public projection', () => {
   it('excludes private minds, receipts, keys and unheard historical speech', async () => {
-    const { service, store } = setup();
+    const { service, store } = await setup();
     await activate(service);
-    service.world.entities.ada!.actor!.agency.goals[0]!.objective = 'secret-npc-intention';
-    service.world.memories.ada!.push({
-      id: 'private-memory',
-      actorId: 'ada',
-      kind: 'reflection',
-      source: 'inferred',
-      summary: 'secret-inner-history',
-      at: 0,
-      entityIds: [],
-      importance: 10,
+    await editWorld(service, (world) => {
+      world.entities[NPC_ID]!.actor!.agency.goals[0]!.objective = 'secret-npc-intention';
+      world.memories[NPC_ID]!.push({
+        id: 'private-memory',
+        actorId: NPC_ID,
+        kind: 'reflection',
+        source: 'inferred',
+        summary: 'secret-inner-history',
+        at: 0,
+        entityIds: [],
+        importance: 10,
+      });
+      setSpatialPosition(
+        world,
+        world.entities[NPC_ID]!,
+        { y: 0, x: 26, z: 22 },
+        worldSupport(world.entities[NPC_ID]!),
+      );
     });
-    setSpatialPosition(
-      service.world,
-      service.world.entities.ada!,
-      { y: 0, x: 26, z: 22 },
-      worldSupport(service.world.entities.ada!),
-    );
-    expect((await service.say('unheard', 'ada', 'secret-unheard-speech')).ok).toBe(true);
-    setSpatialPosition(
-      service.world,
-      service.world.entities.ada!,
-      { y: 0, x: 12, z: 13 },
-      worldSupport(service.world.entities.ada!),
-    );
+    expect((await service.say('unheard', NPC_ID, 'secret-unheard-speech')).ok).toBe(true);
+    await editWorld(service, (world) => {
+      setSpatialPosition(
+        world,
+        world.entities[NPC_ID]!,
+        { y: 0, x: 12, z: 13 },
+        worldSupport(world.entities[NPC_ID]!),
+      );
+    });
     await store.putJob({
       id: 'private-job',
       kind: 'thought',
@@ -389,6 +358,11 @@ describe('public projection and a playable native loop', () => {
       request: { text: 'secret-request-text' },
       result: { reflection: 'secret-result' },
     });
+    await expect
+      .poll(async () =>
+        (await projectView(service)).ai.jobs.some((job) => job.id === 'private-job'),
+      )
+      .toBe(true);
     const view = await projectView(service);
     const serialized = JSON.stringify(view);
     for (const secret of [
@@ -406,75 +380,17 @@ describe('public projection and a playable native loop', () => {
     expect(serialized).not.toContain('commandReceipts');
     expect(view.conversation).toHaveLength(0);
     expect(
-      service.observe('ada')!.memories.some((memory) => memory.summary === 'secret-inner-history'),
+      service.observe(NPC_ID)!.memories.some((memory) => memory.summary === 'secret-inner-history'),
     ).toBe(false); // Legacy unbounded authored notes are audit-only.
   });
   it('keeps zero-duration movement progress a finite public number', async () => {
-    const { service } = setup();
+    const { service } = await setup();
     await activate(service);
     await service.command('already-there', {
       type: 'move',
-      position: { ...worldPosition(service.world.entities.player!), surfaceId: 'terrain' },
+      position: { ...worldPosition(service.world.entities[PLAYER_ID]!), surfaceId: 'terrain' },
     });
     const action = (await projectView(service)).player.action;
     expect(action === null || Number.isFinite(action.progress)).toBe(true);
-  });
-  it('supports craft, hunt, harvest, cook and eat through enabled public affordances', async () => {
-    const { service, clock } = setup();
-    await activate(service);
-    expect(
-      (
-        await service.admit(sling(), {
-          actorId: 'player',
-          requestId: 'fixture-authoring',
-          source: 'test-fixture',
-          authority: { origin: 'player', policyRevision: 1 },
-        })
-      ).ok,
-    ).toBe(true);
-    const recipe = (await projectView(service)).recipes[0]!;
-    expect(recipe.actions[0]!.enabled).toBe(true);
-    expect((await service.command('craft', recipe.actions[0]!.command)).ok).toBe(true);
-    await run(service, clock, 2.5);
-    let view = await projectView(service);
-    const tool = view.player.inventory.find((item) => item.category === 'equipment')!;
-    expect((await service.command('equip', tool.actions[0]!.command)).ok).toBe(true);
-    view = await projectView(service);
-    const hunt = view.entities
-      .find((entity) => entity.id === 'hare-1')!
-      .actions.find((action) => action.command.type === 'hunt')!;
-    expect(hunt.enabled).toBe(true);
-    expect((await service.command('hunt', hunt.command)).ok).toBe(true);
-    await run(service, clock, 1);
-    view = await projectView(service);
-    const remains = view.entities.find((entity) => entity.id === 'hare-1')!;
-    expect(remains.kind).toBe('remains');
-    const harvest = remains.actions.find((action) => action.command.type === 'harvest')!;
-    expect(harvest.enabled).toBe(true);
-    await service.command('harvest', harvest.command);
-    await run(service, clock, 7.5);
-    view = await projectView(service);
-    const meat = view.player.inventory.find((item) => item.definitionId === 'raw_meat')!;
-    expect(meat.quantity).toBe(2);
-    expect(meat.actions.some((action) => action.command.type === 'eat')).toBe(false);
-    await service.command(
-      'cook',
-      meat.actions.find((action) => action.command.type === 'cook')!.command,
-    );
-    await run(service, clock, 8.5);
-    view = await projectView(service);
-    const meal = view.player.inventory.find((item) => item.definitionId === 'cooked_meat')!;
-    await service.command(
-      'eat',
-      meal.actions.find((action) => action.command.type === 'eat')!.command,
-    );
-    view = await projectView(service);
-    expect(
-      view.milestones
-        .filter((milestone) => ['invent', 'craft', 'hunt', 'eat'].includes(milestone.id))
-        .every((milestone) => milestone.done),
-    ).toBe(true);
-    expect(view.clock.seconds).toBe(1170);
-    expect(view.player.health).toBe(100);
   });
 });

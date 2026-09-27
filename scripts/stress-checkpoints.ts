@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { mkdtemp, stat, writeFile } from 'node:fs/promises';
 import { tmpdir, cpus, totalmem } from 'node:os';
 import { join } from 'node:path';
@@ -17,6 +18,9 @@ import { readConfig } from '../apps/server/src/config.js';
 
 // Native operational benchmark, no provider or test runner. Keep the disposable
 // source and report for inspection; the database target must be empty.
+// Initialize native geometry before constructing or validating recovered world state.
+await initializeCollisionRuntime();
+
 const [output, sizeArgument = '100000', roundsArgument = '3', residency = 'cold'] =
   process.argv.slice(2);
 const size = Number(sizeArgument),

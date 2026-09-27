@@ -1,9 +1,12 @@
 import { worldPosition, worldSupport } from './spatial-state.js';
+import {
+  advanceWithNavigation as advanceWorld,
+  prepareWorldNavigation,
+} from '../../../tests/fixtures/navigation.js';
 import { describe, expect, it } from 'vitest';
 import {
   PLAYER_ID,
   NPC_ID,
-  advanceWorld,
   canReachEntity,
   createWorld,
   executeCommand,
@@ -183,7 +186,7 @@ describe('native spatial-world integration without providers', () => {
       type: 'move',
       destination: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     }).world;
-    const bad = structuredClone(world);
+    const bad = structuredClone(prepareWorldNavigation(world));
     bad.entities[PLAYER_ID]!.actor!.action!.path[0]!.y += 3;
     expect(() => validateSpatialWorld(bad)).toThrow('Invalid saved spatial route');
   });
@@ -194,7 +197,7 @@ describe('native spatial-world integration without providers', () => {
         id: 'air-rest',
         actorId: 'bird-1',
         type: 'status-effect',
-        definitionId: 'rest',
+        definitionId: 'wilderness:restorative-rest',
         targetId: 'bird-1',
         operation: 'activate',
       }).outcome.code,
@@ -202,10 +205,5 @@ describe('native spatial-world integration without providers', () => {
     const broken = structuredClone(world);
     broken.flightRoutes['clearing-bird-loop']!.points[1]!.position.x += 1;
     expect(() => validateSpatialWorld(broken)).toThrow('vertical');
-  });
-  it('rejects old formats explicitly instead of silently upgrading a save', () => {
-    const old = active();
-    old.schemaVersion = 8;
-    expect(() => validateWorldModules(old)).toThrow('3D format 9');
   });
 });

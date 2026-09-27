@@ -20,6 +20,19 @@ const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
 type RecordLineage = { tip: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
 const admittedRecords = new WeakMap<WorldState, object[]>();
+const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
+/** History owners register changed arrays, not every retained record. At publication we
+ * seal one plain snapshot before Immer's generic finalizer/patch generator visits it.
+ * Registration does not certify an append: prefix identity is checked after all edits.
+ */
+export function trackRecordArray(world: WorldState, owner: object, key: string): void {
+  if (!isDraft(world)) return;
+  let arrays = recordArrays.get(world);
+  if (!arrays) recordArrays.set(world, (arrays = new Map()));
+  let keys = arrays.get(owner);
+  if (!keys) arrays.set(owner, (keys = new Set()));
+  keys.add(key);
+}
 const changedEntities = new WeakMap<WorldState, ReadonlySet<string>>();
 const entitySuccessors = new WeakMap<
   WorldState['entities'],
@@ -87,6 +100,24 @@ export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
   for (const value of admittedRecords.get(world) ?? []) freeze(value, true);
   admittedRecords.delete(world);
+  const sealedAppends: Array<{ before: unknown[]; after: unknown[] }> = [];
+  for (const [owner, keys] of recordArrays.get(world) ?? []) {
+    const properties = owner as Record<string, unknown>;
+    for (const key of keys) {
+      const value = properties[key];
+      if (!Array.isArray(value) || !isDraft(value)) continue;
+      const before = original(value)!;
+      if (!Object.isFrozen(before)) continue;
+      const after = current(value);
+      if (after === before) continue;
+      // current() resolves every nested edit; the original array stays immutable even
+      // for append-then-edit/delete and branching histories in the same transition.
+      properties[key] = freeze(after, true);
+      if (after.length >= before.length && before.every((entry, i) => entry === after[i]))
+        sealedAppends.push({ before, after });
+    }
+  }
+  recordArrays.delete(world);
   const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
   const publishAppraisals = captureAppraisalIndex(world);
@@ -168,6 +199,18 @@ export function finishWorld(world: WorldState): WorldState {
       lineage.tip = next;
       recordLineages.set(next, lineage);
     }
+  }
+  for (const { before: previous, after: next } of sealedAppends) {
+    let lineage = recordLineages.get(previous);
+    if (!lineage) {
+      lineage = { tip: previous };
+      recordLineages.set(previous, lineage);
+    }
+    if (lineage.tip === previous) {
+      lineage.tip = next;
+      recordLineages.set(next, lineage);
+    }
+    if (previous === before && next === result.events) appendOnly = true;
   }
   if (result.events !== before && appendOnly && result.events.length >= before.length) {
     let lineage = eventLineages.get(before);

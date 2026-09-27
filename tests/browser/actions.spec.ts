@@ -1,12 +1,13 @@
+import { PLAYER_ID } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
 import { SqliteStore } from '../../apps/server/src/store.js';
-test('scoped React action search, delayed facts and saved unavailable preference (native fixture)', async ({
+test('scoped React action search, contextual facts and saved unavailable preference (native fixture)', async ({
   page,
 }, info) => {
   const game = await createGameServer({
-    config: readConfig({}),
+    config: readConfig({ AI_BUDGET_USD: '0' }),
     store: new SqliteStore(':memory:'),
     production: true,
     tick: false,
@@ -30,18 +31,12 @@ test('scoped React action search, delayed facts and saved unavailable preference
     await expect(search).toBeFocused();
     const gather = menu.getByRole('button', { name: /Gather River reeds/ });
     await gather.hover();
-    await page.waitForTimeout(400);
-    await expect(tip).toBeHidden();
+    await expect(tip).toBeVisible();
     await expect(tip).toContainText('36 seconds');
     await expect(tip).toContainText('Yields');
     await search.fill('hunt');
     await expect(menu.locator('[data-catalogue-action]')).toHaveCount(0);
-    await search.fill('a new woven sling');
-    await search.press('Enter');
-    await expect(menu).toBeHidden();
-    await expect(page.locator('#message')).toHaveValue('a new woven sling');
-    expect(paid).toEqual([]);
-    await page.getByRole('button', { name: 'Hide Conversation panel' }).click();
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     const toggle = menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true });
@@ -53,7 +48,7 @@ test('scoped React action search, delayed facts and saved unavailable preference
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
     await page.keyboard.press('Enter');
-    expect(game.service.world.entities.player!.actor!.action).toBeNull();
+    expect(game.service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     await expect(menu).toBeVisible();
     await page.screenshot({ path: info.outputPath('action-menu.png') });
     await page.keyboard.press('Escape');

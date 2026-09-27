@@ -1,5 +1,9 @@
 # Open Legend licensing
 
+## Navigation and collision dependencies
+
+The server uses `recast-navigation@0.43.1` (MIT wrapper; retain the applicable upstream Recast/Detour notices with distributed WASM) and `@dimforge/rapier3d-compat@0.20.0` (Apache-2.0). Applicable packaged notices are preserved in [licenses/navigation](licenses/navigation); retain upstream/transitive notices when redistributing binaries. These dependencies do not relicense OpenLegend first-party code. No navcat runtime, third-party reference screenshot or game artwork was added.
+
 Accepted September 19, 2026. This guide distinguishes the license effective in this repository from policies for components that do not exist yet. The applicable license texts and explicit component notices govern permissions.
 
 ## Current repository license

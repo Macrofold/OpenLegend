@@ -1,5 +1,9 @@
 # Open Legend UI design brief
 
+## World presentation ownership
+
+[World presentation](world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+
 ## Spatial camera and floor UI
 
 [Spatial-world controls](spatial-world.md#tactical-camera-and-perspective) own camera/floor behavior. The current Camera toolbar keeps zoom/recenter and adds a View popover with rotation, tilt, projection, lock and level selection. A floor focus changes presentation only. Explicit XYZ/surface selection reaches the server; lower-level cutaways cannot expose unpermitted people. Preserve accessible buttons, canvas keyboard focus, touch alternatives, panel shortcuts and non-canvas inspection.

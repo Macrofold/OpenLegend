@@ -94,6 +94,9 @@ export interface PlayerProfile {
     showUnavailableActions: boolean;
     pauseWhenHidden: boolean;
     narratorVoice?: 'restrained' | 'lyrical' | 'wry';
+    revealMode?: 'off' | 'player' | 'nearby';
+    revealRadius?: number;
+    revealStrength?: number;
   };
 }
 /** A control changes only its own preference, preserving concurrent UI choices. */
@@ -252,6 +255,8 @@ export interface GameView {
     baseRatio: number;
     paused: boolean;
     pauseReason: 'manual' | 'away' | 'storage' | null;
+    /** Technical preparation only; this exposes no other actor's route or intent. */
+    preparingNavigation?: boolean;
   };
   player: {
     participation?: 'active' | 'exiting' | 'inactive';

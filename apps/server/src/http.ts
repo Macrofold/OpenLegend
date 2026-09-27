@@ -9,6 +9,7 @@ import {
   type RequestScope,
 } from './authority.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
+import { NavigationCoordinator } from './navigation/coordinator.js';
 import { GameSaveError } from './game-saves.js';
 import { Autosaves } from './autosaves.js';
 import {
@@ -111,6 +112,9 @@ const preferences = z
     showUnavailableActions: z.boolean().optional(),
     pauseWhenHidden: z.boolean().optional(),
     narratorVoice: z.enum(['restrained', 'lyrical', 'wry']).optional(),
+    revealMode: z.enum(['off', 'player', 'nearby']).optional(),
+    revealRadius: z.number().finite().min(2).max(12).optional(),
+    revealStrength: z.number().finite().min(0.2).max(0.95).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'Choose a preference to update.');
@@ -311,6 +315,7 @@ export async function createGameServer(
   const service = new WorldService(store, config, options.now);
   const autosaves = new Autosaves(service);
   await service.ready;
+  const navigation = new NavigationCoordinator(service);
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
   let activeWrites = 0;
@@ -2191,6 +2196,7 @@ export async function createGameServer(
       await autosaves.close();
       await director.close();
       await publicationDone;
+      await navigation.close();
       await service.flush();
       await projectionLane.idle();
       for (const [stream, state] of streams) {

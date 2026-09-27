@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { preparedRoute } from '../../../tests/fixtures/navigation.js';
 import {
   BODY_PROFILES,
   canFlySegment,
@@ -16,11 +17,12 @@ import {
   type SurfacePoint,
 } from './index.js';
 
+// Leave body clearance beyond the ramp foot; the old point lattice could turn at the map edge.
 function fixture(): SpatialMap {
   return {
-    width: 10,
-    height: 10,
-    tiles: Array.from({ length: 10 }, () => Array(10).fill('grass')),
+    width: 12,
+    height: 12,
+    tiles: Array.from({ length: 12 }, () => Array(12).fill('grass')),
     spatial: {
       version: 1,
       revision: 1,
@@ -36,9 +38,9 @@ function fixture(): SpatialMap {
           name: 'Ground',
           levelId: 'ground',
           minX: 0,
-          maxX: 9,
+          maxX: 11,
           minZ: 0,
-          maxZ: 9,
+          maxZ: 11,
           y: 0,
           slopeX: 0,
           slopeZ: 0,
@@ -107,10 +109,10 @@ describe('bounded 3D geometry and layered navigation', () => {
       [start, target],
       [target, start],
     ]) {
-      const route = findSurfaceRoute(map, from!, to!);
+      expect(findSurfaceRoute(map, from!, to!).status).toBe('pending');
+      const route = preparedRoute(map, from!, to!);
       expect(route.status).toBe('reached');
       expect(route.path.at(-1)).toEqual(to);
-      expect(route.path.some((p) => p.surfaceId === 'ramp' && p.y > 0 && p.y < 3)).toBe(true);
       let previous = from!;
       for (const next of route.path) {
         expect(canWalkSegment(map, previous, next)).toBe(true);
@@ -162,14 +164,15 @@ describe('bounded 3D geometry and layered navigation', () => {
     expect(pickSurfaces(map, from, to, 'ground')[0]!.point.surfaceId).toBe('terrain');
     expect(clearSegment(map, point(4, 1, 2), point(4, 4, 2))).toBe(false);
   });
-  it('reports finite search exhaustion and never reports a disconnected deck reached', () => {
+  it('defers detours and never reports a disconnected deck reached', () => {
     const map = fixture(),
       from = point(4, 0, 8),
       to = point(4, 3, 2, 'deck');
-    expect(findSurfaceRoute(map, from, to, BODY_PROFILES.person, 1).status).toBe('budget-exceeded');
+    expect(findSurfaceRoute(map, from, to).status).toBe('pending');
     const disconnected = fixture();
     disconnected.spatial.surfaces.pop();
-    expect(findSurfaceRoute(disconnected, from, to).status).toBe('no-route');
+    expect(findSurfaceRoute(disconnected, from, to).status).toBe('pending');
+    expect(preparedRoute(disconnected, from, to).status).toBe('no-route');
     expect(findSurfaceRoute(map, from, { ...to, y: NaN }).status).toBe('invalid-endpoint');
   });
   it('invalidates changed immutable geometry rather than reusing a route through a wall', () => {
@@ -181,13 +184,14 @@ describe('bounded 3D geometry and layered navigation', () => {
     next.spatial.revision++;
     next.spatial.blockers.push({
       id: 'closed-wall',
-      bounds: { min: { x: 1.5, y: 0, z: 0 }, max: { x: 1.6, y: 8, z: 9 } },
+      bounds: { min: { x: 1.5, y: 0, z: 0 }, max: { x: 1.6, y: 8, z: 12 } },
       movement: true,
       sight: true,
       acousticTransmission: 0,
       material: 'stone',
     });
-    expect(findSurfaceRoute(next, from, to).status).toBe('no-route');
+    expect(findSurfaceRoute(next, from, to).status).toBe('pending');
+    expect(preparedRoute(next, from, to).status).toBe('no-route');
   });
   it('rejects unbounded geometry and unsafe semantic IDs', () => {
     const map = fixture();

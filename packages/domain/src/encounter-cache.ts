@@ -1,5 +1,8 @@
-import { isDraft, original } from 'immer';
-import type { WorldState } from './types.js';
+import { current, isDraft, original } from 'immer';
+import { worldRootEntities } from './entity-index.js';
+import { worldPosition } from './spatial-state.js';
+import type { Position, WorldState } from './types.js';
+import { spatialCandidates } from './spatial.js';
 export interface ExposureInput {
   id: string;
   position: { x: number; y: number; z: number };
@@ -21,7 +24,11 @@ interface ExposureCache {
   inputs: Map<string, ExposureInput>;
   observers: Map<string, ObserverInput>;
 }
-const caches = new WeakMap<WorldState, ExposureCache>();
+export type EncounterBaseline = Pick<
+  WorldState,
+  'visiblePeople' | 'visibleObjects' | 'perceptionEpisodes'
+> & { positions: Map<string, Position>; contacts: Map<string, unknown> };
+const caches = new WeakMap<object, ExposureCache>();
 const pending = new WeakMap<WorldState, ExposureCache>();
 const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a &&
@@ -36,7 +43,7 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
 /** Derived per-phase inputs, rebuilt on recovery. No visibility or event authority lives here. */
 export function exposureChanges(
   world: WorldState,
-  base: WorldState,
+  base: EncounterBaseline,
   map: object,
   inputs: ExposureInput[],
 ) {
@@ -46,7 +53,7 @@ export function exposureChanges(
     inputs: new Map(
       inputs.map(({ id, position, height, radius, alive, memory, object }) => [
         id,
-        { id, position, height, radius, alive, memory, object },
+        { id, position: { ...position }, height, radius, alive, memory, object },
       ]),
     ),
     observers: new Map(),
@@ -61,6 +68,7 @@ export function exposureChanges(
   for (const old of previous?.inputs.values() ?? [])
     if (!next.inputs.has(old.id)) changed.push(old);
   pending.set(world, next);
+  const nearbyChanges = spatialCandidates(changed);
   return (actor: ExposureInput, radius: number, signature: string): boolean => {
     const old = previous?.observers.get(actor.id);
     next.observers.set(actor.id, {
@@ -79,11 +87,11 @@ export function exposureChanges(
       old.people !== base.visiblePeople?.[actor.id] ||
       old.objects !== base.visibleObjects?.[actor.id] ||
       old.episodes !== base.perceptionEpisodes?.[actor.id] ||
-      old.contacts !== base.entities[actor.id]?.actor?.contacts
+      old.contacts !== base.contacts.get(actor.id)
     )
       return true;
     // A changed source can affect this observer at either its previous or new position.
-    return changed.some(
+    return nearbyChanges(actor.position, radius).some(
       (input) =>
         Math.hypot(
           input.position.x - actor.position.x,
@@ -107,4 +115,38 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
       caches.set(result, next);
     } else if (prior) caches.set(result, prior);
   };
+}
+
+/** Only encounter dependencies cross a private motion slice. Histories, plans and the
+ * remaining world are not copied just to remember the last observed positions. */
+export function snapshotEncounters(world: WorldState): EncounterBaseline {
+  const next = pending.get(world);
+  const snapshot = <T extends object | undefined>(value: T): T =>
+    value && isDraft(value) ? current(value) : value;
+  const result: EncounterBaseline = {
+    positions: new Map(
+      (next
+        ? [...next.inputs.values()].map((input) => [input.id, input.position] as const)
+        : undefined) ??
+        worldRootEntities(world, true).map((entity) => [entity.id, { ...worldPosition(entity) }]),
+    ),
+    contacts: new Map(),
+    ...(world.visiblePeople ? { visiblePeople: snapshot(world.visiblePeople) } : {}),
+    ...(world.visibleObjects ? { visibleObjects: snapshot(world.visibleObjects) } : {}),
+    ...(world.perceptionEpisodes ? { perceptionEpisodes: snapshot(world.perceptionEpisodes) } : {}),
+  };
+  const prior = caches.get(isDraft(world) ? original(world)! : world);
+  const cache = next ?? prior;
+  for (const id of cache?.observers.keys() ?? Object.keys(world.entities))
+    result.contacts.set(id, snapshot(world.entities[id]?.actor?.contacts));
+  if (next) {
+    for (const [id, input] of next.observers) {
+      input.people = result.visiblePeople?.[id];
+      input.objects = result.visibleObjects?.[id];
+      input.episodes = result.perceptionEpisodes?.[id];
+      input.contacts = result.contacts.get(id);
+    }
+    caches.set(result, next);
+  } else if (prior) caches.set(result, prior);
+  return result;
 }

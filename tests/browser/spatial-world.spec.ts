@@ -49,16 +49,22 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await expect
       .poll(() => game.service.world.entities[game.service.controlledEntityId]!.actor!.action?.type)
       .toBe('move');
+    await expect
+      .poll(
+        () =>
+          game.service.world.entities[game.service.controlledEntityId]!.actor!.action?.navigation,
+        { timeout: 15_000 },
+      )
+      .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 280));
     await expect
       .poll(() => worldPosition(game.service.world.entities[game.service.controlledEntityId]!).y)
       .toBeCloseTo(3);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
-    await page.getByRole('button', { name: 'Recenter camera', exact: true }).click();
-    await page.getByLabel('Camera options', { exact: true }).click();
-    await page.getByRole('button', { name: 'Rotate camera right', exact: true }).click();
+    await page.getByRole('button', { name: 'Center on player', exact: true }).click();
+    await page.getByRole('button', { name: 'Rotate right', exact: true }).click();
     await expect(canvas).toHaveAttribute('data-camera-yaw', String(Math.PI / 4));
-    await page.getByRole('button', { name: 'Toggle camera projection', exact: true }).click();
+    await page.getByRole('button', { name: 'Perspective view', exact: true }).click();
     await expect(canvas).toHaveAttribute('data-projection', 'perspective');
     await page.getByLabel('Focus level', { exact: true }).selectOption('ground');
     await expect(canvas).toHaveAttribute('data-floor', 'ground');
@@ -66,12 +72,9 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       game.service.world.map.spatial.surfaces.some((surface) => surface.id === 'lookout-deck'),
     ).toBe(true);
     await page.getByLabel('Focus level', { exact: true }).selectOption('');
-    await page.getByRole('button', { name: 'Toggle camera rotation lock', exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Rotate camera right', exact: true }),
-    ).toBeDisabled();
-    await page.getByRole('button', { name: 'Toggle camera rotation lock', exact: true }).click();
-    await page.getByLabel('Camera options', { exact: true }).click();
+    await page.getByRole('button', { name: 'Lock rotation', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Rotate right', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: 'Lock rotation', exact: true }).click();
     await page.screenshot({ path: info.outputPath('spatial-lookout-perspective.png') });
     const before = JSON.stringify(
       worldPosition(game.service.world.entities[game.service.controlledEntityId]!),

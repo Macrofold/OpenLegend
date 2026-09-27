@@ -289,7 +289,7 @@ An operator or invited player should not need manual DB provisioning and a playa
 
 Expand world extents/map detail/navigation envelopes together after measuring representative larger maps; preserve explicit budget failure.
 
-Small independent geometry bounds can obstruct regional-world growth; avoid guessing a larger constant without navigation evidence. [LA136](../limits/spatial.md#la136), [LA137](../limits/spatial.md#la137), [LA138](../limits/spatial.md#la138), [LA139](../limits/spatial.md#la139), [LA140](../limits/spatial.md#la140), [LA141](../limits/spatial.md#la141), [LA142](../limits/spatial.md#la142) · [Work](spatial-world.md)
+Small independent geometry bounds can obstruct regional-world growth; avoid guessing a larger constant without navigation evidence. [LA136](../limits/spatial.md#la136), [LA137](../limits/spatial.md#la137), [LA138](../limits/spatial.md#la138), [LA139](../limits/spatial.md#la139), [LA141](../limits/spatial.md#la141), [SP01–SP03](../limits/spatial.md#sp01) · [Work](spatial-world.md)
 
 ## Remaining historical assessments
 

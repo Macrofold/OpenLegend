@@ -1,4 +1,7 @@
-import { exposureChanges } from './encounter-cache.js';
+import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
+import { motionTravelBounds, nativeMotionInterval } from './motion-boundaries.js';
+import { withStableAudience } from './event-audience.js';
+import { stateChangeRevision } from './dependencies.js';
 import {
   canAccessContainer,
   accessiblePossession,
@@ -6,7 +9,6 @@ import {
   inventoryWorkReason,
 } from './object-access.js';
 import { advanceAppraisals } from './appraisals.js';
-import { advanceCapabilityContributions } from './state-contributions.js';
 import {
   WorkBudgetError,
   meteredIterator,
@@ -27,6 +29,7 @@ import {
 } from './objects.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
+import { objectExposureQuery } from './object-exposure.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
 import {
@@ -42,7 +45,11 @@ import {
   type ResourceOperation,
 } from './resource-claims.js';
 import { sameDefinitionPin } from './state-owners.js';
-import { BASE_ACTION_DEFAULTS } from './worlds/base/actions.js';
+import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
+import { nativeInterval } from './temporal-boundaries.js';
+import { TIME_EPSILON } from './simulation-time.js';
+import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { advanceCommitments } from './commitments.js';
 import {
   canHandleItems,
   portableItems,
@@ -57,11 +64,15 @@ import {
   canWalkSegment,
   finitePoint,
   interpolate,
+  MOVEMENT,
   SPATIAL_LIMITS,
+  type RoutePlan,
+  type NavigationRequest,
+  type NavigationResult,
   type SurfacePoint,
 } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
-import { advanceFlight, LandingOccupancy } from './flight.js';
+import { advanceFlight, landingDue, LandingOccupancy } from './flight.js';
 import {
   withdrawAttempt,
   replaceGoals,
@@ -84,7 +95,7 @@ import {
   advanceReservoirs,
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
-import { changeConversation } from './conversations.js';
+import { reconcileConversations, changeConversation } from './conversations.js';
 import {
   canSpeak,
   hasMemory,
@@ -95,7 +106,10 @@ import {
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import {
-  advanceStatusEffects,
+  reconcileStatusEffects,
+  prepareStatusRates,
+  integrateStatusRates,
+  mayAdvanceStatusEffects,
   activateStatusEffect,
   deactivateStatusEffect,
   interruptStatusEffects,
@@ -104,7 +118,14 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  recordVisualAcquisition,
+  finish,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -142,8 +163,7 @@ import type {
 } from './types.js';
 
 export const SIMULATION_RULES = {
-  version: 2,
-  fixedStepSeconds: 1,
+  version: 3,
   maxAdvanceSeconds: 86400,
   ...BASE_ACTION_DEFAULTS,
 } as const;
@@ -275,17 +295,17 @@ function actionInReach(
     return (
       !!action.destination &&
       worldSupport(actor) === action.destination.surfaceId &&
-      distance(origin, action.destination) <= 0.015
+      distance(origin, action.destination) <= MOVEMENT.arrivalTolerance
     );
   const target = actionTarget(world, action);
   return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
 }
-function approachPath(world: WorldState, actor: Entity, action: Action): SurfacePoint[] | null {
+function approachPath(world: WorldState, actor: Entity, action: Action): RoutePlan | null {
   if (!supportedPosition(actor)) return null;
   const destination = targetPosition(world, action);
   if (!destination) return null;
-  if (visionRadius(world, actor) === 0)
-    return directProbe(
+  if (visionRadius(world, actor) === 0) {
+    const path = directProbe(
       world,
       worldPosition(actor),
       destination,
@@ -294,6 +314,8 @@ function approachPath(world: WorldState, actor: Entity, action: Action): Surface
         ? action.destination!.surfaceId
         : (worldSupport(actionTarget(world, action)) ?? undefined),
     );
+    return path ? { status: 'reached', path, length: 0, expanded: 0 } : null;
+  }
   return action.type === 'move'
     ? findPath(
         world,
@@ -314,10 +336,121 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
   const path = approachPath(world, actor, action);
   if (!path)
     return outcome(false, 'unreachable', 'No supported route to a reachable stance was found.');
+  if (path.status !== 'reached' && path.status !== 'pending')
+    return outcome(false, path.status, 'No supported route was found.');
   action.stage = 'approaching';
-  action.path = path;
+  action.path = path.path;
+  action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
   return null;
 }
+/** Required navigation is a technical barrier, not an in-world wait. Stale requests do not
+ * block time: the next native step reconciles them. Never include another actor's destination
+ * in the public barrier indicator. docs/architecture.md#navigation-preparation
+ */
+export function navigationBlocked(world: WorldState, actorIds?: readonly string[]): boolean {
+  const actors = actorIds ? actorIds.map((id) => world.entities[id]!) : worldRootEntities(world);
+  return actors.some((entity) => {
+    const request = entity.actor?.action?.navigation;
+    if (
+      !entity.actor?.alive ||
+      !activelyParticipates(entity) ||
+      entity.actor.incapacitated ||
+      !request ||
+      request.failure
+    )
+      return false;
+    const body = bodyProfile(entity);
+    return (
+      request.request.geometryRevision === world.map.spatial.revision &&
+      request.request.from.surfaceId === worldSupport(entity) &&
+      distance(worldPosition(entity), request.request.from) < 1e-7 &&
+      body.radius === request.request.body.radius &&
+      body.height === request.request.body.height &&
+      body.maxSlope === request.request.body.maxSlope
+    );
+  });
+}
+
+/** Route results are untrusted derived data. Only a matching current action may accept them;
+ * preparation may finish while paused, but this transition never moves or consumes anything.
+ * archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation
+ */
+export function completeNavigation(
+  original: WorldState,
+  actorId: string,
+  actionId: string,
+  request: NavigationRequest,
+  result: NavigationResult,
+): Transition {
+  const source = original.entities[actorId],
+    action = source?.actor?.action;
+  const stale = (): Transition => ({
+    world: original,
+    events: [],
+    outcome: outcome(false, 'stale-route', 'The route request is no longer current.'),
+  });
+  if (
+    !source?.actor?.alive ||
+    !activelyParticipates(source) ||
+    source.actor.incapacitated ||
+    !action ||
+    action.id !== actionId ||
+    !action.navigation ||
+    canonicalJson(action.navigation.request) !== canonicalJson(request) ||
+    request.geometryRevision !== original.map.spatial.revision ||
+    worldSupport(source) !== request.from.surfaceId ||
+    distance(worldPosition(source), request.from) > 1e-7
+  )
+    return stale();
+  const profile = bodyProfile(source);
+  if (
+    profile.radius !== request.body.radius ||
+    profile.height !== request.body.height ||
+    profile.maxSlope !== request.body.maxSlope
+  )
+    return stale();
+  let failure =
+    result.status === 'reached'
+      ? undefined
+      : result.status === 'no-route'
+        ? 'no supported route reaches that destination.'
+        : result.status === 'unavailable'
+          ? 'navigation preparation is unavailable; retry the action later.'
+          : result.status === 'budget-exceeded'
+            ? 'the route exceeds the current navigation budget.'
+            : 'the proposed route does not fit this body or its supporting surfaces.';
+  if (result.status === 'reached') {
+    let previous = request.from;
+    if (!Array.isArray(result.path) || result.path.length > SPATIAL_LIMITS.maxPathPoints)
+      failure = 'navigation returned an invalid route.';
+    for (const point of failure ? [] : result.path) {
+      if (!finitePoint(point) || !canWalkSegment(spatialMap(original), previous, point, profile)) {
+        failure = 'the prepared route became physically blocked.';
+        break;
+      }
+      previous = point;
+    }
+    if (
+      !request.destinations.some(
+        (p) => p.surfaceId === previous.surfaceId && distance(p, previous) < 1e-6,
+      )
+    )
+      failure = 'navigation returned only a partial route.';
+  }
+  const world = draftWorld(original),
+    current = world.entities[actorId]!.actor!.action!;
+  if (failure) current.navigation!.failure = failure;
+  else {
+    current.path = result.path.map((p) => ({ ...p }));
+    delete current.navigation;
+  }
+  return finish(
+    world,
+    [],
+    outcome(true, failure ? 'route-blocked' : 'route-ready', failure ?? 'Route ready.'),
+  );
+}
+
 function materialRequirements(
   world: WorldState,
   action: Action,
@@ -1323,22 +1456,32 @@ function moveAlongPath(
   let remaining = distanceBudget;
   const map = spatialMap(world),
     profile = bodyProfile(actor);
-  while (path.length && remaining > 0) {
+  while (path.length) {
     const point = path[0]!,
       start = supportedPosition(actor);
-    if (!start || !canWalkSegment(map, start, point, profile)) return false;
+    if (!start) return false;
     const delta = distance(start, point);
+    if (delta <= SPATIAL_LIMITS.epsilon) {
+      if (!canWalkSegment(map, start, point, profile)) return false;
+      setSpatialPosition(world, actor, point, point.surfaceId);
+      path.shift();
+      continue;
+    }
+    if (remaining <= 0) break;
+    const next =
+      delta <= remaining
+        ? point
+        : {
+            ...interpolate(start, point, remaining / delta),
+            surfaceId: start.surfaceId,
+          };
+    if (!canWalkSegment(map, start, next, profile)) return false;
     if (delta <= remaining) {
       setSpatialPosition(world, actor, point, point.surfaceId);
       path.shift();
       remaining -= delta;
     } else {
-      setSpatialPosition(
-        world,
-        actor,
-        interpolate(start, point, remaining / delta),
-        start.surfaceId,
-      );
+      setSpatialPosition(world, actor, next, start.surfaceId);
       remaining = 0;
     }
   }
@@ -1384,6 +1527,24 @@ function advanceAction(
     return;
   }
   if (action.stage === 'approaching') {
+    if (action.navigation?.failure) {
+      failAction(world, actor, events, action.navigation.failure);
+      return;
+    }
+    if (action.navigation) {
+      const requested = action.navigation.request;
+      const profile = bodyProfile(actor);
+      if (
+        requested.geometryRevision === world.map.spatial.revision &&
+        requested.body.radius === profile.radius &&
+        requested.body.height === profile.height &&
+        requested.body.maxSlope === profile.maxSlope &&
+        requested.from.surfaceId === worldSupport(actor) &&
+        distance(requested.from, worldPosition(actor)) < 1e-7
+      )
+        return;
+      delete action.navigation;
+    }
     const destination = targetPosition(world, action);
     if (!destination) {
       failAction(world, actor, events, 'the target disappeared.');
@@ -1396,13 +1557,14 @@ function advanceAction(
       failAction(world, actor, events, 'the target is no longer alive.');
       return;
     }
+    if (seconds === 0 && !moveAlongPath(world, actor, action.path, 0)) action.path = [];
     if (!actionInReach(world, actor, action)) {
       const last = action.path.at(-1);
       const endpointUseful =
         last &&
         (action.type === 'move'
           ? last.surfaceId === action.destination!.surfaceId &&
-            distance(last, action.destination!) <= 0.015
+            distance(last, action.destination!) <= MOVEMENT.arrivalTolerance
           : canReachEntity(
               world,
               actor,
@@ -1411,24 +1573,28 @@ function advanceAction(
               last,
             ));
       if (!endpointUseful) {
-        const path = approachPath(world, actor, action);
-        if (!path) {
-          failAction(world, actor, events, 'no supported route remains.');
+        if ((action.replans ?? 0) >= MOVEMENT.maxReplans) {
+          failAction(
+            world,
+            actor,
+            events,
+            'the target or route keeps changing; choose a new action.',
+          );
           return;
         }
-        action.path = path;
+        action.replans = (action.replans ?? 0) + 1;
+        const error = approach(world, actor, action);
+        if (error) {
+          failAction(world, actor, events, error.message);
+          return;
+        }
+        if (action.navigation) return;
       }
-      if (
-        !moveAlongPath(
-          world,
-          actor,
-          action.path,
-          SIMULATION_RULES.movementTilesPerSecond *
-            seconds *
-            (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
-        )
-      )
-        failAction(world, actor, events, 'the route became physically blocked.');
+      if (!moveAlongPath(world, actor, action.path, nativeMovementSpeed(actor) * seconds)) {
+        action.path = [];
+        if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
+          failAction(world, actor, events, 'the route became physically blocked.');
+      }
       return;
     }
     if (action.type === 'move') {
@@ -1440,6 +1606,9 @@ function advanceAction(
       failAction(world, actor, events, error.message);
       return;
     }
+    // A moving target may enter reach during this phase. Work begins at that
+    // endpoint, never retroactively over the preceding approach interval.
+    seconds = 0;
   }
   if (
     ['gather', 'harvest', 'cook', 'pickup'].includes(action.type) &&
@@ -1526,6 +1695,7 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
   if (
     !animal ||
     !entity.actor?.alive ||
+    entity.actor.incapacitated ||
     entity.actor.action ||
     entity.spatial.flight ||
     entity.spatial.fallVelocity !== undefined
@@ -1545,18 +1715,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
     ]) {
       const destination = {
         y: 0,
-        x:
-          worldPosition(entity).x +
-          vector.x *
-            SIMULATION_RULES.animalFleeTilesPerSecond *
-            seconds *
-            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
-        z:
-          worldPosition(entity).z +
-          vector.z *
-            SIMULATION_RULES.animalFleeTilesPerSecond *
-            seconds *
-            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
+        x: worldPosition(entity).x + vector.x * nativeMovementSpeed(entity, true) * seconds,
+        z: worldPosition(entity).z + vector.z * nativeMovementSpeed(entity, true) * seconds,
       };
       const point = sameSurfacePoint(world, entity, destination.x, destination.z),
         start = supportedPosition(entity);
@@ -1578,7 +1738,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
         start = supportedPosition(entity);
       if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity)))
         setSpatialPosition(world, entity, point, point.surfaceId);
-      animal.wanderSeconds = 120 + Math.floor(nextRandom(world) * 120);
+      // Retain overshoot. The base horizon is shorter than this minimum wait.
+      animal.wanderSeconds += 120 + Math.floor(nextRandom(world) * 120);
     }
   }
 }
@@ -1616,7 +1777,7 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
     }
   }
   if (component.action && component.fullness > 10 && component.energy > 5) return;
-  if (component.fullness < 42) {
+  if (component.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) {
     const resource = worldRootEntities(world)
       .filter(
         (entity) =>
@@ -1690,38 +1851,66 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
 }
 
 /** This finite native step changes entity state, not participant components/membership.
- * Compile IDs outside the draft so inert scenery is not proxied/sorted every second. A nested
+ * Compile IDs outside the draft so inert scenery is not proxied/sorted every interval. A nested
  * command can install a new world; refresh there before the next native phase. Future native
  * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
  * docs/performance.md#simulation-cpu-and-growing-history
  */
-function nativeParticipants(world: WorldState): { actors: string[]; ambient: string[] } {
-  const active = worldRootEntities(world)
+function nativeParticipants(world: WorldState): {
+  actors: string[];
+  ambient: string[];
+  statuses: string[];
+} {
+  const roots = worldRootEntities(world);
+  const active = roots
     .filter((e) => activelyParticipates(e) && (e.actor || e.animal || e.heat))
     .sort((a, b) => a.id.localeCompare(b.id));
   return {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
+    statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
   };
 }
 
-/** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
-export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
-  const steps = advanceWorldSlices(original, elapsedSimSeconds);
+type NativeMechanics = {
+  remainingSeconds: number;
+  interval: ReturnType<typeof nativeInterval>;
+  status: ReturnType<typeof prepareStatusRates>;
+  travelFor: (id: string) => number;
+  reactiveActors: string[];
+};
+const nativeContinuations = new WeakMap<
+  WorldState,
+  {
+    mechanics: NativeMechanics;
+    participants: ReturnType<typeof nativeParticipants>;
+  }
+>();
+
+/** Advance a bounded prefix at meaningful/fidelity boundaries.
+ * docs/simulation-time.md#native-interval-contract */
+export function advanceWorld(
+  original: WorldState,
+  elapsedSimSeconds: number,
+  options: { maxIntervals?: number } = {},
+): Transition {
+  const steps = advanceWorldSlices(original, elapsedSimSeconds, options);
   let result = steps.next();
   while (!result.done) result = steps.next();
   return result.value;
 }
-/** Yields private progress only. The server holds its writer until the final transition. */
+/** Yields private progress only. At a coherent boundary the caller can request publication
+ * by resuming with true. The domain reads no wall clock and never exposes a partial draft. */
 export function* advanceWorldSlices(
   original: WorldState,
   elapsedSimSeconds: number,
-): Generator<void, Transition> {
+  options: { maxIntervals?: number } = {},
+): Generator<void | 'boundary', Transition, boolean | undefined> {
   const nested = inWorkGroup();
   try {
     return yield* meteredIterator(
       WORK_LIMITS.group,
-      advanceWorldNative(original, elapsedSimSeconds),
+      advanceWorldNative(original, elapsedSimSeconds, options),
     );
   } catch (error) {
     if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
@@ -1733,11 +1922,16 @@ export function* advanceWorldSlices(
 function* advanceWorldNative(
   original: WorldState,
   elapsedSimSeconds: number,
-): Generator<void, Transition> {
+  options: { maxIntervals?: number } = {},
+): Generator<void | 'boundary', Transition, boolean | undefined> {
+  const maxIntervals = options.maxIntervals ?? 4096;
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
-    elapsedSimSeconds > SIMULATION_RULES.maxAdvanceSeconds
+    elapsedSimSeconds > SIMULATION_RULES.maxAdvanceSeconds ||
+    !Number.isSafeInteger(maxIntervals) ||
+    maxIntervals < 1 ||
+    maxIntervals > 4096
   )
     return {
       world: original,
@@ -1745,46 +1939,71 @@ function* advanceWorldNative(
       outcome: outcome(
         false,
         'invalid-duration',
-        'Advance duration must be between zero and one simulated day.',
+        'Supply zero to one game day and a bounded positive interval count.',
       ),
     };
-  if (original.paused || elapsedSimSeconds === 0)
+  if (original.paused || elapsedSimSeconds === 0 || navigationBlocked(original))
     return {
       world: original,
       events: [],
       outcome: outcome(
         true,
-        original.paused ? 'paused' : 'unchanged',
-        original.paused ? 'World time is paused.' : 'No time elapsed.',
+        original.paused
+          ? 'paused'
+          : navigationBlocked(original)
+            ? 'navigation-pending'
+            : 'unchanged',
+        'No game time advanced.',
       ),
     };
-  let participants = nativeParticipants(original);
+  // Only the exact immutable native successor can reuse this prediction. Commands,
+  // edits and recovery create another identity and rebuild; forks copy the countdown.
+  const continuation = Object.isFrozen(original) ? nativeContinuations.get(original) : undefined;
+  let participants = continuation?.participants ?? nativeParticipants(original);
+  const mechanicalRevision = (world: WorldState) =>
+    stateChangeRevision(world, 'contribution') +
+    stateChangeRevision(world, 'body') +
+    stateChangeRevision(world, 'participation');
   let world = draftWorld(original);
+  let before = snapshotEncounters(original);
   const events: WorldEvent[] = [];
-  let remaining = elapsedSimSeconds;
-  while (remaining > 0) {
-    const seconds = Math.min(1, remaining);
-    remaining -= seconds;
-    world.simTime += seconds;
-    reconcileResourceReservations(world);
-    advanceAppraisals(world, events);
-    // Status operations also apply to non-actor entities, in saved entity/definition order.
-    for (const entity of worldRootEntities(world))
-      if (activelyParticipates(entity)) advanceStatusEffects(world, entity, seconds, events);
-      else advanceCapabilityContributions(world, entity, events);
-    // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
-    for (const actorId of participants.actors) {
+  let remaining = elapsedSimSeconds,
+    intervals = 0,
+    motionSlices = 0,
+    slicesSinceBoundary = 0;
+  let mechanics: NativeMechanics | undefined = continuation
+    ? { ...continuation.mechanics }
+    : undefined;
+  while (
+    remaining > 0 &&
+    intervals < maxIntervals &&
+    motionSlices < 4096 &&
+    !navigationBlocked(world, participants.actors)
+  ) {
+    // A tiny retained remainder is a forecast, not authority to advance the clock.
+    // Recompute from current state; only a real predicate may require a micro-interval.
+    if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) mechanics = undefined;
+    const beforeState = mechanicalRevision(world);
+    let statusIds = participants.statuses;
+    if (!mechanics) {
+      reconcileResourceReservations(world);
+      advanceAppraisals(world, events);
+      for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
+      advanceCommitments(world, []);
+      reconcileConversations(world);
+    }
+    const beforeDecisions = world.nextId;
+    for (const actorId of mechanics?.reactiveActors ?? participants.actors) {
       yield;
-      let actor = world.entities[actorId]!;
-      let component = actor.actor!;
+      let actor = world.entities[actorId];
+      if (!actor?.actor) continue;
+      let component = actor.actor;
       if (!component.alive || component.incapacitated) continue;
-      if (hasWildernessNeeds(component)) {
-        if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
-        if (component.health === 0) continue;
-        if (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
-          nativeSurvival(world, actor, events);
-      }
-      advanceReservoirs(world, actor, seconds, events);
+      if (
+        hasWildernessNeeds(component) &&
+        (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
+      )
+        nativeSurvival(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
       if (step) {
@@ -1803,6 +2022,7 @@ function* advanceWorldNative(
             };
         participants = nativeParticipants(transition.world);
         world = draftWorld(transition.world);
+        mechanics = undefined;
         events.push(...transition.events);
         actor = world.entities[actorId]!;
         component = actor.actor!;
@@ -1815,25 +2035,214 @@ function* advanceWorldNative(
         if (!transition.outcome.ok || !component.action)
           finishPlanAction(world, actorId, started.actionId, transition.outcome);
       }
+
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
         component.action?.type === 'status-effect' ||
         component.action?.type === 'pickup'
       )
-        advanceAction(world, actor, seconds, events);
+        advanceAction(world, actor, 0, events);
     }
-    // Only landing needs this index; rebuild once at that phase, then track subsequent moves.
+    if (world.nextId !== beforeDecisions) mechanics = undefined;
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
+    const trackOccupancy = (e: Entity) => occupancy?.update(e);
+    // Flight events read one occurrence-time pose for every receiver, after movement.
+    const occurrences: Array<Parameters<typeof emit>> = [];
+    const deferFlight = (...args: Parameters<typeof emit>): void => {
+      const source = args[4];
+      if (source?.placement?.mode === 'world')
+        args[4] = {
+          ...source,
+          placement: { ...source.placement, position: { ...source.placement.position } },
+        };
+      occurrences.push(args);
+    };
+    const flushFlight = () => {
+      withStableAudience(world, () => {
+        occurrences.sort((a, b) => (a[4]?.id ?? '').localeCompare(b[4]?.id ?? ''));
+        for (const occurrence of occurrences) emit(...occurrence);
+      });
+      occurrences.length = 0;
+    };
+    const beforeStartEvents = events.length;
     for (const id of participants.ambient) {
       yield;
-      const entity = world.entities[id]!;
-      if (!capabilityBlocked(world, entity, 'locomotion')) {
-        advanceFlight(world, entity, seconds, events, landingOccupancy);
-        advanceAnimal(world, entity, seconds);
+      const entity = world.entities[id];
+      if (!entity || capabilityBlocked(world, entity, 'locomotion')) continue;
+      advanceFlight(world, entity, 0, events, landingOccupancy, deferFlight);
+      advanceAnimal(world, entity, 0);
+      trackOccupancy(entity);
+    }
+    flushFlight();
+    // Grounding predicates may change even without changing an active status episode.
+    if (events.length !== beforeStartEvents || mechanicalRevision(world) !== beforeState)
+      mechanics = undefined;
+    // Nested commands can replace entities or status attributes. Reuse the speech branch's
+    // conservative roster helper; never retain revoked draft references across that boundary.
+    statusIds = participants.statuses;
+    for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
+    if (events.length !== beforeStartEvents || mechanicalRevision(world) !== beforeState)
+      mechanics = undefined;
+    if (navigationBlocked(world, participants.actors)) break;
+    const intervalState = mechanicalRevision(world);
+    if (!mechanics) {
+      const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
+      const travelFor = motionTravelBounds(
+        world,
+        BASE_TIME_POLICY.idleHorizonSeconds,
+        participants.actors,
+        participants.ambient,
+      );
+      const interval = nativeInterval(
+        world,
+        BASE_TIME_POLICY.idleHorizonSeconds,
+        participants.actors,
+        participants.ambient,
+        statusIds,
+        status,
+        travelFor,
+      );
+      // Only already-urgent native responders and plans can reconsider between known
+      // thresholds. Others keep integrating values without repeating decision work.
+      const reactiveActors = participants.actors.filter((id) => {
+        const actor = world.entities[id]?.actor;
+        return (
+          actor &&
+          (actor.agency.plan ||
+            (actor.controller === 'npc' &&
+              ((hasWildernessNeeds(actor) &&
+                actor.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) ||
+                Object.entries(actor.attributes ?? {}).some(([id, state]) => {
+                  const definition = attributeDefinition(world, id)!;
+                  return (
+                    definition.reservoir &&
+                    definition.concern &&
+                    typeof state.value === 'number' &&
+                    state.value < definition.concern.below
+                  );
+                }))))
+        );
+      });
+      mechanics = {
+        remainingSeconds: interval.seconds,
+        interval,
+        status,
+        travelFor,
+        reactiveActors,
+      };
+    }
+    const { interval, status, travelFor } = mechanics;
+    const seconds = nativeMotionInterval(
+      world,
+      Math.min(remaining, mechanics.remainingSeconds),
+      participants.ambient,
+      travelFor,
+    );
+    // Fixed contributions become ineffective at the endpoint. Their release grants only
+    // future movement, never movement over the interval they restricted.
+    // docs/simulation-time.md#native-interval-contract
+    const movementRestricted = new Set(
+      statusIds.filter((id) => capabilityBlocked(world, world.entities[id], 'locomotion')),
+    );
+    const working = new Map(
+      participants.actors.flatMap((id) => {
+        const e = world.entities[id],
+          a = e?.actor?.action;
+        return e?.actor?.alive &&
+          !e.actor.incapacitated &&
+          a?.stage === 'working' &&
+          (!capabilityBlocked(world, e, 'locomotion') ||
+            a.type === 'status-effect' ||
+            a.type === 'pickup')
+          ? [[id, a.id] as const]
+          : [];
+      }),
+    );
+    world.simTime += seconds;
+    remaining = Math.max(0, remaining - seconds);
+    mechanics.remainingSeconds = Math.max(0, mechanics.remainingSeconds - seconds);
+    motionSlices++;
+    slicesSinceBoundary++;
+    const beforeMovementEffects = events.length;
+    // Move before endpoint effects: a shot/death at the end cannot cause earlier fleeing.
+    for (const id of participants.actors) {
+      yield;
+      const actor = world.entities[id];
+      if (
+        actor?.actor?.alive &&
+        !actor.actor.incapacitated &&
+        actor.actor.action?.stage === 'approaching' &&
+        !movementRestricted.has(id)
+      )
+        advanceAction(world, actor, seconds, events);
+    }
+    const movementEffects = events.length !== beforeMovementEffects;
+    // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
+    // Order due RNG draws by deadline then identity, independently of callback chunk size.
+    const wanderers = participants.ambient
+      .filter((id) => {
+        const e = world.entities[id];
+        return (
+          e?.animal &&
+          e.actor?.alive &&
+          !e.actor.incapacitated &&
+          !e.actor.action &&
+          !e.spatial.flight &&
+          e.spatial.fallVelocity === undefined &&
+          !(e.animal.fleeSeconds > 0 && e.animal.fleeFrom) &&
+          !movementRestricted.has(id)
+        );
+      })
+      .sort(
+        (a, b) =>
+          world.entities[a]!.animal!.wanderSeconds - world.entities[b]!.animal!.wanderSeconds ||
+          a.localeCompare(b),
+      );
+    const wandered = new Set(wanderers);
+    for (const id of wanderers) advanceAnimal(world, world.entities[id]!, seconds);
+    occupancy = undefined;
+    const landings = new Set(
+      participants.ambient.filter((id) => landingDue(world, world.entities[id]!, seconds)),
+    );
+    const movementOrder = [...participants.ambient.filter((id) => !landings.has(id)), ...landings];
+    for (const id of movementOrder) {
+      yield;
+      const entity = world.entities[id];
+      if (!entity) continue;
+      if (!movementRestricted.has(id)) {
+        const flightOwned = !!entity.spatial.flight || entity.spatial.fallVelocity !== undefined;
+        advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
+        // Landing grants future animal movement, never the flight interval just consumed.
+        if (!flightOwned && !wandered.has(id)) advanceAnimal(world, entity, seconds);
       }
-      occupancy?.update(entity);
-      if (entity.heat?.lit) {
+      trackOccupancy(entity);
+    }
+    const movedWithOccurrences = occurrences.length > 0;
+    flushFlight();
+    const beforeEffects = events.length;
+    integrateStatusRates(world, status, seconds, events);
+    for (const id of participants.actors) {
+      const actor = world.entities[id],
+        component = actor?.actor;
+      if (!actor || !component?.alive || component.incapacitated) continue;
+      if (
+        hasWildernessNeeds(component) &&
+        advanceWildernessNeeds(
+          actor,
+          seconds,
+          interval.exhausted.has(id) ? seconds : 0,
+          interval.starving.has(id) ? seconds : 0,
+        )
+      )
+        reconcileBody(world, actor, events, 'needs');
+      if (!component.alive || component.incapacitated) continue;
+      advanceReservoirs(world, actor, seconds, events);
+      if (working.get(id) === component.action?.id) advanceAction(world, actor, seconds, events);
+    }
+    for (const id of participants.ambient) {
+      const entity = world.entities[id];
+      if (entity?.heat?.lit) {
         entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
         if (entity.heat.fuelSeconds === 0) {
           entity.heat.lit = false;
@@ -1841,30 +2250,73 @@ function* advanceWorldNative(
         }
       }
     }
+    for (const id of statusIds) {
+      const entity = world.entities[id];
+      if (entity) reconcileStatusEffects(world, entity, events);
+    }
+    // Arrival starts new work now; only work already active at the start receives elapsed time.
+    for (const id of participants.actors) {
+      const actor = world.entities[id];
+      if (
+        actor?.actor?.alive &&
+        !actor.actor.incapacitated &&
+        actor.actor.action?.stage === 'approaching' &&
+        !capabilityBlocked(world, actor, 'locomotion')
+      )
+        advanceAction(world, actor, 0, events);
+    }
+    reconcileResourceReservations(world);
+    advanceAppraisals(world, events);
+    const sharedBoundary =
+      mechanics.remainingSeconds === 0 ||
+      movementEffects ||
+      events.length !== beforeEffects ||
+      mechanicalRevision(world) !== intervalState;
+    if (sharedBoundary || slicesSinceBoundary === 32) {
+      intervals++;
+      slicesSinceBoundary = 0;
+    }
+    if (sharedBoundary || movedWithOccurrences) mechanics = undefined;
+    yield* updateEncounters(world, before, events, participants.actors);
+    advanceCommitments(world, events);
+    reconcileConversations(world);
+    if (remaining > 0 && intervals < maxIntervals && motionSlices < 4096) {
+      if (yield 'boundary') break;
+      before = snapshotEncounters(world);
+    }
   }
-  yield* updateEncounters(world, original, events, participants.actors);
-  return finish(
+  const result = finish(
     world,
     events,
-    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
+    outcome(
+      true,
+      navigationBlocked(world, participants.actors)
+        ? 'navigation-pending'
+        : remaining > 0
+          ? 'advance-budget'
+          : 'advanced',
+      `Advanced ${world.simTime - original.simTime} simulation seconds in ${intervals + (slicesSinceBoundary ? 1 : 0)} intervals (${motionSlices} motion slices).`,
+    ),
   );
+  if (mechanics && Object.isFrozen(original))
+    nativeContinuations.set(result.world, { mechanics, participants });
+  return result;
 }
 
+const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function* updateEncounters(
   world: WorldState,
-  original: WorldState,
+  original: EncounterBaseline,
   events: WorldEvent[],
   actorIds: readonly string[],
 ): Generator<void> {
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const hadObjectExposures = original.visibleObjects !== undefined;
-  const encounter = encounterEmitter(world, events);
-
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
-  const entities = worldRootEntities(world)
+  const entities = worldRootEntities(world, true)
     .filter(activelyParticipates)
     .map((entity) => {
       const position = worldPosition(entity),
@@ -1891,7 +2343,12 @@ function* updateEncounters(
     0,
   );
   const changedExposure = exposureChanges(world, original, spatialMap(world), entities);
-  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
+  const objectsFor = objectExposureQuery(
+    world,
+    entities.filter((e) => e.object),
+  );
+  // A blocked observer still reconciles the loss of its visual episodes. Skipping the
+  // observer here would let waking reuse an episode from before perception was lost.
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
     yield;
     const radius = visionRadius(world, actor.entity);
@@ -1927,7 +2384,7 @@ function* updateEncounters(
           bodiesTouch(actor.entity, e.entity) &&
           hasLineOfEffect(world, actor.entity, e.entity),
       )) {
-        const oldPosition = worldPosition(original.entities[source.id]);
+        const oldPosition = original.positions.get(source.id);
         const detail =
           oldPosition && distance(oldPosition, source.position) > 0.001 ? 'moving' : 'present';
         const previous = prior[source.id];
@@ -1984,7 +2441,7 @@ function* updateEncounters(
         Object.keys(contacts).length !== Object.keys(prior).length ||
         Object.entries(contacts).some(([id, c]) => c !== prior[id])
       )
-        actor.entity.actor!.contacts = contacts;
+        world.entities[actor.id]!.actor!.contacts = contacts;
     }
     if (radius === 0) {
       if (
@@ -1995,24 +2452,42 @@ function* updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, radius + 2)
+    let seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
-    const objectIds = objects.map((entity) => entity.id);
+    let objectIds = objectsFor(actor.entity);
+    const previousObjects = original.visibleObjects?.[actor.id];
+    const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
+    const sameObjects =
+      !!previousObjects &&
+      (objectIds === previousObjects ||
+        (objectIds.length === previousObjects.length &&
+          objectIds.every((id, i) => id === previousObjects[i])));
+    if (samePeople) seen = previous;
+    if (sameObjects) objectIds = previousObjects!;
     // Persistent exposure episodes do not imply identity recognition across a disappearance.
     // docs/knowledge.md#subject-binding
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const exposed = [...seen, ...objectIds];
-    if (
-      exposed.length !== Object.keys(priorEpisodes).length ||
-      exposed.some((id) => !priorEpisodes[id])
-    )
-      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
-      );
-    const newlySeen = seen.filter((id) => !previouslySeen.has(id));
+    const certified = Object.isFrozen(priorEpisodes)
+      ? episodeMembership.get(priorEpisodes)
+      : undefined;
+    if (certified?.people !== seen || certified.objects !== objectIds) {
+      const exposed = [...seen, ...objectIds];
+      if (
+        exposed.length !== Object.keys(priorEpisodes).length ||
+        exposed.some((id) => !priorEpisodes[id])
+      )
+        (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+          exposed.map((id) => [
+            id,
+            priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`,
+          ]),
+        );
+      else if (Object.isFrozen(priorEpisodes))
+        episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
+    }
+    const previouslySeen = samePeople ? null : new Set(previous);
+    const newlySeen = samePeople ? [] : seen.filter((id) => !previouslySeen!.has(id));
     if (newlySeen.length) {
       // Encounter emission adds awareness, not memories. Read the current immutable
       // memory snapshot once instead of rescanning/proxying it for every new contact.
@@ -2029,33 +2504,22 @@ function* updateEncounters(
           .flatMap((m) => m.entityIds),
       );
       for (const id of newlySeen) {
-        if (!recent.has(id)) encounter(actor.entity, id, true);
+        if (!recent.has(id)) recordVisualAcquisition(world, events, actor.entity, id, true);
         yield;
       }
     }
-    if (
-      !original.visiblePeople?.[actor.id] ||
-      seen.length !== previous.length ||
-      seen.some((id, index) => id !== previous[index])
-    )
+    if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
-    // Object exposures use the same committed awareness path without a cognition trigger.
-    const priorObjects = new Set(
-      original.visibleObjects?.[actor.id] ??
-        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
-    );
-    for (const entity of objects) {
-      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
-      yield;
-    }
-    const previousObjects = original.visibleObjects?.[actor.id];
-    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
-    if (
-      !previousObjects ||
-      objectIds.length !== previousObjects.length ||
-      objectIds.some((id, index) => id !== previousObjects[index])
-    )
+    if (!sameObjects) {
+      // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
+      // Captions/speech still resolve event-time evidence independently of this visual cache.
+      const priorObjects = new Set(previousObjects ?? (hadObjectExposures ? [] : objectIds));
+      for (const id of objectIds) {
+        if (!priorObjects.has(id)) recordVisualAcquisition(world, events, actor.entity, id, false);
+        yield;
+      }
       (world.visibleObjects ??= {})[actor.id] = objectIds;
+    }
   }
 }
 
@@ -2137,6 +2601,10 @@ export function observeActor(
       // Seeing a bag does not disclose its private contents or packing load.
       delete copy.container;
       delete copy.inventoryRevision;
+      if (copy.actor?.action) {
+        delete copy.actor.action.destination;
+        delete copy.actor.action.navigation;
+      }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;

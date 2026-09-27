@@ -59,8 +59,14 @@ export interface ChangeSet {
 }
 const pending = new WeakMap<
   WorldState,
-  { changes: Map<string, SemanticChange>; conservative: boolean }
+  { changes: Map<string, SemanticChange>; conservative: boolean; states: Map<StateField, number> }
 >();
+type StateField = Extract<SemanticChange, { kind: 'state' }>['field'];
+/** Private-phase invalidation follows mutation owners, including silent status changes.
+ * This rebuildable token is not a persisted revision or permission to reuse across commands. */
+export function stateChangeRevision(world: WorldState, field: StateField): number {
+  return pending.get(world)?.states.get(field) ?? 0;
+}
 const published = new WeakMap<WorldState, ChangeSet>();
 const MAX_CHANGE_SCOPES = 4096;
 /** Called at semantic mutation owners before old scope is discarded. Bounded coalescing
@@ -74,7 +80,10 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
       after: change.after ? { x: change.after.x, y: change.after.y, z: change.after.z } : null,
     };
   let set = pending.get(world);
-  if (!set) pending.set(world, (set = { changes: new Map(), conservative: false }));
+  if (!set)
+    pending.set(world, (set = { changes: new Map(), conservative: false, states: new Map() }));
+  if (change.kind === 'state')
+    set.states.set(change.field, (set.states.get(change.field) ?? 0) + 1);
   const key =
     change.kind === 'spatial'
       ? `spatial:${change.entityId}`

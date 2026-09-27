@@ -35,6 +35,7 @@ export function actionCatalogue(
     const item = itemFor(service.world, context.itemId);
     if (!item || custodian(service.world, item.id) !== scope.actorId)
       throw new Error('This possession is unavailable.');
+    const observation = service.observe(scope.actorId, { includeMemories: false })!;
     const projected = inventoryItemView(service, scope, item),
       options = [...projected.actions];
     if (context.destinationId) {
@@ -67,8 +68,8 @@ export function actionCatalogue(
         id: option.id,
         label: option.label,
         category: 'Possessions',
-        description: ACTION_DESCRIPTIONS[option.command.type],
-        facts: [],
+        description: describeCommand(option.command, observation),
+        facts: commandFacts(option.command, observation),
         keywords: [projected.name],
         enabled: option.enabled,
         ...(option.reason ? { reason: option.reason } : {}),

@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { randomUUID } from 'node:crypto';
@@ -17,6 +18,9 @@ import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.j
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
 import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
+// Initialize native geometry before constructing or validating recovered world state.
+await initializeCollisionRuntime();
+
 const file = process.argv[2];
 if (!file)
   throw new Error(

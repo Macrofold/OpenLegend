@@ -1,5 +1,15 @@
 # Verification
 
+## Spatial/cadence integration with current main
+
+The [September 26 integration record](verification/spatial-cadence-main-integration.md) pins the refreshed main/source commits, semantic reconciliation, fresh native/service/browser observations and matched performance comparison. The local rebase preserves main’s authority, record persistence, state/object and work-budget owners. The owner-authorized selective fixture cleanup resolves the stale navigation type errors and restores the local CI command. The linked record gives current automated evidence; hosted CI and broader sustained 8×/graphics qualification remain open. Historical records below apply to their own revisions.
+
+Current camera-facing sprite, privacy and combined-load evidence: [Mixed spatial review](verification/mixed-spatial-review.md). Earlier results below describe their own revisions.
+
+## Recast and world-presentation integration
+
+See the [current integration record](verification/recast-integration.md) for the pinned worker/capsule implementation, sampled clearance calibration, running application, performance probes and browser evidence/limitations. Historical native lattice, schema-9 and earlier automated results below are not passing qualification for the new backend. No new unit, integration or browser test suites were run for this request.
+
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
 ## Immediate gameplay limits
@@ -1312,3 +1322,17 @@ Two 10,000-source cold-history saves on each adapter exercised capture alongside
 Timer gaps during capture peaked at 33.22 ms and 18.76 ms respectively. Both complete native continuation comparisons passed. Reports: `/tmp/openlegend-rebase-stress-{sqlite,pg}.json`; command parameters match the benchmark above with 10,000 cold sources and two rounds. The host was not isolated and the runtime differs from the prior review. These short regression runs do not replace the original greater-than-64-MiB qualification, establish tail percentiles or close population, hosted, natural-aging, live-provider or future-owner gates.
 
 Full typecheck and production build passed; existing PlayCanvas browser-externalization and chunk warnings remain. Changed-file formatting, whitespace and local Markdown links were checked; the pre-existing remaining-foundations table formatting exception was preserved. No unit, integration or browser tests were added or run.
+
+## Spatial rebase and eight-times review
+
+[Conflict resolutions, running 8x server measurements, acoustic query observations and remaining limits](verification/spatial-rebase-eightx.md). Dense 8x is not certified by the successful starter run or isolated acoustic pruning.
+
+## Walking under consolidation pressure
+
+The running PostgreSQL world had Hare at 8,207 awareness records, above the old 8,192-record gate. Mike's queued walk remained at zero progress while the clock was unpaused; the public projection incorrectly labeled this memory pressure a save error. After making pressure nonblocking, the same world resumed the queued walk without a reset. A browser click to nearby clear ground then moved Mike from approximately (11.09, 0, 17.84) to (12.41, 0, 15.64), completed the action and displayed Saved.
+
+A separate manual execution loaded a copy of the blocked snapshot into disposable in-memory SQLite, without an AI director or external archived history. Sixty native seconds completed the original queued walk in about 150 ms; all original awareness source IDs remained present and persistence displayed Saved despite continuing consolidation pressure. An injected storage-error condition still paused time and displayed the error. This is a small runtime check, not a long-session storage/scaling qualification; cold-history growth remains PF08. No provider calls or automated tests were made. Production TypeScript/Vite build passed with the existing bundle-size warning. Deferred regression cases are in [TODO](maintainers/TODO.md#movement-under-memory-pressure); local output is `/tmp/ol-walk-exercise.log`.
+
+## Elapsed-time integration
+
+[Cadence evidence](verification/simulation-cadence.md) records actual clock progress, integration counts, finite boundary probes and short running-server workloads. [PF13](maintainers/simulation-time.md) distinguishes implementation from the combined sound-branch, regional and sustained scale gates. The older per-second 8x reports remain historical measurements, not a mandatory cadence.

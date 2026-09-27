@@ -22,7 +22,13 @@ import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
-import { draftWorld, finishWorld, cloneValue, trackDetachedRecord } from './draft.js';
+import {
+  draftWorld,
+  finishWorld,
+  cloneValue,
+  trackDetachedRecord,
+  trackRecordArray,
+} from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
@@ -339,11 +345,16 @@ export function mutateExperience(
       return null;
     for (const entry of additions) {
       trackDetachedRecord(world, entry.value);
-      if (entry.source === 'awareness')
+      if (entry.source === 'awareness') {
         appendEntry((world.experience!.awareness[actorId] ??= []), entry.value, 'eventId');
-      else if (entry.source === 'memory')
+        trackRecordArray(world, world.experience!.awareness, actorId);
+      } else if (entry.source === 'memory') {
         appendEntry((world.memories[actorId] ??= []), entry.value, 'id');
-      else appendEntry((world.experience!.summaries[actorId] ??= []), entry.value, 'id');
+        trackRecordArray(world, world.memories, actorId);
+      } else {
+        appendEntry((world.experience!.summaries[actorId] ??= []), entry.value, 'id');
+        trackRecordArray(world, world.experience!.summaries, actorId);
+      }
     }
     return [];
   }

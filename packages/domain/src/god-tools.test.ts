@@ -1,3 +1,4 @@
+import { PLAYER_ID } from '@open-legend/domain';
 import { worldPosition } from './spatial-state.js';
 import { describe, expect, it } from 'vitest';
 import { createWorld, quantityOf, reviveActor, spawnWorldEntity } from './index.js';
@@ -23,7 +24,12 @@ describe('god world editing (native fixtures)', () => {
       personality: 'Warm, direct, and difficult to discourage.',
       backstory: 'Mira once mapped the marsh paths north of the clearing.',
       initialGoals: ['Find a safe route home.', 'Learn who lives nearby.'],
-      goal: 'Find a safe route home.',
+      agency: {
+        goals: [
+          expect.objectContaining({ objective: 'Find a safe route home.' }),
+          expect.objectContaining({ objective: 'Learn who lives nearby.' }),
+        ],
+      },
       alive: true,
     });
     expect(person.actor!.traits!.map((trait) => trait.id)).toEqual(['curious', 'steadfast']);
@@ -54,7 +60,7 @@ describe('god world editing (native fixtures)', () => {
     expect(revived.world.entities[person.id]!.actor).toMatchObject({
       alive: true,
       incapacitated: false,
-      health: 25,
+      health: 100,
     });
     expect(reviveActor(revived.world, person.id).outcome.code).toBe('alive');
   });
@@ -70,7 +76,7 @@ describe('god world editing (native fixtures)', () => {
     expect(
       spawnWorldEntity(world, {
         type: 'river-stones',
-        position: { ...worldPosition(world.entities.player!), surfaceId: 'terrain' },
+        position: { ...worldPosition(world.entities[PLAYER_ID]!), surfaceId: 'terrain' },
       }).outcome.code,
     ).toBe('occupied');
     expect(JSON.stringify(world)).toBe(JSON.stringify(createWorld(33)));

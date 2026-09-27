@@ -1,5 +1,10 @@
 # Research archive: 3D worlds, navigation, and hybrid presentation
 
+## Adopted direction after qualification
+
+Recast/Detour is selected on measured preparation cost and established upstream use; navcat remains a researched alternative, not an installed parallel backend. JavaScript conveniences are not proof of scalability. The current adapter keeps trusted capability rules, exact support and action execution separate from navigation; teleport execution does not require a walking route. Rapier supplies selected shape overlap/sweep operations, not automatic lighting, hearing or dynamics. See [integration evidence](../../docs/verification/recast-integration.md), [shared calibration](../07-technical-architecture/spatial-world-runtime.md#movement-calibration) and [presentation](../../docs/world-presentation.md). Historical source evaluations and superseded experiments below are research context, not competing current-provider requirements.
+
+
 **Research snapshot: September 22, 2026.** This is a targeted primary-source design review, not an engine benchmark or a systematic survey of all games. Documentation and selected source interfaces were inspected; no third-party package was installed, no game implementation was reverse-engineered, and no OpenLegend runtime test was performed in this review.
 
 The [spatial-world specification](../../docs/spatial-world.md) owns chosen behavior, the [runtime contract](../07-technical-architecture/spatial-world-runtime.md) owns technical requirements, and the [SW tracker](../../docs/maintainers/spatial-world.md) owns tasks and acceptance. Active experiments and unresolved product choices belong in the existing research backlog and open-decisions documents.

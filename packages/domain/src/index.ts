@@ -36,6 +36,7 @@ export {
   canRecoverAtCamp,
   executeCommand,
   advanceWorld,
+  navigationBlocked,
   observeActor,
   queryMemories,
   remember,
@@ -162,3 +163,4 @@ export * from './contribution-residency.js';
 export * from './object-access.js';
 
 export { advanceWorldSlices } from './kernel.js';
+export { completeNavigation } from './kernel.js';

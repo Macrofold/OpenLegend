@@ -1,5 +1,5 @@
 import { recordSemanticChange } from './dependencies.js';
-import { isDraft, original } from 'immer';
+import { current, isDraft, original } from 'immer';
 import type { Entity, WorldState } from './types.js';
 
 // Root membership is rebuildable. Values are read from the current phase, so moving
@@ -36,12 +36,14 @@ export function rootMembershipChanged(world: WorldState, id: string): void {
   if (!changed) draftMembership.set(world, (changed = new Set()));
   changed.add(id);
 }
-export function worldRootEntities(world: WorldState): Entity[] {
+export function worldRootEntities(world: WorldState, snapshot = false): Entity[] {
   if (!isDraft(world)) return snapshotRoots(world.entities).map((id) => world.entities[id]!);
   const base = original(world)!;
   const ids = snapshotRoots(base.entities),
     changed = draftMembership.get(world);
-  const entities = world.entities;
+  // Read-only phases need current values without creating proxies for every static root.
+  // The snapshot is private to that phase; mutations still go through the live world.
+  const entities = snapshot ? current(world.entities) : world.entities;
   const result: Entity[] = [];
   // Membership hooks cover every native root insertion/removal. Unchanged roots do
   // not need repeated placement proxy walks for every emitted event in this phase;
@@ -52,8 +54,8 @@ export function worldRootEntities(world: WorldState): Entity[] {
   }
   if (changed)
     for (const id of changed)
-      if (!physicalRoot(base.entities[id]) && physicalRoot(world.entities[id]))
-        result.push(world.entities[id]!);
+      if (!physicalRoot(base.entities[id]) && physicalRoot(entities[id]))
+        result.push(entities[id]!);
   return result;
 }
 /** The draft's exact entity write set routes membership maintenance. No serialized

@@ -1,11 +1,19 @@
 # Maintainer work index
 
+## Presentation and navigation delivery
+
+[SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.
+
 This page is the master navigation index for active implementation work.
 
 - [Gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) — current native/NPC support, player and creator surfaces, and linked next steps.
 - [Remaining foundational work](remaining-foundational-work.md) — ranked gaps, branch coverage and accepted-decision delivery map.
 - [Priorities 1–5 implementation and design package](../projects/foundations-1-5.md) — five paired feature/technical specifications, source baseline, cross-project sequence and links to 46 completed implementation/qualification slices, measured limits and branch migration seams.
 - [Multiplayer authority and operations](multiplayer.md) — control, private projections, special player permissions, maintenance and absence integration.
+
+## Elapsed simulation
+
+[PF13 delivery](simulation-time.md) follows the [clock/integration contract](../simulation-time.md). The [boundary catalogue](simulation-boundaries.md) collects natural deadlines and conservative future bounds; [speech integration](speech-time-integration.md) coordinates the parallel sound branch. Neither is another task tracker or a completed universal scheduler.
 
 ## Focused work
 
