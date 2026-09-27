@@ -2,7 +2,7 @@
 
 [Research roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Mass Effect 2](mass-effect-2.md) · [Library](../README.md)
 
-**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with access limitations below. Documentary research, not a playtest. **Spoilers:** the story and investigation examples disclose the conspiracy, mission dependencies and the sequel reward. This retired mobile game is an independent subject; it is not Mass Effect 2, Mass Effect Infiltrator or an installment of Legendary Edition.
+**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with access limitations below; the requested second-pass audit is recorded after the requirement map. Documentary research, not a playtest. **Spoilers:** the story and investigation examples disclose the conspiracy, mission dependencies and the sequel reward. This retired mobile game is an independent subject; it is not Mass Effect 2, Mass Effect Infiltrator or an installment of Legendary Edition.
 
 **Central finding — interpretation:** adapting a familiar world does not necessarily preserve what makes interacting with it satisfying. Galaxy retains recognizable fiction, conversation choices and a compact investigation, but delegates ordinary shooting while making movement depend on tilting the viewing surface. Its most useful lesson is the need to evaluate the remaining decisions after simplification. Reducing buttons is not enough if the player mainly waits for automatic actions or struggles to express a basic intention.
 
@@ -38,6 +38,8 @@ The compact toolkit has three special-attack families: **Stasis**, a shield-disr
 
 Stasis prevents a target from acting while allowing Jacob to continue attacking it. In Galaxy it can affect a shielded opponent; Mass Effect 2's defense-gated control rules must not be imported. Shields recover after safety, whereas depleted health requires a pickup. Defeat restarts the current combat segment rather than permanently ending the whole narrative. Breakable crates are not as dependable as solid walls, and opponents can make a static position unsafe. [S15](#s15)
 
+The explosive attack has a different delivery rule from the automatically aimed rifle: it travels straight and detonates on an object or enemy. Its radius can damage Jacob as well as opponents. A close obstruction can therefore spoil an intended distant attack or make it dangerous to its user. Position and clearance matter independently of selecting the desired enemy. [S14](#s14)
+
 Each special power can receive one mission-linked upgrade: Bekke lengthens Stasis, Tortuga improves the explosive attack, and Ahn'Kedar improves shield disruption. An upgrade marker distinguishes the improved power. Availability colors differentiate a ready, in-range attack from cooldown or an out-of-range target. The exact duration and damage values are not supplied here because the available documentation does not justify a universal numerical table. [S14](#s14)
 
 Containers and defeated enemies supply immediate-use benefits such as health, shielding or temporary attack improvement. This is local resource collection, not a backpack of trade goods. There is no researched evidence of a deep merchant economy, recipe system, property construction, profession tree or player market. The absence matters: Galaxy asks the player to use a compact toolkit, not continually compare dozens of rifles. [S3](#s3) [S4](#s4)
@@ -51,6 +53,8 @@ The main progression is through missions and their small capability improvements
 Jacob's former commander, **Derek Izunami**, sends him to investigate after the attack. **Miranda Lawson** supplies contacts and leads, rather than becoming a manually controlled squad member. The early confrontation with **Clint “Black Eye” Darragh** demonstrates that dialogue can be a route through an obstacle, not only decoration between gunfights. A later appearance in Mass Effect 2 does not mean all of a character's sequel abilities or relationships are present here. [S8](#s8)
 
 The three major leads connect **Illo Nazario** on Tortuga, the element-zero stockpile on Bekke and kidnapped scientists at **Ahn'Kedar**. The asari **Batha**, protected by the krogan **Nax**, supplies scientific assistance. Illo's illness is not an unrelated biography detail: it creates a reason to obtain help before expecting his cooperation. **Ish** provides access information. The design gives several pieces of fiction different practical roles without letting the player invent an arbitrary solution outside the authored conversation. [S8](#s8) [S16](#s16)
+
+The order changes an immediate interaction, not only the order of map icons. With Batha rescued and unrefined element zero already aboard, Jacob can offer Illo a cure at their meeting; otherwise medical care becomes an unfinished dependency. Jacob can threaten to withhold help or offer it more freely, but the investigation still leads toward Jath'Amon. Batha's research also explains the material's purpose: the scientists were deceived about the disease, and her prototype needs shipboard supplies plus the rare element to become a vaccine. This is an authored rescue-and-treatment chain, not a player-operated laboratory or general crafting recipe. [S16](#s16) [S24](#s24)
 
 **Major spoilers.** The evidence ultimately reverses the apparent threat: ambassador **Jath'Amon** is not simply the person who must be protected from the terrorists. The plan targets the Citadel Council. The final mission resolves that conspiracy, and the story returns to Jacob and Miranda's developing partnership. This is a fixed larger conclusion with local variation and ordering, not a simulation producing alternative governments or a free-form detective deduction engine. [S17](#s17)
 
@@ -88,6 +92,8 @@ Comic-book panels give Galaxy a distinct visual identity instead of attempting a
 
 The conversation interface displays complete selectable lines rather than relying entirely on the trilogy's short intent summaries. That changes the relationship between the player's selection and Jacob's wording. Kevin Barrett also describes a journal available during conversation, intended to keep the necessary context inside the game. This is a useful information-support feature, not proof that every dialogue decision is difficult or consequential. [S11](#s11) [S18](#s18)
 
+Holt's review describes a more specific input failure than merely slow loading: the loading indicator sometimes remains after combat has begun, while movement and special attacks remain unavailable. That is his device-era observation, not a claim that every version or device reproduces it. It also differs from a deliberate cooldown or an out-of-range target. **Interpretation:** feedback should distinguish an unavailable capability from controls that have not become responsive; otherwise players may blame their plan for a technical failure. [S2](#s2)
+
 Reviewers could appreciate the comic presentation while objecting to repeated loading, limited visual enemy distinction and inconsistent performance. Sound reception also varies: GamePro values the force of the audio, while jazzfan4 finds comparatively little beyond gunfire and sparse voice work. Those are dated listening/play accounts, not a formal soundtrack analysis or an accessibility audit. No complete video, device compatibility test or before/after patch benchmark was performed here. [S3](#s3) [S20](#s20)
 
 ## 7. Production and the lesson BioWare itself drew
@@ -122,6 +128,8 @@ Five distinct written reviews were inspected beyond score summaries. Two are Ger
 | Jörg Luibl, 4Players, August 14, 2009 | Values expressive conversations and peaceful resolutions while objecting to imprecise movement and repetitive room-clearing. The closing transition can also frustrate resource collection. [S4](#s4) |
 | TechCrunch, June 28, 2009 | Novelty fades; automation, loading and pricing disappoint. [S5](#s5) |
 
+The second-pass audit reread the accessible Pocket Gamer, Macworld and TechCrunch bodies and recovered substantive indexed GamePro text. Direct GamePro and 4Players requests still failed; the initial 4Players reading remains a historical evidence record rather than a fresh full retrieval. No extra review is created by counting its verdict separately. Holt's favorable comments on story and illustrations are retained alongside his technical criticism, rather than reducing his account to a uniformly negative judgment. [S1](#s1) [S2](#s2) [S3](#s3) [S4](#s4) [S5](#s5)
+
 ### Direct-player testimony and retired-store access
 
 Galaxy has no native Steam release, so a Steam helpful-review sample is inapplicable rather than merely inaccessible. The retired App Store listing did not provide a usable historical ranked-review set. The strongest accessible alternative here is **jazzfan4's** substantive GameSpot review, April 24, 2010: the writer finds some value in a short, inexpensive diversion but criticizes repetitive combat, weak challenge and uncomfortable tilt play. The reported roughly two-hour experience is that person's estimate, not a universal completion time. [S20](#s20)
@@ -151,13 +159,13 @@ Read the identity and action inventory first, then the two developer accounts al
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Section 1; original devices, release-date boundary, patch and retired status. |
-| R02 | Section 2; actions, prerequisites, feedback and limits. |
-| R03 | Section 3; powers, upgrades, pickups and absent inventory/economy layers. |
+| R02 | Sections 2–3; actions, projectile delivery, prerequisites, feedback and limits. |
+| R03 | Section 3; powers, upgrades, pickups, self-damage and absent inventory/economy layers. |
 | R04 | Sections 3 and 8; mission progression, recovery, saving, replay and historical pricing. |
 | R05 | Section 5; five constructed interactions with conditions and failure cases. |
 | R06 | Section 4; authored people/dialogue and absent squad, romance and multiplayer systems. |
 | R07 | Section 6; visual identity, controls, readability, audio and performance boundaries. |
-| R08 | Sections 4–5; named places, people and connected investigation. |
+| R08 | Sections 4–5; named places, people, mission-order effects and connected investigation. |
 | R09 | Section 7; contemporary producer rationale and later studio reflection. |
 | R10 | Section 8; distribution, reward promotion and retirement implications. |
 | R11 | Section 8; dated prices, qualitative success statement and explicit financial unknowns. |
@@ -167,17 +175,19 @@ Read the identity and action inventory first, then the two developer accounts al
 
 No dedicated earlier G105 chapter, mechanics study or dossier existed in the inspected baseline inventories. This is additive research. Existing chapters, packet owners and incidental references remain unchanged. The separate global packet/conversation reconciliation remains pending; [packet provenance](../references/packet-provenance.md) does not certify it. Review checked the requirement map, source anchors, five-review count, retired-store qualification, power-name differences and the absence of invented RPG layers. The ledger records the completion commit separately.
 
+**Second-pass audit, September 26:** read the entire dossier against R01–R14 and the explicit mechanics inventory. Added the missing distinction between automatic rifle targeting and an explosive projectile that can hit its user; made the illness/rescue/resource dependency and mission-order effect concrete; distinguished a critic's loading-related input failure from intended power restrictions. Preserved all five worked situations, original sources, economic dates and player-access limitations. Three written reviews were freshly retrieved in full and GamePro through substantive indexing; the failed 4Players retry is not represented as a new reading. Added Batha's specific research role as S24. No new release, engine implementation, working retired service or personal gameplay observation is inferred.
+
 ## Annotated sources
 
 Capture date: **September 26, 2026**. “Indexed” means substantive text supplied through search rather than a claim that a blocked page was completely retrieved. Primary interviews retain their speakers' attribution; guides are secondary mechanics documentation.
 
-<a id="s1"></a>**S1.** Tracy Erickson, [Galaxy review](https://www.pocketgamer.com/mass-effect-galaxy/review/), Pocket Gamer, June 24, 2009. Full substantive body read.
+<a id="s1"></a>**S1.** Tracy Erickson, [Galaxy review](https://www.pocketgamer.com/mass-effect-galaxy/review/), Pocket Gamer, June 24, 2009. Full substantive body read; retrieved again during the audit.
 
-<a id="s2"></a>**S2.** Chris Holt, [Galaxy review](https://www.macworld.com/article/198937/masseffect-2.html), Macworld, July 7, 2009. Full substantive body read. Misleading URL slug does not identify the second main game.
+<a id="s2"></a>**S2.** Chris Holt, [Galaxy review](https://www.macworld.com/article/198937/masseffect-2.html), Macworld, July 7, 2009. Full substantive body read and reread during the audit. Misleading URL slug does not identify the second main game. Loading/input and recalibration findings are attributed to his review, not reproduced on hardware here.
 
-<a id="s3"></a>**S3.** Thomas Ruhk, [Galaxy im Test](https://www.gamepro.de/artikel/mass-effect-galaxy-im-test-test-fuer-iphone%2C1962817.html), GamePro, September 11, 2009. Substantive German main-review text read through indexing; direct fetch failed. Separate verdict page not counted or represented as read.
+<a id="s3"></a>**S3.** Thomas Ruhk, [Galaxy im Test](https://www.gamepro.de/artikel/mass-effect-galaxy-im-test-test-fuer-iphone%2C1962817.html), GamePro, September 11, 2009. Substantive German main-review text read through indexing; direct fetch failed, including the audit retry. Separate verdict page not counted or represented as read.
 
-<a id="s4"></a>**S4.** Jörg Luibl, [Galaxy test](https://www.4p.de/test/mass_effect_galaxy/3044643), 4Players, August 14, 2009. Substantive German text read through indexing; June 2025 metadata update is not a verified new playtest. The introduction's erroneous in-world year is not adopted.
+<a id="s4"></a>**S4.** Jörg Luibl, [Galaxy test](https://www.4p.de/test/mass_effect_galaxy/3044643), 4Players, August 14, 2009. Substantive German text read through indexing in the initial pass; June 2025 metadata update is not a verified new playtest. The introduction's erroneous in-world year is not adopted. The second-pass direct retrieval failed; no fresh full reread is claimed.
 
 <a id="s5"></a>**S5.** [TechCrunch review](https://techcrunch.com/2009/06/28/quick-review-mass-effect-galaxy/). Read in full; byline: Contributor.
 
@@ -197,11 +207,11 @@ Capture date: **September 26, 2026**. “Indexed” means substantive text suppl
 
 <a id="s13"></a>**S13.** Mass Effect Wiki, [Galaxy Guide](https://masseffect.fandom.com/wiki/Mass_Effect_Galaxy_Guide) and [Missions](https://masseffect.fandom.com/wiki/Missions). Indexed sequence, mission selection, combat transitions and save behavior inspected; only Galaxy sections used.
 
-<a id="s14"></a>**S14.** Mass Effect Wiki, [Abilities — Galaxy](https://masseffect.fandom.com/wiki/Abilities_%28Mass_Effect_Galaxy%29). Substantive indexed availability, upgrade and effect descriptions read. Inconsistent screen-side labeling across references is not reproduced as a control diagram.
+<a id="s14"></a>**S14.** Mass Effect Wiki, [Abilities — Galaxy](https://masseffect.fandom.com/wiki/Abilities_%28Mass_Effect_Galaxy%29). Substantive indexed availability, upgrade and effect descriptions read. The audit additionally checked straight-line delivery and self-damage; no exact damage/upgrade percentage is inferred from ambiguous descriptive wording. Inconsistent screen-side labeling across references is not reproduced as a control diagram.
 
 <a id="s15"></a>**S15.** Mass Effect Wiki, [Combat — Galaxy](https://masseffect.fandom.com/wiki/Combat_%28Mass_Effect_Galaxy%29). Substantive indexed defense, recovery, cover and shielded-Stasis rules inspected; sequel rules excluded.
 
-<a id="s16"></a>**S16.** Mass Effect Wiki, [Illo Nazario](https://masseffect.fandom.com/wiki/Illo_Nazario). Indexed illness, cure and conditional conversation passages inspected; major spoilers.
+<a id="s16"></a>**S16.** Mass Effect Wiki, [Illo Nazario](https://masseffect.fandom.com/wiki/Illo_Nazario). Indexed illness, cure and conditional conversation passages inspected and rechecked during the audit; major spoilers. Illo's explanation of how he became ill is his attributed story, not an independent in-world investigation by this researcher.
 
 <a id="s17"></a>**S17.** Mass Effect Wiki, [Protect the Council](https://masseffect.fandom.com/wiki/Protect_the_Council). Indexed mission dependency and reveal inspected; major spoilers.
 
@@ -216,3 +226,5 @@ Capture date: **September 26, 2026**. “Indexed” means substantive text suppl
 <a id="s22"></a>**S22.** TouchArcade, [December 7, 2009 sale roundup](https://toucharcade.com/2009/12/07/a-case-of-the-mondays-game-updates-freebies-and-sales/). Indexed historical price report inspected; not an additional independent game review or current sale.
 
 <a id="s23"></a>**S23.** [Galaxy player reviews](https://www.metacritic.com/game/mass-effect-galaxy/), Metacritic. Dated rude76 statement inspected; a tiny qualitative record, not a representative rating population.
+
+<a id="s24"></a>**S24.** Mass Effect Wiki, [Batha](https://masseffect.fandom.com/wiki/Batha). Substantive indexed rescue, prototype-vaccine and material-dependency account read during the audit. Supplements Illo's meeting conditions without implying that this short adventure exposes a general pharmaceutical crafting system. Major plot spoilers.
