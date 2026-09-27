@@ -17,6 +17,8 @@ The original game is now a cross-platform product:
 
 **Update 1.4, Fully Yoked**, launched with the additional platforms and was explicitly described by Obsidian as the **last planned content update**. It added New Game+, Ant Queens and related choices/items, new equipment, Playgrounds additions and other features while preserving future bug-fix/refinement support. Later maintenance does not turn Grounded into a live-content service with an open-ended first-game roadmap. [Fully Yoked](https://grounded.obsidian.net/news/grounded/fully-yoked).
 
+**Current original-game patch boundary:** the newest first-party original-Grounded patch located in this audit is **1.4.7.4815 (May 12, 2025)**, a hotfix after 1.4.7. It fixes pet/REMIX.D/playground issues and follows 1.4.7's pet, zipline, AFK-needs and Playgrounds changes. No later original-game 1.4.8+ patch was found on Obsidian's current news surface; Grounded 2 updates are separate. [1.4.7](https://grounded.obsidian.net/news/grounded/grounded-patch-147) · [1.4.7.4815](https://grounded.obsidian.net/news/grounded/grounded-patch-1471).
+
 **Grounded 2 is a separate sequel.** It entered Game Preview / Steam Early Access on July 29, 2025 and remains explicitly in Early Access as of September 2026, with its own park, Buggies, archetypes, progression and content cadence. Its current systems do **not** establish original Grounded rules. [Grounded 2 current site](https://grounded2.obsidian.net/) · [September 2026 patch](https://grounded2.obsidian.net/news/grounded-2/patch-0505).
 
 The original player's promise is: choose one of four shrunken teenagers, discover why you have been reduced to insect scale, survive a backyard ecology, craft gear from what lives there, build routes and homes into the landscape, and eventually become capable of confronting creatures and spaces that initially felt impossibly large.
@@ -24,6 +26,10 @@ The original player's promise is: choose one of four shrunken teenagers, discove
 First-session play is about water, food, shelter, analyzing materials and avoiding creatures. Established play is about deliberate loadouts, elemental matchups, upgraded gear, traversal infrastructure, labs/bosses, resource logistics, shared bases and story completion. Fully Yoked adds an explicit replay/endgame loop through the REMIX.R and New Game+.
 
 ## R02 — player actions and major mechanics
+
+### Teen identity and progression baseline
+
+The player chooses **Max, Willow, Pete or Hoops**. They are authored personalities with different voice lines but share the same underlying mechanical capability: there is no custom-stat character creator and no teen-specific combat class. Build identity emerges later from gear, mutations, Milk Molars, food, trinkets and player skill rather than from the selected teen.
 
 ### Gathering, analysis and recipe discovery
 
@@ -87,6 +93,27 @@ Running/jumping/climbing improvised terrain are constant. Dandelion tufts histor
 
 Grounded rewards treating **space itself as something to engineer**.
 
+### Pets and companion mechanics
+
+Grounded has a real—but bounded—companion layer. Players can tame **aphids, weevils and gnats** with species-specific slurries, and Fully Yoked adds **baby Red, Black and Fire Ants** through friendly Ant Queen outcomes. A following pet provides a mechanical bonus and extra inventory; pets can be named, housed and dressed. Difficulty changes their risk: current references describe pets as invulnerable by default on Mild/Medium, while they can die on Whoa!, leaving a memorial. [Pets](https://grounded.wiki.gg/wiki/Pets).
+
+Pets are not autonomous combat-party characters with dialogue, quests or affinity arcs. Their randomized "personalities" and happiness are cosmetic rather than deep agent goals, so the companion system should not be inflated into an RPG relationship simulation.
+
+### Quests, activities and reward loops
+
+The **ASL/BURG.L quest system** supplies both main-line Apprentice tasks and repeatable Daily Quests for **Raw Science**. Tasks deliberately sample the game's verbs—crafting, building, creature kills, cooking, perfect blocking, smoothies, exploration landmarks and other yard activities—so the quest layer teaches/rewards system breadth rather than adding a separate quest-only ruleset. [BURG.L Quests](https://grounded.wiki.gg/wiki/BURG.L_Quests).
+
+Other recurring activities include:
+- MIX.R/Super MIX.R defense challenges;
+- creature-card discovery and gold-card hunting through PEEP.R;
+- optional bosses;
+- pet taming;
+- cooking/smoothie preparation;
+- base decoration/coziness;
+- Playgrounds creation and browsing.
+
+There is no casino-style minigame progression or separate sports economy; the activities reuse the same survival/combat/building resources.
+
 ### Creature raids and defensive events
 
 Insects can react to player behavior and attack a base through the faction-reactivity/waft-emitter systems. MIX.R/Super MIX.R events invert exploration into defense: activate a machine and protect it against waves for a reward. PC Gamer's 1.0 review specifically notes that over-hunting creature populations can produce retaliation. [PC Gamer review](https://www.pcgamer.com/grounded-review/).
@@ -101,7 +128,9 @@ Grounded later added **Playgrounds**, a separate authoring mode with logic/gizmo
 
 ### Useful absences
 
-There is no romance system, recruitable humanoid companion party, political dialogue-faction campaign or job/class selection in the original. The four teens have characterization and voice differences but are not different RPG classes. Stealth exists behaviorally—crouching, avoiding patrols, using terrain—but there is no deep stealth-skill progression tree. Creature ecology/reaction substitutes for NPC society across much of the game.
+There is no romance system, recruitable **humanoid** companion party or job/class selection in the original. The four teens have characterization and voice differences but are not different RPG classes. Grounded does have fantasy-like elemental staff weapons/mutations, but no separate mana/spellbook class system. Stealth exists behaviorally—crouching, avoiding patrols, using terrain—but there is no deep stealth-skill progression tree.
+
+The faction boundary needs precision: there is no dialogue-driven political-faction campaign, but insect groups **do** track hostility strongly enough to trigger Payback raids, the Waft Emitter can deliberately provoke factional raids, and Ant Queen choices can change how a colony reacts. That creature-faction layer is gameplay, not merely flavor. [Waft Emitter](https://grounded.wiki.gg/wiki/Waft_Emitter) · [Fully Yoked](https://grounded.obsidian.net/news/grounded/fully-yoked).
 
 ## R03 — items, entities and composition
 
@@ -130,6 +159,10 @@ Weapons are similarly differentiated by damage type, speed, reach, stamina cost,
 ### Inventory versus carried construction materials
 
 Ordinary items occupy slots and stack according to category/capacity progression. Grass planks/weed stems are visibly carried rather than disappearing into normal bags. This separation communicates construction load physically and makes a hauling build/player role possible.
+
+### Loot, duplication and reward objects
+
+Creature drops, boss parts, treasure/chests, trinkets and creature cards are the main loot/reward families rather than randomized Diablo-style weapon showers. Raw Science functions as an unlock/duplication currency in later progression, while smithing materials improve chosen equipment. Rare trinkets and special boss/event drops support build experimentation; the player's long-term inventory is therefore a mixture of deterministic crafted gear and discoverable/rare modifiers.
 
 ### Creatures as resource nodes and world actors
 
@@ -260,6 +293,10 @@ Unless attributed otherwise, these are rules-based illustrations from documented
 
 Max, Willow, Pete and Hoops provide different voices/personality reactions. They share the same underlying capability system; selecting a teen is not selecting fighter/mage/rogue stats. This supports co-op banter/identity without forcing friends into roles they did not choose.
 
+### Pets are useful companions, not simulated friends
+
+Tamed aphids/weevils/gnats and baby ants can follow a player, carry inventory and apply buffs. Their names, attire, cosmetic happiness/personality and difficulty-dependent mortality can create attachment, but they do not maintain dialogue, independent goals, relationship arcs or schedules comparable to human companions. This is the closest original Grounded comes to a persistent companion mechanic. [Pets](https://grounded.wiki.gg/wiki/Pets).
+
 ### Creature behavior is the social/ecological fabric
 
 The backyard lacks towns full of humanoid NPC schedules, but its creatures have:
@@ -295,6 +332,12 @@ Creature animation/audio are functional telegraphs as well as atmosphere. Spider
 The game supports first- and third-person play and extensive difficulty/custom settings. Most distinctively, its **Arachnophobia Safe Mode** progressively abstracts spider visuals for players who cannot tolerate realistic spiders. That is a domain-specific accessibility response to a threat central to the game's fantasy rather than simply removing the content.
 
 The UI exposes creature weaknesses through PEEP.R, crafting dependencies through recipes, construction as translucent placement, status effects/mutations through build screens and location/story through the SCA.B interface. Some critics still find progression direction unclear despite those tools—an important distinction between **mechanical legibility** and **goal legibility**.
+
+### Audio and music
+
+Creature sound is gameplay information: footsteps, wing buzzes, attack calls and environmental cues can warn the player before a threat is visible in tall grass or darkness. The official soundtrack also deliberately maps music to places/states: the 34-track Year 1/Year 2 release includes biome/home/danger/story pieces such as **Grasslands, Home, The Dark, Haze, Koi, Upper Grasslands Day/Night** and boss/event cues. Steam credits **Justin E. Bell** as composer, with Year 2 music by Brian Trifon, Brian Lee White and Jay Wiltzen/Finishing Move. [Official soundtrack](https://store.steampowered.com/app/2161390/Grounded_Official_Soundtrack/).
+
+That state-linked score reinforces geography: the yard's regions can sound distinct even though they are all physically one backyard.
 
 ## R08 — story, authored mystery and player-created narrative
 
@@ -377,7 +420,7 @@ Support economics changed once 1.4 was declared the final planned content update
 
 ### Steam/player evidence — current surfaces inspected
 
-Current Steam Community review pages were directly accessible in September 2026.
+Current Steam Community review pages were directly accessible in September 2026. The audit also inspected **Most Helpful (All Time)** and current-week surfaces separately because the all-time negative ranking is heavily populated by 2020–2023 Early Access or older multiplayer/account complaints that must not be represented as current content-state evidence. [All-time helpful](https://steamcommunity.com/app/962130/reviews/?browsefilter=toprated&snr=1_5_100010_) · [all-time helpful negatives](https://steamcommunity.com/app/962130/negativereviews/?browsefilter=toprated&snr=1_5_100010_) · [current surface](https://steamcommunity.com/app/962130/reviews/?l=english).
 
 **Positive accounts** praise:
 - open-world freedom and secrets;
@@ -540,6 +583,23 @@ https://grounded2.obsidian.net/news/grounded-2/patch-0505
 **S19 — Obsidian Public Test closure, October 28, 2020.** Primary evidence of a test/live save-loss incident and the operational risk of public-test migration.  
 https://grounded.obsidian.net/news/grounded/public-test-through-xbox-flight-closed-for-new-players
 
+**S20 — Obsidian Patch 1.4.7 / Hotfix 1.4.7.4815, April–May 2025.** Primary latest-original-game patch boundary located in this audit; pet buffs/health, ZIP.R speed, Playgrounds changes and subsequent fixes.  
+https://grounded.obsidian.net/news/grounded/grounded-patch-147  
+https://grounded.obsidian.net/news/grounded/grounded-patch-1471
+
+**S21 — Grounded Wiki: Pets, BURG.L Quests and Waft Emitter.** Current community mechanics references for companion inventory/buffs/mortality, quest rewards and explicit factional-raid behavior. Used for rules, not developer intent.  
+https://grounded.wiki.gg/wiki/Pets  
+https://grounded.wiki.gg/wiki/BURG.L_Quests  
+https://grounded.wiki.gg/wiki/Waft_Emitter
+
+**S22 — Grounded Official Soundtrack, Steam, Oct. 5, 2022.** Primary soundtrack product/credits: 34 Year 1/Year 2 tracks, Justin E. Bell and listed Year 2 contributors.  
+https://store.steampowered.com/app/2161390/Grounded_Official_Soundtrack/
+
+**S23 — Steam Community helpful/current Grounded surfaces, Sep. 2026.** Direct player testimony; all-time helpful positives/negatives are version-mixed and therefore kept separate from current-week accounts.  
+https://steamcommunity.com/app/962130/reviews/?browsefilter=toprated&snr=1_5_100010_  
+https://steamcommunity.com/app/962130/negativereviews/?browsefilter=toprated&snr=1_5_100010_  
+https://steamcommunity.com/app/962130/reviews/?l=english
+
 ### Suggested reading route
 
 1. **S11 (PC Gamer)** for the strongest concise explanation of why the ecology/map work.
@@ -577,3 +637,5 @@ https://grounded.obsidian.net/news/grounded/public-test-through-xbox-flight-clos
 - Community wiki pages establish documented rules, not proprietary implementation or design intent.
 - Player milestones are not copies sold, revenue or retention.
 - Grounded 2 remains separate Early Access context; nothing in that sequel is used to fill an original-game research gap.
+- The audit's current original-game patch boundary is the latest first-party patch found on Obsidian's news surface (1.4.7.4815, May 12, 2025); this is a retrieval finding, not a guarantee that no unindexed platform-only build exists.
+- Steam all-time helpful reviews include historically valid Early Access/older-account complaints; current claims are not inferred from those older bodies without qualification.
