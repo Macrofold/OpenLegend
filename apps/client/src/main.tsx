@@ -27,7 +27,8 @@ import {
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
-import type { WorldRenderer } from './world-renderer';
+import type { ScreenRect, WorldRenderer } from './world-renderer';
+import { observeHudLayout } from './ui/hud-layout';
 import { CameraControls } from './ui/camera-controls';
 import type { CameraState } from './world-camera';
 import {
@@ -159,6 +160,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     1,
     (v): v is number => typeof v === 'number' && [1, 1.5, 2, 3].includes(v),
   );
+  const [captionOcclusions, setCaptionOcclusions] = useState<ScreenRect[]>([]);
   const canvas = useRef<HTMLCanvasElement>(null),
     hud = useRef<HTMLDivElement>(null),
     survival = useRef<HTMLElement>(null),
@@ -331,17 +333,9 @@ function App({ resetApplication }: { resetApplication: () => void }) {
   }, []);
   const hasView = view !== null;
   useEffect(() => {
-    if (!hasView || !survival.current || !hud.current) return;
-    const root = hud.current;
-    // Applicable attributes and session controls vary the card height. Dock below
-    // its measured border box; CSS owns the responsive presentation scale.
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry)
-        root.style.setProperty('--status-height', `${entry.borderBoxSize[0]!.blockSize}px`);
-    });
-    observer.observe(survival.current);
-    return () => observer.disconnect();
-  }, [hasView]);
+    if (!hasView || !survival.current || !hud.current || !canvas.current) return;
+    return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
+  }, [hasView, width, scale, open, timeSettings]);
   function fit(panels: PanelId[]) {
     const available = width / scale;
     if (available < 720) return panels;
@@ -465,20 +459,32 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                 : { projection, levelId, rotationLocked, following },
             ),
         });
-      scene.current.setCaptionOptions({
-        enabled: captionsEnabled,
-        paused: captionsPaused,
-        readingScale: captionReadingScale,
-        uiScale: scale,
-        reducedMotion: reduce,
-      });
       scene.current.setView(view);
     } catch (e) {
       scene.current?.destroy();
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError, captionsEnabled, captionsPaused, captionReadingScale, scale, reduce]);
+  }, [view, sceneError]);
+  useEffect(() => {
+    scene.current?.setCaptionOptions({
+      enabled: captionsEnabled,
+      paused: captionsPaused,
+      readingScale: captionReadingScale,
+      uiScale: scale,
+      reducedMotion: reduce,
+      occlusions: captionOcclusions,
+    });
+  }, [
+    hasView,
+    sceneError,
+    captionsEnabled,
+    captionsPaused,
+    captionReadingScale,
+    scale,
+    reduce,
+    captionOcclusions,
+  ]);
   useEffect(
     () => () => {
       scene.current?.destroy();

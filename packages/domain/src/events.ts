@@ -123,7 +123,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
   const acquire = (
     source: Entity,
     targetId: string,
-    meaningful: boolean,
+    stimulus: { importance: number; urgency: number; semanticTrigger: boolean },
     detail?: string,
   ): WorldEvent => {
     if (owner !== source.id) {
@@ -140,20 +140,14 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       [source.id],
       source,
       targetId,
-      meaningful
-        ? {
-            importance: 6,
-            semanticTrigger: true,
-            acquisition: true,
-            change: detail ? 'detail' : 'onset',
-          }
-        : {
-            importance: 0,
-            urgency: 0,
-            semanticTrigger: false,
-            acquisition: true,
-            change: detail ? 'detail' : 'onset',
-          },
+      {
+        // Recording evidence must not turn a story/relevance score into urgency.
+        // The caller's world policy owns these separate choices.
+        // docs/events-perception-and-reactions.md#8-ongoing-salience-relevance-and-reminders
+        ...stimulus,
+        acquisition: true,
+        change: detail ? 'detail' : 'onset',
+      },
       'private',
       pending,
       `I ${observed}`,

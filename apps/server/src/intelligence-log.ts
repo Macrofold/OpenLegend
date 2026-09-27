@@ -88,6 +88,7 @@ export class IntelligenceLog {
   private pending = new Map<string, { call: IntelligenceCall; bytes: number }>();
   private pendingBytes = 0;
   private draining?: Promise<void>;
+  private drainTimer?: ReturnType<typeof setTimeout>;
   private dropped = false;
   private latest = new Map<string, IntelligenceCall>();
   private closed = false;
@@ -139,28 +140,55 @@ export class IntelligenceLog {
     }
   }
   private startDrain(): void {
-    if (this.draining || !this.pending.size) return;
+    if (this.draining || this.drainTimer || !this.pending.size || this.closed) return;
+    // Inspector snapshots may lag 100 ms; gameplay/accounting never use this queue.
+    // Batch distinct calls as well as superseded versions of one call to avoid an fsync per update.
+    // docs/limits/observability.md#diagnostic-write-backlog
+    this.drainTimer = setTimeout(() => {
+      this.drainTimer = undefined;
+      void this.drain();
+    }, 100);
+  }
+  private drain(): Promise<void> {
+    if (this.draining) return this.draining;
     this.draining = (async () => {
-      // Same-turn start/finish updates share one write. Distinct call IDs remain distinct.
-      await new Promise<void>((resolve) => setImmediate(resolve));
-      while (this.pending.size) {
-        const [id, entry] = this.pending.entries().next().value!;
+      const batch: IntelligenceCall[] = [];
+      for (const [id, entry] of this.pending) {
         this.pending.delete(id);
         this.pendingBytes -= entry.bytes;
+        batch.push(entry.call);
+        if (batch.length >= 64) break;
+      }
+      if (this.store.putIntelligenceCalls) {
         try {
-          await this.store.putIntelligenceCall(entry.call);
+          await this.store.putIntelligenceCalls(batch);
         } catch {
           console.error('Could not persist intelligence diagnostics.');
         }
-      }
+      } else
+        for (const call of batch) {
+          // A repository without batch writes must still attempt later, unrelated
+          // snapshots after one fails. Diagnostics never prevent shutdown.
+          try {
+            await this.store.putIntelligenceCall(call);
+          } catch {
+            console.error('Could not persist intelligence diagnostics.');
+          }
+        }
       this.dropped = false;
     })().finally(() => {
       this.draining = undefined;
       this.startDrain();
     });
+    return this.draining;
   }
   async flush(): Promise<void> {
-    while (this.draining) await this.draining;
+    do {
+      clearTimeout(this.drainTimer);
+      this.drainTimer = undefined;
+      if (this.draining) await this.draining;
+      else if (this.pending.size) await this.drain();
+    } while (this.draining || this.pending.size || this.drainTimer);
   }
   async close(): Promise<void> {
     this.closed = true;

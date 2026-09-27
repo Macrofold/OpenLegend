@@ -43,4 +43,6 @@ For conversation capture, extract agreed decisions, requirements, examples, limi
 
 Before consolidating/deleting, migrate unique current requirements, tasks, facts, criteria, questions and needed references. Preserve IDs, checkbox state, dependencies, blockers and valid exit criteria. Current specs/trackers state current truth, not dated diaries.
 
+Apply the [root preservation rule](../../AGENTS.md#documentation-is-a-maintained-source-of-truth) to every edit. Compare removed or replaced passages against the task's explicit scope; retain useful material outside that scope. Internal agent plans and summaries cannot authorize a reversal. When an authorized change supersedes prior behavior, update its canonical owner and retain the prior rationale with a clearly linked explanation of the reversal.
+
 Review the full diff for lost meaning, duplicate owners, stale status and misplaced decisions. For moved paths/headings, search repository-wide, including code comments, and fix inbound links before removing the source. Update local why-comments when their reason changes. Verify relative targets and anchors. Edit only affected owners; record concrete follow-up work, not duplicate generic risks.

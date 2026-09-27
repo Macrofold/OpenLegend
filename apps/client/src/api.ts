@@ -91,12 +91,13 @@ export async function getState(): Promise<GameView> {
   return view;
 }
 /** Private reads carry this tab's audience and discard responses from a prior scope. */
-export async function getScoped<T>(path: string): Promise<T> {
+export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<T> {
   const scope = viewScope;
   const generation = accessGeneration;
   const response = await fetch(path, {
     credentials: 'same-origin',
     cache: 'no-store',
+    signal,
     headers: { 'X-OL-Client': tabClientId, 'X-OL-Scope': scope },
   });
   if (!response.ok) throw new Error(`The requested history is unavailable (${response.status}).`);

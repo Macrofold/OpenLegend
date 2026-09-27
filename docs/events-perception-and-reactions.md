@@ -197,7 +197,7 @@ Use distinct concepts rather than one overloaded importance field:
 | Urgency                | A known hazard needs an immediate response            | Native/typed reaction policy     |
 | Narrative significance | A story-worthy introduction or event                  | Existing story selector          |
 
-Keep current event importance compatible; new dimensions need not all become numeric scores or stored fields.
+Keep current event importance compatible; new dimensions need not all become numeric scores or stored fields. The implemented base-world default now omits stored ordinary animal/object sighting onsets and records person sightings without automatically requesting reasoning; [memory architecture](memory-architecture.md#encounters-sensory-detail-and-reminder-continuity) owns that September 27 decision and its lost-history tradeoff. Its base-world policy supplies importance, urgency and eligibility to request reasoning independently; the generic event recorder must not derive either of the latter from a numerical importance threshold. This small policy does not complete the richer dimensions or reminders below.
 
 An ongoing high-salience stimulus uses three mechanisms: an onset opportunity, bounded inclusion in later current context while valid, and an optional due review. Escalation or meaningful changes can produce additional opportunities. This does not create one paid thought per simulation tick.
 

@@ -30,6 +30,8 @@ The UI may initially load 50 rows per page, with a server maximum of 100. These 
 
 ## 3. Read API and common projection
 
+The browser uses the shared `getScoped` request helper, carrying its tab identity and current authority scope. Pending requests can be aborted, and responses from an obsolete access generation are rejected before entering the panel. This matches the other private-history consumers.
+
 Add a thin actor-scoped read surface, for example the proposed `GET /api/world-events?type=speech&limit=50&cursor=...`, implemented against the existing history repository. Reusing an equivalent existing history route is acceptable if it can provide this exact scope and pagination contract without mixing Narrator records or changing Talk behavior. The endpoint is a read view, not a new event system.
 
 Bind world, controlled actor and authorization on the server. The client cannot request another actor's experience by choosing an actor ID. Validate type filters against allowed registered types; bind filter values in SQL rather than interpolating them. Omit type for All.

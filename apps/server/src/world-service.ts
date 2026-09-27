@@ -1709,6 +1709,10 @@ export class WorldService {
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
       const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
+      // A rejected/stale background transition with no effects has nothing to save.
+      // Explicit commands and response jobs still need their durable outcome/receipt.
+      if (result.world === this.world && !receipt && !responseJobId && !result.invalidatedMemoryIds)
+        return { ...result.outcome };
       const world = receipt
         ? updateWorld(result.world, (draft) => {
             delete draft.commandReceipts[receipt.id];
@@ -1737,10 +1741,13 @@ export class WorldService {
     timeline: string,
   ): Promise<void> {
     await this.mutate(async () => {
-      if (this.world.map !== map || this.timelineId !== timeline) return;
+      if (this.storageError || this.world.map !== map || this.timelineId !== timeline) return;
       const transition = completeNavigation(this.world, actorId, actionId, request, result);
       if (transition.world === this.world) return;
-      await this.commit({ ...this.saved, world: transition.world }, undefined, 'unchanged');
+      // The action/request is already durable. A computed route belongs to routine
+      // progress; restart can prepare it again from that request. Avoid a second save
+      // before the character takes its first step. docs/performance.md#navigation-failure-and-shutdown
+      this.acceptRoutine({ ...this.saved, world: transition.world });
     });
   }
 

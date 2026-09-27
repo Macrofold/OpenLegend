@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-09-27 — Hearing review and routine-work decisions
+
+The owner authorized revisiting semantics to improve the crowded 3× scene. [Memory architecture](memory-architecture.md#encounters-sensory-detail-and-reminder-continuity) now distinguishes current visibility from stored sightings: routine animal/scenery appearances are no longer individual memories, and person onset is retained without automatically triggering reasoning. Existing evidence is not deleted; richer significance remains EPR06. [Performance](performance.md#hearing-review-and-lower-routine-history-cost) records computed-route buffering, optional diagnostic batching and publication timing, including crash/delay tradeoffs. [Evidence](verification/three-times-scene-performance.md#hearing-review-continuation-september-27) leaves stall-free acceptance open under measured host/database delays. HE04's client history reader now uses the shared authority-scoped helper. Caption placement now avoids measured fixed controls and open panels, preserving hidden reading time without measuring DOM layout every frame.
+
+The requested follow-up review keeps these choices but separates importance, urgency and reasoning eligibility at the base-world owner; fixes unrelated diagnostic loss after a single write failure; and removes redundant caption measurements/scene updates. [Review evidence](verification/three-times-scene-performance.md#requested-implementation-review-september-27) records native equivalence, browser lifecycle checks and the lack of a demonstrated whole-server speedup.
+
+Added the requested concrete-language, useful-documentation-preservation and behavior-decision reporting instructions. Internal agent plans/summaries do not authorize removing useful documentation. Existing development-save policy and broader acceptance gates remain intact.
+
 ## 2026-09-27 — Development save policy restored
 
 At Mike's explicit request, restored the protected development-save instruction in [AGENTS.md](../AGENTS.md#development-save-policy) as its sole owner. The change in `79e65130d` and the [in-place development updates](#in-place-development-updates) entry are superseded as policy. [RP02](maintainers/revisitable-policies.md#rp02--development-state-compatibility) now points to the protected rule and retains only review context and decision authority. Reconciled save/load, architecture, feature/project docs and trackers; retired the D1/D2 older-canonical-table migration task and replaced old-save acceptance work with current-format integrity/rejection work. Historical conversion implementation and measured evidence remain labeled historical; runtime behavior was not changed by this documentation update.

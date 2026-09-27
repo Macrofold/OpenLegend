@@ -3,6 +3,7 @@ import type { PerceivedEventsPage, PublicEvent } from '@open-legend/protocol';
 import { Button, Icon } from '../design-system/components';
 import { EventTime } from './event-time';
 import { ConversationThread } from './conversation';
+import { getScoped } from '../api';
 
 const filters = [
   ['all', 'All'],
@@ -54,17 +55,7 @@ function ScopedWorldEvents({
     try {
       const query = new URLSearchParams({ type });
       if (older && cursor) query.set('cursor', cursor);
-      const response = await fetch(`/api/world-events?${query}`, {
-        cache: 'no-store',
-        signal: abort.signal,
-      });
-      if (!response.ok)
-        throw new Error(
-          response.status === 400
-            ? 'This history page expired. Refresh the event log.'
-            : 'World Events could not be loaded.',
-        );
-      const page = (await response.json()) as PerceivedEventsPage;
+      const page = await getScoped<PerceivedEventsPage>(`/api/world-events?${query}`, abort.signal);
       if (request !== generation.current) return;
       setEvents((previous) => {
         if (!older) return page.events;

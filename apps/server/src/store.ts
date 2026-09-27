@@ -24,6 +24,7 @@ import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { prepareHistory } from './history-preparation.js';
+import { insertRows } from './sql-rows.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
@@ -357,6 +358,7 @@ export interface GameRepository extends WorldStore {
   memories?: MemoryRepository;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): Promise<void>;
+  putIntelligenceCalls?(calls: IntelligenceCall[]): Promise<void>;
   intelligenceCalls(offset: number, access?: DiagnosticAccess): Promise<IntelligenceCall[]>;
   intelligenceCall(id: string): Promise<IntelligenceCall | undefined>;
   diagnosticRoots(
@@ -420,15 +422,21 @@ export class SqliteStore implements GameRepository {
     return row ? (JSON.parse(String(row['payload'])) as IntelligenceCall) : undefined;
   }
   async putIntelligenceCall(call: IntelligenceCall): Promise<void> {
+    await this.putIntelligenceCalls([call]);
+  }
+  async putIntelligenceCalls(calls: IntelligenceCall[]): Promise<void> {
     await this.ready;
-
-    await this.db
-      .prepare(
-        'INSERT INTO intelligence_calls (id, started_at, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
-      )
-      .run(call.id, call.startedAt, JSON.stringify(call));
+    if (!calls.length) return;
+    await insertRows(
+      this.db,
+      'intelligence_calls (id, started_at, payload)',
+      calls.map((call) => [call.id, call.startedAt, JSON.stringify(call)]),
+      'ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
+    );
     // Diagnostic retention is approximate between periodic pruning passes.
-    if (++this.intelligenceWrites % 25 === 0)
+    const previous = this.intelligenceWrites;
+    this.intelligenceWrites += calls.length;
+    if (Math.floor(previous / 25) !== Math.floor(this.intelligenceWrites / 25))
       await this.db.exec(
         'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
       );

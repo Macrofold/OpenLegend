@@ -186,7 +186,7 @@ Exposure membership reuses correctly invalidated derived inputs. Native actor/am
 
 **Changed · Restrictiveness: Safe.**
 
-Pending world mutations: 256; pending operations per SQL read/write lane: 512; pending age: five seconds. Executing work is never cancelled. HTTP simultaneous handlers and projection queue depth: four times player capacity (default 400). Aggregate retained request bodies: 16 MiB, plus existing per-request limits. Publication coalesces for 50 ms and yields between viewers after roughly 8 ms. Overloaded disconnect cleanup retries after one second, bounded by admitted transports. Rejection is explicit `busy`/503 with Retry-After.
+Pending world mutations: 256; pending operations per SQL read/write lane: 512; pending age: five seconds. Executing work is never cancelled. HTTP simultaneous handlers and projection queue depth: four times player capacity (default 400). Aggregate retained request bodies: 16 MiB, plus existing per-request limits. Publication starts at most once per 50 ms window, sends immediately after idle, and yields between viewers after roughly 8 ms. Overloaded disconnect cleanup retries after one second, bounded by admitted transports. Rejection is explicit `busy`/503 with Retry-After.
 
 **Reason / tradeoff:** Bound queued closures and body memory while preserving atomic writes and durable receipts. Age/depth are overload protection, not an execution deadline. Optional publication retries may refresh later; uncertain mutations are not automatically replayed. [Owner](../performance.md#bounded-admission).
 

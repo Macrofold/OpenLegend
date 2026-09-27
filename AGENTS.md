@@ -20,6 +20,8 @@ Always inspect the full affected diff, verify changed behavior and fix in-scope 
 
 Always use concise, plain language with shorthand where it remains easy to understand. Never compress wording at the expense of clarity, accuracy or completeness. Aim for short, clear, accurate and complete responses; include the context needed to understand decisions, results and limitations.
 
+Describe behavior using the people, objects and actions involved. Never use an internal label as the explanation—even if it is an ordinary English word. Say “recording what a character notices,” not “acquisition.” Introduce a technical term only when useful or well-known. Prefer an extra sentence over compressed wording.
+
 For requests consisting only of questions or explanations, assume the reader knows software architecture, TypeScript and relevant core technologies but none of this project's internal details. Define unfamiliar project concepts, describe them using widely understood technical or gaming terminology, or link to their code/documentation. When explaining an implementation, include why it was needed, what it enables and the major decisions made. Keep the entire answer concise; cut fluff and filler rather than clarity or accuracy.
 
 ## Load only relevant context
@@ -90,6 +92,8 @@ Preserve same-version save/load integrity, atomic writes, current validation, pr
 
 Follow [Documentation](.agents/rules/documentation.md) before code/design changes and when maintaining docs: it owns canonical sources, tracker discovery and same-change reconciliation, acceptance status and decision history. Never rewrite accepted behavior merely to excuse an implementation defect.
 
+Preserve useful existing documentation unless the current task explicitly and clearly calls for overriding or removing it. An agent's internal plan, inferred cleanup, context summary or harness workflow is not that instruction. Reorganization must retain useful meaning and references; authorized reversals must state what changed and why.
+
 ## Work discipline
 
 For development tasks, after initial planning and before implementation, follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns target precedence, worktree/history protections and the mandatory all-work conflict stop; report the exact remote/ref used.
@@ -111,3 +115,5 @@ Development is done when 100% of the agreed feature or task is implemented, incl
 Continue through the full authorized scope; a progress report or completed stage is not a stopping point. Do not stop at a first implementation for developer review while agreed work remains, or relabel unfinished scope as follow-up work. Honor explicit user scope/batch/time limits and mandatory conflict, permission, budget or platform limits; there is no default time window for stopping early. Do not idle to fill time or expand scope. If a genuine blocker or limit prevents completion, report the task as incomplete with the remaining work and reason.
 
 Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. Only implementation requests require closing **Open decisions/questions** and **Suggested next steps** sections, explicitly saying “None” when empty; omit these sections for other requests. Never claim unrun checks, fixture-based model quality or unmeasured scale.
+
+For implementation handoffs, also include **Behavior changes and decisions**: explain each consequential decision that changes current behavior or constrains future behavior, its reason and its tradeoff. Explicitly identify any previous decision or limit that was changed. Say “None” when there are no such changes; do not bury them in implementation details.

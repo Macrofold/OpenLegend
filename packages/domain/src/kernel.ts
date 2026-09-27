@@ -1,4 +1,5 @@
 import { isSpeechVolume } from './acoustics.js';
+import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
 import { motionTravelBounds, nativeMotionInterval } from './motion-boundaries.js';
 import { withStableAudience } from './event-audience.js';
@@ -2575,46 +2576,56 @@ function* updateEncounters(
         episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
     }
     const previouslySeen = samePeople ? null : new Set(previous);
-    const newlySeen = samePeople ? [] : seen.filter((id) => !previouslySeen!.has(id));
+    const newlySeen = samePeople
+      ? []
+      : seen.filter(
+          (id) =>
+            !previouslySeen!.has(id) &&
+            (hasMemory(world.entities[id]) || SIGHTING_POLICY.retainRoutineOnset),
+        );
     if (newlySeen.length) {
       // Encounter emission adds awareness, not memories. Read the current immutable
       // memory snapshot once instead of rescanning/proxying it for every new contact.
       const entries = world.memories[actor.id] ?? [];
       const records = isDraft(entries) ? current(entries) : entries;
-      const recent = new Set(
-        records
-          .filter(
-            (m) =>
-              m.kind === 'episode' &&
-              (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
-              world.simTime - m.at < 3600,
-          )
-          .flatMap((m) => m.entityIds),
-      );
+      const recent = new Set<string>();
+      for (const memory of records)
+        if (
+          memory.kind === 'episode' &&
+          (memory.summary.startsWith('I saw ') || memory.eventType === 'encounter') &&
+          world.simTime - memory.at < 3600
+        )
+          for (const id of memory.entityIds) recent.add(id);
       for (const id of newlySeen) {
         if (!recent.has(id))
-          // Keep batched private evidence; routine animal onset needs no semantic
-          // reasoning unless an interest matches. Mind-bearing encounters also
-          // offer social cognition. Meaningful detail changes remain separate.
+          // Seeing someone is evidence, not an obligation to reason. Ordinary animals
+          // remain visible and interest-matchable without a stored entry on each return.
           // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
-          encounter(actor.entity, id, hasMemory(world.entities[id]));
+          encounter(
+            actor.entity,
+            id,
+            hasMemory(world.entities[id]) ? SIGHTING_POLICY.social : SIGHTING_POLICY.routine,
+          );
         yield;
       }
     }
-    for (const id of seen) {
-      const detail = changedFeatures.get(id);
-      if (detail && (samePeople || previouslySeen!.has(id)))
-        encounter(actor.entity, id, true, detail);
-    }
+    if (changedFeatures.size)
+      for (const id of seen) {
+        const detail = changedFeatures.get(id);
+        if (detail && (samePeople || previouslySeen!.has(id)))
+          encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
+      }
     if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
     if (!sameObjects) {
       // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
       // Captions/speech still resolve event-time evidence independently of this visual cache.
-      const priorObjects = new Set(previousObjects ?? []);
-      for (const id of objectIds) {
-        if (!priorObjects.has(id)) encounter(actor.entity, id, false);
-        yield;
+      if (SIGHTING_POLICY.retainRoutineOnset) {
+        const priorObjects = new Set(previousObjects ?? []);
+        for (const id of objectIds) {
+          if (!priorObjects.has(id)) encounter(actor.entity, id, SIGHTING_POLICY.routine);
+          yield;
+        }
       }
       (world.visibleObjects ??= {})[actor.id] = objectIds;
     }
@@ -2623,7 +2634,7 @@ function* updateEncounters(
       for (const id of objectIds) {
         const detail = changedFeatures.get(id);
         if (detail && (sameObjects || priorObjects!.has(id)))
-          encounter(actor.entity, id, false, detail);
+          encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
       }
     }
     encounter.flush();

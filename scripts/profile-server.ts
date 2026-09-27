@@ -1,8 +1,8 @@
 import { mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { tmpdir, availableParallelism, loadavg } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Session } from 'node:inspector/promises';
-import { performanceSnapshot } from '../apps/server/src/performance.js';
+import { observeDurations, performanceSnapshot } from '../apps/server/src/performance.js';
 import { createGameServer } from '../apps/server/src/http.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqliteStore } from '../apps/server/src/store.js';
@@ -21,6 +21,7 @@ if (!output || !Number.isFinite(seconds) || seconds < 3 || seconds > 120)
     'Usage: node --import tsx scripts/profile-server.ts NEW_REPORT.json [SECONDS=15]',
   );
 const cognitionFixture = process.env['OPENLEGEND_PROFILE_COGNITION'] === '1';
+const speechFixture = process.env['OPENLEGEND_PROFILE_SPEECH'] === '1';
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-scene-profile-'));
 const config = readConfig({
   OPEN_LEGEND_DATA_DIR: directory,
@@ -158,10 +159,30 @@ let streamTask: Promise<void> | undefined;
 let commandTimer: ReturnType<typeof setInterval> | undefined;
 let commandTask: Promise<void> | undefined;
 let commandBusy = false;
+let speechTimer: ReturnType<typeof setInterval> | undefined;
+let speechTask: Promise<void> | undefined;
+let speechBusy = false;
+let speechOffered = 0,
+  speechAccepted = 0,
+  speechSkipped = 0;
+let failureCount = 0;
+const failures: Array<{ source: string; message: string }> = [];
+const failed = (source: string, error: unknown) => {
+  failureCount++;
+  if (failures.length < 10) failures.push({ source, message: String(error) });
+};
 const commands: Array<{ atMs: number; ms: number; ok: boolean; code?: string }> = [];
 const gaps: number[] = [];
 const warmGaps: number[] = [];
+const spans: Array<{ stage: string; ms: number; endedAt: number }> = [];
+const longGaps: Array<{ atMs: number; ms: number; spans: typeof spans }> = [];
+const stopTrace = observeDurations((stage, ms, endedAt) => {
+  if (ms < 3 || stage === 'native.intervalSimMs') return;
+  spans.push({ stage, ms, endedAt });
+  if (spans.length > 2000) spans.splice(0, 1000);
+});
 let measureStart = 0;
+let measuring = false;
 let bytes = 0,
   updates = 0;
 try {
@@ -197,21 +218,36 @@ try {
       for (;;) {
         const read = await reader.read();
         if (read.done) break;
-        bytes += read.value.length;
+        if (measuring) bytes += read.value.length;
         pending += decoder.decode(read.value, { stream: true });
         const messages = pending.split('\n\n');
         pending = messages.pop()!;
         for (const message of messages)
-          if (/event: (patch|snapshot)/.test(message)) {
+          if (measuring && /event: (patch|snapshot)/.test(message)) {
             const at = performance.now();
             gaps.push(at - lastUpdate);
+            if (at - lastUpdate > 150) {
+              longGaps.push({
+                atMs: at - measureStart,
+                ms: at - lastUpdate,
+                spans: spans
+                  .filter((span) => span.endedAt >= lastUpdate)
+                  .map((span) => ({
+                    ...span,
+                    endedAt: span.endedAt - measureStart,
+                  })),
+              });
+              longGaps.sort((a, b) => b.ms - a.ms);
+              longGaps.length = Math.min(20, longGaps.length);
+            }
             if (lastUpdate - measureStart >= 5000) warmGaps.push(at - lastUpdate);
             lastUpdate = at;
             updates++;
           }
       }
+      if (!streamAbort.signal.aborted) failed('stream', 'The update stream ended early.');
     } catch (error) {
-      if (!streamAbort.signal.aborted) throw error;
+      if (!streamAbort.signal.aborted) failed('stream', error);
     }
   })();
   const anchor = worldPosition(game.service.world.entities[view.player.id]);
@@ -245,13 +281,49 @@ try {
         ok: result.ok,
         code: result.code,
       });
-    })().finally(() => {
-      commandBusy = false;
-    });
+    })()
+      .catch((error: unknown) => failed('command', error))
+      .finally(() => {
+        commandBusy = false;
+      });
   }, 1000);
+  if (speechFixture) {
+    const speakers = worldRootEntities(game.service.world).filter(
+      (e) => e.actor?.controller === 'npc',
+    );
+    speechTimer = setInterval(() => {
+      if (speechBusy) {
+        speechSkipped++;
+        return;
+      }
+      speechBusy = true;
+      const index = speechOffered++;
+      speechTask = game.service
+        .say(
+          `profile-speech-${index}`,
+          speakers[index % speakers.length]!.id,
+          'The deer are moving near the trees. I will keep watching this path.',
+          undefined,
+          (['whisper', 'normal', 'shout'] as const)[index % 3],
+        )
+        .then((result) => {
+          if (result.ok) speechAccepted++;
+        })
+        .catch((error: unknown) => failed('speech', error))
+        .finally(() => {
+          speechBusy = false;
+        });
+    }, 500);
+  }
   const start = performance.now(),
     simStart = game.service.world.simTime;
+  const startingLoad = loadavg();
   measureStart = start;
+  // Initial connection/setup is not a measured publication interval.
+  lastUpdate = start;
+  gaps.length = warmGaps.length = spans.length = longGaps.length = 0;
+  bytes = updates = 0;
+  measuring = true;
   const before = performanceSnapshot();
   sql.clear();
   slowSql.length = 0;
@@ -270,10 +342,13 @@ try {
   );
   await new Promise<void>((done) => setTimeout(done, seconds * 1000));
   clearInterval(commandTimer);
-  await commandTask;
+  clearInterval(speechTimer);
+  await Promise.all([commandTask, speechTask]);
   const elapsedMs = performance.now() - start;
   const simulatedSeconds = game.service.world.simTime - simStart;
   const after = performanceSnapshot();
+  // Pause, GC and final inspection are cleanup, not gameplay publication stalls.
+  measuring = false;
   await post('/api/control', { paused: true });
   if (process.env['OPENLEGEND_CPU_PROFILE'] === '1') {
     const { profile } = await profiler.post('Profiler.stop');
@@ -298,6 +373,7 @@ try {
   const finalView = (await finalResponse.json()) as GameView;
   const report = {
     node: process.version,
+    host: { logicalCpus: availableParallelism(), startingLoad, endingLoad: loadavg() },
     cognition: cognitionFixture ? 'native-route-fixture' : 'spending-disabled',
     adapter: database ? 'postgres' : 'sqlite',
     setupMs,
@@ -305,6 +381,9 @@ try {
     simulatedSeconds,
     achievedSpeed: simulatedSeconds / (elapsedMs / 1000) / 60,
     providerCalls,
+    speech: { offered: speechOffered, accepted: speechAccepted, skipped: speechSkipped },
+    failureCount,
+    failures,
     storageError: game.service.storageError,
     heap: {
       collected: !!globalThis.gc,
@@ -346,8 +425,10 @@ try {
       updates,
       bytes,
       p95GapMs: percentile(gaps, 0.95),
+      p99GapMs: percentile(gaps, 0.99),
       maxGapMs: Math.max(0, ...gaps),
       warmP95GapMs: percentile(warmGaps, 0.95),
+      warmP99GapMs: percentile(warmGaps, 0.99),
       warmMaxGapMs: Math.max(0, ...warmGaps),
     },
     warmCommandP95Ms: percentile(
@@ -358,8 +439,10 @@ try {
     after,
     sql: [...sql].sort((a, b) => b[1].ms - a[1].ms).slice(0, 30),
     slowSql,
+    longGaps,
   };
   await writeFile(resolve(output), JSON.stringify(report, null, 2), { flag: 'wx', mode: 0o600 });
+  if (failureCount) process.exitCode = 1;
   console.log(
     JSON.stringify({
       output,
@@ -369,13 +452,16 @@ try {
       after: undefined,
       sql: undefined,
       slowSql: undefined,
+      longGaps: undefined,
     }),
   );
 } finally {
+  stopTrace();
   if (commandTimer) clearInterval(commandTimer);
+  if (speechTimer) clearInterval(speechTimer);
   streamAbort.abort();
   try {
-    await Promise.all([commandTask, streamTask]);
+    await Promise.all([commandTask, speechTask, streamTask]);
   } finally {
     profiler.disconnect();
     await game.close();

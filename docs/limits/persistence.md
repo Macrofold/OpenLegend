@@ -20,13 +20,13 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA171
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — checked September 27 · Restrictiveness: Safe.**
 
-Routine simulation progress is durably saved about once per real second; explicit commands are saved immediately.
+Routine simulation progress is durably saved about once per real second; explicit commands are saved before acknowledgment. Computed navigation results now join routine progress instead of forcing another save before movement; after a crash, the durable request can prepare its route again.
 
 **Reason / tradeoff:** Keep the documented tradeoff between write cost and losing the latest unsaved routine progress after an abrupt crash.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Implementation starting point](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Review**.
 

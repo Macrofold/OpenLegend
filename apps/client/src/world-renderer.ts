@@ -4,6 +4,10 @@ export interface ScreenPoint {
   x: number;
   y: number;
 }
+export interface ScreenRect extends ScreenPoint {
+  width: number;
+  height: number;
+}
 export interface SceneCallbacks {
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
@@ -20,6 +24,7 @@ export interface SpeechCaptionOptions {
   readingScale: number;
   uiScale: number;
   reducedMotion: boolean;
+  occlusions?: readonly ScreenRect[];
 }
 export interface WorldRenderer {
   setCaptionOptions(options: SpeechCaptionOptions): void;

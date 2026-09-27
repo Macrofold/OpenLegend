@@ -588,9 +588,9 @@ Grounding preserves all permitted single-command handles and visible follow choi
 
 **Current · Restrictiveness: Medium.**
 
-Visual onset of a native animal without memory capability is ordinary private evidence (importance/urgency zero), not an automatic semantic reasoning trigger. Mind-bearing encounters remain social opportunities. Existing interests and meaningful separate events or detail changes can still initiate consideration; visibility, episode identity and raw acquisition remain intact.
+Ordinary animal/object first sightings and returns update current visibility and exposure identity but create no stored encounter. New memory-bearing people create private evidence at importance **3**, urgency **0**, with no automatic semantic trigger. Significant changes and separate speech/action/hazard events keep their existing handling; registered interests can still inspect visible candidates. [Base policy](../../packages/domain/src/worlds/base/senses.ts).
 
-**Reason / tradeoff:** A repeatedly passing bird should not purchase fresh reasoning for every observer. This replaces the former blanket significant-living-source onset. The current benign native fauna make this a useful minimal policy; qualify richer salience before adding predators or authored conspicuous features. [Contract](../memory-architecture.md#encounters-sensory-detail-and-reminder-continuity) · [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance).
+**Reason / tradeoff:** Avoid multiplying mundane bird/scenery history by observer count. This September 27 owner-authorized change replaces importance-zero animal onset records, object onset records and automatic social-onset reasoning. Unrecorded sightings cannot later be recalled as individual memories. It does not delete existing history or suppress current perception. Richer first-sighting significance remains EPR06; revisit when authored conspicuous objects or dangerous fauna are added. [Contract](../memory-architecture.md#encounters-sensory-detail-and-reminder-continuity) · [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance).
 
 ## Maintenance read backoff
 

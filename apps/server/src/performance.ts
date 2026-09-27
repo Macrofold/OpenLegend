@@ -4,7 +4,26 @@ const samples = new Map<
   string,
   { count: number; values: number[]; next: number; totalMs: number; maxMs: number }
 >();
+type DurationObserver = (stage: string, milliseconds: number, endedAt: number) => void;
+const durationObservers = new Set<DurationObserver>();
+/** Optional local profiler hook; inactive in normal gameplay, never persisted or projected. */
+export function observeDurations(observer: DurationObserver): () => void {
+  durationObservers.add(observer);
+  return () => durationObservers.delete(observer);
+}
 export function recordDuration(stage: string, milliseconds: number): void {
+  if (durationObservers.size) {
+    const endedAt = performance.now();
+    for (const observer of durationObservers) {
+      try {
+        observer(stage, milliseconds, endedAt);
+      } catch {
+        // Optional profiling must not turn a successful gameplay operation into failure.
+        durationObservers.delete(observer);
+        console.error('Disabled a failed performance observer.');
+      }
+    }
+  }
   let sample = samples.get(stage);
   if (!sample) {
     if (samples.size >= 64) return;

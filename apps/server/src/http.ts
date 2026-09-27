@@ -445,6 +445,7 @@ async function initializeGameServer(
   let publishing = false;
   let publicationDone = Promise.resolve();
   let publishQueued = false;
+  let nextPublicationAt = 0;
   let disposed = false;
   const publish = () => {
     if (disposed) return;
@@ -453,9 +454,14 @@ async function initializeGameServer(
       publishQueued = true;
       return;
     }
+    // Send immediately after idle, then coalesce to a 20 Hz ceiling. Adding a fresh
+    // 50 ms delay after every batch made work time accumulate on top of the cadence.
+    // docs/performance.md#bounded-batching-backpressure-and-publication
+    const delay = Math.max(0, nextPublicationAt - performance.now());
     publishTimer = setTimeout(async () => {
       publishTimer = undefined;
       publishing = true;
+      nextPublicationAt = performance.now() + 50;
       let completePublication!: () => void;
       publicationDone = new Promise<void>((resolve) => {
         completePublication = resolve;
@@ -507,7 +513,7 @@ async function initializeGameServer(
           publish();
         }
       }
-    }, 50);
+    }, delay);
   };
   const unsubscribe = service.subscribe(publish);
   onFailure(unsubscribe);

@@ -31,6 +31,7 @@ type Entry = {
   height: number;
   ring?: SVGCircleElement;
   arrow?: HTMLElement;
+  attach: (node: HTMLDivElement | null) => void;
 };
 // Queue residence is separate from the ring's reading budget. Old hidden speech remains in history.
 // docs/hearing-and-speech.md#7-caption-component-and-lifetime
@@ -152,7 +153,7 @@ export class SpeechCaptions {
       }
       const perceived = event as Entry['event'];
       const parts = chunks(captionText(perceived));
-      this.pending.push({
+      const entry: Entry = {
         event: perceived,
         visible: false,
         lastVisibleAt: this.clock.now,
@@ -162,7 +163,18 @@ export class SpeechCaptions {
         width: 0,
         height: 0,
         lifetime: this.lifetime(parts[0]!),
-      });
+        // A stable ref preserves measurements while other captions arrive/expire.
+        // React otherwise detaches every unchanged caption on each overlay render.
+        attach: (node) => {
+          if (entry.node === node) return;
+          if (entry.node) this.resizeObserver.unobserve(entry.node);
+          entry.node = node ?? undefined;
+          entry.width = entry.height = 0;
+          entry.visible = false;
+          if (node) this.resizeObserver.observe(node);
+        },
+      };
+      this.pending.push(entry);
     }
     this.pending.sort((a, b) => b.priority - a.priority);
     if (this.seen.size > 1024) this.seen = new Set([...this.seen].slice(-512));
@@ -227,13 +239,7 @@ export class SpeechCaptions {
                 role={entry.chunk === 0 ? 'status' : undefined}
                 aria-label={entry.chunk === 0 ? entry.event.text : undefined}
                 aria-hidden={entry.chunk > 0 ? true : undefined}
-                ref={(node) => {
-                  if (entry.node) this.resizeObserver.unobserve(entry.node);
-                  entry.node = node ?? undefined;
-                  entry.width = entry.height = 0;
-                  entry.visible = false;
-                  if (node) this.resizeObserver.observe(node);
-                }}
+                ref={entry.attach}
               >
                 <div aria-hidden="true">
                   <div className="ol-speech-caption-meta">
@@ -286,9 +292,14 @@ export class SpeechCaptions {
     this.paint();
   }
   private paint(): void {
-    if (!this.projection) return;
+    if (!this.projection || !this.active.length) return;
     const p = this.projection;
-    const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
+    const occupied = (this.options.occlusions ?? []).map((rect) => ({
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height,
+      w: rect.width,
+      h: rect.height,
+    }));
     for (const [index, entry] of this.active.entries()) {
       const node = entry.node;
       if (!node) continue;
@@ -306,21 +317,29 @@ export class SpeechCaptions {
         point = p.neutral(index);
       // Small bounded stacking, not a second layout engine or an inferred source location.
       let y = point.y;
-      for (let pass = 0; pass <= occupied.length; pass++) {
-        const collision = occupied.find(
-          (other) =>
-            Math.abs(point.x - other.x) < (width + other.w) / 2 + 8 &&
-            y > other.y - other.h - 8 &&
-            y - height < other.y,
-        );
-        if (!collision) break;
-        y = collision.y - collision.h - 8;
+      let fits = false;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        for (let pass = 0; pass <= occupied.length; pass++) {
+          const collision = occupied.find(
+            (other) =>
+              Math.abs(point.x - other.x) < (width + other.w) / 2 + 8 &&
+              y > other.y - other.h - 8 &&
+              y - height < other.y,
+          );
+          if (!collision) break;
+          y = collision.y - collision.h - 8;
+        }
+        fits =
+          y - height >= 8 &&
+          y <= p.height - 8 &&
+          point.x - width / 2 >= 8 &&
+          point.x + width / 2 <= p.width - 8;
+        if (fits || attempt === 1) break;
+        // A fixed HUD can occupy the whole space above a speaker. Keep the
+        // authorized caption readable elsewhere without inventing a bearing.
+        point = p.neutral(index);
+        y = point.y;
       }
-      const fits =
-        y - height >= 8 &&
-        y <= p.height - 8 &&
-        point.x - width / 2 >= 8 &&
-        point.x + width / 2 <= p.width - 8;
       entry.visible = fits;
       if (fits) {
         entry.lastVisibleAt = this.clock.now;
