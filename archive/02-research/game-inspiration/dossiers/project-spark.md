@@ -773,6 +773,25 @@ These are research interpretations, not accepted OpenLegend implementation requi
 
 ## 22. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms that most conventional game categories were **creator-authored**, while Project Spark supplied the world/logic/identity primitives:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Champions supplied first-party archetypes/progression; arbitrary user games could implement their own stats/classes/levels through Kode/state.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** platform assets/props and Kode could implement these; there was no single universal inventory/crafting grammar across all creations.
+- **Magic / spells / powers:** creator-defined via WHEN/DO rules, inputs, effects and state.
+- **Traversal / environmental and object interaction:** terrain sculpting, custom movement/cameras, physics, triggers, proximity, projectiles, transformations and user-authored interaction rules are covered throughout §§2–13.
+- **Activities / minigames / combat / stealth / loot / rewards:** Crossroads, Champions Quest, Conker, community games and arbitrary Kode-authored activities demonstrate distinct contracts rather than one canonical ruleset.
+- **Death / failure / recovery:** creator-defined from health/state/checkpoint/restart logic; no platform-wide death contract.
+- **Economy / trading:** creator-defined in fiction. The launch content/credit economy and later all-content-free transition were platform/business systems, not a universal in-world market (§15).
+- **Story / relationships / romance / reputation / party / companions:** first-party authored content and creator-authored Kode could implement these; follower/healer brains were bounded behavior, not a general cognitive-agent/social-memory system.
+- **NPC/AI behavior and schedules / factions:** teams, sensors, rule pages and reusable brains could author bounded behaviors; no universal autonomous faction or daily-schedule simulation.
+- **World map / quests / events / building / settlements / management:** terrain/world editing, Crossroads choices and Kode made these authorable rather than globally fixed.
+- **Multiplayer / social / endgame / return loops:** Xbox online co-creation, sharing/remix, community discovery and creator progression formed the platform loop while service was live; each created game defined its own endgame.
+
+**Current preservation boundary:** Project Spark was removed from storefronts in 2016 and its **online services ended August 12, 2016**. Local/offline creations already stored on a device could remain usable under the historical shutdown terms, but online discovery, downloading and sharing ended with the service. The audit does not describe Project Spark as a presently downloadable creator platform, and it does not conflate that shutdown with Dreams' later live-support sunset.
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / promise | §§1, 17 |

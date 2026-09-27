@@ -1233,6 +1233,27 @@ OpenLegend should treat persistent actors and institutions as **anchors of gener
 
 ## 33. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and updates the maintenance boundary beyond the original Cosmos launch entry:
+
+- **Identity / classes / attributes / skills / leveling / trees:** no fixed RPG class; Traveller identity emerges from Exosuit/Multi-Tool/ships/freighter, technology, companions, reputation, owned bases/settlements/stations and chosen projects (§§1–8).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** Exosuit inventories/technology, Multi-Tools, starships, freighters, vehicles, modules, blueprints, crafted/refined resources and salvage are covered across §§3–12.
+- **Magic / spells / powers:** no fantasy spellbook; advanced technology, biological companions, cloaking/gravity tools and ship/freighter systems provide bounded capabilities.
+- **Traversal / environmental and object interaction:** walking/jetpack/swimming, starship/Exocraft/freighter/Corvette travel, terrain manipulation, gravity handling, spacewalking, station/base construction and salvage are central.
+- **Activities / minigames:** exploration/scanning, survival, trading, building, farming, fishing, fleet/settlement/station management, creature breeding/battling, archaeology/salvage, Expeditions and missions form distinct overlapping projects.
+- **Combat / stealth / loot / rewards:** Multi-Tool/ship/freighter/creature combat and cloaking/avoidance exist; rewards include resources, modules, ships/tools, reputation, cosmetics and expedition rewards rather than one loot ladder.
+- **Death / failure / recovery:** mode/difficulty-specific loss, autosave/recovery, damaged technology/ships and expedition/fresh-save contracts are distinguished.
+- **Economy / trading:** Units, Nanites, Quicksilver, trade goods, guild/faction economics and station/settlement systems are separate; premium purchase is not an in-world currency.
+- **Story / relationships / romance / reputation / party / companions:** authored Atlas/Artemis/Autophage and other storylines, faction/guild reputation, creature companions, settlements and human multiplayer are covered; romance is not a major system.
+- **NPC/AI behavior and schedules / factions:** alien NPCs, freighter/fleet/settlement actors, Sentinels, pirates, creatures and newer station/alliance systems have bounded authored behaviors; the dossier does not claim deep individual cognitive memory or full daily schedules.
+- **World map / environment / quests / events:** generated galaxy/planets, star maps, missions/storylines, deep-space POIs, Expeditions and temporary community events provide the world/objective structure.
+- **Building / settlements / management:** base/freighter/Corvette/station construction plus settlement/fleet/station management are major long-term systems.
+- **Multiplayer / social / endgame / return loops:** multiplayer/Nexus, shared expeditions, alliances, bases/ships, continued exploration/collection/building and major free updates provide return loops without one finite mandatory endgame.
+
+**Current boundary check:** **Cosmos 7.0** shipped September 9, 2026. Hello Games subsequently released maintenance through **Cosmos 7.04 on September 21**, while the **Our Journey Continues** anniversary Expedition launched September 16 for roughly six weeks. [NMS41](#nms41) [NMS55](#nms55) These are current delivered states; the Expedition remains time-limited rather than permanent world progression.
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1, 30–31 |
@@ -1365,3 +1386,5 @@ OpenLegend should treat persistent actors and institutions as **anchors of gener
 <a id="n14"></a>**N14 — [Beacon](https://www.nomanssky.com/beacon-update/), June 2025.** Primary settlement choices, records and attention-pressure changes. Advertised citizen individuality is not proof of general social cognition.
 
 <a id="n15"></a>**N15 — [Companions](https://www.nomanssky.com/companions-update/), 2021.** Primary care/assistance/egg relationships. Original six-companion capacity is not asserted as a current maximum; fictional neuro-translation is not evidence of a language model.
+
+<a id="nms55"></a>**NMS55 — [Hello Games latest news](https://www.nomanssky.com/news/?page=1), [Cosmos 7.04](https://www.nomanssky.com/2026/09/cosmos-7-04/) and [Expedition Twenty-Three](https://www.nomanssky.com/2026/09/expedition-twenty-three-our-journey-continues/), checked September 27, 2026.** Primary current maintenance/event boundary: Cosmos maintenance through 7.04 on September 21 and the six-week anniversary Expedition launched September 16. Platform rollout caveats in individual patch posts remain relevant.

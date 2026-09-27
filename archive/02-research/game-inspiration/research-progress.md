@@ -31,12 +31,12 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G11 — Path of Exile 2 | **Audited** | `9e53dfe501f6a9c5277595fffe8821bcb71fbb12` — explicit mechanics-inventory closure; confirmed current Early Access/Forbidden Rites state and kept December 11 full release future. |
 | G12 — Diablo IV | **Audited** | `9e936ceb5ea647a93d0cdb800b9a6b661887f68b` — explicit mechanics-inventory closure; rechecked Hell's Legacy/Lord of Hatred as live and kept the announced 2027 Amazon future. |
 | G13 — Dreams | **Audited** | `e4a015ebb24b6a39f66d65a043ff224e99b52031` — explicit platform-level mechanics closure; preserved live-support sunset versus continued play/create/share, with online multiplayer correctly recorded as never shipped. |
-| G14 — Project Spark | **In progress** | Recheck shutdown/offline-preservation boundary and full creation/play mechanics inventory. |
-| G15 — Worlds Adrift | Pending | — |
-| G16 — Spore | Pending | — |
-| G17 — No Man's Sky | Pending | — |
-| G18 — EverQuest Next | Pending | — |
-| G19 — Ultima Online | Pending | — |
+| G14 — Project Spark | **Audited** | `62ae3e91121b5c4f69930958320e2f7717b02ec3` — explicit creator-platform mechanics closure; preserved 2016 online-service shutdown versus limited local/offline artifact survival. |
+| G15 — Worlds Adrift | **Audited** | `ecfb2164e0ca076956ca794d47b0a196369289dd` — explicit mechanics-inventory closure; preserved 2019 MMO shutdown versus separate Lost Skies 1.0 and unofficial reconstruction projects. |
+| G16 — Spore | **Audited** | `58495e5efa10c522b0d032456846a6f6aed71e00` — explicit stage-relative mechanics closure; freshly verified live Sporepedia and September 2026 official creation activity. |
+| G17 — No Man's Sky | **Audited** | `0d02834da3d8c3706743085e4462247b800393bb` — explicit mechanics-inventory closure; advanced current boundary from Cosmos 7.0 launch to 7.04 maintenance plus the live anniversary Expedition. |
+| G18 — EverQuest Next | **Audited** | `9c513bd05a7edb7bd2c9b525807152464acb7979` — explicit documented-design mechanics closure; preserved cancelled/unreleased evidence boundary without fabricating shipped systems or reviews. |
+| G19 — Ultima Online | **In progress** | Recheck current production-shard/New Legacy/season boundaries and full mechanics inventory. |
 | G20 — Minecraft | Pending | — |
 | G21 — RimWorld | Pending | — |
 | G22 — Hades I | Pending | — |

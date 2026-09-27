@@ -908,6 +908,27 @@ The Worlds Adrift Island Creator reviews show how much emotional value remained 
 
 ## 24. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the following boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** no conventional avatar class/attribute/level system; progression came from Knowledge, schematics, tools, materials, ship capability and human skill (§§1–5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** protected belt/stash, ordinary carried resources, schematics, crafted tools/components, cannons, engines/wings/cores and salvage are covered across §§4–8, 21.
+- **Magic / spells / powers:** absent; exceptional capability came from physical tools, grappling/gliding, machinery and engineered ship components.
+- **Traversal / environmental and object interaction:** grappling, swinging, climbing, gliding, physics, ship piloting, storms/wind, construction, salvage and detached components are central (§§3–8).
+- **Activities / minigames:** exploration, shipbuilding, material/schematic gathering, salvage, PvP/boarding, Island Creator content and crew expeditions formed the activity set rather than separate minigames.
+- **Combat / stealth / loot / rewards:** personal/ship combat, boarding, ambush/avoidance and salvage existed; there was no conventional gear-rarity combat ladder or deep stealth-stat system.
+- **Death / failure / recovery:** revivers, protected versus dropped possessions, ship damage/loss, respawn charge and server persistence/logout are covered in §§10, 21.
+- **Economy / trading:** value was materially/socially mediated through resources, schematics, components, expertise, salvage and direct exchange/theft; there was no central NPC auction-house economy (§16).
+- **Story / relationships / romance / reputation / party / companions:** crew relationships and encounters were human-social; lore/codex/world fragments framed the setting. There was no romance/reputation campaign or autonomous NPC companion party.
+- **NPC/AI behavior and schedules / factions:** wildlife/PvE content was limited and versioned; human crews supplied the main social actors. No autonomous civilian schedule/faction-politics simulation is inferred.
+- **World map / environment / quests / events:** persistent floating-island regions, weather walls, ruins, player-authored islands and world progression supplied goals without a standard quest chain.
+- **Building / settlements / management:** personally constructed/maintained airships were the central persistent project; permanent land settlements/population management were not.
+- **Multiplayer / social / endgame / return loops:** the original product was an always-online shared MMO with crews, PvP/PvE rules and continued exploration/build improvement rather than a finite campaign ending.
+
+**Current preservation boundary:** official Worlds Adrift servers shut down in **July 2019** and the original MMO remains unavailable. **Lost Skies** is a separate Bossa title—released 1.0 on September 17, 2025 with solo/smaller-scale co-op—and is not a restoration of Worlds Adrift's persistent world, characters or ships. Community reconstruction efforts are likewise not official reopened service. [WA53](#wa53) [WA54](#wa54)
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / promise | §§1–2 |

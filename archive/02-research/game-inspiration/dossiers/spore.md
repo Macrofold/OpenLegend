@@ -1228,6 +1228,27 @@ These are inspiration judgments, not accepted architecture decisions or instruct
 
 ## 26. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the stage-relative boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** no conventional RPG class tree governs the whole game. Creature anatomy/parts, stage history/archetype effects, Tribe/Civ organization and Space tools/captain progression provide different progression vocabularies.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** meaningful “equipment” changes by stage—body parts, tribal tools/instruments/weapons, civilization vehicles/buildings, spacecraft tools and Galactic Adventures Captain gear (§§2–15).
+- **Magic / spells / powers:** no shared fantasy spellbook; biological abilities, superweapons, archetype powers and Space tools are contextual capability systems (§11).
+- **Traversal / environmental and object interaction:** cell swimming, Creature locomotion/gliding, RTS movement, vehicles/spaceflight, terraforming/ecology tools and Galactic Adventures embodied interaction are covered across §§4–15.
+- **Activities / minigames:** the five stages are mechanically distinct activities; creators and Galactic Adventures add further authored activities rather than one universal loop.
+- **Combat / stealth / loot / rewards:** combat exists in several stage-specific forms; conventional stealth is limited/contextual. DNA/parts, food/resources, city/spice economy, tools and Captain rewards replace one shared loot ladder.
+- **Death / failure / recovery:** stage-specific failure/retry contracts apply; there is no one permadeath/account-loss rule across all stages.
+- **Economy / trading:** food/resources, city production/spice and Space trading use different economic models (§10); Sporepedia sharing is artifact distribution rather than in-fiction commerce.
+- **Story / relationships / romance / reputation / party / companions:** species alliances/enmities, tribe/civilization relations, Space diplomacy and Galactic Adventures NPC objectives exist; romance/individual relationship simulation is not a major system.
+- **NPC/AI behavior and schedules / factions:** creature behavior, RTS factions and alien empires have authored archetypes and relation states, but no deep personal-memory/daily-schedule simulation (§13).
+- **World map / environment / quests / events:** generated planets/galaxy, Space missions and Galactic Adventures authored locations/goals are covered across §§12–15.
+- **Building / settlements / management:** Tribe/Civilization/Space include settlements/cities/colonies and management at changing scales; Galactic Adventures adds authored place construction.
+- **Multiplayer / social / endgame / return loops:** base Spore is single-player. Sporepedia/Sporecasts asynchronously distribute creations; Space/Galactic Adventures, creators and community artifacts provide return loops without live co-op.
+
+**Current preservation boundary:** the official **Sporepedia is still live** and the official Spore site was still publishing creation contests in September 2026, including the September 18 Jawhead challenge. [SP42](#sp42) The active website explicitly supports browsing/downloading/sharing creations; this is stronger than assuming the service survived because an old page exists. It does not guarantee permanent future operation or certify every account/login path. GOG's 2025 Preservation Program package remains a separate offline-distribution achievement.
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / promise | §§1, 18, 24 |
