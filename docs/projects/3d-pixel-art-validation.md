@@ -35,15 +35,15 @@ The minimum real native sequence uses supported move, turn, equip, pickup/drop, 
 
 The creator should answer concrete questions at normal gameplay size and in motion:
 
-| Criterion | Passing observation | Failure that requires action |
-| --- | --- | --- |
-| Pixel-art identity | Deliberate color clusters, silhouette and detail organization; not merely a low-resolution 3D screenshot | Busy material noise, generic smooth shading broken into pixels, or reliance on blur to conceal weak art |
-| Human/object readability | Distinct individuals, clothing and important equipment are recognizable without constant zoom | Faces/gear become indistinguishable or bodies look unintentionally toy-like |
-| Organic environment | Layered natural shapes and quiet areas support the people and objects | Repeated blocks/cards dominate or all surfaces have equal detail |
-| Temporal stability | Slow camera motion and turning preserve coherent edges, materials and contacts | Distracting shimmer, crawling outlines, detached shadows or snapping equipment |
-| Dimensional coherence | Turning, carrying, depth, support and shadows make the scene more convincing | Hidden sides collapse, grips float, bodies penetrate terrain, or roof cutaways expose forbidden content |
-| State truthfulness | Current posture, possessions, damage and construction are understandable | Model/art suggests an action succeeded, an item exists, or a feature works when native state says otherwise |
-| Production usefulness | Variation and new assets can be produced and corrected repeatedly with manageable effort | Every outfit or pose requires rebuilding the entire character, or routine generated output needs extensive bespoke repair |
+| Criterion                | Passing observation                                                                                      | Failure that requires action                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Pixel-art identity       | Deliberate color clusters, silhouette and detail organization; not merely a low-resolution 3D screenshot | Busy material noise, generic smooth shading broken into pixels, or reliance on blur to conceal weak art                   |
+| Human/object readability | Distinct individuals, clothing and important equipment are recognizable without constant zoom            | Faces/gear become indistinguishable or bodies look unintentionally toy-like                                               |
+| Organic environment      | Layered natural shapes and quiet areas support the people and objects                                    | Repeated blocks/cards dominate or all surfaces have equal detail                                                          |
+| Temporal stability       | Slow camera motion and turning preserve coherent edges, materials and contacts                           | Distracting shimmer, crawling outlines, detached shadows or snapping equipment                                            |
+| Dimensional coherence    | Turning, carrying, depth, support and shadows make the scene more convincing                             | Hidden sides collapse, grips float, bodies penetrate terrain, or roof cutaways expose forbidden content                   |
+| State truthfulness       | Current posture, possessions, damage and construction are understandable                                 | Model/art suggests an action succeeded, an item exists, or a feature works when native state says otherwise               |
+| Production usefulness    | Variation and new assets can be produced and corrected repeatedly with manageable effort                 | Every outfit or pose requires rebuilding the entire character, or routine generated output needs extensive bespoke repair |
 
 Artistic judgment remains a human acceptance decision; a single model-generated beauty score is not a release gate. Record findings and tradeoffs rather than claiming a universal numerical aesthetics score. The comparison can legitimately select sprites for a family while choosing meshes for another.
 
@@ -51,32 +51,32 @@ Artistic judgment remains a human acceptance decision; a single model-generated 
 
 These are required scenario outcomes. Select focused existing checks or manual scenarios during implementation according to the repository rules; this spec does not call for generating a new large automated suite by default.
 
-| ID | Exercise | Required result |
-| --- | --- | --- |
-| Q01 | Fallback → approved sprite → approved rigid model | One semantic entity, unchanged mechanics and selection; each intermediate state usable |
-| Q02 | Replace a representation while moving across a ramp/support seam | Feet, support, heading and actual route remain coherent; no body teleport or nav rebuild |
-| Q03 | Replace while holding/equipping/containing a real item | Exactly one item and correct placement/quantity; current attachment state wins |
-| Q04 | Receive corpse art after harvesting/removal | No resurrection, duplicate effect, old pose or phantom picker |
-| Q05 | Publish a model without the required current animation/state | Keep the compatible representation or approved state fallback; no silent loss of readability |
-| Q06 | Change appearance brief/style/physical profile while generation runs | Exact stale/incompatible candidate rejection; unrelated ticks do not cause spurious rejection |
-| Q07 | Duplicate demand, double submit, reconnect and restart | Same durable work/receipts; no duplicate generation or publication |
-| Q08 | Lose a provider admission response or cancel after dispatch | Uncertainty and financial reserve survive; no automatic paid retry/fallback |
-| Q09 | Produce a valid sprite but invalid model | Sprite remains approved and usable; failed stage and cost are inspectable |
-| Q10 | Save/load with pending art and already approved art | Same-version appearance/identity restored; obsolete callbacks rejected; no paid replay |
-| Q11 | Delete/replace a world or switch principal during asset load | Old resources cannot install, publish into the new scope, or leak retained private art |
-| Q12 | Reveal/roof cutaway/picking around stacked occluders | Only currently authorized targets and matching fragments can draw or be picked |
-| Q13 | Change an unseen actor's gear/appearance | Remembered representation does not update to hidden live state or acquire new lights/motion |
-| Q14 | Private asset hash, dependency URL or thumbnail requested by another user | Access denied without confirming hidden content through convenience endpoints |
-| Q15 | Import malformed, oversized, external-reference or unsupported-extension asset | Bounded rejection before uncontrolled allocation/fetch; no executable content |
-| Q16 | Generated model suggests a larger opening, extra limb or functional flame | No mechanical mutation; reject/flag the visual mismatch under the family contract |
-| Q17 | GPU/context loss or failed upload during handoff | Compatible fallback, complete cleanup, no duplicate shadows/picking; recover without generation |
-| Q18 | Exhaust queue, stage funding, artifact storage or client residency | Optional work defers/fails truthfully; current gameplay and required state remain visible |
-| Q19 | Shared geometry/material reused by many distinct instances | Independent pose/color/equipment and correct lifetime; deleting one instance preserves others |
-| Q20 | Actively pinned asset is considered for garbage collection | No removal while needed by publication, current-format save, pack or in-flight dependency |
-| Q21 | Incompatible clothing/body or unusual rig | Explicit fit/coverage result and declared visual fallback; no body/slot manipulation |
-| Q22 | Instance with nonhuman articulation and touch-only policy | Same rendering contracts without human/sight assumptions or invented actuator mechanics |
-| Q23 | Publish/rollback concurrently from two creator sessions | Expected-revision conflict, no last-write-wins overwrite of newer approved work |
-| Q24 | Read current job status through ordinary player/NPC context | Only permitted art readiness; no private prompts, creator intent, hidden inventions or automatic fiction events |
+| ID  | Exercise                                                                       | Required result                                                                                                 |
+| --- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Q01 | Fallback → approved sprite → approved rigid model                              | One semantic entity, unchanged mechanics and selection; each intermediate state usable                          |
+| Q02 | Replace a representation while moving across a ramp/support seam               | Feet, support, heading and actual route remain coherent; no body teleport or nav rebuild                        |
+| Q03 | Replace while holding/equipping/containing a real item                         | Exactly one item and correct placement/quantity; current attachment state wins                                  |
+| Q04 | Receive corpse art after harvesting/removal                                    | No resurrection, duplicate effect, old pose or phantom picker                                                   |
+| Q05 | Publish a model without the required current animation/state                   | Keep the compatible representation or approved state fallback; no silent loss of readability                    |
+| Q06 | Change appearance brief/style/physical profile while generation runs           | Exact stale/incompatible candidate rejection; unrelated ticks do not cause spurious rejection                   |
+| Q07 | Duplicate demand, double submit, reconnect and restart                         | Same durable work/receipts; no duplicate generation or publication                                              |
+| Q08 | Lose a provider admission response or cancel after dispatch                    | Uncertainty and financial reserve survive; no automatic paid retry/fallback                                     |
+| Q09 | Produce a valid sprite but invalid model                                       | Sprite remains approved and usable; failed stage and cost are inspectable                                       |
+| Q10 | Save/load with pending art and already approved art                            | Same-version appearance/identity restored; obsolete callbacks rejected; no paid replay                          |
+| Q11 | Delete/replace a world or switch principal during asset load                   | Old resources cannot install, publish into the new scope, or leak retained private art                          |
+| Q12 | Reveal/roof cutaway/picking around stacked occluders                           | Only currently authorized targets and matching fragments can draw or be picked                                  |
+| Q13 | Change an unseen actor's gear/appearance                                       | Remembered representation does not update to hidden live state or acquire new lights/motion                     |
+| Q14 | Private asset hash, dependency URL or thumbnail requested by another user      | Access denied without confirming hidden content through convenience endpoints                                   |
+| Q15 | Import malformed, oversized, external-reference or unsupported-extension asset | Bounded rejection before uncontrolled allocation/fetch; no executable content                                   |
+| Q16 | Generated model suggests a larger opening, extra limb or functional flame      | No mechanical mutation; reject/flag the visual mismatch under the family contract                               |
+| Q17 | GPU/context loss or failed upload during handoff                               | Compatible fallback, complete cleanup, no duplicate shadows/picking; recover without generation                 |
+| Q18 | Exhaust queue, stage funding, artifact storage or client residency             | Optional work defers/fails truthfully; current gameplay and required state remain visible                       |
+| Q19 | Shared geometry/material reused by many distinct instances                     | Independent pose/color/equipment and correct lifetime; deleting one instance preserves others                   |
+| Q20 | Actively pinned asset is considered for garbage collection                     | No removal while needed by publication, current-format save, pack or in-flight dependency                       |
+| Q21 | Incompatible clothing/body or unusual rig                                      | Explicit fit/coverage result and declared visual fallback; no body/slot manipulation                            |
+| Q22 | Instance with nonhuman articulation and touch-only policy                      | Same rendering contracts without human/sight assumptions or invented actuator mechanics                         |
+| Q23 | Publish/rollback concurrently from two creator sessions                        | Expected-revision conflict, no last-write-wins overwrite of newer approved work                                 |
+| Q24 | Read current job status through ordinary player/NPC context                    | Only permitted art readiness; no private prompts, creator intent, hidden inventions or automatic fiction events |
 
 Reuse corresponding SW/INV/PO/save evidence where unchanged; do not close broader parent tasks merely because one visual consumer passes.
 

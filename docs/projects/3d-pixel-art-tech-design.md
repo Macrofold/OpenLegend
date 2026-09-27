@@ -19,16 +19,16 @@ Documentation changes affect zero runtime logic lines. Future work spans protoco
 
 ## 2. Semantic owners
 
-| Owner | Responsibility | Must not own |
-| --- | --- | --- |
-| Domain and existing object/body/action owners | Identity, physical state, dimensions/profile references, equipment placement, supported visual facts, saved cosmetic seed/reference when persistent | Provider jobs, files, wall time, GPU state, artistic validation scores |
-| Spatial owner | Authoritative geometry, support, collision, reach/query consumers and navigation invalidation | Deriving mechanics from an imported render mesh |
-| Server appearance service | Authorized appearance lookup, compatibility resolution, scoped projections, immutable publication and binding revision | Direct mutations of body, inventory, action outcome, or fictional knowledge |
-| Existing invention/workshop service | Mechanical admission, creator/actor scope, exact reviewed candidate and actual creation | Treating generated art as an admitted mechanic |
-| Server art job coordinator | Durable demand, stage admission, reservations, provider receipts, quarantine, validation and publication coordination | Authorizing itself, new gameplay effects, replacing shared compute |
-| Execution adapter / optional Macrofold coordination | Bounded authorized computation and artifact/result receipts | World authority, unrestricted storage access, policy, durable world asset ownership |
-| Client representation resources | PlayCanvas nodes, pose, materials, approved asset handles, picking/reveal/shadow bindings, cleanup | Grants, real motion, damage, object ownership, or generation admission |
-| Bundled-world content | Style profile, material palette, supported rig/part families, specific visual state mappings | Universal human anatomy or an unavoidable wilderness aesthetic |
+| Owner                                               | Responsibility                                                                                                                                      | Must not own                                                                        |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Domain and existing object/body/action owners       | Identity, physical state, dimensions/profile references, equipment placement, supported visual facts, saved cosmetic seed/reference when persistent | Provider jobs, files, wall time, GPU state, artistic validation scores              |
+| Spatial owner                                       | Authoritative geometry, support, collision, reach/query consumers and navigation invalidation                                                       | Deriving mechanics from an imported render mesh                                     |
+| Server appearance service                           | Authorized appearance lookup, compatibility resolution, scoped projections, immutable publication and binding revision                              | Direct mutations of body, inventory, action outcome, or fictional knowledge         |
+| Existing invention/workshop service                 | Mechanical admission, creator/actor scope, exact reviewed candidate and actual creation                                                             | Treating generated art as an admitted mechanic                                      |
+| Server art job coordinator                          | Durable demand, stage admission, reservations, provider receipts, quarantine, validation and publication coordination                               | Authorizing itself, new gameplay effects, replacing shared compute                  |
+| Execution adapter / optional Macrofold coordination | Bounded authorized computation and artifact/result receipts                                                                                         | World authority, unrestricted storage access, policy, durable world asset ownership |
+| Client representation resources                     | PlayCanvas nodes, pose, materials, approved asset handles, picking/reveal/shadow bindings, cleanup                                                  | Grants, real motion, damage, object ownership, or generation admission              |
+| Bundled-world content                               | Style profile, material palette, supported rig/part families, specific visual state mappings                                                        | Universal human anatomy or an unavoidable wilderness aesthetic                      |
 
 These are logical responsibilities, not a mandate for new packages or services. Reuse the existing mutation, repository, projection, and execution boundaries. A narrow in-process appearance service and one artifact-store adapter are sufficient first implementations.
 

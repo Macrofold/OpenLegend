@@ -13,13 +13,13 @@
 
 Separate five dimensions rather than generating every combination:
 
-| Dimension | Examples | Normal implementation |
-| --- | --- | --- |
-| Stable identity | Body proportions, facial/hair design, distinctive markings, maker's ornament | Persistent appearance revision and cosmetic seed; shared base geometry plus bounded customization |
-| Reusable definition | Axe shape, cloth weave, roof module, animal body family | Immutable library part, material, rig, or approved procedural family |
-| Assembly and placement | Helmet on head, bag on back, blade in handle, wall joined to frame | Compatible visual attachments linked to real object/assembly state when applicable |
-| Committed changing state | Wetness, supported wound, death, open door, construction progress | Native state mapping into material/pose/part selection; no generation per update |
-| Presentation quality | Near/far LOD, billboard fallback, shadow simplification, pixel density | Client selection among approved compatible representations; no new mechanical version |
+| Dimension                | Examples                                                                     | Normal implementation                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Stable identity          | Body proportions, facial/hair design, distinctive markings, maker's ornament | Persistent appearance revision and cosmetic seed; shared base geometry plus bounded customization |
+| Reusable definition      | Axe shape, cloth weave, roof module, animal body family                      | Immutable library part, material, rig, or approved procedural family                              |
+| Assembly and placement   | Helmet on head, bag on back, blade in handle, wall joined to frame           | Compatible visual attachments linked to real object/assembly state when applicable                |
+| Committed changing state | Wetness, supported wound, death, open door, construction progress            | Native state mapping into material/pose/part selection; no generation per update                  |
+| Presentation quality     | Near/far LOD, billboard fallback, shadow simplification, pixel density       | Client selection among approved compatible representations; no new mechanical version             |
 
 A material variation should not generate a new skeleton. A corpse pose should not create a new animal identity. A mesh simplification should not create a new item definition. Persistent appearance changes are intentional revisions; transient illumination and pose are not.
 
@@ -35,18 +35,18 @@ A visual assembly tree is not necessarily a mechanical containment tree. A bag w
 
 ## 3. Family selection by useful dimensionality
 
-| Family | Recommended starting representation | Important variations | Explicit limitation |
-| --- | --- | --- | --- |
-| Ground, ramps, decks | Existing mechanical surfaces with styled materials and bounded decorative meshes | Material, moisture appearance, edge treatment, authored detail | No terrain deformation or navigability from visual displacement alone |
-| Rigid tools, weapons, containers, furniture | Shared/procedural meshes, then generated rigid candidates | Dimensions within family fit, grip, material regions, ornament, wear | Decorative model cannot add damage, capacity, a moving joint, or usable opening |
-| Humans and compatible humanoids | Reviewed skinned body/rig with modular equipment; sprites remain available | Body fit, skin/hair, garments, posture, carried objects | No universal automatic rigging or unlimited body-proportion retargeting |
-| Animals | Reviewed family rigs or compatible sprites | Species silhouette, markings, proportions, life states | A humanoid auto-rigger is not an animal pipeline |
-| Articulated machines/constructs | Rigid part hierarchy and reviewed joint controller; skin only if useful | Joint ranges, gripper variants, visible charge/status | Visual joints do not create mechanical actuators or senses |
-| Buildings and constructions | Admitted structural modules plus decorative surface layers | Partial construction, openings, material, repair, damage | Generated exterior shell is not a traversable, destructible interior |
-| Trees and rocks | Dimensional trunk/rock; mixed mesh/card canopy | Shape family, bark/leaf material, growth state if supported | Decorative branches/canopy cannot grant support or change sensing |
-| Grass, flowers, small foliage | Cards or very simple shared geometry | Palette, density, wind presentation | No need for unique generated mesh per blade or flower |
-| Fire, smoke, sparks, magic | Sprites/particles and approved effect primitives, optional local geometry | Intensity appearance, palette, phase, supported emitted cues | A glowing texture does not add illumination, combustion, or a spell |
-| Portraits and item icons | Approved 2D art or rendered views of a known model | Close-up detail and identity-consistent state | Portrait detail is not evidence of world-avatar readability |
+| Family                                      | Recommended starting representation                                              | Important variations                                                 | Explicit limitation                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Ground, ramps, decks                        | Existing mechanical surfaces with styled materials and bounded decorative meshes | Material, moisture appearance, edge treatment, authored detail       | No terrain deformation or navigability from visual displacement alone           |
+| Rigid tools, weapons, containers, furniture | Shared/procedural meshes, then generated rigid candidates                        | Dimensions within family fit, grip, material regions, ornament, wear | Decorative model cannot add damage, capacity, a moving joint, or usable opening |
+| Humans and compatible humanoids             | Reviewed skinned body/rig with modular equipment; sprites remain available       | Body fit, skin/hair, garments, posture, carried objects              | No universal automatic rigging or unlimited body-proportion retargeting         |
+| Animals                                     | Reviewed family rigs or compatible sprites                                       | Species silhouette, markings, proportions, life states               | A humanoid auto-rigger is not an animal pipeline                                |
+| Articulated machines/constructs             | Rigid part hierarchy and reviewed joint controller; skin only if useful          | Joint ranges, gripper variants, visible charge/status                | Visual joints do not create mechanical actuators or senses                      |
+| Buildings and constructions                 | Admitted structural modules plus decorative surface layers                       | Partial construction, openings, material, repair, damage             | Generated exterior shell is not a traversable, destructible interior            |
+| Trees and rocks                             | Dimensional trunk/rock; mixed mesh/card canopy                                   | Shape family, bark/leaf material, growth state if supported          | Decorative branches/canopy cannot grant support or change sensing               |
+| Grass, flowers, small foliage               | Cards or very simple shared geometry                                             | Palette, density, wind presentation                                  | No need for unique generated mesh per blade or flower                           |
+| Fire, smoke, sparks, magic                  | Sprites/particles and approved effect primitives, optional local geometry        | Intensity appearance, palette, phase, supported emitted cues         | A glowing texture does not add illumination, combustion, or a spell             |
+| Portraits and item icons                    | Approved 2D art or rendered views of a known model                               | Close-up detail and identity-consistent state                        | Portrait detail is not evidence of world-avatar readability                     |
 
 These are recommendations, not hard-coded noun switches. A different world can install another supported family behind the same contracts. Exact library reuse and registered applicability should precede optional language classification.
 
