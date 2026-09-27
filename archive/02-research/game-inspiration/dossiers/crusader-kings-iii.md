@@ -20,7 +20,7 @@ The current PC game in September 2026 is substantially broader than launch. Impo
 
 Console content cadence lags PC in places; for example Roads to Power/Wandering Nobles reached current-generation consoles in May 2026. The dossier therefore avoids treating "current PC" and "current console" as identical. [Paradox console release](https://www.paradoxinteractive.com/media/press-releases/paradox-interactive/crusader-kings-iii-on-console-gets-major-expansion-and-event-pack).
 
-A separately announced pack scheduled after this research date is not represented as released content.
+**Future boundary as of this audit:** **By God Alone** is announced for **September 30, 2026**, three days after this September 27 audit. It is a Chapter V core expansion focused on playable theocracies, church politics, cardinals, dynamic holy sites and related religious systems. It is **not yet released** here and none of those announced mechanics are counted as current behavior. Paradox's April 2026 Chapter V announcement also names a later **Silk & Silver** expansion; that roadmap item is likewise future scope, not current mechanics. [By God Alone announcement](https://www.paradoxinteractive.com/media/press-releases/paradox-interactive/keep-the-faith-in-upcoming-crusader-kings-iii-expansion) · [Chapter V announcement](https://www.paradoxinteractive.com/media/press-releases/paradox-interactive/paradox-launches-new-expansion-pass-for-crusader-kings-iii).
 
 ## R02 — player actions and major mechanics
 
@@ -53,6 +53,12 @@ Cultures and faiths define traditions, innovations, doctrines, marriage/crime ru
 ### Warfare
 
 War requires valid cause/claims under relevant rules. Players raise levies and Men-at-Arms, appoint knights/commanders, siege holdings and fight armies. War score resolves the political claim rather than rewarding unbounded annihilation. Gold, supply/attrition and military quality constrain campaigns.
+
+### Useful absences: crafting and stealth
+
+CK3 has extensive **construction**—holdings, buildings, special structures, monuments through content—and artifact acquisition/management, but it does **not** use a general player-controlled material-crafting profession where the ruler personally gathers ingredients and forges ordinary equipment. Artifact creation is event/court/content mediated rather than a survival-crafting loop.
+
+Likewise, hostile schemes use secrecy, agents, intrigue skill and discovery risk, but there is no avatar-scale crouch/line-of-sight stealth mode. Calling Murder or Abduction "stealth gameplay" would import an action-game concept the interface does not implement. These absences are useful because CK3 places hidden action at the **social/informational** layer instead.
 
 ## R03 — entities, resources and composition
 
@@ -169,7 +175,7 @@ All Under Heaven illustrates the scale of ongoing production: Paradox calls it t
 
 The launch positioning emphasized "real strategy requires cunning" and ruler fantasy rather than conventional map conquest. That framing made the game's anecdotal systems central marketing material.
 
-Distribution began on PC storefronts including Steam/Microsoft/Paradox routes and expanded to PS5/Xbox Series. Subscription/Game Pass access and later console releases widened entry. The title supports mods, which amplify historical conversions, total conversions and role-play.
+Distribution began on PC storefronts including Steam/Microsoft/Paradox routes and expanded to PS5/Xbox Series. Game Pass access, later console releases and Paradox's current **Crusader Kings III Subscription** widen entry through different payment models. The current subscription advertises access to released expansion/flavor/event/cosmetic content rather than ownership; future Chapter V releases remain separately date-bounded. The title also supports mods, which amplify historical conversions, total conversions and role-play. [CK3 overview/subscription](https://www.paradoxinteractive.com/games/crusader-kings-iii/about).
 
 Its most powerful organic unit is the **story anecdote**: "I murdered my uncle after a feast," "my neglected son lost Ireland," or a dynasty ruined by plague is compact, surprising and mechanically plausible. Current Steam reviews still use mini dynastic narratives as recommendation copy. This is evidence that the game generates shareable stories, not measured proof of a specific virality coefficient.
 
@@ -179,7 +185,7 @@ Paradox also markets expansions as new fantasy modes—royal court, travel, land
 
 Paradox reported **3 million base-game copies sold** by September 1, 2023, explicitly excluding expansion/cosmetic packs. On April 23, 2025, Paradox announced **4 million copies across computer, PlayStation 5 and Xbox Series platforms**. [3m release](https://www.paradoxinteractive.com/media/press-releases/press-release/crusader-kings-iii-hits-3-million-sales) · [4m release](https://www.paradoxinteractive.com/media/press-releases/press-release/crusader-kings-iii-passes-four-million-sales).
 
-The business model is premium base game plus a long sequence of paid major/core/flavor/event/cosmetic packs, usually paired with free updates. This is also the dominant current criticism in Steam samples: some long-time positive players praise the simulation while objecting to aggregate DLC cost.
+The business model is premium base game plus a long sequence of paid major/core/flavor/event/cosmetic packs, usually paired with free updates, **plus an optional subscription that grants access to already released add-ons without conveying ownership**. This distinction matters when discussing current price/access and support obligations. It is also the dominant current criticism in Steam samples: some long-time positive players praise the simulation while objecting to aggregate DLC cost.
 
 Launch participation reached a reported Steam peak around 97,000 concurrent players in its first days; that is a Steam concurrency observation, not unit sales or retention. [PCGamesN launch report](https://www.pcgamesn.com/crusader-kings-3/steam-charts).
 
@@ -236,6 +242,8 @@ The transferable principle is **persistent people + constrained motives + inheri
 - [Khans of the Steppe](https://www.paradoxinteractive.com/games/crusader-kings-iii/add-ons/crusader-kings-iii-khans-of-the-steppe) — nomadic/herd/migration/tributary systems.
 - [Coronations](https://www.paradoxinteractive.com/games/crusader-kings-iii/add-ons/crusader-kings-iii-coronations) — coronation/oath activity.
 - [All Under Heaven](https://www.paradoxinteractive.com/games/crusader-kings-iii/add-ons/crusader-kings-iii-all-under-heaven) — East/Southeast Asian map/governments.
+- [By God Alone announcement](https://www.paradoxinteractive.com/media/press-releases/paradox-interactive/keep-the-faith-in-upcoming-crusader-kings-iii-expansion) and [Chapter V announcement](https://www.paradoxinteractive.com/media/press-releases/paradox-interactive/paradox-launches-new-expansion-pass-for-crusader-kings-iii) — inspected September 27, 2026 to pin Sept. 30 By God Alone and later Silk & Silver as future rather than released systems.
+- [CK3 overview](https://www.paradoxinteractive.com/games/crusader-kings-iii/about) — current storefront/platform positioning and optional content-subscription route.
 - Paradox 3m/4m press releases in R11 — defined sales milestones.
 
 ### Critical/player sources
@@ -249,7 +257,7 @@ G126 is a newly curated subject. Direct branch-path checks found no prior dedica
 | Requirement | Coverage |
 | --- | --- |
 | R01 | launch/current PC, console and expansion boundaries |
-| R02 | traits/stress, schemes/hooks, vassals/factions, culture/faith, war |
+| R02 | traits/stress, schemes/hooks, vassals/factions, culture/faith, war, plus explicit crafting/stealth absences |
 | R03 | people, titles, claims, currencies, artifacts and political composition |
 | R04 | life/dynasty progression, succession, economy and long time horizons |
 | R05 | eight worked dynastic/political/travel examples |

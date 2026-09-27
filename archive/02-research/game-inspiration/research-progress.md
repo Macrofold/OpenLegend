@@ -14,7 +14,7 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
-| `docs/game-inspiration-games-121-end` | `b79a6fd69135` | [G121–G130 initial passes complete; follow-up audit has G121–G122 audited and G123 active.](#g121g130-branch-research-state) |
+| `docs/game-inspiration-games-121-end` | `9fece0c9bd3f` | [G121–G130 initial passes complete; follow-up audit has G121–G126 audited and G127 active.](#g121g130-branch-research-state) |
 
 All G01–G130 initial research is now present. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
@@ -446,13 +446,13 @@ The original range pass produced ten dossiers with eight worked situations each,
 
 ## G121–G130 branch research state
 
-Imported from `docs/game-inspiration-games-121-end` at `b79a6fd6913519cf1f9c7f71a63bfd096a8fcdb0`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/b79a6fd6913519cf1f9c7f71a63bfd096a8fcdb0/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
+Imported from `docs/game-inspiration-games-121-end` at `9fece0c9bd3f5209eae516bf4326d81d9d139159`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/9fece0c9bd3f5209eae516bf4326d81d9d139159/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
 
 ### Requirements-and-corrections audit — G121 through G130
 
 **Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
 
-**Current audit state: G121–G122 audited; G123 Rain World active; G124–G130 pending.** Reconciled against the newer [audit evidence](coverage-audit-g121-g130.md#current-audit-state) at this merged source head; its G122 closure supersedes the source progress ledger’s stale G122-active pointer. Global P01–P05 gates remain separate and pending.
+**Active: G127 — Dragon's Dogma 2.** G121–G126 have been reread against the complete standard and corrected where needed. Reconciled against the newer [audit evidence](coverage-audit-g121-g130.md#current-audit-state); this supersedes the stale active-subject pointer in the source progress ledger.
 
 ### Initial G121–G130 research completion
 
