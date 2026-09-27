@@ -492,8 +492,8 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 | G139 | Subnautica | Pending | Not started |
 | G140 | Don't Starve Together | Pending | Not started |
 | G141 | Raft | **Complete** | [Dossier](dossiers/raft.md); `c236d8a2c0fd6050f4e441fcaa1691cfed59b955`. Full Early Access→1.0→console/cross-play boundary, comprehensive mechanics inventory, eight worked interactions, five independent written-review perspectives with Checkpoint's unavailable body explicitly limited to its credited index summary, current Steam/player evidence, production/distribution/commercial history and source limits. Scoped compare shows only the dossier changed; no prior dedicated Raft owner was found. |
-| G142 | Grounded | **In progress** | Initial R01–R14 pass underway in `dossiers/grounded.md`; verify Early Access→1.0→Fully Yoked/platform boundaries and Grounded 2 separation, complete mechanics inventory, five written reviews, Steam/player evidence, production/commercial history, eight worked interactions and preservation/navigation. |
-| G143 | The Long Dark | Pending | Not started |
+| G142 | Grounded | **Complete** | [Dossier](dossiers/grounded.md); `1ff2c665aa34ceea19ab1339357b682718c0382a`. Original-game Early Access→1.0→Fully Yoked/platform scope, Grounded 2 separation, comprehensive mechanics/progression/build/ecology inventory, eight worked interactions, five full written reviews plus current Steam testimony, official 1m/10m/15m/20m player milestones kept distinct from sales, production/test/migration evidence and explicit limits. Scoped compare shows only the dossier changed. |
+| G143 | The Long Dark | **In progress** | Initial R01–R14 pass underway in `dossiers/the-long-dark.md`; separate Survival Mode, WINTERMUTE, Challenges and Tales from the Far Territory; verify current episode/content/platform boundaries, complete survival/injury/wildlife/equipment/economy mechanics, five written reviews, Steam/player evidence, production/commercial history and eight worked interactions. |
 | G144 | Green Hell | Pending | Not started |
 | G145 | Enshrouded | Pending | Not started |
 | G146 | V Rising | Pending | Not started |
