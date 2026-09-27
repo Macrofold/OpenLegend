@@ -1,8 +1,8 @@
 # Final Fantasy V — full research dossier
 
-**G82 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 1992 Super Famicom Final Fantasy V. Later releases are separated where they materially alter content or convenience: PlayStation/Anthology localization, Final Fantasy V Advance, the 2013 mobile/legacy-PC branch, and the 2021+ Pixel Remaster. The roster focus is job/ability composition, ATB, equipment, exploration and challenge-run affordances. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G82 · Complete research pass, September 26, 2026; expanded after the substantive coverage audit.** Primary mechanics baseline: the 1992 Super Famicom Final Fantasy V. Later releases are separated where they materially alter content or convenience: PlayStation/Anthology localization, Final Fantasy V Advance, the 2013 mobile/legacy-PC branch, and the 2021+ Pixel Remaster. The roster focus is job/ability composition, ATB, equipment, exploration and challenge-run affordances. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough is claimed. Mechanics examples are reconstructed from documented rules and version-specific guides/reviews.
+No personal playthrough is claimed. Mechanics examples are reconstructed from documented rules and version-specific guides/reviews. **Spoilers:** sections 10, 12 and 24 discuss world transformation and the Galuf–Krile succession.
 
 ## 1. Identity and player promise
 
@@ -145,6 +145,8 @@ This creates:
 - support effects that can outperform conventional spells when understood;
 - a powerful “expert knowledge” ceiling.
 
+Section 24 develops named White Wind and Dragon Power situations, including the acquisition conditions, consumed inputs and limits that these short system sketches omit.
+
 ### Equipment abilities
 
 Some jobs teach equipment permissions, allowing another job to wear weapons/armor it normally could not. That means the player can treat equipment rules themselves as something learnable and transferable. [FFV10](#ffv10)
@@ -208,7 +210,7 @@ Pixel Remaster's later booster options can alter EXP acquisition and encounter f
 
 ## 10. World progression and exploration
 
-FFV uses a strongly authored quest but provides more exploration and optionality than FFIV's most linear stretches.
+**World-structure spoilers.** FFV uses a strongly authored quest but provides more exploration and optionality than FFIV's most linear stretches.
 
 Major world-state structure:
 1. the first world opens as crystal disasters and meteor events push the party across regions;
@@ -248,7 +250,7 @@ This is a strong OpenLegend pattern: **difficulty can test whether the player un
 
 ## 12. Story, characters and the relationship to mechanics
 
-FFV is still an authored story about elemental crystals, Exdeath and the Void, but the cast is smaller and role identity is mechanically decoupled from personality.
+**Major character and world spoilers.** FFV is still an authored story about elemental crystals, Exdeath and the Void, but the cast is smaller and role identity is mechanically decoupled from personality.
 
 Bartz remains Bartz whether he is a Knight, Bard or Chemist. Faris's narrative identity does not mechanically require “pirate” as a combat class.
 
@@ -261,6 +263,10 @@ That separation produces benefits:
 It also creates a weakness noted by some reviews: because combat identity is player-assigned, the characters can feel less mechanically individuated than FFIV's fixed specialists. [FFV13](#ffv13)
 
 The world/state changes do more mechanical storytelling than the jobs do: crystal destruction changes access to classes; world transformation changes routes; narrative progression literally expands and then recombines the map.
+
+**Galuf and Krile make continuity explicit.** At the Guardian Tree, Galuf protects his granddaughter and continues the scripted confrontation with Exdeath beyond ordinary battle survivability. The party's attempted cures cannot reverse his story death. His subsequent bequest gives Krile his abilities; she replaces him in the party. The Advance script explicitly stages this transfer, while the job guide confirms that learned abilities and job experience carry over. Krile's underlying stat tendencies differ, so she is not simply the same character renamed. [FFV29](#ffv29) [FFV30](#ffv30)
+
+**Interpretation:** the game preserves the player's training investment without pretending that the relationship has not changed. This is a specific authored exception to normal KO/revival, not a reusable inheritance system in which any dead actor transfers every skill to a relative. The contrast with FFIV's lost person-specific verbs is therefore substantive rather than merely thematic.
 
 ## 13. NPCs, factions, social systems and multiplayer
 
@@ -403,17 +409,18 @@ A particularly helpful negative review came from a self-described speedrunner/Fo
 | Stats/leveling | Character EXP/levels plus job ABP; mastered-job inheritance into Freelancer |
 | Equipment | Job-restricted weapons/armor; learned Equip permissions can cross boundaries |
 | Items | Healing/status/key items, throwables, Mix ingredients, rare drops |
-| Crafting | No general crafting; Chemist Mix combines consumables in battle |
-| Magic | White/Black/Time/Summon/Blue/Spellblade plus job-specific powers |
-| Enemy interaction | Control/Catch, Steal, Blue Magic learning, status/element exploitation |
+| Crafting | No general crafting; Chemist Mix combines consumables in battle; named recipe in §24 |
+| Magic | White/Black/Time/Summon/Blue/Spellblade plus job-specific powers; school access and spell acquisition are distinct |
+| Enemy interaction | Control/Catch, Steal, Blue Magic learning, status/element exploitation; White Wind acquisition in §24 |
 | Combat | ATB, rows, commands, buffs/debuffs, counters, party composition |
 | Exploration | Multi-world overworlds, towns/dungeons, secret passages, optional summons/bosses |
 | Traversal | Walking, chocobo, ship, air travel, submarine and other story-gated movement |
 | Economy | Gil, shops/inns/items/equipment; some abilities can consume money/resources |
-| Death/failure | KO/revival; total defeat/save recovery; modern checkpoint/autosave conveniences |
+| Death/failure | KO/revival; total defeat/save recovery; modern checkpoint/autosave conveniences; authored Galuf succession is not ordinary revival |
 | Story | Authored quest; crystals/job unlocks and world merge connect narrative to system/world state |
 | Relationships | Authored party bonds; no romance/reputation simulation |
 | NPC/factions | Scripted NPCs/kingdoms; no dynamic diplomacy system |
+| Activities | Piano exploration and performance unlock Bard songs; no general instrument-performance simulator |
 | Multiplayer | Current Pixel Remaster single-player; community metagame exists outside game |
 | Challenge/endgame | Optional bosses/areas, mastery experiments; Advance adds Sealed Temple/jobs |
 | User-generated modes | No editor/mod framework required for Four Job Fiesta-style self-imposed rules |
@@ -460,39 +467,71 @@ The merge of FFV's worlds changes what the same geography means.
 
 ## 22. Preservation and requirement audit
 
-No FFV-specific prior file or packet owner was found in the existing game/mechanics/dossier filenames checked on this branch, so this pass is additive.
+No FFV-specific prior file or packet owner was found in the existing game/mechanics/dossier filenames checked on this branch, so this pass is additive. The corrective pass preserves earlier combinations, reviews and source IDs while supplying the missing depth in §§12 and 24.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity/scope/promise | §§1–2 |
-| R02 actions/major mechanics | §§3–11, 20 |
-| R03 items/entities/composition | §§3–8, 20 |
-| R04 progression/economy/time | §§3, 7–9, 20 |
-| R05 concrete interactions | §§6, 11, 14 |
+| R02 actions/major mechanics | §§3–11, 20, 24 |
+| R03 items/entities/composition | §§3–8, 20, 24 |
+| R04 progression/economy/time | §§3, 7–9, 12, 20, 24 |
+| R05 concrete interactions | §§6, 11, 14 and five complete constructed situations in §24 |
 | R06 people/AI/social/multiplayer | §§12–14, 20 |
-| R07 art/audio/interface/feel | §§2, 16 |
-| R08 narrative/play | §§10, 12 |
+| R07 art/audio/interface/feel | §§2, 16, 24 |
+| R08 narrative/play | §§10, 12, 24 |
 | R09 production/development | §15 |
 | R10 marketing/distribution/virality | §§14, 17 |
 | R11 commercial/participation | §17 |
 | R12 reception/player feedback | §§18–19 |
-| R13 transferable inspiration/limits | §21 |
-| R14 sources/viewing/preservation/navigation | §§2, 22 + annotated sources |
+| R13 transferable inspiration/limits | §§21, 24 |
+| R14 sources/viewing/preservation/navigation | §§2, 22, 24 + annotated sources |
 
 ### Evidence limits
 
 - Version-specific mechanics are labeled; Advance/mobile additions are not projected into the 1992 baseline.
 - Five independent substantive reviews are used.
-- Steam feedback is sampled from a helpful-review surface and is not representative polling.
+- Steam feedback is sampled from a helpful-review surface and is not representative polling. Its inherited author/permalink identifiers are incomplete; no new identities are invented.
 - Pixel Remaster six-million sales are series-level only.
 - Four Job Fiesta is a community-created challenge/charity format, not a built-in FFV game mode.
-- No dossier claim depends on unwatched video footage.
+- No dossier claim depends on unwatched video footage. The piano progression, White Wind targeting, Mix menu and Galuf succession are useful additional viewing routes, not scenes watched in this pass.
 
 ## 23. Completion conclusion
 
 FFV's core contribution is a progression architecture where **roles are temporary, learning is durable and capabilities compose**. Its best systems turn specialization into ingredients for later hybridization. The community's ability to create Four Job Fiesta from those rules is strong evidence that the design space is not only deep when unconstrained—it remains interesting when deliberately constrained.
 
 For OpenLegend, the highest-value lesson is to make professions, education, equipment permissions and learned techniques **modular enough to combine, but grounded enough that combinations still feel like consequences of a person's history rather than arbitrary build slots**.
+
+## 24. Acquisition, performance and complete situations
+
+**Corrective research, September 26, 2026.** These are constructed examples of documented rules, not personally completed runs. They extend rather than replace the earlier composition sketches. The final situation contains a major story spoiler.
+
+### Piano practice is exploration with an audible record
+
+Eight distinct pianos are distributed through Tule, Carwen, Karnak, Jachol, Crescent, Regole, Moore and Phantom Village. Some require finding a concealed route rather than merely entering a pub. Playing new instruments advances the performance sequence; visiting the Crescent minstrel after sufficient progress unlocks songs. Seven pianos support Sinewy Etude and all eight support Hero's Rime. Merely repeating one instrument is not equivalent to exploring the set. [FFV26](#ffv26) [FFV31](#ffv31)
+
+Hero's Rime raises the party's in-battle level while the singer continues performing; it is not permanent EXP. A singer gives up ordinary action selection and can be interrupted. The community reference distinguishes the original-family level ceiling from Pixel Remaster, so no single cap is assigned to all editions here. The audible improvement communicates an acquired history, although the player is not actually playing a keyboard or learning freeform music. [FFV31](#ffv31)
+
+### A. Make the enemy teach instead of merely defeating it
+
+**Intention:** learn White Wind. **Conditions:** encounter an Enchanted Fan in Ronka Ruins with Control and a valid Learning recipient prepared. **Actions:** control the monster, direct White Wind onto the learning party and finish the encounter. **Interaction:** a healing action normally used on the enemy's side becomes an acquisition opportunity. **Result:** the party gains another recovery option. **Next choice:** assign Blue Magic to someone whose health can support it. **Limit:** White Wind heals according to the caster's current HP, so a nearly defeated caster is a poor emergency healer; it also costs MP. Simply seeing the monster heal itself is not the same as satisfying the learning condition. [FFV28](#ffv28) [FFV09](#ffv09)
+
+### B. A potion can become something other than healing
+
+**Intention:** improve an attacker's effectiveness during a difficult fight. **Conditions:** Mix is available and inventory contains a Dragon Fang plus a Potion or Hi-Potion. **Actions:** combine them into Dragon Power for the intended recipient. **Interaction:** two consumed items temporarily raise that target's battle level by twenty rather than restore HP. **Result:** an inventory decision changes the value of subsequent attacks without a permanent level-up. **Next choice:** attack during the benefit or spend another action on survival. **Limit:** the effect ends with the battle and relevant incapacitation states; spending a potion this way does not also heal its owner, and level-dependent power does not bypass every resistance or encounter rule. [FFV27](#ffv27)
+
+### C. A quiet detour gives the next battle a new role
+
+**Intention:** obtain Hero's Rime. **Conditions:** late-world travel permits reaching the remaining piano locations. **Actions:** find the missing instruments, complete the performance progression and return to demonstrate it to the Crescent minstrel. **Interaction:** exploration and a social reward unlock a sustained combat action. **Result:** a Bard can contribute by supporting others over time rather than making another immediate attack. **Next choice:** choose a fight and formation that can protect the singer. **Limit:** the reward does not cast itself, and an interrupted performance cannot be assumed to continue providing its full planned benefit. [FFV26](#ffv26) [FFV31](#ffv31)
+
+### D. A learned permission is not the thing it permits
+
+**Intention:** make a durable front-line character provide emergency White Magic. **Conditions:** the character has learned an appropriate transferable White command and the party owns the desired spell. **Actions:** equip the learned command on the chosen job, check its available spell tier and MP, then use it when recovery is needed. **Interaction:** career learning changes a different job's action menu while possession and resources still constrain the spell. **Result:** specialization can be combined without permanently abandoning the martial role. **Next choice:** retain that flexibility or spend the limited extra slot on another capability. **Limit:** job mastery does not automatically purchase every spell, and equipping a lower command tier does not unlock every higher-tier action. The guide's preference rankings and prescriptive character assignments are not adopted as mandatory builds. [FFV29](#ffv29)
+
+### E. A person is lost without deleting the player's training
+
+**Major spoiler. Intention:** continue after Galuf's sacrifice. **Conditions:** the authored Guardian Tree sequence replaces him with Krile. **Actions:** inspect the inherited jobs and abilities, then choose a loadout for the next journey rather than assuming training must restart. **Interaction:** narrative succession preserves mechanical investment while changing the participating person. **Result:** the group regains a fourth functional member without reversing the death. **Next choice:** continue the inherited specialization or redirect Krile's development. **Limit:** her base attributes differ; continuity of learned capabilities is not identity of every statistic or resurrection of Galuf. [FFV29](#ffv29) [FFV30](#ffv30)
+
+**Interpretation:** these acquisition channels make expertise more varied than spending ABP. Some power comes from an enemy, some from inventory transformation, some from a world-spanning pastime and some from an authored bequest. Their limits prevent the useful insight—skills can move—from becoming the unsupported claim that any capability can transfer between any two entities.
 
 ## Sources — annotated set
 
@@ -546,3 +585,14 @@ For OpenLegend, the highest-value lesson is to make professions, education, equi
 
 <a id="ffv25"></a>**FFV25 — [FINAL FANTASY V most-helpful English Steam reviews](https://steamcommunity.com/app/1173810/reviews/?browsefilter=toprated&l=english).** Steam user reviews, inspected 2026-09-26. Qualitative launch-era veteran praise/criticism; self-selected and patch-sensitive.
 
+<a id="ffv26"></a>**FFV26 — [Piano Master Locations and Guide](https://almarsguides.com/retro/walkthroughs/PS1/Games/FinalFantasyAnthology/FinalFantasyV/Sidequests/PianoLocations/).** Almar's Guides, authored PlayStation/Anthology route; substantive page read September 26, 2026. Distinct instruments, concealed locations and Crescent reward; old level ceiling not imposed on every remaster. No music playback claimed.
+
+<a id="ffv27"></a>**FFV27 — [Mix](https://finalfantasy.fandom.com/wiki/Mix_(Final_Fantasy_V)).** Final Fantasy Wiki, community mechanics reference; Dragon Power recipe and duration section read September 26, 2026. Specific ingredients and temporary level change, not an exhaustive copied recipe table or a personally tested formula.
+
+<a id="ffv28"></a>**FFV28 — [White Wind](https://finalfantasy.fandom.com/wiki/White_Wind_(Final_Fantasy_V)).** Final Fantasy Wiki; acquisition and use sections read September 26, 2026. Enchanted Fan/Control, current-HP healing and resource limit. The page's Enkidu inventory is qualified by its text saying that source cannot be redirected for learning; it is not adopted as an available acquisition route.
+
+<a id="ffv29"></a>**FFV29 — [Jobs Strategy Guide](https://gamefaqs.gamespot.com/pc/323470-final-fantasy-v-pixel-remaster/faqs/49839).** KholdStareMud, GameFAQs; introduction, inheritance and command-acquisition passages read September 26, 2026. Older guide attached to a modern product page, not a new Pixel Remaster balance test. Character preference rankings and erroneous individual spell-level examples are not adopted.
+
+<a id="ffv30"></a>**FFV30 — [Final Fantasy V Advance Game Script](https://www.neoseeker.com/final-fantasy-v/faqs/270395-script-a.html).** Community transcription of the game's authored text, v1.0; substantive indexed Guardian Tree/Galuf bequest passage inspected September 26, 2026. Original dialogue establishes the narrative sequence; no cutscene or complete playthrough was watched.
+
+<a id="ffv31"></a>**FFV31 — [Sing](https://finalfantasy.fandom.com/wiki/Sing_(Final_Fantasy_V)).** Final Fantasy Wiki; song acquisition, sustained-performance and interruption descriptions read September 26, 2026. Original-versus-Pixel Remaster cap distinguished; no claim that a temporary level song grants permanent EXP.
