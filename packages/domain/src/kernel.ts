@@ -1,3 +1,4 @@
+import { isSpeechVolume } from './acoustics.js';
 import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
 import { motionTravelBounds, nativeMotionInterval } from './motion-boundaries.js';
 import { withStableAudience } from './event-audience.js';
@@ -1091,15 +1092,23 @@ function executeCommandNative(
         command.text.length > 1500
       )
         return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+      const volume = command.volume ?? 'normal';
+      if (!isSpeechVolume(volume))
+        return reject('invalid-volume', 'Choose whisper, normal or shout.');
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
       if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
       if (
         command.targetId &&
-        (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          capabilityBlocked(world, target, 'perception') ||
+          target.actor.incapacitated)
       )
-        return reject('not-heard', 'The listener is not within hearing range.');
+        return reject('not-heard', 'The intended listener is unavailable.');
+      // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
+      // docs/hearing-and-speech.md#4-speech-volume-and-admission
       emit(
         world,
         events,
@@ -1111,9 +1120,14 @@ function executeCommandNative(
           text: command.text.trim(),
           ...(intendedRecipientId ? { intendedRecipientId } : {}),
           ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+          utteranceId: command.id,
+          volume,
+          acousticPolicyId: world.moduleManifest.acoustics.id,
+          acousticPolicyVersion: world.moduleManifest.acoustics.version,
+          sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
         },
       );
-      result = outcome(true, 'spoken', 'Speech delivered to nearby listeners.');
+      result = outcome(true, 'spoken', 'Spoken.');
       break;
     }
     case 'goal': {
@@ -1132,7 +1146,12 @@ function executeCommandNative(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+      if (
+        !target?.actor?.alive ||
+        !hasMemory(target) ||
+        target.actor.incapacitated ||
+        !hearsEntity(world, target, actor)
+      )
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -1808,7 +1827,12 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
 }
 
 /** Native urgency uses only carried food and currently visible resources; it is not an AI impersonation. */
-function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]): void {
+function nativeSurvival(
+  world: WorldState,
+  actor: Entity,
+  events: WorldEvent[],
+  resources: ReadonlyMap<string, readonly string[]>,
+): void {
   const component = actor.actor!;
   if (
     !hasWildernessNeeds(component) ||
@@ -1841,7 +1865,8 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
   }
   if (component.action && component.fullness > 10 && component.energy > 5) return;
   if (component.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) {
-    const resource = worldRootEntities(world)
+    const resource = (resources.get('berries') ?? [])
+      .flatMap((id) => (world.entities[id] ? [world.entities[id]!] : []))
       .filter(
         (entity) =>
           entity.resource?.definitionId === 'berries' &&
@@ -1923,8 +1948,19 @@ function nativeParticipants(world: WorldState): {
   actors: string[];
   ambient: string[];
   statuses: string[];
+  resources: Map<string, string[]>;
 } {
   const roots = worldRootEntities(world);
+  // Supply membership follows the same command/continuation boundaries as the roster.
+  // Quantities and visibility remain live; hunger need not proxy unrelated scenery.
+  const resources = new Map<string, string[]>();
+  for (const entity of roots) {
+    const definition = entity.resource?.definitionId;
+    if (!definition) continue;
+    const ids = resources.get(definition) ?? [];
+    ids.push(entity.id);
+    resources.set(definition, ids);
+  }
   const active = roots
     .filter((e) => activelyParticipates(e) && (e.actor || e.animal || e.heat))
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -1932,6 +1968,7 @@ function nativeParticipants(world: WorldState): {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
     statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
+    resources,
   };
 }
 
@@ -2066,7 +2103,7 @@ function* advanceWorldNative(
         hasWildernessNeeds(component) &&
         (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
       )
-        nativeSurvival(world, actor, events);
+        nativeSurvival(world, actor, events, participants.resources);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
       if (step) {
@@ -2734,8 +2771,8 @@ export function observeActor(
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
           // Actor context is prose-first. Structured event fields stay authoritative in
           // world state; only the event's authored context text crosses this boundary.
-          ...(aware.intelligible && aware.content !== undefined
-            ? { data: { text: aware.content } }
+          ...(aware.content !== undefined
+            ? { data: { text: aware.speech ? aware.text : aware.content } }
             : {}),
         }))
       : [],

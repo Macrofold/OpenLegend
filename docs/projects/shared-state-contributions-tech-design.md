@@ -121,7 +121,7 @@ Route the entire effect group through the current writer transaction. Lock/check
 
 Do not append a transfer journal row on every microsecond of continuous drain. Save compact integrated process/stock state at existing durability boundaries; retain discrete meaningful transfers and required receipt evidence. Do not reconstruct current balances by scanning lifetime history.
 
-Add identity-preserving in-place migrations to existing record extraction, with source verification and atomic cutover. There is never a period with writable native and generic copies. Follow current [active-development save policy](../save-and-load.md#active-development-policy), which supersedes older no-migration prose in historical designs. Missing required pins or invalid residue/contribution references fail before installation.
+The delivered record extraction used source verification and atomic cutover without simultaneous writable native and generic copies. Future state/storage changes follow the [development save policy](../../AGENTS.md#development-save-policy). Missing required pins or invalid residue/contribution references fail before installation.
 
 SL00 capture includes active contributions, holds, progress, fractional carry, deadlines and exact definitions. Restore installs these together under a fresh timeline/authority fence, rebuilds lookups and schedules future native work without replaying initial application. Current privacy, control grants and external spending remain outside rewind. INV-5/EWF07 own live owner replacement; unsupported detach or missing migration blocks activation.
 

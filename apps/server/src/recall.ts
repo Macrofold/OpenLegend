@@ -26,9 +26,12 @@ import {
   type WorldState,
   type Awareness,
 } from '@open-legend/domain';
+import { embeddingBatches } from './embedding-batches.js';
 import {
   createEmbeddingClient,
   type EmbeddingClient,
+  type EmbeddingRequest,
+  type AiResult,
   type JudgeRequest,
   type JudgeValue,
   type JudgmentAnswer,
@@ -110,7 +113,10 @@ function memoryCandidate(
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
     text: `${gameTime(memory.at)} [${memory.source}]: ${summary}`,
-    revision: digest({ ...memory, summary }),
+    ...(awareness?.speech
+      ? { embeddingText: `${gameTime(memory.at)} [${memory.source}]: ${memory.summary}` }
+      : {}),
+    revision: awareness?.speech ? digest(memory) : digest({ ...memory, summary }),
     required:
       matches(requiredIds) ||
       (memory.kind === 'commitment' && !memory.resolved) ||
@@ -236,7 +242,7 @@ export function candidateSet(
     }
   }
   for (const memory of candidates) {
-    memory.embeddingText = memory.text;
+    memory.embeddingText ??= memory.text;
     memory.text = projectEntityMarkers(memory.text, world, actorId);
     const identities = [...new Set(memory.entityIds)].flatMap((id) =>
       world.entities[id] && !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
@@ -407,10 +413,44 @@ export class RecallService {
       });
   }
 
+  /** Check at actual dispatch, after logging/admission awaits. Start the provider in a
+   * fresh mutation turn, but release that turn before waiting for its response. */
+  private async embedCurrent(
+    request: EmbeddingRequest,
+    current: () => boolean | Promise<boolean>,
+  ): Promise<AiResult<number[][]>> {
+    const admitted = await this.service.publishRecall(async () => {
+      const valid = await current();
+      if (valid && !this.closed && !request.signal?.aborted)
+        return { result: this.embeddings.embed(request) };
+      const now = new Date().toISOString();
+      const cancelled: AiResult<number[][]> = {
+        outcome: 'cancelled',
+        reason: 'Embedding context changed before dispatch.',
+        receipt: {
+          requestId: request.requestId,
+          provider: 'openai',
+          requestedModel: this.service.config.embeddingModel,
+          model: this.service.config.embeddingModel,
+          modelVersionStatus: 'unavailable',
+          contextDigest: digest(request.texts),
+          startedAt: now,
+          completedAt: now,
+          latencyMs: 0,
+          dispatched: false,
+          completionUncertain: false,
+        },
+      };
+      return { result: Promise.resolve(cancelled) };
+    });
+    return admitted.result;
+  }
+
   private async indexMemories(): Promise<void> {
     const repository = this.service.store.memories;
+    const generation = this.service.generation;
     const head = await this.service.store.records?.head();
-    if (!repository || !head) return;
+    if (!repository || !head || generation !== this.service.generation) return;
     const config = this.service.config;
     const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
     const actors = Object.values(this.service.world.entities)
@@ -421,8 +461,22 @@ export class RecallService {
       const actorId = actors.shift()!;
       if (this.service.world.entities[actorId]?.actor?.controller !== 'npc') continue;
       const scope: MemoryScope = { worldId: head.worldId, actorId, generation: head.generation };
-      const batch = await repository.pending(scope, model);
+      const pending = await repository.pending(scope, model);
+      const batch =
+        embeddingBatches(
+          pending.map((source) => ({ ...source, text: source.memory.summary })),
+        ).next().value ?? [];
       if (!batch.length) continue;
+      const current = async () =>
+        generation === this.service.generation &&
+        this.service.world.entities[actorId]?.actor?.controller === 'npc' &&
+        (await repository.current(
+          scope,
+          batch.map((source) => ({
+            id: source.memory.id,
+            revision: source.revision,
+          })),
+        ));
       const requestId = `memory-index:${randomUUID()}`;
       const admitted = await repository.markAttempt(
         scope,
@@ -440,30 +494,57 @@ export class RecallService {
             actorId,
           ),
       );
-      if (!admitted) return;
+      if (!admitted) continue; // A denied actor must not starve the next actor.
       const result = await this.log.run(
         'Background memory embeddings',
         { requestId, actorId, ...model, sourceIds: batch.map((source) => source.memory.id) },
         () =>
-          this.embeddings.embed({
-            requestId,
-            texts: batch.map((source) => source.memory.summary),
-            signal: this.indexController.signal,
-          }),
+          this.embedCurrent(
+            {
+              requestId,
+              texts: batch.map((source) => source.memory.summary),
+              signal: this.indexController.signal,
+            },
+            current,
+          ),
       );
       await this.service.store.settle(requestId, result.receipt);
       if (result.outcome !== 'value') return;
-      await repository.putVectors(
-        scope,
-        model,
-        batch.map((source, index) => ({
-          id: source.memory.id,
-          revision: source.revision,
-          vector: result.value[index]!,
-        })),
-      );
+      await this.service.publishRecall(async () => {
+        if (this.closed || this.indexController.signal.aborted || !(await current())) return;
+        await repository.putVectors(
+          scope,
+          model,
+          batch.map((source, index) => ({
+            id: source.memory.id,
+            revision: source.revision,
+            vector: result.value[index]!,
+          })),
+        );
+      });
       actors.push(actorId);
     }
+  }
+
+  private recallCurrent(
+    world: WorldState,
+    actorId: string,
+    generation: string,
+    signal: AbortSignal,
+  ): boolean {
+    const now = this.service.world;
+    return (
+      !this.closed &&
+      !signal.aborted &&
+      generation === this.service.generation &&
+      world.id === now.id &&
+      !!now.entities[actorId]?.actor &&
+      now.entities[actorId]?.actor?.controller === world.entities[actorId]?.actor?.controller &&
+      digest(now.experience?.forgotten[actorId] ?? []) ===
+        digest(world.experience?.forgotten[actorId] ?? []) &&
+      digest(now.experience?.corrections?.[actorId] ?? {}) ===
+        digest(world.experience?.corrections?.[actorId] ?? {})
+    );
   }
 
   private readonly retrieval = new WeakMap<
@@ -502,11 +583,13 @@ export class RecallService {
     signal: AbortSignal,
     budgetCeiling: number,
   ): Promise<AttentionCandidate[]> {
+    const generation = this.service.generation;
     const repository = this.service.store.memories;
     const head = await this.service.store.records?.head();
     if (!repository || !head)
       return candidateSet(world, actorId, observed, requiredIds, automaticIds, conversationIds);
     const scope: MemoryScope = { worldId: world.id, actorId, generation: head.generation };
+    const current = () => this.recallCurrent(world, actorId, generation, signal);
     const config = this.service.config;
     const coverage = await repository.coverage(scope, {
       model: config.embeddingModel,
@@ -553,17 +636,20 @@ export class RecallService {
         const result = await this.log.run(
           'Memory query embedding',
           { requestId: id, actorId, model: config.embeddingModel },
-          () => this.embeddings.embed({ requestId: id, texts: [query], signal }),
+          () => this.embedCurrent({ requestId: id, texts: [query], signal }, current),
         );
         await this.service.store.settle(id, result.receipt);
         status = result.outcome;
         if (result.outcome === 'value') {
           vector = result.value[0];
-          await this.service.store.putIntegration(key, {
-            key: queryKey,
-            model: config.embeddingModel,
-            dimensions: config.embeddingDimensions,
-            query: vector,
+          await this.service.publishRecall(async () => {
+            if (!current()) throw new Error('Recall context changed during query embedding.');
+            await this.service.store.putIntegration(key, {
+              key: queryKey,
+              model: config.embeddingModel,
+              dimensions: config.embeddingDimensions,
+              query: vector,
+            });
           });
         }
       } else status = 'structured fallback: spending cap';
@@ -625,6 +711,7 @@ export class RecallService {
     immediateContext: Record<string, unknown> = {},
   ) {
     const config = this.service.config;
+    const generation = this.service.generation;
     const inner = world.innerWorlds?.[actorId];
     const records = mindFor(world, actorId).records;
     const people = candidates
@@ -713,15 +800,16 @@ export class RecallService {
         : new Set<string>();
 
     // Preserve structured priority while indexing only sections large enough to need semantic top-N.
-    const missing = ranked
-      .filter((candidate) => semanticIds.has(candidate.id) && !indexed.has(candidate.id))
-      .slice(0, 32);
+    const unindexed = ranked.filter(
+      (candidate) => semanticIds.has(candidate.id) && !indexed.has(candidate.id),
+    );
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
       revision: inner?.revision,
       forgotten: world.experience?.forgotten[actorId],
     });
     const cachedQuery = cache.queries[queryKey];
+    const missing = embeddingBatches(unindexed, cachedQuery ? [] : [query]).next().value ?? [];
     let embeddingStatus = !semanticPool.length
       ? 'skipped: every section is within the direct-Jev limit'
       : vectors
@@ -754,7 +842,10 @@ export class RecallService {
             dimensions: config.embeddingDimensions,
             texts,
           },
-          async () => await this.embeddings.embed({ requestId: id, texts, signal }),
+          () =>
+            this.embedCurrent({ requestId: id, texts, signal }, () =>
+              this.recallCurrent(world, actorId, generation, signal),
+            ),
         );
         await this.service.store.settle(id, result.receipt);
         embeddingStatus = result.outcome;
@@ -767,23 +858,18 @@ export class RecallService {
         }
       }
     }
-    // A late response must not repopulate corrected/forgotten content.
-    if (
-      !semanticPool.length ||
-      (digest(this.service.world.experience?.forgotten[actorId] ?? []) ===
-        digest(world.experience?.forgotten[actorId] ?? []) &&
-        digest(this.service.world.experience?.corrections?.[actorId] ?? {}) ===
-          digest(world.experience?.corrections?.[actorId] ?? {}))
-    ) {
-      if (vectors && additions.length) {
-        await vectors.put(scope, additions);
-        for (const source of additions) indexed.add(source.id);
-      }
-      if (semanticPool.length && vectors) await this.service.store.putIntegration(key, cache);
-    } else {
-      // Rebuilding from a changed privacy snapshot belongs to a fresh decision.
-      throw new Error('Recall sources changed during embedding; discard stale context.');
-    }
+    // Validation and bounded writes share the mutation turn with forgetting/restore.
+    // Provider work above remains outside; an inherited callback context cannot bypass it.
+    if (semanticPool.length && vectors)
+      await this.service.publishRecall(async () => {
+        if (!this.recallCurrent(world, actorId, generation, signal))
+          throw new Error('Recall sources changed during embedding; discard stale context.');
+        if (additions.length) {
+          await vectors.put(scope, additions);
+          for (const source of additions) indexed.add(source.id);
+        }
+        await this.service.store.putIntegration(key, cache);
+      });
     const q = cache.queries[queryKey];
     const byId = new Map(searchable.map((c) => [c.id, c]));
     const priority = (c: AttentionCandidate) =>

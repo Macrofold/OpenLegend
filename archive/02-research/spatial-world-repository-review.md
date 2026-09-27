@@ -70,7 +70,7 @@ Sources: [AGENTS.md](https://github.com/Macrofold/OpenLegend/blob/dd40ad2ad42639
 
 ### 8. No-legacy-save policy changes the correct implementation plan
 
-The active policy rejects incompatible development saves rather than requiring migrations. New 3D records should therefore have a deliberate current-format cutover, not a permanent optional-Y layer. Same-version continuity, retained routes, billing/privacy boundaries, and load-epoch fencing still apply.
+This historical review recommended an explicit XYZ cutover rather than a permanent optional-Y layer. The current [development save policy](../../AGENTS.md#development-save-policy) owns compatibility; same-version continuity, retained routes, billing/privacy boundaries and load-epoch fencing remain separate integrity requirements.
 
 Source: [save/load policy](https://github.com/Macrofold/OpenLegend/blob/dd40ad2ad42639a8171b6fa0a82c184c351b346e/docs/save-and-load.md#active-development-policy).
 

@@ -13,6 +13,7 @@ import { validateStatusEffects } from './status-effect-validation.js';
 import { activeStatusEffects } from './status-capabilities.js';
 import { strikeDefinition } from './strikes.js';
 import { validatePerceptionState } from './perception-frame.js';
+import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './acoustics.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
@@ -69,6 +70,8 @@ export interface WorldModuleManifest {
   senses: SenseDefinition[];
   defaultSenses: string[];
   sensePins: DefinitionPin[];
+  acoustics: AcousticPolicy;
+  acousticsPin: DefinitionPin;
 }
 export interface AttributeView {
   id: string;
@@ -122,7 +125,7 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
 } as const);
 const definitionPins = new WeakMap<object, DefinitionPin>();
 export function definitionPin(
-  definition: AttributeDefinition | SenseDefinition | ItemDefinition,
+  definition: AttributeDefinition | SenseDefinition | ItemDefinition | AcousticPolicy,
 ): DefinitionPin {
   const cached = definitionPins.get(definition);
   if (cached) return cached;
@@ -148,6 +151,8 @@ export function createModuleManifest(
     senses: structuredClone(senses),
     defaultSenses: DEFAULT_SENSES.map((s) => s.id),
     sensePins: senses.map(definitionPin),
+    acoustics: structuredClone(DEFAULT_ACOUSTICS),
+    acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
   };
   validateModuleManifest(manifest);
   return manifest;
@@ -181,6 +186,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'defaultSenses',
     'sensePins',
     'appraisals',
+    'acoustics',
+    'acousticsPin',
   ]);
   validateAppraisalPolicy(manifest.appraisals);
   if (
@@ -201,19 +208,31 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     new Set(manifest.defaultSenses).size !== manifest.defaultSenses.length
   )
     throw new Error('Invalid sense bindings.');
+  validateAcoustics(manifest.acoustics);
+  if (canonicalJson(manifest.acousticsPin) !== canonicalJson(definitionPin(manifest.acoustics)))
+    throw new Error('Missing exact acoustic policy dependency.');
   const senseIds = new Set<string>(),
     detectors = new Set<string>();
   for (const sense of manifest.senses) {
-    object(sense, ['id', 'version', 'implementation', 'radius']);
+    object(
+      sense,
+      sense.implementation === 'hearing-db-v1'
+        ? ['id', 'version', 'implementation', 'hearingFloorDbSpl']
+        : ['id', 'version', 'implementation', 'radius'],
+    );
     if (
       !namespace.test(sense.id) ||
       senseIds.has(sense.id) ||
       sense.version !== 1 ||
       !SENSE_IMPLEMENTATIONS.includes(sense.implementation) ||
-      !finite(sense.radius) ||
-      (sense.implementation === 'body-contact-v1'
-        ? sense.radius !== 0
-        : sense.radius <= 0 || sense.radius > 32)
+      (sense.implementation === 'hearing-db-v1'
+        ? !finite(sense.hearingFloorDbSpl) ||
+          sense.hearingFloorDbSpl < -120 ||
+          sense.hearingFloorDbSpl > 200
+        : !finite(sense.radius) ||
+          (sense.implementation === 'body-contact-v1'
+            ? sense.radius !== 0
+            : sense.radius <= 0 || sense.radius > 32))
     )
       throw new Error('Unsupported sense definition.');
     if (detectors.has(sense.implementation)) throw new Error('Duplicate sense detector owner.');

@@ -393,7 +393,7 @@ Audio playback uses a renderer-independent sound presentation adapter fed by **a
 
 ## 11. Persistence, restoration, and versioning
 
-Follow the active in-place development-save policy. Apply small, explicit current-model updates at startup/load when necessary, preserving world identity and unrelated state; never reset for a feature cutover. New flat fixtures explicitly initialize `y: 0`. Do not scatter `y ?? 0` compatibility readers throughout the code. Unclear conversion or malformed current state remains a surfaced error.
+Follow the [development save policy](../../AGENTS.md#development-save-policy). New flat fixtures explicitly initialize `y: 0`; supported current spatial state carries explicit XYZ/support, and malformed state remains an error.
 
 Persist canonical geometry/shape/profile versions; entity positions/support/mode/heading; active native routes and cursors; traversal/fall state; consequential waiting/reservation order; known spatial evidence; and event-time origins. Retain the current goals and native action receipts through their existing owners.
 

@@ -1,0 +1,18 @@
+{
+  "seed": 73,
+  "people": 10,
+  "animals": 20,
+  "layout": "scattered",
+  "steps": 100,
+  "intervalSeconds": 24,
+  "warmup": 0,
+  "speed": 8,
+  "timeoutSeconds": 120,
+  "objects": [
+    {
+      "count": 300,
+      "name": "Observation object",
+      "properties": ["rigid"]
+    }
+  ]
+}

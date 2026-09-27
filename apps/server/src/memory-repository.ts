@@ -591,6 +591,13 @@ export class MemoryRepository {
   private params(scope: MemoryScope) {
     return [scope.worldId, scope.actorId, scope.generation];
   }
+  /** SQL counterpart of hasLinguisticSpeech: no-word cues remain recallable evidence,
+   * but cannot crowd the automatic dialogue or protected verbatim pool. */
+  private get linguisticSpeech(): string {
+    return this.db.dialect === 'postgres'
+      ? "a.payload::jsonb->'speech'->>'intelligibility' IN ('partial','clear') AND a.payload::jsonb->'speech'->>'perception'<>'seen'"
+      : "json_extract(a.payload,'$.speech.intelligibility') IN ('partial','clear') AND json_extract(a.payload,'$.speech.perception')<>'seen'";
+  }
   async context(
     scope: MemoryScope,
     requiredIds: string[],
@@ -628,7 +635,7 @@ export class MemoryRepository {
                 `SELECT a.source_id FROM history_events e
         JOIN mind_awareness a ON a.world_id=e.world_id AND a.source_id=e.id
         JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.id=a.source_id AND r.source_kind='awareness'
-        WHERE ${this.eligible} AND e.conversation_id=? AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech'
+        WHERE ${this.eligible} AND e.conversation_id=? AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech' AND ${this.linguisticSpeech}
         ORDER BY a.sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
               )
               .all(...this.params(scope), conversation)
@@ -841,7 +848,7 @@ export class MemoryRepository {
         WHERE ${this.eligible} AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
         AND (r.at,r.sequence,r.id) > (?,?,?)
         AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
-        AND r.id NOT IN (SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND event_type='speech' ORDER BY at DESC,sequence DESC,id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
+        AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech' AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
         ${
           mode === 'daily'
             ? `AND EXISTS (SELECT 1 FROM ${'mind_memories'} m WHERE r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id AND m.revision<=?

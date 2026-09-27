@@ -11,6 +11,31 @@ export function statusDefinitions(world: WorldState): StatusEffectDefinition[] {
   const policy = world.statusEffectPolicy;
   return (isDraft(policy) ? original(policy)! : policy).definitions;
 }
+const restrictionDefinitions = new WeakMap<StatusEffectDefinition[], Map<Capability, string[]>>();
+function restrictions(world: WorldState, capability: Capability): string[] {
+  const definitions = statusDefinitions(world);
+  const reusable = Object.isFrozen(definitions);
+  let compiled = reusable ? restrictionDefinitions.get(definitions) : undefined;
+  if (!compiled) {
+    compiled = new Map();
+    if (reusable) restrictionDefinitions.set(definitions, compiled);
+  }
+  let ids = compiled.get(capability);
+  if (!ids) {
+    ids = definitions
+      .filter((definition) =>
+        definition.whileActive.some(
+          (operation) =>
+            'restrictCapabilities' in operation &&
+            operation.restrictCapabilities.capabilities.includes(capability),
+        ),
+      )
+      .map((definition) => definition.id);
+    compiled.set(capability, ids);
+  }
+  return ids;
+}
+
 type States = NonNullable<Entity['statusEffects']>;
 type SourceBinding = { targetId: string; contributionId: string };
 type SourceIndex = Map<string, readonly SourceBinding[]>;
@@ -154,20 +179,12 @@ export function capabilityBlocked(
   capability: Capability,
 ): boolean {
   entity = entity ? (world.entities[entity.id] ?? entity) : undefined;
-  if (!entity?.statusEffects) return false;
-  const independent = contributionIndex(entity.statusEffects);
-  // This is a frequent native read. Do not allocate a derived set for every
-  // capability check or cache mutable draft state across contribution changes.
-  for (const definition of statusDefinitions(world)) {
-    if (
-      definitionActive(entity.statusEffects, definition.id, independent, world) &&
-      definition.whileActive.some(
-        (op) =>
-          'restrictCapabilities' in op && op.restrictCapabilities.capabilities.includes(capability),
-      )
-    )
-      return true;
-  }
+  const states = entity?.statusEffects;
+  if (!states) return false;
+  const independent = contributionIndex(states);
+  // Immutable rule membership is reusable; current contribution lifetime and state are not.
+  for (const id of restrictions(world, capability))
+    if (definitionActive(states, id, independent, world)) return true;
   return false;
 }
 export function activeStatusEffects(

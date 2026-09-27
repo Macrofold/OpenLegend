@@ -27,7 +27,7 @@ Read `AGENTS.md`, both new design documents, the master index, current Architect
 
 Current starting points worth retaining include unified actors, shared native body effects, immutable domain snapshots, one writer, journal plus checkpoints, cold history, durable conversations/story jobs, scoped reference binding, current manual save files, and the story evaluator registry. The AG and EPR designs are not proof their complete runtime exists.
 
-No old-development-save migration, compatibility reader, or legacy fixture is part of EWF. Same-version save/load, external spending/privacy authority, and active-definition lifecycle remain required.
+Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). Same-version save/load, external spending/privacy authority and active-definition lifecycle remain required.
 
 ## Delivery order and stop rules
 
@@ -167,7 +167,7 @@ Delivered native agency scope and remaining AG/INV boundaries are recorded in [A
 - [ ] Supply INV-5 with the module-level dependency and state-owner changes needed for activation and retirement. Do not add a competing module installer or bypass existing authoring/activation permissions.
 - [ ] Verify removal or replacement while an action, AG plan, source observation, private mind, or retained save still references the old version. Reject or use the owner's explicit compatible transition; never orphan state or allow two writers.
 - [ ] When a stateful effect or specialized construct is included, save its exact definition bindings, active contribution, supported termination state, and relevant phase/deadline. Expiry or module removal cannot restore a stale target snapshot or erase unrelated later changes.
-- [x] Keep development-format breaks separate from live definition updates. Add no legacy readers; preserve real spending, current privacy, and load-generation fencing.
+- [x] Keep development-format breaks separate from live definition updates. Apply the [development save policy](../../AGENTS.md#development-save-policy); preserve real spending, current privacy and load-generation fencing.
 
 **Tests:** same-version save/load of a custom need/sense; save with a missing required definition; replaced implementation interface; stale callback from same world ID/different load generation; removal blocked by a live dependency; failed activation leaves old manifest/state; returned receipt does not imply a repeated installation.
 

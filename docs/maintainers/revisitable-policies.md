@@ -14,13 +14,13 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP02 — Development-state compatibility
 
-**Current policy:** [Save/load — Active development policy](../save-and-load.md#active-development-policy); [root summary](../../AGENTS.md#authored-reality-design-principles). Evolve development worlds in place with small safe migrations; avoid disproportionate support for legacy game versions.
+**Current policy:** [AGENTS.md — Development save policy](../../AGENTS.md#development-save-policy), the sole binding text.
 
-**Why revisit:** Early development favors one current model; supporting released versions or other people's retained worlds may require an explicit compatibility window and migration commitments.
+**Why revisit:** A future real-player release may need a declared save-compatibility window. This is a review candidate, not a commitment to implement compatibility now.
 
-**Review trigger:** Before promising cross-release save compatibility, supporting production/shared worlds or multiple maintained releases, or when preserving existing worlds no longer admits a safe small conversion. A trigger calls for a decision, not an automatic compatibility framework or destructive reset.
+**Review trigger:** Before promising retained worlds across releases or supporting real players, present the proposed support window and cost to Mike. Until then the linked rule remains in force; reaching a trigger never changes it automatically.
 
-**Decision authority:** Project maintainer, with the save/load design owner. Preserve stored state while a consequential compatibility decision remains unresolved; privacy and external accounting remain protected.
+**Decision authority:** Mike, the project owner, through the explicit policy-change request required by the linked block. Engineering judgment, a design-owner approval or a general implementation request cannot substitute for that request.
 
 ## RP03 — Selective history and initial overload handling
 

@@ -76,7 +76,15 @@ Base-world rules/content belong in `docs/worlds/base/` and `packages/domain/src/
 
 Apply the [boundary principles](docs/engine-and-world-boundaries.md#design-principles-for-every-feature) when designing or changing a subsystem. Localize justified v1 specificity with its owner, limitation, seam and expansion trigger. Preserve the external-world-package seam without an unused loader.
 
-State/storage changes follow [save/load](docs/save-and-load.md#active-development-policy): evolve development worlds in place with small safe migrations preserving identity and unrelated state. No per-feature save versions, parallel legacy runtimes or replacement directories to avoid migration. Never automatically reset a world; preserve atomicity, current validation, privacy and external accounting.
+State/storage changes follow the development save policy below and the [current-format save/load contract](docs/save-and-load.md).
+
+### Development save policy
+
+**No legacy support until the owner removes this block.** The game is in active development and there are no real players. Do not implement, extend or maintain backward compatibility, legacy save readers, old-save migrations or compatibility fixtures when models/storage change. Preserving incompatible development saves is not a delivery requirement. Validate the current model and reject incompatible saves explicitly. Existing conversion code, old task approvals and historical verification do not authorize legacy-support work.
+
+Preserve same-version save/load integrity, atomic writes, current validation, privacy, credentials and real spending/accounting. Incompatible saves must not trigger automatic deletion, reset or replacement; destructive action requires the owner's explicit request. Live definition changes inside a supported running world retain their separate integrity requirements.
+
+**DO NOT REMOVE, WEAKEN, BYPASS, RELOCATE OR REINTERPRET THIS BLOCK UNDER ANY CIRCUMSTANCES WITHOUT AN EXPLICIT REQUEST FROM MIKE, THE PROJECT OWNER, TO CHANGE THIS POLICY.** General feature work, startup failures, rebases, documentation cleanup, existing migrations or approaching a release are not that request. This block is the sole policy owner; other documents link here. [RP02](docs/maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks when the owner may want to reconsider it; it grants no permission to change the rule.
 
 ## Documentation is a maintained source of truth
 

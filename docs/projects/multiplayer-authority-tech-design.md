@@ -116,7 +116,7 @@ Nested belongings later introduced by P3 follow the inactive actor's containment
 
 Extend the existing control/profile repository and scoped canonical data queries. Include current grant/control revisions in database publication checks, not only an in-memory cache. The single world writer provides ordering, while transaction constraints guard stale processes and restart. Lock in stable scope/actor order and keep transactions short.
 
-Migrate the existing local profile, selected actor, preferences and milestones in place. Preserve opaque IDs, creator attribution and saves; require explicit verified-account linkage. Move global player-specific milestones/preferences to their current actor/account owner without fabricating progress for other accounts. Authentication secrets never enter that migration's gameplay payload.
+The delivered local-profile conversion retained opaque IDs and creator attribution, required verified-account linkage, and moved preferences/milestones to their actor/account owner without fabricating progress or putting secrets into gameplay. Future gameplay compatibility follows the [development save policy](../../AGENTS.md#development-save-policy); current account/security authority remains independent of gameplay rewind.
 
 Restore keeps current sessions/grants/control counters and external accounting, rotates timeline/application context, reinstalls gameplay atomically and rebuilds scoped view/subscription caches. Reconcile saved active/exiting humans with current control before resuming; a save cannot resurrect a revoked account or repeat departure/return receipts. SL owns the restore transaction, not a new multiplayer save implementation.
 

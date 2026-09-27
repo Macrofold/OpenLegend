@@ -154,7 +154,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC10.2 Fence old native preparation, perception, interpretation and asset callbacks by world/load epoch and relevant revisions. Rebuild derived watches without replaying paid calls or old events.
 - [ ] AC10.3 Reuse durable admission/idempotency beyond hot receipt windows; preserve uncertain real accounting and native RNG. Reject identity reuse with altered content.
 - [ ] AC10.4 Enforce private actor evidence versus authoritative adjudication versus projected feedback. Reject raw world queries, new host privileges and generated code through ordinary invocations.
-- [ ] AC10.5 Apply small identity-preserving upgrades under the active save/load policy. Reject unsafe or corrupt current state without reset. Definition activation must not silently retarget running calls.
+- [ ] AC10.5 Apply the [development save policy](../../AGENTS.md#development-save-policy) and canonical active-definition policies rather than silently upgrading running calls.
 
 **Exit:** AX19–AX26, AX53–AX68 and AX71 pass. Same-version replay continues the same accepted work with no extra effect, knowledge, charge or native random draw.
 

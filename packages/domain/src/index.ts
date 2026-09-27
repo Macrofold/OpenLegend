@@ -168,3 +168,6 @@ export { advanceWorldSlices } from './kernel.js';
 export { completeNavigation } from './kernel.js';
 
 export * from './action-targets.js';
+export * from './acoustics.js';
+export { speechExposure, soundOrigin, hearingReferenceRadius } from './perception.js';
+export * from './speech.js';

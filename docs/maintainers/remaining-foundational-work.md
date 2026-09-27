@@ -26,7 +26,7 @@ The September 26 [implementation and design map](../projects/foundations-1-5.md)
 | 4        | [Dependency and aggregate-work behavior](../projects/dependency-invalidation-feature-spec.md) | [Membership, generations and budgets](../projects/dependency-invalidation-tech-design.md)          | [DI01–DI08](dependency-invalidation.md), EWF08 child; SW/EPR/PF retain native owners |
 | 5        | [Appraisal and social continuity](../projects/appraisal-social-continuity-feature-spec.md)    | [Causes, accepted publication and privacy](../projects/appraisal-social-continuity-tech-design.md) | [ACT07.1–ACT07.7 / ACT08.1–ACT08.4](actor-model.md#priority-5-implementation-slices) |
 
-All 46 delivery slices are complete against their concrete exit boundaries; source and runtime evidence, rather than design delivery, support those closures. Scope each child ID to its linked tracker. Every durable owner joins SL00 while introduced; current in-place data upgrades, human-private scope and non-rewindable authority/accounting apply across all five.
+All 46 delivery slices are complete against their concrete exit boundaries; source and runtime evidence, rather than design delivery, support those closures. Scope each child ID to its linked tracker. Every durable owner joins SL00 while introduced; the [development save policy](../../AGENTS.md#development-save-policy), human-private scope and non-rewindable authority/accounting apply across all five.
 
 ## Playable exposure after foundations
 

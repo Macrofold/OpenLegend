@@ -75,7 +75,7 @@ Coordinate live activation with INV-5 rather than creating a module installer. S
 
 A local pack round-trip between two test worlds is enough to establish initial portability semantics. The destination can require bindings or adapters; refusal is a valid result. A marketplace, pricing scheme, or hosted account library is not required for the first local proof.
 
-Distinguish active-definition transformation from legacy-development-save compatibility. The no-legacy policy still permits refusing incompatible old development formats. It does not allow a live revision to orphan active state or a same-version save to depend on mutable “latest” behavior.
+Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Active-definition transformation must not orphan live state or make a same-version save depend on mutable “latest” behavior.
 
 ## EW-R5: ambitious behavior only with explicit semantic owners
 

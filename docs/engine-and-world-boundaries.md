@@ -257,4 +257,4 @@ This document owns the conceptual engine/world boundary and the extension decisi
 | [Worked examples](extensible-world-examples.md)                                                                         | Illustrative target behaviors and cross-subsystem failure cases, not competing specifications                              |
 | [World agent and workshop](../archive/03-design-proposals/world-agent-and-workshop.md) / [UI brief](ui-design-brief.md) | Natural-language authoring workflow, review decisions, and progressive technical inspection                                |
 
-The active no-legacy-development-save policy remains in force. It does not remove same-version integrity or the separate requirement that a live definition change preserve a coherent running world.
+Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Live definition activation and current-format continuity remain the separate contracts described above.

@@ -35,18 +35,28 @@ export function prepareHistory(
       if (changedIds.has(event.id)) throw new Error('Duplicate changed history event identity.');
       changedIds.add(event.id);
     }
-    const audience = new Set<string>();
-    for (const event of changed) for (const actorId of event.audience) audience.add(actorId);
+    const wanted = new Map<string, Set<string>>();
+    for (const event of changed)
+      for (const actorId of event.audience) {
+        let ids = wanted.get(actorId);
+        if (!ids) wanted.set(actorId, (ids = new Set()));
+        ids.add(event.id);
+      }
     const awarenessIndexes = new Map<string, Map<string, Awareness>>();
     const forgottenIndexes = new Map<string, Set<string>>();
-    for (const actorId of audience) {
+    for (const [actorId, ids] of wanted) {
       const values = new Map<string, Awareness>();
       const entries = world.experience?.awareness[actorId] ?? [];
       const prior = previous?.experience?.awareness[actorId] ?? [];
       const count = fastAppend ? appendedRecordCount(prior, entries) : undefined;
-      const relevant = count === undefined ? entries : entries.slice(prior.length);
-      for (const entry of relevant)
-        if (!values.has(entry.eventId)) values.set(entry.eventId, entry);
+      // Preserve append-proven preparation and resolve only the changed events' evidence.
+      // Edits search from recent awareness; cold evidence remains owned by stored perspectives.
+      // docs/hearing-and-speech.md#performance-and-invalidation
+      const start = count === undefined ? 0 : prior.length;
+      for (let i = entries.length - 1; i >= start && ids.size; i--) {
+        const entry = entries[i]!;
+        if (ids.delete(entry.eventId)) values.set(entry.eventId, entry);
+      }
       awarenessIndexes.set(actorId, values);
       forgottenIndexes.set(actorId, new Set(world.experience?.forgotten[actorId] ?? []));
     }

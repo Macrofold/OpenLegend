@@ -44,3 +44,5 @@ All 238 original numbers are preserved. `LA014` is audit number 14. Most old row
 ## Growing work with no independent bound
 
 The [source-review coverage](limits/README.md#growth-path-review-coverage) distinguishes no search/input-work cap from bounded results, batches and pages. New entries: memory MH01–MH07 and KG01, cognition CG01, native work NW10–NW11, and save catalog SV17. The [backlog ranking](maintainers/limits-audit.md#ranking-method) uses near-term permitted gameplay exposure and impact; absence of a cap does not automatically recommend deleting data or adding a fixed content limit.
+
+Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).

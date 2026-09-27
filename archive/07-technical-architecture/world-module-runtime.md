@@ -403,7 +403,7 @@ Each integration identifies:
 
 Cache keys include the relevant world/load generation, manifest and definition versions, actor/scope, and source revisions. A rotating gameplay retry epoch is not automatically the correct restore-generation token. Restore must fence old callbacks even if entity IDs recur.
 
-The active development policy prohibits adding old-save readers, migrations, or compatibility fixtures. Bump the current format and reject incompatible development saves when necessary. This is separate from **live definition activation inside a supported running format** and **same-version save continuity**. Those still require coherent state/definition dependencies and must not be omitted.
+Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). **Live definition activation inside a supported running format** and **same-version save continuity** still require the coherent state/definition dependencies defined here.
 
 ## 12. Restricted algorithms remain conditional
 

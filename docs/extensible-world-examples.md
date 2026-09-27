@@ -188,4 +188,4 @@ A combination must define target flow, stages, shared versus per-target costs, f
 
 A supported second definition should change its artifact, bindings, registration where needed, and tests—not generic protocol, cognition, scheduler, UI, and persistence branches named after that particular mechanic. A new computational primitive may legitimately require host engineering. Label that boundary instead of claiming the same abstraction can already express it.
 
-Use the exact installed versions and present evidence when evaluating an example. No example overrides standard-world behavior, authoring locks, human control rules, current privacy/accounting policy, or the no-legacy-development-save instruction.
+Use the exact installed versions and present evidence when evaluating an example. No example overrides standard-world behavior, authoring locks, human control rules, current privacy/accounting policy, or the [development save policy](../AGENTS.md#development-save-policy).

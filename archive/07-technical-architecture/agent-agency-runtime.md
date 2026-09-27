@@ -334,7 +334,7 @@ A same-version restart can rebuild native readiness from authoritative state wit
 
 Keep explicit pause semantics consistent with the existing distinction between player-initiated work and autonomous background cognition. No new paid stage or physical effect is admitted while its policy forbids it. A result held across pause still needs relevant freshness checks after resume. Cancellation removes future authority, not necessarily charges already incurred remotely.
 
-The active development policy in [AGENTS](../../AGENTS.md) and [save/load](../../docs/save-and-load.md#active-development-policy) applies: **do not add old-save migrations or compatibility readers for this redesign**. Reject incompatible development saves explicitly. This does not remove same-version recovery, privacy revocation, external accounting or the separate future version/activation semantics of generated world definitions.
+Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). This design retains same-version recovery, privacy revocation, external accounting and the separate future version/activation semantics of generated world definitions.
 
 ## 9. Diagnostics and observable behavior
 

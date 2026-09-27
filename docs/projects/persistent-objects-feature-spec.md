@@ -68,7 +68,7 @@ Use existing pickup/drop/equip/crafting commands and the action catalogue, with 
 
 ## 5. Stages and non-goals
 
-**Stage 1:** preserve current objects/stacks while unifying identity and placement ownership through checked in-place migration. Keep public XYZ views working without giving contained objects a fake independent position.
+**Stage 1 (delivered):** unified object/stack identity and placement ownership through the historical conversion recorded in the technical design. Future storage changes follow the [development save policy](../../AGENTS.md#development-save-policy). Keep public XYZ views working without giving contained objects a fake independent position.
 
 **Stage 2:** implement stable lot operations, lifecycle/lineage, resource claims and individual equipment selection. Preserve current pickup/drop semantics and successful native gathering.
 
@@ -88,7 +88,7 @@ Quantity totals and admitted sources/sinks reconcile at each committed step. Eve
 
 Accepted defaults: quantity-one individual containers/equipped units, explicit merge equivalence rather than definition-only merging, no automatic actionable aliasing after retirement, authored packing-load capacity for the first bag, no new actor encumbrance, and declared ownership separate from custody. Update the base-world item contract alongside implementation of its intentional equipped-unit refinement.
 
-**Blocking product questions: none for this foundation.** New theft/trade/destruction policies and physical weight balancing are not silently decided here. A real migration collision or unsupported disposition must be resolved before conversion/retirement, with the original state preserved.
+**Blocking product questions: none for this foundation.** New theft/trade/destruction policies and physical weight balancing are not silently decided here. A current identity collision or unsupported disposition must be resolved before publication/retirement.
 
 ## Maintained records
 

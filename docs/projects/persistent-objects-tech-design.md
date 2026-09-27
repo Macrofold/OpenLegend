@@ -10,7 +10,7 @@ Inspected main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`: [item-handling.ts](..
 
 Important implementation fact: record IDs are storage-path identities, while entity/item IDs are domain identities. Current RecordNode parent FKs express owned storage subrecords. They must not become physical containment FKs with cascade deletion. A bag's contents are independent entities, not owned JSON children destroyed when the bag row is deleted.
 
-Use the [production possessions model](../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction) and [base-world items](../worlds/base/items.md). Evolve current records in place; do not add a second inventory JSON list, spatial position or item registry. The new object model requires explicit adaptation of code that assumes every entity has an independent XYZ position.
+Use the [production possessions model](../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction) and [base-world items](../worlds/base/items.md). Use the [development save policy](../../AGENTS.md#development-save-policy) for storage changes; do not add a second inventory JSON list, spatial position or item registry. The new object model requires explicit adaptation of code that assumes every entity has an independent XYZ position.
 
 ## 2. Identity and canonical representation
 
@@ -47,7 +47,7 @@ Active items keep positive safe-integer quantity. Retirement removes availabilit
 
 ## 3. Storage changes and indexes
 
-Extend current record ownership as follows; exact migration version is selected after DF02 reconciliation, not hard-coded against a moving branch:
+Current record ownership is as follows; future changes follow DF02 and the [development save policy](../../AGENTS.md#development-save-policy):
 
 | Existing/new logical record         | Required change and access path                                                                                                                                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -121,11 +121,11 @@ P2 inactive human participation suppresses the carried root's active bodily/worl
 
 ## 9. Identity-preserving migration and save/load
 
-PO02 quiesces the current writer and validates source record revision. Promote current item IDs to entity identities, checking collisions with existing entity IDs first. Preserve current definitions, quantities, owner-as-custody, pile geometry, equipment, pending actions, holds, histories and receipts. Collision or unknown references produce a report with the original world untouched; no automatic renaming/reset is authorized.
+The completed PO02 conversion quiesced the writer, checked source revisions and identity collisions, and promoted item IDs to entity identities while preserving definitions, quantities, custody, geometry, equipment, actions, holds, histories and receipts. Collision/unknown-reference checks protected the source. This is historical delivery context; future changes follow the [development save policy](../../AGENTS.md#development-save-policy).
 
-Convert actor/pile custody into placement, existing root XYZ/support into the single placement representation, and current equipped references through the reviewed individualization plan. Rebuild dialect-specific schema/FKs/indexes with the current migration machinery, verify row/quantity/reference totals and switch canonical record ownership atomically. Old writable `world.items` and duplicate location fields are removed after verified cutover; an export/view projection is not a competing owner.
+The conversion mapped custody and root XYZ/support to one placement representation, individualized equipped references, rebuilt schema/FKs/indexes and verified row/quantity/reference totals before atomic cutover. It removed writable `world.items` and duplicate location fields; an export/view projection is not a competing owner.
 
-Do not invent legal ownership, character recognition or item damage during migration. Missing newly applicable state follows explicit admitted initialization; an unsupported instance remains unavailable for that mechanic until initialized. Keep source checksums, conversion receipt and exact definition bytes; retain rollback before publication. After new writes, rollback requires a real reverse migration or authorized restore, never reopening stale source state silently.
+The historical conversion retained source checksums, receipts and exact definitions without inventing legal ownership, recognition or damage. Current-state initialization remains explicit; unsupported instances remain unavailable for a mechanic until initialized. Recovery after new writes must never silently reopen stale source state.
 
 SL00 capture includes active entities/lots/placements, cold lifecycle and lineage required by retained references, container state/summaries or rebuild inputs, holds, processes and pins. Restore validates cycles, positive live quantities, required definitions, valid equipment and complete references before installing, then rebuilds derived indexes. Current grants/forgetting/accounting and new timeline fences remain outside rewind. No missing-data fallback may drop a bag, an ingredient or a child's identity.
 
@@ -139,7 +139,7 @@ Complexity targets: direct child query proportional to returned page; cycle/ance
 
 [PO01–PO09](../maintainers/persistent-objects.md) supplies ordered work. Planning envelope: approximately 2,500–5,000 production logic lines across domain item/spatial adapters, canonical records/migrations, action/context and client views; PO01 must refine this with the actual direct-position and inventory caller audit.
 
-Required native/manual evidence includes all feature scenarios, both SQL adapters, failed multi-item transfer, opposing nested moves, ancestor capacity changes, reservation interference, dropped acknowledgements, migration with active equipment, nonempty retirement, delayed old references and restore. Compare total quantities and pins before/after each committed operation. Record network privacy and real browser list behavior separately from native invariants. Follow default verification rules: no newly authored/run automated suites, no paid execution required, CI/deferred regression coverage remains open.
+Required native/manual evidence includes all feature scenarios, both SQL adapters, failed multi-item transfer, opposing nested moves, ancestor capacity changes, reservation interference, dropped acknowledgements, current-format restore with active equipment, nonempty retirement, delayed old references and restore. Compare total quantities and pins before/after each committed operation. Record network privacy and real browser list behavior separately from native invariants. Follow default verification rules: no newly authored/run automated suites, no paid execution required, CI/deferred regression coverage remains open.
 
 ## 11. Alternatives and primary mechanism references
 

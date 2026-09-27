@@ -51,7 +51,7 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 **Dependencies:** none. Coordinate with PF00/PF09.
 
-- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active identity-preserving in-place upgrade policy; use disposable worlds for experiments.
+- [ ] Record the current commit and locate the actual implementations and completed work. Read the [development save policy](../../AGENTS.md#development-save-policy); use disposable current-format saves for experiments.
 - [ ] Trace one directed speech request, one living-actor encounter, one ordinary-object acquisition, one need-protection episode, one reflection wakeup, and one story-selector decision. Separate physical occurrence, evidence, wakeup, model dispatch, and effect admission.
 - [ ] Add bounded counters to existing profiling: full entity traversals, spatial builds, query candidates, exact sense tests, event-audience candidates, actor input scans, retained experiences inspected, accepted/deferred opportunities, and queue age. No per-counter SQL writes.
 - [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, unchanged-opportunity suppression, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
@@ -70,7 +70,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 - [ ] Define typed actor-intake metadata: actor, authority generation, source/episode, stable order, reason, applicable policy revision, simulation/wall deadline kind, and disposition. Reuse existing response/job identities where applicable.
 - [ ] Require scope to be assigned by trusted native/server code. Reject arbitrary model/client changes to audience, internal owner, policy, or priority authority.
 - [ ] Keep payload projection separate from record identity. Owner-private internal payloads cannot pass through the current generic spatial-audience branch.
-- [ ] Classify new fields as saved authority, deterministic derived state, or process resources. Update the save manifest/current format only when needed; add no old-format reader or migration.
+- [ ] Classify new fields as saved authority, deterministic derived state, or process resources. Update the save manifest/current format under the [development save policy](../../AGENTS.md#development-save-policy).
 - [ ] Preserve native consequences in the existing ordered transition. Define which later consumers receive after-commit IDs rather than callbacks capable of mutating world state immediately.
 
 **Tests:** scope cannot be forged; system-only signals never produce awareness; private thoughts remain absent from ordinary story input, and another actor's private evidence remains absent from the viewer; the viewer's own designated visual acquisition can reach its story selector; accepted IDs survive same-version save/load.
@@ -184,7 +184,7 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 - [ ] Restore paused, rebuild a correct baseline without new paid calls or fake entries, and preserve current forgetting/access/accounting authority.
 - [ ] Bound pending metadata by count/bytes and processing by the existing performance budgets. Coalesce repeated wakeups while retaining distinct authoritative evidence in existing durable records.
 - [ ] On overflow, retain unconsumed cursors/backlog and expose actual coverage/deferred counts; never advance past lost evidence or block native emergency behavior behind optional work.
-- [ ] Define shutdown treatment of optional notifications separately from authoritative commits and paid attempts. Do not add legacy readers or migration fixtures under the active development policy.
+- [ ] Define shutdown treatment of optional notifications separately from authoritative commits and paid attempts. Follow the [development save policy](../../AGENTS.md#development-save-policy).
 
 **Tests:** same-version save/restore mid-exposure, mid-threshold episode, and with pending due work; old result after restore; queue saturation; slow store; failure during commit; privacy deletion followed by load; zero replayed paid work; no new-world initialization hooks called during rebaseline.
 

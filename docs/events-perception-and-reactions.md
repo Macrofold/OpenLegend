@@ -253,7 +253,7 @@ Shared event identity can later support achievements, tool availability, and oth
 
 ## 11. Save/load, reset, and privacy
 
-Follow the current save/load owner and the active no-legacy-support policy. Do not add old-format migrations for this change. Reject incompatible development formats explicitly when a necessary version changes; same-version integrity remains required.
+Follow the [save/load contract](save-and-load.md) and [development save policy](../AGENTS.md#development-save-policy).
 
 Classify new state explicitly:
 

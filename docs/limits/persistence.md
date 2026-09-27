@@ -346,9 +346,9 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
 
-**Only two streamed table layouts are recognized.** The stream reader explicitly accepts the current table layout and one exact preceding pre-foundation layout. Future owner/table changes need explicit conversion/compatibility handling. Arbitrary missing current tables are rejected; legacy whole-JSON saves have a separate reader.
+**Only two streamed table layouts are recognized.** The stream reader explicitly accepts the current table layout and one exact preceding pre-foundation layout. Future owner/table changes follow the [development save policy](../../AGENTS.md#development-save-policy). Arbitrary missing current tables are rejected; legacy whole-JSON saves have a separate reader.
 
-**Reason / tradeoff:** Convert understood development saves without guessing missing state. Rejecting incomplete current packages is correctness; the supported historical window is a chosen compatibility boundary.
+**Historical rationale / current scope:** The delivered reader converted one understood preceding layout without guessing missing state. Its presence describes implementation, not an ongoing support window. Current packages still require complete tables; compatibility decisions belong to the linked root policy and [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility).
 
 [Implementation](../../apps/server/src/checkpoint.ts).
 

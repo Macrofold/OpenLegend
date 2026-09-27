@@ -158,7 +158,7 @@ The local SIGKILL drills qualify application-process interruption, not host powe
 
 ## 6. Migration from the local snapshot and change journal
 
-For active development, move operational state into independent records through small safe in-place migrations under the [save/load policy](../../docs/save-and-load.md#active-development-policy). Preserve world identity, unrelated state, privacy and accounting; validate and publish the conversion atomically. Normalizing storage does not require a fresh world, a new data directory or parallel legacy runtimes.
+For development compatibility, follow the [root policy](../../AGENTS.md#development-save-policy). The delivered transition to independent records is historical implementation evidence. Current record publication, save/load and operational adapter import still require coherent authority, validation, privacy and external accounting.
 
 The following importer procedure applies when an explicit deployment move requires transferring a world between databases, such as SQLite to PostgreSQL. It is not the default workflow for ordinary development schema changes. Apply it to records consumed by each baseline feature; checkpoint/replay exports, content-rights records and distributed routing steps apply only when those capabilities are enabled. Preserve all existing source information even when its target feature is deferred, and retain the source through the operational cutover/backup window. Current evidence is recorded in [Verification](../../docs/verification.md); broader production normalization and disaster recovery remain open.
 

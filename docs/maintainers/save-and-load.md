@@ -95,9 +95,9 @@ Exit: deterministic no-cost fixtures prove stale results cannot mutate the resto
 
 ## SL06 — Compatibility policy after real-player support begins
 
-The [active development policy](../save-and-load.md#active-development-policy) permits small in-place migrations now. This task covers a future ongoing release-compatibility commitment, not ordinary development updates. Current-state integrity checks remain in SL01.
+This task is conditional on the owner changing the [development save policy](../../AGENTS.md#development-save-policy) through [RP02](revisitable-policies.md#rp02--development-state-compatibility). Current-state integrity checks remain in SL01.
 
-- [ ] When real-player release compatibility is needed, select a support window in D60 and scope an ordered migration pipeline with preserved originals and historical fixtures.
+- [ ] After the owner changes the linked policy, select a real-player support window in D60 and scope an ordered migration pipeline with preserved originals and historical fixtures.
 
 Exit: future compatibility work is qualified only against a newly authorized support policy. This task does not block the development save/load flow.
 
@@ -145,7 +145,7 @@ These are source-confirmed gaps/choices, not newly passed runtime checks. Existi
 - [ ] **SL09-C — Slow-output snapshot pressure.** Measure retained WAL/row versions and database/command latency during slow writes, sync and publication on both adapters, including failure/cleanup. Add bounded cancellation or decouple snapshot retention only if the observed pressure warrants it, preserving one consistent cut. [SB16](../limits/persistence.md#sb16).
 - [ ] **SL08-A — Restart-visible failure status.** Preserve or durably report the latest checkpoint failure for operators, with explicit reset/acknowledgment; confirm restart does not falsely imply recent protection. Keep catalog health distinct from historical autosave errors. [SB12](../limits/persistence.md#sb12).
 
-The current/preceding-layout boundary ([SB15](../limits/persistence.md#sb15)) remains intentional; future owner integration must extend SL01/DF02 compatibility evidence rather than accept arbitrary missing tables. [SV18](../limits/observability.md#sv18) records the stress tool’s envelope; it is not a capacity gate. Operational restore file cleanup belongs to [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence).
+The existing current/preceding-layout reader ([SB15](../limits/persistence.md#sb15)) is recorded implementation, not an obligation to extend it. Future owner integration qualifies current-format SL01/DF02 behavior under the [development save policy](../../AGENTS.md#development-save-policy). [SV18](../limits/observability.md#sv18) records the stress tool’s envelope; it is not a capacity gate. Operational restore file cleanup belongs to [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence).
 
 ## SL10 — Conditional portability and shared-world expansion
 

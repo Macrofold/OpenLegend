@@ -59,6 +59,12 @@ The September 25 supported-gameplay foundation implements independent entity/inv
 
 A documentation change does not advance a capability. Update this table only when current code and current evidence support the new state.
 
+
+## Hearing and perceived speech
+
+Pinned dB acoustics, whisper/normal/shout, deterministic listener capsules, scoped history/context, spatial captions and World Events are integrated locally with main's current elapsed-time simulation, authority, records/memory, contribution state and renderer. The public schema remains 2; no hearing-specific save gate or old-save conversion is added. [Architecture](../../docs/architecture.md#hearing-captions-and-perceived-events) owns delivered behavior. [Current evidence](../../docs/verification/hearing-main-integration.md) distinguishes this combined tree from old source-branch measurements. HE05 retains broader graphics/accessibility, PostgreSQL, providers, CI and dense/cold capacity gates; implementation does not close them.
+
+
 ## Foundations priorities 1–5
 
 The [approved implementation](../../docs/projects/foundations-1-5.md#approved-implementation-plan) adds typed native/sparse state ownership, atomic resource claims and accounted holds; independent capability contributions; verified OIDC principals, durable grants/control and protected absence/return; entity-backed lots, individual equipment, finite nested bags and distinct declared ownership; dependency generations and aggregate native work admission; and persistent cause-bound appraisals plus directional subject-note views. The same canonical record, mutation, history and accepted-reflection owners remain authoritative. Supported populated state upgrades in place; current human privacy, authority and external accounting do not rewind.

@@ -1,9 +1,9 @@
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
-import { hearsEntity, seesEntity, sensesFor } from './perception.js';
+import { seesEntity, visionRadius } from './perception.js';
 import { spatialCandidates } from './spatial.js';
-import { bodyProfile, worldPosition } from './spatial-state.js';
+import { worldPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 type Receiver = { id: string; position: Position; radius: number; order: number };
@@ -11,13 +11,13 @@ type ReceiverIndex = {
   inputs: Receiver[];
   buckets: Array<{ radius: number; near: ReturnType<typeof spatialCandidates<Receiver>> }>;
 };
-const frames = new WeakMap<WorldState, Map<boolean, ReceiverIndex>>();
-const stableFrames = new WeakMap<WorldState, Map<boolean, ReceiverIndex>>();
+const frames = new WeakMap<WorldState, ReceiverIndex>();
+const stableFrames = new WeakMap<WorldState, { index?: ReceiverIndex }>();
 /** Synchronous native flight evidence changes experience, not receiver poses/senses/bodies.
  * Only that explicitly fixed phase may skip rereading inputs for simultaneous occurrences. */
 export function withStableAudience(world: WorldState, emitOccurrences: () => void): void {
   const previous = stableFrames.get(world);
-  stableFrames.set(world, new Map());
+  stableFrames.set(world, {});
   try {
     emitOccurrences();
   } finally {
@@ -29,31 +29,26 @@ export function withStableAudience(world: WorldState, emitOccurrences: () => voi
  * inputs on every emission; only the exact immutable geometry query may be memoized.
  * No TTL, stale draft reference or pre-movement audience becomes authority.
  * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private */
-export function externalAudience(world: WorldState, source: Entity, speech: boolean): string[] {
+export function externalAudience(world: WorldState, source: Entity): string[] {
   if (!activelyParticipates(source)) return [];
   const stable = stableFrames.get(world);
-  let index = stable?.get(speech);
+  let index = stable?.index;
   if (!index) {
     const roots = worldRootEntities(world, true);
     const inputs: Receiver[] = [];
     for (const [order, entity] of roots.entries()) {
       if (!hasMemory(entity) || !entity.actor?.alive || !activelyParticipates(entity)) continue;
-      const radius =
-        sensesFor(world, entity).find(
-          (s) => s.implementation === (speech ? 'hearing-transmission-v1' : 'vision-geometry-v1'),
-        )?.radius ?? 0;
+      const radius = visionRadius(world, entity);
       if (radius <= 0) continue;
       const p = worldPosition(entity);
       inputs.push({
         id: entity.id,
         order,
         radius,
-        position: { x: p.x, y: p.y + (speech ? bodyProfile(entity).earHeight : 0), z: p.z },
+        position: { x: p.x, y: p.y, z: p.z },
       });
     }
-    let frame = frames.get(world);
-    if (!frame) frames.set(world, (frame = new Map()));
-    index = frame.get(speech);
+    index = frames.get(world);
     if (
       !index ||
       index.inputs.length !== inputs.length ||
@@ -85,12 +80,12 @@ export function externalAudience(world: WorldState, source: Entity, speech: bool
           near: spatialCandidates(receivers, radius),
         })),
       };
-      frame.set(speech, index);
+      frames.set(world, index);
     }
-    stable?.set(speech, index);
+    if (stable) stable.index = index;
   }
   const p = worldPosition(source);
-  const origin = { x: p.x, y: p.y + (speech ? bodyProfile(source).earHeight : 0), z: p.z };
+  const origin = { x: p.x, y: p.y, z: p.z };
   return index.buckets
     .flatMap((bucket) => bucket.near(origin, bucket.radius))
     .filter(
@@ -102,10 +97,6 @@ export function externalAudience(world: WorldState, source: Entity, speech: bool
         ) <= receiver.radius,
     )
     .sort((a, b) => a.order - b.order)
-    .filter((receiver) =>
-      speech
-        ? hearsEntity(world, world.entities[receiver.id]!, source)
-        : seesEntity(world, world.entities[receiver.id]!, source),
-    )
+    .filter((receiver) => seesEntity(world, world.entities[receiver.id]!, source))
     .map((receiver) => receiver.id);
 }

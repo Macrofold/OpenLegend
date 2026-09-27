@@ -1,5 +1,7 @@
 # Spatial rebase and eight-times runtime review
 
+This is a historical integration record. Its save-policy reconciliation has been superseded by the [current development save policy](../../AGENTS.md#development-save-policy); the runtime evidence below remains historical evidence.
+
 ## Source and conflicts
 
 Replayed the 27 commits unique to `feature/spatial-world-3d` at `133049b01a302f4ae75dd70604325727b4706fbe` onto main `c466b63f818021a6cd65d0809b94f220cce642d4`. A named backup retains the original tip. Publication uses an explicit old-tip force-with-lease and verifies main has not moved; main itself is not modified. The same conflict resolutions were replayed on GitHub and their complete Git tree matched the local reviewed tree before integration fixes.

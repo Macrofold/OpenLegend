@@ -101,6 +101,7 @@ export interface JobRecord extends AiJobView {
   fingerprint: string;
   createdAt: number;
   request: {
+    volume?: import('@open-legend/domain').SpeechVolume;
     text: string;
     action?: {
       mode: 'enqueue' | 'replace';
@@ -190,6 +191,19 @@ function collectChanges(
     return;
   }
   if (Array.isArray(previous) && Array.isArray(next)) {
+    const appended = appendedRecordCount(previous, next);
+    if (appended !== undefined) {
+      if (appended)
+        operations.push({
+          op: 'splice',
+          path,
+          index: previous.length,
+          deleteCount: 0,
+          values: next.slice(previous.length),
+        });
+      return;
+    }
+
     if (previous.length !== next.length) {
       let start = 0;
       while (start < Math.min(previous.length, next.length) && previous[start] === next[start])

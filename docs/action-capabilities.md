@@ -523,7 +523,7 @@ Each callback/result carries world/load epoch, actor/controller authority, root/
 
 The same-version save must distinguish running, waiting, blocked, suspended where supported, completed and cancelled work. An unsupported definition change either blocks activation for active work or follows the canonical INV version policy; do not silently retarget old invocations.
 
-Follow the [active development policy](save-and-load.md#active-development-policy): use small, identity-preserving in-place upgrades; reject malformed state rather than reset a world. Do not add per-feature versions or parallel legacy runtimes. Fictional time travel, cloning and memory effects remain below real accounting, permission revocation and privacy guarantees.
+Follow the [development save policy](../AGENTS.md#development-save-policy). Fictional time travel, cloning and memory effects remain below real accounting, permission revocation and privacy guarantees.
 
 ## 18. Interface and presentation
 
@@ -712,7 +712,7 @@ Continue point movement, narrow follow and fulfillment review independently of i
 
 ### Reconciliation notes from the implemented review
 
-The current adapter carries response-local operation identity, original request and manifest revision into native admission. Saved pending identity additionally includes explicit target and queue/replace mode; the exact alternative is never silently overwritten. These fields should map to the common invocation/authority contracts rather than become a competing definition registry. Current persistence follows the active in-place upgrade policy. Missing non-authoritative target/mode metadata is defaulted conservatively; existing alternative modes, commands, IDs and text remain unchanged.
+The current adapter carries response-local operation identity, original request and manifest revision into native admission. Saved pending identity additionally includes explicit target and queue/replace mode; the exact alternative is never silently overwritten. These fields should map to the common invocation/authority contracts rather than become a competing definition registry. Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). The existing initializer defaults missing non-authoritative target/mode metadata conservatively while retaining alternative modes, commands, IDs and text; this describes existing code, not a future compatibility requirement.
 
 The implemented control vocabulary is still the existing flat sequential AG frontier plus a family-local indefinite follow activity. General wait/branch/repeat, finite follow termination, rich target roles, installed-definition dependency pins and arbitrary output ports remain to reconcile. An indefinite follow cannot be advertised as the completed prerequisite of a later generated step. Current confirmation stores only plan-eligible mechanical commands; confirmation of immediate social/control operations needs their own shared admission contract before claiming support.
 

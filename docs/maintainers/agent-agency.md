@@ -18,7 +18,7 @@ AG owns the new decision envelope, operational goal/plan state, native continuat
 
 Start with **AG01–AG04**: prove optional composition and persistent native work without inventing any new mechanics. Add **AG05–AG07** for unlisted attempts, relevant context and meaningful reconsideration. Integrate **AG08** with the relevant INV-1/INV-7 capabilities to deliver actor-led invention. AG09–AG11 accompany every slice rather than being postponed until the end. AG12 is the separate live behavioral gate. The full NC12 narration acceptance program is not a prerequisite for a native goal record; retain the particular privacy, receipt and conversation dependencies that the slice actually uses.
 
-Use the current single writer and existing stores first. No new platform dependency, public event broker, arbitrary generated code or always-running actor harness is authorized. Follow the active [no-legacy-development-save policy](../save-and-load.md#active-development-policy); same-version restore, privacy and real spending integrity remain required.
+Use the current single writer and existing stores first. No new platform dependency, public event broker, arbitrary generated code or always-running actor harness is authorized. Follow the [development save policy](../../AGENTS.md#development-save-policy).
 
 ### AG01 — Optional, bounded, multi-operation decisions
 
@@ -138,7 +138,7 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** agency domain state and existing save/application owners. **Depends on:** each stateful slice as it lands; coordinated with save/load tracker. **Touchpoints:** `WorldService`, `GameSaves`, saved world validation, durable jobs and receipt repositories.
 
-- [ ] Include goals, frontiers, active native work and actor-visible invention state in same-version integrity. Reject incompatible development formats; add no old-save conversion layer.
+- [ ] Include goals, frontiers, active native work and actor-visible invention state in same-version integrity. Apply the [development save policy](../../AGENTS.md#development-save-policy).
 - [x] Rebuild only derived readiness/interests after restart. Preserve actual resources, completed steps and mutable goal revisions rather than asking a model to reconstruct them.
 - [ ] Fence provider and native-dispatch callbacks by the current world/load epoch. Retain non-rewindable billing, revocation and uncertainty records under existing policy.
 - [ ] Treat saved queued/running paid work as recovery/reconciliation state, not authorization to dispatch again. Preserve explicit versus autonomous pause/cancellation behavior and fresh checks on resumption.

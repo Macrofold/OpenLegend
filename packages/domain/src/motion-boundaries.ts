@@ -42,10 +42,8 @@ export function motionTravelBounds(
     const entity = world.entities[id];
     if (!entity?.actor?.alive || entity.actor.incapacitated || !hasMemory(entity)) return [];
     const senses = sensesFor(world, entity).filter(
-      (s) =>
-        s.implementation !== 'hearing-transmission-v1' &&
-        s.radius > 0 &&
-        s.radius / 4 < BASE_TIME_POLICY.perceptionTravelMetres,
+      (s): s is Extract<typeof s, { radius: number }> =>
+        'radius' in s && s.radius > 0 && s.radius / 4 < BASE_TIME_POLICY.perceptionTravelMetres,
     );
     if (!senses.length) return [];
     const radius = Math.max(...senses.map((s) => s.radius));

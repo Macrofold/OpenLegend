@@ -44,6 +44,7 @@ export class VectorStore {
    * never evict durable vectors; explicit game mutations own invalidation.
    */
   async reconcile(scope: VectorScope, sources: VectorSource[]): Promise<Set<string>> {
+    if (!sources.length) return new Set();
     return new Set(
       (
         await this.db
@@ -70,6 +71,7 @@ export class VectorStore {
   }
 
   async put(scope: VectorScope, sources: (VectorSource & { vector: number[] })[]): Promise<void> {
+    if (!sources.length) return;
     for (const source of sources) this.validate(scope, source.vector);
     await this.db
       .prepare(
@@ -90,6 +92,7 @@ export class VectorStore {
     this.validate(scope, query);
     if (!Number.isSafeInteger(limit) || limit < 1)
       throw new Error('Vector search limit must be a positive integer.');
+    if (!sources.length) return [];
     return (
       await this.db
         .prepare(

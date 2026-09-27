@@ -26,6 +26,6 @@ The local host has one authenticated principal. Its history perspective follows 
 
 New worlds seed people as `entity-0001` and `entity-0002`; other existing definition and entity IDs remain stable keys. Loading older worlds adds the control binding from controller metadata once. Existing bindings are authoritative. This does not rename entities or rewrite historical IDs, request fingerprints, response digests or provider audit data. Old diagnostic fields are read only for display.
 
-Consequently an older save can still have a canonical entity ID literally spelled `player` or `ada`. Those strings are accepted only when present in its permitted ID set. Eliminating those spellings from every existing save remains a separate coordinated migration across domain state and durable database references; a partial JSON rewrite is not safe. Names such as Mike are never accepted merely because they match a label.
+Consequently an older save can still have a canonical entity ID literally spelled `player` or `ada`. Those strings are accepted only when present in its permitted ID set. These spellings are not special roles and do not require a rename campaign; development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Names such as Mike are never accepted merely because they match a label.
 
 Interrupted paid jobs retain the existing stale-on-restart behavior and are never automatically resubmitted. New response requests use cognition contract version 6.

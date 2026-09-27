@@ -31,6 +31,7 @@ import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
 import { completeNavigation, navigationBlocked } from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
+import type { SpeechVolume } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -458,7 +459,7 @@ export class WorldService {
       }),
     };
     this.saved = updateMilestones(this.saved, this.saved.world.events);
-    // Startup migrations may replace historical branches, so use the ordinary diff once.
+    // Startup initialization can add actor state, so use the ordinary diff once.
     const startupHistory = this.saved.world;
     if (store.history) this.saved = { ...this.saved, world: retainHotEvents(startupHistory) };
     const startupAllocation = this.hostWork.reserve(this.saved.world);
@@ -535,6 +536,11 @@ export class WorldService {
   get profile(): PlayerProfile {
     if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
     return this.currentProfile;
+  }
+  /** Derived recall publication always enters a fresh mutation turn, including callbacks
+   * that inherited an earlier AsyncLocalStorage context. Providers remain outside this lane. */
+  async publishRecall<T>(operation: () => Promise<T>): Promise<T> {
+    return this.mutationContext.exit(() => this.mutate(operation));
   }
   async setPreferences(
     preferences: PlayerPreferencePatch,
@@ -681,6 +687,10 @@ export class WorldService {
   private disconnectedAt: number | null = null;
   telemetryRevision = 0;
   private transcriptRevision = 0;
+  private eventViewRevisions = new Map<string, number>();
+  worldEventsRevision(actorId: string): string {
+    return `${this.generation}:${this.eventViewRevisions.get(actorId) ?? 0}:${this.transcriptEpoch}`;
+  }
   private transcriptEpoch = 0;
   get historyEpoch(): string {
     return `${this.generation}:${this.transcriptEpoch}`;
@@ -693,6 +703,16 @@ export class WorldService {
     after: WorldEvent[],
     count: number | undefined,
   ) {
+    // Refresh only observers whose permitted event log changed. Unheard speech must not
+    // generate a public activity signal or a history request for unrelated observers.
+    const observers = new Set(
+      (count === undefined ? [...before, ...after] : count ? after.slice(-count) : []).flatMap(
+        (event) => event.audience,
+      ),
+    );
+    for (const actorId of observers)
+      this.eventViewRevisions.set(actorId, (this.eventViewRevisions.get(actorId) ?? 0) + 1);
+    if (count === undefined && before !== after) this.transcriptEpoch++;
     const relevant = (event: WorldEvent) =>
       !(
         event.type === 'action-started' &&
@@ -704,7 +724,6 @@ export class WorldService {
         : after.slice(after.length - count).some(relevant);
     if (changed) {
       this.transcriptRevision++;
-      if (count === undefined) this.transcriptEpoch++;
     }
   }
   /** Presentation changes need the same refresh signal as committed journal sources. */
@@ -2716,6 +2735,7 @@ export class WorldService {
     actorId: string,
     text: string,
     targetId?: string,
+    volume: SpeechVolume = 'normal',
   ): Promise<ApiResult> {
     return await this.transition((world) =>
       executeCommand(world, {
@@ -2723,6 +2743,7 @@ export class WorldService {
         actorId,
         type: 'say',
         text,
+        volume,
         ...(targetId ? { targetId } : {}),
       }),
     );
