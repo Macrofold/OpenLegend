@@ -284,6 +284,12 @@ Examples:
 - fly → flying;
 - exercise/physical action → relevant physical stats.
 
+### Stealth is a real but deliberately shallow subsystem
+
+The **Stealth** stat is not just a menu number. GTA V has an explicit stealth-movement mode; higher Stealth makes normal/stealth movement quieter and makes stealth-mode movement faster. The stat improves through time spent moving stealthily and through stealth takedowns. [GV18](#gv18)
+
+That qualifies the dossier's earlier “skills/use progression” statement: stealth exists as a reusable locomotion/detection verb, but it is nowhere near a systemic immersive-sim model. Mission scripting, simplified witness/police rules and limited disguise/evidence logic constrain it. This is a useful comparison to the Wanted system: one mechanic models **how visibly/noisily the actor moves**, while the other models an institutional response once the game has recognized crime.
+
 ### OpenLegend transfer
 
 Some abilities should grow through repeated embodied practice rather than abstract XP allocation.
@@ -648,6 +654,16 @@ Steam reviews document:
 
 These are edition/service complaints, not evidence against the 2013 Story Mode design.
 
+### GTA Online is still receiving new authored and creator content in 2026
+
+The September audit checked Rockstar's current Newswire rather than inferring service health from Steam activity. Official 2026 posts show:
+- a new **Rockstar Mission Creator / Community Mission** push in April–June;
+- the **Kortz Center Heist** released July 14;
+- continuing summer heist/business events and vehicles through August/September;
+- **Business Rivalries** active in September. [GV19](#gv19)
+
+Rockstar also announced **nopixel V** on September 1, 2026, with a September 8 closed beta through the Rockstar Games Launcher, explicitly recognizing long-running GTA V roleplay/community world modification as a supported adjacent experience. [GV20](#gv20) This does not make nopixel V part of ordinary GTA Online rules, but it materially updates the dossier's creator/mod boundary: by 2026 Rockstar is not merely tolerating roleplay communities from a distance; it is directly supporting at least one prominent derivative roleplay project.
+
 ## 24. Commercial scale
 
 Take-Two's August 2026 investor materials report GTA V at **more than 230 million units sold-in worldwide** across its lifetime. [GV12](#gv12)
@@ -864,7 +880,7 @@ Shared-world freedom needs permissions and social governance.
 
 Covered:
 - three protagonists/identity;
-- stats/use progression;
+- stats/use progression, including explicit stealth movement/takedown training;
 - weapons/combat/cover;
 - vehicles/traversal;
 - wanted system;
@@ -896,6 +912,17 @@ G67 was added by the expanded roster and had no inherited full GTA V dossier. Th
 - official creator/mod ecosystem
 
 as explicit boundaries.
+
+### Reading / viewing routes
+
+For a compact verification route:
+1. **GV04/GV07/GV08** for developer intent around three protagonists, open-world “being,” heists and production scale.
+2. **GV18** for the actual character-control/stat baseline including Stealth.
+3. **GV05/GV06/GV14/GV15/GV16** for five substantive Story Mode reviews.
+4. **GV02/GV09/GV11** for the current Enhanced package and direct Steam service/edition feedback.
+5. **GV19–GV20** for the September 2026 GTA Online/content-creator boundary; **GV12–GV13** for dated commercial context.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -932,3 +959,9 @@ as explicit boundaries.
 <a id="gv16"></a>**GV16 — [Grand Theft Auto V review](https://www.theguardian.com/technology/2013/oct/13/gran-theft-auto-5-review).** Matt Kamen, The Observer/The Guardian archive, October 13, 2013.
 
 <a id="gv17"></a>**GV17 — [Grand Theft Auto V: A crime- and sun-filled tourist destination](https://arstechnica.com/gaming/2013/09/gta-v/).** Ars Technica, September 2013. Independent review/technical perspective.
+
+<a id="gv18"></a>**GV18 — [Grand Theft Auto V — Game Help / manual](https://dlassets-ssl.xboxlive.com/public/content/4f0a3089-ba2c-4f3d-9e38-102a41cbd885/GameManual/bffef18e-3f19-4190-a9b1-75402359b13b/en-IL/index.html).** Rockstar/Xbox-distributed game manual. Audited September 27, 2026 for on-foot Stealth Mode and the Stealth-stat behavior/training loop; used as mechanics evidence for Story Mode-era controls, not current Online balancing.
+
+<a id="gv19"></a>**GV19 — [Rockstar Games Newswire](https://www.rockstargames.com/newswire).** Rockstar primary current feed, audited September 27, 2026. Used for the 2026 Mission Creator/Community Missions, Kortz Center Heist, summer events and September Business Rivalries chronology; event bonuses are dated and not generalized as permanent rules.
+
+<a id="gv20"></a>**GV20 — [Introducing nopixel V](https://www.rockstargames.com/newswire/article/17857581o753k1/introducing-nopixel-v).** Rockstar Games, September 1, 2026. Primary announcement of Rockstar-supported nopixel V closed beta and its explicit framing of GTA V roleplay/community modification; treated as an adjacent creator ecosystem, not ordinary GTA Online content.
