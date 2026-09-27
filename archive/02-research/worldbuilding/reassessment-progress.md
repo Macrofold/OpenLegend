@@ -1,6 +1,6 @@
 # Whole-world reassessment: progress and evidence
 
-**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 07, The Witcher. Completed dossier revisions: 6/28. Shared synthesis reconciliation: pending the dossier pass.**
+**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 09, Dune. Completed dossier revisions: 8/28. Shared synthesis reconciliation: pending the dossier pass.**
 
 This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet and its integration history; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
 
@@ -18,9 +18,9 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [04. Star Trek](worlds/04-star-trek.md) | Revised | `36b5f382eb654b8e97e308ae1a36c43bf1812668`; useful abundance, recreation, intimacy, conflicting reception, functioning standards and consequential deception. |
 | [05. Marvel](worlds/05-marvel.md) | Revised | `196d6746bb98b7232ce3a677c7f9de9f1fb5e748`; wedding, performance and vocation, functional relationships, recovery, persecution and coercive captivity. |
 | [06. DC Universe](worlds/06-dc-universe.md) | Revised | `c48d79dc8bdc6f0d8225fb38345b7cfd84d1bd51`; superpowered pleasure, marriage, competition, deliberate cruelty, working institutions and distinct recovery/loss. |
-| [07. The Witcher](worlds/07-the-witcher.md) | In progress | Dossier-specific evidence and commit pending. |
-| [08. Pokémon](worlds/08-pokemon.md) | Pending | — |
-| [09. Dune](worlds/09-dune.md) | Pending | — |
+| [07. The Witcher](worlds/07-the-witcher.md) | Revised | `599a3f479f387b6c355a3b0bad587639c1039838`; paid music, intimacy, bridge victory, reproductive coercion, abuse, a lively wedding and unequal consequences. |
+| [08. Pokémon](worlds/08-pokemon.md) | Revised | `27ccc7ee7e8cb734fd21020f43eb127841de19a4`; competitive mastery, athletic recreation, effective institutions, deliberate manipulation and distinct rescue/recovery. |
+| [09. Dune](worlds/09-dune.md) | In progress | Dossier-specific evidence and commit pending. |
 | [10. A Song of Ice and Fire](worlds/10-a-song-of-ice-and-fire.md) | Pending | — |
 | [11. Earthsea](worlds/11-earthsea.md) | Pending | — |
 | [12. Discworld](worlds/12-discworld.md) | Pending | — |
