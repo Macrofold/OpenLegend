@@ -10,7 +10,7 @@ Persona 5 Royal is Atlus/P-Studio's expanded version of Persona 5, first release
 
 The player is a Tokyo high-school student living on probation. By day, Joker attends school, works, studies, explores the city and builds relationships. By night—or more accurately, in chosen free-time blocks—he and the Phantom Thieves enter cognitive Palaces to change the hearts of abusive or corrupt adults. The official site explicitly frames the rhythm as ordinary student life alternating with Phantom Thief activity.
 
-Royal preserves Persona 5's core campaign while adding Kasumi Yoshizawa, Takuto Maruki, Kichijoji, new activities and mechanics, revised Palaces and Mementos, new Personas/music/scenes, the Thieves Den and a substantial third-semester story. Access to Royal's added final arc depends on calendar choices, so "Royal content" is not simply an epilogue automatically appended to every playthrough.
+Royal preserves Persona 5's core campaign while adding Kasumi Yoshizawa, Takuto Maruki, Kichijoji, new activities and mechanics, revised Palaces and Mementos, new Personas/music/scenes, the Thieves Den and a substantial third-semester story. Access to Royal's added final arc depends on calendar choices, so "Royal content" is not simply an epilogue automatically appended to every playthrough. **Audit correction:** the mandatory gate for the third semester itself is Takuto Maruki's Councillor Confidant reaching **Rank 9 by November 17**; Akechi and Kasumi have separate deadlines that preserve additional Royal scenes/relationship development but are not the condition that opens the semester. [GameSpot third-semester guide](https://www.gamespot.com/articles/how-to-unlock-persona-5-royals-ninth-palace-and-semester-spoiler-free-guide/1100-6475412/) · [RPG Site endings guide](https://www.rpgsite.net/feature/9612-persona-5-royal-endings-guide-interrogation-answers-how-to-get-the-true-ending).
 
 ## R02 — player actions and major mechanics
 
@@ -96,7 +96,7 @@ New Game+ carries selected persistent advantages such as social-stat progress, C
 **Intention:** prepare for a boss using elements current Personas lack. **Conditions:** suitable ingredients/level and yen for summons if needed. **Actions:** fuse older Personas, inherit targeted skills/traits, register useful results. **Interaction:** captured enemies become components in a new ability package. **Result:** Joker's identity changes materially without changing party members. **Limit:** a fusion can lose useful coverage if inherited skills are chosen poorly.
 
 ### Case 7 — Royal third-semester access
-**Intention:** see Royal's major added story. **Conditions:** relevant Confidant progression must occur before its calendar cutoff. **Actions:** repeatedly spend scarce free-time blocks with the required relationship. **Interaction:** optional-looking social scheduling controls later authored campaign access. **Result:** successful planning unlocks major narrative content. **Limit:** this coupling can punish blind players who assume all major story content is automatic.
+**Intention:** see Royal's major added story. **Conditions:** Maruki's Councillor Confidant must reach Rank 9 by November 17; Akechi/Kasumi deadlines affect additional Royal material but do not themselves unlock the semester. **Actions:** spend enough scarce free-time blocks with Maruki before the cutoff. **Interaction:** an optional-looking relationship schedule controls later authored campaign access. **Result:** Rank 10 then resolves automatically through story progression and the third semester becomes available. **Limit:** this coupling can punish blind players who assume all major story content is automatic. [GameSpot guide](https://www.gamespot.com/articles/how-to-unlock-persona-5-royals-ninth-palace-and-semester-spoiler-free-guide/1100-6475412/)
 
 ### Case 8 — resource conservation through ambush
 **Intention:** preserve HP/SP during a Palace run. **Conditions:** a patrolling Shadow has not detected the party. **Actions:** use cover, approach from safety and ambush. **Interaction:** exploration/stealth produces combat initiative. **Result:** enemies may be disabled before acting, reducing attrition and increasing odds of a one-day route clear.
@@ -119,7 +119,9 @@ Party members have fixed combat identities plus customizable equipment and selec
 
 Tokyo crowds, schoolmates and shops create density but are not autonomous schedule simulations comparable to a sandbox life sim. Most named relationships use authored availability calendars and scripted states.
 
-### Multiplayer/network
+### Factions and multiplayer/network
+
+The Phantom Thieves, Palace rulers, police/institutional actors and other groups matter narratively, but Royal does **not** have a general dynamic faction-reputation, territory-control or joinable-faction system comparable to a sandbox RPG. Alignment with those groups is authored through plot/Confidant choices rather than an independent faction simulation.
 
 Royal is single-player. Its network/Thieves Guild features are asynchronous support/telemetry rather than co-op: they can expose aggregate player choices or limited assistance in specific situations depending on platform/service availability. Do not treat them as shared-world multiplayer.
 
@@ -216,6 +218,7 @@ The useful pattern is not "copy Persona's school calendar." It is **make differe
 - [Atlus title page](https://atlus.com/atlus-titles/p5r/?ItemID=90) — Royal positioning and platform/version information.
 - [Atlus Japan sales announcement, September 2025](https://www.atlus.co.jp/news/35357/) — Japan Royal milestone and separate combined P5/P5R worldwide milestone.
 - [Persona Central translation of Famitsu developer interview](https://personacentral.com/persona-5-royal-first-developer-interview/) — secondary translation of primary developer remarks; producer/director intent is attributed accordingly.
+- [GameSpot third-semester guide](https://www.gamespot.com/articles/how-to-unlock-persona-5-royals-ninth-palace-and-semester-spoiler-free-guide/1100-6475412/) and [RPG Site ending guide](https://www.rpgsite.net/feature/9612-persona-5-royal-endings-guide-interrogation-answers-how-to-get-the-true-ending) — secondary mechanics verification used in the September 27 audit to distinguish the mandatory Maruki Rank-9 gate from Akechi/Kasumi's additional-content deadlines.
 
 ### Critical/player sources read
 Five independent reviews are summarized in R12: GameSpot, PC Gamer, Push Square, Nintendo Life and RPG Site. The current Steam Community review surface supplied contrasting qualitative player evidence.
@@ -235,7 +238,7 @@ G124 is a newly curated G111–G130 subject. Direct branch-path checks found no 
 | R03 | Equipment, consumables, tools and Persona composition |
 | R04 | Levels, social stats, Confidants, yen, HP/SP, time and NG+ |
 | R05 | Eight cross-system worked cases |
-| R06 | Confidants, party identity, NPC simulation boundary, asynchronous network |
+| R06 | Confidants, party identity, explicit faction-simulation absence, NPC boundary and asynchronous network |
 | R07 | Graphic UI, character art, music, difficulty and pacing friction |
 | R08 | Palace/Confidant narrative integration and Royal semester |
 | R09 | Enhanced-edition production and 2022 port boundary |
