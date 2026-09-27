@@ -12,16 +12,25 @@ This is context-window management, not a new fictional memory system. Conversati
 
 ## 2. What a continuing conversation generally needs
 
-The compactor should not maintain a large catalogue of special conversational concepts. Across ordinary dialogue, a useful continuation usually depends on a few broad kinds of information:
+The compactor should not maintain a large catalogue of special conversational concepts. Research on dialogue information state, Questions Under Discussion, grounding/repair and long-term conversational memory suggests a small useful abstraction:
 
-1. **Established context.** What the exchange is about and the important claims, choices, explanations or background that later turns rely on.
-2. **Current threads.** What is still being discussed, asked, negotiated, explained or decided. This includes an unanswered question or a promise when one matters, but neither needs its own compaction subsystem.
-3. **Changes in understanding.** Corrections, clarifications, reversals, resolutions and updates that make an older statement misleading if presented as current.
-4. **Interaction state when material.** Explicit acceptance, refusal, preference, boundary, apology, disagreement or similar state that materially changes how the next reply should be understood.
+1. **Established conversational context.** What the exchange now relies on: important attributed claims, explanations, choices, decisions, constraints, shared labels and relationships between referenced people, objects, places or events.
+2. **Active issues and focus.** What is still being asked, discussed, negotiated, explained, disputed, decided or deferred, plus enough context to understand follow-ups and references.
+3. **Updates and repairs.** Explicit corrections, clarifications, reversals, retractions, resolutions and later changes that would make an older compact statement misleading if presented as current.
 
-Speaker attribution and uncertainty are invariants across all four: “Ben said the bridge is safe” must not become “the bridge is safe.” A summary should preserve uncertainty, disagreement and who expressed a position when those distinctions matter.
+These are summarization concerns, not separately writable engine records. A promise, refusal, apology, preference or boundary can matter, but it belongs in one of these general concerns when the continuing exchange relies on it; it does not require a special compaction subsystem.
 
-Recent exact wording and the current trigger remain outside this abstraction where possible. The current speech that caused a response stays verbatim in the existing Trigger section.
+Three rules cut across all three concerns:
+
+- **Perspective and attribution:** preserve who said/perceived what when it changes meaning. “Ben said the bridge is safe” must not become “the bridge is safe.”
+- **Grounding/uncertainty:** do not infer that a statement was accepted merely because it was spoken or conversation continued. Preserve explicit acceptance, disagreement or uncertainty when material.
+- **Reference continuity:** retain useful temporal, spatial, attributive or comparative relationships needed to resolve later expressions such as “the second sword,” “the room with the blue rug,” or “the inn beside the bridge.”
+
+The compactor reports the conversation; it does not critique it, decide who is correct, infer hidden motives, or invent a correction from mere contradiction.
+
+Recent exact wording and the current trigger remain outside this abstraction where possible. The recent verbatim tail carries local discourse focus and the current speech that caused a response stays verbatim in the existing Trigger section.
+
+Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
 
 ### Examples considered
 
@@ -29,9 +38,10 @@ Recent exact wording and the current trigger remain outside this abstraction whe
 - **Directions or instructions:** retain the destination, constraints and any later correction; routine wording can disappear.
 - **Planning:** retain the current plan, relevant reasons/constraints and what changed; superseded brainstorming can collapse.
 - **Negotiation:** retain the current proposal, accepted/refused terms and unresolved points rather than every bargaining turn.
-- **Investigation or argument:** retain attributed claims, contradictions, uncertainty and later corrections without declaring a disputed claim true.
+- **Investigation or argument:** retain attributed claims, disagreement, uncertainty and later corrections without declaring a disputed claim true or treating silence as agreement.
 - **Personal conversation:** retain explicit disclosures, requests, boundaries, apologies or decisions that the current exchange still relies on; do not infer hidden feelings as fact.
 - **Long explanation/story:** retain the thread and the information needed to continue or answer follow-up questions, while compressing repetitive detail.
+- **Relational callback:** retain enough of “the black sword from the cellar” or “the inn beside the bridge” to distinguish it later from similar entities.
 - **Multi-party/overheard conversation:** each NPC receives only the subset actually available through its event-time awareness, even when everyone shares the same conversation ID.
 
 These examples define a general continuity goal, not fixed extraction fields.
@@ -120,18 +130,21 @@ The feature is acceptable when:
 - older material needed to understand the current exchange survives compaction in representative planning, negotiation, correction, argument and personal-conversation fixtures;
 - current triggering speech and recent dialogue remain exact;
 - corrections and reversals are not flattened into the obsolete version as current truth;
-- disputed/hearsay statements retain attribution or uncertainty when material;
-- unanswered/current threads can remain available without introducing a specialized promise/task subsystem;
+- an assertion is not silently promoted to mutual agreement; disputed/hearsay statements retain attribution or uncertainty when material;
+- unanswered/current issues can remain available without introducing a specialized promise/task subsystem;
+- later temporal, spatial, attributive and comparative references can resolve to the intended earlier conversational referent in representative cases;
+- actor-relative references such as “the room I visited” versus “the room you visited” preserve perspective;
+- unheard, indistinct or unresolved information remains unknown rather than being filled in by compaction;
 - late joiners and partial overhearers never gain unheard content;
 - restore, forgetting and correction cannot reuse a stale derived summary;
 - compaction failure causes an explicit failure rather than silent truncation;
 - diagnostics can distinguish full-transcript use from compacted use and show the exact model-facing conversation projection.
 
-Quality should be evaluated through natural next-turn behavior, not only questions such as “what did I tell you earlier?”
+Quality should be evaluated through natural next-turn behavior and implicit callbacks, not only questions such as “what did I tell you earlier?” Qualification must also include returning to an old topic after many intervening turns; repeated failures there are the clearest trigger to evaluate a richer internal strategy.
 
 ## 10. Decisions and future extension
 
-V1 uses a single rolling summary because it is the smallest design that solves the request-size problem while remaining inspectable. If repeated re-summarization shows measurable semantic drift, the same entry point can later swap to source-backed hierarchical summaries or another compaction strategy without changing cognition callers.
+V1 uses a single rolling summary because it is the smallest design that solves the request-size problem while remaining inspectable. If repeated re-summarization shows measurable drift, or if returning to older topics repeatedly loses required context, the same entry point can later swap to source-backed/topic-coherent segments, targeted older-turn retrieval, hierarchical summaries or another strategy without changing cognition callers.
 
 The summary format and prompt are implementation policy behind that boundary. The durable transcript and actor-awareness rules are not.
 
@@ -143,3 +156,4 @@ The summary format and prompt are implementation policy behind that boundary. Th
 - Limits and constraints: [Narration and conversations inventory](../limits/narration.md).
 - Related design: [Technical design](conversation-compaction-tech-design.md).
 - Current semantic owners: [Memory architecture](../memory-architecture.md) and [Narration, agent responses and conversations](../narration-and-conversations.md).
+- Research: [Conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) · [Long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
