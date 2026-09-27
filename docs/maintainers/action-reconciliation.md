@@ -4,7 +4,7 @@
 
 ## Fresh conversation: start here
 
-The merged integration source is `codex/native-action-integration`, based on refreshed `origin/main` at `f551e3d8fddbc548717332508d9abd31c433d3b8`. It rebases source `review/action-main-reconciled` at `580476bcfbfe8993b1c709acfacc7d4775b00941`, preserving the published source. [Integration plan](../projects/native-action-integration.md) records semantic choices and progress; [current evidence](../verification/native-action-integration.md) records actual checks and blockers. Read the live refs before continuing; do not replay preserved branches again. [Continued performance evidence](../verification/three-times-scene-performance.md#continued-merged-build-investigation) adds SQLite follow/death/locomotion and sleep/wake checks, pending-action commit rollback, and PostgreSQL batch equivalence and completed 3× server samples; broader AR acceptance remains open.
+The merged integration source is `codex/native-action-integration`, based on refreshed `origin/main` at `f551e3d8fddbc548717332508d9abd31c433d3b8`. It rebases source `review/action-main-reconciled` at `580476bcfbfe8993b1c709acfacc7d4775b00941`, preserving the published source. It subsequently merged into local `main` at `75ee15f7` on September 26, 2026; refreshed `origin/main` at `45210d41` also contains that merge. [Integration plan](../projects/native-action-integration.md) records semantic choices and progress; [current evidence](../verification/native-action-integration.md) records actual checks and blockers. Read the live refs before continuing; do not replay preserved branches again. [Continued performance evidence](../verification/three-times-scene-performance.md#continued-merged-build-investigation) adds SQLite follow/death/locomotion and sleep/wake checks, pending-action commit rollback, and PostgreSQL batch equivalence and completed 3× server samples; broader AR acceptance remains open.
 
 The September 25 handoff described a branch based on `03105fed` and main at `8f72e945`. That comparison is historical. Main's newer records/checkpoints, account authority, resource claims, shared workers, dependency invalidation, placement and elapsed cadence are now the owners in this integration. They supersede older fixed-step, journal-only and raw-array-cursor assumptions. The earlier exercised runtime at `d143461b` remains historical evidence only.
 
@@ -13,7 +13,7 @@ Preserved history:
 - `design/action-repertoire-and-capability-grounding` at `94a7682aee9f100ccb54e073969bb4ed4f9fea49` retains the earlier action/perception/persistence implementation and documentation history.
 - `review/action-cleanup-application` at `614764d77723955cfcf5972cd8f0bff8a70f3c12` is the preserved source of the later replay.
 - `84bad771` and `1c797464` replayed/reconciled the implementation on the integrated main baseline and added follow/contact/death fixes. Earlier source commits are not all ancestors after replay; the source branches are retained for comparison, not as additional work to merge blindly.
-- Integration-only PR #20 is closed without merging. That PR did not merge the work; the later local merge `75ee15f7` incorporates `codex/native-action-integration`.
+- Integration-only PR #20 is closed without merging. The pre-merge statement that main was unchanged is historical. That PR did not merge the work; the later local merge `75ee15f7` incorporates `codex/native-action-integration`.
 
 ### Read order and authority
 
@@ -112,4 +112,4 @@ Current task authorization and repository guidance govern work. The previous con
 
 ## Next bounded sequence
 
-Complete the integration plan and current evidence, preserve the AR02/AR03/AR04.3/AR07.2 qualification gaps, and obtain enough disk space for disposable PostgreSQL measurements. Run separately authorized CI before merge. Do not reimplement delivered owners or treat the 384 repertoire ideas as installed mechanics.
+Continue qualification of the merged code under AR02/AR03/AR04.3/AR07.2, using the continued evidence above and checking current disk capacity before disposable PostgreSQL measurements. Run separately authorized CI against the merged revision and record its results; the merge itself did not satisfy these checks. Do not reimplement delivered owners or treat the 384 repertoire ideas as installed mechanics.

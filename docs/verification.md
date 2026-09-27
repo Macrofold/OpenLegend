@@ -4,6 +4,42 @@ Historical migration/recovery observations below describe the pinned implementat
 
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
+## Explicit narration failure
+
+September 27, 2026, on `codex/narration-failure-cleanup` from `origin/main` at
+`45210d41`. A one-off disposable SQLite world used the real server factory,
+WorldService commit, story selection, Narrator worker and public history route with
+`AI_BUDGET_USD=0`. Missing provider configuration produced a durable failed entry
+containing exactly “Narration failed.” while retaining its source evidence and
+diagnostic reason. An explicitly claimed job survived close/reopen as uncertain
+with failed presentation; recovery, resume and a later worker wakeup queued no retry.
+The database recorded zero paid reservations.
+
+Manual publication preserved successful prose. Injected historical fallback and native
+merge-notice records verified public projection: the former showed the failure message,
+the latter retained its notice. The real `/api/history` route returned these entries,
+and the standalone projection returned the same failure message. These fixtures prove
+presentation/plumbing only, not live model quality or the full NC12 acceptance matrix.
+
+Browser interaction in the disposable game verified Journal failures, successful prose,
+the native notice, absence of Regenerate narration, history refresh, and the failed
+Narrator banner's dismissal. The normal local Sign in link recovered the browser's stale
+local session. No authentication policy or user save was changed.
+
+Pinned Prettier on changed files, `pnpm typecheck`, `pnpm build`, local-link review and
+`git diff --check` passed. Build warnings about PlayCanvas `worker_threads` externalization
+and the large client chunk remain. No automated suites or live-provider calls ran;
+[NC12/CR12](maintainers/narration-and-conversations.md) retain broad qualification.
+
+After rebasing onto freshly fetched `origin/main` at `61437608`, TypeScript and the
+production build passed again. A fresh current-format disposable SQLite world verified
+failed generation, successful publication, native notice display, actor-scoped source
+evidence, HTTP history, the failure banner, and close/reopen/resume without a retry.
+Zero paid reservations were recorded. The two additive conflicts preserved main's
+evidence helper and changelog entries alongside the narration changes. Browser evidence
+above remains from the original implementation; no browser or automated suite was rerun
+for the rebase, and no old-save compatibility fixture was used.
+
 ## Spatial/cadence integration with current main
 
 The [September 26 integration record](verification/spatial-cadence-main-integration.md) pins the refreshed main/source commits, semantic reconciliation, fresh native/service/browser observations and matched performance comparison. The local rebase preserves main’s authority, record persistence, state/object and work-budget owners. The owner-authorized selective fixture cleanup resolves the stale navigation type errors and restores the local CI command. The linked record gives current automated evidence; hosted CI and broader sustained 8×/graphics qualification remain open. Historical records below apply to their own revisions.

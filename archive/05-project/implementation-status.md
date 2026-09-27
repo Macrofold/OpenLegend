@@ -89,7 +89,7 @@ The Person tab also exposes editable health, fullness and energy snapshots, a fi
 
 ### Selective story narration
 
-The default replaceable story selector, namespaced actor/object fields, owner editor, semantic introduction milestones, bounded frequency/grouping, dispatch revocation and indexed banner projection are implemented. Ordinary encounters and cognition importance do not admit Narrator jobs. Legacy prose remains private history and pending raw evidence does not appear as a banner. Place entities and inventory-item encounters are unsupported. Native runtime exercise is recorded in [verification](../../docs/verification.md); automated/privacy/recovery acceptance remains open in the [NC tracker](../../docs/maintainers/narration-and-conversations.md).
+The default replaceable story selector, namespaced actor/object fields, owner editor, semantic introduction milestones, bounded frequency/grouping, dispatch revocation and indexed banner projection are implemented. Ordinary encounters and cognition importance do not admit Narrator jobs. Successful legacy prose remains private history and pending raw evidence does not appear as a banner. Failed generation displays “Narration failed.” without substituted descriptions or automatic retry; the player regeneration control is removed. Place entities and inventory-item encounters are unsupported. Native runtime exercise is recorded in [verification](../../docs/verification.md); automated/privacy/recovery acceptance remains open in the [NC tracker](../../docs/maintainers/narration-and-conversations.md).
 
 ## Manual gameplay saves
 

@@ -60,14 +60,17 @@ current code and canonical contracts take precedence over stale handoff claims.
   measurements prompted feature-cache and finalization consolidation; they do not qualify
   sustained throughput, heap growth or production PostgreSQL behavior.
 - Canonical behavior, limits, trackers and historical report navigation reconciled. Broad unmet
-  AC acceptance remains open. Final pinned formatting, TypeScript, configuration, production build and link/diff checks passed. Integration fixes and evidence are retained on the local review branch.
-- Merge readiness remains blocked: the full disk prevents disposable PostgreSQL qualification;
-  browser interaction could not pass the disposable instance's sign-in screen, and required
-  automated CI remains unrun under repository policy. See [current evidence](../verification/native-action-integration.md).
+  AC acceptance remains open. Final pinned formatting, TypeScript, configuration, production build and link/diff checks passed. Integration fixes and evidence were subsequently merged into local `main` at `75ee15f7` on September 26, 2026; refreshed `origin/main` at `45210d41` contains that merge.
+- The integration is merged; qualification remains incomplete. At integration time, disk exhaustion
+  blocked disposable PostgreSQL qualification, browser interaction could not pass the disposable
+  instance's sign-in screen, and automated CI was unrun. See the [integration evidence](../verification/native-action-integration.md)
+  and [continued merged-build observations](../verification/three-times-scene-performance.md#continued-merged-build-investigation)
+  for later progress; these do not close broad AR acceptance.
 
 ## Remaining work and decisions
 
-No unresolved product or conflict-resolution decision remains. Free disk space (at least 5 GB),
-complete AR02/AR03/AR04.3/AR07.2 qualification, verify browser controls in an authenticated
-session, and run required CI before merging. This integration does not implement future general
+No unresolved product or conflict-resolution decision remains. Verify adequate disk space
+for remaining disposable PostgreSQL work, complete AR02/AR03/AR04.3/AR07.2 qualification,
+verify browser controls in an authenticated session, and run separately authorized required CI
+against the merged code. Record results without treating the completed merge as qualification. This integration does not implement future general
 tracking, workflow languages or the full repertoire to close unrelated acceptance criteria.

@@ -173,3 +173,21 @@ One editor request can update values used to decide which events deserve narrati
 [Implementation starting point](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Expand**.
+
+## NR01 — Narration failure and regeneration
+
+**Current · Restrictiveness: Very safe.**
+
+Player history and standalone narration show “Narration failed.” on generation failure;
+they do not substitute descriptions or offer Regenerate narration. No failure or restart
+automatically retries generation. The existing explicit API remains available to authorized
+callers, with its source checks, revision identity and accounting fences.
+
+**Reason / tradeoff:** The September 27, 2026 product decision removes the player retry
+control and fallback prose so a failed generation is explicit and causes no hidden spending.
+It sacrifices an in-game regeneration shortcut; original evidence and actual impacts remain
+saved. Deterministic conversation lifecycle notices are not generation failures.
+
+[Contract](../narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction) ·
+[Implementation work](../maintainers/narration-and-conversations.md) ·
+[Plan](../projects/narration-failure-cleanup.md).

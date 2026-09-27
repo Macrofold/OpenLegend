@@ -267,12 +267,12 @@ export class Narrator {
       world.id,
       job,
       text,
-      text ? undefined : 'Invalid source coverage or output; deterministic fallback retained.',
+      text ? undefined : 'Invalid source coverage or output.',
       result.receipt,
     );
     await this.log.record(`${id}:publication`, 'Narration publication', {
       input: { sourceIds: job.sources.map((s) => s.id), voice: job.voice },
-      output: { status: text ? 'completed' : 'fallback' },
+      output: { status: text ? 'completed' : 'failed' },
     });
   }
   async close() {

@@ -102,18 +102,6 @@ export function History({
         current ? { ...current, voice: value as HistoryPage['voice'] } : current,
       );
   }
-  async function regenerate(id: string) {
-    try {
-      const result = await post('/api/narration/regenerate', {
-        id,
-        requestId: crypto.randomUUID(),
-      });
-      if (!result.ok) setError(result.message);
-      else void load();
-    } catch (reason) {
-      setError(String(reason));
-    }
-  }
   async function leave() {
     if (!page?.active) return;
     try {
@@ -176,11 +164,6 @@ export function History({
               {impact.delta} {impact.field} · {impact.entityName ?? 'affected actor'}
             </div>
           ))}
-          {item.kind === 'narration' && item.status !== 'pending' && (
-            <Button size="sm" variant="quiet" onPress={() => void regenerate(item.id)}>
-              Regenerate narration
-            </Button>
-          )}
           {item.status === 'pending' && (
             <small>Prose is being prepared; committed facts are shown.</small>
           )}

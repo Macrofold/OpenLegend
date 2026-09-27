@@ -58,7 +58,7 @@ export interface StoryJob {
   sources: StorySource[];
   voice: NarratorVoice;
   createdAt: number;
-  state: 'queued' | 'running' | 'completed' | 'fallback' | 'uncertain' | 'cancelled';
+  state: 'queued' | 'running' | 'completed' | 'failed' | 'fallback' | 'uncertain' | 'cancelled';
   reason?: string;
   receipt?: unknown;
   previousItem?: TranscriptItem;
@@ -90,6 +90,15 @@ function eventEvidence(awareness: EventEvidence): EventEvidence {
     importance,
     urgency,
   };
+}
+const narrationFailed = 'Narration failed.';
+/** Older failures retain their source evidence in storage, never substitute prose in the UI. */
+function projectNarration(item: TranscriptItem): TranscriptItem {
+  // Native merge notices have no event sources and did not attempt generation.
+  // docs/narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction
+  return item.status === 'failed' || (item.status === 'fallback' && item.sourceIds.length > 0)
+    ? { ...item, status: 'failed', text: narrationFailed }
+    : item;
 }
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
@@ -610,7 +619,7 @@ export class HistoryRepository {
     if (
       job.selection &&
       !job.item.conversationId &&
-      ['completed', 'fallback', 'uncertain'].includes(job.state)
+      ['completed', 'failed', 'fallback', 'uncertain'].includes(job.state)
     )
       await this.db
         .prepare(
@@ -730,9 +739,9 @@ export class HistoryRepository {
         .all(worldId)) {
         const job = JSON.parse(String(row['payload'])) as StoryJob;
         if (!job.selection) {
-          job.previousItem = { ...job.item, status: 'fallback' };
+          job.previousItem = { ...job.item, status: 'failed', text: narrationFailed };
           job.state = 'cancelled';
-          job.item.status = 'fallback';
+          job.item = job.previousItem;
           job.reason = 'Legacy broad narration policy retired.';
           await this.saveStory(worldId, job);
         }
@@ -743,7 +752,7 @@ export class HistoryRepository {
         const job = JSON.parse(String(row['payload'])) as StoryJob;
         job.state = 'uncertain';
         job.reason = 'Interrupted generation was not repeated.';
-        job.item.status = 'fallback';
+        job.item = { ...job.item, status: 'failed', text: narrationFailed };
         await this.saveStory(worldId, job);
       }
     });
@@ -804,11 +813,11 @@ export class HistoryRepository {
         return false;
       }
       delete job.previousItem;
-      job.state = text ? 'completed' : 'fallback';
+      job.state = text ? 'completed' : 'failed';
       job.item = {
         ...job.item,
-        text: text ?? job.item.text,
-        status: text ? 'completed' : 'fallback',
+        text: text || narrationFailed,
+        status: text ? 'completed' : 'failed',
         revision: (job.item.revision ?? 1) + 1,
       };
       job.reason = reason;
@@ -874,7 +883,7 @@ export class HistoryRepository {
       conversationId: record.sourceId,
       sourceIds: [],
       impacts: [],
-      status: 'fallback',
+      status: 'completed',
       revision: 1,
     };
     await this.db
@@ -904,7 +913,7 @@ export class HistoryRepository {
         'SELECT payload FROM story_banners WHERE world_id=? AND owner_id=? ORDER BY position DESC,id DESC LIMIT 1',
       )
       .get(worldId, ownerId);
-    return row ? (JSON.parse(String(row['payload'])) as TranscriptItem) : null;
+    return row ? projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem) : null;
   }
   async perceivedEvents(
     worldId: string,
@@ -1037,7 +1046,11 @@ export class HistoryRepository {
         legacy: !event.conversationId && event.type === 'speech',
       };
     });
-    items.push(...stories.map((row) => JSON.parse(String(row['payload'])) as TranscriptItem));
+    items.push(
+      ...stories.map((row) =>
+        projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
+      ),
+    );
     items.sort((a, b) => b.order - a.order || b.id.localeCompare(a.id));
     const page = items.slice(0, limit);
     return {

@@ -576,7 +576,7 @@ export interface TranscriptItem {
     delta: number;
     sourceId: string;
   }>;
-  status?: 'pending' | 'fallback' | 'completed';
+  status?: 'pending' | 'failed' | 'fallback' | 'completed';
   voice?: 'restrained' | 'lyrical' | 'wry';
   sourceStatus?: 'available' | 'unavailable';
   revision?: number;

@@ -10,6 +10,22 @@ The [integration plan](projects/hearing-main-integration.md) consolidates hearin
 
 Development-save handling follows the [root policy](../AGENTS.md#development-save-policy). D66 owns speech re-authoring without colliding with main's social decisions. [HE01–HE05](maintainers/hearing-and-speech.md), the [HR limits inventory](limits/hearing-and-speech.md) and [combined evidence](verification/hearing-main-integration.md) separate delivered behavior from remaining CI, PostgreSQL, provider, broad graphical and dense/cold performance qualification. Historical branch measurements remain labeled historical. The follow-up rebase in `codex/hearing-ready-for-main` includes main `45210d41`: native action invocation/follow, private acquisition batching, bounded history writes and scene/cognition/persistence improvements. Response instructions use `cognition-v17-grounded-actions-hearing` to identify the combined prompt/schema. The protected development-save policy remains in its root owner.
 
+## 2026-09-27 — Explicit narration failure
+
+The player UI no longer offers Regenerate narration. Failed or interrupted generation now
+displays “Narration failed.” without substituted prose or automatic retry; saved source
+evidence, actual impacts, receipts and native conversation notices retain their existing
+owners. Older generated fallback entries receive the same public presentation. This makes
+failure explicit while removing an in-game regeneration shortcut; the explicit API remains.
+[Contract](narration-and-conversations.md), [NR01](limits/narration.md#nr01--narration-failure-and-regeneration)
+and [NC08–NC12](maintainers/narration-and-conversations.md) own behavior and outstanding
+qualification. Conversation compaction is excluded from this change.
+
+Corrected the remaining action-integration merge wording: `75ee15f7` merged the work into
+main, while the [integration evidence](verification/native-action-integration.md) still records
+incomplete qualification. AC01.2 and CR12/NC12 already cover detailed action parameters and
+broad cognition/narration qualification; no duplicate missing-work requirements were added.
+
 ## 2026-09-26 — Integrate native action grounding and follow
 
 Rebased the preserved action branch onto main's records/checkpoints, account/control authority, placement, resource claims, dependency invalidation and elapsed cadence. Finite parameterized move/follow, reviewed private revisions and acquisition/history batching retain those owners. Reconciliation fixes include scoped action job/UI identities, live-draft contact mutation, follow navigation cancellation and server/checkpoint startup cleanup. Superseded fixed-step and raw-array cursor implementations are removed. Main's complete byte-bounded action choice set and free exact authored descriptions are preserved, and incomplete spatial queries are filtered before schedule batching. Updated [limit inventories](limits/cognition.md#cg02) record implemented boundaries without declaring uncalibrated thresholds or throughput qualified.

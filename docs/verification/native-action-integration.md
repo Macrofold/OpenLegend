@@ -2,7 +2,7 @@
 
 September 26–27, 2026. Source `review/action-main-reconciled` at `580476bcfbfe8993b1c709acfacc7d4775b00941` was rebased onto refreshed `origin/main` at `f551e3d8fddbc548717332508d9abd31c433d3b8`, in local branch `codex/native-action-integration`. This report describes that branch plus its integration fixes; earlier reports in this directory retain their own historical baselines. [Plan](../projects/native-action-integration.md), [AR tasks](../maintainers/action-reconciliation.md#integration-tasks), [sanitized observations](native-action-integration.json).
 
-**Integration code and documentation are reconciled; merge qualification remains incomplete.** PostgreSQL measurement is blocked by disk exhaustion, browser action interaction is unverified, and automated CI was not run under the repository's default verification policy. No live-provider work ran; all runtime work used zero AI budget. Injected revisions/classifications exercise native plumbing, not model quality.
+**Integration code and documentation were subsequently merged into local `main` at `75ee15f7` on September 26, 2026; qualification remained incomplete.** Refreshed `origin/main` at `45210d41` contains that merge. Merging does not establish that the outstanding checks passed. The following records the integration-time evidence; [continued merged-build observations](three-times-scene-performance.md#continued-merged-build-investigation) record later progress. PostgreSQL measurement was blocked by disk exhaustion, browser action interaction was unverified, and automated CI was not run under the repository's default verification policy. No live-provider work ran; all runtime work used zero AI budget. Injected revisions/classifications exercise native plumbing, not model quality.
 
 ## Reconciliation and corrected defects
 
@@ -18,7 +18,7 @@ September 26–27, 2026. Source `review/action-main-reconciled` at `580476bcfbfe
 
 Pinned dependency manifests and lockfile match main exactly. Two ordinary/offline installs failed with `ENOSPC`. Verification used ignored local links to main's already installed pinned packages, with workspace packages resolved to this integration checkout. No dependency/lockfile updates or unrelated checkout edits were made.
 
-Pinned Prettier on the affected files, TypeScript (`tsc --noEmit`), generated-configuration validation, production build and `git diff --check` passed. The affected Markdown/source-comment link audit found no missing local targets or anchors. Production build warnings about PlayCanvas `worker_threads` externalization and the large client chunk are retained rather than suppressed. Full automated suites (`pnpm test`, `pnpm check`, browser suites) were not run; required CI remains a merge gate.
+Pinned Prettier on the affected files, TypeScript (`tsc --noEmit`), generated-configuration validation, production build and `git diff --check` passed. The affected Markdown/source-comment link audit found no missing local targets or anchors. Production build warnings about PlayCanvas `worker_threads` externalization and the large client chunk are retained rather than suppressed. Full automated suites (`pnpm test`, `pnpm check`, browser suites) were not run; required CI was unrun at integration time and remains outstanding qualification for the merged code.
 
 ## Manual native runtime
 
