@@ -7,6 +7,7 @@
 - **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
+- **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
@@ -46,6 +47,10 @@ The dossiers supplement the original chapters and granular studies rather than r
 ### Cautionary cases and language-driven creation
 
 [Dreams / Project Spark](games/dreams-and-project-spark.md) · [EverQuest Next](games/everquest-next.md) · [Worlds Adrift](games/worlds-adrift.md) · [Spore](games/spore.md) · [No Man's Sky](games/no-man-s-sky.md) · [Ultima Online ecology](games/ultima-online-s-ecology.md) · [Scribblenauts](games/scribblenauts.md) · [AI Dungeon](games/ai-dungeon.md).
+
+### Expanded tactical, open-world and party-RPG dossiers
+
+The [G61–G80 reading index](dossiers/README.md) links the full-category studies from Fire Emblem: Path of Radiance through Final Fantasy III. These dossiers supplement the earlier game chapters rather than replacing them. The [roster](research-roster.md) retains all other ranges and their exact subject boundaries; the [progress ledger](research-progress.md) alone owns completion status.
 
 ## Deeper reading by system
 

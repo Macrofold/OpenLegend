@@ -113,6 +113,22 @@ Use the concrete example to find a study, then read its limitations and countere
 | What makes a limited creative contribution reach ordinary players? | Scene Makers submissions, selection, and distribution | [Core Keeper](core-keeper-resource-circuits-food-and-inhabited-discovery.md) |
 | Can a demo teach the real reward through repeated bounded play? | Content-limited versus round-capped demos | [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) |
 
+## Party identity, learning and changing access
+
+The linked [full-game dossiers](../dossiers/README.md) own the detailed evidence and edition boundaries for these comparisons. The original games, 3D remakes and Pixel Remasters must not be combined into an imaginary single ruleset.
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| Can equipment teach a passive without permanently occupying its original slot? | Picto learning versus equipped statistics and Lumina capacity | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
+| Can defense change the next offensive decision? | Nusaro, Monoco's Bestial Wheel and parry-dependent mask changes | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
+| Can a relationship reopen familiar geography? | Esquie's bond and access to underwater rewards | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
+| Can repeatable item use undermine an intended resource limit? | Healing Staff recovery and the incentive to prolong a solved encounter | [Final Fantasy I](../dossiers/final-fantasy.md) |
+| Does being allowed to equip something mean it supports the intended role? | Weapon proficiency and visible Magic Interference | [Final Fantasy II](../dossiers/final-fantasy-ii.md) |
+| Is knowing about an object equivalent to being able to use it? | Learned Sunfire keyword versus possession of Egil's Torch and carried Sunfire | [Final Fantasy II](../dossiers/final-fantasy-ii.md) |
+| Can an informational action make another character's turn more valuable? | Scholar's Study and Hein's changing weakness | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
+| Does a free role change undo every previous investment? | Character level, job proficiency, HP history and current spell reserves | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
+| Can a later vehicle complement rather than replace an earlier one? | Nautilus diving versus Invincible mountain access and onboard services | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
+
 ## Keep the comparison honest
 
 The same word can conceal different promises: a story can be authored, generated, mechanically recorded, or interpreted by a player. A reusable object can preserve its image, its relationships, its behavior, or its surrounding scenario. A helper can execute a job, choose a purpose, or become someone the player cares about. Identify which property matters before borrowing a pattern.
