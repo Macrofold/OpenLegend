@@ -1,761 +1,390 @@
 # PEAK — full research dossier
 
-**G47 · Complete research pass, September 26, 2026.** This dossier covers the shipped PC game through its **final major update**, which added the Gloom and Citadel variant biomes in August 2026. Landfall's current FAQ explicitly says major-content development is finished: PEAK remains playable and supported with fixes, but is intentionally **not** a forever/live-service game. Console/cross-platform work mentioned in current support material is kept as planned/in-progress unless separately released.
+**G47 · Research and identified audit remedies completed September 26, 2026.** Scope: the shipped PC game, including March 2026's Custom/Mini Runs and campfire saves, August's **Final Ascent**, and identified September maintenance/access changes. The August update completed planned major content; it was not the last modification ever. Console crossplay remains a stated future plan in the inspected support material, not a currently tested feature. [PK-B](#pk-b) [PK-C](#pk-c) [PK-P](#pk-p) [PK-Q](#pk-q)
 
 [Preserved overview](../games/peak.md) · [Detailed mechanics study](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
-PEAK's relevance to OpenLegend is that a **very small shared predicament** can generate memorable social stories when position, knowledge, scarce items and physical help are real. The rescue story does not need to be separately generated: somebody slips, voice grows faint with distance, another player locates them, a rope/piton/backpack changes what the group can do, and the outcome becomes worth retelling.
+PEAK demonstrates how a small shared predicament can produce memorable social stories when position, information, limited supplies and physical help are real. A rescue need not be separately narrated into existence: separation changes what people know, communication helps locate someone, and a tool or another climber changes what can happen. This is research and conditional inspiration, not an accepted OpenLegend feature specification. No firsthand play, watched footage, soundtrack audition or current network test is claimed.
 
 ## 1. Identity, scope and current boundary
 
-PEAK is a first-person cooperative climbing game created by developers from Aggro Crab and Landfall under the “Landcrab” collaboration.
+PEAK is a first-person cooperative climbing game made by Aggro Crab and Landfall collaborators under **Landcrab**. It released on Steam June 16, 2025. Stranded nature scouts climb an island's mountain, forage, manage their condition and help one another reach an escape. Solo and groups of up to four are supported. A compact premise makes the purpose immediately understandable without making the route easy. [PK-A](#pk-a)
 
-It released on Steam June 16, 2025.
+Friend invitations are not public matchmaking. The September 2 update added **room codes** and a streamer option to hide them; it explicitly described this as preparation for ports. Thus older statements that access relies only on the Steam friends list are incomplete, but the update does not establish a public lobby browser or already released universal console crossplay. [PK-Q](#pk-q)
 
-The premise:
-- a nature-scout group crash-lands on a mysterious island;
-- the only apparent rescue path is up;
-- climb through dangerous biomes;
-- scavenge supplies;
-- manage stamina/injuries/status;
-- help one another;
-- reach the summit.
+### Final major content versus maintenance
 
-It supports:
-- solo;
-- friend-based online groups up to four.
+**The Final Ascent**, released August 11, 2026, introduced **Gloom** and **The Citadel**, another Ascent and additional tools. Landfall explains that the small joint team wants to return to its own studios' projects rather than turn PEAK into a perpetual service. Bug fixes continue. September's restoration of biome rotation and room-code work illustrate the distinction between completing major content and abandoning the product. [PK-B](#pk-b) [PK-C](#pk-c) [PK-Q](#pk-q)
 
-It does **not** natively provide a public-lobby/server browser as of the current evidence; official/community routes instead rely on friends/room access/Discord-style group finding. [PK-A](#pk-a)
+## 2. The goal is simple; the decisions are not
 
-### Current/final major-content boundary
+The objective is climbing, not building an economic empire. Route, bodily position, stamina, afflictions, food, equipment, weather and other people determine how that objective is pursued. A rest point can be more valuable than another meter of elevation.
 
-Landfall's current FAQ says:
-- **Gloom** and **Citadel** were the final major-update biomes;
-- PEAK is not intended as a live service;
-- the small joint team wants to return to separate studio projects;
-- maintenance/bug fixes continue. [PK-B](#pk-b)
+**Interpretation:** an activity can support emergence through interdependence rather than a large quest catalog. The relevant design question is whether another person changes the available decisions, not how many nominal systems exist.
 
-The final-biome announcement set the update for August 11, 2026. [PK-C](#pk-c)
+## 3. Climbing and the stamina budget
 
-## 2. The goal is intentionally simple
+Climbing spends stamina; stopping on a usable surface allows recovery. The visible bar also represents capacity lost to burdens and conditions. Running out of immediately available climbing energy and having the bar filled by incapacitating afflictions must not be treated as the same event. The latter can produce the downed state described in §13. [PK-D](#pk-d) [PK-R](#pk-r)
 
-The objective is:
-> climb the mountain.
+A player chooses the starting point, the next secure surface, a feasible length, a tool and whether help is needed. **Height gained** and **safety reached** are different outcomes. A strong temporary boost can leave the player stranded if it expires before a resting place.
 
-The depth comes from:
-- route;
-- physical position;
-- stamina;
-- injuries/status;
-- food;
-- carried tools;
-- weather/hazards;
-- other players.
+**Interpretation:** this makes trajectory and aftermath part of an action's value. A planner that optimizes immediate distance while ignoring its end state has not solved the climbing problem.
 
-This is useful design compression.
+## 4. Afflictions have related but nonidentical consequences
 
-A game does not need:
-- dozens of quest types;
-- procedural plot;
-- faction politics
+Injury, poison, hunger, cold, heat, spores and carrying burden can reduce useful capacity. Some subside or respond to particular remedies; others require more deliberate treatment. **Curse** can follow revival or certain powerful actions and does not simply disappear through ordinary waiting. **Petrify** instead constrains the bonus-stamina bar and can eventually crystallize the scout. The two bars and their failure rules should not be collapsed into one generic health meter. [PK-S](#pk-s)
 
-to produce emergent episodes if the core activity creates readable interdependence.
-
-## 3. Climbing and stamina
-
-Climbing consumes stamina.
-
-The stamina display also communicates reductions/pressure from conditions and carried Weight.
-
-The player must decide:
-- where to start climbing;
-- which surface/ledge is reachable;
-- whether current stamina can finish;
-- where to rest;
-- whether to use an item;
-- whether to ask for help.
-
-This creates an important distinction:
-- **height gained**;
-- **safe state reached**.
-
-Getting higher can make the situation worse if the player reaches nowhere recoverable.
-
-## 4. Status effects converge on practical climbing capability
-
-Setbacks can include:
-- injury;
-- poison/other biome conditions;
-- hunger-related pressure;
-- carrying burden;
-- environmental debuffs.
-
-Several consequences eventually express themselves through:
-- less available climbing capacity;
-- harder movement/survival.
-
-This makes the game readable.
-
-But the UI still needs to show **why** capability fell.
-
-OpenLegend can use shared downstream consequences:
-- exhausted;
-- encumbered;
-- injured
-
-while preserving causal provenance.
+**Interpretation:** several setbacks can share a practical consequence while retaining separate causes. That can simplify decisions, but only if the interface explains what is occupying the capacity and which response fits. More bars would not automatically be clearer; less explanation would not automatically be more immersive.
 
 ## 5. Carrying and inventory are route decisions
 
-Items help:
-- healing;
-- stamina;
-- food;
-- climbing;
-- rescue;
-- route construction.
+Food, healing supplies and climbing equipment improve future options while burdening the carrier. Dropping or consuming an object can change whether the next wall is feasible. The question is contextual: a rope that is invaluable at a later obstacle can make the present climb harder. Weight is not established here as a universal multiplier of running speed or fall damage; loose review language about being slower is not a substitute for the capacity rules. [PK-D](#pk-d)
 
-But carrying has cost.
-
-The player can therefore face:
-> keep the rope for a future wall, or drop it so this wall is possible?
-
-That is a materially different inventory experience from:
-- unlimited bag of abstract quest objects.
-
-Items exist because they change what routes the body can survive.
+**Interpretation:** a small inventory matters when its objects change reachable states. Unlimited abstract storage would remove both the individual tradeoff and some of the reasons to distribute responsibility across a group.
 
 ## 6. Backpack: shared access without global storage
 
-A Backpack adds storage.
+A backpack supplies extra spaces. Its owner can put it down to manage it, while another scout can access it when worn. Contents still carry a burden. Possession, physical location, access and responsibility are therefore separate concepts. [PK-D](#pk-d)
 
-The preserved mechanics study documents:
-- it can be placed to manage directly;
-- another player can access it while worn;
-- contents still contribute to carrying burden. [PK-D](#pk-d)
-
-This separates:
-- ownership/access;
-- physical location;
-- burden.
-
-### OpenLegend lesson
-
-A settlement/group inventory does not have to become one magical global stash.
-
-Objects can remain:
-- on a person;
-- in a cart;
-- in a house;
-- accessible under permissions.
-
-That creates real logistics/social responsibility.
+**Interpretation:** a shared inventory need not become a magical group stash. A partner carrying the rope is a practical social relationship, but being unable to reach that partner can also be friction. The system needs understandable controls rather than treating laborious transfer as inherently realistic.
 
 ## 7. Pitons create intermediate safe states
 
-A placed Piton creates a climbing handhold where a Scout can recover stamina.
+A placed piton is a handhold for recovering stamina, not merely a percentage improvement to climbing. It divides one infeasible wall into shorter feasible stages and can help later teammates. Occupancy matters: one handhold is not a platform on which the whole group can recover simultaneously. Naturally occurring rusty variants also have different durability. [PK-D](#pk-d)
 
-One placed object transforms:
-- impossible uninterrupted wall
+**Interpretation:** a small tool can change a problem's topology. It creates an intermediate state, which is richer than simply making the same action cheaper. The player should be able to distinguish an invalid placement from an inadequately prepared route.
 
-into:
-- climb;
-- rest;
-- climb.
+## 8. Ropes, Anti-Rope and other traversal tools
 
-This is more interesting than:
-> “+20% climb efficiency.”
+An anchored Rope Spool creates a climbable route. **Anti-Rope** rises rather than hangs downward and can float away; its unusual carrying behavior and placement make it a different opportunity, not just better ordinary rope. The preserved study retains exact version cautions rather than assuming unlimited physical simulation. [PK-D](#pk-d)
 
-The tool changes **problem topology**. [PK-D](#pk-d)
+The final update adds a **Jetpack**, which occupies the backpack role and consumes suitable fuel items, and a **Glider**, which enables horizontal travel but still spends stamina. Those are different exchanges: storage versus powered ascent, and altitude/stamina versus lateral reach. The announcement also identifies Warp Fungus as a new tool, without this dossier inventing a complete interaction table from its teasing description. [PK-C](#pk-c)
 
-It can also help later climbers, turning one person's action into route infrastructure.
+**Interpretation:** altering a familiar object's consequential property can create new routes while remaining understandable. Costs and failure states should follow that property, not be arbitrary punishments added after a clever use.
 
-## 8. Ropes and Anti-Rope
+## 9. Food identification and cooking
 
-Rope Spools create climbable anchored routes.
+Foraged food and packaged luggage supplies are not equivalent guarantees. Food can reduce hunger, supply bonus stamina, relieve a condition or impose another one. Its immediate benefit competes with the value of carrying it for later, and groups can allocate a scarce remedy to the person whose recovery changes the whole route. [PK-T](#pk-t)
 
-Anti-Rope reverses a key property:
-- it rises instead of falling;
-- its floating behavior changes carrying/placement risk.
+Identification has actual cues. The documented poisonous **Button Shroom** has a spotted cap rather than the ordinary split-X marking; the poisonous **Cluster Shroom** has skirted stalks. These are concrete distinctions, not a verified claim that every mushroom's meaning is randomized each day. [PK-U](#pk-u)
 
-This is an especially good compositional example:
-> change one familiar physical rule and new uses emerge. [PK-D](#pk-d)
+Cooking usually improves a food's benefit, but is not universal purification. Further exposure moves through cooked, well-done, burnt and incinerated states; the middle stages do not imply an endlessly stacking upgrade. Heat can come from ordinary cooking sources or environmental interactions, with item-specific exceptions. [PK-V](#pk-v)
 
-OpenLegend materials/magic should often work this way:
-- keep recognizable ontology;
-- alter one consequential property.
+A **Red Prickleberry** illustrates cross-system preparation: it helps hunger/heat but in its raw form can create head thorns the eater cannot remove alone. Cooking removes that particular drawback. Eating, carrying, preparing and asking another scout for help are different solutions to the same resource problem. [PK-W](#pk-w)
 
-That produces surprising but understandable affordances.
-
-## 9. Food, supplies and uncertain consumption
-
-Players scavenge food and supplies.
-
-Food can be:
-- safe/helpful;
-- risky/questionable;
-- context-dependent.
-
-Carrying food means:
-- future recovery;
-- current Weight cost.
-
-Eating now means:
-- immediate capacity;
-- less future buffer.
-
-Group play adds allocation:
-- who needs it most?
-- who is carrying the group's reserve?
-- should a weak climber consume the rare resource?
-
-A shared predicament makes small consumables socially meaningful.
+**Interpretation:** uncertain consumption is interesting when observation and learning improve future choices. It is weaker when the only sensible approach is an external exhaustive food chart. Cooking should change a recognizable risk rather than award an unexplained universal safety flag.
 
 ## 10. Temporary power needs an exit plan
 
-The Big Lollipop example preserved in the detailed study gives temporary unlimited stamina followed by a Drowsy downside in its ordinary form/version.
+The preserved **Big Lollipop** example grants a temporary unlimited-stamina interval followed by Drowsy in its ordinary form. Later cooked variants have their own rules. The useful plan is reaching a stable post-effect state, not climbing as high as possible before the advantage ends. [PK-D](#pk-d)
 
-The correct use is not merely:
-> go as high as possible.
+**Interpretation:** a power can be extremely strong and still be bounded through timing, aftermath, position or dependence. An understood drawback creates risk; an undiscoverable one feels like a trap. Neither high power nor severe consequence is sufficient by itself.
 
-It is:
-> spend the temporary window reaching a **safe post-effect state**. [PK-D](#pk-d)
+## 11. Assistance and conflict are physical
 
-This is a valuable OpenLegend power-design principle.
+Scouts help each other onto ledges, place route tools, carry supplies, locate separated players and take risks to recover someone. The same spatial and item rules also enable accidental or deliberate interference. Helping is meaningful because a particular person's position or resource changes another's outcome, not because the game merely announces cooperation. [PK-D](#pk-d)
 
-Strong temporary abilities stay interesting when:
-- their aftermath matters;
-- the player understands it beforehand.
+The later **Cannibalism** mechanic is a deliberately macabre example of conflicting interests: sufficient hunger enables sacrificing another scout as food, with a Curse cost. A setting lets a player opt out of participating as either eater or victim. That narrow control is not blanket protection from every form of cooperative griefing. This is a fictional gameplay permission, not an endorsement of harm. [PK-X](#pk-x)
 
-## 11. Rescue and direct physical help
-
-Players can:
-- help someone up;
-- deploy route tools;
-- carry resources for others;
-- locate separated players;
-- coordinate by proximity voice/pings;
-- recover around group decisions.
-
-The physicality makes social action clear.
-
-“I helped you” means:
-- my position;
-- my item;
-- my action
-
-changed your possible outcome.
-
-OpenLegend AI companions should be judged against this standard:
-- did they perceive?
-- communicate?
-- take useful action?
-- accept risk?
-- become a burden worth helping?
-
-Fluent rescue narration is not equivalent.
+**Interpretation:** shared agency requires a contract about destructive actions, not only friendly invitations. The most important question for an AI companion is whether it notices, communicates, acts usefully, incurs a cost or needs help—not whether it can produce fluent rescue dialogue.
 
 ## 12. Proximity voice and partial information
 
-Voice volume/proximity means separation affects information.
+Distance changes the communication channel. PC Gamer's reviewer describes a group separating in a snowstorm and using proximity communication to find and help a stranded member. The playable causal chain is separation → different knowledge → a limited signal → movement and coordination → changed outcome. [PK-E](#pk-e)
 
-PC Gamer recounts a group splitting in a snowstorm and locating a stranded companion through proximity communication before helping them. [PK-E](#pk-e)
+**Interpretation:** incomplete information can produce cooperation when there is a way to share it and a reason it matters. Simply hiding facts is not enough. A faint voice, visible gesture and dropped pack can communicate different kinds of information; no omniscient group narrator is required.
 
-The episode works because:
-1. positions diverge;
-2. knowledge diverges;
-3. communication channel has range;
-4. group re-coordinates;
-5. action changes outcome.
+## 13. Downed, dead and recovered are different states
 
-This is exactly the kind of causal chain OpenLegend should preserve for NPC/player stories.
+When afflictions leave no usable main capacity, a scout can become downed: ordinary movement, item use and speech are unavailable. The group has a limited opportunity to help before death. Carrying normally suspends that countdown, but the documented heavy-Spores exception prevents treating carrying as universally safe preservation. Appropriate recovery or decaying temporary conditions can restore participation. [PK-R](#pk-r)
 
-## 13. Ghost/death/recovery social role
+Death changes the person to a ghost/spectator role. **Ancient Statues** and suitable revival items such as a **Scout Effigy** provide restoration opportunities; a campfire's saving function is not itself the same mechanic as the nearby statue's revival. Resurrection can impose Curse. The inherited parent/child Steam anecdote shows a dead player still guiding a survivor, not proof that death has no cost. [PK-R](#pk-r) [PK-S](#pk-s) [PK-F](#pk-f)
 
-Death/failure can leave a player in a spectator/ghost-like state depending on current run state, enabling continued group guidance even when direct embodied contribution has ended.
+**Interpretation:** failure can change social participation rather than remove it entirely. A timed rescue, later resurrection and useful ghost guidance are three different responses, each with different dependencies. An inaccessible body or missing revival resource can still make a loss consequential.
 
-Helpful Steam testimony includes a parent/child run where the dead/ghost player guides the surviving climber. [PK-F](#pk-f)
+## 14. Daily maps, custom runs and interruption recovery
 
-That is an elegant way for failure to change participation rather than simply remove the person from the social activity.
+The ordinary island changes on a daily cadence while allowing retries of the day's layout. General mechanical knowledge persists as local route knowledge refreshes. A new map does not require forgetting what a rope or food item does. [PK-A](#pk-a)
 
-OpenLegend death/absence systems can similarly ask:
-> what meaningful role remains?
+**March 30, 2026 — Play It Your Way:** the airport kiosk gained **Custom Runs**, with adjustable hazards, item availability and difficulty components, and **Mini Runs**, which isolate one biome of the day's map. Custom play disables achievements. Campfire autosaves allow leaving an expedition and continuing later; starting another expedition or completing/losing the run ends that save. Map-removing updates can invalidate it. **Chill Campfires** pause hunger and advancing fog while the group stays there. [PK-P](#pk-p)
 
-## 14. Daily maps: renew route knowledge without changing basic laws
+August's update changed loading so the autosave is not consumed merely by loading it. September's patch additionally remembers items lying around the campfire, not only carried ones. Launch reviews saying there is no save were correct about their tested version, not the September 2026 contract. [PK-C](#pk-c) [PK-Q](#pk-q)
 
-The mountain/island layout rotates on a 24-hour cadence.
+**Interpretation:** interruption recovery and fictional resurrection solve different problems. A game can preserve risk while letting players go to dinner. Custom modes also separate desired difficulty from compulsory exposure to a particular hazard; they should make the associated reward contract explicit.
 
-Players can retry the same day's layout.
+## 15. Biomes change the operation, not only the scenery
 
-This creates two knowledge layers:
-- general mechanical mastery;
-- current-route familiarity.
+The original Shore → Tropics → Alpine → Caldera → Kiln route and later variants must be distinguished. The first four include a lead-in and a climb; the volcanic finale changes the geometry again. The table explains the decision introduced, not an exhaustive spawn table. [PK-Y](#pk-y)
 
-A new day refreshes:
-- path;
-- item distribution;
-- hazards;
+| Region or variant | Concrete pressure and resulting decision |
+| --- | --- |
+| Shore | Teaches route choice, luggage/food acquisition and manageable climbing before the later specialized environments. [PK-A](#pk-a) |
+| Tropics | Poisonous plants and adverse weather complicate an otherwise plausible route; readable cover and timing become valuable. [PK-Y](#pk-y) |
+| Roots, alternative second region | Wind affects movement and gripping; spores, pursuing creatures and limited bridges make position and group spacing important. Fungi and vines also supply traversal opportunities. Not every mechanic is a penalty. [PK-Z](#pk-z) |
+| Alpine | Cold and storms make shelter or heat sources part of ascent planning. A geyser can warm a scout but also launch them; a helpful location carries a distinct risk. [PK-Y](#pk-y) [PK-AA](#pk-aa) |
+| Mesa, alternative third region | Direct sun encourages shade, cooling supplies or another departure time; cacti, dynamite and moving hazards complicate travel. The canyon requires descending and climbing again rather than maximizing altitude monotonically. [PK-AB](#pk-ab) |
+| Caldera and Kiln | Volcanic exposure and a climbing interior impose different safe intervals; rising lava supplies the finale's advancing pressure. [PK-Y](#pk-y) [PK-AC](#pk-ac) |
+| Gloom and The Citadel, paired alternatives | Sleep-inducing fog and a wet, obstructed lower region make safe islands, trees and light useful. The tower replaces that traversal with a vertical route threatened by rising gloom. A light that improves visibility need not prevent Drowsy; those effects require separate checking. [PK-AD](#pk-ad) [PK-AC](#pk-ac) |
 
-without invalidating:
-- how ropes work;
-- how stamina works;
-- how rescue works.
+The announced two-week exclusive Gloom/Citadel period was extended; September 2 restored Caldera/Kiln to rotation and added smaller changes there. Do not repeat the planned duration as the complete realized schedule. The developers also revised Roots difficulty, so initial complaints are not automatically current balance. [PK-Q](#pk-q)
 
-This is high-quality procedural variation:
-> change the problem instance, not the learned grammar.
+**Interpretation:** useful variation changes which familiar plan is sensible. A heat-resistant route, a rest-point chain and a shared narrow bridge test different aspects of the same compact vocabulary. Purely cosmetic terrain would not create those decisions.
 
-## 15. Biomes and final variant expansion
+## 16. Ascents: cumulative constraints and a different final objective
 
-The climb passes through biome-specific hazards.
+Tenderfoot and Peak are initial options; completing the standard route opens the Ascent ladder, with subsequent completions unlocking further cumulative constraints. One eligible participant can start a group's harder run, and group success can grant progression to others; this is not a requirement that every participant independently cleared every preceding tier. [PK-AE](#pk-ae)
 
-Over post-launch development PEAK added/rotated additional biome content.
+The constraints change practical preparation. Higher tiers can make carrying a flare necessary, reduce environmental safety and raise the cost of mistakes. **Ascent 7 changed in August 2026:** it no longer forbids revival; it begins with Curse and makes revival add more. The stated reason was preserving participation rather than locking a dead friend out for the whole run. [PK-C](#pk-c)
 
-The final major update adds:
-- **Gloom**;
-- **Citadel**;
+**Ending-route spoilers:** Ascent 8 adds four Amulets associated with Scout Statues and a Nadir objective. The objects take inventory space and pull the party toward particular locations, but also have useful abilities whose use brings Petrify. Unlike the ordinary flare-dependent escape, this route's end interaction supplies its own completion. The objective changes what a successful expedition must carry and where it must go; it is not merely a larger stamina penalty. [PK-AE](#pk-ae)
 
-as variants cycling with previous biome alternatives. [PK-B](#pk-b) [PK-C](#pk-c)
+**Interpretation:** a difficulty ladder can change logistics, recovery and purpose rather than only numerical severity. Version-qualified rules are essential when a formerly forbidden action—reviving—becomes possible but costly.
 
-This expansion pattern is efficient:
-- same climbing grammar;
-- new environmental constraints;
-- new items/hazards/routes.
+## 17. Badges, cosmetics and the value of repetition
 
-The game gains novelty without becoming an unrelated minigame collection.
+Badges recognize particular actions and unlock visible cosmetics. They provide goals beyond one summit, but some depend on other people or favorable items/locations. An achievement that cannot currently be attempted is a different challenge from one that is difficult to execute. Custom Run restrictions also prevent assuming every configuration supplies identical progress. [PK-R](#pk-r) [PK-P](#pk-p) [PK-H](#pk-h)
 
-## 16. Ascent/difficulty and repeated mastery
+**Interpretation:** mastery, luck and time-gated opportunity should not be confused. A badge can celebrate a memorable cooperative event without making every player repeat a low-probability setup solely to finish a list.
 
-PEAK includes increasing difficulty/Ascent-style challenges and badges/achievements.
+## 18. Solo and cooperation are different experiences
 
-Higher difficulty can:
-- change available support/resources;
-- intensify hazards;
-- demand stronger route/item mastery.
+Solo is supported; friend-based cooperation is central to much of the criticism's enthusiasm. PC Gamer and Vandal find solitary play harsher or less appealing, whereas Games.cz finds it enjoyable in its own right. Helpful player accounts also describe solo mastery and finding new friends through community group-finding. These are different audience responses, not a rule that the game cannot be completed alone. [PK-E](#pk-e) [PK-AF](#pk-af) [PK-AG](#pk-ag) [PK-F](#pk-f)
 
-Current Steam accounts describe extreme runs where:
-- missing expected flare/support at high Ascent becomes a known rule;
-- one remaining hook/resource can determine final success. [PK-G](#pk-g)
+A product asking players to bring their own group carries an access cost. Room codes reduce invitation friction without being equivalent to matchmaking or moderation. **Interpretation:** population, group availability and a good cooperative activity are separate conditions for social enjoyment.
 
-The game's small vocabulary supports mastery because high difficulty stresses:
-- known objects;
-- known physical rules.
+## 19. What the game intentionally does not become
 
-## 17. Badges and cosmetic progression
+There is no large industrial crafting tree, settlement construction, permanent loot economy, conventional class tree, romance/faction simulation or native AI companion society established here. Cooking, deployable tools, a customizable scout and a configurable run do not secretly imply those broader systems. [PK-A](#pk-a) [PK-P](#pk-p)
 
-Badges/achievements provide goals beyond:
-- one successful summit.
+**Interpretation:** emergence can come from a few objects with physical consequences. It need not be justified by an enormous item catalog. This makes PEAK a useful complement to, not a miniature substitute for, a persistent civilization game.
 
-They can unlock/correspond to cosmetic recognition.
+## 20. Authored framing and discovered mystery
 
-This gives players:
-- challenge targets;
-- group goals;
-- replay prompts.
+The scout organization, crash, guidebook attributed to **Scoutmaster Myres**, island and escape supply a compact authored frame. GameSpot's December 2025 essay compares the growing mystery to Lost. Later statues and the final route add another layer without converting ordinary expeditions into a dialogue-heavy campaign. [PK-D](#pk-d) [PK-J](#pk-j) [PK-C](#pk-c)
 
-Current player feedback flags the downside:
-- some badge conditions depend heavily on item/map RNG;
-- “I know what to do but cannot attempt it today” feels different from difficulty. [PK-H](#pk-h)
+Memorable stories can still concern a fall, rescue, shared meal, mistake or betrayal rather than the central mystery. **Interpretation:** authored lore gives actions a setting; the players supply a particular history through what actually happens. Neither layer replaces the other.
 
-OpenLegend achievements should distinguish:
-- mastery challenge;
-- scavenger luck;
-- time gate.
+## 21. Art, sound and tactile feedback
 
-## 18. Solo versus co-op is a real product difference
+Stylized scouts, cartoon-like surfaces, exaggerated bodies and environmental contrasts make failure readable and often funny. PC Gamer values the tactile climbing and sounds; Games.cz emphasizes animation and the voice channel's changing acoustics. These are attributed experiences, not a fresh sensory test. [PK-E](#pk-e) [PK-AG](#pk-ag)
 
-Officially, solo is supported.
+A falling body, fading scream, visible ledge or inaccessible pack can explain an event more directly than a status paragraph. Weather and sound can also reveal danger before a player sees its source. **Interpretation:** an agent's success or failure should have observable causes; an eloquent explanation after the event is not always an adequate replacement.
 
-But multiple sources agree the social experience is central.
+Accessibility and reliability are distinct. March's alternative mushroom-enemy presentation and Custom hazard controls address different preferences, while later patches address item disappearance and input faults. A player who cannot tolerate an image and a player whose backpack falls through geometry have different problems. [PK-P](#pk-p) [PK-Q](#pk-q)
 
-PC Gamer finds solo:
-- harsher;
-- lonelier
+## 22. Production: narrowing an idea, not making everything in four weeks
 
-than group play. [PK-E](#pk-e)
+The preserved creator interview describes an earlier broader pitch, a Seoul collaboration, three Aggro Crab and four Landfall contributors, and an intensive roughly four-week jam. It explicitly warns that the released game was not created entirely from scratch during that period. Prior work, experience, tools and later finishing effort matter. [PK-D](#pk-d)
 
-Current negative Steam reviews complain:
-- no public lobby browser;
-- solo feels significantly worse;
-- a multiplayer-focused game asks the user to bring their own group. [PK-I](#pk-i)
+**Interpretation:** the transferable production lesson is concentrating experienced collaborators on one worthwhile activity. A memorable travel story is not an audited labor budget or a reliable recipe for reproducing the outcome.
 
-Other helpful reviews demonstrate the opposite possibility:
-- people used community Discord/group-finding to make new friends;
-- some players enjoyed solo mastery deeply. [PK-F](#pk-f)
+## 23. Finishing a product and continuing to care for it
 
-So the correct conclusion is not:
-> “solo is bad.”
+The developers describe unexpected attention and support burdens and a wish to return to their separate projects. The final-update explanation rejects endlessly adding bloat or chasing engagement. Its continuing bug fixes and port preparation are consistent with that decision. [PK-B](#pk-b)
 
-It is:
-> the product's emotional payoff changes dramatically with social context.
+The same FAQ says the team deliberately did not adopt Steam Workshop after discussion with modders, including cross-platform limitations. An unofficial modding community and selective support are not a native Workshop feature or a promise of unrestricted official authoring tools. [PK-B](#pk-b)
 
-## 19. No inventory/crafting empire
+**Interpretation:** a finished premium cooperative activity and an always-hosted persistent world inherit different obligations. An eventual OpenLegend business model should align expectations with actual ongoing work, not treat either perpetual expansion or abandonment as the only choices.
 
-PEAK deliberately does **not** have a large:
-- crafting tree;
-- settlement builder;
-- permanent equipment economy;
-- class progression system.
+## 24. Marketing and the shareable incident
 
-The items are mostly situational tools/consumables.
+The pitch—climb with friends, where one mistake affects the group—is easy to demonstrate. Falls, rescue attempts, fading proximity voice, risky food and unusual equipment yield short understandable clips. WIRED's reporting discusses streamer-friendly comedy and the copycat problem following the breakout. [PK-K](#pk-k)
 
-That matters for OpenLegend:
-> emergence can come from **few objects with physical consequences**, not only enormous item catalogs.
-
-## 20. Story and authored framing
-
-The authored framing is compact:
-- scouts;
-- crash;
-- mysterious island;
-- summit/rescue goal;
-- Scoutmaster Myres/Guidebook;
-- environmental mystery.
-
-Later writing/lore became richer; GameSpot compared the island mystery to *Lost*-style escalating questions. [PK-J](#pk-j)
-
-But the memorable player stories are still usually:
-- rescue;
-- fall;
-- betrayal/mistake;
-- shared food;
-- impossible climb.
-
-The authored mystery provides atmosphere without replacing the cooperative mechanical story.
-
-## 21. Art, audio and tactile feel
-
-PEAK uses:
-- cute/stylized Scouts;
-- pastel/readable surfaces;
-- exaggerated ragdoll/body motion;
-- environmental contrasts;
-- proximity voice.
-
-PC Gamer emphasizes:
-- tactile movement;
-- climbing sounds;
-- cute/danger contrast. [PK-E](#pk-e)
-
-Critic reviews repeatedly describe the game as:
-- charming;
-- tactile;
-- chaotic.
-
-The presentation helps players interpret failure:
-- a falling body;
-- shrinking voice;
-- visible ledge;
-- dropped backpack.
-
-OpenLegend needs similar legibility even if the camera differs:
-> if an AI character fails, the player should see why.
-
-## 22. Production: deliberate narrowing, not a magical four-week game
-
-Developer interviews describe:
-- an earlier broader concept;
-- a collaborative game-jam trip to Seoul;
-- three Aggro Crab + four Landfall collaborators;
-- a roughly four-week intensive jam.
-
-But reporting explicitly warns the game was **not** created entirely from zero in four weeks. [PK-D](#pk-d)
-
-The meaningful production lesson:
-- experienced teams;
-- existing idea/code/art/process;
-- focused scope;
-- one clear activity;
-- collaboration.
-
-Do not turn “game jam” into a myth that quality requires no prior investment.
-
-## 23. Burnout and choosing not to maximize the graph
-
-By 2026 the developers have repeatedly discussed:
-- unexpected scale;
-- extra support work;
-- burnout/attention cost;
-- desire to return to other projects.
-
-Landfall's final-update FAQ says explicitly that they do **not** want to:
-- keep adding bloat;
-- chase attention forever. [PK-B](#pk-b)
-
-This is commercially important:
-> a successful game can choose a **finished product contract** rather than convert itself into perpetual service.
-
-OpenLegend's eventual business model should align support expectations with what the product actually needs.
-
-## 24. Marketing, virality and sharing unit
-
-PEAK has an extremely legible pitch:
-> climb with friends; one mistake can doom the group.
-
-It also produces strong clips:
-- screaming falls;
-- proximity voice fading;
-- last-second rescue;
-- cursed food;
-- dropped backpack;
-- absurd route tools.
-
-WIRED notes its slapstick, simple premise and streamer suitability while reporting copycat problems after its breakout. [PK-K](#pk-k)
-
-The important virality mechanism is not just “streamers.”
-
-The game continuously produces:
-> short, comprehensible social incidents.
-
-OpenLegend should aim for similarly shareable causal episodes:
-- “our mayor remembered the lie”;
-- “the bridge invention saved the caravan”;
-- “this animal warned us before the flood.”
+**Interpretation:** the useful sharing unit is an intelligible causal episode, not “streamers” as a universal explanation. A clip can convey interdependence, but does not reveal how often ordinary sessions produce it, whether the loss was enjoyable to its victim, or how many viewers bought the game. No channel-attribution percentage is invented.
 
 ## 25. Commercial context
 
-Documented milestones:
-- **100,000 copies in 24 hours**;
-- **1 million in six days**;
-- **2 million in nine days**;
-- **10 million+ by August 2025**;
-- Game File's January 2026 interview describes **more than 10 million sold in 2025**. [PK-L](#pk-l) [PK-M](#pk-m)
+The preserved research records **100,000 copies in 24 hours**, **one million in six days**, and a later **two-million-in-nine-days** milestone. It also retains the reported **ten-million-plus August 2025** context and Game File's January 2026 introduction describing **more than ten million copies sold during 2025**. These are attributed historical sales statements, not synchronized active-player totals or audited profit. [PK-K](#pk-k) [PK-L](#pk-l) [PK-M](#pk-m) [PK-AH](#pk-ah)
 
-Game/File/developer reporting also describes the low standard price ($7.99 after an initial launch discount), which made group gifting/impulse purchase easier.
+Historical reporting identifies a low standard price around $7.99 after the launch promotion. That is a dated pricing structure, not a current regional purchase quote. The hypothesis that inexpensive group gifting reduces friction is plausible; precise conversion, margins and marketing return are not established. PEAK's exceptional outcome is not a reasonable default revenue forecast for another game. [PK-M](#pk-m)
 
-Do not infer:
-- repeatable margins;
-- exact marketing ROI;
-- OpenLegend should use the same price.
+## 26. Five substantive written assessments
 
-PEAK is an exceptional outcome.
+Five independent publications' actual substantive texts are now available, rather than five critic-index blurbs. The PC Gamer reading is retained from the original pass; four further texts were inspected in remediation. Game8's substantive indexed body was readable although its direct page failed. Czech and Spanish original texts were read and paraphrased in English. None assesses every subsequent update.
 
-## 26. Five substantive written reviews
+### 1. Elie Gould — PC Gamer, June 26, 2025
 
-### 1. PC Gamer — Elie Gould, June 26, 2025
+Gould values tactile climbing, group improvisation, daily layouts and proximity-driven rescue. Solo feels harsher and lonelier, and the tested graphics/API configuration produced instability. The snowstorm rescue is a concrete player account, not a generic claim that proximity chat always creates cooperation. [PK-E](#pk-e)
 
-**Praised:** creative collaboration, tactile climbing, daily maps, proximity-driven rescue and low-friction value.
+### 2. Allisandra Reyes — Game8, June 19, 2025; page updated July 11
 
-**Criticized:** solo is harsher/lonelier; launch-period graphics/API instability occurred in the review setup.
+Reyes values the group's equipment burden and mutual dependence, along with attractive presentation and environmental sound. Failed voice/network behavior and a camp-related bug interrupted play and forced an unwelcome restart. Her limited early progress and difficult solo attempt are not all-biome or high-Ascent testing. The earlier June 20 aggregate date is replaced by the article's actual publication/update metadata; later native autosaving materially changes the general restart context. [PK-AI](#pk-ai)
 
-The strongest source for the causal rescue loop. [PK-E](#pk-e)
+### 3. Michal Krupička — Games.cz, July 11, 2025
 
-### 2. Checkpoint Gaming — June 24, 2025
+Krupička enjoys climbing movement, animation and sound, and finds solo worthwhile as well as cooperative sessions. He wants more dependable/deeper access to climbing tools and regards the game as a particularly good short social outing rather than an indefinitely absorbing multiplayer staple. That conflicts usefully with blanket dismissal of solo. The old July 15 index date is not the original article date. [PK-AG](#pk-ag)
 
-**Praised:** tactile climbing, challenge, charming presentation, cooperative recovery from mistakes.
+### 4. Alex Van Aken — Game Informer, July 10, 2025, PC
 
-**Criticism/boundary:** highly positive, but emphasizes that chaos/failure is integral; players who dislike replaying mistakes may experience the same mechanic differently. [PK-N](#pk-n)
+Van Aken praises discovering item interactions and adapting routes to weather, then describes playful retaliation and races among friends. Rare items or people clipping through terrain become especially frustrating because the group depends on them. His explanation of virality is a critic's hypothesis, not measured acquisition data. His original biome inventory and broad zero-stamina language are not current-version rules authority. [PK-Y](#pk-y)
 
-### 3. Game8 — June 20, 2025
+### 5. William van Dijk — Vandal, July 2, 2025; updated July 7, PC
 
-**Praised:** short/sharp structure, clever co-op mechanics, memorable biomes.
+Van Dijk values simple controls, joint route-finding and absurd group incidents. He criticizes communication/server failures, uneven biomes and a less compelling solo experience. His no-save statement describes the launch period and is superseded by the March 2026 feature. The review used a supplied code. Its opening discussion of local co-op and inconsistent metadata do not establish a native shared-screen PEAK mode, and anticipated community tools are not delivered features. [PK-AF](#pk-af)
 
-**Criticized:** server issues/bugs and communication friction can interfere.
+### Preserved indexed leads, not additional full reads
 
-Useful reminder that social mechanics depend on reliable networking. [PK-N](#pk-n)
+The earlier **Checkpoint Gaming, June 24, 2025** excerpt appreciates tactile climbing, challenge and cooperative recovery. **Final Weapon, July 28, 2025** emphasizes friends-first chaos while criticizing bugs and weaker solo appeal. **IGN Benelux** praises strategic cooperation developing from simple climbing. Full original bodies were not recovered in this remediation; these observations remain index-attributed and are not used to satisfy the five-text minimum. The old Games.cz index route remains as provenance, now superseded for reading by the actual article. [PK-N](#pk-n) [PK-O](#pk-o)
 
-### 4. Final Weapon — July 28, 2025
+**Synthesis:** appreciation for interdependence is widespread in this small set, but expected longevity, acceptable repetition and solo value differ. Treating all criticism as a single demand for more content would lose those distinctions.
 
-**Praised:** chaotic friends-first experience.
+## 27. Helpful Steam testimony and limits
 
-**Criticized:** solo is clearly secondary; bugs/crashes reduce polish.
+The original pass's helpful-positive sample values friends helping and screaming, proximity voice, changing routes, rescues, ghost guidance, community group-finding and later biome additions. One previously inspected account was updated to praise Gloom/Citadel. These are the earlier recorded readings, not a newly extracted ranked sample. [PK-F](#pk-f)
 
-This is one of the clearest professional statements of the group-dependence tradeoff. [PK-N](#pk-n)
+The original negative sample objects to group dependence without public lobby search, solo pressure, limited long-run convenience and some cosmetic changes. Recent/default posts also contain ordinary frustration with hazards. Jokes and protest language are not adopted as mechanical evidence. Room codes, save changes and later biome work must be considered before converting older complaints into current absence claims. [PK-G](#pk-g) [PK-H](#pk-h) [PK-I](#pk-i)
 
-### 5. Games.cz — July 15, 2025
-
-**Praised:** satisfying climbing animation/sound and casual fun.
-
-**Criticized:** climbing gear could be deeper; sees it more as a one-evening social treat than a months-long multiplayer staple. [PK-O](#pk-o)
-
-### Additional
-
-IGN Benelux later praised the game's progression from simple climbing into strategic cooperative play. [PK-N](#pk-n)
-
-The criticism set is useful precisely because it disagrees about expected longevity.
-
-## 27. Steam positive/negative evidence
-
-### Helpful positive
-
-All-time helpful reviews emphasize:
-- friends screaming/helping;
-- proximity voice;
-- daily map;
-- rescuing/group bonding;
-- post-death guidance;
-- creating new friendships through community group finding;
-- final update adding worthwhile new biomes. [PK-F](#pk-f)
-
-One very highly rated review was updated after the final update to praise Gloom/Citadel and the added difficulty/badge content.
-
-### Negative
-
-Helpful negative reviews include:
-- multiplayer focus without public lobby search/server list;
-- solo balance feeling punishing;
-- limited long-term content/QOL;
-- protest/joke complaints about cosmetic changes.
-
-Current negative reviews also include ordinary rage/frustration from hard hazards. [PK-I](#pk-i)
-
-Do not treat joke/protest reviews as mechanics evidence.
+Helpful votes, present playtime and publication date answer different questions. No representative satisfaction percentage, personal demographic inference or independent verification of every technical allegation is supplied.
 
 ## 28. Concrete situations
 
-### Situation A — place a rest point and change the wall
+The five original cases are preserved and made more explicit. Cases A, B, D and F–H are constructed rules-based illustrations; C is based on the attributed PC Gamer rescue and E on inherited player testimony. They are not this researcher's play sessions.
 
-**Goal:** cross a wall longer than current stamina.
+### A. Place a rest point and change the wall
 
-**Action:** place Piton mid-climb.
+A scout faces a wall longer than current capacity, deploys a valid piton and divides the climb into two recoverable stages. The next climber can reuse it after occupancy clears. **Next decision:** advance or place another route aid. **Limit:** a piton is not a whole-group platform, and a failed placement does not grant imaginary support. [PK-D](#pk-d)
 
-**Result:** wall becomes two manageable segments.
+### B. Carrying help makes the helper less capable
 
-**Group effect:** later teammate can use the same intermediate state.
+A scout brings the group's food and rope in a backpack. The group gains options, while that person's burden reduces their own climbing margin. **Next decision:** transfer, consume, deploy or abandon supplies before the wall. **Limit:** calling goods communal does not remove their physical location or carrying cost. [PK-D](#pk-d)
 
-**Lesson:** tools should create new world states, not only numerical buffs.
+### C. Locate a missing friend through incomplete information
 
-### Situation B — carrying help makes the helper weaker
+A storm separates the group. A faint voice guides movement until the stranded partner is found and helped. **Result:** communication and physical intervention create a rescue rather than merely describing one. **Next question:** how much signal permits coordination without eliminating uncertainty? **Limit:** this was one critic's incident, not every expedition's outcome. [PK-E](#pk-e)
 
-**Goal:** bring food/rope for group.
+### D. Invert a material property
 
-**Action:** one Scout carries Backpack/supplies.
+Anti-Rope rises from a position where ordinary hanging rope would solve a different problem. The scout uses that altered direction for access, then must prevent the tool floating away. **Next decision:** recover it or leave the route for another person. **Limit:** reversing one property does not imply unrestricted flight or perfect simulated rope physics. [PK-D](#pk-d)
 
-**Result:** group has options but carrier bears Weight burden.
+### E. Die but remain useful
 
-**Lesson:** useful social roles can include asymmetric cost.
+The inherited parent/child account has a ghost guiding a living climber. **Result:** embodied failure changes contribution rather than ending the social session. **Next decision:** continue guiding or pursue an available revival. **Limit:** useful observation does not restore the lost physical actions, and one account is not a population claim. [PK-F](#pk-f)
 
-### Situation C — locate the missing friend
+### F. Prepare food to avoid requiring a rescue interaction
 
-**State:** snowstorm/group separated.
+A scout has a Red Prickleberry and needs relief before crossing hot terrain. Cooking removes its particular thorn drawback before consumption. Eating it raw might instead require another person to help remove the head thorns. **Next decision:** spend the cooking opportunity or accept that dependency. **Limit:** this recipe does not prove cooking purifies every risky food. [PK-W](#pk-w)
 
-**Signal:** proximity voice is faint but audible.
+### G. A save solves an interruption, not a fictional injury
 
-**Action:** teammates follow communication, find/assist.
+A group reaches camp but cannot finish the expedition tonight. It leaves and resumes through the campfire save rather than restarting all solved terrain. **Next decision:** continue the plan with the saved resources. **Limit:** a new expedition, run completion/loss or relevant map update can end that save; the feature is not a guarantee of eternal world persistence. [PK-P](#pk-p) [PK-Q](#pk-q)
 
-**Result:** information channel + movement + help creates rescue story.
+### H. Route around objects that are both keys and tools
 
-**Lesson:** memory-worthy stories need real causal links.
+On Ascent 8, the group plans visits to Scout Statues and divides the Amulets among carriers. Each item occupies space but can help its holder; using it adds a different risk. **Next decision:** preserve it as a required key or spend its power to keep the expedition viable. **Limit:** losing an essential carried object can invalidate the route even when the climb itself remains possible. [PK-AE](#pk-ae)
 
-### Situation D — invert one material property
+## 29. Transferable inspiration and counterexamples
 
-**Tool:** Anti-Rope.
+**Prototype one shared predicament before an entire society.** A modest crisis can test perception, communication, useful action, trust and rescue together. Complexity is justified by the decisions it produces, not by a large system count.
 
-**Difference:** rises/floats instead of ordinary downward rope behavior.
+**Make help spatial and costly.** Travel, carrying, consumption and risk make another actor's contribution visible. An agent's narration should not substitute for those causes.
 
-**Result:** enables upward route construction and creates loss risk.
+**Let tools create reachable states.** A rope, bridge, handhold, permission or introduction can open a route that a larger numerical bonus does not. Clear preconditions and ownership keep that freedom coherent.
 
-**Lesson:** one rule change can create an entire new affordance family.
+**Use partial information where cooperation can address it.** A limited channel needs a reason to communicate and a consequential response. Opaque state with no possible inference is a different problem.
 
-### Situation E — die but remain socially useful
+**Refresh situations while keeping their laws learnable.** Daily geography and evolving constraints need not randomly change every object's meaning. When a real patch changes a learned law, expose it.
 
-**State:** one player dead/ghost.
+**Separate ordinary interruption from fictional failure.** Campfire saves illustrate a way to respect players' lives without claiming every setback should disappear. Their limited persistence differs from a continuing shared world.
 
-**Action:** guide living teammate using superior viewpoint/knowledge.
+**Treat access and consent as social mechanics.** Invitations, codes, norms around harm and recovery permissions shape the experience. They are not merely networking details or a solved problem because friends joined successfully.
 
-**Result:** failure changes role instead of ending participation.
+**Allow a successful product to have an endpoint.** Repeated play, mod interest and maintenance can coexist with completed major content. That is a different support contract from an indefinitely expanding world and should be priced and communicated accordingly.
 
-**Lesson:** design post-failure agency intentionally.
+## 30. Requirements, preservation and study routes
 
-## 29. Transferable inspiration for OpenLegend
-
-### A. Prototype one shared predicament before a whole society
-
-A clear crisis can test:
-- perception;
-- communication;
-- memory;
-- useful action;
-- rescue.
-
-### B. Make assistance spatial and costly
-
-Help is meaningful when a helper:
-- travels;
-- carries;
-- spends;
-- risks.
-
-### C. Build tools that change topology
-
-Ropes, bridges, portals, handholds, permissions and introductions can create **new reachable states**.
-
-### D. Partial information can create cooperation
-
-But it must have:
-- a communication route;
-- a reason to share;
-- consequence.
-
-### E. Rotate situations, keep laws stable
-
-Procedural variety should not make learned mechanics unreliable.
-
-### F. Allow games/worlds to be finished
-
-Do not equate ongoing value with mandatory endless feature addition.
-
-### G. Social mode access is part of design
-
-If the fun depends on groups:
-- matchmaking;
-- invites;
-- persistence;
-- moderation;
-- group finding
-
-are product mechanics, not only platform plumbing.
-
-## 30. Requirement and preservation check
-
-| Requirement | Coverage |
+| Requirement | Substantive coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / major mechanics | §§3–19 |
-| R03 items / entities / composition | §§5–10 |
-| R04 progression / economy / time | §§14–17, 25 |
-| R05 concrete interactions | §28 |
-| R06 people / AI / social / multiplayer | §§6, 11–13, 18 |
-| R07 art / audio / interface / feel | §21 |
-| R08 story / narrative | §20 |
-| R09 production / development | §§22–23 |
-| R10 marketing / distribution / virality | §24 |
-| R11 commercial / participation | §25 |
-| R12 reviews / player feedback | §§26–27 |
-| R13 inspiration / limits | §29 |
-| R14 sources / preservation / navigation | this section + sources |
+| R01 identity and scope | §§1–2, 14–16; released modes, planned ports and update boundaries |
+| R02 actions and principal mechanics | §§3–19; operational climbing, food, recovery, regions and modes |
+| R03 objects and composition | §§5–10, 16; burden, transformation, fuel and key/tool dual use |
+| R04 progress, time and loss | §§3–4, 13–17; daily maps, saves, Ascents and badges |
+| R05 concrete situations | §28, eight preserved/extended cases with next decisions and limits |
+| R06 people and social/AI boundaries | §§6, 11–13, 18–19; group entry, roles, conflict and absent systems |
+| R07 presentation | §21 and distinct reviewer observations |
+| R08 narrative | §20, named framing and spoiler-qualified final objective |
+| R09 production | §§22–23; creator account, prior work and support decisions |
+| R10 distribution and discovery | §§1, 23–24; observed routes versus causal hypotheses |
+| R11 commercial evidence | §25, dated unit measures and explicit private-data limits |
+| R12 reception | §§26–27; five substantive texts and inherited helpful-player evidence |
+| R13 transfer and limits | §29 and case-specific counterexamples |
+| R14 sources/preservation/navigation | this section and annotated register |
 
-**Mechanics-inventory check:** climbing/stamina/status, Weight/inventory, food/recovery, Pitons/Ropes/Anti-Rope/backpacks, rescue, proximity communication, daily procedural routes, biomes, difficulty/badges, death/ghost role, solo/co-op and final-update boundary are covered. PEAK intentionally lacks conventional RPG classes/skill trees, crafting economy, settlement building, factions, romance, persistent loot progression and native AI companion simulation.
+**Preservation:** the [original chapter](../games/peak.md) and [shared-burdens mechanics study](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md) remain intact. Their backpack, piton, rope, lollipop, voice-rescue and production arguments are preserved and linked. The earlier five situations remain. Index-only critical observations have not been erased or promoted into full reads; actual originals or independent alternatives now supply the required bodies. Dated launch absence claims are explicitly distinguished from later delivered features.
 
-**Preservation check:** [the original PEAK chapter](../games/peak.md) remains intact. [The detailed shared-burdens study](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md) remains the owner for stamina/Weight, Backpack, Piton, Rope/Anti-Rope, Big Lollipop, proximity-rescue and Seoul-jam evidence. The dossier adds the final-update/current-support and expanded review/commercial corpus.
+**Remediation boundary:** identified rules, review-evidence and source-locator gaps are addressed. Some mechanics pages were readable only through substantive indexed text; exact spawn, timing and edge-case tables were not independently played. This is not a new exhaustive fact-check of every inherited statement or a passed seven-input packet reconciliation. The ledger owns the branch's remaining games.
 
-## Sources
+**Study route:** begin with the ordinary climb and capacity model, then compare one route tool and one food preparation. Read the five critics before interpreting a spectacular clip as a typical session. Next compare March's interruption/customization changes with August's recovery and final-objective changes. The preserved video links, Game Informer media and official update trailers are viewing routes, not footage represented as watched here. Major ending details begin in §16.
 
-<a id="pk-a"></a>**PK-A — [PEAK on Steam](https://store.steampowered.com/app/3527290/PEAK/).** Landcrab/Aggro Crab/Landfall/Valve, accessed 2026-09-26. Core premise and current PC product surface.
+## Annotated sources
 
-<a id="pk-b"></a>**PK-B — [PEAK FAQ](https://landfall.se/peak-faq).** Landfall, accessed 2026-09-26. Primary current support/final-major-update/live-service boundary.
+All new retrievals September 26, 2026. Publisher statements establish release and stated scope, community references describe observed rules, critics and players supply attributed experiences. Interpretations remain this dossier's analysis.
 
-<a id="pk-c"></a>**PK-C — [The final biome update arrives August 11](https://store.steampowered.com/news/posts/?enddate=1786035613&feed=steam_community_announcements).** PEAK/Landcrab, 2026-08-06. Primary announcement of Gloom/Citadel final major update.
+<a id="pk-a"></a>**PK-A — [PEAK Steam product](https://store.steampowered.com/app/3527290/PEAK/).** Landcrab/Aggro Crab/Landfall. Core scope, daily map and native play; not a current profit or compatibility test.
 
-<a id="pk-d"></a>**PK-D — [PEAK shared burdens, rescue, and spatial tools](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md).** Internal detailed study with adjacent official/community/developer sources.
+<a id="pk-b"></a>**PK-B — [Landfall PEAK FAQ](https://landfall.se/peak-faq).** Current support explanation; completed major content, mod-support limits and future console plans. Ending expansion is not a shutdown.
 
-<a id="pk-e"></a>**PK-E — [PEAK review](https://www.pcgamer.com/games/adventure/peak-review/).** Elie Gould, PC Gamer, 2025-06-26.
+<a id="pk-c"></a>**PK-C — Landcrab, August 11, 2026.** [The Final Ascent, exact original](https://steamcommunity.com/games/3527290/announcements/detail/676254354515165310); [version-specific developer-text mirror](https://peak.wiki.gg/wiki/2.0.a). Original shell plus substantive official-feed/mirrored body inspected. Supersedes the generic all-games August 6 preview locator. Final content, changed revival and save rules; no footage viewing claimed.
 
-<a id="pk-f"></a>**PK-F — [PEAK most helpful Steam reviews](https://steamcommunity.com/app/3527290/reviews/?browsefilter=toprated).** Steam Community, accessed 2026-09-26. Self-selected player accounts; joke material not treated as mechanics evidence.
+<a id="pk-d"></a>**PK-D — [Preserved shared-burdens study](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md).** Earlier item, capacity, communication and creator interview evidence, with its own dates and limits.
 
-<a id="pk-g"></a>**PK-G — [PEAK current Steam review/community surface](https://steamcommunity.com/app/3527290/reviews/).** Accessed 2026-09-26. Current player accounts including high-Ascent run examples.
+<a id="pk-e"></a>**PK-E — Elie Gould, PC Gamer, June 26, 2025.** [Review](https://www.pcgamer.com/games/adventure/peak-review/). Inherited substantive body and specific group incident; launch-version experience.
 
-<a id="pk-h"></a>**PK-H — [PEAK current September Steam reviews](https://steamcommunity.com/app/3527290/reviews/?filterLanguage=english).** Qualitative current evidence around achievement RNG/value/group play.
+<a id="pk-f"></a>**PK-F — [Most helpful Steam reviews](https://steamcommunity.com/app/3527290/reviews/?browsefilter=toprated).** Original September 26 sample retained; self-selected accounts and edited reviews, not a fresh sample in remediation.
 
-<a id="pk-i"></a>**PK-I — [PEAK helpful negative Steam reviews](https://steamcommunity.com/app/3527290/negativereviews/?browsefilter=toprated&l=english).** Accessed 2026-09-26. Multiplayer access, solo and QOL complaints; self-selected.
+<a id="pk-g"></a>**PK-G — [Steam review feed](https://steamcommunity.com/app/3527290/reviews/).** Inherited current-at-capture individual accounts; not authoritative current Ascent rules.
 
-<a id="pk-j"></a>**PK-J — [The Magic of PEAK Is Its Lost-like Lore](https://www.gamespot.com/articles/the-magic-of-peak-is-its-lost-like-lore/1100-6537069/).** Aron Garst, GameSpot, 2025-12-19. Authored mystery/worldbuilding analysis.
+<a id="pk-h"></a>**PK-H — [English review surface](https://steamcommunity.com/app/3527290/reviews/?filterLanguage=english).** Inherited testimony about badges, randomness, value and group play.
 
-<a id="pk-k"></a>**PK-K — [AI Slop Is Ripping Off One of Summer's Best Games](https://www.wired.com/story/ai-slop-is-ripping-off-one-of-summers-best-games-fighting-back-is-harder-than-you-think/).** Megan Farokhmanesh, WIRED, 2025-08-14. Stream/share/copycat context and then-current developer sales report.
+<a id="pk-i"></a>**PK-I — [Helpful negative Steam reviews](https://steamcommunity.com/app/3527290/negativereviews/?browsefilter=toprated&l=english).** Inherited group-access, solo and convenience criticism; date and later changes must qualify absence claims.
 
-<a id="pk-l"></a>**PK-L — [PEAK sells 1 million in six days](https://www.pcgamer.com/games/im-gonna-crash-out-new-climbing-game-peak-has-sold-1-million-copies-in-less-than-a-week-outperforming-its-developers-most-popular-game/).** PC Gamer, 2025-06-24.
+<a id="pk-j"></a>**PK-J — Aron Garst, GameSpot, December 19, 2025.** [Lost-like lore essay](https://www.gamespot.com/articles/the-magic-of-peak-is-its-lost-like-lore/1100-6537069/). Earlier authored-mystery analysis retained.
 
-<a id="pk-m"></a>**PK-M — [PEAK interview](https://www.gamefile.news/p/peak-interview).** Stephen Totilo / Nick Kaman, Game File, 2026-01-07. Accessible excerpt states >10M copies sold in 2025 and discusses pricing; paywalled remainder not represented as read.
+<a id="pk-k"></a>**PK-K — Megan Farokhmanesh, WIRED, August 14, 2025.** [Copycat and discovery reporting](https://www.wired.com/story/ai-slop-is-ripping-off-one-of-summers-best-games-fighting-back-is-harder-than-you-think/). Inherited sharing and reported commercial context, not a source for legal conclusions or causal attribution percentages.
 
-<a id="pk-n"></a>**PK-N — [PEAK critic reviews](https://www.metacritic.com/game/peak/critic-reviews/?platform=pc).** Metacritic index, accessed 2026-09-26. Routes/summaries for Checkpoint Gaming, Game8, Final Weapon, IGN Benelux; original review claims kept to displayed substantive summaries where bodies are not retrievable.
+<a id="pk-l"></a>**PK-L — PC Gamer, June 24, 2025.** [One-million-copy report](https://www.pcgamer.com/games/im-gonna-crash-out-new-climbing-game-peak-has-sold-1-million-copies-in-less-than-a-week-outperforming-its-developers-most-popular-game/). Historical attributed milestone, not a live count.
 
-<a id="pk-o"></a>**PK-O — [PEAK critic index](https://videogamescritic.com/game/peak-3527290).** Review index preserving Games.cz critique of limited long-run staple value and climbing-gear depth; secondary route, used narrowly.
+<a id="pk-m"></a>**PK-M — Stephen Totilo/Nick Kaman, Game File, January 7, 2026.** [Interview](https://www.gamefile.news/p/peak-interview). Inherited accessible introduction for 2025 sales/pricing; paywalled remainder not represented as read.
+
+<a id="pk-n"></a>**PK-N — [Metacritic critic index](https://www.metacritic.com/game/peak/critic-reviews/?platform=pc).** Preserved Checkpoint/Final Weapon/IGN Benelux excerpts and discovery routes. Not a substitute for full bodies or independent criticism itself.
+
+<a id="pk-o"></a>**PK-O — [Earlier review index](https://videogamescritic.com/game/peak-3527290).** Preserved provenance for Games.cz's longevity/tool-depth summary; PK-AG now supplies the actual original and correct date.
+
+<a id="pk-p"></a>**PK-P — Landcrab, March 30, 2026.** [Play It Your Way original](https://store.steampowered.com/news/app/3527290/view/526495718648578104); [full developer-text reproduction](https://www.gematsu.com/2026/03/peak-play-it-your-way-update-now-available). Reproduction read; original shell. Custom/Mini Runs, campfire saves, pause and accessibility changes.
+
+<a id="pk-q"></a>**PK-Q — Landcrab, September 2, 2026.** [Official announcements](https://steamcommunity.com/app/3527290/announcements/), named entry **Patch 2.04.a THE KILN IS BACK**. Substantive body read: rotation, room codes, port preparation and campfire item persistence. This is a mutable title-specific feed; use the date/title, not an imagined standalone identifier. Later 2.4.C maintenance is separately dated September 14.
+
+<a id="pk-r"></a>**PK-R — Community wiki, [How to play](https://peak.wiki.gg/wiki/Controls).** Substantive indexed downed/recovery, group and badge sections read; direct page blocked. The heavy-Spores carrying exception prevents universalizing the rescue rule.
+
+<a id="pk-s"></a>**PK-S — Community wiki, [Stamina bar](https://peak.wiki.gg/wiki/Stamina_bar).** Indexed condition and Curse/Petrify distinctions, also surfaced through its Thorns alias. No numerical full-table or source-code validation claimed.
+
+<a id="pk-t"></a>**PK-T — Community wiki, [Food](https://peak.wiki.gg/wiki/Food).** Indexed acquisition and effect categories; not an optimal recipe ranking.
+
+<a id="pk-u"></a>**PK-U — Community wiki, [Button Shroom](https://peak.wiki.gg/wiki/Button_Shroom) and [Cluster Shroom](https://peak.wiki.gg/wiki/Cluster_Shroom).** Indexed visible identification cues. Their documented distinctions are preferred over unsupported claims of universally randomized mushroom appearance.
+
+<a id="pk-v"></a>**PK-V — Community wiki, [Cooking](https://peak.wiki.gg/wiki/Cooking).** Substantive indexed stages and item-specific changes; no universal purification rule inferred.
+
+<a id="pk-w"></a>**PK-W — Community wiki, [Red Prickleberry](https://peak.wiki.gg/wiki/Red_Prickleberry).** Indexed raw/cooked effects and head-thorn dependency; named example, not personally reproduced.
+
+<a id="pk-x"></a>**PK-X — Community wiki, [Cannibalism](https://peak.wiki.gg/wiki/Cannibalism).** Indexed fictional action, Curse cost and opt-out scope. Not a general consent or safety guarantee for all multiplayer actions.
+
+<a id="pk-y"></a>**PK-Y — Alex Van Aken, Game Informer, July 10, 2025.** [Full PC review](https://gameinformer.com/review/peak/a-brilliant-co-op-climbing-adventure). Complete substantive body read. Original biome/weather account, item dependence and specific frustration; broad shorthand is not current rules authority.
+
+<a id="pk-z"></a>**PK-Z — Community wiki, [Roots](https://peak.wiki.gg/wiki/Roots).** Indexed route features, wind, bridge capacity and creature/spore hazards. Some fine-grained exceptions are marked unconfirmed by the source and are not repeated as validated facts.
+
+<a id="pk-aa"></a>**PK-AA — Community wiki, [Geyser](https://peak.wiki.gg/wiki/Geyser).** Indexed warming/launching behavior; exact probability and radius not needed for the design example.
+
+<a id="pk-ab"></a>**PK-AB — Community wiki, [Mesa](https://peak.wiki.gg/wiki/Mesa).** Substantive indexed sun, shade, canyon and hazard descriptions, also surfaced through Sun alias. Exact rotation probabilities and exploit advice are not promoted into a universal contract.
+
+<a id="pk-ac"></a>**PK-AC — Community wiki, [Fog](https://peak.wiki.gg/wiki/Fog).** Indexed advancing pressure, lava and rising-gloom distinctions. Exact timers and boundary exploits excluded.
+
+<a id="pk-ad"></a>**PK-AD — Community wiki, [Gloom](https://peak.wiki.gg/wiki/Gloom) and [The Citadel](https://peak.wiki.gg/wiki/Citadel).** Substantive indexed environment and paired-route descriptions, including the Belltower alias. Visibility versus Drowsy prevention retained as distinct effects.
+
+<a id="pk-ae"></a>**PK-AE — Community wiki, [Ascents](https://peak.wiki.gg/wiki/Ascents).** Indexed progression and Ascent 8 details, surfaced through the Acent alias; direct body blocked. Spoiler-qualified keys, group progression and altered ending, not a personally tested optimal route.
+
+<a id="pk-af"></a>**PK-AF — William van Dijk, Vandal, July 2, 2025; updated July 7.** [Spanish PC review](https://vandal.elespanol.com/analisis/pc/peak/207417). Full original body read. Actual cooperative experience and technical objections; unrelated local-coop framing and inaccurate metadata are not native-mode evidence.
+
+<a id="pk-ag"></a>**PK-AG — Michal Krupička, Games.cz, July 11, 2025.** [Czech original review](https://games.tiscali.cz/recenze/peak-recenze-kooperacniho-horolezectvi-599500). Substantive original body read; positive solo response and limited-long-term-value criticism retained.
+
+<a id="pk-ah"></a>**PK-AH — [Preserved original chapter](../games/peak.md).** Owns earlier attributed 100k/one-million growth evidence and its source register. Historical milestones are not remeasured in remediation.
+
+<a id="pk-ai"></a>**PK-AI — Allisandra Reyes, Game8, June 19, 2025; updated July 11.** [Review](https://game8.co/articles/reviews/peak-game-review). Full substantive indexed text, including body and conclusion, read; direct open failed. Metadata, limited progress and historical saving/network problems distinguished.
