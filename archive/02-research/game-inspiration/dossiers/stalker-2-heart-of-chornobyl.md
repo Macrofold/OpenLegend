@@ -158,9 +158,11 @@ The official NPC guide says faction reputation affects dialogue, quest developme
 
 Day/night and weather affect visibility and danger. Emissions forcibly interrupt routes; Update 2.0 fog changes perception. Long travel creates opportunity for A-Life events, stashes, anomalies and combat, but reviewers also repeatedly criticize excessive walking/backtracking.
 
-### Failure
+### Failure, endings and return loop
 
 Death returns the player to a saved/checkpointed state rather than continuing as a persistent injury simulation. More consequential failures are sometimes **progression bugs/soft locks**, which current September 2026 Steam reviews still report on some setups. This is technical failure, not intentional game design, and must not be romanticized as survival difficulty.
+
+The main story has multiple endings shaped by cumulative choices rather than a single endlessly continuing postgame. No official New Game+ addition is documented in the current Update 2.0/Cost of Hope materials; the current secondary ending reference likewise reports no NG+ and requires replay/reload for other ending paths. **Cost of Hope adds a separate return/onboarding route:** from New Game → DLC Content, a player can use **Early Start** or **Advanced Start** presets to jump to points where the expansion is available, including Ward- or Spark-context advanced starts, while existing compatible saves can enter it naturally. This is a content-access/replay convenience, not NG+. [Official Cost of Hope / 2.0 FAQ](https://www.stalker2.com/news/cost-of-hope-update-2-0-everything-to-know) · [PC Gamer ending guide](https://www.pcgamer.com/games/fps/all-stalker-2-endings-and-how-to-get-each/).
 
 ## R05 — worked interactions and concrete situations
 
@@ -481,7 +483,7 @@ The transferable principle is **persistent hostility with readable causality**: 
 ### Primary/current game sources read
 
 - [Update 2.0](https://www.stalker2.com/news/back-to-the-zone-2-0-update) — August 2026 engine/visual/A-Life/fog/custom-rules changes.
-- [Cost of Hope release](https://www.stalker2.com/news/cost-of-hope-release) and [combined FAQ](https://www.stalker2.com/news/cost-of-hope-update-2-0-everything-to-know) — current paid expansion scope, platforms and starting options.
+- [Cost of Hope release](https://www.stalker2.com/news/cost-of-hope-release) and [combined FAQ](https://www.stalker2.com/news/cost-of-hope-update-2-0-everything-to-know) — current paid expansion scope, platforms, save compatibility and Early/Advanced Start routes used to document the current return/replay boundary.
 - [Official news index](https://www.stalker2.com/news) — current September 2026 patch/news chronology.
 - [Steam official announcement stream](https://steamcommunity.com/app/1643320/allnews/) — inspected September 27, 2026 to confirm Patch 2.0.6 remains the newest gameplay patch visible after the September 24 accolades post.
 - [Major Patch 1.1](https://support.stalker2.com/hc/en-us/articles/32829700589073-Major-Patch-1-1-is-here) — first A-Life repair iteration and explicit offline-simulation bug.
@@ -528,7 +530,7 @@ G130 is a newly curated G111–G130 subject. Direct branch checks found no prior
 | R01 | launch/current platforms, 2.0/2.0.6, Cost of Hope, multiplayer and mod boundaries |
 | R02 | first-person combat, anomalies/detectors/bolts, Emissions, hubs/fog plus explicit class/crafting/party/base-building absences |
 | R03 | weapons, condition/upgrades, artifacts, consumables, encumbrance and mutant loot |
-| R04 | fixed-protagonist gear/knowledge progression, coupons/repairs, reputation, time/weather and failure |
+| R04 | fixed-protagonist gear/knowledge progression, coupons/repairs, reputation, time/weather, failure, endings and DLC return/start routes |
 | R05 | eight worked artifact/logistics/A-Life/faction/weather situations |
 | R06 | versioned A-Life history, factions/reputation, no persistent companion/romance system and no verified current multiplayer |
 | R07 | UE5 visual/audio world identity, UI and current-versus-launch technical friction |
