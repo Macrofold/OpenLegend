@@ -12,7 +12,7 @@ A useful first-session distinction is **make an activity versus join an activity
 
 ### Current versus historical versions
 
-The September 16, 2026 update makes Windows 64-bit client, dedicated-server and Hammer builds available across branches. It adds spawn-menu subcategories, better player-model browsing and more informative download controls. These changes matter to discoverability and address-space limits; they do not establish limitless simulation performance or universal add-on compatibility. The same release adds a Hacked Manhack NPC and allows damage to the Dropship. Current maintenance is therefore more than a frozen preservation of the 2006 product. [P1]
+The September 16, 2026 update makes Windows 64-bit client, dedicated-server and most developer-tool builds available across branches. It adds spawn-menu subcategories, better player-model browsing and more informative download controls. These changes matter to discoverability and address-space limits; they do not establish limitless simulation performance or universal add-on compatibility. The same release adds a Hacked Manhack NPC and allows damage to the Dropship. Facepunch then shipped a **September 17 hotfix** for add-on mounting, startup crashes and compatibility regressions. Current maintenance is therefore more than a frozen preservation of the 2006 product, and “64-bit Windows is available” should not be generalized into every operating system/client path being 64-bit. [P1]
 
 The July 23, 2025 update includes most Counter-Strike: Source and Half-Life 2 episodic assets by default, with Valve's permission. Maps, voice-over and music are excluded. This qualifies old advice that every user must buy those games merely to see their commonly used props, without claiming that every missing texture has been eliminated. The TTT homepage now reflects the included assets; its older help page retains a contradictory opening sentence before explaining that CS:S is optional for its maps. The dated release note is the clearer boundary. [P8] [T1] [T4]
 
@@ -201,6 +201,26 @@ The direct PC Gamer review could not be retrieved, Eurogamer was robots-blocked,
 
 ## 10. Coverage and preservation
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the full mechanics inventory confirms that the dossier covers both the native Sandbox contract and the important mode-specific exceptions:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Sandbox supplies player-model/color identity but no universal class, attribute, XP, perk or tech progression. Individual game modes such as TTT/DarkRP may add roles or economies and are explicitly scoped to those modes (§§1–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** spawnable props, entities, weapons, vehicles and scripted add-ons are content rather than a persistent RPG inventory. Construction uses tools/constraints and duplication; there is no native universal crafting/gear-upgrade ladder (§§2–3).
+- **Magic / spells / powers:** absent as a default Sandbox progression system; community scripted weapons/entities can implement arbitrary bounded abilities without making them native universal rules.
+- **Traversal / environmental and object interaction:** first-person movement, vehicles, physics-gun manipulation, freezing, constraints, NPC controls, removal, posing, rendering tools and map interaction are core (§2).
+- **Activities / minigames:** building, posing, machinima, screenshots/demos, Prop Hunt, TTT, Cinema, DarkRP and community modes demonstrate different finished activities. They must remain mode-specific rather than being aggregated into one fictional all-in-one ruleset (§§3–4).
+- **Combat / stealth / loot / rewards:** Half-Life-derived weapons/NPC battles are available in Sandbox; Prop Hunt implements hiding/search and TTT social deduction. There is no universal loot rarity/reward progression across Garry's Mod.
+- **Death / failure / recovery / economy / trading:** Sandbox death/reset has no global persistent-character loss contract. TTT Karma and DarkRP money/jobs are mode-level systems, not platform-wide economies (§4).
+- **Story / relationships / romance / reputation / party / companions:** Sandbox has no authored campaign relationship/romance/reputation progression. Human relationships, role-play and social deduction are produced primarily by players; NPC combat behavior is not a general social-memory system (§§2, 4).
+- **NPC/AI schedules / factions:** Source NPC hostility/navigation and mode-specific scripts exist, but no universal daily schedule or autonomous faction society is implied (§2).
+- **World map / environment / quests / events:** installed maps define session spaces; community modes/servers can add objectives/events. Native Sandbox has no canonical quest journal or campaign map progression.
+- **Building / settlements / management:** physical construction/contraptions are core, while settlement/population management is absent unless a particular mode/add-on supplies it.
+- **Multiplayer / social / endgame / return loops:** servers, Workshop dependencies, human groups, reusable dupes/saves/demos and published modes create the main long-term return loop (§§3–4, 7–8). There is no universal authored endgame.
+
+The freshness audit also adds Facepunch's **September 17, 2026 hotfix** immediately following the 64-bit update. The Windows 64-bit release reduces 32-bit address-space pressure but is not represented as a performance guarantee, a Linux/macOS 64-bit equivalence statement, or proof that all legacy add-ons are compatible. [P1]
+
+
 | Requirement | Substantive owner |
 | --- | --- |
 | R01 identity/version/promise | §1, including free-mod/standalone and current-update boundaries |
@@ -226,7 +246,7 @@ Both prior owners were read in full and remain unchanged. They preserve the movi
 
 All accessed September 26, 2026 unless a historical publication/capture is specified. Facepunch wiki entries are first-party-hosted documentation, sometimes old; current release notes take precedence where they conflict. Main article bodies were read, not every global wiki-navigation entry or every technical changelog line.
 
-- **P1 — [September 2026 update][P1].** Rubat, September 16; current build/UI/NPC/audio changes and compatibility caveats. No benchmark performed.
+- **P1 — [September 2026 update][P1].** Rubat, September 16 plus the September 17 hotfix on the same changelog; current Windows 64-bit/build/UI/NPC/audio changes and immediate compatibility fixes. No benchmark performed.
 - **P2 — [Using Tools][P2].** Explicit shipped-tool inventory and basic selection/configuration flow. Several individual legacy tool links failed; no unread page counted.
 - **P3 — [Prop Hunt][P3].** Mode rules and settings-dependent controls; not every fork's specification.
 - **P4 — [DarkRP][P4].** Commands, administration and extension boundaries. Its relative age/popularity wording is not a verified current ranking.
