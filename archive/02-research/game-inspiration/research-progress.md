@@ -12,6 +12,38 @@ The preceding continuation through G40 produced full dossiers, requirement maps,
 
 RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
 
+## Requirements-and-corrections audit — G01 through G25
+
+**Active.** Fresh audit begun September 27, 2026 using the same standard applied to G26–G39: actual dossier review against R01–R14 and the explicit mechanics inventory, current/version verification where material, preservation of earlier owners/evidence limits, and a per-game commit before advancing.
+
+| Subject | Audit status | Audit commit / correction boundary |
+| --- | --- | --- |
+| G01 — Hades II | **In progress** | Recheck current release/update boundary and full mechanics inventory. |
+| G02 — Among Us | Pending | — |
+| G03 — Animal Crossing: New Horizons | Pending | — |
+| G04 — Roblox | Pending | — |
+| G05 — Grow a Garden | Pending | — |
+| G06 — Steal a Brainrot | Pending | — |
+| G07 — Fortnite | Pending | — |
+| G08 — League of Legends | Pending | — |
+| G09 — Dota 2 | Pending | — |
+| G10 — Path of Exile | Pending | — |
+| G11 — Path of Exile 2 | Pending | — |
+| G12 — Diablo IV | Pending | — |
+| G13 — Dreams | Pending | — |
+| G14 — Project Spark | Pending | — |
+| G15 — Worlds Adrift | Pending | — |
+| G16 — Spore | Pending | — |
+| G17 — No Man's Sky | Pending | — |
+| G18 — EverQuest Next | Pending | — |
+| G19 — Ultima Online | Pending | — |
+| G20 — Minecraft | Pending | — |
+| G21 — RimWorld | Pending | — |
+| G22 — Hades I | Pending | — |
+| G23 — Dwarf Fortress | Pending | — |
+| G24 — The Sims | Pending | — |
+| G25 — Wildermyth | Pending | — |
+
 ## Requirements-and-corrections audit — G26 through G40
 
 | Subject | Audit status | Audit commit / correction boundary |
