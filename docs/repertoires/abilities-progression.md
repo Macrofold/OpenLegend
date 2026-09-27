@@ -4,6 +4,8 @@
 
 **Proposal catalogue · September 27, 2026.** Progression makes people more capable and gives them styles of their own. Learning an instrument, mastering a bow, earning a professional role and wielding extraordinary power offer different satisfactions. Learned knowledge, equipped abilities, resources, execution skill and institutional authority each contribute something distinct.
 
+**Scope:** Own learned techniques, proficiencies, classes, unlocks and advancement paths here. Archery proficiency or a quick-reload skill links to the underlying rules in [Combat](combat-rescue.md); the bow or firearm itself belongs in [Objects](objects.md). A spell’s supernatural behavior belongs in [Magic](magic.md), while its learning path belongs here; see [category ownership](README.md#category-ownership-and-cross-references).
+
 [The loadout as a sentence](#the-loadout-as-a-sentence) · [A skill remembered after the uniform](#a-skill-remembered-after-the-uniform) · [The signature move with two lives](#the-signature-move-with-two-lives) · [A specialization with a neighbor](#a-specialization-with-a-neighbor) · [The technique you choose not to use](#the-technique-you-choose-not-to-use) · [A curriculum made of civic problems](#a-curriculum-made-of-civic-problems) · [Respec through a new way of living](#respec-through-a-new-way-of-living) · [The expert's shorter path](#the-experts-shorter-path) · [A talent discovered by someone else](#a-talent-discovered-by-someone-else) · [Power with a public footprint](#power-with-a-public-footprint)
 
 ## Coverage of the playable foundation

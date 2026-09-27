@@ -4,6 +4,8 @@
 
 **Proposal catalogue · September 27, 2026.** Magic gives a world distinctive ways to live, make, travel and fight. Its pleasures include wonder, mastery, useful craft and impossible experiences; its dangers follow from the same rules. Select a small coherent family of powers with understandable sources, costs and limits.
 
+**Scope:** Own spells, enchantments, supernatural effects and magical laws here, including their distinctive sources, costs and limits. A particular enchanted bow belongs in [Objects](objects.md); its shared aiming, cover and damage interactions belong in [Combat](combat-rescue.md), and learning its technique belongs in [Abilities](abilities-progression.md). Explicit magical exceptions stay here and link to the affected rule under [category ownership](README.md#category-ownership-and-cross-references).
+
 [Borrowed warmth](#borrowed-warmth) · [Promise knots](#promise-knots) · [Echo carpentry](#echo-carpentry) · [Names as invitations](#names-as-invitations) · [The grammar of useful charms](#the-grammar-of-useful-charms) · [Moonbound forms](#moonbound-forms) · [A dragon's weather debt](#a-dragons-weather-debt) · [Ink that keeps a threshold](#ink-that-keeps-a-threshold) · [Mending by shared pattern](#mending-by-shared-pattern) · [The school of deliberate limits](#the-school-of-deliberate-limits)
 
 ## Coverage of the playable foundation

@@ -4,6 +4,8 @@
 
 **Proposal catalogue · September 27, 2026.** These patterns describe how actions combine into satisfying play: handling tools, timing a move, using resources, solving a problem or coordinating with other people. Consequences connect making, discovery, competition and everyday life. Specific objects, cultures and powers remain authored world choices.
 
+**Scope:** This catalogue owns patterns that transfer across activities, such as preparation, interruption, composition and lasting consequences. Detailed rules for a particular activity belong with that activity: ranged attacks and armor interaction in [Combat](combat-rescue.md), production in [Work](work-crafting.md), and social bonds in [Relationships](relationships.md). Use the [ownership guide](README.md#category-ownership-and-cross-references) to distinguish a rule from an item, skill or attempted action.
+
 [Borrowed purpose](#borrowed-purpose) · [Promises that occupy tomorrow](#promises-that-occupy-tomorrow) · [Pressure becomes opportunity](#pressure-becomes-opportunity) · [Leave a way back](#leave-a-way-back) · [Tools teach their users](#tools-teach-their-users) · [A useful refusal](#a-useful-refusal) · [Change the problem's topology](#change-the-problems-topology) · [Retire a successful solution](#retire-a-successful-solution) · [Failure leaves useful fragments](#failure-leaves-useful-fragments) · [Rules as playable objects](#rules-as-playable-objects)
 
 ## Coverage of the playable foundation

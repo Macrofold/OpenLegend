@@ -4,6 +4,8 @@
 
 **Proposal catalogue · September 27, 2026.** Adventure begins with a reason to go somewhere and something worth finding there. Treasure, curiosity, work, companionship, escape and ambition lead to different journeys. Places, obstacles and discoveries should offer choices, with enough direction to sustain a finite story and enough freedom to explore.
 
+**Scope:** Own the journey, quest, site, mystery, encounter premise and discovery here. A hunt defines its quarry, clues, location and reward; [Combat](combat-rescue.md) owns the fighting rules and enemy tactics, and [Objects](objects.md) owns particular loot and weapons. Use [category ownership](README.md#category-ownership-and-cross-references) to connect these entries without recreating their inventories.
+
 [The return expedition](#the-return-expedition) · [The missing person who made a choice](#the-missing-person-who-made-a-choice) · [A treasure that is a route](#a-treasure-that-is-a-route) · [The expedition with several purposes](#the-expedition-with-several-purposes) · [The mystery that permits useful error](#the-mystery-that-permits-useful-error) · [A rival expedition with manners](#a-rival-expedition-with-manners) · [The monster is a location](#the-monster-is-a-location) · [A local ending worth choosing](#a-local-ending-worth-choosing) · [The guided path and the wild path](#the-guided-path-and-the-wild-path) · [A discovery that invites a party](#a-discovery-that-invites-a-party)
 
 ## Coverage of the playable foundation

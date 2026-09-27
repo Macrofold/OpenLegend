@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Repertoire category ownership clarified
+
+The [library ownership guide](repertoires/README.md#category-ownership-and-cross-references) now assigns specific weapons, armor and ammunition to Objects; fighting rules to Combat; learned techniques to Abilities; and concrete attempts to Actions. It also distinguishes reusable interaction patterns, crafting processes, material inputs, technical systems, supernatural effects and adventure premises. Catalogue scope notes, navigation and the shared foundation point to these boundaries so separate category expansions can connect their work without duplicating inventories.
+
+The [combat foundation](repertoires/combat-rescue.md#coverage-of-the-playable-foundation) now explicitly separates melee, ranged aiming/projectiles, ammunition/reloads, damage/armor and stealth/morale alongside its existing tactical and rescue coverage. These are domains for later specific entries; existing pattern cards, action rows, Criticality and Level meanings remain. No runtime contract or implementation acceptance changes; [ACT and its parent owners](maintainers/action-capabilities.md#ownership-and-dependencies) retain their current scope and open criteria.
+
 ## 2026-09-27 — Mature subjects woven into the full repertoire foundation
 
 Reviewed the [design foundation](repertoires/design-foundation.md), all 27 category bases, four world proposals and shared selection, situation, action and source guidance against the intended range of lived and playable experience. The foundation now opens with motives and activities spanning discovery, mastery, love, creation, pleasure, ambition, conflict and loss. Mature subjects appear within their relevant systems; the prominent adult-content section and repeated category declarations have been removed. Ordinary law, work, supportive relationships, cultural life and harmless strangeness regain space alongside danger, exploitation and evil.

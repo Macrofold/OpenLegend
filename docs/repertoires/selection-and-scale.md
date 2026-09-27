@@ -2,7 +2,7 @@
 
 [Library and labels](README.md) · [Worked combinations](combinations.md) · [Source atlas](source-atlas.md) · [Design foundation](design-foundation.md)
 
-**Design judgment, September 27, 2026.** The library's breadth is for selection. Choose a coherent promise with desired rewards, meaningful resistance, distinctive people and consequences. The [foundation](design-foundation.md) covers both constructive and destructive possibilities; a world need not enable every catalogue at once. Ratings below summarize qualitative patterns in the research; they are neither a player survey nor a validated product forecast.
+**Design judgment, September 27, 2026.** The library's breadth is for selection. Choose a coherent promise with desired rewards, meaningful resistance, distinctive people and consequences. Use [category ownership](README.md#category-ownership-and-cross-references) to locate the specific equipment, rules, skills and situations that deliver it; a selected experience can draw from several catalogues. The [foundation](design-foundation.md) covers both constructive and destructive possibilities; a world need not enable every catalogue at once. Ratings below summarize qualitative patterns in the research; they are neither a player survey nor a validated product forecast.
 
 ## The strongest candidates to explore first
 

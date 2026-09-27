@@ -4,6 +4,8 @@
 
 The goal is not a menu containing every verb. It is a world in which an actor can express a precise attempt, choose a method, maintain an activity, coordinate with others, and adapt to real consequences. Ordinary use of an installed magical ability can need no invention; an apparently mundane request can require an entirely missing physical subsystem.
 
+**Scope:** Rows here are concrete attempts. [Objects](objects.md) owns the hunting bow or firearm; [Combat](combat-rescue.md) owns the rules for aiming, firing, reloading and resolving a hit; [Abilities](abilities-progression.md) owns a learned technique that changes what the actor can do. The same distinction applies to other domains under [category ownership](README.md#category-ownership-and-cross-references). A mechanics reference can point to its domain catalogue; it need not have a duplicate entry in `mechanics.md`.
+
 ## Reading and extending the catalogue
 
 There are **384 seed examples in 32 domains**. Rows are original OpenLegend design examples, not claims that the inspiration games implement those exact interactions. Most are not currently supported. Similar verbs sometimes have separate rows because their authority, participants, knowledge, persistence, or consequences differ.
