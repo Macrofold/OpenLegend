@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — technical design
 
-**Status:** proposed design only; no runtime implementation is authorized by this document. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) track implementation if approved.
+**Status:** proposed design only; no runtime implementation is authorized by this document. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC18](../maintainers/narration-and-conversations.md) track implementation and conditional follow-up if approved.
 
 ## 1. Architectural decision
 
@@ -107,7 +107,52 @@ The compaction rubric is a deliberately small adaptation of established dialogue
 
 These mappings are conceptual guidance for the summarizer and verification suite, **not new authoritative runtime record families**. The implementation remains one rolling derived summary plus recent exact turns behind one entry point.
 
-## 5. Compaction algorithm
+## 5. Enforcement model: hard invariants versus compaction-quality requirements
+
+Not every rule in this design is enforced the same way. Privacy, authority, timeline validity and exact recent context are **hard runtime invariants**. Semantic fidelity inside generated summary prose is a **model-quality requirement** enforced by prompt design, inspection and qualification rather than pretending an LLM guarantee is deterministic.
+
+The intended flow is:
+
+```text
+authoritative durable conversation
+        ↓
+actor event-time awareness filter                 HARD
+        ↓
+actor-perspective rendered speech                 HARD
+        ↓
+full transcript fits?
+   ├─ yes → return permitted speech verbatim      HARD
+   └─ no
+        ↓
+older-history summarization prompt                MODEL QUALITY
+        ↓
+size/shape validation + source/timeline recheck   HARD
+        ↓
+summary + recent verbatim tail                    mixed
+        +
+exact current Trigger + existing mandatory state HARD
+        ↓
+NPC response generation
+```
+
+| Requirement | Enforcement in v1 |
+| --- | --- |
+| NPC receives only speech it was allowed to perceive | **Hard:** actor event-time awareness scopes input before the compactor sees it. |
+| Late join/partial hearing cannot expose earlier or unheard speech | **Hard:** there is no global conversation summary; compaction is actor-scoped after disclosure filtering. |
+| Current triggering speech stays exact | **Hard:** owned by the existing Trigger context and never depends on the older-history summary. |
+| Recent dialogue stays exact | **Hard:** retained as a verbatim suffix rather than represented only by generated summary prose. |
+| Summary cannot create world facts, knowledge, commitments, goals, relationships or permissions | **Hard authority boundary:** the summary is derived read-only context; existing semantic owners remain authoritative. |
+| Restore/correction/forgetting cannot reuse stale compaction | **Hard:** generation/source-boundary checks and invalidation reject stale derived state. |
+| Summary stays within its admitted size/format | **Hard:** validate output before installing it. |
+| Preserve speaker attribution and actor perspective inside summarized material | **Prompt + qualification:** actor-perspective source text helps, but generated prose remains fallible. |
+| Do not infer agreement from an assertion or silence | **Prompt + qualification.** |
+| Preserve explicit corrections, clarification, disagreement and uncertainty | **Prompt + qualification;** existing authoritative correction records remain separately protected when applicable. |
+| Preserve active issues/focus and useful relational references | **Prompt + qualification.** |
+| Prefer recall/continuity over elegant brevity | **Prompt/tuning policy + qualification.** |
+
+A generated summary that passes structural validation is **not certified semantically correct**. V1 deliberately does not add a second paid LLM “summary verifier”: that would add another fallible inference step, cost and latency without turning semantic fidelity into a hard guarantee. Instead, raw history remains available, exact model-facing summaries are inspectable, and [NC17](../maintainers/narration-and-conversations.md) qualifies the model/prompt against adversarial and natural conversation scenarios.
+
+## 6. Compaction algorithm
 
 The entry point receives an explicit byte allowance from the surrounding context builder. V1 uses bytes rather than turn counts.
 
@@ -125,7 +170,7 @@ The exact split between summary and recent text is configurable policy. Do not i
 
 Repeated summary-plus-new-turns compaction is accepted for v1 because it is simple and cheap. If evaluation shows material recursive drift, replace the internal strategy behind the same entry point rather than changing its callers.
 
-## 6. Provider execution
+## 7. Provider execution
 
 Use the existing OpenLegend AI generation boundary with a small/cleanup-capable model route and strict output-size validation. No Letta, LangChain, Zep, Mem0 or provider-specific opaque compaction dependency is required.
 
@@ -143,7 +188,7 @@ Compaction is on-demand. Do not proactively summarize every conversation in the 
 
 Existing spending admission applies. There is no automatic paid retry/fallback. A rejected/failed compaction leaves the previous valid row unchanged.
 
-## 7. Authority, privacy and stale-result checks
+## 8. Authority, privacy and stale-result checks
 
 Scope before relevance/compaction:
 
@@ -161,7 +206,7 @@ Before accepting an asynchronous compaction result, revalidate world generation 
 
 A compaction result grants no authority. It cannot mutate commitments, beliefs, goals, relationships, plans, knowledge or events.
 
-## 8. Invalidation kept intentionally coarse
+## 9. Invalidation kept intentionally coarse
 
 V1 does not build source-level dependency graphs.
 
@@ -176,7 +221,7 @@ If cheaply identifying the affected conversation is awkward for an existing corr
 
 Appending ordinary new speech does not invalidate the old summary; it simply becomes new recent dialogue and later input to the next compaction.
 
-## 9. Failure and concurrency
+## 10. Failure and concurrency
 
 Compaction updates use stable request/attempt identity and the existing AI cancellation/spending contracts.
 
@@ -190,7 +235,7 @@ If the full transcript does not fit and no valid projection can be produced with
 
 Two compaction attempts for the same actor/conversation should serialize or install only when their expected source boundary is still current. A later successful compaction supersedes an earlier derived row; neither modifies transcript history.
 
-## 10. Inspection
+## 11. Inspection
 
 Cognition inspection should expose enough information to diagnose continuity without exposing anything beyond the inspected actor's existing authorization:
 
@@ -206,7 +251,7 @@ Cognition inspection should expose enough information to diagnose continuity wit
 
 This should reuse existing grouped cognition/debug surfaces rather than create a new UI subsystem.
 
-## 11. Save/load and storage
+## 12. Save/load and storage
 
 The full transcript and awareness are the saved truth. Conversation compaction is derived state.
 
@@ -214,7 +259,7 @@ For supported same-version persistence, cache it in the server's existing durabl
 
 A rebuild is always possible from the actor's retained permitted history. Restore must never dispatch a model merely to reconstruct caches; reconstruction occurs lazily when conversation context is next required and spending is admitted.
 
-## 12. Performance
+## 13. Performance
 
 The hot path remains cheap for ordinary conversations: load/render current conversation and return it if it fits.
 
@@ -224,7 +269,7 @@ Database preparation still needs a bounded path for fetching the relevant permit
 
 No embeddings or vector search are needed because the task is sequential compression of one known conversation, not open-ended recall.
 
-## 13. Extension seam
+## 14. Extension seam
 
 The single entry point is the intentional extension seam.
 
@@ -240,7 +285,9 @@ None requires cognition callers to know how compaction works.
 
 Prefer that order of escalation before introducing a general conversation graph. Extraction or retrieval is warranted only when measured scenarios cannot be solved cleanly by the rolling strategy.
 
-## 14. Implementation stages
+These are **future improvement candidates, not committed v1 implementation**. [NC18](../maintainers/narration-and-conversations.md) is the single conditional follow-up owner: it is activated only by measured NC17 failures and evaluates the smallest research-backed mechanism that addresses the observed failure. It explicitly includes source-backed rebuilds, topic segmentation, targeted retrieval, hierarchical/temporal memory and—only for demonstrated needs—richer dialogue structures such as QUD/commitment/grounding state or temporal graphs. Individual research ideas are not separate implementation tasks until evidence selects one.
+
+## 15. Implementation stages
 
 **NC14 — boundary and contract.** Add the single conversation-context owner, route existing full-transcript behavior through it, preserve current semantics and expose baseline diagnostics.
 
@@ -250,7 +297,9 @@ Prefer that order of escalation before introducing a general conversation graph.
 
 **NC17 — qualification.** Exercise long conversations across planning, negotiation, correction, disagreement, personal disclosure, relational reference, self/other perspective, implicit callback, old-topic return, abstention and multi-party/overhearing cases; measure context size, compaction frequency and continuity failures before tuning policy.
 
-## 15. Verification criteria
+**NC18 — conditional richer-strategy evaluation.** Only if NC17 demonstrates a repeatable failure of the rolling-summary design, evaluate the smallest relevant candidate behind the same entry point: source-backed rebuild, topic-coherent segments, targeted older-turn retrieval, hierarchical/temporal summaries, or richer dialogue/graph state where the failure specifically warrants it. This item does not pre-authorize implementing all candidates.
+
+## 16. Verification criteria
 
 Verify at minimum:
 
@@ -273,7 +322,7 @@ Verify at minimum:
 
 Live model quality, deterministic privacy fixtures and storage/performance measurements are separate evidence classes.
 
-## 16. Tradeoffs and open decisions
+## 17. Tradeoffs and open decisions
 
 The rolling summary can accumulate semantic drift across many generations. That is an accepted v1 tradeoff because hierarchical provenance would add complexity before evidence shows it is needed. Raw history remains available for rebuilding and future strategies.
 
