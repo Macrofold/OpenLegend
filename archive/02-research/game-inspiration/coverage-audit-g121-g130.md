@@ -77,6 +77,12 @@ After the game-by-game repairs, the audit reran a second-pass matrix across all 
 
 **Result after repair: no category is unaddressed for G121–G130.** Where a category is inapplicable, the dossier now states the useful absence instead of borrowing a superficially similar mechanic. G121 and G122 intentionally combine R10 and R11 into one substantive `R10–R11` section; both distribution/marketing and commercial/participation requirements are present, so this is a heading shape rather than missing coverage. Every other dossier has explicit R01 through R14 sections. Five-written-review minimums and Steam/player sampling (or the documented non-Steam substitute for Ultima VII) remain present.
 
+## Final diff and verification
+
+The final branch comparison against audit baseline `757bafba40efa875733aba635c3aec829d4c92ad` contains only the **ten G121–G130 dossiers**, this audit record, the canonical `research-progress.md` ledger and `docs/documentation-changelog.md`. No runtime file, unrelated dossier or prior research owner changed. The audit table has **zero Pending/In progress rows**, and the canonical ledger records G121–G130 as requirements-audited with no active game in this range.
+
+A second-pass mechanics matrix checked every explicit inventory category named by the assignment after the repairs; no G121–G130 dossier has an unaddressed category. Parent navigation to the roster, requirements and progress owners was retained, and the new audit link is present in the canonical ledger. This is a scoped static document/diff review, not an automated external-link crawler.
+
 ## Verification boundary
 
 This file records the scoped document audit and actual corrective commits. It does not claim gameplay execution, a full external-link crawler, or the global seven-file packet reconciliation. Sources described as read were actually retrieved as substantive text; inaccessible evidence remains a limitation rather than a completion claim.
