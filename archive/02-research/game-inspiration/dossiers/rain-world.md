@@ -8,11 +8,11 @@ Rain World is most useful as a study of a world that is *not centered on the pla
 
 **Base game.** Videocult's Rain World released on Windows and PlayStation 4 on March 28, 2017. Its central fantasy is surviving as a small "slugcat" in the ruins of an immense industrial ecosystem: travel room by room, find enough food to hibernate, reach shelter before lethal rain, learn animal behavior, and gradually discover a larger cosmological story. Akupara's current base-game page describes more than 1,600 rooms across 12 regions, limited resources, procedural creature behavior, Monk and Hunter alternatives, and up-to-four-player Arena modes. [Publisher page](https://www.akuparagames.com/game/rain-world/).
 
-**Downpour / More Slugcats Expansion.** Rain World: Downpour released on Steam January 19, 2023. It adds five campaign protagonists—Gourmand, Artificer, Rivulet, Spearmaster and Saint—whose abilities substantially alter traversal, combat and survival. It also adds new regions and creatures plus Challenge, Expedition and Jolly Co-Op. Steam's current description specifies local co-op for up to four players through the **base-game campaigns**, not generic online multiplayer across every campaign. [Steam Downpour page](https://store.steampowered.com/app/1933390/Rain_World_Downpour/).
+**Downpour / More Slugcats Expansion.** Rain World: Downpour released on Steam January 19, 2023. It adds five campaign protagonists—Gourmand, Artificer, Rivulet, Spearmaster and Saint—whose abilities substantially alter traversal, combat and survival. It also adds new regions and creatures plus Challenge, Expedition and Jolly Co-Op. The original Downpour store description limited Jolly to the base campaigns, but that is no longer the complete current boundary: **Watcher 1.5, released September 25, 2025, retroactively added official Jolly Co-Op support to all five More Slugcats campaigns and added Jolly support to The Watcher campaign.** This is local co-op, not a persistent online shared world. [Steam Downpour page](https://store.steampowered.com/app/1933390/Rain_World_Downpour/) · [Watcher 1.5 announcement](https://store.steampowered.com/news/posts/?appgroupname=Rain+World&appids=312520&enddate=1760029407&feed=steam_community_announcements).
 
 **Remix.** The free Rain World Remix update accompanied the Downpour era. Videocult described it as accessibility/customization work with bug fixes, extra tutorials and individually toggleable options; this matters because launch-era reviews often criticize opacity that later players can soften without replacing the underlying simulation. [Remix announcement](https://store.steampowered.com/news/posts/?appids=312520&enddate=1666295457&feed=steam_community_announcements).
 
-**The Watcher.** The second DLC released on PC storefronts March 28, 2025 and on major consoles September 25, 2025 according to Akupara's current page. The publisher advertises more than 2,500 screens across 30 new/updated regions, 27 bespoke creatures, new weather/ecologies, a dynamic progression system, expanded Arena and updated co-op. Treat those as current publisher scope claims rather than applying them backward to 2017. [Watcher page](https://www.akuparagames.com/game/rain-world-the-watcher/). A September 2025 Unity interview describes 25 new creatures; the mismatch is retained as a dated-source discrepancy rather than reconciled by invention. [Unity interview](https://unity.com/blog/exploring-procedural-design-rain-world).
+**The Watcher.** The second DLC released on PC storefronts March 28, 2025 and on major consoles September 25, 2025 according to Akupara's current page. Watcher 1.5 on September 25 added new regions, creatures/items, endings, Arena support and the broader Jolly boundary above. The 2026 patch line continued afterward: **1.11.7 (March 31, 2026)** added Watcher Safari support and extensive ripple/ecology fixes, and **1.11.8 (April 14, 2026)** fixed Watcher ending/region/key-item and Expedition issues. September 2026 announcements are merchandising/community news rather than a newer gameplay patch in the inspected official stream. The publisher advertises more than 2,500 screens across 30 new/updated regions and 27 bespoke creatures; a September 2025 Unity interview describes 25 new creatures, so those dated scope descriptions remain explicitly unreconciled rather than averaged into an invented exact count. [Watcher page](https://www.akuparagames.com/game/rain-world-the-watcher/) · [Steam announcement stream](https://store.steampowered.com/oldnews/?appgroupname=Rain+World&appids=312520&feed=steam_community_announcements&headlines=1) · [Unity interview](https://unity.com/blog/exploring-procedural-design-rain-world).
 
 **Player promise.** First-session play is intentionally vulnerable: move, jump, climb poles, pick up and throw objects, hunt small prey, hide, and follow minimal directional nudges. Established play is dramatically richer because players learn hidden movement, predator tells, social behavior, room topology, item functions and routes. Player knowledge becomes progression even when the avatar's base verbs barely change.
 
@@ -42,9 +42,13 @@ Rain World is not built around clearing rooms. The player can throw rocks to stu
 
 The player is often choosing among **fight, flee, redirect, bribe, wait, hide, or reroute**, not merely choosing which attack to execute.
 
+### Stealth, concealment and perception
+
+Rain World has no universal crouch-stealth skill or detection meter, but concealment is still a real systemic verb. Pipes, darkness, room geometry, distance and creature attention can break pursuit or let the slugcat wait for a safer route. Creature AI explicitly tracks threats, prey, friends and discomfort rather than treating the player as an always-known target. The Watcher extends this more directly with camouflage/ripple abilities described by the developers, making concealment an avatar capability in addition to ordinary hiding and route manipulation. The important boundary is that stealth emerges through creature perception and world geometry, not a generic RPG stealth statistic. [Unity interview](https://unity.com/blog/exploring-procedural-design-rain-world).
+
 ### Modes
 
-Base Arena provides competitive and sandbox play for up to four local players. Downpour adds Challenge, Expedition and Jolly Co-Op. Expedition randomizes context and assigns challenge goals; Challenge uses fixed test scenarios; Jolly adds cooperative survival to specified campaigns. These modes reuse the creature/world grammar under different goals.
+Base Arena provides competitive and sandbox play for up to four local players. Downpour adds Challenge, Expedition and Jolly Co-Op. Expedition randomizes context and assigns challenge goals; Challenge uses fixed test scenarios. Jolly's original base-campaign scope was expanded by Watcher 1.5 to the five More Slugcats campaigns and The Watcher campaign. These modes reuse the creature/world grammar under different goals rather than becoming a separate online progression game.
 
 ## R03 — items, entities, and composition
 
@@ -119,7 +123,7 @@ The ecosystem is not a literal unconstrained food-chain simulation in every room
 
 Players can also discover forms of creature trust/taming with some species, most famously lizards, through repeated beneficial interactions. The useful pattern is repeated behavior changing a creature relationship without a dialogue menu.
 
-**Multiplayer is local, mode-specific and version-dependent.** Base Arena is competitive/sandbox. Downpour's Jolly Co-Op supports up to four local players for base campaigns according to its store description. The Watcher page says co-op was updated. This is not conventional persistent online multiplayer.
+**Multiplayer is local, mode-specific and version-dependent.** Base Arena is competitive/sandbox. Downpour originally described Jolly Co-Op for base campaigns; Watcher 1.5 later added official Jolly support to all five More Slugcats campaigns and The Watcher campaign. This is still local cooperative campaign play, not conventional persistent online multiplayer.
 
 ## R07 — art, audio, interface, and feel
 
@@ -219,6 +223,7 @@ The transferable principle is not "make everything brutally hard." It is **give 
 - [Akupara — Rain World](https://www.akuparagames.com/game/rain-world/) — current product/port scope; promotional.
 - [Steam — Downpour](https://store.steampowered.com/app/1933390/Rain_World_Downpour/) — expansion protagonists and modes.
 - [Akupara — The Watcher](https://www.akuparagames.com/game/rain-world-the-watcher/) — current dates and advertised scope.
+- [Steam Community Announcements — Rain World](https://store.steampowered.com/oldnews/?appgroupname=Rain+World&appids=312520&feed=steam_community_announcements&headlines=1) — primary current update chronology inspected in the September 27 audit: Watcher 1.5 co-op/content expansion, 1.11.7 and 1.11.8 patches, and no later gameplay patch in the visible 2026 stream.
 - [Akupara — Watcher PC launch](https://www.akuparagames.com/2025/03/28/rain-world-the-watcher-out-now-on-pc/) — March 28, 2025 PC launch.
 - [Akupara — Watcher consoles](https://www.akuparagames.com/2025/09/11/the-watcher-releases-on-consoles-on-september-25th/) — September 25, 2025 console announcement/update.
 - [Unity developer interview, 2025](https://unity.com/blog/exploring-procedural-design-rain-world) — modular creature AI and Watcher production; its 25-creature statement differs from current publisher's 27.
@@ -247,7 +252,7 @@ G123 is newly curated in the G111–G130 expansion. Direct path checks found no 
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Base/Downpour/Remix/Watcher identity and boundaries |
-| R02 | Traversal, cycles, karma, combat/evasion and modes |
+| R02 | Traversal, cycles, karma, combat/evasion, stealth/perception and modes |
 | R03 | Objects, carrying and situational composition |
 | R04 | Knowledge, karma/passages, reputation economy and return loops |
 | R05 | Eight worked interactions |
