@@ -2,15 +2,15 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Magic gives a world distinctive ways to live, make, travel and fight. Its pleasures include wonder, mastery, useful craft and impossible experiences; its dangers follow from the same rules. Select a small coherent family of powers with understandable sources, costs and limits.
+**Proposal catalogue · September 28, 2026.** Magic gives a world distinctive ways to live, make, travel and fight. Its pleasures include wonder, mastery, useful craft and impossible experiences; its dangers follow from the same rules. Select a small coherent family of powers with understandable sources, costs and limits.
 
 **Scope:** Own spells, enchantments, supernatural effects and magical laws here, including their distinctive sources, costs and limits. A particular enchanted bow belongs in [Objects](objects.md); its shared aiming, cover and damage interactions belong in [Combat](combat-rescue.md), and learning its technique belongs in [Abilities](abilities-progression.md). Making an enchanted possession belongs in [Work](work-crafting.md), its substances in [Materials](materials-resources.md), anatomy in [Bodies](bodies-species.md), relationships in [Relationships](relationships.md), and a magical adventure's premise in [Adventure](adventure-discovery.md). Explicit supernatural exceptions stay here and link to the affected owner under [category ownership](README.md#category-ownership-and-cross-references).
 
-**Inventory:** 240 selectable spells, enchantments and laws, followed by the ten retained pattern cards. New entries are **creative synthesis**. Their Inspiration links identify a researched relationship or question, not a claim that a source contains our invented spell. Consult the shared [Criticality](README.md#criticality), [Level](README.md#level) and [catalogue-table definitions](README.md#catalogue-tables); build scope is a broad dependency estimate, not a runtime audit. U/C entries assume the named constituent powers are admitted; D entries propose a new reusable magical behavior, not executable code or permission to bypass its owner.
+**Inventory:** 300 selectable spells, enchantments and laws, followed by the ten retained pattern cards. New entries are **creative synthesis**. Their Inspiration links identify a researched relationship or question, not a claim that a source contains our invented spell. Consult the shared [Criticality](README.md#criticality), [Level](README.md#level) and [catalogue-table definitions](README.md#catalogue-tables); build scope is a broad dependency estimate, not a runtime audit. U/C entries assume the named constituent powers are admitted; D entries propose a new reusable magical behavior, not executable code or permission to bypass its owner.
 
 **Seed fit:** FA recommends an optional tradition for the wider [Borrowed Dawn proposal](worlds/living-fantasy.md), not another mandatory opening system. Its first arc still selects only the Art of Borrowing. Borrowing transfers warmth and does not acquire healing, resurrection or unlimited energy by implication. The Courtesy of Names remains voluntary even in a library containing separate coercive traditions. Wider-library entries use `—`; none silently add supernatural powers to MD, MO or SC. Selecting mutually incompatible magical laws requires an explicit world choice.
 
-**Domains:** [Heat and flame](#heat-flame-and-borrowed-cold) · [Elements and force](#wind-water-stone-and-force) · [Wards](#wards-counters-and-magical-defense) · [Movement](#steps-doors-and-impossible-roads) · [Everyday enchantment](#hands-households-and-enchanted-work) · [Healing](#healing-bodies-and-vitality) · [Transformation](#forms-selves-and-transformations) · [Sensing](#senses-signs-and-divination) · [Illusion and art](#illusion-performance-and-glamour) · [Memory and intimacy](#memory-dreams-and-intimate-connections) · [Living environments](#gardens-weather-and-living-land) · [Summoning](#summoning-spirits-and-bargains) · [Black magic](#curses-compulsion-and-black-magic) · [Death](#death-necromancy-and-the-returning) · [Spell construction](#spell-grammar-costs-and-tradition-laws) · [Strange horizons](#time-cosmic-wonders-and-catastrophes) · [Research coverage](#research-coverage)
+**Domains:** [Heat and flame](#heat-flame-and-borrowed-cold) · [Elements and force](#wind-water-stone-and-force) · [Wards](#wards-counters-and-magical-defense) · [Movement](#steps-doors-and-impossible-roads) · [Everyday enchantment](#hands-households-and-enchanted-work) · [Healing](#healing-bodies-and-vitality) · [Transformation](#forms-selves-and-transformations) · [Sensing](#senses-signs-and-divination) · [Illusion and art](#illusion-performance-and-glamour) · [Memory and intimacy](#memory-dreams-and-intimate-connections) · [Living environments](#gardens-weather-and-living-land) · [Summoning](#summoning-spirits-and-bargains) · [Black magic](#curses-compulsion-and-black-magic) · [Death](#death-necromancy-and-the-returning) · [Spell construction](#spell-grammar-costs-and-tradition-laws) · [Strange horizons](#time-cosmic-wonders-and-catastrophes) · [Borrowed geometry](#motion-surfaces-and-borrowed-geometry) · [Paired casting](#paired-casting-and-conditional-power) · [Unfamiliar pleasures](#altered-bodies-and-unfamiliar-pleasures) · [Predatory bargains](#predation-leverage-and-coercive-bargains) · [Household marvels](#household-marvels-and-unruly-performances) · [Strange continuities](#death-absence-and-strange-continuities) · [Research coverage](#research-coverage)
 
 **Retained patterns:** [Borrowed warmth](#borrowed-warmth) · [Promise knots](#promise-knots) · [Echo carpentry](#echo-carpentry) · [Names as invitations](#names-as-invitations) · [The grammar of useful charms](#the-grammar-of-useful-charms) · [Moonbound forms](#moonbound-forms) · [A dragon's weather debt](#a-dragons-weather-debt) · [Ink that keeps a threshold](#ink-that-keeps-a-threshold) · [Mending by shared pattern](#mending-by-shared-pattern) · [The school of deliberate limits](#the-school-of-deliberate-limits)
 
@@ -29,7 +29,7 @@ These archetypes connect the concrete inventories without requiring every world 
 | Traditions, faith and rival authority | FA | Schools, temples and hedge practitioners offer different powers and accounts of them. Belief, supernatural effect and institutional interests need not coincide. |
 | Artifacts, mastery and discovery | FA | Develop a signature spell, recover a relic, face a dragon or stop an apocalyptic ritual. Beauty, knowledge, power and dangerous bargains are distinct rewards. |
 
-Research anchors: [Divinity: Original Sin](source-atlas.md#g56), [Final Fantasy VII](source-atlas.md#g84), [Earthsea](source-atlas.md#w11), [Avatar](source-atlas.md#w13) and [His Dark Materials](source-atlas.md#w20). Retained citations preserve earlier patterns; fresh-reading coverage is distinguished below.
+Research anchors: [Divinity: Original Sin](source-atlas.md#g56), [Final Fantasy VII](source-atlas.md#g84), [Earthsea](source-atlas.md#w11), [Avatar](source-atlas.md#w13) and [His Dark Materials](source-atlas.md#w20). Retained citations preserve earlier patterns; reading coverage across continuations is distinguished below.
 
 ## Heat, flame and borrowed cold
 
@@ -383,17 +383,119 @@ These are not an excuse to make every strange idea a world-ending threat. Local 
 | MG-239 | Resurrection of a vanished city, not its people | — | Play | 5 Frontier | D | Reconstruct a city's evidenced nonliving structures from declared material and magical reserves, leaving absent residents, uncertain details and present occupants as separate questions. | Large; large-scale restoration and provenance boundaries. | [Macondo][macondo]; extrapolation |
 | MG-240 | A world's last spell | — | Play | 5 Frontier | D | Define a one-time ritual that permanently ends one selected magical law, forcing a choice about the lives and institutions that depend on it without deleting their history. | Large; explicit world-law retirement and dependent-state transition. | [Earthsea][earthsea]; extrapolation |
 
+## Motion, surfaces and borrowed geometry
+
+These effects alter a specific path, interface or material relationship. Returning an object is not undoing the events it caused, and an impossible shortcut still needs a defined exit.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-241 | Retrace one object's flight | FA | Play | 3 Enriching | D | Send a marked nonliving object backward along its recently recorded path, spending charge to move its present body; a shattered plate stays shattered, and a newly closed door can stop its return. | Large; bounded trajectory record, supplied energy and current collisions. | [Tears of the Kingdom][totk-study]; synthesis |
+| MG-242 | Ceiling-through ascent | FA | Play | 3 Enriching | D | Pass upward through one eligible ceiling to a surveyed clear landing, subject to thickness and carried-load limits; inspect a proposed exit before committing instead of teleporting into unknown space. | Large; constrained solid passage and validated arrival. | [Tears of the Kingdom][totk-study]; synthesis |
+| MG-243 | Stone stitched like cloth | FA | Play | 3 Enriching | D | Join two marked stone edges with a charged flexible seam while leaving each slab rigid; make a folding barricade or hinged stage without turning the entire wall soft. | Large; magical joint law; Materials and Work own slabs and assembly. | [Garry's Mod][gmod]; original synthesis |
+| MG-244 | Weight-bearing shadow | FA | Play | 3 Enriching | D | Transfer a carried object's downward burden to its shadow on a prepared supporting surface, leaving inertia unchanged; lifting the shadow off that support or losing it to darkness returns the burden visibly. | Large; localized load transfer, shadow continuity and release. | [PEAK][peak]; original synthesis |
+| MG-245 | Edge lent to water | FA | Play | 3 Enriching | D | Hold a thin strip of supplied water as a charged cutting edge, then let it fall as ordinary liquid; a broken water supply interrupts both a delicate cutting task and a threatening blade. | Large; material-response exception; Combat owns cutting harm. | [Avatar][avatar]; original synthesis |
+| MG-246 | Inside-out pocket | FA | Play | 3 Enriching | D | Turn a marked flexible container's inner surface outward without tearing it, exposing hidden pockets and seams; contents fall or need support rather than remaining invisibly stored. | Moderate; reversible surface transformation and actual contents. | [CDDA][cdda-study]; original synthesis |
+| MG-247 | Arrest at the last inch | FA | Play | 4 Advanced | D | Halt one incoming nonliving object just short of a marked surface while a finite ward bears its load; clearing the object, releasing it and exhausting the ward have different consequences. | Large; interception, stored load and deliberate release direction. | [Noita][noita]; original synthesis |
+| MG-248 | The unburdened passage | FA | Play | 4 Advanced | D | Let a marked doorway pass a willing body and its specifically admitted worn covering while rejecting separate cargo; a prisoner may escape without recovering the keys, weapon or treasure left behind. | Large; explicit body/cargo boundary and atomic passage. | [PEAK][peak]; original synthesis |
+| MG-249 | Exchanged forms, unchanged substances | FA | Play | 4 Advanced | D | Exchange the exterior shapes of two eligible nonliving objects with equal admitted volume, retaining each object's material and mass; a wax key and an iron candle acquire very different uses. | Large; paired shape mapping, material limits and restoration rule. | [Scribblenauts][scribble]; original synthesis |
+| MG-250 | Distance borrowed from another corridor | — | Play | 4 Advanced | D | Shorten one prepared corridor by adding the same traversable length to another, leaving entrances fixed; a convenient escape can turn the donor passage into an exhausting detour. | Large; paired topology law and occupied-space transitions. | [Dishonored 2][dishonored-study]; original extrapolation |
+
+## Paired casting and conditional power
+
+Composition creates shared opportunities and competing commitments. A spell can transfer, divide or spend an effect without duplicating its budget or deciding whom the caster ought to trust.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-251 | Pass the living ward | FA | Play | 2 Expected | D | Hand a compatible maintained ward to a willing qualified caster through a brief overlapping channel; its remaining capacity transfers rather than refilling, and the receiver must accept before the sender lets go. | Large; effect ownership, qualification and acknowledged handover. | [Final Fantasy XI][ff11-study]; synthesis |
+| MG-252 | A deliberate gap in the blast | FA | Play | 3 Enriching | D | Shape a compatible area spell around a few prepared exclusion marks; protected gaps remain where marked, so moving beyond them or taking another person's place changes exposure. | Large; fixed effect geometry; Combat owns actual occupants and harm. | [Wrath's spell rules][wrath-study]; synthesis |
+| MG-253 | Silence as a charged primer | FA | Play | 3 Enriching | D | Store intercepted sound within a small marked volume until a second caster releases it as one bounded pulse; a quiet room produces little ammunition, and the silence also hides useful warnings. | Large; finite acoustic capture and two-stage release. | [Mass Effect 3][me3-study]; original synthesis |
+| MG-254 | Shatter the shield outward | FA | Play | 3 Enriching | D | Spend an existing compatible shield's remaining reserve on a directed spray of magical fragments; the attack removes that protection immediately and cannot spend capacity already lost to incoming blows. | Large; conserved ward-to-payload conversion; Combat owns delivery. | [Mass Effect 3][me3-study]; synthesis |
+| MG-255 | Trap armed by one spell, sprung by another | FA | Play | 3 Enriching | D | Make a bounded rune dormant until one specified spell family primes it, then discharge its paid payload only when a second family reaches it; ordinary foot traffic need not trigger it. | Moderate; spell-family observations and finite armed states. | [Noita][noita]; synthesis |
+| MG-256 | Thrown mark, distant detonation | FA | Play | 3 Enriching | D | Let one participant place a short-lived mark while another supplies a compatible remote effect; losing sight or the mark can prevent delivery, and marking alone does no damage. | Large; separate targeting evidence, mark expiry and paid payload. | [Tears of the Kingdom][totk-study]; synthesis |
+| MG-257 | Graft one spell property | FA | Blend | 4 Advanced | D | Transfer one admitted modifier, such as return behavior, from a prepared spell into another eligible spell; preserve their separate payload costs and disclose which incompatible property the graft replaces. | Large; typed modifier transfer, ordering and exclusions. | [Balatro operators][balatro-study]; original synthesis |
+| MG-258 | The missing singer's opening | FA | Play | 4 Advanced | D | Build a ritual barrier from several sustained voices, each holding one declared segment; a participant can open their segment by stopping, while the others retain only the portions they actually maintain. | Large; partitioned shared effects and visible participant withdrawal. | [Languages and communication][languages]; original synthesis |
+| MG-259 | Charge borrowed from the next casting | FA | Play | 4 Advanced | D | Place a contestable siphon on a compatible caster that diverts a capped fraction of their next paid spell charge; unspent reserves remain untouched, and waiting out or breaking the siphon defeats it. | Large; casting-event interception, resistance and no double expenditure. | [Morrowind][morrowind-study]; original synthesis |
+| MG-260 | Unprepare a spell by venting it | FA | Play | 4 Advanced | D | Release an unused prepared spell's committed reserve through a disclosed harmless sink or dangerous discharge before reclaiming its preparation slot; erasing the notation alone neither refunds nor detonates it. | Large; prepared-effect lifecycle and selected disposal routes. | [Kingmaker's spell preparation][kingmaker-study]; original synthesis |
+
+## Altered bodies and unfamiliar pleasures
+
+Bodies retain their identity and actual capacities unless a selected law explicitly changes them. Sensory novelty, private adult pleasure and useful adaptation are ends of their own, not promises of medical treatment or automatic consent.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-261 | Lift a seal on vitality | FA | Play | 2 Expected | D | Remove a compatible curse that blocks part of a body's recoverable capacity; ordinary rest or healing can then replenish it, but lifting the seal does not itself close a wound or fill the restored reserve. | Large; Bodies capacity distinct from present condition and treatment. | [Tears of the Kingdom][totk-study]; synthesis |
+| MG-262 | An eye perched elsewhere | FA | Play | 3 Enriching | D | Move one willing caster's functioning eye into a temporary anchored form within range, retaining its actual view but leaving its original position blind; return requires an intact link or a defined recovery rite. | Large; scoped sense relocation and bodily aftermath. | [Prey][prey-study]; original synthesis |
+| MG-263 | Hair braided into working fingers | FA | Play | 3 Enriching | D | Give an existing braid limited grasp and touch while consuming a charm's reserve; threading beads or holding a page becomes possible, but the braid remains attached, snag-prone and incapable of lifting a person. | Large; Bodies temporary effectors and Abilities coordination. | [Caves of Qud][qud]; original synthesis |
+| MG-264 | Bones as a private lantern | FA | Play | 3 Enriching | D | Let a willing person illuminate selected parts of their own skeleton as light visible through the body's surface, choosing a delicate dance pattern or unsettling silhouette without changing bone strength. | Moderate; controlled body-local light and cosmetic visibility. | [Wildermyth][wildermyth]; original synthesis |
+| MG-265 | Warmth felt as cool silk | FA | Play | 3 Enriching | D | Let consenting adults invert a bounded range of mild thermal sensations during private touch or performance; actual temperature stays unchanged, and the effect leaves hazardous-temperature warnings unaltered. | Large; selected sensory mapping, intensity bounds and personal stop control. | [The Culture][culture]; original synthesis |
+| MG-266 | Perfume seen as color | FA | Play | 3 Enriching | D | Translate one willing person's actual scent perceptions into a chosen visible-to-them palette; compose a fragrant room or follow a fading odor without displaying chemicals the nose never detected. | Large; Bodies sensed input and private cross-sensory presentation. | [Languages and communication][languages]; original synthesis |
+| MG-267 | Brewer's divided enchantment | FA | Play | 3 Enriching | D | Split a prepared drink's explicitly magical revelry effect from its flavor into a second marked vessel; consenting adults choose taste, enchantment or both, while ordinary alcohol and nutrition remain where the liquid actually goes. | Moderate; fictional effect separation and clearly labeled servings. | [The Culture][culture]; original synthesis |
+| MG-268 | One borrowed gesture | FA | Play | 4 Advanced | D | Let a willing expert lend the execution pattern of one demonstrated gesture for a few uses on a compatible body; the recipient gains neither its surrounding expertise nor the expert's memories or credentials. | Large; bounded motor-pattern transfer; Abilities owns later learning. | [Final Fantasy IX][ff9-study]; original synthesis |
+| MG-269 | Become a living ink figure | FA | Play | 4 Advanced | D | Flatten a willing body into a moving figure on one supplied sheet, retaining limited sight and speech but losing ordinary grip; tears and smearing threaten the form, and return needs clear space beside the sheet. | Large; alternate embodiment, carrier damage and restoration geometry. | [Scribblenauts][scribble]; original synthesis |
+| MG-270 | Molt the armor you grew | FA | Play | 4 Advanced | D | Shed a compatible magically grown outer shell as temporary cover while the wearer becomes unprotected; replacement consumes the original growth resources, and the discarded shell decays rather than supplying endless permanent material. | Large; Bodies armor transition and finite material lifecycle. | [Wildermyth][wildermyth]; original synthesis |
+
+## Predation, leverage and coercive bargains
+
+These laws permit frightening uses of power without calling coercion cooperation. Observable limits and particular release routes give opponents something to understand, exploit or fight over.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-271 | Scent of spent sorcery | FA | Play | 2 Expected | D | Leave a fading, locally detectable trail when a selected spell family expends charge; hunters can follow recent casting, while an uncast spell or unrelated person's presence leaves no such trail. | Moderate; expenditure traces, weathering and observer-specific sensing. | [S.T.A.L.K.E.R. 2][stalker-study]; original synthesis |
+| MG-272 | Quarry's borrowed trick | FA | Play | 3 Enriching | D | Bind one actually witnessed creature technique into a short-lived token through an admitted pact or predatory rite; using it grants that action within compatible bodily limits, not the creature's whole nature. | Large; observed-action capture, finite uses and explicit acquisition law. | [Octopath Traveler II][octo2-study]; synthesis |
+| MG-273 | Theft of a person's shade | FA | Play | 3 Enriching | D | Detach a susceptible victim's shadow and carry it as a limited refuge from an enabled sunlight curse; the visible absence exposes the theft, and recovering or breaking the tether returns the shadow. | Large; resisted shadow transfer and local protective geometry. | [The Witcher][witcher]; original synthesis |
+| MG-274 | Crown fed by stolen sleep | FA | Play | 3 Enriching | D | Sustain a crown's specified ward by drawing recoverable rest from nearby marked sleepers; those people wake exhausted, and leaving range or removing their marks starves the protection. | Large; bounded coerced resource transfer and Bodies aftermath. | [The Broken Earth][broken]; original synthesis |
+| MG-275 | Mask that needs another hand | FA | Play | 3 Enriching | D | Bind a transformation mask so its wearer cannot remove it but another capable person can undo its accessible clasp; isolation becomes the curse's power, without requiring forgiveness or a morally perfect rescuer. | Moderate; asymmetric release condition and body-form continuity. | [Spirited Away][spirited]; original synthesis |
+| MG-276 | Borrowed strength, borrowed vulnerability | FA | Play | 3 Enriching | D | Grant a chosen bodily enhancement only while also carrying the donor charm's declared vulnerability; trading charms changes both together instead of keeping every advantage and discarding its price. | Large; inseparable effect bundle and visible removal. | [Morrowind][morrowind-study]; synthesis |
+| MG-277 | Suppressor's occupied hand | FA | Play | 4 Advanced | D | Prevent one compatible target from casting while the suppressor maintains a contestable grip on their magical tether; the occupied hand and attention cannot simultaneously sustain an unrelated attack. | Large; resisted suppression, range and real caster commitment. | [Deus Ex][deus-study]; original synthesis |
+| MG-278 | Prisoner turned into the key | FA | Play | 4 Advanced | D | Transform a captive into an aware key whose use in one named lock restores them; sound remains perceptible but ordinary movement does not, making release depend on another actor finding and using the key. | Large; coercive embodiment, identity continuity and damage/release rules. | [The Witcher][witcher]; original synthesis |
+| MG-279 | A weather-worker's stolen service | FA | Play | 4 Advanced | D | Force an existing weather-capable spirit to supply one bounded service through a destructible anchor; breaking it liberates the spirit and ends the service, leaving the beneficiaries to find another arrangement. | Large; coercive tether to an existing power; Ecology owns aftermath. | [Spirited Away][spirited]; original synthesis |
+| MG-280 | Pact that eats its collateral | — | Play | 4 Advanced | D | Make a specifically recorded pact consume an identified pledged possession when its agreed observable deadline passes; disputed morality is irrelevant, but false recording, substituted collateral and broken anchors are real attack surfaces. | Large; authored collateral law and object-identity accounting. | [Earthsea][earthsea]; original extrapolation |
+
+## Household marvels and unruly performances
+
+A magical home can be comfortable, funny, sensual or gloriously impractical. These enchantments leave room for enjoyment without a required emergency, hidden curse or progression reward.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-281 | The serving platter's procession | FA | Play | 3 Enriching | D | Give prepared dishes a slow hovering route between marked places at a table, pausing for a diner to take an actual serving; an empty dish returns empty, and guests can stop the procession. | Moderate; bounded carrying, occupancy and finite food. | [Ultima VII][ultima-study]; original synthesis |
+| MG-282 | Story-woven quilt | FA | Play | 3 Enriching | D | Rearrange the visible threads of an enchanted quilt into scenes from a deliberately narrated story, preserving its material and warmth; conflicting storytellers can make a wonderfully incoherent picture. | Moderate; finite textile patterns and supplied narrative input. | [Macondo][macondo]; original synthesis |
+| MG-283 | Dough helper's final bow | FA | Play | 3 Enriching | D | Animate a supplied lump of dough as a non-person kitchen helper with one rehearsed kneading routine, then let it fold itself into a loaf; ingredients remain finite and animation conveys no hidden soul. | Moderate; bounded food animation; Work owns baking and hygiene. | [Spirited Away][spirited]; original synthesis |
+| MG-284 | Curtains that borrow a horizon | FA | Play | 3 Enriching | D | Give a window a recorded distant view that changes with its curtains' folds; inhabitants can enjoy an old landscape while the actual window, weather and exit remain unchanged. | Moderate; selected visual recording and surface projection. | [Macondo][macondo]; original synthesis |
+| MG-285 | Shoes that trade their squeaks | FA | Play | 3 Enriching | D | Exchange the sound origins of two marked pairs of shoes within range; dancing becomes a comic conversation, while an unwary eavesdropper may follow the wrong footsteps. | Moderate; paired acoustic routing with actual source sounds. | [Discworld][disc]; original synthesis |
+| MG-286 | Breath as a tiny orchestra | FA | Play | 3 Enriching | D | Split one performer's controlled exhalation into several chosen instrumental voices, with shared breath and attention limits; elaborate counterpoint remains a learned performance rather than an automatic composition. | Large; simultaneous sound channels; Abilities owns execution skill. | [Languages and communication][languages]; original synthesis |
+| MG-287 | Swear jar's spectacular overflow | FA | Play | 3 Enriching | D | Let an agreed list of audible words charge a jar until it releases a finite burst of harmless light and ridiculous sound; it counts recognized utterances, not whether anyone meant to offend. | Moderate; explicit word matching and bounded sensory release. | [Discworld][disc]; original synthesis |
+| MG-288 | Gossip baked into the crust | FA | Play | 3 Enriching | D | Store a voluntarily supplied short recording in a loaf and play its phrases as the loaf is broken; a wedding toast, joke or forged accusation travels as authored speech, not verified truth. | Moderate; object-local record and consumption-triggered playback. | [Macondo][macondo]; original synthesis |
+| MG-289 | Dining room of chosen proportions | FA | Play | 4 Advanced | D | Adjust the apparent scale of food and furniture separately for willing diners while preserving touch, portions and actual reach; a tiny-looking feast or monumental teacup can be theatrical without feeding anyone twice. | Large; per-observer glamour and unmodified physical interactions. | [The Culture][culture]; original synthesis |
+| MG-290 | A room remembers its dance | FA | Play | 4 Advanced | D | Let a marked room replay only consenting dancers' recorded steps as moving pools of light, so later visitors can learn, improvise or dance beside the traces; absent performers are not summoned people. | Large; authorized motion recording and Arts floor choreography. | [Wildermyth][wildermyth]; original synthesis |
+
+## Death, absence and strange continuities
+
+Returning a skill, moving a soul and restoring a person are different promises. These laws make those differences playable without treating every loss as either reversible trivia or permanent hopelessness.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MG-291 | Wake the tool, not its maker | FA | Play | 3 Enriching | D | Reawaken one recorded working motion in a deceased maker's actual tool using supplied charge; it can demonstrate a remembered cut but cannot answer questions or claim to be that person. | Moderate; bounded motion trace and non-person animation. | [Ultima VII][ultima-study]; original synthesis |
+| MG-292 | Revenant with a closed curriculum | FA | Play | 3 Enriching | D | Restore a willing dead fighter under a return law that preserves old techniques but prevents further magical advancement until a fuller restoration occurs; formidable experience survives without an endlessly improving disposable recruit. | Large; identity continuity and explicit learning boundary. | [Shadow of War][shadowwar-study]; synthesis |
+| MG-293 | Testimony that burns as it speaks | FA | Play | 3 Enriching | D | Release one finite sensory record left in specially prepared remains, consuming that record as it is heard; choose witnesses and questions carefully, because another casting cannot recover the expended trace. | Large; corpse-local recorded evidence, limited answers and no summoned person. | [Baldur's Gate 3][bg3]; original synthesis |
+| MG-294 | A shadow lent for an evening | FA | Play | 4 Advanced | D | Allow a willing living person to lend their shadow as a temporary host to one willing dead person; the visitor gains only the host's declared light-bound movement and senses, not control of the donor. | Large; paired consent, limited embodiment and assured separation. | [His Dark Materials][hdm]; original synthesis |
+| MG-295 | Recall the departed helper's unfinished task | FA | Play | 4 Advanced | D | Transfer a released construct's recorded work state to a newly supplied compatible construct; the replacement resumes an unfinished job without inheriting a vanished person's identity or imagined memories. | Large; non-person task continuity; Automation owns the plan. | [Prey][prey-study]; original synthesis |
+| MG-296 | Borrow the signs of life | FA | Play | 4 Advanced | D | Give specified remains simulated breathing, warmth and color for one charged interval without restoring awareness or healing damage; a vigil or falsified death report depends on observers missing the spell's defined discrepancies. | Large; finite bodily animation and heat; no revival or implied consent. | [Shadow of War][shadowwar-study]; original synthesis |
+| MG-297 | Return bought with a lost gift | — | Play | 4 Advanced | D | Offer an identifiable willing dead person one return in exchange for permanently relinquishing a named supernatural gift; losing that power need not erase their learned knowledge, relationships or ordinary abilities. | Large; world-selected revival bargain and irreversible capability retirement. | [Wrath's mythic paths][wrath-study]; original extrapolation |
+| MG-298 | One soul, several disputing masks | — | Play | 5 Frontier | D | Divide one person's admitted magical embodiment among a finite set of masks, each able to voice a different remembered viewpoint; define shared agency and reunion explicitly rather than declaring every apparent voice a disposable new person. | Large; selected identity ontology, finite hosts and conflict resolution. | [His Dark Materials][hdm]; original extrapolation |
+| MG-299 | A town's skipped winter | — | Play | 5 Frontier | D | Suspend an explicitly consenting bounded settlement's local time for one winter, with a reliable external release rule; the surrounding world continues, so debts, politics and absent travelers do not pause with it. | Large; temporal boundary, occupancy consent and persistent external history. | [Outer Wilds][outer]; original extrapolation |
+| MG-300 | A dead god's finite spring | — | Play | 5 Frontier | D | Let rites draw a finite life-supporting power from the remains of a dead deity, nourishing a strange inhabited refuge until the reserve ends; using the power neither revives the god nor makes its custodians rightful rulers. | Large; explicit divine-remains law, finite reserve and Ecology dependence. | [The Broken Earth][broken]; original extrapolation |
+
 ## Borrowed warmth
 
-**FA · Play · High · 3/New.** Gap: bounded transfer effects with source, sink, range and conservation.
+**FA · Play · 1 Basics · D.** Gap: bounded transfer effects with source, sink, range and conservation.
 
-A hearth-worker warms a frostbitten traveler by cooling a basin of water. The same technique preserves food, shapes fog or slows a kiln. Every benefit has a visible source and destination. Players invent methods through consistent transfers. Never permit recursive heat creation, and give controlled practice tools so understanding the rule does not require fatal experimentation. In battle the same transfer can chill a weapon hand or discharge stored heat against armor, with visible costs and counterplay.
+A hearth-worker warms a frostbitten traveler by cooling a basin of water. The same technique preserves food, shapes fog or slows a kiln. Every benefit has a visible source and destination. Players invent methods through consistent transfers. Never permit recursive heat creation, and give controlled practice tools so understanding the rule does not require fatal experimentation. In battle the same transfer can chill a weapon hand or discharge stored heat against armor, with visible costs and counterplay. Warming does not itself repair frost injury.
 
 Seeds: [Noita](source-atlas.md#g32), [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57).
 
 ## Promise knots
 
-**FA · Play · High · 3/New.** Gap: voluntary bounded commitments linked to defined magical effects.
+**FA · Play · 3 Enriching · D.** Gap: voluntary bounded commitments linked to defined magical effects.
 
 Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible; the cord performs the accepted reminder and no additional binding.
 
@@ -401,7 +503,7 @@ Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Rig
 
 ## Echo carpentry
 
-**FA · Play · High · 3/New.** Gap: temporary supported geometry with load, duration and defined expiry outcomes.
+**FA · Play · 3 Enriching · D.** Gap: temporary supported geometry with load, duration and defined expiry outcomes.
 
 A carpenter restores the brief outline of a doorway or bridge from an observed trace. The echo lasts only while anchored to surviving material and bears a limited load. Explorers choose who crosses and what stays behind. Expiry needs warning and defined outcomes for occupants, including falling, escape or rescue; memory cannot conjure arbitrary structures from an omniscient historical database.
 
@@ -409,7 +511,7 @@ Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Disho
 
 ## Names as invitations
 
-**FA · Play · Try · 3/New.** Gap: registered relationships and consent-based invocation within range.
+**FA · Play · 3 Enriching · D.** Gap: registered relationships and consent-based invocation within range.
 
 Learning a river spirit's chosen name permits asking it for a service; the name is a relationship, not ownership. A stranger can still negotiate through gestures or an intermediary. Invocations can succeed, be misunderstood or be refused. This invitation tradition is distinct from the binding powers described above.
 
@@ -417,7 +519,7 @@ Seeds: [Caves of Qud](source-atlas.md#g33), [Earthsea](source-atlas.md#w11), [Hi
 
 ## The grammar of useful charms
 
-**FA · Play · High · 3/New.** Gap: finite target, trigger, transformation and cost composition.
+**FA · Blend · 3 Enriching · D.** Gap: finite target, trigger, transformation and cost composition.
 
 Combine “when wet,” “this cloth” and “stiffen briefly” to make a rain shelter that folds when dry. Another maker uses the same operators for a rescue sling. Preview ordering, duration and resource use with a harmless demonstration. Restrict operators and effect budgets; new prose is a proposal for supported composition, not an executable expansion of the grammar.
 
@@ -425,7 +527,7 @@ Seeds: [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fant
 
 ## Moonbound forms
 
-**FA · Play · Try · 3/New.** Gap: voluntary transformations with clear cycle and identity continuity.
+**FA · Play · 3 Enriching · D.** Gap: voluntary transformations with clear cycle and identity continuity.
 
 A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. The voluntary transformation preserves identity while changing movement and equipment needs. Communities develop customs around it, and individuals use it differently.
 
@@ -433,7 +535,7 @@ Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [
 
 ## A dragon's weather debt
 
-**FA · Play · Try · 3/New.** Gap: bounded regional weather influence and durable negotiated commitments.
+**FA · Play · 4 Advanced · D.** Gap: bounded regional weather influence and durable negotiated commitments.
 
 A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The dragon has its own household, plans and reasons for accepting or refusing the arrangement. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
 
@@ -441,7 +543,7 @@ Seeds: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: 
 
 ## Ink that keeps a threshold
 
-**FA · Play · High · 3/New.** Gap: spatially bounded wards with explicit triggers and revocation.
+**FA · Play · 2 Expected · D.** Gap: spatially bounded wards with explicit triggers and revocation.
 
 A painted line chimes when a named category of object crosses, helping a nursery watch for stray embers or a library protect fragile books. It can be rubbed away, interrupted or deliberately bypassed through another route. Inspection reveals its actual rule. Categories must be supported and observable; “evil intentions” cannot become an unrestricted mind-reading selector.
 
@@ -449,7 +551,7 @@ Seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Divinity: Original Sin I
 
 ## Mending by shared pattern
 
-**FA · Play · Try · 3/New.** Gap: constrained restoration using a known reference and real replacement material.
+**FA · Play · 2 Expected · D.** Gap: constrained restoration using a known reference and real replacement material.
 
 A mender aligns broken pottery with a remembered or recorded pattern, but must supply clay and choose whether to preserve old patches. Restoration is interpretive and materially grounded. It can repair a home or falsify an artifact, creating social stakes. It does not restore erased history, duplicate unique objects or reverse external costs; uncertain details remain uncertain.
 
@@ -457,7 +559,7 @@ Seeds: [Black Myth: Wukong](source-atlas.md#g76), [The Legend of Zelda: Tears of
 
 ## The school of deliberate limits
 
-**FA · Play · High · 2/Extend.** Gap: authored training plus supported spell-family admission.
+**FA · Play · 2 Expected · C.** Gap: authored training plus supported spell-family admission.
 
 A magical school teaches three dependable techniques through civic problems, controlled duels and hazardous fieldwork. Advancement adds understanding, combinations and responsibility before more powers. Players can change schools without losing all learned competence. Limits should be legible and generative, not arbitrary class gates that prevent a plausible ordinary solution or demand hours of prerequisite grinding.
 
@@ -465,13 +567,15 @@ Seeds: [Slay the Spire](source-atlas.md#g43), [Final Fantasy III](source-atlas.m
 
 ## Research coverage
 
-Base catalogue and shared rules: `2bb10759c263cf29a3de0f25bb3595e49420006f`. Applicable instructions, shared definitions, design foundation, actions, the complete source atlas, selection/combinations, all four seed proposals, assigned originals and relevant neighboring scope statements were read. Shared classifications and world proposals are not changed by these optional powers.
+MG-001–MG-240 and all ten linked pattern headings are retained. This closeout adds MG-241–MG-300, updates navigation and pattern classifications, and clarifies that Borrowing's warming is not tissue repair. The [group reading and processing record](group-7-research-progress.md) separates carried-forward reads, individually marked completions, catalogue integration and source-library gaps.
 
-Freshly read in full: all **39 worldbuilding documents**, including **28 world dossiers** and their comparative, method and audit material, at `b387e7caeda5cec301045b877ca50a2815a869dd`; all **38 preserved game chapters**, the **Noita and Hades II full dossiers**, the **Factorio/Satisfactory granular study**, and the essays **How to interpret the evidence**, **Comparative map**, and **What actually makes these worlds fun** at `065309db37067c8e0a213bc1ed14446a4ea20eea`. Indexes and available correction-ledger sections were checked separately; an index is not a dossier read. The Hades II pass includes its correction note and annotated-source tail, not just the combat excerpt.
+Across the assignment, the recorded reading covers **148 game dossiers, 38 original game-study files, 29 granular mechanics studies, twelve essay files and 39 worldbuilding documents**, including the 28 world dossiers. Main-game material is pinned to `065309db37067c8e0a213bc1ed14446a4ea20eea`; the eighteen survival additions use `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a`. Worldbuilding uses `b387e7caeda5cec301045b877ca50a2815a869dd`. Additional reference notebooks, operational supplements, navigation and correction records are identified in the reading record. The original game-study files overlap the dossier subjects; they are not 38 extra games. Applicable guidance, shared definitions, design foundation, actions, source atlas, selection/combinations, four seed proposals and neighboring scope statements informed the catalogue.
 
-**Gap:** the requested fresh full game-corpus reread remains incomplete. Other full-game dossiers, other granular studies, remaining essays, reference supplements and long-ledger tails were not freshly read for this checkpoint. Continuation heads `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` (G131–140) and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` (G141–148) were discovered, but their bodies have not informed it. Retained citations preserve prior patterns, not a claim of a fresh full read of every linked game. No external videos, playtests or underlying novels were independently consumed here.
+The final sixty are **original synthesis**, not recovered verbatim drafts or claims that their source games implement these spells. They develop trajectory versus history, coordinated casting, bodily capacity versus healing, sensory pleasure, predatory dependencies, domestic spectacle and distinct forms of return. Their links identify the informing research; the more unusual world-law choices retain `—` rather than silently altering a seed world.
 
-The integration owner should reconcile shared research pins, catalogue counts and navigation, and coordinate the named Bodies, Combat, Objects, Materials, Work, Ecology, Relationships, Languages, Institutions and Simulation dependencies. The proposed powers do not close implementation acceptance criteria; shared files, trackers and the changelog remain unchanged.
+**Limits:** this is completion of a repository-manuscript reading and idea-integration task, not a fresh external-fact audit, playtest or reread of the underlying fictional canons. Videos were not watched. Unavailable aliases are not counted as read, and the source library's separate original-packet reconciliation remains outside this closeout. Research uncertainty remains attached to the source rather than being converted into a precise invented fact.
+
+**Integration dependencies:** Bodies owns anatomy and bodily consequences; Combat owns attacks, resistance, damage and rescue; Objects owns specific enchanted possessions; Materials and Work own substances and production; Relationships and Institutions own agreements and authority; Ecology owns environmental aftermath; Languages and Simulation own records and represented experiences. Shared navigation/count summaries, research-pin reconciliation and any central changelog entry remain integration-owner updates. No shared world proposal, research manuscript or runtime code is changed here.
 
 [dawn]: worlds/living-fantasy.md
 [noita]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/noita.md
@@ -512,3 +616,19 @@ The integration owner should reconcile shared research pins, catalogue counts an
 [macondo]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/24-macondo.md
 [spirited]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/25-spirited-away.md
 [elder]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/27-the-elder-scrolls.md
+[totk-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/the-legend-of-zelda-tears-of-the-kingdom.md
+[cdda-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/cataclysm-dark-days-ahead.md
+[dishonored-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/dishonored-2.md
+[ff11-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-xi.md
+[wrath-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/wrath-mythic-paths-and-crusade-battles.md
+[me3-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/mass-effect-3.md
+[balatro-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/balatro-scoring-operators-risk-and-readable-combinations.md
+[morrowind-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/the-elder-scrolls-iii-morrowind.md
+[kingmaker-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/kingmaker-party-rules-and-kingdom-operations.md
+[prey-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/prey-2017.md
+[ff9-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-ix.md
+[stalker-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/stalker-2-heart-of-chornobyl.md
+[octo2-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/octopath-traveler-ii.md
+[deus-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/deus-ex-2000.md
+[ultima-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/ultima-vii-the-black-gate.md
+[shadowwar-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/middle-earth-shadow-of-war.md
