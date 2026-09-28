@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, sources and limitations. It does not claim external-bibliography rereading, personal gameplay, full-video viewing or independent verification. Unlisted material remains unread. Counts are cumulative across resumes, not fresh rereads of unchanged completed documents.
 
-**Coverage:** **42/42 worldbuilding documents**, **29 game dossiers**, **20/39 original game chapters**, **9 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents**, **33 game dossiers**, **23/39 original game chapters**, **12 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,11 +12,11 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The complete rechecked research-branch heads and corpus discovery record are preserved in [revision register `a5d704c`](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery). This covers the main game/world libraries, expansion branch, all numbered game research branches and `codex/world-idea-repertoires`. Research is accessed through Git objects, not by merging unrelated branches.
 
-The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading the linked documents. The complete mechanics and original-chapter trees have been inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Their integrated dossier studies count within their dossiers.
+The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading linked documents. Complete mechanics and original-chapter trees were inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Integrated dossier studies count within their dossiers. Shared documents count once, not once per game they cover.
 
-## Game dossiers — 29 complete
+## Game dossiers — 33 complete
 
-Filenames below are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
+Filenames are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
 
 - [x] G01 — `hades-ii.md`
 - [x] G02 — `among-us.md`
@@ -44,11 +44,15 @@ Filenames below are relative to [the dossier directory](../../archive/02-researc
 - [x] G24 — `the-sims.md`
 - [x] G25 — `wildermyth.md`
 - [x] G26 — `baldurs-gate-3.md`
+- [x] G27 — `factorio.md`
+- [x] G28 — `satisfactory.md`
+- [x] G29 — `terraria.md`
+- [x] G30 — `stardew-valley.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 
-## Original game chapters — 20 complete
+## Original game chapters — 23 complete
 
 Filenames are relative to [the original-chapter directory](../../archive/02-research/game-inspiration/games/).
 
@@ -72,8 +76,11 @@ Filenames are relative to [the original-chapter directory](../../archive/02-rese
 - [x] `wildermyth.md`
 - [x] `baldur-s-gate-3.md`
 - [x] `dungeons-and-dragons.md`
+- [x] `factorio-and-satisfactory.md`
+- [x] `terraria.md`
+- [x] `stardew-valley.md`
 
-## Game supplements — 9 complete
+## Game supplements — 12 complete
 
 Filenames are relative to [the mechanics-study directory](../../archive/02-research/game-inspiration/mechanics/).
 
@@ -86,6 +93,9 @@ Filenames are relative to [the mechanics-study directory](../../archive/02-resea
 - [x] `dungeons-and-dragons-adjudication.md`
 - [x] `dungeons-and-dragons-srd-systems.md`
 - [x] `minecraft-signals-authorship-and-meaningful-objects.md`
+- [x] `factorio-satisfactory-flows-blueprints-and-place.md`
+- [x] `terraria-equipment-composition-settlements-and-discovery.md`
+- [x] `stardew-valley-calendars-gifts-and-useful-routines.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -159,10 +169,17 @@ Detailed prior findings and hashes remain preserved, not discarded by this compa
 - [Later game findings through Dreams/Project Spark, `918345d`](https://github.com/Macrofold/OpenLegend/blob/918345d788537c004d2bf9eb5e83ee387461ed2b/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Worlds Adrift and complete roster, `b7d9f09`](https://github.com/Macrofold/OpenLegend/blob/b7d9f09064372a485224c072e4a92a0ab877a3ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Spore, No Man's Sky and EverQuest Next, `a5d704c`](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
+- [Ultima Online and Minecraft, `9a609cc`](https://github.com/Macrofold/OpenLegend/blob/9a609ccad221acd4274017369eae2a02665fd0c0/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 
-**Ultima Online:** dossier blob `3e552f95a9734fd8f6627915e5834c12a90411f8`; ecology chapter `99cf185d5acddca5f7b401150d0c04907e778fc0`. Changing a practiced profession need not erase personal identity. Useful products can carry the maker into someone else's life; shops, homes and familiar suppliers preserve place and reputation. Pet training, usefulness and vulnerability support attachment without proving general cognition. Death, revival and recovering property are separate states. Theft and murder have victims, reporting and different ruleset permissions; safer and harsher worlds invite different kinds of dependence. Remembered danger is not evidence everyone enjoys it. The ecology account concerns incentives overwhelming a particular model, not proof that ecology or simulation cannot work. Production shards and seasonal New Legacy progression/persistence remain distinct; future season dates were not treated as shipped content.
+**Factorio:** dossier `3335b496562e0963d1b8ea2eb412413c01ce79f9`. A working creation can record changing competence. Improving a teammate's metric can confiscate their understanding; permission to cooperate is not permission to replace their design. Formal completion, reliable operation, self-imposed mastery and a satisfying restart are different destinations. Bigger reserves can fail where freshness matters. A shortage may follow an unwanted surplus; more effort at the visible symptom is not necessarily help. Environmental constraints can reward transferred knowledge or make earned expertise feel irrelevant. The corrected final fluid rules supersede the discarded unlimited prototype; historical implementation, ports, experimental versions and Space Age are separate evidence. No native interpersonal psychology is inferred from human collaboration.
 
-**Minecraft:** dossier blob `a17bf8172abc7416330f124b7909433899b2a09c`; original chapter `38cd64c84970590c854c477ab65eda494d4e9051`; detailed study `0818d77943a894d3dd69c01a95a3ae36fbfc2960`. An imperfect shelter, souvenir or repaired wall can mean more than a superior replacement. Automation can repeat a chosen intention without choosing every subsequent project. A familiar law changing can invalidate learned competence and beloved work, not just a technical diagram. Expression and earned rarity are different rewards; expensive cosmetics can please collectors while withholding someone else's primary enjoyment. Shared places can have individually claimable rewards without making every object nonscarce. A sensor's signal is not semantic understanding; archaeological suggestion is not documented provenance. Repair and preservation are both legitimate commitments. Java, Bedrock, historical experiments and extension layers remain separate evidence.
+**Satisfactory:** dossier `ed165d99761487341078c5527814bc42b668b24a`. Enjoying a place, explaining a design, expressing it and maximizing output are different goals. A decorative road can be wanted without an efficiency payoff. Let people savor completed work before automatically assigning another demand. An explorer, planner and aesthetic builder can cooperate through different pleasures. More companion comments can become unwanted interruption; authored ADA speech is not generative cognition. Remote possession, delivery rate and required local submission differ. Shared progress does not automatically follow every visitor home. Current controls, creature options and cross-play restrictions qualify older criticism without erasing preferences.
+
+**Factory pair supplements:** complete original chapter `8d1e08d20260c605ec67c36d0314cfc62c86360f` and mechanics study `8d0546a7ec086bdd9cee44ec7745d966b24d331b`. Stock, flow, capacity, dependency and control remain distinct. A remembered solution, reproducible design, specialized design and operating installation are different accomplishments. Do not turn a useful delegation into compulsory optimal planning or a creator's speculative experiment into a promise.
+
+**Terraria:** dossier `86da0a4a860a9f39c80fe006e42777c6f6ab82dd`, original `feb8385c5c2d813b783bffaf403b179c68d3989e`, study `37a3379df70b0d95959caf5ec9a782ff55304ccd`. Practical capabilities can change a familiar route and revive old projects. Explaining combination versus reforging can remove a misunderstanding without choosing the person's entire challenge. Earlier discoveries can remain useful without making every collection compulsory. Strong helpers can erase a newcomer’s discovery; speed is not the only measure of good help. Building a route records preparation for others too. People-as-service-components are not evidence of rich relationships. Shimmer changes appearance, not personality; teleportation does not carry everything. Current pylon and bulb corrections qualify historical accounts. Character loss settings, world difficulty and Hardmode are distinct contracts.
+
+**Stardew Valley:** dossier `996c07f8308638db4609cffa46fa7340e9bb8c40`, original `c3142fbdaecc1d22f443a04558382c4d4a3f4083`, study `1f31b288fa63e7001d57ca03ef2b6820f16bc7f5`. The same routine can be enjoyed, freely chosen, obligatory or an unwanted delay; gathering products, attending to animals and managing supply are separate responsibilities. Saving an item preserves possible gifts, projects and future opportunities as well as sale value. A public ceremony need not satisfy a wish for lasting personal recognition. Knowing preferences, expressing care, unlocking scenes and changing future behavior are distinct. Roommates and spouses need not be the same relationship. Different observers can judge the same action differently without universal mind-reading. Recurring windows are opportunities, not necessarily permanent failures; an established life and total completion are different good stopping points. Shared time changes the cost of quiet reflection. Current winter crops, tool exceptions, dialogue and later goals qualify older claims; rich authored families are not freely self-inventing inhabitants.
 
 Across all notes: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Keep ordinary pleasure, deliberate cruelty and completed ambitions without compulsory moral reframing or replacement craving. Distinguish appearance, memory, testimony, interpretation and acts. Source corrections qualify earlier overviews. Human social play, authored dialogue, simulation and cancelled-game plans are different evidence. Historical source wording never overrides current AGENTS instructions.
 
