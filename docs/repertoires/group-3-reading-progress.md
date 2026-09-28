@@ -4,15 +4,15 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 61 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 29 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 62 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 30 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
-Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. The resume began at `918345d788537c004d2bf9eb5e83ee387461ed2b`; comparison confirmed unchanged research, with only Needs, Characters and this ledger changed since the pin. Research is read through Git objects rather than merging unrelated branches.
+Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. The current continuation began at `05c326d1dbd16c096aab79961c2158ae49cc0d2e`; comparison against the pin confirmed unchanged research, with only Needs, Characters and this ledger changed. Research is read through Git objects rather than merging unrelated branches.
 
-The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves rechecked heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
+The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The current branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 61 complete
+## Game dossiers — 62 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -73,6 +73,7 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G55 — `pillars-of-eternity-ii-deadfire.md`
 - [x] G56 — `divinity-original-sin.md`
 - [x] G57 — `divinity-original-sin-ii.md`
+- [x] G58 — `pathfinder-kingmaker.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -122,7 +123,7 @@ Relative to [games](../../archive/02-research/game-inspiration/games/):
 - [x] `core-keeper.md`
 - [x] `peak.md`
 
-## Game supplements — 29 complete
+## Game supplements — 30 complete
 
 Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 
@@ -155,6 +156,7 @@ Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 - [x] `peak-shared-burdens-rescue-and-spatial-tools.md`
 - [x] `deadfire-expedition-and-relationship-rules.md`
 - [x] `divinity-original-sin-ii-builds-and-authorship.md`
+- [x] `kingmaker-party-rules-and-kingdom-operations.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -222,13 +224,9 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/7f61da0f6299cf50fd966bfca0ee165a23fa4b61/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves the Dragon Age findings and links all earlier checkpoints. This compaction preserves the complete reading and synthesis history rather than discarding notes.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/05c326d1dbd16c096aab79961c2158ae49cc0d2e/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves the complete Deadfire, Original Sin I and Original Sin II findings and links the Dragon Age and earlier checkpoints. This compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Deadfire:** dossier `b9dd911add706a21b27ae13318f7cc67b4708ac3`; operational supplement `dd7faacd364e106a1e4745ba7d1341044785f5ef`. Companions react to one another, and attention to somebody's animal companion is a particular gesture rather than a purchase of loyalty. Casual intimacy, continuing romance, friendship and faction allegiance differ. A talking possession can have private history and attachment without being an ordinary equipment bonus. Ship repair, crew treatment, party recovery and a return home's familiarity are different forms of care. A specialist's absence can explain incomplete progress without erasing what the group accomplished. Affection does not remove competing obligations. The source corrects historical Brace, injury and relationship claims; the first Pillars' later turn-based experiment is not Deadfire's mode. Eventual profitability does not establish an exact lifetime-sales or budget figure, and unavailable review/video bodies remain unavailable.
-
-**Original Sin I:** dossier `2b0c230ce731befbb80ea1c24d72139decab46a4`. Habitual grave looting can become desecration through the presence of a grieving person; its social meaning is not the loot's price. Two jointly controlled protagonists can disagree without being one shared will. Accumulated choices can matter to a later act of forgiveness. A non-speaking companion can communicate and have a personal objective; companions added after launch are not the original launch roster. Providing a means does not imply agreement about its use. A safety preparation can prevent one hazard without making the body universally safe. Healing can harm a differently constituted recipient; benevolent intention is not a sufficient target check. Source anecdotes, edition-specific rules, community modifications, fixed-puzzle complaints and crowdfunding versus full costs remain distinct.
-
-**Original Sin II:** dossier `07030e143d35cc5d659e4211397f48bbc0cf2f18`; builds/authorship supplement `3bd179da744633bd14d036d78d8c96fd041b5a66`. Meeting a proud parent can change the meaning of an earlier killing without changing the event. Personal history can survive mechanical respecialization; ownership of a skill, preparation, tools and opportunity to act are different conditions. A third companion can change the capabilities of an established pair. Reversible placement is not reversible construction. Bodily lockpicks remove a consumable need, not expertise or permission. Ancestry changes care and access without assigning every member the same psychology. A powerful tool can quickly become obsolete while its owner remains attached. Independent co-op presence does not ensure shared knowledge or participation in a consequential choice. An author able to adjudicate anything can still attend to only one conversation at a time. Human Game Master improvisation, scripted campaign response and separate Arena rules are not autonomous inhabitants. Optional Gift Bags, integrated Four Relics content and later ports have distinct contracts; source table errors, unviewed videos and inaccessible manuals are not silently filled from memory.
+**Kingmaker:** complete dossier `0a98d7c17c366e87873daca9f8572881428c04b4` and operational supplement `cf481bbe7f76f4472d0b0068797e9141b3a49edd`. Adventuring, camp care and administrative commitment can give one person competing valued roles. Adviser competence, assignment availability and willingness to support a ruler differ; repeated disagreement can end service. An adviser on an administrative assignment can still accompany the adventuring party: the restriction is not universal physical absence. A hunter reduces supplies only where hunting is possible; predictable provisions and reduced camping time answer different needs. Restoration after revival is not the same as restoring health. A named maker's books, workspace and research can connect the realm to personal ambition without inventing a universal crafting system. Parallel-protagonist imports support dramatic irony, not automatic character knowledge. The source distinguishes event uncertainty from project commitment, unrest from Stability, editions, fictional constructions from reviewer incidents, and historical opacity/port failures from current verified behavior. These suggest Group 3 ideas; they are not claims of autonomous simulated psychology in Kingmaker.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
@@ -247,7 +245,7 @@ Inherited entries are not newly written work. Earlier continuation commits added
 
 ## Prerequisites and remaining work
 
-Completed prerequisites: root AGENTS, documentation rules, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, four seed proposals and four assigned catalogues. Neighboring scopes: Relationships, Bodies, Institutions, Work, Combat and Arts. Applicable rules/classifications were rechecked this resume; no additional AGENTS exists at `docs/` or `docs/repertoires/` in the inspected revision.
+Completed prerequisites: root AGENTS, documentation rules, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, four seed proposals and four assigned catalogues. Neighboring scopes: Relationships, Bodies, Institutions, Work, Combat and Arts. Applicable rules/classifications were rechecked; no additional AGENTS exists at `docs/` or `docs/repertoires/` in the inspected revision. This continuation confirmed the two directory trees and reread root AGENTS and documentation rules.
 
 Continue all unchecked game material, including supplements, comparative documents and references; expand Psychology and Traits. Repair source-column misuse of seed proposals, Traits' incorrect “Animal Crossing III” / G99 wording, nonexistent owner names and D classifications caused only by unusual bodies. Preserve IDs and linked headings.
 
