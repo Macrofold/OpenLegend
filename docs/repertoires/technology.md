@@ -2,13 +2,13 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Technologies change what people can do: explore, make, heal, entertain, defend, dominate and escape. Their inputs, operators and vulnerabilities give invention a place in everyday life and struggles for power. The SC proposals use inhabited ships and abstract journeys, never playable piloting or space navigation. See the [design foundation](design-foundation.md) for the shared creative direction.
+**Proposal catalogue · September 28, 2026.** Technologies change what people can do: explore, make, heal, entertain, defend, dominate and escape. Their inputs, operators and vulnerabilities give invention a place in everyday life and struggles for power. The SC proposals use inhabited ships and abstract journeys, never playable piloting or space navigation. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 **Scope:** Own technical principles, device systems and infrastructure capabilities here. For a beam weapon, this can describe its energy supply, cooling or sensor system; [Objects](objects.md) owns the specific weapon and [Combat](combat-rescue.md) owns aiming, firing and damage resolution. Production and repair processes belong in [Work](work-crafting.md), substances in [Materials](materials-resources.md), learned operation in [Abilities](abilities-progression.md), reusable task-authoring tools in [Automation](automation-creators.md), and sites in [Settlements](settlements-architecture.md). See [category ownership](README.md#category-ownership-and-cross-references).
 
-**Inventory:** 240 selectable systems and principles, followed by the ten retained pattern cards. A named installation illustrates a capability, not a substitute finished-item inventory. All new rows are creative synthesis: the Inspiration links identify a researched design pattern or comparison, not evidence that the source contains our proposed machine. Follow the shared [Criticality](README.md#criticality), [Level](README.md#level) and [table definitions](README.md#catalogue-tables). Build estimates are broad dependencies, not an implementation audit. Fictional technical laws are identified as definitions; diagrams, descriptions and proposed designs do not supply matter or authority.
+**Inventory:** 300 selectable systems and principles, followed by the ten retained pattern cards. A named installation illustrates a capability, not a substitute finished-item inventory. All new rows are creative synthesis: the Inspiration links identify a researched design pattern or comparison, not evidence that the source contains our proposed machine. Follow the shared [Criticality](README.md#criticality), [Level](README.md#level) and [table definitions](README.md#catalogue-tables). Build estimates are broad dependencies, not an implementation audit. Fictional technical laws are identified as definitions; diagrams, descriptions and proposed designs do not supply matter or authority.
 
-**Domains:** [Mechanisms](#mechanical-transmission-and-motion) · [Heat](#heat-cold-and-thermal-comfort) · [Water and air](#water-air-and-sanitation) · [Energy](#power-generation-and-storage) · [Sensing](#measurement-and-sensing) · [Communications](#communications-and-records) · [Control](#control-computation-and-automation) · [Manufacture](#manufacturing-and-material-transformation) · [Bodies](#medicine-accessibility-and-body-interfaces) · [Food and ecology](#food-agriculture-and-ecological-systems) · [Pleasure](#homes-arts-pleasure-and-public-life) · [Transport](#ground-transport-and-cargo) · [Arms](#weapon-and-countermeasure-subsystems) · [Habitats](#habitats-and-resilient-services) · [Crew systems](#bounded-planetary-and-crew-systems) · [Strange engineering](#strange-engineering-and-experimental-principles) · [Research coverage](#research-coverage)
+**Domains:** [Mechanisms](#mechanical-transmission-and-motion) · [Heat](#heat-cold-and-thermal-comfort) · [Water and air](#water-air-and-sanitation) · [Energy](#power-generation-and-storage) · [Sensing](#measurement-and-sensing) · [Communications](#communications-and-records) · [Control](#control-computation-and-automation) · [Manufacture](#manufacturing-and-material-transformation) · [Bodies](#medicine-accessibility-and-body-interfaces) · [Food and ecology](#food-agriculture-and-ecological-systems) · [Pleasure](#homes-arts-pleasure-and-public-life) · [Transport](#ground-transport-and-cargo) · [Arms](#weapon-and-countermeasure-subsystems) · [Habitats](#habitats-and-resilient-services) · [Crew systems](#bounded-planetary-and-crew-systems) · [Strange engineering](#strange-engineering-and-experimental-principles) · [Restart and recovery](#restart-and-recovery-circuits) · [Situated sensing](#situated-sensing-and-machine-recognition) · [Programmable matter and manufacture](#programmable-control-and-material-recovery) · [Shared sensory life](#shared-sensory-life-and-performance) · [Dangerous operating choices](#dangerous-operating-choices) · [Experimental bargains](#experimental-technical-bargains) · [Research coverage](#research-coverage)
 
 **Retained patterns:** [The district heat loom](#the-district-heat-loom) · [Hushmesh](#hushmesh) · [The relay orchard](#the-relay-orchard) · [A tool with swappable manners](#a-tool-with-swappable-manners) · [Phase kiln](#phase-kiln) · [The route room](#the-route-room) · [External action crew stations](#external-action-crew-stations) · [Pocket fabrication with a bill of matter](#pocket-fabrication-with-a-bill-of-matter) · [Memory as a commissioned recording](#memory-as-a-commissioned-recording) · [The repairable city](#the-repairable-city)
 
@@ -379,9 +379,111 @@ Some technologies are plausible extrapolations; others need a new fictional tech
 | TE-239 | Shared-material prototype mirror | — | Lab | 5 Frontier | D | Define paired workspaces that share one finite stock of compatible material, so shaping one prototype changes what remains available to the other rather than cloning resources. | Large; trusted shared matter and concurrent editing law. | [Dreams and Project Spark][dreams]; extrapolation |
 | TE-240 | City-sized instrument network | — | Blend | 5 Frontier | D | Define an engineered settlement whose supported structures form one controllable acoustic instrument; bridges hum, squares resonate and residents can choose silence locally. | Large; city-scale acoustic law and local control boundaries. | [Discworld][disc]; original extrapolation |
 
+## Restart and recovery circuits
+
+A system can be efficient in steady operation and still unable to start. These capabilities preserve work, reclaim useful output and give a damaged installation an understandable route back into service.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-241 | Independent black-start supply | MO SC | Play | 2 Expected | C | Supply the initial power needed to start a generator's pumps and controls before the generator can support itself; a small starter can restore a much larger district. | Moderate; startup stages separate from steady-state demand. | [Oxygen Not Included][oni-study]; synthesis |
+| TE-242 | Regenerative braking return | MO SC | Play | 2 Expected | C | Recover part of a compatible ground vehicle's braking energy into available storage; a full store requires a different braking path rather than unlimited recovery. | Moderate; ground motion, conversion loss and storage acceptance. | [Resource circuits][flows]; original synthesis |
+| TE-243 | Hydraulic pressure accumulator | MO SC FA | Play | 2 Expected | C | Store supplied hydraulic energy for a brief high-demand action, allowing a slow pump to operate a powerful intermittent press or rescue tool. | Moderate; pressure, volume and discharge limits. | [World technology][worldtech]; synthesis |
+| TE-244 | Airlock gas recovery | SC | Play | 2 Expected | C | Reclaim a chamber's usable gas before exposing it to an incompatible exterior; slower cycles conserve stores while urgent departures may deliberately spend them. | Moderate; compartment gases and selectable cycle timing. | [The Expanse][expanse]; synthesis |
+| TE-245 | Regenerable adsorption beds | MO SC | Play | 3 Enriching | C | Alternate compatible capture beds between useful filtration and a supported regeneration stage; restored capacity costs heat, time and a destination for released material. | Large; Materials reversible capture and waste routing. | [Oxygen Not Included][oni-study]; original synthesis |
+| TE-246 | Cold-start conditioning loop | MO SC | Play | 3 Enriching | C | Warm the parts or working fluids a particular cold-soaked machine needs before loading it; an apparently intact installation becomes an expedition preparation problem. | Moderate; operating temperature and staged admission. | [CDDA][cdda-study]; synthesis |
+| TE-247 | Emergency quench reservoir | MO SC FA | Play | 3 Enriching | C | Spend a finite compatible cooling reserve to arrest a process excursion; the saved machine remains hot, wet or unavailable until its actual recovery requirements are met. | Moderate; thermal exchange and consequential byproducts. | [Oxygen Not Included][oni-study]; synthesis |
+| TE-248 | Sealed manipulation glovebox | MO SC | Play | 3 Enriching | C | Let an operator manipulate supported samples through a barrier while preserving a distinct chamber environment; reach and glove compatibility matter as much as the seal. | Moderate; Bodies controls and contained Work access. | [Prey][prey-study]; original synthesis |
+| TE-249 | Condensate return branch | MO SC FA | Play | 3 Enriching | C | Recover suitable condensed working fluid for another cycle instead of constantly replacing it; contamination can make a previously useful return stream unacceptable. | Moderate; Materials state and monitored return route. | [Resource circuits][flows]; synthesis |
+| TE-250 | Workpiece-preserving pause | ALL | Play | 3 Enriching | C | Hold a compatible partly finished object in a defined recoverable state when work stops; resuming may require reheating or repositioning rather than starting from raw inputs. | Moderate; Work intermediate state and fixture support. | [CDDA][cdda-study]; synthesis |
+
+## Situated sensing and machine recognition
+
+Detection, identification and interpretation are different outputs. These systems make uncertainty useful without presenting a blank sensor display as proof that nothing exists.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-251 | Differential sample comparison | MO SC | Play | 2 Expected | C | Compare a fresh supported sample against a retained local baseline; detect a change without claiming that the instrument already knows its source or significance. | Moderate; samples, calibration and scoped measurements. | [Prey][prey-study]; synthesis |
+| TE-252 | Parallax range measurement | MO SC FA | Play | 2 Expected | C | Compare views from known separated positions to estimate distance; obstructing one view or moving the baseline changes the confidence of the result. | Moderate; optical geometry and observation provenance. | [Outer Wilds][outer]; original synthesis |
+| TE-253 | Passive signal listening | MO SC | Play | 2 Expected | C | Receive an already emitted supported signal without illuminating the target; covert observation trades active-ranging detail for a smaller outgoing signature. | Moderate; emitted and received channels kept separate. | [Starsector][starsector-study]; synthesis |
+| TE-254 | Known-sample calibration dock | MO SC | Play | 3 Enriching | C | Present a sensor with an identifiable reference before a survey, exposing a failed or drifting instrument that would otherwise report a misleading empty scene. | Moderate; reference signals and calibration state. | [S.T.A.L.K.E.R. 2][stalker-study]; original synthesis |
+| TE-255 | Observer-specific camouflage | SC | Play | 3 Enriching | C | Configure an enabled concealment system for a defined sensing channel; defeating an optical observer need not fool a machine using another channel. | Large; existing concealment law and sensor eligibility. | [Deus Ex][deus-study]; synthesis |
+| TE-256 | Crevice inspection crawler | SC | Play | 3 Enriching | C | Send a small ground-contact probe through a supported maintenance gap to return local images or readings; the person and their larger equipment still cannot pass through. | Large; bounded ground probe geometry and signal access. | [Prey][prey-study]; synthesis |
+| TE-257 | Wear-track contact recorder | MO SC | Play | 3 Enriching | C | Record where supported moving parts actually touched during a test; compare a beautiful intended path with the worn path the mechanism produced. | Moderate; contact events and retained diagnostic record. | [Garry's Mod][gmod]; original synthesis |
+| TE-258 | Tamper-evident mechanical tally | ALL | Play | 3 Enriching | C | Advance or disturb a visible record when a sealed mechanism is opened; the record establishes an intervention, not who performed it or whether it was authorized. | Moderate; Objects seals and persistent state changes. | [The Wire][wire]; original synthesis |
+| TE-259 | Sensor heartbeat watchdog | MO SC | Play | 3 Enriching | C | Distinguish a recent empty reading from a sensor that has stopped reporting; stale observations can trigger inspection instead of silently sustaining an old claim of safety. | Moderate; timestamps and supported fault responses. | [Lethal Company][lethal]; synthesis |
+| TE-260 | Machine-recognized affiliation signal | SC | Play | 4 Advanced | C | Let a compatible machine classify an actor through an emitted credential or installed signature; changed implants or a stolen token can alter recognition without changing the person's actual allegiance. | Large; machine classification separate from social identity. | [Prey][prey-study]; synthesis |
+
+## Programmable control and material recovery
+
+These capabilities deepen manufacture without making every machine an unlimited fabricator. Knowledge, control patterns, usable stock and finished objects keep separate identities.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-261 | Pneumatic logic network | MO SC FA | Play | 2 Expected | C | Use supported pressure states to implement a finite control circuit where ordinary electronics are unwanted; leaks become both power losses and logical faults. | Moderate; fluid signals and finite gates. | [Minecraft signals][minecraft-study]; original synthesis |
+| TE-262 | Mechanically latched memory | ALL | Play | 2 Expected | C | Retain a chosen control state without continuous power; a restored machine resumes from an inspectable latch rather than assuming that power loss meant consent to reset. | Moderate; persistent mechanical states and reset access. | [Garry's Mod][gmod]; original synthesis |
+| TE-263 | Shared module-capacity budget | MO SC | Play | 3 Enriching | C | Allocate one finite operating budget among installed modules; adding a sensor, shield or actuator can require reducing another module's output instead of merely filling empty slots. | Moderate; compatible modules and resource allocation. | [Starsector][starsector-study]; synthesis |
+| TE-264 | Physical patch-cord programming | MO SC FA | Play | 3 Enriching | C | Route supported signals by plugging visible connections between units; a performer or engineer can alter a sequence by moving an actual cable rather than rewriting an opaque program. | Moderate; typed ports and connection state. | [Balatro operators][balatro-study]; original synthesis |
+| TE-265 | Graded material reclamation | MO SC | Play | 3 Enriching | C | Break a supported object into recoverable material grades; mixed or damaged inputs may yield lower-grade stock, making reuse valuable without promising perfect reversal of manufacture. | Moderate; Work reclamation and Materials grades. | [Prey][prey-study]; synthesis |
+| TE-266 | Centrifugal separation | MO SC | Play | 3 Enriching | C | Separate supported mixture components through a controlled rotating process; a new output becomes available while balance, containment and usable feed remain prerequisites. | Moderate; Materials separation rules and rotational load. | [World technology][worldtech]; original synthesis |
+| TE-267 | Vacuum forming | MO SC | Play | 3 Enriching | C | Draw a compatible prepared sheet over a supplied form, producing fitted covers or theatrical shapes; the form provides geometry while the sheet supplies finite material. | Moderate; Work forming and pressure interfaces. | [World technology][worldtech]; original synthesis |
+| TE-268 | Microfluidic dosing | MO SC | Play | 3 Enriching | C | Deliver small controlled quantities through compatible channels, enabling miniature experiments, precise coloring or delicate culture support; clogged channels produce a specific diagnosable failure. | Moderate; fluid metering and Materials compatibility. | [Resource circuits][flows]; original synthesis |
+| TE-269 | Surface-treatment bath | MO SC | Play | 3 Enriching | C | Apply a supported finish or protective layer to eligible exposed surfaces; a sealed cavity and an accessible exterior do not receive identical treatment by declaration. | Moderate; Work recipes, exposure and consumable coating stock. | [World technology][worldtech]; original synthesis |
+| TE-270 | Transferable fabrication licence | SC | Play | 4 Advanced | C | Carry permission to use a particular blueprint on compatible machines separately from the blueprint's description; selling or lending access changes production possibilities without supplying its materials. | Large; blueprint knowledge, machine support and scoped authority. | [Mass Effect][mass-study]; [Starsector][starsector-study]; synthesis |
+
+## Shared sensory life and performance
+
+A technical system can make a meal, dance, home or remembered place more wonderful. None needs to justify itself by raising combat statistics.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-271 | Pressure-window sound bridge | SC | Play | 3 Enriching | C | Carry selected exterior sounds through an intact habitat boundary so residents can hear a reef or storm without opening the room to it; live and recorded playback are clearly distinct. | Moderate; scoped acoustic sensing and interior reproduction. | [The Expanse][expanse]; original synthesis |
+| TE-272 | Ground-anchored theatrical flight rig | ALL | Play | 3 Enriching | C | Move supported performers through a rehearsed overhead path using installed rigging; spectacular apparent flight remains a stage mechanism with load and clearance limits, not vehicle piloting. | Large; Objects rigging and Arts choreography. | [Garry's Mod][gmod]; original synthesis |
+| TE-273 | Recorded warmth choreography | SC | Play | 3 Enriching | C | Play a chosen sequence of mild localized warmth through compatible seating or clothing; consenting adults can compose a private sensory duet without transmitting unshared thoughts. | Moderate; thermal outputs and individual stop controls. | [The Culture][culture]; original synthesis |
+| TE-274 | Movement-to-music wearables | MO SC | Play | 3 Enriching | C | Map a performer's measured gestures to selected notes or percussion; a dance produces music, while changing the mapping creates a new instrument rather than improving bodily skill automatically. | Moderate; motion sensing and Arts event mapping. | [Languages and communication][languages]; original synthesis |
+| TE-275 | Physical sound-groove playback | ALL | Play | 3 Enriching | C | Store a supported acoustic pattern in an inspectable physical track and reproduce it through a compatible reader; wear and deliberate alteration become audible parts of an artifact's life. | Moderate; record medium and bounded acoustic reproduction. | [Discworld][disc]; original synthesis |
+| TE-276 | Course-by-course scent clearing | MO SC | Play | 3 Enriching | C | Clear a prior fragrance before releasing the next one in a bounded tasting or theater space; sequence matters because accumulated smells would create a different experience. | Moderate; Materials scent persistence and air exchange. | [The Culture][culture]; original synthesis |
+| TE-277 | Rotating shared preparation bench | MO SC FA | Play | 3 Enriching | C | Bring selected tools and ingredients within reach of seated collaborators through a controlled rotating work surface; shared access improves without everyone needing identical reach or posture. | Moderate; Objects geometry and collision-aware indexing. | [The Sims][sims]; original synthesis |
+| TE-278 | Daylight-guiding interior optics | MO SC FA | Play | 3 Enriching | C | Route available daylight through supported reflectors and guides into an interior garden or reading room; changing weather remains perceptible rather than being replaced by a constant artificial sky. | Moderate; light paths, loss and movable alignment. | [Animal Crossing][animal]; original synthesis |
+| TE-279 | Kinetic handwriting wall | MO SC | Play | 4 Advanced | C | Reproduce an authorized writing motion with a bounded drawing mechanism on a public surface; messages can visibly arrive stroke by stroke and later be erased without pretending readers forgot them. | Large; motion reproduction and Languages shared records. | [Commissioned memory](#memory-as-a-commissioned-recording); original synthesis |
+| TE-280 | Museum motion demonstration | MO SC FA | Blend | 4 Advanced | C | Run a supported reconstruction of an artifact's documented movement beside the preserved original; visitors can see a conjectured use without wearing out the unique object or mistaking the model for recovered history. | Large; separate models, artifacts and evidence labels. | [World technology][worldtech]; original synthesis |
+
+## Dangerous operating choices
+
+Offense, secrecy, restraint and emergency operation depend on actual system states. These entries are fictional design concepts, not real-world construction or intrusion instructions.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-281 | Selectable lower-impact equipment mode | MO SC | Play | 3 Enriching | C | Configure a supported weapon or restraint system for a defined lower-impact operation; allied equipment and environmental hazards can still make the encounter lethal. | Moderate; Objects mode capability and Combat actual harm. | [Mass Effect][mass-study]; synthesis |
+| TE-282 | Local signal interference field | MO SC | Play | 3 Enriching | C | Obscure a specified communication or sensing band within a bounded area; hostile coordination may fail, but friendly warnings using the same channel are also affected. | Large; channel overlap, finite power and countermeasures. | [Deus Ex][deus-study]; synthesis |
+| TE-283 | Hard-pressure venting interval | SC | Play | 3 Enriching | C | Give an enabled protective system a stored load that clears only through a vulnerable venting phase; more capacity delays the decision but does not replace recovery. | Large; existing field law, retained load and exposed state. | [Starsector][starsector-study]; synthesis |
+| TE-284 | Finite decoy identities | SC | Play | 3 Enriching | C | Emit one of a prepared set of machine-readable identities through a compatible device; repeated use and independent observations can expose the deception instead of guaranteeing universal acceptance. | Large; specific recognition protocol and evidence history. | [Prey][prey-study]; original synthesis |
+| TE-285 | Impact-triggered branch isolation | MO SC | Play | 3 Enriching | C | Disconnect a supported damaged power branch before it continues feeding a fault; protection can preserve the wider installation while deliberately disabling the attached tool or weapon. | Moderate; local damage sensing and switch behavior. | [Oxygen Not Included][oni-study]; synthesis |
+| TE-286 | Emergency outward exhaust | MO SC | Play | 4 Advanced | C | Purge a compromised compartment through a designated outlet; restoring one room transfers gas, heat or contaminants somewhere real, making outlet placement a consequential decision. | Large; atmosphere transfer and affected spaces. | [The Expanse][expanse]; synthesis |
+| TE-287 | Isolatable implant bus | SC | Play | 4 Advanced | C | Disable one compatible implanted function while retaining unrelated bodily services; an intrusive or malfunctioning enhancement need not require shutting down the person. | Large; Bodies implant interfaces and authorized isolation. | [CDDA][cdda-study]; synthesis |
+| TE-288 | Discharge-and-rearm hazard cycle | SC | Play | 4 Advanced | C | Expose a supported perimeter device's finite discharge and recharging states, creating a temporary passage window rather than permanent safety after the first trigger. | Moderate; device energy states and Combat hazard timing. | [S.T.A.L.K.E.R. 2][stalker-study]; synthesis |
+| TE-289 | Abandoned-system shutdown sequence | MO SC | Play | 4 Advanced | C | Put an unattended compatible installation into a staged low-risk state when its required operator or acknowledgment is absent; legitimate ongoing tasks need an explicit continuation policy. | Large; finite shutdown states and interrupted work. | [Prey][prey-study]; synthesis |
+| TE-290 | Arsenal-to-public-service conversion | SC | Play | 4 Advanced | C | Reuse compatible power, cooling and structural modules from a retired arsenal to support a clinic or workshop; conversion preserves useful hardware without retaining its old targeting authority. | Large; Work conversion and interface-specific reuse. | [Repairable city](#the-repairable-city); original synthesis |
+
+## Experimental technical bargains
+
+These are proposed fictional operating laws, not descriptions of demonstrated real technology. Each changes a concrete possibility and identifies the resources or distinctions it must preserve.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TE-291 | Sacrificial scaffold printing | SC | Play | 4 Advanced | D | Define fabrication that uses temporary supports grown from a separate finite feedstock; dissolving the supports reveals a finished shape but also removes any accidental load they were carrying. | Large; authored support material and Work completion stages. | [Tears of the Kingdom][totk-study]; original extrapolation |
+| TE-292 | Single-use teardown template | SC | Play | 4 Advanced | D | Define a scanner that destroys an eligible sample while preserving one temporary fabrication template; decide whether a rare object is more valuable intact or as a route to a reproducible substitute. | Large; Objects consumption, bounded analysis and separate feedstock. | [Prey][prey-study]; original extrapolation |
+| TE-293 | Peelable temporary circuitry | SC | Play | 4 Advanced | D | Define a supplied film that places one supported circuit on a compatible surface and can later be peeled away; the film is consumed or reclaimed, not copied by remembering its pattern. | Large; Materials conductance and finite circuit application. | [Minecraft signals][minecraft-study]; original extrapolation |
+| TE-294 | Reciprocal deformation pair | — | Lab | 5 Frontier | D | Define two connected nonliving surfaces whose bounded shape changes are coupled: flattening a seat can arch a distant canopy, creating useful and occasionally ridiculous competing preferences. | Large; unusual-reality geometry law and conserved working material. | [Garry's Mod][gmod]; original extrapolation |
+| TE-295 | Time-spread impact buffer | — | Lab | 5 Frontier | D | Define a device that releases one admitted impact's force over a longer interval; it can save a fragile load but remains loaded until the stored impulse has actually been discharged. | Large; temporal force law and explicit capacity. | [World technology][worldtech]; original extrapolation |
+| TE-296 | Taste projection without nutrition | SC | Blend | 5 Frontier | D | Define a compatible sensory interface that presents selected recorded flavors without creating food; a spectacular tasting can delight a participant while leaving hunger and nourishment unchanged. | Large; Bodies taste mapping and voluntary sensory access. | [The Culture][culture]; original extrapolation |
+| TE-297 | Lent motor-control workspace | — | Blend | 5 Frontier | D | Define a consensual interface through which an expert briefly guides one compatible tool using another participant's available control channel; ownership of the body, stop control and private thought remain separate. | Large; trusted scoped control and interruption; Abilities retains expertise. | [The Culture][culture]; original extrapolation |
+| TE-298 | Age-separated specimen storage | — | Lab | 5 Frontier | D | Define a chamber whose contents undergo a specified slower aging process while the outside world continues; preserving a specimen consumes capacity and does not grant arbitrary access to its past. | Large; bounded temporal rate and entry/exit state. | [Outer Wilds][outer]; original extrapolation |
+| TE-299 | Reassemblable service swarm | SC | Blend | 5 Frontier | D | Define a finite swarm of supplied units that can form a few admitted tools or structures; forming a bridge removes those units from a workbench until they return. | Large; material-preserving assembly, supported shapes and local control. | [Spore][spore]; original extrapolation |
+| TE-300 | Repairable miniature habitat | — | Lab | 5 Frontier | D | Define an engineered small-scale inhabited environment with its own explicit air, access and scale interfaces; outside maintenance can become a meaningful event inside without automatically creating or copying residents. | Large; unusual scale law, Ecology and independently defined people. | [World technology][worldtech]; original extrapolation |
+
 ## The district heat loom
 
-**MO SC · Blend · High · 3/New.** Gap: coarse heat-routing network with capacity, loss and isolation.
+**MO SC · Blend · 3 Enriching · D.** Gap: coarse heat-routing network with capacity, loss and isolation.
 
 A network moves surplus workshop heat to baths and greenhouses through visible exchange stations. Operators negotiate priorities during cold weather. Builders get a machine that connects domestic comfort and industry. Start with a handful of nodes, bypasses and clear flow displays; detailed thermodynamics is optional, and one fault should not recursively simulate every household appliance.
 
@@ -389,7 +491,7 @@ Seeds: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Ox
 
 ## Hushmesh
 
-**MO SC · Play · Try · 3/New.** Gap: bounded acoustic attenuation and per-sense observations.
+**MO SC · Play · 3 Enriching · D.** Gap: bounded acoustic attenuation and per-sense observations.
 
 A woven panel dampens selected sound ranges, allowing a musician and night worker to share a building. The same panel can help conceal a raider's approach or mask a machine's warning noise, creating a useful tradeoff. Players configure particular acoustic effects, not universal stealth bubbles. Define what is attenuated, which warnings remain visible and how people inspect the effect; silence must not erase unrelated evidence.
 
@@ -397,7 +499,7 @@ Seeds: [Deus Ex (2000)](source-atlas.md#g117), [Prey (2017)](source-atlas.md#g11
 
 ## The relay orchard
 
-**SC · Play · High · 3/New.** Gap: bounded communication nodes, delays and maintenance.
+**SC · Play · 4 Advanced · D.** Gap: bounded communication nodes, delays and maintenance.
 
 A settlement grows or assembles branching relays that carry messages through difficult terrain. A damaged node isolates one valley, prompting repair, courier work or a temporary bridge. An armed faction may seize it to charge for access, and rivals can contest that control. Players build, defend or disrupt consequential infrastructure. Messages retain senders and uncertainty; relay coverage cannot grant omniscient remote perception or access to information nobody chose to transmit.
 
@@ -405,7 +507,7 @@ Seeds: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides of Darkness](s
 
 ## A tool with swappable manners
 
-**MO SC · Play · High · 2/Extend.** Gap: finite operating modes, power budgets and compatible attachments.
+**MO SC · Play · 2 Expected · C.** Gap: finite operating modes, power budgets and compatible attachments.
 
 A service drone can survey, carry or illuminate, but its heavy cargo mount blocks a sensor. Players configure it for a particular job and can explain the tradeoff; a weapon or decoy mount can support an expedition while consuming capacity needed for salvage. Avoid dozens of interchangeable stat modules; each attachment should enable a different method. Behavior modes remain bounded standing plans, not unrestricted agents generating fresh instructions on every tick.
 
@@ -413,7 +515,7 @@ Seeds: [Final Fantasy VII](source-atlas.md#g84), [Final Fantasy XII](source-atla
 
 ## Phase kiln
 
-**SC FA · Play · Try · 3/New.** Gap: one authored transformation process with conserved inputs and batch limits.
+**SC FA · Play · 4 Advanced · D.** Gap: one authored transformation process with conserved inputs and batch limits.
 
 A machine changes the internal structure of a common mineral to make gate components, consuming power and a reusable catalyst that slowly degrades. The interesting scarcity is maintenance expertise and reliable energy. Creators can build industrial towns, lucrative monopolies or contested arsenals around it; an invented process may let a newcomer challenge the current owner. State the fictional law clearly and keep waste or loss explicit; “phase” is not permission for arbitrary matter creation.
 
@@ -421,7 +523,7 @@ Seeds: [Noita](source-atlas.md#g32), [Mass Effect: Andromeda](source-atlas.md#g1
 
 ## The route room
 
-**SC · Play · High · 3/New.** Gap: destination selection, departure conditions and atomic route transitions.
+**SC · Play · 2 Expected · D.** Gap: destination selection, departure conditions and atomic route transitions.
 
 An inhabited ship has a route room where crew compare destination conditions, passengers and supplies. Once prepared, travel advances through an abstract transition; play resumes aboard during a discrete incident or on the ground. The captain chooses commitments, not orbital maneuvers. Do not add a hidden flight simulator, navigable starfield, dogfighting or piloted approach controls.
 
@@ -429,7 +531,7 @@ Seeds: [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Mass Effect 2](s
 
 ## External action crew stations
 
-**SC · Play · Try · 3/New.** Gap: bounded station tasks resolving one shared encounter state.
+**SC · Play · 4 Advanced · D.** Gap: bounded station tasks resolving one shared encounter state.
 
 During a discrete external encounter, crew operate shielding, communications, evacuation and weapon stations from inside the ship. A player can demand surrender, protect another vessel, pursue a contracted capture or disengage while coordinating finite people and power. Offensive actions need declared targets, costs and consequences just as defensive actions do. Each station has visible dependencies. Resolve encounters in discrete phases with finite targets; the ship never becomes a directly piloted combat vehicle.
 
@@ -437,7 +539,7 @@ Seeds: [Lethal Company](source-atlas.md#g38), [Mass Effect 2](source-atlas.md#g1
 
 ## Pocket fabrication with a bill of matter
 
-**SC · Play · High · 3/New.** Gap: supported recipes, material accounting and honest output constraints.
+**SC · Play · 3 Enriching · D.** Gap: supported recipes, material accounting and honest output constraints.
 
 A field fabricator makes repair brackets from local feedstock, but cannot print knowledge, living citizens or every complex component. Players scan a supported shape, choose material and inspect strength limits. It rewards preparation and adaptation. Output consumes conserved inputs and time; a convincing prompt cannot fabricate an absent execution capability or clone unique resources.
 
@@ -445,7 +547,7 @@ Seeds: [Minecraft](source-atlas.md#g20), [Mass Effect: Andromeda](source-atlas.m
 
 ## Memory as a commissioned recording
 
-**MO SC · Play · Try · 3/New.** Gap: voluntary bounded recordings with access and revocation semantics.
+**MO SC · Play · 3 Enriching · D.** Gap: voluntary bounded recordings with access and revocation semantics.
 
 A resident records a guided account of an old workshop, choosing what to show and omit. Visitors can explore the testimony and compare it with present evidence. It is an authored artifact, not access to the person's mind or perfect past. Editing must retain provenance where relevant, and revoking access cannot undo knowledge a recipient already acquired.
 
@@ -453,7 +555,7 @@ Seeds: [Final Fantasy XV](source-atlas.md#g92), [His Dark Materials](source-atla
 
 ## The repairable city
 
-**MO SC · Play · High · 2/Extend.** Gap: inspectable service nodes, standard parts and scoped maintenance plans.
+**MO SC · Play · 2 Expected · C.** Gap: inspectable service nodes, standard parts and scoped maintenance plans.
 
 Public pumps, lights and kiosks share a few understandable modules. A neighborhood team can improve reliability using ordinary tools and local spare stock. Power users design maintenance networks while casual players enjoy dependable services. Avoid one global control console that trivially disables everything; keep failure domains small and make repairs alter the lived environment visibly.
 
@@ -461,13 +563,15 @@ Seeds: [Factorio](source-atlas.md#g27), [Fallout 4](source-atlas.md#g74), [Discw
 
 ## Research coverage
 
-Base catalogue and shared rules: `2bb10759c263cf29a3de0f25bb3595e49420006f`. Applicable instructions, shared definitions, design foundation, actions, selection/combinations, all four seed proposals, assigned originals and relevant neighboring scope statements were read. The source atlas was read through line 220; its uninspected tail was not counted as research.
+The original 240 systems and ten pattern bodies are preserved, with TE-241–TE-300 added after completing the available research manuscripts across the assignment. Applicable instructions, shared definitions, design foundation, actions, selection/combinations, all four seed proposals, assigned originals and relevant neighboring scope statements were read. The complete source atlas was read as navigation rather than substituted for its sources.
 
-Freshly read in full: all **39 worldbuilding documents**, including **28 world dossiers** and their comparative, method and audit material, at `b387e7caeda5cec301045b877ca50a2815a869dd`; all **38 preserved game chapters**, the **Noita full dossier**, the **Factorio/Satisfactory granular study**, and the essays **How to interpret the evidence**, **Comparative map**, and **What actually makes these worlds fun** at `065309db37067c8e0a213bc1ed14446a4ea20eea`. Current indexes and available correction-ledger sections were checked separately; reading an index was not counted as reading its dossiers.
+**Coverage:** all 148 game dossiers, 38 preserved game chapters, 29 granular studies, twelve essay files and the accessible reference notebooks, interaction lookup, operational supplements and correction ledgers. Main-game material uses `065309db37067c8e0a213bc1ed14446a4ea20eea`; the eighteen survival additions use `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a`. All 39 worldbuilding documents were read at `b387e7caeda5cec301045b877ca50a2815a869dd`. The [group reading record](group-7-research-progress.md) preserves individual completion marks, processing notes and the distinction between earlier reads and this continuation.
 
-**Gap:** the requested fresh full game-corpus reread remains incomplete. Other full-game dossiers, other granular studies, remaining essays, reference supplements and long-ledger tails were not freshly read for this checkpoint. Continuation heads `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` (G131–140) and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` (G141–148) were discovered, but their bodies have not informed it. Retained pattern citations preserve earlier work; they do not imply a new full read of every linked dossier. No external videos, playtests or underlying novels were independently consumed here.
+**Limits:** dated source claims were not converted into fresh live-service or technical certifications. No videos were watched, games tested or underlying novels independently reread. Some directory/audit aliases returned 404; actual linked audit files, the field guide and operational supplements were read instead. No unidentified unavailable text is claimed read, and the source library's separate original-packet reconciliation is not certified here.
 
-All new machines are proposals and creative synthesis, not claims about a source game's current mechanics. The integration owner should update shared research pins and coverage records, and coordinate missing Objects, Materials, Work, Combat, Bodies, Ecology and Automation dependencies named above. Those shared files remain unchanged.
+The new systems emphasize startup versus steady operation, recovery of real materials, limited evidence, public and private sensory pleasure, and technical choices that can serve either care or conflict. They are original proposals, not assertions that a cited game implements the described machine. New fictional operating laws are marked D; wider-world experiments are not silently assigned to a seed proposal. SC continues to exclude playable piloting and navigation.
+
+**Integration dependencies:** Objects owns finished equipment; Materials owns substances and response laws; Work owns manufacture and repair; Combat owns harm and rescue; Bodies owns interfaces and treatment effects; Ecology owns living needs; Automation owns reusable plans. Shared source-atlas pins and cross-group navigation are integration-owner updates. No shared catalogue, research manuscript or runtime code was changed.
 
 [flows]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/factorio-satisfactory-flows-blueprints-and-place.md
 [fun]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/essays/what-actually-makes-these-worlds-fun.md
@@ -509,3 +613,13 @@ All new machines are proposals and creative synthesis, not claims about a source
 [macondo]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/24-macondo.md
 [spirited]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/25-spirited-away.md
 [fallout]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/28-fallout.md
+[oni-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/oxygen-not-included.md
+[cdda-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/cataclysm-dark-days-ahead.md
+[prey-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/prey-2017.md
+[starsector-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/starsector.md
+[stalker-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/stalker-2-heart-of-chornobyl.md
+[deus-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/deus-ex-2000.md
+[minecraft-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/minecraft-signals-authorship-and-meaningful-objects.md
+[balatro-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/balatro-scoring-operators-risk-and-readable-combinations.md
+[mass-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/mass-effect.md
+[totk-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/the-legend-of-zelda-tears-of-the-kingdom.md
