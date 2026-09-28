@@ -119,6 +119,7 @@ export {
   NATIVE_STRIKES,
   strikeDefinition,
   availableStrikes,
+  describeAttack,
   validMelee,
   type StrikeDefinition,
   type MeleeProfile,
@@ -128,7 +129,7 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
-export { BASE_HUNTING, huntingDescription } from './worlds/base/hunting.js';
+export { BASE_HUNTING, huntingDescription, observedAnimalHealth } from './worlds/base/hunting.js';
 export { memoryPerspective } from './memory-perspective.js';
 
 export * from './participation.js';

@@ -1,4 +1,4 @@
-import { worldPosition } from '@open-legend/domain';
+import { worldPosition, observedAnimalHealth } from '@open-legend/domain';
 import { entityLabel } from './entity-references.js';
 import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
 import type { AttentionCandidate } from './recall.js';
@@ -45,6 +45,8 @@ export function perceivedEntityText(
   const facts = [
     `I can see ${entityLabel(world, entity, observerId)}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
   ];
+  const health = observedAnimalHealth(world, observerId, entity.id);
+  if (health) facts.push(health);
   if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
   else if (entity.actor?.action) {
     const action = entity.actor.action;

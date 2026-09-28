@@ -1,6 +1,6 @@
 # Embodied survival and weapon use
 
-**Status: approved for implementation in chat, September 27, 2026; mechanics implemented, integrated acceptance incomplete.** The owner requests cognitively chosen survival behavior, removal of automatic berry seeking/eating, a knife for Mike and Ada, and reusable melee mechanics. The owner accepted the starting scene, biography, initial tuning and delivery plan below; tuning remains empirically unqualified. The owner confirmed that existing NPC ghost/revival policy stays in place.
+**Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** The owner requests cognitively chosen survival behavior, removal of automatic berry seeking/eating, a knife for Mike and Ada, and reusable melee mechanics. The owner accepted the starting scene, biography, initial tuning and delivery plan below; optimal tuning remains unqualified. The owner confirmed that existing NPC ghost/revival policy stays in place.
 
 [Technical design](embodied-survival-tech-design.md) explains ownership and implementation. Current behavior remains described by [survival](../worlds/base/survival.md), [combat](../worlds/base/combat.md), [agency](../agent-agency.md) and [targeted actions](../targeted-actions.md).
 
@@ -10,7 +10,7 @@ Ada should notice her body's condition, consider her possessions and surrounding
 
 An authored person necessarily starts with some knowledge and dispositions. Emergence here means that her operational goals and choice of means arise during play; it does not mean a blank model rediscovers biology. We can explain food, injury and death without prescribing a response. This supports believable characterization, not a claim that the model experiences hunger or consciousness.
 
-The first delivery ends at a real melee attempt and its visible outcome. It must support continuing attacks through ordinary chosen plans, including an eventual animal death when actual hits suffice. Autonomous harvesting, cooking and eating are later behavioral qualification: native operations already exist, but a successful attack does not prove the complete food chain works through cognition.
+The first delivery ends at a real melee attempt and its visible outcome. It must support continuing attacks through ordinary chosen plans, including an eventual animal death when actual hits suffice. The owner has now authorized the [complete Jev-only meal follow-up](embodied-survival-tech-design.md#complete-jev-only-meal-follow-up): Ada must choose hunting, harvesting, cooking and eating through ordinary cognition. Native operations already exist, but a successful attack does not prove this complete chain. Reusable learned activities remain a discussion proposal, not implementation scope.
 
 ## A person before a task
 
@@ -144,7 +144,11 @@ Non-goals: permanent NPC death, new ghost/summoning mechanics, a universal utili
 
 ## Current delivery evidence
 
+The approved comparison/retry follow-up adds short tool descriptions and evaluates compact attack statistics alongside visible animal health. Health disclosure is bundled-world knowledge for currently seen animals, not access to human/NPC private needs or unseen targets. The [technical follow-up](embodied-survival-tech-design.md#weapon-comparison-visible-health-and-retry-follow-up) tracks implementation and live comparison separately. [Starting-scene action priorities](../maintainers/action-capabilities.md#starting-scene-action-priorities) propose the broader next steps; that proposal is not authorization to implement the entire catalogue.
+
 Native condition, inventory, finite melee and named starter integration are implemented. The renewed [Jev-only trials](../verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) demonstrate unassigned-goal hunting, knife equip/approach, real misses, outcome-aware retries and successful hits on hare/deer. Food-present comparisons select eating/gathering. Broader UI, scheduling-race and population qualification remain incomplete in their existing trackers; successful hunting does not waive those requirements or establish reliable long-term survival.
+
+The earlier [minimal-context follow-up](../verification/embodied-survival.md#minimal-context-and-equipment-derived-hunting) removed numeric combat prose and explicit hunting/food-preparation biography additions, and derived concise hunt options from compatible equipment. Its final Jev path demonstrates a knife deer attempt and later retry, an unarmed hare attack, eating carried food and deferral without perceived prey. Those early spear/bow checks were native fixtures; the later [complete-meal trials](../verification/embodied-survival.md#complete-jev-only-meals) now demonstrate real Jev-selected spear/bow meals and a deer meal. [AG13](../maintainers/agent-agency.md#ag13--embodied-survival-demonstration) tracks the observed weapon-choice and retry-delay limitations; these results establish neither global prompt minimality nor reliable survival.
 
 The owner explicitly rejected generation even solely to formulate a freeform intention. Keep every scenario decision Jev/native, with no seeded operational goal, forced hunting rule or silent threshold change to manufacture a pass. Jev’s inability to author novel goal prose remains visible; choosing a known action without a formal goal is allowed.
 

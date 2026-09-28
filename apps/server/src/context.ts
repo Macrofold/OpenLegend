@@ -6,7 +6,13 @@ import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { availableStrikes, strikeDefinition, huntingDescription } from '@open-legend/domain';
+import {
+  availableStrikes,
+  strikeDefinition,
+  huntingDescription,
+  observedAnimalHealth,
+  describeAttack,
+} from '@open-legend/domain';
 import {
   canReachEntity,
   findApproachPath,
@@ -40,14 +46,17 @@ function describeTargets(
   actorId: string,
   candidates: CandidateAction[],
 ): CandidateAction[] {
+  const health = new Map<string, string>();
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
     const target = id ? service.world.entities[id] : undefined;
+    if (target && !health.has(target.id))
+      health.set(target.id, observedAnimalHealth(service.world, actorId, target.id));
     return target
       ? {
           ...candidate,
-          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${entityLabel(service.world, target, actorId)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.`,
+          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${entityLabel(service.world, target, actorId)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''}`,
         }
       : candidate;
   });
@@ -506,7 +515,12 @@ export function npcCandidates(
     const definition = definitions.get(item.definitionId);
     const launcher = definition?.launcher;
     const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
-    return definition && launcher && ammunition ? [{ item, definition, launcher, ammunition }] : [];
+    return definition &&
+      launcher &&
+      ammunition &&
+      (item.id === actor.equippedItemId || item.quantity === 1)
+      ? [{ item, definition, launcher, ammunition }]
+      : [];
   });
   const cuttingTool = inventory.some((item) =>
     definitions.get(item.definitionId)?.properties.includes('point'),
@@ -546,13 +560,16 @@ export function npcCandidates(
         if (!reachable.get(launcher.range)) continue;
         actions.push({
           id: `hunt:${item.id}:${entity.id}`,
-          description,
+          description: `${item.id !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
           command: {
             type: 'hunt',
             targetId: entity.id,
             itemId: item.id,
             ammunitionId: ammunition.id,
           },
+          ...(item.id !== actor.equippedItemId
+            ? { prerequisite: { type: 'equip' as const, itemId: item.id } }
+            : {}),
         });
       }
     }
@@ -572,7 +589,7 @@ export function npcCandidates(
         );
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`}`,
+          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
           command: {
             type: 'strike',
             definitionId: definition.id,
@@ -599,7 +616,13 @@ export function npcCandidates(
     )
       actions.push({
         id: `harvest:${entity.id}`,
-        description: `Use a carried cutting point to harvest the finite ${entity.name}.`,
+        description: `Harvest ${entity.remains.yields
+          .filter((item) => item.quantity > 0)
+          .map(
+            (item) =>
+              `${item.quantity} × ${service.world.itemDefinitions[item.definitionId]!.name}`,
+          )
+          .join(', ')} from ${entity.name} using a carried cutting tool.`,
         command: { type: 'harvest', targetId: entity.id },
       });
     if (entity.heat?.lit) {

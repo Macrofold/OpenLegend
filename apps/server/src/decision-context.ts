@@ -634,10 +634,7 @@ export async function selectDecisionActions(
     id: `a${index}`,
     description:
       purpose === 'choose-action' && candidate.prerequisite
-        ? candidate.description.replace(
-            'Requires first equipping the carried weapon in a separate action. ',
-            'Equip first. ',
-          )
+        ? `${candidate.description.replace('Requires first equipping the carried weapon in a separate action. ', '')} (auto-equip)`
         : candidate.description,
   }));
   const candidateDescriptions = Object.fromEntries(
