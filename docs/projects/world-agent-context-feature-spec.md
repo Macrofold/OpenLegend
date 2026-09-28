@@ -6,7 +6,7 @@
 
 Let a person describe an invention in ordinary language and receive a useful, accurately explained draft for review. Give the agent the necessary mechanics and a small set of meaningful operations. Keep administrative orchestration, permission checks, accounting and persistence in the application.
 
-This is a context and authoring-interface project, not a new invention engine. The current [World Agent](../world-agent-runtime.md) remains one conversation able to investigate, design and invoke authorized actions. The [technical design](world-agent-context-tech-design.md) proposes how to make simple requests small while keeping deeper investigation available. [Mechanics inventory](world-agent-context/mechanics.md) separates executable behavior from supported authoring.
+This project improves context and authoring while adopting the existing [graph and invention-pipeline foundation](world-agent-context/initial-foundation.md). The first version includes real dependency, validation and readiness records through existing owners; it does not introduce a new invention engine. The current [World Agent](../world-agent-runtime.md) remains one conversation able to investigate, design and invoke authorized actions. The [technical design](world-agent-context-tech-design.md) proposes how to make simple requests small while keeping deeper investigation available. [Mechanics inventory](world-agent-context/mechanics.md) separates executable behavior from supported authoring.
 
 ## Problem demonstrated
 
@@ -22,7 +22,7 @@ The test asked for creation, a separate refinement, review and an unsupported-me
 
 The player asks: “Make a sling using cord and prepared fiber. Favor accuracy even if crafting takes longer.” The application supplies the actual eligible materials, launcher mechanics, field meanings, selected draft if any, and a clear completion instruction. The agent designs the candidate and submits it once for review.
 
-Native code validates the complete candidate and current inventor eligibility, saves an immutable revision and creates the exact review plan. The result says that the draft is saved and awaiting human review. The agent briefly explains the tradeoff and finishes. It must not call a valid draft “installed,” claim the player possesses it, or wait in a paid loop for approval. Human approval and Apply retain their existing authority and receipts.
+Native code derives the candidate’s typed dependency graph, runs the supported family’s required checks, records presentation adequacy and current inventor eligibility, saves an immutable revision and creates the exact review plan. The result says that the draft is saved and awaiting human review. The agent briefly explains the tradeoff and finishes. It must not call a valid draft “installed,” claim the player possesses it, or wait in a paid loop for approval. Human approval and Apply retain their existing authority and receipts.
 
 ### Refining a saved invention
 
@@ -51,9 +51,11 @@ On resume, rebuild current draft/review facts from application records and prese
 ## Required behavior
 
 - Plain-English instructions state the person's goal, constraints, current selection, next useful action and completion condition. Exact IDs remain data; internal names alone never explain a mechanic.
-- Relevant mechanical descriptions identify subject/source/target, prerequisites, units, reads, changes, consumption timing, interactions, completion and interruption. Use real current values and explicit support/coverage.
+- Relevant mechanical descriptions identify named participant/object roles, prerequisites, units, reads, changes, consumption timing, interactions, process ownership, completion and interruption. Ordinary subject/source/target bindings are examples, not a universal three-role limit. Use real current values and explicit support/coverage.
 - Definition, recipe, live item, actor, resource source and status instance remain distinct. Installation, learning, possession and action completion remain distinct outcomes.
 - The first context is small and sufficient for common tasks. Broader evidence, relationships and schemas are available on demand with explicit continuation and incomplete coverage.
+- A shared candidate relationship projection informs context selection, native validation and human review. Exact provenance, query coverage and unresolved requirements remain visible; a complete graph page cannot imply complete interaction validation.
+- Attributable intent, selected revision, required checks, presentation adequacy, review, activation, knowledge and actual creation/use remain independently recoverable. These are native workflow responsibilities, not compulsory model calls.
 - One source-backed representation owns each fact. Templates, readable instructions and strict tool contracts are views of the same owners; prose and examples grant neither mechanics nor authority.
 - Tool results give the next useful action. Invalid, stale, unavailable, unsupported, denied, incomplete and uncertain outcomes remain distinct.
 - The owner can inspect technical metrics and costs; players retain the existing abstract usage display. New prompts do not expose provider economics or estimate invention counts.
@@ -61,9 +63,9 @@ On resume, rebuild current draft/review facts from application records and prese
 
 ## Scope and exclusions
 
-In scope: deterministic scoped context assembly, selected tool profiles, generated field guidance/templates, compact results, source/version-aware deduplication, resumable working context, native save-for-review orchestration, medium execution policy and measured qualification.
+In scope: deterministic scoped context assembly, a small typed candidate graph, bounded native validation plans, attributable requirements and independent readiness; selected tool profiles, generated field guidance/templates, compact results, source/version-aware deduplication, resumable working context, native save-for-review orchestration, medium execution policy and measured qualification.
 
-Existing INV/WW owners retain real harness reliability, art, full physics/composition, broader action families, body/law migration, private multiplayer qualification and sustained scale. This project exposes their actual support accurately; it does not implement them. No generic state patch, generated executable code, second effect interpreter, separate wallet, second World Agent UI, legacy save support or authoritative workspace files are introduced.
+Existing INV/WW owners retain real harness reliability, generated art and richer presentation publication, full physics/composition, broader action families, body/law migration, private multiplayer qualification and sustained scale. This project exposes their actual support accurately; it does not implement them. No generic state patch, generated executable code, second effect interpreter, separate wallet, second World Agent UI, legacy save support or authoritative workspace files are introduced.
 
 ## Acceptance criteria
 
@@ -75,10 +77,11 @@ Existing INV/WW owners retain real harness reliability, art, full physics/compos
 6. Recipient grants filter all input before formatting; altered grants/world generation require safe fresh context. No administrative context leaks into NPC cognition or another conversation.
 7. Matched workload measurements meet the proposed [context targets](../limits/inventions.md#ctx01--context-size-and-measured-efficiency) without reducing semantic correctness. No byte savings are claimed as measured token or latency savings.
 8. Macrofold's outgoing request confirms medium effort and a permission-appropriate tool/instruction surface. File tasks continue working under their own permissions.
+9. The [initial foundation proof](world-agent-context/initial-foundation.md#6-concrete-first-version-proof) demonstrates graph/context/review parity, scoped native check completeness, presentation adequacy and recovery across recipe, gathering and owner sleep-policy cases. Harder repertoire cases preserve their requirements or report missing support, without claiming new execution systems.
 
 ## Delivery stages
 
-First deliver source-backed recipe guidance and deterministic context; then the native submit operation and thin transports; then selected profiles and Macrofold execution behavior; then continuity and cross-kind templates; finally qualify actual journeys. Work remains tracked once in WW17–WW23, not as duplicate checklists here. Runtime implementation starts only after approval of this design.
+First deliver source-backed guidance, the candidate graph and bounded shared analysis; then native submit with retained requirements/checks/readiness and thin transports; then selected profiles and Macrofold execution behavior; then continuity and cross-kind templates; finally qualify actual journeys. These are parts of the initial version, not optional graph/pipeline follow-ups. Work remains tracked once in WW17–WW23, not as duplicate checklists here. Runtime implementation starts only after approval of this design.
 
 ## Maintained records
 

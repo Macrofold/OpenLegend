@@ -1,0 +1,55 @@
+# Proposed synthetic state after successful native preparation; not executed evidence.
+# Later view of candidate-graph.yaml: identical candidate/graph, validation advanced from revision 1 to 2.
+# References point to existing owners or their proposed bounded extensions, not a second world store.
+objective:
+  id: example-existing-authoring-root
+  selected_candidate: { id: example-draft-1, revision: 1 }
+  route: new-supported-definition
+  requirements:
+    - id: req-materials
+      source: example-user-turn-1
+      strength: hard
+      text: Use cord and prepared fiber.
+      finding: Satisfied by the inspected candidate inputs.
+    - id: req-accuracy
+      source: example-user-turn-1
+      strength: preference
+      text: Favor accuracy even if crafting takes longer.
+      finding: The selected parameters and tradeoff are shown for human review; no automatic optimality claim.
+dependency_graph: example-candidate-graph-1
+validation:
+  id: example-validation-plan-1
+  revision: 2
+  candidate_revision: 1
+  family_contract: example-swing-contract-version
+  policy_and_source_pins: example-private-pin-record
+  checks:
+    - id: shape-and-references
+      validator: example-native-validator-version
+      status: passed
+    - id: material-and-family-constraints
+      requires: [shape-and-references]
+      validator: example-native-validator-version
+      status: passed
+    - id: inventor-authority-and-current-pins
+      requires: [shape-and-references]
+      validator: example-native-authoring-version
+      status: passed
+  mandatory_coverage: complete-for-finite-recipe-admission
+  broader_interactions: not-evaluated
+  evidence: Native findings refer to this exact synthetic candidate; a real record must contain actual results and applicability versions.
+presentation:
+  requirement: Existing inventory-tool representation with truthful name and description.
+  status: existing-fallback-adequate
+  binding: example-verified-family-representation
+  optional_art: not-requested
+readiness:
+  draft: saved
+  review: { id: example-plan-1, status: pending-human-review }
+  installation: { status: not-applied, receipt: null }
+  knowledge: { status: not-granted-by-this-draft }
+  instance: { status: not-created, receipt: null }
+  use: { status: not-requested, receipt: null }
+operation: { id: example-sling-create-1, status: committed }
+player_summary: Saved for review. This has not installed the recipe or created a sling.
+agent_next: Explain the selected accuracy/work tradeoff and finish; the human reviews it in the application.

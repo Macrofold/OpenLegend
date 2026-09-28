@@ -1,0 +1,53 @@
+# Proposed illustrative projection. All IDs/version labels are synthetic, not security digests.
+# Pre-validation view; pipeline-state.yaml shows the later validation revision for this same candidate.
+# Native source adapters derive this; the model cannot submit graph edges as executable behavior.
+id: example-candidate-graph-1
+candidate: { kind: recipe-draft, id: example-draft-1, version: example-revision-1 }
+snapshot: example-authorized-snapshot-1
+references:
+  candidate: { kind: recipe-draft, id: example-draft-1, version: example-revision-1 }
+  cord: { kind: item-definition, id: cord, version: example-cord-version }
+  fiber: { kind: item-definition, id: prepared_fiber, version: example-fiber-version }
+  family: { kind: family, id: swing, version: example-family-version }
+  output: { kind: proposed-item-definition, id: example-output-1, version: example-revision-1 }
+relationships:
+  - id: example-edge-material-1
+    source: candidate
+    target: cord
+    relation: requires
+    role: binding
+    quantity: 2
+    sourceRecord: candidate
+    assertion: compiler-derived
+  - id: example-edge-material-2
+    source: candidate
+    target: fiber
+    relation: requires
+    role: pouch
+    quantity: 2
+    sourceRecord: candidate
+    assertion: compiler-derived
+  - id: example-edge-family
+    source: candidate
+    target: family
+    relation: implements
+    sourceRecord: candidate
+    assertion: compiler-derived
+  - id: example-edge-output
+    source: candidate
+    target: output
+    relation: produces
+    sourceRecord: candidate
+    assertion: compiler-derived
+    meaning: Proposed crafting result; no item exists from this edge.
+coverage:
+  projection:
+    scope: Candidate's direct finite-recipe references in this authorized snapshot.
+    status: complete
+  mandatory_checks:
+    scope: Current finite recipe family and authoring admission.
+    status: pending
+  broader_interactions: not-evaluated
+frontier: []
+validation_plan_ref: { id: example-validation-plan-1, revision: 1 }
+model_summary: This draft requires cord and prepared fiber and uses the supported swing family. Validation is pending; nothing is installed or crafted.

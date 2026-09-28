@@ -34,6 +34,10 @@
 
 The executable status family is wider than the current hand-written authoring guide. A new generated guide must include actual supported contribution fields or declare its incomplete coverage; copying the current prose is not proof of complete schema support.
 
+## Relationships and future mechanics
+
+The [initial foundation](initial-foundation.md) derives a candidate graph from these same owners for context, validation and review. It also checks the design against the harder [action repertoire](../../repertoires/actions.md): multi-person roles, continuing actor/device processes, ordered physical prerequisites, attributed observations and identity/topology/time constraints. These cases require honest requirements and missing-capability findings now; they do not authorize new execution families. Preserve their distinctions when extending the common description shape rather than forcing every action into a subject/source/target triplet.
+
 ## Worked context selection
 
 ### Sling
