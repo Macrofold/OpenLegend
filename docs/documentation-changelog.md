@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-27 — World Agent context and invention-loop design
+
+Added the requested [feature specification](projects/world-agent-context-feature-spec.md), [technical design](projects/world-agent-context-tech-design.md) and [mechanics/YAML examples](projects/world-agent-context/README.md). The proposal uses deterministic scoped context, selected typed tools, native save-for-review and permission-appropriate Macrofold instructions. The owner requested medium effort; runtime behavior remains unchanged until implementation. Byte/turn targets are unqualified and never permit dropping required facts. [WW17–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) and [CTX01–CTX05](limits/inventions.md#world-agent-context-proposal) track work and tradeoffs. No new mechanics, paid execution or closure of the live-harness gate is claimed.
+
 ## 2026-09-27 — World Agent honors configured BYOK
 
 The owner selected BYOK for invention authoring. Removed the native authoring override that forced managed billing and omitted the saved provider connection; the [runtime](world-agent-runtime.md#4-execution-adapter) now honors the same operator settings as other native calls. This supersedes the request to fund managed credits. Existing admission caps, provider-cost accounting, conservative missing-usage holds and the abstract player usage display are preserved. [Real BYOK execution](verification/invention-main-integration.md#byok-authoring-and-connector-schema-blocker) reaches the model but exposes a Macrofold tool-schema validation failure; WW07 remains open rather than claiming successful invention qualification.

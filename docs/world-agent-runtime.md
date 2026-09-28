@@ -48,6 +48,8 @@ Do not hold an idle paid harness waiting for a person or a long art/validation j
 
 ## 6. Context and reasoning continuity
 
+The owner requested the [World Agent context project](projects/world-agent-context/README.md) to simplify inputs, tools and templates with medium effort. It is a proposed design tracked by WW17–WW23, not current runtime behavior; existing authority and continuity requirements below remain controlling.
+
 Initial context contains the user's goal, current selected project/revision, pinned preferences, pending decisions, concise world constitution/capability summary, budget state and tool instructions. It does not contain every definition or private memory. `ol_inspect`, graph and evidence tools can reach all authorized information needed over successive calls.
 
 Retain a compact working record of accepted constraints, decisions, unresolved findings and evidence refs. Provider compaction may summarize explanation but cannot overwrite canonical selections, approvals, failure findings or materials. Rebuild authoritative facts from tools on resume. Never spend a turn merely to repeat a readily available native catalogue.

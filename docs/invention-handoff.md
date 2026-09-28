@@ -66,6 +66,8 @@ The exact current catalogue comes from shared descriptors and `tools/list`, not 
 
 ## Next-work navigation and stop conditions
 
+The [World Agent context design packet](projects/world-agent-context/README.md) proposes scoped mechanics/context, typed tools, native save-for-review, readable YAML examples and medium effort. WW17–WW23 own its stages; the latest request authorizes documentation, not runtime implementation. Existing WW07 financial/harness/release gaps remain open.
+
 [WW11](maintainers/world-agent-writes.md) owns current-main reconciliation and sustained integration. [WW07 / INV-21.5](maintainers/world-agent-writes.md) owns the real Macrofold connector/harness release gate. [WW15 / INV-15](maintainers/world-agent-writes.md) owns expanded graph investigation, complete impact jobs and visual editing. [INV-12/18/19](maintainers/inventions-and-world-evolution.md) owns generated art, image-inclusive funding and capability-first qualification; [INV-20 and AC](maintainers/inventions-and-world-evolution.md) own actual repertoire consumers. These are pointers, not new tasks or claims that the parent work is finished.
 
 Unresolved product choices belong in [Open decisions](../archive/05-project/open-decisions.md). The conversation is unified and the current owner-approved usage/economics split is settled in the runtime contract. A reachable authenticated deployment and qualified harness/model are operational enablement inputs. Do not treat their absence as an excuse to duplicate adapters or invent credentials.

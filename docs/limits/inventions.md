@@ -265,3 +265,37 @@ Original recommendation: **Keep**.
 The default owner session cap is $5 and may be lowered; the finite workshop root defaults to $5 and is configurable from $0–$10, under the existing per-character monthly ceiling. Attributable Run reservations use remaining session exposure. Shared Worker capacity is separately owner-managed; the earlier all-inclusive compute allocation is removed by the owner’s decision. Players see abstract remaining usage, with no dollars, provider terms or invention-count estimates. See [runtime ownership](../world-agent-runtime.md#1-product-decisions), [budget accounting](../invention-budgets.md), and WW09/WW11 in [write delivery](../maintainers/world-agent-writes.md).
 
 The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entries and 50 public results per page; traces retain 100 visited nodes, depth 12 and 16 pages with explicit unfinished frontiers. These are synchronous safety ceilings, not measured population capacity. Current PostgreSQL memory inspection pages ten records through canonical cold storage, removing the obsolete 1,000-record hot-world cutoff. INV-15 and WW15 own expansion; current limits remain until evidence justifies it.
+
+## World Agent context proposal
+
+**Proposed, not implemented or performance-qualified.** [Design](../projects/world-agent-context-tech-design.md) and [WW17–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own context work. Existing runtime/session/recipe guards remain controlling until deliberately changed. These entries are defaults and qualification targets, not gameplay laws. No extra limits-audit task is needed before the proposed path exists; WW18/WW23 own measurement and revision.
+
+### CTX01 — Context size and measured efficiency
+
+**Proposed · Restrictiveness: Safe for the simple reference journey; unqualified for complex work.** Target at most 12,000 compact-JSON-equivalent bytes for the complete initial simple-recipe request, including tools/instructions, and 25,000 bytes for each subsequent request in that journey. Target at most three model generations to saved review plus explanation when no correction/clarification is needed. These are diagnostic acceptance targets, not truncation or turn limits. The old capture's initial/final sizes were 21,514/71,948 bytes; it failed to save and is not a successful matched baseline. Measure provider tokens/quality and complete matched journeys separately.
+
+**Reason / tradeoff:** A readable goal, selected mechanics/materials and typed submission should fit below the broad catalogue/history. Preserve units, consequences and uncertainty if a target is missed. Complex policy/investigation may exceed these targets under current resource admission; record why. No invention-count estimate or player-visible token budget is introduced.
+
+### CTX02 — Preparation and disclosure work
+
+**Proposed · Restrictiveness: Safe, requires representative measurement.** Start a packet slice with at most 64 projected fact/description records and 256 examined dependency references, in addition to existing bounded search/page work. Count aggregate slice work, not once per nested call; use stricter existing reader bounds and check bytes incrementally. Required facts beyond the slice return a retained continuation/incomplete result, never an absence claim. Drop optional examples before required mechanics.
+
+**Reason / tradeoff:** Tiny output does not bound scans, graph construction or hydration. These provisional bounds cover a selected family and direct dependencies with explicit overflow. Current whole-graph paths retain their larger construction ceilings; this design does not make them incremental automatically. WW18 measures and prefers direct reads; WW15/PF retain broader index work. No global cap on world definitions, relevant knowledge or eventual investigation completeness is proposed.
+
+### CTX03 — Retention, deduplication and cache scope
+
+**Proposed · Restrictiveness: Safe.** Use request-scoped live-fact reuse and versioned immutable schema/description fragments. No new cross-session live-state cache or time-to-live initially. Match grants/audience, generation, dependency and projection versions. Derived packet versions remain while an active turn/unresolved operation needs them; at most one new packet per tool response under the existing admitted tool-work ceiling. Before enabling the new path, WW20 must verify that this aggregate ceiling is actually enforced by the executor, not merely a documented target. Never discard unresolved operations, exact approvals, selected candidate or required constraints to hit a byte target. Existing record/session caps apply to invalid drafts and receipts; capacity refusal preserves records.
+
+**Reason / tradeoff:** Observed duplication is largely within requests and schema reads. Global caching or lossy administrative memory adds privacy/invalidation risk before demonstrated need. Audit history stays with its current owner; no unlimited retention promise or automatic deletion policy. Harness compaction and provider-cache billing are not assumed.
+
+### CTX04 — Tool profiles and templates
+
+**Proposed · Restrictiveness: Medium per run, not a global capability limit.** Initial recipe profile: four named find/inspect/guide/submit operations with relevant facts preloaded. Broader profiles remain reachable within grants through qualified session transitions. No-file runs expose no filesystem tools; legitimate file tasks retain appropriate affordances. YAML is readable generated context, not executable mutation syntax.
+
+**Reason / tradeoff:** Smaller catalogues reduce irrelevant choices but require retained continuity when changing profiles. No dynamic grant expansion is assumed. A tested codec may omit irrelevant representation branches, never required effects or checks. Four tools are not a universal investigation ceiling.
+
+### CTX05 — Reasoning effort and paid work
+
+**Owner-requested target, not yet implemented/live-qualified · Restrictiveness: Medium.** World Agent uses medium effort with strict forwarding and no silent fallback. Keep configured model/BYOK and existing session/monthly/Run admission, timeouts and output ceilings. This replaces authoring's current xhigh selection, not generic full cognition. New remote profiles/sessions preserve funding identity and reconcile prior exposure.
+
+**Reason / tradeoff:** The owner requested medium. Lower effort may affect latency/cost and difficult-task quality; measure separately from context changes. Do not invent a lower output cap without evidence, increase spending automatically or treat continuation as a new allowance. Existing uncertainty and no-paid-retry rules remain binding.
