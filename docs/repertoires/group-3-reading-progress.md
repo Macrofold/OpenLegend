@@ -2,9 +2,9 @@
 
 [Psychology](psychology-behavior.md#research-coverage) · [Traits](traits.md#research-coverage) · [Needs](needs.md#research-coverage) · [Characters](characters-backstories.md#research-coverage)
 
-**Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean its external bibliography was reopened, a game played, a full recording watched or its claims independently certified. Anything not explicitly checked remains unread in this continuation. Counts are cumulative across resumes, not claims of rereading completed documents on every resume.
+**Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean its external bibliography was reopened, a game played, a full recording watched or its claims independently certified. Unchecked/unlisted documents remain unread. Counts are cumulative across resumes, not claims of rereading completed documents on every resume.
 
-**Current coverage:** all **42 worldbuilding documents**; **24 game dossiers**, **15 original game chapters**, **8 game supplements**, and **3 game-library indexes/roster documents**. **The full game corpus is not yet complete.** Catalogue delivery is recorded separately below.
+**Current coverage:** all **42 worldbuilding documents**; **27 game dossiers**, **18 original game chapters**, **8 game supplements**, and **3 game-library indexes/roster documents**. **The full game corpus is not yet complete.** Catalogue delivery is recorded separately below.
 
 ## Revisions and discovery
 
@@ -27,7 +27,7 @@ All checked paths use **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This immut
 
 The pinned corpus contains **29 world dossiers and 13 worldbuilding root documents**, beyond the older index's 28-world count. Two unnumbered D&D subjects extend the older 148-game roster. The original-game-chapter tree has **39 documents**; the separate Dragon Age series dossier supplements four mainline dossiers. Index/tree inspection is discovery, not completion of linked material. No shared research ledger or roster is edited here.
 
-## Game dossiers — 24 complete
+## Game dossiers — 27 complete
 
 - [x] G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md)
 - [x] G02 — [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md)
@@ -44,6 +44,9 @@ The pinned corpus contains **29 world dossiers and 13 worldbuilding root documen
 - [x] G13 — [Dreams](../../archive/02-research/game-inspiration/dossiers/dreams.md)
 - [x] G14 — [Project Spark](../../archive/02-research/game-inspiration/dossiers/project-spark.md)
 - [x] G15 — [Worlds Adrift](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md)
+- [x] G16 — [Spore](../../archive/02-research/game-inspiration/dossiers/spore.md)
+- [x] G17 — [No Man's Sky](../../archive/02-research/game-inspiration/dossiers/no-mans-sky.md)
+- [x] G18 — [EverQuest Next](../../archive/02-research/game-inspiration/dossiers/everquest-next.md)
 - [x] G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md)
 - [x] G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md)
 - [x] G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
@@ -54,7 +57,7 @@ The pinned corpus contains **29 world dossiers and 13 worldbuilding root documen
 - [x] Unnumbered — [D&D 2024 / 5.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)
 - [x] Unnumbered — [D&D 3.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)
 
-## Original game chapters — 15 complete
+## Original game chapters — 18 complete
 
 - [x] [Hades / Hades II](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md)
 - [x] [Among Us / Lethal Company](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md)
@@ -65,6 +68,9 @@ The pinned corpus contains **29 world dossiers and 13 worldbuilding root documen
 - [x] [Path of Exile / Path of Exile 2 / Diablo IV](../../archive/02-research/game-inspiration/games/path-of-exile-path-of-exile-2-and-diablo-iv.md)
 - [x] [Dreams / Project Spark](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md)
 - [x] [Worlds Adrift](../../archive/02-research/game-inspiration/games/worlds-adrift.md)
+- [x] [Spore](../../archive/02-research/game-inspiration/games/spore.md)
+- [x] [No Man's Sky](../../archive/02-research/game-inspiration/games/no-man-s-sky.md)
+- [x] [EverQuest Next](../../archive/02-research/game-inspiration/games/everquest-next.md)
 - [x] [RimWorld](../../archive/02-research/game-inspiration/games/rimworld.md)
 - [x] [Dwarf Fortress](../../archive/02-research/game-inspiration/games/dwarf-fortress.md)
 - [x] [The Sims](../../archive/02-research/game-inspiration/games/the-sims.md)
@@ -143,17 +149,18 @@ No world document is missing or unread at the pinned revision. Reading a world d
 
 ## Findings and evidence boundaries
 
-Detailed earlier findings, individual blob hashes and correction records remain preserved in [checkpoint `bdc6868`](https://github.com/Macrofold/OpenLegend/blob/bdc686832644b4ee5d49140d94c8db5c5665451b/docs/repertoires/group-3-reading-progress.md#findings-to-carry-into-inventories). The subsequent distinctions and complete Dreams/Project Spark findings remain in [checkpoint `918345d`](https://github.com/Macrofold/OpenLegend/blob/918345d788537c004d2bf9eb5e83ee387461ed2b/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries). These records remain inputs for the catalogue work; compacting this manifest does not revoke their completed reads or discard their findings.
+Detailed earlier findings, individual blob hashes and correction records remain preserved in [checkpoint `bdc6868`](https://github.com/Macrofold/OpenLegend/blob/bdc686832644b4ee5d49140d94c8db5c5665451b/docs/repertoires/group-3-reading-progress.md#findings-to-carry-into-inventories). The subsequent distinctions and complete Dreams/Project Spark findings remain in [checkpoint `918345d`](https://github.com/Macrofold/OpenLegend/blob/918345d788537c004d2bf9eb5e83ee387461ed2b/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries). The full Worlds Adrift and roster notes remain in [checkpoint `b7d9f09`](https://github.com/Macrofold/OpenLegend/blob/b7d9f09064372a485224c072e4a92a0ab877a3ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries). These records remain inputs; compacting this manifest does not revoke reads or discard findings.
 
-Preserve their central distinctions: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Ordinary pleasure and deliberately chosen harm both belong. Identity, testimony, interpretation and actual acts differ. A completed ambition may end well without a compulsory replacement craving. Editions, adaptations, human social play and authored or simulated inhabitants are not interchangeable evidence.
+Preserve the central distinctions: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Ordinary pleasure and deliberately chosen harm both belong. Identity, testimony, interpretation and actual acts differ. A completed ambition may end well without a compulsory replacement craving. Editions, adaptations, human social play and authored or simulated inhabitants are not interchangeable evidence.
 
-**Worlds Adrift — complete dossier and original chapter.** The dossier (blob `2a44b9103591520499671fa97774cb60fbe2d626`) and chapter (blob `97744625c91a16611c6856fd95ad3a377842ffe7`) were read through their endings, with an overlapping read recovering the dossier's truncated bibliography. A shared construction can be home, livelihood, transport, accumulated competence and social identity at once. Losing it need not mean the same thing to its builder, navigator and temporary guest. Crew responsibilities arise from useful expertise; the pilot wanting to flee, repairer wanting stability and salvager wanting one more component can disagree without anyone secretly betraying the group. An ally's fast movement being mistaken for an enemy illustrates evidence and recognition, not omniscient allegiance detection.
+| Newly completed subject | Exact blobs: dossier; original chapter | Source-derived findings and synthesis inputs |
+| --- | --- | --- |
+| Worlds Adrift | `2a44b9103591520499671fa97774cb60fbe2d626`; `97744625c91a16611c6856fd95ad3a377842ffe7` | A shared creation is home, transport, work and pride; its loss has different meanings to different crew members. Reasonable evacuation, repair and salvage aims can conflict. Misrecognition is not secret betrayal. Protected belongings, a return point, a retained ship and reunion are separate recovery outcomes. Private experimentation can consume shared resilience. Historical scanning/PvE changes, separate successor/reconstruction and developer-attributed closure causes remain qualified. |
+| Spore | `6e23ae735fda15f1282d3294f8c19b0027cb4a58`; `850f45fdba5755be8b4c5a2a37396c3df882b205` | Enjoying creation and wanting deeper activities are different valid motivations. Appearance, rated affordances and physical anatomy have different contracts; a downloaded Captain does not inherit earned statistics. Stage progression can preserve a species while abandoning a player's favorite way of living. Befriend, ally, carry and deliver are distinct goals. Conventional habitability harms Grox: improvement is beneficiary-dependent. Expressive routines are not learned temperament. The corrected study explicitly excludes native branching dialogue despite the earlier overview; no copied inference from the older claim. |
+| No Man's Sky | `f8f14d46467e7468ff71a3ad71d189b472535db0`; `c76cfc0baf0b4170cf7ba7b9d9aabd507341a1a5` | Project identities coexist without one universal power level. Familiar companions can matter more than stronger replacements. A place gains meaning through chosen work, return and particular attachments. Automation can free attention without erasing authorship; care need not mean incessant emergency returns. Discovery and fabrication can retain distinct value. Different maintenance preferences are not different commitments to exploration. Bounded settlement records and translated creature thoughts do not establish general cognition. Launch, later systems, platform differences and temporary expeditions remain separate evidence. |
+| EverQuest Next | `19154340e73c22ed951a3bf149cf316404c6ba29`; `1f75b0c5680152cba85f72415ae5faff999feceb` | Planned preferences suggest location choices that change with opportunity and danger; learned access can depend on which people trust a character. Different observers can value the same act differently. A veteran gaining breadth need not make a newcomer irrelevant. A durable place can later change again without erasing its history. These are cancelled-game design intentions, not validated shipped NPC memory or player reception; Landmark is a separate product. Cancellation does not isolate a failed subsystem or establish that ambitious worlds are impossible. |
 
-A found part, a safely installed part and a useful whole are different achievements. Tool possession is not mastery. Protected possessions, a surviving return point, the retained home and reunion with companions are separate recovery outcomes. One person's distant resurrection can consume shared resilience, creating disagreement about the cost of experimentation. Quiet travel, clothing and cultural fragments can matter without becoming combat upgrades. Chosen research and fortunate discovery should not automatically invalidate one another.
-
-The dossier distinguishes historical scanning from the revised 2019 progression, early PvP statements from later regional hybrid protection, and a locally surviving editor from its lost inhabited destination. It distinguishes the July 26, 2019 official shutdown, the separate Lost Skies product and a partial community reconstruction. Founder explanations remain attributed rather than single-cause proof; most social behavior is human play, not NPC cognition. Its historical development-save-policy language is not adopted as current OpenLegend policy: applicable AGENTS instructions govern this task.
-
-**Research roster — complete.** Blob `a7ac8bdcb5ad286d5947b44e416ca6a308a63c27` was read in contiguous chunks through its final survival-scope paragraph. Franchise splits, direct sequels/remakes within parent dossiers, Dragon Age's separate series supplement, both ARKs and both Forest games remain distinct obligations. Roster completion is not completion of its linked dossiers.
+The complete research roster, blob `a7ac8bdcb5ad286d5947b44e416ca6a308a63c27`, preserves all franchise splits and supplemental obligations. Roster completion is not dossier completion. Original chapters' historical development-save-policy wording does not override current AGENTS instructions.
 
 These are source-derived observations and creative inputs, not clinical predictions, causal proof of popularity or instructions to copy franchise lore. New catalogue situations are marked **creative synthesis**. No personal play, live-model testing, representative sentiment coding, private-code inspection or exhaustive external-bibliography rereading is claimed.
 
