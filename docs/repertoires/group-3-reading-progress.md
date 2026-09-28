@@ -2,7 +2,7 @@
 
 [Psychology](psychology-behavior.md#research-coverage) · [Traits](traits.md#research-coverage) · [Needs](needs.md#research-coverage) · [Characters](characters-backstories.md#research-coverage)
 
-September 28, 2026 continuation on `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean an external bibliography was reopened, a primary book or film revisited, or a game played. Every document not explicitly checked below remains unchecked in this continuation. Earlier checkpoints preserve their historical reading records; they are not silently counted again as fresh work.
+September 28, 2026 continuation on `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean an external bibliography was reopened, a primary book or film revisited, or a game played. Every document not explicitly checked below remains unchecked in this continuation. Earlier checkpoints preserve historical reading records; they are not silently counted again as fresh work.
 
 ## Revisions and discovery
 
@@ -22,7 +22,9 @@ Every checked document below uses **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**
 | `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` |
 | `docs/worldbuilding-research-library` | `b387e7caeda5cec301045b877ca50a2815a869dd` |
 
-The selected revision has 29 revised world dossiers, beyond the older world index's 28, and two unnumbered D&D game subjects beyond the older 148-subject roster. No new roster IDs are invented here. The inspected original-chapter tree contains 39 documents. The separate Dragon Age series dossier supplements, rather than replaces, four mainline dossiers. Index/tree inspection is discovery, not reading the linked corpus.
+The selected revision has 29 revised world dossiers, beyond the older world index's 28, and two unnumbered D&D game subjects beyond the older 148-subject roster. No new roster IDs are invented here. The inspected original-game-chapter tree contains 39 documents. The separate Dragon Age series dossier supplements, rather than replaces, four mainline dossiers. Index/tree inspection is discovery, not reading the linked corpus.
+
+The complete worldbuilding tree at this revision contains **42 Markdown files: 29 world dossiers and 13 root documents**. All 42 have now been read in full. Its stale reassessment ledger still describes a 28-world pass and pending synthesis despite the later revised documents; actual files, not that old count, establish this reading inventory. No shared research ledger was edited.
 
 ## Game dossiers — 7 complete
 
@@ -52,7 +54,7 @@ The selected revision has 29 revised world dossiers, beyond the older world inde
 
 D&D's shared hub and studies count once, not once per edition. Reading the complete-SRD **synthesis** does not mean this continuation reread its underlying 364-page PDF. The 3.5 dossier's incomplete reception/production evidence remains incomplete. No dedicated CKIII original chapter appeared in the inspected chapter tree; comparative studies are separate documents.
 
-## World dossiers — 21 complete
+## World dossiers — 29 complete
 
 - [x] [01 — Middle-earth](../../archive/02-research/worldbuilding/worlds/01-middle-earth.md)
 - [x] [02 — Wizarding World](../../archive/02-research/worldbuilding/worlds/02-wizarding-world.md)
@@ -74,35 +76,58 @@ D&D's shared hub and studies count once, not once per edition. Reading the compl
 - [x] [18 — The Broken Earth](../../archive/02-research/worldbuilding/worlds/18-the-broken-earth.md)
 - [x] [19 — Narnia](../../archive/02-research/worldbuilding/worlds/19-narnia.md)
 - [x] [20 — His Dark Materials](../../archive/02-research/worldbuilding/worlds/20-his-dark-materials.md)
+- [x] [21 — The Wire](../../archive/02-research/worldbuilding/worlds/21-the-wire.md)
+- [x] [22 — The Sopranos](../../archive/02-research/worldbuilding/worlds/22-the-sopranos.md)
+- [x] [23 — Austen's social worlds](../../archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md)
+- [x] [24 — Macondo](../../archive/02-research/worldbuilding/worlds/24-macondo.md)
+- [x] [25 — Spirited Away](../../archive/02-research/worldbuilding/worlds/25-spirited-away.md)
+- [x] [26 — Warhammer 40,000](../../archive/02-research/worldbuilding/worlds/26-warhammer-40000.md)
+- [x] [27 — The Elder Scrolls](../../archive/02-research/worldbuilding/worlds/27-the-elder-scrolls.md)
+- [x] [28 — Fallout](../../archive/02-research/worldbuilding/worlds/28-fallout.md)
 - [x] [29 — D&D worlds](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md)
 
-Reading a world dossier does not also check off a separate game dossier about that franchise. Books, games, screen versions, original editions and later interpretations retain their stated boundaries. World dossiers 21–28 remain unread in this continuation.
+Reading a world dossier does not also check off a separate game dossier about that franchise. Books, games, screen versions, original editions and later interpretations retain their stated boundaries. No world dossier is missing or unread at the pinned revision.
 
-## Worldbuilding essays and supplements — 2 complete
+## Worldbuilding root documents — 13 complete
 
+- [x] [README and current roster](../../archive/02-research/worldbuilding/README.md)
 - [x] [Character formation](../../archive/02-research/worldbuilding/character-formation.md)
+- [x] [Comparative synthesis](../../archive/02-research/worldbuilding/comparative-synthesis.md)
+- [x] [Comparative matrix](../../archive/02-research/worldbuilding/comparative-matrix.md)
+- [x] [Authorship, medium and accessibility](../../archive/02-research/worldbuilding/authorship-medium-and-accessibility.md)
+- [x] [Institutions, history and power](../../archive/02-research/worldbuilding/institutions-history-and-power.md)
+- [x] [Languages and communication](../../archive/02-research/worldbuilding/languages-and-communication.md)
+- [x] [Magic, technology and ecology](../../archive/02-research/worldbuilding/magic-technology-and-ecology.md)
 - [x] [D&D planes and lived magic](../../archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md)
+- [x] [Research method](../../archive/02-research/worldbuilding/research-method.md)
+- [x] [Source audit](../../archive/02-research/worldbuilding/source-audit.md)
+- [x] [Reassessment progress](../../archive/02-research/worldbuilding/reassessment-progress.md)
+- [x] [Historical research progress](../../archive/02-research/worldbuilding/research-progress.md)
+
+Truncated responses were followed with overlapping contiguous reads. This includes the comparative synthesis's conclusion and the source-audit table's final rows. Empty out-of-range responses did not count as retrieving omitted text.
 
 ## Findings to carry into inventories
 
 - Ordinary individuality: hobbies, remembered occasions and durable dispositions differ. Food, rooms, gifts, music, bodily enjoyment and routines need not be productivity bonuses or impending tragedies. Daily autonomy is not unlimited permission for irreversible life changes.
 - Work and aftermath: competence, passion, refusal and incapability differ. A rescue leaves real care work. A possession can have practical, prestigious and private meanings. Retaining identity through custody or recruitment does not make recruitment compulsory. Famous colony stories are attributed accounts, not our sessions or evidence of animal gratitude.
 - Agency and power: traits can shape choices without forcing them; affection, allegiance, authority, willingness and probability differ. Heirs inherit circumstances, not a predecessor's personality. Created people and sentient equipment can have their own aims. Useful abundance should change desires, not be canceled by invented scarcity.
-- Vocation: extraordinary ability need not choose a fighting career. Performance, escape artistry, ordinary craft and music are real ambitions. A gifted student may prefer the daily life of another vocation. Capable adults can seek love, rest, irreverence and private pleasure without losing their competence.
-- Outcomes: winning, survival, recognition, restoration, forgiveness, reconciliation and freedom are distinct. A functioning marriage, a meal provided, a public service restored or a magnificent contest can really succeed. A lost contest can preserve admiration and future ambition without becoming painless. Some enemies knowingly choose cruelty; stopping them need not make them friends.
-- Particular mixed lives: Nanny Ogg's bawdiness is not the same act as taking relatives' labor for granted; Toph's enjoyment of fighting is not merely an unspoken rescue request; a discarded prestigious vocation can lead to Diamond's desired musical life. Brook's preserved song does not resurrect his companions, and the revised dossier distinguishes Yorki's illness from the later poisoned battle. These are source examples, not characters to copy.
-- Evidence and uncertainty: false but motivating histories do not become authoritative facts; memories, witnesses and retrospective accounts have different access. Merope's past remains an in-world reconstruction. Book-specific sexual coercion must not be replaced by an adaptation's different acts. Seeking treatment does not certify recovery. Criticism of framing remains meaningful without denying that a depicted service or achievement works.
-- Local magic: professional knowledge need not be adventuring rank; translation is not belonging; hospitality does not own guests. Regional magical dependencies can support pleasure, work and danger differently. The D&D lore supplement's eight indexed articles are not an entire-wiki read. The same environmental fact can give a scholar, courier, farmer and ruler different purposes.
-- Large futures and small choices: The Expanse allows chosen retirement, functioning long-term love and military success with permanent personal loss. Foundation's institutional memory can eclipse particular lives, and successful military service can threaten the person one serves. The Culture's abundance permits serious voluntary mastery and pleasure, but an institution can exploit those real ambitions. Asymmetry is not proof that every kindness is false, nor that a favorable outcome authorized its means.
-- Divergent desires under shared conditions: Broken Earth's lovers do not all want the same daily life; a freely chosen adventure can still make other people victims. An improved world need not restore everyone who died. Narnia's feast, abolition and formidable combat remain real alongside criticism of its hierarchy and representation. Susan's later fate and the rumored transformation of children remain uncertain rather than supplied by invention. His Dark Materials joins curiosity, craft and adult pleasure to inquiry; its children's undescribed conduct is not invented, and its affirmed love does not erase the ending's separation.
+- Vocation: extraordinary ability need not choose a fighting career. Performance, escape artistry, ordinary craft and music are real ambitions. A gifted student may prefer another vocation's daily life. Macondo's accomplished Meme does not love the music she performs; a new biography can similarly separate talent, pleasure and audience recognition without copying her circumstances.
+- Outcomes: winning, survival, recognition, restoration, forgiveness, reconciliation and freedom are distinct. A marriage, meal, public service or contest can really succeed. A lost contest can preserve admiration and ambition without becoming painless. Some enemies knowingly choose cruelty; stopping them need not make them friends.
+- Particular mixed lives: Nanny Ogg's bawdiness differs from taking relatives' labor for granted; Toph enjoys fighting; Diamond chooses music; Brook's preserved song does not resurrect his companions. The revised dossier distinguishes Yorki's illness from the later poisoned battle. These are source examples, not characters to copy.
+- Evidence and uncertainty: motivated histories do not become authoritative facts; witnesses, memories and reconstructions have different access. Merope's past remains an in-world account. Box Hill does not contain the imagined tidy spoken apology. Kino, Susan and the Sopranos ending retain the actual corpus's uncertainty. Book and adaptation accounts of coercion cannot be silently exchanged.
+- Local magic: professional knowledge need not be adventuring rank; translation is not belonging; hospitality does not own guests. Regional effects can support pleasure, work and danger differently. The D&D supplement's eight indexed articles are not an entire-wiki read. A scholar, courier, farmer and ruler can understand the same phenomenon and want different changes.
+- Long futures: the Expanse permits chosen retirement and functioning love beside costly victory. Foundation's institutions can eclipse individual lives, and loyal competence can threaten a ruler. Culture abundance supports serious voluntary mastery even where an institution exploits a real ambition. Necron longevity can preserve vanity and a thrilling feud rather than impartial wisdom.
+- Divergent lives: Broken Earth's chosen lovers want different futures, and chosen piracy harms others. Narnia's feasts and liberation are real alongside criticism of hierarchy. His Dark Materials preserves inquiry, craft and adult pleasure without inventing explicit acts for children or undoing its ending's separation. The Wire's working gym and Bubbles's repaired family life are not canceled by other people's losses.
+- Deliberate harm and ordinary competence: Artie's cooking is a desired achievement, not consolation for failed criminality; Tony can enjoy life while knowingly harming people. Crezia's professional care ends a romance without being a misunderstanding to repair. A harmful patron can fund a genuinely good performance. An effective institution need not be legitimate in every other respect.
+- Usable promises: Tamriel's musical institution can offer clever historical reconstruction yet disappoint somebody seeking actual performance. Fallout's recruited acts actually take the stage; its mercenaries, willing sexual workers and captives have different arrangements. Raul's maintenance and gunslinging are distinct possible futures, not one obligatory recovery arc. The specific activity must live up to its advertised role.
 
-These observations are creative inputs, not clinical predictions, causal proof of popularity, or an instruction to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific, or live-model validation is claimed.
+These observations are creative inputs, not clinical predictions, causal proof of popularity, or instructions to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific or live-model validation is claimed.
 
 ## Prerequisites and remaining work
 
-Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library, granular-study and worldbuilding READMEs are fully read; their linked documents are not automatically checked off.
+Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library and granular-study READMEs are fully read; their linked documents are not automatically checked off.
 
-**Fresh complete reads: 7 game dossiers, 5 original game chapters, 5 game supplements, 21 world dossiers, 1 worldbuilding comparative essay and 1 worldbuilding supplement.** All unlisted research remains unchecked. This is not a complete-corpus claim or a completed inventory expansion. Inherited catalogue counts are 276 psychology rows and 240 each for traits, needs and characters; those are not new entries from this continuation.
+**Fresh reading: the complete 42-document worldbuilding library; 7 game dossiers, 5 original game chapters and 5 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed inventory expansion. Inherited catalogue counts are 276 psychology rows and 240 each for traits, needs and characters; those are not new entries from this continuation.
 
 Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
 
