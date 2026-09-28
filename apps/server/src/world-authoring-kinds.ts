@@ -30,6 +30,7 @@ import { scopedInventionErrors } from './invention-context.js';
 import { fingerprint } from './relationship-index.js';
 import { commandInputSchema } from './world-service.js';
 import type { WorldService } from './world-service.js';
+import type { WorldAgentPreparation } from '@open-legend/protocol';
 
 export interface AuthoringDraft {
   id: string;
@@ -38,6 +39,7 @@ export interface AuthoringDraft {
   intent: string;
   payload: unknown;
   digest: string;
+  preparation?: WorldAgentPreparation;
   actorId: string;
   policyRevision: number;
   base: {
@@ -227,7 +229,7 @@ export function authoringTransition(
     switch (d.kind) {
       case 'recipe': {
         // World-level investigation does not teach the controlled inventor unavailable materials.
-        const errors = scopedInventionErrors(service, d.actorId, d.payload);
+        const errors = scopedInventionErrors(service, d.actorId, d.payload, world);
         if (errors.length) return reject(world, 'invalid-declaration', errors.join(' '));
         return admitDeclaration(world, d.payload as DeclarationDraft, {
           requestId: receiptId,
@@ -288,41 +290,59 @@ export function authoringTransition(
     );
   }
 }
-export function validateAuthoring(service: WorldService, d: AuthoringDraft, scope: RequestScope) {
-  const world = service.world;
+export function validateAuthoring(
+  service: WorldService,
+  d: AuthoringDraft,
+  scope: RequestScope,
+  world = service.world,
+) {
   const action = d.kind === 'action' ? commandInputSchema.safeParse(d.payload) : undefined;
   // Preview and Apply share base/control fences. A structurally valid action on an
   // obsolete base must not be presented as ready for human approval.
-  const t = !currentDraftBase(world, d)
-    ? reject(
-        world,
-        'stale-base',
-        'A referenced definition changed. Create a new draft against the current base.',
-      )
-    : d.kind === 'action'
-      ? {
-          outcome:
-            d.actorId !== scope.actorId || !service.currentScope(scope, 'play', true)
-              ? { ok: false, code: 'stale-controller', message: 'The controlled actor changed.' }
-              : action?.success
-                ? service.previewCommand(action.data, d.actorId)
-                : {
-                    ok: false,
-                    code: 'invalid-action',
-                    message: 'Payload does not match a native command.',
-                  },
-        }
-      : authoringTransition(
-          service,
-          d.kind === 'recipe' ? { ...world, paused: false } : world,
-          d,
-          `preview-${d.id}-${d.revision}`,
-          scope,
-        );
+  const t =
+    world !== service.world && d.kind === 'action'
+      ? reject(
+          world,
+          'stale-snapshot',
+          'Native command preview requires the current world snapshot.',
+        )
+      : !currentDraftBase(world, d)
+        ? reject(
+            world,
+            'stale-base',
+            'A referenced definition changed. Create a new draft against the current base.',
+          )
+        : d.kind === 'action'
+          ? {
+              outcome:
+                d.actorId !== scope.actorId || !service.currentScope(scope, 'play', true)
+                  ? {
+                      ok: false,
+                      code: 'stale-controller',
+                      message: 'The controlled actor changed.',
+                    }
+                  : action?.success
+                    ? service.previewCommand(action.data, d.actorId)
+                    : {
+                        ok: false,
+                        code: 'invalid-action',
+                        message: 'Payload does not match a native command.',
+                      },
+            }
+          : authoringTransition(
+              service,
+              d.kind === 'recipe' ? { ...world, paused: false } : world,
+              d,
+              `preview-${d.id}-${d.revision}`,
+              scope,
+            );
   // Validate recipe structure while paused, without relaxing actual admission or the actor checks.
-  const structural = d.kind === 'recipe' ? validateDeclaration(service.world, d.payload) : [];
+  const structural = d.kind === 'recipe' ? validateDeclaration(world, d.payload) : [];
   return {
     ...t.outcome,
+    // Preview executes the native owner against an uncommitted snapshot. Its success prose
+    // describes Apply and must not claim that validation already installed the change.
+    message: t.outcome.ok ? 'Native checks passed.' : t.outcome.message,
     activationRequiresResume: d.kind === 'recipe' || d.kind === 'action',
     structuralErrors: structural,
     coverage:

@@ -72,11 +72,13 @@ export function createWorldMcp(
             const scope = contextHandle ? await authoring?.readContext(contextHandle) : undefined;
             let result =
               validScope() && (!contextHandle || scope)
-                ? await tools.execute(name, args, {
-                    worldId: config!.worldId,
-                    principal: scope?.accountId ?? 'configured-mcp-world-reader',
-                    scope,
-                  })
+                ? contextHandle && authoring
+                  ? await authoring.executeRead(name, args, contextHandle, tools)
+                  : await tools.execute(name, args, {
+                      worldId: config!.worldId,
+                      principal: scope?.accountId ?? 'configured-mcp-world-reader',
+                      scope,
+                    })
                 : {
                     status: 'forbidden',
                     message: 'World read grant expired, changed, or is unavailable.',
@@ -112,6 +114,7 @@ export function createWorldMcp(
               inputSchema: tool.schema.extend({ contextHandle: z.string().min(32).max(256) }),
               annotations: {
                 readOnlyHint: [
+                  'ol_authoring_guide',
                   'ol_session',
                   'ol_draft_read',
                   'ol_compare',

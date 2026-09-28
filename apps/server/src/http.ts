@@ -26,7 +26,7 @@ import {
   sessionDecisionRequest,
   authoringToolRequest,
 } from './world-authoring-contracts.js';
-import { WorldToolService, worldReadRequest } from './world-tools.js';
+import { WorldToolService, WORLD_READ_TOOLS, worldReadRequest } from './world-tools.js';
 import { createWorldMcp } from './world-mcp.js';
 import { executeInventionTool, inventionToolInput } from './invention-tools.js';
 import { GameSaveError } from './game-saves.js';
@@ -2185,14 +2185,20 @@ async function initializeGameServer(
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'World-owner tools disabled.' });
               const value = authoringToolRequest.parse(body);
-              const data = await authoring.execute(
-                value.name,
-                value.arguments,
-                value.contextHandle,
-                scope,
-              );
+              const data = Object.hasOwn(WORLD_READ_TOOLS, value.name)
+                ? await authoring.executeRead(
+                    value.name,
+                    value.arguments,
+                    value.contextHandle,
+                    worldTools,
+                    scope,
+                  )
+                : await authoring.execute(value.name, value.arguments, value.contextHandle, scope);
               return send(response, 200, {
-                ok: data.status === 'ok' || data.status === 'needs_approval',
+                ok:
+                  data.status === 'ok' ||
+                  data.status === 'needs_approval' ||
+                  data.status === 'ready_for_review',
                 message: data.message,
                 data,
               });

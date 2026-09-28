@@ -8,6 +8,8 @@ export const WILDERNESS_NEEDS = {
   starvationDamagePerSecond: 0.009,
   exhaustionDamagePerSecond: 0.003,
 } as const;
+export const WILDERNESS_NEEDS_GUIDE =
+  'For bodies with native fullness and energy and enabled needs: fullness drains during sleep as well as waking. Zero fullness or energy damages health. Sleep energy recovery and awake/work expenditure come from the separate current status definitions; changing sleep does not remove those other processes. Rates are points per simulation second.';
 export function hasWildernessNeeds(
   actor: ActorComponent,
 ): actor is ActorComponent & { fullness: number; energy: number } {

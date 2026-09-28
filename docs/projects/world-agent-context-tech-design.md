@@ -1,6 +1,6 @@
 # World Agent context and invention loop: technical design
 
-**Status: proposed, documentation only.** Implements the requested design scope of the [feature specification](world-agent-context-feature-spec.md); it does not change current runtime contracts until accepted and delivered. Medium effort is the owner's explicit target. [Project packet](world-agent-context/README.md) records the inspected baseline and examples.
+**Status: approved implementation target; implementation in progress.** Implements the requested design scope of the [feature specification](world-agent-context-feature-spec.md); it does not change current runtime contracts until accepted and delivered. Medium effort is the owner's explicit target. [Project packet](world-agent-context/README.md) records the inspected baseline and examples.
 
 ## 1. Architectural decision
 
@@ -116,7 +116,7 @@ Prefer a few named, typed operations over a generic `execute` tool with a second
 | `ol_authoring_guide` | Source-backed selected-kind field guide/capabilities when missing from the initial packet. Return a schema/template once, with version and scope.                                                                                                                                                                                                            |
 | `ol_recipe_submit`   | Strict recipe object, bound `packetRef`, operation identity and optional exact edit/derive reference; save/validate/prepare through the existing service. Return a compact durable outcome.                                                                                                                                                                  |
 
-These names/contracts are proposed. This is one recipe-family adapter, not one tool per sling, bow or material. Current tool names and behavior remain until implementation. A fresh context normally includes the guide/materials, so the simple path uses only submission and the final explanation.
+These four core operations are implemented. The recipe profile additionally includes `ol_request_capability` so another supported kind remains reachable; it grants no permission or spending. This is one recipe-family adapter, not one tool per sling, bow or material. A fresh context normally includes the guide/materials, so the simple path uses only submission and the final explanation.
 
 The selected recipe schema presents structured arguments directly, replacing `payloadJson` string encoding at this model boundary. Internally it still normalizes into the existing canonical declaration. The current model-facing/provider schema requires nullable inapplicable branches, which normalization removes before canonical storage. Selected launcher/ammunition/gathering variants can omit these branches through the same codec; normalization never invents materials, parameter values, effects or player choices. A derive operation requires an inspected existing recipe ref; a new-candidate schema has no `baseRecipeId` field. Edits require the exact expected draft revision. Initial release may retain current model-facing nullable fields until a smaller variant is qualified.
 
@@ -182,7 +182,7 @@ Templates express a shape, not a canned finished invention. The agent chooses cr
 
 ## 9. Medium effort and Macrofold responsibilities
 
-Current OpenLegend authoring requests `macrofoldModelParameters('full')`, which means `xhigh`; changing generic `full` would affect unrelated cognition. Add a World Agent-specific execution setting targeting `reasoning.effort: medium`, with strict parameter support and the existing BYOK/model selection. The inspected local Macrofold adapter accepts medium for the configured model and forwards admitted model parameters. Live outbound capture must still prove the actual setting reaches the provider; do not claim measured quality from source inspection.
+The previous authoring path used `macrofoldModelParameters('full')` (`xhigh`). The implementation now selects World Agent-specific `reasoning.effort: medium`, with strict parameter support and existing BYOK/model selection; generic full cognition remains unchanged. The inspected local Macrofold adapter accepts medium for the configured model and forwards admitted model parameters. Live outbound capture must still prove the actual setting reaches the provider; do not claim measured quality from source inspection.
 
 Changed admission configuration requires a fresh remote session with safe continuity where the current session cannot honor it. Preserve the same conversation/ledger and reconcile the previous Run first. Do not force a small output ceiling that truncates valid candidates; retain the existing output guard until measured candidate/reasoning needs justify a separate change.
 

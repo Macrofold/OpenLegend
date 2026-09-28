@@ -4,6 +4,8 @@ import { z } from 'zod';
 import {
   DECLARATION_CONTRACT,
   DEFAULT_COGNITION_POLICY,
+  WILDERNESS_NEEDS,
+  WILDERNESS_NEEDS_GUIDE,
   type WorldState,
 } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
@@ -103,18 +105,23 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
     case 'status-effect-policy':
       return {
         ...common,
+        ...(world.moduleManifest.definitions.some((d) => d.implementation === 'native-fullness-v1')
+          ? { nativePhysiology: { description: WILDERNESS_NEEDS_GUIDE, rates: WILDERNESS_NEEDS } }
+          : {}),
         example: { ...world.statusEffectPolicy, revision: world.statusEffectPolicy.revision + 1 },
         notes: [
           'Supply the whole policy {revision:current+1,clockOffsetHours:[0,24),definitions:[...]}; omitted definitions are removed, not implicitly retained. At most 128 definitions.',
           'Required definition fields: id (safe record ID), type="statusEffect", target="$subject", label, enabled:boolean, requires:condition, reactivationDelaySeconds:0..86400, occupiesAction:boolean, interruptOn:string[]<=32, whileActive:operation[1..32].',
-          'Optional: activationCondition, automaticActivation, automaticDeactivation; presentation; onActivate/onDeactivate; actions.',
+          'Optional: activationCondition, automaticActivation, automaticDeactivation; presentation; onActivate/onDeactivate; actions; contribution.',
           'A condition has exactly one of all:[conditions], any:[conditions], compare:{target,attribute,operator,value}, field:{target,name,operator,value}, dailyWindow:{target:"$world",clock:"localTime",start,end}, statusActive:{target,definitionId,value:boolean}. Groups are nonempty, depth<=12, <=128 condition nodes per tree.',
           'Entity target is $subject|$source|$actionTarget. compare uses an existing numeric attribute; operator equal|notEqual|lessThan|lessThanOrEqual|greaterThanOrEqual; value finite number.',
           'field.name is controller|alive|incapacitated|grounded|activeWork|kind; equal|notEqual; controller/kind have string values, other fields boolean. dailyWindow bounds [0,24), start != end. statusActive definitionId must occur in this policy.',
           'An operation is {changeRate:{target,attribute,amount:-1000000..1000000,per:"gameSecond"},when?:condition} OR {restrictCapabilities:{target:"$subject",capabilities:[actions|locomotion|speech|perception]}}.',
           'changeRate can write only existing numeric native-energy-v1, native-fullness-v1 or reservoir-v1 attributes. No generic memory/health/control mutation.',
+          'Inspect referenced attribute definitions for meanings, units and ranges. Missing bound values are inapplicable, not zero. Equal unit labels alone do not establish a supply or resource-transfer interface.',
           'presentation: {pose?:"horizontal",particle?:{text:<=32chars,anchor:"head",motion:"floatAway"}}. onActivate/onDeactivate: {emit:{target,type:"stateChanged",narration}} with only {subject.name}, {source.name}, {actionTarget.name} substitutions.',
           'actions: {activate:string,deactivate:string,allowOther:boolean,activateOther:boolean}. Labels do not confer controller authority.',
+          'contribution: {disclosure:owner|public,lifetime:explicit-removal|source-sustained} or {disclosure:owner|public,lifetime:fixed,seconds:positive}. Native admission checks source lifetime and permissions.',
           'Changed active effect episodes terminate through the current owner. Current dream dependencies must be preserved. Review lists affected instances; native validation remains authoritative.',
         ],
       };

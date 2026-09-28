@@ -1,3 +1,5 @@
+import type { RelationshipEdge, RelationshipNode, RelationshipRef } from './relationships.js';
+
 /** Public owner-authoring views. Credentials, provider prompts and mutable domain state stay server-side. */
 export interface WorldAgentReply {
   ok: boolean;
@@ -40,6 +42,50 @@ export interface WorldAgentDraftView {
   kind: WorldAuthoringKind;
   intent: string;
   digest: string;
+  preparation?: WorldAgentPreparation;
+}
+export interface WorldAgentRequirement {
+  id: string;
+  source: { turnId: string; text: string };
+  strength: 'request' | 'hard' | 'preference';
+  finding: string;
+  status: 'human-review' | 'satisfied' | 'unsupported' | 'superseded';
+  supersededBy?: string;
+}
+export interface WorldAgentCandidateGraph {
+  snapshot: string;
+  candidate: RelationshipRef;
+  nodes: RelationshipNode[];
+  edges: RelationshipEdge[];
+  unresolved: { field: string; message: string }[];
+  coverage: {
+    projection: 'complete' | 'incomplete';
+    scope: string;
+    broaderInteractions: 'not-evaluated';
+  };
+  work: { examined: number; records: number };
+}
+export interface WorldAgentPreparation {
+  version: 1;
+  candidateDigest: string;
+  graph: WorldAgentCandidateGraph;
+  requirements: WorldAgentRequirement[];
+  checks: {
+    id: string;
+    validatorVersion: string;
+    requires: string[];
+    status: 'passed' | 'failed' | 'pending';
+    finding: string;
+  }[];
+  coverage: 'complete-for-native-admission' | 'pending' | 'blocked';
+  presentation: {
+    status: 'no-new-asset' | 'existing-fallback-adequate' | 'required-representation-missing';
+    description: string;
+    optionalArt: 'not-requested';
+  };
+  /** Source/validator/authority pins make this evidence attributable, never an approval. */
+  evidence: { version: string; dependencies: string; generation: string };
+  next: 'ready_for_review' | 'needs_revision' | 'pending_analysis' | 'blocked';
 }
 export interface WorldAgentPlanView {
   id: string;
@@ -48,6 +94,7 @@ export interface WorldAgentPlanView {
   digest: string;
   impact: { token: string; affected: number };
   validation: WorldAgentValidation;
+  preparation?: WorldAgentPreparation;
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: { ok: boolean; code: string; message: string };
 }

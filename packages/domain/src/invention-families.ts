@@ -120,3 +120,16 @@ export const INVENTION_FAMILY_INTERFACES = {
     limitation: string;
   }
 >;
+
+/** Agent-facing descriptions of the existing finite consumers. Changing this guidance does
+ * not add effects; update it with the corresponding craft/hunt/gather owners. */
+export const INVENTION_CONSUMER_GUIDE = {
+  craft:
+    'Inputs are consumed at work start. One output arrives on completion. Interrupted work does not refund inputs. Installation learns the method; it does not craft or spawn an item.',
+  hunting:
+    'One compatible projectile per resolved shot, hit or miss. Range is world metres, damage health points, accuracy base probability modified by fleeing. Only native animal hunting; no homing or new on-hit effects.',
+  gathering:
+    'Body material must be BOTH rigid and flexible, plus binding. Quantity is total batch yield capped by remaining source. Best compatible carried tool only; no stacking or equip prerequisite.',
+  needs:
+    'Ordinary work expenditure still applies. Recipe fields cannot add nutrition, fuel, sleep effects, arbitrary status operations or autonomous machines.',
+} as const;

@@ -4,8 +4,10 @@ import type {
   WorldAgentReply,
   WorldAgentTurnCursor,
   WorldAgentTurnView,
+  WorldAgentRequirement,
 } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
+import type { AuthoringProfile } from './world-authoring-context.js';
 
 /** Operational authoring state is not rewound with gameplay. Domain definitions remain in WorldState.
  * docs/world-agent-runtime.md#durable-write-sessions
@@ -28,6 +30,12 @@ export interface AgentSession {
   actorId: string;
   activeTurn?: string;
   turnSequence?: number;
+  profile?: AuthoringProfile;
+  selectedDraft?: { id: string; revision: number };
+  toolCalls?: number;
+  packetRef?: string;
+  pendingProfile?: { kind: Exclude<AuthoringProfile, 'discovery'>; reason: string; turnId: string };
+  requirements?: WorldAgentRequirement[];
 }
 export interface AgentTurnRecord {
   fingerprint: string;
@@ -92,12 +100,15 @@ export class WorldAgentStore {
     return row ? (JSON.parse(String(row['payload'])) as AgentSession) : undefined;
   }
   async saveSession(session: AgentSession) {
+    const payload = JSON.stringify(session);
+    if (Buffer.byteLength(payload) > 128 * 1024)
+      throw new Error('Authoring session exceeds its byte limit.');
     await this.db
       .prepare(
         `INSERT INTO world_agent_sessions VALUES (?,?,?,?)
       ON CONFLICT(id) DO UPDATE SET context_hash=excluded.context_hash,payload=excluded.payload`,
       )
-      .run(session.id, session.worldId, session.contextHash, JSON.stringify(session));
+      .run(session.id, session.worldId, session.contextHash, payload);
   }
   async get<T>(sessionId: string, kind: string, id: string): Promise<T | undefined> {
     const row = await this.db
@@ -131,6 +142,11 @@ export class WorldAgentStore {
       .prepare('SELECT COUNT(*) AS count FROM world_agent_records WHERE session_id=? AND kind=?')
       .get(sessionId, kind);
     return Number(row?.['count'] ?? 0);
+  }
+  async clearPackets(sessionId: string) {
+    await this.db
+      .prepare("DELETE FROM world_agent_records WHERE session_id=? AND kind='packet'")
+      .run(sessionId);
   }
   async turns(sessionId: string, before?: WorldAgentTurnCursor) {
     const cursor = before ?? { sequence: Number.MAX_SAFE_INTEGER, id: '\uffff' };

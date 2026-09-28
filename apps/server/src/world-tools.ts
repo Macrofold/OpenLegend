@@ -18,7 +18,7 @@ import { declarationSchema } from './ai-schemas.js';
 import { normalizeInventionProposal } from './invention-service.js';
 import { fingerprint, GraphReadError, GRAPH_LIMITS, refKey } from './relationship-index.js';
 import { inspectableEntity, projectLiveSubject } from './live-relationships.js';
-import { DEFINITION_KINDS, WorldGraphReader } from './world-graph.js';
+import { DEFINITION_KINDS, WorldGraphReader, readDefinition } from './world-graph.js';
 import type { WorldService } from './world-service.js';
 
 const id = z.string().min(1).max(200);
@@ -26,7 +26,16 @@ const version = z.string().min(1).max(100);
 const ref = z.object({ kind: id, id: z.string().min(1).max(500), version }).strict();
 const subject = z.object({ kind: z.enum(['entity', 'item']), id }).strict();
 const select = z
-  .object({ kind: id, id: z.string().min(1).max(500), version: version.optional() })
+  .object({
+    kind: id,
+    id: z.string().min(1).max(500),
+    version: version.optional(),
+    sections: z
+      .array(z.enum(['facts', 'mechanics', 'relationships']))
+      .min(1)
+      .max(3)
+      .optional(),
+  })
   .strict();
 const paging = {
   cursor: z.string().min(1).max(512).optional(),
@@ -361,6 +370,14 @@ export class WorldToolService {
         );
       case 'ol_inspect': {
         const input = raw as z.infer<typeof select>;
+        if (!input.sections?.includes('relationships')) {
+          const exact = readDefinition(world, input.kind, input.id);
+          if (exact) {
+            if (input.version && input.version !== exact.node.ref.version)
+              throw new GraphReadError('stale', 'Definition changed.');
+            return { ...exact, ref: exact.node.ref };
+          }
+        }
         const definitions = this.graph.read(world, generation);
         if (input.kind === 'memory-record') {
           const record = await this.memoryRecord(world, generation, input.id, grant);

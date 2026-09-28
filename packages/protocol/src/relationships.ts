@@ -7,7 +7,7 @@ export interface RelationshipRef {
 export interface RelationshipNode {
   ref: RelationshipRef;
   label: string;
-  layer: 'definition' | 'live' | 'evidence';
+  layer: 'definition' | 'live' | 'evidence' | 'proposed';
   availability?: 'reference-only';
   /** Discovery hint from the source reader, never an authorization grant. */
   canInspect?: boolean;
@@ -30,6 +30,7 @@ export const RELATIONSHIP_KINDS = [
   'represented_by',
   'held_by',
   'evidenced_by',
+  'reads',
 ] as const;
 export type RelationshipKind = (typeof RELATIONSHIP_KINDS)[number];
 export interface RelationshipEdge {

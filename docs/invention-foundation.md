@@ -252,3 +252,13 @@ The exact provider, confidence calibration, numeric work limits, and entitlement
 ## Repertoire integration
 
 [Repertoire foundation](repertoire-foundation.md) maps the action examples to definition authoring, ordinary invocations, retained methods, live structures, participants, information and obligations. It refines graph/presentation/integration without replacing AC/AG/INV ownership.
+
+## Initial context and preparation implementation
+
+The current owner-authoring path retains attributable requests, immutable candidates, a derived dependency graph, versioned native checks and independent presentation/review status through the existing operational repositories. Human approval, installation, learning and physical creation remain separate. The [runtime](world-agent-runtime.md#scoped-context-and-native-save-for-review) owns this finite flow; [WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) and [verification](verification/world-agent-context.md) retain outstanding qualification. These records do not implement future complex activities, universal interactions, generated artwork or project-wide scheduling.
+
+## Maintained records
+
+- Implementation: [World Agent delivery, WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design), with broader INV owners retained above.
+- Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal).
+- Related contract: [Invention coordination and preparation](world-agent-runtime.md).

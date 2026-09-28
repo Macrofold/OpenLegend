@@ -10,6 +10,7 @@ import type {
   WorldAgentSessionSummary,
   WorldAgentSessionView,
   WorldAgentTurnCursor,
+  WorldAgentPreparation,
 } from '@open-legend/protocol';
 import { WorldAgentStore, type AgentSession, type AgentTurnRecord } from './world-agent-store.js';
 import {
@@ -27,6 +28,23 @@ import {
 } from './world-authoring-kinds.js';
 import { fingerprint } from './relationship-index.js';
 import type { WorldService } from './world-service.js';
+import {
+  CONTEXT_WORK,
+  prepareAuthoring,
+  authoringEvidenceDependencies,
+} from './world-authoring-analysis.js';
+import {
+  authoringGuide,
+  buildAuthoringPacket,
+  contextMembership,
+  packetCurrent,
+  profileTools,
+  renderAuthoringPacket,
+  type AuthoringPacket,
+} from './world-authoring-context.js';
+import { readDefinition } from './world-graph.js';
+import { normalizeInventionProposal } from './invention-service.js';
+import type { WorldToolService, WorldToolResult } from './world-tools.js';
 
 export interface WorldAgentTurn {
   /** In-process cancellation only; never serialized into prompts or durable records. */
@@ -39,6 +57,8 @@ export interface WorldAgentTurn {
   budget: { id: string; limitUsd: number };
   runUsd: number;
   timeoutSeconds: number;
+  prompt: string;
+  profile: AuthoringPacket['profile'];
 }
 export type AgentReply = WorldAgentReply;
 export interface ChangePlan {
@@ -48,6 +68,7 @@ export interface ChangePlan {
   digest: string;
   impact: { token: string; affected: number };
   validation: ReturnType<typeof validateAuthoring>;
+  preparation?: WorldAgentPreparation;
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: ApiResult;
 }
@@ -60,7 +81,10 @@ export interface AuthoringResult {
     | 'capacity'
     | 'forbidden'
     | 'needs_approval'
-    | 'blocked';
+    | 'blocked'
+    | 'ready_for_review'
+    | 'needs_revision'
+    | 'pending_analysis';
   message?: string;
   data?: unknown;
   cost: 'no-paid-work';
@@ -319,7 +343,7 @@ export class WorldAuthoringService {
       drafts: drafts
         .slice(0, 20)
         .map(({ id, revision, kind, intent, digest }) => ({ id, revision, kind, intent, digest })),
-      plans: plans.slice(0, 20),
+      plans: plans.slice(0, 20).map(({ preparation: _preparation, ...plan }) => plan),
       nextDraft: drafts.length > 20 ? drafts[19]!.id : null,
       nextPlan: plans.length > 20 ? plans[19]!.id : null,
     };
@@ -347,6 +371,7 @@ export class WorldAuthoringService {
           delete s.activeTurn;
           s.contextHash = contextHash(randomBytes(32).toString('hex'));
           await this.records.saveSession(s);
+          await this.records.clearPackets(s.id);
         });
     }
   }
@@ -390,6 +415,37 @@ export class WorldAuthoringService {
         s.activeTurn = requestId;
         s.turnSequence = (s.turnSequence ?? 0) + 1;
         s.title ??= text.slice(0, 60);
+        s.toolCalls = 0;
+        let selected = s.selectedDraft
+          ? await this.records.get<AuthoringDraft>(
+              s.id,
+              'revision',
+              `${s.selectedDraft.id}:${s.selectedDraft.revision}`,
+            )
+          : undefined;
+        const profile = s.pendingProfile?.kind ?? selected?.kind ?? s.profile ?? 'discovery';
+        if (s.pendingProfile && s.profile !== profile) {
+          // A different kind starts from the request that selected it, not the previous
+          // invention's requirements. Its prior drafts/turns remain immutable and readable.
+          s.requirements = s.requirements?.filter(
+            (r) => r.source.turnId === s.pendingProfile?.turnId,
+          );
+          selected = undefined;
+          delete s.selectedDraft;
+        }
+        s.profile = profile;
+        delete s.pendingProfile;
+        const packet = buildAuthoringPacket(
+          this.service.world,
+          s,
+          randomUUID(),
+          text,
+          profile,
+          selected,
+        );
+        const prompt = renderAuthoringPacket(packet, contextHandle);
+        s.packetRef = packet.id;
+        s.requirements = packet.requirements;
         // Commit both identity and handle before any external dispatch.
         await this.records.db.transaction(async () => {
           await this.records.put(sessionId, 'turn', requestId, {
@@ -399,6 +455,8 @@ export class WorldAuthoringService {
             createdAt: Date.now(),
           });
           await this.records.saveSession(s);
+          await this.records.clearPackets(s.id);
+          await this.records.put(s.id, 'packet', packet.id, packet);
         });
         return {
           turn: {
@@ -406,7 +464,9 @@ export class WorldAuthoringService {
             sessionId,
             contextHandle,
             connectionId: config.macrofoldWorldConnectionId,
-            toolNames: [...Object.keys(WORLD_READ_TOOLS), ...Object.keys(WORLD_AUTHORING_TOOLS)],
+            toolNames: profileTools(profile),
+            prompt,
+            profile,
             budget: this.budget(s),
             runUsd: Math.min(config.macrofoldWorldRunUsd, remaining),
             timeoutSeconds: config.macrofoldWorldTimeoutSeconds,
@@ -430,8 +490,62 @@ export class WorldAuthoringService {
           // Terminal or failed runs cannot keep writing through a copied handle.
           s.contextHash = contextHash(randomBytes(32).toString('hex'));
           await this.records.saveSession(s);
+          await this.records.clearPackets(s.id);
         }
       });
+    });
+  }
+  async nextRecipeStage(
+    sessionId: string,
+    requestId: string,
+    handle: string,
+    scope: RequestScope,
+  ): Promise<WorldAgentTurn | undefined> {
+    return this.serial(sessionId, async () => {
+      const s = await this.requireSession(sessionId, scope);
+      if (
+        s.activeTurn !== requestId ||
+        s.contextHash !== contextHash(handle) ||
+        s.profile !== 'discovery' ||
+        s.pendingProfile?.kind !== 'recipe' ||
+        s.pendingProfile.turnId !== requestId
+      )
+        return;
+      const turn = await this.records.get<AgentTurnRecord>(s.id, 'turn', requestId);
+      const exposure = await this.records.exposure(sessionBudgetId(s));
+      if (!turn || turn.cancelRequested || exposure.uncertainUsd > 0) return;
+      const remaining = this.budget(s).limitUsd - exposure.spentUsd - exposure.reservedUsd;
+      if (remaining < 0.000001) return;
+      const contextHandle = randomBytes(32).toString('base64url');
+      s.contextHash = contextHash(contextHandle);
+      s.profile = 'recipe';
+      delete s.pendingProfile;
+      // One admitted turn keeps its aggregate tool-work budget across this planned stage.
+      const packet = buildAuthoringPacket(
+        this.service.world,
+        s,
+        randomUUID(),
+        turn.text ?? '',
+        'recipe',
+      );
+      const prompt = renderAuthoringPacket(packet, contextHandle);
+      s.packetRef = packet.id;
+      await this.records.db.transaction(async () => {
+        await this.records.put(s.id, 'packet', packet.id, packet);
+        await this.records.saveSession(s);
+      });
+      return {
+        authority: scope,
+        sessionId,
+        contextHandle,
+        connectionId: this.service.config.macrofoldWorldConnectionId,
+        toolNames: profileTools('recipe'),
+        profile: 'recipe',
+        prompt,
+        budget: this.budget(s),
+        runUsd: Math.min(this.service.config.macrofoldWorldRunUsd, remaining),
+        timeoutSeconds: this.service.config.macrofoldWorldTimeoutSeconds,
+      };
     });
   }
   async applyLocal(sessionId: string, planId: string, scope = this.service.localScope) {
@@ -445,8 +559,9 @@ export class WorldAuthoringService {
   private async draft(s: AgentSession, id: string, revision: number, current = false) {
     const d = await this.records.get<AuthoringDraft>(s.id, 'revision', `${id}:${revision}`);
     const latest = current ? await this.records.get<AuthoringDraft>(s.id, 'draft', id) : undefined;
-    if (!d || (current && latest?.revision !== revision))
-      throw new AuthoringRequestError('Draft is unavailable or no longer selected.');
+    if (!d) throw new AuthoringRequestError('Draft is unavailable.', 'unavailable');
+    if (current && latest?.revision !== revision)
+      throw new AuthoringRequestError('Draft is no longer the selected revision.', 'stale');
     return d;
   }
   async review(sessionId: string, planId: string, scope = this.service.localScope) {
@@ -480,7 +595,10 @@ export class WorldAuthoringService {
         const validation = validateAuthoring(this.service, draft, scope);
         if (
           !validation.ok ||
-          authoringImpact(this.service.world, draft).token !== plan.impact.token
+          authoringImpact(this.service.world, draft).token !== plan.impact.token ||
+          (plan.preparation &&
+            plan.preparation.evidence.dependencies !==
+              authoringEvidenceDependencies(this.service.world, draft, scope))
         )
           throw new AuthoringRequestError(
             'The reviewed change is no longer ready. Validate and prepare a new review.',
@@ -494,6 +612,128 @@ export class WorldAuthoringService {
   async readContext(handle: string): Promise<RequestScope | undefined> {
     const session = await this.records.byContext(contextHash(handle));
     return session && this.permitted(session) ? session.authority : undefined;
+  }
+  /** The same turn budget and packet binding covers reads as well as writes. The shared
+   * read owner still performs disclosure and source validation; this adds only continuity. */
+  async executeRead(
+    name: string,
+    raw: unknown,
+    handle: string,
+    tools: WorldToolService,
+    scope?: RequestScope,
+  ): Promise<AuthoringResult | WorldToolResult> {
+    try {
+      const session = await this.records.byContext(contextHash(handle));
+      if (!session || !this.permitted(session, scope))
+        return result('forbidden', 'Context is unavailable.');
+      return await this.serial(session.id, async () => {
+        const s = await this.requireSession(session.id, scope);
+        if (s.contextHash !== contextHash(handle))
+          return result('forbidden', 'Context was replaced.');
+        const parsed =
+          name === 'ol_inspect' ? WORLD_READ_TOOLS.ol_inspect.schema.safeParse(raw) : undefined;
+        const recovering = parsed?.success && parsed.data.kind === 'authoring-operation';
+        if (s.activeTurn) {
+          if (!profileTools(s.profile ?? 'discovery').includes(name))
+            return result('forbidden', 'Tool is outside this turn’s profile.');
+          if (!recovering && (s.toolCalls ?? 0) >= CONTEXT_WORK.tools)
+            return result('capacity', 'Turn tool-work limit reached. Finish; do not repeat calls.');
+          if (!recovering) {
+            s.toolCalls = (s.toolCalls ?? 0) + 1;
+            await this.records.saveSession(s);
+          }
+        }
+        const readWorld = this.service.world;
+        let response: AuthoringResult | WorldToolResult;
+        let selected: AuthoringDraft | undefined;
+        if (parsed?.success && parsed.data.kind === 'authoring-operation') {
+          const saved = await this.records.get<{ response: AuthoringResult }>(
+            s.id,
+            'operation',
+            parsed.data.id,
+          );
+          response = saved
+            ? result('ok', 'Retained exact operation outcome.', saved.response)
+            : result(
+                'unavailable',
+                'No committed operation outcome is available under this identity. Do not guess another write ID.',
+              );
+          // Recovery reads retained receipts, not current-world facts. Quotas and changed
+          // definition pins must not hide an already committed outcome from its owner.
+          if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
+          return response.status === 'ok' && s.activeTurn && s.packetRef
+            ? result('ok', response.message, { result: response.data, packetRef: s.packetRef })
+            : response;
+        } else if (parsed?.success && parsed.data.kind === 'authoring-draft') {
+          selected = await this.records.get<AuthoringDraft>(s.id, 'draft', parsed.data.id);
+          response = !selected
+            ? result('unavailable', 'Draft unavailable.')
+            : parsed.data.version && parsed.data.version !== selected.digest
+              ? result('stale', 'Draft changed.')
+              : result('ok', undefined, selected);
+        } else
+          response = await tools.execute(name, raw, {
+            worldId: s.worldId,
+            principal: s.principal,
+            scope: s.authority,
+          });
+        if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
+        if (contextMembership(readWorld) !== contextMembership(this.service.world))
+          return result(
+            'stale',
+            'Definitions changed during inspection. Read current facts before submitting.',
+          );
+        if (response.status !== 'ok' || !s.activeTurn || !s.packetRef) return response;
+        const prior = await this.records.get<AuthoringPacket>(s.id, 'packet', s.packetRef);
+        if (!prior) return result('stale', 'Packet unavailable; start a fresh context.');
+        if (selected) {
+          if (selected.kind !== s.profile)
+            return result('blocked', 'Select this draft’s kind before inspecting it in this turn.');
+          s.selectedDraft = { id: selected.id, revision: selected.revision };
+          s.requirements = selected.preparation?.requirements;
+        }
+        selected ??= s.selectedDraft
+          ? await this.records.get<AuthoringDraft>(s.id, 'draft', s.selectedDraft.id)
+          : undefined;
+        const packet = buildAuthoringPacket(
+          readWorld,
+          s,
+          randomUUID(),
+          prior.requirements.find((r) => r.source.turnId === s.activeTurn)?.source.text ?? '',
+          s.profile ?? 'discovery',
+          selected,
+        );
+        if (packetCurrent(prior, readWorld, s)) packet.pins = [...prior.pins];
+        if (parsed?.success) {
+          const ref = readDefinition(readWorld, parsed.data.kind, parsed.data.id)?.node.ref;
+          if (
+            ref &&
+            !packet.pins.some(
+              (p) => p.kind === ref.kind && p.id === ref.id && p.version === ref.version,
+            )
+          )
+            packet.pins.push(ref);
+        }
+        if (packet.pins.length > CONTEXT_WORK.records)
+          return result('capacity', 'Required references exceed one packet slice.');
+        await this.records.put(s.id, 'packet', packet.id, packet);
+        s.packetRef = packet.id;
+        await this.records.saveSession(s);
+        if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
+        return result('ok', response.message, {
+          result: response.data,
+          packetRef: packet.id,
+          ...(!packetCurrent(prior, readWorld, s) ? { refreshedContext: packet.facts } : {}),
+        });
+      });
+    } catch (error) {
+      return result(
+        error instanceof AuthoringRequestError ? error.code : 'unavailable',
+        error instanceof AuthoringRequestError
+          ? error.message
+          : 'Inspection could not be confirmed. Saved records remain available.',
+      );
+    }
   }
   async execute(
     name: string,
@@ -514,7 +754,30 @@ export class WorldAuthoringService {
         if (current.contextHash !== contextHash(handle))
           return result('forbidden', 'Session context has been replaced.');
         const args = call.arguments;
+        if (current.activeTurn && !profileTools(current.profile ?? 'discovery').includes(name))
+          return result('forbidden', 'This operation is outside the admitted tool profile.');
         const operationId = 'operationId' in args ? args.operationId : undefined;
+        // Lost replies remain recoverable even after the new-work allowance is exhausted.
+        if (operationId) {
+          const prior = await this.records.get<{ fingerprint: string; response: AuthoringResult }>(
+            s.id,
+            'operation',
+            operationId,
+          );
+          if (prior)
+            return prior.fingerprint === fingerprint({ name, args })
+              ? prior.response
+              : result('invalid', 'Operation ID already has different content.');
+        }
+        if (current.activeTurn) {
+          if ((current.toolCalls ?? 0) >= CONTEXT_WORK.tools)
+            return result(
+              'capacity',
+              'This turn reached its tool-work limit. Finish and retain the current work; do not keep calling tools.',
+            );
+          current.toolCalls = (current.toolCalls ?? 0) + 1;
+          await this.records.saveSession(current);
+        }
         const execute = () => this.dispatch(call, current);
         // Only operational edits use this transaction. Apply enters the world lane first,
         // never with a database lock held (avoids writer/database lock inversion).
@@ -549,7 +812,7 @@ export class WorldAuthoringService {
           );
     } catch (error) {
       return result(
-        error instanceof AuthoringRequestError ? 'blocked' : 'unavailable',
+        error instanceof AuthoringRequestError ? error.code : 'unavailable',
         error instanceof AuthoringRequestError
           ? error.message
           : 'Authoring storage could not confirm the operation. Inspect saved records before retrying.',
@@ -566,9 +829,207 @@ export class WorldAuthoringService {
     if (typeof entityId !== 'string' || !this.service.mayInspectPrivate(entityId, scope))
       throw new AuthoringRequestError('This body is unavailable to the current account.');
   }
+  private async draftRequirements(s: AgentSession, d: AuthoringDraft) {
+    const packet = s.packetRef
+      ? await this.records.get<AuthoringPacket>(s.id, 'packet', s.packetRef)
+      : undefined;
+    return (
+      packet?.requirements ??
+      d.preparation?.requirements ?? [
+        {
+          id: `request-${d.id}`,
+          source: { turnId: s.activeTurn ?? `local-${d.id}`, text: d.intent },
+          strength: 'request' as const,
+          status: 'human-review' as const,
+          finding:
+            'Supplied intent; exact human review establishes acceptance, not a mechanical shape check.',
+        },
+      ]
+    );
+  }
   private async dispatch(call: WorldAuthoringCall, s: AgentSession): Promise<AuthoringResult> {
     const { name, arguments: a } = call;
     switch (name) {
+      case 'ol_authoring_guide':
+        return result('ok', undefined, authoringGuide(this.service.world, a.kind));
+      case 'ol_request_capability': {
+        if (!s.activeTurn || s.profile === a.kind)
+          return result(
+            'blocked',
+            'Request a different supported profile only when the current human task needs it.',
+          );
+        s.pendingProfile = { kind: a.kind, reason: a.reason, turnId: s.activeTurn };
+        await this.records.saveSession(s);
+        return result(
+          'ok',
+          a.kind === 'recipe'
+            ? 'Recipe preparation is selected. Finish this discovery stage; native coordination admits the next stage only after this run completes and accounting is known.'
+            : 'This kind is selected for the next human turn. Explain its scope and ask the person to continue; no broader-scope run is automatically started.',
+        );
+      }
+      case 'ol_authoring_submit':
+      case 'ol_recipe_submit': {
+        const kind = name === 'ol_recipe_submit' ? 'recipe' : a.proposal.kind;
+        const deriveFrom = name === 'ol_recipe_submit' ? a.deriveFrom : undefined;
+        const packet = await this.records.get<AuthoringPacket>(s.id, 'packet', a.packetRef);
+        const world = this.service.world;
+        if (
+          !packet ||
+          packet.id !== s.packetRef ||
+          packet.profile !== kind ||
+          !packetCurrent(packet, world, s)
+        )
+          return result(
+            'stale',
+            'Required context changed or is unavailable. Inspect current facts to obtain a fresh packet; no draft was written.',
+          );
+        const old = a.edit
+          ? await this.draft(s, a.edit.draftId, a.edit.expectedRevision, true)
+          : undefined;
+        if (old && old.kind !== kind)
+          return result('invalid', 'The selected draft has a different kind.');
+        if (a.edit && deriveFrom)
+          return result('invalid', 'Choose an edit or a new derived recipe, not both.');
+        if (old && (packet.selected?.id !== old.id || packet.selected.revision !== old.revision))
+          return result('stale', 'Inspect the exact current draft before revising it.');
+        if (deriveFrom) {
+          const base = readDefinition(world, 'recipe', deriveFrom.recipeId);
+          if (
+            !base ||
+            base.node.ref.version !== deriveFrom.version ||
+            !packet.pins.some(
+              (pin) =>
+                pin.kind === 'recipe' &&
+                pin.id === base.node.ref.id &&
+                pin.version === base.node.ref.version,
+            )
+          )
+            return result(
+              'stale',
+              'Derivation requires an inspected exact recipe reference in this packet.',
+            );
+        }
+        if (old && old.revision >= 256)
+          return result('capacity', 'This draft reached its retained revision limit.');
+        if (!old && (await this.records.count(s.id, 'draft')) >= 64)
+          return result('capacity', 'This session reached its retained draft limit.');
+        if ((await this.records.count(s.id, 'plan')) >= 512)
+          return result('capacity', 'This session reached its retained review limit.');
+        // Capture after repository waits. The synchronous native pass uses this exact snapshot.
+        const snapshot = this.service.world;
+        if (!packetCurrent(packet, snapshot, s))
+          return result('stale', 'Context changed while preparing the submission.');
+        const payload =
+          name === 'ol_recipe_submit'
+            ? normalizeInventionProposal(a.candidate)
+            : a.proposal.candidate;
+        if (Buffer.byteLength(JSON.stringify(payload)) > 24000)
+          return result('capacity', 'Candidate exceeds the authoring byte limit.');
+        this.assertDraftTarget(kind, payload, s.authority);
+        const requirements = structuredClone(packet.requirements);
+        for (const [i, requirement] of (a.requirements ?? []).entries()) {
+          const source = packet.requirements.find(
+            (r) =>
+              r.source.turnId === requirement.sourceTurnId &&
+              r.source.text.includes(requirement.quote),
+          );
+          if (!source)
+            return result(
+              'invalid',
+              'Requirement quotes must come from the retained human request.',
+            );
+          const findingId = `finding-${a.operationId}-${i}`;
+          if (requirement.supersedes) {
+            const previous = requirements.find((r) => r.id === requirement.supersedes);
+            if (
+              !previous ||
+              source.source.turnId !== s.activeTurn ||
+              previous.source.turnId === s.activeTurn
+            )
+              return result(
+                'invalid',
+                'Replacing a prior requirement needs a quote from a newer human turn.',
+              );
+            previous.status = 'superseded';
+            previous.supersededBy = findingId;
+          }
+          requirements.push({
+            id: findingId,
+            source: { turnId: source.source.turnId, text: requirement.quote },
+            strength: requirement.strength,
+            status: requirement.status,
+            finding: requirement.finding,
+          });
+        }
+        if (requirements.length > CONTEXT_WORK.records)
+          return result('capacity', 'Retained requirements exceed the current record envelope.');
+        const d: AuthoringDraft = {
+          id: old?.id ?? randomUUID(),
+          revision: (old?.revision ?? 0) + 1,
+          kind,
+          intent: [...new Set(packet.requirements.map((r) => r.source.text))].join('\n'),
+          payload,
+          actorId: s.actorId,
+          policyRevision: old?.policyRevision ?? snapshot.inventionPolicy.revision,
+          base: draftBase(snapshot, kind, payload, old?.base, deriveFrom?.recipeId),
+          digest: '',
+        };
+        d.digest = fingerprint(d);
+        const { preparation, validation, impact } = prepareAuthoring(
+          this.service,
+          snapshot,
+          d,
+          s.authority,
+          s.timeline,
+          requirements,
+        );
+        d.preparation = preparation;
+        await this.records.put(s.id, 'revision', `${d.id}:${d.revision}`, d);
+        await this.records.put(s.id, 'draft', d.id, d);
+        s.selectedDraft = { id: d.id, revision: d.revision };
+        s.requirements = requirements;
+        let plan: ChangePlan | undefined;
+        if (preparation.next === 'ready_for_review') {
+          plan = {
+            id: randomUUID(),
+            draftId: d.id,
+            revision: d.revision,
+            digest: fingerprint({
+              draft: d.digest,
+              evidence: preparation.evidence,
+              impact,
+              session: s.id,
+              timeline: s.timeline,
+            }),
+            impact,
+            validation,
+            preparation,
+            status: 'pending',
+          };
+          await this.records.put(s.id, 'plan', plan.id, plan);
+        }
+        const freshPacket = buildAuthoringPacket(snapshot, s, randomUUID(), '', kind, d);
+        await this.records.put(s.id, 'packet', freshPacket.id, freshPacket);
+        s.packetRef = freshPacket.id;
+        await this.records.saveSession(s);
+        return result(
+          preparation.next,
+          plan
+            ? 'Saved and awaiting human review. Explain the tradeoff and finish. Nothing is installed or crafted.'
+            : 'Candidate saved with findings; no approval plan was created.',
+          {
+            operationId: a.operationId,
+            draft: { id: d.id, revision: d.revision },
+            packetRef: freshPacket.id,
+            ...(plan ? { review: { id: plan.id, status: plan.status } } : {}),
+            checks: preparation.checks.map(({ id, status, finding }) => ({ id, status, finding })),
+            findings: preparation.graph.unresolved,
+            coverage: preparation.coverage,
+            installation: 'not-applied',
+            instance: 'not-created',
+          },
+        );
+      }
       case 'ol_session':
         return result(
           'ok',
@@ -594,8 +1055,19 @@ export class WorldAuthoringService {
           digest: '',
         };
         d.digest = fingerprint({ ...d, digest: '' });
+        const requirements = await this.draftRequirements(s, d);
+        d.preparation = prepareAuthoring(
+          this.service,
+          this.service.world,
+          d,
+          s.authority,
+          s.timeline,
+          requirements,
+        ).preparation;
         await this.records.put(s.id, 'revision', `${d.id}:1`, d);
         await this.records.put(s.id, 'draft', d.id, d);
+        s.selectedDraft = { id: d.id, revision: d.revision };
+        await this.records.saveSession(s);
         return result('ok', 'Draft saved, not installed.', d);
       }
       case 'ol_draft_update': {
@@ -611,9 +1083,21 @@ export class WorldAuthoringService {
           intent: a.intent ?? old.intent,
           base: draftBase(this.service.world, old.kind, payload, old.base),
         };
+        const requirements = await this.draftRequirements(s, d);
+        delete d.preparation;
         d.digest = fingerprint({ ...d, digest: '' });
+        d.preparation = prepareAuthoring(
+          this.service,
+          this.service.world,
+          d,
+          s.authority,
+          s.timeline,
+          requirements,
+        ).preparation;
         await this.records.put(s.id, 'revision', `${d.id}:${d.revision}`, d);
         await this.records.put(s.id, 'draft', d.id, d);
+        s.selectedDraft = { id: d.id, revision: d.revision };
+        await this.records.saveSession(s);
         return result('ok', 'New revision saved; older reviews cannot apply to it.', d);
       }
       case 'ol_draft_read':
@@ -647,17 +1131,37 @@ export class WorldAuthoringService {
       case 'ol_change_prepare': {
         if ((await this.records.count(s.id, 'plan')) >= 512)
           return result('capacity', 'This session reached its review-plan limit.');
-        const d = await this.draft(s, a.draftId, a.revision, true),
-          validation = validateAuthoring(this.service, d, s.authority);
+        const d = await this.draft(s, a.draftId, a.revision, true);
+        const requirements = await this.draftRequirements(s, d);
+        const { validation, impact, preparation } = prepareAuthoring(
+          this.service,
+          this.service.world,
+          d,
+          s.authority,
+          s.timeline,
+          requirements,
+        );
         if (!validation.ok) return result('blocked', validation.message, validation);
-        const impact = authoringImpact(this.service.world, d);
+        if (preparation.next !== 'ready_for_review')
+          return result(
+            preparation.next,
+            'Required preparation is incomplete; no review was created.',
+            preparation,
+          );
         const plan: ChangePlan = {
           id: randomUUID(),
           draftId: d.id,
           revision: d.revision,
-          digest: fingerprint({ draft: d.digest, impact, session: s.id, timeline: s.timeline }),
+          digest: fingerprint({
+            draft: d.digest,
+            evidence: preparation.evidence,
+            impact,
+            session: s.id,
+            timeline: s.timeline,
+          }),
           impact,
           validation,
+          preparation,
           status: 'pending',
         };
         await this.records.put(s.id, 'plan', plan.id, plan);
@@ -694,7 +1198,10 @@ export class WorldAuthoringService {
             if (
               fresh.contextHash !== s.contextHash ||
               latest?.status !== 'approved' ||
-              authoringImpact(world, draft).token !== plan.impact.token
+              authoringImpact(world, draft).token !== plan.impact.token ||
+              (plan.preparation &&
+                plan.preparation.evidence.dependencies !==
+                  authoringEvidenceDependencies(world, draft, s.authority))
             )
               return {
                 world,

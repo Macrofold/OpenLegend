@@ -1,6 +1,6 @@
 # Initial invention foundation: graph, checks and pipeline
 
-**Status: proposed implementation scope; documentation only.** The owner requested that the first version include a foundation for every critical invention-process responsibility, including a basic dependency graph. This strengthens the [context feature specification](../world-agent-context-feature-spec.md) and [technical design](../world-agent-context-tech-design.md); it does not authorize runtime implementation or claim future mechanics exist.
+**Status: approved initial implementation scope; work in progress.** The owner requested that the first version include a foundation for every critical invention-process responsibility, including a basic dependency graph. This strengthens the [context feature specification](../world-agent-context-feature-spec.md) and [technical design](../world-agent-context-tech-design.md); the owner has approved implementation of this finite scope. It does not claim future mechanics exist.
 
 The first version must carry a supported invention through real draft, dependency, validation, presentation-readiness and review records into the existing activation/knowledge/use boundaries. Describing those stages in a prompt is insufficient. Keep the finite recipe path small, but make its records and projections useful to other existing authoring kinds.
 

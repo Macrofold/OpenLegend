@@ -1,6 +1,7 @@
 import type { RequestScope } from './authority.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
 import { contextHash, type WorldAgentTurn, type WorldAuthoringService } from './world-authoring.js';
+import { fingerprint } from './relationship-index.js';
 
 export interface WorldAgentMessage {
   authority: RequestScope;
@@ -87,6 +88,25 @@ export class WorldAgentRunner {
       } else {
         dispatched = true;
         reply = await this.execute(message, turn);
+        if (reply.ok && !turn.signal?.aborted) {
+          const next = await this.authoring.nextRecipeStage(
+            message.sessionId,
+            message.requestId,
+            turn.contextHandle,
+            turn.authority,
+          );
+          if (next && !turn.signal?.aborted) {
+            // Typed, successful discovery progression is a new stage, never a retry of an
+            // uncertain/failed Run. Both stages share the original session allowance.
+            reply = await this.execute(
+              {
+                ...message,
+                requestId: `stage-${fingerprint([message.requestId, 'recipe']).slice(0, 48)}`,
+              },
+              { ...next, signal: turn.signal },
+            );
+          }
+        }
       }
     } catch {
       reply = {

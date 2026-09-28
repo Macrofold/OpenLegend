@@ -113,3 +113,15 @@ A graph can initially be useful before it is sufficient to certify arbitrary com
 ## Graph reader implementation
 
 The [implemented architecture](architecture.md#repertoire-relationship-and-mcp-foundation) records source coverage, adjacency/cursor behavior, caps, cache boundaries, owner UI and read-only MCP integration. Current readers expose exact native definitions and selected live/evidence neighborhoods; `complete` means complete for that named projection, while `impact` remains `not-evaluated`. No topology editor, arbitrary edge-write authority or general closure validator is delivered. [INV-15](maintainers/inventions-and-world-evolution.md#inv-15--navigable-relationship-graph-and-visual-inspection) retains the remaining graph/visual/evidence qualification, and [INV-20](maintainers/inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) adds real cross-domain source consumers.
+
+## Candidate preparation projection
+
+`world-authoring-analysis.ts` derives an immutable overlay for the exact submitted revision using the existing source reader and relationship index. Recipes reference input definitions with roles/quantities, native family, proposed output, gathering resource and optional base recipe. Whole status-policy candidates expose attribute reads/rates, capability restrictions, native body/clock reads, proposed status links and cognition dependencies. Existing body/attribute/cognition adapters expose their finite native references; this is not a full live-body or command interaction graph.
+
+Only resolved endpoints form indexed edges. Missing required definitions remain field-addressed findings. Proposed definitions are labeled separately from installed definitions; native state/capability references are marked reference-only. Temporal status reads can cycle without implying recursive execution or a cycle in the check plan. Node/work overflow leaves required coverage incomplete and blocks review. Context findings and the expandable human dependency list use this same retained projection. Selected-source reads match installed graph reference versions without building the complete catalogue. Broader impact, graphical editing and cross-domain closure remain INV-15/WW15; [CTX02/CTX06](limits/inventions.md#ctx02--preparation-and-disclosure-work) and [evidence](verification/world-agent-context.md) describe current bounds.
+
+## Maintained records
+
+- Implementation: [World Agent delivery, WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design), with broader INV owners retained above.
+- Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal).
+- Related contract: [Invention coordination and preparation](invention-validation.md).

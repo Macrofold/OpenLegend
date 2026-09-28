@@ -122,20 +122,87 @@ export function WorldAgentReview({
               <p>{review.plan.validation.semantics}</p>
               <p>{review.plan.validation.message}</p>
               <p className="ol-caption">
-                Coverage: {review.plan.validation.coverage}. Native validation is not proof that
-                every requested meaning or possible interaction was checked.
+                Coverage: {review.plan.validation.coverage.replace(/\.$/, '')}. Native validation is
+                not proof that every requested meaning or possible interaction was checked.
               </p>
               <p>Affected records in this adapter's scope: {review.plan.impact.affected}.</p>
-              {review.plan.validation.activationRequiresResume && (
-                <p>
-                  Resume the world separately before applying this change. This review does not
-                  unpause it.
-                </p>
-              )}
+              {(review.plan.preparation ?? review.draft.preparation) &&
+                (() => {
+                  const preparation = review.plan.preparation ?? review.draft.preparation;
+                  if (!preparation) return null;
+                  const label = (ref: { kind: string; id: string; version: string }) =>
+                    preparation.graph.nodes.find(
+                      (node) =>
+                        node.ref.kind === ref.kind &&
+                        node.ref.id === ref.id &&
+                        node.ref.version === ref.version,
+                    )?.label ?? ref.id;
+                  return (
+                    <>
+                      <p>{preparation.presentation.description}</p>
+                      <p>
+                        {review.plan.status === 'applied'
+                          ? 'This change has been applied; see the native result below.'
+                          : 'Saved for review. No world change has been applied.'}
+                        {review.draft.kind === 'recipe' &&
+                          ' Saving or installing a recipe does not create an item; crafting is a separate action.'}
+                      </p>
+                      <details open>
+                        <summary>Requirements and checks</summary>
+                        <ul>
+                          {preparation.requirements.map((requirement) => (
+                            <li key={requirement.id}>
+                              <q>{requirement.source.text}</q> — {requirement.finding} (
+                              {requirement.status})
+                            </li>
+                          ))}
+                        </ul>
+                        <ul>
+                          {preparation.checks.map((check) => (
+                            <li key={check.id}>
+                              {check.status}: {check.finding}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="ol-caption">
+                          These checks cover the supported native rules. Broader interactions have
+                          not been evaluated.
+                        </p>
+                      </details>
+                      <details>
+                        <summary>Materials and dependencies</summary>
+                        <ul>
+                          {preparation.graph.edges.map((edge) => (
+                            <li key={edge.id}>
+                              {label(edge.source)} → {edge.relation.replaceAll('_', ' ')} →{' '}
+                              {label(edge.target)}
+                              {edge.role && ` (${edge.role})`}
+                              {edge.quantity !== undefined && ` × ${edge.quantity}`}
+                            </li>
+                          ))}
+                        </ul>
+                        {preparation.graph.unresolved.map((finding, index) => (
+                          <p key={index}>
+                            {finding.field}: {finding.message}
+                          </p>
+                        ))}
+                        <p className="ol-caption">
+                          {preparation.graph.coverage.scope}:{' '}
+                          {preparation.graph.coverage.projection}. Proposed outputs are not
+                          installed definitions or possessed items.
+                        </p>
+                      </details>
+                    </>
+                  );
+                })()}
+              {review.plan.status !== 'applied' &&
+                review.plan.validation.activationRequiresResume && (
+                  <p>Applying this change requires a running world. Approval does not resume it.</p>
+                )}
               {!!review.plan.validation.structuralErrors.length && (
                 <p>{review.plan.validation.structuralErrors.join('\n')}</p>
               )}
-              <details open>
+              <details>
                 <summary>Exact candidate</summary>
                 <pre className="ol-agent-json">{JSON.stringify(review.draft.payload, null, 2)}</pre>
               </details>
@@ -171,7 +238,7 @@ export function WorldAgentReview({
               )}
             </>
           )}
-          {notice && <p role="status">{notice}</p>}
+          {notice && notice !== review?.plan.result?.message && <p role="status">{notice}</p>}
           {error && <p role="alert">{error}</p>}
           <Button variant="quiet" disabled={busy} onPress={onClose}>
             Close review

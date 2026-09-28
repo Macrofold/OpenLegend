@@ -272,3 +272,15 @@ An authoring model that is cheaper per token but requires repeated repairs may b
 Tools such as [fast-check model-based testing](https://fast-check.dev/docs/advanced/model-based-testing/) can help generate and reduce operation sequences; adoption is optional and must fit the existing TypeScript test setup. No new dependency is introduced by this design.
 
 The long-term scaling property is cumulative: established contracts and independently maintained evidence make future ordinary inventions cheaper, while genuinely new behavior receives proportional investigation. No amount of cached evidence eliminates the need for current world authority and coherent activation.
+
+## Finite authoring preparation
+
+The initial native pipeline records three checks for each exact revision: owning native admission, required reference coverage and presentation adequacy. The presentation check declares its native-admission prerequisite. Findings retain validator version, candidate digest, dependency content and timeline; approval revalidates native admission and evidence freshness. No paid semantic judge, copied-world scenario executor or general interaction closure is implied.
+
+Original human wording remains attributable and reviewable. Source-quoted hard constraints/preferences may record unsupported behavior; a model cannot mark semantic intent mechanically satisfied. Unsupported requirements block review. Invalid candidates return `needs_revision`; exhausted required analysis returns `pending_analysis`; unsupported requirements or missing required presentation return `blocked`; only a complete finite native preparation creates `ready_for_review`. Broader interactions remain explicitly unevaluated even when finite admission passes. Long analysis beyond the slice is explicitly unsupported in this release, rather than silently accepted or held inside a transaction. See [runtime ownership](world-agent-runtime.md#scoped-context-and-native-save-for-review), [presentation](invention-art-pipeline.md#initial-native-presentation-readiness), and [actual evidence](verification/world-agent-context.md).
+
+## Maintained records
+
+- Implementation: [World Agent delivery, WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design), with broader INV owners retained above.
+- Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal).
+- Related contract: [Invention coordination and preparation](invention-foundation.md).

@@ -1,6 +1,6 @@
 # World Agent context and invention loop: feature specification
 
-**Status: proposed design, requested 2026-09-27. No runtime implementation or live qualification is claimed.** Medium reasoning effort is an explicit owner requirement for the proposed World Agent execution profile. Other interface choices below are recommendations for implementation review.
+**Status: approved implementation target; implementation in progress. No completed runtime delivery or live qualification is claimed.** Medium reasoning effort is an explicit owner requirement for the proposed World Agent execution profile. Other interface choices below are recommendations for implementation review.
 
 ## Purpose
 
@@ -81,7 +81,7 @@ Existing INV/WW owners retain real harness reliability, generated art and richer
 
 ## Delivery stages
 
-First deliver source-backed guidance, the candidate graph and bounded shared analysis; then native submit with retained requirements/checks/readiness and thin transports; then selected profiles and Macrofold execution behavior; then continuity and cross-kind templates; finally qualify actual journeys. These are parts of the initial version, not optional graph/pipeline follow-ups. Work remains tracked once in WW17–WW23, not as duplicate checklists here. Runtime implementation starts only after approval of this design.
+First deliver source-backed guidance, the candidate graph and bounded shared analysis; then native submit with retained requirements/checks/readiness and thin transports; then selected profiles and Macrofold execution behavior; then continuity and cross-kind templates; finally qualify actual journeys. These are parts of the initial version, not optional graph/pipeline follow-ups. Work remains tracked once in WW17–WW23, not as duplicate checklists here. Runtime implementation is approved; the project packet tracks execution and evidence.
 
 ## Maintained records
 

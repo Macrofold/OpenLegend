@@ -1,5 +1,7 @@
 import {
   validateDeclaration,
+  observeActor,
+  type WorldState,
   type ActorObservation,
   type DeclarationDraft,
 } from '@open-legend/domain';
@@ -35,8 +37,9 @@ export function scopedInventionErrors(
   service: WorldService,
   actorId: string,
   candidate: unknown,
+  world: WorldState = service.world,
 ): string[] {
-  const observed = service.observe(actorId);
+  const observed = observeActor(world, actorId, { includeMemories: false });
   if (!observed) return ['The inventor is unavailable.'];
   const materials = new Set(inventionMaterials(observed).map((material) => material.id));
   if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
@@ -57,7 +60,7 @@ export function scopedInventionErrors(
     )
       return ['The proposal targets a resource unavailable to this inventor.'];
   }
-  return validateDeclaration(service.world, candidate);
+  return validateDeclaration(world, candidate);
 }
 
 /** Follow-ups retain their first workshop allocation; current config can tighten it. */

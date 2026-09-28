@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { declarationSchema } from './ai-schemas.js';
+import { typedAuthoringPayload } from './world-authoring-schemas.js';
 
 const id = z
   .string()
@@ -8,6 +10,25 @@ const id = z
 const revision = z.number().int().min(1).max(1_000_000);
 const draft = { draftId: id, revision };
 const mutation = { operationId: id };
+const requirementAnnotations = z
+  .array(
+    z
+      .object({
+        sourceTurnId: id,
+        quote: z.string().min(1).max(2000),
+        strength: z.enum(['hard', 'preference']),
+        status: z.enum(['human-review', 'unsupported']),
+        finding: z.string().min(1).max(1000),
+        supersedes: id
+          .describe(
+            'Prior finding ID replaced by an explicit change in the current human request. Original wording remains in review.',
+          )
+          .optional(),
+      })
+      .strict(),
+  )
+  .max(16)
+  .optional();
 const payload = z
   .string()
   .min(2)
@@ -26,6 +47,48 @@ export type AuthoringKind = z.infer<typeof authoringKind>;
 
 // One catalogue owns validation for local tools and MCP. No approval-grant or budget-increase tool.
 export const WORLD_AUTHORING_TOOLS = {
+  ol_authoring_submit: {
+    description:
+      'Save a typed candidate through the selected native kind, retain requirements/checks/dependencies, and prepare exact human review if ready. Whole policies replace the complete selected policy; omitted definitions are removals. No automatic approval or live effect. Finish on ready_for_review.',
+    schema: z
+      .object({
+        ...mutation,
+        packetRef: id,
+        proposal: typedAuthoringPayload,
+        edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
+        requirements: requirementAnnotations,
+      })
+      .strict(),
+  },
+  ol_recipe_submit: {
+    description:
+      'Save a complete recipe and its native checks for exact human review. On ready_for_review, explain the tradeoff and finish. Nothing is installed or crafted. For a new recipe omit deriveFrom; never guess a base ID. Reuse the same operationId and body to recover a lost response.',
+    schema: z
+      .object({
+        ...mutation,
+        packetRef: id,
+        candidate: z.fromJSONSchema(declarationSchema),
+        edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
+        deriveFrom: z
+          .object({ recipeId: id, version: z.string().min(1).max(100) })
+          .strict()
+          .optional(),
+        requirements: requirementAnnotations,
+      })
+      .strict(),
+  },
+  ol_authoring_guide: {
+    description:
+      'Read missing selected-kind field meanings and native mechanics. The context usually already includes this guide; do not read it again unless needed. Guidance never grants a capability or approval.',
+    schema: z.object({ kind: authoringKind }).strict(),
+  },
+  ol_request_capability: {
+    description:
+      'Request the supported tool profile needed for the current human request. Records the next stage; it grants no approval, spending or broader scope. Explain missing scope in final text. Do not call for an unsupported engine mechanic.',
+    schema: z
+      .object({ ...mutation, kind: authoringKind, reason: z.string().min(1).max(500) })
+      .strict(),
+  },
   ol_session: {
     description:
       'Read the current authorized authoring session, spending and reachable drafts/reviews. Does not create or refill a budget.',
@@ -103,9 +166,23 @@ export type WorldAuthoringCall = {
 /** Keep each tool name correlated with its validated arguments in both transports. */
 export function parseWorldAuthoringCall(name: string, raw: unknown): WorldAuthoringCall | null {
   if (!Object.hasOwn(WORLD_AUTHORING_TOOLS, name)) return null;
-  const parsed = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName].schema.safeParse(raw);
-  // The indexed schema has validated this exact name. No unchecked payload reaches dispatch.
-  return parsed.success ? ({ name, arguments: parsed.data } as WorldAuthoringCall) : null;
+  try {
+    if (Buffer.byteLength(JSON.stringify(raw) ?? '') > 28000) return null;
+    // Bound container depth before recursive Zod parsing. Valid native conditions have
+    // at most 12 predicate levels; 64 JSON containers leaves room for their wrappers.
+    const pending = [{ value: raw, depth: 0 }];
+    while (pending.length) {
+      const { value, depth } = pending.pop()!;
+      if (!value || typeof value !== 'object') continue;
+      if (depth > 64) return null;
+      for (const child of Object.values(value)) pending.push({ value: child, depth: depth + 1 });
+    }
+    const parsed = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName].schema.safeParse(raw);
+    // The indexed schema has validated this exact name. No unchecked payload reaches dispatch.
+    return parsed.success ? ({ name, arguments: parsed.data } as WorldAuthoringCall) : null;
+  } catch {
+    return null;
+  }
 }
 
 export const sessionRequest = z.object({ sessionId: id, worldId: id }).strict();
@@ -152,4 +229,11 @@ export const sessionListRequest = z
   .strict();
 
 /** Expected owner-facing request failure; infrastructure exceptions stay private. */
-export class AuthoringRequestError extends Error {}
+export class AuthoringRequestError extends Error {
+  constructor(
+    message: string,
+    readonly code: 'blocked' | 'stale' | 'unavailable' | 'capacity' | 'forbidden' = 'blocked',
+  ) {
+    super(message);
+  }
+}

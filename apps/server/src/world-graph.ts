@@ -49,6 +49,83 @@ export interface DefinitionProjection {
   resolve(kind: string, id: string): DefinitionRecord | undefined;
 }
 
+/** A selected context needs exact source facts, not a build of every world's edge.
+ * Keep identities identical to projectDefinitions; neither path exposes recipe provenance. */
+export function readDefinition(
+  world: WorldState,
+  kind: string,
+  id: string,
+): DefinitionRecord | undefined {
+  let data: unknown;
+  let label = id;
+  switch (kind) {
+    case 'item-definition': {
+      const value = Object.hasOwn(world.itemDefinitions, id)
+        ? world.itemDefinitions[id]
+        : undefined;
+      if (!value) return;
+      data = value;
+      label = value.name;
+      break;
+    }
+    case 'recipe': {
+      const value = Object.hasOwn(world.recipes, id) ? world.recipes[id] : undefined;
+      if (!value) return;
+      const { provenance: _private, ...definition } = value;
+      data = definition;
+      label = value.name;
+      break;
+    }
+    case 'attribute': {
+      const value = world.moduleManifest.definitions.find((d) => d.id === id);
+      if (!value) return;
+      data = value;
+      label = value.name;
+      break;
+    }
+    case 'status-effect': {
+      const value = world.statusEffectPolicy.definitions.find((d) => d.id === id);
+      if (!value) return;
+      data = value;
+      label = value.label;
+      break;
+    }
+    case 'status-effect-policy':
+      if (id !== 'current') return;
+      data = world.statusEffectPolicy;
+      label = 'Status effect policy';
+      break;
+    case 'cognition-policy':
+      if (id !== 'current') return;
+      data = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+      label = 'Cognition policy';
+      break;
+    case 'family': {
+      if (!Object.hasOwn(SUPPORTED_INVENTION_FAMILIES, id)) return;
+      const key = id as keyof typeof SUPPORTED_INVENTION_FAMILIES;
+      const value = SUPPORTED_INVENTION_FAMILIES[key];
+      data = { ...value, ...INVENTION_FAMILY_INTERFACES[key] };
+      label = value.description;
+      break;
+    }
+    case 'host':
+      if (!Object.hasOwn(HOST_IMPLEMENTATIONS, id)) return;
+      data = HOST_IMPLEMENTATIONS[id as keyof typeof HOST_IMPLEMENTATIONS];
+      break;
+    default:
+      return;
+  }
+  return {
+    node: {
+      ref: { kind, id, version: fingerprint(data) },
+      label,
+      layer: 'definition',
+      canInspect: true,
+    },
+    data,
+  };
+}
+
 /** Exact source readers live here; traversal and transports know no fictional mechanic names.
  * docs/repertoire-foundation.md#3-definition-live-arrangement-and-evidence-views
  */

@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-28",
+  "scope": "Native, transport, recovery and local measurements; live data tracked separately",
+  "native": {
+    "checks": [
+      "Typed submission saves exact candidate, dependencies, native checks, original intent and pending review through HTTP",
+      "Same operation/body replays exact saved outcome without a new revision",
+      "Operation lookup recovers committed result; operation ID collision is rejected",
+      "Exact inspected revision refines into an immutable second revision",
+      "Exact human approval and Apply commit once; repeated Apply recovers receipt",
+      "Missing required endpoint retains invalid draft/findings without dangling graph edges or a review",
+      "Whole status policy records actual attribute reads/rates, restrictions and cognition linkage with independent no-new-asset readiness",
+      "Attributable unsupported requirement blocks review without discarding candidate",
+      "Non-weapon gathering candidate records resource, native family, input roles and quantities",
+      "Explicit newer human change supersedes an unsupported requirement while preserving both immutable revisions",
+      "Exhausted new-work allowance still recovers the exact committed save",
+      "Injected review-storage failure rolls candidate, revision and operation outcome back together",
+      "Changed required policy rejects the old packet before draft storage",
+      "Direct selected-source reads match installed graph identities and data exactly",
+      "Large candidate analysis stops at measured work bounds and explicitly retains incomplete coverage",
+      "Another principal cannot recover a private operation through its copied handle",
+      "Actual MCP discovery exposes shared strict descriptors and exact cross-transport receipt replay",
+      "Native flow has no provider attempts or spending",
+      "Temporal status self-read is retained without inventing recursive execution or a workflow cycle",
+      "Missing required representation independently blocks readiness",
+      "10,000 irrelevant definitions do not grow candidate graph work; cold/warm source costs measured",
+      "Native profile stages rotate handles, retain original request/shared funding, and require a human turn before broader policy scope"
+    ],
+    "providerCalls": 0,
+    "recipePromptBytes": 4494,
+    "recipeToolBytes": 7578,
+    "mcpToolCount": 24,
+    "nativeScale": {
+      "extraDefinitions": 10000,
+      "coldEvidenceHashMs": 8.629917000000205,
+      "selectedRead": {
+        "medianMs": 0.0029580000000350992,
+        "p95Ms": 0.04625000000032742
+      },
+      "fullProjection": {
+        "medianMs": 113.20049999999992,
+        "p95Ms": 164.99420800000007
+      },
+      "warmEvidence": {
+        "medianMs": 0.056582999999591266,
+        "p95Ms": 0.14691700000003038
+      },
+      "candidateGraph": {
+        "medianMs": 0.03650000000016007,
+        "p95Ms": 0.062291000000186614
+      }
+    }
+  },
+  "recovery": {
+    "database": {
+      "adapter": "postgres",
+      "topology": "loopback",
+      "version": "14.17 (Homebrew)"
+    },
+    "realProviderCalls": 0,
+    "checks": [
+      "Opening the same session cannot increase its allowance",
+      "Exact review digest, human approval, concurrent HTTP/MCP Apply and repeated Apply commit once",
+      "Custom binding/value edits and world-receipt recovery after lost plan projection",
+      "Immutable submitted revisions reject stale selected-draft approval",
+      "Real HTTP/MCP discovers the updated tool catalogue; service bearer cannot read human-private body state",
+      "Cross-account authoring history and approvals stay inaccessible",
+      "Player supplied workshop proposal stays uninstalled until exact saved Apply, with complete history DTO",
+      "Native investigation, drafts, review, and Apply make no paid attempts",
+      "Concurrent session reservations and per-character monthly caps share one ledger",
+      "Injected executor cancellation revokes tools, keeps terminal text and never redispatches a duplicate identity",
+      "Current operational backup preserves authoring sessions, immutable records and attempt-budget links",
+      "PostgreSQL restart retains revisions/receipts and marks interrupted work uncertain without redispatch",
+      "Current-format gameplay restore fences old authoring context and retains operational records/accounting",
+      "Another human body is rejected before a draft or base fingerprint is disclosed",
+      "Revoking current account grants immediately fences an already issued authoring handle"
+    ]
+  },
+  "reviewFixes": [
+    "Browser reconnect preserves definition review evidence; current identity/grant/audience/timeline still fence it; commands additionally bind control generation.",
+    "Preview wording describes validation, not installation or complete readiness.",
+    "Graph work counts stop exactly at the examined-operation ceiling."
+  ],
+  "additionalNativeCheck": "Bounded graph accounting and stable/revoked semantic authority fingerprint comparisons passed.",
+  "liveRecipeProviderRequests": {
+    "runId": "01a0e662-fc76-7673-ad24-ef3cf2492336",
+    "traceId": "464191d7f8b3d109fe318cf4dffcdae2",
+    "requests": [
+      {
+        "requestBytes": 15059,
+        "messagesBytes": 5708,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 4384,
+          "output": 2586,
+          "input_cached": 113,
+          "input_cache_write": 0,
+          "total": 7083
+        },
+        "providerReportedCostUsd": 0.000955826,
+        "settlementEstimateMicroUsd": 968
+      },
+      {
+        "requestBytes": 16941,
+        "messagesBytes": 7590,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 5018,
+          "output": 2227,
+          "input_cached": 113,
+          "input_cache_write": 0,
+          "total": 7358
+        },
+        "providerReportedCostUsd": 0.000947426,
+        "settlementEstimateMicroUsd": 960
+      },
+      {
+        "requestBytes": 19423,
+        "messagesBytes": 10072,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 764,
+          "output": 637,
+          "input_cached": 5105,
+          "input_cache_write": 0,
+          "total": 6506
+        },
+        "providerReportedCostUsd": 0.00021401,
+        "settlementEstimateMicroUsd": 715
+      }
+    ],
+    "source": "Langfuse generation input and committed usage; compact UTF-8 JSON; private content excluded",
+    "limits": "Before later explain-only prompt fix; unmatched against historical failure; not provider invoice reconciliation"
+  },
+  "reviewFollowup": [
+    "Current human request separated from earlier requirements; real explain-only run left drafts unchanged",
+    "Authenticated operation lookup passes after new-work quota",
+    "900-level malformed input rejected before recursive parsing",
+    "Unsupported state/capability identifiers remain unresolved instead of becoming graph facts"
+  ]
+}
