@@ -1,6 +1,6 @@
 # Worldbuilding research library
 
-**28 world dossiers, six comparative essays, and a cross-world matrix.** Research initiated and reviewed on 2026-09-26.
+**29 world dossiers, six comparative essays, and the original 28-world comparison matrix.** Research initiated and reviewed on 2026-09-26; Dungeons & Dragons added on 2026-09-27.
 
 This is an independent study of fictional worlds: how their histories, material circumstances, institutions, languages, beliefs, extraordinary conditions, and ordinary pleasures produce distinctive lives—and how creators make those lives compelling to audiences. It is not a proposal, implementation specification, or set of recommendations for another fictional world or software project.
 
@@ -10,9 +10,11 @@ The central distinction is between a large inventory of invented facts and a wor
 
 ## Start here
 
-Read [What makes a fictional world feel alive?](comparative-synthesis.md) for the overall argument. Use the [comparison matrix](comparative-matrix.md) to see all 28 worlds side by side: their initial audience foothold, most developed relationships, a worked example, and a significant limit.
+Read [What makes a fictional world feel alive?](comparative-synthesis.md) for the overall argument. Use the [comparison matrix](comparative-matrix.md) to see the original 28 worlds side by side: their initial audience foothold, most developed relationships, a worked example, and a significant limit.
 
-For a particular question, choose a thematic essay below, then follow its links to the relevant dossiers. The [research method](research-method.md) defines the scope and evidence standards; the [source audit](source-audit.md) records what kinds of evidence support the packet and where access remains limited. The [progress and verification ledger](research-progress.md) records completion rather than duplicating the research arguments.
+The added [Dungeons & Dragons dossier](worlds/29-dungeons-and-dragons.md) compares current Forgotten Realms orientation, deeper Eberron creator material, and selected Greyhawk, Planescape, and Ravenloft lenses. It studies ordinary magic, labor, institutions, faith, language, pleasure, and named characters. Its own evidence register and the [D&D research hub](../game-inspiration/games/dungeons-and-dragons.md#evidence-and-completion-status) record the addition's access and completion limits. The earlier comparative essays and matrix have not been silently reclassified as 29-world audits.
+
+For a particular question, choose a thematic essay below, then follow its links to the relevant dossiers. The [research method](research-method.md) defines the scope and evidence standards; the [source audit](source-audit.md) records what kinds of evidence support the original packet and where access remains limited. The [progress and verification ledger](research-progress.md) records its completion rather than duplicating the research arguments.
 
 ## The six comparative essays
 
@@ -27,7 +29,7 @@ For a particular question, choose a thematic essay below, then follow its links 
 
 ## Complete dossier roster
 
-The numbering is a stable navigation device, not a ranking. Selection is purposive: the eight explicitly requested anchors plus twenty comparisons that expose different routes to depth. These are substantial analyses, not a claim to enumerate every notable fictional world.
+The numbering is a stable navigation device, not a ranking. Selection is purposive: the original eight explicitly requested anchors plus twenty comparisons that expose different routes to depth, followed by the separately requested Dungeons & Dragons addition. These are substantial analyses, not a claim to enumerate every notable fictional world.
 
 ### The eight requested anchors
 
@@ -81,10 +83,13 @@ The numbering is a stable navigation device, not a ranking. Selection is purposi
 |---|---|---|
 | 27 | [The Elder Scrolls / Tamriel](worlds/27-the-elder-scrolls.md) | Competing histories, textual genres, religious institutions, place-specific life, and the politics of recognizing a claimed identity. |
 | 28 | [Fallout](worlds/28-fallout.md) | Environmental traces, inherited promises, new societies after catastrophe, technological dependency, companion histories, and personhood. |
+| 29 | [Dungeons & Dragons: representative worlds](worlds/29-dungeons-and-dragons.md) | Current Forgotten Realms orientation; Eberron's everyday magic, professions, institutions, belief, status, and divergent characters; contrasting Greyhawk, Planescape, and Ravenloft lenses. Edition, canon, creator extrapolation, and table invention remain distinct. |
 
 ## What a dossier contains
 
 Each dossier addresses the world's distinctive attraction and accessible entry; its creators and production history; historical layers and the custody of memory; geography and ordinary material life; peoples, institutions, religion, politics, and diplomacy; language and communication; magic, technology, or other organizing conditions; several contrasting character studies; and at least one actual scene or arc in which those dimensions operate together.
+
+The D&D addition maps those same research dimensions but explicitly retains a scene-evidence gap: its worked sequences are original constructed illustrations, not freshly audited published scenes. Current paid setting books were primarily available as contents, while substantive creator essays supply deeper Eberron evidence. Its source register and packet status do not mark those access limits as completed acceptance gates.
 
 The analysis also identifies what is less developed, what is intentionally mysterious, where contradictions or cultural simplifications create problems, and which pleasures make the place worth attending to. A missing category is not filled with invented lore: a story without a detailed diplomatic service or religious hierarchy is allowed to remain such a story.
 
@@ -100,16 +105,16 @@ The character studies examine more than trauma. Work, affection, confidence, pri
 
 **Wonder without exhaustive explanation:** compare Narnia, Spirited Away, Earthsea, and Pokémon. Ask what remains mysterious while immediate relationships and risks stay understandable.
 
-**Power that reshapes ordinary life:** begin with the magic/technology/ecology essay, then Dune, The Expanse, The Culture, and Discworld. Compare scarce necessities, maintenance, abundance, and the social effects of communication.
+**Power that reshapes ordinary life:** begin with the magic/technology/ecology essay, then Dune, The Expanse, The Culture, and Discworld. Compare scarce necessities, maintenance, abundance, and the social effects of communication. The [D&D addition](worlds/29-dungeons-and-dragons.md#5-eberron-magic-as-infrastructure-and-labor) adds professional magic, guild training, rural applications, and access to institutions.
 
-**Large franchises that remain accessible:** begin with the authorship essay, then Star Wars, Marvel, DC, and One Piece. Compare standalone entry, recurring relationships, accretion, adaptation, and the costs of continuity becoming compulsory homework.
+**Large franchises that remain accessible:** begin with the authorship essay, then Star Wars, Marvel, DC, and One Piece. Compare standalone entry, recurring relationships, accretion, adaptation, and the costs of continuity becoming compulsory homework. D&D adds the distinction between rules edition, setting continuity, creator interpretation, and a particular table's events.
 
-These routes are thematic comparisons, not ranked judgments of quality. The matrix links every item and supplies additional pairings.
+These routes are thematic comparisons, not ranked judgments of quality. The original matrix links its 28 items and supplies additional pairings; the D&D dossier supplies its own representative-setting comparison.
 
 ## Evidence and limits
 
-The packet separates fictional content, documented production history, critical interpretation, and uncertainty. It uses named primary works and scene-level anchors alongside creator interviews, official archives and biographies, specialist essays, and explicitly marked secondary orientation. Sources are not all equally strong; the [source audit](source-audit.md) makes that variation visible.
+The packet separates fictional content, documented production history, critical interpretation, and uncertainty. It uses named primary works and scene-level anchors alongside creator interviews, official archives and biographies, specialist essays, and explicitly marked secondary orientation. Sources are not all equally strong; the [source audit](source-audit.md) makes that variation visible for the original packet, and the D&D dossier provides its own annotated source register.
 
 It does **not** claim a complete fresh rereading or viewing of every primary work, an exhaustive survey of current franchise canon, or empirical proof that a particular technique caused commercial success. Statements about a work's invitation or emotional effect are argued readings, not universal claims about audiences. The roster is broad but selective, and the source base is predominantly accessible English-language material.
 
-For the exact completion and review state, see [research-progress.md](research-progress.md). The documents are maintained on `docs/worldbuilding-research-library` under `archive/02-research/worldbuilding/`.
+For the original packet's exact completion and review state, see [research-progress.md](research-progress.md); for the addition, see the [D&D packet status](../game-inspiration/games/dungeons-and-dragons.md#evidence-and-completion-status). The original library was developed on `docs/worldbuilding-research-library`; this D&D addition is maintained on `codex/world-idea-repertoires` under `archive/02-research/`.
