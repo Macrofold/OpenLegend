@@ -18,9 +18,11 @@ import {
 import type { RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
 import { statusCapabilitySchema, statusConditionSchema } from './world-authoring-schemas.js';
+import { authoringBodyTarget } from './world-authoring-bindings.js';
+import { authoringAttributeValue } from './world-authoring-values.js';
 
 export const CONTEXT_WORK = { records: 64, examined: 256, tools: 32, bytes: 64000 } as const;
-export const AUTHORING_ANALYSIS_VERSION = 'native-authoring-analysis-v1';
+export const AUTHORING_ANALYSIS_VERSION = 'native-authoring-analysis-v2';
 const sourceDigests = new WeakMap<object, string>();
 // Durable content hashes survive restart; immutable source identities avoid re-hashing the
 // entire definition catalogue on every review. Mutable fixtures are deliberately not cached.
@@ -79,6 +81,7 @@ export function candidateGraph(
   world: WorldState,
   draft: AuthoringDraft,
   generation: string,
+  canReadBody: (id: string) => boolean = () => false,
 ): WorldAgentCandidateGraph {
   const candidate = { kind: 'authoring-draft', id: draft.id, version: draft.digest };
   const nodes = new Map<string, RelationshipNode>();
@@ -321,6 +324,39 @@ export function candidateGraph(
   } else {
     // Other existing kind adapters still own validation. Their graph coverage is deliberately
     // finite and does not assert complete live-body, command or unknown-host dependencies.
+    let body: RelationshipRef | undefined;
+    if (draft.kind === 'attribute-bindings' || draft.kind === 'attribute-values') {
+      // A body binding and a value snapshot have different freshness owners. Do not
+      // bind attachment review to changing energy/charge or project private bodies.
+      // docs/invention-graph.md#candidate-preparation-projection
+      if (
+        typeof p.entityId !== 'string' ||
+        !canReadBody(p.entityId) ||
+        !Object.hasOwn(world.entities, p.entityId) ||
+        !world.entities[p.entityId]?.actor
+      ) {
+        missing('entityId', 'Required body is unavailable in the permitted scope.');
+      } else {
+        body = add({
+          ref: {
+            kind: 'authoring-body-target',
+            id: p.entityId,
+            version: authoringBodyTarget(world, p.entityId).digest,
+          },
+          label: `Body: ${world.entities[p.entityId]!.name}`,
+          layer: 'live',
+          availability: 'reference-only',
+        });
+        link(
+          candidate,
+          body,
+          'contributes_to',
+          draft.kind === 'attribute-bindings'
+            ? 'attribute attachment'
+            : 'creator value intervention',
+        );
+      }
+    }
     if (draft.kind === 'cognition-policy') {
       link(candidate, existing('cognition-policy', 'current', 'base.policy'), 'derives_from');
       link(
@@ -336,11 +372,30 @@ export function candidateGraph(
     } else if (draft.kind === 'attribute-values') {
       for (const change of list(p.changes)) {
         if (!spend()) break;
-        link(
-          candidate,
-          existing('attribute', record(change).attributeId, 'changes.attributeId'),
-          'requires',
-        );
+        const c = record(change);
+        const definition = existing('attribute', c.attributeId, 'changes.attributeId');
+        link(candidate, definition, 'requires');
+        if (!body || typeof c.attributeId !== 'string') continue;
+        const value = authoringAttributeValue(world, body.id, c.attributeId);
+        if (!value) {
+          missing(
+            'changes.attributeId',
+            'Required attribute is not attached to the selected body.',
+          );
+          continue;
+        }
+        const current = add({
+          ref: {
+            kind: 'authoring-attribute-value',
+            id: JSON.stringify([body.id, c.attributeId]),
+            version: fingerprint([body.version, value]),
+          },
+          label: `Current ${c.attributeId} on selected body`,
+          layer: 'live',
+          availability: 'reference-only',
+        });
+        link(candidate, current, 'reads', 'current value and revision');
+        if (current) link(current, definition, 'defined_by');
       }
     } else if (draft.kind === 'attribute') {
       if (p.removeId) link(candidate, existing('attribute', p.removeId, 'removeId'), 'uses');
@@ -389,7 +444,9 @@ export function prepareAuthoring(
   requirements: WorldAgentRequirement[],
 ) {
   const validation = validateAuthoring(service, draft, scope, world);
-  const graph = candidateGraph(world, draft, generation);
+  const graph = candidateGraph(world, draft, generation, (id) =>
+    service.mayInspectPrivate(id, scope),
+  );
   const impact = authoringImpact(world, draft);
   const pending = graph.coverage.projection === 'incomplete';
   const missing = graph.unresolved.length > 0;

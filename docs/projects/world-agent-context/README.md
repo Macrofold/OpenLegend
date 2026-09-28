@@ -1,6 +1,6 @@
 # World Agent context and invention loop
 
-**Status: implementation approved and in progress.** The owner’s “Okay implement all of it” approves WW18–WW23 and the initial graph/pipeline foundation. Design verification below remains historical evidence, not runtime completion.
+**Status: finite foundation and approved custom-resource follow-up implemented and qualified; final-head CI remains the merge gate.** The owner’s “Okay implement all of it” approves WW18–WW23 and the initial graph/pipeline foundation. Design verification below remains historical evidence, not runtime completion.
 
 ## Implementation plan
 
@@ -91,4 +91,14 @@ Remove duplicate recipe schema facts from its guide while retaining family-speci
 
 ## Current qualification result
 
-The final explicit-invention sample meets CTX01: 11,973 / 14,442 complete request bytes, two model generations, one successful save and no rejected calls. Policy submission, browser exact review/Apply, qualified native affordances and 25 native observations pass; the 15 current-PostgreSQL recovery observations remain applicable. [Final evidence](../../verification/world-agent-context.md#final-local-qualification) records exact scope, costs and the isolated Macrofold overlay. Current-head CI and documentation review remain final merge gates; no PR is merged. The separate paused staging deployment is not a code failure.
+The final explicit-invention sample meets CTX01: 11,973 / 14,442 complete request bytes, two model generations, one successful save and no rejected calls. Policy submission, browser exact review/Apply, qualified native affordances and 25 native observations pass; the 15 current-PostgreSQL recovery observations remain applicable. [Final evidence](../../verification/world-agent-context.md#final-local-qualification) records exact scope, costs and the isolated Macrofold overlay. All three required OpenLegend CI gates pass at `fc7b2580`; no PR is merged. The separate paused staging deployment is not a code failure.
+
+## Next approved slice: custom-resource dependency evidence
+
+The foundation at `fc7b2580` passes all three required OpenLegend CI gates. Continue the already accepted INV-11.1/11.2 and INV-15 projection design for the existing custom-resource adapters: show the exact selected body and, for direct value interventions, the exact current attribute value/binding. This is a useful next step for charge-based creations; it does not add a charging source, a creature generator, automatic multi-change activation or new physics.
+
+Estimated 60–100 runtime logic lines. Owners: `world-authoring-analysis.ts`, existing body/value identity and impact helpers, and current scoped preparation/review. Risk: private-body disclosure or confusing a definition with its live state. Build bounded reference-only body/value nodes from existing semantic owners after authorization; retain missing/inaccessible endpoints as generic blockers. Binding edits depend on body identity and definitions, not ordinary draining; value edits depend on the actual value/revision. Keep current native admission and impact freshness authoritative, and bump analysis evidence identity when semantics change. No whole-world projection, new store, new paid stage or client authority.
+
+Verify a disposable PostgreSQL definition → attachment → value-review sequence through selected tools, exact graph identities/roles, rate-driven stale-value refusal, binding evidence surviving unrelated value changes, private-body refusal and replay/restore. Reuse unchanged recipe/status/live-model evidence; this slice changes native graph evidence, not model prompts or execution. Inspect the full affected diff, update canonical graph/tracker/evidence, typecheck/build and required CI. Complete means accurate review dependencies and no changed native mutation semantics, with all selected checks passing. The selected base remains refreshed `origin/main` at `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`; branch remains `codex/integrate-invention`.
+
+The custom-resource slice is implemented and its six focused PostgreSQL checks, typecheck, production build and affected-diff review pass. Exact private read denial, native draining/stale-value rejection, independent attachment approval and restart preservation are recorded in [evidence](../../verification/world-agent-context.md#custom-resource-follow-up). No additional provider work was needed. General composition, physical sources, new family ports and emergent interactions remain the separately designed INV/EWF stages, not implied by these finite references.

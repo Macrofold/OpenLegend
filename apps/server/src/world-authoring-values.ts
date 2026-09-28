@@ -35,6 +35,16 @@ export function attributeValueTarget(world: WorldState, payload: unknown) {
   return authoringBodyTarget(world, parsed.success ? parsed.data.entityId : '');
 }
 
+/** State identity shared by review freshness and its scoped dependency projection. */
+export function authoringAttributeValue(world: WorldState, entityId: string, attributeId: string) {
+  const actor = Object.hasOwn(world.entities, entityId)
+    ? world.entities[entityId]?.actor
+    : undefined;
+  return Object.hasOwn(actor?.attributes ?? {}, attributeId)
+    ? actor?.attributes?.[attributeId]
+    : undefined;
+}
+
 /** Exact current-value edits are creator interventions, never a native recharge or an NPC power.
  * The native owner validates revisions/ranges and emits concern changes atomically.
  * docs/world-agent-inspection-and-edits.md#reviewed-custom-attribute-values
@@ -84,22 +94,20 @@ export function editAuthoringAttributeValues(
 export function attributeValueImpact(world: WorldState, payload: unknown) {
   const parsed = attributeValueSchema.safeParse(payload);
   const target = attributeValueTarget(world, payload);
-  const actor = Object.hasOwn(world.entities, target.entityId)
-    ? world.entities[target.entityId]?.actor
-    : undefined;
   return {
     token: fingerprint([
       target,
       parsed.success
         ? parsed.data.changes.map((c) => {
-            const value = Object.hasOwn(actor?.attributes ?? {}, c.attributeId)
-              ? actor?.attributes?.[c.attributeId]
-              : undefined;
+            const value = authoringAttributeValue(world, target.entityId, c.attributeId);
             return [c.attributeId, value?.revision ?? null, value?.value ?? null];
           })
         : [],
     ]),
-    affected: actor ? 1 : 0,
+    affected:
+      Object.hasOwn(world.entities, target.entityId) && world.entities[target.entityId]?.actor
+        ? 1
+        : 0,
   };
 }
 

@@ -748,5 +748,20 @@
     "jevUsd": 0,
     "qualificationImage": "sha256:50acfc2b82b47183ca7f98c6bb2989388862631d20881297b16508588db7acbb",
     "deployment": "Isolated loopback API/scheduler and temporary source overlay; original owner checkout and preview preserved. Not deployed or merged."
+  },
+  "customResourceFollowup": {
+    "date": "2026-09-28",
+    "analysisVersion": "native-authoring-analysis-v2",
+    "database": "Disposable PostgreSQL 14.17 loopback",
+    "checks": [
+      "Selected attribute and attachment submissions expose the exact permitted body identity without inventing a supply source",
+      "Value review reads the exact current value/revision and its installed definition, separately from the body target",
+      "Native draining invalidates value review and its value reference, while an unrelated attachment retains its body identity and approved Apply",
+      "Denied body reads expose no live label/value/hash; missing binding stays unresolved without a fabricated endpoint",
+      "Actual selected submission for another human body retains no private live dependency",
+      "PostgreSQL restart preserves exact graph evidence and current resource state without rewinding values"
+    ],
+    "providerCalls": 0,
+    "additionalJevUsd": 0
   }
 }
