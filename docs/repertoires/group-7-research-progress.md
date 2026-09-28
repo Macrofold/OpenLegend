@@ -27,7 +27,8 @@ The current main roster lists 148 subjects. Index entries, headings and fetched-
 - [x] Read and process G107–G112, including original/sequel, restoration and port distinctions.
 - [x] Read and process G113–G130, including expansions, mode changes, stable/beta and mod distinctions.
 - [x] Read the remaining 16 granular mechanics studies: all 29 are now complete.
-- [ ] Finish comparative/theme essays, interaction-pattern material, supplements and unfinished ledger ranges.
+- [x] Complete all twelve essay files, the granular index and the full interaction lookup.
+- [ ] Finish supplements, reference notebooks and unfinished ledger ranges.
 - [ ] Integrate useful original synthesis in the three catalogues with source links and seed-world boundaries.
 - [ ] Refresh each catalogue's coverage note and complete the straightforward editorial pass.
 
@@ -93,4 +94,13 @@ Full game count: **148/148**, comprising the carried-forward 114 and the 34 comp
 - [x] [Vampire Survivors](../../archive/02-research/game-inspiration/mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) — steering automated actions through position, complementary coverage and upgrades that remove one specific liability; solved work deserves another purpose, not endless chores.
 - [x] [Wrath supplement](../../archive/02-research/game-inspiration/mechanics/wrath-mythic-paths-and-crusade-battles.md) — supernatural specialization can change a learned skill's purpose, recipient selection or recovery population; capacity, recruits and operating resources remain different requirements.
 
-The main library README was also read in full. The granular index and interaction lookup are navigation/comparison documents still to be completed separately; they are not counted among these 29 studies.
+## Essays and interaction navigation — complete
+
+All **twelve files in essays/** are now read in full at the main-library revision. The preceding continuation completed How to Interpret the Evidence, Comparative Map and What Actually Makes These Worlds Fun. This continuation completed Contents, Introduction, Executive Judgment, Camera/Audience/Non-FPS, Virality and Discovery, Production and Platform Pitfalls, Implications for OpenLegend, A Practical Validation Program and Prioritized Study Itinerary.
+
+- [x] [Essay collection](../../archive/02-research/game-inspiration/essays/contents.md) — preserve distinct play, relationship and authoring roles; judge originality by changed possibilities rather than renamed content. Readability can preserve complexity. Quiet expression, voluntary return and ambitious strangeness can coexist with practical usefulness. The validation suggestions were read as reference material, not adopted as runtime tasks.
+- [x] [Granular index](../../archive/02-research/game-inspiration/mechanics/README.md) — read the complete 25-study plus four-operational-supplement map and evidence boundaries.
+- [x] [Interaction lookup](../../archive/02-research/game-inspiration/mechanics/interaction-lookup.md) — read through the later party-learning and KOTOR II additions, not just the original comparison tables. Processing distinguishes stored knowledge, actual access, acquired tools, equipped effects and authorized action; these distinctions guide the upcoming catalogue additions.
+- [x] [Main library README](../../archive/02-research/game-inspiration/README.md) — full index read; historical checkpoint wording is not substituted for the current 148-subject roster.
+
+The reference notebooks, remaining supplements and incomplete ledger ranges are the next reading gate. Their completion is not inferred from the essays or from the full-game count.
