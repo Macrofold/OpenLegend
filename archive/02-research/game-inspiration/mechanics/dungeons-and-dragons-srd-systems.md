@@ -72,7 +72,7 @@ A Ring of Spell Storing and a Shield Guardian allow previously supplied magic to
 
 ### Interfaces can themselves be gameplay
 
-The Apparatus of the Crab is a machine with two occupants, multiple levers, environmental limits, and a finite air supply. The controls are part of understanding and operating it, not a generic “use vehicle” button with every result implied. `[S, p. 210, Apparatus of the Crab]`
+The Apparatus of the Crab is a machine with room for two occupants, multiple levers, environmental limits, and a finite air supply. It requires one pilot. The controls are part of understanding and operating it, not a generic “use vehicle” button with every result implied. The lever table was visually checked against page 210. `[S, p. 210, Apparatus of the Crab]`
 
 **Adaptation:** unfamiliar machinery can reward experimentation, documentation, teamwork, and training. Controls should reveal a coherent system; random punishment for touching a lever is not the same as discovery. A skilled operator might perform familiar sequences quickly, while a novice can still infer the essentials from visible feedback.
 
@@ -312,13 +312,15 @@ The uploaded PDF was read across the following complete ranges, including catalo
 | 254–343 | Monster procedures and the full monster catalogue | §§7–11, 13 |
 | 344–364 | Animal catalogue, including entries with non-Beast types | §§7, 9 |
 
-**Input identity:** `SRD_CC_v5.2.1.pdf`, 364 pages; SHA-256 `8974902d109d6e63672d7c490bde9ccf052410503d9cfa768237154fbc5e3d87`. Reading every page is not a claim to have exhaustively checked every numerical calculation, visually inspected every table, played every combination, or audited the commercial books. The uploaded document is the SRD, not the complete Player's Handbook, Dungeon Master's Guide, or Monster Manual.
+**Input identity:** `SRD_CC_v5.2.1.pdf`, 364 pages; SHA-256 `8974902d109d6e63672d7c490bde9ccf052410503d9cfa768237154fbc5e3d87`. Reading every page is not a claim to have exhaustively checked every numerical calculation, visually inspected every table, played every combination, or audited the commercial books. The uploaded document is the SRD, not the complete Player's Handbook, Dungeon Master's Guide, or Monster Manual. Selected equipment, travel, magic-item crafting, sentience, and apparatus tables were additionally checked as page images during review.
 
 This pass supersedes the earlier current-edition dossier's **selected-SRD-reading limitation**, but not its separate paid-book, reception, or population-data limits. No new 3.5 reception research or famous-GM video audit is claimed.
 
 ### Do not silently reconcile the source
 
-Two internal inconsistencies are worth preserving as source questions: the equipment table and entry disagree on Block and Tackle's price, and the travel chapters do not present land-vehicle pace consistently. `[S, pp. 12, 95–96, 192]` This study does not choose an official erratum on the publisher's behalf. A future implementation must explicitly decide its rule rather than pretending the source is unambiguous.
+A genuine travel ambiguity remains: page 12 allows travelers in wagons, carriages, and other land vehicles to choose a pace, while page 192 says vehicle travelers use the vehicle's speed and do not choose a pace. The latter passage was visually checked. This study does not invent an official erratum; a future implementation should identify its chosen rule. `[S, pp. 12, 192, Vehicles]`
+
+A separate suspected equipment-price discrepancy did **not** survive visual review: Block and Tackle weighs 5 pounds and costs 1 GP in the page 95 table, agreeing with the page 96 entry. The initial draft's claim of a disagreement is corrected here. This is a reading/column-alignment correction, not a publisher error. `[S, pp. 95–96]`
 
 Several familiar assumptions are also unsafe: Grease is explicitly nonflammable; Daylight produces sunlight; Wild Shape retains speech; the revised Rakshasa is not described by the familiar old low-level-spell-immunity shortcut. `[S, pp. 43, 122, 137, 317–318]` Other entries omit restrictions remembered from older versions. Absence of remembered wording is not permission to manufacture an official correction. Reopen the named entry before converting it into a mechanic.
 
