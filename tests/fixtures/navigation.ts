@@ -65,7 +65,12 @@ export function advanceWithNavigation(world: WorldState, seconds: number): Trans
     events.push(...result.events);
     if (!result.outcome.ok || result.world.paused || result.world.simTime >= target)
       return { ...result, events };
-    if (result.world.simTime === world.simTime)
+    // Starting queued work can request a route before any game time passes.
+    // Resolve that new request on the next iteration, as the host coordinator does.
+    if (
+      result.world.simTime === world.simTime &&
+      (result.outcome.code !== 'navigation-pending' || result.world === world)
+    )
       throw new Error('Native navigation fixture made no progress.');
     world = result.world;
   }

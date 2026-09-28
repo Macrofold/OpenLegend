@@ -392,16 +392,24 @@ export function finishPlanAction(
   actor.agency.revision++;
   // Exhausting chosen steps is meaningful feedback; ordinary intermediate progress
   // remains native. This never completes the actor's broader goal.
-  if (!result.ok || plan!.status === 'completed')
+  if (!result.ok || plan!.status === 'completed') {
+    // Name the actual finished work; a bare completion marker has no meaning
+    // when recalled without the plan. A completed attempt can still be a miss.
+    const results = plan!.steps
+      .filter((entry) => entry.status === 'completed' || entry.status === 'blocked')
+      .map(
+        (entry, index) =>
+          `${index + 1}. ${entry.command.type} (${entry.status}): ${entry.outcome!.message}`,
+      )
+      .join(' ');
     appendMemory(world, actorId, {
       kind: 'episode',
       source: 'internal',
-      summary: result.ok
-        ? `My chosen sequence is complete: ${result.message}`
-        : `My planned work stopped: ${result.message}`,
+      summary: `My planned actions ${result.ok ? 'finished' : 'stopped'}. ${results}`,
       entityIds: [actorId],
       importance: 6,
     });
+  }
 }
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
   const actor = world.entities[actorId]!.actor!;

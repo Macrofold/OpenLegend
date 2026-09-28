@@ -28,6 +28,16 @@ export interface MeleeProfile {
   windupSeconds: number;
   recoverySeconds: number;
 }
+
+/** Nominal capability, not guaranteed damage or pursuit time. */
+export function describeAttack(
+  profile: Pick<
+    StrikeDefinition,
+    'damage' | 'range' | 'workSeconds' | 'recoverySeconds' | 'accuracy'
+  >,
+): string {
+  return `${profile.damage} injury per hit; ${profile.workSeconds + (profile.recoverySeconds ?? 0)} game seconds plus approach; reach ${profile.range} m; ${Math.round((profile.accuracy ?? 1) * 100)}% base hit chance in reach.`;
+}
 export function validMelee(profile: MeleeProfile): boolean {
   return (
     !!profile &&

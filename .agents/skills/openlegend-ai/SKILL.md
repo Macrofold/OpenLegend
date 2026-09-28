@@ -20,3 +20,5 @@ For Jev, inspect [shared question rubrics](../../../apps/server/src/jev-question
 For generation, align prompt, runtime schema, decoder and consumers. Structured output and streamed partial parsing do not establish semantic truth or authorize effects; retain final validation and current-state admission. Do not invent a provider capability or conflate speech, thought and action merely because they share one response.
 
 Trace cancellation, timeout, invalid output, replay, stale context and partial/uncertain completion through accounting. Missing usage is not free execution. No automatic paid retry/fallback or fabricated response. Use the [verification/spending policy](../../rules/verification.md); fixtures cannot prove live quality, latency or calibration.
+
+For every Jev-related report, apply [Jev cost reporting](../../rules/verification.md#jev-cost-reporting), including progress updates and explanations.

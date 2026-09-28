@@ -7,8 +7,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     portable: true,
     packingLoad: 1,
     name: 'Knife',
-    description:
-      'A small sharp cutting tool, useful for preparing material and for close contact strikes. It can injure a living body, but a swing can miss.',
+    description: 'A small sharp blade for close-range cutting and stabbing.',
     properties: ['rigid', 'point'],
     melee: {
       damage: 8,
