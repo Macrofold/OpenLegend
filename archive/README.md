@@ -12,6 +12,8 @@ For active task documents and their owning specifications, use the [master TODO 
 
 ## Start here
 
+The [worldbuilding research library](02-research/worldbuilding/README.md) compares 29 world dossiers through six essays and a matrix. Its whole-world reassessment covers ordinary pleasures, ambition, institutions, conflict, relationships and consequences without prescribing one tone or changing engine contracts. The [source audit](02-research/worldbuilding/source-audit.md) and [reassessment ledger](02-research/worldbuilding/reassessment-progress.md) distinguish actual reading, committed work and remaining evidence limits.
+
 The [agency research](02-research/agency-cognition-and-planning.md) supports [optional decisions and persistent pursuit](../docs/agent-agency.md), with [runtime semantics](07-technical-architecture/agent-agency-runtime.md) and [AG delivery tasks](../docs/maintainers/agent-agency.md). These extend memory and the event framework without claiming runtime implementation.
 
 The [engine perception and event research](02-research/engine-perception-and-event-architectures.md) supports the proposed [stimulus/reaction contract](../docs/events-perception-and-reactions.md); implementation work is indexed in the [maintainer work index](../docs/maintainers/README.md).
