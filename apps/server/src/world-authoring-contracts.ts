@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { declarationSchema } from './ai-schemas.js';
-import { typedAuthoringPayload } from './world-authoring-schemas.js';
+import { authoringCandidateSchemas, typedAuthoringPayload } from './world-authoring-schemas.js';
 
 const id = z
   .string()
@@ -45,8 +45,45 @@ export const authoringKind = z.enum([
 ]);
 export type AuthoringKind = z.infer<typeof authoringKind>;
 
+export const AUTHORING_SUBMIT_TOOLS = {
+  'status-effect-policy': 'ol_status_policy_submit',
+  'cognition-policy': 'ol_cognition_policy_submit',
+  attribute: 'ol_attribute_submit',
+  'attribute-bindings': 'ol_attribute_bindings_submit',
+  'attribute-values': 'ol_attribute_values_submit',
+  action: 'ol_action_submit',
+} as const;
+
+function selectedSubmit<K extends keyof typeof authoringCandidateSchemas>(kind: K) {
+  return {
+    description:
+      `Save a ${kind} candidate for exact human review with native checks and dependencies. ` +
+      (kind.endsWith('-policy')
+        ? 'Whole policies replace the complete policy; omitted definitions are removals. '
+        : '') +
+      'No approval or live effect. Finish on ready_for_review. Reuse the same operationId and body to recover a lost response.',
+    schema: z
+      .object({
+        ...mutation,
+        packetRef: id,
+        proposal: z
+          .object({ kind: z.literal(kind), candidate: authoringCandidateSchemas[kind] })
+          .strict(),
+        edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
+        requirements: requirementAnnotations,
+      })
+      .strict(),
+  };
+}
+
 // One catalogue owns validation for local tools and MCP. No approval-grant or budget-increase tool.
 export const WORLD_AUTHORING_TOOLS = {
+  [AUTHORING_SUBMIT_TOOLS['status-effect-policy']]: selectedSubmit('status-effect-policy'),
+  [AUTHORING_SUBMIT_TOOLS['cognition-policy']]: selectedSubmit('cognition-policy'),
+  [AUTHORING_SUBMIT_TOOLS.attribute]: selectedSubmit('attribute'),
+  [AUTHORING_SUBMIT_TOOLS['attribute-bindings']]: selectedSubmit('attribute-bindings'),
+  [AUTHORING_SUBMIT_TOOLS['attribute-values']]: selectedSubmit('attribute-values'),
+  [AUTHORING_SUBMIT_TOOLS.action]: selectedSubmit('action'),
   ol_authoring_submit: {
     description:
       'Save a typed candidate through the selected native kind, retain requirements/checks/dependencies, and prepare exact human review if ready. Whole policies replace the complete selected policy; omitted definitions are removals. No automatic approval or live effect. Finish on ready_for_review.',

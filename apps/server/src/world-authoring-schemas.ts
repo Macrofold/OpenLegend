@@ -251,3 +251,12 @@ export const typedAuthoringPayload = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('attribute-values'), candidate: attributeValueSchema }).strict(),
   z.object({ kind: z.literal('action'), candidate: commandInputSchema }).strict(),
 ]);
+
+export const authoringCandidateSchemas = {
+  'status-effect-policy': statusPolicySchema,
+  'cognition-policy': cognitionPolicySchema,
+  attribute: attributeDeclarationSchema,
+  'attribute-bindings': attributeBindingSchema,
+  'attribute-values': attributeValueSchema,
+  action: commandInputSchema,
+} as const;

@@ -868,6 +868,12 @@ export class WorldAuthoringService {
         );
       }
       case 'ol_authoring_submit':
+      case 'ol_status_policy_submit':
+      case 'ol_cognition_policy_submit':
+      case 'ol_attribute_submit':
+      case 'ol_attribute_bindings_submit':
+      case 'ol_attribute_values_submit':
+      case 'ol_action_submit':
       case 'ol_recipe_submit': {
         const kind = name === 'ol_recipe_submit' ? 'recipe' : a.proposal.kind;
         const deriveFrom = name === 'ol_recipe_submit' ? a.deriveFrom : undefined;

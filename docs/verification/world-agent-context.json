@@ -149,5 +149,47 @@
     "Authenticated operation lookup passes after new-work quota",
     "900-level malformed input rejected before recursive parsing",
     "Unsupported state/capability identifiers remain unresolved instead of becoming graph facts"
-  ]
+  ],
+  "selectedProfileFollowup": {
+    "source": "native Zod JSON Schema; compact UTF-8, before MCP/provider framing",
+    "genericSubmissionSchemaBytes": 15143,
+    "profiles": [
+      {
+        "kind": "status-effect-policy",
+        "name": "ol_status_policy_submit",
+        "bytes": 7788
+      },
+      {
+        "kind": "cognition-policy",
+        "name": "ol_cognition_policy_submit",
+        "bytes": 2283
+      },
+      {
+        "kind": "attribute",
+        "name": "ol_attribute_submit",
+        "bytes": 4195
+      },
+      {
+        "kind": "attribute-bindings",
+        "name": "ol_attribute_bindings_submit",
+        "bytes": 1855
+      },
+      {
+        "kind": "attribute-values",
+        "name": "ol_attribute_values_submit",
+        "bytes": 2136
+      },
+      {
+        "kind": "action",
+        "name": "ol_action_submit",
+        "bytes": 3664
+      }
+    ],
+    "checks": [
+      "All six selected profiles expose exactly one candidate kind",
+      "Generic submission tool denied in an active selected profile",
+      "22 existing native HTTP/MCP observations pass with the selected status-policy tool"
+    ],
+    "live": "Pending explicit approval for six new organization-wide connector names; provider HTTP 400 is not claimed resolved"
+  }
 }

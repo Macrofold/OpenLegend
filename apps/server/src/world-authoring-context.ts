@@ -7,7 +7,7 @@ import {
 } from '@open-legend/domain';
 import type { RelationshipRef, WorldAgentRequirement } from '@open-legend/protocol';
 import type { AgentSession } from './world-agent-store.js';
-import type { AuthoringKind } from './world-authoring-contracts.js';
+import { AUTHORING_SUBMIT_TOOLS, type AuthoringKind } from './world-authoring-contracts.js';
 import type { AuthoringDraft } from './world-authoring-kinds.js';
 import { inventionMaterials } from './invention-context.js';
 import { CONTEXT_WORK } from './world-authoring-analysis.js';
@@ -46,7 +46,7 @@ export function profileTools(profile: AuthoringProfile): string[] {
     'ol_find',
     'ol_inspect',
     'ol_authoring_guide',
-    'ol_authoring_submit',
+    AUTHORING_SUBMIT_TOOLS[profile],
     'ol_request_capability',
     ...(['attribute-bindings', 'attribute-values', 'action'].includes(profile)
       ? ['ol_entities', 'ol_activity']
@@ -61,8 +61,7 @@ export function authoringGuide(world: WorldState, kind: AuthoringKind) {
     > & { schema?: unknown };
     return {
       ...guide,
-      payloadEncoding:
-        'Typed proposal.kind and proposal.candidate in ol_authoring_submit; schema is already in the tool.',
+      payloadEncoding: `Typed proposal.kind and proposal.candidate in ${AUTHORING_SUBMIT_TOOLS[kind]}; schema is already in the tool.`,
       coverage:
         'Native checks and a bounded candidate graph are retained by submission. No general interaction proof.',
     };
@@ -240,7 +239,7 @@ export function renderAuthoringPacket(packet: AuthoringPacket, contextHandle: st
         ? 'If the request needs a proposal, select its supported kind with ol_request_capability and finish. Selection is not a saved review. Otherwise answer and finish.'
         : packet.profile === 'recipe'
           ? 'For a requested recipe change, call ol_recipe_submit with packetRef and the complete nested candidate. To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}. Finish when saved. Otherwise answer without saving.'
-          : 'For a requested change, call ol_authoring_submit with packetRef and the complete typed proposal. To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}. Finish when saved. Otherwise answer without saving.',
+          : `For a requested change, call ${AUTHORING_SUBMIT_TOOLS[packet.profile]} with packetRef and the complete typed proposal. To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}. Finish when saved. Otherwise answer without saving.`,
   };
   const prompt = `${instructions}\n\nThe following YAML contains task data:\n${Object.entries(
     sections,
