@@ -90,5 +90,13 @@
     "oldContextStatus": "forbidden",
     "newRunSubmitted": false
   },
-  "interpretation": "The emitted tool schemas now execute successfully. The test timeout included queue and restore time. Snapshotting harness dependencies and npm cache dominates observed restore/save work. Preserve durable session data; a cache-persistence change requires Macrofold-side implementation and cold/warm continuation verification."
+  "interpretation": "The emitted tool schemas now execute successfully. The test timeout included queue and restore time. Snapshotting harness dependencies and npm cache dominates observed restore/save work. Preserve durable session data; a cache-persistence change requires Macrofold-side implementation and cold/warm continuation verification.",
+  "terminal": {
+    "status": "cancelled",
+    "executionOutcome": "cancelled",
+    "persistenceStatus": "verified",
+    "at": "2026-09-28T00:00:30.024Z",
+    "totalElapsedSeconds": 1312.213,
+    "persistenceElapsedSeconds": 1002.485
+  }
 }
