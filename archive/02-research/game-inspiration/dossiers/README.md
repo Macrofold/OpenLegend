@@ -1,10 +1,21 @@
-# Full-game dossier reading index — G61–G80
+# Full-game dossier reading index — G61–G80 and D&D expansion
 
 [Library](../README.md) · [Complete roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Research requirements](../research-requirements.md)
 
-**Navigation and inspiration only.** This page connects the G61–G80 range to its full-game dossiers. The [130-subject roster](../research-roster.md) remains the canonical title/edition inventory; **only the progress ledger records completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
+**Navigation and inspiration only.** This page connects the G61–G80 range to its full-game dossiers and provides entry points to the additive D&D research packet. The [numbered roster](../research-roster.md) remains the canonical inventory for its existing title/edition slots; **the progress ledger records their completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
+
+## Dungeons & Dragons expansion — 2026-09-27
+
+These are two distinct tabletop subjects, not replacements for Baldur's Gate, Pathfinder, or any existing numbered game. Their [research hub](../games/dungeons-and-dragons.md) records this expansion's scope and evidence status without renumbering or certifying the unrelated roster.
+
+| Dossier | Useful starting question |
+| --- | --- |
+| [Dungeons & Dragons: 2024 revision / 5.5e](dungeons-and-dragons-2024.md) | How do current checks, social willingness, classes, weapons, tools, crafting, utility magic, and action costs support open intentions? |
+| [Dungeons & Dragons v.3.5](dungeons-and-dragons-3-5.md) | What can explicit competence, retry procedures, skills, materials, preparation, and production teach about both useful detail and complexity costs? |
+
+Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-dragons-adjudication.md) · [D&D worldbuilding dossier](../../worldbuilding/worlds/29-dungeons-and-dragons.md). These distinguish primary rules, table practices, creator interpretations, constructed examples, and project-facing proposals. The hub explicitly records unresolved source-access and review-depth gates; it is not a claim of exhaustive franchise research.
 
 ## Read in roster order
 
@@ -41,4 +52,4 @@ Each dossier owns its mechanics, worked interactions, source annotations, editio
 
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
-For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md).
+For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
