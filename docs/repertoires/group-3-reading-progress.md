@@ -28,7 +28,7 @@ The complete worldbuilding tree at this revision contains **42 Markdown files: 2
 
 The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing checkmarks and catalogue work. All ten listed game-research refs and the worldbuilding ref were rechecked and still matched the heads above. The totals below are cumulative for this continuing branch task, not a claim that previously completed documents were reread on every resume.
 
-## Game dossiers — 15 complete
+## Game dossiers — 18 complete
 
 - [x] G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md)
 - [x] G02 — [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md)
@@ -36,6 +36,9 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] G04 — [Roblox](../../archive/02-research/game-inspiration/dossiers/roblox.md)
 - [x] G05 — [Grow a Garden](../../archive/02-research/game-inspiration/dossiers/grow-a-garden.md)
 - [x] G06 — [Steal a Brainrot](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md)
+- [x] G07 — [Fortnite](../../archive/02-research/game-inspiration/dossiers/fortnite.md)
+- [x] G08 — [League of Legends](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md)
+- [x] G09 — [Dota 2](../../archive/02-research/game-inspiration/dossiers/dota-2.md)
 - [x] G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md)
 - [x] G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md)
 - [x] G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
@@ -46,12 +49,14 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] Unnumbered — [D&D 2024 / 5.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)
 - [x] Unnumbered — [D&D 3.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)
 
-## Original game chapters — 10 complete
+## Original game chapters — 12 complete
 
 - [x] [Hades / Hades II](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md)
 - [x] [Among Us / Lethal Company](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md)
 - [x] [Animal Crossing](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md)
 - [x] [Roblox / Grow a Garden / Steal a Brainrot](../../archive/02-research/game-inspiration/games/roblox.md)
+- [x] [Fortnite](../../archive/02-research/game-inspiration/games/fortnite.md)
+- [x] [League of Legends / Dota 2](../../archive/02-research/game-inspiration/games/league-of-legends-and-dota-2.md)
 - [x] [RimWorld](../../archive/02-research/game-inspiration/games/rimworld.md)
 - [x] [Dwarf Fortress](../../archive/02-research/game-inspiration/games/dwarf-fortress.md)
 - [x] [The Sims](../../archive/02-research/game-inspiration/games/the-sims.md)
@@ -79,6 +84,8 @@ Baldur's Gate 3 was read through all 13 dossier sections, the correction audit a
 Hades II (`6d5d9cd105dc9fe6b95530c578a06d2e6549f940`) and Hades I (`7bb89ff489ef5425b47087cc5b030d88934f69d3`) were each read from the opening scope through their complete correction audits and annotated sources. The paired original chapter (`da91b62e0880ca4c551469250863c426180aa82c`) and original-game mechanics study (`45d2f96d767e1c317481be676a0061a579296b73`) were also read completely. The shared chapter counts once; the mechanics study is Hades I evidence, not a substitute for the sequel. The sequel's changed gathering, familiar callbacks and revised ending retain their stated version boundaries. The original's valued platonic outcome is not a failed romance reward. Repetition can preserve selected commitments yet still frustrate someone who dislikes the intervening activity. Dated sales, selected player testimony, indexed-only sources and unviewed recordings remain as limited as their dossiers say; reading completion is not certification of their research requirements.
 
 Among Us (`2cbf4c328a2be1f5b5f4d7ecd02b564679a58b90`), Roblox (`8944781f4f1e9443d0d8a07a5a15ad2ff70cb272`), Grow a Garden (`983ace1a4f48c6439efce268f4960eb0414e9925`) and Steal a Brainrot (`905d2621afdc9257a29d128ccc6cf3a982d3d79c`) were read completely, including correction audits and every annotated source. Their two original shared chapters were read in full (`7b24ba8b070c4bc075afc69ec769535fc7f506a9`, `01436ea6d43328df9dee219b35382bdddb0e02b8`). Reading Lethal Company's field guide is not completion of its separate dossier or study. Among Us preserves mode-specific evidence and human-supplied social memory; a truthful observation need not prove the witness's interpretation. Roblox's platform, contributor roles and experience rules stay distinct. Grow a Garden's copying, gifts, exchanges and paid removal differ; conflicting Raccoon dates and trade thresholds remain unresolved. Steal a Brainrot's contested transport, irreversible reset, explicit duel and ordinary theft have different consequences; attachment can discourage return. Retired events, indexed-only mechanics, small reception samples and private financial gaps are not promoted to verified universal rules.
+
+Fortnite (`067aaea54c57ea2915e57add813e8ae309733ea2`), League of Legends (`fb602c39cdf76cb4e8994133a2a1ca90f60909ef`) and Dota 2 (`71b54bfd2d18514a140d62106236f96bb713be76`) were read completely, including every correction and annotated reference. Fortnite's original chapter (`81d39c58a9ba8955942c022e2475a2dcbec03fb7`) and the complete League/Dota paired chapter (`1ea289a94587ce5cfb45e01dcc008f122707ab85`) were also read. Modes retain separate persistence, assistance and loss contracts; documented conversation tools do not prove truthful memory. League's offered rescue depends on the recipient being able to use it. Dota's rescue can create a later return obligation, and acquired equipment still needs delivery. Individual preferences for mastery, driving, music, a social group or keeping familiar rules are not collapsed into one motivation. Current-sounding version statements remain the pinned dossiers' dated research, not a new live audit; contradictory transfer documentation, indexed-only mechanics and limited reception samples remain qualified.
 
 ## World dossiers — 29 complete
 
@@ -149,6 +156,7 @@ Truncated responses were followed with overlapping contiguous reads. This includ
 - Consequential permission: BG3's people can object or leave, companions can matter during quiet moments, and useful magic changes evidence or access through supported rules. A shared danger need not create friendship or sexual interest. More social initiative can feel intrusive, and a changed build does not erase prior acts. Clear commitment boundaries let mistakes become chosen story rather than unexplained content loss.
 - Chosen returns: Hades distinguishes an unsuccessful attempt from erased knowledge, obligations and home life. Particular interests justify particular callbacks; a quiet platonic bond is a genuine result. Hades II adds causal credit, noticed environmental changes and repeated intimacy after milestones. Preserve sequel boundaries and the difference between enjoyable repetition and an unwanted gate to another activity.
 - Evidence and possession: Among Us separates honest testimony from a sound inference, and missing evidence from an erased event. The three Roblox subjects distinguish playing from creating, portable appearance from portable power, income from favorite possessions, and abundance from a desired life. A collection can become a comfortable social setting or an exhausted goal; guarding a prize can crowd out enjoying it. No one response is universal.
+- Contribution and commitment: Fortnite's surviving teammate, League's offered lantern and Dota's rescue with a scheduled return show different forms of useful help. Meaning depends on what the recipient can actually do and what remains owed afterward. Competition can reward denial, deception and cultivated rivals as well as cooperation; elaborate mastery does not guarantee enjoyment of a particular group or loss policy.
 
 These observations are creative inputs, not clinical predictions, causal proof of popularity, or instructions to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific or live-model validation is claimed.
 
@@ -167,7 +175,7 @@ The inherited 996 entries are not claimed as newly written. This continuation ha
 
 Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library and granular-study READMEs are fully read; their linked documents are not automatically checked off.
 
-**Cumulative complete reading: the 42-document worldbuilding library; 15 game dossiers, 10 original game chapters and 8 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
+**Cumulative complete reading: the 42-document worldbuilding library; 18 game dossiers, 12 original game chapters and 8 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
 
 Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
 
