@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, sources and limitations. It does not claim external-bibliography rereading, personal gameplay, full-video viewing or independent verification. Unlisted material remains unread. Counts are cumulative across resumes, not fresh rereads of unchanged completed documents.
 
-**Coverage:** **42/42 worldbuilding documents**, **36 game dossiers**, **26/39 original game chapters**, **15 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents**, **39 game dossiers**, **29/39 original game chapters**, **18 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -14,7 +14,7 @@ The complete rechecked research-branch heads and corpus discovery record are pre
 
 The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading linked documents. Complete mechanics and original-chapter trees were inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Integrated dossier studies count within their dossiers. Shared documents count once, not once per game they cover.
 
-## Game dossiers — 36 complete
+## Game dossiers — 39 complete
 
 Filenames are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
 
@@ -51,11 +51,14 @@ Filenames are relative to [the dossier directory](../../archive/02-research/game
 - [x] G31 — `valheim.md`
 - [x] G32 — `noita.md`
 - [x] G33 — `caves-of-qud.md`
+- [x] G34 — `outer-wilds.md`
+- [x] G35 — `garrys-mod.md`
+- [x] G36 — `kenshi.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 
-## Original game chapters — 26 complete
+## Original game chapters — 29 complete
 
 Filenames are relative to [the original-chapter directory](../../archive/02-research/game-inspiration/games/).
 
@@ -85,8 +88,11 @@ Filenames are relative to [the original-chapter directory](../../archive/02-rese
 - [x] `valheim.md`
 - [x] `noita.md`
 - [x] `caves-of-qud.md`
+- [x] `outer-wilds.md`
+- [x] `garry-s-mod.md`
+- [x] `kenshi.md`
 
-## Game supplements — 15 complete
+## Game supplements — 18 complete
 
 Filenames are relative to [the mechanics-study directory](../../archive/02-research/game-inspiration/mechanics/).
 
@@ -105,6 +111,9 @@ Filenames are relative to [the mechanics-study directory](../../archive/02-resea
 - [x] `valheim-zomboid-preparation-risk-and-home.md`
 - [x] `noita-wands-materials-and-experimentation.md`
 - [x] `caves-of-qud-bodies-cooking-and-social-knowledge.md`
+- [x] `outer-wilds-tools-knowledge-and-a-changing-world.md`
+- [x] `garrys-mod-tools-constraints-and-player-made-games.md`
+- [x] `kenshi-injury-rescue-and-the-cost-of-delegation.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -180,14 +189,13 @@ Detailed prior findings and hashes remain preserved, not discarded by this compa
 - [Spore, No Man's Sky and EverQuest Next, `a5d704c`](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Ultima Online and Minecraft, `9a609cc`](https://github.com/Macrofold/OpenLegend/blob/9a609ccad221acd4274017369eae2a02665fd0c0/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Factorio, Satisfactory, Terraria and Stardew Valley, `5cdcc2d`](https://github.com/Macrofold/OpenLegend/blob/5cdcc2ddfebfb17eaadd9a4034e6a822959a55ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
+- [Valheim, Noita and Caves of Qud, `fb8a3a1`](https://github.com/Macrofold/OpenLegend/blob/fb8a3a1ae13000c7c49f6b3c6cb26bccf1cb4e0f/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 
-**Valheim:** dossier `dcdf81b6c8e4eaa5c06bdcc8388017e207b8c503`; original `abaa2b66c92d04d18bfe3535f33fd198526c59db`; shared Valheim/Zomboid study `80b4a8784fd8990766e3f895a24c493bc4d85e87`. Shared progress is not shared competence or knowledge: a returning novice can face a changed world without understanding its changes. An experienced companion's agreement not to spoil or shortcut discovery is a concrete form of help. Quiet domestic participation can be meaningful without immediately serving the next fight. Meals can support different kinds of readiness, although a nominal bonus becomes a tax if every errand requires maximum preparation. A feast distributes finite preparation and provides a gathering place. A memorable silver voyage and repetitive chest manipulation are different frictions; capacity, transfer effort and geographical transport need different remedies. An evocative sighting interpreted as acknowledgement is not evidence of personalized NPC approval. Recovery windows are not invulnerability, neutral property is not free loot, and taming does not establish dialogue relationships. The dossier separates current 1.0/maintenance, older testimony, settings and mods; its current-version claims remain repository-source evidence, not independent verification here.
+**Outer Wilds:** dossier `7b30575f377b7015bd74b687eb50b2c0c7a4dcaf`; original `4dadc9482b074a381f4e1a6d8212ec69295f041d`; study `860b55dc168fddf01dae4a93222d00c574b3db4d`. A correct interpretation can fail through timing or execution; acknowledging partial success need not supply the full answer. A familiar sound can become a person worth finding, and a familiar instrument can acquire a new use through knowledge. Silence, distance and restrained acknowledgement can support attachment without constant commentary. Remembering a lead is not choosing the next goal for someone. A missed opportunity may teach when to return. Archaeological curiosity, direct interpersonal drama, flight, solitude and being pursued in darkness are distinct preferences; calling all of them exploration erases meaningful differences. The ending changes what success means rather than simply restoring the old world. The expansion uses a different information medium and fear profile, not a larger stat ladder. Its Reduced Frights option is not a guarantee of no fear. Fictional observation rules are not real quantum physics. The source's missing negative-rated Steam body remains a gap, not evidence of consensus; technical and native/modded boundaries remain scoped.
 
-**Valheim/Zomboid comparative study, entire document:** immediate safety, next-journey supplies, infrastructure reliability and a reason to continue are distinct problems. A generator's need for a powered fuel source turns an apparent solution into a dependency. A rare instruction can make a journey purposeful or hold a known project hostage; the model's knowledge is not automatically the character's. A self-sufficient home may successfully conclude a goal rather than require another compulsory threat. Funny short-session loss and the destruction of weeks of work carry different stakes. The source's mixed Build 41/later utility evidence and planned NPC limits remain explicit; this study does not complete the separate Zomboid dossier.
+**Garry's Mod:** dossier `a516b96791f6b2867029a3f17e7239b63ff3fc8b`; original `01d56ba75245d3565a909de6b58b6f0f873a3e64`; study `44526c142f5df76dc393fa74de863f135053e76e`. Building, adapting, playing a finished activity, staging an image and simply gathering with people are different valid depths of participation. A convincing expression in a posed image is not experienced emotion; a typed role-play action is not automatically executed physics. Suspicion, credible testimony and sufficient grounds to act differ; a penalty system cannot infer every participant's knowledge or good faith. Waiting for certainty has a cost, while idle innocent participants need meaningful activity. A community can be lost although its software remains intact; better tools or a replacement server do not recreate particular friendships. Recognition, enjoyment, income and continued maintenance are distinct rewards and burdens. A creation's relationships matter as much as its parts, and portability includes dependencies and permission. Native Sandbox, TTT, Prop Hunt, DarkRP and Cinema are not one universal ruleset. The dossier's five written reviews include blogs and players rather than five professional outlets; historical allegations and demographic generalizations were not adopted.
 
-**Noita:** dossier `1466caefc97637622779b2d9236f30a860aab058`; original `2863903853044c6c49c6991a83ff63ce3d78068a`; study `1fb836a0c3b285469a5aabaa2e469d6db14d5d83`. Not understanding a rule, lacking its components and making an execution mistake are different failures. A spectacular accident can be a joke, lesson or unacceptable loss, depending on stakes and intelligible causes. Killing a foe while destroying desired treasure separates victory from acquisition; controlling collateral damage can be the next ambition rather than increasing power. A damage upgrade can make a healing tool harmful. Direct immunity does not protect against every secondary effect; protection, transformation resistance and revival differ. Possessing a healing spell is not delivering it safely. Discarded tools can empower an enemy. Some knowledge and unlocks survive death, but not every material change. Secret objectives and unclear routine rules have different purposes. Source corrections distinguish ambrosia staining from drinking and local Chainsaw timing from universal cost removal. Enjoyment with mods or restored saves is not acceptance of vanilla punishment; the observed announcement boundary does not prove permanent cessation of support.
-
-**Caves of Qud:** dossier `b5c150391466b201b0656d31d69d298dadb84ced`; original `a0618cabce531a6fa8185db3e3e619a89d35e531`; study `3a53f7de3d44620ed55a7e6517de18e322d7a970`. A body changes usable actions, equipment, social standing and vulnerability, not just appearance. A controlled body leaves another exposed; magical control and reputation-based recruitment are not equivalent relationships. Losing speech can interrupt trade and social projects while the person remains alive; curing an illness and restoring a lost part differ. A stable recipe can make fear trigger a useful effect without erasing fear, while guessed ingredients do not guarantee the learned result. A teacher can have enemies: gaining knowledge through one bond can worsen another. Secrets, recipes and histories can have particular destinations without every piece of lore becoming currency. A golem's companion model is not consumed, and personal chronology can supply an ingredient without copying a complete personality. The source's quest-generation paper describes contextual fit and prepositioned objects, not a fully causally simulated society. Classic, Roleplay and Wander permit different costs of curiosity. Current autoexplore, port and expansion boundaries qualify older summaries; no external paper or video was newly reopened here.
+**Kenshi:** dossier `9cb529e1f2d0574398a9dc42aa1e52063af59233`; original `7176063bc760fdeb4ea16664d6e6eeb72e893f29`; study `2379e14b3a73276f1becd44596d2b7b71bde195d`. Escaping, rescuing a captive, treating injuries and finding safe refuge afterward are separate achievements. A rescue may be motivated by affection, duty, investment or practical need, not compulsory virtue. An injured person can remain a participant; a carrier or medic becomes important through real dependence, not only thankful prose. A mismatched prosthesis creates a specific procurement problem, and unchanged recognition can threaten a newly freed person. Surviving adversity may teach, but not every loss is beneficial; meaningful practice and repetition solely for a stat differ. Accepted work blocked by storage is not unwillingness or lack of purpose. A home can support travel or consume all attention. Other groups' conflicts can create an escape without existing solely to help the protagonist. Conditional town changes are not evidence of a fully simulated strategic war. Current limb/editor/recruitment evidence qualifies old FAQ statements; mods, historical reviews and the unreleased prequel remain separate. Negative-rated Steam retrieval is still an explicit source gap.
 
 Across all notes: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Keep ordinary pleasure, deliberate cruelty and completed ambitions without compulsory moral reframing or replacement craving. Distinguish appearance, memory, testimony, interpretation and acts. Source corrections qualify earlier overviews. Human social play, authored dialogue, simulation and cancelled-game plans are different evidence. Historical source wording never overrides current AGENTS instructions.
 
