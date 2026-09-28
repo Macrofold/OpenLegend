@@ -38,7 +38,7 @@ The dossier directory also contains two D&D editions and `dragon-age-series.md`;
 
 ## Game-by-game reading
 
-**29 complete dossiers; 0 partial.** Every row below is a complete read at the pinned snapshot. **Catalogue incorporation remains Pending for all rows**; there are not yet new catalogue entries attributable to this continuation. G30–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
+**32 complete dossiers; 0 partial.** Every row below is a complete read at the pinned snapshot. **Catalogue incorporation remains Pending for all rows**; there are not yet new catalogue entries attributable to this continuation. G33–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
 
 | Read | Game and dossier | Exact dossier blob / preserved record |
 | --- | --- | --- |
@@ -71,6 +71,9 @@ The dossier directory also contains two D&D editions and `dragon-age-series.md`;
 | [x] | G27 — [Factorio](../../archive/02-research/game-inspiration/dossiers/factorio.md) | `3335b496562e0963d1b8ea2eb412413c01ce79f9` |
 | [x] | G28 — [Satisfactory](../../archive/02-research/game-inspiration/dossiers/satisfactory.md) | `ed165d99761487341078c5527814bc42b668b24a` |
 | [x] | G29 — [Terraria](../../archive/02-research/game-inspiration/dossiers/terraria.md) | `86da0a4a860a9f39c80fe006e42777c6f6ab82dd` |
+| [x] | G30 — [Stardew Valley](../../archive/02-research/game-inspiration/dossiers/stardew-valley.md) | `996c07f8308638db4609cffa46fa7340e9bb8c40` |
+| [x] | G31 — [Valheim](../../archive/02-research/game-inspiration/dossiers/valheim.md) | `dcdf81b6c8e4eaa5c06bdcc8388017e207b8c503` |
+| [x] | G32 — [Noita](../../archive/02-research/game-inspiration/dossiers/noita.md) | `1466caefc97637622779b2d9236f30a860aab058` |
 
 ## Source-specific incorporation cautions
 
@@ -87,6 +90,12 @@ The immutable G01–G23 checkpoint above retains each earlier subject's distinct
 **G28 — Satisfactory:** complete through S41, R1–R5 and definitions. A road, tour or facade can matter as a place without increasing throughput. Reading a teammate's layout can be detective work; unsolicited optimization can erase understandable authorship. Removing repeated construction commentary demonstrates that more dialogue is not always more presence. ADA's authored dialogue is not generative cognition. Alternate recipes change assumptions rather than being universally better; authored terrain differs from optional resource randomization. Preserve PC/console pools and historical control/blueprint criticism.
 
 **G29 — Terraria:** complete through V4, M22, A1, D1–D2, R1–R5, S1–S2 and definitions. Explain a missed rule without supplying every optimal answer. Old tools, routes and building choices can retain meaning after a world transition. The dossier's 1.4.5 pylon purchase/use correction qualifies the older study rather than erasing its historical player testimony. Hardmode, character-loss settings and world difficulty differ. Transformation can change appearance without personality; equipment/world persistence differs. Do not mark future cross-play or tModLoader default migration shipped. Optional collections need not become compulsory completion anxiety.
+
+**G30 — Stardew Valley:** complete through V4/M27, reviews and source definitions. A comfortable continuing life and full Perfection are different stopping points. Recipes can be knowledge gifts; a harvest can be reserved, processed, sold or shared for different purposes. Learning a preference, expressing care and receiving later reciprocity are distinct. A public restoration ceremony does not prove every later conversation acknowledges every contribution. Preserve ordinary roommate relationships, observer-specific reactions, historical versus 1.6 dialogue, and co-op's changed reading/time cost. Optional seasonal opportunities must not silently become mandatory attendance.
+
+**G31 — Valheim:** complete through the final mechanics definitions. A placed feast gathers people and distributes finite preparation without erasing individual food choices. Useful home comfort and atmosphere are both meaningful. Odin's apparent acknowledgement is a critic's interpretation, not verified personalized approval. Shared world progress is not shared competence; an experienced partner's no-spoiler agreement preserves discovery. Ordinary portal restrictions have later exceptions; do not assign playable sailing to SC. The full shared Project Zomboid study is read, but G37's dossier and chapter remain pending. Its magazine-search and utility examples retain their version/access limitations.
+
+**G32 — Noita:** complete through M-TWITCH and all source definitions. World secrets differ from unclear explanations of ordinary failure. A spell's name does not disclose every compositional role; timing, capacity, replenishment and delivery differ. A reported plasma experiment succeeds in killing while destroying desired gold, creating a next containment question; it was not independently replayed. A lore tablet is also a physical object, but this group's entry should own its knowledge/history rather than projectile behavior. Sacred editing access and divine retaliation have different triggers. Keep seed-specific recipes, selected cross-run flags, modded review experiences and audience participation distinct. The newer dossier's expanded Chainsaw evidence does not retroactively change the older study's access limits.
 
 ## Supplementary reading
 
@@ -124,6 +133,12 @@ Complete chapters do not complete separate dossiers or mechanics manuscripts. Ea
 | [x] | [Factorio/Satisfactory flows, blueprints and place](../../archive/02-research/game-inspiration/mechanics/factorio-satisfactory-flows-blueprints-and-place.md) | `8d0546a7ec086bdd9cee44ec7745d966b24d331b`; through F6/S3. |
 | [x] | [Terraria chapter](../../archive/02-research/game-inspiration/games/terraria.md) | `feb8385c5c2d813b783bffaf403b179c68d3989e` |
 | [x] | [Terraria equipment, settlements and discovery](../../archive/02-research/game-inspiration/mechanics/terraria-equipment-composition-settlements-and-discovery.md) | `37a3379df70b0d95959caf5ec9a782ff55304ccd`; through T8. |
+| [x] | [Stardew Valley chapter](../../archive/02-research/game-inspiration/games/stardew-valley.md) | `c3142fbdaecc1d22f443a04558382c4d4a3f4083` |
+| [x] | [Stardew Valley calendars, gifts and routines](../../archive/02-research/game-inspiration/mechanics/stardew-valley-calendars-gifts-and-useful-routines.md) | `1f31b288fa63e7001d57ca03ef2b6820f16bc7f5`; through S8. |
+| [x] | [Valheim chapter](../../archive/02-research/game-inspiration/games/valheim.md) | `abaa2b66c92d04d18bfe3535f33fd198526c59db` |
+| [x] | [Valheim/Project Zomboid preparation, risk and home](../../archive/02-research/game-inspiration/mechanics/valheim-zomboid-preparation-risk-and-home.md) | `80b4a8784fd8990766e3f895a24c493bc4d85e87`; both halves and V3/Z5 complete; G37 dossier/chapter still pending. |
+| [x] | [Noita chapter](../../archive/02-research/game-inspiration/games/noita.md) | `2863903853044c6c49c6991a83ff63ce3d78068a` |
+| [x] | [Noita wands, materials and experimentation](../../archive/02-research/game-inspiration/mechanics/noita-wands-materials-and-experimentation.md) | `1fb836a0c3b285469a5aabaa2e469d6db14d5d83`; through N9. |
 | [ ] | Remaining chapters, studies, essays, references and supporting research | Pending; no blanket supplementary completion. |
 
 ## Owned catalogues and shared guidance
@@ -151,4 +166,4 @@ Earlier catalogues record 39 worldbuilding manuscripts at `b387e7caeda5cec301045
 
 Worlds Adrift's dossier/chapter says incompatible development saves are discarded. Current root instructions instead require safe in-place migrations preserving identity/unrelated state and never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Do not import that stale research assertion. Its shared owner should reconcile it; no runtime contract is changed here.
 
-Next unread game: **G30 — Stardew Valley**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
+Next unread game: **G33 — Caves of Qud**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
