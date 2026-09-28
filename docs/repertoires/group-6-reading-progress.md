@@ -32,7 +32,7 @@ Live branch heads checked on September 28, 2026:
 | `docs/game-inspiration-games-131-140` | `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` |
 | `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` |
 
-Fresh comparisons confirmed both the current game-library head and G131–G140's listed head are ancestors of the reading snapshot. The game-library comparison shows no modifications to its existing G01–G130 dossiers; later additions include the survival and D&D material. Other branch comparisons remain to be confirmed independently; listing a head is not proof that every file was compared.
+Fresh comparisons confirmed both the current game-library head and G131–G140's listed head are ancestors of the reading snapshot. The game-library comparison shows no modifications to its existing G01–G130 dossiers; later additions include the survival and D&D material. Other branch comparisons remain to be confirmed independently; listing a head is not proof that every file was compared. The continuation after `2c719a835c4efef0d5a9936c1affad3cf3086fac` rechecked all listed heads through GitHub's matching-refs response and found them unchanged; branch search found no additional game-inspiration branch.
 
 The complete game-research root listing and dossier-tree listing were inspected, including recovery of initially truncated output. The nominal roster has G01–G148; the dossier directory additionally contains the two D&D editions and `dragon-age-series.md`, besides its README. D&D also has a chapter and two mechanics studies. Worldbuilding includes `worlds/29-dungeons-and-dragons.md`, `dungeons-and-dragons-planes-and-lived-magic.md` and `reassessment-progress.md`. These are pending, not covered by the older 148-game/28-world claim. The remaining supplementary directories and worldbuilding tree still need complete discovery.
 
@@ -62,8 +62,9 @@ All linked dossiers are at the reading snapshot above. The earlier exact blobs a
 | [x] | G16 — [Spore](../../archive/02-research/game-inspiration/dossiers/spore.md) | Pending. Prepared musical exchanges and responsive music; copied form does not import achievements or friendships. Preserve the later branching-dialogue correction. |
 | [x] | G17 — [No Man's Sky](../../archive/02-research/game-inspiration/dossiers/no-mans-sky.md) | Pending. Discovery and fabrication retain different provenance; collection, quiet recreation and communal events coexist. Vocabulary collection differs from communicative competence; temporary event factions are not permanent institutions. Blob `f8f14d46467e7468ff71a3ad71d189b472535db0`. |
 | [x] | G18 — [EverQuest Next](../../archive/02-research/game-inspiration/dossiers/everquest-next.md) | Pending. Local history can reflect several professions' contributions and open later teaching relationships. These are unshipped design proposals; Landmark's creator tools are separate delivered evidence. Blob `19154340e73c22ed951a3bf149cf316404c6ba29`. |
+| [x] | G19 — [Ultima Online](../../archive/02-research/game-inspiration/dossiers/ultima-online.md) | Pending. Maker marks, shops, housing museums and possessions preserve social history; professions support lives beyond combat. Ghost recovery is a ruleset-specific state, not a universal afterlife. Production shards, historical full-loot expectations and seasonal New Legacy differ. Ecology failure is an attributed developer retrospective about harvesting incentives; divided Trammel testimony is not a population-wide verdict. Complete through UO42, including the September 27 correction audit. Blob `3e552f95a9734fd8f6627915e5834c12a90411f8`. |
 
-**18 complete dossiers; 0 partial.** G19–G148, both D&D dossiers and the Dragon Age series supplement remain unread in this continuation. No catalogue incorporation is marked complete.
+**19 complete dossiers; 0 partial.** G20–G148, both D&D dossiers and the Dragon Age series supplement remain unread in this continuation. No catalogue incorporation is marked complete. The earlier eight-game pass remains separate inherited evidence below; this continuation does not erase it or claim to have reread it.
 
 ## Supplementary reading
 
@@ -83,6 +84,7 @@ The exact G01–G16 chapter blobs remain in the immutable shared-reading checkpo
 | [x] | [Spore](../../archive/02-research/game-inspiration/games/spore.md) | Dossier's embedded studies and full registers also read. |
 | [x] | [No Man's Sky](../../archive/02-research/game-inspiration/games/no-man-s-sky.md) | Complete; blob `c76cfc0baf0b4170cf7ba7b9d9aabd507341a1a5`. |
 | [x] | [EverQuest Next](../../archive/02-research/game-inspiration/games/everquest-next.md) | Complete; blob `1f75b0c5680152cba85f72415ae5faff999feceb`. |
+| [x] | [Ultima Online's ecology](../../archive/02-research/game-inspiration/games/ultima-online-s-ecology.md) | Complete; blob `99cf185d5acddca5f7b401150d0c04907e778fc0`. Incentive-driven overharvesting is the narrower failure; do not infer that all ecological simulation fails. |
 | [ ] | Other chapters, separate mechanics studies, comparative essays, reference appendices and supporting research | Pending. No blanket supplementary completion is claimed. |
 
 ## Assigned catalogues and shared guidance
@@ -123,4 +125,4 @@ The Worlds Adrift dossier and chapter describe OpenLegend as rejecting or discar
 
 ## Resume
 
-Next unread game: **G19 — Ultima Online**. Finish current-corpus discovery and revision comparisons, remaining game/world manuscripts and supplements, and actual incorporation in the four owned inventories. No catalogue changes or completed incorporation are claimed at this checkpoint. Preserve IDs and native linked headings. Shared atlas, README counts, other groups' catalogues, research files, world proposals, shared trackers and changelog remain unchanged; hand their needed updates to the integration owner.
+Next unread game: **G20**. Finish current-corpus discovery and revision comparisons, remaining game/world manuscripts and supplements, and actual incorporation in the four owned inventories. No catalogue changes or completed incorporation are claimed at this checkpoint. Preserve IDs and native linked headings. Shared atlas, README counts, other groups' catalogues, research files, world proposals, shared trackers and changelog remain unchanged; hand their needed updates to the integration owner.
