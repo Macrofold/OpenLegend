@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, sources and limitations. It does not claim external-bibliography rereading, personal gameplay, full-video viewing or independent verification. Unlisted material remains unread. Counts are cumulative across resumes, not fresh rereads of unchanged completed documents.
 
-**Coverage:** **42/42 worldbuilding documents**, **39 game dossiers**, **29/39 original game chapters**, **18 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents**, **42 game dossiers**, **31/39 original game chapters**, **20 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -14,7 +14,7 @@ The complete rechecked research-branch heads and corpus discovery record are pre
 
 The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading linked documents. Complete mechanics and original-chapter trees were inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Integrated dossier studies count within their dossiers. Shared documents count once, not once per game they cover.
 
-## Game dossiers — 39 complete
+## Game dossiers — 42 complete
 
 Filenames are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
 
@@ -54,11 +54,14 @@ Filenames are relative to [the dossier directory](../../archive/02-research/game
 - [x] G34 — `outer-wilds.md`
 - [x] G35 — `garrys-mod.md`
 - [x] G36 — `kenshi.md`
+- [x] G37 — `project-zomboid.md`
+- [x] G38 — `lethal-company.md`
+- [x] G39 — `scribblenauts.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 
-## Original game chapters — 29 complete
+## Original game chapters — 31 complete
 
 Filenames are relative to [the original-chapter directory](../../archive/02-research/game-inspiration/games/).
 
@@ -91,8 +94,10 @@ Filenames are relative to [the original-chapter directory](../../archive/02-rese
 - [x] `outer-wilds.md`
 - [x] `garry-s-mod.md`
 - [x] `kenshi.md`
+- [x] `project-zomboid.md`
+- [x] `scribblenauts.md`
 
-## Game supplements — 18 complete
+## Game supplements — 20 complete
 
 Filenames are relative to [the mechanics-study directory](../../archive/02-research/game-inspiration/mechanics/).
 
@@ -114,6 +119,8 @@ Filenames are relative to [the mechanics-study directory](../../archive/02-resea
 - [x] `outer-wilds-tools-knowledge-and-a-changing-world.md`
 - [x] `garrys-mod-tools-constraints-and-player-made-games.md`
 - [x] `kenshi-injury-rescue-and-the-cost-of-delegation.md`
+- [x] `lethal-company-tools-partial-information-and-cooperation.md`
+- [x] `scribblenauts-ai-dungeon-language-intent-and-consequence.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -123,7 +130,7 @@ Relative to [game inspiration](../../archive/02-research/game-inspiration/):
 - [x] `mechanics/README.md`
 - [x] `research-roster.md`
 
-Other game root documents, essays, references, standalone field guide and unlisted studies remain unchecked. The paired Among Us/Lethal Company chapter does not complete Lethal Company's separate dossier or study. The whole Valheim/Project Zomboid study is read, but not Project Zomboid's dossier or original chapter. D&D's shared documents count once; the SRD synthesis does not claim this continuation reread its underlying 364-page PDF. No separate CKIII original chapter exists in the inspected tree.
+Other game root documents, essays, references, standalone field guide and unlisted studies remain unchecked. Shared Among Us/Lethal Company, Valheim/Project Zomboid and Scribblenauts/AI Dungeon documents were read in full, including both subjects. AI Dungeon's separate dossier and original chapter remain unread. D&D's shared documents count once; the SRD synthesis does not claim this continuation reread its underlying 364-page PDF. No separate CKIII original chapter exists in the inspected tree.
 
 ## World dossiers — 29 complete
 
@@ -190,12 +197,15 @@ Detailed prior findings and hashes remain preserved, not discarded by this compa
 - [Ultima Online and Minecraft, `9a609cc`](https://github.com/Macrofold/OpenLegend/blob/9a609ccad221acd4274017369eae2a02665fd0c0/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Factorio, Satisfactory, Terraria and Stardew Valley, `5cdcc2d`](https://github.com/Macrofold/OpenLegend/blob/5cdcc2ddfebfb17eaadd9a4034e6a822959a55ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Valheim, Noita and Caves of Qud, `fb8a3a1`](https://github.com/Macrofold/OpenLegend/blob/fb8a3a1ae13000c7c49f6b3c6cb26bccf1cb4e0f/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
+- [Outer Wilds, Garry's Mod and Kenshi, `d80ea74`](https://github.com/Macrofold/OpenLegend/blob/d80ea74bbdf75863f9bf7a957cfcdf22fc6d9ab5/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 
-**Outer Wilds:** dossier `7b30575f377b7015bd74b687eb50b2c0c7a4dcaf`; original `4dadc9482b074a381f4e1a6d8212ec69295f041d`; study `860b55dc168fddf01dae4a93222d00c574b3db4d`. A correct interpretation can fail through timing or execution; acknowledging partial success need not supply the full answer. A familiar sound can become a person worth finding, and a familiar instrument can acquire a new use through knowledge. Silence, distance and restrained acknowledgement can support attachment without constant commentary. Remembering a lead is not choosing the next goal for someone. A missed opportunity may teach when to return. Archaeological curiosity, direct interpersonal drama, flight, solitude and being pursued in darkness are distinct preferences; calling all of them exploration erases meaningful differences. The ending changes what success means rather than simply restoring the old world. The expansion uses a different information medium and fear profile, not a larger stat ladder. Its Reduced Frights option is not a guarantee of no fear. Fictional observation rules are not real quantum physics. The source's missing negative-rated Steam body remains a gap, not evidence of consensus; technical and native/modded boundaries remain scoped.
+**Project Zomboid:** dossier `509570b0eeba23688d0f8ea684fdc759003784c3`; original `e2f6439a765d3830c7adbb9b7dd173b637e8b242`; shared study already checked. Occupation supplies a starting capability, not an immutable destiny. Hunger, thirst, endurance, tiredness, panic, stress, boredom and unhappiness are different conditions; solving one need not fix another. A useful object can organize a life because it is this particular object: Brown restores a battered red van despite available working cars. Knowing a recipe, having materials, owning tools and being able to use them remain distinct. Growing expertise can reveal an animal's condition rather than merely raise output. Missing a character's hearing changes evidence, while real-player accessibility is a separate responsibility. The ordinary camera must not grant every hidden room or mind. The generator-magazine account is historical, not proof of the sole current knowledge route. Ordinary wound infection and Knox Infection differ. Stable/Unstable, delivered animals/planned human NPCs, modeled sales/company disclosure and differently timed Steam samples remain explicitly separated.
 
-**Garry's Mod:** dossier `a516b96791f6b2867029a3f17e7239b63ff3fc8b`; original `01d56ba75245d3565a909de6b58b6f0f873a3e64`; study `44526c142f5df76dc393fa74de863f135053e76e`. Building, adapting, playing a finished activity, staging an image and simply gathering with people are different valid depths of participation. A convincing expression in a posed image is not experienced emotion; a typed role-play action is not automatically executed physics. Suspicion, credible testimony and sufficient grounds to act differ; a penalty system cannot infer every participant's knowledge or good faith. Waiting for certainty has a cost, while idle innocent participants need meaningful activity. A community can be lost although its software remains intact; better tools or a replacement server do not recreate particular friendships. Recognition, enjoyment, income and continued maintenance are distinct rewards and burdens. A creation's relationships matter as much as its parts, and portability includes dependencies and permission. Native Sandbox, TTT, Prop Hunt, DarkRP and Cinema are not one universal ruleset. The dossier's five written reviews include blogs and players rather than five professional outlets; historical allegations and demographic generalizations were not adopted.
+**Lethal Company:** dossier `3e2d8b2759dd5adc1ebc27816d2c209d8bc9af97`; study `1015125f1c2454fd9cd5b8a3de963dae8f3f0699`; shared original already checked. Rescue can save a person while abandoning their cargo, and the group may disagree about the acceptable mixed outcome. A remote helper can be useful without being an inferior fighter or wholly safe. One person watching while another navigates makes attention a shared responsibility; handovers and interrupted speech become actionable evidence. A warning can replace everyone's collection goal with evacuation. Private appetite for one more load can risk a shared reserve. Individual death, whole-crew scrap loss and missing quota are different reset scopes. A sold obligation is not the money still held, and a two-handed item restricts access without literally consuming every slot. V80's utility slot qualifies the old four-slot tool-versus-cargo account: some constraints suppressed the very interactions they were intended to make interesting. Actual useful cooperation, available friends and a welcoming public group remain distinct. Body recovery reduces rather than universally removes fines; current content and player-requested voice mimics/ecology are not conflated. Funny short-run disasters do not establish willingness to lose a long-lived home.
 
-**Kenshi:** dossier `9cb529e1f2d0574398a9dc42aa1e52063af59233`; original `7176063bc760fdeb4ea16664d6e6eeb72e893f29`; study `2379e14b3a73276f1becd44596d2b7b71bde195d`. Escaping, rescuing a captive, treating injuries and finding safe refuge afterward are separate achievements. A rescue may be motivated by affection, duty, investment or practical need, not compulsory virtue. An injured person can remain a participant; a carrier or medic becomes important through real dependence, not only thankful prose. A mismatched prosthesis creates a specific procurement problem, and unchanged recognition can threaten a newly freed person. Surviving adversity may teach, but not every loss is beneficial; meaningful practice and repetition solely for a stat differ. Accepted work blocked by storage is not unwillingness or lack of purpose. A home can support travel or consume all attention. Other groups' conflicts can create an escape without existing solely to help the protagonist. Conditional town changes are not evidence of a fully simulated strategic war. Current limb/editor/recruitment evidence qualifies old FAQ statements; mods, historical reviews and the unreleased prequel remain separate. Negative-rated Steam retrieval is still an explicit source gap.
+**Scribblenauts:** dossier `9a25d2ab6f89672011c3e9559402fbbee2579856`; original `b4d63cee3ef16d19ac252c93c169cc81fb859848`; shared study `3122ba0b94223c5d4623e23376094fe021bc6d00`, including all AI Dungeon material. Recognition of words, supported behavior, the recipient's willingness, a visible effect and accepted completion can differ. A jetpack does not establish willingness to fly; a report's additional daredevil modification matters. Relationship-shaped help can differ from supplying a tool, without establishing a persistent family simulation. Mutually exclusive local objectives may require separate resets rather than an available compromise. New walkthrough evidence qualifies the old toxic-barrel account: a black hole is not universally unable to complete the task; placement/version/state were uncontrolled. Toy authorship can legitimately bypass a serious consequence; that does not preserve the same dramatic contract. Component authoring, place authoring, a reusable definition and its current instance are different wants. PC, Wii U, regional 3DS, Unmasked and Mega Pack features remain scoped.
+
+**Shared Scribblenauts/AI Dungeon study:** stored lore, retrieved context, understanding and compliance are different states. A first generated trigger affects the next output, not the already-running one. Factual continuity, motive continuity and style are separate goals. Editing can be chosen authorship or unwanted repair, and an unexpected continuation can be welcome invention or an unacceptable contradiction depending on the facts expected to stay fixed. These observations do not imply the separate AI Dungeon dossier is read or a narrative card implements physical consequences.
 
 Across all notes: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Keep ordinary pleasure, deliberate cruelty and completed ambitions without compulsory moral reframing or replacement craving. Distinguish appearance, memory, testimony, interpretation and acts. Source corrections qualify earlier overviews. Human social play, authored dialogue, simulation and cancelled-game plans are different evidence. Historical source wording never overrides current AGENTS instructions.
 
