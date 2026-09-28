@@ -28,10 +28,12 @@ The complete worldbuilding tree at this revision contains **42 Markdown files: 2
 
 The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing checkmarks and catalogue work. All ten listed game-research refs and the worldbuilding ref were rechecked and still matched the heads above. The totals below are cumulative for this continuing branch task, not a claim that previously completed documents were reread on every resume.
 
-## Game dossiers — 9 complete
+## Game dossiers — 11 complete
 
+- [x] G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md)
 - [x] G03 — [Animal Crossing: New Horizons](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md)
 - [x] G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md)
+- [x] G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md)
 - [x] G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
 - [x] G24 — [The Sims](../../archive/02-research/game-inspiration/dossiers/the-sims.md)
 - [x] G25 — [Wildermyth](../../archive/02-research/game-inspiration/dossiers/wildermyth.md)
@@ -40,8 +42,9 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] Unnumbered — [D&D 2024 / 5.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)
 - [x] Unnumbered — [D&D 3.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)
 
-## Original game chapters — 7 complete
+## Original game chapters — 8 complete
 
+- [x] [Hades / Hades II](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md)
 - [x] [Animal Crossing](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md)
 - [x] [RimWorld](../../archive/02-research/game-inspiration/games/rimworld.md)
 - [x] [Dwarf Fortress](../../archive/02-research/game-inspiration/games/dwarf-fortress.md)
@@ -50,8 +53,9 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] [Baldur's Gate 3](../../archive/02-research/game-inspiration/games/baldur-s-gate-3.md)
 - [x] [D&D chapter / packet hub](../../archive/02-research/game-inspiration/games/dungeons-and-dragons.md)
 
-## Game supplements — 7 complete
+## Game supplements — 8 complete
 
+- [x] [Hades I: builds, character callbacks and return rhythm](../../archive/02-research/game-inspiration/mechanics/hades-builds-character-callbacks-and-return-rhythm.md)
 - [x] [RimWorld: work, personality and story](../../archive/02-research/game-inspiration/mechanics/rimworld-work-dependencies-personality-and-story.md)
 - [x] [Dwarf Fortress: artifacts, work and remembered life](../../archive/02-research/game-inspiration/mechanics/dwarf-fortress-artifacts-work-and-remembered-life.md)
 - [x] [The Sims: emotion, homes and chosen autonomy](../../archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md)
@@ -65,6 +69,8 @@ D&D's shared hub and studies count once, not once per edition. Reading the compl
 Wildermyth was read in contiguous dossier chunks through its complete annotated bibliography, plus the entire original chapter and supplementary study. Its Legacy framing is mythic retelling, not evidence of literal chronological continuity. The reviewer's bereavement-to-healing interpretation is not a claim that the game inferred grief and forced a build. Relationships, body changes and scenery-dependent actions can carry history into play, while repeated authored situations and accidental-order friction remain meaningful criticisms.
 
 Baldur's Gate 3 was read through all 13 dossier sections, the correction audit and complete annotated source register (dossier blob `95ea756fc2a5a26307add35e81830432d9afb5af`), plus its entire original chapter (`f6858714bcafa169d7b43200dcdeaa259705c948`) and granular study (`a5bcfebcdf96549783a35c479e53074e32b93fe6`). A truncated first chunk was completed with an overlapping read before marking it. Companion motives, approval, cooperation, romance and commitment boundaries remain distinct. Respec is not rewritten history; nonlethal intent is not a guarantee that an unsupported finishing action spares someone. Reviews' intrusive-romance, dominant-strategy, onboarding and missed-choice concerns remain attributed disagreements rather than universal player findings. The dossier's failed Steam sampling and inherited, dated commercial evidence remain limitations; no bibliography links or videos were newly opened for this read.
+
+Hades II (`6d5d9cd105dc9fe6b95530c578a06d2e6549f940`) and Hades I (`7bb89ff489ef5425b47087cc5b030d88934f69d3`) were each read from the opening scope through their complete correction audits and annotated sources. The paired original chapter (`da91b62e0880ca4c551469250863c426180aa82c`) and original-game mechanics study (`45d2f96d767e1c317481be676a0061a579296b73`) were also read completely. The shared chapter counts once; the mechanics study is Hades I evidence, not a substitute for the sequel. The sequel's changed gathering, familiar callbacks and revised ending retain their stated version boundaries. The original's valued platonic outcome is not a failed romance reward. Repetition can preserve selected commitments yet still frustrate someone who dislikes the intervening activity. Dated sales, selected player testimony, indexed-only sources and unviewed recordings remain as limited as their dossiers say; reading completion is not certification of their research requirements.
 
 ## World dossiers — 29 complete
 
@@ -133,6 +139,7 @@ Truncated responses were followed with overlapping contiguous reads. This includ
 - Deliberate harm and ordinary competence: Artie's cooking is a desired achievement, not consolation for failed criminality; Tony can enjoy life while knowingly harming people. Crezia's professional care ends a romance without being a misunderstanding to repair. A harmful patron can fund a genuinely good performance. An effective institution need not be legitimate in every other respect.
 - Usable promises: Tamriel's musical institution can offer clever historical reconstruction yet disappoint somebody seeking actual performance. Fallout's recruited acts actually take the stage; its mercenaries, willing sexual workers and captives have different arrangements. Raul's maintenance and gunslinging are distinct possible futures, not one obligatory recovery arc. The specific activity must live up to its advertised role.
 - Consequential permission: BG3's people can object or leave, companions can matter during quiet moments, and useful magic changes evidence or access through supported rules. A shared danger need not create friendship or sexual interest. More social initiative can feel intrusive, and a changed build does not erase prior acts. Clear commitment boundaries let mistakes become chosen story rather than unexplained content loss.
+- Chosen returns: Hades distinguishes an unsuccessful attempt from erased knowledge, obligations and home life. Particular interests justify particular callbacks; a quiet platonic bond is a genuine result. Hades II adds causal credit, noticed environmental changes and repeated intimacy after milestones. Preserve sequel boundaries and the difference between enjoyable repetition and an unwanted gate to another activity.
 
 These observations are creative inputs, not clinical predictions, causal proof of popularity, or instructions to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific or live-model validation is claimed.
 
@@ -151,7 +158,7 @@ The inherited 996 entries are not claimed as newly written. This continuation ha
 
 Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library and granular-study READMEs are fully read; their linked documents are not automatically checked off.
 
-**Cumulative complete reading: the 42-document worldbuilding library; 9 game dossiers, 7 original game chapters and 7 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
+**Cumulative complete reading: the 42-document worldbuilding library; 11 game dossiers, 8 original game chapters and 8 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
 
 Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
 
