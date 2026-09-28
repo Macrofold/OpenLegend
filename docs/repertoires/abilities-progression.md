@@ -2,13 +2,13 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Progression makes people more capable and gives them styles of their own. Learning an instrument, mastering a bow, earning a professional role and wielding extraordinary power offer different satisfactions. Learned knowledge, equipped abilities, resources, execution skill and institutional authority each contribute something distinct.
+**Proposal catalogue · September 28, 2026.** Progression makes people more capable and gives them styles of their own. Learning an instrument, mastering a bow, earning a professional role and wielding extraordinary power offer different satisfactions. Learned knowledge, equipped abilities, resources, execution skill and institutional authority each contribute something distinct.
 
 **Scope:** Own learned techniques, proficiencies, classes, unlocks and advancement paths here. Archery proficiency or a quick-reload skill links to the underlying rules in [Combat](combat-rescue.md); the bow or firearm itself belongs in [Objects](objects.md). A spell's supernatural behavior belongs in [Magic](magic.md), while its learning path belongs here; see [category ownership](README.md#category-ownership-and-cross-references). Anatomy belongs in [Bodies and species](bodies-species.md), production processes in [Work and crafting](work-crafting.md), and individual attempts in [Actions](actions.md).
 
-**Inventory:** 224 selectable entries, followed by the ten retained pattern cards. These are alternatives for different lives and worlds, not one compulsory skill tree. Use the shared [Criticality](README.md#criticality), [Level](README.md#level) and [table definitions](README.md#catalogue-tables). A learned method does not supply missing equipment, bodily capacity, supernatural permission or institutional authority. Build gaps below name the relevant owner without inventing cross-catalogue IDs.
+**Inventory:** 300 selectable entries, followed by the ten retained pattern cards. These are alternatives for different lives and worlds, not one compulsory skill tree. Use the shared [Criticality](README.md#criticality), [Level](README.md#level) and [table definitions](README.md#catalogue-tables). A learned method does not supply missing equipment, bodily capacity, supernatural permission or institutional authority. Build gaps below name the relevant owner without inventing cross-catalogue IDs.
 
-**Inventory navigation:** [Everyday competence](#everyday-competence) · [Fieldcraft](#fieldcraft-and-animal-handling) · [Movement](#movement-and-adaptive-mastery) · [Arms](#weapons-and-martial-disciplines) · [Rescue](#rescue-and-team-leadership) · [Craft expertise](#craft-and-diagnostic-expertise) · [Social practice](#social-practice-and-intimacy) · [Arts](#arts-games-and-sensory-mastery) · [Investigation](#investigation-and-covert-proficiencies) · [Technical training](#technical-and-unfamiliar-interface-training) · [Magical training](#magical-disciplines) · [Classes](#classes-and-expressive-loadouts) · [Advancement](#teaching-recognition-and-advancement) · [Exceptional learning](#exceptional-learning-and-strange-mastery) · [Research coverage](#research-coverage)
+**Inventory navigation:** [Everyday competence](#everyday-competence) · [Fieldcraft](#fieldcraft-and-animal-handling) · [Movement](#movement-and-adaptive-mastery) · [Arms](#weapons-and-martial-disciplines) · [Rescue](#rescue-and-team-leadership) · [Craft expertise](#craft-and-diagnostic-expertise) · [Social practice](#social-practice-and-intimacy) · [Arts](#arts-games-and-sensory-mastery) · [Investigation](#investigation-and-covert-proficiencies) · [Technical training](#technical-and-unfamiliar-interface-training) · [Magical training](#magical-disciplines) · [Classes](#classes-and-expressive-loadouts) · [Advancement](#teaching-recognition-and-advancement) · [Exceptional learning](#exceptional-learning-and-strange-mastery) · [Working knowledge](#working-knowledge-and-teaching-implements) · [Practiced partnerships](#practiced-partnerships) · [Applied mastery](#applied-mastery-and-economy-of-effort) · [Expressive virtuosity](#expressive-virtuosity) · [Demanding power disciplines](#demanding-power-disciplines) · [Unusual careers](#unusual-careers-and-successions) · [Research coverage](#research-coverage)
 
 **Retained patterns:** [The loadout as a sentence](#the-loadout-as-a-sentence) · [A skill remembered after the uniform](#a-skill-remembered-after-the-uniform) · [The signature move with two lives](#the-signature-move-with-two-lives) · [A specialization with a neighbor](#a-specialization-with-a-neighbor) · [The technique you choose not to use](#the-technique-you-choose-not-to-use) · [A curriculum made of civic problems](#a-curriculum-made-of-civic-problems) · [Respec through a new way of living](#respec-through-a-new-way-of-living) · [The expert's shorter path](#the-experts-shorter-path) · [A talent discovered by someone else](#a-talent-discovered-by-someone-else) · [Power with a public footprint](#power-with-a-public-footprint)
 
@@ -121,7 +121,7 @@ These entries define training and expressive styles. [Combat and rescue](combat-
 | AP-065 | Crowd-fighting restraint | ALL | Play | 4 Advanced | C | Train target selection and controlled movement around bystanders; avoiding one harm can cost an opening without automatically earning superior damage. | Large; Combat bystander awareness and chosen constraints. | [Baldur's Gate 3][bg3]; synthesis |
 | AP-066 | Monster-anatomy sparring | SC FA | Play | 4 Advanced | C | Learn a known creature's reach and movement from safe models or witnessed encounters; a similar silhouette need not share its vulnerabilities. | Large; Bodies and Combat species-specific affordances. | [The Witcher][witcher]; synthesis |
 | AP-067 | Spell-and-steel coordination | FA | Play | 4 Advanced | C | Rehearse switching between a known spell and weapon technique while managing shared hands, breath and attention; neither becomes a free extra action. | Large; Magic and Combat overlapping resource commitments. | [Noita][noita]; synthesis |
-| AP-068 | Fighting one's own echo | FA | Blend | 4 Advanced | C | Practice against a bounded magical replay of recorded movements; improve a habit without mistaking the replay for a thinking opponent. | Large; Magic owns replay; Combat owns practice outcomes. | [The Elder Scrolls][elder]; original synthesis |
+| AP-068 | Fighting one's own echo | FA | Blend | 4 Advanced | C | Practice against a bounded magical replay of recorded movements; improve a habit without mistaking the replay for a thinking opponent. | Large; Magic owns replay; Combat owns practice outcomes. | [The Elder Scrolls][elder]; synthesis |
 
 ## Rescue and team leadership
 
@@ -349,9 +349,127 @@ These entries make unusual learning do something specific. The wider-library lab
 | AP-223 | City learns a shared gesture | — | Blend | 5 Frontier | D | Define a voluntary collective proficiency that coordinates one public ritual or emergency signal; participation can lapse without turning inhabitants into a hive mind. | Large; collective learning policy; Institutions owns participation. | [Discworld][disc]; original extrapolation |
 | AP-224 | Mastery changes the examination | — | Lab | 5 Frontier | D | Define an explicit learning world where solving a bounded problem adds a new teachable variation; preserve old lessons and prevent endless goalpost changes. | Large; owner-authored curriculum generation and completion boundaries. | [Against the Storm][ats]; original extrapolation |
 
+## Working knowledge and teaching implements
+
+A thing can supply instructions, temporarily enable an action or help its user internalize a technique. The entries distinguish those gains instead of treating possession as permanent expertise.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-225 | Equipment apprenticeship | SC FA | Play | 2 Expected | C | Practice a technique supported by a teaching implement until it can be performed with an ordinary compatible tool; returning the implement no longer removes that learned technique. | Moderate; separate granted action, practice and learned ability. | [Final Fantasy IX][ff9-study]; synthesis |
+| AP-226 | Open-manual workmanship | ALL | Play | 2 Expected | C | Complete an unfamiliar supported recipe while consulting its manual; interruption or losing the book removes reference access, not the partly finished work. Memorization is optional. | Moderate; Work reference requirements and retained workpieces. | [CDDA][cdda-study]; synthesis |
+| AP-227 | Musical sight-reading | ALL | Play | 2 Expected | C | Perform a new score within one's instrument skill without first memorizing it; difficult passages invite slower rehearsal rather than an all-or-nothing music check. | Moderate; Languages notation and Arts performance. | [Languages][languages]; synthesis |
+| AP-228 | Recipe reconstruction by taste | ALL | Play | 3 Enriching | C | Compare a dish with familiar flavors and propose several plausible recipes; tasting starts an experiment rather than exposing its cook's exact secret. | Moderate; sensed ingredients and Work test batches. | [Core Keeper][core-study]; original synthesis |
+| AP-229 | Living-specimen watch | SC FA | Play | 3 Enriching | C | Learn a creature's distinctive motion by observing it perform the act; capture, patient distance or a trusted trainer can preserve a learning opportunity that killing would end. | Moderate; observed-action milestones and compatible bodies. | [Prey][prey-study]; synthesis |
+| AP-230 | Landmarks in a walking song | ALL | Play | 3 Enriching | C | Memorize a route as verses tied to actual landmarks; companions can learn it together, while a missing bridge makes the old verse visibly incomplete. | Moderate; Languages mnemonic forms and Adventure route evidence. | [Black Flag][blackflag-study]; original synthesis |
+| AP-231 | Mnemonic knot reading | ALL | Play | 3 Enriching | C | Read a learned cord notation for quantities, waypoints or instructions by touch; a damaged knot leaves an identifiable gap instead of a magically completed message. | Moderate; Objects cord records and Languages notation. | [Languages][languages]; original synthesis |
+| AP-232 | Crystal-socket literacy | SC FA | Play | 3 Enriching | C | Recognize which installed component supports, copies or redirects its neighbor; diagnose an inert pairing before buying a stronger but equally incompatible crystal. | Moderate; Technology or Magic owns socket relationships. | [Final Fantasy VII][ff7-study]; synthesis |
+| AP-233 | Marked-up failure collection | ALL | Blend | 3 Enriching | C | Study preserved cracked pots, tangled casts or jammed mechanisms alongside the conditions that produced them; learn a specific warning sign without being required to ruin another good object. | Moderate; Objects condition history and teaching annotations. | [Production pitfalls][pitfalls-study]; synthesis |
+| AP-234 | Translation through shared work | ALL | Play | 4 Advanced | C | Learn another language's practical distinctions while performing a familiar craft together; achieve useful workshop communication before fluent conversation or ceremonial literacy. | Large; Languages learning and witnessed joint activity. | [Star Trek][trek]; original synthesis |
+| AP-235 | Rival-school reconstruction | ALL | Play | 4 Advanced | C | Piece together an unavailable discipline from surviving demonstrations and notes; retain unresolved steps and develop a distinct workable variant instead of claiming the lost master's complete knowledge. | Large; partial curricula and independently tested methods. | [Morrowind][morrowind-study]; synthesis |
+| AP-236 | Inheritance without borrowed memories | SC FA | Blend | 4 Advanced | D | Define a legacy that transfers one practiced procedure to a successor while leaving personal recollections behind; the heir can play a familiar tune without remembering who loved it. | Large; scoped procedural inheritance; Magic or Technology transfer. | [Octopath II][octo2-study]; original extrapolation |
+
+## Practiced partnerships
+
+Shared practice can unlock a particular joint maneuver. Affection is not a substitute for qualification, and a useful partnership need not become romance or permanent obedience.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-237 | Alternating bellows rhythm | ALL | Play | 2 Expected | C | Train two workers to sustain an even blast while each rests between strokes; a lone worker can use a slower process instead of losing the entire craft. | Moderate; Work labor cadence and Technology airflow. | [Against the Storm][ats]; original synthesis |
+| AP-238 | Shield-step exchange | MD SC FA | Play | 2 Expected | C | Learn a paired advance in which one fighter guards the other's crossing; breaking contact or turning away ends the protection rather than leaving an invisible party bonus. | Moderate; Combat stance transitions and actual coverage. | [Fire Emblem Fates][fates-study]; synthesis |
+| AP-239 | Counterweight climbing pair | ALL | Play | 3 Enriching | C | Rehearse a supported rope arrangement so one climber's controlled descent helps another ascend; mass, anchors and recovery space remain part of the technique. | Moderate; Objects ropes and Combat rescue loads. | [PEAK][peak-study]; original synthesis |
+| AP-240 | Mage's held note | FA | Play | 3 Enriching | C | Sustain the first phrase of a known paired spell while a partner chooses its permitted ending; interruption releases an incomplete effect according to that spell's rules. | Large; Magic staged casting and shared commitment. | [Final Fantasy IV][ff4-study]; synthesis |
+| AP-241 | Spotter and steady hand | ALL | Play | 3 Enriching | C | Pair a clear observer with a practitioner whose view is blocked during delicate work; practiced callouts shorten corrections without letting the practitioner see through the observer's eyes. | Moderate; Work collaboration and actual communication. | [Lethal Company][lethal]; original synthesis |
+| AP-242 | Glassworker's handover | MD MO FA | Play | 3 Enriching | C | Learn the moment and grip for handing a warm workpiece between compatible tools; a duet can produce forms that cool before a solo worker can finish them. | Moderate; Work thermal windows and tool eligibility. | [Character formation][formation]; original synthesis |
+| AP-243 | Dancer's opening cue | ALL | Play | 3 Enriching | C | Rehearse a visual flourish that tells a partner when to begin a difficult passage; the same cue can be withheld, missed or deliberately counterfeited. | Moderate; Arts cue recognition and shared repertoire. | [Persona 5 Royal][persona-study]; original synthesis |
+| AP-244 | Rivalry sparring code | ALL | Play | 3 Enriching | C | Establish signals for escalating, pausing and conceding a fierce practice bout; rivals can learn each other's counters without settling the argument that makes them rivals. | Moderate; Combat practice rules and Relationships agreements. | [Dragon Age II][da2-study]; original synthesis |
+| AP-245 | Blind-spot watch exchange | SC FA | Play | 3 Enriching | C | Practice handing observation of a gaze-sensitive danger to another person while moving; an acknowledgment matters because merely asking does not establish that someone is watching. | Moderate; perception ownership and communicated handoff. | [Lethal Company][lethal]; synthesis |
+| AP-246 | Choir's missing voice | ALL | Play | 3 Enriching | C | Learn an alternate harmony so a small ensemble can continue after a singer leaves; the arrangement changes its sound rather than pretending the absent voice is still present. | Moderate; Arts alternate parts and available vocal ranges. | [The Sims][sims-study]; original synthesis |
+| AP-247 | Bonded emergency intervention | ALL | Play | 4 Advanced | C | Repeated joint practice unlocks one partner-specific rescue cue and rehearsed response; it can free a trapped ally sooner, but spends the helper's own opportunity and requires reach. | Large; Combat intervention budgets and pair-specific training. | [XCOM 2][xcom-study]; synthesis |
+| AP-248 | Mutually taught finishing move | SC FA | Play | 4 Advanced | C | Two specialists develop an attack whose first action supplies the second's qualifying state; each retains an ordinary use for their half when the partner is absent. | Large; Combat and Magic combination eligibility. | [Mass Effect 3][me3-study]; synthesis |
+
+## Applied mastery and economy of effort
+
+Expertise can conserve a scarce input, improve timing, preserve a useful object or reveal a new method. These are distinct rewards from a larger damage number.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-249 | Measured expenditure | ALL | Play | 2 Expected | C | Learn how much of a supported consumable a particular task actually needs; an expert can use fewer charges without substituting skill for a missing tool. | Moderate; Work or Technology consumption and qualification. | [KOTOR][kotor-study]; synthesis |
+| AP-250 | Broad-family repair mastery | ALL | Play | 2 Expected | C | Recognize usable parts across a wider family of damaged equipment; previously poor salvage becomes valuable, while incompatible materials remain incompatible. | Moderate; Work owns repair transformations and limits. | [New Vegas][newvegas-study]; synthesis |
+| AP-251 | Quality-preserving harvest | ALL | Play | 2 Expected | C | Learn the handling method that preserves a desired hide, fruit or specimen; faster acquisition can damage the property the buyer or researcher actually values. | Moderate; Work harvest outcomes and Materials quality. | [Assassin's Creed III][ac3-study]; synthesis |
+| AP-252 | Controlled disarming | ALL | Play | 3 Enriching | C | Develop a fictional combat technique aimed at separating an opponent from a usable weapon instead of destroying it; exposure and the opponent's response make preservation costly. | Moderate; Combat disarm and Objects possession. | [Battle Brothers][brothers-study]; synthesis |
+| AP-253 | Moving-target stance transition | MO SC FA | Play | 3 Enriching | C | Rehearse switching from steady aim to movement and back without losing the selected target; accuracy and protection still depend on the stance actually occupied. | Moderate; Combat aim and movement commitments. | [Mass Effect Infiltrator][infiltrator-study]; synthesis |
+| AP-254 | Familiar-weapon reload economy | MO SC | Play | 3 Enriching | C | Learn a specific weapon's reload rhythm and avoid wasting a partially available supply; the technique does not reload another weapon family or create ammunition. | Moderate; Combat reload states and Objects magazines. | [Deus Ex][deus-study]; synthesis |
+| AP-255 | Recovering swing | MD SC FA | Play | 3 Enriching | C | Train to regain footing after a missed committed strike, preserving a limited defensive option instead of automatically receiving another full attack. | Moderate; Combat recovery windows and stamina. | [Battle Brothers][brothers-study]; original synthesis |
+| AP-256 | Hot-work pacing | ALL | Play | 3 Enriching | C | Alternate preparation and heat-intensive work around a known installation's cooling rhythm; improve output by choosing timing rather than granting the machine imaginary capacity. | Moderate; Work scheduling and Technology heat state. | [Oxygen Not Included][oni-study]; synthesis |
+| AP-257 | Expert's last measure | ALL | Play | 3 Enriching | C | Spend a replenishing reserve of focused attention to bring a nearly successful piece across a defined quality threshold; decide which commission deserves that effort. | Moderate; bounded concentration and Work quality previews. | [World of Warcraft][wow-study]; synthesis |
+| AP-258 | Pack-shedding escape drill | ALL | Play | 3 Enriching | C | Practice releasing an accessible outer load when movement becomes urgent; regain mobility by leaving real possessions behind, not by deleting their weight while retaining them. | Moderate; Objects carried layers and Combat movement. | [PEAK][peak-study]; synthesis |
+| AP-259 | Narrow-gap body control | ALL | Play | 3 Enriching | C | Learn posture and breathing for passing a tight but physically possible opening; clothing and carried gear may need to go first, and impossible anatomy remains a barrier. | Moderate; Bodies dimensions and Adventure clearances. | [Rain World][rain-study]; original synthesis |
+| AP-260 | Trace-preserving approach | ALL | Play | 3 Enriching | C | Rehearse entering a scene without trampling the evidence being sought; slowing the approach can preserve a trail that a hurried expert would destroy. | Moderate; Adventure traces and movement disturbance. | [KOTOR II][kotor2-study]; original synthesis |
+| AP-261 | Intermittent threat sampling | ALL | Play | 4 Advanced | C | Learn to alternate brief checks of several known threats while maintaining a task; retain uncertainty between observations instead of acquiring continuous all-direction sight. | Large; perception timing and task attention. | [Lethal Company][lethal]; synthesis |
+| AP-262 | Fighting withdrawal discipline | ALL | Play | 4 Advanced | C | Practice preserving spacing and a usable exit while conceding ground; a retreat can retain the group and equipment without being scored as a failed attempt to kill everything. | Large; Combat movement, morale and withdrawal goals. | [Kenshi][kenshi]; synthesis |
+
+## Expressive virtuosity
+
+These learned arts make ordinary company, public performance and unfamiliar bodies rewarding in their own right. Their inclusion does not require attaching a combat bonus to every pleasure.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-263 | Funeral voice | ALL | Play | 3 Enriching | C | Learn to carry names and memories through a lament suited to the mourners; the performance can honor a particular life without prescribing how quickly grief should end. | Moderate; Arts repertoire and chosen commemorations. | [Middle-earth][middle]; original synthesis |
+| AP-264 | Heckler's reversal | ALL | Play | 3 Enriching | C | Practice turning an interruption into a comic callback without losing the thread of the performance; a hostile audience can still refuse the invitation to laugh. | Moderate; Arts interruptions and audience memory. | [Discworld][disc]; original synthesis |
+| AP-265 | Sober portrayal of drunkenness | ALL | Play | 3 Enriching | C | Rehearse an apparently unsteady gait, slurred line or near-fall while retaining precise control; theater and deception use performance rather than an actual intoxicant bonus. | Moderate; Arts embodied acting and observer interpretation. | [The Sopranos][sopranos]; original synthesis |
+| AP-266 | Kitchen chorus | ALL | Play | 3 Enriching | C | Learn songs whose pauses fit shared preparation work, letting conversation, music and useful labor coexist without forcing everyone to stop and face a performer. | Moderate; Arts and Work compatible concurrent actions. | [The Sims][sims-study]; synthesis |
+| AP-267 | Ribbon-blade flourish | MD MO FA | Play | 3 Enriching | C | Train a theatrical blade routine around trailing fabric and deliberate near-misses; audience spectacle differs from efficient fighting, and live edges require a separate chosen risk contract. | Moderate; Arts choreography and Combat contact rules. | [Hades][hades]; original synthesis |
+| AP-268 | Flavor counterpoint | ALL | Play | 3 Enriching | C | Arrange a tasting so one course changes the next course's perceived sweetness, bitterness or heat; personal preferences remain different even when the sequence is skillfully made. | Moderate; Arts sequence and Bodies sensory adaptation. | [The Culture][culture]; original synthesis |
+| AP-269 | Courtly insult arithmetic | MD FA | Play | 3 Enriching | C | Learn which form of address or omitted courtesy turns a polished compliment into a recognizable slight; public wit can win admiration and create a very real enemy. | Moderate; Languages conventions and Relationships interpretation. | [Austen][austen]; original synthesis |
+| AP-270 | Duet for unequal voices | SC FA | Play | 3 Enriching | C | Compose a call-and-response for performers with very different pitch ranges or audible durations; their difference becomes the music rather than a defect to normalize. | Moderate; Bodies voice limits and Arts arrangement. | [Languages][languages]; original synthesis |
+| AP-271 | Marionette heelwork | ALL | Play | 4 Advanced | C | Learn to control a supported puppet rig with feet while hands play an instrument; mastery creates a miniature one-person theater with real coordination and setup needs. | Large; Objects controls and Arts simultaneous performance. | [Garry's Mod][gmod]; original synthesis |
+| AP-272 | Intimacy after transformation | SC FA | Play | 4 Advanced | C | Learn with a willing adult partner how changed touch, size or temperature alters familiar affectionate rituals; preserve pleasure and communication without assuming old permission covers every new sensation. | Large; Bodies feedback and Relationships boundaries; non-graphic. | [The Culture][culture]; original synthesis |
+| AP-273 | Echo-guided sculpture | SC FA | Play | 4 Advanced | C | Train an existing echo sense against reference pieces to judge a sculpture's cavities and contours; the result can be designed for listeners as well as viewers. | Large; Bodies sensing and Arts spatial composition. | [Languages][languages]; original synthesis |
+| AP-274 | Nightmare comedy | FA | Blend | 4 Advanced | C | Learn to stage a frightening remembered image as consensual absurd theater inside an enabled dream; laughter can be the goal without claiming that performance cures trauma. | Large; Magic dream staging and Arts audience agreement. | [Macondo][macondo]; original synthesis |
+
+## Demanding power disciplines
+
+These are curricula and practiced methods for already admitted effects. The magical law belongs in Magic; a technique cannot invent an unsupported result merely because its name sounds powerful.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-275 | Reagent discrimination | FA | Play | 2 Expected | C | Learn which ingredient property a spell consumes and recognize supported substitutes; keep an attractive but incompatible specimen for another purpose rather than wasting it in a familiar formula. | Moderate; Magic reagent requirements and Materials observations. | [Ultima VII][ultima-study]; synthesis |
+| AP-276 | Recovery-cadence casting | FA | Play | 2 Expected | C | Practice interleaving a known low-cost action with a caster's actual recovery rhythm; avoid spending the final reserve before a required escape or sustaining spell. | Moderate; Magic resource regeneration and prepared actions. | [Morrowind][morrowind-study]; synthesis |
+| AP-277 | One-breath abbreviation | FA | Play | 3 Enriching | C | Master a permitted shortened form of one incantation; cast it in a smaller opening while retaining its material cost and losing the deliberate form's wider tolerance for error. | Moderate; Magic alternate cast forms and interruption. | [Kingmaker][kingmaker-study]; original synthesis |
+| AP-278 | Slow spell shaping | FA | Play | 3 Enriching | C | Spread a supported effect over a longer channel to reduce peak demand; maintain the vulnerable working interval instead of receiving the short cast's immediate result at the cheaper cost. | Moderate; Magic duration and output accounting. | [Morrowind][morrowind-study]; synthesis |
+| AP-279 | Ward-copy analysis | FA | Blend | 3 Enriching | C | Study an inspectable ward to recover one supported clause, then rebuild it in a permitted practice setting; copying a trigger does not copy the original owner's access rights. | Moderate; Magic visible clauses and separately admitted ownership. | [Balatro operators][balatro-study]; original synthesis |
+| AP-280 | Mirror-body distancing | FA | Play | 3 Enriching | C | Rehearse aiming or moving through an existing decoy's position without confusing its facing with one's own; the double becomes a practiced spatial reference, not a second thinking self. | Moderate; Magic decoy state and Combat targeting. | [Dishonored 2][dishonored-study]; synthesis |
+| AP-281 | Blood-price budgeting | FA | Play | 4 Advanced | C | Learn the fictional costs of an enabled blood-powered art and reserve enough bodily capacity for its aftermath; a technically available cast may still be a disastrous choice. | Large; Magic cost disclosure and Bodies fictional harm; no procedure. | [Veilguard][veilguard-study]; synthesis |
+| AP-282 | Corpse-pilot stillness | FA | Play | 4 Advanced | C | Train to perceive through an admitted possession of motionless remains without reflexively attempting to move them; information can be gained where the body cannot act. | Large; Magic possession and separate body-control limits. | [Dishonored 2][dishonored-study]; synthesis |
+| AP-283 | Shared-ward discrimination | FA | Play | 4 Advanced | C | Learn which benefits a magical bond can carry and deliberately route only a supported ward through it; intimacy or similarity does not make every curse or wound transferable. | Large; Magic link filters and recipient eligibility. | [KOTOR II][kotor2-study]; synthesis |
+| AP-284 | Reservoir-to-strike conversion | SC FA | Play | 4 Advanced | C | Master a supported technique that spends accumulated protection on an attack, then recover or reposition before the lost defense is needed; the conversion is a commitment, not free damage. | Large; Magic or Technology reserves; Combat follow-through. | [Mass Effect 3][me3-study]; synthesis |
+| AP-285 | Choir phase correction | FA | Play | 4 Advanced | C | Hear which participant is making a joint spell interfere with itself and adjust the agreed timing; a missing singer may require a smaller result rather than more effort from everyone. | Large; Magic simultaneous casting and audible feedback. | [Final Fantasy XI][ff11-study]; original synthesis |
+| AP-286 | Anti-magic fieldcraft | FA | Play | 4 Advanced | C | Develop a deliberate mundane fallback repertoire for regions that suppress one's usual powers; ropes, witnesses and shelter replace specific dependencies without erasing magical expertise elsewhere. | Moderate; Magic suppression boundaries and ordinary proficiencies. | [Dishonored 2][dishonored-study]; synthesis |
+| AP-287 | Giant's whisper-casting | FA | Play | 4 Advanced | C | Train an enormous voice to deliver a narrow, quiet version of a known sound-mediated spell; scale becomes precision while the spell still requires a listener or resonant target. | Large; Bodies voice geometry and Magic sound effects. | [Earthsea][earthsea]; original synthesis |
+| AP-288 | Oath-burning initiation | — | Blend | 4 Advanced | D | Define a school that unlocks one new discipline when a student knowingly relinquishes a specified magical privilege; lost access, retained knowledge and later reconciliation have explicit terms. | Large; Magic initiation law and progression transition. | [Wrath paths][wrath-study]; original extrapolation |
+| AP-289 | Lesson stolen from a curse | — | Blend | 5 Frontier | D | Define an art in which surviving and understanding a particular curse teaches one fragment of its operation; consent-based demonstrations or preserved records provide alternatives to farming victims. | Large; Magic effect-to-knowledge rules and ethical alternatives. | [Prey][prey-study]; original extrapolation |
+| AP-290 | Spell taught by its counterspell | — | Lab | 5 Frontier | D | Define a reciprocal school where a correctly understood interruption exposes one missing step of the interrupted technique; repeated identical interruptions teach nothing new. | Large; Magic observable execution and bounded learning evidence. | [Noita][noita]; original extrapolation |
+
+## Unusual careers and successions
+
+These paths combine specific learned methods into a recognizable role. They need not make the person virtuous, famous or responsible for saving the world.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AP-291 | Canal-lock conductor | MD MO FA | Play | 3 Enriching | C | Combine water-level reading, signals and patient sequencing to pass traffic through an existing lock system; become the person whose timing keeps a busy town moving. | Moderate; Technology locks and Economy traffic. | [Dwarf Fortress][df]; original synthesis |
+| AP-292 | Recuperating research fellow | ALL | Play | 3 Enriching | C | Pursue accessible study and teaching while recovering from an injury; gain knowledge without pretending the injured body has regained its former practical capacity. | Moderate; Bodies recovery and differentiated learning. | [CDDA][cdda-study]; synthesis |
+| AP-293 | Exile's portable school | ALL | Play | 4 Advanced | C | Preserve a threatened discipline through copied lessons, demonstrators and apprentices who can travel separately; losing the original institution need not erase every practiced method. | Large; Languages archives and Institutions distributed teaching. | [Crusader Kings III][ck3-study]; original synthesis |
+| AP-294 | Maskwright duelist | FA | Play | 4 Advanced | C | Train several mask-associated fighting styles and change between already learned sets; a new mask changes active technique, not biography, loyalties or every observer's recognition. | Large; bounded loadout transitions and Objects masks. | [Octopath II][octo2-study]; original synthesis |
+| AP-295 | Swarm-hand tailor | SC FA | Play | 4 Advanced | C | Learn to direct an admitted group of tiny helpers through one shared textile pattern; fine work becomes possible where each helper alone understands only its next bounded motion. | Large; Technology or Magic helpers and Work cloth state. | [Palworld][palworld-study]; original synthesis |
+| AP-296 | Monster's banquet tutor | FA | Play | 4 Advanced | C | Teach a particular formidable guest how to share a table built for smaller bodies, including utensils, turn-taking and chosen restraint; appetite and personality remain the guest's own. | Moderate; Bodies capacities and Arts hospitality. | [Spirited Away][spirited]; original synthesis |
+| AP-297 | Silence-bound mage | — | Blend | 4 Advanced | D | Define a curriculum that replaces a tradition's spoken components with supported gestures or tactile notation; mastery changes communication needs but does not automatically evade every ward keyed to casting. | Large; Magic alternate components and visible limits. | [Languages][languages]; original extrapolation |
+| AP-298 | Debt-eater's jurist | — | Blend | 5 Frontier | D | Learn an admitted law that distinguishes a voluntarily surrendered obligation from a forged one before a debt-consuming spirit can act; expertise concerns valid targets, not authority to erase any disliked promise. | Large; Magic obligation effects and Institutions legitimacy. | [Discworld][disc]; original extrapolation |
+| AP-299 | Ruinsong surveyor | — | Blend | 5 Frontier | D | Learn to interpret an enabled building's residual work-song, distinguishing load-bearing memory from decorative echoes; the survey can guide restoration or reveal a carefully concealed demolition. | Large; Magic acoustic provenance and Work structural interpretation. | [Macondo][macondo]; original extrapolation |
+| AP-300 | Apprentice to a future scar | — | Lab | 5 Frontier | D | Define a bounded prophetic lesson that reveals one possible injury and lets the student practice avoiding its cause; the lesson expires after the relevant encounter rather than granting perfect foreknowledge. | Large; Magic conditional futures and limited practice transfer. | [DC][dc]; original extrapolation |
+
 ## The loadout as a sentence
 
-**ALL · Play · High · 3/New.** Gap: finite typed ability composition with visible ordering and resource use.
+**ALL · Play · 4 Advanced · D.** Gap: finite typed ability composition with visible ordering and resource use.
 
 A maker connects a proximity sensor, a gentle push and a directional nozzle to build a fruit catcher; a battlemage composes an enemy-triggered blast with a costly area effect. Reversing the order or changing the target creates a different tool, not simply a stronger one. Experts compose while beginners start from a working example. Show the resulting operation and failure limits; incompatible clauses should remain explicit rather than silently disappear.
 
@@ -359,7 +477,7 @@ Seeds: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas.md#g32), [Bala
 
 ## A skill remembered after the uniform
 
-**ALL · Play · High · 2/Extend.** Gap: learned competence separate from current role, equipment and permission.
+**ALL · Play · 2 Expected · C.** Gap: learned competence separate from current role, equipment and permission.
 
 A former city guard becomes a gardener but retains spear technique, first aid and crowd-calming experience; they can take up arms again when danger returns. Their old badge no longer grants restricted access. Players can change lives without discarding history or retaining inappropriate authority. Meaningful training should transfer where applicable; avoid resetting all competence on a role change or allowing remembered procedure to stand in for current authorization.
 
@@ -367,7 +485,7 @@ Seeds: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.m
 
 ## The signature move with two lives
 
-**MD SC FA · Play · High · 2/Extend.** Gap: one admitted capability usable against compatible noncombat targets.
+**MD SC FA · Play · 3 Enriching · C.** Gap: one admitted capability usable against compatible noncombat targets.
 
 A shield specialist's bracing technique holds a collapsing stall while neighbors escape; a climbing pull helps retrieve a trapped animal. Combat mastery becomes community competence. The physical or magical mechanism remains the same across contexts. Do not add a separate bespoke “rescue version” solely to recognize the player's intention, or guarantee success where capacity is insufficient.
 
@@ -375,7 +493,7 @@ Seeds: [RuneScape: Dragonwilds](source-atlas.md#g50), [The Legend of Zelda: Brea
 
 ## A specialization with a neighbor
 
-**ALL · Play · High · 2/Extend.** Gap: complementary abilities and reliable cooperative invitations.
+**ALL · Play · 2 Expected · C.** Gap: complementary abilities and reliable cooperative invitations.
 
 One character can stabilize a device while another adjusts it, but either can perform a slower safe method alone. Cooperation feels valuable without making a fixed party mandatory. Experts can discover faster coordinated variants. Show who contributes what and permit withdrawal; a missing specialist should change cost or approach rather than arbitrarily make the entire world unplayable.
 
@@ -383,7 +501,7 @@ Seeds: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas
 
 ## The technique you choose not to use
 
-**ALL · Play · Try · 2/Extend.** Gap: method constraints and independent values integrated with planning.
+**ALL · Play · 3 Enriching · C.** Gap: method constraints and independent values integrated with planning.
 
 A talented interrogator refuses coercion and learns to investigate through records, witnesses and patient questions. A character's identity includes rejected means, not only unlocked powers. The player can make a similar commitment. Do not reward the restraint solely with a stronger replacement ability; let its value lie in relationships, self-expression and distinct consequences.
 
@@ -391,7 +509,7 @@ Seeds: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age: Origins](source-atla
 
 ## A curriculum made of civic problems
 
-**ALL · Play · High · 2/Extend.** Gap: demonstrated learning from varied tasks with bounded feedback.
+**ALL · Play · 2 Expected · C.** Gap: demonstrated learning from varied tasks with bounded feedback.
 
 An apprentice learns measurement by fitting a ramp, heat control by repairing a bath and communication by explaining both to clients. Each lesson leaves something useful behind. Progress is competence shown in different contexts. Avoid repeating one action hundreds of times or forcing the student to damage things to create training opportunities; practice examples can be deliberately supplied.
 
@@ -399,7 +517,7 @@ Seeds: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](sour
 
 ## Respec through a new way of living
 
-**ALL · Play · Try · 2/Extend.** Gap: reversible configuration and gradual goal/skill changes without identity reset.
+**ALL · Play · 2 Expected · C.** Gap: reversible configuration and gradual goal/skill changes without identity reset.
 
 A veteran reallocates limited active techniques to try an aggressive duelist build or a quieter teaching role while retaining knowledge, friends and history. They may mentor others or return to fieldwork later. Configuration changes should be understandable and affordable. Do not require a fictional memory wipe or expensive punishment merely to try a new play style; irreversible changes belong to explicit chosen stories.
 
@@ -407,7 +525,7 @@ Seeds: [Diablo IV](source-atlas.md#g12), [Final Fantasy III](source-atlas.md#g80
 
 ## The expert's shorter path
 
-**ALL · Play · High · 2/Extend.** Gap: mastery shortcuts with equivalent material outcomes and optional manual control.
+**ALL · Play · 3 Enriching · C.** Gap: mastery shortcuts with equivalent material outcomes and optional manual control.
 
 A practiced brewer can batch a familiar recipe through a trusted routine while choosing to perform an experimental batch by hand. Expertise reduces friction without erasing expression. A novice can still understand the steps. Shortcuts must preserve inputs, time and meaningful risks; convenience cannot quietly duplicate output or change the world law to make an expert's narration true.
 
@@ -415,7 +533,7 @@ Seeds: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89)
 
 ## A talent discovered by someone else
 
-**ALL · Play · Try · 2/Extend.** Gap: event-grounded recognition and optional learning invitations.
+**ALL · Play · 3 Enriching · C.** Gap: event-grounded recognition and optional learning invitations.
 
 After a player calmly organizes a rescue, a teacher offers a course in expedition planning. The offer names the observed act and can be declined. Recognition makes past choices matter without secretly assigning a permanent class. Avoid profiling real players or inferring hidden personality; the invitation concerns witnessed fictional behavior and opens an option rather than defining who they are.
 
@@ -423,7 +541,7 @@ Seeds: [Wildermyth](source-atlas.md#g25), [Fire Emblem: Three Houses](source-atl
 
 ## Power with a public footprint
 
-**SC FA · Play · Try · 3/New.** Gap: bounded high-impact effects and visible dependencies on services or consent.
+**SC FA · Play · 4 Advanced · D.** Gap: bounded high-impact effects and visible dependencies on services or consent.
 
 A hero can lift a heavy gate but needs stable footing and a clear area; a city can build anchor points that make the power useful in emergencies. Communities adapt around capability without becoming helpless admirers. Make the footprint inspectable and preserve ordinary alternatives. Greater strength should be perceptible in familiar tasks as well as useful against new challenges.
 
@@ -431,15 +549,15 @@ Seeds: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Cyberpunk 207
 
 ## Research coverage
 
-This expansion began from `codex/world-idea-repertoires` at `2bb10759c263cf29a3de0f25bb3595e49420006f`. Applicable repository instructions, README definitions, design foundation, actions, selection/combinations, all four proposals, the original assigned catalogues and relevant neighboring scope statements were read. The source atlas was read through line 220; its remaining navigation was not counted as research coverage.
+This expansion preserves the original 224 entries and ten pattern bodies, adding AP-225–AP-300 after completing the available research manuscripts across the assignment. Applicable repository instructions, shared definitions, design foundation, actions, selection/combinations, all four seed proposals, assigned catalogues and neighboring ownership statements were read; the full source atlas is now read as navigation, not substituted for the studies.
 
-**Fully read:** all 39 documents in the worldbuilding library at `b387e7caeda5cec301045b877ca50a2815a869dd`: 28 world dossiers, six comparative essays, matrix, method, index, source audit and progress ledger. In the game library at `065309db37067c8e0a213bc1ed14446a4ea20eea`, the complete Noita dossier and the preserved chapters for Against the Storm, AI Dungeon, Among Us/Lethal Company, Animal Crossing, Balatro, Baldur's Gate 3, Caves of Qud, Core Keeper, Dreams/Project Spark, Dwarf Fortress, EverQuest Next, Factorio/Satisfactory, Fortnite, Garry's Mod, Hades/Hades II, Kenshi and League/Dota were read, together with the evidence-interpretation essay and current index material. The index and correction ledger were used as navigation and version qualification, not substitutes for unread dossiers.
+**Coverage:** all 148 game dossiers, all 38 preserved game chapters, all 29 granular mechanics studies, all twelve essay files and the accessible reference notebooks, interaction lookup, supplements and correction ledgers. Main-game research is pinned to `065309db37067c8e0a213bc1ed14446a4ea20eea`; the eighteen survival additions use `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a`. All 39 worldbuilding documents were read at `b387e7caeda5cec301045b877ca50a2815a869dd`. The [group reading record](group-7-research-progress.md) distinguishes earlier completed reads from this continuation's individually marked completions and synthesis.
 
-**Coverage gap:** the requested fresh full game-corpus reread is not complete at this checkpoint. Other game dossiers, preserved chapters, mechanics studies, essays and reference supplements remain unread unless named above; portions of the long progress ledger and roster tail remain unread. The current continuation heads were discovered at `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` (G131–140) and `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` (G141–148), but their dossier bodies have not yet informed this checkpoint. No missing source was replaced by an invented claim or a new research dossier. Retained archetype citations preserve earlier work and are not assertions that every linked full-game dossier was freshly read here.
+**Limits:** source manuscripts retain their dated claims and access qualifications. Videos were not watched, underlying fictional canons were not reread, and external facts were not recertified by this manuscript pass. The source library's separate original-packet reconciliation remains its own unfinished task. Some directory/audit aliases returned 404; the canonical linked field guide, actual audit files and operational supplements were read instead, while no unidentified unavailable text is claimed read.
 
-Every new row is original synthesis. Links identify a relevant researched pattern or local prerequisite, not a claim that a source contains the proposed OpenLegend skill. Source interpretations, dated evidence and continuity limits remain with their owners; no fresh playthrough, viewing of linked videos or rereading of the underlying fictional canon is claimed.
+Every numbered idea is original synthesis or explicitly labelled extrapolation. Its source link identifies an informing pattern, not proof that the source implements the proposed skill. The six new domains emphasize equipment-mediated learning, partner-specific practice, conservation through expertise, expressive pleasure and distinctive power disciplines. FA options beyond Borrowing are later optional traditions; wider-law experiments use the wider-library label.
 
-**Integration dependencies:** Work owns recipes and repair operations; Combat owns attack and rescue resolution; Bodies owns senses, anatomy and adaptations; Technology and Magic own the enabled capabilities being learned; Languages owns literacy and evidence; Institutions owns credentials and authority. Shared source-atlas revision pins and any group-wide coverage tracker need integration-owner updates; they were not edited here.
+**Integration dependencies:** Work owns recipes and repair operations; Combat owns attack and rescue resolution; Bodies owns senses, anatomy and adaptations; Technology and Magic own enabled capabilities; Languages owns literacy and evidence; Institutions owns credentials and authority. Shared source-atlas pins and cross-group navigation remain integration-owner changes. No runtime code, gameplay tests or new research dossiers were added.
 
 [middle]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/01-middle-earth.md
 [trek]: https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/04-star-trek.md
@@ -478,3 +596,39 @@ Every new row is original synthesis. Links identify a relevant researched patter
 [hades]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/games/hades-and-hades-ii.md
 [kenshi]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/games/kenshi.md
 [lethal]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/games/among-us-and-lethal-company.md
+[ff9-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-ix.md
+[cdda-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/cataclysm-dark-days-ahead.md
+[core-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/core-keeper-resource-circuits-food-and-inhabited-discovery.md
+[prey-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/prey-2017.md
+[blackflag-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/assassins-creed-iv-black-flag.md
+[ff7-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-vii.md
+[pitfalls-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/essays/production-and-platform-pitfalls.md
+[morrowind-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/the-elder-scrolls-iii-morrowind.md
+[octo2-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/octopath-traveler-ii.md
+[fates-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/fire-emblem-fates.md
+[peak-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/peak-shared-burdens-rescue-and-spatial-tools.md
+[ff4-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-iv.md
+[persona-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/persona-5-royal.md
+[da2-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/dragon-age-ii.md
+[sims-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md
+[xcom-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/xcom-2.md
+[me3-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/mass-effect-3.md
+[kotor-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/star-wars-knights-of-the-old-republic.md
+[newvegas-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/fallout-new-vegas.md
+[ac3-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/assassins-creed-iii.md
+[brothers-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/battle-brothers.md
+[infiltrator-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/mass-effect-infiltrator.md
+[deus-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/deus-ex-2000.md
+[oni-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/oxygen-not-included.md
+[wow-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/world-of-warcraft.md
+[rain-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/rain-world.md
+[kotor2-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/star-wars-knights-of-the-old-republic-ii.md
+[ultima-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/ultima-vii-the-black-gate.md
+[kingmaker-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/kingmaker-party-rules-and-kingdom-operations.md
+[balatro-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/balatro-scoring-operators-risk-and-readable-combinations.md
+[dishonored-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/dishonored-2.md
+[veilguard-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/dragon-age-the-veilguard.md
+[ff11-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/final-fantasy-xi.md
+[wrath-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/mechanics/wrath-mythic-paths-and-crusade-battles.md
+[ck3-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/crusader-kings-iii.md
+[palworld-study]: https://github.com/Macrofold/OpenLegend/blob/065309db37067c8e0a213bc1ed14446a4ea20eea/archive/02-research/game-inspiration/dossiers/palworld.md
