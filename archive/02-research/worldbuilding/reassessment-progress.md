@@ -1,12 +1,14 @@
 # Whole-world reassessment: progress and evidence
 
-**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 19, Narnia. Completed dossier revisions: 18/28. Shared synthesis reconciliation: pending the dossier pass.**
+**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 23, Austen's social worlds. Committed dossier revisions: 22/28. Shared synthesis reconciliation: pending the dossier pass.**
 
-This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet and its integration history; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
+This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
 
 ## Repository continuity
 
 The requested branch did not contain the library. The existing 28-world packet was located on `docs/worldbuilding-research-library` at `b387e7caeda5cec301045b877ca50a2815a869dd` and also checked against its later main-branch integration. No additional dossier beyond the 28-slot roster was found in those inventories. Import commit `9cb9cb727f6fa962d35da4a35892e6b5ed325f1f` placed the 39 library documents on the requested branch, preserving its prior work. The comparison against `3323f23517158dbf43f0ffd41e1c142cfebf2cb1` showed only those additions. No merge, rebase, force update, main-branch write, engine change, or repertoire implementation was performed.
+
+At resumption, the remote head was `a3ac00af3489cd2895a7c97e344b070e175699b3` (Sopranos revision). Comparison with the import confirmed changes to dossiers 01–22 and this ledger only. This supersedes the interrupted ledger's stale 18/28 count; completed research is being preserved rather than repeated.
 
 ## Dossier status
 
@@ -18,7 +20,7 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [04. Star Trek](worlds/04-star-trek.md) | Revised | `36b5f382eb654b8e97e308ae1a36c43bf1812668`; useful abundance, recreation, intimacy, conflicting reception, functioning standards and consequential deception. |
 | [05. Marvel](worlds/05-marvel.md) | Revised | `196d6746bb98b7232ce3a677c7f9de9f1fb5e748`; wedding, performance and vocation, functional relationships, recovery, persecution and coercive captivity. |
 | [06. DC Universe](worlds/06-dc-universe.md) | Revised | `c48d79dc8bdc6f0d8225fb38345b7cfd84d1bd51`; superpowered pleasure, marriage, competition, deliberate cruelty, working institutions and distinct recovery/loss. |
-| [07. The Witcher](worlds/07-the-witcher.md) | Revised | `599a3f479f387b6c355a3b0bad587639c1039838`; paid music, intimacy, bridge victory, reproductive coercion, abuse, a lively wedding and unequal consequences. |
+| [07. The Witcher](worlds/07-the-witcher.md) | Revised | `599a3f479f387b6c355a3b0bad587639c1039838b`; paid music, intimacy, bridge victory, reproductive coercion, abuse, a lively wedding and unequal consequences. |
 | [08. Pokémon](worlds/08-pokemon.md) | Revised | `27ccc7ee7e8cb734fd21020f43eb127841de19a4`; competitive mastery, athletic recreation, effective institutions, deliberate manipulation and distinct rescue/recovery. |
 | [09. Dune](worlds/09-dune.md) | Revised | `35551148cc4c6b58ab672836207c9ebe3e4d6a8e`; ritual pleasure, music, worm-riding mastery, coercion, reproductive control and unequal outcomes. |
 | [10. A Song of Ice and Fire](worlds/10-a-song-of-ice-and-fire.md) | Revised | `d55a075d35c0eb8640d3b9e3ab23d70c5f542f27`; feasting, martial aspiration, intimacy, coercion and lasting effects. |
@@ -30,11 +32,11 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [16. Foundation](worlds/16-foundation.md) | Revised | `4bee03439849b6a5427c2fc1a49c74b5825ec3f6`; travel, music, useful services, martial ambition, induced loyalty and Bayta's lethal intervention. |
 | [17. The Culture](worlds/17-the-culture.md) | Revised | `b8918fadeacc754fcbba5555cd0d8ff97592d1cc`; bodily pleasure, recital, artistic ambition, deliberate cruelty, coercion and unequal resolutions. |
 | [18. The Broken Earth](worlds/18-the-broken-earth.md) | Revised | `071c5accb752e62a4f819619425fc88235f09e46`; chosen intimacy, divergent ambitions, piracy, civic provision and an enduring change that does not erase loss. |
-| [19. Narnia](worlds/19-narnia.md) | In progress | Dossier-specific evidence and commit pending. |
-| [20. His Dark Materials](worlds/20-his-dark-materials.md) | Pending | — |
-| [21. The Wire](worlds/21-the-wire.md) | Pending | — |
-| [22. The Sopranos](worlds/22-the-sopranos.md) | Pending | — |
-| [23. Austen's social worlds](worlds/23-austens-social-worlds.md) | Pending | — |
+| [19. Narnia](worlds/19-narnia.md) | Revised | Committed before the verified resumption head; source/coverage record in the dossier. |
+| [20. His Dark Materials](worlds/20-his-dark-materials.md) | Revised | Committed before the verified resumption head; source/coverage record in the dossier. |
+| [21. The Wire](worlds/21-the-wire.md) | Revised | Committed before the verified resumption head; source/coverage record in the dossier. |
+| [22. The Sopranos](worlds/22-the-sopranos.md) | Revised | `a3ac00af3489cd2895a7c97e344b070e175699b3`; source/coverage record in the dossier. |
+| [23. Austen's social worlds](worlds/23-austens-social-worlds.md) | In progress | Focused source review and revision pending. |
 | [24. Macondo](worlds/24-macondo.md) | Pending | — |
 | [25. Spirited Away](worlds/25-spirited-away.md) | Pending | — |
 | [26. Warhammer 40,000](worlds/26-warhammer-40000.md) | Pending | — |
