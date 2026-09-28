@@ -14,7 +14,7 @@ Preserve branch history, stable IDs and unrelated work. Commit meaningful checkp
 
 **Reading snapshot: `7e8c27ab3d933642302cf08076dae2a9ced05437`.** All linked research below uses this immutable revision unless stated otherwise. Relative links provide navigation, not an assertion that later revisions were read.
 
-Full earlier notes remain in immutable checkpoints: [G01–G16 detailed cautions](https://github.com/Macrofold/OpenLegend/blob/abff3395544a106749aab74d0274490cd813e60a/docs/repertoires/group-6-reading-progress.md#source-specific-incorporation-cautions), [exact earlier blobs and shared reading](https://github.com/Macrofold/OpenLegend/blob/6a096700e25b652cccfd156ec36c4b4ffd58c3db/docs/repertoires/group-6-reading-progress.md), [G01–G19 checkpoint](https://github.com/Macrofold/OpenLegend/blob/bf32f3d0f53f9c296ca2ffc95a1b6c4ddaf11923/docs/repertoires/group-6-reading-progress.md), and [G20 checkpoint](https://github.com/Macrofold/OpenLegend/blob/c365ab5ed9b5a099427b9649339ce7ce79633150/docs/repertoires/group-6-reading-progress.md). Condensing this working index does not discard those source-specific distinctions.
+Full earlier notes remain in immutable checkpoints: [G01–G16 detailed cautions](https://github.com/Macrofold/OpenLegend/blob/abff3395544a106749aab74d0274490cd813e60a/docs/repertoires/group-6-reading-progress.md#source-specific-incorporation-cautions), [exact earlier blobs and shared reading](https://github.com/Macrofold/OpenLegend/blob/6a096700e25b652cccfd156ec36c4b4ffd58c3db/docs/repertoires/group-6-reading-progress.md), [G01–G19 checkpoint](https://github.com/Macrofold/OpenLegend/blob/bf32f3d0f53f9c296ca2ffc95a1b6c4ddaf11923/docs/repertoires/group-6-reading-progress.md), [G20 checkpoint](https://github.com/Macrofold/OpenLegend/blob/c365ab5ed9b5a099427b9649339ce7ce79633150/docs/repertoires/group-6-reading-progress.md), and [G01–G23 distinctions and supplementary blobs](https://github.com/Macrofold/OpenLegend/blob/b0ae02f5f3bef4f0deac22ce2e9817923cf4d2f1/docs/repertoires/group-6-reading-progress.md). This compact index retains the checked subjects; those records preserve the longer source-specific notes.
 
 Live heads rechecked September 28 through GitHub matching refs; unchanged from the saved discovery:
 
@@ -38,62 +38,79 @@ The dossier directory also contains two D&D editions and `dragon-age-series.md`;
 
 ## Game-by-game reading
 
-All incorporation is **Pending** at this checkpoint. Earlier exact blobs and longer cautions are in the immutable records above.
+**26 complete dossiers; 0 partial.** Every row below is a complete read at the pinned snapshot. **Catalogue incorporation remains Pending for all rows**; there are not yet new catalogue entries attributable to this continuation. G27–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
 
-| Read | Game and dossier | Distinction retained for incorporation |
+| Read | Game and dossier | Exact dossier blob / preserved record |
 | --- | --- | --- |
-| [x] | G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md) | Causal credit, recurring social rituals and relationship music; familiar assistance is not human multiplayer. |
-| [x] | G02 — [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md) | Appearance, observation and inference differ; truthful witnesses may infer wrongly. |
-| [x] | G03 — [Animal Crossing: New Horizons](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md) | Collections, future-self letters, hobbies and voluntary return; later changes qualify launch criticism. |
-| [x] | G04 — [Roblox](../../archive/02-research/game-inspiration/dossiers/roblox.md) | Shared place is not shared knowledge; identity portability is not power portability; finite works need not demand attendance. |
-| [x] | G05 — [Grow a Garden](../../archive/02-research/game-inspiration/dossiers/grow-a-garden.md) | Shared weather and pleasure after abundance; copying, gifting, exchange and removal differ. Disputed timings stay disputed. |
-| [x] | G06 — [Steal a Brainrot](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md) | Possession, transit and secure return; declared stakes and multi-owner commitments. Attachment can discourage risk. |
-| [x] | G07 — [Fortnite](../../archive/02-research/game-inspiration/dossiers/fortnite.md) | Performing a part versus composing loops; credited reuse and mode-specific promises. Cosmetics do not preserve retired activities. |
-| [x] | G08 — [League of Legends](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md) | Expiring observations, recipient-completed help, musical identity and learning burden. |
-| [x] | G09 — [Dota 2](../../archive/02-research/game-inspiration/dossiers/dota-2.md) | Copy an operation, not an identity; preserve exclusions and scheduled returns. Lore differs from match history. |
-| [x] | G10 — [Path of Exile](../../archive/02-research/game-inspiration/dossiers/path-of-exile.md) | Scholar requests and useful knowledge; discovery differs from repeated unlock chores. Keep sequel rules separate. |
-| [x] | G11 — [Path of Exile 2](../../archive/02-research/game-inspiration/dossiers/path-of-exile-2.md) | Old theme becomes a person's song; reversible versus permanent commitments; pausing a trial is not winning. |
-| [x] | G12 — [Diablo IV](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md) | Miracle authority, martial credibility, quiet horror and oaths; cooperation, subjugation and conditional assistance differ. |
-| [x] | G13 — [Dreams](../../archive/02-research/game-inspiration/dossiers/dreams.md) | Small contributions to a festival; art, edit access, credit and audience are separate outcomes. |
-| [x] | G14 — [Project Spark](../../archive/02-research/game-inspiration/dossiers/project-spark.md) | Inspectable examples and playable music; surviving local work does not preserve a vanished venue. |
-| [x] | G15 — [Worlds Adrift](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md) | Cultural fragments and clothing; knowledge is not just a score; farewell does not undo loss. No SC piloting. |
-| [x] | G16 — [Spore](../../archive/02-research/game-inspiration/dossiers/spore.md) | Prepared musical exchanges; copied form does not import achievements or friendships. Later dialogue correction retained. |
-| [x] | G17 — [No Man's Sky](../../archive/02-research/game-inspiration/dossiers/no-mans-sky.md) | Discovery versus fabrication; vocabulary versus competence; temporary event factions. Blob `f8f14d46467e7468ff71a3ad71d189b472535db0`. |
-| [x] | G18 — [EverQuest Next](../../archive/02-research/game-inspiration/dossiers/everquest-next.md) | Professions contribute history and teaching opportunities. Unshipped proposals; Landmark delivered separately. Blob `19154340e73c22ed951a3bf149cf316404c6ba29`. |
-| [x] | G19 — [Ultima Online](../../archive/02-research/game-inspiration/dossiers/ultima-online.md) | Maker marks, museums and noncombat lives. Ruleset-specific ghosts/loss; ecology is an attributed incentive case, Trammel testimony not a universal verdict. Through UO42/audit. Blob `3e552f95a9734fd8f6627915e5834c12a90411f8`. |
-| [x] | G20 — [Minecraft](../../archive/02-research/game-inspiration/dossiers/minecraft.md) | First shelters, archaeological composition and cosmetic expression. Page signals are not semantic reading; vibration filters are not general microphones. Editions/experiments/extensions distinct. Through MC17/audit. Blob `a17bf8172abc7416330f124b7909433899b2a09c`. |
-| [x] | G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md) | Beliefs shape ordinary meals, clothes, work and ritual; chronology can complicate kinship. A player's animal-rescue saga is not encoded gratitude. Preserve criticism of emotionally thin social logs, single-player/mod boundaries and each expansion's separate systems. Through RW47 and final preservation check. Blob `796387127c2306bca15b8042255621ac8b7ad04b`. |
-| [x] | G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md) | Repeated routes change meaning; returns can advance obligations, household work and selective callbacks. Friendship is not universal obedience or compulsory romance. Story interest does not make unwanted repetition enjoyable. Original/sequel and run/persistent state stay separate. Through S33, definitions and audit. Blob `7bb89ff489ef5425b47087cc5b030d88934f69d3`. |
-| [x] | G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md) | Usefulness, craftsmanship, prestige and history differ. Libraries require writers/materials; demonstrations transmit knowledge. Recorded causes can overturn plausible myths; archive knowledge is not every inhabitant's knowledge. Atmosphere need not grant a bonus. Modes and shipped/planned magic stay distinct. Through D38, definitions and audit. Blob `ffa89128d2bc41e3b4991162968c94ad53931b00`. |
+| [x] | G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md) | Earlier exact-blob checkpoint above. |
+| [x] | G02 — [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md) | Earlier exact-blob checkpoint above. |
+| [x] | G03 — [Animal Crossing: New Horizons](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md) | Earlier exact-blob checkpoint above. |
+| [x] | G04 — [Roblox](../../archive/02-research/game-inspiration/dossiers/roblox.md) | Earlier exact-blob checkpoint above. |
+| [x] | G05 — [Grow a Garden](../../archive/02-research/game-inspiration/dossiers/grow-a-garden.md) | Earlier exact-blob checkpoint above. |
+| [x] | G06 — [Steal a Brainrot](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md) | Earlier exact-blob checkpoint above. |
+| [x] | G07 — [Fortnite](../../archive/02-research/game-inspiration/dossiers/fortnite.md) | Earlier exact-blob checkpoint above. |
+| [x] | G08 — [League of Legends](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md) | Earlier exact-blob checkpoint above. |
+| [x] | G09 — [Dota 2](../../archive/02-research/game-inspiration/dossiers/dota-2.md) | Earlier exact-blob checkpoint above. |
+| [x] | G10 — [Path of Exile](../../archive/02-research/game-inspiration/dossiers/path-of-exile.md) | Earlier exact-blob checkpoint above. |
+| [x] | G11 — [Path of Exile 2](../../archive/02-research/game-inspiration/dossiers/path-of-exile-2.md) | Earlier exact-blob checkpoint above. |
+| [x] | G12 — [Diablo IV](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md) | Earlier exact-blob checkpoint above. |
+| [x] | G13 — [Dreams](../../archive/02-research/game-inspiration/dossiers/dreams.md) | Earlier exact-blob checkpoint above. |
+| [x] | G14 — [Project Spark](../../archive/02-research/game-inspiration/dossiers/project-spark.md) | Earlier exact-blob checkpoint above. |
+| [x] | G15 — [Worlds Adrift](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md) | Earlier exact-blob checkpoint above. |
+| [x] | G16 — [Spore](../../archive/02-research/game-inspiration/dossiers/spore.md) | Earlier exact-blob checkpoint above. |
+| [x] | G17 — [No Man's Sky](../../archive/02-research/game-inspiration/dossiers/no-mans-sky.md) | `f8f14d46467e7468ff71a3ad71d189b472535db0` |
+| [x] | G18 — [EverQuest Next](../../archive/02-research/game-inspiration/dossiers/everquest-next.md) | `19154340e73c22ed951a3bf149cf316404c6ba29` |
+| [x] | G19 — [Ultima Online](../../archive/02-research/game-inspiration/dossiers/ultima-online.md) | `3e552f95a9734fd8f6627915e5834c12a90411f8` |
+| [x] | G20 — [Minecraft](../../archive/02-research/game-inspiration/dossiers/minecraft.md) | `a17bf8172abc7416330f124b7909433899b2a09c` |
+| [x] | G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md) | `796387127c2306bca15b8042255621ac8b7ad04b` |
+| [x] | G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md) | `7bb89ff489ef5425b47087cc5b030d88934f69d3` |
+| [x] | G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md) | `ffa89128d2bc41e3b4991162968c94ad53931b00` |
+| [x] | G24 — [The Sims](../../archive/02-research/game-inspiration/dossiers/the-sims.md) | `52b593a069e6be7a08caab12e9c54a7b13d7fe08` |
+| [x] | G25 — [Wildermyth](../../archive/02-research/game-inspiration/dossiers/wildermyth.md) | `8cd035161b057cebbaf5e7cc148190ddc7b9e798` |
+| [x] | G26 — [Baldur's Gate 3](../../archive/02-research/game-inspiration/dossiers/baldurs-gate-3.md) | `95ea756fc2a5a26307add35e81830432d9afb5af` |
 
-**23 complete dossiers; 0 partial.** G24–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
+## Source-specific incorporation cautions
+
+The immutable G01–G23 checkpoint above retains each earlier subject's distinctions, including historical/current rules, unshipped EverQuest Next proposals, Minecraft's suggestive archaeology, RimWorld's expansion boundaries and social-believability criticism, Hades' selected callbacks and motivation mismatch, and Dwarf Fortress's separate occurrence/allegation/interpretation and practical/prestige/history values.
+
+**G24 — The Sims:** complete through S35, reference definitions and the corrections audit. Ordinary care differs from repeated meter servicing; a chosen room's expression need not maximize efficiency. Hobbies can become classes, broken ceramics can acquire a second artistic life, and heirlooms can carry a person's intended continuity. Daily autonomy, aging and irreversible offscreen changes are separate policies. The original, Sims 3, Sims 4, Legacy, individual packs and a player's mods remain distinct. Preserve the Legacy negative-Steam-sample gap; reading the dossier does not newly obtain that sample. No scientific psychology or real-world legal conclusions are imported.
+
+**G25 — Wildermyth:** complete through W28 and definitions. A recognizable hero can be retold without importing a continuous chronology, every possession or a frozen family tree. Rivalry is not failed friendship; family is not the same combat bonus. A changed body can preserve a consequence without being an automatic upgrade or punishment. A scene needing an absent cast should decline to run. Shay's first-aid choice after her brother's death is a critic's interpretation, not inferred bereavement choosing an ability. Preserve PC/console and base/Omenroad distinctions, the negative-rated Steam access gap, and finished production versus service shutdown.
+
+**G26 — Baldur's Gate 3:** complete through B40/P1/P2 and definitions. Corpse questioning is bounded evidence access, not omniscience; appearance, recognition and embodiment can differ, with the documented disguise edge behavior retained rather than simplified away. A shared quiet moment can matter without a stat reward. Character refusal and platonic limits belong alongside broad player freedom. Musical character identity is deliberately composed/performed, not automatically supplied by fluent text. Acknowledging an unmade choice is a continuity defect. Rest, local time pressure and scene eligibility differ; final major content update does not mean maintenance ended. Preserve the Steam mature-content/access limitation; no unseen reviews are claimed read.
 
 ## Supplementary reading
 
-Complete chapters do not complete separate dossiers or mechanics manuscripts. Earlier exact blobs remain in the immutable checkpoints.
+Complete chapters do not complete separate dossiers or mechanics manuscripts. Earlier exact blobs and longer notes remain in the immutable checkpoints.
 
 | Read | Chapter or study | Boundary / exact blob |
 | --- | --- | --- |
-| [x] | [Hades/Hades II chapter](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md) | Read earlier; G22 dossier and separate study now also complete. |
+| [x] | [Hades/Hades II chapter](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md) | G22 dossier and separate study also complete. |
 | [x] | [Among Us/Lethal Company](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md) | G38 dossier pending. |
 | [x] | [Animal Crossing](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md) | Later dossier corrections retained. |
 | [x] | [Roblox](../../archive/02-research/game-inspiration/games/roblox.md) | Includes G05/G06. |
 | [x] | [Fortnite](../../archive/02-research/game-inspiration/games/fortnite.md) | Complete. |
 | [x] | [League/Dota](../../archive/02-research/game-inspiration/games/league-of-legends-and-dota-2.md) | Complete. |
 | [x] | [PoE/PoE2/Diablo IV](../../archive/02-research/game-inspiration/games/path-of-exile-path-of-exile-2-and-diablo-iv.md) | Complete. |
-| [x] | [Dreams/Project Spark](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md) | Embedded dossier studies/registers also read. |
+| [x] | [Dreams/Project Spark](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md) | Embedded studies/registers also read. |
 | [x] | [Worlds Adrift](../../archive/02-research/game-inspiration/games/worlds-adrift.md) | Stale save-policy reference flagged below. |
-| [x] | [Spore](../../archive/02-research/game-inspiration/games/spore.md) | Embedded dossier studies/registers also read. |
+| [x] | [Spore](../../archive/02-research/game-inspiration/games/spore.md) | Embedded studies/registers also read. |
 | [x] | [No Man's Sky](../../archive/02-research/game-inspiration/games/no-man-s-sky.md) | `c76cfc0baf0b4170cf7ba7b9d9aabd507341a1a5` |
 | [x] | [EverQuest Next](../../archive/02-research/game-inspiration/games/everquest-next.md) | `1f75b0c5680152cba85f72415ae5faff999feceb` |
-| [x] | [Ultima Online ecology](../../archive/02-research/game-inspiration/games/ultima-online-s-ecology.md) | `99cf185d5acddca5f7b401150d0c04907e778fc0`; not a universal simulation failure. |
-| [x] | [Minecraft chapter](../../archive/02-research/game-inspiration/games/minecraft.md) | `38cd64c84970590c854c477ab65eda494d4e9051`; complete field guide. |
-| [x] | [Minecraft signals/authorship](../../archive/02-research/game-inspiration/mechanics/minecraft-signals-authorship-and-meaningful-objects.md) | `0818d77943a894d3dd69c01a95a3ae36fbfc2960`; through M9. Suggestive history is not simulated provenance; historical timing feedback is not a current regression. |
-| [x] | [RimWorld chapter](../../archive/02-research/game-inspiration/games/rimworld.md) | `9e7e892fc7917082547fd837258d099b84fc877e`; complete field guide. |
-| [x] | [RimWorld work, personality and story](../../archive/02-research/game-inspiration/mechanics/rimworld-work-dependencies-personality-and-story.md) | `09cc889de1f6379753729227adc568ea122e1a14`; through R7. Refusal differs from low ability; limits on stock rules, player testimony and emotional interpretation retained. |
-| [x] | [Hades builds, callbacks and returns](../../archive/02-research/game-inspiration/mechanics/hades-builds-character-callbacks-and-return-rhythm.md) | `45d2f96d767e1c317481be676a0061a579296b73`; through H8. Scene eligibility/priority differs from memory storage; challenge-run advice is not universal balance. |
-| [x] | [Dwarf Fortress chapter](../../archive/02-research/game-inspiration/games/dwarf-fortress.md) | `2968a8c50c2ed1fda4314bd44b63d95b9f818c9d`; complete field guide. |
-| [x] | [Dwarf Fortress artifacts and remembered life](../../archive/02-research/game-inspiration/mechanics/dwarf-fortress-artifacts-work-and-remembered-life.md) | `fa72682020a1c8bcb202821e34c463f9a4146b97`; through D7. Artifact is not its maker's whole story; expert interpretation is not a universal player obligation. |
+| [x] | [Ultima Online ecology](../../archive/02-research/game-inspiration/games/ultima-online-s-ecology.md) | `99cf185d5acddca5f7b401150d0c04907e778fc0` |
+| [x] | [Minecraft chapter](../../archive/02-research/game-inspiration/games/minecraft.md) | `38cd64c84970590c854c477ab65eda494d4e9051` |
+| [x] | [Minecraft signals/authorship](../../archive/02-research/game-inspiration/mechanics/minecraft-signals-authorship-and-meaningful-objects.md) | `0818d77943a894d3dd69c01a95a3ae36fbfc2960`; through M9. |
+| [x] | [RimWorld chapter](../../archive/02-research/game-inspiration/games/rimworld.md) | `9e7e892fc7917082547fd837258d099b84fc877e` |
+| [x] | [RimWorld work, personality and story](../../archive/02-research/game-inspiration/mechanics/rimworld-work-dependencies-personality-and-story.md) | `09cc889de1f6379753729227adc568ea122e1a14`; through R7. |
+| [x] | [Hades builds, callbacks and returns](../../archive/02-research/game-inspiration/mechanics/hades-builds-character-callbacks-and-return-rhythm.md) | `45d2f96d767e1c317481be676a0061a579296b73`; through H8. |
+| [x] | [Dwarf Fortress chapter](../../archive/02-research/game-inspiration/games/dwarf-fortress.md) | `2968a8c50c2ed1fda4314bd44b63d95b9f818c9d` |
+| [x] | [Dwarf Fortress artifacts and remembered life](../../archive/02-research/game-inspiration/mechanics/dwarf-fortress-artifacts-work-and-remembered-life.md) | `fa72682020a1c8bcb202821e34c463f9a4146b97`; through D7. |
+| [x] | [The Sims chapter](../../archive/02-research/game-inspiration/games/the-sims.md) | `a710ec31f7b25e460b95aa4f384a27c83007ecb2` |
+| [x] | [The Sims emotional tools, shared homes and autonomy](../../archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md) | `7981c7526dea884cf194003c9df7b107f5d151dd`; through S7. |
+| [x] | [Wildermyth chapter](../../archive/02-research/game-inspiration/games/wildermyth.md) | `94967c5345af7ddbe048ec0aa4c0a932865be5e5` |
+| [x] | [Wildermyth bodies, relationships and authored myth](../../archive/02-research/game-inspiration/mechanics/wildermyth-bodies-relationships-and-authored-myth.md) | `7a050f5a29bb48df9cfb08cd4ea4cfc3483c9448`; through W9. |
+| [x] | [Baldur's Gate 3 chapter](../../archive/02-research/game-inspiration/games/baldur-s-gate-3.md) | `f6858714bcafa169d7b43200dcdeaa259705c948` |
+| [x] | [Baldur's Gate 3 utility magic, identities and choice](../../archive/02-research/game-inspiration/mechanics/baldurs-gate-3-utility-magic-identities-and-consequential-choice.md) | `a5bcfebcdf96549783a35c479e53074e32b93fe6`; through B8. |
 | [ ] | Remaining chapters, studies, essays, references and supporting research | Pending; no blanket supplementary completion. |
 
 ## Owned catalogues and shared guidance
@@ -121,4 +138,4 @@ Earlier catalogues record 39 worldbuilding manuscripts at `b387e7caeda5cec301045
 
 Worlds Adrift's dossier/chapter says incompatible development saves are discarded. Current root instructions instead require safe in-place migrations preserving identity/unrelated state and never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Do not import that stale research assertion. Its shared owner should reconcile it; no runtime contract is changed here.
 
-Next unread game: **G24 — The Sims**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
+Next unread game: **G27 — Factorio**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
