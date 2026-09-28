@@ -1218,7 +1218,13 @@ export class MacrofoldBackend implements AiClient {
       )
         runs.add(output['run_id']);
     }
-    const storedReceipt = (call.output as { receipt?: AiReceipt } | undefined)?.receipt;
+    // Human-message diagnostics contain the reply, while the durable accounting
+    // owner retains its receipt. Never infer zero usage or redispatch to recover it.
+    const storedReceipt =
+      (call.output as { receipt?: AiReceipt } | undefined)?.receipt ??
+      (call.kind === 'Full harness · world agent'
+        ? await this.service.store.attemptReceipt(this.key(`message:${call.id}`))
+        : undefined);
     if (storedReceipt?.providerRequestId) runs.add(storedReceipt.providerRequestId);
     const readPages = async (path: string) => {
       const data: unknown[] = [];
@@ -1260,8 +1266,8 @@ export class MacrofoldBackend implements AiClient {
       results.push({ runId: run, events: value(events), billing: value(billing) });
     }
     const output = call.output as { receipt?: AiReceipt } | undefined;
-    if (output?.receipt?.providerRequestId && output.receipt.estimatedCostUsd === undefined) {
-      const receipt = { ...output.receipt };
+    if (storedReceipt?.providerRequestId && storedReceipt.estimatedCostUsd === undefined) {
+      const receipt = { ...storedReceipt };
       const signal = AbortSignal.timeout(10_000);
       try {
         const status = object(

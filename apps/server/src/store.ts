@@ -402,6 +402,7 @@ export interface GameRepository extends WorldStore {
     budget?: AttemptBudget,
   ): Promise<boolean>;
   attemptBudget(budgetId: string): Promise<AttemptBudgetSnapshot>;
+  attemptReceipt(id: string): Promise<AiReceipt | undefined>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
   usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
@@ -1252,6 +1253,12 @@ export class SqlGameRepository implements GameRepository {
     });
     if (accepted) this.usageCache = undefined;
     return accepted;
+  }
+
+  async attemptReceipt(id: string): Promise<AiReceipt | undefined> {
+    await this.ready;
+    const row = await this.db.prepare('SELECT receipt FROM attempts WHERE id = ?').get(id);
+    return row?.['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
   }
 
   async settle(id: string, receipt: AiReceipt): Promise<void> {

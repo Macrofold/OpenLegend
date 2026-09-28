@@ -20,7 +20,7 @@ The server routes level 2 to mini/low, levels 3/4 to complex/low or high, and cl
 
 `jev-questions.ts` separates relevance, immediate complexity, lasting significance and invention admissibility/mechanism. One attention request contains as many candidate questions as its serialized size budget allows; routing asks route and reflection together; invention asks admissibility and route together. Useful contradictory evidence must survive relevance selection. A provider confidence field is not the same as a selected answer's probability. Invention remains conservatively gated; routing never grants domain authority.
 
-Reported BYOK provider costs are distinct from zero platform model charges. Complete harness usage rows supply token/cost receipts when available; missing or ambiguous billing retains the admitted reserve and can be reconciled later. The grouped god debugger links actual provider input/output to trigger, recall, route and committed outcome. Live synthetic examples and limitations remain in [TODO](maintainers/TODO.md).
+Reported BYOK provider costs are distinct from zero platform model charges. Complete harness usage rows supply token/cost receipts when available; missing or ambiguous billing retains the admitted reserve and can be reconciled later. Inspector reconciliation of current-timeline World Agent messages reads their exact receipt from the accounting repository when reply diagnostics omit it; complete usage and a confirmed terminal Run are still required. The grouped god debugger links actual provider input/output to trigger, recall, route and committed outcome. Live synthetic examples and limitations remain in [TODO](maintainers/TODO.md).
 
 ## Shared Worker setup and cutover
 
