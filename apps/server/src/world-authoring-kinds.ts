@@ -92,7 +92,10 @@ export function draftBase(
     if (typeof resource === 'string') materialIds.add(resource);
     baseRecipeId = inherited?.recipe?.recipeId ?? baseRecipeId;
     const recipe = baseRecipeId ? world.recipes[baseRecipeId] : undefined;
-    if (baseRecipeId && !recipe) throw new AuthoringRequestError('The base recipe is unavailable.');
+    if (baseRecipeId && !recipe)
+      throw new AuthoringRequestError(
+        'The base recipe is unavailable; no new draft or revision was saved. For a new recipe, omit baseRecipeId. To derive from an existing recipe, inspect and supply its exact recipe ID; do not guess one.',
+      );
     return {
       // Removed inputs no longer invalidate this revision; retained inputs keep their pins.
       // docs/invention-validation.md

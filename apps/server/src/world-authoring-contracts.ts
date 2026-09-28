@@ -33,14 +33,18 @@ export const WORLD_AUTHORING_TOOLS = {
   },
   ol_draft_create: {
     description:
-      'Save a supplied candidate without installing it. Native recipes use the controlled inventor; other supported kinds use owner authority. Inspect the current kind schema and base first.',
+      'Save a supplied candidate without installing it. Native recipes use the controlled inventor; other supported kinds use owner authority. Inspect the current kind schema first. For a new recipe, omit baseRecipeId; supply it only to derive from an existing recipe you inspected.',
     schema: z
       .object({
         ...mutation,
         kind: authoringKind,
         intent: z.string().min(1).max(4000),
         payloadJson: payload,
-        baseRecipeId: id.optional(),
+        baseRecipeId: id
+          .describe(
+            'Optional existing recipe ID for a derived recipe. Omit for a new invention. Never use a mechanism, material, world or invented ID here.',
+          )
+          .optional(),
       })
       .strict(),
   },

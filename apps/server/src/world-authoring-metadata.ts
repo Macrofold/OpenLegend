@@ -28,7 +28,7 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
         schema: declarationSchema,
         contract: DECLARATION_CONTRACT,
         notes:
-          'Known material inputs only for the session inventor. New derived recipes leave existing instances unchanged. No crafting or spawning on installation.',
+          'Known material inputs only for the session inventor. To create a new recipe, omit baseRecipeId from ol_draft_create. Supply it only to derive from an inspected existing recipe. New derived recipes leave existing instances unchanged. No crafting or spawning on installation.',
       };
     case 'action':
       return {

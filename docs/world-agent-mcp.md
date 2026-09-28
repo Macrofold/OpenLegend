@@ -169,6 +169,8 @@ The current `/mcp` request envelope is 128 KiB with a ten-second body deadline a
 
 The seven current authoring kinds include the [reviewed custom attribute binding](invention-composition.md#reviewed-custom-attribute-binding). Discover their actual payload contracts through `ol_schema` and `tools/list`. Large general-law migrations, arbitrary operators, advanced art jobs and full impact closure are not registered merely because target examples describe them.
 
+For a new recipe, omit `baseRecipeId` from `ol_draft_create`. The optional field selects an inspected existing recipe when deriving a new recipe from it; a mechanism, material or world ID is not a recipe ID. An unavailable base is rejected without saving a draft, with guidance to omit the field for new inventions. Invalid IDs are never silently discarded.
+
 [Write continuation verification](verification/workshop-continuation.md) records actual HTTP/MCP/native and small PostgreSQL execution. [INV-21 focused delivery](maintainers/world-agent-writes.md) retains live Macrofold forwarding/usefulness, multi-user grants, broader body changes, strict image-inclusive external budgeting and sustained scale qualification. The endpoint is write-capable now; those larger acceptance gates remain open.
 
 ## Local transport parity
