@@ -8,7 +8,7 @@ Starting branch revision: `e56cd2bd7955460f0b25a63a45603fe48409dadc`.
 
 The preceding continuation reports **114 of 148 full game dossiers read**, **World of Warcraft partially read**, all **38 preserved game chapters**, all **39 worldbuilding documents**, and **13 of 29 granular mechanics studies** read. These are carried-forward reading results, not a claim that this continuation has freshly repeated them. The older uploaded handoff predates that continuation and reports a smaller completed dossier count. The current roster identifies World of Warcraft as G97; the carried-forward full-game range is G01–G96 plus the eighteen G131–G148 additions.
 
-The committed inventories at the starting checkpoint contain **224 AP entries, 240 TECH entries and 240 MAG entries**, plus ten retained pattern cards in each catalogue. The preceding continuation reported 196 additional saved drafts, but those drafts are not present in this continuation's mounted files; they are not counted as integrated or committed. The existing 704 entries are preserved. New synthesis will be recorded and integrated explicitly rather than represented as a recovered verbatim draft.
+The committed inventories at the starting checkpoint contain **224 AP entries, 240 TECH entries and 240 MAG entries**, plus ten retained pattern cards in each catalogue. The preceding continuation reported 196 additional saved drafts, but those drafts were not recovered in this continuation; they are not counted as integrated or committed. The existing 704 entries are preserved. New synthesis will be recorded and integrated explicitly rather than represented as a recovered verbatim draft.
 
 ## Source revisions
 
@@ -22,7 +22,8 @@ The current main roster still lists 148 subjects. A research title, index entry 
 ## Remaining work
 
 - [x] Finish World of Warcraft, including its source and correction sections.
-- [ ] Read and process G98–G130, the 33 subsequent outstanding full game dossiers.
+- [x] Read and process G98–G100, including expansion, edition and correction boundaries.
+- [ ] Read and process G101–G130, the 30 remaining full game dossiers.
 - [ ] Read the remaining 16 granular mechanics studies.
 - [ ] Finish comparative/theme essays, interaction-pattern material, supplements and previously unfinished ledger ranges.
 - [ ] Integrate useful original synthesis in all three catalogues, with source links and seed-world boundaries.
@@ -32,6 +33,9 @@ Individual completed reads are checked below with their source revision and proc
 
 ## Completed in this continuation
 
-Full game count: **115/148**, including the carried-forward 114.
+Full game count: **118/148**, including the carried-forward 114. The following complete reads include source registers and correction/coverage tails at the main-library revision above.
 
-- [x] **G97 — World of Warcraft.** Full dossier, all source annotations and coverage/correction tail read at main-library revision above; blob `4cb7e0d8c318fcf0bfdd4b085e7b79e7b1aa4312`. Processing: distinguish shared collection knowledge from personal qualification; reserve limited expert attention for a quality threshold; treat a reusable layout as a plan with missing-material disclosure, not duplicated possessions. Retain solo/group and optional-goal tensions rather than prescribing compulsory weekly work. Catalogue integration pending. [Source](../../archive/02-research/game-inspiration/dossiers/world-of-warcraft.md)
+- [x] **G97 — World of Warcraft.** Blob `4cb7e0d8c318fcf0bfdd4b085e7b79e7b1aa4312`. Processing: distinguish shared collection knowledge from personal qualification; reserve limited expert attention for a quality threshold; treat a reusable layout as a plan with missing-material disclosure, not duplicated possessions. Retain solo/group and optional-goal tensions rather than prescribing compulsory weekly work. Catalogue integration pending. [Source](../../archive/02-research/game-inspiration/dossiers/world-of-warcraft.md)
+- [x] **G98 — Assassin's Creed IV: Black Flag.** Blob `69ee4d526a31f27972e19a9d20c939b8a7894c91`. Processing: diversions can also remove the user's cover; capture can offer mutually exclusive immediate repair, reduced pursuit or future assets; learned songs can change ordinary return journeys. Quiet acquisition can support the same infrastructure goal as combat. Keep original, Freedom Cry and Resynced rules separate; do not recommend playable piloting for SC. Catalogue integration pending. [Source](../../archive/02-research/game-inspiration/dossiers/assassins-creed-iv-black-flag.md)
+- [x] **G99 — Assassin's Creed III.** Blob `a900629b9a49001a030331c3d7b056c3a90cb3aa`. Processing: observational apprenticeship, quality-preserving harvesting, maintained escort impersonation and recognizing equipment that prevents a learned technique. Artisan development connects remembered people to production access; fast travel does not imply advancing every background clock. Alternate supernatural scenarios remain separate from ordinary historical-world capabilities. Catalogue integration pending. [Source](../../archive/02-research/game-inspiration/dossiers/assassins-creed-iii.md)
+- [x] **G100 — Assassin's Creed Valhalla.** Blob `b99c0aa68b84b5e908aaa96ae1a95f5d39072701`. Processing: distinguish learned, equipped and temporarily borrowed powers; an environmental capability source can also be a clue. Resource denial before payment, containing an indestructible hazard and relinquishing an implement as an authored refusal suggest original bounded effects. Preserve the difference between cosmetic appearance and operative protection, and between crew recovery and permanent death. Catalogue integration pending. [Source](../../archive/02-research/game-inspiration/dossiers/assassins-creed-valhalla.md)
