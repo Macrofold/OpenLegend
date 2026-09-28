@@ -22,7 +22,7 @@ The complete game root and dossier tree were inspected, recovering truncation. T
 
 ## Game-by-game reading
 
-**36 complete dossiers; 0 partial. Catalogue incorporation is Pending for every row.** There are no new catalogue entries attributable to this continuation yet. G37–G148, both D&D dossiers and the Dragon Age series supplement remain unread in this continuation. Earlier catalogue reading remains inherited evidence, not erased or counted twice.
+**40 complete dossiers; 0 partial. Catalogue incorporation is Pending for every row.** There are no new catalogue entries attributable to this continuation yet. G41–G148, both D&D dossiers and the Dragon Age series supplement remain unread in this continuation. Earlier catalogue reading remains inherited evidence, not erased or counted twice.
 
 | Read | Game and complete dossier |
 | --- | --- |
@@ -62,6 +62,10 @@ The complete game root and dossier tree were inspected, recovering truncation. T
 | [x] | G34 — [Outer Wilds](../../archive/02-research/game-inspiration/dossiers/outer-wilds.md) |
 | [x] | G35 — [Garry's Mod](../../archive/02-research/game-inspiration/dossiers/garrys-mod.md) |
 | [x] | G36 — [Kenshi](../../archive/02-research/game-inspiration/dossiers/kenshi.md) |
+| [x] | G37 — [Project Zomboid](../../archive/02-research/game-inspiration/dossiers/project-zomboid.md) |
+| [x] | G38 — [Lethal Company](../../archive/02-research/game-inspiration/dossiers/lethal-company.md) |
+| [x] | G39 — [Scribblenauts](../../archive/02-research/game-inspiration/dossiers/scribblenauts.md) |
+| [x] | G40 — [AI Dungeon](../../archive/02-research/game-inspiration/dossiers/ai-dungeon.md) |
 
 ## Source-specific incorporation cautions
 
@@ -75,9 +79,17 @@ Earlier cautions remain in the immutable checkpoints above, including version bo
 
 **G36 — Kenshi:** dossier blob `9cb529e1f2d0574398a9dc42aa1e52063af59233`, complete through A11 and definitions. Recovery can produce an unresolved next problem and a shared history without requiring one moral interpretation. Body/equipment mismatch is not generic healing. Research books have distinct source categories; visiting arbitrary ruins does not guarantee the required knowledge. Conditional town changes are not evidence of an offscreen simulated war. Base-focused boredom does not prove exploration lacks lore; delegation failure is not meaningful harshness. Preserve historical official-page corrections, mod boundaries, the absent negative-rated Steam sample and unreleased-prequel separation.
 
+**G37 — Project Zomboid:** dossier `509570b0eeba23688d0f8ea684fdc759003784c3`, complete through all source definitions. Restoring a particular red van can matter despite easier substitutes. Practical knowledge, tools and skill are different prerequisites; secure-base purpose is not solved merely by adding more manufacturing. Preserve radio/television and interrupted ordinary-life traces. Deafness changes a fictional survivor's evidence, not the real player's accessibility entitlement. Historical magazine-search accounts, mixed wiki versions, dated Stable/Unstable corrections and future human NPCs remain distinct. The shared Valheim study was already fully read, not counted twice.
+
+**G38 — Lethal Company:** dossier `3e2d8b2759dd5adc1ebc27816d2c209d8bc9af97`, complete through G35 and the audit. Saving the person while losing cargo is partial fulfillment. Prior-crew logs are fallible testimony; complementary observation and interrupted speech create useful uncertainty. V80's utility slot qualifies the old tool/cargo tradeoff because the constraint discouraged tool use. Individual death, crew-wipe scrap loss and quota reset differ. Body recovery reduces rather than universally eliminates fines. Short-run funny catastrophe does not justify equivalent persistent-world loss; private-group enjoyment does not establish public access or hearing accessibility. V85 and the ending remain future in this research snapshot.
+
+**G39 — Scribblenauts:** dossier `9a25d2ab6f89672011c3e9559402fbbee2579856`, complete through U8. Word recognition, supported behavior, recipient willingness and objective credit differ. An object editor does not replace a stage/playground, and a reusable definition is not a preserved scene instance. Conflicting black-hole cleanup reports do not establish that black holes never work; placement/version were uncontrolled. The later jetpack/daredevil cat report is not proof an earlier critic tested his hypothetical. Preserve PC/Wii U/3DS/regional/Unlimited/Unmasked boundaries, local versus retired online routes, and the missing negative-rated Steam sample.
+
+**G40 — AI Dungeon:** dossier `ef42f062bc85bf827d25f77bd32da914652c6922`, complete through both independent studies and both source registers; all truncated ranges recovered. Acting, co-authoring, correcting and instantiating a reusable premise are different roles. Stored lore, retrieved context and followed constraints differ; editing an old death need not rebuild its summary. A surprising personal revelation can be welcome without making identity drift welcome. Preserve scenario-script state versus universal rules, Optimized Context compatibility, historical/current model and retired Traveler/Voyage boundaries. The studies' differing Steam and other source access outcomes remain independent evidence, not contradictions to erase. No model test, privacy audit, gameplay or video viewing is claimed.
+
 ## Supplementary reading
 
-The [G01–G32 supplementary checklist](https://github.com/Macrofold/OpenLegend/blob/fad412321f6a0abe3c30a719cb56168c8935d934/docs/repertoires/group-6-reading-progress.md#supplementary-reading) preserves **36 complete chapters/studies**, their exact blobs and boundaries. This includes the entire Valheim/Project Zomboid study, not G37's unread dossier or chapter, and the Among Us/Lethal Company chapter, not G38's unread dossier. Complete supplements do not automatically complete their linked manuscripts.
+The [G01–G32 supplementary checklist](https://github.com/Macrofold/OpenLegend/blob/fad412321f6a0abe3c30a719cb56168c8935d934/docs/repertoires/group-6-reading-progress.md#supplementary-reading) preserves **36 complete chapters/studies**, their exact blobs and boundaries. Its Valheim/Project Zomboid study and Among Us/Lethal Company chapter were already complete; G37 and G38's separate dossiers are now also read. Complete supplements do not automatically complete their linked manuscripts.
 
 | Read | Additional chapter or study | Exact blob |
 | --- | --- | --- |
@@ -89,6 +101,11 @@ The [G01–G32 supplementary checklist](https://github.com/Macrofold/OpenLegend/
 | [x] | [Garry's Mod tools, constraints and player-made games](../../archive/02-research/game-inspiration/mechanics/garrys-mod-tools-constraints-and-player-made-games.md) | `44526c142f5df76dc393fa74de863f135053e76e`; through G10. |
 | [x] | [Kenshi chapter](../../archive/02-research/game-inspiration/games/kenshi.md) | `7176063bc760fdeb4ea16664d6e6eeb72e893f29` |
 | [x] | [Kenshi injury, rescue and delegation](../../archive/02-research/game-inspiration/mechanics/kenshi-injury-rescue-and-the-cost-of-delegation.md) | `2379e14b3a73276f1becd44596d2b7b71bde195d`; through K4. |
+| [x] | [Project Zomboid chapter](../../archive/02-research/game-inspiration/games/project-zomboid.md) | `e2f6439a765d3830c7adbb9b7dd173b637e8b242` |
+| [x] | [Lethal Company tools and partial information](../../archive/02-research/game-inspiration/mechanics/lethal-company-tools-partial-information-and-cooperation.md) | `1015125f1c2454fd9cd5b8a3de963dae8f3f0699`; through L8. |
+| [x] | [Scribblenauts chapter](../../archive/02-research/game-inspiration/games/scribblenauts.md) | `b4d63cee3ef16d19ac252c93c169cc81fb859848` |
+| [x] | [Scribblenauts/AI Dungeon language and consequence](../../archive/02-research/game-inspiration/mechanics/scribblenauts-ai-dungeon-language-intent-and-consequence.md) | `3122ba0b94223c5d4623e23376094fe021bc6d00`; both halves through S5/A3. |
+| [x] | [AI Dungeon chapter](../../archive/02-research/game-inspiration/games/ai-dungeon.md) | `3face9fed5ba868166e9549ba22652f66f6d0329` |
 | [ ] | Remaining chapters, studies, essays, references and supporting research | Pending; no blanket supplementary completion. |
 
 ## Owned catalogues and shared guidance
@@ -116,4 +133,4 @@ Earlier catalogues record 39 worldbuilding manuscripts at `b387e7caeda5cec301045
 
 Worlds Adrift's dossier/chapter says incompatible development saves are discarded. Current root instructions instead require safe in-place migrations preserving identity and unrelated state, never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Do not import the stale assertion. Its shared owner should reconcile it; no runtime contract changes here.
 
-Next unread game: **G37 — Project Zomboid**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
+Next unread game: **G41 — Palworld**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
