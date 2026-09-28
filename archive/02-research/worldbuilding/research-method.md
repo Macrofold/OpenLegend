@@ -1,87 +1,113 @@
 # Worldbuilding research: scope, method, and evidence standards
 
-Research initiated: 2026-09-26. This is an independent comparative study of fictional worlds, their creators, their inhabitants, and the experiences they offer audiences. It is not a product proposal, game-design document, implementation specification, or recommendation for any particular project.
+Initiated 2026-09-26; reconciled for the whole-world reassessment on 2026-09-27. This is an independent comparative study of fictional worlds, their inhabitants, creators, presentation, and reception. Possible transferable lessons are interpretations, not implementation specifications, accepted engine rules, or a catalogue of game ideas.
 
-Navigation: [library index and roster](README.md), [source audit and access updates](source-audit.md), and [completion/verification ledger](research-progress.md). The source audit records later retrieval successes and continuing limitations; an earlier dossier's access note describes its initial research pass, not a claim that a source can never be accessed.
+Navigation: [index and complete roster](README.md), [source audit](source-audit.md), [current reassessment ledger](reassessment-progress.md), and [historical progress](research-progress.md). Each dossier owns its corpus and precise reading record. Later access success supersedes an earlier failure only for the specific material actually obtained.
 
 ## The research question
 
-What makes a fictional world feel inhabited, historically deep, internally consequential, emotionally accessible, and entertaining rather than like a collection of invented facts? How do its material circumstances, institutions, histories, languages, beliefs, and ordinary experiences produce distinctive people—and how does the work let an audience discover those connections?
+What makes a world convincing and compelling as a place where people live, enjoy, want, create, compete, love, fear, govern, harm, protect, and change? How do material conditions, capacities, institutions, histories, and relationships interact? How does the work make those interactions available to an audience, and where do readers find them weak, repetitive, troubling, or unpersuasive?
 
-The study distinguishes three objects that are often conflated:
+Three objects must remain distinct:
 
-1. **The represented world:** what the work establishes about places, people, institutions, history, and extraordinary powers.
-2. **The work's presentation of that world:** viewpoint, genre, dramatic structure, prose, performance, visual design, sound, pacing, and selective disclosure.
-3. **The world's production and reception:** creators' circumstances and working methods, collaborators, editorial constraints, adaptation, serialization, communities, and the limits of any claim about why audiences respond.
+1. **The represented world:** what identified works establish about people, places, events, institutions, history, and capacities.
+2. **The presentation:** viewpoint, prose, panels, performance, images, sound, interaction, pacing, genre, and selective disclosure.
+3. **Production and reception:** collaborators, working conditions, revisions, adaptation, publication, criticism, and actual audience evidence.
 
-A fictional setting need not be complete, scientifically plausible, morally admirable, or equally detailed everywhere to feel convincing. The study asks where its credibility comes from, where it deliberately leaves gaps, and where contradictions weaken or productively complicate it.
+A world need not be morally admirable, physically possible, fully explained, or equally detailed everywhere. The study identifies where credibility and pleasure arise, where ambiguity is intentional, where a claim remains unsupported, and where an omission weakens what the story asks us to believe.
 
-## Selection and boundaries
+## Selection, versions, and boundaries
 
-The required core consists of Middle-earth, the Wizarding World, Star Wars, Star Trek, Marvel, DC, The Witcher, and Pokémon. Additional dossiers compare influential fantasy, science fiction, animation, games, literary settings, and realist television. Selection is purposive, not a ranking by sales and not a claim to cover every important world.
+The original eight anchors are Middle-earth, the Wizarding World, Star Wars, Star Trek, Marvel, DC, The Witcher, and Pokémon. Twenty further dossiers compare fantasy, science fiction, animation, games, literary worlds, and realist television. The subsequently incorporated D&D dossier brings the roster to **29**, while explicitly retaining unequal coverage among its selected settings. This is purposive selection, not a popularity ranking or a census of fiction.
 
-The comparison includes different scales and authorship models: one town, a professional institution, a national society, a continent, an archipelago, a planet, a galaxy, a multiverse; a single author's changing conception, a creative partnership, a writers' room, and a multi-generation corporate franchise. An Austen social world or television Baltimore is not a wholly invented geography, but it is an authored selection of social relations and possible lives, making it an important comparison rather than an exception to be excused.
+The comparison spans one workplace or town through continents, galaxies, and multiverses; single authors, partnerships, writers' rooms, and shared franchises. Austen's social worlds and television Baltimore are authored selections of possible lives, not literal invented planets or documentary accounts of all real inhabitants.
 
-No attempt is made to turn settings into a uniform fictional encyclopedia. A blank or lightly specified category is meaningful evidence. Do not invent a religion for a secular story, a diplomatic service for a village tale, or a complete language from a handful of words merely to fill a heading.
+State the version whenever it changes a claim. Comics and screen universes differ; Star Wars canon and Legends differ; Witcher novels and game choices differ; Pokémon games, remakes, and anime differ. An edition is not necessarily a chronological advance. A published adventure's possible result is not an observed campaign, and a creator's proposed setting elaboration is not automatically established canon.
 
-## Required dossier coverage
+Do not turn unspecified dimensions into invented lore. Lack of an elaborate clerical hierarchy, explicit sexual scene, agricultural census, or complete language can be a meaningful limit. It is not evidence that the subject was deliberately forbidden, nor permission to reconstruct it from assumptions.
 
-Each dossier must explain the distinctive world in its own terms while covering the following dimensions, combining headings where appropriate:
+## Coverage questions, not identical quotas
 
-- **Scope and continuity:** primary works and period considered; book/screen/game distinctions; alternative continuities; spoiler warning; explicit exclusions.
-- **Creator and production history:** credited creators and consequential collaborators; documented influences and historical circumstances; how the world accumulated, changed, or was revised. Distinguish a creator's statement from a critic's inference and from an unsupported biographical guess.
-- **Audience promise and entry:** why someone cares before mastering the lore; familiar frames, immediate desires, rituals, humor, spectacle, relationships, mystery, and repeated pleasures.
-- **Time and memory:** founding stories, historical layers, decline or development, competing memories, archives, propaganda, ruins, family history, and the selective survival of knowledge.
-- **Place and material life:** geography, ecology, transport, food, work, exchange, household labor, class, education, leisure, medicine, law, maintenance, and uneven regional development where the work supplies them.
-- **Society and power:** nations, cities, planets, polities, peoples/species, diaspora, class/caste, kinship, corporations, guilds, militaries, civic institutions, colonial relations, internal divisions, diplomacy, and incentives.
-- **Religion and cosmology:** gods or their absence, ritual, belief, institutional authority, lived ethics, heresy, death, and differences between metaphysical truth and what inhabitants think is true.
-- **Language and communication:** invented languages versus naming aesthetics, registers, translation, accent, literacy, occupational vocabulary, censorship, storytelling, and the relationship between speech and belonging.
-- **Magic, technology, or other extraordinary conditions:** sources, costs, limits, access, training, monopoly, everyday consequences, historical changes, and places where spectacle outruns the rules. Realist settings examine the technologies and institutions actually organizing life rather than forcing a magic-system analogy.
-- **People formed by the world:** at least three contrasting named character studies where suitable, connecting experiences to interpretations, habits, relationships, values, and choices. Include competence, pleasure, privilege, affection, embarrassment, and ordinary routines—not only trauma. Do not diagnose fictional characters or imply that the same experience determines the same personality.
-- **Systems working together:** at least one worked sequence showing how several world elements jointly produce a situation and a consequential human choice. Distinguish an actual scene/arc from an explicitly hypothetical illustration.
-- **Selective depth and productive omissions:** which elements are developed intensely, what is suggested, what is genuinely underspecified, and why this balance works or fails.
-- **Tensions and criticism:** continuity problems, stereotyped or flattened cultures, power escalation, implausible institutions, moral blind spots, adaptation tradeoffs, and real limits to the dossier's interpretation. Avoid treating personal criticism as measured audience consensus.
-- **Evidence and further reading:** annotated sources, useful primary-work anchors, what was retrieved in this research session, and evidence gaps.
+Each dossier should account for the following where the source develops them, using its own emphasis and existing structure:
+
+- **Ordinary life and things worth wanting:** homes, food, work, friendship, family, courtship, sex, music, leisure, beauty, humor, celebration, belonging, and vocation. An activity can be valuable without a later threat justifying it.
+- **Agency and aspiration:** mastery, discovery, adventure, wealth, glory, status, freedom, power, competition, creation, and transformation. Success can be desirable beyond avoiding harm.
+- **Particular people and relationships:** contrasting named lives, experiences, habits, motives, and choices. Affection, trust, consent, respect, obedience, and ideological agreement are different relations. Supporting people need not exist only to forgive or assist a protagonist.
+- **Conflict and harmful conduct:** misunderstandings, competing interests, structural pressures, and deliberate wrongdoing. Where relevant, specify the violence, coercion, exploitation, revenge, torture, or sexual violence rather than obscuring it with a generic label.
+- **Institutions and power:** government, law, religion, class, wealth, labor, property, commerce, military organization, bureaucracy, education, patronage, resistance, and corruption. Examine what institutions successfully provide as well as whom they exclude or harm.
+- **Bodies and material conditions:** ecology, resources, climate, health, reproduction, aging, mortality, technology, transport, production, survival, comfort, and abundance. Avoid assuming scarcity is the only serious material condition.
+- **Extraordinary possibilities:** magic, gods, monsters, unusual species, alien intelligence, transformations, and altered physical laws. Include beauty, ordinary uses, pleasure, temptation, limits, and destructive capacities without assigning all beings one moral role.
+- **Change and consequence:** victory, defeat, recovery, liberation, domination, succession, reform, collapse, reunion, reconciliation, separation, and enduring loss. Identify whose life changes and what actually lasts.
+
+Creator history, language and communication, deep time, access, medium, and criticism remain required comparative dimensions where evidence permits. The list is a guide to missing material, not a demand for the same headings or amounts of material in every dossier.
+
+Adult subjects are not excluded because they are uncomfortable. Sex, drink, drugs, nightlife, cruelty, sexual violence, horror, demonic powers, and apocalyptic threats belong where the selected sources make them consequential. Their presence does not make them the organizing theme of every world. Nor must sex, pleasure, humor, or celebration be treated as corruption or a prelude to punishment. Proportion comes from the source, not a predetermined balance of kindness and darkness.
+
+## Developed cases and their evidentiary status
+
+A useful case identifies the people and their purposes; prior circumstances and knowledge; available means; relevant material, institutional, or supernatural conditions; choices and interactions; the outcome; and its continuing effects. Interpretation should then explain what may make the encounter interesting, moving, funny, pleasurable, frightening, or memorable.
+
+Use several contrasting cases where the corpus supports them. They can include a wanted ordinary activity, an achieved competence, an institutional transaction, a conflict, or an irreversible change. Do not reduce a world to its worst atrocity or gentlest scene. A knight may enjoy winning; a villain may choose cruelty; a household may be loving; a service may work; a tragedy may not yield reconciliation.
+
+Different evidence objects need explicit labels:
+
+| Object | What may be claimed |
+|---|---|
+| Fixed event in an identified work | What that continuity depicts, with a suitable primary anchor or clear secondary check. |
+| Recurring published practice | The established institution or custom, not an invented evening or person's unstated outcome. |
+| Authored interactive alternative | A possible route or ending, not all branches combined into one biography. |
+| Creator proposal or personal campaign interpretation | What that creator suggests, not universally binding canon. |
+| Hypothetical illustration | An analytical possibility, not a researched source event or evidence that a world contains it. |
+| Reported or reconstructed in-world account | What a character says or infers, without silently upgrading it to direct observation. |
+
+Earlier hypothetical examples can preserve useful analytical distinctions, but cannot substitute for developed evidence from the source. A compressed synopsis should not be expanded into invented dialogue, interiority, sexual detail, or an unshown resolution.
 
 ## Evidence rules
 
-### Four distinct kinds of statement
+### Separate kinds of claims
 
-**Established content** identifies what a named work or continuity depicts. **Documented production history** is supported by a creator interview, archive, publisher record, or other attributable source. **Interpretation** explains an effect or causal relationship proposed by this research. **Uncertainty** marks disputed continuity, missing evidence, or a plausible but unverified explanation. Do not make an interpretive judgment sound like a creator quotation or an established psychological finding.
+**Established content** concerns a named work or continuity. **Documented production history** requires attributable creator, publisher, archival, or similar evidence. **Critical interpretation** is an argued reading. **Reception evidence** records what an identifiable critic or actual sample reports. **Uncertainty** marks incomplete access, contested versions, or unverified explanations. **Possible transfer** is an explicitly conditional inference, not a fact about the original or an authorized product change.
 
-Most analytical paragraphs in the dossiers are original close-reading arguments, not empirical claims about all audiences. Phrases such as “makes accessible,” “feels lived-in,” and “invites attachment” describe plausible formal effects. They do not establish experimentally demonstrated audience responses. Commercial success does not prove a particular worldbuilding technique caused that success.
+Phrases such as “invites attachment” or “makes accessible” identify possible formal effects, not experimentally established audience responses. Sales, acclaim, or inclusion in this roster do not prove that a particular feature caused popularity. The study has no matched comparison group or systematic reception survey.
 
-### Source hierarchy and use
+### Sources and reading depth
 
-Prefer primary works for fictional facts; creator testimony for stated intentions and process; official archives, publishers, museums, and scholarly institutions for production history; and attributed criticism for competing interpretations. Official franchise summaries establish that franchise's presentation, not neutral critical consensus. Interviews can simplify collaborative authorship, retrospectively impose order, or repeat an appealing origin anecdote.
+Prefer original works for events; creator testimony for stated intentions and process; official archives, publishers, museums, and scholarly sources for production context; substantive criticism for competing readings; and reliable reference accounts for checking accessible details. Promotional pages and official summaries establish their limited content, not independent critical consensus or the experience of an entire work.
 
-Web sources are linked in each dossier with a note explaining their use. The common retrieval date is 2026-09-26 unless a source says otherwise. Publication dates and fictional historical dates are not the retrieval date. A source's age is not itself a defect for historical research. This packet does not attempt an exhaustive inventory of new franchise releases or current canon as of the retrieval date.
+Search snippets locate sources; they are not sufficient evidence for a full research pass. Where a limited indexed fragment is used, label it as a fragment and restrict the claim. An interview quotation reproduced elsewhere is not a complete interview read. A contents page is not a paid chapter; a transcript is not a new viewing; a walkthrough is not an executed playthrough; an uninspected PDF map is not visually verified.
 
-Primary-work anchors are bibliographic and scene-level guides for checking the analysis. They are not a claim that complete novels, television series, comic runs, or games were reread or replayed during this session. Newly retrieved web evidence supports the indicated claims; analytical discussion also draws on established knowledge of the identified primary works. Where access is partial or a source is promotional, say so. Never claim to have inspected an inaccessible full text.
+Record which passages, sections, episodes, articles, or accounts were actually consulted. A named primary-work anchor can remain useful without implying the whole work was freshly consumed. The revised dossiers preserve that distinction, including cases where direct source access failed and substantive secondary material supplied the new check.
 
-Cite claims near the relevant paragraph using local source labels or linked titles. Keep long plot retellings and quotations out of the packet. Prefer original analysis to paraphrasing a single critic. Short references to canonical incidents should establish an argument, not substitute for the work.
+Cite close to the claim with local source labels, links, or explicit primary-work anchors. Explain what a source supports and what it does not. Preserve useful earlier citations; do not quietly replace their evidence status with the confidence of a new summary. Avoid invented quotations, long retellings, and excessive dependence on one critic.
 
-### Continuity and cultural care
+### Contradiction, culture, and attribution
 
-Do not fuse Marvel comics with the MCU, DC's many continuities with one screen adaptation, Star Wars canon with Legends, Sapkowski's fiction with game choices, or Pokémon games with a single anime chronology. State which layer supports an example. Avoid exact dates or universal rules when versions vary.
+A character's belief is not the world's objective truth. A culture's reputation is not every member's nature. A compelling villain's speech is not the author's endorsement. A critic's objection is not consensus. Published ambiguity, editorial revision, a transcription error, and fan theory are separate possibilities.
 
-Distinguish a fictional people's collective reputation from every individual's nature. Note when a setting racializes culture, moral character, or biology, and when it supplies internal disagreement. Explain religious imagery without assuming all believers interpret it identically. Consider women, children, workers, servants, migrants, and marginal groups where the narrative makes them visible; identify omissions rather than inventing hidden evidence.
+Treat translation and edition differences as mediation. Do not invent a single complete version where the source record is plural. Identify asymmetries of attention—servants, children, workers, migrants, outsiders, or victims may receive less interiority—without fabricating biographies to repair them.
 
-## Comparative synthesis
+Fictional social arrangements are not evidence that all real members of a religion, nationality, profession, or other group have the depicted motives. The realist television worlds and Macondo are not comprehensive historical or contemporary censuses. Fantastic medicine, radiation, drugs, or technology are not real-world safety guidance.
 
-The synthesis documents should compare mechanisms rather than copy lessons or prescribe a single formula. Required questions include:
+## Reassessment workflow
 
-- How does a large history become a small personal problem?
-- What kinds of constraint make choices meaningful without extinguishing wonder?
-- How do institutions persist even when particular individuals change?
-- How do names, idioms, objects, rituals, and maintenance carry implicit history?
-- What is the difference between a coherent world and a fully explained one?
-- How do humor, affection, beauty, desire, and everyday competence make a world worth inhabiting?
-- How do authorship, medium, serialization, adaptation, and fandom change a world's apparent consistency?
-- What produces an interesting person beyond a backstory summary, and what allows similar origins to produce different people?
+Begin with the actual repository roster, method, requirements, source audit, dossiers, thematic studies, and prior synthesis. Locate research on another branch if absent from the requested one. Preserve unrelated work and additions already incorporated. Existing summaries are claims to examine, not a lens through which every new source must be interpreted.
 
-## Completion and review
+Focus new research on omissions, distortions, weakly supported assertions, or missing interactions. Do not repeat adequate research merely to generate activity. Preserve strong examples, distinctions, and citations. Rewrite synthesis after reviewing the whole revised corpus because a changed selection of cases can change the comparative conclusion even where many individual claims remain true.
 
-Completion means that the selected roster has substantive dossiers, the thematic synthesis exists, navigation is usable, evidence limitations are visible, and files are committed on the dedicated research branch. It does not mean that every canonical work or every possible fictional universe has been exhaustively studied.
+Each dossier closes with sources consulted, sections reviewed, changes, and unresolved gaps. Reread it as a whole for balance, specificity, consistency, continuity, and source fidelity before committing. Commit the completed world and keep current progress visible in the ledger. An interrupted task's old count is not evidence that later committed work is absent.
 
-Review the final packet for missing requested dimensions, unmarked continuity switches, invented quotations, unsupported claims about creators, repetitive filler, broken internal links, and accidental project-design or coding recommendations. Preserve research boundaries throughout.
+## Comparative synthesis and possible lessons
+
+Compare mechanisms without prescribing one moral trajectory. How does history become a present choice? What makes achievement worth wanting? How do working institutions and deliberate wrongdoing coexist? How do powers affect bodies and ordinary activity? What does a particular medium make perceptible? Which endings permit a lasting gain, and whose losses remain?
+
+The revised essays must preserve differences among a household that flourishes, a ruler defeated by force, an institution improved, a relationship refused, a world destroyed, and a community permanently separated. None is automatically more mature or realistic than the others.
+
+Transferable lessons, where offered, should remain conditional and tied to actual cases. Do not convert every observation into gentle, cooperative, morally improving gameplay, or assume shock and suffering automatically produce depth. Do not implement systems or expand repertoire categories during this research correction. Fictional authority, consent violations, and supernatural commands confer no actual platform permission or power over participants.
+
+## Completion and verification
+
+Completion of this reassessment means every roster dossier has received the focused pass, the shared documents have been reconciled from that corpus, reading records are precise, changes are committed on the requested branch, and the final review states what was actually verified. It does not mean every franchise was exhaustively consumed or every setting received equal primary access.
+
+Review for lost meaning, repetitive generic framing, unmarked adaptation switches, unsupported biographical claims, conflated endings, and newly introduced bias. Verify relative links and references against accessible targets; distinguish reachable pages from claim support. Report external access failures rather than treating them as absence of evidence that a source exists. Do not claim automated crawlers, formatters, tests, map inspection, or exhaustive external verification unless performed.
+
+The [source audit](source-audit.md) owns the cross-library evidence summary. The [reassessment ledger](reassessment-progress.md) owns current completion and verification. The [historical ledger](research-progress.md) preserves the previous packet's claims without silently applying them to new changes.
