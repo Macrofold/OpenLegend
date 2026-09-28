@@ -874,7 +874,7 @@ export class WorldAuthoringService {
           'ok',
           a.kind === 'recipe'
             ? 'Recipe preparation is selected. Finish this discovery stage; native coordination admits the next stage only after this run completes and accounting is known.'
-            : 'This kind is selected for the next human turn. Explain its scope and ask the person to continue; no broader-scope run is automatically started.',
+            : 'This kind is selected for the next human turn. Stop all tool calls now. Explain its scope and ask the person to continue; no broader-scope run is automatically started.',
         );
       }
       case 'ol_authoring_submit':

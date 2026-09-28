@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   DECLARATION_CONTRACT,
   DEFAULT_COGNITION_POLICY,
+  RESERVOIR_CONSUMER_GUIDE,
   WILDERNESS_NEEDS,
   WILDERNESS_NEEDS_GUIDE,
   type WorldState,
@@ -42,6 +43,7 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
     case 'attribute-bindings':
       return {
         ...common,
+        mechanics: { 'reservoir-v1': RESERVOIR_CONSUMER_GUIDE },
         schema: z.toJSONSchema(attributeBindingSchema),
         notes: [
           'This is a reviewed world-owner change to one selected body, not an NPC ability or a new definition.',
@@ -64,6 +66,7 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
     case 'attribute':
       return {
         ...common,
+        mechanics: { 'reservoir-v1': RESERVOIR_CONSUMER_GUIDE },
         example: {
           definition: {
             id: 'custom:charge',

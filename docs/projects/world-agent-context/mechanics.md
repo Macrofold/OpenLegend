@@ -58,7 +58,7 @@ A world owner may separately choose a wider sleep-policy revision. That proposal
 
 ### Charge without a source
 
-A custom reservoir definition and body attachment do not create a battery item, supply or charging mechanism. Context must identify the compatible source/transfer owner or say it is missing. A reviewed direct value edit is an owner intervention and can create/remove fictional quantity; it is not ordinary replenishment. A future mechanical adapter is justified by the missing operation, not by adding another descriptive field.
+A custom reservoir definition and body attachment do not create a battery item, supply or charging mechanism. Native drain continues during replenishment. Gross transfer comes from finite compatible stock; away from bounds and other effects, equal drain/replenishment rates maintain the recipient value while consuming stock. Work duration bounds transfer time, not net gain. Context must identify the compatible source/transfer owner or say it is missing. A reviewed direct value edit is an owner intervention and can create/remove fictional quantity; it is not ordinary replenishment. A future mechanical adapter is justified by the missing operation, not by adding another descriptive field.
 
 ## Extension test
 

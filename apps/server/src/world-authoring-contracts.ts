@@ -160,7 +160,7 @@ export const WORLD_AUTHORING_TOOLS = {
   },
   ol_request_capability: {
     description:
-      'Request the supported tool profile needed for the current human request. Records the next stage; it grants no approval, spending or broader scope. Explain missing scope in final text. Do not call for an unsupported engine mechanic.',
+      'Select the supported profile for this request, then stop tools and explain the next stage in final text. Selection grants no approval, spending or broader scope. Do not request unsupported engine mechanics.',
     schema: z
       .object({ ...mutation, kind: authoringKind, reason: z.string().min(1).max(500) })
       .strict(),

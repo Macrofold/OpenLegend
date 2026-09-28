@@ -1830,6 +1830,9 @@ function advanceAction(
       completeAction(world, actor, action, events);
       return;
     }
+    // The pre-step action pass advances no time. Resource transfers require a
+    // positive amount; attempting one here would incorrectly stop valid work.
+    if (seconds === 0) return;
     const transfer = applyResourceGroup(
       world,
       {
