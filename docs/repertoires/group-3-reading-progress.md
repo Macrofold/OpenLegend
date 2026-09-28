@@ -26,33 +26,38 @@ The selected revision has 29 revised world dossiers, beyond the older world inde
 
 The complete worldbuilding tree at this revision contains **42 Markdown files: 29 world dossiers and 13 root documents**. All 42 have now been read in full. Its stale reassessment ledger still describes a 28-world pass and pending synthesis despite the later revised documents; actual files, not that old count, establish this reading inventory. No shared research ledger was edited.
 
-## Game dossiers — 7 complete
+## Game dossiers — 8 complete
 
 - [x] G03 — [Animal Crossing: New Horizons](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md)
 - [x] G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md)
 - [x] G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
 - [x] G24 — [The Sims](../../archive/02-research/game-inspiration/dossiers/the-sims.md)
+- [x] G25 — [Wildermyth](../../archive/02-research/game-inspiration/dossiers/wildermyth.md)
 - [x] G126 — [Crusader Kings III](../../archive/02-research/game-inspiration/dossiers/crusader-kings-iii.md)
 - [x] Unnumbered — [D&D 2024 / 5.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)
 - [x] Unnumbered — [D&D 3.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)
 
-## Original game chapters — 5 complete
+## Original game chapters — 6 complete
 
 - [x] [Animal Crossing](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md)
 - [x] [RimWorld](../../archive/02-research/game-inspiration/games/rimworld.md)
 - [x] [Dwarf Fortress](../../archive/02-research/game-inspiration/games/dwarf-fortress.md)
 - [x] [The Sims](../../archive/02-research/game-inspiration/games/the-sims.md)
+- [x] [Wildermyth](../../archive/02-research/game-inspiration/games/wildermyth.md)
 - [x] [D&D chapter / packet hub](../../archive/02-research/game-inspiration/games/dungeons-and-dragons.md)
 
-## Game supplements — 5 complete
+## Game supplements — 6 complete
 
 - [x] [RimWorld: work, personality and story](../../archive/02-research/game-inspiration/mechanics/rimworld-work-dependencies-personality-and-story.md)
 - [x] [Dwarf Fortress: artifacts, work and remembered life](../../archive/02-research/game-inspiration/mechanics/dwarf-fortress-artifacts-work-and-remembered-life.md)
 - [x] [The Sims: emotion, homes and chosen autonomy](../../archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md)
+- [x] [Wildermyth: bodies, relationships and authored myth](../../archive/02-research/game-inspiration/mechanics/wildermyth-bodies-relationships-and-authored-myth.md)
 - [x] [D&D adjudication](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-adjudication.md)
 - [x] [D&D complete-SRD systems synthesis](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md)
 
 D&D's shared hub and studies count once, not once per edition. Reading the complete-SRD **synthesis** does not mean this continuation reread its underlying 364-page PDF. The 3.5 dossier's incomplete reception/production evidence remains incomplete. No dedicated CKIII original chapter appeared in the inspected chapter tree; comparative studies are separate documents.
+
+Wildermyth was read in contiguous dossier chunks through its complete annotated bibliography, plus the entire original chapter and supplementary study. Its Legacy framing is mythic retelling, not evidence of literal chronological continuity. The reviewer's bereavement-to-healing interpretation is not a claim that the game inferred grief and forced a build. Relationships, body changes and scenery-dependent actions can carry history into play, while repeated authored situations and accidental-order friction remain meaningful criticisms.
 
 ## World dossiers — 29 complete
 
@@ -123,12 +128,23 @@ Truncated responses were followed with overlapping contiguous reads. This includ
 
 These observations are creative inputs, not clinical predictions, causal proof of popularity, or instructions to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific or live-model validation is claimed.
 
+## Catalogue delivery checkpoints
+
+| Catalogue | Starting entries | Current entries | Delivered in this continuation |
+| --- | --- | --- | --- |
+| Psychology and behavior | 276 | 276 | Expansion pending. |
+| Traits | 240 | 240 | Expansion pending. |
+| Needs | 240 | 300 | `90867e97edaef849212d2952f0160870b6584715`: ND-241–ND-300, six new domains, retained original IDs/headings, corrected owners, removed seed-proposal Inspiration links and separated ordinary exotic goals from new satisfaction laws. |
+| Characters and backstories | 240 | 240 | Expansion pending. |
+
+The inherited 996 entries are not claimed as newly written. This continuation has added 60 needs so far. Reading checkpoints and content delivery are deliberately reported separately.
+
 ## Prerequisites and remaining work
 
 Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library and granular-study READMEs are fully read; their linked documents are not automatically checked off.
 
-**Fresh reading: the complete 42-document worldbuilding library; 7 game dossiers, 5 original game chapters and 5 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed inventory expansion. Inherited catalogue counts are 276 psychology rows and 240 each for traits, needs and characters; those are not new entries from this continuation.
+**Fresh reading: the complete 42-document worldbuilding library; 8 game dossiers, 6 original game chapters and 6 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
 
 Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
 
-Pending editorial corrections: separate seed proposals from Inspiration; repair Traits' inaccurate “Animal Crossing III” / G99 wording; replace nonexistent Food/Travel catalogue owners; reconsider D labels applied merely because ordinary desires or biographies depend on an unusual body. Preserve IDs and linked headings. Shared atlas counts, revised research navigation and integration history remain the integration owner's work. Shared research files and implementation trackers remain unchanged.
+Remaining editorial work in the other three catalogues: separate seed proposals from Inspiration; repair Traits' inaccurate “Animal Crossing III” / G99 wording; replace nonexistent catalogue owners; reconsider D labels assigned merely because an ordinary disposition or biography depends on an unusual body. Preserve IDs and linked headings. Shared atlas counts, revised research navigation and integration history remain the integration owner's work. Shared research files and implementation trackers remain unchanged.
