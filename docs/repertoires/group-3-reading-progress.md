@@ -2,13 +2,17 @@
 
 [Psychology](psychology-behavior.md#research-coverage) · [Traits](traits.md#research-coverage) · [Needs](needs.md#research-coverage) · [Characters](characters-backstories.md#research-coverage)
 
-September 28, 2026 continuation on `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean an external bibliography was reopened, a primary book or film revisited, or a game played. Every document not explicitly checked below remains unchecked in this continuation. Earlier checkpoints preserve historical reading records; they are not silently counted again as fresh work.
+**Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, source register and limitations. It does not mean its external bibliography was reopened, a game played, a full recording watched or its claims independently certified. Anything not explicitly checked remains unread in this continuation. Counts are cumulative across resumes, not claims of rereading completed documents on every resume.
+
+**Current coverage:** all **42 worldbuilding documents**; **23 game dossiers**, **14 original game chapters**, **8 game supplements**, and the two game-library indexes explicitly checked below. **The full game corpus is not yet complete.**
+
+This file is the compact current manifest. The full earlier reading notes, individual blob hashes, correction details and creative findings remain preserved in [checkpoint `bdc6868`](https://github.com/Macrofold/OpenLegend/blob/bdc686832644b4ee5d49140d94c8db5c5665451b/docs/repertoires/group-3-reading-progress.md#findings-to-carry-into-inventories); compacting this manifest does not revoke those completed reads or discard that research. Catalogue delivery is recorded separately from reading below.
 
 ## Revisions and discovery
 
-Every checked document below uses **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**, the immutable starting commit. This single revision pins the exact contents of every linked path; earlier checkpoint commits also retain individual blob hashes. The source branch `codex/world-idea-repertoires` was observed at `2bb10759c263cf29a3de0f25bb3595e49420006f`. Research is read through Git objects without merging unrelated branches.
+All checked paths use **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This immutable revision identifies every checked document exactly. Research absent from a working tree is read through Git objects, not by merging unrelated branches. The source branch `codex/world-idea-repertoires` was observed at `2bb10759c263cf29a3de0f25bb3595e49420006f`; the resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` preserved existing catalogue work and checkmarks.
 
-| Remote branch inspected | Observed head |
+| Research branch inspected and rechecked | Observed head |
 | --- | --- |
 | `docs/game-inspiration-library` | `065309db37067c8e0a213bc1ed14446a4ea20eea` |
 | `docs/game-inspiration-library-expansion` | `57bcd96f75f4561baff10ea57e28210dd908ebd5` |
@@ -22,13 +26,9 @@ Every checked document below uses **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**
 | `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` |
 | `docs/worldbuilding-research-library` | `b387e7caeda5cec301045b877ca50a2815a869dd` |
 
-The selected revision has 29 revised world dossiers, beyond the older world index's 28, and two unnumbered D&D game subjects beyond the older 148-subject roster. No new roster IDs are invented here. The inspected original-game-chapter tree contains 39 documents. The separate Dragon Age series dossier supplements, rather than replaces, four mainline dossiers. Index/tree inspection is discovery, not reading the linked corpus.
+The pinned corpus contains **29 world dossiers and 13 worldbuilding root documents**, beyond the older index's 28-world count. Two unnumbered D&D subjects extend the older 148-game roster. The original-game-chapter tree has **39 documents**; the separate Dragon Age series dossier supplements four mainline dossiers. Index/tree inspection is discovery, not completion of linked material. No shared research ledger or roster is edited here.
 
-The complete worldbuilding tree at this revision contains **42 Markdown files: 29 world dossiers and 13 root documents**. All 42 have now been read in full. Its stale reassessment ledger still describes a 28-world pass and pending synthesis despite the later revised documents; actual files, not that old count, establish this reading inventory. No shared research ledger was edited.
-
-The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing checkmarks and catalogue work. All ten listed game-research refs and the worldbuilding ref were rechecked and still matched the heads above. The totals below are cumulative for this continuing branch task, not a claim that previously completed documents were reread on every resume.
-
-## Game dossiers — 21 complete
+## Game dossiers — 23 complete
 
 - [x] G01 — [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md)
 - [x] G02 — [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md)
@@ -42,6 +42,8 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] G10 — [Path of Exile](../../archive/02-research/game-inspiration/dossiers/path-of-exile.md)
 - [x] G11 — [Path of Exile 2](../../archive/02-research/game-inspiration/dossiers/path-of-exile-2.md)
 - [x] G12 — [Diablo IV](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md)
+- [x] G13 — [Dreams](../../archive/02-research/game-inspiration/dossiers/dreams.md)
+- [x] G14 — [Project Spark](../../archive/02-research/game-inspiration/dossiers/project-spark.md)
 - [x] G21 — [RimWorld](../../archive/02-research/game-inspiration/dossiers/rimworld.md)
 - [x] G22 — [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md)
 - [x] G23 — [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
@@ -52,7 +54,7 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] Unnumbered — [D&D 2024 / 5.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)
 - [x] Unnumbered — [D&D 3.5e](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)
 
-## Original game chapters — 13 complete
+## Original game chapters — 14 complete
 
 - [x] [Hades / Hades II](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md)
 - [x] [Among Us / Lethal Company](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md)
@@ -61,6 +63,7 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] [Fortnite](../../archive/02-research/game-inspiration/games/fortnite.md)
 - [x] [League of Legends / Dota 2](../../archive/02-research/game-inspiration/games/league-of-legends-and-dota-2.md)
 - [x] [Path of Exile / Path of Exile 2 / Diablo IV](../../archive/02-research/game-inspiration/games/path-of-exile-path-of-exile-2-and-diablo-iv.md)
+- [x] [Dreams / Project Spark](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md)
 - [x] [RimWorld](../../archive/02-research/game-inspiration/games/rimworld.md)
 - [x] [Dwarf Fortress](../../archive/02-research/game-inspiration/games/dwarf-fortress.md)
 - [x] [The Sims](../../archive/02-research/game-inspiration/games/the-sims.md)
@@ -79,19 +82,13 @@ The resume from `194f757ec3e0fbc7fdd8915a69fe06dd907ea7d3` retained the existing
 - [x] [D&D adjudication](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-adjudication.md)
 - [x] [D&D complete-SRD systems synthesis](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md)
 
-D&D's shared hub and studies count once, not once per edition. Reading the complete-SRD **synthesis** does not mean this continuation reread its underlying 364-page PDF. The 3.5 dossier's incomplete reception/production evidence remains incomplete. No dedicated CKIII original chapter appeared in the inspected chapter tree; comparative studies are separate documents.
+## Game-library indexes
 
-Wildermyth was read in contiguous dossier chunks through its complete annotated bibliography, plus the entire original chapter and supplementary study. Its Legacy framing is mythic retelling, not evidence of literal chronological continuity. The reviewer's bereavement-to-healing interpretation is not a claim that the game inferred grief and forced a build. Relationships, body changes and scenery-dependent actions can carry history into play, while repeated authored situations and accidental-order friction remain meaningful criticisms.
+- [x] [Game-inspiration README](../../archive/02-research/game-inspiration/README.md)
+- [x] [Granular mechanics-study README](../../archive/02-research/game-inspiration/mechanics/README.md)
+- [ ] [Research roster](../../archive/02-research/game-inspiration/research-roster.md) — inspected for discovery; truncated portion and remainder still need complete reading.
 
-Baldur's Gate 3 was read through all 13 dossier sections, the correction audit and complete annotated source register (dossier blob `95ea756fc2a5a26307add35e81830432d9afb5af`), plus its entire original chapter (`f6858714bcafa169d7b43200dcdeaa259705c948`) and granular study (`a5bcfebcdf96549783a35c479e53074e32b93fe6`). A truncated first chunk was completed with an overlapping read before marking it. Companion motives, approval, cooperation, romance and commitment boundaries remain distinct. Respec is not rewritten history; nonlethal intent is not a guarantee that an unsupported finishing action spares someone. Reviews' intrusive-romance, dominant-strategy, onboarding and missed-choice concerns remain attributed disagreements rather than universal player findings. The dossier's failed Steam sampling and inherited, dated commercial evidence remain limitations; no bibliography links or videos were newly opened for this read.
-
-Hades II (`6d5d9cd105dc9fe6b95530c578a06d2e6549f940`) and Hades I (`7bb89ff489ef5425b47087cc5b030d88934f69d3`) were each read from the opening scope through their complete correction audits and annotated sources. The paired original chapter (`da91b62e0880ca4c551469250863c426180aa82c`) and original-game mechanics study (`45d2f96d767e1c317481be676a0061a579296b73`) were also read completely. The shared chapter counts once; the mechanics study is Hades I evidence, not a substitute for the sequel. The sequel's changed gathering, familiar callbacks and revised ending retain their stated version boundaries. The original's valued platonic outcome is not a failed romance reward. Repetition can preserve selected commitments yet still frustrate someone who dislikes the intervening activity. Dated sales, selected player testimony, indexed-only sources and unviewed recordings remain as limited as their dossiers say; reading completion is not certification of their research requirements.
-
-Among Us (`2cbf4c328a2be1f5b5f4d7ecd02b564679a58b90`), Roblox (`8944781f4f1e9443d0d8a07a5a15ad2ff70cb272`), Grow a Garden (`983ace1a4f48c6439efce268f4960eb0414e9925`) and Steal a Brainrot (`905d2621afdc9257a29d128ccc6cf3a982d3d79c`) were read completely, including correction audits and every annotated source. Their two original shared chapters were read in full (`7b24ba8b070c4bc075afc69ec769535fc7f506a9`, `01436ea6d43328df9dee219b35382bdddb0e02b8`). Reading Lethal Company's field guide is not completion of its separate dossier or study. Among Us preserves mode-specific evidence and human-supplied social memory; a truthful observation need not prove the witness's interpretation. Roblox's platform, contributor roles and experience rules stay distinct. Grow a Garden's copying, gifts, exchanges and paid removal differ; conflicting Raccoon dates and trade thresholds remain unresolved. Steal a Brainrot's contested transport, irreversible reset, explicit duel and ordinary theft have different consequences; attachment can discourage return. Retired events, indexed-only mechanics, small reception samples and private financial gaps are not promoted to verified universal rules.
-
-Fortnite (`067aaea54c57ea2915e57add813e8ae309733ea2`), League of Legends (`fb602c39cdf76cb4e8994133a2a1ca90f60909ef`) and Dota 2 (`71b54bfd2d18514a140d62106236f96bb713be76`) were read completely, including every correction and annotated reference. Fortnite's original chapter (`81d39c58a9ba8955942c022e2475a2dcbec03fb7`) and the complete League/Dota paired chapter (`1ea289a94587ce5cfb45e01dcc008f122707ab85`) were also read. Modes retain separate persistence, assistance and loss contracts; documented conversation tools do not prove truthful memory. League's offered rescue depends on the recipient being able to use it. Dota's rescue can create a later return obligation, and acquired equipment still needs delivery. Individual preferences for mastery, driving, music, a social group or keeping familiar rules are not collapsed into one motivation. Current-sounding version statements remain the pinned dossiers' dated research, not a new live audit; contradictory transfer documentation, indexed-only mechanics and limited reception samples remain qualified.
-
-Path of Exile, Path of Exile 2 and Diablo IV were read in full at the pinned revision, including their complete audits and annotated sources, plus the entire original three-game chapter. Their editions, released systems, temporary seasons and proposed future releases remain separate. Safer modification need not preserve later options; owning an item need not make its intended combination usable; keeping a character's name need not preserve a learned method. Diablo's documented SSF restoration is read together with the earlier failure, and its group-only puzzles are not assumed solvable by a hired helper. Historical tuning, indexed-only evidence and proprietary/economic gaps remain qualified. The new character inventory uses these as creative inputs, not current build recommendations or fresh external verification.
+Other game root documents, essays, references, standalone field guide and unlisted studies remain unchecked. Reading the paired Among Us/Lethal Company chapter does not complete Lethal Company's separate dossier or study. D&D's shared chapter and studies count once; the complete-SRD synthesis does not mean this continuation reread its underlying 364-page PDF. No dedicated CKIII original chapter appeared in the inspected tree.
 
 ## World dossiers — 29 complete
 
@@ -125,8 +122,6 @@ Path of Exile, Path of Exile 2 and Diablo IV were read in full at the pinned rev
 - [x] [28 — Fallout](../../archive/02-research/worldbuilding/worlds/28-fallout.md)
 - [x] [29 — D&D worlds](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md)
 
-Reading a world dossier does not also check off a separate game dossier about that franchise. Books, games, screen versions, original editions and later interpretations retain their stated boundaries. No world dossier is missing or unread at the pinned revision.
-
 ## Worldbuilding root documents — 13 complete
 
 - [x] [README and current roster](../../archive/02-research/worldbuilding/README.md)
@@ -143,29 +138,24 @@ Reading a world dossier does not also check off a separate game dossier about th
 - [x] [Reassessment progress](../../archive/02-research/worldbuilding/reassessment-progress.md)
 - [x] [Historical research progress](../../archive/02-research/worldbuilding/research-progress.md)
 
-Truncated responses were followed with overlapping contiguous reads. This includes the comparative synthesis's conclusion and the source-audit table's final rows. Empty out-of-range responses did not count as retrieving omitted text.
+No world document is missing or unread at the pinned revision. Reading a world dossier does not complete a separate game dossier about that franchise. Truncated responses were completed with overlapping contiguous reads; empty out-of-range responses were not treated as recovered material. Stale research-progress counts do not override the actual revised files.
 
-## Findings to carry into inventories
+## Findings and evidence boundaries
 
-- Ordinary individuality: hobbies, remembered occasions and durable dispositions differ. Food, rooms, gifts, music, bodily enjoyment and routines need not be productivity bonuses or impending tragedies. Daily autonomy is not unlimited permission for irreversible life changes.
-- Work and aftermath: competence, passion, refusal and incapability differ. A rescue leaves real care work. A possession can have practical, prestigious and private meanings. Retaining identity through custody or recruitment does not make recruitment compulsory. Famous colony stories are attributed accounts, not our sessions or evidence of animal gratitude.
-- Agency and power: traits can shape choices without forcing them; affection, allegiance, authority, willingness and probability differ. Heirs inherit circumstances, not a predecessor's personality. Created people and sentient equipment can have their own aims. Useful abundance should change desires, not be canceled by invented scarcity.
-- Vocation: extraordinary ability need not choose a fighting career. Performance, escape artistry, ordinary craft and music are real ambitions. A gifted student may prefer another vocation's daily life. Macondo's accomplished Meme does not love the music she performs; a new biography can similarly separate talent, pleasure and audience recognition without copying her circumstances.
-- Outcomes: winning, survival, recognition, restoration, forgiveness, reconciliation and freedom are distinct. A marriage, meal, public service or contest can really succeed. A lost contest can preserve admiration and ambition without becoming painless. Some enemies knowingly choose cruelty; stopping them need not make them friends.
-- Particular mixed lives: Nanny Ogg's bawdiness differs from taking relatives' labor for granted; Toph enjoys fighting; Diamond chooses music; Brook's preserved song does not resurrect his companions. The revised dossier distinguishes Yorki's illness from the later poisoned battle. These are source examples, not characters to copy.
-- Evidence and uncertainty: motivated histories do not become authoritative facts; witnesses, memories and reconstructions have different access. Merope's past remains an in-world account. Box Hill does not contain the imagined tidy spoken apology. Kino, Susan and the Sopranos ending retain the actual corpus's uncertainty. Book and adaptation accounts of coercion cannot be silently exchanged.
-- Local magic: professional knowledge need not be adventuring rank; translation is not belonging; hospitality does not own guests. Regional effects can support pleasure, work and danger differently. The D&D supplement's eight indexed articles are not an entire-wiki read. A scholar, courier, farmer and ruler can understand the same phenomenon and want different changes.
-- Long futures: the Expanse permits chosen retirement and functioning love beside costly victory. Foundation's institutions can eclipse individual lives, and loyal competence can threaten a ruler. Culture abundance supports serious voluntary mastery even where an institution exploits a real ambition. Necron longevity can preserve vanity and a thrilling feud rather than impartial wisdom.
-- Divergent lives: Broken Earth's chosen lovers want different futures, and chosen piracy harms others. Narnia's feasts and liberation are real alongside criticism of hierarchy. His Dark Materials preserves inquiry, craft and adult pleasure without inventing explicit acts for children or undoing its ending's separation. The Wire's working gym and Bubbles's repaired family life are not canceled by other people's losses.
-- Deliberate harm and ordinary competence: Artie's cooking is a desired achievement, not consolation for failed criminality; Tony can enjoy life while knowingly harming people. Crezia's professional care ends a romance without being a misunderstanding to repair. A harmful patron can fund a genuinely good performance. An effective institution need not be legitimate in every other respect.
-- Usable promises: Tamriel's musical institution can offer clever historical reconstruction yet disappoint somebody seeking actual performance. Fallout's recruited acts actually take the stage; its mercenaries, willing sexual workers and captives have different arrangements. Raul's maintenance and gunslinging are distinct possible futures, not one obligatory recovery arc. The specific activity must live up to its advertised role.
-- Consequential permission: BG3's people can object or leave, companions can matter during quiet moments, and useful magic changes evidence or access through supported rules. A shared danger need not create friendship or sexual interest. More social initiative can feel intrusive, and a changed build does not erase prior acts. Clear commitment boundaries let mistakes become chosen story rather than unexplained content loss.
-- Chosen returns: Hades distinguishes an unsuccessful attempt from erased knowledge, obligations and home life. Particular interests justify particular callbacks; a quiet platonic bond is a genuine result. Hades II adds causal credit, noticed environmental changes and repeated intimacy after milestones. Preserve sequel boundaries and the difference between enjoyable repetition and an unwanted gate to another activity.
-- Evidence and possession: Among Us separates honest testimony from a sound inference, and missing evidence from an erased event. The three Roblox subjects distinguish playing from creating, portable appearance from portable power, income from favorite possessions, and abundance from a desired life. A collection can become a comfortable social setting or an exhausted goal; guarding a prize can crowd out enjoying it. No one response is universal.
-- Contribution and commitment: Fortnite's surviving teammate, League's offered lantern and Dota's rescue with a scheduled return show different forms of useful help. Meaning depends on what the recipient can actually do and what remains owed afterward. Competition can reward denial, deception and cultivated rivals as well as cooperation; elaborate mastery does not guarantee enjoyment of a particular group or loss policy.
-- Chosen methods: the three ARPG dossiers distinguish enjoying an experiment from enjoying repetitive rebuilding, preserving a method from preserving one item, and selecting a desired property from pursuing its strongest version. A familiar identity can survive a change without the old capability surviving. A finite successful project can end well without an immediate replacement craving.
+The [full earlier findings](https://github.com/Macrofold/OpenLegend/blob/bdc686832644b4ee5d49140d94c8db5c5665451b/docs/repertoires/group-3-reading-progress.md#findings-to-carry-into-inventories) remain inputs for the unfinished catalogue work. Their central distinctions are retained here:
 
-These observations are creative inputs, not clinical predictions, causal proof of popularity, or instructions to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific or live-model validation is claimed.
+- **Particular lives:** ordinary pleasures, work, rivalry, love and deliberate cruelty all belong. Competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. A completed ambition can end well without an invented replacement craving. Some rivals enjoy competing and some enemies knowingly choose harm.
+- **Identity and evidence:** appearances, memories, statements, interpretations and actual acts differ. Heirs need not inherit personality; restoration or a new build does not erase acts; a long life does not supply omniscience. Shared source events preserve different witnesses and edition/adaptation boundaries. The earlier notes retain specific corrections concerning Merope, Box Hill, Yorki, Kino, Susan and disputed endings.
+- **Agency after change:** created people can have independent aims, abundance can support genuine chosen mastery, and extraordinary power does not prescribe a fighting career. The world readings include successful retirement, functioning love, valued ordinary art and knowingly harmful patrons without forcing one moral arc.
+- **Game-specific limits:** Wildermyth's Legacy is retelling, not literal chronological continuity. BG3 distinguishes affection, cooperation, romance and commitment; a nonlethal intention does not make an unsupported finisher safe. Hades' returning home can preserve relationships and knowledge without making repetition enjoyable to everyone; its original and sequel are not interchangeable. D&D 3.5's reception/production gaps remain gaps.
+- **Possession and contribution:** Among Us preserves partial evidence and human-supplied social memory. Roblox, Grow a Garden and Steal a Brainrot separate creation, appearance, income, favorite possessions, collecting and company; copying, gifts, exchange, theft and explicit stakes differ. Fortnite's surviving teammate, League's usable rescue and Dota's later return obligation give different meanings to help. Contradictory dates, retired events and unverified transfer rules remain qualified in the dossiers and earlier notes.
+- **Cherished methods:** Path of Exile, Path of Exile 2 and Diablo IV separate experimentation from unwanted rebuilding, an acquired object from a viable combination, and choosing a property from maximizing it. Diablo's SSF restoration is read alongside its earlier interruption; group-only puzzles are not assumed solvable by a hired helper. Patch/season history is not new live advice.
+
+**Dreams and Project Spark — complete reading added at this checkpoint.** Dreams (`496459af3f0d850e4e10fda19b54669718a8bef9`), Project Spark (`3934ad63ef4ec4ed08653205d2ae760aa9b4fee2`) and their entire paired chapter (`8f21d97465e113e544f960eecbfd5d0f39ebff2b`) were read through their final annotated references; Dreams' truncated bibliography was recovered by an overlapping read. There is no separate earlier mechanics study for either according to these dossiers. A component, finished activity, admired work and personally meaningful project are different achievements. Dreams' Art, Laila and changing genres provide authored inner-life examples, not autonomous cognition; recurring musical relationships need not be background decoration. Project Spark's performed healer separates usefulness, allegiance and expressive behavior. A successful toy can please its maker without entertaining strangers. Editing words does not change a completion condition, and a shared contribution does not grant every editing or publication right. Beginning with a working example, modifying it and starting from scratch suit different creative appetites.
+
+The paired distinction remains exact: Dreams ended regular feature support while retaining play/create/share; Project Spark's online services ended, with narrower local preservation. Later maintenance, changing curation and rebuilt works are not evidence of restored old promises. Xbox/PC, local/networked cooperation, prerelease features, old economies and shipped systems remain separate. No single missing feature is asserted to have caused either platform's outcome.
+
+These are source-derived observations and creative inputs, not clinical predictions, causal proof of popularity or instructions to copy franchise lore. New catalogue situations are marked **creative synthesis**. No personal play, live-model testing, representative sentiment coding, private-code inspection or exhaustive external-bibliography rereading is claimed.
 
 ## Catalogue delivery checkpoints
 
@@ -173,17 +163,15 @@ These observations are creative inputs, not clinical predictions, causal proof o
 | --- | --- | --- | --- |
 | Psychology and behavior | 276 | 276 | Expansion pending. |
 | Traits | 240 | 240 | Expansion pending. |
-| Needs | 240 | 300 | `90867e97edaef849212d2952f0160870b6584715`: ND-241–ND-300, six new domains, retained original IDs/headings, corrected owners, removed seed-proposal Inspiration links and separated ordinary exotic goals from new satisfaction laws. |
-| Characters and backstories | 240 | 300 | `edc8fa2ddea94441ba41afb23eb1311b209ce658`: CB-241–CB-300, six new domains, retained old IDs/headings, sorted established figures, removed seed-proposal Inspiration links and moved exotic-body prerequisites to their actual owners. |
+| Needs | 240 | 300 | `90867e97edaef849212d2952f0160870b6584715`: ND-241–ND-300; six new domains, preserved IDs/headings, corrected owners, actual research Inspiration and separated exotic goals from new satisfaction laws. |
+| Characters and backstories | 240 | 300 | `edc8fa2ddea94441ba41afb23eb1311b209ce658`: CB-241–CB-300; six new domains, preserved IDs/headings, sorted established figures, actual research Inspiration and exotic-body prerequisites assigned to their owners. |
 
-The inherited 996 entries are not claimed as newly written. This continuation has added **120 entries: 60 needs and 60 characters**, bringing the four catalogues to **1,116 entries**. Reading checkpoints and content delivery are deliberately reported separately.
+The inherited 996 entries are not newly written work. This continuation has added **120 entries: 60 needs and 60 characters**, bringing the catalogues to **1,116**. Reading is not a substitute for delivering the remaining catalogue work.
 
 ## Prerequisites and remaining work
 
-Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library and granular-study READMEs are fully read; their linked documents are not automatically checked off.
+Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, four seed proposals and four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts.
 
-**Cumulative complete reading: the 42-document worldbuilding library; 21 game dossiers, 13 original game chapters and 8 game supplements.** The rest of the game corpus remains unchecked. This is not a complete game-corpus claim or a completed four-catalogue expansion.
+Continue the unchecked game corpus, including supplementary/comparative/reference material, and expand Psychology and Traits. Their remaining editorial work includes seed proposals incorrectly used as Inspiration, Traits' inaccurate “Animal Crossing III” / G99 wording, nonexistent owner names, and D labels caused only by an unusual body. Preserve IDs and linked headings.
 
-Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
-
-Remaining editorial work in Psychology and Traits: separate seed proposals from Inspiration; repair Traits' inaccurate “Animal Crossing III” / G99 wording; replace nonexistent catalogue owners; reconsider D labels assigned merely because an ordinary disposition depends on an unusual body. Preserve IDs and linked headings. Shared atlas counts, revised research navigation and integration history remain the integration owner's work. Shared research files and implementation trackers remain unchanged.
+Respect the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight and the Borrowed Dawn's bounded initial magic with compatible additions. Use the wider-library label where appropriate. Shared atlas counts, navigation and integration history remain the integration owner's work; other catalogues, world proposals, shared research files and implementation trackers are unchanged.
