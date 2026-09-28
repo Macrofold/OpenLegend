@@ -2,21 +2,21 @@
 
 [History and myth](history-myth.md) · [Faith and ritual](faith-ritual.md) · [Languages and knowledge](languages-knowledge.md) · [Arts and leisure](arts-leisure.md)
 
-Branch-local continuation ledger, added at the user's explicit September 28, 2026 request to mark games as they are read and commit that progress. This does not change the shared research library's completion ledger, certify its research gates, or claim that the repertoire expansion is finished.
+Branch-local continuation ledger, created at the user's explicit September 28, 2026 request to mark games as they are read and commit progress. It does not change the shared research library's completion ledger or certify its acceptance gates.
 
 ## Reading rules
 
-- A checked dossier means its complete text, correction sections, examples, reception discussion and annotated source register were read. Indexes, atlas summaries and snippets do not qualify.
-- Supplementary reading and incorporation are separate columns. Reading a source is not the same as incorporating it into selectable catalogue entries.
-- Partial reads record the exact next line. Unlisted subjects are **not read in this continuation**, not silently complete. The entire available corpus remains required.
-- Entries are original design synthesis unless specifically described otherwise. Reading a repository dossier does not claim fresh gameplay, watching its videos, or reopening all external references.
-- Commit each meaningful checkpoint and save outstanding changes at least every five minutes while working. Preserve existing branch history and unrelated changes.
+A checked dossier means the complete manuscript was read, including corrections, worked examples, reception, embedded studies and annotated source registers. An index, atlas summary or search excerpt does not qualify. Supplementary reading and catalogue incorporation are separate states. Partial reads give the next line; unlisted subjects are unread in this continuation. Reading repository research does not claim fresh gameplay, listening, watching videos or reopening all external references.
+
+Keep original design synthesis distinct from source-established behavior. Preserve branch history, existing catalogue IDs and unrelated work. Commit meaningful checkpoints and save outstanding changes at least every five minutes while working. Mark incorporation complete only when actual catalogue entries or substantive revisions can be identified.
+
+The longer G01–G16 source-specific cautions and initial discovery notes are preserved in the [immutable detailed checkpoint](https://github.com/Macrofold/OpenLegend/blob/abff3395544a106749aab74d0274490cd813e60a/docs/repertoires/group-6-reading-progress.md#source-specific-incorporation-cautions). This working index retains their source identities and actionable distinctions without repeatedly duplicating that prose.
 
 ## Source revisions and discovery
 
-Reading checkout snapshot: `7e8c27ab3d933642302cf08076dae2a9ced05437`, the existing Group 6 head when this continuation began. The previous inventory work and its recorded coverage are preserved.
+Reading checkout snapshot: **`7e8c27ab3d933642302cf08076dae2a9ced05437`**, the existing Group 6 head when this continuation began. All dossier and chapter paths below refer to that snapshot unless explicitly stated otherwise; blob hashes identify the exact bytes read.
 
-The live named library heads were checked on September 28, 2026:
+Live branch heads checked on September 28, 2026:
 
 | Source | Head |
 | --- | --- |
@@ -32,106 +32,87 @@ The live named library heads were checked on September 28, 2026:
 | `docs/game-inspiration-games-131-140` | `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` |
 | `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` |
 
-The prior coverage note records integration checks of the original ranges. This continuation independently confirmed that the current G131–G140 head is an ancestor of the checkout snapshot. Further source comparisons remain to be recorded; listing a branch head is not proof that every file was compared.
+This continuation independently confirmed G131–G140's listed head is an ancestor of the reading snapshot. Other integration comparisons are inherited from earlier catalogue coverage and still need independent confirmation; discovering a head is not the same as comparing all its files.
 
-The nominal [roster](../../archive/02-research/game-inspiration/research-roster.md) has G01–G148, but the actual checkout also contains `dungeons-and-dragons-3-5.md` and `dungeons-and-dragons-2024.md`, a D&D chapter and two D&D mechanics studies. Worldbuilding also contains `worlds/29-dungeons-and-dragons.md`, a planes/lived-magic supplement and a reassessment ledger. These additional materials are **pending**, not covered by the older 148-game/28-world claim. Discovery is still in progress.
+The nominal roster has G01–G148, but the checkout also contains two D&D dossiers (`dungeons-and-dragons-3-5.md`, `dungeons-and-dragons-2024.md`), a D&D chapter and two D&D mechanics studies. Worldbuilding includes `worlds/29-dungeons-and-dragons.md`, `dungeons-and-dragons-planes-and-lived-magic.md` and `reassessment-progress.md`. These additional materials are pending; the older 148-game/28-world statement is not a complete current-corpus claim. Corpus discovery remains open.
 
 ## Game-by-game reading
 
-All dossier paths are under `archive/02-research/game-inspiration/dossiers/` at the reading checkout snapshot above. Blob hashes identify the exact bytes read. A complete chapter is not a substitute for any associated mechanics study; those are tracked separately below.
+Dossiers are under `archive/02-research/game-inspiration/dossiers/`. The linked chapters are checked independently in the next section.
 
-| Dossier read | Game | Dossier / blob | Linked chapter | Catalogue incorporation |
-| --- | --- | --- | --- | --- |
-| [x] | G01 — Hades II | [hades-ii.md](../../archive/02-research/game-inspiration/dossiers/hades-ii.md); `6d5d9cd105dc9fe6b95530c578a06d2e6549f940` | [x] Hades/Hades II | Pending. Specific causal credit; voluntary repeatable social rituals; music conveying relationships; narrative payoff distinct from combat satisfaction. |
-| [x] | G02 — Among Us | [among-us.md](../../archive/02-research/game-inspiration/dossiers/among-us.md); `2cbf4c328a2be1f5b5f4d7ecd02b564679a58b90` | [x] Among Us/Lethal Company | Pending. Distinguish appearance, sensor identity and inference; discussion needs attention; playful temporary betrayal is not permission to destroy a persistent home. |
-| [x] | G03 — Animal Crossing: New Horizons | [animal-crossing-new-horizons.md](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md); `b7b91a09b37cb2d4ef9f6c4e59f51a93478df0f7` | [x] Animal Crossing | Pending. Visible collections, future-self correspondence, distinct hobbies, voluntary return and protected displays; do not require every player to enjoy decorating. |
-| [x] | G04 — Roblox | [roblox.md](../../archive/02-research/game-inspiration/dossiers/roblox.md); `8944781f4f1e9443d0d8a07a5a15ad2ff70cb272` | [x] Roblox | Pending. Shared place is not shared knowledge; portable identity is not portable power; complete finite works need not become recurring attendance loops. |
-| [x] | G05 — Grow a Garden | [grow-a-garden.md](../../archive/02-research/game-inspiration/dossiers/grow-a-garden.md); `983ace1a4f48c6439efce268f4960eb0414e9925` | [x] Roblox subsection | Pending. Shared weather occasions, whimsical transformations with actual consequences, pleasure after abundance; copying, gifting, exchange and removal stay distinct. |
-| [x] | G06 — Steal a Brainrot | [steal-a-brainrot.md](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md); `905d2621afdc9257a29d128ccc6cf3a982d3d79c` | [x] Roblox subsection | Pending. Competitive possession and vulnerable return; declared duel stakes; multi-owner spatial rituals with consumed inputs; attachment can discourage participation. |
-| [x] | G07 — Fortnite | [fortnite.md](../../archive/02-research/game-inspiration/dossiers/fortnite.md); `067aaea54c57ea2915e57add813e8ae309733ea2` | [x] Fortnite | Pending. Performing a fixed musical part versus composing loops; credited reuse; coherent invitations; retained cosmetics do not preserve a retired activity. |
-| [x] | G08 — League of Legends | [league-of-legends.md](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md); `fb602c39cdf76cb4e8994133a2a1ca90f60909ef` | [x] League/Dota | Pending. Expiring observation; recipient-completed assistance; cultural musical identity; distinctive modes and historical revisions without inflated learning burden. |
-| [x] | G09 — Dota 2 | [dota-2.md](../../archive/02-research/game-inspiration/dossiers/dota-2.md); `71b54bfd2d18514a140d62106236f96bb713be76` | [x] League/Dota | Pending. Copying an operation without its entire identity; scheduled-return commitments; scoped temporary knowledge; authored lore versus the history of a particular match. |
-| [x] | G10 — Path of Exile | [path-of-exile.md](../../archive/02-research/game-inspiration/dossiers/path-of-exile.md); `351cb8f5c1d9a2de169ab4936e09f91cb95537a8` | [x] PoE/PoE2/Diablo IV | Pending. A scholar's specific request opens useful knowledge; composition prerequisites matter; rediscovery and first-time wonder differ from repeated unlock chores. |
-| [x] | G11 — Path of Exile 2 | [path-of-exile-2.md](../../archive/02-research/game-inspiration/dossiers/path-of-exile-2.md); `6bfb6c60d1710736f1b95c022b0fed92b09f79e5` | [x] PoE/PoE2/Diablo IV | Pending. An older musical theme becomes a person's song; distinct reversible and permanent commitments; understandable preparation and recovery choices. |
-| [x] | G12 — Diablo IV | [diablo-iv.md](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md); `03c37e1231742c9c8b2fb3c3498ef0eef0d6cc5a` | [x] PoE/PoE2/Diablo IV | Pending. Miracle-working authority versus martial credibility; quiet horror; oath-shaped practices; coordinated participation and visible regional history. |
-| [x] | G13 — Dreams | [dreams.md](../../archive/02-research/game-inspiration/dossiers/dreams.md); `496459af3f0d850e4e10fda19b54669718a8bef9` | [x] Dreams/Project Spark | Pending. A room, song or prop can contribute to a collective festival; personal memory can sustain a small playable artwork; attributed remixing and performance are distinct from whole-game authorship. |
-| [x] | G14 — Project Spark | [project-spark.md](../../archive/02-research/game-inspiration/dossiers/project-spark.md); `3934ad63ef4ec4ed08653205d2ae760aa9b4fee2` | [x] Dreams/Project Spark | Pending. Inspectable examples teach through adaptation; playable music invites reinterpretation; expressive performance differs from useful behavior; a creative practice can outlive its venue without preserving that venue's social world. |
-| [x] | G15 — Worlds Adrift | [worlds-adrift.md](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md); `2a44b9103591520499671fa97774cb60fbe2d626` | [x] Worlds Adrift | Pending. Cultural fragments and clothing connect material discovery with history; practical knowledge is not a spendable score; crew anecdotes need identifiable causes; farewell ritual honors but does not undo loss. Ship-piloting mechanics are not a fit for SC's seed boundary. |
-| [x] | G16 — Spore | [spore.md](../../archive/02-research/game-inspiration/dossiers/spore.md); `6e23ae735fda15f1282d3294f8c19b0027cb4a58` | [x] Spore | Pending. Prepared musical exchanges; history expressed differently at successive scales; authored responsive music; a recognizable copied form can develop another history without importing its original achievements. |
+| Dossier read | Game | Dossier / blob | Catalogue incorporation and source distinction |
+| --- | --- | --- | --- |
+| [x] | G01 — Hades II | [hades-ii.md](../../archive/02-research/game-inspiration/dossiers/hades-ii.md); `6d5d9cd105dc9fe6b95530c578a06d2e6549f940` | Pending. Particular causal credit; recurring social rituals after rewards; relationship music; narrative payoff distinct from combat satisfaction. Familiar help is not human multiplayer. |
+| [x] | G02 — Among Us | [among-us.md](../../archive/02-research/game-inspiration/dossiers/among-us.md); `2cbf4c328a2be1f5b5f4d7ecd02b564679a58b90` | Pending. Appearance, sensor identity and inference differ; truthful witnesses can draw wrong conclusions. Preserve discussion and bounded playful betrayal. |
+| [x] | G03 — Animal Crossing: New Horizons | [animal-crossing-new-horizons.md](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md); `b7b91a09b37cb2d4ef9f6c4e59f51a93478df0f7` | Pending. Visible collections, future-self letters, distinct hobbies, voluntary return and protected displays. Later improvements qualify dated launch criticism. |
+| [x] | G04 — Roblox | [roblox.md](../../archive/02-research/game-inspiration/dossiers/roblox.md); `8944781f4f1e9443d0d8a07a5a15ad2ff70cb272` | Pending. Shared place is not shared knowledge; portable identity is not portable power; finite works need not become attendance loops. A platform is not one game's rules. |
+| [x] | G05 — Grow a Garden | [grow-a-garden.md](../../archive/02-research/game-inspiration/dossiers/grow-a-garden.md); `983ace1a4f48c6439efce268f4960eb0414e9925` | Pending. Shared weather occasions, meaningful whimsical transformations and pleasure after abundance. Copying, gifting, exchange and removal differ; unresolved timings stay unresolved. |
+| [x] | G06 — Steal a Brainrot | [steal-a-brainrot.md](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md); `905d2621afdc9257a29d128ccc6cf3a982d3d79c` | Pending. Possession, vulnerable transit and secure return; declared duel stakes; multi-owner ritual commitments. Attachment can discourage risk-taking as well as encourage return. |
+| [x] | G07 — Fortnite | [fortnite.md](../../archive/02-research/game-inspiration/dossiers/fortnite.md); `067aaea54c57ea2915e57add813e8ae309733ea2` | Pending. Performing a fixed part versus composing reusable loops; credited reuse and mode-specific promises. Retained cosmetics do not preserve a retired activity. |
+| [x] | G08 — League of Legends | [league-of-legends.md](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md); `fb602c39cdf76cb4e8994133a2a1ca90f60909ef` | Pending. Expiring observation, recipient-completed assistance and cultural musical identity. Historical reinterpretation differs from an unchanged archive; mastery can become a learning burden. |
+| [x] | G09 — Dota 2 | [dota-2.md](../../archive/02-research/game-inspiration/dossiers/dota-2.md); `71b54bfd2d18514a140d62106236f96bb713be76` | Pending. Copy an operation, not an entire identity; preserve exclusions, dependencies and scheduled return commitments. Authored lore differs from a particular match's history. |
+| [x] | G10 — Path of Exile | [path-of-exile.md](../../archive/02-research/game-inspiration/dossiers/path-of-exile.md); `351cb8f5c1d9a2de169ab4936e09f91cb95537a8` | Pending. A scholar's request opens useful knowledge; composition has prerequisites; first discovery differs from repeated unlock chores. Keep the original and sequel rules separate. |
+| [x] | G11 — Path of Exile 2 | [path-of-exile-2.md](../../archive/02-research/game-inspiration/dossiers/path-of-exile-2.md); `6bfb6c60d1710736f1b95c022b0fed92b09f79e5` | Pending. An old musical theme becomes a person's song; reversible and permanent commitments differ. Pausing a trial changes scheduling burden, not its result. |
+| [x] | G12 — Diablo IV | [diablo-iv.md](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md); `03c37e1231742c9c8b2fb3c3498ef0eef0d6cc5a` | Pending. Miracle-working authority versus martial credibility; quiet horror and oath-shaped practice. Consensual cooperation, demon subjugation and conditional mercenary help are distinct. |
+| [x] | G13 — Dreams | [dreams.md](../../archive/02-research/game-inspiration/dossiers/dreams.md); `496459af3f0d850e4e10fda19b54669718a8bef9` | Pending. One room, song or prop can contribute to a collective festival; personal memory can sustain a small work. Reusable art, editable access, public credit and an audience are separate outcomes. |
+| [x] | G14 — Project Spark | [project-spark.md](../../archive/02-research/game-inspiration/dossiers/project-spark.md); `3934ad63ef4ec4ed08653205d2ae760aa9b4fee2` | Pending. Inspectable examples teach through adaptation; playable music invites reinterpretation; expressive performance differs from useful behavior. Local survival does not preserve a vanished social venue. |
+| [x] | G15 — Worlds Adrift | [worlds-adrift.md](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md); `2a44b9103591520499671fa97774cb60fbe2d626` | Pending. Cultural fragments and clothing connect discovery with history; practical knowledge is not a spendable score; farewell ritual honors but does not undo loss. Ship piloting does not fit SC. |
+| [x] | G16 — Spore | [spore.md](../../archive/02-research/game-inspiration/dossiers/spore.md); `6e23ae735fda15f1282d3294f8c19b0027cb4a58` | Pending. Prepared musical exchanges, authored responsive music and history at successive scales. Copied form does not import achievements or friendships. Later detailed correction rejects native branching dialogue. |
 
-**Dossier count in this continuation: 16 complete; 0 partial.** G17–G148 and both additional D&D dossiers remain unread. Source/index navigation reads do not increase this count. No catalogue incorporation is marked complete.
+**16 complete dossiers; 0 partial.** G17–G148 and both additional D&D dossiers remain unread in this continuation. No catalogue incorporation is marked complete.
 
 ## Supplementary reading
 
-| Read | Source | Blob / boundary |
+| Read | Chapter | Exact blob / limit |
 | --- | --- | --- |
-| [x] | [Hades/Hades II chapter](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md) | `da91b62e0880ca4c551469250863c426180aa82c`; full pair chapter and Hades I field guide. Does not complete G22's dossier. |
-| [x] | [Among Us/Lethal Company chapter](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md) | `7b24ba8b070c4bc075afc69ec769535fc7f506a9`; full pair chapter and Lethal Company field guide. Does not complete G38's dossier. |
-| [x] | [Animal Crossing chapter](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md) | `7f828b57b44d0e2246022ec58060a8da67f6a9e7`; full text, including its earlier lower-depth evidence qualification. |
-| [x] | [Roblox chapter](../../archive/02-research/game-inspiration/games/roblox.md) | `01436ea6d43328df9dee219b35382bdddb0e02b8`; full platform, Grow a Garden and Steal a Brainrot sections; their independent dossiers are separately checked above. |
-| [x] | [Fortnite chapter](../../archive/02-research/game-inspiration/games/fortnite.md) | `81d39c58a9ba8955942c022e2475a2dcbec03fb7`; full text, including the unresolved ranking and earlier reception-evidence limits. |
-| [x] | [League/Dota chapter](../../archive/02-research/game-inspiration/games/league-of-legends-and-dota-2.md) | `1ea289a94587ce5cfb45e01dcc008f122707ab85`; full comparison, with the games' evidence kept distinct. |
-| [x] | [PoE/PoE2/Diablo IV chapter](../../archive/02-research/game-inspiration/games/path-of-exile-path-of-exile-2-and-diablo-iv.md) | `f29d6eb0521e58c72d954e7be790064b6932de05`; full comparison; the three dossiers are independently checked above. |
-| [x] | [Dreams/Project Spark chapter](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md) | `8f21d97465e113e544f960eecbfd5d0f39ebff2b`; full comparison. Both independent dossiers, their embedded detailed studies and additional annotations were also read completely. |
-| [x] | [Worlds Adrift chapter](../../archive/02-research/game-inspiration/games/worlds-adrift.md) | `97744625c91a16611c6856fd95ad3a377842ffe7`; full text. Its OpenLegend development-save policy sentence is outdated relative to current root guidance; see the integration note below. |
-| [x] | [Spore chapter](../../archive/02-research/game-inspiration/games/spore.md) | `850f45fdba5755be8b4c5a2a37396c3df882b205`; full text. The independent dossier's embedded detailed studies and complete annotated registers were also read. |
-| [ ] | Associated mechanics studies, comparative essays, remaining chapters and supporting research | Pending. No blanket supplementary-reading completion is claimed. Hades I's mechanics study must not be attributed to Hades II. |
+| [x] | [Hades/Hades II](../../archive/02-research/game-inspiration/games/hades-and-hades-ii.md) | `da91b62e0880ca4c551469250863c426180aa82c`; does not complete G22's dossier or the separate Hades I mechanics study. |
+| [x] | [Among Us/Lethal Company](../../archive/02-research/game-inspiration/games/among-us-and-lethal-company.md) | `7b24ba8b070c4bc075afc69ec769535fc7f506a9`; does not complete G38's dossier. |
+| [x] | [Animal Crossing](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md) | `7f828b57b44d0e2246022ec58060a8da67f6a9e7`. |
+| [x] | [Roblox](../../archive/02-research/game-inspiration/games/roblox.md) | `01436ea6d43328df9dee219b35382bdddb0e02b8`; includes both G05/G06 sections. |
+| [x] | [Fortnite](../../archive/02-research/game-inspiration/games/fortnite.md) | `81d39c58a9ba8955942c022e2475a2dcbec03fb7`. |
+| [x] | [League of Legends/Dota 2](../../archive/02-research/game-inspiration/games/league-of-legends-and-dota-2.md) | `1ea289a94587ce5cfb45e01dcc008f122707ab85`. |
+| [x] | [PoE/PoE2/Diablo IV](../../archive/02-research/game-inspiration/games/path-of-exile-path-of-exile-2-and-diablo-iv.md) | `f29d6eb0521e58c72d954e7be790064b6932de05`. |
+| [x] | [Dreams/Project Spark](../../archive/02-research/game-inspiration/games/dreams-and-project-spark.md) | `8f21d97465e113e544f960eecbfd5d0f39ebff2b`; both dossiers' embedded studies and annotations also read. |
+| [x] | [Worlds Adrift](../../archive/02-research/game-inspiration/games/worlds-adrift.md) | `97744625c91a16611c6856fd95ad3a377842ffe7`; see stale project-policy reference below. |
+| [x] | [Spore](../../archive/02-research/game-inspiration/games/spore.md) | `850f45fdba5755be8b4c5a2a37396c3df882b205`; dossier's embedded studies and full registers also read. |
+| [ ] | Other chapters, separate mechanics studies, comparative essays, reference appendices and supporting research | Pending. A dossier's embedded study does not silently complete a separately stored manuscript. |
 
-## Source-specific incorporation cautions
+## Assigned catalogues and shared guidance
 
-**G01:** familiar assistance is not human multiplayer; authored reactions are not open-ended cognition. Ongoing intimacy can remain worthwhile after a meter is filled. Movement/charging friction, material overload, random unlock opportunities and ending dissatisfaction are distinct. Potential transfers: credit the actual contributor in a chronicle; retain an enjoyable recurring observance after its first reward; let changed musical performance express a changed relationship. These are pending original proposals, not source-established OpenLegend behavior.
+All four assigned catalogues were freshly read in full at the reading snapshot. These are **existing inventories**, not new entries authored by this continuation.
 
-**G02:** a truthful eyewitness can support a mistaken conclusion when appearance can change. A sensor can record a different property without becoming a complete causal account. Preserve discussion rather than replacing it with automatic certainty; optional role complexity should not make low-input participation worthless. Potential transfer: a festival deduction game whose testimony survives disappearing stage evidence, with clearly bounded losses and an explicit end to the fiction.
-
-**G03:** preserve launch criticisms as dated history rather than repeating them as current defects; the dossier records later batch-crafting and separate creative spaces. A photograph, living specimen, furnishing and museum donation offer different rewards. Future-self letters are an attributed player practice, not an official quest. Quiet recurring pleasure needs no compulsory optimization score.
-
-**G04:** one platform is not one game's rules, audience or economy. A player-scoped clue is not automatically known to companions standing nearby. Finite artistic experiences may conflict with incentives to maximize repeat attendance. Reusable art can have dependencies and local adaptations without making every new performance a copy of the original.
-
-**G05:** the dossier preserves unresolved Raccoon timing and trade-threshold disagreements; do not invent a canonical live build. Copying another's produce, receiving a gift, agreeing a trade and losing an object are different experiences. A solved accumulation loop may reveal either welcome time for social pleasure or a missing purpose; more grind is not an automatic answer to either.
-
-**G06:** keep the thrill of competition as well as its costs. Possession, transit and secure arrival are distinct; an agreed-stakes duel is not the same promise as unexpected public theft. Cooperative formation can consume several people's assets and therefore needs an intelligible commitment. A critic's reluctance to return after acquiring treasured objects is a counterexample to assuming attachment always increases attendance. Conflicting formula notation, slot maxima and event availability remain uncertain.
-
-**G07:** a reusable musical loop, a performed instrument part and a cosmetic instrument are different contributions. Credited blueprint reuse can reduce manipulation without erasing authorship. Separate each mode's loss, permanence and audience promise. An available tool or retained appearance does not establish that a retired activity remains playable; a model's structured response does not prove an event actually occurred.
-
-**G08:** an assistance invitation succeeds only when the recipient can actually use it. Vision has a source and expiry; recent observation is not prediction. Music can express kinship and identity without changing combat numbers. Keep historical-mode reinterpretation separate from an unchanged archived game, and preserve the contrast between rewarding mastery and an exhausting need to relearn the catalogue.
-
-**G09:** spell copying retains explicit exclusions and destination dependencies rather than transferring an entire person. A rescue with a scheduled return creates an additional commitment. Team-shared vision is not a private-belief simulation. Authored character lore and a particular competitive episode are separate kinds of history; neither overwrites the other automatically.
-
-**G10:** preserve the original game's rules independently from the sequel. The optional library request connects a scholar, a discoverable place and build-enabling knowledge; its first discovery and repeated unlock cost can have different appeal. A powerful composition can undermine its own supporting resource model. The dossier's dated socket, companion-loss and Atlas corrections prevent old constraints being mistaken for current ones.
-
-**G11:** the sequel's ordinary equipment sockets, permanent Socket-bound Augments and movable skill supports imply different commitments. A familiar currency name does not preserve the original game's operation. Trial pausing changes a real-life scheduling burden rather than declaring the encounter won. Una's reuse of an earlier theme is a specific attributed production example of musical continuity becoming personal expression, not an independent listening analysis or a proposed copy of that song.
-
-**G12:** keep consensual cooperation, hostile demon subjugation and conditional mercenary assistance distinct. A miracle-working claimant can gain public trust that a successful fighter lacks; the critic's interpretation of an authored campaign is not proof of an unrestricted social simulation. Empty space and carefully selected sound can produce horror without constant combat. Updates to party progression and restored SSF availability qualify earlier criticisms rather than erasing that history.
-
-**G13:** a reusable component, a playable work, editable access, public credit and an audience are different outcomes. The collective haunted-house event shows bounded rooms and props gaining a shared destination. Art's Dream connects contrasting play styles through one musician's memories, pride and relationships; Tren connects a toy railway with personal history and meaningful cargo choices. A performance recorded for playback must not be mistaken for live contingent interaction. Preserve local artistic changes when adopting a revised shared component. Ending feature development, ending staffed curation and closing access are separate events; no single absent feature is proven to explain the platform's commercial trajectory.
-
-**G14:** distinguish a remake, a credited derivative, an editable original and a preserved performance. Conker's adult comic episode and the playable music collaboration supply particular audience invitations, not proof that every visitor wants to author. A helper's useful condition and its recorded gesture are independent; a transformation needs an ending as well as an entrance. Contemporary claims of collaborative Xbox creation do not establish delivered PC multiplayer. A rebuilt game can preserve an idea and learned skill without being an export of the original executable.
-
-**G15:** keep the joy of piracy, crew coordination, extraordinary movement and quiet discovery alongside evidence that repeated destruction prevents some people establishing a home. Later hybrid PvE rules qualify earlier claims that such boundaries were impossible. Codex fragments and culturally named clothes provide another kind of reward beyond engineering; their descriptions do not automatically confer protective statistics. A farewell ceremony recognizes attachment but does not restore an inaccessible world. The original game, separate successor and partial community reconstruction remain distinct.
-
-**G16:** an expressive body, a rated capability and a physical contact affordance are different things. Repeated skill parts do not grant unlimited strength; a cosmetic spaceship does not inherit weapons from its silhouette. Musical diplomacy involves prepared instrument roles and a response sequence, which can be either delightful or repetitive depending on the selected activity. Stage-history categories do not remember particular friends. A downloaded Captain keeps form without the original achievements; a local copy can acquire another history. Galactic Adventures' later detailed correction says native branching dialogue is absent despite the earlier overview's claim. Retargeted animation and responsive music retain authored intent. Preserve the pleasure of visual invention without pretending it establishes unlimited functional simulation or scientific evolution.
-
-## Worldbuilding and shared reading
-
-The existing [history coverage note](history-myth.md#research-coverage) records an earlier complete reading of 39 worldbuilding documents at `b387e7caeda5cec301045b877ca50a2815a869dd` and the four seed proposals/shared guidance at `2bb10759c263cf29a3de0f25bb3595e49420006f`. The earlier worldbuilding reading is **inherited checkpoint evidence**, not a claim of fresh reading of those full research documents in this continuation. New or revised worldbuilding material still needs comparison and reading.
-
-This continuation has freshly read root `AGENTS.md`, `.agents/rules/documentation.md`, the repertoire README classifications/ownership, the complete `design-foundation.md` (`f5d91e8a242f5fc9faa2d9b679d6d4a9d31fd594`), `selection-and-scale.md` (`5389e77d68f26b0458ffebad8a8cc44441c7317a`), `combinations.md` (`a7b4dbe2f0b9e21943fc594fa57b592e522e7d17`), and the sixteen complete dossiers and ten complete chapters listed above. `actions.md` has been read through line 95 and remains partial. The opening source-atlas navigation and portions of the research index, roster and correction ledger were read but remain incomplete. Neighboring scopes, full assigned-catalogue reading and fresh worldbuilding research remain pending. No full-corpus certification is made.
-
-### Fresh seed-proposal reading
-
-All four full proposals were read at the checkout snapshot, including their casts, initial scenarios and final boundary sections. These are original OpenLegend proposals, not additional external-world dossiers.
-
-| Read | Proposal | Blob | Boundary carried into Group 6 |
+| Read | Catalogue | Existing entries | Exact blob |
 | --- | --- | --- | --- |
-| [x] | [MD — Threewater March](worlds/medieval-survival.md) | `c1429138c02a5bda2aeeed6904659c7cc5049748` | No starting firearms or assumed supernatural intervention. A documented warning, effective rescue and religious interpretation are separate claims. |
-| [x] | [MO — Linden Reach](worlds/modern-life.md) | `62bebdb084a1dcab91612c0ea8f8c0bc525ea1fa` | Contemporary authored city; exhibitions, sport, romance, everyday hobbies and finite achievements stand alongside rivalry and crime. Fictional interfaces grant no real account access. |
-| [x] | [SC — Veyra Reach](worlds/planetary-scifi.md) | `592aa0c65996fe1095a8841255a75bd4c222d05b` | No playable flight/navigation; ships are inhabited places with abstract transitions. Tactile or mantle expression is not telepathy or perfect emotional truth. Belief does not settle synthetic identity rules. |
-| [x] | [FA — The Borrowed Dawn](worlds/living-fantasy.md) | `c31b69aaf67e7de41f670e33bd6e5742c847b5c6` | First arc uses finite warmth transfer and leaves gods unresolved. Echoes and other traditions need explicit later selection; Echoes does not reveal a perfect unobserved past. |
+| [x] | [History and myth](history-myth.md) | 208; HMY001–HMY208 | `80559afd32542c94971b292b6f2c09e843671ba3` |
+| [x] | [Faith and ritual](faith-ritual.md) | 224; FTH001–FTH224 | `ac114734c5d65cd2731c877fc17d53bbaaf40503` |
+| [x] | [Languages and knowledge](languages-knowledge.md) | 224; LKN001–LKN224 | `b9bad49828e73fa3d09c675bcfdf0305014b9ee0` |
+| [x] | [Arts and leisure](arts-leisure.md) | 240; ARL001–ARL240 | `d02860eff5a2f2d37143e9eb37a34a019537bb52` |
+
+**896 existing selectable entries.** Full reading includes the retained introductory cards, every inventory row, reference definitions and coverage notes. HMY003 and HMY148 are a candidate for sharper differentiation: both currently concern scarcity-era food becoming beloved; preserve IDs and make their historical consequences distinct rather than add another synonym.
+
+Fresh shared reading: root `AGENTS.md`, `.agents/rules/documentation.md`, README classifications/ownership, complete `design-foundation.md` (`f5d91e8a242f5fc9faa2d9b679d6d4a9d31fd594`), `selection-and-scale.md` (`5389e77d68f26b0458ffebad8a8cc44441c7317a`), `combinations.md` (`a7b4dbe2f0b9e21943fc594fa57b592e522e7d17`) and **complete `actions.md`** (`1f9fcbb5244afd399297f1e6399554764ffa2208`), including all 384 examples, combinations and the final authoring template. The opening source-atlas navigation and portions of research indexes, roster and correction ledger remain partial.
+
+Relevant neighboring scope/coverage sections read, not their complete inventories: Magic 1–42; Abilities 1–34; Work 1–38; Institutions 1–33; Relationships 1–34; Technology 1–34; Objects 1–36; Bodies 1–33; Adventure 1–34; Mechanics 1–33; Combat 1–34. These establish the references needed for owned cultural practices without moving equipment, powers, production, training, offices or attack resolution into Group 6.
+
+## Fresh seed-proposal reading
+
+All four complete proposals, including casts, initial scenarios and final boundaries, were read at the reading snapshot. They are OpenLegend proposals, not additional external-world dossiers.
+
+| Read | Proposal | Exact blob | Relevant boundary |
+| --- | --- | --- | --- |
+| [x] | [MD — Threewater March](worlds/medieval-survival.md) | `c1429138c02a5bda2aeeed6904659c7cc5049748` | No starting firearms or assumed supernatural intervention. A verified warning and its religious interpretation remain different claims. |
+| [x] | [MO — Linden Reach](worlds/modern-life.md) | `62bebdb084a1dcab91612c0ea8f8c0bc525ea1fa` | Contemporary authored city; ordinary hobbies, exhibitions and finite achievements coexist with rivalry and crime. Fictional interfaces grant no real account access. |
+| [x] | [SC — Veyra Reach](worlds/planetary-scifi.md) | `592aa0c65996fe1095a8841255a75bd4c222d05b` | No playable flight/navigation; ships are inhabited places with abstract transitions. Unfamiliar expression is not telepathy or perfect emotional truth. |
+| [x] | [FA — The Borrowed Dawn](worlds/living-fantasy.md) | `c31b69aaf67e7de41f670e33bd6e5742c847b5c6` | First arc uses finite warmth transfer and leaves gods unresolved. Other traditions require explicit selection; Echoes does not reveal a perfect unobserved past. |
+
+## Worldbuilding research
+
+The earlier catalogues record 39 worldbuilding manuscripts read at `b387e7caeda5cec301045b877ca50a2815a869dd`, plus earlier game essays and mechanics reading. Arts also records an earlier eight-game reading pass. These are **inherited checkpoint evidence**, not fresh readings by this continuation. The fresh complete-worldbuilding count here is still **0**; new and revised material, including D&D, remains pending. Earlier source links are retained without silently certifying their manuscripts as freshly read.
 
 ## Integration note
 
-The Worlds Adrift dossier's persistence discussion and the earlier chapter describe OpenLegend as rejecting or discarding incompatible development saves. At this checkout, root `AGENTS.md` instead routes to `docs/save-and-load.md#active-development-policy` and requires evolving development worlds in place with safe migrations, preserving identity and unrelated state and never automatically resetting a world. Do not import the research's outdated project-policy assertion into these catalogues. Shared research is read-only for this task; its owner should reconcile those references against the current policy. This note changes no runtime contract or acceptance criterion.
+The Worlds Adrift dossier and chapter describe OpenLegend as rejecting or discarding incompatible development saves. At the reading snapshot, root `AGENTS.md` instead routes to `docs/save-and-load.md#active-development-policy` and requires evolving development worlds in place with safe migrations, preserving identity and unrelated state and never automatically resetting a world. Do not import the outdated project-policy assertion. Shared research is read-only here; its owner should reconcile those references. This changes no runtime contract or acceptance criterion.
 
 ## Resume
 
-Next unread rostered game: **G17 — No Man's Sky**. Complete corpus discovery, the outstanding shared/cross-reference reading, fresh world studies and remaining supplementary research. Turn completed source readings into additions or substantive improvements in the four assigned catalogues; no incorporation has yet been marked complete. Preserve every existing inventory ID and linked heading. Keep all other groups' catalogues, shared research documents, world proposals, shared trackers and the changelog unchanged. Record any integration-owner updates in the handoff.
+Next unread game: **G17 — No Man's Sky**. Finish current-corpus discovery and revision comparisons, read remaining game and world manuscripts and supplements, and incorporate the research into the four owned inventories. No catalogue changes or completed incorporation are claimed at this checkpoint. Preserve all existing IDs and native linked headings. Shared atlas, README counts, other groups' catalogues, research files, world proposals, trackers and changelog remain unchanged; hand their needed updates to the integration owner.
