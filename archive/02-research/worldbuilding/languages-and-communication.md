@@ -1,108 +1,116 @@
-# Languages and communication: a world heard, named, and interpreted
+# Languages and communication: a world heard, named, performed, and disputed
 
-Language can make a world feel old, divided, intimate, unfamiliar, or socially precise. These effects do not all require the same invention. This essay distinguishes constructed languages from scripts, naming systems, registers, translation conventions, and the social control of speech. It compares the [world dossiers](README.md), whose primary-work anchors and continuity boundaries remain authoritative for the examples.
+Reconciled on 2026-09-27 against the [29 revised dossiers](README.md). Language can communicate history, belonging, affection, pleasure, rank, uncertainty, or menace. These effects do not require the same invention. The dossiers own primary-work anchors, versions, and access limits; this essay compares their mechanisms rather than reconstructing a grammar or claiming fluency.
 
-## 1. A language, a script, and a collection of names are different things
+## 1. A language, a script, and a collection of names differ
 
-A convincing visual inscription is not evidence of a complete spoken language. A vocabulary is not a full account of grammar. A named language in a story may remain almost entirely unspecified. Conversely, a work using the audience's ordinary language can develop exceptionally rich distinctions of voice and social meaning.
+A visual inscription is not evidence of a complete spoken language. A vocabulary is not a grammar. A named language can remain almost unspecified. Conversely, ordinary language can carry remarkably detailed distinctions of voice and relationship.
 
-The dimensions are separable:
-
-| Dimension | What it concerns | What it can contribute to a fictional world |
+| Dimension | What it concerns | Possible contribution |
 |---|---|---|
-| Sound patterns | Which sounds and combinations recur | Recognizable relationships among names and voices; a sense of regional or historical difference. |
-| Grammar | How words change form and combine into expressions | Reusable linguistic structure rather than isolated invented phrases. |
-| Vocabulary | What expressions are available in the represented material | Occupations, rituals, ecological knowledge, distinctions people repeatedly need to make. |
-| Writing | How language is represented visually | Archives, inscriptions, education, public authority, and differences between spoken and written access. |
-| Social usage | Who speaks how, to whom, and under what conditions | Belonging, courtesy, intimidation, intimacy, rank, and exclusion. |
-| Historical variation | How usage differs across periods and communities | Migration, conquest, inheritance, forgotten origins, prestige, and local memory. |
+| Sound patterns | Recurring sounds and combinations | Recognizable relationships among names and voices. |
+| Grammar | How forms change and expressions combine | Reusable linguistic structure rather than isolated phrases. |
+| Vocabulary | Which distinctions receive expressions | Work, ritual, ecological knowledge, recurring practical needs. |
+| Writing | Visual representation | Archives, public authority, education, and access. |
+| Social usage | Who speaks how, to whom, and when | Courtesy, intimacy, intimidation, humor, affiliation, and exclusion. |
+| Historical variation | Change across periods and communities | Migration, inheritance, prestige, conquest, and memory. |
 
-This is an analytical inventory, not a requirement that every dossier supply all six equally. Arden Smith's account of Tolkien's writing systems explicitly distinguishes scripts from the languages they represent, including the use of invented scripts for English. That is a concrete reason not to equate an unfamiliar alphabet with an unfamiliar grammar. [L1]
+This is a set of distinctions, not six quotas for every world. Arden Smith's account explicitly separates Tolkien's writing systems from the languages they represent, including uses for English. An unfamiliar alphabet therefore does not establish unfamiliar grammar. [L1]
 
-## 2. Two histories can inhabit the same invented language
+D&D's Elvish discussion is differently bounded: Baker offers an explicitly personal metaphysical interpretation rather than a complete published grammar. The existence of interesting linguistic consequences does not make it the same type of achievement as Tolkien's extended language construction. [D&D](worlds/29-dungeons-and-dragons.md).
 
-Tolkien's languages have a history within Middle-earth and a separate history of Tolkien revising his conception. Hostetter emphasizes both, including the absence of a final, immutable linguistic system. A fictional sound change and an author's altered idea are therefore different kinds of evidence even when they affect the same published expression. [L2]
+## 2. An invented language can have two histories
 
-The literary effect extends beyond a specialist's ability to reconstruct grammar. A name can retain a history that current inhabitants do not fully know. An older form can survive in a title, song, or place while ordinary speech changes around it. A person may speak a language learned for scholarship or reverence rather than the language of childhood. These relationships make history audible without requiring every reader to master it. [Middle-earth](worlds/01-middle-earth.md).
+Hostetter distinguishes language change within Middle-earth from Tolkien's actual revisions. Neither should be treated as a final immutable system. A fictional sound change, an editorial decision, and a later scholar's reconstruction are different evidence even when they concern the same expression. [L2]
 
-The same distinction protects adaptation research. A novel may establish that characters speak Dothraki without supplying the extensive linguistic material later developed for television. The later construction is a consequential creative contribution, not proof that every earlier page contained an already completed hidden grammar. [Westeros](worlds/10-a-song-of-ice-and-fire.md).
+The effect does not depend on every reader reconstructing grammar. A place-name can outlive a kingdom; a formal address can preserve a language learned for scholarship or reverence; a song can carry words no longer used in everyday conversation. History becomes audible before its complete explanation is available. [Middle-earth](worlds/01-middle-earth.md).
 
-A world's linguistic history also need not mirror a neat political map. Diaspora, education, mixed households, trade, and ritual can place several forms of speech within one community. The dossiers often leave these arrangements suggestive rather than complete; the research does not fill those gaps by inventing a universal language policy.
+Adaptations introduce further authorship. Martin's novels naming Dothraki is not the same as the later television construction. A sound performed on screen can give specificity that an earlier text did not provide. The later contribution should be credited without implying that it already existed fully formed in the novel. [Westeros](worlds/10-a-song-of-ice-and-fire.md).
 
-## 3. Performance and use can enlarge the original construction
+A language map also need not coincide with a political map. Trade, education, migration, ritual, and mixed households can create overlapping speech communities. Where the selected works only suggest these arrangements, the research should leave them suggestive rather than invent a complete national language policy.
 
-Marc Okrand describes beginning with the needs of particular scripts and existing Klingon sounds, then expanding the language as later works developed the culture. He also identifies a feedback relationship with performance and with people using the language beyond the original film dialogue. The interview supplies a history of actual creative use, not a claim that every depicted alien language is equally developed. [L3]
+## 3. Use, performance, and collaboration enlarge a construction
 
-That history reveals several authors of apparent consistency: the person constructing linguistic forms, the writer deciding what must be said, the performer embodying it, and later users who expose missing distinctions. A polished fictional encounter can conceal those stages of collaboration.
+Okrand describes beginning with script needs and existing Klingon sounds, then expanding the language through later cultural development, performance, and users beyond the original films. This is evidence of a process rather than proof that every Star Trek language is equally elaborated. [L3]
 
-There is also a caution. An association between a fictional people's vocal style and a cultural stereotype should not be turned into a general rule about real languages or their speakers. A harsh sound does not establish a violent morality; a brief sentence does not establish limited intelligence. The analysis concerns artistic presentation and its risks, not biological or linguistic determinism.
+The writer selecting an utterance, the language constructor, the performer, and later speakers can each contribute to apparent consistency. A finished encounter can conceal those stages. Likewise, Star Wars often conveys a droid's objection through sound, gesture, and a companion's answer, giving the viewer understanding without literal access to every utterance. [Star Wars](worlds/03-star-wars.md).
 
-In Star Wars, many communicative encounters rely less on complete grammar than on sound, gesture, response, and context. A viewer may infer a droid's objection from how a companion answers it. The result can be comprehensible while preserving the sense that the viewer does not directly possess every language in the room. [Star Wars](worlds/03-star-wars.md).
+Such choices have limits. A harsh sound does not establish a speaker's cruelty; brevity does not establish low intelligence. Accent, translated register, and an invented people's moral nature should not be silently treated as the same thing. The relevant issue is how the work presents difference and whether it allows individuality, not a real-world rule connecting sounds to character.
 
-## 4. Translation of words is not necessarily translation of a situation
+## 4. Translating words does not settle an encounter
 
-“Darmok” makes an unusually clear fictional distinction between recognizable words and inaccessible cultural references. Picard has to learn what an utterance is doing, not merely replace it with a dictionary equivalent. The official retrospective provides a scene-level check on the episode; its acclaim is not used here as a measured audience conclusion. [L4]
+“Darmok” distinguishes recognizable words from inaccessible cultural references. Picard must learn what an utterance does within a shared frame. The officially hosted retrospective supports the episode's central encounter; it does not make the premise a demonstrated model of a complete natural language. Questions about technical communication and novel information remain legitimate. [L4; Star Trek](worlds/04-star-trek.md).
 
-The episode is not a demonstrated model of a complete natural language. Questions about how the society communicates novel technical information remain legitimate. Its strength is a dramatic thought experiment about shared experience and reference, not proof that its premise exhaustively explains an interstellar civilization. [Star Trek](worlds/04-star-trek.md).
+Austen offers less spectacular failures of understanding. Someone can understand every word while mistaking courtesy for agreement or flattery for insight. Stringer's business vocabulary does not provide reliable membership in the institutions he wants to enter. Linguistic fluency and social judgment remain different resources. [Austen](worlds/23-austens-social-worlds.md); [The Wire](worlds/21-the-wire.md).
 
-Other works make the difference less spectacular. An Austen character may understand every word and still mistake a warning for flattery or courtesy for agreement. Stringer's business vocabulary does not grant him secure membership in the institutions he wants to enter. In both cases, linguistic fluency and social understanding are different resources. [Austen](worlds/23-austens-social-worlds.md); [The Wire](worlds/21-the-wire.md).
+Nor is mutual comprehension a guarantee of compatible aims. The Master's objective becomes more vulnerable when its logic is understood, not more acceptable. Sisko's forged evidence aims to manufacture belief rather than mutual recognition. Communication can enable help, deception, bargaining, resistance, or defeat; its value is not confined to reconciliation. [Fallout](worlds/28-fallout.md); [Star Trek](worlds/04-star-trek.md).
 
-Translation can also move power. Whoever interprets a message can decide which uncertainty to preserve, which implication to explain, and whose perspective becomes normal. The selected works do not always dramatize professional interpreters in detail, so this is an interpretive question to ask of represented encounters, not a claim that every universe contains a fully specified translating profession.
+Interpreters and intermediaries also decide which uncertainty to preserve and whose perspective seems normal. Not every dossier develops a professional interpreting institution, so this remains a question where evidence is thin, not a claim that all these worlds fully dramatize it.
 
-## 5. Names are relationships, not only labels
+## 5. Names belong to relationships as well as individuals
 
-Earthsea makes disclosure of a true name a form of vulnerability and trust. Spirited Away makes the loss and recovery of a name part of an employment relation and a remembered connection to place. The two worlds do not share one magical rule; they make different social meanings of naming materially consequential. [Earthsea](worlds/11-earthsea.md); [Spirited Away](worlds/25-spirited-away.md).
+Earthsea's true names make disclosure consequential; Spirited Away links loss of a name to employment and recovery to remembered place. These are not one shared magic rule. They connect naming to different kinds of knowledge, vulnerability, and trust. [Earthsea](worlds/11-earthsea.md); [Spirited Away](worlds/25-spirited-away.md).
 
-Names can also work without magic. Geralt's adopted designation participates in public credibility before later events complicate it. A Westerosi surname publicly situates a child within a hierarchy. Repeated names in Macondo invite comparison across lives without making those lives identical. Naming connects private biography to the ways strangers can interpret and act upon a person. [The Witcher](worlds/07-the-witcher.md); [Westeros](worlds/10-a-song-of-ice-and-fire.md); [Macondo](worlds/24-macondo.md).
+A name can operate socially without magic. Geralt's designation participates in public credibility; a Westerosi surname assigns status; Macondo's repeated names invite comparison without making each life identical. A nickname, private joke, or deliberate formality can preserve a history few outsiders know. The depth lies in how someone may act on the name, not merely its exotic sound. [The Witcher](worlds/07-the-witcher.md); [Westeros](worlds/10-a-song-of-ice-and-fire.md); [Macondo](worlds/24-macondo.md).
 
-Titles require recognition. Calling oneself a king, an officer, a scholar, or a prophet is not equivalent to being accepted as one. Different communities can recognize different portions of the same identity. This is why a change of address can be dramatic: the words announce a changed relationship rather than simply conveying another fact.
+Titles require recognition. Tamriel's different endorsements are not interchangeable merely because a visitor claims one heroic identity. A school champion's public standing, a guild's qualification, and a religious office also identify different relationships to an audience. A change in address can therefore announce an achieved social change without a new physical power. [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Wizarding World](worlds/02-wizarding-world.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-At a smaller scale, a nickname, private joke, or deliberately formal address can preserve a history shared by only a few people. Language supplies depth when an expression means more within that relationship than it would mean to a stranger reading a glossary.
+That recognition need not be morally complete. A title can be obtained by a lethal duel or maintained by a misleading account. Accurate analysis separates the public status from the conduct that produced it.
 
-## 6. Literacy determines who can make the past usable
+## 6. Archives make the past available—and contestable
 
-One Piece makes the capacity to read historical inscriptions politically dangerous. The Elder Scrolls gives competing written genres different claims to authority. Foundation lets scientific knowledge become an inherited prestige that may outlast understanding. In these cases the question is not merely whether writing exists, but who is allowed or able to interpret it. [One Piece](worlds/14-one-piece.md); [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Foundation](worlds/16-foundation.md).
+One Piece makes historical literacy dangerous. Tamriel's written genres compete for authority. Foundation connects specialized knowledge to prestige and dependence. An archive's significance is not just that many books exist, but that reading can alter exposure, credibility, or a future choice. [One Piece](worlds/14-one-piece.md); [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Foundation](worlds/16-foundation.md).
 
-Documents also preserve institutional voice. A sermon, letter, official guide, advertisement, and private record can describe the same society differently. Fallout's reassuring public language becomes more revealing when it is encountered beside the material or recorded consequences of institutional conduct. The contradiction requires the reader to compare sources rather than accept the first authoritative tone. [Fallout](worlds/28-fallout.md).
+Documents retain voices. A sermon, advertisement, private letter, and official report can describe one society differently. Fallout's reassuring institutional language is tested against surrounding records and material traces rather than accepted because of its tone. A reader becomes a participant in comparison instead of simply collecting approved facts. [Fallout](worlds/28-fallout.md).
 
-Macondo's insomnia plague makes the relation between naming and practical knowledge especially vivid. Labels are an attempt to preserve the world, but remembering a name alone does not guarantee knowing how an object participates in life. Later official denial shows the converse danger: people can retain an experience while the public language makes it difficult to share as recognized history. [Macondo](worlds/24-macondo.md).
+Macondo's insomnia plague makes labels' limits visible: a name alone may not preserve knowledge of use. Later official denial shows a different failure, when experience survives but public language denies it recognition. The two are not interchangeable metaphors; one concerns the threatened practical memory of a community, the other a powerful account imposed against a survivor's knowledge. [Macondo](worlds/24-macondo.md).
 
-These examples make an archive a social place. Its contents have authors, omissions, access conditions, material vulnerabilities, and interpreters. The existence of many books in a setting is much less significant than whether reading them can alter a person's understanding or exposure to danger.
+A reconstructed text can also achieve something without becoming true. The King Olaf verse helps restore Solitude's festival. Its public effect includes pleasure and patronage, while its claims remain open to doubt. A scholarly or bureaucratic account can likewise have real consequences without enjoying the researcher's endorsement. [The Elder Scrolls](worlds/27-the-elder-scrolls.md).
 
-## 7. Ordinary speech can be more detailed than an invented dictionary
+## 7. Speech is also enjoyable: wit, courtship, rivalry, and song
 
-The Wire, Austen, and The Sopranos make distinctions of occupation, status, intimacy, and self-justification audible within recognizable languages. A character does not sound exactly the same at work, under examination, with a parent, and with a trusted friend. The change can reveal membership in several overlapping worlds. [The Wire](worlds/21-the-wire.md); [Austen](worlds/23-austens-social-worlds.md); [The Sopranos](worlds/22-the-sopranos.md).
+A conversation can be worth having without concealing a plot. Catherine and Henry's dance includes teasing and disagreement that neither cancel attraction nor establish obedience. Discworld's bawdy speech and Trazyn and Orikan's verbal rivalry offer different pleasures: one cannot reduce every memorable exchange to either coded oppression or impending agreement. [Austen](worlds/23-austens-social-worlds.md); [Discworld](worlds/12-discworld.md); [Warhammer 40,000](worlds/26-warhammer-40000.md).
 
-Professional speech can be efficient inside a community and excluding outside it. Religious or bureaucratic language can make an action appear necessary, respectable, or too specialized for outsiders to question. A plain description from another speaker can expose what the official form concealed. Discworld repeatedly turns that collision into comedy. [Discworld](worlds/12-discworld.md).
+Music has performers, audiences, memories, and material conditions. Dandelion earns and enjoys attention; Diamond chooses a musical life; the Rumbar Pirates record a performance for an absent companion; Fallout's recruited acts occupy a regular stage. Some of these performances accompany tragedy, some support an ordinary career. Music need not always be propaganda, exposition, or consolation after harm. [The Witcher](worlds/07-the-witcher.md); [Earthsea](worlds/11-earthsea.md); [One Piece](worlds/14-one-piece.md); [Fallout](worlds/28-fallout.md).
 
-A distinction of voice need not consist of an accent or catchphrase. It can arise from what the speaker treats as obvious, how much certainty they claim, when they apologize, whose name they avoid, or what they notice first. These choices connect dialogue to experience rather than making it a collection of decorative verbal quirks.
+Sound is not automatically another language with fixed translatable propositions. Its rhythm, timbre, recurrence, and relation to bodies can create attachment that a plot synopsis misses. In Star Wars, a funeral's music joins work, community, and public action; in Spirited Away, music and quiet duration help make the journey present. The dossier evidence for these formal effects remains distinct from a complete musicological analysis. [Star Wars](worlds/03-star-wars.md); [Spirited Away](worlds/25-spirited-away.md).
 
-The risk is caricature. A represented accent can become an easy signal of stupidity, menace, servitude, or comic inferiority. A richly differentiated elite alongside an undifferentiated population of accented outsiders is an asymmetry of worldbuilding, even when the invented vocabulary is technically elaborate.
+Speech can also be ordinary rather than a permanent performance of ideology. The Wire, Austen, and The Sopranos distinguish how someone sounds at work, with a parent, among friends, or under examination. Certainty, tact, omission, attention, and timing can differentiate a voice without a conspicuous accent or catchphrase. [The Wire](worlds/21-the-wire.md); [Austen](worlds/23-austens-social-worlds.md); [The Sopranos](worlds/22-the-sopranos.md).
 
-## 8. Nonhuman communication and the limits of certainty
+## 8. Register can clarify work or disguise harm
 
-Pokémon, dæmons, dragons, droids, and other nonhuman beings do not all communicate through the same relationship to human speech. Some use ordinary dialogue; some are understood through behavior and familiarity; some remain partly opaque. That difference affects what a human character can legitimately claim to know about another being's wishes. [Pokémon](worlds/08-pokemon.md); [His Dark Materials](worlds/20-his-dark-materials.md); [Earthsea](worlds/11-earthsea.md); [Star Wars](worlds/03-star-wars.md).
+Occupational language can be efficient among experts and excluding to newcomers. It can also carry pride and shared standards, not merely status anxiety. A repairer and a bureaucrat need not notice the same facts. Eberron's professional distinctions and the Rocinante's expertise make this difference practical. [D&D](worlds/29-dungeons-and-dragons.md); [The Expanse](worlds/15-the-expanse.md).
 
-A companion's silence is not automatic consent. Nor does inability to produce a familiar sentence establish a lack of personhood. Stories become more substantial when characters have to attend to another being rather than treating translation or ownership as complete knowledge of it. The degree to which each work follows through on that possibility varies.
+Religious or administrative language can make a choice appear necessary, respectable, or beyond outsiders' competence. Discworld's plain-spoken collisions expose that evasion comically. Imperial language in Warhammer can cloak intentional violence; the rhetoric of a great future can conceal coercion in Foundation or Fallout. Recognizing the vocabulary does not require adopting its judgment. [Discworld](worlds/12-discworld.md); [Warhammer 40,000](worlds/26-warhammer-40000.md); [Foundation](worlds/16-foundation.md); [Fallout](worlds/28-fallout.md).
 
-Uncertainty can itself preserve difference. Perfectly translating every unfamiliar being into the same contemporary voice may ease exposition while erasing what made the encounter strange. But permanent opacity can also deny a population the interiority granted to others. The question is which narrative purpose the uncertainty serves and whose experience remains inaccessible as a result.
+The critical risk is caricature. A richly differentiated elite beside an undifferentiated population whose accents signify only menace, servitude, or stupidity is an asymmetry of representation. Technical intricacy in invented vocabulary does not remedy that by itself. Conversely, not every stylized voice claims documentary realism.
 
-## Conclusion: linguistic depth is often depth of relationship
+## 9. Nonhuman communication and the limits of inference
 
-A language system can reward extensive study, but a reader need not be a linguist to perceive the past in a name, the danger in a forbidden text, or the intimacy of a changed form of address. The world feels inhabited when expressions belong to people with histories, occupations, loyalties, and unequal access to meaning.
+Pokémon, dæmons, droids, dragons, and spirits relate to human speech in different ways. Some converse, some are understood through practiced attention, and some remain partly opaque. Those differences affect what a human character can reasonably claim about another being's wishes. [Pokémon](worlds/08-pokemon.md); [His Dark Materials](worlds/20-his-dark-materials.md); [Star Wars](worlds/03-star-wars.md); [Earthsea](worlds/11-earthsea.md).
 
-The strongest comparison is therefore not a contest over dictionary size. It is the difference between words placed on a world and communication practiced within it.
+Silence is not automatic agreement, and fluent speech is not proof of benevolence. Chihiro can understand something of No-Face's need while refusing his offers. Ged can know enough to bargain successfully with Yevaud without establishing affection. Communication can respect an irreducible difference rather than assimilating every being into one familiar personality. [Spirited Away](worlds/25-spirited-away.md); [Earthsea](worlds/11-earthsea.md).
 
-## Direct sources checked in the continuation
+There are two opposing risks. Perfect translation into the same contemporary voice can erase strangeness; permanent opacity can deny a population the interiority granted to others. The relevant question is what purpose that choice serves in the particular work, not whether every nonhuman encounter satisfies a universal norm of friendliness or accessibility.
 
-- [L1] Arden R. Smith, “Writing Systems,” Tolkien Estate. Specialist distinction between invented scripts and languages; no claim that every script is used identically in every period.
-- [L2] Carl F. Hostetter, “Tolkien's Invented Languages,” Tolkien Estate. Specialist distinction between fictional language history and Tolkien's revisions.
-- [L3] National Museum of Language, interview with Marc Okrand. First-person production and use history, particularly the questions on script requirements, cultural development, and later speakers.
-- [L4] Jordan Hoffman, “One Trek Mind: Deciphering ‘Darmok’,” StarTrek.com. Officially hosted critical retrospective checking the episode's central language encounter, not general linguistic research.
+## Conclusion: language is practiced, not merely placed on a world
+
+A reader need not master a conlang to perceive the history in a name, intimacy in an address, wit in a refusal, or danger in a forbidden text. Linguistic depth can arise from relationships, occupations, pleasure, power, and unequal access to meaning as well as from technical invention.
+
+Possible transfer lies in differentiating voices and uses of communication, not expanding dictionary size for its own sake or making every exchange end in improved agreement. A fictional order, invocation, or declaration does not become actual platform authority because its words have power within the story.
+
+## Retained direct sources
+
+- [L1] Arden R. Smith, “Writing Systems,” Tolkien Estate. Specialist distinction between scripts and languages.
+- [L2] Carl F. Hostetter, “Tolkien's Invented Languages,” Tolkien Estate. Fictional history distinguished from actual revision.
+- [L3] National Museum of Language, interview with Marc Okrand. Production needs, performance, cultural development, and later use.
+- [L4] Jordan Hoffman, “One Trek Mind: Deciphering ‘Darmok’,” StarTrek.com. Episode retrospective, not general linguistic research.
 
 [L1]: https://www.tolkienestate.com/scholarship/arden-smith-writing-systems/
 [L2]: https://www.tolkienestate.com/scholarship/carl-hostetter-tolkiens-invented-languages/
 [L3]: https://languagemuseum.org/interview-with-marc-okrand-inventor-of-klingon/
 [L4]: https://www.startrek.com/en-un/news/one-trek-mind-deciphering-darmok
 
-Retrieved 2026-09-26. Other fictional examples are linked to the dossiers and their primary-work anchors. This essay does not provide a reconstructed grammar or certify fluency in any constructed language.
+These sources were retrieved in the original 2026-09-26 pass and retained rather than all newly rechecked. New fictional comparisons refer to the revised dossiers and their separate reading records.
+
+**Reconciliation record:** preserved language/script distinctions, two histories, translation, archives, register, and nonhuman uncertainty. Expanded enjoyment, performance, courtship, rivalry, and adversarial comprehension; communication no longer points by default toward care or reconciliation. No complete grammar, soundtrack study, or newly surveyed reception is claimed.

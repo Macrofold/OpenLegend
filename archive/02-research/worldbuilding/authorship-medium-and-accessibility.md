@@ -1,105 +1,110 @@
 # Authorship, medium, and accessibility: how a world becomes an experience
 
-This essay complements the [comparative synthesis](comparative-synthesis.md) by separating what exists in a fictional world from how that world is made and encountered. The [dossiers](README.md) own the individual case studies and continuity boundaries. Creator testimony is evidence of a stated process or intention; a literary interpretation is not automatically evidence that every audience experienced the intended effect.
+Reconciled on 2026-09-27 against the [29 revised dossiers](README.md). The [main synthesis](comparative-synthesis.md) compares represented lives and consequences; this essay asks how worlds are made and encountered. Creator testimony, an established fictional event, a critic's reading, and a reported audience response are different kinds of evidence.
 
-## 1. The finished world's apparent inevitability can conceal an iterative process
+## 1. Apparent inevitability can conceal revision
 
-A reader encounters a completed sequence, often with maps, names, histories, and later explanations already available. That experience can make the world appear to have existed fully formed before its first story. Several creator accounts challenge this impression.
+Readers often meet a finished sequence with its later maps, histories, and explanations already available. That can make the world appear fully planned before its first story. Several creator accounts challenge the impression. Tolkien describes compositional discoveries in his Auden letter; Miyazaki describes storyboarding while production continued; Peterson recalls evocative faction names acquiring complicated identities afterward. These are distinct practices, not one universal method. [A1–A3]
 
-In his 1955 letter to Auden, Tolkien describes discoveries made during composition rather than claiming complete advance knowledge of every major figure. Miyazaki describes developing *Spirited Away* through storyboards while production was underway. Ted Peterson recalls early Elder Scrolls organizations beginning as evocative names before later work supplied their more complicated identities. These are three different forms of accretion, not three examples of a single production method. [A1–A3]
+Depth can arise from attending to earlier inventions' implications. A name, minor character, or unresolved relationship becomes a constraint and an opportunity for later work. That is not equivalent to claiming that any contradiction is acceptable because it can be explained away.
 
-The interpretive consequence is important: depth can arise from attending to an earlier invention's implications. A name, image, minor character, or unresolved relationship becomes a constraint on later work, and later work can reveal a significance the first appearance did not require. This is different from claiming that any contradiction is acceptable because an author can revise it afterward.
+Revision can **elaborate** what was unspecified, **reinterpret** what the audience thought it knew, or **replace** an established account. Earthsea's later examination of gendered institutions is not the same operation as a superhero continuity reset. D&D's explicitly identified selection among incompatible versions is different again: source management need not masquerade as a newly discovered fictional mystery. [Earthsea](worlds/11-earthsea.md); [DC](worlds/06-dc-universe.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-Revision has at least three effects. It can **elaborate** something previously unspecified, **reinterpret** something the audience already understood, or **replace** an established account. The first often enlarges a world unobtrusively; the second can make familiar material more interesting; the third requires a more explicit negotiation with the audience's memory. Earthsea's later treatment of gendered authority and superhero continuity resets do not perform the same kind of revision. [Earthsea](worlds/11-earthsea.md); [DC](worlds/06-dc-universe.md).
+## 2. Biography supplies resources, not a universal decoding key
 
-## 2. A creator's life supplies resources, not a universal decoding key
+Philology, journalism, teaching, drawing, music, family storytelling, and other work can shape what a creator notices. Those backgrounds do not establish that every character disguises a relative or every institution has one historical model. Austen's household conditions mattered to writing without making each heroine autobiography. Sapkowski's eclectic sources complicate a single cultural origin for the Witcher. Jemisin's testimony about classification supports a stated creative concern without exhausting interpretation. [Austen](worlds/23-austens-social-worlds.md); [The Witcher](worlds/07-the-witcher.md); [The Broken Earth](worlds/18-the-broken-earth.md).
 
-Philology, journalism, teaching, drawing, music, commercial work, family storytelling, and earlier genre experience offer creators different habits of attention. Those backgrounds can help explain why a world notices certain things. They do not establish that every fictional person is a disguised acquaintance or that every invented institution has exactly one real model.
+The distinction is between **documented influence**, **plausible comparison**, and **unsupported origin story**. A creator identifying a remembered image supplies the first. A critic noticing a structural resemblance supplies the second. Guessing a private motive without evidence supplies neither. Retrospective testimony can also simplify collaboration or make a messy process appear more coherent than it was.
 
-Austen's household conditions matter to her ability to write; they do not make every heroine an autobiography. Sapkowski's varied mythological reading complicates a single-origin account of the Witcher. Jemisin's own discussion of classification makes personhood a documented creative concern, but it does not remove the possibility of interpretations she did not explicitly announce. The relevant biographical evidence is annotated in the individual dossiers. [Austen](worlds/23-austens-social-worlds.md); [The Witcher](worlds/07-the-witcher.md); [The Broken Earth](worlds/18-the-broken-earth.md).
+A work can exceed or frustrate its originating intention. The Warhammer publisher's satirical framing is evidence of an explicit position, not proof that every heroic image is received as satire. A particular novel's courage, brutality, or comedy must still be examined rather than settled by a slogan about the franchise. [Warhammer 40,000](worlds/26-warhammer-40000.md).
 
-The useful distinction is between **documented influence**, **plausible comparison**, and **unsupported origin story**. A creator identifying a particular image is the first. A critic noticing a structural resemblance is the second. An assertion that a fictional villain must represent a relative, without evidence, is the third. This library does not turn plausible resemblance into a claimed fact about someone's private motives.
+## 3. Many people create the world an audience perceives
 
-The work may also disagree with an originating intention. A later collaboration can emphasize heroism in material initially framed as satire, or make a minor romantic or political relationship central. The creator's account belongs in the research without becoming the only permissible account of the result. [Warhammer 40,000](worlds/26-warhammer-40000.md); [Star Trek](worlds/04-star-trek.md).
+An unfamiliar being can become legible through silhouette, movement, performance, sound, costume, or music before a line of exposition. A comic's panel sequence can make endurance felt; a translation can reconstruct idiom and humor; illustrations can connect repeated places. Burtt's sounds, Ditko's pages, Baynes's images, and DiTerlizzi's production testimony supply different contributions an encyclopedia cannot preserve on its own. [Star Wars](worlds/03-star-wars.md); [Marvel](worlds/05-marvel.md); [Narnia](worlds/19-narnia.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-## 3. Worldbuilding has many authors even when one name dominates the cover
-
-A screenplay's alien can become recognizable through a silhouette, movement, voice, sound effect, prop, or musical association. A comic character's vulnerability can depend on panel duration and bodily posture. A translated novel's humor can depend on how idiom and register are reconstructed. These contributions are not merely decoration added after the real worldbuilding has finished.
-
-Ben Burtt's credited sounds make an unfamiliar machine or creature communicative; Ditko's page construction makes Peter Parker's endurance something the reader experiences; Pauline Baynes's recurring images help give Narnia visual continuity. Each contribution does something a prose encyclopedia cannot simply replace. [Star Wars](worlds/03-star-wars.md); [Marvel](worlds/05-marvel.md); [Narnia](worlds/19-narnia.md).
-
-The forms of authorship differ:
-
-| Creative arrangement | What can accumulate | Characteristic tension |
+| Arrangement | What can accumulate | Characteristic tension |
 |---|---|---|
-| One author's evolving sequence | Recurrent language, themes, private associations, and the ability to question an earlier conception | Later ideas can make the earlier world appear less stable than memory suggests. |
-| A partnership or continuing ensemble | Different strengths, multiple perspectives, repeated performance, and editorial challenge | A unified effect can conceal disagreement or obscure credit. |
-| A long-running shared franchise | Many genres, regions, generations, and routes of entry | Coordination, resets, and recognizable branding can constrain lasting change. |
-| Adaptation into another medium | New physical specificity, rhythm, voice, spatial experience, and emphasis | An effective change can be mistaken for evidence about the original continuity. |
+| One author's evolving sequence | Recurring language, images, and the ability to question earlier assumptions. | Later ideas can unsettle the remembered earlier world. |
+| Partnership or continuing ensemble | Complementary strengths, repeated performance, and editorial challenge. | A unified effect can obscure disagreement or credit. |
+| Long-running shared franchise | Genres, regions, generations, and many entrances. | Coordination, resets, and branding can restrict lasting change. |
+| Adaptation | New bodily specificity, rhythm, voice, and spatial experience. | Effective changes can be mistaken for evidence about the original. |
+| Table or interactive realization | Choice among possibilities and a local history of consequences. | A particular outcome can be incorrectly generalized as universal canon. |
 
-The table describes mechanisms visible in the dossiers, not rankings of creative legitimacy. Tolkien's evolving legendarium, Abraham and Franck's partnership, Marvel's shared publishing history, and the Witcher's adaptations illustrate different combinations. [Middle-earth](worlds/01-middle-earth.md); [The Expanse](worlds/15-the-expanse.md); [Marvel](worlds/05-marvel.md); [The Witcher](worlds/07-the-witcher.md).
+Tolkien's evolving legendarium, Abraham and Franck's partnership, Marvel's publishing history, Witcher adaptations, and D&D's campaign layers illustrate different combinations. These are not ranked models of artistic legitimacy. [Middle-earth](worlds/01-middle-earth.md); [The Expanse](worlds/15-the-expanse.md); [Marvel](worlds/05-marvel.md); [The Witcher](worlds/07-the-witcher.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-## 4. Medium determines which kinds of knowledge arrive naturally
+## 4. Medium changes what knowing a world involves
 
-A novel can place a reader within a mistaken interpretation and later make that interpretation visible. *Emma* does not merely withhold a factual appendix; it lets social perception participate in the mistake. *The Broken Earth* makes the timing and address of narration part of the recovery of a life. The world is learned through the limits of knowing it. [Austen](worlds/23-austens-social-worlds.md); [The Broken Earth](worlds/18-the-broken-earth.md).
+A novel can place the reader inside an erroneous interpretation. *Emma* makes social perception part of the mistake; *The Broken Earth* makes narrative address and the timing of recognition part of the recovery of one life. A summary retaining only chronological events loses that encounter with limited knowledge. [Austen](worlds/23-austens-social-worlds.md); [The Broken Earth](worlds/18-the-broken-earth.md).
 
-Film can establish a society through simultaneous evidence: a servant's route, the owner's room, a machine's noise, a customer's body, and the speed of a worker's movement. *Spirited Away* does not need a narrated organizational chart because Chihiro must physically navigate the organization. Quiet duration also permits a place to feel present without requiring an immediate explanatory payoff. [Spirited Away](worlds/25-spirited-away.md).
+Film can give simultaneous evidence of hierarchy through rooms, routes, bodies, pace, and noise. Chihiro has to navigate a workplace physically; the train sequence offers duration and atmosphere that are not reducible to arriving at Zeniba's house. Quiet is not simply missing action. The relevant sources include criticism and Miyazaki's account, not a claim that the film was newly watched during this pass. [Spirited Away](worlds/25-spirited-away.md).
 
-Serial television accumulates familiarity through return. Viewers learn the ordinary rhythm of a workplace or household, so a changed relationship can alter the meaning of a familiar room. A station that cannot simply depart can retain the consequences of an earlier political choice; a family meal can revive a grievance the participants have never resolved. [Star Trek](worlds/04-star-trek.md); [The Sopranos](worlds/22-the-sopranos.md).
+Serial television accumulates familiarity through return. A changed relationship can change the meaning of a room. DS9 cannot simply depart from the consequences of its setting; a Sopranos meal carries unresolved history as well as actual enjoyment. Recurrence also permits events that matter as ordinary life rather than as clues to the season's main crisis. [Star Trek](worlds/04-star-trek.md); [The Sopranos](worlds/22-the-sopranos.md).
 
-Comics and manga can give scale a rhythm through pages and panels while retaining highly expressive bodies. Interactive works additionally let audiences encounter places and texts in different sequences. That variation does not make every possible action or ending part of one person's canonical biography. A research account must preserve the distinction between an authored possibility and a fixed occurrence. [One Piece](worlds/14-one-piece.md); [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Fallout](worlds/28-fallout.md).
+Comics and manga create rhythm through panels, pages, expressive bodies, and release intervals. Criticism of a One Piece arc encountered weekly need not match a later reader's experience in volumes. Interactive work adds discovery order, optional encounters, and choices; authored alternatives are not one character's combined biography. [One Piece](worlds/14-one-piece.md); [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Fallout](worlds/28-fallout.md).
 
-## 5. Entry, return, and deeper investigation serve different needs
+## 5. Entry, return, and deeper investigation offer different pleasures
 
-An entry scene establishes enough orientation to care: someone wants safety, belonging, recognition, a home, a friend, or an answer. A returning scene rewards familiarity: a room, joke, ritual, or relationship now means more. A deeper investigation rewards the reader who asks how the surrounding history works. These are complementary pleasures, but no audience member must value them equally.
+An entrance establishes something worth attending to; a return rewards familiarity; deeper inquiry changes what surrounding history means. The invitation can be a home or friend, but also competition, sexual attraction, a profession, a spectacular ability, or the possibility of acquiring something desirable. None must be rewritten as avoidance of harm before it counts as a serious motive.
 
-Hogwarts's school year supplies a recognizable calendar; Pokémon supplies companionship and a journey; the Straw Hats supply a stable traveling group amid radically different islands. The recurring frame allows novelty without requiring the audience to rebuild its emotional orientation every time. [Wizarding World](worlds/02-wizarding-world.md); [Pokémon](worlds/08-pokemon.md); [One Piece](worlds/14-one-piece.md).
+Hogwarts's school year and Pokémon's journey give repetition a shape; the Straw Hats preserve different dreams within a continuing crew. A reader can care before mastering the whole geography. The stable frame can support greater novelty, not merely repeat a safe encounter. [Wizarding World](worlds/02-wizarding-world.md); [Pokémon](worlds/08-pokemon.md); [One Piece](worlds/14-one-piece.md).
 
-A dense world can still be accessible when immediate stakes do not depend on a complete glossary. Conversely, simple vocabulary does not make a scene accessible when the participants' desires and risks remain unclear. The relevant burden is not only the number of unfamiliar names, but how much unexplained information someone must retain before the current event matters.
+Difficulty is not automatically a defect. The Wire teaches speech by context; Dune allows terms to become intelligible through action. The issue is whether the current encounter gives enough reason to care, not whether every noun has already been defined. Conversely, simple vocabulary does not rescue a scene whose desires and risks are unclear. [The Wire](worlds/21-the-wire.md); [Dune](worlds/09-dune.md).
 
-Accessibility need not mean frictionless understanding. *The Wire* lets viewers learn professional and local speech through context; *Dune* permits important terms to acquire meaning gradually. The distinction is between a difficulty that corresponds to entering a social world and a difficulty that merely tests whether the audience has consumed every prior installment. [The Wire](worlds/21-the-wire.md); [Dune](worlds/09-dune.md).
+Familiarity can also become a burden. Repeated rescue structures, increasingly compulsory continuity, or routine reversals can reduce curiosity. A reader can enjoy return and object to repetition; these responses need not be forced into one overall verdict about a world.
 
-## 6. Novelty is often a changed relationship among familiar things
+## 6. Novelty can be a changed relationship, not another noun
 
-A school is familiar; learning that its ordinary comforts depend on an excluded workforce changes its meaning. A house is familiar; experiencing it across generations of repeated names and altered memory makes it strange. A future institution is familiar; giving machines personhood and reducing subsistence pressure changes what work and political obligation can mean. Novelty can be structural rather than a steady supply of unfamiliar nouns. [Wizarding World](worlds/02-wizarding-world.md); [Macondo](worlds/24-macondo.md); [The Culture](worlds/17-the-culture.md).
+A school becomes differently understood when its labor arrangements become visible. A house becomes strange through generations of recurring names. Bodily autonomy and abundance change what work, intimacy, and ambition can mean. An ordinary magical service can make a fantasy culture particular without adding a new cosmic catastrophe. [Wizarding World](worlds/02-wizarding-world.md); [Macondo](worlds/24-macondo.md); [The Culture](worlds/17-the-culture.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-Contrast also makes detail legible. A prestigious public institution and a neglected service passage imply a relation. A cosmic being with an everyday appetite becomes more than scale. A comic creature treated with emotional seriousness can make the viewer revise an initial judgment of whose experience deserves attention. [Spirited Away](worlds/25-spirited-away.md); [Discworld](worlds/12-discworld.md); [One Piece](worlds/14-one-piece.md).
+Contrast helps differences become legible: luxury above a service passage, a mighty being's petty rivalry, a comic figure's grief, a formidable warrior's wanted domestic future. These effects can produce humor, attachment, or surprise without automatically resolving into a lesson in kindness. [Spirited Away](worlds/25-spirited-away.md); [Warhammer 40,000](worlds/26-warhammer-40000.md); [One Piece](worlds/14-one-piece.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-The cost of novelty without relationship is replaceability. A new kingdom may have distinctive architecture yet produce exactly the same encounter as the previous one. The audience has seen more surface without acquiring a deeper account of a possible life. The dossier comparisons therefore ask what the difference changes, not only whether the difference is striking.
+The cost of novelty without relationship is replaceability. Distinct architecture means less when every place produces the same encounter and nobody's choices change. Yet not every ornament needs a later payoff. Beauty, craft, and local familiarity can be sufficient reasons to linger. The analysis should not demand a hidden narrative function to justify a pleasure.
 
-## 7. A world can invite participation without making expertise compulsory
+## 7. Participation need not make expertise compulsory
 
-Henry Jenkins's 2007 account of transmedia storytelling distinguishes a meaningful contribution in each medium from mere repetition. It also identifies a difficult balance: an individual entry should be intelligible while broader exploration changes the audience's understanding. This is a critical framework, not a controlled study proving that every expanding franchise benefits from expansion. [A4]
+Jenkins's 2007 transmedia account distinguishes meaningful contribution across media from repetition and identifies the tension between an intelligible individual entry and rewarding broader exploration. It is a critical framework, not experimental proof that expansion always benefits a franchise. [A4]
 
-Pokémon's creators discuss portability, personal attachment, and exchange as intertwined concerns. That provides a specific production account of a social invitation: people can share an interest while owning different parts of it. It does not establish a single cause for the franchise's success. [A5]
+Pokémon's creator conversation supplies a more particular account of portability, exchange, and attachment. People can share an interest while knowing or possessing different portions of it. That does not isolate one cause of commercial success. [A5]
 
-A world can make room for favorite places, characters, traditions, occupations, or unresolved questions. Comparing those attachments can itself become an audience activity. This is an interpretation of the formal opportunities these works offer, not a measured claim that all fans participate identically or that more lore always creates a stronger community.
+Worlds can make room for favorites: a place, profession, creature, relationship, school, or unresolved question. Comparing these attachments can itself become an activity. But essential emotional information displaced into another product can turn invitation into obligation. A satisfying individual story need not explain the whole universe; a vast reference collection does not automatically make the current encounter meaningful.
 
-The opposing risk is obligation. An extension becomes an entry barrier when essential emotional or causal information has been displaced into a different product. More material may then increase the cost of understanding rather than the depth of the current experience. A self-contained story can offer a satisfying encounter within an enormous world; completeness of the episode and completeness of the universe are different aims.
+The D&D addition adds a distinct boundary. A book's setup, its possible outcomes, and a table's actual events must not be conflated. A recurring gala can be established while a creator's proposed performer remains optional; an adventure's sacrifice branch can exist without being the event every campaign experienced. [D&D](worlds/29-dungeons-and-dragons.md).
 
-## 8. Continuity is a relationship with audience memory
+## 8. Continuity is a relationship with memory and expected consequence
 
-Lucasfilm's April 2014 announcement provides primary evidence of a specific change in the editorial status of the earlier Expanded Universe. It is not evidence that every later continuity is perfectly consistent. Canon is governed and communicated through institutions; licensed existence alone does not guarantee one unchanged status forever. [A6]
+Lucasfilm's April 2014 announcement documents a change in the editorial status of the Expanded Universe. It does not establish perfect consistency afterward. Canon is communicated through publishing institutions, and an item's licensed existence does not make its status immutable. [A6]
 
-Retrospective explanation can honor attention by making an earlier detail newly consequential. It can also shrink a world when every stranger becomes related to a famous family or every mystery points to the same original event. An expanding reference book is not necessarily an expanding imaginative horizon. [Star Wars](worlds/03-star-wars.md); [Marvel](worlds/05-marvel.md).
+Retrospective explanation can reward attention by changing an earlier detail's significance. It can also shrink the world when everyone turns out to belong to one family or every mystery serves one original event. Increasing the number of connected facts is not automatically enlarging the imaginative horizon. [Star Wars](worlds/03-star-wars.md); [Marvel](worlds/05-marvel.md).
 
-Likewise, the repeated reversal of death or destruction can alter what future danger means. The problem is not a universal prohibition on resurrection. It is whether the work still gives losses and decisions consequences that an audience can reasonably expect to persist. Different continuities and genres make different promises, which must be identified rather than silently combined.
+Reversals of death or destruction alter expectations. The issue is not a universal prohibition on resurrection, but whether choices still have consequences readers can reasonably expect to persist. A local victory that lasts and a loss that remains damaged deserve to be named separately. A series' need for continued stories should not lead the research to dismiss every achieved improvement as temporary or secretly meaningless. [DC](worlds/06-dc-universe.md); [Middle-earth](worlds/01-middle-earth.md); [Fallout](worlds/28-fallout.md).
 
-## 9. What this research can and cannot establish about popularity
+Uncertainty must also be preserved where the work leaves it. The selected Andor corpus does not settle Kino's later fate; the Sopranos ending is not a newly verified death scene; the Narnia account does not establish Susan's eternal condemnation for sexuality. Faithfulness includes resisting a familiar interpretation when its evidentiary claim is stronger than the source. [Star Wars](worlds/03-star-wars.md); [The Sopranos](worlds/22-the-sopranos.md); [Narnia](worlds/19-narnia.md).
 
-The dossiers identify mechanisms that plausibly support wonder, attachment, anticipation, recognition, and repeated interest. They do not isolate those mechanisms from performance, distribution, marketing, adaptation, timing, recommendation, or prior familiarity. A highly successful work can contain conspicuous worldbuilding weaknesses, and an exceptionally coherent world can fail to reach a broad audience.
+## 9. Criticism belongs to the account rather than outside its inventory
 
-Creator testimony establishes what someone says they attempted or remembers doing. Critical interpretation establishes an argued account of the work. Sales establish a particular commercial outcome when measured correctly. Audience interviews or surveys would establish the responses of their actual participants. These are different kinds of evidence; none should be silently substituted for the others.
+A subject's presence, its presentation, and its reception are separate questions. An account can identify sexual violence and criticize a narrative's handling of refusal without erasing sexuality or assuming every sexual scene has that character. Macondo's narrator-mediated transformation of a struggle into erotic complicity requires that distinction. The dossier preserves a reader's objection without turning it into a representative survey. [Macondo](worlds/24-macondo.md).
 
-The roster also selects already notable worlds. It therefore cannot tell us which features distinguish every successful work from the much larger population that did not become widely known. It contains no matched comparison group and no systematic reception survey. The research's strongest conclusions concern relationships visible in the works, not a predictive formula for cultural success.
+Likewise, the Bards College can offer an interesting exercise in unreliable history while disappointingly failing to support a musician's life. Those readings ask different questions of the same material. A Culture novel's scale and revenge can fascinate while its handling of suffering troubles a critic. The D&D film's Holga can seem particular to one reviewer and thin to another. The comparison need not decide that all audiences secretly want the same thing. [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [The Culture](worlds/17-the-culture.md); [D&D](worlds/29-dungeons-and-dragons.md).
 
-## Conclusion: a world is more than what an encyclopedia could preserve
+Intent also does not govern every response. Heroic framing and satire can pull against one another; entertaining a villain's perspective does not prove either endorsement or successful moral criticism. Conversely, a straightforward good deed can be genuinely effective without needing an ironic complication. [Warhammer 40,000](worlds/26-warhammer-40000.md); [DC](worlds/06-dc-universe.md).
 
-A living fictional world exists for audiences through attention: the order of encounters, the time spent in a place, the voices permitted to explain it, the familiar activities it makes strange, and the relationships it allows to continue. Creator history explains some of that making; medium determines some of its possibilities; audiences bring histories and preferences of their own.
+The reader's route matters. Weekly serialization, collected reading, adaptation, translation, a remembered scene, and a full primary text are not interchangeable experiences. Criticism should be attributed to an identifiable work and encounter rather than attached to an undifferentiated franchise name.
 
-The enduring invitation is not necessarily to know everything. It can be to recognize enough that returning matters, while retaining the sense that other lives remain outside the current story.
+## 10. What the evidence establishes about appeal—and what it cannot
 
-## Direct sources checked in the continuation
+The dossiers argue that particular constructions can support wonder, attachment, mastery, anticipation, recognition, suspense, humor, desire, or moral conviction. They do not isolate these effects from performance, distribution, marketing, timing, recommendation, prior familiarity, or reader history. A commercially successful work can have serious worldbuilding weaknesses, and a coherent world can reach few people.
+
+Creator testimony establishes stated intentions or recollections. Criticism supplies an argued reading. A measured commercial outcome would require its own dated evidence. A survey would describe its actual participants. None is a substitute for another. The roster selects notable worlds without a matched unsuccessful comparison group or a systematic reception study.
+
+The source-access distinction is equally important. Several new cases use freshly retrieved primary passages; others use substantive criticism, annotated reference accounts, unofficial dialogue, or guides. No complete franchise was newly consumed merely because its dossier was revised. Repeatedly linking a claim from a synthesis does not increase the strength of its underlying source. The [source audit](source-audit.md) and dossier records preserve that limit.
+
+## Conclusion: a world is more than its encyclopedia
+
+A world becomes available through attention: the order of encounters, the time spent in a place, whose voice is heard, what is withheld, and which activities are allowed to be enjoyable. Creator history explains some of the making; medium shapes some possibilities; audiences bring different histories and preferences.
+
+Possible transfer is to make an encounter worth having before demanding exhaustive expertise, preserve meaningful consequences, and distinguish a fictional act from its presentation and reception. This is not a formula for popularity, a required moral tone, or a set of new game systems. Fictional transgression and authority remain separate from the actual permissions of an audience, participant, or platform.
+
+## Retained direct sources
 
 [A1]: https://www.tolkienestate.com/letters/letter-to-the-poet-w-h-auden-7-jun-1955/
 [A2]: https://www.midnighteye.com/interviews/hayao-miyazaki/
@@ -108,11 +113,13 @@ The enduring invitation is not necessarily to know everything. It can be to reco
 [A5]: https://www.nintendo.com/en-gb/Iwata-Asks/Iwata-Asks-Pokemon-HeartGold-Version-SoulSilver-Version/Iwata-Asks-Pokemon-HeartGold-Version-SoulSilver-Version/2-The-King-Of-Portable-Toys/2-The-King-Of-Portable-Toys-225900.html
 [A6]: https://www.starwars.com/news/the-legendary-star-wars-expanded-universe-turns-a-new-page
 
-- [A1] Tolkien, letter to W. H. Auden, 7 June 1955. Retrospective first-person composition history.
-- [A2] Tom Mes, interview with Hayao Miyazaki, *Midnight Eye*, 7 January 2002. Reported December 2001 discussion; not a complete production archive.
-- [A3] Ted Peterson, Elder Scrolls anniversary retrospective, *The Escapist*. First-person accretion and revision account; the displayed update date differs from the original anniversary context.
-- [A4] Henry Jenkins, “Transmedia Storytelling 101,” 21 March 2007. Author's theoretical account; commercial descriptions are historical, not a current industry census.
-- [A5] Nintendo, *Iwata Asks: HeartGold/SoulSilver*, chapter two. Creator conversation about communication and expansion.
-- [A6] Lucasfilm, “The Legendary Star Wars Expanded Universe Turns a New Page,” 25 April 2014. Historical editorial announcement.
+- [A1] Tolkien, letter to W. H. Auden, 7 June 1955. Retrospective composition history.
+- [A2] Tom Mes, interview with Miyazaki, *Midnight Eye*, 7 January 2002, reporting a December 2001 discussion. Selected production and storyboarding testimony, not an entire archive.
+- [A3] Ted Peterson, Elder Scrolls anniversary retrospective, *The Escapist*. First-person accretion and revision; displayed update date distinguished from anniversary context.
+- [A4] Jenkins, “Transmedia Storytelling 101,” 21 March 2007. Historical theoretical account, not a current industry census.
+- [A5] Nintendo, *Iwata Asks: HeartGold/SoulSilver*, chapter two. Creator discussion of communication and expansion.
+- [A6] Lucasfilm, “The Legendary Star Wars Expanded Universe Turns a New Page,” 25 April 2014. Dated editorial announcement.
 
-Retrieved 2026-09-26. Scene-level literary claims are linked to the relevant dossiers and their identified primary works; no new complete rereading or viewing is implied.
+These references retain their original 2026-09-26 retrieval record. Later successes and limits, including the fresh Miyazaki reading, are recorded in the owning dossiers rather than silently upgrading every retained reference.
+
+**Reconciliation record:** preserved iteration, biography, collaboration, medium, entry, novelty, participation, continuity, and evidentiary limits. Added differentiated pleasures and critical disagreements from the completed dossier pass, including D&D's sourcebook/film/campaign boundary. No causal popularity model, current audience census, complete viewing, or uninspected full source is claimed.
