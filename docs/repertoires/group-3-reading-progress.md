@@ -6,7 +6,7 @@ September 28, 2026 continuation on `repertoires-v2-group-3`. **[x] means the com
 
 ## Revisions and discovery
 
-Every checked document below uses **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**, the immutable starting commit. This single revision pins the exact contents of every linked path; prior checkpoint commits also retain individual blob hashes. The source branch `codex/world-idea-repertoires` was observed at `2bb10759c263cf29a3de0f25bb3595e49420006f`. Research is read through Git objects without merging unrelated branches.
+Every checked document below uses **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**, the immutable starting commit. This single revision pins the exact contents of every linked path; earlier checkpoint commits also retain individual blob hashes. The source branch `codex/world-idea-repertoires` was observed at `2bb10759c263cf29a3de0f25bb3595e49420006f`. Research is read through Git objects without merging unrelated branches.
 
 | Remote branch inspected | Observed head |
 | --- | --- |
@@ -52,7 +52,7 @@ The selected revision has 29 revised world dossiers, beyond the older world inde
 
 D&D's shared hub and studies count once, not once per edition. Reading the complete-SRD **synthesis** does not mean this continuation reread its underlying 364-page PDF. The 3.5 dossier's incomplete reception/production evidence remains incomplete. No dedicated CKIII original chapter appeared in the inspected chapter tree; comparative studies are separate documents.
 
-## World dossiers — 15 complete
+## World dossiers — 21 complete
 
 - [x] [01 — Middle-earth](../../archive/02-research/worldbuilding/worlds/01-middle-earth.md)
 - [x] [02 — Wizarding World](../../archive/02-research/worldbuilding/worlds/02-wizarding-world.md)
@@ -68,9 +68,15 @@ D&D's shared hub and studies count once, not once per edition. Reading the compl
 - [x] [12 — Discworld](../../archive/02-research/worldbuilding/worlds/12-discworld.md)
 - [x] [13 — Avatar: The Last Airbender](../../archive/02-research/worldbuilding/worlds/13-avatar-the-last-airbender.md)
 - [x] [14 — One Piece](../../archive/02-research/worldbuilding/worlds/14-one-piece.md)
+- [x] [15 — The Expanse](../../archive/02-research/worldbuilding/worlds/15-the-expanse.md)
+- [x] [16 — Foundation](../../archive/02-research/worldbuilding/worlds/16-foundation.md)
+- [x] [17 — The Culture](../../archive/02-research/worldbuilding/worlds/17-the-culture.md)
+- [x] [18 — The Broken Earth](../../archive/02-research/worldbuilding/worlds/18-the-broken-earth.md)
+- [x] [19 — Narnia](../../archive/02-research/worldbuilding/worlds/19-narnia.md)
+- [x] [20 — His Dark Materials](../../archive/02-research/worldbuilding/worlds/20-his-dark-materials.md)
 - [x] [29 — D&D worlds](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md)
 
-Reading a world dossier does not also check off a separate game dossier about that franchise. Books, games, screen versions, original editions and later interpretations retain their stated boundaries. World dossiers 15–28 remain unread in this continuation.
+Reading a world dossier does not also check off a separate game dossier about that franchise. Books, games, screen versions, original editions and later interpretations retain their stated boundaries. World dossiers 21–28 remain unread in this continuation.
 
 ## Worldbuilding essays and supplements — 2 complete
 
@@ -87,6 +93,8 @@ Reading a world dossier does not also check off a separate game dossier about th
 - Particular mixed lives: Nanny Ogg's bawdiness is not the same act as taking relatives' labor for granted; Toph's enjoyment of fighting is not merely an unspoken rescue request; a discarded prestigious vocation can lead to Diamond's desired musical life. Brook's preserved song does not resurrect his companions, and the revised dossier distinguishes Yorki's illness from the later poisoned battle. These are source examples, not characters to copy.
 - Evidence and uncertainty: false but motivating histories do not become authoritative facts; memories, witnesses and retrospective accounts have different access. Merope's past remains an in-world reconstruction. Book-specific sexual coercion must not be replaced by an adaptation's different acts. Seeking treatment does not certify recovery. Criticism of framing remains meaningful without denying that a depicted service or achievement works.
 - Local magic: professional knowledge need not be adventuring rank; translation is not belonging; hospitality does not own guests. Regional magical dependencies can support pleasure, work and danger differently. The D&D lore supplement's eight indexed articles are not an entire-wiki read. The same environmental fact can give a scholar, courier, farmer and ruler different purposes.
+- Large futures and small choices: The Expanse allows chosen retirement, functioning long-term love and military success with permanent personal loss. Foundation's institutional memory can eclipse particular lives, and successful military service can threaten the person one serves. The Culture's abundance permits serious voluntary mastery and pleasure, but an institution can exploit those real ambitions. Asymmetry is not proof that every kindness is false, nor that a favorable outcome authorized its means.
+- Divergent desires under shared conditions: Broken Earth's lovers do not all want the same daily life; a freely chosen adventure can still make other people victims. An improved world need not restore everyone who died. Narnia's feast, abolition and formidable combat remain real alongside criticism of its hierarchy and representation. Susan's later fate and the rumored transformation of children remain uncertain rather than supplied by invention. His Dark Materials joins curiosity, craft and adult pleasure to inquiry; its children's undescribed conduct is not invented, and its affirmed love does not erase the ending's separation.
 
 These observations are creative inputs, not clinical predictions, causal proof of popularity, or an instruction to copy franchise lore. New catalogue situations must be marked **creative synthesis**. No gameplay, scientific, or live-model validation is claimed.
 
@@ -94,7 +102,7 @@ These observations are creative inputs, not clinical predictions, causal proof o
 
 Complete at the starting revision: `AGENTS.md`, `.agents/rules/documentation.md`, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, all four seed proposals and all four assigned catalogues. Relevant neighboring scopes read: Relationships, Bodies, Institutions, Work, Combat and Arts. Current game-library, granular-study and worldbuilding READMEs are fully read; their linked documents are not automatically checked off.
 
-**Fresh complete reads: 7 game dossiers, 5 original game chapters, 5 game supplements, 15 world dossiers, 1 worldbuilding comparative essay and 1 worldbuilding supplement.** All unlisted research remains unchecked. This is not a complete-corpus claim or a completed inventory expansion. Inherited catalogue counts are 276 psychology rows and 240 each for traits, needs and characters; those are not new entries from this continuation.
+**Fresh complete reads: 7 game dossiers, 5 original game chapters, 5 game supplements, 21 world dossiers, 1 worldbuilding comparative essay and 1 worldbuilding supplement.** All unlisted research remains unchecked. This is not a complete-corpus claim or a completed inventory expansion. Inherited catalogue counts are 276 psychology rows and 240 each for traits, needs and characters; those are not new entries from this continuation.
 
 Preserve the medieval proposal's lack of assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight, and the Borrowed Dawn's bounded initial magic with compatible later additions. Use the wider-library label for incompatible premises.
 
