@@ -38,7 +38,7 @@ The dossier directory also contains two D&D editions and `dragon-age-series.md`;
 
 ## Game-by-game reading
 
-**26 complete dossiers; 0 partial.** Every row below is a complete read at the pinned snapshot. **Catalogue incorporation remains Pending for all rows**; there are not yet new catalogue entries attributable to this continuation. G27–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
+**29 complete dossiers; 0 partial.** Every row below is a complete read at the pinned snapshot. **Catalogue incorporation remains Pending for all rows**; there are not yet new catalogue entries attributable to this continuation. G30–G148, two D&D dossiers and the Dragon Age series supplement remain unread in this continuation. The earlier eight-game pass is separate inherited evidence, not erased or counted again as fresh reading.
 
 | Read | Game and dossier | Exact dossier blob / preserved record |
 | --- | --- | --- |
@@ -68,6 +68,9 @@ The dossier directory also contains two D&D editions and `dragon-age-series.md`;
 | [x] | G24 — [The Sims](../../archive/02-research/game-inspiration/dossiers/the-sims.md) | `52b593a069e6be7a08caab12e9c54a7b13d7fe08` |
 | [x] | G25 — [Wildermyth](../../archive/02-research/game-inspiration/dossiers/wildermyth.md) | `8cd035161b057cebbaf5e7cc148190ddc7b9e798` |
 | [x] | G26 — [Baldur's Gate 3](../../archive/02-research/game-inspiration/dossiers/baldurs-gate-3.md) | `95ea756fc2a5a26307add35e81830432d9afb5af` |
+| [x] | G27 — [Factorio](../../archive/02-research/game-inspiration/dossiers/factorio.md) | `3335b496562e0963d1b8ea2eb412413c01ce79f9` |
+| [x] | G28 — [Satisfactory](../../archive/02-research/game-inspiration/dossiers/satisfactory.md) | `ed165d99761487341078c5527814bc42b668b24a` |
+| [x] | G29 — [Terraria](../../archive/02-research/game-inspiration/dossiers/terraria.md) | `86da0a4a860a9f39c80fe006e42777c6f6ab82dd` |
 
 ## Source-specific incorporation cautions
 
@@ -78,6 +81,12 @@ The immutable G01–G23 checkpoint above retains each earlier subject's distinct
 **G25 — Wildermyth:** complete through W28 and definitions. A recognizable hero can be retold without importing a continuous chronology, every possession or a frozen family tree. Rivalry is not failed friendship; family is not the same combat bonus. A changed body can preserve a consequence without being an automatic upgrade or punishment. A scene needing an absent cast should decline to run. Shay's first-aid choice after her brother's death is a critic's interpretation, not inferred bereavement choosing an ability. Preserve PC/console and base/Omenroad distinctions, the negative-rated Steam access gap, and finished production versus service shutdown.
 
 **G26 — Baldur's Gate 3:** complete through B40/P1/P2 and definitions. Corpse questioning is bounded evidence access, not omniscience; appearance, recognition and embodiment can differ, with the documented disguise edge behavior retained rather than simplified away. A shared quiet moment can matter without a stat reward. Character refusal and platonic limits belong alongside broad player freedom. Musical character identity is deliberately composed/performed, not automatically supplied by fluent text. Acknowledging an unmade choice is a continuity defect. Rest, local time pressure and scene eligibility differ; final major content update does not mean maintenance ended. Preserve the Steam mature-content/access limitation; no unseen reviews are claimed read.
+
+**G27 — Factorio:** complete through F36, R1–R6, S1–S4 and definitions. A blueprint records a decision, not its materials, site suitability or a recipient's understanding. Stock, flow, capacity, dependency and control differ; pulses and held values are not interchangeable. A factory can become an autobiographical record. Fulgora's ruins imply history without proving a surviving conversational society. Keep stable/experimental, base/Space Age, official expansion/Space Exploration mod, and discarded/shipped fluid models distinct. Do not import ship navigation into SC.
+
+**G28 — Satisfactory:** complete through S41, R1–R5 and definitions. A road, tour or facade can matter as a place without increasing throughput. Reading a teammate's layout can be detective work; unsolicited optimization can erase understandable authorship. Removing repeated construction commentary demonstrates that more dialogue is not always more presence. ADA's authored dialogue is not generative cognition. Alternate recipes change assumptions rather than being universally better; authored terrain differs from optional resource randomization. Preserve PC/console pools and historical control/blueprint criticism.
+
+**G29 — Terraria:** complete through V4, M22, A1, D1–D2, R1–R5, S1–S2 and definitions. Explain a missed rule without supplying every optimal answer. Old tools, routes and building choices can retain meaning after a world transition. The dossier's 1.4.5 pylon purchase/use correction qualifies the older study rather than erasing its historical player testimony. Hardmode, character-loss settings and world difficulty differ. Transformation can change appearance without personality; equipment/world persistence differs. Do not mark future cross-play or tModLoader default migration shipped. Optional collections need not become compulsory completion anxiety.
 
 ## Supplementary reading
 
@@ -111,6 +120,10 @@ Complete chapters do not complete separate dossiers or mechanics manuscripts. Ea
 | [x] | [Wildermyth bodies, relationships and authored myth](../../archive/02-research/game-inspiration/mechanics/wildermyth-bodies-relationships-and-authored-myth.md) | `7a050f5a29bb48df9cfb08cd4ea4cfc3483c9448`; through W9. |
 | [x] | [Baldur's Gate 3 chapter](../../archive/02-research/game-inspiration/games/baldur-s-gate-3.md) | `f6858714bcafa169d7b43200dcdeaa259705c948` |
 | [x] | [Baldur's Gate 3 utility magic, identities and choice](../../archive/02-research/game-inspiration/mechanics/baldurs-gate-3-utility-magic-identities-and-consequential-choice.md) | `a5bcfebcdf96549783a35c479e53074e32b93fe6`; through B8. |
+| [x] | [Factorio/Satisfactory comparative chapter](../../archive/02-research/game-inspiration/games/factorio-and-satisfactory.md) | `8d1e08d20260c605ec67c36d0314cfc62c86360f`; both field guides complete. |
+| [x] | [Factorio/Satisfactory flows, blueprints and place](../../archive/02-research/game-inspiration/mechanics/factorio-satisfactory-flows-blueprints-and-place.md) | `8d0546a7ec086bdd9cee44ec7745d966b24d331b`; through F6/S3. |
+| [x] | [Terraria chapter](../../archive/02-research/game-inspiration/games/terraria.md) | `feb8385c5c2d813b783bffaf403b179c68d3989e` |
+| [x] | [Terraria equipment, settlements and discovery](../../archive/02-research/game-inspiration/mechanics/terraria-equipment-composition-settlements-and-discovery.md) | `37a3379df70b0d95959caf5ec9a782ff55304ccd`; through T8. |
 | [ ] | Remaining chapters, studies, essays, references and supporting research | Pending; no blanket supplementary completion. |
 
 ## Owned catalogues and shared guidance
@@ -138,4 +151,4 @@ Earlier catalogues record 39 worldbuilding manuscripts at `b387e7caeda5cec301045
 
 Worlds Adrift's dossier/chapter says incompatible development saves are discarded. Current root instructions instead require safe in-place migrations preserving identity/unrelated state and never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Do not import that stale research assertion. Its shared owner should reconcile it; no runtime contract is changed here.
 
-Next unread game: **G27 — Factorio**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
+Next unread game: **G30 — Stardew Valley**. Continue corpus discovery/revision checks, all remaining manuscripts and actual incorporation. Shared atlas/README, other groups, research files, world proposals, shared trackers and changelog remain unchanged; hand needed integration updates to their owner.
