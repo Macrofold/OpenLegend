@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 62 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 30 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 65/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The current branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 62 complete
+## Game dossiers — 65 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -74,6 +74,9 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G56 — `divinity-original-sin.md`
 - [x] G57 — `divinity-original-sin-ii.md`
 - [x] G58 — `pathfinder-kingmaker.md`
+- [x] G59 — `pathfinder-wrath-of-the-righteous.md`
+- [x] G60 — `fire-emblem-the-blazing-blade.md`
+- [x] G61 — `fire-emblem-path-of-radiance.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -123,7 +126,7 @@ Relative to [games](../../archive/02-research/game-inspiration/games/):
 - [x] `core-keeper.md`
 - [x] `peak.md`
 
-## Game supplements — 30 complete
+## Game supplements — 31 complete
 
 Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 
@@ -157,6 +160,7 @@ Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 - [x] `deadfire-expedition-and-relationship-rules.md`
 - [x] `divinity-original-sin-ii-builds-and-authorship.md`
 - [x] `kingmaker-party-rules-and-kingdom-operations.md`
+- [x] `wrath-mythic-paths-and-crusade-battles.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -224,9 +228,13 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/05c326d1dbd16c096aab79961c2158ae49cc0d2e/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves the complete Deadfire, Original Sin I and Original Sin II findings and links the Dragon Age and earlier checkpoints. This compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/0262cc3a46941d667b0e54ce787d115fc904b2b4/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Kingmaker's complete findings and links the Deadfire, Original Sin, Dragon Age and earlier checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Kingmaker:** complete dossier `0a98d7c17c366e87873daca9f8572881428c04b4` and operational supplement `cf481bbe7f76f4472d0b0068797e9141b3a49edd`. Adventuring, camp care and administrative commitment can give one person competing valued roles. Adviser competence, assignment availability and willingness to support a ruler differ; repeated disagreement can end service. An adviser on an administrative assignment can still accompany the adventuring party: the restriction is not universal physical absence. A hunter reduces supplies only where hunting is possible; predictable provisions and reduced camping time answer different needs. Restoration after revival is not the same as restoring health. A named maker's books, workspace and research can connect the realm to personal ambition without inventing a universal crafting system. Parallel-protagonist imports support dramatic irony, not automatic character knowledge. The source distinguishes event uncertainty from project commitment, unrest from Stability, editions, fictional constructions from reviewer incidents, and historical opacity/port failures from current verified behavior. These suggest Group 3 ideas; they are not claims of autonomous simulated psychology in Kingmaker.
+**Wrath:** dossier `4cff3cd7d79afe7116e5e19c78906f474dfd0efe`; operational supplement `3cfaa303da22bf15cb665fc6d65cc5ed9fc68ef7`. Power, changed identity and retained relationships are separate outcomes. A transformation may deliberately trade away companionship; it need not be a free upgrade or be followed by redemption. Ordinary advancement and mythic milestones differ, as do gaining an identity and having time to inhabit it. A talking tool can retain a personal history across useful forms. A named person's experiment can inconvenience the party, but the reported Nenio incident does not establish universal autonomous consumption. Celebration supplies a reason to care about victory distinct from another arena. Vulnerable civilians and mythic commanders offer different fantasies in the same setting. Negative-energy care depends on the recipient's body. Capacity for another troop type is not the troops themselves; recovery after victory does not guarantee sustainable losses. Campaign morale, combat morale, general Energy and strategic Energy Points retain separate owners. Authored recognition, revised paths, source limitations and reviewer fantasy-fit disagreements are preserved.
+
+**The Blazing Blade:** dossier `08d7c10572a35dca6c140f7e2640abe67fab8fc4`. Named recognition can change an enemy from a convenient kill into a possible recruit. An established couple is not a courtship starting at zero; an A support is not universally romantic. Adjacency can unlock conversation while failing to represent meaningful shared experience. Protecting a helper or transporter makes a non-damage contribution visible. A returning person can reward earlier care independently of statistics. Personal attachment and a scored efficiency challenge need not share a definition of success. Permadeath, narrative withdrawal, early-story return, required-lord defeat and transporter return are distinct contracts; player resets do not erase their design differences. Source arithmetic disagreements, regional rules and unavailable manual/interview bodies remain qualified rather than invented.
+
+**Path of Radiance:** dossier `6bbd2bdb7de65991a7b7315d192e68e897ac4772`. A persistent person can shift between urgent battlefield attention and reflective Base conversation without being a different identity. Shared deployment replaces adjacency grinding but is still only a proxy for lived interaction. The body, role, tools, conduct and memories all contribute to recognizability without assigning every member of a class one personality. BEXP enables investment in a favored or weaker person, while critics disagree about whether that growth feels earned. Personalized bounded tools can accumulate history. A transformation's visible approach and reversion change anticipation; they do not establish a universal psychological cycle. Biorhythm is inspectable, not hidden, and can still be low-value bookkeeping. Carrying and pushing have opportunity costs; an ally's broad orders are not direct control of every act. Chapter-specific stealth is not a campaign-wide perception system, and regional difficulty names, emulation features and historical hardware links are not interchangeable.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
