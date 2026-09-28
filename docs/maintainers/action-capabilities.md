@@ -15,7 +15,7 @@ The [capability specification](../action-capabilities.md) owns behavior/contract
 | Presentation/performance (AC11)      | Existing state stream replaces action polling; scoped drafts and retry identity; explicit target retained before caps; shared schema module                                          | Accessibility/browser interaction qualification; remaining dense-state/persistence tails and population capacity qualification (PF-owned) |
 | Common workflow (AC02/AC06/AC09)     | Existing concrete-command adapter and AG sequential frontier only                                                                                                                    | INV/EWF descriptor integration, general predicates/waits/branches/repetition/output ports and new mechanical families                     |
 
-Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
+Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification/integration-summaries.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
 
 ## Ownership and dependencies
 
@@ -272,7 +272,7 @@ Each row is a required test scenario for its applicable slice, not evidence that
 
 ## Current delivered slice
 
-Native move/follow invocation binding, scoped target-bearing proposals, stored revised-action approval, Jev-first text grounding, player Character action controls and actor accept/withdraw handles are implemented narrowly. The actual scope and run evidence are in [Architecture](../architecture.md#jev-first-action-grounding) and [Verification](../verification.md#action-capability-native-slice). Existing task checkboxes above retain their broader acceptance requirements; no automatic completion of AC01–AC12 or AX tests is implied. Requested automated tests are collected in [TODO](TODO.md#action-capability-slice-deferred-automated-coverage).
+Native move/follow invocation binding, scoped target-bearing proposals, stored revised-action approval, Jev-first text grounding, player Character action controls and actor accept/withdraw handles are implemented narrowly. The actual scope and run evidence are in [Architecture](../architecture.md#jev-first-action-grounding) and [Verification](../verification/integration-summaries.md#action-capability-native-slice). Existing task checkboxes above retain their broader acceptance requirements; no automatic completion of AC01–AC12 or AX tests is implied. Requested automated tests are collected in [TODO](TODO.md#action-capability-slice-deferred-automated-coverage).
 
 ## Main integration boundary
 

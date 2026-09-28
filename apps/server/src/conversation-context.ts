@@ -365,7 +365,7 @@ export async function buildConversationContext(input: {
             execution: 'fast',
             task: 'conversation_compaction',
             // Smaller routes invented disagreements in overheard dialogue. Reuse the
-            // configured reasoning route after live qualification: docs/verification.md#conversation-compaction.
+            // configured reasoning route after live qualification: docs/verification/conversation-compaction.md#conversation-compaction.
             model: service.config.macrofoldKey
               ? service.config.macrofoldComplexModel
               : service.config.complexModel,

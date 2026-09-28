@@ -41,7 +41,7 @@ diff is reviewed, and the requested branch is pushed.
 ## Progress
 
 Implementation, native/runtime and browser verification are complete; see
-[evidence](../verification.md#explicit-narration-failure). TypeScript and production
+[evidence](../verification/narration-and-chat-retry.md#explicit-narration-failure). TypeScript and production
 build passed. Original source evidence and failure causes remain stored, while older
 fallback entries are normalized only in the public projection. The existing explicit
 regeneration API remains; the requested removal is from the player UI. Full-diff review,
@@ -63,7 +63,7 @@ permission to load an incompatible save.
 Resolved the two additive conflicts by retaining both history helpers and both sets of
 changelog entries. Full branch/range-diff inspection found no additional semantic conflict.
 TypeScript, production build and the focused disposable narration scenario passed against
-the combined code; [rebase evidence](../verification.md#explicit-narration-failure) records
+the combined code; [rebase evidence](../verification/narration-and-chat-retry.md#explicit-narration-failure) records
 the exercised boundaries. No runtime logic changed beyond reconciliation. The published
 branch update uses a lease pinned to the original remote commit
 `a4f8dd1fea345adf53e4b27685b0d988382e603a`.

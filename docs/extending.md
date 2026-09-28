@@ -92,7 +92,7 @@ Keep returned domain snapshots immutable and mutate through existing drafts/tran
 
 For spatial routes/flight, action processes/output receipts, inventions/definition pins and event-time speech audiences, use these same owners. The in-flight branches supply use cases, not replacement authority: preserve durable progress, exact dependencies, RNG and private evidence; invalidate old callbacks/context after restore without redispatching paid work. Immediate NAV/REL and material actions need partial-progress/quantity continuation; later cooperative, grant and authoring workflows extend that evidence when integrated. [DF02 and SL00/SL09](maintainers/remaining-foundational-work.md) retain branch integration and future-state qualification. No branch merge or new contribution/resource/containment/social contract is implied.
 
-Use the native [checkpoint stress command](verification.md#bounded-history-checkpoints-and-recovery) and compare uninterrupted versus save/load/resume native outcomes, excluding only documented operational differences such as pause and generation. Add process-death, stale-source and rollback drills for new owners. Existing CI requirements remain separate from this task's explicit prohibition on authoring/running automated suites.
+Use the native [checkpoint stress command](verification/checkpoints-and-recovery.md#bounded-history-checkpoints-and-recovery) and compare uninterrupted versus save/load/resume native outcomes, excluding only documented operational differences such as pause and generation. Add process-death, stale-source and rollback drills for new owners. Existing CI requirements remain separate from this task's explicit prohibition on authoring/running automated suites.
 
 ## Governance, discovery and workshop extensions
 

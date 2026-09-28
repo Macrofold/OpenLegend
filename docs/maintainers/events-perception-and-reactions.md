@@ -248,7 +248,7 @@ Initial attribution can be short. Larger tail-percentile or soak claims require 
 
 Report the actual commit, completed EPR IDs, touched canonical docs, native/fixture checks, unrun live checks, measured before/after counters and timings, unresolved product policies, and deferred gates. Do not label a proposed system implemented because the documents were added.
 
-The coarse-contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.
+The coarse-contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.
 
 ## Incoming foundation coverage
 
@@ -267,7 +267,7 @@ The integrated native action slice and [remaining hearing coverage](remaining-fo
 - [ ] Replace the remaining lightweight per-mind/per-entity signature pass and conservative global inventory/manifest invalidation only when profiles justify a mutation-fed regional index. General external-event audience discovery still uses the exact existing path, not a speculative reverse graph.
 - [ ] Qualify cold rotation of own-response provenance, fairness under long-running provider work, all-speed long-session/recovery and concurrent editor mutations. The current shared workflow's finite concurrency and protected native survival are unchanged.
 
-Current facts are in [Architecture](../architecture.md#change-driven-exposure-and-reaction-intake); actual runtime/performance evidence is in [Verification](../verification.md#perception-performance-implementation). Deferred automated cases remain in [TODO](TODO.md#perception-performance--deferred-automated-validation). Do not mark the broader EPR00–EPR10 acceptance complete from these native observations.
+Current facts are in [Architecture](../architecture.md#change-driven-exposure-and-reaction-intake); actual runtime/performance evidence is in [Verification](../verification/integration-summaries.md#perception-performance-implementation). Deferred automated cases remain in [TODO](TODO.md#perception-performance--deferred-automated-validation). Do not mark the broader EPR00–EPR10 acceptance complete from these native observations.
 
 ## Rebased implementation boundary
 

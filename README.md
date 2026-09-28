@@ -14,7 +14,7 @@ The current world supports real elevation and stacked surfaces with generated sp
 
 Development compatibility follows the [root policy](AGENTS.md#development-save-policy). Current worlds must satisfy the [save contract](docs/save-and-load.md), including the [status-effect registry](docs/status-effects.md). Existing startup conversions are described in [Architecture](docs/architecture.md), not a compatibility promise. Malformed current state and journal integrity failures remain explicit errors. The native simulation needs no AI key; set `AI_BUDGET_USD=0` for native-only work.
 
-See [spatial-world behavior](docs/spatial-world.md), [technical provider](archive/07-technical-architecture/spatial-world-runtime.md), [SW delivery tasks](docs/maintainers/spatial-world.md), and [verification](docs/verification.md#spatial-world-runtime). This is not a free rigid-body sandbox or a completed generic 3D-asset authoring platform.
+See [spatial-world behavior](docs/spatial-world.md), [technical provider](archive/07-technical-architecture/spatial-world-runtime.md), [SW delivery tasks](docs/maintainers/spatial-world.md), and [verification](docs/verification/spatial-world-and-scaling.md#spatial-world-runtime). This is not a free rigid-body sandbox or a completed generic 3D-asset authoring platform.
 
 A shared simulation of people, memory, survival, and worlds whose mechanics can grow through play.
 
@@ -105,7 +105,7 @@ The operator supplies `OPEN_LEGEND_ACCOUNT_BINDINGS` as a JSON array of exact ve
 
 Use existing actor/account IDs for an existing world; the default new world's first two people are `entity-0001` and `entity-0002`. Bind a second verified subject to a different account and actor with `play` for an ordinary player. Email, display names and first login never grant access. Bootstrap mappings apply once: changing this environment variable does not undo a later grant revocation or rebind. Current administrators use the revisioned `/api/access` and `/api/access/binding` operations described by the [authority design](docs/projects/multiplayer-authority-tech-design.md); game restore does not rewind their audit or historical human privacy ownership. Creator tools also require the host's `OPEN_LEGEND_GOD_MODE=true`; inspection never grants access to another human's private character.
 
-Sign in from the entry screen. One tab controls each account's current character; a follower uses **Control here** to take over explicitly. **Settings and help → Sign out** revokes the server session. Sessions default to eight hours (`OPEN_LEGEND_SESSION_HOURS`, 0.1–24); after the last controlling connection leaves, exit defaults to fifteen real seconds (`OPEN_LEGEND_EXIT_GRACE_SECONDS`, 1–60), including while simulation time is paused. Return reuses the same character and possessions and validates its placement. Shared automatic pause considers each controlling account's hidden-tab preference. See [current authority and participation](docs/architecture.md#account-authority-and-participation) and [qualified native/browser evidence](docs/verification.md#foundation-priorities-15--implementation-evidence).
+Sign in from the entry screen. One tab controls each account's current character; a follower uses **Control here** to take over explicitly. **Settings and help → Sign out** revokes the server session. Sessions default to eight hours (`OPEN_LEGEND_SESSION_HOURS`, 0.1–24); after the last controlling connection leaves, exit defaults to fifteen real seconds (`OPEN_LEGEND_EXIT_GRACE_SECONDS`, 1–60), including while simulation time is paused. Return reuses the same character and possessions and validates its placement. Shared automatic pause considers each controlling account's hidden-tab preference. See [current authority and participation](docs/architecture.md#account-authority-and-participation) and [qualified native/browser evidence](docs/verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence).
 
 ## Try the extensible attribute demo
 
@@ -145,7 +145,7 @@ See the [base-world mechanics](docs/worlds/base/README.md) for authored rules an
 
 Open **Character → Take an action** to submit a character intention separately from dialogue. Exact requests such as `go to x=12, z=14` and unqualified following of a currently recognized or explicitly selected actor can run without AI. Other wording uses configured Jev first, then bounded interpretation when needed. Disclosed tolerable omissions can run as partial fulfillment; uncertain revisions wait for **Accept revised action** or **Decline / withdraw**. Follow means remaining near a visible living target, not stealth, scent tracking, or a sunset deadline. Use the explicit support identifier when floors overlap. Choose Queue or Replace deliberately. Invention does not need to be unlocked.
 
-See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification.md#action-capability-native-slice).
+See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification/integration-summaries.md#action-capability-native-slice).
 
 ## Explore the project
 
@@ -179,4 +179,4 @@ The licensing guide explains the intended separation between the shared engine, 
 For repeatable native performance experiments, use the [stress profiling guide](docs/maintainers/performance-profiling.md), including the 500-ground-gem scenario.
 
 Documentation maintenance: [Feature document structure](docs/feature-documentation.md), [limits and constraints](docs/openlegend-limits-decisions.md), and [limits to revisit](docs/maintainers/limits-audit.md).
-The native perception/runtime changes and their measured limits are documented in [perception performance verification](docs/verification.md#perception-performance-implementation).
+The native perception/runtime changes and their measured limits are documented in [perception performance verification](docs/verification/integration-summaries.md#perception-performance-implementation).

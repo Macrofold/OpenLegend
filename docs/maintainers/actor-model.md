@@ -82,7 +82,7 @@ state, including stable identities after restart. Reframing preserves its origin
 and lifetime while separately retaining the current interpretation source; original creation
 replay and both-source erasure pass. Saved unsupported deadlines, absent retained allocation
 and removed exact policy pins reject. Actual OIDC owner/creator/cross-owner private-note checks
-and the ordinary subject-label inspection also pass; [Verification](../verification.md#foundation-priorities-15--implementation-evidence)
+and the ordinary subject-label inspection also pass; [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence)
 records the exact evidence boundaries.
 
 Authorized authored causes now use a separate opt-in `wilderness:authored-grief` policy,
@@ -92,7 +92,7 @@ without inventing an experienced event. Human targets reject. Both SQL adapters 
 creation, duplicate/changed-body checks, resolution, cold history and complete reload.
 A real OIDC browser authored and resolved the feeling through the private mind panel.
 
-The complete source/definition retirement audit, actual two-human payload races, cold source/ordinal checks, matched combined stress, full diff review and canonical documentation are complete for ACT07/ACT08. [Verification](../verification.md#foundation-priorities-15--implementation-evidence) records the evidence. Required CI, live reflection characterization and the broader ACT01–06/CR/EPR/SL/hosted gates remain separate; this project dispatched no provider call.
+The complete source/definition retirement audit, actual two-human payload races, cold source/ordinal checks, matched combined stress, full diff review and canonical documentation are complete for ACT07/ACT08. [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records the evidence. Required CI, live reflection characterization and the broader ACT01–06/CR/EPR/SL/hosted gates remain separate; this project dispatched no provider call.
 
 ## Advanced emotional-state foundation
 

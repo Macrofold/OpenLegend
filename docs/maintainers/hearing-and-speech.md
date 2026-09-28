@@ -57,7 +57,7 @@ The [scale/startup continuation](../verification/three-times-scene-performance.m
 - [ ] Qualify production PostgreSQL query plans, source revocation/restore during asynchronous provider work and strict live-provider volume schema compatibility. Native or counting adapters do not prove model quality or production database capacity.
 - [ ] Run required CI under its own authorization. Deferred automated status, geometry, immutable-parent/fork, HE-T01–HE-T07 and SR27–SR31 cases remain in [TODO](TODO.md); implementation/default manual verification does not close them.
 
-Earlier [initial/review records](../verification.md#hearing-runtime-and-performance), [cache review](../verification/hearing-cache-review.md) and [8× continuation](../verification/hearing-8x-continuation.md) remain historical evidence on their pinned trees and hosts. Their one-second/slice assumptions, old 168-diagnostic typing baseline and connector-only recovery workflow are superseded. The abandoned mutable-entity shortcut was never delivered; normal draft isolation remains required.
+Earlier [initial/review records](../verification/hearing-runtime-and-reviews.md#hearing-runtime-and-performance), [cache review](../verification/hearing-cache-review.md) and [8× continuation](../verification/hearing-8x-continuation.md) remain historical evidence on their pinned trees and hosts. Their one-second/slice assumptions, old 168-diagnostic typing baseline and connector-only recovery workflow are superseded. The abandoned mutable-entity shortcut was never delivered; normal draft isolation remains required.
 
 ## Deferred expansion
 

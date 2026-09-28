@@ -522,7 +522,7 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 **Reason / tradeoff:** Preserve complete eligible recall and avoid unqualified approximate-search omissions. Retain this policy while measuring mature corpora; improve/index search with recall-quality evidence rather than silently dropping old memories.
 
-**Evidence:** Existing synthetic PostgreSQL top-100 evidence: about 100,000 sources cost 139 ms median / 319 ms p95 for vector selection and 180 / 498 ms for full local retrieval. These are [prior component measurements](../verification.md#data-foundation-runtime), not fresh measurements of the current top-300 caller. [Implementation](../../apps/server/src/memory-repository.ts) (`readSelection; initialize`). [Revisit C17](../maintainers/limits-audit.md#c17).
+**Evidence:** Existing synthetic PostgreSQL top-100 evidence: about 100,000 sources cost 139 ms median / 319 ms p95 for vector selection and 180 / 498 ms for full local retrieval. These are [prior component measurements](../verification/data-foundation.md#data-foundation-runtime), not fresh measurements of the current top-300 caller. [Implementation](../../apps/server/src/memory-repository.ts) (`readSelection; initialize`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
 ## MH02
 
@@ -550,7 +550,7 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 **Evidence:** Source inspection establishes the query shape, not its latency under a natural workload. [Implementation](../../apps/server/src/memory-repository.ts) (`selectContext`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
-**Implemented mitigation:** Inverted indexes avoid parsing every JSON source on each miss; an indexed required/importance fallback avoids an extra full sort. Repeated identical selections use a 64-entry revision-scoped cache. Broad matches still rank substantial postings, with no approximate/corpus cutoff. Hydration has MH04 admission checks. The derived projection/index adds disk/write cost and rebuilds atomically from canonical sources. [Measured evidence](../verification.md#immediate-gameplay-limits).
+**Implemented mitigation:** Inverted indexes avoid parsing every JSON source on each miss; an indexed required/importance fallback avoids an extra full sort. Repeated identical selections use a 64-entry revision-scoped cache. Broad matches still rank substantial postings, with no approximate/corpus cutoff. Hydration has MH04 admission checks. The derived projection/index adds disk/write cost and rebuilds atomically from canonical sources. [Measured evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits).
 
 ## MH04
 
@@ -590,7 +590,7 @@ Resident awareness: latest 256 records/actor, targeting 1 MiB while always prese
 
 **Reason / tradeoff:** Preserve complete correction/forgetting semantics while reducing unnecessary reads and mutation-lane occupancy. The former whole-world creator-edit preparation is removed. Resumable preparation remains a future response to measured large dependency closures, rather than speculative infrastructure.
 
-**Evidence:** [Implementation](../../apps/server/src/history-edit.ts), [verification](../verification.md#history-storage-efficiency). [Revisit C21](../maintainers/limits-audit.md#c21); D2/PF08 retain larger dependency and hosted qualification.
+**Evidence:** [Implementation](../../apps/server/src/history-edit.ts), [verification](../verification/history-storage-efficiency.md#history-storage-efficiency). [Revisit C21](../maintainers/limits-audit.md#c21); D2/PF08 retain larger dependency and hosted qualification.
 
 ## KG01
 
@@ -602,6 +602,6 @@ Resident awareness: latest 256 records/actor, targeting 1 MiB while always prese
 
 **Reason / tradeoff:** Keep all known subjects available. Select scoped relevant documents before formatting; keep exact involved-subject lookup and per-document controls.
 
-**Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).
+**Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).
 
 **Implemented mitigation:** Current candidate preparation checks a combined 8,192 current-world/note items and 4 MiB of note text before formatting. The document collection is still resident; overflow is explicit, not silent note deletion.

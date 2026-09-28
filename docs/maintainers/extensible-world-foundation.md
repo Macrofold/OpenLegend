@@ -1,6 +1,6 @@
 # Extensible world foundation — implementation tracker
 
-**Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification.md#extensible-attribute-runtime).
+**Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
 
@@ -132,7 +132,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 - [ ] Hand results to EPR's acquisition/episode system and standard context, with event-time scope and receiver rules. No separate sense-specific cognition pipeline or raw omniscient target list.
 - [x] Reuse the existing post-movement spatial improvements and exact-query boundaries. Do not implement a second index or mark EPR02 fully complete without its remaining tests and audience work.
 
-Delivered scope: pinned vision/hearing/contact adapters, unidentified present/moving contact views, private onset/detail/end evidence and short direct movement probes are implemented. Same-version episodes are captured with the existing world. A native runtime run verifies speech exclusion, stable contacts and continuation; broader source responses, general EPR intake, learned navigation and touch-only player presentation keep the remaining items open. See [evidence](../verification.md#extensible-attribute-runtime).
+Delivered scope: pinned vision/hearing/contact adapters, unidentified present/moving contact views, private onset/detail/end evidence and short direct movement probes are implemented. Same-version episodes are captured with the existing world. A native runtime run verifies speech exclusion, stable contacts and continuation; broader source responses, general EPR intake, learned navigation and touch-only player presentation keep the remaining items open. See [evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
 **Tests:** unchanged vision/hearing baseline; third sense added through registration/configuration; unidentified sound/contact; detail change without entry; stationary observer/moving source; hidden properties not revealed; private internal event bypasses spatial audience; restore does not create false novelty.
 
@@ -260,6 +260,6 @@ For each delivered slice report: task IDs and exact changed files; behavior pres
 
 ## Remaining-foundation audit handoff
 
-[SC01–SC08](state-contributions.md) and [DI01–DI08](dependency-invalidation.md) deliver EWF02's selected typed owners and EWF08's finite native dependency/work contracts. They preserve sequential wilderness outcomes, use named start-state resource phases, independently remove capability sources, retain empty-query membership, fence captured generations, and bound aggregate/recurring execution. [Verification](../verification.md#foundation-priorities-15--implementation-evidence) records complete native outcomes, both SQL adapters, real browser/network and mixed stress; operational limits are not hosted capacity.
+[SC01–SC08](state-contributions.md) and [DI01–DI08](dependency-invalidation.md) deliver EWF02's selected typed owners and EWF08's finite native dependency/work contracts. They preserve sequential wilderness outcomes, use named start-state resource phases, independently remove capability sources, retain empty-query membership, fence captured generations, and bound aggregate/recurring execution. [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records complete native outcomes, both SQL adapters, real browser/network and mixed stress; operational limits are not hosted capacity.
 
 EWF01's general registration, the remaining EWF03 physiology/body-policy extraction, EWF07's general live-definition migration and INV-5.6 remain open. Current exact-pin dependencies reject unsupported retirement; that is not a general transition planner. The spatial/invention/action/hearing branches must migrate through the [recorded foundation seams](../projects/foundations-1-5.md#branch-and-repertoire-migration-map). EPR/SW/PF retain their actual query, reaction, scheduling and load work; no second graph or scheduler was added.
