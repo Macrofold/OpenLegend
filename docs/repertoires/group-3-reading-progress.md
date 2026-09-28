@@ -31,12 +31,12 @@ The working branch contains a revised 29-world library, including D&D, beyond th
 ### G24 — The Sims
 
 - [x] [Full comparative dossier](../../archive/02-research/game-inspiration/dossiers/the-sims.md), including September 27 corrections, reception, requirement map and annotated sources. Read in complete contiguous chunks through the end of the file at commit `48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`, blob `52b593a069e6be7a08caab12e9c54a7b13d7fe08`.
-- [ ] [Original game chapter](../../archive/02-research/game-inspiration/games/the-sims.md).
-- [ ] [Emotional tools, shared homes and chosen autonomy](../../archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md).
+- [x] [Original game chapter](../../archive/02-research/game-inspiration/games/the-sims.md), complete at the same commit, blob `a710ec31f7b25e460b95aa4f384a27c83007ecb2`.
+- [x] [Emotional tools, shared homes and chosen autonomy](../../archive/02-research/game-inspiration/mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md), complete at the same commit, blob `7981c7526dea884cf194003c9df7b107f5d151dd`.
 
 Useful distinctions for Group 3: ordinary maintenance versus meaningful care; desired emotional experience versus a manufactured productivity buff; daily autonomy versus irreversible offscreen life changes; a room's expressive value versus efficiency; specific objects and crafts connecting personal ambitions; and a failed occasion generating a new purpose without erasing its failure. New catalogue proposals derived from these distinctions must be labeled synthesis, not represented as actual Sims content.
 
-**Fresh completed game dossiers: 1.** All other game dossiers, original chapters and supplementary studies remain unchecked in this continuation. This is a reading checkpoint, not a claim that the inventory expansion or complete-corpus requirement is finished.
+**Fresh completed game dossiers: 1; associated original chapters: 1; associated supplementary studies: 1.** All other game dossiers, original chapters and supplementary studies remain unchecked in this continuation. This is a reading checkpoint, not a claim that the inventory expansion or complete-corpus requirement is finished.
 
 ## Fresh worldbuilding reads
 
@@ -44,8 +44,10 @@ No complete world dossier or comparative essay is checked off in this continuati
 
 ## Supporting catalogue and guidance reads
 
-At the starting commit, complete reads include `AGENTS.md`, `.agents/rules/documentation.md`, the repertoire README, design foundation, selection-and-scale, combinations, the medieval-survival proposal, and the full psychology and traits catalogues. Remaining prerequisite reading includes the other three seed proposals, actions, source atlas, needs, characters and relevant neighboring scopes. Earlier catalogue statements that those documents were read concern preceding checkpoints; they are not silently relabeled as this continuation's work.
+At the starting commit, complete reads include `AGENTS.md`, `.agents/rules/documentation.md`, the repertoire README, design foundation, selection-and-scale, combinations, actions, all four seed proposals, and all four Group 3 catalogues. The latter retain 276 psychology rows and 240 rows each for traits, needs and characters; these are inherited counts, not new work delivered by this continuation. Remaining prerequisite reading includes the source atlas and relevant neighboring scopes. Earlier catalogue statements about research reading concern preceding checkpoints; they are not silently relabeled as this continuation's work.
+
+The medieval proposal does not assume supernatural effects. Veyra Reach excludes playable spaceflight, piloting and orbital navigation; its ships are inhabited spaces and travel is abstract. The Borrowed Dawn starts with bounded warmth transfer and leaves broader magic as selected expansions. These setting boundaries constrain recommendations, not the wider library's imagination.
 
 ## Editorial follow-through
 
-The pending expansion should preserve existing inventories and IDs. Identified corrections include removing seed-proposal references from Inspiration cells, replacing the erroneous “Animal Crossing III” / G99 attribution in Traits with an accurately identified source, and replacing the nonexistent “Food” catalogue owner with the appropriate existing owner. Shared atlas counts, revised world-research navigation and integration history remain the integration owner's work.
+The pending expansion should preserve existing inventories and IDs. Identified corrections include removing seed-proposal references from Inspiration cells, replacing the erroneous “Animal Crossing III” / G99 attribution in Traits with an accurately identified source, and replacing the nonexistent “Food” and “Travel” catalogue owners with the appropriate existing owners. Review exotic entries whose ordinary desires or biographies were labeled D solely because their underlying body or supernatural capability is missing; the defining behavior, not its character's appearance, determines Level. Shared atlas counts, revised world-research navigation and integration history remain the integration owner's work.
