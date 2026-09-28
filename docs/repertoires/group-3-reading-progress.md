@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, sources and limitations. It does not claim external-bibliography rereading, personal gameplay, full-video viewing or independent verification. Unlisted material remains unread. Counts are cumulative across resumes, not fresh rereads of unchanged completed documents.
 
-**Coverage:** **42/42 worldbuilding documents**, **47 game dossiers**, **36/39 original game chapters**, **24 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents**, **50 game dossiers**, **39/39 original game chapters**, **27 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -14,7 +14,7 @@ The complete rechecked research-branch heads and corpus discovery record are pre
 
 The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading linked documents. Complete mechanics and original-chapter trees were inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Integrated dossier studies count within their dossiers. Shared documents count once, not once per game they cover.
 
-## Game dossiers — 47 complete
+## Game dossiers — 50 complete
 
 Filenames are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
 
@@ -62,11 +62,14 @@ Filenames are relative to [the dossier directory](../../archive/02-research/game
 - [x] G42 — `balatro.md`
 - [x] G43 — `slay-the-spire.md`
 - [x] G44 — `vampire-survivors.md`
+- [x] G45 — `against-the-storm.md`
+- [x] G46 — `core-keeper.md`
+- [x] G47 — `peak.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 
-## Original game chapters — 36 complete
+## Original game chapters — 39 complete
 
 Filenames are relative to [the original-chapter directory](../../archive/02-research/game-inspiration/games/).
 
@@ -106,8 +109,11 @@ Filenames are relative to [the original-chapter directory](../../archive/02-rese
 - [x] `balatro.md`
 - [x] `slay-the-spire.md`
 - [x] `vampire-survivors.md`
+- [x] `against-the-storm.md`
+- [x] `core-keeper.md`
+- [x] `peak.md`
 
-## Game supplements — 24 complete
+## Game supplements — 27 complete
 
 Filenames are relative to [the mechanics-study directory](../../archive/02-research/game-inspiration/mechanics/).
 
@@ -135,6 +141,9 @@ Filenames are relative to [the mechanics-study directory](../../archive/02-resea
 - [x] `balatro-scoring-operators-risk-and-readable-combinations.md`
 - [x] `slay-the-spire-deck-ecology-information-and-costly-synergies.md`
 - [x] `vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md`
+- [x] `against-the-storm-substitution-pressure-and-renewable-settlement-problems.md`
+- [x] `core-keeper-resource-circuits-food-and-inhabited-discovery.md`
+- [x] `peak-shared-burdens-rescue-and-spatial-tools.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -214,12 +223,13 @@ Detailed prior findings and hashes remain preserved, not discarded by this compa
 - [Outer Wilds, Garry's Mod and Kenshi, `d80ea74`](https://github.com/Macrofold/OpenLegend/blob/d80ea74bbdf75863f9bf7a957cfcdf22fc6d9ab5/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Project Zomboid, Lethal Company and Scribblenauts, `9b0c9cd`](https://github.com/Macrofold/OpenLegend/blob/9b0c9cd29cc886de307f720b4dc32b0f10bc8ac6/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [AI Dungeon and Palworld, `6ca8eae`](https://github.com/Macrofold/OpenLegend/blob/6ca8eae9f65117de97b0fe72510a3c11a2d4a897/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
+- [Balatro, Slay the Spire and Vampire Survivors, `bb58e4e`](https://github.com/Macrofold/OpenLegend/blob/bb58e4e1a8414b202554097df93a7b1d1b9327a5/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 
-**Balatro:** dossier `bb3a49c3a3ce2e8db477ea2397db3d46e421f655`; original `b99b2b7f096c44a29063e7f9bbf96a1bf1e4a663`; detailed study `8601cdf354d80773dbb8cf46a38270712f7fe0aa`. A cherished construction can be dismantled to preserve the larger goal; stubbornness, commitment and adaptability are not the same disposition. Saving, declining a purchase, holding a tool unused and pruning something individually valuable can each be active choices. Peak power, ordinary reliability and resistance to one particular counter are different strengths. A person who loves discovering a dependable plan may dislike the lack of recovery after a mistake; continued play does not establish liking every loss. The same ingredients can succeed or fail through order, timing and eligibility. Brainstorm targets the leftmost object even when incompatible, rather than helpfully searching for another target; copying a capability is not copying a whole identity. The dossier's platform and review-editor corrections qualify earlier summaries. This is a rules-centered game without native relationships or synchronous multiplayer; personal-life extrapolations are creative synthesis, not discovered NPC systems.
+**Against the Storm:** dossier `8a736624d9ce6d4d09f123548e5c3ce1f191232f`; original `5d89c1537df1197cd37240ecc8873b799ed80656`; study `0427975685ab9624024a8011a0f5deafc7edac62`. Completing an assigned settlement and wanting to stay with a home are different motives. A bounded project can end while a life, community and history continue. An apparently prosperous town can fail through a late delivery: output, wealth, liquidity and timely access are different conditions. Pausing useful work can protect a community rather than express laziness or disdain for production. A future improvement can consume food needed to reach that future. Permission to perform a recipe is not permission to consume every eligible reserve. Favoring one population can deprive another without either being irrational; Resolve is not a full individual belief system. More territory, population or amenities can impose new obligations. A common stopping place can be valued for access, comfort and company rather than its largest efficiency bonus. Rainpunk's chosen benefit and associated maintenance differ from unconditional chores; the historical opt-in claim does not erase later event/configuration exceptions. Current Cornerstone, hauling, DLC-package, update-date and music-project corrections remain scoped. Reviewers' actual progress, conflicting interface preferences and failed helpful-negative retrieval are not collapsed into consensus or causal sales proof.
 
-**Slay the Spire:** dossier `3a2ea702e97a63e559d357767e25684bec40f845`; original `e1457c9c0e5ca0c4f81b6f21c62b1c6b092a6c45`; detailed study `5dbd584679947b8286b20c68901ff8719d11353a`. Rest can make a future possible that further training would prevent the person from surviving to enjoy. A slow excellent plan and a modest timely one solve different situations. Entering power, remaining in it and safely leaving it are distinct commitments; recovery opportunity must not be silently spent by an earlier action. Admission to a coveted challenge can consume the means needed to survive it. Removing information has a different cost for someone with remembered experience. Keeping everything can block renewal; separately attractive habits/tools can depend on incompatible cleanup assumptions. The repeated journey has distinct authored emotional frames: bargain, ritual, confused awakening and investigation, alongside the player's improvised build story. The exact orb, Focus, stance, key and Neow corrections remain bounded original-game evidence. Calm is not inherently damage reduction, and the costs of three keys are not interchangeable. Sequel co-op, board-game rules, mods and clinical meanings of stance names are not imported.
+**Core Keeper:** dossier `f6bed563853710bebfda2feb41be247bc5cc7d39`; original `7803ca2654635ccc8746dad0b2c53dd3291a95fa`; study `4710c1bb1c1ebf950d4ac0661be0771fb62bd584`. An initial background can orient someone without fixing their lifelong profession. A familiar tool can be restored, reinforced or improved; reclaiming its materials instead destroys that particular possession. Supporting another's capabilities can make a companion valuable without a personal attack contribution. Riding the familiar household animal need not require an unrelated duplicate creature. A discovered passage can become a familiar route, then a workplace or home. A mine can finish successfully and release its caretaker for other purposes. Cavelings working and sleeping alter the observer's interpretation of intrusion, but do not establish hidden autobiographical cognition. A visiting person's skills and goods do not bring their home along; imported capability and responsibility for common installations need agreement. A merchant's bedroom requirement is not evidence of consensual migration or a complete household economy; the hologram service is a separate kind of entity. Summon-timer and mana-regeneration changes supersede older advice. The uncertain September review date does not prove post-patch experience; prerelease supplied-save reviews, solo speculation, platform limits and different death scopes remain explicit.
 
-**Vampire Survivors:** dossier `509082ec529f00e26ef774bbe9610e78c4849436`; original `f87e530cf502badede74c3d4ff3e4dbe8e6a4669`; detailed study `47bef8f6357c688a694db30a439874e970b9ac28`. Delegating execution can preserve purpose, positioning, timing and responsibility. Watching earned success longer is different from wanting a harder challenge; a satisfying endpoint need not invalidate an achievement. A precise personal improvement and uncertain group-wide aid create different allocation choices. Shared movement, independently roaming friends and dependence on a host produce different negotiations. Clearing a threat can destroy the desired reward; a later improvement can remove that specific liability rather than merely raise power. Delaying acquisition can preserve future composition, but immediate safety can be a reasonable alternative. Simple controls can enable one person's access while leaving another wanting more direct action; no universal access verdict follows. Local Adventure resets, current-run growth and durable collection remain distinct. Ordinary caps, pickup exceptions, evolving DLC rules, online ownership/rejoin restrictions and contradictory FAQ coefficients are not silently collapsed. Fictional followers and automatic weapons are not evidence of autonomous personal motives.
+**PEAK:** dossier `8d8488dd84b29e24afa6b7df944a51a88f470a4e`; original `816a8f35c7c283778a4e27c8d40234adb572cb67`; study `636fc4f79d68555ece36411cbc526107571707d9`. Higher altitude is not a safe destination, and a temporary advantage needs a viable aftermath. Carrying help can reduce the helper's immediate capability; calling supplies communal does not remove their physical location. Sharing a one-person handhold requires turn-taking, not a generic cooperation bonus. Cooking one food prevents a particular dependency on another person; it does not purify every threat. Downed, carried, dead, guiding as a ghost and restored to embodied participation are different states. Ordinary exhaustion, capacity consumed by afflictions, Curse and Petrify have different causes and remedies. A useful object can also be a required key, and using its power can endanger its carrier. Mischief, retaliation, abandonment and deliberately harmful permissions belong alongside genuine rescue; one specific opt-out is not universal protection. A pleasant short social outing need not become a lifelong activity. Interruption recovery addresses players' schedules, not fictional resurrection. Major-content completion is not abandonment, and a changed revival restriction is not unchanged launch difficulty. The source preserves older solo/access objections, later room codes/save changes and untested future ports rather than claiming universal current compatibility.
 
 Across all notes: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Keep ordinary pleasure, deliberate cruelty and completed ambitions without compulsory moral reframing or replacement craving. Distinguish appearance, memory, testimony, interpretation and acts. Source corrections qualify earlier overviews. Human social play, authored dialogue, simulation and cancelled-game plans are different evidence. Historical source wording never overrides current AGENTS instructions.
 
