@@ -45,7 +45,7 @@ For the server/caller cutover, stop old native admissions and drain old Sandbox 
 
 Changing `MACROFOLD_WORKER_ID` is an explicit operator reconfiguration, not automatic recovery. Drain/reconcile outstanding work before restarting with another target; saved verified Sessions can continue on an authorized compatible Worker. Lost/ambiguous Run requests are still fenced by their original journal/fingerprint, including the originally requested target. The current server supplies one trusted configuration per world; unrelated worlds/customers must not inherit a shared target or relaxed isolation accidentally.
 
-Implementation and remaining live-deployment gates: [MW01–MW04](maintainers/macrofold-worker-api.md). Local HTTP and build evidence: [Worker API cutover](verification.md#macrofold-worker-api-cutover).
+Implementation and remaining live-deployment gates: [MW01–MW04](maintainers/macrofold-worker-api.md). Local HTTP and build evidence: [Worker API cutover](verification/macrofold-worker.md#macrofold-worker-api-cutover).
 
 ## Configuration and interface
 

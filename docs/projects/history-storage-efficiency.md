@@ -87,10 +87,10 @@ Tracking: [D1/D2](../maintainers/production-data.md),
   return rejected forgetting outcomes instead of reporting success. Load affected
   actors’ terminal appraisals for existing privacy invalidation. Initialize the
   physical schema atomically and refuse missing/incompatible schema markers.
-- Verification and measurements: [evidence](../verification.md#history-storage-efficiency).
+- Verification and measurements: [evidence](../verification/history-storage-efficiency.md#history-storage-efficiency).
   Current native caller/failure scenarios, focused restart/writer checks and required
-  static checks pass. The unchanged old seeded-inventory fixture fails before the
-  exercised persistence path; TODO retains its adaptation. Full CI, natural aging,
+  static checks pass. The existing save/reopen test now creates its own food item,
+  and its focused PostgreSQL rerun passes after correcting the starting-inventory assumption. Full CI, natural aging,
   hosted/browser/live-model qualification and larger affected dependency sets remain
   the existing owners’ work, not acceptance claims from these synthetic fixtures.
 - Deferred choices remain unchanged: public string IDs, one world per database,

@@ -24,7 +24,7 @@ Original recommendation: **Review**.
 
 Default player capacity is 100; HTTP streams, service connections and scoped projection caches allow 300. `OPEN_LEGEND_PLAYER_CAPACITY` (1–10,000) scales these together at three connections/cache scopes per player.
 
-**Reason / tradeoff:** First-release players need reconnect/tab headroom without cache thrashing. Admission is not a hosted-capacity or simulation-speed promise. [Evidence](../verification.md#immediate-gameplay-limits).
+**Reason / tradeoff:** First-release players need reconnect/tab headroom without cache thrashing. Admission is not a hosted-capacity or simulation-speed promise. [Evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits).
 
 ## LA165
 

@@ -64,7 +64,7 @@ The 10,000-lot/12-level SQL and HTTP workload retained 2,000 cold contributions,
 251 pages against exhaustive child order and preserved every descendant placement across
 12 moves. A 480-pixel Chromium interaction covered keyboard paging/search/merge selection,
 paused availability, nested movement and visual overflow. These supersede the earlier
-browser-tool timeout gap. [Verification](../verification.md#foundation-priorities-15--implementation-evidence)
+browser-tool timeout gap. [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence)
 records precise timings, payloads and limitations.
 
 The complete affected-source/definition/referrer review and acceptance/documentation reconciliation are complete. Wider arbitrary construction, hosted throughput
@@ -148,4 +148,4 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 - [x] Use accessible nested possessions for ingredients, eating and equipment. Allow unrelated transfers/splits/merges/drops during work; reject moves that affect reservations or the actor/custodian's active references, including descendants.
 - [x] Integrate container navigation, giving and creator restriction controls with current scope/revisions; exercise HTTP on both adapters and the actual inventory browser.
 
-The [base-world contract](../worlds/base/items.md#shared-containers-and-active-work) and [OB11–OB13](../limits/objects.md#ob11) own behavior/limits. [Verification](../verification.md#immediate-gameplay-limits) records evidence. Arbitrary locks/keys, granular deposit-versus-withdraw grants and consent mechanics are future authored extensions, not implemented promises.
+The [base-world contract](../worlds/base/items.md#shared-containers-and-active-work) and [OB11–OB13](../limits/objects.md#ob11) own behavior/limits. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) records evidence. Arbitrary locks/keys, granular deposit-versus-withdraw grants and consent mechanics are future authored extensions, not implemented promises.

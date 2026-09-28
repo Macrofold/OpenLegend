@@ -1,6 +1,6 @@
 # Shared state, effect contributions and resource claims — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 1 in [remaining foundational work](../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
+**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 1 in [remaining foundational work](../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
 
 The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 

@@ -21,7 +21,7 @@ The eventual experience is: a player or NPC expresses an intent; the system find
 - [x] **BASE-3 — Existing conversation entry:** `apps/client/src/world-agent.ts` opens a new conversation and submits `Invent this: …`. `apps/server/src/macrofold.ts` runs persistent chat with player-scoped context but explicitly denies mutation tools and only returns text. It does not submit chat inventions to admission.
 - [ ] **BASE-4 — Complete live gameplay evidence:** a real world-agent request produces an admitted invention, which is crafted and used after reload. Basic provider/harness connectivity is insufficient evidence for this gate.
 
-- [x] Qualify fresh live supported-sling generation/admission, native craft/equip/hunt after reopening, paraphrased semantic lookup, explicit reuse and derived modification; exercise the production browser history/choice/clarification/draft flows. [Evidence and limits](../verification.md#supported-invention-loop) retain the broader browser-originated generation/use gate and provider abstention explicitly.
+- [x] Qualify fresh live supported-sling generation/admission, native craft/equip/hunt after reopening, paraphrased semantic lookup, explicit reuse and derived modification; exercise the production browser history/choice/clarification/draft flows. [Evidence and limits](../verification/actor-agency-and-inventions.md#supported-invention-loop) retain the broader browser-originated generation/use gate and provider abstention explicitly.
 
 ### Contracts to establish early, without building a universal framework
 

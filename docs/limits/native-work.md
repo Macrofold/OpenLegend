@@ -180,7 +180,7 @@ Dependency authority-scope string: **512 characters maximum**.
 
 Exposure membership reuses correctly invalidated derived inputs. Native actor/ambient/exposure phases yield private progress; the server yields to I/O after roughly 8 ms between checkpoints while retaining the same writer and work meter. Individual operations and finalization remain indivisible. Group output is 64 MB measured as UTF-8; the prior 16 MB allowance rejected the release-sized first crowd exposure.
 
-**Reason / tradeoff:** Preserve witnesses, order and atomic publication. No audience truncation or meter replenishment. A valid 100-person/50-animal/500-added-object first exposure emitted 65,903 events; later steps improved but the first step remains expensive. All physical state still resides in one process. [Evidence](../verification.md#immediate-gameplay-limits); [remaining C18](../maintainers/limits-audit.md#c18).
+**Reason / tradeoff:** Preserve witnesses, order and atomic publication. No audience truncation or meter replenishment. A valid 100-person/50-animal/500-added-object first exposure emitted 65,903 events; later steps improved but the first step remains expensive. All physical state still resides in one process. [Evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits); [remaining C18](../maintainers/limits-audit.md#c18).
 
 ## NW11
 

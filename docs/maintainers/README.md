@@ -63,12 +63,12 @@ This page is the master navigation index for active implementation work.
 - [Product roadmap](../../archive/05-project/roadmap.md)
 - [Open decisions](../../archive/05-project/open-decisions.md)
 - [Research backlog](../../archive/05-project/research-backlog.md)
-- [Verification](../verification.md)
+- [Verification index and shared playtest protocol](../verification.md) — topic reports retain actual results and limitations.
 - [Implementation status](../../archive/05-project/implementation-status.md)
 - [World-agent Macrofold handoff](../macrofold-world-agent-handoff.md)
 - [Runtime-art design owner](../../archive/03-design-proposals/procedural-art-and-animation.md)
 - [Documentation changelog](../documentation-changelog.md)
 
-This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in verification, open choices in open decisions, and history in the documentation changelog.
+This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).

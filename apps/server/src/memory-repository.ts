@@ -614,7 +614,7 @@ export class MemoryRepository {
     // at recall instead scanned unrelated personal history. The scalar awareness
     // probe keeps cold-statistics plans from rescanning/parsing the actor's entire
     // speech history once per turn (rather than using the exact source key).
-    // docs/verification.md#postgresql-only-storage-and-shared-preparation
+    // docs/verification/postgresql-cognition-preparation.md#postgresql-only-storage-and-shared-preparation
     const permittedSource =
       "r.world_id=e.world_id AND r.actor_id=? AND r.id=e.id AND r.eligible=1 AND r.source_kind='awareness'";
     const rows = await this.db

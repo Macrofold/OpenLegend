@@ -10,7 +10,7 @@ Behavior belongs to [Agent agency](../agent-agency.md); the operational contract
 
 [EWF06](extensible-world-foundation.md#ewf06--action-and-controller-integration-without-a-parallel-agency-system) supplies common integration; AG retains its delivery and AG01–AG04 need not wait for complete EWF/EPR qualification. AG05/AG06 consume family/concern interfaces; AG09 captures manifest dependencies.
 
-The native agency slice builds on module concerns and the existing single-action executor. See [Architecture](../architecture.md#actor-agency-foundation) for delivered behavior and [Verification](../verification.md#actor-agency-runtime) for actual evidence. Partial items below are not a claim of complete AG acceptance.
+The native agency slice builds on module concerns and the existing single-action executor. See [Architecture](../architecture.md#actor-agency-foundation) for delivered behavior and [Verification](../verification/actor-agency-and-inventions.md#actor-agency-runtime) for actual evidence. Partial items below are not a claim of complete AG acceptance.
 
 ## Ownership and delivery order
 
@@ -28,7 +28,7 @@ Use the current single writer and existing stores first. No new platform depende
 - [x] Change prompt examples to include empty, single-kind and combined decisions. Keep every operation optional; do not require visible reasoning, a goal for every need, or a reflection rewrite before a small intention edit.
 - [x] Make the action-context gate control expensive suggestions, not permission to submit an unlisted attempt or intention. Preserve existing route/attention budget behavior and the deliberate bounded urgent-response refresh.
 - [x] Update parser, domain contract and diagnostics together; no runtime consumer assumes one `talk`, `act` and `think`.
-- [x] Exercise the operation-list schema through the configured live immediate-response route and continue its admitted native plan without another inference. Narrow evidence is recorded in [Verification](../verification.md#live-agency-contracts); broader behavioral acceptance remains AG12-owned.
+- [x] Exercise the operation-list schema through the configured live immediate-response route and continue its admitted native plan without another inference. Narrow evidence is recorded in [Verification](../verification/actor-agency-and-inventions.md#live-agency-contracts); broader behavioral acceptance remains AG12-owned.
 - [ ] Add automated provider-schema fixtures without external requests; preserve the separate response/reflection and malformed-reference boundaries.
 - [x] Apply advertised aggregate operation/byte limits and per-field limits before mutation. Define explicit no-response, envelope rejection, full acceptance and partial acceptance outcomes.
 
@@ -81,7 +81,7 @@ Use the current single writer and existing stores first. No new platform depende
 - [ ] Extend locomotion with sustained target following when that behavior is taken on; keep it distinct from one-time destination movement and define target-loss/reacquisition behavior at the existing perception boundary.
 
 - [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
-- [x] Resolve up to four new proposals through the existing durable response job, using exact binding and Jev classification before bounded generative interpretation when needed. Native move/follow parameters and existing concrete sequences share admission. Preserve component identity, scoped references and stale-manifest rejection; uncertain revisions await the initiator. See [current runtime evidence](../verification.md#action-capability-native-slice); live semantic quality remains unqualified.
+- [x] Resolve up to four new proposals through the existing durable response job, using exact binding and Jev classification before bounded generative interpretation when needed. Native move/follow parameters and existing concrete sequences share admission. Preserve component identity, scoped references and stale-manifest rejection; uncertain revisions await the initiator. See [current runtime evidence](../verification/integration-summaries.md#action-capability-native-slice); live semantic quality remains unqualified.
 - [x] Add explicit withdrawal/resolution of the four unresolved intent slots through the scoped interpreter and private native controls; do not silently evict unresolved work. The INV bridge remains AG08 work.
 
 **Owner:** server action interpretation; domain command adapters. **Depends on:** AG01, AG03–AG04. **Touchpoints:** `apps/server/src/context.ts`, `decision-context.ts`, `cognition.ts`, response admission and existing action adapters. INV-7.1 owns the shared missing-capability classification contract.

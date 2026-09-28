@@ -1,6 +1,6 @@
 # Historical spatial-world source review
 
-This is the supplied pre-implementation review at `dd40ad2ad42639a8171b6fa0a82c184c351b346e`, not current implementation status. The implementation branch was based on `12c9cd7318ee3958d5bea006005e1f0aad996547`. Current facts and evidence belong to [Architecture](../../docs/architecture.md#spatial-world-foundation) and [Verification](../../docs/verification.md#spatial-world-runtime).
+This is the supplied pre-implementation review at `dd40ad2ad42639a8171b6fa0a82c184c351b346e`, not current implementation status. The implementation branch was based on `12c9cd7318ee3958d5bea006005e1f0aad996547`. Current facts and evidence belong to [Architecture](../../docs/architecture.md#spatial-world-foundation) and [Verification](../../docs/verification/spatial-world-and-scaling.md#spatial-world-runtime).
 
 # Repository review for the spatial-world design
 

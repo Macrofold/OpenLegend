@@ -154,7 +154,7 @@ Restore to an empty isolated target first and verify world identity, clock, quan
 
 After an interrupted save, published UUID directories are the only candidates. Startup removes `.pending-<pid>-<uuid>` directories only when that local PID is demonstrably absent. Preserve ambiguous/legacy stages for inspection; never delete a live writer's stage. A damaged UUID slot is omitted with a visible catalog count; same-size corruption is detected by checksum at load/rotation. Preserve damaged artifacts separately, verify another complete point, then explicitly remove the damaged slot or move it outside the save namespace. Never repair checksums to conceal corruption. Interrupted operational `.backup-pending-*` directories remain unpublished and require operator review. Do not reset the world or delete accounting to bypass an error.
 
-The local SIGKILL drills qualify application-process interruption, not host power loss, remote filesystem durability or region disaster recovery. [Measured evidence](../../docs/verification.md#bounded-history-checkpoints-and-recovery) records those limits and paused restore resource costs.
+The local SIGKILL drills qualify application-process interruption, not host power loss, remote filesystem durability or region disaster recovery. [Measured evidence](../../docs/verification/checkpoints-and-recovery.md#bounded-history-checkpoints-and-recovery) records those limits and paused restore resource costs.
 
 ## 6. Migration from the local snapshot and change journal
 
