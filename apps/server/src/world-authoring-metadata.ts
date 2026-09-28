@@ -98,6 +98,7 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
           revision: (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).revision + 1,
         },
         notes: [
+          'The example already has the required next revision. Keep that revision unchanged; edit only the requested policy fields.',
           'Exact fields: version=1, revision=current+1, maxImmediateLevel=2|3|4, significantEventTypes (at most 16 lowercase/hyphen event names), reflection boolean, dream.',
           'dream is {statusEffectId,afterSeconds>0}; the effect must already exist. This is a world-wide policy revision; it never raises real spending limits.',
         ],
@@ -110,6 +111,7 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
           : {}),
         example: { ...world.statusEffectPolicy, revision: world.statusEffectPolicy.revision + 1 },
         notes: [
+          'The example already has the required next revision. Keep that revision unchanged; edit only the requested policy fields.',
           'Supply the whole policy {revision:current+1,clockOffsetHours:[0,24),definitions:[...]}; omitted definitions are removed, not implicitly retained. At most 128 definitions.',
           'Required definition fields: id (safe record ID), type="statusEffect", target="$subject", label, enabled:boolean, requires:condition, reactivationDelaySeconds:0..86400, occupiesAction:boolean, interruptOn:string[]<=32, whileActive:operation[1..32].',
           'Optional: activationCondition, automaticActivation, automaticDeactivation; presentation; onActivate/onDeactivate; actions; contribution.',

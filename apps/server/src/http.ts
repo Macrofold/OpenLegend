@@ -2088,6 +2088,7 @@ async function initializeGameServer(
                 value.worldId,
                 value.budgetUsd,
                 scope,
+                value.purpose,
               );
               return send(response, 200, { ok: true, ...data });
             }

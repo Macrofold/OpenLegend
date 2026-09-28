@@ -214,7 +214,13 @@ export class WorldAuthoringService {
       next: rows.length > 20 && last ? { createdAt: last.createdAt, id: last.id } : null,
     };
   }
-  async open(id: string, worldId: string, budgetUsd?: number, scope = this.service.localScope) {
+  async open(
+    id: string,
+    worldId: string,
+    budgetUsd?: number,
+    scope = this.service.localScope,
+    purpose?: AgentSession['initialPurpose'],
+  ) {
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
     if (!this.service.config.godMode || worldId !== this.service.world.id)
@@ -229,6 +235,8 @@ export class WorldAuthoringService {
             );
           if (budgetUsd !== undefined && budgetUsd !== s.budgetUsd)
             throw new AuthoringRequestError('Reopening does not change the admitted allowance.');
+          if (purpose !== undefined && purpose !== s.initialPurpose)
+            throw new AuthoringRequestError('Reopening does not change the original purpose.');
         } else {
           s = {
             id,
@@ -244,6 +252,8 @@ export class WorldAuthoringService {
             budgetUsd: Math.min(budgetUsd ?? 5, this.service.config.inventionWorkshopUsd),
             policy: this.policy(),
             actorId: scope.actorId,
+            initialPurpose: purpose ?? 'conversation',
+            profile: purpose === 'invention' ? 'recipe' : 'discovery',
           };
         }
         const contextHandle = randomBytes(32).toString('base64url');
@@ -946,6 +956,20 @@ export class WorldAuthoringService {
               'invalid',
               'Requirement quotes must come from the retained human request.',
             );
+          // Repairs can repeat an unchanged finding. Keep its original identity;
+          // changed meaning or a new human source remains a separate record.
+          if (
+            !requirement.supersedes &&
+            requirements.some(
+              (r) =>
+                r.source.turnId === requirement.sourceTurnId &&
+                r.source.text === requirement.quote &&
+                r.strength === requirement.strength &&
+                r.status === requirement.status &&
+                r.finding === requirement.finding,
+            )
+          )
+            continue;
           const findingId = `finding-${a.operationId}-${i}`;
           if (requirement.supersedes) {
             const previous = requirements.find((r) => r.id === requirement.supersedes);

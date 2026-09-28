@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-28 — Explicit invention preparation and qualified harness affordances
+
+Explicit Invent/New invention now starts recipe preparation directly, without a paid discovery turn or retargeting another conversation. The recipe profile changes from five tools to four because its complete guide is already in the packet; native family facts remain. Policy examples identify their already-incremented revision, repairs distinguish immutable replay from new operations, and identical source-bound findings retain their IDs. OpenCode opts into Macrofold native-question denial with unchanged defaults elsewhere. Exact human review, immutable revisions, PostgreSQL and conservative accounting remain controlling. [Runtime](world-agent-runtime.md#scoped-context-and-native-save-for-review), [WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) and [local evidence](verification/world-agent-context.md#final-local-qualification) distinguish delivered behavior from deployment and broader roadmap gates.
+
 ## 2026-09-28 — Portable recursive-policy submission
 
 The selected status-policy tool now transports its complete candidate as bounded JSON text, retaining strict native shape/condition validation, exact revisions and replay. This supersedes embedding the recursive schema in that agent-facing tool: a real Muse request rejected it before execution, matching an upstream reported incompatibility. Native field guidance remains source-backed; other kinds keep typed objects. The owner approved six connector submission names and optional Macrofold question suppression with unchanged defaults. [Verification](verification/world-agent-context.md) separates native evidence from pending live activation.

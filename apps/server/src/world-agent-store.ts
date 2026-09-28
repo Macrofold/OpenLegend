@@ -31,6 +31,7 @@ export interface AgentSession {
   activeTurn?: string;
   turnSequence?: number;
   profile?: AuthoringProfile;
+  initialPurpose?: 'conversation' | 'invention';
   selectedDraft?: { id: string; revision: number };
   toolCalls?: number;
   packetRef?: string;

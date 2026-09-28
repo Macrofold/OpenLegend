@@ -390,6 +390,9 @@ export class MacrofoldBackend implements AiClient {
       const toolPermissions = worldAgent
         ? {
             ...permissions,
+            // Native question tools duplicate the application's conversation UI.
+            // Other harnesses retain their defaults until Macrofold supports denial.
+            ...(config.macrofoldHarness === 'opencode' ? { questions: 'deny' as const } : {}),
             tools: { include: worldAgent.toolNames.map((n) => `${worldAgent.connectionId}/${n}`) },
           }
         : permissions;

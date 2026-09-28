@@ -182,13 +182,13 @@ Templates express a shape, not a canned finished invention. The agent chooses cr
 
 ## 9. Medium effort and Macrofold responsibilities
 
-The previous authoring path used `macrofoldModelParameters('full')` (`xhigh`). The implementation now selects World Agent-specific `reasoning.effort: medium`, with strict parameter support and existing BYOK/model selection; generic full cognition remains unchanged. The inspected local Macrofold adapter accepts medium for the configured model and forwards admitted model parameters. Live outbound capture must still prove the actual setting reaches the provider; do not claim measured quality from source inspection.
+The previous authoring path used `macrofoldModelParameters('full')` (`xhigh`). The implementation now selects World Agent-specific `reasoning.effort: medium`, with strict parameter support and existing BYOK/model selection; generic full cognition remains unchanged. The inspected local Macrofold adapter accepts medium for the configured model and forwards admitted model parameters. Live outbound capture now confirms that setting for the qualified recipe and policy journeys. The matched context comparison holds medium constant; it does not establish medium superiority over another effort setting.
 
 Changed admission configuration requires a fresh remote session with safe continuity where the current session cannot honor it. Preserve the same conversation/ledger and reconcile the previous Run first. Do not force a small output ceiling that truncates valid candidates; retain the existing output guard until measured candidate/reasoning needs justify a separate change.
 
 Macrofold should derive filesystem affordances from effective file permissions: no access means no file tool/instructions; read-only means reading guidance without save promises; writable output scope permits output guidance. Internal harness checkpoint persistence remains available without exposing agent file access. Its current `harness_prompt_mode: replace` does not remove unconditional worker output instructions. Suppress the harness question tool when the application uses ordinary final-text questions, and use readable unique tool aliases rather than opaque hashes where safely supported.
 
-These are changes in Macrofold's repository, coordinated through WW21; this design does not modify that checkout. An OpenLegend prompt cannot securely remove tools or override a conflicting privileged system message. Qualify permission intersections, resumed/warm sessions and file-enabled regression cases in that owner.
+These changes are implemented in an isolated Macrofold branch under WW21, with default behavior preserved and opt-in question denial for OpenCode. The owner's original modified checkout is preserved; local live qualification uses its existing filesystem/reliability work as an explicitly recorded temporary build overlay. An OpenLegend prompt cannot securely remove tools or override a conflicting privileged system message. Qualify permission intersections, resumed/warm sessions and file-enabled regression cases in that owner.
 
 ## 10. Verification and measurements
 

@@ -69,6 +69,7 @@ function WorldAgentPanel(props: Props) {
     listing = useRef(false);
   const seedSeen = useRef<string | undefined>(undefined);
   const [seedTarget, setSeedTarget] = useState<string>();
+  const [inventionTarget, setInventionTarget] = useState<string>();
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -114,14 +115,19 @@ function WorldAgentPanel(props: Props) {
   useEffect(() => {
     if (inventionSeed && seedSeen.current !== inventionSeed.id) {
       seedSeen.current = inventionSeed.id;
-      const id = active || crypto.randomUUID();
+      // An explicit Invent action starts its own draft; it cannot silently retarget
+      // a retained policy conversation or dispatch before the person presses Send.
+      const id = crypto.randomUUID();
       setActive(id);
       setSeedTarget(id);
+      setInventionTarget(id);
       setShortcut(!godMode);
     }
   }, [inventionSeed, godMode]);
-  function create() {
-    setActive(crypto.randomUUID());
+  function create(invention = false) {
+    const id = crypto.randomUUID();
+    setActive(id);
+    setInventionTarget(invention ? id : undefined);
     setSeedTarget(undefined);
     setShortcut(false);
   }
@@ -162,8 +168,11 @@ function WorldAgentPanel(props: Props) {
                 ))}
               </select>
             </label>
-            <Button size="sm" variant="quiet" onPress={create}>
+            <Button size="sm" variant="quiet" onPress={() => create()}>
               New
+            </Button>
+            <Button size="sm" variant="quiet" onPress={() => create(true)}>
+              New invention
             </Button>
             <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
               Refresh list
@@ -183,11 +192,12 @@ function WorldAgentPanel(props: Props) {
               connected={connected}
               visible={visible}
               seed={seedTarget === active ? inventionSeed : null}
+              purpose={inventionTarget === active ? 'invention' : undefined}
               onCreated={() => void list()}
             />
           ) : (
             <EmptyState title="Investigate and create in one conversation">
-              <Button onPress={create}>New conversation</Button>
+              <Button onPress={() => create()}>New conversation</Button>
             </EmptyState>
           )}
           {error && <p role="alert">{error}</p>}

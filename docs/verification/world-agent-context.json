@@ -201,5 +201,552 @@
     "priorCompleteRequestBytes": 22663,
     "settledTaskUsageUsd": 0.017658,
     "priorUncertainUsd": 4
+  },
+  "finalQualification": {
+    "date": "2026-09-28",
+    "nativeChecks": [
+      "Explicit invention starts recipe preparation without a model selection turn; reopen cannot change purpose and ordinary conversation retains discovery",
+      "Typed submission saves exact candidate, dependencies, native checks, original intent and pending review through HTTP",
+      "Same operation/body replays exact saved outcome without a new revision",
+      "Operation lookup recovers committed result; operation ID collision is rejected",
+      "Exact inspected revision refines into an immutable second revision",
+      "Repair keeps identical source-bound finding IDs and retains changed explanations separately",
+      "Exact human approval and Apply commit once; repeated Apply recovers receipt",
+      "Selected native action saves an exact review, refuses paused execution and replays one approved command receipt",
+      "Missing required endpoint retains invalid draft/findings without dangling graph edges or a review",
+      "Whole status policy records actual attribute reads/rates, restrictions and cognition linkage with independent no-new-asset readiness",
+      "Attributable unsupported requirement blocks review without discarding candidate",
+      "Non-weapon gathering candidate records resource, native family, input roles and quantities",
+      "Explicit newer human change supersedes an unsupported requirement while preserving both immutable revisions",
+      "Exhausted new-work allowance still recovers the exact committed save",
+      "Injected review-storage failure rolls candidate, revision and operation outcome back together",
+      "Changed required policy rejects the old packet before draft storage",
+      "Direct selected-source reads match installed graph identities and data exactly",
+      "Large candidate analysis stops at measured work bounds and explicitly retains incomplete coverage",
+      "Another principal cannot recover a private operation through its copied handle",
+      "Actual MCP discovery exposes shared strict descriptors and exact cross-transport receipt replay",
+      "Native flow has no provider attempts or spending",
+      "Temporal status self-read is retained without inventing recursive execution or a workflow cycle",
+      "Missing required representation independently blocks readiness",
+      "10,000 irrelevant definitions do not grow candidate graph work; cold/warm source costs measured",
+      "Native profile stages rotate handles, retain original request/shared funding, and require a human turn before broader policy scope"
+    ],
+    "mcpDescriptorCount": 30,
+    "mediumComparison": "Held constant across matched context samples; no causal comparison against other effort settings.",
+    "runs": [
+      {
+        "run": "01a0e701-f55b-747a-912b-9d2d60deb685",
+        "generations": [
+          {
+            "requestBytes": 16921,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 4453,
+              "output": 3077,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7643
+            }
+          },
+          {
+            "requestBytes": 23208,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 5798,
+              "output": 638,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6549
+            }
+          },
+          {
+            "requestBytes": 24284,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 6223,
+              "output": 216,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6552
+            }
+          },
+          {
+            "requestBytes": 24878,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 6511,
+              "output": 299,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6923
+            }
+          },
+          {
+            "requestBytes": 29284,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1929,
+              "output": 1794,
+              "input_cached": 5873,
+              "input_cache_write": 0,
+              "total": 9596
+            }
+          },
+          {
+            "requestBytes": 34922,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 2775,
+              "output": 1256,
+              "input_cached": 6257,
+              "input_cache_write": 0,
+              "total": 10288
+            }
+          },
+          {
+            "requestBytes": 40401,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1289,
+              "output": 415,
+              "input_cached": 8945,
+              "input_cache_write": 0,
+              "total": 10649
+            }
+          },
+          {
+            "requestBytes": 44726,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1136,
+              "output": 1390,
+              "input_cached": 10225,
+              "input_cache_write": 0,
+              "total": 12751
+            }
+          },
+          {
+            "requestBytes": 50137,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 12435,
+              "output": 1620,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 14168
+            }
+          },
+          {
+            "requestBytes": 56410,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 7437,
+              "output": 268,
+              "input_cached": 6513,
+              "input_cache_write": 0,
+              "total": 14218
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T07:54:20.166Z",
+        "endedAt": "2026-09-28T07:55:56.155Z"
+      },
+      {
+        "run": "01a0e70f-972b-7109-aeee-cfc00f24aa9a",
+        "generations": [
+          {
+            "requestBytes": 6105,
+            "toolBytes": 3418,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1881,
+              "output": 1150,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3144
+            }
+          },
+          {
+            "requestBytes": 7139,
+            "toolBytes": 3418,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 2205,
+              "output": 1205,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3523
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:09:13.529Z",
+        "endedAt": "2026-09-28T08:09:56.690Z"
+      },
+      {
+        "run": "01a0e710-424c-72f9-b220-02a33e570d73",
+        "generations": [
+          {
+            "requestBytes": 13710,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4003,
+              "output": 2023,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6139
+            }
+          },
+          {
+            "requestBytes": 15270,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4526,
+              "output": 2276,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6915
+            }
+          },
+          {
+            "requestBytes": 17665,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1271,
+              "output": 293,
+              "input_cached": 4081,
+              "input_cache_write": 0,
+              "total": 5645
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:09:57.487Z",
+        "endedAt": "2026-09-28T08:11:26.009Z"
+      },
+      {
+        "run": "01a0e714-8f43-739f-aeb3-b88e39577af8",
+        "generations": [
+          {
+            "requestBytes": 15915,
+            "toolBytes": 5988,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d",
+              "platform_c_ol_status_policy_sub_e2b4f0fa2aa1470f84dcaf7a"
+            ],
+            "usage": {
+              "input": 4134,
+              "output": 2820,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7067
+            }
+          },
+          {
+            "requestBytes": 22382,
+            "toolBytes": 5988,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d",
+              "platform_c_ol_status_policy_sub_e2b4f0fa2aa1470f84dcaf7a"
+            ],
+            "usage": {
+              "input": 5533,
+              "output": 385,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6031
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:14:39.263Z",
+        "endedAt": "2026-09-28T08:15:33.971Z"
+      },
+      {
+        "run": "01a0e71d-2e13-7528-8450-d96a02f545b0",
+        "generations": [
+          {
+            "requestBytes": 12157,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3681,
+              "output": 5448,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 9242
+            }
+          },
+          {
+            "requestBytes": 14172,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 717,
+              "output": 3930,
+              "input_cached": 3697,
+              "input_cache_write": 0,
+              "total": 8344
+            }
+          },
+          {
+            "requestBytes": 16639,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 5037,
+              "output": 359,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 5509
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:24:04.058Z",
+        "endedAt": "2026-09-28T08:26:06.669Z"
+      },
+      {
+        "run": "01a0e723-0924-7749-ae1a-16f95523bdf3",
+        "generations": [
+          {
+            "requestBytes": 11973,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3639,
+              "output": 3580,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7332
+            }
+          },
+          {
+            "requestBytes": 14442,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 782,
+              "output": 496,
+              "input_cached": 3697,
+              "input_cache_write": 0,
+              "total": 4975
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:30:27.923Z",
+        "endedAt": "2026-09-28T08:31:44.729Z"
+      }
+    ],
+    "settledTaskUsd": 0.040373,
+    "uncertainTaskUsd": 4.5,
+    "taskCeilingUsd": 10,
+    "jevUsd": 0,
+    "qualificationImage": "sha256:50acfc2b82b47183ca7f98c6bb2989388862631d20881297b16508588db7acbb",
+    "deployment": "Isolated loopback API/scheduler and temporary source overlay; original owner checkout and preview preserved. Not deployed or merged."
   }
 }

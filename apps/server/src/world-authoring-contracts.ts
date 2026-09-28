@@ -13,7 +13,12 @@ const id = z
   .regex(/^[a-zA-Z0-9_-]+$/);
 const revision = z.number().int().min(1).max(1_000_000);
 const draft = { draftId: id, revision };
-const mutation = { operationId: id };
+const mutation = {
+  operationId: id.describe(
+    'Reuse this ID only for an identical replay. Any changed body, including a new packetRef, needs a new ID.',
+  ),
+};
+const packetRef = id.describe('Use the latest returned packetRef.');
 const requirementAnnotations = z
   .array(
     z
@@ -95,7 +100,7 @@ function selectedSubmit<K extends keyof typeof authoringCandidateSchemas>(kind: 
     schema: z
       .object({
         ...mutation,
-        packetRef: id,
+        packetRef,
         proposal: z
           .object({
             kind: z.literal(kind),
@@ -124,7 +129,7 @@ export const WORLD_AUTHORING_TOOLS = {
     schema: z
       .object({
         ...mutation,
-        packetRef: id,
+        packetRef,
         proposal: typedAuthoringPayload,
         edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
         requirements: requirementAnnotations,
@@ -133,11 +138,11 @@ export const WORLD_AUTHORING_TOOLS = {
   },
   ol_recipe_submit: {
     description:
-      'Save a complete recipe and its native checks for exact human review. On ready_for_review, explain the tradeoff and finish. Nothing is installed or crafted. For a new recipe omit deriveFrom; never guess a base ID. Reuse the same operationId and body to recover a lost response.',
+      'Save a complete recipe with native checks for human review. On ready_for_review, explain the tradeoff and finish; nothing is installed or crafted. For new recipes omit deriveFrom; never guess a base ID.',
     schema: z
       .object({
         ...mutation,
-        packetRef: id,
+        packetRef,
         candidate: z.fromJSONSchema(declarationSchema),
         edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
         deriveFrom: z
@@ -253,6 +258,7 @@ export function parseWorldAuthoringCall(name: string, raw: unknown): WorldAuthor
 export const sessionRequest = z.object({ sessionId: id, worldId: id }).strict();
 export const sessionOpenRequest = sessionRequest.extend({
   budgetUsd: z.number().finite().min(0).max(5).optional(),
+  purpose: z.enum(['conversation', 'invention']).optional(),
 });
 export const sessionDecisionRequest = sessionRequest.extend({
   planId: id,

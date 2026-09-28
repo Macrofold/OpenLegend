@@ -35,6 +35,7 @@ export function WorldAgentSession({
   visible,
   connected,
   seed,
+  purpose,
   onCreated,
 }: {
   worldId: string;
@@ -43,9 +44,22 @@ export function WorldAgentSession({
   visible: boolean;
   connected: boolean;
   seed?: { id: string; text: string } | null;
+  purpose?: 'invention';
   onCreated(): void;
 }) {
   const key = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}`;
+  const [initialPurpose] = useState(
+    () =>
+      purpose ??
+      readLocal<'invention' | null>(
+        `${key}:purpose`,
+        null,
+        (v): v is 'invention' => v === 'invention',
+      ),
+  );
+  useEffect(() => {
+    writeLocal(`${key}:purpose`, initialPurpose);
+  }, [key, initialPurpose]);
   const [text, setText] = useState(() =>
     readLocal(`${key}:draft`, '', (v): v is string => typeof v === 'string'),
   );
@@ -211,6 +225,7 @@ export function WorldAgentSession({
       const reply = await post<{ ok: boolean; message?: string }>('/api/world-agent/session/open', {
         ...prefix,
         budgetUsd: status?.availability.sessionAllowanceUsd ?? 0,
+        ...(initialPurpose ? { purpose: initialPurpose } : {}),
       });
       if (!reply.ok) throw new Error(reply.message ?? 'Session could not be created.');
       onCreated();
@@ -322,7 +337,13 @@ export function WorldAgentSession({
   return (
     <>
       {!session && status && (
-        <EmptyState title="One conversation to investigate and create">
+        <EmptyState
+          title={
+            initialPurpose === 'invention'
+              ? 'Create an invention'
+              : 'One conversation to investigate and create'
+          }
+        >
           <p>
             The agent can inspect this world's mechanics and prepare changes. Live changes require
             your review. Starting a conversation does not use your allowance.
