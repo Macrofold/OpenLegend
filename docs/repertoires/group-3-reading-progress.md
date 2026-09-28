@@ -24,7 +24,7 @@ Checked remote heads:
 | `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` |
 | `docs/worldbuilding-research-library` | `b387e7caeda5cec301045b877ca50a2815a869dd` |
 
-The working branch contains a revised 29-world library, including D&D, beyond the older worldbuilding branch's 28-world index. Its game research also includes D&D beyond the older 148-subject roster. The current game-library README is fully read; its original-chapter tree contains 39 documents, including `games/dungeons-and-dragons.md`. Continue checking the actual current corpus rather than treating historical roster counts as exhaustive. Discovery is not a completed dossier read.
+The working branch contains a revised 29-world library, including D&D, beyond the older worldbuilding branch's 28-world index. Its game research includes `dungeons-and-dragons-2024.md` and `dungeons-and-dragons-3-5.md` beyond the older 148-subject roster; do not invent roster IDs for them. The current game-library README is fully read. The original-chapter tree contains 39 documents, including `games/dungeons-and-dragons.md`. The separate `dragon-age-series.md` dossier is a supplementary study, not a replacement for the four mainline games. Discovery is not a completed read.
 
 ## Fresh game reads
 
@@ -33,7 +33,15 @@ The working branch contains a revised 29-world library, including D&D, beyond th
 - [x] [Full dossier](../../archive/02-research/game-inspiration/dossiers/animal-crossing-new-horizons.md), including corrections and all annotated sources; blob `b7b91a09b37cb2d4ef9f6c4e59f51a93478df0f7`.
 - [x] [Original chapter](../../archive/02-research/game-inspiration/games/animal-crossing-new-horizons.md); blob `7f828b57b44d0e2246022ec58060a8da67f6a9e7`.
 
-Useful distinctions: hobby versus personality versus remembered conduct; giving, keeping, displaying and selling the same possession; weather as an invitation; a place that matters without attack; promises that require actual fulfillment; and future letters as chosen personal ritual. The dossier's bounded routines are not evidence of unrestricted character cognition. Historical criticisms and later convenience changes remain version-specific.
+Useful distinctions: hobby versus personality versus remembered conduct; giving, keeping, displaying and selling the same possession; weather as an invitation; a place that matters without attack; promises that require actual fulfillment; and future letters as chosen personal ritual. Bounded routines are not unrestricted cognition. Historical criticisms and later convenience changes remain version-specific.
+
+### G21 — RimWorld
+
+- [x] [Full dossier](../../archive/02-research/game-inspiration/dossiers/rimworld.md), through its preservation/completion check and complete source register; blob `796387127c2306bca15b8042255621ac8b7ad04b`.
+- [x] [Original chapter](../../archive/02-research/game-inspiration/games/rimworld.md); blob `9e7e892fc7917082547fd837258d099b84fc877e`.
+- [x] [Work dependencies, personality and story](../../archive/02-research/game-inspiration/mechanics/rimworld-work-dependencies-personality-and-story.md); blob `09cc889de1f6379753729227adc568ea122e1a14`.
+
+Useful distinctions: low skill versus incapability versus refusal; passion versus competence; actual care work after a victory; preserved identity across attacker, prisoner and recruit roles; a particular animal becoming someone's purpose; beliefs affecting mundane material choices; and daily priorities differing from contextual judgment. The fire and tortoise accounts are attributed reports, not reproduced events or proof of animal gratitude. Storyteller pressure is not character cognition. Retain the critic's concern that consequential variables can still feel emotionally unconvincing; fluent prose alone does not solve it. Core, expansion, console and mod boundaries remain distinct.
 
 ### G23 — Dwarf Fortress
 
@@ -51,7 +59,13 @@ Useful distinctions: event versus memory versus interpretation; practical value 
 
 Useful distinctions: ordinary maintenance versus meaningful care; emotional experience versus a productivity buff; daily autonomy versus irreversible offscreen life changes; a room's expressive value versus efficiency; crafts connecting personal ambitions; and a failed occasion generating a new purpose without erasing the failure.
 
-**Fresh completed game dossiers: 3; original chapters: 3; supplementary studies: 2.** Every game document not explicitly checked above remains unchecked in this continuation. This checkpoint does not claim that the complete-corpus requirement or inventory expansion is finished. New situations drawn from these distinctions must be labeled creative synthesis, not presented as source-established events.
+### G126 — Crusader Kings III
+
+- [x] [Full dossier](../../archive/02-research/game-inspiration/dossiers/crusader-kings-iii.md), through its final requirement map and completion review; blob `f3ee5e74d204e5c2aedfbd077b5afe5e287e0000`.
+
+Useful distinctions: acting against a disposition can remain possible; affection, competence, allegiance, fear and leverage can disagree; an heir inherits assets and obligations without inheriting the predecessor's personality; a private secret can alter public opportunity; and succession changes the people holding power rather than merely deleting a score. New biographies should have finite holdings, deeds and claims. Do not turn traits into compulsory behavior or numeric opinion into universal obedience. The dossier separates announced religious expansions from delivered mechanics. No dedicated original chapter appears in the inspected 39-document chapter tree; broader comparative studies remain separate pending reads.
+
+**Fresh completed game dossiers: 5; original chapters: 4; supplementary studies: 3.** Every game document not explicitly checked above remains unchecked in this continuation. This checkpoint does not claim that the complete-corpus requirement or inventory expansion is finished. New situations drawn from these distinctions must be labeled creative synthesis, not presented as source-established events.
 
 ## Fresh worldbuilding reads
 
