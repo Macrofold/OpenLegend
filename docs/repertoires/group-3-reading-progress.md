@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the complete repository document was read**, including examples, corrections, sources and limitations. It does not claim external-bibliography rereading, personal gameplay, full-video viewing or independent verification. Unlisted material remains unread. Counts are cumulative across resumes, not fresh rereads of unchanged completed documents.
 
-**Coverage:** **42/42 worldbuilding documents**, **33 game dossiers**, **23/39 original game chapters**, **12 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents**, **36 game dossiers**, **26/39 original game chapters**, **15 game supplements**, **3 game-library indexes/roster documents**. **The full game corpus and remaining catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -14,7 +14,7 @@ The complete rechecked research-branch heads and corpus discovery record are pre
 
 The actual corpus includes 29 world dossiers and 13 worldbuilding root documents, 148 numbered game cases plus two unnumbered D&D dossiers, a separate Dragon Age series supplement, 39 original game chapters, and additional mechanics/essays/references. Tree/index inspection is discovery, not reading linked documents. Complete mechanics and original-chapter trees were inspected; no separate mechanics study exists for Worlds Adrift, Spore, No Man's Sky, EverQuest Next or Ultima Online. Integrated dossier studies count within their dossiers. Shared documents count once, not once per game they cover.
 
-## Game dossiers — 33 complete
+## Game dossiers — 36 complete
 
 Filenames are relative to [the dossier directory](../../archive/02-research/game-inspiration/dossiers/).
 
@@ -48,11 +48,14 @@ Filenames are relative to [the dossier directory](../../archive/02-research/game
 - [x] G28 — `satisfactory.md`
 - [x] G29 — `terraria.md`
 - [x] G30 — `stardew-valley.md`
+- [x] G31 — `valheim.md`
+- [x] G32 — `noita.md`
+- [x] G33 — `caves-of-qud.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 
-## Original game chapters — 23 complete
+## Original game chapters — 26 complete
 
 Filenames are relative to [the original-chapter directory](../../archive/02-research/game-inspiration/games/).
 
@@ -79,8 +82,11 @@ Filenames are relative to [the original-chapter directory](../../archive/02-rese
 - [x] `factorio-and-satisfactory.md`
 - [x] `terraria.md`
 - [x] `stardew-valley.md`
+- [x] `valheim.md`
+- [x] `noita.md`
+- [x] `caves-of-qud.md`
 
-## Game supplements — 12 complete
+## Game supplements — 15 complete
 
 Filenames are relative to [the mechanics-study directory](../../archive/02-research/game-inspiration/mechanics/).
 
@@ -96,6 +102,9 @@ Filenames are relative to [the mechanics-study directory](../../archive/02-resea
 - [x] `factorio-satisfactory-flows-blueprints-and-place.md`
 - [x] `terraria-equipment-composition-settlements-and-discovery.md`
 - [x] `stardew-valley-calendars-gifts-and-useful-routines.md`
+- [x] `valheim-zomboid-preparation-risk-and-home.md`
+- [x] `noita-wands-materials-and-experimentation.md`
+- [x] `caves-of-qud-bodies-cooking-and-social-knowledge.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -105,7 +114,7 @@ Relative to [game inspiration](../../archive/02-research/game-inspiration/):
 - [x] `mechanics/README.md`
 - [x] `research-roster.md`
 
-Other game root documents, essays, references, standalone field guide and unlisted studies remain unchecked. The paired Among Us/Lethal Company chapter does not complete Lethal Company's separate dossier or study. D&D's shared documents count once; the SRD synthesis does not claim this continuation reread its underlying 364-page PDF. No separate CKIII original chapter exists in the inspected tree.
+Other game root documents, essays, references, standalone field guide and unlisted studies remain unchecked. The paired Among Us/Lethal Company chapter does not complete Lethal Company's separate dossier or study. The whole Valheim/Project Zomboid study is read, but not Project Zomboid's dossier or original chapter. D&D's shared documents count once; the SRD synthesis does not claim this continuation reread its underlying 364-page PDF. No separate CKIII original chapter exists in the inspected tree.
 
 ## World dossiers — 29 complete
 
@@ -170,16 +179,15 @@ Detailed prior findings and hashes remain preserved, not discarded by this compa
 - [Worlds Adrift and complete roster, `b7d9f09`](https://github.com/Macrofold/OpenLegend/blob/b7d9f09064372a485224c072e4a92a0ab877a3ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Spore, No Man's Sky and EverQuest Next, `a5d704c`](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 - [Ultima Online and Minecraft, `9a609cc`](https://github.com/Macrofold/OpenLegend/blob/9a609ccad221acd4274017369eae2a02665fd0c0/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
+- [Factorio, Satisfactory, Terraria and Stardew Valley, `5cdcc2d`](https://github.com/Macrofold/OpenLegend/blob/5cdcc2ddfebfb17eaadd9a4034e6a822959a55ab/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries).
 
-**Factorio:** dossier `3335b496562e0963d1b8ea2eb412413c01ce79f9`. A working creation can record changing competence. Improving a teammate's metric can confiscate their understanding; permission to cooperate is not permission to replace their design. Formal completion, reliable operation, self-imposed mastery and a satisfying restart are different destinations. Bigger reserves can fail where freshness matters. A shortage may follow an unwanted surplus; more effort at the visible symptom is not necessarily help. Environmental constraints can reward transferred knowledge or make earned expertise feel irrelevant. The corrected final fluid rules supersede the discarded unlimited prototype; historical implementation, ports, experimental versions and Space Age are separate evidence. No native interpersonal psychology is inferred from human collaboration.
+**Valheim:** dossier `dcdf81b6c8e4eaa5c06bdcc8388017e207b8c503`; original `abaa2b66c92d04d18bfe3535f33fd198526c59db`; shared Valheim/Zomboid study `80b4a8784fd8990766e3f895a24c493bc4d85e87`. Shared progress is not shared competence or knowledge: a returning novice can face a changed world without understanding its changes. An experienced companion's agreement not to spoil or shortcut discovery is a concrete form of help. Quiet domestic participation can be meaningful without immediately serving the next fight. Meals can support different kinds of readiness, although a nominal bonus becomes a tax if every errand requires maximum preparation. A feast distributes finite preparation and provides a gathering place. A memorable silver voyage and repetitive chest manipulation are different frictions; capacity, transfer effort and geographical transport need different remedies. An evocative sighting interpreted as acknowledgement is not evidence of personalized NPC approval. Recovery windows are not invulnerability, neutral property is not free loot, and taming does not establish dialogue relationships. The dossier separates current 1.0/maintenance, older testimony, settings and mods; its current-version claims remain repository-source evidence, not independent verification here.
 
-**Satisfactory:** dossier `ed165d99761487341078c5527814bc42b668b24a`. Enjoying a place, explaining a design, expressing it and maximizing output are different goals. A decorative road can be wanted without an efficiency payoff. Let people savor completed work before automatically assigning another demand. An explorer, planner and aesthetic builder can cooperate through different pleasures. More companion comments can become unwanted interruption; authored ADA speech is not generative cognition. Remote possession, delivery rate and required local submission differ. Shared progress does not automatically follow every visitor home. Current controls, creature options and cross-play restrictions qualify older criticism without erasing preferences.
+**Valheim/Zomboid comparative study, entire document:** immediate safety, next-journey supplies, infrastructure reliability and a reason to continue are distinct problems. A generator's need for a powered fuel source turns an apparent solution into a dependency. A rare instruction can make a journey purposeful or hold a known project hostage; the model's knowledge is not automatically the character's. A self-sufficient home may successfully conclude a goal rather than require another compulsory threat. Funny short-session loss and the destruction of weeks of work carry different stakes. The source's mixed Build 41/later utility evidence and planned NPC limits remain explicit; this study does not complete the separate Zomboid dossier.
 
-**Factory pair supplements:** complete original chapter `8d1e08d20260c605ec67c36d0314cfc62c86360f` and mechanics study `8d0546a7ec086bdd9cee44ec7745d966b24d331b`. Stock, flow, capacity, dependency and control remain distinct. A remembered solution, reproducible design, specialized design and operating installation are different accomplishments. Do not turn a useful delegation into compulsory optimal planning or a creator's speculative experiment into a promise.
+**Noita:** dossier `1466caefc97637622779b2d9236f30a860aab058`; original `2863903853044c6c49c6991a83ff63ce3d78068a`; study `1fb836a0c3b285469a5aabaa2e469d6db14d5d83`. Not understanding a rule, lacking its components and making an execution mistake are different failures. A spectacular accident can be a joke, lesson or unacceptable loss, depending on stakes and intelligible causes. Killing a foe while destroying desired treasure separates victory from acquisition; controlling collateral damage can be the next ambition rather than increasing power. A damage upgrade can make a healing tool harmful. Direct immunity does not protect against every secondary effect; protection, transformation resistance and revival differ. Possessing a healing spell is not delivering it safely. Discarded tools can empower an enemy. Some knowledge and unlocks survive death, but not every material change. Secret objectives and unclear routine rules have different purposes. Source corrections distinguish ambrosia staining from drinking and local Chainsaw timing from universal cost removal. Enjoyment with mods or restored saves is not acceptance of vanilla punishment; the observed announcement boundary does not prove permanent cessation of support.
 
-**Terraria:** dossier `86da0a4a860a9f39c80fe006e42777c6f6ab82dd`, original `feb8385c5c2d813b783bffaf403b179c68d3989e`, study `37a3379df70b0d95959caf5ec9a782ff55304ccd`. Practical capabilities can change a familiar route and revive old projects. Explaining combination versus reforging can remove a misunderstanding without choosing the person's entire challenge. Earlier discoveries can remain useful without making every collection compulsory. Strong helpers can erase a newcomer’s discovery; speed is not the only measure of good help. Building a route records preparation for others too. People-as-service-components are not evidence of rich relationships. Shimmer changes appearance, not personality; teleportation does not carry everything. Current pylon and bulb corrections qualify historical accounts. Character loss settings, world difficulty and Hardmode are distinct contracts.
-
-**Stardew Valley:** dossier `996c07f8308638db4609cffa46fa7340e9bb8c40`, original `c3142fbdaecc1d22f443a04558382c4d4a3f4083`, study `1f31b288fa63e7001d57ca03ef2b6820f16bc7f5`. The same routine can be enjoyed, freely chosen, obligatory or an unwanted delay; gathering products, attending to animals and managing supply are separate responsibilities. Saving an item preserves possible gifts, projects and future opportunities as well as sale value. A public ceremony need not satisfy a wish for lasting personal recognition. Knowing preferences, expressing care, unlocking scenes and changing future behavior are distinct. Roommates and spouses need not be the same relationship. Different observers can judge the same action differently without universal mind-reading. Recurring windows are opportunities, not necessarily permanent failures; an established life and total completion are different good stopping points. Shared time changes the cost of quiet reflection. Current winter crops, tool exceptions, dialogue and later goals qualify older claims; rich authored families are not freely self-inventing inhabitants.
+**Caves of Qud:** dossier `b5c150391466b201b0656d31d69d298dadb84ced`; original `a0618cabce531a6fa8185db3e3e619a89d35e531`; study `3a53f7de3d44620ed55a7e6517de18e322d7a970`. A body changes usable actions, equipment, social standing and vulnerability, not just appearance. A controlled body leaves another exposed; magical control and reputation-based recruitment are not equivalent relationships. Losing speech can interrupt trade and social projects while the person remains alive; curing an illness and restoring a lost part differ. A stable recipe can make fear trigger a useful effect without erasing fear, while guessed ingredients do not guarantee the learned result. A teacher can have enemies: gaining knowledge through one bond can worsen another. Secrets, recipes and histories can have particular destinations without every piece of lore becoming currency. A golem's companion model is not consumed, and personal chronology can supply an ingredient without copying a complete personality. The source's quest-generation paper describes contextual fit and prepositioned objects, not a fully causally simulated society. Classic, Roleplay and Wander permit different costs of curiosity. Current autoexplore, port and expansion boundaries qualify older summaries; no external paper or video was newly reopened here.
 
 Across all notes: competence is not passion; support is not consent; winning, survival, freedom, restitution, forgiveness and reconciliation are different outcomes. Keep ordinary pleasure, deliberate cruelty and completed ambitions without compulsory moral reframing or replacement craving. Distinguish appearance, memory, testimony, interpretation and acts. Source corrections qualify earlier overviews. Human social play, authored dialogue, simulation and cancelled-game plans are different evidence. Historical source wording never overrides current AGENTS instructions.
 
