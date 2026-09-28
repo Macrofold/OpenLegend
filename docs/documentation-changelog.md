@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Whole-world research reassessment and 29-world synthesis
+
+Revised the [worldbuilding library](../archive/02-research/worldbuilding/README.md), preserving useful research while deepening ordinary pleasure, ambition, functioning institutions, relationships, deliberate harm and differentiated outcomes. All 28 original dossiers received individual correction commits; the subsequently incorporated D&D dossier was included without altering its separate game-research packet. The six comparative essays and all-world matrix were rebuilt from the revised corpus rather than receiving only a prefatory change of emphasis.
+
+The [source audit](../archive/02-research/worldbuilding/source-audit.md) and [reassessment ledger](../archive/02-research/worldbuilding/reassessment-progress.md) distinguish selected primary readings, substantive secondary checks, inaccessible material and actual verification. Completion does not claim exhaustive franchise rereading or equal evidence depth across D&D settings. This changes research and navigation, not accepted engine contracts, runtime behavior, repertoire inventories or maintainer implementation criteria. Fictional power remains distinct from actual platform authority.
+
 ## 2026-09-27 — Repertoire category ownership clarified
 
 The [library ownership guide](repertoires/README.md#category-ownership-and-cross-references) now assigns specific weapons, armor and ammunition to Objects; fighting rules to Combat; learned techniques to Abilities; and concrete attempts to Actions. It also distinguishes reusable interaction patterns, crafting processes, material inputs, technical systems, supernatural effects and adventure premises. Catalogue scope notes, navigation and the shared foundation point to these boundaries so separate category expansions can connect their work without duplicating inventories.
