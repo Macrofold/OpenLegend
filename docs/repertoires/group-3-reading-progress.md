@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 58 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 27 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 61 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 29 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves rechecked heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 58 complete
+## Game dossiers — 61 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -70,6 +70,9 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G52 — `dragon-age-ii.md`
 - [x] G53 — `dragon-age-inquisition.md`
 - [x] G54 — `dragon-age-the-veilguard.md`
+- [x] G55 — `pillars-of-eternity-ii-deadfire.md`
+- [x] G56 — `divinity-original-sin.md`
+- [x] G57 — `divinity-original-sin-ii.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -119,7 +122,7 @@ Relative to [games](../../archive/02-research/game-inspiration/games/):
 - [x] `core-keeper.md`
 - [x] `peak.md`
 
-## Game supplements — 27 complete
+## Game supplements — 29 complete
 
 Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 
@@ -150,6 +153,8 @@ Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
 - [x] `against-the-storm-substitution-pressure-and-renewable-settlement-problems.md`
 - [x] `core-keeper-resource-circuits-food-and-inhabited-discovery.md`
 - [x] `peak-shared-burdens-rescue-and-spatial-tools.md`
+- [x] `deadfire-expedition-and-relationship-rules.md`
+- [x] `divinity-original-sin-ii-builds-and-authorship.md`
 
 ## Game-library indexes and roster — 3 complete
 
@@ -217,15 +222,13 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [complete preceding findings register](https://github.com/Macrofold/OpenLegend/blob/38a6c6a8cc53b12ac663969f770e2711086f2b7a/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves G48–G51 findings and links every earlier research checkpoint, including all worldbuilding, original chapters and completed studies. This navigation compaction does not discard those notes or revoke their reads.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/7f61da0f6299cf50fd966bfca0ee165a23fa4b61/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves the Dragon Age findings and links all earlier checkpoints. This compaction preserves the complete reading and synthesis history rather than discarding notes.
 
-**Dragon Age II:** dossier `a6b0f77dbb683ed2c83eb4152c27b5209562c6da`. A person can be deeply important without agreeing: rivalry is not mere failed friendship, yet no relationship meter overrides every conviction. A fixed family history supports attachment differently from a broad created origin. Familiar districts gain meaning through years of changed status, grief and recurring people; reused geography without corresponding meaning can instead feel empty. Hawke's accumulated dialogue tone affects incidental expression, not just the current reply. Resource discoveries, carried goods and permission to commission work differ. An inherited family enemy, a temporary guest and a continued companion produce distinct expectations. A success in one act can finance the next problem instead of finishing the life. The source preserves real-time tactical control, hidden-reinforcement criticism, setup/detonation conditions, contrasting reviews and limited negative-testimony retrieval without generalizing fictional rivalry into clinical advice.
+**Deadfire:** dossier `b9dd911add706a21b27ae13318f7cc67b4708ac3`; operational supplement `dd7faacd364e106a1e4745ba7d1341044785f5ef`. Companions react to one another, and attention to somebody's animal companion is a particular gesture rather than a purchase of loyalty. Casual intimacy, continuing romance, friendship and faction allegiance differ. A talking possession can have private history and attachment without being an ordinary equipment bonus. Ship repair, crew treatment, party recovery and a return home's familiarity are different forms of care. A specialist's absence can explain incomplete progress without erasing what the group accomplished. Affection does not remove competing obligations. The source corrects historical Brace, injury and relationship claims; the first Pillars' later turn-based experiment is not Deadfire's mode. Eventual profitability does not establish an exact lifetime-sales or budget figure, and unavailable review/video bodies remain unavailable.
 
-**Dragon Age: Inquisition:** dossier `8c935087c38b5badacf7eb787e7821ec2c2f2855`, including its entire completion map and source register. A person may be treated as a religious symbol without believing that interpretation. Personal competence, institutional expertise and legitimate authority differ. An ally's affection does not dissolve sovereign allegiance; public judgment and private intimacy can conflict. A useful journey can be partially completed, with a missing specialist giving reason to return rather than erasing all progress. Producing a reveal-tool, carrying it, observing its result and transmitting the knowledge are different contributions. A victorious emergency leader can face a legitimate question about relinquishing exceptional powers. Another culture's account of familiar magic can overturn official history without making either merely a cosmetic faction. Historical launch reviews, platform-specific DLC, inaccessible helpful reviews and attributed lifetime-unit statements remain scoped; promotion about ecology is not shipped general simulation. The separate completion-evidence reference remains unread until its own checkmark.
+**Original Sin I:** dossier `2b0c230ce731befbb80ea1c24d72139decab46a4`. Habitual grave looting can become desecration through the presence of a grieving person; its social meaning is not the loot's price. Two jointly controlled protagonists can disagree without being one shared will. Accumulated choices can matter to a later act of forgiveness. A non-speaking companion can communicate and have a personal objective; companions added after launch are not the original launch roster. Providing a means does not imply agreement about its use. A safety preparation can prevent one hazard without making the body universally safe. Healing can harm a differently constituted recipient; benevolent intention is not a sufficient target check. Source anecdotes, edition-specific rules, community modifications, fixed-puzzle complaints and crowdfunding versus full costs remain distinct.
 
-**The Veilguard:** dossier `e8d1b1bbf6bbca204d9505ee509604cd3dc478fa`, including targeted source corrections and the full register. Familiar defensive reflexes can conflict with a chosen offensive commitment; rejecting the equipment can be more satisfying than training away the preferred habit. A companion can be close yet unready, or prepared yet lost through an unavoidable authored sacrifice. Distinct losses are not proof of universally inadequate care. Allocating a specialist to one group also removes them from another. A changed home or resumed interrupted conversation provides continuity through a learned baseline. Supportive disagreement can feel reassuring to one player and insufficiently independent to another; neither response proves all companionship needs dramatic rupture. A specialist's portable tool is not the same as their presence. Civic response and intimate household writing can have different depth. The city-choice/merchant correction, variable romance outcomes, selected-history import, later maintenance updates and bounded player-count financial disclosure remain qualified. Moral expression, creator breadth and relationship consequences are separate dimensions.
-
-**Dragon Age series and smaller games:** dossier `36104f7fa5cc3fa8372e9873f4213fa5f138a4ab`. Mainline identity moves among social origin, life in a city, public authority and a heroic household; retaining names does not preserve the same participation contract. Event, knowledge, interpretation and presentation continuity differ. A printed personal-history tapestry preserves meaning without exporting a complete lived universe. Journeys allows reconsidering an uncommitted move without removing consequences of an attack. Legends' unavailable borrowed helper can be a commercial scheduling rule rather than a personal obligation. Remix changes the action grammar, not just the costume. The Last Court gives favors, companions and offices local social meaning; a lover, accomplice, counselor and bodyguard are different relationships. Elevated pressure can create an opportunity rather than only a penalty. Heroes' duplicate figures are coherent collectibles, not a literal population of identical people. Surviving text, restored rules, offline conversion and a continuing social service preserve different things. Planned Journeys chapters, original-service closures, the separate Last Court fan adaptation and the community-reproduced Heroes notice retain their evidence boundaries.
+**Original Sin II:** dossier `07030e143d35cc5d659e4211397f48bbc0cf2f18`; builds/authorship supplement `3bd179da744633bd14d036d78d8c96fd041b5a66`. Meeting a proud parent can change the meaning of an earlier killing without changing the event. Personal history can survive mechanical respecialization; ownership of a skill, preparation, tools and opportunity to act are different conditions. A third companion can change the capabilities of an established pair. Reversible placement is not reversible construction. Bodily lockpicks remove a consumable need, not expertise or permission. Ancestry changes care and access without assigning every member the same psychology. A powerful tool can quickly become obsolete while its owner remains attached. Independent co-op presence does not ensure shared knowledge or participation in a consequential choice. An author able to adjudicate anything can still attend to only one conversation at a time. Human Game Master improvisation, scripted campaign response and separate Arena rules are not autonomous inhabitants. Optional Gift Bags, integrated Four Relics content and later ports have distinct contracts; source table errors, unviewed videos and inaccessible manuals are not silently filled from memory.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
