@@ -61,7 +61,10 @@ export function authoringGuide(world: WorldState, kind: AuthoringKind) {
     > & { schema?: unknown };
     return {
       ...guide,
-      payloadEncoding: `Typed proposal.kind and proposal.candidate in ${AUTHORING_SUBMIT_TOOLS[kind]}; schema is already in the tool.`,
+      payloadEncoding:
+        kind === 'status-effect-policy'
+          ? `Use proposal.kind="status-effect-policy" and proposal.candidate containing the complete policy serialized as JSON text in ${AUTHORING_SUBMIT_TOOLS[kind]}. Preserve every unchanged field from the supplied example; native validation checks the decoded policy.`
+          : `Typed proposal.kind and proposal.candidate in ${AUTHORING_SUBMIT_TOOLS[kind]}; schema is already in the tool.`,
       coverage:
         'Native checks and a bounded candidate graph are retained by submission. No general interaction proof.',
     };

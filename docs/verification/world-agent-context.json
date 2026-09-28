@@ -191,5 +191,15 @@
       "22 existing native HTTP/MCP observations pass with the selected status-policy tool"
     ],
     "live": "Pending explicit approval for six new organization-wide connector names; provider HTTP 400 is not claimed resolved"
+  },
+  "recursivePolicyTransport": {
+    "schemaBytes": 1786,
+    "nativeRoundTripAndReplay": true,
+    "malformedUnknownAndDeepInputRejected": true,
+    "providerAcceptance": "pending",
+    "priorSelectedPolicyRun": "01a0e6ef-db5e-75ba-a5f5-a95788a30377",
+    "priorCompleteRequestBytes": 22663,
+    "settledTaskUsageUsd": 0.017658,
+    "priorUncertainUsd": 4
   }
 }

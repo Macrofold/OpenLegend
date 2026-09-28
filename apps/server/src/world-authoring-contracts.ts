@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { declarationSchema } from './ai-schemas.js';
-import { authoringCandidateSchemas, typedAuthoringPayload } from './world-authoring-schemas.js';
+import {
+  authoringCandidateSchemas,
+  statusPolicySchema,
+  typedAuthoringPayload,
+} from './world-authoring-schemas.js';
 
 const id = z
   .string()
@@ -54,6 +58,32 @@ export const AUTHORING_SUBMIT_TOOLS = {
   action: 'ol_action_submit',
 } as const;
 
+/** Bound recursive values before the native schema walks them, including JSON text input. */
+function boundedContainers(raw: unknown) {
+  const pending = [{ value: raw, depth: 0 }];
+  while (pending.length) {
+    const { value, depth } = pending.pop()!;
+    if (!value || typeof value !== 'object') continue;
+    if (depth > 64) return false;
+    for (const child of Object.values(value)) pending.push({ value: child, depth: depth + 1 });
+  }
+  return true;
+}
+// Recursive JSON Schema is not portable across model providers. Transport text retains
+// the complete native expression language; this validator, not the model, admits it.
+const statusPolicyText = payload
+  .describe(
+    'The complete status policy as JSON text. Preserve unchanged fields exactly. The native status-policy validator still checks every field and condition. See the supplied policy example and field guide.',
+  )
+  .refine((text) => {
+    try {
+      const value: unknown = JSON.parse(text);
+      return boundedContainers(value) && statusPolicySchema.safeParse(value).success;
+    } catch {
+      return false;
+    }
+  }, 'Expected bounded JSON text containing a valid native status policy.');
+
 function selectedSubmit<K extends keyof typeof authoringCandidateSchemas>(kind: K) {
   return {
     description:
@@ -67,7 +97,11 @@ function selectedSubmit<K extends keyof typeof authoringCandidateSchemas>(kind: 
         ...mutation,
         packetRef: id,
         proposal: z
-          .object({ kind: z.literal(kind), candidate: authoringCandidateSchemas[kind] })
+          .object({
+            kind: z.literal(kind),
+            candidate:
+              kind === 'status-effect-policy' ? statusPolicyText : authoringCandidateSchemas[kind],
+          })
           .strict(),
         edit: z.object({ draftId: id, expectedRevision: revision }).strict().optional(),
         requirements: requirementAnnotations,
@@ -207,13 +241,7 @@ export function parseWorldAuthoringCall(name: string, raw: unknown): WorldAuthor
     if (Buffer.byteLength(JSON.stringify(raw) ?? '') > 28000) return null;
     // Bound container depth before recursive Zod parsing. Valid native conditions have
     // at most 12 predicate levels; 64 JSON containers leaves room for their wrappers.
-    const pending = [{ value: raw, depth: 0 }];
-    while (pending.length) {
-      const { value, depth } = pending.pop()!;
-      if (!value || typeof value !== 'object') continue;
-      if (depth > 64) return null;
-      for (const child of Object.values(value)) pending.push({ value: child, depth: depth + 1 });
-    }
+    if (!boundedContainers(raw)) return null;
     const parsed = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName].schema.safeParse(raw);
     // The indexed schema has validated this exact name. No unchecked payload reaches dispatch.
     return parsed.success ? ({ name, arguments: parsed.data } as WorldAuthoringCall) : null;

@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-28 — Portable recursive-policy submission
+
+The selected status-policy tool now transports its complete candidate as bounded JSON text, retaining strict native shape/condition validation, exact revisions and replay. This supersedes embedding the recursive schema in that agent-facing tool: a real Muse request rejected it before execution, matching an upstream reported incompatibility. Native field guidance remains source-backed; other kinds keep typed objects. The owner approved six connector submission names and optional Macrofold question suppression with unchanged defaults. [Verification](verification/world-agent-context.md) separates native evidence from pending live activation.
+
 ## 2026-09-28 — Scoped invention context and native preparation
 
 Implemented the approved [context foundation](world-agent-runtime.md#scoped-context-and-native-save-for-review): source-backed English/YAML, typed atomic save-for-review, derived candidate dependencies, attributable requirements and native checks/presentation readiness. These extend existing PostgreSQL, authority, approval and receipt owners; no new effects engine or legacy support. The recipe profile now includes five tools instead of the proposed four so a typed capability request keeps other supported kinds reachable. World Agent uses medium with strict parameter support; generic cognition is unchanged. Fresh remote contexts retain the same conversation and spending ledger.

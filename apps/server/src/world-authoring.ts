@@ -136,7 +136,7 @@ export class WorldAuthoringService {
   }
   private policy() {
     const c = this.service.config;
-    return `owner-review-v1:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS)])}`;
+    return `owner-review-v2:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS)])}`;
   }
   private permitted(s: AgentSession, scope = s.authority) {
     return (
@@ -928,7 +928,9 @@ export class WorldAuthoringService {
         const payload =
           name === 'ol_recipe_submit'
             ? normalizeInventionProposal(a.candidate)
-            : a.proposal.candidate;
+            : typeof a.proposal.candidate === 'string'
+              ? JSON.parse(a.proposal.candidate)
+              : a.proposal.candidate;
         if (Buffer.byteLength(JSON.stringify(payload)) > 24000)
           return result('capacity', 'Candidate exceeds the authoring byte limit.');
         this.assertDraftTarget(kind, payload, s.authority);
