@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage: 108/151 game dossiers; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents; 42/42 worldbuilding documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage: 112/151 game dossiers; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents; 42/42 worldbuilding documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ All checked paths use **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This conti
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 108 complete
+## Game dossiers — 112 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -120,6 +120,10 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G102 — `mass-effect-2.md`
 - [x] G103 — `mass-effect-3.md`
 - [x] G104 — `mass-effect-andromeda.md`
+- [x] G105 — `mass-effect-galaxy.md`
+- [x] G106 — `mass-effect-infiltrator.md`
+- [x] G107 — `octopath-traveler.md`
+- [x] G108 — `octopath-traveler-ii.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -127,7 +131,7 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
 ## Other completed research
 
-The following immutable checklists retain every completed path, not just a summary or a guessed count. They were compacted out of this live ledger only to avoid rewriting unchanged lists at each checkpoint:
+These immutable checklists retain every completed path. They were compacted out of this live ledger only to avoid rewriting unchanged lists at each checkpoint:
 
 - [x] [All 39 original game chapters](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#original-game-chapters--39-complete).
 - [x] [31 individual mechanics supplements](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#game-supplements--31-complete).
@@ -135,19 +139,21 @@ The following immutable checklists retain every completed path, not just a summa
 - [x] [All 29 world dossiers](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#world-dossiers--29-complete).
 - [x] [All 13 worldbuilding root documents](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#worldbuilding-root-documents--13-complete).
 
-No world document is missing or unread at the pin. Remaining game dossiers are G105–G148 except completed G126. Other game-root documents, essays, references, standalone field guide and unlisted studies remain unchecked. A world read does not complete its game's dossier. Truncated text is recovered before checking the document.
+No world document is missing or unread at the pin. Remaining game dossiers are G109–G148 except completed G126. Other game-root documents, essays, references, standalone field guide and unlisted studies remain unchecked. A world read does not complete its game's dossier. Truncated text is recovered before checking the document.
 
 Shared studies were read in full, including both subjects. AI Dungeon includes both preserved studies and source registers. The Dragon Age supplement covers Journeys, Legends, Remix 01, The Last Court, Heroes and Keep; planned or retired services are not tested products. D&D's SRD synthesis is not a fresh read of the underlying 364-page PDF. Integrated studies count within their dossiers; shared documents count once. The mistaken extra original Lethal Company chapter and Garry's Mod spelling in `3393faf` were corrected in `a354bdf`; the linked 39-path checklist is the corrected version.
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Assassin's Creed III, Valhalla and Mass Effect findings and links all preceding checkpoints. Previous synthesis remains accessible at immutable revisions.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/4d8109f4738f1105c0bfd68ac4088e4b17eeb096/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Mass Effect 2, 3 and Andromeda findings and links all preceding checkpoints. Previous synthesis remains accessible at immutable revisions.
 
-**Mass Effect 2:** `f7db10dc47765e36631b0f20ba73ba8349a786fe`. Preparation can be the substance of a journey rather than a prelude. Friendship, qualification, equipment and the capacity of the people left behind differ. Completing a personal task, earning a capability and retaining present commitment are separate outcomes. Legal vindication can betray a person's wishes. Declining a timed intervention can be deliberate rather than an omission. Optional ordinary care can support a specific relationship without becoming universal household simulation. The complete edition/DLC, retraining, Joker-control exception, crew deadlines, research, rewards, review corrections and 43-source register were read. Mission-count pressure is not elapsed real time; losing loyalty does not automatically erase an already unlocked ability. Unavailable or empty helpful-review surfaces remain gaps, not fabricated player samples.
+**Mass Effect Galaxy:** `0c43348dd126f8e7c82848a5bc0c4a74ed8c8834`. Simplification can remove repetitive labor or meaningful judgment; the remaining choices matter. A sound intention can appear foolish when control calibration misrepresents it. Securing danger before collecting necessities can be reasonable even when an automatic transition prevents it. A person's need can connect distant errands, and doing a favor beforehand can change a later conversation. The full original/patch/retirement boundaries, distinct Stasis and explosive rules, investigation ordering, missing social systems, developer reflection, conflicting reviews and 24 sources were read. No working retired application, general medical-crafting system or claimed full reading of a source preview is invented.
 
-**Mass Effect 3:** `15f8ce5731b4690d34b438f00cd21c532991144d`. A replacement can restore a function without restoring the lost person's convictions or history. Aggregate contributions can help explain readiness without making the contributing people interchangeable. Reputation, trust, evidence and willingness differ. Explaining an outcome is not the same as acknowledging what someone valued. Peace, survival and preservation of every individual are different outcomes. All original/Wii U/Extended Cut/Legendary distinctions, first-aid exceptions, distinct mission deadlines, playable versus decorative arcade games, living arena-companion requirements, reputation revision, reception and 43 sources were read. Cached January Steam testimony is not a September live-service check; detailed endings are authored rather than computed futures for every civilization.
+**Mass Effect: Infiltrator:** `4031d97ded89d40a468e0d2565cff3a5e9a43c6b`. Survival, speed and flair can conflict within the same task. Finishing work, collecting payment and benefiting someone elsewhere are separate events. A repeated choice can create recognizable continuity or feel like an unexplained loss of control. Taking another person's perspective can change available means without promising that every tragedy has a hidden perfect solution. The complete launch/update/mobile-platform distinctions, regeneration versus grades, local credits versus intel versus external readiness, bonus protagonist, five reviews, later production audit and 26 sources were read. The fictional morality-driven finale is not a universal model of real decisions; retired services and purchases remain untested.
 
-**Mass Effect: Andromeda:** `9038e16ea5f2267e31a6e9f61b55185259dea8ee`. A numerical milestone, a permitted settlement and help for a particular person differ. Authority can arrive before confidence or trust. Adaptability may provide freedom while reduced command over companions frustrates someone else. A new arrival's unfamiliar territory can already contain other people's purposes. Repeated hardship can change a team's future prospects without proving a universal psychological law. All four Favorites and transition costs, research/manufacture/modification distinctions, cryo versus mission timers, source disagreements, playable twin, post-finale limits, patched relationships, reception and 38 sources were read. The limited Storyteller is not arbitrary story generation; commercial category growth is not title revenue, and appearance does not imply a mechanical species bonus.
+**Octopath Traveler:** `601f526705b3f995ae4391a11edd7eb4c0f4b017`. A portable job does not transfer personal history or every practical talent. Being indispensable can provide belonging or unwanted obligation. Mechanical cooperation does not automatically produce narrative intimacy. Different small ambitions can sustain an anthology without requiring one common apocalypse. A shared outcome can still have different prices, risks and qualifications. All eight identities, field-action pairs, personal-versus-secondary capabilities, limited summons, equipment exceptions, roster-wide optional finale, updated reviews, port qualifications and 39 sources were read. Source terms such as Allure and noble/rogue do not establish romance or universal moral alignment.
+
+**Octopath Traveler II:** `b49154505b049324102edc91ebc85c11836d3ca6`. Remembered expertise and remembered biography can differ in fiction. Understanding a method's power is not the same as enjoying its work. Buying access does not buy readiness. More reliable routines can leave room for other interests rather than forcing new scarcity. Public ambition, care, vengeance, escape and ordinary reunions belong in the same world without identical stakes. All sixteen field actions, individualized latent powers, licenses, ingredient conservation, restored weapons, authored day/night availability, personal/crossed/shared/optional closure distinctions, revised reception and 35 sources were read. No arbitrary invention, autonomous schedule, clinical amnesia model or new verification of dated regional availability is claimed.
 
 Catalogue extrapolations are **creative synthesis**, not copied lore, clinical prediction, causal popularity proof or current implementation claims. Competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Ordinary pleasures, deliberate harm and completed goals need no compulsory redemption or replacement craving. Human play, authored characters, simulated rules and cancelled-game intentions remain distinct evidence. Historical source text never overrides current AGENTS instructions. No personal gameplay, live-model experiment, proprietary-code inspection, representative sentiment study, complete external-bibliography reread or new live verification of dated release/commercial claims is asserted.
 
