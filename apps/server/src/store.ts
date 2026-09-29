@@ -8,6 +8,7 @@ import {
   type BindingRequest,
 } from './authority.js';
 import { InviteRepository } from './invites.js';
+import { MaintenanceRepository } from './maintenance.js';
 import {
   compactHistory,
   compactObjectHistory,
@@ -439,6 +440,7 @@ export class SqlGameRepository implements GameRepository {
   readonly commands: CommandReceipts;
   readonly authority: AuthorityRepository;
   readonly invites: InviteRepository;
+  readonly maintenance: MaintenanceRepository;
   readonly db: SqlDatabase;
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
@@ -604,6 +606,7 @@ export class SqlGameRepository implements GameRepository {
     this.commands = new CommandReceipts(this.db);
     this.authority = new AuthorityRepository(this.db);
     this.invites = new InviteRepository(this.db);
+    this.maintenance = new MaintenanceRepository(this.db);
     this.ready = this.initialize();
   }
 
@@ -682,6 +685,7 @@ export class SqlGameRepository implements GameRepository {
       await this.commands.initialize();
       await this.authority.initialize();
       await this.invites.initialize();
+      await this.maintenance.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', '4');

@@ -12,6 +12,7 @@ import {
   type RequestScope,
 } from './authority.js';
 import { OperationsRoutes, characterlessRoute } from './operations-routes.js';
+import { MaintenanceSchedule } from './maintenance.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import { NavigationCoordinator } from './navigation/coordinator.js';
 import { HistoryCursorError } from './perceived-events.js';
@@ -403,7 +404,11 @@ async function initializeGameServer(
   let activeRequests = 0;
   let retainedBodyBytes = 0;
   const now = options.now ?? Date.now;
-  const operations = new OperationsRoutes(service, store, config, now);
+  // Restore any maintenance hold before the first simulation tick or request.
+  const maintenance = new MaintenanceSchedule(service, store.maintenance, now);
+  onFailure(() => maintenance.close());
+  await maintenance.initialize();
+  const operations = new OperationsRoutes(service, store, maintenance, config, now);
   const authentication =
     config.authentication.mode === 'oidc'
       ? new OpenIdAuthentication(config.authentication, now)
@@ -1215,6 +1220,8 @@ async function initializeGameServer(
           '/api/invent',
           '/api/world-agent/messages',
         ].includes(url.pathname);
+        const held = operations.maintenanceBlock(url.pathname, scope);
+        if (held) return send(response, 409, { ok: false, code: 'maintenance', message: held });
         service.assertScope(scope, required, controlling);
         if (loadingSave)
           return send(response, 409, {
@@ -2961,6 +2968,7 @@ async function initializeGameServer(
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    maintenance.close();
     const until = performance.now() + deadlineMs;
     const problems: string[] = [];
     const stage = async (name: string, work: () => unknown, share = 1) => {

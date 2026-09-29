@@ -14,6 +14,7 @@ import {
   ownedActors,
   redeemInvite,
 } from './invites.js';
+import { MaintenanceError, type MaintenanceSchedule } from './maintenance.js';
 import type { SqlGameRepository } from './store.js';
 import { calendarFields } from './view.js';
 import type { WorldService } from './world-service.js';
@@ -32,9 +33,28 @@ const CHARACTERLESS_ROUTES = new Set([
   'POST /api/saves/load',
   'POST /api/invites/create',
   'POST /api/invites/revoke',
+  'POST /api/maintenance/schedule',
+  'POST /api/maintenance/update',
+  'POST /api/maintenance/cancel',
+  'POST /api/maintenance/start',
+  'POST /api/maintenance/ready',
 ]);
 export const characterlessRoute = (method: string | undefined, path: string) =>
   CHARACTERLESS_ROUTES.has(`${method} ${path}`);
+/** Ordinary gameplay mutations stop while maintenance holds the world. Creators keep the
+ * existing paused-world editing; any job they start waits and is fenced at Ready. */
+const MAINTENANCE_GAMEPLAY = new Set([
+  '/api/command',
+  '/api/action-attempt',
+  '/api/commitment',
+  '/api/conversation',
+  '/api/knowledge',
+  '/api/chat',
+  '/api/chat/retry',
+  '/api/invent',
+  '/api/world-agent/messages',
+  '/api/narration/regenerate',
+]);
 
 /** Bounded spectator payload; worlds above this report how many bodies were omitted. */
 const OVERVIEW_BODY_LIMIT = 2_000;
@@ -85,9 +105,20 @@ export class OperationsRoutes {
   constructor(
     private readonly service: WorldService,
     private readonly store: SqlGameRepository,
+    private readonly maintenance: MaintenanceSchedule,
     private readonly config: AppConfig,
     private readonly now: () => number,
   ) {}
+  /** Rejection message while maintenance holds the world, or undefined to continue. */
+  maintenanceBlock(path: string, scope: RequestScope): string | undefined {
+    if (!this.service.maintenanceActive) return undefined;
+    // Only Ready resumes; pause and speed controls would suggest otherwise.
+    if (path === '/api/control')
+      return 'The world is paused for maintenance until a creator marks it ready.';
+    if (MAINTENANCE_GAMEPLAY.has(path) && !this.service.currentScope(scope, 'create'))
+      return 'The world is paused for maintenance. Ordinary actions resume when it is ready.';
+    return undefined;
+  }
   /** Current capabilities of this exact scope, or a stale-scope rejection. */
   capabilities(scope: RequestScope): readonly Capability[] {
     const capabilities =
@@ -146,6 +177,7 @@ export class OperationsRoutes {
         candidates: invitableCharacters(this.service.world, owned),
       };
     }
+    if (capabilities.includes('create')) view.maintenanceHistory = this.maintenance.history();
     // Access may have changed during any awaited section; never return a stale audience's data.
     this.capabilities(scope);
     return view;
@@ -159,9 +191,26 @@ export class OperationsRoutes {
     try {
       if (path === '/api/invites/create') return await this.createInvite(scope, body);
       if (path === '/api/invites/revoke') return await this.revokeInvite(scope, body);
+      const maintenance = {
+        '/api/maintenance/schedule': () => this.maintenance.schedule(scope, body),
+        '/api/maintenance/update': () => this.maintenance.update(scope, body),
+        '/api/maintenance/cancel': () => this.maintenance.cancel(scope, body),
+        '/api/maintenance/start': () => this.maintenance.start(scope, body),
+        '/api/maintenance/ready': () => this.maintenance.ready(scope, body),
+      }[path];
+      if (maintenance)
+        return {
+          status: 200,
+          value: { ok: true, message: 'Maintenance updated.', maintenance: await maintenance() },
+        };
     } catch (error) {
       if (error instanceof InviteError)
         return { status: 409, value: { ok: false, code: 'invite', message: error.message } };
+      if (error instanceof MaintenanceError)
+        return {
+          status: 409,
+          value: { ok: false, code: error.code, message: error.message, field: error.field },
+        };
       throw error;
     }
     return undefined;

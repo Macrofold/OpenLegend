@@ -158,3 +158,21 @@
   max-width: 720px;
   margin: 0 auto var(--space-5);
 }
+.ol-maintenance-notice {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+}
+.ol-maintenance-notice[data-status='active'] {
+  border-color: var(--highlight);
+}
+.ol-maintenance-notice .ol-btn {
+  justify-self: start;
+}
+.ol-operations-notices {
+  max-width: 720px;
+  margin: 0 auto var(--space-5);
+}
+.ol-operations-notices:empty {
+  display: none;
+}

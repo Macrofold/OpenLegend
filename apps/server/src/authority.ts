@@ -4,8 +4,8 @@ import { isSafeRecordId, type WorldState } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
 // Dependency order for operational recovery; these records never enter gameplay checkpoints.
-// Invites are operational access records owned by invites.ts; they back up and restore
-// with current authority.
+// Invites and maintenance windows are operational access/control records owned by
+// invites.ts and maintenance.ts; they back up and restore with current authority.
 export const AUTHORITY_TABLES = [
   'auth_accounts',
   'auth_sessions',
@@ -17,6 +17,7 @@ export const AUTHORITY_TABLES = [
   'auth_binding_receipts',
   'auth_access_audit',
   'auth_invites',
+  'ops_maintenance',
 ];
 
 export const capabilitySchema = z.enum([

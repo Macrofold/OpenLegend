@@ -5,6 +5,8 @@ import { Button, Section, Tag } from '../design-system/components';
 import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
 import { AccessSection } from './operations-access';
+import { MaintenanceNotice } from './maintenance-notice';
+import { MaintenanceSection } from './operations-maintenance';
 import { useLocal } from './storage';
 import './operations.css';
 
@@ -78,6 +80,11 @@ export function OperationsConsole() {
         </div>
       </header>
       <EntryNotice />
+      {view && (
+        <div className="ol-operations-notices">
+          <MaintenanceNotice maintenance={view.maintenance} />
+        </div>
+      )}
       {!view ? (
         <div className="ol-card ol-operations-card">
           <p role="status">{error || 'Loading world operations…'}</p>
@@ -116,6 +123,19 @@ export function OperationsConsole() {
               <Section title="World overview">
                 <OverviewMap overview={view.overview} />
               </Section>
+            </section>
+          )}
+          {can('create') && (
+            <section className="ol-card ol-operations-card" aria-label="Maintenance">
+              <MaintenanceSection
+                current={
+                  view.maintenance?.status === 'scheduled' || view.maintenance?.status === 'active'
+                    ? view.maintenance
+                    : undefined
+                }
+                history={view.maintenanceHistory ?? []}
+                onChanged={() => void refresh()}
+              />
             </section>
           )}
           {view.access && (

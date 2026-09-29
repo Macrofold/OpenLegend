@@ -4,6 +4,7 @@ import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { OperationsConsole } from './ui/operations-console';
 import { EntryNotice } from './ui/entry-notice';
+import { MaintenanceNotice } from './ui/maintenance-notice';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
@@ -1148,7 +1149,9 @@ function App({
                     </span>
                     <div className="ol-caption">
                       {view.clock.paused
-                        ? 'Paused'
+                        ? view.clock.pauseReason === 'maintenance'
+                          ? 'Paused for maintenance'
+                          : 'Paused'
                         : view.clock.preparingNavigation
                           ? 'Preparing navigation…'
                           : 'Time in the wilderness'}
@@ -1160,7 +1163,7 @@ function App({
                   id="pause"
                   icon={view.clock.paused ? 'ui.play' : 'ui.pause'}
                   label={view.clock.paused ? 'Resume world' : 'Pause world'}
-                  disabled={!connected || pausePending}
+                  disabled={!connected || pausePending || view.clock.pauseReason === 'maintenance'}
                   pressed={view.clock.paused}
                   onPress={() => void pause()}
                 />
@@ -1201,6 +1204,7 @@ function App({
               )}
               <div className="ol-hud-notices">
                 <EntryNotice />
+                <MaintenanceNotice maintenance={view.maintenance} />
               </div>
             </div>
             <div className="ol-top-tools">
