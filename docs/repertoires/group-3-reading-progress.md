@@ -4,15 +4,15 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 105/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage: 108/151 game dossiers; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents; 42/42 worldbuilding documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
-Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This continuation began at `cc5f289365494410f61992a873bcdeebbe4e907a`; comparison against the pin confirmed unchanged research, with only Needs, Characters and this ledger changed. Research is read through Git objects rather than merging unrelated branches.
+All checked paths use **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This continuation began at `cc5f289365494410f61992a873bcdeebbe4e907a`; comparison against the pin confirmed unchanged research, with only Needs, Characters and this ledger changed. Research is read through Git objects rather than merging unrelated branches.
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 105 complete
+## Game dossiers — 108 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -117,170 +117,39 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G99 — `assassins-creed-iii.md`
 - [x] G100 — `assassins-creed-valhalla.md`
 - [x] G101 — `mass-effect.md`
+- [x] G102 — `mass-effect-2.md`
+- [x] G103 — `mass-effect-3.md`
+- [x] G104 — `mass-effect-andromeda.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
 - [x] Series supplement — `dragon-age-series.md`
 
-## Original game chapters — 39 complete
+## Other completed research
 
-Relative to [games](../../archive/02-research/game-inspiration/games/):
+The following immutable checklists retain every completed path, not just a summary or a guessed count. They were compacted out of this live ledger only to avoid rewriting unchanged lists at each checkpoint:
 
-- [x] `hades-and-hades-ii.md`
-- [x] `among-us-and-lethal-company.md`
-- [x] `animal-crossing-new-horizons.md`
-- [x] `roblox.md`
-- [x] `fortnite.md`
-- [x] `league-of-legends-and-dota-2.md`
-- [x] `path-of-exile-path-of-exile-2-and-diablo-iv.md`
-- [x] `dreams-and-project-spark.md`
-- [x] `worlds-adrift.md`
-- [x] `spore.md`
-- [x] `no-man-s-sky.md`
-- [x] `everquest-next.md`
-- [x] `ultima-online-s-ecology.md`
-- [x] `minecraft.md`
-- [x] `rimworld.md`
-- [x] `dwarf-fortress.md`
-- [x] `the-sims.md`
-- [x] `wildermyth.md`
-- [x] `baldur-s-gate-3.md`
-- [x] `dungeons-and-dragons.md`
-- [x] `factorio-and-satisfactory.md`
-- [x] `terraria.md`
-- [x] `stardew-valley.md`
-- [x] `valheim.md`
-- [x] `noita.md`
-- [x] `caves-of-qud.md`
-- [x] `outer-wilds.md`
-- [x] `garry-s-mod.md`
-- [x] `kenshi.md`
-- [x] `project-zomboid.md`
-- [x] `scribblenauts.md`
-- [x] `ai-dungeon.md`
-- [x] `palworld.md`
-- [x] `balatro.md`
-- [x] `slay-the-spire.md`
-- [x] `vampire-survivors.md`
-- [x] `against-the-storm.md`
-- [x] `core-keeper.md`
-- [x] `peak.md`
+- [x] [All 39 original game chapters](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#original-game-chapters--39-complete).
+- [x] [31 individual mechanics supplements](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#game-supplements--31-complete).
+- [x] [Three game-library indexes and roster](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#game-library-indexes-and-roster--3-complete).
+- [x] [All 29 world dossiers](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#world-dossiers--29-complete).
+- [x] [All 13 worldbuilding root documents](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#worldbuilding-root-documents--13-complete).
 
-The checkpoint at `3393faf` accidentally inserted a nonexistent standalone original `lethal-company.md` chapter and altered the original Garry's Mod chapter spelling. The next commit restored these established 39 paths. Lethal Company remains fully covered by its shared original chapter, separate dossier and mechanics study; no extra chapter read is claimed.
+No world document is missing or unread at the pin. Remaining game dossiers are G105–G148 except completed G126. Other game-root documents, essays, references, standalone field guide and unlisted studies remain unchecked. A world read does not complete its game's dossier. Truncated text is recovered before checking the document.
 
-## Game supplements — 31 complete
-
-Relative to [mechanics](../../archive/02-research/game-inspiration/mechanics/):
-
-- [x] `hades-builds-character-callbacks-and-return-rhythm.md`
-- [x] `rimworld-work-dependencies-personality-and-story.md`
-- [x] `dwarf-fortress-artifacts-work-and-remembered-life.md`
-- [x] `the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md`
-- [x] `wildermyth-bodies-relationships-and-authored-myth.md`
-- [x] `baldurs-gate-3-utility-magic-identities-and-consequential-choice.md`
-- [x] `dungeons-and-dragons-adjudication.md`
-- [x] `dungeons-and-dragons-srd-systems.md`
-- [x] `minecraft-signals-authorship-and-meaningful-objects.md`
-- [x] `factorio-satisfactory-flows-blueprints-and-place.md`
-- [x] `terraria-equipment-composition-settlements-and-discovery.md`
-- [x] `stardew-valley-calendars-gifts-and-useful-routines.md`
-- [x] `valheim-zomboid-preparation-risk-and-home.md`
-- [x] `noita-wands-materials-and-experimentation.md`
-- [x] `caves-of-qud-bodies-cooking-and-social-knowledge.md`
-- [x] `outer-wilds-tools-knowledge-and-a-changing-world.md`
-- [x] `garrys-mod-tools-constraints-and-player-made-games.md`
-- [x] `kenshi-injury-rescue-and-the-cost-of-delegation.md`
-- [x] `lethal-company-tools-partial-information-and-cooperation.md`
-- [x] `scribblenauts-ai-dungeon-language-intent-and-consequence.md`
-- [x] `palworld-useful-creatures-care-and-automation.md`
-- [x] `balatro-scoring-operators-risk-and-readable-combinations.md`
-- [x] `slay-the-spire-deck-ecology-information-and-costly-synergies.md`
-- [x] `vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md`
-- [x] `against-the-storm-substitution-pressure-and-renewable-settlement-problems.md`
-- [x] `core-keeper-resource-circuits-food-and-inhabited-discovery.md`
-- [x] `peak-shared-burdens-rescue-and-spatial-tools.md`
-- [x] `deadfire-expedition-and-relationship-rules.md`
-- [x] `divinity-original-sin-ii-builds-and-authorship.md`
-- [x] `kingmaker-party-rules-and-kingdom-operations.md`
-- [x] `wrath-mythic-paths-and-crusade-battles.md`
-
-## Game-library indexes and roster — 3 complete
-
-Relative to [game inspiration](../../archive/02-research/game-inspiration/):
-
-- [x] `README.md`
-- [x] `mechanics/README.md`
-- [x] `research-roster.md`
-
-Other root documents, essays, references, standalone field guide and unlisted studies remain unchecked. Shared studies were read in full, including both subjects. AI Dungeon includes both preserved studies and both source registers. The Dragon Age supplement covers Journeys, Legends, Remix 01, The Last Court, Heroes and Keep; it does not count planned or retired services as tested playable products. D&D's SRD synthesis is not a fresh read of the underlying 364-page PDF. Integrated studies count within their dossiers; shared documents count once. No invented original chapter or standalone study is required where the inspected trees contain none.
-
-## World dossiers — 29 complete
-
-Relative to [worlds](../../archive/02-research/worldbuilding/worlds/):
-
-- [x] `01-middle-earth.md`
-- [x] `02-wizarding-world.md`
-- [x] `03-star-wars.md`
-- [x] `04-star-trek.md`
-- [x] `05-marvel.md`
-- [x] `06-dc-universe.md`
-- [x] `07-the-witcher.md`
-- [x] `08-pokemon.md`
-- [x] `09-dune.md`
-- [x] `10-a-song-of-ice-and-fire.md`
-- [x] `11-earthsea.md`
-- [x] `12-discworld.md`
-- [x] `13-avatar-the-last-airbender.md`
-- [x] `14-one-piece.md`
-- [x] `15-the-expanse.md`
-- [x] `16-foundation.md`
-- [x] `17-the-culture.md`
-- [x] `18-the-broken-earth.md`
-- [x] `19-narnia.md`
-- [x] `20-his-dark-materials.md`
-- [x] `21-the-wire.md`
-- [x] `22-the-sopranos.md`
-- [x] `23-austens-social-worlds.md`
-- [x] `24-macondo.md`
-- [x] `25-spirited-away.md`
-- [x] `26-warhammer-40000.md`
-- [x] `27-the-elder-scrolls.md`
-- [x] `28-fallout.md`
-- [x] `29-dungeons-and-dragons.md`
-
-## Worldbuilding root documents — 13 complete
-
-Relative to [worldbuilding](../../archive/02-research/worldbuilding/):
-
-- [x] `README.md`
-- [x] `character-formation.md`
-- [x] `comparative-synthesis.md`
-- [x] `comparative-matrix.md`
-- [x] `authorship-medium-and-accessibility.md`
-- [x] `institutions-history-and-power.md`
-- [x] `languages-and-communication.md`
-- [x] `magic-technology-and-ecology.md`
-- [x] `dungeons-and-dragons-planes-and-lived-magic.md`
-- [x] `research-method.md`
-- [x] `source-audit.md`
-- [x] `reassessment-progress.md`
-- [x] `research-progress.md`
-
-No world document is missing or unread at the pin. A world read does not complete a game dossier. Truncated content was recovered through overlapping contiguous reads, not counted from headings or empty out-of-range responses. Stale audit counts do not override actual revised files.
+Shared studies were read in full, including both subjects. AI Dungeon includes both preserved studies and source registers. The Dragon Age supplement covers Journeys, Legends, Remix 01, The Last Court, Heroes and Keep; planned or retired services are not tested products. D&D's SRD synthesis is not a fresh read of the underlying 364-page PDF. Integrated studies count within their dossiers; shared documents count once. The mistaken extra original Lethal Company chapter and Garry's Mod spelling in `3393faf` were corrected in `a354bdf`; the linked 39-path checklist is the corrected version.
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/a354bdf0f118576e0444241f4d792f0f7fcaf2ae/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Warcraft III, World of Warcraft and Black Flag findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Assassin's Creed III, Valhalla and Mass Effect findings and links all preceding checkpoints. Previous synthesis remains accessible at immutable revisions.
 
-**Assassin's Creed III:** dossier `a900629b9a49001a030331c3d7b056c3a90cb3aa`. Ordinary work can reveal a life without requiring a spectacular event. A person can matter through remembered history, useful competence and an unremarkable habit; reducing them to an unlock discards those distinctions. A completed objective need not deliver the security that motivated it. A practiced technique can be valuable yet wrong for the intended aftermath. The full original/DLC/remaster/retired-service boundaries, Homestead dependencies, observation versus autonomous routines, recruit recovery, background clocks, optional versus mandatory objectives, cultural-consultation limits, five reviews and 40 sources were read. The incorrect Aveline description is rejected; supernatural counterfactual fiction and authored historical figures are not real-world evidence. G99 is Assassin's Creed III, not the Traits catalogue's mistaken Animal Crossing III label.
+**Mass Effect 2:** `f7db10dc47765e36631b0f20ba73ba8349a786fe`. Preparation can be the substance of a journey rather than a prelude. Friendship, qualification, equipment and the capacity of the people left behind differ. Completing a personal task, earning a capability and retaining present commitment are separate outcomes. Legal vindication can betray a person's wishes. Declining a timed intervention can be deliberate rather than an omission. Optional ordinary care can support a specific relationship without becoming universal household simulation. The complete edition/DLC, retraining, Joker-control exception, crew deadlines, research, rewards, review corrections and 43-source register were read. Mission-count pressure is not elapsed real time; losing loyalty does not automatically erase an already unlocked ability. Unavailable or empty helpful-review surfaces remain gaps, not fabricated player samples.
 
-**Assassin's Creed Valhalla:** dossier `b99c0aa68b84b5e908aaa96ae1a95f5d39072701`. Appearance, capability and social permission are different states. Endless victory can fail to supply someone's wanted life, while another person can genuinely desire further conquest. Familiar people can give returning home a purpose beyond spending resources. Helping a fallen companion can compete with preserving an expedition; the cost depends on the actual recovery contract rather than an imagined permanent death. All paid/free/educational activity boundaries, earned versus equipped abilities, cosmetic hood, crew recovery, Orlog ordering, regional transformation limits, conclusion versus replay, five reviews and 56 sources were read. Fictional myth, romance gates and player anecdotes are not religious, psychological or population evidence; contradictory ending thresholds remain unresolved rather than invented.
+**Mass Effect 3:** `15f8ce5731b4690d34b438f00cd21c532991144d`. A replacement can restore a function without restoring the lost person's convictions or history. Aggregate contributions can help explain readiness without making the contributing people interchangeable. Reputation, trust, evidence and willingness differ. Explaining an outcome is not the same as acknowledging what someone valued. Peace, survival and preservation of every individual are different outcomes. All original/Wii U/Extended Cut/Legendary distinctions, first-aid exceptions, distinct mission deadlines, playable versus decorative arcade games, living arena-companion requirements, reputation revision, reception and 43 sources were read. Cached January Steam testimony is not a September live-service check; detailed endings are authored rather than computed futures for every civilization.
 
-**Mass Effect:** dossier `3a1254287971a44958455d217a5a3175dec63f98`. Prior trust, persuasive skill and unavoidable loss create different choices. A cooperation can survive a fundamental disagreement without requiring either person to abandon it. Intent to protect people does not make an actually destructive action harmless. A specialist's presence can change the available vocabulary, while choosing companions also expresses attachment and curiosity. Personal history can persist without transferring every owned capability. The full original/PC/PS3/Legendary distinctions, backgrounds, actual versus announced squad control, skills versus interaction execution, tactical recovery versus narrative death, bounded romance, six worked examples, DLC/source-code-access limitations and complete second-pass corrections and sources were read. None of the original's authored profiles is a clinical diagnosis or proof of generated childhood; no native helpful Steam sample was accessible in the underlying research.
+**Mass Effect: Andromeda:** `9038e16ea5f2267e31a6e9f61b55185259dea8ee`. A numerical milestone, a permitted settlement and help for a particular person differ. Authority can arrive before confidence or trust. Adaptability may provide freedom while reduced command over companions frustrates someone else. A new arrival's unfamiliar territory can already contain other people's purposes. Repeated hardship can change a team's future prospects without proving a universal psychological law. All four Favorites and transition costs, research/manufacture/modification distinctions, cryo versus mission timers, source disagreements, playable twin, post-finale limits, patched relationships, reception and 38 sources were read. The limited Storyteller is not arbitrary story generation; commercial category growth is not title revenue, and appearance does not imply a mechanical species bonus.
 
-Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
-
-Catalogue extrapolations are labelled **creative synthesis**, not copied lore, clinical prediction, causal popularity proof or an implementation claim. No personal gameplay, live-model experiments, proprietary-code inspection, representative sentiment coding or exhaustive external-bibliography rereading is claimed. Dated release, commercial and patch claims remain the dossiers' source records, not a new live audit.
+Catalogue extrapolations are **creative synthesis**, not copied lore, clinical prediction, causal popularity proof or current implementation claims. Competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Ordinary pleasures, deliberate harm and completed goals need no compulsory redemption or replacement craving. Human play, authored characters, simulated rules and cancelled-game intentions remain distinct evidence. Historical source text never overrides current AGENTS instructions. No personal gameplay, live-model experiment, proprietary-code inspection, representative sentiment study, complete external-bibliography reread or new live verification of dated release/commercial claims is asserted.
 
 ## Catalogue delivery checkpoints
 
@@ -291,12 +160,12 @@ Catalogue extrapolations are labelled **creative synthesis**, not copied lore, c
 | Needs | 240 | 300 | `90867e97edaef849212d2952f0160870b6584715`: ND-241–ND-300; six new domains, preserved IDs/headings, corrected owners and research Inspiration. |
 | Characters and backstories | 240 | 300 | `edc8fa2ddea94441ba41afb23eb1311b209ce658`: CB-241–CB-300; six new domains, preserved IDs/headings, sorted entries, corrected owners and research Inspiration. |
 
-Inherited entries are not newly written work. Earlier continuation commits added **120 entries**, yielding **1,116**. Reading is not a substitute for remaining catalogue delivery.
+Earlier continuations added **120 entries**, yielding **1,116**. Inherited entries are not newly written work. Reading is not a substitute for remaining catalogue delivery.
 
 ## Prerequisites and remaining work
 
-Completed prerequisites: root AGENTS, documentation rules, repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas, four seed proposals and four assigned catalogues. Neighboring scopes: Relationships, Bodies, Institutions, Work, Combat and Arts. Applicable rules/classifications were rechecked; no additional AGENTS exists at `docs/` or `docs/repertoires/` in the inspected revision. This continuation reread root AGENTS and documentation rules and confirmed both absent nested AGENTS paths.
+Completed: applicable root AGENTS and documentation rules; repertoire README, design foundation, selection-and-scale, combinations, actions, source atlas; four seed proposals and assigned catalogues; neighboring Relationships, Bodies, Institutions, Work, Combat and Arts scopes. Root instructions were reread this continuation; absent `docs/AGENTS.md` and `docs/repertoires/AGENTS.md` paths were confirmed.
 
-Continue all unchecked game material, including supplements, comparative documents and references; expand Psychology and Traits. Repair source-column misuse of seed proposals, Traits' incorrect “Animal Crossing III” / G99 wording, nonexistent owner names and D classifications caused only by unusual bodies. Preserve IDs and linked headings.
+Finish all unchecked game material and the Psychology/Traits inventories. Repair seed proposals used as Inspiration, Traits' “Animal Crossing III” / G99 error, nonexistent owner names and D classifications based only on unusual bodies. Preserve IDs and linked headings. Update coverage in all four assigned files after delivery.
 
-Respect medieval limits on assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight and Borrowed Dawn's bounded initial magic with compatible expansion. Wider-library ideas remain welcome. Shared atlas/navigation/history updates belong to the integration owner; other catalogues, proposals, research libraries, shared trackers and runtime remain unchanged.
+Respect medieval limits on assumed supernatural effects, Veyra Reach's exclusion of playable spaceflight and Borrowed Dawn's bounded initial magic with compatible expansion. Wider-library ideas remain welcome. Shared atlas/navigation/history updates belong to the integration owner. Other catalogues, proposals, research libraries, shared trackers and runtime remain unchanged.
