@@ -1,4 +1,8 @@
 export * from './types.js';
+export * from './action-experience.js';
+export * from './activity-learning.js';
+export * from './activity-execution.js';
+export { nativeActivityView } from './worlds/base/action-views.js';
 export * from './item-handling.js';
 export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
 export {
@@ -186,3 +190,4 @@ export { speechExposure, soundOrigin, hearingReferenceRadius } from './perceptio
 export * from './speech.js';
 export * from './conditions.js';
 export * from './inventory-inspection.js';
+export { availableItemQuantity } from './resource-claims.js';

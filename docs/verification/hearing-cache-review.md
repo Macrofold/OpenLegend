@@ -2,7 +2,7 @@
 
 Historical source-branch evidence. These measurements and reproduction commands describe the revisions/hosts below, before main's elapsed-time, authority and durable-memory integration. The old profiler modes and typing baseline are superseded. Use [combined integration evidence](hearing-main-integration.md) for the current tree; no historical pass qualifies it automatically.
 
-Verification annex for [HE05](../maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification), supplementing [earlier runtime evidence](../verification.md#hearing-8x-runtime-qualification). Source baseline: `f1ee3ffb799239888eb0e8e025cf4f5193e50198`, already containing main `03105fed9209c126e4e69e9faeb4687f42d1e74a` and the `fdcbd31` guidance update. This pass did not rewrite branch history or modify main.
+Verification annex for [HE05](../maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification), supplementing [earlier runtime evidence](hearing-eight-times.md#hearing-8x-runtime-qualification). Source baseline: `f1ee3ffb799239888eb0e8e025cf4f5193e50198`, already containing main `03105fed9209c126e4e69e9faeb4687f42d1e74a` and the `fdcbd31` guidance update. This pass did not rewrite branch history or modify main.
 
 ## Implemented change
 

@@ -1,6 +1,6 @@
 # Multiplayer principal, control and private projections — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
 
 The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 

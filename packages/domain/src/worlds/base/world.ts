@@ -1,3 +1,4 @@
+import { emptyActionExperience } from '../../action-experience.js';
 import { ADA_IDENTITY } from './characters.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
@@ -82,6 +83,7 @@ export function createWorld(
   const world: WorldState = {
     perceptionFeatures: {},
     schemaVersion: 10,
+    actionExperience: emptyActionExperience(),
     participationPolicy: structuredClone(BASE_PARTICIPATION_POLICY),
     itemHandling: structuredClone(BASE_ITEM_HANDLING),
     statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),

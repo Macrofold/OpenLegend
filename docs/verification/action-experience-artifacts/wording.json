@@ -1,0 +1,213 @@
+[
+  {
+    "name": "compact",
+    "projection": {
+      "text": "Can do: Equip; Hunt once, 3 separate attempts in order; Harvest; Cook; Eat (total consumption: Up to 1 Raw meat; earlier work produced 2, but future yield is uncertain; total consumption: Up to 1 Cooked meat; earlier work produced 1, but future yield is uncertain; travel and interruption: Distances below are from my current position. Later travel and future conditions may change. Spent materials and actual injury remain after interruption; failed work stops the sequence.; observed entry condition: This method was learned with target health at most 18; it does not establish how to defeat a healthier target) [Equip (tool: Knife; description: A small sharp blade for close-range cutting and stabbing.; weapon: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.); Hunt once, 3 separate attempts in order (target: a hare; tool: Knife; distance: 1.0 m; direction: to my right; health: 18/18; description: A small sharp blade for close-range cutting and stabbing.; attack: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.; approach: Move to within 0.8 m; route length is not known); Harvest (target: a hare; distance: 1.0 m; direction: to my right; health: 18/18; requirements: Requires a cutting tool and unharvested remains; 84 game seconds plus approach; approach: Move to within 1.6 m; the route length is not known; previous result: My earlier attempt produced 2 Raw meat; this attempt may fail or produce less; previous result: My earlier attempt produced 2 Bone fragment; this attempt may fail or produce less); Cook (target: Banked campfire; distance: 2.8 m; direction: behind and to my left; cost: Uses one raw meat at the start; 90 game seconds; requires a lit fire throughout; spent meat is not returned on interruption; approach: Move to within 1.6 m; the route length is not known; fire: Lit now; it must stay lit until cooking ends; later requirement: Requires 1 Raw meat actually produced by earlier work; it is not owned yet; previous result: My earlier attempt produced 1 Cooked meat; this attempt may fail or produce less); Eat (later requirement: Requires 1 Cooked meat actually produced by earlier work; it is not owned yet; food: Eating one Cooked meat restores up to 38 fullness)]",
+      "covered": [
+        "action.facts.0",
+        "action.facts.1",
+        "action.facts.2",
+        "action.facts.3",
+        "action.0.facts.0",
+        "action.0.facts.1",
+        "action.1.facts.0",
+        "action.1.facts.1",
+        "action.1.facts.2",
+        "action.1.facts.3",
+        "action.1.facts.4",
+        "action.1.facts.5",
+        "action.2.facts.0",
+        "action.2.facts.1",
+        "action.2.facts.2",
+        "action.2.facts.3",
+        "action.2.facts.4",
+        "action.2.facts.5",
+        "action.2.facts.6",
+        "action.3.facts.0",
+        "action.3.facts.1",
+        "action.3.facts.2",
+        "action.3.facts.3",
+        "action.3.facts.4",
+        "action.3.facts.5",
+        "action.3.facts.6",
+        "action.4.facts.0",
+        "action.4.facts.1"
+      ],
+      "fallback": [],
+      "omitted": false,
+      "bytes": 2287
+    },
+    "answers": {
+      "attempts": {
+        "type": "choice",
+        "choice": "three",
+        "probabilities": {
+          "one": 0,
+          "three": 1,
+          "unlimited": 0
+        },
+        "confidence": 1
+      },
+      "guarantee": {
+        "type": "choice",
+        "choice": "no",
+        "probabilities": {
+          "no": 1,
+          "yes": 0
+        },
+        "confidence": 1
+      },
+      "range": {
+        "type": "choice",
+        "choice": "different",
+        "probabilities": {
+          "same": 0,
+          "different": 1
+        },
+        "confidence": 1
+      },
+      "health": {
+        "type": "choice",
+        "choice": "eighteen",
+        "probabilities": {
+          "zero": 0,
+          "unknown": 0,
+          "eighteen": 1
+        },
+        "confidence": 0.99
+      }
+    },
+    "usage": {
+      "inputTokens": 1179,
+      "outputTokens": 139
+    },
+    "cost": 0.000049518
+  },
+  {
+    "name": "expanded",
+    "projection": {
+      "text": "Can do: Equip; Hunt once, 3 separate attempts in order; Harvest; Cook; Eat (total consumption: Up to 1 Raw meat; earlier work produced 2, but future yield is uncertain; total consumption: Up to 1 Cooked meat; earlier work produced 1, but future yield is uncertain; travel and interruption: Distances below are from my current position. Later travel and future conditions may change. Spent materials and actual injury remain after interruption; failed work stops the sequence.; observed entry condition: This method was learned with target health at most 18; it does not establish how to defeat a healthier target) [Equip (tool: Knife; description: A small sharp blade for close-range cutting and stabbing.; weapon: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.); Hunt once (target: a hare; tool: Knife; distance: 1.0 m; direction: to my right; health: 18/18; description: A small sharp blade for close-range cutting and stabbing.; attack: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.; approach: Move to within 0.8 m; route length is not known); Hunt once (target: a hare; tool: Knife; distance: 1.0 m; direction: to my right; health: 18/18; description: A small sharp blade for close-range cutting and stabbing.; attack: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.; approach: Move to within 0.8 m; route length is not known); Hunt once (target: a hare; tool: Knife; distance: 1.0 m; direction: to my right; health: 18/18; description: A small sharp blade for close-range cutting and stabbing.; attack: 8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.; approach: Move to within 0.8 m; route length is not known); Harvest (target: a hare; distance: 1.0 m; direction: to my right; health: 18/18; requirements: Requires a cutting tool and unharvested remains; 84 game seconds plus approach; approach: Move to within 1.6 m; the route length is not known; previous result: My earlier attempt produced 2 Raw meat; this attempt may fail or produce less; previous result: My earlier attempt produced 2 Bone fragment; this attempt may fail or produce less); Cook (target: Banked campfire; distance: 2.8 m; direction: behind and to my left; cost: Uses one raw meat at the start; 90 game seconds; requires a lit fire throughout; spent meat is not returned on interruption; approach: Move to within 1.6 m; the route length is not known; fire: Lit now; it must stay lit until cooking ends; later requirement: Requires 1 Raw meat actually produced by earlier work; it is not owned yet; previous result: My earlier attempt produced 1 Cooked meat; this attempt may fail or produce less); Eat (later requirement: Requires 1 Cooked meat actually produced by earlier work; it is not owned yet; food: Eating one Cooked meat restores up to 38 fullness)]",
+      "covered": [
+        "action.facts.0",
+        "action.facts.1",
+        "action.facts.2",
+        "action.facts.3",
+        "action.0.facts.0",
+        "action.0.facts.1",
+        "action.1.facts.0",
+        "action.1.facts.1",
+        "action.1.facts.2",
+        "action.1.facts.3",
+        "action.1.facts.4",
+        "action.1.facts.5",
+        "action.2.facts.0",
+        "action.2.facts.1",
+        "action.2.facts.2",
+        "action.2.facts.3",
+        "action.2.facts.4",
+        "action.2.facts.5",
+        "action.3.facts.0",
+        "action.3.facts.1",
+        "action.3.facts.2",
+        "action.3.facts.3",
+        "action.3.facts.4",
+        "action.3.facts.5",
+        "action.4.facts.0",
+        "action.4.facts.1",
+        "action.4.facts.2",
+        "action.4.facts.3",
+        "action.4.facts.4",
+        "action.4.facts.5",
+        "action.4.facts.6",
+        "action.5.facts.0",
+        "action.5.facts.1",
+        "action.5.facts.2",
+        "action.5.facts.3",
+        "action.5.facts.4",
+        "action.5.facts.5",
+        "action.5.facts.6",
+        "action.6.facts.0",
+        "action.6.facts.1"
+      ],
+      "fallback": [],
+      "omitted": false,
+      "bytes": 2915
+    },
+    "answers": {
+      "attempts": {
+        "type": "choice",
+        "choice": "three",
+        "probabilities": {
+          "one": 0,
+          "three": 1,
+          "unlimited": 0
+        },
+        "confidence": 1
+      },
+      "guarantee": {
+        "type": "choice",
+        "choice": "no",
+        "probabilities": {
+          "no": 1,
+          "yes": 0
+        },
+        "confidence": 1
+      },
+      "range": {
+        "type": "choice",
+        "choice": "different",
+        "probabilities": {
+          "same": 0,
+          "different": 1
+        },
+        "confidence": 1
+      },
+      "health": {
+        "type": "choice",
+        "choice": "eighteen",
+        "probabilities": {
+          "zero": 0,
+          "unknown": 0,
+          "eighteen": 1
+        },
+        "confidence": 0.99
+      }
+    },
+    "usage": {
+      "inputTokens": 1368,
+      "outputTokens": 139
+    },
+    "cost": 0.000057456
+  },
+  {
+    "name": "fallback",
+    "projection": {
+      "text": "Can do: Equipment I inspected. Extra details: {\"available weapons\":[{\"weapon\":\"Hunting knife\",\"reach\":\"1.3 m\",\"available\":true},{\"weapon\":\"Bow\",\"reach\":\"20 m\",\"available\":false,\"reason\":\"No arrows\"}]}",
+      "covered": [
+        "action.facts.0"
+      ],
+      "fallback": [
+        "action.facts.0"
+      ],
+      "omitted": false,
+      "bytes": 200
+    },
+    "answers": {
+      "weapon": {
+        "type": "choice",
+        "choice": "knife",
+        "probabilities": {
+          "bow": 0,
+          "both": 0,
+          "knife": 1
+        },
+        "confidence": 1
+      }
+    },
+    "usage": {
+      "inputTokens": 426,
+      "outputTokens": 38
+    },
+    "cost": 0.000017892
+  }
+]

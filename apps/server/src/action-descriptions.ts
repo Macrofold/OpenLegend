@@ -11,6 +11,10 @@ import type { CommandInput } from '@open-legend/protocol';
 /** Common explanations also cover families with no eligible target. Prose is
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
+  'inspect-activities':
+    'Read a bounded page of my own past actions and results, without repeating them.',
+  activity:
+    'Attempt a personally learned sequence; each step rechecks its requirements and keeps actual completed results.',
   say: 'Speak to nearby listeners. Only people who hear the words receive the speech.',
   conversation:
     'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',

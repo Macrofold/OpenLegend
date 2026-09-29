@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ActivityHistory } from './activity-history';
 import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
 import type {
   AuthoredAppraisalRequest,
@@ -356,6 +357,11 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
               More feelings and people
             </Button>
           )}
+          <ActivityHistory
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+            actorId={mind.actorId}
+            owned={owned}
+          />
           <InlineJson
             title="Memories, experiences and commitments"
             value={{

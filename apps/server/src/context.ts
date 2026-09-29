@@ -1,3 +1,4 @@
+import { learnedActivityCandidates } from './activity-context.js';
 import { worldPosition } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
 import { itemFor, directChildIds } from '@open-legend/domain';
@@ -5,7 +6,6 @@ import { inventionMaterials } from './invention-context.js';
 import { observerDescription } from '@open-legend/domain';
 import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
-import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import {
   availableStrikes,
@@ -37,9 +37,9 @@ import type { WorldService } from './world-service.js';
 
 // Describe the native batch, not an invented quantity choice. Interpretation may
 // compose these steps but cannot rewrite their arguments or effects.
-function gatherDescription(entity: Entity): string {
+function gatherDescription(service: WorldService, entity: Entity): string {
   const resource = entity.resource!;
-  return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
+  return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${service.world.itemDefinitions[resource.definitionId]?.name ?? 'material'} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
 function describeTargets(
@@ -48,6 +48,7 @@ function describeTargets(
   candidates: CandidateAction[],
 ): CandidateAction[] {
   const health = new Map<string, string>();
+  const origin = worldPosition(service.world.entities[actorId]!);
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
@@ -57,7 +58,7 @@ function describeTargets(
     return target
       ? {
           ...candidate,
-          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${entityLabel(service.world, target, actorId)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''}`,
+          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - worldPosition(target).x, origin.y - worldPosition(target).y, origin.z - worldPosition(target).z).toFixed(1)} m. Route length is not known.`,
         }
       : candidate;
   });
@@ -268,6 +269,17 @@ export function npcCandidates(
   });
   const cursor = actor.inventoryInspection;
   const actions: CandidateAction[] = [
+    ...learnedActivityCandidates(service, actorId, observed),
+    ...(service.world.actionExperience.learning[actorId]
+      ? [
+          {
+            id: 'inspect-activities',
+            description:
+              'Inspect a page of my own past actions, results and learned activities. This does not perform them again.',
+            command: { type: 'inspect-activities' as const, historyAfter: -1 },
+          },
+        ]
+      : []),
     {
       id: 'inspect-inventory',
       description:
@@ -458,7 +470,7 @@ export function npcCandidates(
     if (service.previewCommand(command, actorId).ok)
       actions.push({
         id: `approach:${entity.id}`,
-        description: `Move near the currently observed position of ${entityLabel(service.world, entity, actorId)}. This moves to that location once; it does not follow later movement.`,
+        description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id)}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });
   }
@@ -544,7 +556,7 @@ export function npcCandidates(
         if (!reachable.get(launcher.range)) continue;
         actions.push({
           id: `hunt:${item.id}:${entity.id}`,
-          description: `${item.id !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
+          description: `${item.id !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
           command: {
             type: 'hunt',
             targetId: entity.id,
@@ -573,9 +585,10 @@ export function npcCandidates(
         );
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
+          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
           command: {
             type: 'strike',
+            ...(description ? { purpose: 'Hunt once' } : {}),
             definitionId: definition.id,
             itemId: definition.weaponItemId,
             targetId: entity.id,
@@ -589,7 +602,7 @@ export function npcCandidates(
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
-        description: gatherDescription(entity),
+        description: gatherDescription(service, entity),
         command: { type: 'gather', targetId: entity.id },
       });
     if (
@@ -671,17 +684,17 @@ export function planningCandidates(
       .filter((entity) => entity.resource && entity.resource.quantity > 0)
       .map((entity) => ({
         id: `plan-gather:${entity.id}`,
-        description: gatherDescription(entity),
+        description: gatherDescription(service, entity),
         command: { type: 'gather' as const, targetId: entity.id },
       })),
     ...Object.entries(NATIVE_PREPARATIONS).map(([preparation, recipe]) => ({
       id: `plan-prepare:${preparation}`,
-      description: `Prepare ${recipe.outputQuantity} ${recipe.output}; needs ${recipe.inputQuantity} ${recipe.input} at start, ${recipe.workSeconds} work seconds.`,
+      description: `Prepare ${recipe.outputQuantity} ${service.world.itemDefinitions[recipe.output]?.name ?? 'material'}; needs ${recipe.inputQuantity} ${service.world.itemDefinitions[recipe.input]?.name ?? 'material'} at start, ${recipe.workSeconds} work seconds.`,
       command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
     })),
     ...observed.knownRecipes.map((recipe) => ({
       id: `plan-craft:${recipe.id}`,
-      description: `Craft one ${recipe.outputDefinitionId} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${input.definitionId}`).join(', ')} at start.`,
+      description: `Craft one ${service.world.itemDefinitions[recipe.outputDefinitionId]?.name ?? recipe.name} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${service.world.itemDefinitions[input.definitionId]?.name ?? 'material'}`).join(', ')} at start.`,
       command: { type: 'craft' as const, recipeId: recipe.id },
     })),
   ]);

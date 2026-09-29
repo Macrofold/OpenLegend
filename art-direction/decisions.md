@@ -27,6 +27,10 @@ Open: the minimum world-sprite detail, character screen size, overhead versus si
 
 The [second board](round-02/index.html) explores these remaining questions. It keeps 17 new references and three benchmarks separate from the original board and feedback.
 
+## Concept art with Midjourney — September 27, 2026
+
+- 2026-09-27 · Generate painted **concept art** of Threewater March characters with Midjourney, not pixel art · no reference IDs · Mike: "I'm looking for concept art, by the way, not pixelated art. Even though that's the eventual art style, I want to generate concept art." · Prompts follow the [Midjourney guide](midjourney/README.md); the in-game pixel look is still produced separately. Faces and bodies in prompts are invented until Mike picks a look for each character.
+
 ## Choices to resolve from feedback
 
 1. Character proportions and how much individual identity is visible at the normal camera scale.

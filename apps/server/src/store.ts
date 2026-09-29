@@ -353,6 +353,7 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   releaseHistory?(state: SavedWorld): SavedWorld;
+  adoptHistory?(original: SavedWorld, prepared: SavedWorld): void;
   hydrateHistory?(
     state: SavedWorld,
     actorIds?: string[],
@@ -574,7 +575,29 @@ export class SqlGameRepository implements GameRepository {
 
   readonly ready: Promise<void>;
   private async initialize() {
-    const schema = `
+    await this.db.transaction(async () => {
+      // Reject old layouts before any table/index initialization can modify them.
+      // AGENTS.md#development-save-policy: no conversion, reset or deletion.
+      const existing = await this.db
+        .prepare("SELECT to_regclass('open_legend.meta') AS relation")
+        .get();
+      if (existing?.['relation']) {
+        const version = await this.db.prepare('SELECT value FROM meta WHERE key=?').get('schema');
+        if (version?.['value'] !== '2')
+          throw new Error(
+            'Unsupported database schema. Existing data was not converted or deleted.',
+          );
+      }
+      if (
+        !existing?.['relation'] &&
+        (await this.db
+          .prepare(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' LIMIT 1",
+          )
+          .get())
+      )
+        throw new Error('Database schema marker is missing. Existing data was not changed.');
+      const schema = `
       CREATE TABLE IF NOT EXISTS world (
         id BIGINT PRIMARY KEY CHECK (id = 1), revision BIGINT NOT NULL, payload TEXT NOT NULL
       );
@@ -608,28 +631,26 @@ export class SqlGameRepository implements GameRepository {
         pause_when_hidden BIGINT NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))
       );
     `;
-    await this.db.exec(schema);
-    await this.db.exec(
-      `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
-    );
+      await this.db.exec(schema);
+      await this.db.exec(
+        `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
+      );
 
-    this.vectors = new VectorStore(this.db);
-    await this.vectors.initialize();
+      this.vectors = new VectorStore(this.db);
+      await this.vectors.initialize();
 
-    await new KnowledgeStore(this.db).initialize();
-    await this.records.initialize();
-    await this.memories.initialize();
-    await new WorldAgentStore(this.db).initialize();
-    await this.history.initialize();
-    await this.saves.initialize();
-    await this.commands.initialize();
-    await this.authority.initialize();
-    const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
-    if (version && version['value'] !== '1')
-      throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
-    await this.db
-      .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
-      .run('schema', '1');
+      await new KnowledgeStore(this.db).initialize();
+      await this.records.initialize();
+      await this.memories.initialize();
+      await new WorldAgentStore(this.db).initialize();
+      await this.history.initialize();
+      await this.saves.initialize();
+      await this.commands.initialize();
+      await this.authority.initialize();
+      await this.db
+        .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
+        .run('schema', '2');
+    });
   }
 
   releaseHistory(state: SavedWorld): SavedWorld {
@@ -643,6 +664,11 @@ export class SqlGameRepository implements GameRepository {
     };
     this.acceptedState = released;
     return released;
+  }
+  adoptHistory(original: SavedWorld, prepared: SavedWorld): void {
+    if (original !== this.acceptedState || original.world.id !== prepared.world.id)
+      throw new Error('Prepared history no longer matches the committed world.');
+    this.acceptedState = prepared;
   }
   async hydrateHistory(
     state: SavedWorld,
@@ -665,9 +691,10 @@ export class SqlGameRepository implements GameRepository {
       };
       validateWorldModules(state.world);
       if (
-        state.world.archivedEventCount &&
-        (await this.history.eventCount(state.world.id)) !==
-          state.world.archivedEventCount + state.world.events.length
+        (await (active
+          ? this.history.retainedEventCount(state.world.id)
+          : this.history.auditEventCount(state.world.id))) !==
+        (state.world.archivedEventCount ?? 0) + state.world.events.length
       )
         throw new Error(
           'Archived history coverage disagrees with the records; restore the complete database.',
@@ -703,9 +730,10 @@ export class SqlGameRepository implements GameRepository {
     upgradeWorldState(state.world);
     validateWorldModules(state.world);
     if (
-      state.world.archivedEventCount &&
-      (await this.history.eventCount(state.world.id)) !==
-        state.world.archivedEventCount + state.world.events.length
+      (await (active
+        ? this.history.retainedEventCount(state.world.id)
+        : this.history.auditEventCount(state.world.id))) !==
+      (state.world.archivedEventCount ?? 0) + state.world.events.length
     )
       throw new Error(
         'Archived history coverage disagrees with the save; restore the complete database.',

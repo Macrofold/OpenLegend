@@ -16,6 +16,14 @@ export const BASE_ACTION_DEFAULTS = {
   shotSeconds: 18,
 } as const;
 
+/** Wind-up safety margin shared by ranged admission and the offered description. */
+export function rangedApproachRange(range: number): number {
+  return Math.max(
+    0.5,
+    range - BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * BASE_ACTION_DEFAULTS.shotSeconds - 0.25,
+  );
+}
+
 /** Native locomotion and deadline planning use the same authored speed. */
 export function nativeMovementSpeed(
   entity: import('../../types.js').Entity,

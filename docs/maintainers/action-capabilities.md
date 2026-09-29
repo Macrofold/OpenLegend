@@ -15,7 +15,7 @@ The [capability specification](../action-capabilities.md) owns behavior/contract
 | Presentation/performance (AC11)      | Existing state stream replaces action polling; scoped drafts and retry identity; explicit target retained before caps; shared schema module                                          | Accessibility/browser interaction qualification; remaining dense-state/persistence tails and population capacity qualification (PF-owned) |
 | Common workflow (AC02/AC06/AC09)     | Existing concrete-command adapter and AG sequential frontier only                                                                                                                    | INV/EWF descriptor integration, general predicates/waits/branches/repetition/output ports and new mechanical families                     |
 
-Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
+Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification/integration-summaries.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
 
 ## Starting-scene action priorities
 
@@ -119,6 +119,8 @@ The first playable slice is **parameterized movement through the existing native
 **Exit:** REL-01–07 and AX15–AX18, AX31–AX36, AX45–AX48, AX51 and AX59–AX63 pass. Following an occluded deer cannot exploit its authoritative position, even though the simulation knows it.
 
 ## AC06 — Typed method composition and result ports
+
+The delivered [AE project](../action-experience.md) is a concrete consumer of this work: structured nested records, decision-relevant context, committed partial/multiple-output experience links and learned method continuation. AE uses the canonical invoke/sequence/branch/repeat/wait vocabulary; output commitment is separate from terminal success and grants no automatic failure continuation. [AE01/AE02/AE09](action-experience.md) coordinate those slices under AC/AG ownership; this does not mark AC06 delivered or authorize a second interpreter.
 
 **Owner:** AG03 continuation and family-output adapters. **Depends on:** AC02–AC04. **Touchpoints:** `agency.ts`, `response.ts`, native completion receipts, request schemas and plan projection.
 
@@ -292,7 +294,7 @@ Each row is a required test scenario for its applicable slice, not evidence that
 
 ## Current delivered slice
 
-Native move/follow invocation binding, scoped target-bearing proposals, stored revised-action approval, Jev-first text grounding, player Character action controls and actor accept/withdraw handles are implemented narrowly. The actual scope and run evidence are in [Architecture](../architecture.md#jev-first-action-grounding) and [Verification](../verification.md#action-capability-native-slice). Existing task checkboxes above retain their broader acceptance requirements; no automatic completion of AC01–AC12 or AX tests is implied. Requested automated tests are collected in [TODO](TODO.md#action-capability-slice-deferred-automated-coverage).
+Native move/follow invocation binding, scoped target-bearing proposals, stored revised-action approval, Jev-first text grounding, player Character action controls and actor accept/withdraw handles are implemented narrowly. The actual scope and run evidence are in [Architecture](../architecture.md#jev-first-action-grounding) and [Verification](../verification/integration-summaries.md#action-capability-native-slice). Existing task checkboxes above retain their broader acceptance requirements; no automatic completion of AC01–AC12 or AX tests is implied. Requested automated tests are collected in [TODO](TODO.md#action-capability-slice-deferred-automated-coverage).
 
 ## Main integration boundary
 

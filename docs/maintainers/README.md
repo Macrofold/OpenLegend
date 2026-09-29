@@ -19,6 +19,8 @@ This page is the master navigation index for active implementation work.
 
 ## Focused work
 
+[Action records and learned activities (AE01–AE10)](action-experience.md) records delivered nested action/effect descriptions, choice context, connected experience, idle learning and shared structure with private acquisition. Start with [current behavior](../action-experience.md); the tracker links design, operating limits and actual evidence without closing broader AC/AG/CR work.
+
 [Macrofold Worker API cutover (MW01–MW04)](macrofold-worker-api.md) tracks the shared-compute caller migration, cancellation/state preservation and coordinated deployment gates.
 
 For a fresh conversation continuing invention and World Agent work, start with [the no-context handoff](../invention-handoff.md). It maps settled decisions, source files and existing task owners without creating another specification.
@@ -82,12 +84,12 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 - [Product roadmap](../../archive/05-project/roadmap.md)
 - [Open decisions](../../archive/05-project/open-decisions.md)
 - [Research backlog](../../archive/05-project/research-backlog.md)
-- [Verification](../verification.md)
+- [Verification index and shared playtest protocol](../verification.md) — topic reports retain actual results and limitations.
 - [Implementation status](../../archive/05-project/implementation-status.md)
 - [World-agent Macrofold handoff](../macrofold-world-agent-handoff.md)
 - [Hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)
 - [Documentation changelog](../documentation-changelog.md)
 
-This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in verification, open choices in open decisions, and history in the documentation changelog.
+This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).

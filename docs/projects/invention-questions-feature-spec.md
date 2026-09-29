@@ -1,6 +1,6 @@
 # Invention questions: feature specification
 
-**Status: proposed; documentation only.** The owner requested the design and task tracking. This document does not enable native questions or authorize runtime implementation. Current OpenCode authoring suppresses its question tool and uses ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../world-agent-runtime.md).
+**Status: approved implementation target; implementation in progress.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The target below is not yet enabled or qualified. Current OpenCode authoring suppresses its question tool and uses ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../world-agent-runtime.md).
 
 ## Purpose and scope
 

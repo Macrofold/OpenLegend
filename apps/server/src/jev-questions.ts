@@ -2,7 +2,7 @@ import type { JudgmentAnswer, TypedQuestionMap } from '@open-legend/ai';
 
 /** Versioned decision rubrics shared by runtime routing and live inspection.
  * Each question owns one decision; an answer never grants native authority. */
-export const JEV_QUESTIONS_VERSION = 'cognition-questions-v10';
+export const JEV_QUESTIONS_VERSION = 'cognition-questions-v11';
 // Provisional suitability threshold, not calibrated correctness: docs/limits/cognition.md#cg05.
 export const JEV_ACTION_THRESHOLD = 0.7;
 const evidenceRule =

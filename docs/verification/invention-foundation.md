@@ -1,0 +1,217 @@
+# Invention foundation verification
+
+These are recorded observations from the original verification log, not a new run. “Current” refers to each observation’s recorded revision. [Verification index](../verification.md) · [Current acceptance owners](../maintainers/README.md).
+
+## Foundation review verification
+
+The September 22 review corrected the native response envelope passed to action interpretation when NPC invention is enabled, lost withdrawal handles in relevance fallback, missing generated gathering-target knowledge checks, and premature removal of child dispatch from tracked work. These boundaries have deferred automated coverage in [TODO](../maintainers/TODO.md#invention-foundation--deferred-automated-coverage).
+
+Manual execution in a fresh disposable SQLite world admitted a previously recorded rake proposal, crafted it, gathered four fibers with exactly four resource units debited, and reopened with its recipe and completed request retained. Native action interpretation accepted an explicitly constructed demonstration response after authoring metadata was separated; this is native fixture evidence, not a new live NPC decision. Wilderness, reservoir and touch presets each advanced 120 simulation seconds and passed saved-world validation. Provider calls, spending and outstanding reservations were zero. Production build and formatting passed; no automated tests were written or run. Browser, live-provider and dispatch-failure/concurrency qualification were not repeated.
+
+## Invention foundation expansion
+
+Manual execution on September 22, 2026 used isolated SQLite worlds, real configured inference, native transitions and the production HTTP server. No automated tests were written or run.
+
+- The live provider admitted a branch bow, stone-tipped arrow and bound wooden fiber rake. The bow feasibility rubric used the existing 0.55 confidence threshold. This is one successful clear-request observation, not broad routing calibration.
+- After reopening the saved world, native crafting produced bow `item-19` and arrow `item-45`. Equipping and hunting consumed the arrow; the shot missed under native rules. The crafted rake `item-57` gathered four fibers and debited exactly four units from its finite resource. Restart retained definitions, equipment identity and completed requests.
+- Supplying the saved rake proposal directly admitted without provider calls. An HTTP-supplied variant with null unused components was normalized and admitted under a zero-dollar cap; repeating the request returned its saved completion. Owner HTTP controls locked and unlocked NPC invention, and player history/status omitted NPC requests.
+- Native NPC execution rejected a locked request, persisted invalid-method feedback, admitted an explicit linked revision and suppressed the unchanged method on resubmission. Discovery events addressed only their inventor; NPC ownership named the world creator and did not teach the player. Admission consumed no crafting resources. These native observations do not themselves establish model quality.
+- In a fresh synthetic world containing repository-authored fictional characters, live NPC decisions exposed and helped resolve an envelope-integration error and null-component mismatch. A later complete proposal was correctly rejected because raw fiber cannot fill the body role. After private feedback was delivered, a fresh live decision revised its own materials and submitted an admitted sling through a linked child request, without a second authoring call. The NPC chose to speak during that later decision; the engine's validation/discovery events remained private. This demonstrates one live revision, not reliable autonomous invention across all situations.
+
+Browser control timed out twice, so no fresh visual walkthrough is claimed. The production page returned HTTP 200; actual session/origin-protected routes verified settings, supplied proposals, durable results and duplicate delivery. Full browser-originated crafting/use and broader automated/model-quality coverage remain in [TODO](../maintainers/TODO.md#invention-foundation--deferred-automated-coverage).
+
+Final native execution reloaded five recipes through the gathering-definition integrity checks, rejected a decision stamped before an NPC lock/reopen, delivered an invalid-method result only to its actor, and projected correct gathering-tool labels without NPC jobs. The temporary HTTP server was stopped; disposable saves were retained. Production build, formatting and the 104-file Markdown link/anchor scan passed. Existing PlayCanvas externalization and bundle-size warnings remain.
+
+Conservative additional ledger usage was **$0.047265**, including **$0.030000** retained for the initial sandbox-blocked network attempts; no reservations remained. Including earlier work in this task, the recorded total is **$0.374684**, below the authorized $10. These are application estimates, not a provider invoice. Live NPC calls used only synthetic demo worlds after approval review rejected use of the earlier demo context.
+
+Agency implementation and new operation/goal/plan acceptance remain open in the [AG tracker](../maintainers/agent-agency.md). Documentation integration is not gameplay, fixture or live-provider evidence.
+
+## Invention foundation integration with current main
+
+The September 27 [integration evidence](invention-main-integration.md) records exact source heads, current PostgreSQL/HTTP/MCP/browser journeys, 39 focused existing tests, static/build checks, reused historical evidence and remaining broader qualification. No live-provider spending occurred.
+
+Historical migration/recovery observations below describe the pinned implementations that ran. Current development compatibility is governed only by the [root policy](../../AGENTS.md#development-save-policy); past evidence is not new work authorization.
+
+Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
+
+## Authoring continuation review
+
+Manual native execution against an isolated SQLite world exercised cognition-policy draft/validation/human approval/Apply, identical Apply replay, and rejection of an action draft after its pinned policy changed. A synthetic admitted turn retained its original text and sequence, lost write authority on cancellation, and returned a cancelled terminal record. A second synthetic in-flight turn became uncertain through startup recovery without redispatch. The attempts table remained empty; no provider request or paid call was made. These are application/service observations, not live Macrofold or browser qualification. Production TypeScript compilation passed. Automated regression work is WAC01–WAC02 in maintainer TODO.
+
+## Repertoire foundation runtime observations
+
+This pass integrates main `196cfd258654df40b96e70b0ac95e26d38b1eca3` with the retained invention branch and implements [source-backed relationship inspection and read-only MCP](../architecture.md#repertoire-relationship-and-mcp-foundation). It adds no native simulation effects or saved-world schema. The [aggregate record](repertoire-foundation.json) identifies the runtime checkpoint, environment and workload inputs. New automated cases are IRF01–IRF09 in [maintainer TODO](../maintainers/TODO.md#repertoire-foundation-deferred-regression-coverage).
+
+### Environment and method
+
+Manual execution used Linux x64, Node v22.16.0, local SQLite, five visible CPUs (AMD EPYC 9V74 80-Core Processor; available parallelism 4), isolated disposable worlds and zero AI funding. No provider keys were read, no native Macrofold run or real model/image API was called, and provider spending was **$0**. SDK dependencies were exact-pinned to 2.0.0 and installed with lifecycle scripts disabled. Production TypeScript and the Vite client build passed; the existing large main-chunk warning remains. No unit/test suites were written or run in this continuation. Temporary native/HTTP exercise drivers and private CPU profiles were kept outside version control.
+
+### Actual HTTP, source and recovery observations
+
+A real `createGameServer` instance served the actual official-SDK `/mcp` transport with a generated local bearer and a 2025-11-25 initialization. Discovery returned all eight registered tools; context, current definitions, direct relationships, live entity inspection and the cookie/origin-protected local owner endpoint returned successfully. An invalid bearer returned 401. An unknown argument produced a protocol-valid tool error (`isError: true`), not an accepted actor override. The SDK compatibility response used short SSE framing for some calls; this was parsed by the manual caller. It is not live Macrofold interoperability evidence.
+
+One thousand small-world tool graph reads took 21.85 ms total, with median 0.017 ms and maximum 1.631 ms in this sample. The actual world digest remained unchanged and the frozen-definition cache was reused. These in-process timings are not HTTP throughput or production tail guarantees. Handler inputs and outputs remain independently bounded.
+
+After an actual native Resume and speech action, retained personal commitment evidence could be inspected with its existing provenance. A complete supplied sling passed unpaid native preview, entered the existing authenticated Invent endpoint, was admitted without a model call, appeared with its real input/output links, and invalidated the old definition cache. Clean close/reopen retained that admitted definition and exposed it again. This does not establish a new write path through MCP, new agreement semantics, in-world reading/writing, or general composition. All those readers remain non-mutating; the manual mutation used existing native services deliberately.
+
+### Bounded adjacency profiling
+
+The synthetic graph contains one high-degree root and source-labelled leaf records, not an actual world of that many admitted mechanics. Each size ran 1,000 first-page queries returning 50 edges. A no-match relation filter had to page through the root and could examine no more than 1,024 entries per call. Returned-copy mutation did not alter the index, and a cursor against a changed source was rejected as stale.
+
+| Synthetic graph             | Build    | Median page query | No-match continuation pages |
+| --------------------------- | -------- | ----------------- | --------------------------- |
+| 1,001 nodes / 1,000 edges   | 3.18 ms  | 0.151 ms          | 1                           |
+| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms          | 10                          |
+| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms          | 30                          |
+
+Build includes indexing/sorting/snapshot identity; it is not zero cost and is not performed per simulation tick. Queries measure bounded adjacency only, not all-source extraction, transitive closure, database I/O, model use or UI layout. The raw record includes sampled RSS changes; they are not peak-memory or zero-allocation claims. Multi-hop impact jobs, persistent source indexing and all-family coverage remain pending.
+
+### Native stress remains a separate limit
+
+The existing `scripts/stress-native.ts` runner executed the committed `gems.json` and `mixed.json` scenarios for 180 steps with no warmup, frozen snapshots and a requested 3× rate (180 native seconds per real second). A headroom below 1 does not sustain that requested rate.
+
+| Scenario             | Native loop | Largest step | 3× headroom |
+| -------------------- | ----------- | ------------ | ----------- |
+| gems / 514 entities  | 1122.59 ms  | 116.59 ms    | 0.891       |
+| mixed / 344 entities | 1674.33 ms  | 955.58 ms    | 0.597       |
+
+The mixed world retained 3,254 events and 31,756 awareness entries. These current-baseline samples still show meaningful cold-step cost and do not qualify large-population hosting. The source/adjacency work does not claim to improve native simulation. No witness, event, physical effect or simulation time was dropped to improve a score. Follow [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance) and the [encounter design](../encounter-scaling.md); do not infer a cross-review speedup from different hardware or earlier baselines.
+
+### UI and integration limits
+
+Documentation path/heading checks covered 142 Markdown files and found no newly introduced unresolved link relative to the integrated baseline. Existing checked maintainer entries were preserved; the reader/MCP subsets have separate implementation marks and their automated acceptance remains pending. Source-comment documentation anchors were also checked. This is documentation verification, not runtime acceptance.
+
+The owner relationship-list component builds successfully and its actual shared HTTP route was exercised. A manual Chromium navigation failed with `ERR_BLOCKED_BY_ADMINISTRATOR` in this environment; no visual, keyboard, accessibility or end-to-end browser acceptance is claimed. The restriction was not bypassed. Actual Macrofold provisioning/harness forwarding, modern protocol profile, multi-user credential/recipient controls, full output-schema qualification, larger source stores, shutdown/body-abuse matrices and full-stack sustained load remain explicit task gates.
+
+The implemented MCP endpoint is opt-in and read-only. Full unified conversation, world/session mutation grants, complete impact verification, live structural/participation semantics, information carriers, mutual agreements, observer-relative effects and image generation remain their respective INV/AC/EWF/EPR work. A type or graph label does not complete those features.
+
+## World Agent specification rebase reconciliation
+
+The specification/review branch is reconciled onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`. Its existing invention changes were replayed in first-parent order; the earlier merge commit's complete first-parent change was retained rather than dropping its manual integration edits. The only replay conflict was the documentation changelog, resolved by keeping both additions. No upstream runtime or workflow changes were overwritten. Production TypeScript compilation and the Vite client build passed again on the reconciled tree, retaining the existing bundle-size warning. The actual configuration reader again returned `[5, 0, 2.5]` for default/zero/explicit-lower settings. No test suite, live harness or paid provider was invoked. Temporary source/publication files are absent from the resulting tree.
+
+The encounter plan and PF09 sequence now recognize upstream audience reuse, mutation-owner experience membership, participant-roster reuse and isolated observation-copy improvements as delivered, not future implementation. The earlier invention stress measurements remain historical evidence for their named baselines; they are not current-tree timings. EPR acquisition-scope correction and full-stack/population qualification remain pending. This specification pass did not rerun those native performance experiments or produce a new speedup claim.
+
+## Unified World Agent specification
+
+This pass specifies the unified out-of-world World Agent, typed relationship graph, shared application tools, native Macrofold/MCP connection, kind composition, live-law revisions, target player/NPC journeys and encounter-scaling plan. These are accepted target contracts, not newly implemented graph/MCP/composition/runtime-art services. The only runtime change is the workshop-root default from $1 to $5; explicit configured caps and existing admitted session/root allocations are not changed by that default.
+
+The review inspected OpenLegend's last delivered implementation `377ef03e6d4ff2c5c947f9085cd94111a84b34d0` and main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`; the review branch already contains that main revision. The intervening incomplete publication added an export workflow and a partial patch file, not an implemented capability. Those temporary files are removed without applying the partial patch. Macrofold contracts were inspected at `19865a2f45885e228deb6b7ea443e33982257d21`; official MCP tooling/protocol sources were researched on September 23, 2026.
+
+Manual execution of the actual `readConfig` under Node 22.16.0 with isolated empty/specified environment objects returned default/zero/explicit-lower workshop values of `[5, 0, 2.5]`. No provider keys were read or requests dispatched. Production TypeScript (`tsc --noEmit -p tsconfig.build.json`) and the Vite client build passed; the existing approximately 2.625 MB uncompressed main bundle warning remains. No automated unit suites, browser automation, native-harness or paid model/image calls were run; provider spend was $0. There is no new native-simulation performance claim: the [encounter plan](../encounter-scaling.md) distinguishes historical cold-stall evidence, delivered upstream optimizations and remaining qualification.
+
+Documentation verification covers relative links/anchors, preservation of existing task IDs/checkbox states, source-comment references, explicit implemented-versus-target boundaries and removal of the prior temporary publication files. Future automated cases are UWA01–UWA10 in the [maintainer TODO](../maintainers/TODO.md#unified-world-agent-deferred-regression-coverage). Actual SDK negotiation, Macrofold tool forwarding, native agent usefulness, the image-inclusive session cap and compositional world behavior still require their explicit INV release gates.
+
+This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
+
+## Invention extensibility review
+
+Reviewed `24f970566f5ed400fd25e197dd3aa624fa0accc9`, which retains main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` plus the preceding invention/performance work. The review implements the finite [world-agent workshop tools](../architecture.md#invention-workshop-tools), not the full invention foundation. [Raw bounded observations](invention-extensibility-review.json) retain workloads and limits.
+
+### Method
+
+Manual isolated execution on September 23, 2026 used Linux x64, Node 22.16.0, local SQLite, five visible CPUs reporting Intel Xeon Platinum 8370C at 2.80 GHz, and disposable worlds. Production TypeScript compilation and Vite client build passed. The existing approximately 2.625 MB uncompressed main client chunk warning remains. No unit/test suites, browser automation, real PostgreSQL queries or live model requests were run. Actual provider spending was **$0**. All ledger amounts below are explicitly synthetic, not API charges. Transient exercise scripts and CPU profiles remain outside version control.
+
+### Actual application and transport observations
+
+A real `createGameServer` instance served authenticated local HTTP requests with its automatic timer disabled for controlled native stepping. The new tool endpoint returned the four current native families and only the controlled actor's bound system metadata; an unknown recipe returned the same scoped-unavailable response. A complete supplied sling entered workshop while paused, completed `draft-ready`, and changed neither recipe count nor inventory. Submission acknowledgement was 32.70 ms in this single sample; this is not total live generation latency.
+
+Identical preview replay returned the saved result. Apply with a wrong digest was rejected; Apply while paused was rejected without consuming the parent. After explicit Resume, Apply admitted the stored recipe. Identical Apply replay returned the completed job. A separate native craft command plus actual `WorldService.tick` progression produced the item by simulation time 72. Clean close/reopen preserved the recipe, ready draft and admission result. No spending attempt was created by the supplied preview/Apply/craft path.
+
+An invalid supplied draft using an unknown ingredient was retained with a native finding rather than silently rewritten. The feedback did not disclose properties of the missing/private definition. This is one negative example, not broad adversarial/privacy acceptance.
+
+A second manual loop injected HTTP responses through the real `createAiClient` request encoder, strict-schema validation and response decoder. It exercised three actual director turns: inspect a learned recipe and own modules, validate a proposed variant, then retain the final ready draft. Input context sizes were 7,112 / 10,224 / 11,478 bytes. Native validation/checkpoint stored the inspected base, final digest and report; Apply admitted the derived recipe without another model call and left the original recipe/objects unchanged. Distinct `:workshop:1` through `:workshop:3` attempts and root memberships were retained. Their synthetic cost receipts are not live billing or model-quality evidence. This encoder exercise exposed an undefined optional context field missed by initial direct-result injection; omitting that field fixed the real adapter path before the final repeated run.
+
+Nine linked supplied previews reached authoring depth 8 under zero configured funding. The ready candidate still applied through a separate native continuation; no new model attempt was created. This qualifies the limited no-extra-authoring-round Apply case, not every possible continuation race.
+
+### Cost and recovery observations
+
+Two concurrent synthetic $0.30 reservations against one $0.50 root cap returned one acceptance and one rejection. An uncertain receipt retained $0.30 exposure; after closing/reopening the database, an additional $0.25 reservation was refused. Existing monthly actor limits remain separate constraints over the same attempt facts. No real provider was invoked.
+
+The actual `backup-world.ts` and `restore-world.ts` scripts successfully exported current operational format 2 and restored into an empty target, preserving all three synthetic attempt rows and all three root-budget membership rows. Gameplay schema was unchanged. PostgreSQL, corrupt/partial backup, in-flight restore and lowered-limit concurrency remain deferred automated/manual qualification.
+
+### Bounded tool workloads and native stress
+
+A repeated native dry-validation exercise on the small two-recipe world ran 300 invocations: median 0.953 ms, sampled p95 1.622 ms, maximum 6.379 ms. A 3,000-call catalogue workload took 18.73 ms and retained an identical world digest. These are in-process small-world measurements, not HTTP throughput, live-provider latency or large-world capacity. Material reads still depend on the actual observation cost; no new per-tick cache or scanner was introduced.
+
+The existing native stress runner used its committed gems/mixed scenarios with 180 steps and no warmup:
+
+| Scenario                                                   | Measured native loop | Largest step | Headroom at requested 3x |
+| ---------------------------------------------------------- | -------------------- | ------------ | ------------------------ |
+| 500 ground objects, 514 entities, original domain baseline | 4347.45 ms           | 1760.21 ms   | 0.230                    |
+| Same ground-object scenario, review                        | 4248.23 ms           | 1774.04 ms   | 0.235                    |
+| 10 added people, 20 animals, 300 resources; 344 entities   | 20193.16 ms          | 18648.81 ms  | 0.050                    |
+
+The complete ground-object runs have the same final-world digest. A separate mixed baseline attempt was interrupted by a local command deadline while writing output and supplies no comparative throughput evidence. The completed mixed review retains 3,254 events and 31,756 awareness entries, with first-exposure/experience work dominating. Both completed workloads fail the requested 3x throughput; below 1 is insufficient headroom. This is the existing PF09/EPR/SW problem, not resolved by workshop tools. Different hardware/load from earlier observations prevents attributing cross-review timing changes to a regression or speedup. No witnesses/events, physical semantics or simulation time were dropped to improve a score.
+
+### Remaining qualification
+
+Live natural-language quality, Macrofold inference execution, full browser/accessibility flow, broader cancellation/concurrency/save fencing, PostgreSQL budget queries and large observation/material workloads remain unqualified. Generic definition composition, host-enforced dependency summaries, owner-wide mechanics tools, generated art and full payer/runtime budgets remain feature gaps under INV/EWF. [IER01–IER07](../maintainers/TODO.md#invention-extensibility-review-regression-todos) are the requested deferred automated regression cases. Existing IPR/SR/AG cases remain valid; no suite was marked complete by these manual observations.
+
+## Invention performance review
+
+Reviewed main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` alongside the documentation-only foundation `69897a356c959677cfbf7fe1785f2b9db0271b43`. The latter implemented no runtime features. This review changes five server files only; domain/spatial rules are unchanged. [Current behavior and residual limits](../architecture.md#bounded-invention-history-and-recovery) distinguish these fixes from the future foundation.
+
+### Method and environment
+
+Manual runtime and synthetic stress execution on September 23, 2026 used Linux x64, Node 22.16.0, SQLite 3.49.1, five visible CPUs reporting Intel Xeon Platinum 8573C, isolated disposable data, no credentials and zero AI budget. The pinned dependencies were installed with lifecycle scripts disabled. Production TypeScript and Vite client builds passed; the existing approximately 2.62 MB uncompressed client chunk warning remains. No unit/test suites, browser automation, live model calls or real PostgreSQL queries were run. Actual provider spend was $0. The reserved attempt below is synthetic local accounting, not a paid call.
+
+[Bounded raw measurements and workload metadata](invention-performance-review.json) retain the observations. These are short, synthetic samples with ordinary profiling/run-order noise, not stable production percentiles, an independent-machine benchmark, an exhaustive concurrency test or a hosted population guarantee. Scripted application/profiling exercises were kept outside the repository; no executable unit tests were added.
+
+### Retained job history and recovery
+
+The SQLite experiment inserted 20,000 or 50,000 completed invention rows with an 8,000-character candidate description plus eight unfinished jobs. The newest 100 history rows belonged to an abandoned timeline. Regular recovery timing excludes initial setup/index creation; a separate run measured index installation on existing history.
+
+| Observed operation                                                                       | Before                                                               | After                                                 |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Recover eight unfinished jobs beside 20,000 completed rows                               | 324.23 ms; 201,981,952-byte sampled RSS increase                     | 1.79 ms; no sampled RSS increase                      |
+| Recover eight unfinished jobs beside 50,000 completed rows                               | 768.32 ms; 469,876,736-byte sampled RSS increase                     | 1.63 ms; no sampled RSS increase                      |
+| Obtain three current-timeline rows with 50,000 historical rows (median of 30 retrievals) | 0.411 ms; incorrectly returned zero after limiting abandoned history | 0.054 ms; returned the intended three current records |
+
+No sampled RSS increase is not a claim of zero allocation. The new partial index avoids parsing retained completed job payloads; it does not remove all attempts-table recovery cost. Building new indexes over the 50,000-row existing database took 629.26 ms once. SQLite's query plan used `jobs_inventor_timeline` for scope and row-value keyset bounds. Another run recovered 137 pending jobs across several batches in 28.55 ms, left no unfinished rows and retained a synthetic 12,000-micro-USD reserved attempt as uncertain with the same exposure. Corrupt data, crash mid-recovery, large uncertain-attempt populations and PostgreSQL plans remain TODO.
+
+### Search CPU and SQL payload
+
+At 20,000 known sources, an isolated current-membership check took 697.09 ms with nested array scans versus 3.81 ms with a single set and linear lookups. Both reported the same valid membership. These are single native measurements, not complete search response times.
+
+Capturing the actual `VectorStore.reconcile` SQL parameter with 2,000 characters of extra source text per record reduced 20,000-source input from 41,077,781 to 877,781 bytes when only ID/revision pins were serialized. The accompanying native serialization measurements were 131.69 versus 9.90 ms. No pgvector, database I/O, network or embedding time was measured. `put` continues to receive actual vectors; exact ranking complexity and cold indexing of all missing sources remain pending optimization.
+
+### Actual HTTP and native continuation
+
+A real `createGameServer` instance with its normal simulation timer accepted a complete supplied sling over `/api/world-agent/messages`, admitted it without any provider call, returned the saved completion on identical request replay, accepted a separate native craft command, produced the item during simulation progress and recovered the recipe/admitted job after clean restart. The world progressed to simulation time 80; history returned one request. Observed HTTP times were 39.74 ms for submission, 24.16 ms for duplicate lookup and 18.25 ms for starting craft. These individual timings are not a tail-latency claim. The spending-attempt table remained empty and reported reserved/spent cost remained zero.
+
+### Native capacity boundary
+
+The existing native stress runner executed `scripts/performance/scenarios/gems.json` and `mixed.json`. Headroom compares measured throughput to the requested 3× rate of 180 native simulation steps per real second; below 1 fails that workload's requested rate.
+
+| Scenario                                                                             | Measured loop | Largest step | 3× headroom |
+| ------------------------------------------------------------------------------------ | ------------- | ------------ | ----------- |
+| 500 synthetic ground objects, 514 total entities, 180 steps, no warmup — baseline    | 2,128.14 ms   | 884.66 ms    | 0.470       |
+| Same scenario — review                                                               | 2,132.14 ms   | 902.98 ms    | 0.469       |
+| 10 added people, 20 animals, 300 resources; 344 total entities, 180 steps, no warmup | 10,571.16 ms  | 9,754.86 ms  | 0.095       |
+| Same mixed setup with 30 warmup steps excluded, then 180 measured steps              | 1,181.39 ms   | 82.84 ms     | 0.846       |
+
+The two ground-object runs produced the same final-world SHA-256 digest. No native-domain speedup is claimed from server query changes. The mixed cold run retained 3,254 events and 31,756 awareness entries; first-exposure work dominates that observation. Warmup improves the measured steady portion but must not hide the cold stall, and even the warmed sample does not sustain 3×. These observations provide evidence for existing [PF09](../maintainers/performance.md#pf09--population-work-follows-relevance), spatial/EPR and SR07 work; the review does not silently drop events, alter witnesses or change simulation time to meet a target. There is no browser/GPU, persistence, provider or long-running-world capacity evidence in these native measurements.
+
+### Unimplemented and unqualified scope
+
+[INV](../maintainers/inventions-and-world-evolution.md) retains coordinated art/revisions, dependency verification, mechanic freezes and full episode/runtime budgets as future work. Per-request cold indexing limits, reliable provider-derived exposure bounds, long-month usage/attempt-query scaling and cross-world payer enforcement remain explicit gaps. The budget for a result already funded must not be reserved again merely to publish it; this is a clarified target contract, not a delivered generated-art feature. All requested regression tests are in [TODO](../maintainers/TODO.md#invention-performance-review-regression-todos). Existing behavior-specific and spatial tests are not obsolete merely because this manual exercise passed.
+
+## Reviewed authoring transport development
+
+Production TypeScript and the client build pass at the write-transport stage. A temporary manual script used a disposable SQLite world, real local HTTP/MCP transport and synthetic credentials with zero funding. It negotiated the 2025-11-25 MCP profile (the SDK returned an SSE envelope), discovered 18 implemented tools, saved a custom charge-attribute draft, repeated the same operation without creating another draft, ran native validation, prepared a review, rejected unapproved Apply, accepted an exact human decision through the local route, applied through MCP, and repeated Apply without incrementing the manifest again. Graph search found the actual accepted definition. Reopening the application retained the definition and review; reported spending/reservations were zero. This is native/transport evidence, not a model, browser, hosted security or PostgreSQL acceptance claim. No automated tests or paid providers were run.
+
+## Durable authoring turn delivery
+
+The production TypeScript compilation passed for the asynchronous delivery change. A disposable SQLite application with no provider keys served actual authenticated same-origin session-open and paged-turn requests. A separate manual run used the real session/record/runner path with an explicitly synthetic executor: admission returned in 2.14 ms, an identical submission returned running without another execution, cancellation reached the exact active turn, and the terminal result remained readable after drain. This is a single local runtime sample, not model latency or throughput evidence. All spending/exposure remained zero. No unit/test suites or paid providers were run; MW06 records deferred concurrency, transport and failure coverage.
+
+## Unified authoring interface and native write journey
+
+Production TypeScript and the Vite client build passed. The bundle retains the pre-existing large-chunk warning (approximately 2.661 MB main JavaScript uncompressed in this build). No automated unit suites, browser automation, PostgreSQL, live Macrofold or paid providers were run.
+
+A disposable SQLite application executed actual authenticated local HTTP and MCP requests with a synthetic connector credential, no model keys and zero spending. SDK initialization negotiated 2025-11-25 and discovered eighteen implemented tools. The compatibility response used SSE framing, correctly consumed by the manual protocol client; this does not establish actual Macrofold forwarding. MCP saved an optional custom category draft, ran the native validator and prepared a review. Unapproved Apply returned needs_approval. A changed digest was rejected with a safe 409 authoring-request message. After the authenticated human decision, Apply installed the definition; identical Apply returned the same committed result without another installation. The definition was not attached to any actor.
+
+The UI's actual status/review/decision/list endpoints retained candidate and approval data, correctly reported missing provider configuration, and permitted historical inspection after session closure while MCP writes were refused. Closing/reopening the server preserved the applied plan, closed session and zero exposure; the attempts table was empty. Session-status calls in this single small-world sample took 2.81–4.83 ms and the owner session list took 1.89 ms; these are illustrative observations, not stable percentiles or capacity claims. Actual browser rendering/accessibility and live model quality remain MW07/INV-21.5 work. Paid spending was $0.
+
+## Scoped World Agent context and invention preparation
+
+[Current context verification](world-agent-context.md) records native PostgreSQL/HTTP/MCP save-for-review, immutable refinement/replay, candidate graph/readiness, failure/privacy/recovery scenarios, browser approval/Apply and bounded local measurements. It separately records real Macrofold execution, uncertainty and remaining WW18–WW23 acceptance; native fixtures do not establish provider quality.

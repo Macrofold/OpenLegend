@@ -98,7 +98,7 @@ Disposable native evidence, provider budget $0:
   qualification; the latter run's heap includes the intentionally cloned full reference.
 
 The final cold/fork/root-membership comparisons, both-adapter wide SQL workload, mature
-contribution residency and P5 integration are recorded in [Verification](../verification.md#foundation-priorities-15--implementation-evidence).
+contribution residency and P5 integration are recorded in [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence).
 Independent capability contributions now charge their admitted recurring status-work root;
 exhaustion refuses the complete native step without advancing time. The complete source/port review and parent reconciliation are complete. The measured 24% native CPU increase and unqualified hosted rate remain explicit [PF limitations](performance.md#foundations-15-measurements-and-remaining-cost).
 

@@ -1,6 +1,6 @@
 # Invention questions: technical design
 
-**Status: proposed; no runtime implementation.** Implements the design scope of the [feature specification](invention-questions-feature-spec.md). The recommendation below preserves the current contract that human waiting is not active model execution.
+**Status: approved implementation target; implementation in progress.** Implements the design scope of the [feature specification](invention-questions-feature-spec.md). The recommendation below preserves the current contract that human waiting is not active model execution.
 
 ## 1. Baseline and decision
 
@@ -116,6 +116,19 @@ Qualify native event defaults, cancellation after question capture, exact usage/
 Required proof includes: single/multi/custom questions; existing answer reused without repetition; malformed/oversize/duplicate events; source quote validation; cursor loss/gaps; two-tab conflicts; repeated save-only corrections, superseded Continue and correction during execution; lost answer and dispatch acknowledgement; capture/stop/answer/continuation crash points; cancellation/restore/revocation and disclosure reduction; no admission from status reads; budget exhaustion with retained answer; exact review/Apply and permanent receipt replay after continuation. Measure full requests/generations/cost/time-to-review and verify medium/BYOK forwarding on a relevant supported recipe plus a distinct supported non-recipe journey. Demonstrate unsupported mechanics remain unsupported.
 
 No unresolved product decision blocks documenting this recommendation. The end-and-readmit lifecycle and no deferred automatic continuation are proposed choices, not changes to deployed behavior. Cancellation/settlement and native retry support are technical enablement gates; if qualification cannot meet the existing accounting contract, keep structured questions disabled and report the blocker rather than weaken it. Optional same-run suspension is outside the initial implementation.
+
+## 10. Approved implementation plan
+
+The owner authorized full implementation and end-to-end scenarios for this feature and the World Agent context foundation. Start: `52080ecbcf76869901f765610c4a07fbf9965141` on `codex/integrate-invention`; merge refreshed `origin/main` (`be68b1e0d75baac3c2c9f38948824aa4a98ed0d9`) while preserving ancestry and current behavior. No working-branch transition. The existing WW18–WW23 foundation is implemented; audit its actual accepted scope and reuse still-valid evidence rather than rebuild it or pull in unrelated future invention families.
+
+1. Reconcile main's current-format database initialization, action metadata/learned activities and topic verification reports with the existing authoring owners. Preserve current PostgreSQL, approval/receipt and private disclosure contracts. Run relevant static/native checks before relying on the merged baseline.
+2. WW25: verify the actual native question event and cancellation/usage path with no-cost injected transport first. Establish native retry control before any paid call. Preserve previous uncertain exposure; the shared $10 ceiling is not reset by this continuation.
+3. WW26/WW27: add bounded typed question normalization, atomic operational capture/context fencing, durable human answers, source provenance, exact corrections and single explicit continuation through current store/service/runner owners. Reconcile cancellation, stale grants/dependencies, restore and lost acknowledgements without redispatch.
+4. WW28/WW29: implement inline accessible forms, retained state and compact source-backed continuation through existing protocol/UI/context. Keep current owner access, medium/BYOK, native save-for-review, useful hard constraints and approval separation.
+5. WW30 and context acceptance: inspect the entire affected diff, fix findings, run focused existing checks and disposable PostgreSQL/native/HTTP/MCP/browser scenarios, and then actual Macrofold question → answer → review with a well-specified no-question control and distinct non-recipe scenario. Exercise race/failure/restart/restore/privacy/accounting paths and measure bounded event/context/history work and browser responsiveness. Retain exact evidence/limitations; static or fixture success does not replace live verification.
+6. Reconcile specifications, limits and stable trackers with actual delivered behavior, commit coherent changes, push the integration branch and update PR #24. Recheck main and verify affected changes before final handoff; leave PR merge to the owner.
+
+Completion requires every initial feature requirement and the relevant context-foundation journeys, all required checks and in-scope review fixes. Technical access, financial uncertainty and mandatory conflict-stop rules remain real blockers; do not label incomplete scope as complete. Initial additional-runtime estimate is 500–900 logic lines; reassess if implementation reveals more cross-layer state or lifecycle work. No paid calls have been made in this continuation.
 
 ## Maintained records
 

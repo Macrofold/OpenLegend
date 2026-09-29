@@ -164,7 +164,7 @@ matched CPU profiles, 10,000-lot/12-level SQL+HTTP pages and moves, 2,002 termin
 episodes, reservation admission at the actor memory ceiling, and real TCP backpressure and
 connection churn. The final matched mixed run costs approximately 24% more native CPU than
 the baseline; both miss its requested 3× rate before SQL/browser work. These measurements
-qualify the tested boundaries, not PF/D5 hosted capacity. [Verification](../verification.md#foundation-priorities-15--implementation-evidence)
+qualify the tested boundaries, not PF/D5 hosted capacity. [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence)
 owns the exact workload and evidence; SC/MP/PO/DI/ACT own the completed acceptance mapping.
 [PF](../maintainers/performance.md#foundations-15-measurements-and-remaining-cost) retains
 the measured CPU and wider-load work. Inspected branches have migration contracts above;
@@ -227,7 +227,7 @@ The review repaired all confirmed findings above through their existing owners, 
 adding another authority or changing the foundation designs. Native success/failure journeys,
 real HTTP publication, both-adapter cold reload and visual browser control checks passed.
 Matched held-stock stress preserves the complete world digest and RNG. The
-[review evidence](../verification.md#foundation-follow-up-review) separates these checks
+[review evidence](../verification/foundations-1-5.md#foundation-follow-up-review) separates these checks
 from the earlier mixed-workload CPU regression and existing required-CI fixture work.
 The full affected diff and repaired owners were reread. Typechecking, production build,
 configuration drift, changed-file formatting, documentation links and whitespace checks

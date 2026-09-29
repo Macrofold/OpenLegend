@@ -1,3 +1,4 @@
+import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
 import { worldPosition, worldSupport } from '@open-legend/domain';
@@ -97,6 +98,15 @@ export async function prepareDecision(
   await service.flushMemorySources(actorId);
   const world = service.world;
   const generation = service.generation;
+  const inspection = world.actionExperience.learning[actorId]?.inspection;
+  const inspected =
+    inspection && inspection.eventId === triggerEvidenceId
+      ? await service.activityHistoryForActor(
+          actorId,
+          inspection.after,
+          inspection.methodAfter ?? 0,
+        )
+      : undefined;
   stimulus = projectEntityMarkers(stimulus, world, actorId);
   const observed = decisionObservation(world, actorId);
   if (!observed) throw new Error('Actor unavailable.');
@@ -144,6 +154,32 @@ export async function prepareDecision(
       : undefined;
   const planning = planningCandidates(service, actorId, observed);
   const availableActions = distinctActions([
+    ...(inspected && inspection?.methodAfter
+      ? learnedActivityCandidates(service, actorId, observed, inspection.methodAfter)
+      : []),
+    ...(inspected?.methodNext !== null && inspected?.methodNext !== undefined
+      ? [
+          {
+            id: 'inspect-methods-next',
+            description:
+              'Inspect the next page of my own learned activities and their requirements.',
+            command: {
+              type: 'inspect-activities' as const,
+              historyAfter: inspection!.after,
+              methodAfter: inspected.methodNext,
+            },
+          },
+        ]
+      : []),
+    ...(inspected?.next !== null && inspected?.next !== undefined
+      ? [
+          {
+            id: 'inspect-activities-next',
+            description: 'Inspect the next page of my own recorded actions and results.',
+            command: { type: 'inspect-activities' as const, historyAfter: inspected.next },
+          },
+        ]
+      : []),
     ...npcCandidates(service, actorId, observed),
     ...planning,
   ]);
@@ -241,11 +277,32 @@ export async function prepareDecision(
     body: bodyContext(world, observed.actor),
     contacts: observed.contacts.map((c) => c.text),
     goal: currentGoal(snapshotActor),
+    commitments: (world.memories[actorId] ?? [])
+      .filter(
+        (memory) =>
+          memory.obligation &&
+          !memory.resolved &&
+          ['active', 'overdue'].includes(memory.obligation.status) &&
+          !(world.experience?.forgotten[actorId] ?? []).includes(memory.id),
+      )
+      .map(
+        (memory) =>
+          `${memory.summary}${memory.obligation?.dueAt !== undefined ? ` Due in ${Math.max(0, memory.obligation.dueAt - world.simTime)} game seconds.` : ''}`,
+      ),
+    activityCoverage:
+      'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.',
     agency: {
       goals: snapshotActor.agency.goals,
-      plan: snapshotActor.agency.plan,
+      plan: remainingActivityText(service.world, actorId),
+      planRevision: snapshotActor.agency.plan?.revision ?? 0,
       attempts: snapshotActor.agency.attempts,
     },
+    ...(inspected
+      ? {
+          inspectedActions: inspected.entries.map((entry) => entry.text),
+          inspectedMethods: inspected.methods.map((method) => `${method.text}. ${method.status}`),
+        }
+      : {}),
     conversation: [],
     surroundings: [],
     possessions: [],
@@ -407,6 +464,12 @@ export async function prepareDecision(
     compileInterests(currentWorld, actorId, currentSelection),
   );
   const context: Record<string, unknown> = {
+    ...(inspected
+      ? {
+          inspectedActions: inspected.entries.map((entry) => entry.text),
+          inspectedMethods: inspected.methods.map((method) => `${method.text}. ${method.status}`),
+        }
+      : {}),
     capabilities: {
       speech: canSpeak(currentObserved.actor),
       expressions: supportsManualWork(currentObserved.actor),
@@ -450,8 +513,15 @@ export async function prepareDecision(
     ...(currentObserved.inventoryCoverage.paged
       ? { inventoryCoverage: currentObserved.inventoryCoverage }
       : {}),
+    commitments: requiredContext['commitments'],
+    activityCoverage: requiredContext['activityCoverage'],
     goal: currentGoal(actor),
-    agency: { goals: actor.agency.goals, plan: actor.agency.plan, attempts: actor.agency.attempts },
+    agency: {
+      goals: actor.agency.goals,
+      plan: remainingActivityText(service.world, actorId),
+      planRevision: actor.agency.plan?.revision ?? 0,
+      attempts: actor.agency.attempts,
+    },
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
   };
   context['conversation'] = conversation.lines;
@@ -572,6 +642,8 @@ export async function prepareDecision(
     actionCandidates: availableActions,
     knownPlans: {} as Record<string, string[]>,
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
+    replaceChosenPlan:
+      actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',
     awarenessSequence,
     validateConversation: validatePrepared,
     attemptBindings: [...attempts.values()],
@@ -741,6 +813,8 @@ export function refreshDecisionActions(
       ...planningCandidates(service, prepared.binding.actorId, observed),
     ]),
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
+    replaceChosenPlan:
+      actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',
     binding: { ...prepared.binding, expectedPlan: actor.planGeneration },
   };
 }

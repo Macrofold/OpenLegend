@@ -1,3 +1,15 @@
+import {
+  ACTIVITY_LIMITS,
+  beginActivity,
+  endActivity,
+  bindActivityAction,
+  occurrenceFor,
+  type ActivityOutput,
+} from './action-experience.js';
+import { nativeActivityView } from './worlds/base/action-views.js';
+import { rangedApproachRange } from './worlds/base/actions.js';
+import { isRecordedActivityCommand, recordActivityEffect } from './action-experience.js';
+import { startLearnedActivity } from './activity-execution.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
@@ -39,7 +51,6 @@ import {
   ResourceReservationError,
   applyResourceGroup,
   availableItemQuantity,
-  applyResourcePhase,
   reconcileResourceReservations,
   releaseInvocationResources,
   availableResource,
@@ -200,7 +211,12 @@ function itemClaims(
   }
   return remaining === 0 ? operations : null;
 }
-function takeItem(world: WorldState, actorId: string, itemId: string): ItemInstance | null {
+function takeItem(
+  world: WorldState,
+  actorId: string,
+  itemId: string,
+  cause?: string,
+): ItemInstance | null {
   const item = itemFor(world, itemId);
   if (!item || !accessiblePossession(world, actorId, item.id) || item.quantity < 1) return null;
   const taken = { ...item, quantity: 1 };
@@ -210,7 +226,7 @@ function takeItem(world: WorldState, actorId: string, itemId: string): ItemInsta
     applyResourceGroup(
       world,
       {
-        invocationId: world.entities[actorId]?.actor?.action?.id ?? `native:${actorId}`,
+        invocationId: cause ?? world.entities[actorId]?.actor?.action?.id ?? `native:${actorId}`,
         fulfillment: 'all-or-nothing',
         operations: [
           {
@@ -276,10 +292,7 @@ function actionReach(world: WorldState, action: Action): number {
       ?.range ?? 0;
   // Approach far enough that even the shortest admitted launcher can finish its
   // wind-up while a fleeing animal moves. Completion still rechecks actual range.
-  return Math.max(
-    0.5,
-    range - SIMULATION_RULES.animalFleeTilesPerSecond * SIMULATION_RULES.shotSeconds - 0.25,
-  );
+  return rangedApproachRange(range);
 }
 function targetPosition(world: WorldState, action: Action): Position | undefined {
   return action.type === 'move'
@@ -482,7 +495,27 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
   const requirements = materialRequirements(world, action);
   const claims: ResourceOperation[] = [];
   for (const input of requirements) {
-    const selected = itemClaims(world, actor.id, input.definitionId, input.quantity);
+    const chosen =
+      action.type === 'cook' && action.itemId ? itemFor(world, action.itemId) : undefined;
+    const selected =
+      action.type === 'cook'
+        ? chosen &&
+          chosen.definitionId === input.definitionId &&
+          accessiblePossession(world, actor.id, chosen.id) &&
+          availableItemQuantity(world, chosen.id) >= input.quantity
+          ? [
+              {
+                source: {
+                  kind: 'item' as const,
+                  itemId: chosen.id,
+                  definition: itemDefinitionPin(world.itemDefinitions[chosen.definitionId]!),
+                },
+                sourceRevision: chosen.revision ?? 0,
+                amount: input.quantity,
+              },
+            ]
+          : null
+        : itemClaims(world, actor.id, input.definitionId, input.quantity);
     if (!selected)
       return outcome(
         false,
@@ -495,22 +528,21 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
     return outcome(false, 'no-heat', 'Cooking requires a lit campfire.');
   if (
     claims.length &&
-    applyResourcePhase(
+    applyResourceGroup(
       world,
-      {
-        id: 'native-action-inputs-v1',
-        groups: [
-          {
-            invocationId: action.id,
-            fulfillment: 'all-or-nothing',
-            operations: claims,
-          },
-        ],
-      },
+      { invocationId: action.id, fulfillment: 'all-or-nothing', operations: claims },
       [],
-    )[0]?.status !== 'applied'
+    ).status !== 'applied'
   )
     return outcome(false, 'missing-material', 'The required materials are no longer available.');
+  const experience = occurrenceFor(world, actor.id, action.id);
+  if (experience?.view.children?.[0])
+    experience.view.children[0].result = 'Reached the required working distance.';
+  if (experience && ['strike', 'hunt'].includes(action.type))
+    (experience.view.children ??= []).push({
+      name: action.type === 'hunt' ? 'Shoot once' : 'Attack once',
+      facts: [],
+    });
   action.consumed = requirements;
   action.stage = 'working';
   action.path = [];
@@ -576,7 +608,15 @@ function executeCommandNative(
     events: [],
     outcome: outcome(false, code, message),
   });
-  if (!command || !validId(command.id) || !validId(command.actorId))
+  if (
+    !command ||
+    !validId(command.id) ||
+    !validId(command.actorId) ||
+    (command.purpose !== undefined &&
+      (typeof command.purpose !== 'string' ||
+        !command.purpose.trim() ||
+        command.purpose.length > 120))
+  )
     return reject('invalid-command', 'A command needs bounded actor and command IDs.');
   if (command.type === 'conversation')
     return changeConversation(
@@ -669,13 +709,58 @@ function executeCommandNative(
     )
       return reject('capability-restricted', 'Movement is required to reach this pile.');
   }
+  if (
+    isRecordedActivityCommand(command) &&
+    original.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
+  )
+    return reject(
+      'experience-capacity',
+      'The action-record allowance is full. Existing work and history are preserved; new recorded actions need more storage allowance.',
+    );
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
   let result = outcome(true, 'accepted', 'Action started.');
   let action: Action | undefined;
+  const experience = isRecordedActivityCommand(command)
+    ? beginActivity(
+        world,
+        command,
+        command.id,
+        nativeActivityView(original, command),
+        component.agency.plan?.steps.some((step) => step.id === command.id)
+          ? component.agency.plan.id
+          : undefined,
+      )
+    : undefined;
+  if (
+    experience &&
+    (command.type === 'strike' || command.type === 'hunt') &&
+    component.equippedItemId
+  ) {
+    const prior = [...(world.actionExperience.occurrences[actor.id] ?? [])]
+      .reverse()
+      .find(
+        (entry) =>
+          entry.command.type === 'equip' &&
+          entry.command.itemId === component.equippedItemId &&
+          entry.status === 'completed',
+      );
+    if (prior) experience.connections.push({ from: prior.id, relation: 'support' });
+  }
   switch (command.type) {
+    case 'activity':
+      result = startLearnedActivity(
+        world,
+        actor.id,
+        command.id,
+        command.methodId,
+        command.bindings,
+        command.resume,
+      );
+      if (!result.ok) return { world: original, events: [], outcome: result };
+      break;
     case 'pickup': {
       action = createAction(world, 'pickup', world.itemHandling.pickupSeconds);
       action.targetId = command.targetId;
@@ -815,6 +900,43 @@ function executeCommandNative(
         return reject('blocked', 'Choose walkable ground.');
       action = createAction(world, 'move', 0);
       action.destination = { ...command.destination };
+      break;
+    }
+    case 'inspect-activities': {
+      if (
+        !Number.isSafeInteger(command.after) ||
+        command.after < -1 ||
+        (command.methodAfter !== undefined &&
+          (!Number.isSafeInteger(command.methodAfter) ||
+            command.methodAfter < 0 ||
+            command.methodAfter > ACTIVITY_LIMITS.acquisitions))
+      )
+        return reject('invalid-page', 'Choose a valid action-history page.');
+      const event = emit(
+        world,
+        events,
+        'activity-history-requested',
+        'I chose to inspect my own recorded actions and their results.',
+        actor,
+        undefined,
+        { semanticTrigger: true, importance: 6 },
+        'private',
+      );
+      const cursor = (world.actionExperience.learning[actor.id] ??= {
+        after: null,
+        pending: [],
+        assessed: [],
+      });
+      cursor.inspection = {
+        eventId: event.id,
+        after: command.after,
+        methodAfter: command.methodAfter ?? 0,
+      };
+      result = outcome(
+        true,
+        'history-requested',
+        'Own action history selected for the next decision context.',
+      );
       break;
     }
     case 'inspect-inventory': {
@@ -982,6 +1104,17 @@ function executeCommandNative(
         return reject('not-visible', 'Move within sight of the remains.');
       if (!canCut(world, actor.id))
         return reject('missing-tool', 'A cutting point is needed to prepare the remains.');
+      if (experience)
+        experience.connections.push(
+          ...(world.actionExperience.changes[target.id] ?? [])
+            .filter((link) => link.actorId === actor.id)
+            .slice(-1)
+            .map((link) => ({
+              from: link.occurrenceId,
+              relation: 'material' as const,
+              port: 'remains',
+            })),
+        );
       action = createAction(world, 'harvest', SIMULATION_RULES.harvestSeconds);
       action.targetId = target.id;
       break;
@@ -1014,9 +1147,17 @@ function executeCommandNative(
             ? 'Cook raw meat before eating.'
             : 'Choose prepared edible food.',
         );
-      if (!takeItem(world, actor.id, item.id))
+      if (!takeItem(world, actor.id, item.id, command.id))
         return reject('unavailable', 'That food is no longer available.');
+      const beforeFullness = component.fullness!;
       setWildernessNeed(component, 'fullness', component.fullness! + definition.nutrition);
+      recordActivityEffect(world, command.id, {
+        subjectId: actor.id,
+        label: 'Me',
+        property: 'fullness',
+        before: beforeFullness,
+        after: component.fullness!,
+      });
       emit(
         world,
         events,
@@ -1048,6 +1189,11 @@ function executeCommandNative(
           !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
       )
         return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
+      const effectActive = () =>
+        !!(definition.contribution
+          ? activeContributionId(target, definition.id, actor.id)
+          : target.statusEffects?.[definition.id]?.active);
+      const wasActive = effectActive();
       if (command.operation === 'activate') {
         if (
           !activateStatusEffect(
@@ -1073,6 +1219,13 @@ function executeCommandNative(
         'status-effect',
         `${definition.label}: ${command.operation === 'activate' ? 'activated' : 'deactivated'}.`,
       );
+      recordActivityEffect(world, command.id, {
+        subjectId: target.id,
+        label: observerDescription(world, actor.id, target.id),
+        property: definition.label,
+        before: wasActive,
+        after: effectActive(),
+      });
       break;
     }
     case 'confirm-attempt': {
@@ -1100,7 +1253,15 @@ function executeCommandNative(
       interruptStatusEffects(world, actor, events, 'voluntary');
       if (component.action?.type === 'status-effect')
         return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
-      if (component.action) releaseInvocationResources(world, component.action.id);
+      if (component.action) {
+        endActivity(
+          world,
+          actor.id,
+          component.action.id,
+          outcome(false, 'cancelled', 'Stopped by choice; already committed effects remain.'),
+        );
+        releaseInvocationResources(world, component.action.id);
+      }
       cancelPlan(world, component);
       component.action = null;
       component.planGeneration++;
@@ -1234,6 +1395,7 @@ function executeCommandNative(
       return reject('unsupported', 'This command is not supported.');
   }
   if (action) {
+    if (experience) bindActivityAction(world, experience, action.id);
     if (
       ['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish', 'strike', 'pickup'].includes(
         action.type,
@@ -1255,7 +1417,23 @@ function executeCommandNative(
     // Scheduled-work previews stop after identical admission, before action-start events/receipts.
     // docs/architecture.md#bundled-world-and-item-custody
     if (options.preview) return { world: original, events: [], outcome: result };
+    if (component.action && component.action.id !== action.id)
+      endActivity(
+        world,
+        actor.id,
+        component.action.id,
+        outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
+      );
     component.action = action;
+    if (experience && action.stage === 'approaching')
+      experience.view.children = [
+        {
+          name: 'Move into reach',
+          facts: experience.view.facts.filter(
+            (fact) => fact.name === 'distance' || fact.name === 'approach',
+          ),
+        },
+      ];
     component.planGeneration++;
     emit(
       world,
@@ -1270,6 +1448,7 @@ function executeCommandNative(
     );
   }
   if (options.preview) return { world: original, events: [], outcome: result };
+  if (!action && experience) endActivity(world, actor.id, command.id, result);
   world.commandReceipts[command.id] = { digest, outcome: result };
   reconcileConditions(world, actor, events);
   return finish(world, events, result);
@@ -1294,6 +1473,12 @@ function completeAction(
 ): void {
   const component = actor.actor!;
   let outputItemId: string | undefined;
+  const outputs: ActivityOutput[] = [];
+  const produce = (definitionId: string, quantity: number): string => {
+    const itemId = addItem(world, actor.id, definitionId, quantity);
+    outputs.push({ port: definitionId, itemId, definitionId, quantity });
+    return itemId;
+  };
   switch (action.type) {
     case 'pickup': {
       const target = world.entities[action.targetId ?? ''];
@@ -1375,7 +1560,7 @@ function completeAction(
         failAction(world, actor, events, 'the resource is no longer available.');
         return;
       }
-      outputItemId = addItem(world, actor.id, target.resource.definitionId, quantity);
+      outputItemId = produce(target.resource.definitionId, quantity);
       emit(
         world,
         events,
@@ -1389,7 +1574,7 @@ function completeAction(
     }
     case 'prepare': {
       const preparation = NATIVE_PREPARATIONS[action.preparation!];
-      outputItemId = addItem(world, actor.id, preparation.output, preparation.outputQuantity);
+      outputItemId = produce(preparation.output, preparation.outputQuantity);
       emit(
         world,
         events,
@@ -1405,7 +1590,7 @@ function completeAction(
         failAction(world, actor, events, 'the pinned recipe is missing.');
         return;
       }
-      const itemId = addItem(world, actor.id, recipe.outputDefinitionId, 1);
+      const itemId = produce(recipe.outputDefinitionId, 1);
       outputItemId = itemId;
       emit(
         world,
@@ -1486,12 +1671,13 @@ function completeAction(
         return;
       }
       const bonus = world.itemDefinitions[ammunition.definitionId]!.ammunition!.damageBonus;
-      if (!takeItem(world, actor.id, ammunition.id)) {
+      if (!takeItem(world, actor.id, ammunition.id, action.id)) {
         failAction(world, actor, events, 'compatible ammunition is no longer available.');
         return;
       }
       const accuracy = launcher.accuracy * (target.animal.fleeSeconds > 0 ? 0.85 : 1);
       const hit = nextRandom(world) < accuracy;
+      action.strikeOutcome = hit ? 'hit' : 'miss';
       const damage = hit ? launcher.damage + bonus : 0;
       const actualDamage = Math.min(target.actor!.health, damage);
       target.animal.fleeFrom = { ...worldPosition(actor) };
@@ -1503,7 +1689,7 @@ function completeAction(
         `${actor.name} ${hit ? `hit the ${target.actor!.species} for ${actualDamage} damage` : `missed the ${target.actor!.species}`}. One projectile was used.`,
         actor,
         target.id,
-        { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind },
+        { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind, actionId: action.id },
       );
       if (actualDamage > 0)
         commitBodyEffects(
@@ -1527,7 +1713,7 @@ function completeAction(
         return;
       }
       for (const yieldItem of target.remains.yields)
-        addItem(world, actor.id, yieldItem.definitionId, yieldItem.quantity);
+        produce(yieldItem.definitionId, yieldItem.quantity);
       target.remains.harvested = true;
       emit(
         world,
@@ -1544,7 +1730,7 @@ function completeAction(
         failAction(world, actor, events, 'the fire went out before cooking finished.');
         return;
       }
-      outputItemId = addItem(world, actor.id, 'cooked_meat', 1);
+      outputItemId = produce('cooked_meat', 1);
       emit(
         world,
         events,
@@ -1561,10 +1747,11 @@ function completeAction(
       true,
       action.strikeOutcome ?? 'completed',
       action.strikeOutcome
-        ? `The strike ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; recovery is complete.`
+        ? `The ${action.type === 'hunt' ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
         : `${action.type} completed.`,
     ),
     ...(outputItemId ? { itemId: outputItemId } : {}),
+    ...(outputs.length ? { outputs } : {}),
   });
   component.action = null;
 }
@@ -2457,6 +2644,16 @@ function* advanceWorldNative(
     yield* updateEncounters(world, before, events, participants.actors);
     advanceCommitments(world, events);
     reconcileConversations(world);
+    // Control-only waits must observe endpoint changes even when this advance
+    // ends exactly at the deadline. Queue future work without granting it time.
+    for (const id of participants.actors) {
+      const plan = world.entities[id]?.actor?.agency.plan;
+      if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
+        const revision = plan.revision;
+        readyPlanStep(world, id);
+        if (plan.revision !== revision) mechanics = undefined;
+      }
+    }
     if (remaining > 0 && intervals < maxIntervals && motionSlices < 4096) {
       if (yield 'boundary') break;
       before = snapshotEncounters(world);

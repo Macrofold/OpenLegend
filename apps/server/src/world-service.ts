@@ -1,3 +1,16 @@
+import { activityChoiceView } from './activity-context.js';
+import {
+  ACTIVITY_LIMITS,
+  discoverActivities,
+  retainActivity,
+  renderActivity,
+  acquiredActivities,
+} from '@open-legend/domain';
+import {
+  prepareHistoryEdit,
+  type HistoryEditSelection,
+  type PreparedHistoryEdit,
+} from './history-edit.js';
 import { reconcileConditions, initializePerception } from '@open-legend/domain';
 import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
@@ -116,6 +129,7 @@ const id = z
 export const commandInputSchema = z
   .object({
     type: z.enum([
+      'activity',
       'conversation',
       'say',
       'pickup',
@@ -140,10 +154,33 @@ export const commandInputSchema = z
       'status-effect',
       'replenish',
       'inspect-inventory',
+      'inspect-activities',
       'cancel',
       'recover',
       'teach',
     ]),
+    purpose: z.string().trim().min(1).max(120).optional(),
+    methodId: id.optional(),
+    bindings: z
+      .record(
+        id,
+        z.union([
+          z.string().min(1).max(1500),
+          z
+            .object({
+              x: z.number().finite(),
+              y: z.number().finite(),
+              z: z.number().finite(),
+              surfaceId: id,
+            })
+            .strict(),
+        ]),
+      )
+      .refine((value) => Object.keys(value).length <= ACTIVITY_LIMITS.nodes)
+      .optional(),
+    resume: z.boolean().optional(),
+    historyAfter: z.number().int().min(-1).optional(),
+    methodAfter: z.number().int().min(0).max(ACTIVITY_LIMITS.acquisitions).optional(),
     after: id.optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
@@ -934,6 +971,40 @@ export class WorldService {
       }
     });
   }
+  private async withHistoryEdit<T extends ApiResult>(
+    selection: HistoryEditSelection,
+    operation: (prepared?: PreparedHistoryEdit) => Promise<T>,
+  ): Promise<T | (ApiResult & { revision: number })> {
+    await this.flush();
+    if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
+    const original = this.saved;
+    const generation = this.generation;
+    const prepared = await prepareHistoryEdit(this.store.records.db, original, selection);
+    return this.mutate(async () => {
+      await this.flush();
+      // A newer world may have added a dependency or changed authority while the read
+      // snapshot was open. Refuse stale preparation instead of dropping that dependency.
+      if (original !== this.saved || generation !== this.generation)
+        return {
+          ok: false,
+          code: 'stale',
+          message: 'The world changed while preparing this edit. Refresh and try again.',
+          revision: this.viewRevision,
+        };
+      this.store.adoptHistory!(original, prepared.state);
+      this.saved = prepared.state;
+      freezeWorld(this.saved.world);
+      try {
+        return await operation(prepared);
+      } finally {
+        if (this.store.releaseHistory && !this.storageError)
+          this.saved = this.store.releaseHistory(this.saved);
+        else this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
+        freezeWorld(this.saved.world);
+      }
+    });
+  }
+
   async memoryContext(actorId: string, query: string | null, limit: number) {
     await this.flush();
     const world = this.world,
@@ -1061,6 +1132,267 @@ export class WorldService {
         : this.world;
     });
   }
+  /** Internal actor-context caller; external callers must use inspectActivities. */
+  async activityHistoryForActor(
+    actorId: string,
+    after = -1,
+    methodAfter = 0,
+  ): Promise<import('@open-legend/protocol').ActivityHistoryPage> {
+    const generation = this.generation;
+    await this.flush();
+    const rows = this.store.records
+      ? await this.store.records.activityPage(this.world.id, actorId, after, undefined, 16)
+      : (this.world.actionExperience.occurrences[actorId] ?? [])
+          .map((entry, position) => ({ entry, position }))
+          .filter((row) => row.position > after)
+          .slice(0, 16);
+    if (generation !== this.generation)
+      throw new Error('The world changed during action inspection.');
+    const denied = new Set(this.world.experience?.forgotten[actorId] ?? []);
+    const entries: import('@open-legend/protocol').ActivityHistoryPage['entries'] = [];
+    let bytes = 0,
+      through = after,
+      remaining = rows.length === 16;
+    for (const row of rows) {
+      if (
+        row.entry.revoked ||
+        denied.has(row.entry.id) ||
+        row.entry.evidenceIds.some((id) => denied.has(id))
+      ) {
+        through = row.position;
+        continue;
+      }
+      const text = renderActivity(
+        row.entry.parentName && row.entry.parentName !== row.entry.view.name
+          ? {
+              name: row.entry.parentName,
+              facts: [
+                {
+                  name: 'recorded part',
+                  value:
+                    'This is one performed part of the chosen activity, not a claim that all of it finished',
+                  critical: true,
+                },
+              ],
+              children: [row.entry.view],
+            }
+          : row.entry.view,
+        'What happened',
+      );
+      if ((bytes += Buffer.byteLength(text)) > 16384) {
+        remaining = true;
+        break;
+      }
+      entries.push({ at: row.entry.at, text, status: row.entry.status });
+      through = row.position;
+    }
+    const known = acquiredActivities(this.world, actorId);
+    const methods: import('@open-legend/protocol').ActivityHistoryPage['methods'] = [];
+    let methodBytes = 0,
+      methodNext: number | null = null;
+    for (let index = methodAfter; index < known.length; index++) {
+      const method = known[index]!;
+      const bindings = this.world.actionExperience.acquisitions[actorId]![method.id]!.bindings;
+      const text = renderActivity(
+        activityChoiceView(this.world, actorId, method, bindings),
+        'Can do',
+      );
+      if (methods.length >= 4 || methodBytes + Buffer.byteLength(text) > 16384) {
+        methodNext = index;
+        break;
+      }
+      methodBytes += Buffer.byteLength(text);
+      methods.push({
+        name: method.name,
+        text,
+        status: method.executable
+          ? 'Tentative, learned from my own attempts; current bindings may need revision'
+          : 'Incomplete idea; cannot execute',
+      });
+    }
+    return {
+      worldId: this.world.id,
+      generation,
+      learningStatus: this.world.actionExperience.learning[actorId]?.pending.length
+        ? 'Learning from completed actions is pending. It requires safe idle time, available storage, and an authorized model budget.'
+        : 'No completed actions are waiting for learning.',
+      entries,
+      next: remaining ? through : null,
+      methods,
+      methodNext,
+    };
+  }
+
+  async inspectActivities(actorId: string, after = -1, scope = this.localScope, methodAfter = 0) {
+    this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
+    if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
+    const result = await this.activityHistoryForActor(actorId, after, methodAfter);
+    this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
+    if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
+    return result;
+  }
+
+  async prepareActivityLearning(actorId: string) {
+    await this.flush();
+    const original = this.saved,
+      generation = this.generation;
+    const after = original.world.actionExperience.learning[actorId]?.position ?? -1;
+    let rows = this.store.records
+      ? await this.store.records.activityPage(original.world.id, actorId, after)
+      : (original.world.actionExperience.occurrences[actorId] ?? [])
+          .map((entry, position) => ({ entry, position }))
+          .filter((row) => row.position > after)
+          .slice(0, 512);
+    const through = rows.at(-1)?.position ?? after;
+    const seen = new Set(rows.map((row) => row.entry.id));
+    for (let pass = 0; pass < 12 && rows.length < 512 && this.store.records; pass++) {
+      const missing = [
+        ...new Set(rows.flatMap((row) => row.entry.connections.map((link) => link.from))),
+      ]
+        .filter((id) => !seen.has(id))
+        .slice(0, 512 - rows.length);
+      if (!missing.length) break;
+      const remainingBytes = 4 * 1024 * 1024 - Buffer.byteLength(JSON.stringify(rows));
+      if (remainingBytes < 1) break;
+      const linked = await this.store.records.activityPage(
+        original.world.id,
+        actorId,
+        -1,
+        missing,
+        128,
+        remainingBytes,
+      );
+      if (!linked.length) break;
+      for (const row of linked) seen.add(row.entry.id);
+      if (Buffer.byteLength(JSON.stringify([...rows, ...linked])) > 4 * 1024 * 1024) break;
+      rows.push(...linked);
+    }
+    rows.sort((a, b) => a.position - b.position);
+    const denied = new Set(original.world.experience?.forgotten[actorId] ?? []);
+    const discovered = discoverActivities(
+      original.world,
+      actorId,
+      rows.map((row) =>
+        denied.has(row.entry.id) || row.entry.evidenceIds.some((id) => denied.has(id))
+          ? { ...row.entry, revoked: true }
+          : row.entry,
+      ),
+    );
+    const assessed = original.world.actionExperience.learning[actorId]?.assessed ?? [];
+    const proposedAssessments = [
+      ...new Set([...assessed, ...discovered.candidates.map((candidate) => candidate.signature)]),
+    ];
+    // Prove space for every possible retain before paying. This discarded draft
+    // reuses native admission and cannot publish knowledge or advance the cursor.
+    let retentionBlocked = false;
+    updateWorld(original.world, (draft) => {
+      draft.actionExperience.occurrences[actorId] = rows.map((row) => row.entry);
+      for (const candidate of discovered.candidates)
+        if (!retainActivity(draft, actorId, candidate)) retentionBlocked = true;
+    });
+    const capacityBlocked =
+      retentionBlocked ||
+      proposedAssessments.length > ACTIVITY_LIMITS.assessed ||
+      Buffer.byteLength(JSON.stringify(proposedAssessments)) > ACTIVITY_LIMITS.assessmentBytes;
+    return { ...discovered, rows, through, generation, actorId, capacityBlocked };
+  }
+
+  async publishActivityLearning(
+    batch: Awaited<ReturnType<WorldService['prepareActivityLearning']>>,
+    judgments: ('retain' | 'decline' | 'uncertain')[],
+    dispatched = false,
+  ): Promise<boolean> {
+    return this.mutate(async () => {
+      await this.flush();
+      if (
+        batch.capacityBlocked ||
+        this.paused ||
+        this.generation !== batch.generation ||
+        !this.world.entities[batch.actorId]?.actor?.alive
+      )
+        return false;
+      const rows = this.store.records
+        ? await this.store.records.activityPage(
+            this.world.id,
+            batch.actorId,
+            -1,
+            batch.rows.map((row) => row.entry.id),
+          )
+        : batch.rows;
+      const deniedNow = new Set(this.world.experience?.forgotten[batch.actorId] ?? []);
+      if (
+        batch.candidates.some((candidate) =>
+          [...candidate.occurrenceIds, ...(candidate.otherEvidence ?? [])].some((id) => {
+            const entry = rows.find((row) => row.entry.id === id)?.entry;
+            return (
+              !entry ||
+              entry.actorId !== batch.actorId ||
+              entry.revoked ||
+              deniedNow.has(id) ||
+              entry.evidenceIds.some((source) => deniedNow.has(source))
+            );
+          }),
+        )
+      )
+        return false;
+      if (
+        dispatched &&
+        (this.world.entities[batch.actorId]?.actor?.action ||
+          this.world.entities[batch.actorId]?.actor?.agency.plan?.status === 'active')
+      )
+        return false;
+      if (this.store.records && this.store.adoptHistory) {
+        const prepared = this.store.records.withActivityPage(this.saved, batch.actorId, rows);
+        this.store.adoptHistory(this.saved, prepared);
+        this.saved = prepared;
+      }
+      const world = updateWorld(this.world, (draft) => {
+        const cursor = draft.actionExperience.learning[batch.actorId];
+        if (!cursor) return;
+        for (const [index, candidate] of batch.candidates.entries()) {
+          if (dispatched) {
+            if (
+              !cursor.assessed.includes(candidate.signature) &&
+              (cursor.assessed.length >= ACTIVITY_LIMITS.assessed ||
+                Buffer.byteLength(JSON.stringify([...cursor.assessed, candidate.signature])) >
+                  ACTIVITY_LIMITS.assessmentBytes)
+            )
+              throw new Error('Activity assessment allowance is full; learning remains pending.');
+            if (!cursor.assessed.includes(candidate.signature))
+              cursor.assessed.push(candidate.signature);
+          } else if (judgments[index] === 'retain') {
+            const denied = new Set(draft.experience?.forgotten[batch.actorId] ?? []);
+            const valid = candidate.occurrenceIds.every((id) => {
+              const entry = rows.find((row) => row.entry.id === id)?.entry;
+              return (
+                entry &&
+                !entry.revoked &&
+                !denied.has(id) &&
+                !entry.evidenceIds.some((source) => denied.has(source))
+              );
+            });
+            if (!valid || !retainActivity(draft, batch.actorId, candidate))
+              throw new Error(
+                'Learning could not be retained; no partial publication was committed.',
+              );
+          }
+        }
+        // Advance only a fully prepared page. Durable records retain deferred
+        // endpoints; dispatched signatures prevent uncertain work being retried.
+        cursor.examined = [...new Set([...(cursor.examined ?? []), ...batch.examined])];
+        if (!batch.more) {
+          cursor.position = batch.through;
+          cursor.examined = [];
+        }
+        if (!batch.more)
+          cursor.pending = cursor.pending.filter(
+            (id) => !batch.rows.some((row) => row.entry.id === id),
+          );
+      });
+      return this.commit({ ...this.saved, world }, undefined, 'unchanged');
+    });
+  }
+
   async maintenanceBatch(
     actorId: string,
     mode: ConsolidationBatch['mode'],
@@ -2349,79 +2681,87 @@ export class WorldService {
     }>,
     scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
-    return this.withActorHistory([actorId], async () => {
-      await this.ready;
-      if (!this.mayInspectPrivate(actorId, scope))
-        return {
-          ok: false as const,
-          code: 'forbidden',
-          message: 'Human-private character content is unavailable to this principal.',
+    return this.withHistoryEdit(
+      {
+        sources: memoryChanges.map((change) => ({
+          actorId,
+          sourceId: change.entryId.slice(change.entryId.indexOf(':') + 1),
+        })),
+      },
+      async () => {
+        await this.ready;
+        if (!this.mayInspectPrivate(actorId, scope))
+          return {
+            ok: false as const,
+            code: 'forbidden',
+            message: 'Human-private character content is unavailable to this principal.',
+          };
+        const entity = this.world.entities[actorId];
+        if (!entity?.actor || !hasMemory(entity))
+          return { ok: false, code: 'actor', message: 'Choose a person.' };
+        const currentPerson: GodPersonEditorDraft = {
+          inventory: inventoryTotals(this.world, actorId),
+          name: entity.name,
+          description:
+            entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
+          personality: entity.actor.personality ?? '',
+          backstory: entity.actor.backstory ?? '',
+          traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
+          goals: goalTexts(entity.actor),
+          stats: {
+            health: entity.actor.health,
+            fullness: entity.actor.fullness,
+            energy: entity.actor.energy,
+          },
         };
-      const entity = this.world.entities[actorId];
-      if (!entity?.actor || !hasMemory(entity))
-        return { ok: false, code: 'actor', message: 'Choose a person.' };
-      const currentPerson: GodPersonEditorDraft = {
-        inventory: inventoryTotals(this.world, actorId),
-        name: entity.name,
-        description:
-          entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
-        personality: entity.actor.personality ?? '',
-        backstory: entity.actor.backstory ?? '',
-        traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        goals: goalTexts(entity.actor),
-        stats: {
-          health: entity.actor.health,
-          fullness: entity.actor.fullness,
-          energy: entity.actor.energy,
-        },
-      };
-      const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
-        (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
-      );
-      for (const key of changedFields) {
-        // Simulation-owned stats may drift after opening; an explicit god edit overrides
-        // that snapshot. Other fields retain field-level optimistic concurrency.
+        const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
+          (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
+        );
+        for (const key of changedFields) {
+          // Simulation-owned stats may drift after opening; an explicit god edit overrides
+          // that snapshot. Other fields retain field-level optimistic concurrency.
+          if (
+            key !== 'stats' &&
+            JSON.stringify(currentPerson[key]) !== JSON.stringify(basePerson[key])
+          )
+            return {
+              ok: false,
+              code: 'stale',
+              message: `This person's ${key} changed elsewhere. Refresh before saving it.`,
+              revision: this.viewRevision,
+            };
+        }
+        const mergedPerson = { ...currentPerson };
+        for (const key of changedFields)
+          Object.assign(mergedPerson, { [key]: structuredClone(person[key]) });
+        const entries = memoryChanges.length ? experienceEntries(this.world, actorId) : undefined;
+        for (const change of memoryChanges) {
+          const entry = entries?.get(change.entryId);
+          if (!entry || digest(entry.value) !== change.expectedHash)
+            return {
+              ok: false,
+              code: 'stale',
+              message: 'A memory you changed was updated elsewhere. Refresh and review it.',
+              revision: this.viewRevision,
+            };
+        }
+        const result = editPersonState(this.world, {
+          actorId,
+          person: mergedPerson,
+          memoryChanges,
+        });
+        if (!result.outcome.ok) return result.outcome;
         if (
-          key !== 'stats' &&
-          JSON.stringify(currentPerson[key]) !== JSON.stringify(basePerson[key])
+          !(await this.commit(
+            { ...this.saved, world: result.world },
+            result.invalidatedMemoryIds,
+            'unchanged',
+          ))
         )
-          return {
-            ok: false,
-            code: 'stale',
-            message: `This person's ${key} changed elsewhere. Refresh before saving it.`,
-            revision: this.viewRevision,
-          };
-      }
-      const mergedPerson = { ...currentPerson };
-      for (const key of changedFields)
-        Object.assign(mergedPerson, { [key]: structuredClone(person[key]) });
-      const entries = memoryChanges.length ? experienceEntries(this.world, actorId) : undefined;
-      for (const change of memoryChanges) {
-        const entry = entries?.get(change.entryId);
-        if (!entry || digest(entry.value) !== change.expectedHash)
-          return {
-            ok: false,
-            code: 'stale',
-            message: 'A memory you changed was updated elsewhere. Refresh and review it.',
-            revision: this.viewRevision,
-          };
-      }
-      const result = editPersonState(this.world, {
-        actorId,
-        person: mergedPerson,
-        memoryChanges,
-      });
-      if (!result.outcome.ok) return result.outcome;
-      if (
-        !(await this.commit(
-          { ...this.saved, world: result.world },
-          result.invalidatedMemoryIds,
-          'unchanged',
-        ))
-      )
-        return { ok: false, code: 'storage', message: this.storageError! };
-      return { ...result.outcome, revision: this.viewRevision };
-    });
+          return { ok: false, code: 'storage', message: this.storageError! };
+        return { ...result.outcome, revision: this.viewRevision };
+      },
+    );
   }
 
   async worldEventsEditor(
@@ -2501,46 +2841,49 @@ export class WorldService {
     changes: Array<{ id: string; expectedHash: string; replacement: WorldEvent | null }>,
     scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
-    return this.withActorHistory(undefined, async () => {
-      await this.ready;
-      // Load cold dependencies only for an explicit owner edit, under mutation ownership.
-      const original =
-        this.world.archivedEventCount && this.store.history
+    return this.withHistoryEdit(
+      { eventIds: changes.map((change) => change.id) },
+      async (prepared) => {
+        await this.ready;
+        const cold = prepared?.events.filter((event) => !this.worldEventsById.has(event.id)) ?? [];
+        const original = cold.length
           ? {
               ...this.world,
-              events: [
-                ...(await this.store.history.allEvents(this.world.id)).filter(
-                  (event) => !this.worldEventsById.has(event.id),
-                ),
-                ...this.world.events,
-              ].sort((a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence)),
-              archivedEventCount: 0,
+              events: [...this.world.events, ...cold].sort(
+                (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
+              ),
+              archivedEventCount: (this.world.archivedEventCount ?? 0) - cold.length,
             }
           : this.world;
-      const eventsById = new Map(original.events.map((event) => [event.id, event]));
-      for (const change of changes) {
-        const event = eventsById.get(change.id);
-        if (!event || !this.mayInspectEvent(event, scope) || digest(event) !== change.expectedHash)
-          return {
-            ok: false,
-            code: 'stale',
-            message: 'A world event you changed was updated elsewhere. Refresh and review it.',
-            revision: this.viewRevision,
-          };
-      }
-      const result = editWorldEventsState(original, changes);
-      if (!result.outcome.ok) return result.outcome;
-      if (
-        !(await this.commit(
-          { ...this.saved, world: result.world },
-          result.invalidatedMemoryIds,
-          'diff',
-          original,
-        ))
-      )
-        return { ok: false, code: 'storage', message: this.storageError! };
-      return { ...result.outcome, revision: this.viewRevision };
-    });
+        const eventsById = new Map(original.events.map((event) => [event.id, event]));
+        for (const change of changes) {
+          const event = eventsById.get(change.id);
+          if (
+            !event ||
+            !this.mayInspectEvent(event, scope) ||
+            digest(event) !== change.expectedHash
+          )
+            return {
+              ok: false,
+              code: 'stale',
+              message: 'A world event you changed was updated elsewhere. Refresh and review it.',
+              revision: this.viewRevision,
+            };
+        }
+        const result = editWorldEventsState(original, changes, prepared?.referencedEventIds);
+        if (!result.outcome.ok) return result.outcome;
+        if (
+          !(await this.commit(
+            { ...this.saved, world: result.world },
+            result.invalidatedMemoryIds,
+            'diff',
+            original,
+          ))
+        )
+          return { ok: false, code: 'storage', message: this.storageError! };
+        return { ...result.outcome, revision: this.viewRevision };
+      },
+    );
   }
 
   async command(
@@ -2605,9 +2948,28 @@ export class WorldService {
     input: CommandInput,
     actorId: string,
   ): Command | ApiResult {
-    const envelope = { id: commandId, actorId };
+    const envelope = {
+      id: commandId,
+      actorId,
+      ...(input.purpose ? { purpose: input.purpose } : {}),
+    };
     let command: Command;
     switch (input.type) {
+      case 'activity':
+        if (!input.methodId || !input.bindings)
+          return {
+            ok: false,
+            code: 'binding',
+            message: 'Choose a learned method and current objects.',
+          };
+        command = {
+          ...envelope,
+          type: 'activity',
+          methodId: input.methodId,
+          bindings: input.bindings,
+          ...(input.resume ? { resume: true } : {}),
+        };
+        break;
       case 'say':
         if (!input.text?.trim())
           return { ok: false, code: 'speech', message: 'Enter something to say.' };
@@ -2763,6 +3125,14 @@ export class WorldService {
         command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
         break;
       }
+      case 'inspect-activities':
+        command = {
+          ...envelope,
+          type: 'inspect-activities',
+          after: input.historyAfter ?? -1,
+          methodAfter: input.methodAfter ?? 0,
+        };
+        break;
       case 'inspect-inventory':
         command = {
           ...envelope,
@@ -2869,37 +3239,36 @@ export class WorldService {
     correctionEventId: string,
     scope = this.localScope,
   ): Promise<ApiResult> {
-    return this.withActorHistory([actorId], async () => {
-      await this.ready;
-      if (!this.mayInspectPrivate(actorId, scope))
-        return {
-          ok: false as const,
-          code: 'forbidden',
-          message: 'Human-private character content is unavailable to this principal.',
-        };
+    return this.withHistoryEdit(
+      {
+        sources: [
+          { actorId, sourceId },
+          { actorId, sourceId: correctionEventId },
+        ],
+      },
+      async () => {
+        await this.ready;
+        if (!this.mayInspectPrivate(actorId, scope))
+          return {
+            ok: false as const,
+            code: 'forbidden',
+            message: 'Human-private character content is unavailable to this principal.',
+          };
 
-      const invalidated = [
-        sourceId,
-        ...(this.world.memories[actorId] ?? [])
-          .filter((memory) => memory.id === sourceId || memory.eventId === sourceId)
-          .map((memory) => memory.id),
-        ...(this.world.experience?.summaries[actorId] ?? [])
-          .filter((summary) => summary.id === sourceId || summary.sourceIds.includes(sourceId))
-          .map((summary) => summary.id),
-      ];
-      const corrected = correctExperience(this.world, actorId, sourceId, correctionEventId);
-      if (!corrected.outcome.ok) return corrected.outcome;
-      const ok = await this.commit(
-        { ...this.saved, world: corrected.world },
-        { [actorId]: invalidated },
-        'unchanged',
-      );
-      return {
-        ok,
-        code: ok ? 'corrected' : 'storage',
-        message: ok ? corrected.outcome.message : this.storageError!,
-      };
-    });
+        const corrected = correctExperience(this.world, actorId, sourceId, correctionEventId);
+        if (!corrected.outcome.ok) return corrected.outcome;
+        const ok = await this.commit(
+          { ...this.saved, world: corrected.world },
+          corrected.invalidatedMemoryIds,
+          'unchanged',
+        );
+        return {
+          ok,
+          code: ok ? 'corrected' : 'storage',
+          message: ok ? corrected.outcome.message : this.storageError!,
+        };
+      },
+    );
   }
 
   async forgetMemory(
@@ -2907,7 +3276,7 @@ export class WorldService {
     sourceId: string,
     scope = this.localScope,
   ): Promise<ApiResult> {
-    return this.withActorHistory([actorId], async () => {
+    return this.withHistoryEdit({ sources: [{ actorId, sourceId }] }, async () => {
       await this.ready;
       if (!this.mayInspectPrivate(actorId, scope))
         return {
@@ -2918,7 +3287,11 @@ export class WorldService {
 
       if (!this.world.entities[actorId]?.actor)
         return { ok: false, code: 'actor', message: 'Unknown actor.' };
+      const recordedAction =
+        this.world.actionExperience.occurrences[actorId]?.some((entry) => entry.id === sourceId) ||
+        (await this.store.records?.activityPage(this.world.id, actorId, -1, [sourceId]))?.length;
       if (
+        !recordedAction &&
         !experiences(this.world, actorId, true).some(
           (m) => m.id === sourceId || m.eventId === sourceId,
         )
@@ -2929,6 +3302,7 @@ export class WorldService {
           message: 'That source is not retained for this actor.',
         };
       const forgotten = forgetExperience(this.world, actorId, sourceId);
+      if (!forgotten.outcome.ok) return forgotten.outcome;
       const ok = await this.commit(
         { ...this.saved, world: forgotten.world },
         forgotten.invalidatedMemoryIds,

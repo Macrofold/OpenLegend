@@ -1,3 +1,4 @@
+import { learnedActivityCandidates } from './activity-context.js';
 import { canUseInventory, inventoryItemView } from './inventory-view.js';
 import { itemFor, itemsForOwner } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
@@ -569,6 +570,10 @@ export async function projectView(
           : 'live'
         : 'unconfigured';
   const playerActions = [
+    ...learnedActivityCandidates(service, player.id).map((option) => {
+      const preview = service.previewCommand(option.command!, player.id);
+      return action(option.id, option.description, option.command!, preview.ok, preview.message);
+    }),
     ...statusEffectActions(world, player, player).map((option) => {
       const preview = service.previewCommand(option.command, scope.actorId);
       return action(option.id, option.label, option.command, preview.ok, preview.message);

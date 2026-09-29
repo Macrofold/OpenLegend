@@ -1,3 +1,4 @@
+import { acquiredActivities } from '@open-legend/domain';
 import { continuityView } from './continuity-view.js';
 import { projectStatusEffects } from '@open-legend/domain';
 import { mindFor, wordCount } from '@open-legend/domain';
@@ -53,11 +54,18 @@ export async function inspectGodMind(
       text: m.summary,
       resolved: !!m.resolved,
     })),
-    skills: (service.world.knowledge[actorId] ?? []).map((k) => ({
-      name: service.world.recipes[k.recipeId]?.name ?? 'Unavailable technique',
-      source: k.source,
-      learnedAt: k.learnedAt,
-    })),
+    skills: [
+      ...acquiredActivities(service.world, actorId).map((method) => ({
+        name: `${method.name} (${method.executable ? 'tentative' : 'incomplete; cannot execute'})`,
+        source: 'My own connected actions',
+        learnedAt: service.world.actionExperience.acquisitions[actorId]![method.id]!.at,
+      })),
+      ...(service.world.knowledge[actorId] ?? []).map((k) => ({
+        name: service.world.recipes[k.recipeId]?.name ?? 'Unavailable technique',
+        source: k.source,
+        learnedAt: k.learnedAt,
+      })),
+    ],
     statusEffects: projectStatusEffects(service.world, entity, 'owner').map((d) => ({
       id: d.id,
       label: d.label,

@@ -1,3 +1,4 @@
+import { activeActivity } from './action-experience.js';
 import { chargeWork } from './work-budget.js';
 import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
@@ -252,6 +253,36 @@ function recordEvent(
   }
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   events.push(event);
+  if (
+    [
+      'action-started',
+      'ate',
+      'equipped',
+      'gathered',
+      'prepared',
+      'crafted',
+      'harvested',
+      'cooked',
+      'struck',
+      'shot',
+      'body-effect',
+      'moved',
+      'action-stopped',
+    ].includes(type)
+  ) {
+    const cause =
+      data?.['actionId'] ??
+      data?.['effectId'] ??
+      (source && world.actionExperience.current[source.id]);
+    const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
+    if (
+      experience &&
+      audience.includes(experience.actorId) &&
+      experience.evidenceIds.length < 64 &&
+      !experience.evidenceIds.includes(event.id)
+    )
+      experience.evidenceIds.push(event.id);
+  }
   if (world.experience) {
     const acquired: Awareness[] = [];
     for (const actorId of audience) {

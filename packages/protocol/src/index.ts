@@ -6,6 +6,7 @@ export type { SurfacePoint, SpatialLayout };
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
   type:
+    | 'activity'
     | 'conversation'
     | 'say'
     | 'pickup'
@@ -30,9 +31,16 @@ export interface CommandInput {
     | 'replenish'
     | 'status-effect'
     | 'inspect-inventory'
+    | 'inspect-activities'
     | 'cancel'
     | 'recover'
     | 'teach';
+  purpose?: string;
+  methodId?: string;
+  bindings?: Record<string, string | SurfacePoint>;
+  resume?: boolean;
+  historyAfter?: number;
+  methodAfter?: number;
   after?: string;
   conversationId?: string;
   text?: string;
@@ -457,6 +465,16 @@ export interface AuthoredAppraisalRequest {
 }
 
 /** Private continuity DTO: owner access or separately authorized NPC inspection. */
+export interface ActivityHistoryPage {
+  worldId: string;
+  generation: string;
+  learningStatus: string;
+  entries: { at: number; text: string; status: string }[];
+  next: number | null;
+  methods: { name: string; status: string; text: string }[];
+  methodNext: number | null;
+}
+
 export interface GodMindView {
   continuity?: {
     authoring?: {

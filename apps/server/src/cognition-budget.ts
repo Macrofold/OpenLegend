@@ -18,6 +18,9 @@ export function decisionAllowance(config: AppConfig, provider: 'jev' | 'openai')
 }
 /** Reserve one interactive response plus optional native interpretation, attention and embeddings. */
 export function interactiveAllowance(config: AppConfig): number {
+  // Strict typed-only operation cannot spend on generation or embeddings. Holding
+  // those allowances would starve eligible idle learning despite available funds.
+  if (config.jevOnly) return 3 * decisionAllowance(config, 'jev');
   if (config.macrofoldKey)
     return 2 * config.macrofoldRunUsd + 3 * config.jevReserveUsd + config.embeddingReserveUsd;
   const inputPrice = Math.max(

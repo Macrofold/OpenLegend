@@ -9,9 +9,15 @@ Give each substantive concept one canonical owner. Local reminders may summarize
 - **Tasks, dependencies, blockers, exit criteria:** Focused `docs/maintainers/` tracker; its README is navigation only
 - **Miscellaneous/cross-cutting gaps with no focused tracker:** `docs/maintainers/TODO.md`
 - **Implemented behavior:** `docs/architecture.md` and subsystem snapshot in `archive/05-project/implementation-status.md`
-- **Actual gameplay/runtime verification evidence:** `docs/verification.md`; guidance/tooling evidence stays in its commit/PR or handoff, linked from its focused tracker
+- **Actual gameplay/runtime verification evidence:** Topic reports under `docs/verification/`, linked from the [verification index](../../docs/verification.md); guidance/tooling evidence stays in its commit/PR or handoff, linked from its focused tracker
 - **Unresolved decisions / active research questions:** `archive/05-project/open-decisions.md` / `research-backlog.md`
 - **Significant decisions and change history:** `docs/documentation-changelog.md`
+
+## Verification reports
+
+Keep `docs/verification.md` as a short navigation index and shared playtest protocol. Record detailed results in the relevant `docs/verification/<topic>.md` report; create a focused report for a distinct investigation rather than appending unrelated runs to one file or creating a file for every check. Link the report from the index and affected specifications/trackers, using section anchors for specific evidence. Keep raw measurement artifacts beside their report and link them there.
+
+Preserve the recorded revision/environment, workload, results, failures and limitations, distinguishing native, fixture, browser, live-provider and stress evidence. Retain older observations as labeled historical evidence; a later pass does not erase an earlier failure or qualify a different workload. Current task state and unmet acceptance remain in the focused maintainer tracker, not a duplicate checklist in the index. Load only reports relevant to the task.
 
 ## Keep maintainer work synchronized
 

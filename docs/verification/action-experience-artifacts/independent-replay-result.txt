@@ -1,0 +1,26 @@
+jobs [{"status":"completed","message":"Maintenance accepted."}]
+{
+  "providerCalls": 0,
+  "capturedReceiptsReplayed": 1,
+  "generated": 0,
+  "sharedDefinitions": 1,
+  "secondActorAcquisitions": 1,
+  "evidence": "only the learner independently completed Cook and Eat attempts",
+  "costs": [
+    0.000028938
+  ],
+  "answers": [
+    {
+      "learn0": {
+        "type": "choice",
+        "choice": "retain",
+        "probabilities": {
+          "retain": 0.99,
+          "decline": 0.01,
+          "uncertain": 0
+        },
+        "confidence": 0.98
+      }
+    }
+  ]
+}

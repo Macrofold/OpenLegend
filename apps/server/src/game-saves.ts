@@ -11,8 +11,8 @@ import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-cli
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
-// The envelope label is not a per-feature compatibility gate. Validate and upgrade the
-// actual state: docs/save-and-load.md#active-development-policy.
+// Physical storage changes reject incompatible development checkpoints without conversion.
+// docs/save-and-load.md#active-development-policy.
 export class GameSaveError extends Error {}
 /** The recovery row may contain a legacy payload or an integrity-checked file pointer. */
 export function recoveryFile(payload: unknown, checksum: unknown): string | undefined {
@@ -22,12 +22,10 @@ export function recoveryFile(payload: unknown, checksum: unknown): string | unde
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return file.data;
 }
-export const SAVE_FORMAT = 'development-2026-09-22-spatial1';
+export const SAVE_FORMAT = 'development-2026-09-28-action-experience';
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
-  /** Verified preceding stream layout; used only for its matching operational conversion. */
-  legacyRecordLayout?: true;
   format: string;
   state: SavedWorld;
   history: Record<(typeof HISTORY_TABLES)[number], Rows>;
@@ -103,7 +101,7 @@ export class GameSaves {
       label: String(row['label']),
       createdAt: String(row['created_at']),
       simTime: Number(row['sim_time']),
-      compatible: typeof row['format'] === 'string',
+      compatible: row['format'] === SAVE_FORMAT,
     }));
     const manual = (await this.files.list(worldId, { ...options, excludeRecovery: true })).map(
       (metadata) => ({
@@ -112,7 +110,7 @@ export class GameSaves {
         createdAt: metadata.createdAt,
         simTime: metadata.simTime,
         kind: metadata.kind ?? 'manual',
-        compatible: typeof metadata.format === 'string',
+        compatible: metadata.format === SAVE_FORMAT,
       }),
     );
     return [...manual, ...recovery]
@@ -275,11 +273,9 @@ export class GameSaves {
       payload = (stored ?? JSON.parse(encoded)) as SavePayload;
       if (digest(payload) !== row['checksum'])
         throw new GameSaveError('Save integrity check failed.');
-      // Only the checked stream manifest can establish the preceding record layout.
-      delete payload.legacyRecordLayout;
     }
     if (
-      typeof payload.format !== 'string' ||
+      payload.format !== SAVE_FORMAT ||
       payload.format !== row['format'] ||
       payload.state?.world?.id !== worldId ||
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
@@ -308,6 +304,14 @@ export class GameSaves {
   }
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
   async install(current: SavedWorld, restore: RestoreSave) {
+    if (restore.payload.format !== SAVE_FORMAT)
+      throw new GameSaveError('Unsupported save format; existing data was not changed.');
+    const totals = restore.payload.history.history_totals;
+    if (
+      totals.length !== 1 ||
+      Number(totals[0]!['event_count']) !== restore.payload.history.history_events.length
+    )
+      throw new GameSaveError('Save event count disagrees with retained records.');
     validateWorldModules(restore.payload.state.world);
     const recoveryId = randomUUID();
     await this.create(current, 'Before last load', recoveryId, { kind: 'recovery' });

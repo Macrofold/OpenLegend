@@ -181,3 +181,7 @@ The [research archive](../archive/02-research/agency-cognition-and-planning.md) 
 
 - Implementation: [Agency tasks](maintainers/agent-agency.md); [cognition tasks](maintainers/cognition-redesign.md).
 - Limits and constraints: [Cognition and action selection inventory](limits/cognition.md).
+
+## Learned activities and action history
+
+The existing plan can now execute a personally acquired finite nested method and expose only its remaining work at reconsideration. Actual native outcomes, partial products and committed costs remain recorded across interruption and restore. [Action records and learned activities](action-experience.md) owns learning, shared structure/private support, projections and limits; its delivery does not close every broader agency lifecycle or capability target.

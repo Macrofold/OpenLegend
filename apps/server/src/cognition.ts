@@ -91,8 +91,16 @@ export const thoughtOnlySchema = z
   .strict();
 
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
-  const base = { actorId, id };
+  const base = { actorId, id, ...(input.purpose ? { purpose: input.purpose } : {}) };
   switch (input.type) {
+    case 'activity':
+      return {
+        ...base,
+        type: 'activity',
+        methodId: input.methodId!,
+        bindings: input.bindings!,
+        ...(input.resume ? { resume: true } : {}),
+      };
     case 'say':
       return {
         ...base,
@@ -176,6 +184,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         type: 'inspect-inventory',
         after: input.after,
         expectedRevision: input.expectedRevision,
+      };
+    case 'inspect-activities':
+      return {
+        ...base,
+        type: 'inspect-activities',
+        after: input.historyAfter ?? -1,
+        methodAfter: input.methodAfter ?? 0,
       };
     case 'strike':
       return {

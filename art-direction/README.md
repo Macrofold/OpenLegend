@@ -6,6 +6,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 **Final selection:** [Creative inspiration board](final-board/index.html) · [Creative brief](final-board/creative-brief.md)
 
+**Concept art with Midjourney:** [Prompting guide](midjourney/README.md) · Character prompts: [Halven Rusk](prompts/halven-rusk-midjourney.md), [Maer Fen](prompts/maer-fen-midjourney.md)
+
 **Latest exploration round:** [Round-three board — Hades, pixels and painted worlds](round-03/index.html) · [Round-two feedback synthesis](round-02-analysis.md)
 
 **Previous:** [Round-two board](round-02/index.html) · [Your feedback summarized with examples](round-01-analysis.md) · [Round-two illustrated opening set](round-02/START-HERE.md).
@@ -44,6 +46,8 @@ API behavior: [Chrome's direct-file saving guide](https://developer.chrome.com/d
 - `feedback.md`: place to record specific user reactions as they arrive.
 - `feedback.json`: live feedback file created when you first click Save and select this folder. Read this file for the latest saved browser feedback.
 - `assets/README.md`: asset organization and acquisition log.
+- `midjourney/`: Midjourney prompting guide for painted concept art (versions, prompt writing, parameters, consistency, templates, house style, rights).
+- `prompts/`: per-character Midjourney prompt sets, one file per character, starting with Halven Rusk.
 - `board-template.html` and `build_board.py`: regenerate the board/catalog after changing references. Run `python3 art-direction/build_board.py` from the project root.
 - `feedback-storage.js`: file linking, permission handling, browser-backup integration, and autosave logic, bundled into `index.html`.
 - `feedback-storage.test.cjs`: persistence tests; run `node --test art-direction/feedback-storage.test.cjs`.

@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-This is the accepted target design for the audible-speech feature. Numerical defaults are explicit, reversible gameplay tuning. The delivered slice and remaining limits are documented in [Architecture](architecture.md#hearing-captions-and-perceived-events); [Verification](verification.md#hearing-runtime-and-performance) distinguishes native/offline DOM evidence from pending full-scene and live-provider qualification.
+This is the accepted target design for the audible-speech feature. Numerical defaults are explicit, reversible gameplay tuning. The delivered slice and remaining limits are documented in [Architecture](architecture.md#hearing-captions-and-perceived-events); [Verification](verification/hearing-runtime-and-reviews.md#hearing-runtime-and-performance) distinguishes native/offline DOM evidence from pending full-scene and live-provider qualification.
 
 This document owns acoustic quantities, speech-perception tiers, volume, listener-specific linguistic evidence, and spatial speech-caption behavior. It specializes the [sensory design](../archive/07-technical-architecture/perception-and-attention.md). [EPR](events-perception-and-reactions.md) retains occurrence scope, acquisition episodes, reaction intake, and scheduling. [Narration and conversations](narration-and-conversations.md) retains conversation membership, event retention, and Narrator authority. [Perceived World Events](perceived-world-events.md) owns the player-facing comprehensive event viewer. [Timed UI](timed-ui.md) owns reusable presentation lifetimes and progress rings. No second event bus, speech database, reaction scheduler, or writable copy of world truth is introduced.
 

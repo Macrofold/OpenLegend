@@ -1,0 +1,232 @@
+[
+  {
+    "id": "experience-1",
+    "name": "Equip",
+    "status": "completed",
+    "outputs": [],
+    "connections": [],
+    "result": "Equipped Knife."
+  },
+  {
+    "id": "experience-2",
+    "name": "Hunt once",
+    "status": "completed",
+    "outputs": [],
+    "connections": [
+      {
+        "from": "experience-1",
+        "relation": "support"
+      }
+    ],
+    "result": "The strike missed; this one attempt has ended."
+  },
+  {
+    "id": "experience-3",
+    "name": "Hunt once",
+    "status": "completed",
+    "outputs": [],
+    "connections": [
+      {
+        "from": "experience-1",
+        "relation": "support"
+      }
+    ],
+    "result": "The strike hit; this one attempt has ended."
+  },
+  {
+    "id": "experience-4",
+    "name": "Hunt once",
+    "status": "completed",
+    "outputs": [],
+    "connections": [
+      {
+        "from": "experience-1",
+        "relation": "support"
+      },
+      {
+        "from": "experience-3",
+        "relation": "state"
+      }
+    ],
+    "result": "The strike hit; this one attempt has ended."
+  },
+  {
+    "id": "experience-5",
+    "name": "Hunt once",
+    "status": "completed",
+    "outputs": [],
+    "connections": [
+      {
+        "from": "experience-1",
+        "relation": "support"
+      },
+      {
+        "from": "experience-3",
+        "relation": "state"
+      },
+      {
+        "from": "experience-4",
+        "relation": "state"
+      }
+    ],
+    "result": "The strike hit; this one attempt has ended."
+  },
+  {
+    "id": "experience-6",
+    "name": "Harvest",
+    "status": "completed",
+    "outputs": [
+      {
+        "port": "raw_meat",
+        "itemId": "item-48",
+        "definitionId": "raw_meat",
+        "quantity": 2
+      },
+      {
+        "port": "bone",
+        "itemId": "item-49",
+        "definitionId": "bone",
+        "quantity": 2
+      }
+    ],
+    "connections": [
+      {
+        "from": "experience-5",
+        "relation": "material",
+        "port": "remains"
+      }
+    ],
+    "result": "harvest completed."
+  },
+  {
+    "id": "experience-7",
+    "name": "Cook",
+    "status": "completed",
+    "outputs": [
+      {
+        "port": "cooked_meat",
+        "itemId": "item-56",
+        "definitionId": "cooked_meat",
+        "quantity": 1
+      }
+    ],
+    "connections": [
+      {
+        "from": "experience-6",
+        "relation": "material",
+        "port": "raw_meat",
+        "quantity": 1
+      }
+    ],
+    "result": "cook completed."
+  },
+  {
+    "id": "experience-8",
+    "name": "Eat",
+    "status": "completed",
+    "outputs": [],
+    "connections": [
+      {
+        "from": "experience-7",
+        "relation": "material",
+        "port": "cooked_meat",
+        "quantity": 1
+      }
+    ],
+    "result": "Food restored fullness."
+  }
+]
+discovery [
+  {
+    name: 'Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest',
+    entries: [
+      'experience-1',
+      'experience-3',
+      'experience-4',
+      'experience-5',
+      'experience-6'
+    ]
+  },
+  {
+    name: 'Harvest, then Cook',
+    entries: [ 'experience-6', 'experience-7' ]
+  },
+  {
+    name: 'Cook, then Eat',
+    entries: [ 'experience-7', 'experience-8' ]
+  },
+  {
+    name: 'Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest, then Cook, then Eat',
+    entries: [
+      'experience-1',
+      'experience-3',
+      'experience-4',
+      'experience-5',
+      'experience-6',
+      'experience-7',
+      'experience-8'
+    ]
+  }
+] 16 false
+retained 4
+replay completed [ 'Cook', 'Eat' ]
+acceptance {"socialSteps":8,"overlappingMatches":5,"stressRows":500,"passes":15,"visits":2179,"stressMs":591.9935,"projectionBytes":202,"quota":"explicit rejection","revocation":"independent support survives, sole support revoked"}
+operators {
+  repeat: 'bounded at two',
+  branch: 'one observed branch',
+  wait: 'timed out and explicitly resumed',
+  tamperedFrontier: 'rejected'
+}
+exact-ten {
+  candidates: [
+    [ 'ten-1', 'ten-2', 'ten-5', 'ten-6' ],
+    [ 'ten-6', 'ten-8', 'ten-9' ],
+    [ 'ten-8', 'ten-9', 'ten-10' ],
+    [
+      'ten-1',  'ten-2',
+      'ten-5',  'ten-6',
+      'ten-8',  'ten-9',
+      'ten-10'
+    ]
+  ],
+  miss: 'evidence only',
+  contributingHit: 'retained'
+}
+integration {
+  independentActors: 'one definition, separate private words',
+  mixing: 'ambiguous quantities preserved',
+  restore: 'no repeated debit',
+  fireLoss: 'blocked without product or refund'
+}
+context {
+  movingTarget: '5 to 8 metres and 18 to 10 health',
+  observers: 'hidden health and knife omitted',
+  specificKnives: 5,
+  collapsedCriticalFacts: 'preserved',
+  fire: 'known blocker',
+  sharedProduct: 'shortage disclosed',
+  unknownSupport: 'non-executable',
+  catalogue: {
+    definitions: 256,
+    owned: 64,
+    offers: 4,
+    medianMs: 0.2566670000001068,
+    maxMs: 2.435917000000245,
+    bytes: 2397
+  }
+}
+effects {
+  multiSubject: 'three distinct effects',
+  partial: 'preserved',
+  unknown: 'explicit',
+  format: 'readable; exact values stored'
+}
+retentionCapacity {
+  definitions: 256,
+  acquisitions: 64,
+  result: 'no orphan or loss of existing knowledge'
+}
+ammunition {
+  loaded: '3 projectiles; 20 metre reach; 12 injury including ammunition',
+  empty: 'known missing projectile'
+}

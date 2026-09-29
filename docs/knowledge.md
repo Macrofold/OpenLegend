@@ -46,3 +46,7 @@ Fictional NPC pads and observer identities are private to their owner and author
 
 - Implementation: [Feature tasks](maintainers/cognition-redesign.md).
 - Limits and constraints: [Memory, knowledge and consolidation inventory](limits/memory.md).
+
+## Learned methods
+
+Reusable action methods have world-scoped structural definitions and actor-owned acquisitions, separate from recipe invention and prose notepads. Independent permitted reproduction can reuse a definition; catalogue existence alone grants no knowledge. Private support, revocation, compatible-definition checks and tentative evidence follow [action records and learned activities](action-experience.md).

@@ -1,3 +1,5 @@
+import { activityFrontier, type ActivityExecution } from './activity-execution.js';
+import { endActivity, occurrenceFor, renderActivity } from './action-experience.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import {
   actionTargetsCurrent,
@@ -33,10 +35,13 @@ export interface GoalChange {
   parentId: string | null;
 }
 export type ItemOutputCommand = {
+  purpose?: string;
   id: string;
   actorId: string;
   type: 'equip' | 'eat' | 'cook';
   itemFromStep: string;
+  outputPort?: string;
+  quantity?: number;
   heatId?: string;
 };
 export type PlannedCommand = Command | ItemOutputCommand;
@@ -49,6 +54,7 @@ export interface PlanStep {
   outcome?: Outcome;
 }
 export interface ActorPlan {
+  activity?: ActivityExecution;
   id: string;
   revision: number;
   goalId: string | null;
@@ -360,6 +366,13 @@ export function cancelPlan(world: WorldState, actor: ActorComponent): void {
         actor.action = null;
         actor.planGeneration++;
       }
+      if (step.actionId)
+        endActivity(
+          world,
+          step.command.actorId,
+          step.actionId,
+          outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.'),
+        );
       step.status = 'cancelled';
       step.outcome = outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.');
     }
@@ -374,6 +387,7 @@ export function finishPlanAction(
   actionId: string,
   result: Outcome,
 ): void {
+  endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = world.entities[actorId]!.actor!;
   const plan = actor.agency.plan;
@@ -382,10 +396,14 @@ export function finishPlanAction(
   );
   if (!step) return;
   step.outcome = result;
+  if (plan!.activity?.activeKey)
+    plan!.activity.outputs[plan!.activity.activeKey] = cloneValue(result.outputs ?? []);
+  if (!result.ok && plan!.activity) plan!.activity.reason = result.message;
   step.status = result.ok ? 'completed' : 'blocked';
   plan!.status = !result.ok
     ? 'blocked'
-    : plan!.steps.every((entry) => entry.status === 'completed')
+    : (!plan!.activity || !plan!.activity.pending.length) &&
+        plan!.steps.every((entry) => entry.status === 'completed')
       ? 'completed'
       : 'active';
   plan!.revision++;
@@ -395,17 +413,27 @@ export function finishPlanAction(
   if (!result.ok || plan!.status === 'completed') {
     // Name the actual finished work; a bare completion marker has no meaning
     // when recalled without the plan. A completed attempt can still be a miss.
-    const results = plan!.steps
+    const children = plan!.steps
       .filter((entry) => entry.status === 'completed' || entry.status === 'blocked')
       .map(
-        (entry, index) =>
-          `${index + 1}. ${entry.command.type} (${entry.status}): ${entry.outcome!.message}`,
-      )
-      .join(' ');
+        (entry) =>
+          (entry.actionId && occurrenceFor(world, actorId, entry.actionId)?.view) || {
+            name: entry.command.purpose ?? entry.command.type,
+            facts: [],
+            result: entry.outcome!.message,
+          },
+      );
+    const purpose = plan!.activity
+      ? world.actionExperience.methods[plan!.activity.methodId]?.name
+      : plan!.steps.at(-1)?.command.purpose;
+    const results = renderActivity(
+      { name: purpose ?? 'Chosen actions', facts: [], children },
+      'What happened',
+    );
     appendMemory(world, actorId, {
       kind: 'episode',
       source: 'internal',
-      summary: `My planned actions ${result.ok ? 'finished' : 'stopped'}. ${results}`,
+      summary: `${results}${plan!.activity && (plan!.activity.archivedSteps ?? 0) > 0 ? ' Earlier completed steps are recorded separately and are not repeated here.' : ''}`,
       entityIds: [actorId],
       importance: 6,
     });
@@ -436,7 +464,9 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
     !actor.agency.goals.some((goal) => goal.id === plan.goalId && goal.status === 'active')
   )
     return;
-  return plan.steps.find((step) => step.status === 'queued');
+  return (
+    plan.steps.find((step) => step.status === 'queued') ?? activityFrontier(world, actorId, plan)
+  );
 }
 export function validateAgency(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
@@ -548,7 +578,7 @@ export function validateAgency(world: WorldState): void {
         plan.revision < 1 ||
         !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
         !Array.isArray(plan.steps) ||
-        plan.steps.length < 1 ||
+        (!plan.activity && plan.steps.length < 1) ||
         plan.steps.length > AGENCY_LIMITS.steps ||
         (plan.goalId && !ids.has(plan.goalId)))
     )
@@ -675,7 +705,7 @@ export function deferAttempt(
 }
 
 /** Finite native command families only; saved JSON never installs an executor. */
-function isPhysicalCommand(command: Command): boolean {
+export function isPhysicalCommand(command: Command): boolean {
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   switch (command.type) {
     case 'pickup':
@@ -742,12 +772,31 @@ function isPhysicalCommand(command: Command): boolean {
   }
 }
 
+/** Speech can be a chosen step without giving the speaker control of a reply. */
+export function isActivityCommand(command: Command): boolean {
+  return (
+    isPhysicalCommand(command) ||
+    (!!command &&
+      command.type === 'say' &&
+      isSafeRecordId(command.id) &&
+      isSafeRecordId(command.actorId) &&
+      typeof command.text === 'string' &&
+      command.text.trim().length > 0 &&
+      command.text.length <= 1500 &&
+      (command.targetId === undefined || isSafeRecordId(command.targetId)) &&
+      (command.intendedRecipientId === undefined || isSafeRecordId(command.intendedRecipientId)) &&
+      (command.volume === undefined || ['whisper', 'normal', 'shout'].includes(command.volume)))
+  );
+}
 function isPlannedCommand(command: PlannedCommand): boolean {
-  if (!command || !('itemFromStep' in command)) return isPhysicalCommand(command);
+  if (!command || !('itemFromStep' in command)) return isActivityCommand(command);
   return (
     isSafeRecordId(command.id) &&
     isSafeRecordId(command.actorId) &&
     isSafeRecordId(command.itemFromStep) &&
+    (command.outputPort === undefined || isSafeRecordId(command.outputPort)) &&
+    (command.quantity === undefined ||
+      (Number.isSafeInteger(command.quantity) && command.quantity > 0)) &&
     ['equip', 'eat', 'cook'].includes(command.type) &&
     (command.type === 'cook' ? isSafeRecordId(command.heatId) : command.heatId === undefined)
   );
@@ -761,7 +810,7 @@ function validOutputReferences(commands: PlannedCommand[]): boolean {
       if (
         !producer ||
         producer.actorId !== command.actorId ||
-        !['gather', 'prepare', 'craft', 'cook'].includes(producer.type)
+        !['gather', 'prepare', 'craft', 'cook', 'harvest'].includes(producer.type)
       )
         return false;
     }
@@ -776,10 +825,17 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
   const command = step.command;
   if (!('itemFromStep' in command)) return command;
   const producer = plan.steps.find((entry) => entry.id === command.itemFromStep);
+  const output = producer?.outcome?.outputs?.find(
+    (entry) => entry.port === command.outputPort && entry.quantity >= (command.quantity ?? 1),
+  );
   const itemId =
-    producer?.status === 'completed' && producer.outcome?.ok ? producer.outcome.itemId : undefined;
+    producer?.status === 'completed' && producer.outcome?.ok
+      ? command.outputPort
+        ? output?.itemId
+        : producer.outcome.itemId
+      : undefined;
   if (!itemId) return;
-  const { itemFromStep: _, heatId, ...base } = command;
+  const { itemFromStep: _, outputPort: _port, quantity: _quantity, heatId, ...base } = command;
   return base.type === 'cook'
     ? { ...base, type: 'cook', itemId, heatId: heatId! }
     : { ...base, type: base.type, itemId };

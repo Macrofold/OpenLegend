@@ -1,6 +1,6 @@
 # Persistent appraisal and character-owned social continuity — technical design
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
+**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
 
 The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
