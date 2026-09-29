@@ -166,8 +166,27 @@
 .ol-maintenance-notice[data-status='active'] {
   border-color: var(--highlight);
 }
-.ol-maintenance-notice .ol-btn {
-  justify-self: start;
+.ol-maintenance-details {
+  display: grid;
+  gap: var(--space-1);
+}
+/* Two classes: the design system's later .ol-btn rule would otherwise show the toggle. */
+.ol-maintenance-notice .ol-maintenance-toggle {
+  display: none;
+}
+/* Phone-width HUD: notices sit between the clock and the side rails, so keep them to a headline
+   (times on request) and move the rails below them while any notice is shown. */
+.ol-hud[data-narrow='true'] .ol-maintenance-notice .ol-maintenance-toggle {
+  display: inline-flex;
+}
+.ol-hud[data-narrow='true'] .ol-maintenance-details:not([data-expanded]) {
+  display: none;
+}
+.ol-hud[data-narrow='true']:has(.ol-hud-notices > *) {
+  --dock-top: max(
+    230px,
+    calc(var(--status-bottom) + var(--space-3) + 56px + var(--space-3) + 112px)
+  );
 }
 .ol-operations-notices {
   max-width: 720px;

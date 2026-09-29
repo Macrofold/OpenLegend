@@ -20,6 +20,7 @@ export function useMinuteClock(): number {
 /** Player-facing notice. Active maintenance cannot be dismissed while it holds the world. */
 export function MaintenanceNotice({ maintenance }: { maintenance?: MaintenanceWindowView | null }) {
   const now = useMinuteClock();
+  const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useLocal(
     'open-legend:maintenance-dismissed',
     '',
@@ -39,24 +40,40 @@ export function MaintenanceNotice({ maintenance }: { maintenance?: MaintenanceWi
       aria-label="World maintenance"
     >
       <strong>{maintenanceHeadline(maintenance, now)}</strong>
-      {!terminal && (
-        <>
-          <span>
-            {shown.announced} · {shown.duration} (announced end is an estimate)
-          </span>
-          {shown.local && (
-            <span className="ol-caption">
-              Your time ({shown.viewerZone}): {shown.local}
+      {/* Narrow HUDs collapse these details so the card does not cover the side rails. */}
+      <div className="ol-maintenance-details" data-expanded={expanded || undefined}>
+        {!terminal && (
+          <>
+            <span>
+              {shown.announced} · {shown.duration} (announced end is an estimate)
             </span>
-          )}
-        </>
-      )}
-      {maintenance.message && <span className="ol-caption">{maintenance.message}</span>}
-      {maintenance.status !== 'active' && (
-        <Button size="sm" variant="quiet" onPress={() => setDismissed(key)}>
-          Dismiss
-        </Button>
-      )}
+            {shown.local && (
+              <span className="ol-caption">
+                Your time ({shown.viewerZone}): {shown.local}
+              </span>
+            )}
+          </>
+        )}
+        {maintenance.message && <span className="ol-caption">{maintenance.message}</span>}
+      </div>
+      <div className="ol-operations-row">
+        {(!terminal || maintenance.message) && (
+          <Button
+            size="sm"
+            variant="quiet"
+            className="ol-maintenance-toggle"
+            aria-expanded={expanded}
+            onPress={() => setExpanded(!expanded)}
+          >
+            {expanded ? 'Hide details' : 'Show details'}
+          </Button>
+        )}
+        {maintenance.status !== 'active' && (
+          <Button size="sm" variant="quiet" onPress={() => setDismissed(key)}>
+            Dismiss
+          </Button>
+        )}
+      </div>
     </section>
   );
 }
