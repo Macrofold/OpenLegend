@@ -1,4 +1,4 @@
-import type { ApiResult, GamePatch, GameView } from '@open-legend/protocol';
+import type { ApiResult, GamePatch, GameView, OperationsView } from '@open-legend/protocol';
 
 // One identity for this page's heartbeats and explicit Resume actions. A delayed
 // pagehide notification must not erase a newer return/resume notification.
@@ -17,6 +17,8 @@ export function privateDraftScope(): string {
     throw new Error('Refresh your access before opening private saved work.');
   return privateDraftNamespace;
 }
+/** The signed-in account's grant has no character here; it uses World operations instead. */
+export class CharacterlessError extends AccessError {}
 export function clearAccess(): void {
   accessGeneration++;
   worldGeneration = '';
@@ -97,6 +99,11 @@ export async function getState(): Promise<GameView> {
     cache: 'no-store',
     headers: { 'X-OL-Client': tabClientId },
   });
+  if (response.status === 403) {
+    const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+    if (body.code === 'characterless')
+      throw new CharacterlessError(body.message ?? 'Open World operations.');
+  }
   if (response.status === 401 || response.status === 403)
     throw new AccessError(
       response.status === 401
@@ -105,6 +112,28 @@ export async function getState(): Promise<GameView> {
     );
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
   const view = (await response.json()) as GameView;
+  return view;
+}
+/** Operator/spectator console state. It opens no event stream and never counts as presence. */
+export async function getOperations(): Promise<OperationsView> {
+  const response = await fetch('/api/operations', {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { 'X-OL-Client': tabClientId },
+  });
+  const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
+    message?: string;
+  };
+  if (response.status === 401) throw new AccessError('Sign in to continue.');
+  if (!response.ok || !result.ok)
+    throw new AccessError(result.message ?? 'This account has no access to this world.');
+  const view = result as OperationsView;
+  // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
+  if (view.generation !== worldGeneration || view.scope !== viewScope) {
+    accessGeneration++;
+    worldGeneration = view.generation;
+    viewScope = view.scope;
+  }
   return view;
 }
 /** Private reads carry this tab's audience and discard responses from a prior scope. */

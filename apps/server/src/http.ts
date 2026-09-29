@@ -6,10 +6,12 @@ import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
   capabilitySchema,
+  isCharacterless,
   scopeKey,
   type Capability,
   type RequestScope,
 } from './authority.js';
+import { OperationsRoutes, characterlessRoute } from './operations-routes.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import { NavigationCoordinator } from './navigation/coordinator.js';
 import { HistoryCursorError } from './perceived-events.js';
@@ -401,6 +403,7 @@ async function initializeGameServer(
   let activeRequests = 0;
   let retainedBodyBytes = 0;
   const now = options.now ?? Date.now;
+  const operations = new OperationsRoutes(service, config, now);
   const authentication =
     config.authentication.mode === 'oidc'
       ? new OpenIdAuthentication(config.authentication, now)
@@ -733,11 +736,20 @@ async function initializeGameServer(
           throw new AuthorityError('session');
         if (request.method === 'GET' && url.pathname === '/api/session') {
           const grant = await store.authority.grant(service.world.id, login.accountId);
+          const entered =
+            grant &&
+            (grant.actorId ? grant.capabilities.includes('play') : !!grant.capabilities.length);
           return send(response, 200, {
             ok: true,
             accountId: login.accountId,
-            worlds: grant?.capabilities.includes('play')
-              ? [{ id: service.world.id, actorId: grant.actorId }]
+            worlds: entered
+              ? [
+                  {
+                    id: service.world.id,
+                    actorId: grant.actorId,
+                    capabilities: grant.capabilities,
+                  },
+                ]
               : [],
           });
         }
@@ -777,6 +789,12 @@ async function initializeGameServer(
             scope = await service.requestScope(login, connectionId);
           }
         }
+        if (isCharacterless(scope) && !characterlessRoute(request.method, url.pathname))
+          return send(response, 403, {
+            ok: false,
+            code: 'characterless',
+            message: 'This account has no character in this world. Use World operations.',
+          });
         responseScope = scope;
         if (
           request.method === 'GET' &&
@@ -787,7 +805,13 @@ async function initializeGameServer(
           throw new AuthorityError('stale-scope');
         if (request.method === 'GET' && url.pathname === '/api/state')
           return send(response, 200, await currentView(scope));
+        if (request.method === 'GET' && url.pathname === '/api/operations') {
+          // Operations sections carry their own capability checks and final currency check.
+          responseScope = undefined;
+          return send(response, 200, await operations.state(scope));
+        }
         if (request.method === 'GET' && url.pathname === '/api/performance') {
+          responseCapability = 'inspect';
           service.assertScope(scope, 'inspect');
           return send(response, 200, performanceSnapshot());
         }

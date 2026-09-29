@@ -385,8 +385,12 @@ export interface GameView {
     controlGeneration: number;
     controlling: boolean;
     canManageSaves: boolean;
+    /** Creator or access manager: may open the separate World operations console. */
+    canOperate?: boolean;
     mode: 'local' | 'oidc';
   };
+  /** Latest operational maintenance window for this world, if any. */
+  maintenance?: MaintenanceWindowView | null;
   inventionPolicy: { revision: number; playerLocked: boolean; agentLocked: boolean };
   saveTimeline?: string;
   commandEpoch?: string;
@@ -422,7 +426,7 @@ export interface GameView {
     speed: number;
     baseRatio: number;
     paused: boolean;
-    pauseReason: 'manual' | 'away' | 'storage' | null;
+    pauseReason: 'manual' | 'away' | 'storage' | 'maintenance' | null;
     /** Technical preparation only; this exposes no other actor's route or intent. */
     preparingNavigation?: boolean;
     /** Stopping-time names this world defines ("dawn"); empty when it names none. */
@@ -984,3 +988,83 @@ export interface PlayerActionAttempt {
 export * from './relationships.js';
 
 export * from './world-agent.js';
+
+/** Operational entry and maintenance DTOs; see docs/projects/multiplayer-entry-maintenance.md. */
+export type AccessCapability =
+  | 'play'
+  | 'spectate'
+  | 'create'
+  | 'inspect'
+  | 'save'
+  | 'manage-access';
+
+/** Real-world instants are UTC epoch milliseconds; `timeZone` is the creator's IANA display zone. */
+export interface MaintenanceWindowView {
+  id: string;
+  revision: number;
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+  startsAt: number;
+  /** Announced estimate only. An active window stays paused until marked ready. */
+  endsAt: number;
+  timeZone: string;
+  message: string;
+  lastChange: 'scheduled' | 'rescheduled' | 'extended' | 'started' | 'cancelled' | 'completed';
+  updatedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+}
+
+/** Public physical overview for spectators: no names, identities, possessions or speech. */
+export interface WorldOverview {
+  map: { width: number; height: number; tiles: GameView['map']['tiles'] };
+  bodies: Array<{
+    category: 'person' | 'animal' | 'resource' | 'fire' | 'object';
+    x: number;
+    z: number;
+  }>;
+  omitted: number;
+}
+
+export interface AccessGrantView {
+  accountId: string;
+  actorId?: string;
+  capabilities: AccessCapability[];
+  revision: number;
+  label?: string;
+  self: boolean;
+}
+
+export interface InviteView {
+  id: string;
+  role: 'player' | 'spectator' | 'operator';
+  capabilities: AccessCapability[];
+  actorId?: string;
+  label: string;
+  createdAt: number;
+  expiresAt: number;
+  status: 'pending' | 'redeemed' | 'revoked' | 'expired';
+  redeemedAt?: number;
+  accountId?: string;
+}
+
+export interface OperationsView {
+  ok: true;
+  worldId: string;
+  accountId: string;
+  capabilities: AccessCapability[];
+  /** The account's character in this world, if it has one. */
+  actorId?: string;
+  scope: string;
+  generation: string;
+  mode: 'local' | 'oidc';
+  clock: Pick<GameView['clock'], 'seconds' | 'day' | 'hour' | 'speed' | 'paused' | 'pauseReason'>;
+  maintenance: MaintenanceWindowView | null;
+  overview?: WorldOverview;
+  access?: {
+    grants: AccessGrantView[];
+    invites: InviteView[];
+    /** Living people without a current or historical human owner. */
+    candidates: Array<{ actorId: string; name: string }>;
+  };
+  maintenanceHistory?: MaintenanceWindowView[];
+}

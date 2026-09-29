@@ -16,17 +16,43 @@ export const AUTHORITY_TABLES = [
   'auth_access_audit',
 ];
 
-export const capabilitySchema = z.enum(['play', 'create', 'inspect', 'save', 'manage-access']);
+export const capabilitySchema = z.enum([
+  'play',
+  'spectate',
+  'create',
+  'inspect',
+  'save',
+  'manage-access',
+]);
 export type Capability = z.infer<typeof capabilitySchema>;
+/** Characterless grants share the one-grant-per-account row without a character. The marker
+ * never leaves this repository; changing the existing NOT NULL column would convert saves.
+ * docs/projects/multiplayer-entry-maintenance.md#decisions */
+const CHARACTERLESS = '#characterless:';
+const storedActor = (accountId: string, actorId: string | undefined) =>
+  actorId ?? `${CHARACTERLESS}${accountId}`;
+const grantActor = (stored: unknown): string | undefined =>
+  String(stored).startsWith(CHARACTERLESS) ? undefined : String(stored);
+export const actorIdSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .refine((id) => isSafeRecordId(id) && !id.startsWith(CHARACTERLESS));
+/** A grant without a character can never play or hold a control lease. */
+export const grantCapabilitiesValid = (actorId: string | undefined, capabilities: Capability[]) =>
+  actorId !== undefined || !capabilities.includes('play');
 export const accountBindingSchema = z
   .object({
     issuer: z.string().url(),
     subject: z.string().min(1).max(512),
     accountId: z.string().min(1).max(100).refine(isSafeRecordId),
-    actorId: z.string().min(1).max(100).refine(isSafeRecordId),
-    capabilities: z.array(capabilitySchema).max(5),
+    actorId: actorIdSchema.optional(),
+    capabilities: z.array(capabilitySchema).max(6),
   })
-  .strict();
+  .strict()
+  .refine((binding) => grantCapabilitiesValid(binding.actorId, binding.capabilities), {
+    message: 'A binding without a character cannot include play.',
+  });
 export type AccountBinding = z.infer<typeof accountBindingSchema>;
 export interface VerifiedIdentity {
   issuer: string;
@@ -41,7 +67,8 @@ export interface LoginSession {
 export interface WorldGrant {
   worldId: string;
   accountId: string;
-  actorId: string;
+  /** Absent for an operator/spectator grant; such grants never include play. */
+  actorId?: string;
   revision: number;
   capabilities: Capability[];
 }
@@ -53,7 +80,8 @@ export interface ControlLease {
   sessionId: string;
   connectionId: string;
 }
-/** Server-created immutable authority. It contains no bearer credential. */
+/** Server-created immutable authority. It contains no bearer credential. A characterless
+ * operator/spectator scope has an empty actorId, generation 0 and inspection audience. */
 export interface RequestScope {
   accountId: string;
   sessionId: string;
@@ -105,6 +133,7 @@ export class AuthorityError extends Error {
   }
 }
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
+export const isCharacterless = (scope: RequestScope) => scope.audience === 'authorized-inspection';
 export const scopeKey = (scope: RequestScope) => hash(JSON.stringify(scope));
 /** Reconnect keeps device drafts; security, embodiment and timeline changes do not.
  * This namespace grants no request authority and never replaces scopeKey.
@@ -193,25 +222,30 @@ export class AuthorityRepository {
       const current = await this.grant(worldId, binding.accountId);
       // Operator configuration establishes a binding once. Restart never undoes a later revocation.
       if (current) return;
-      await this.retainActorOwner(worldId, binding.actorId, binding.accountId);
-      const grant: WorldGrant = {
+      await this.insertGrant({
         worldId,
         accountId: binding.accountId,
         actorId: binding.actorId,
         revision: 1,
         capabilities: [...new Set(binding.capabilities)],
-      };
-      await this.db
-        .prepare('INSERT INTO auth_grants VALUES (?,?,?,?,?)')
-        .run(
-          worldId,
-          grant.accountId,
-          grant.actorId,
-          grant.revision,
-          JSON.stringify(grant.capabilities),
-        );
-      this.changed(() => this.grants.set(key(worldId, grant.accountId), grant));
+      });
     });
+  }
+  /** One insertion path for bootstrap and invited grants; the caller owns admission. */
+  async insertGrant(grant: WorldGrant): Promise<void> {
+    if (!grantCapabilitiesValid(grant.actorId, grant.capabilities))
+      throw new AuthorityError('forbidden');
+    if (grant.actorId) await this.retainActorOwner(grant.worldId, grant.actorId, grant.accountId);
+    await this.db
+      .prepare('INSERT INTO auth_grants VALUES (?,?,?,?,?)')
+      .run(
+        grant.worldId,
+        grant.accountId,
+        storedActor(grant.accountId, grant.actorId),
+        grant.revision,
+        JSON.stringify(grant.capabilities),
+      );
+    this.changed(() => this.grants.set(key(grant.worldId, grant.accountId), grant));
   }
   async login(
     identity: VerifiedIdentity,
@@ -275,7 +309,7 @@ export class AuthorityRepository {
     const value: WorldGrant = {
       worldId,
       accountId,
-      actorId: String(row['actor_id']),
+      actorId: grantActor(row['actor_id']),
       revision: Number(row['revision']),
       capabilities: z.array(capabilitySchema).parse(JSON.parse(String(row['capabilities']))),
     };
@@ -304,7 +338,21 @@ export class AuthorityRepository {
     connectionId: string,
   ): Promise<RequestScope> {
     const grant = await this.grant(worldId, session.accountId);
-    if (!grant?.capabilities.includes('play')) throw new AuthorityError('forbidden');
+    if (grant && !grant.actorId && grant.capabilities.length)
+      return Object.freeze({
+        accountId: session.accountId,
+        sessionId: session.id,
+        sessionRevision: session.revision,
+        worldId,
+        timelineId,
+        grantRevision: grant.revision,
+        actorId: '',
+        controlGeneration: 0,
+        connectionId,
+        audience: 'authorized-inspection' as const,
+      });
+    if (!grant?.actorId || !grant.capabilities.includes('play'))
+      throw new AuthorityError('forbidden');
     const control = await this.control(worldId, grant.actorId);
     return Object.freeze({
       accountId: session.accountId,
@@ -324,19 +372,24 @@ export class AuthorityRepository {
     const control = this.controls.get(key(scope.worldId, scope.actorId));
     return Object.freeze({ ...scope, controlGeneration: control?.generation ?? 0 });
   }
-  current(scope: RequestScope, capability: Capability, controlling: boolean, now: number): boolean {
+  /** Capabilities of a still-current session and grant, from the committed cache. */
+  currentCapabilities(scope: RequestScope, now: number): readonly Capability[] | undefined {
     const session = this.sessions.get(scope.sessionId),
       grant = this.grants.get(key(scope.worldId, scope.accountId));
-    const control = this.controls.get(key(scope.worldId, scope.actorId));
-    return (
-      !!session &&
+    return session &&
       session.accountId === scope.accountId &&
       session.revision === scope.sessionRevision &&
       session.expiresAt > now &&
-      !!grant &&
+      grant &&
       grant.revision === scope.grantRevision &&
-      grant.actorId === scope.actorId &&
-      grant.capabilities.includes(capability) &&
+      (grant.actorId ?? '') === scope.actorId
+      ? grant.capabilities
+      : undefined;
+  }
+  current(scope: RequestScope, capability: Capability, controlling: boolean, now: number): boolean {
+    const control = this.controls.get(key(scope.worldId, scope.actorId));
+    return (
+      !!this.currentCapabilities(scope, now)?.includes(capability) &&
       (!controlling ||
         (!!control &&
           control.generation === scope.controlGeneration &&
@@ -371,7 +424,7 @@ export class AuthorityRepository {
     if (
       session['grant_revision'] === null ||
       Number(session['grant_revision']) !== scope.grantRevision ||
-      session['grant_actor'] !== scope.actorId ||
+      (grantActor(session['grant_actor']) ?? '') !== scope.actorId ||
       !z
         .array(capabilitySchema)
         .parse(JSON.parse(String(session['capabilities'])))
@@ -503,6 +556,7 @@ export class AuthorityRepository {
       world.authorship.playerAccountIds[actorId] = accountId;
     }
     for (const grant of await this.worldGrants(world.id)) {
+      if (!grant.actorId) continue;
       const actor = world.entities[grant.actorId]?.actor;
       if (!actor)
         throw new Error(
@@ -538,19 +592,20 @@ export class AuthorityRepository {
       if (await this.bindingReceipt(scope, request)) return;
       const old = await this.grant(scope.worldId, request.accountId);
       if (
-        !old ||
+        !old?.actorId ||
         old.revision !== request.expectedRevision ||
         !Number.isSafeInteger(old.revision + 1) ||
         old.actorId === request.actorId
       )
         throw new AuthorityError('conflict');
+      const previousActor = old.actorId;
       const occupied = await this.db
         .prepare('SELECT account_id FROM auth_grants WHERE world_id=? AND actor_id=?')
         .get(scope.worldId, request.actorId);
       if (occupied) throw new AuthorityError('forbidden');
-      await this.retainActorOwner(scope.worldId, old.actorId, old.accountId);
+      await this.retainActorOwner(scope.worldId, previousActor, old.accountId);
       await this.retainActorOwner(scope.worldId, request.actorId, old.accountId);
-      for (const actorId of [old.actorId, request.actorId]) {
+      for (const actorId of [previousActor, request.actorId]) {
         const previous = await this.control(scope.worldId, actorId);
         if (!Number.isSafeInteger(previous.generation + 1)) throw new AuthorityError('conflict');
         const value = {
@@ -633,8 +688,14 @@ export class AuthorityRepository {
         revision: old.revision + 1,
         capabilities: [...new Set(capabilities)],
       };
-      if (old.capabilities.includes('play') && !grant.capabilities.includes('play')) {
-        const control = await this.control(scope.worldId, old.actorId);
+      if (!grantCapabilitiesValid(grant.actorId, grant.capabilities))
+        throw new AuthorityError('forbidden');
+      const releasedActor =
+        old.capabilities.includes('play') && !grant.capabilities.includes('play')
+          ? old.actorId
+          : undefined;
+      if (releasedActor) {
+        const control = await this.control(scope.worldId, releasedActor);
         if (!Number.isSafeInteger(control.generation + 1)) throw new AuthorityError('conflict');
         const released = {
           ...control,
@@ -646,8 +707,8 @@ export class AuthorityRepository {
           .prepare(
             'INSERT INTO auth_controls VALUES (?,?,?,?,?,?) ON CONFLICT(world_id,actor_id) DO UPDATE SET generation=excluded.generation,account_id=excluded.account_id,session_id=excluded.session_id,connection_id=excluded.connection_id',
           )
-          .run(scope.worldId, old.actorId, released.generation, old.accountId, '', '');
-        this.changed(() => this.controls.set(key(scope.worldId, old.actorId), released));
+          .run(scope.worldId, releasedActor, released.generation, old.accountId, '', '');
+        this.changed(() => this.controls.set(key(scope.worldId, releasedActor), released));
       }
       await this.db
         .prepare(

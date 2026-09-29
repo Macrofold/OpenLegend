@@ -2,6 +2,7 @@ import { WorldVisualSettings } from './ui/world-visual-settings';
 import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
+import { OperationsConsole } from './ui/operations-console';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
@@ -16,6 +17,7 @@ import type {
 } from '@open-legend/protocol';
 import {
   AccessError,
+  CharacterlessError,
   clearAccess,
   acceptAccess,
   eventsUrl,
@@ -104,7 +106,13 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
 type GodEditorWindow =
   | { id: string; type: 'person'; actorId: string }
   | { id: string; type: 'world-events' };
-function App({ resetApplication }: { resetApplication: () => void }) {
+function App({
+  resetApplication,
+  onCharacterless,
+}: {
+  resetApplication: () => void;
+  onCharacterless: () => void;
+}) {
   const [view, setView] = useState<GameView | null>(null),
     [connected, setConnected] = useState(false),
     [error, setError] = useState(''),
@@ -306,6 +314,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
+          if (e instanceof CharacterlessError) {
+            clearAccess();
+            onCharacterless();
+            return;
+          }
           if (e instanceof AccessError) {
             clearAccess();
             if (latest.current) {
@@ -343,7 +356,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
-  }, [accept, notify]);
+  }, [accept, notify, onCharacterless]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
@@ -907,6 +920,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       case 'help':
         return (
           <>
+            {view.access?.canOperate && (
+              <a href="/?view=operations" target="_blank" rel="noopener">
+                Open World operations
+              </a>
+            )}
             {view.access?.mode === 'oidc' && (
               <Button
                 onPress={() =>
@@ -1453,7 +1471,15 @@ function App({ resetApplication }: { resetApplication: () => void }) {
 }
 function ApplicationScope() {
   const [generation, setGeneration] = useState(0);
+  const [operations, setOperations] = useState(
+    () => new URLSearchParams(location.search).get('view') === 'operations',
+  );
   const resetApplication = useCallback(() => setGeneration((value) => value + 1), []);
-  return <App key={generation} resetApplication={resetApplication} />;
+  const openOperations = useCallback(() => setOperations(true), []);
+  // Characterless operator/spectator accounts, or an explicit ?view=operations tab.
+  if (operations) return <OperationsConsole />;
+  return (
+    <App key={generation} resetApplication={resetApplication} onCharacterless={openOperations} />
+  );
 }
 createRoot(document.getElementById('app')!).render(<ApplicationScope />);

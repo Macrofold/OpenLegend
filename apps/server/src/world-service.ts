@@ -125,6 +125,7 @@ import type {
   CommandInput,
   GodPersonEditorView,
   GodWorldEventsEditorView,
+  MaintenanceWindowView,
   PlayerProfile,
   PlayerPreferencePatch,
 } from '@open-legend/protocol';
@@ -594,9 +595,11 @@ export class WorldService {
           ]
         : config.authentication.bindings;
     const existingGrants = await store.authority.worldGrants(this.saved.world.id);
-    const actorBindings = new Map(existingGrants.map((grant) => [grant.actorId, grant.accountId]));
+    const actorBindings = new Map(
+      existingGrants.flatMap((grant) => (grant.actorId ? [[grant.actorId, grant.accountId]] : [])),
+    );
     for (const binding of bindings)
-      if (!existingGrants.some((grant) => grant.accountId === binding.accountId))
+      if (binding.actorId && !existingGrants.some((grant) => grant.accountId === binding.accountId))
         actorBindings.set(binding.actorId, binding.accountId);
     const actorOwners = new Map([
       ...Object.entries(this.saved.world.authorship.playerAccountIds),
@@ -761,7 +764,35 @@ export class WorldService {
     return this.milestonesFor(this.controlledEntityId);
   }
   get paused(): boolean {
-    return this.saved.manuallyPaused || this.absent || this.storageError !== null;
+    return (
+      this.saved.manuallyPaused || this.maintenanceHeld || this.absent || this.storageError !== null
+    );
+  }
+  /** Operational MP03 hold and public notice, owned by MaintenanceSchedule and outside
+   * gameplay saves. docs/projects/multiplayer-entry-maintenance.md#decisions */
+  maintenanceNotice: MaintenanceWindowView | null = null;
+  private maintenanceHeld = false;
+  get maintenanceActive(): boolean {
+    return this.maintenanceHeld;
+  }
+  /** Persist an operational change, then publish its hold and notice at one writer boundary.
+   * Entering or leaving the hold drops pending simulation debt (no catch-up) and rotates the
+   * world generation, so no job or result admitted before a boundary applies after it. */
+  async changeMaintenance(
+    held: boolean,
+    notice: MaintenanceWindowView | null,
+    persist: () => Promise<void>,
+  ): Promise<void> {
+    return this.mutate(async () => {
+      await this.ready;
+      await persist();
+      this.maintenanceNotice = notice;
+      if (this.maintenanceHeld !== held) {
+        this.maintenanceHeld = held;
+        this.generation = randomUUID();
+      }
+      await this.syncPause();
+    });
   }
   private get absent(): boolean {
     if (this.config.authentication.mode === 'oidc') {
@@ -850,14 +881,16 @@ export class WorldService {
         this.presenceOrders.delete(key);
     return this.presence.size > 0;
   }
-  get pauseReason(): 'manual' | 'away' | 'storage' | null {
+  get pauseReason(): 'manual' | 'away' | 'storage' | 'maintenance' | null {
     return this.storageError
       ? 'storage'
-      : this.saved.manuallyPaused
-        ? 'manual'
-        : this.absent
-          ? 'away'
-          : null;
+      : this.maintenanceHeld
+        ? 'maintenance'
+        : this.saved.manuallyPaused
+          ? 'manual'
+          : this.absent
+            ? 'away'
+            : null;
   }
 
   subscribe(listener: () => void): () => void {
@@ -2156,11 +2189,12 @@ export class WorldService {
         (await this.store.authority!.actorOwners(this.world.id)).get(request.actorId) ??
         this.world.authorship.playerAccountIds[request.actorId];
       if (
-        !grant ||
+        !grant?.actorId ||
         grant.revision !== request.expectedRevision ||
         grant.actorId === request.actorId
       )
         throw new AuthorityError('conflict');
+      const previousActorId = grant.actorId;
       if (!entity?.actor || entity.retirement || (owner && owner !== request.accountId))
         throw new AuthorityError('forbidden');
       let world = updateWorld(this.world, (draft) => {
@@ -2169,7 +2203,7 @@ export class WorldService {
       });
       // Both embodiments settle through the existing departure owner. Native progress and
       // inventory stay with the actor; explicit control acquisition is required afterward.
-      for (const actorId of [grant.actorId, request.actorId]) {
+      for (const actorId of [previousActorId, request.actorId]) {
         const actor = world.entities[actorId]?.actor;
         if (!actor) throw new AuthorityError('forbidden');
         if (actor.participation?.phase === 'inactive') continue;
@@ -2203,7 +2237,7 @@ export class WorldService {
         ))
       )
         return { ok: false, code: 'storage', message: this.storageError! };
-      this.exits.delete(grant.actorId);
+      this.exits.delete(previousActorId);
       this.exits.delete(request.actorId);
       this.humanActorIds = Object.values(this.world.entities)
         .filter((entity) => entity.actor?.controller === 'player')
@@ -2349,6 +2383,12 @@ export class WorldService {
 
       if (input.speed !== undefined && ![0.5, 1, 3, 8].includes(input.speed))
         return { ok: false, code: 'speed', message: 'Choose 0.5×, 1×, 3× or 8×.' };
+      if (this.maintenanceHeld && input.paused === false)
+        return {
+          ok: false,
+          code: 'maintenance',
+          message: 'The world is paused for maintenance until a creator marks it ready.',
+        };
       if (input.paused === false) {
         // Clicking Resume is itself evidence that the player has returned. Do not
         // wait for the browser's next (possibly throttled) five-second heartbeat.
@@ -2368,7 +2408,8 @@ export class WorldService {
       };
       next.world = {
         ...next.world,
-        paused: next.manuallyPaused || this.absent || this.storageError !== null,
+        paused:
+          next.manuallyPaused || this.maintenanceHeld || this.absent || this.storageError !== null,
       };
       // Speed changes preserve already-admitted time; pausing/resuming starts a fresh clock.
       if (next.world.paused || this.world.paused) this.debtSeconds = 0;

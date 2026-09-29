@@ -119,6 +119,13 @@ function isJournalEvent(event: { type: string; text: string; data?: Record<strin
 }
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
+/** Calendar projection shared by embodied views and the characterless operations view. */
+export const calendarFields = (world: WorldState) => ({
+  seconds: world.simTime,
+  day: Math.floor(world.simTime / 86400) + 1,
+  hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
+});
+
 export async function projectView(
   service: WorldService,
   executionSource: 'live-model' | 'test-fixture' = 'live-model',
@@ -691,8 +698,11 @@ export async function projectView(
       actorId: scope.actorId,
       controlGeneration: scope.controlGeneration,
       controlling: service.currentScope(scope, 'play', true),
+      canOperate:
+        service.currentScope(scope, 'create') || service.currentScope(scope, 'manage-access'),
       mode: service.config.authentication.mode,
     },
+    maintenance: service.maintenanceNotice,
     worldEventsRevision: service.worldEventsRevision(scope.actorId),
     historyRevision: service.historyRevision,
     historyEpoch: service.historyEpoch,
@@ -749,9 +759,7 @@ export async function projectView(
       ),
     })),
     clock: {
-      seconds: world.simTime,
-      day: Math.floor(world.simTime / 86400) + 1,
-      hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
+      ...calendarFields(world),
       speed: speed,
       baseRatio: service.config.baseRatio,
       paused: paused,
@@ -1033,7 +1041,9 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     !same(previous.godTools, next.godTools) ||
     !same(previous.vision, next.vision) ||
     !same(previous.hearing, next.hearing) ||
-    !same(previous.map, next.map)
+    !same(previous.map, next.map) ||
+    // Rare operational notices reset the view instead of adding another patch field.
+    !same(previous.maintenance, next.maintenance)
   )
     return null;
   const beforeEntities = new Map(previous.entities.map((entity) => [entity.id, entity]));
