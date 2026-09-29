@@ -8,7 +8,7 @@
 
 ## Coverage of the playable foundation
 
-**352 selectable inventory entries in 19 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Criticality](README.md#criticality), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Criticality, Level, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by two eight-entry extensions. Later IDs extend the original ranges without renumbering them.
+**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Criticality](README.md#criticality), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Criticality, Level, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
 
 | Domain | IDs | Domain | IDs |
 | --- | --- | --- | --- |
@@ -21,9 +21,9 @@
 | [Absence endings and reunion](#absence-endings-and-reunion) | RSH-193–208, 289–292 | [Different bodies identities and timescales](#different-bodies-identities-and-timescales) | RSH-209–224, 293–296 |
 | [Shared pleasures and futures](#shared-pleasures-and-futures) | RSH-225–240, 297–300 | [Shared creations and second chances](#shared-creations-and-second-chances) | RSH-301–320 |
 | [Ensembles and overlapping circles](#ensembles-and-overlapping-circles) | RSH-321–336 | [Shared burdens and imperfect rescues](#shared-burdens-and-imperfect-rescues) | RSH-337–344 |
-| [Teaching and ties across generations](#teaching-and-ties-across-generations) | RSH-345–352 | [Game reading checkpoint](#game-reading-checkpoint) | Completed and pending research |
+| [Teaching and ties across generations](#teaching-and-ties-across-generations) | RSH-345–352 | [Company beyond usefulness](#company-beyond-usefulness) | RSH-353–360 |
 
-[Ten retained pattern cards](#the-reliable-disagreement) follow the inventory.
+[Ten retained pattern cards](#the-reliable-disagreement) follow the inventory. [Completed research reading checklist](#game-reading-checkpoint).
 
 **Evidence convention:** “Synthesis” identifies an original relationship inspired by the linked dossier's broader concerns; it does not assert that the source contains this exact arrangement. “Original” makes no external evidence claim. All entries are ideas, with no implementation evidence asserted. Build scope names broad missing support, not an implementation audit. Intimate relationships below concern consenting adults; coercion and sexual violence are treated separately as harms, without explicit sexual depiction. Children have age-appropriate family, friendship and play entries.
 
@@ -512,6 +512,21 @@ A learned technique, inherited story or changed lifespan can connect particular 
 | RSH-351 | The future child who has already mourned you | — | Play | 4 Advanced | C | An adult descendant arrives through a bounded time crossing and meets a younger version of the parent they buried. Familiar habits bring comfort, but this parent has not lived the remembered choices and may dislike being corrected by someone claiming decades of intimacy. A new bond must develop alongside the visitor's real grief. | Large: explicit identity and time-crossing limits; Unusual realities owns causality and the visitor's history. | Synthesis · [Fire Emblem Awakening](source-atlas.md#g62) |
 | RSH-352 | The prophecy's unexpectedly compatible future in-laws | — | Play | 4 Advanced | C | Two families meet because an admitted uncertain prophecy predicts a marriage between their adult children. The parents discover a splendid friendship through cooking and cards even when the predicted couple is uninterested. They can keep enjoying one another without turning that pleasure into pressure to make the prophecy come true. | Large: bounded foresight distinct from actual consent or future certainty; Magic owns prediction, Relationships the chosen ties. | Original |
 
+## Company beyond usefulness
+
+A useful role can bring people together without defining everything they value in one another. When the work, dependence or shared body changes, these particular relationships acquire new possibilities. Material help, genuine attachment and coercion remain distinct even when they coexist.
+
+| ID | Idea | Seed worlds | Use | Criticality | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| RSH-353 | The repairer who misses your interruptions | ALL | Play | 2 Expected | C | A friend's improved machinery ends the regular repair visits that once supplied your favorite conversations. They are proud of the successful work and miss your company. Asking for a visit with nothing broken, finding another shared pastime or resenting the replacement changes a bond that was never only a service contract. | Small: remembered encounters and changing invitations; Technology owns reliability, Work repair. | Synthesis · [Factorio](source-atlas.md#g27), original relationship extension |
+| RSH-354 | The aristocrat and the cleaner who survived together | ALL | Play | 3 Enriching | C | A noble and a cleaner became candid, dependable partners during a crisis. Restored to an ordinary household, one slips back into expecting deference while the other still speaks as a comrade. They can preserve a private friendship, change their working arrangement or discover that surviving together did not settle how either wants to live afterward. | Moderate: shared history and contextual authority; Institutions owns employment and rank. | Synthesis · [Abiotic Factor](../../archive/02-research/game-inspiration/dossiers/abiotic-factor.md), original extension of shared practical roles |
+| RSH-355 | The friend who solved away your favorite walk | ALL | Play | 3 Enriching | C | A friend proudly builds a shortcut for your daily trip, bypassing the bakery, gossip and view you secretly enjoyed along the old route. You can appreciate the useful gift and still take the longer walk, invite them along or explain what the journey meant. Efficiency need not become a test of gratitude. | Small: particular preferences and gift interpretation; Settlements owns the shortcut, Actions travel. | Synthesis · [Core Keeper](source-atlas.md#g46) |
+| RSH-356 | The courtesan and the client who become co-authors | MD MO FA | Play | 3 Enriching | C | Two consenting adults who met through paid companionship discover that they write magnificent comic scenes together. Their public success creates a new collaboration beside the original service relationship. The courtesan wants independent credit and a wider career; the client may celebrate that ambition or mistake authorship for a claim on future intimacy. | Moderate: distinct creative, commercial and personal commitments; Arts owns the work, Economy payment. | Original |
+| RSH-357 | The captor who teaches you magnificently | MD SC FA | Play | 4 Advanced | C | A captive learns a difficult craft from a captor who is both an extraordinary teacher and a determined defender of their imprisonment. The learner can admire the technique, despise the coercion and use the retained knowledge after escape. Seeking freedom need not require denying real competence, and an excellent lesson does not earn forgiveness. | Moderate: retained learning and independently appraised harm; Abilities owns competence, Institutions custody. | Synthesis · [The Broken Earth](source-atlas.md#w18) |
+| RSH-358 | The vampire and the donor who would rather be friends | FA | Play | 4 Advanced | C | An adult who freely joined a bounded feeding arrangement ends it but still wants the vampire's company over cards and conversation. The vampire can seek another willing donor, enjoy the changed friendship or reveal that it valued access more than the person. Affection does not renew withdrawn permission, and coercive retaliation remains a distinct harmful choice. | Large: explicit fictional feeding limits and independent participation; Bodies and Magic own the effects. | Synthesis · [V Rising](../../archive/02-research/game-inspiration/dossiers/v-rising.md), original consensual alternative rather than a native source claim |
+| RSH-359 | The household furnace jealous of the new oven | — | Play | 4 Advanced | C | An admitted sapient furnace has warmed the household for years, but a new oven now makes its favorite baking duty unnecessary. It demands an absurdly ambitious feast to prove its worth, then discovers one resident would rather sit beside it and hear old stories. The furnace may love the attention, pursue another craft or insist that it still wants real work. | Large: admitted independent agency and specific capabilities; Magic or Technology owns heat, Work baking. | Original |
+| RSH-360 | The lovers whose union becomes a third person | — | Blend | 4 Advanced | C | Two adult partners can voluntarily combine through an admitted process into a recurring conscious identity with tastes neither shares alone. Their combined self loves a friend the partners scarcely know and asks for more time together. Future unions require willing participants; the relationship must accommodate three perspectives without treating any one as an automatic average or owner of the others. | Large: explicit collective identity, memory and separation limits; Bodies and Magic own combination, not inherited consent. | Synthesis · [The Culture](source-atlas.md#w17), original collective-relationship extrapolation |
+
 ## The reliable disagreement
 
 Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns. See RSH-003 in [Everyday friendship](#everyday-friendship).
@@ -574,88 +589,193 @@ Gap: acknowledged harm, concrete restitution and continuing choice. Seeds: [Drag
 
 ## Research coverage and integration notes
 
-**Pinned revisions:** repertoire/D&D baseline `2bb10759c263cf29a3de0f25bb3595e49420006f`; game-library `065309db37067c8e0a213bc1ed14446a4ea20eea`; integrated survival snapshot `9c24bc58bd6d640ba475bc9bd3030332704f7809`; worldbuilding-library `b387e7caeda5cec301045b877ca50a2815a869dd`. Game-library and contributing branch refs were rechecked in this continuation and the library head was unchanged. D&D retains direct research paths rather than invented atlas IDs. Source dates and access limitations remain attached to the original studies.
+**Completed Group 4 scope — September 28, 2026:** **150 unique game dossiers and 29 world dossiers**, plus the original chapters, mechanics studies, comparative essays and supporting reference material recorded below. No discovered game or world dossier remains unread. This is the cumulative reading record across the saved Group 4 passes, not a claim that every reading was repeated during the final continuation. Complete reads include corrections, appended parallel studies and source registers; retrieved headings, snippets or downloaded-but-unread material do not qualify.
 
-**Cumulative complete reading: 70 unique game dossiers; 80 remain.** The earlier 26-game remote record and ten-game saved handoff overlap; their union was 28, not 36. Subsequent reading checkpoints advanced that union through G65. Among Us and Animal Crossing rereads confirmed existing coverage, and AI Dungeon's two integrated studies count as one game. The checklist below consolidates the branch checkpoints through `456e95a8a147b8fbd8579e359344973c68a88996`, rather than leaving newer completion marks only in commit messages.
+**Revision pins:** game library `065309db37067c8e0a213bc1ed14446a4ea20eea`; G131–G140 research `7d78c055ee7a554f78a9430eeccddbfb502ab8f6`; G141–G148 research `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a`; world library `b387e7caeda5cec301045b877ca50a2815a869dd`; repertoire/D&D baseline `2bb10759c263cf29a3de0f25bb3595e49420006f`. Library and contributing range refs were rechecked and unchanged. The earlier integrated survival snapshot `9c24bc58bd6d640ba475bc9bd3030332704f7809` remains preserved; the fuller survival range studies are included rather than replaced by that snapshot. The world branch supplies 28 dossiers and six themes; the baseline supplies the additional D&D world and planes/lived-magic study.
 
-**Inherited supporting coverage:** all 29 world dossiers; the six main worldbuilding thematic essays and the additional D&D planes/lived-magic study; all twelve game essays; D&D hub, adjudication study and complete-SRD systems synthesis; shared repertoire prerequisites and all four seed-world proposals. Previous checkpoints also record complete original chapters and granular studies associated with the completed games, including whole shared studies, Deadfire, the Dragon Age series supplement and the Inquisition operational reference. This continuation completely read the DOS2 builds/authorship, Kingmaker party/kingdom and Wrath mythic/crusade supplements, as recorded in the Institutions coverage note and reading commits. These records are not relabelled as fresh readings of every external source they cite.
+**Checkpoint reconciliation:** the saved ten-game handoff overlapped with the earlier remote 26-game record; their union was 28, not 36. Among Us and Animal Crossing rereads confirmed coverage rather than increasing it. Subsequent commits recorded completed ranges while preserving the catalogue tree, and `09f5746863742acb4ac37c0e732672e46f2bf54a` consolidated the first 70 into this file. The final continuation began at `ebd0dc400dfe4821fa76da2418c880a142fb9849`, whose cumulative checkpoint recorded 146. Commit `085c7f8e0ee203a144f17a6afa1f8c2258653acc` marked the final four. The complete checklist below consolidates those marks so future work need not reconstruct them from commit bodies. AI Dungeon's two preserved studies count as one subject; edition and direct-sequel coverage remains inside the roster's specified parent dossiers.
 
 ### Game reading checkpoint
 
-A checked item means the complete dossier, including corrections and its source register, is recorded read in the cumulative Group 4 work. The game-library pin above is the current reading revision unless an inherited checkpoint states otherwise. Partial retrieval, headings, indexes and downloaded-but-unread material do not qualify. Most numbered paths are under `archive/02-research/game-inspiration/dossiers/`; names and IDs follow the library roster. Earlier commit bodies retain blob-level details for their batches.
+**150/150 complete.** G01–G148 follow the [research roster](../../archive/02-research/game-inspiration/research-roster.md); their dossiers are under `archive/02-research/game-inspiration/dossiers/`. The two D&D editions are additional baseline dossiers, not invented G149/G150 atlas identifiers. A check records reading the research, not playing the game or independently reopening all sources its authors used.
 
-- [x] G01 Hades II — inherited; `hades-ii.md`.
-- [x] G02 Among Us — inherited and fully reread; `among-us.md`; blob `2cbf4c328a2be1f5b5f4d7ecd02b564679a58b90`.
-- [x] G03 Animal Crossing: New Horizons — inherited and fully reread; `animal-crossing-new-horizons.md`; blob `b7b91a09b37cb2d4ef9f6c4e59f51a93478df0f7`.
-- [x] G04 Roblox — inherited; `roblox.md`.
-- [x] G05 Grow a Garden — inherited; `grow-a-garden.md`.
-- [x] G06 Steal a Brainrot — inherited; `steal-a-brainrot.md`.
-- [x] G07 Fortnite — inherited; `fortnite.md`.
-- [x] G08 League of Legends — inherited; `league-of-legends.md`.
-- [x] G09 Dota 2 — inherited; `dota-2.md`.
-- [x] G10 Path of Exile — inherited; `path-of-exile.md`.
-- [x] G11 Path of Exile 2 — inherited; `path-of-exile-2.md`.
-- [x] G12 Diablo IV — inherited; `diablo-iv.md`.
-- [x] G13 Dreams — inherited; `dreams.md`.
-- [x] G14 Project Spark — inherited; `project-spark.md`.
-- [x] G15 Worlds Adrift — inherited; `worlds-adrift.md`.
-- [x] G16 Spore — inherited; `spore.md`.
-- [x] G17 No Man's Sky — inherited; `no-mans-sky.md`.
-- [x] G18 EverQuest Next — inherited; `everquest-next.md`; cancelled proposed design, not shipped evidence.
-- [x] G19 Ultima Online — inherited; `ultima-online.md`.
-- [x] G20 Minecraft — completed in checkpoint `64ca44a63d7c2cf39482b5fe6c96a9068e4b7ce9`.
-- [x] G21 RimWorld — completed in checkpoint `64ca44a63d7c2cf39482b5fe6c96a9068e4b7ce9`.
-- [x] G22 Hades I — completed in checkpoint `1ce571260c5a44c52d76c4b36300969afae4ad65`.
-- [x] G23 Dwarf Fortress — completed in checkpoint `1ce571260c5a44c52d76c4b36300969afae4ad65`.
-- [x] G24 The Sims — inherited; `the-sims.md`.
-- [x] G25 Wildermyth — inherited from saved handoff; `wildermyth.md`; blob `8cd035161b057cebbaf5e7cc148190ddc7b9e798`.
-- [x] G26 Baldur's Gate 3 — completed in checkpoint `1840f6e68bc804d68156f6807788a751f7c4d99a`.
-- [x] G27 Factorio — completed in checkpoint `1840f6e68bc804d68156f6807788a751f7c4d99a`.
-- [x] G28 Satisfactory — completed in checkpoint `23b0f9bd295520e3b9b84b7a99567d7442d831bd`.
-- [x] G29 Terraria — completed in checkpoint `23b0f9bd295520e3b9b84b7a99567d7442d831bd`.
-- [x] G30 Stardew Valley — completed in checkpoint `23b0f9bd295520e3b9b84b7a99567d7442d831bd`.
-- [x] G31 Valheim — completed in checkpoint `1c4ab0a9f822b85a158fcdf44145c4ae4e45aee0`.
-- [x] G32 Noita — completed in checkpoint `1c4ab0a9f822b85a158fcdf44145c4ae4e45aee0`.
-- [x] G33 Caves of Qud — completed in checkpoint `1edc45c3894a59318368885ecb15bb8def0b7220`.
-- [x] G34 Outer Wilds — completed in checkpoint `1edc45c3894a59318368885ecb15bb8def0b7220`.
-- [x] G35 Garry's Mod — completed in checkpoint `a85a9774b0c4eb7f1e410d48e17181c5804ddc9b`.
-- [x] G36 Kenshi — completed in checkpoint `a85a9774b0c4eb7f1e410d48e17181c5804ddc9b`.
-- [x] G37 Project Zomboid — completed in checkpoint `a85a9774b0c4eb7f1e410d48e17181c5804ddc9b`.
-- [x] G38 Lethal Company — completed in checkpoint `c1a8fd4c736b460ba92ad35fb6d6ddd6e5dda394`.
-- [x] G39 Scribblenauts — completed in checkpoint `c1a8fd4c736b460ba92ad35fb6d6ddd6e5dda394`.
-- [x] G40 AI Dungeon — both integrated studies completed in checkpoint `27aaa49f3f5ff3208e934974fe2636f6e8c649cf`; counted once.
-- [x] G41 Palworld — completed in checkpoint `27aaa49f3f5ff3208e934974fe2636f6e8c649cf`.
-- [x] G42 Balatro — completed in checkpoint `ae8c92bb2d68661067c9d378de66f6c8e7942ebc`.
-- [x] G43 Slay the Spire — completed in checkpoint `ae8c92bb2d68661067c9d378de66f6c8e7942ebc`.
-- [x] G44 Vampire Survivors — completed in checkpoint `6996630795addd98fa8052af497df927ebf10f05`.
-- [x] G45 Against the Storm — completed in checkpoint `6996630795addd98fa8052af497df927ebf10f05`.
-- [x] G46 Core Keeper — completed in checkpoint `05c742b944c7f79bac1964ccc1dcefbd941ac858`.
-- [x] G47 PEAK — completed in checkpoint `05c742b944c7f79bac1964ccc1dcefbd941ac858`.
-- [x] G48 RuneScape — completed in checkpoint `e97546e00a6fa81571b758f970a41895a8e54709`.
-- [x] G49 Old School RuneScape — completed in checkpoint `e97546e00a6fa81571b758f970a41895a8e54709`.
-- [x] G50 RuneScape: Dragonwilds — completed in checkpoint `e97546e00a6fa81571b758f970a41895a8e54709`.
-- [x] G51 Dragon Age: Origins — completed in checkpoint `235a58b0c564722d64d3dd1ae389ad64997f0c6b`.
-- [x] G52 Dragon Age II — inherited; `dragon-age-ii.md`.
-- [x] G53 Dragon Age: Inquisition — completed in checkpoint `235a58b0c564722d64d3dd1ae389ad64997f0c6b`.
-- [x] G54 Dragon Age: The Veilguard — completed in checkpoint `235a58b0c564722d64d3dd1ae389ad64997f0c6b`.
-- [x] G55 Pillars of Eternity II: Deadfire — inherited from saved handoff; `pillars-of-eternity-ii-deadfire.md`; blob `b9dd911add706a21b27ae13318f7cc67b4708ac3`.
-- [x] G56 Divinity: Original Sin — completed here and saved in `429ca4745854a87a00b13256d4f379345d575f70`.
-- [x] G57 Divinity: Original Sin II — completed here and saved in `429ca4745854a87a00b13256d4f379345d575f70`.
-- [x] G58 Pathfinder: Kingmaker — completed here and saved in `429ca4745854a87a00b13256d4f379345d575f70`.
-- [x] G59 Pathfinder: Wrath of the Righteous — completed here and saved in `e3ba9c0559e9224c1559f3539fe621b304e04c46`.
-- [x] G60 Fire Emblem: The Blazing Blade — completed here and saved in `d6cca4757b2c86a87e461f73d1ea5ad1afc2f482`.
-- [x] G61 Fire Emblem: Path of Radiance — completed here and saved in `d6cca4757b2c86a87e461f73d1ea5ad1afc2f482`.
-- [x] G62 Fire Emblem Awakening — completed here and saved in `d6cca4757b2c86a87e461f73d1ea5ad1afc2f482`.
-- [x] G63 Fire Emblem Fates — completed here and saved in `456e95a8a147b8fbd8579e359344973c68a88996`.
-- [x] G64 Fire Emblem: Three Houses — completed here and saved in `456e95a8a147b8fbd8579e359344973c68a88996`.
-- [x] G65 Fire Emblem Heroes — completed here and saved in `456e95a8a147b8fbd8579e359344973c68a88996`.
-- [x] G102 Mass Effect 2 — inherited; `mass-effect-2.md`.
-- [x] G115 Mount & Blade II: Bannerlord — inherited; `mount-and-blade-ii-bannerlord.md`.
-- [x] G126 Crusader Kings III — inherited; `crusader-kings-iii.md`.
-- [x] Dungeons & Dragons 2024 — inherited at repertoire/D&D checkpoint.
-- [x] Dungeons & Dragons 3.5 — inherited at repertoire/D&D checkpoint.
-- [ ] G66–G101, G103–G114, G116–G125 and G127–G148 — **80 dossiers remain unread**. Resume with G66 Disco Elysium; only remove an ID after its complete dossier has been read.
+#### Inherited complete readings
 
-**Supplement checkpoint:** Deadfire's `mechanics/deadfire-expedition-and-relationship-rules.md` was completed at blob `dd7faacd364e106a1e4745ba7d1341044785f5ef`. Later completed chapters/studies and their exact blobs are recorded in the linked reading commits; this includes full shared studies rather than just the half concerning the current game. Original chapters, non-D&D mechanics studies and reference/audit material not individually marked complete remain pending. Reading a research synthesis is not personally reopening every primary book, wiki, video or PDF it cites; original access limitations remain limitations.
+These 146 completions were already recorded before the final continuation. They remain inherited, including their original revision and access qualifications.
 
-**Integration:** RSH-321–336 preserve the recovered ensemble direction without overwriting newer RSH-301–320. RSH-337–352 add particular physical dependencies, incomplete rescues and teaching/kinship continuities from the extended readings; they do not claim these exact arrangements exist in the source games. Update shared counts/navigation and extend source-atlas coverage for newer D&D and supplemental studies after group branches land. Shared documents remain read-only. Relationships depend on participant-specific memory, disclosure, commitments, schedules and permissions. Economy owns transfers and budgets; Institutions formal rights; Diplomacy faction bargains; Bodies, Technology and Settlements physical accommodation; Magic and Unusual realities exceptional identity, memory and time rules. SC crew relationships concern inhabited places and abstract journeys, not player ship piloting. Missing constituents are named by owner rather than invented IDs. No runtime implementation, gameplay tests or live-model experiments were performed.
+- [x] G01 — Hades II.
+- [x] G02 — Among Us; earlier complete reread confirmed existing coverage.
+- [x] G03 — Animal Crossing: New Horizons; earlier complete reread confirmed existing coverage.
+- [x] G04 — Roblox.
+- [x] G05 — Grow a Garden.
+- [x] G06 — Steal a Brainrot.
+- [x] G07 — Fortnite.
+- [x] G08 — League of Legends.
+- [x] G09 — Dota 2.
+- [x] G10 — Path of Exile.
+- [x] G11 — Path of Exile 2.
+- [x] G12 — Diablo IV.
+- [x] G13 — Dreams.
+- [x] G14 — Project Spark.
+- [x] G15 — Worlds Adrift.
+- [x] G16 — Spore.
+- [x] G17 — No Man's Sky.
+- [x] G18 — EverQuest Next; cancelled proposed design, not shipped-game evidence.
+- [x] G19 — Ultima Online.
+- [x] G20 — Minecraft.
+- [x] G21 — RimWorld.
+- [x] G22 — Hades I.
+- [x] G23 — Dwarf Fortress.
+- [x] G24 — The Sims.
+- [x] G25 — Wildermyth.
+- [x] G26 — Baldur's Gate 3.
+- [x] G27 — Factorio.
+- [x] G28 — Satisfactory.
+- [x] G29 — Terraria.
+- [x] G30 — Stardew Valley.
+- [x] G31 — Valheim.
+- [x] G32 — Noita.
+- [x] G33 — Caves of Qud.
+- [x] G34 — Outer Wilds.
+- [x] G35 — Garry's Mod.
+- [x] G36 — Kenshi.
+- [x] G37 — Project Zomboid.
+- [x] G38 — Lethal Company.
+- [x] G39 — Scribblenauts.
+- [x] G40 — AI Dungeon; both integrated studies, one unique subject.
+- [x] G41 — Palworld.
+- [x] G42 — Balatro.
+- [x] G43 — Slay the Spire; original-game scope.
+- [x] G44 — Vampire Survivors.
+- [x] G45 — Against the Storm.
+- [x] G46 — Core Keeper.
+- [x] G47 — PEAK.
+- [x] G48 — RuneScape, modern / RuneScape 3.
+- [x] G49 — Old School RuneScape.
+- [x] G50 — RuneScape: Dragonwilds.
+- [x] G51 — Dragon Age: Origins.
+- [x] G52 — Dragon Age II.
+- [x] G53 — Dragon Age: Inquisition.
+- [x] G54 — Dragon Age: The Veilguard.
+- [x] G55 — Pillars of Eternity II: Deadfire.
+- [x] G56 — Divinity: Original Sin.
+- [x] G57 — Divinity: Original Sin II.
+- [x] G58 — Pathfinder: Kingmaker.
+- [x] G59 — Pathfinder: Wrath of the Righteous.
+- [x] G60 — Fire Emblem: The Blazing Blade.
+- [x] G61 — Fire Emblem: Path of Radiance.
+- [x] G62 — Fire Emblem Awakening.
+- [x] G63 — Fire Emblem Fates.
+- [x] G64 — Fire Emblem: Three Houses.
+- [x] G65 — Fire Emblem Heroes.
+- [x] G66 — Disco Elysium.
+- [x] G67 — Grand Theft Auto V.
+- [x] G68 — Cyberpunk 2077.
+- [x] G69 — Red Dead Redemption.
+- [x] G70 — Red Dead Redemption 2.
+- [x] G71 — The Elder Scrolls V: Skyrim.
+- [x] G72 — The Witcher 3: Wild Hunt.
+- [x] G73 — The Legend of Zelda: Breath of the Wild.
+- [x] G74 — Fallout 4.
+- [x] G75 — Elden Ring.
+- [x] G76 — Black Myth: Wukong.
+- [x] G77 — Clair Obscur: Expedition 33.
+- [x] G78 — Final Fantasy I.
+- [x] G79 — Final Fantasy II.
+- [x] G80 — Final Fantasy III.
+- [x] G81 — Final Fantasy IV.
+- [x] G82 — Final Fantasy V.
+- [x] G83 — Final Fantasy VI.
+- [x] G84 — Final Fantasy VII, including the dossier's distinct Remake/Rebirth treatment.
+- [x] G85 — Final Fantasy VIII.
+- [x] G86 — Final Fantasy IX.
+- [x] G87 — Final Fantasy X, including X-2's system contrast.
+- [x] G88 — Final Fantasy XI.
+- [x] G89 — Final Fantasy XII.
+- [x] G90 — Final Fantasy XIII, including XIII-2 and Lightning Returns contrasts.
+- [x] G91 — Final Fantasy XIV.
+- [x] G92 — Final Fantasy XV.
+- [x] G93 — Final Fantasy XVI.
+- [x] G94 — Warcraft: Orcs & Humans.
+- [x] G95 — Warcraft II: Tides of Darkness.
+- [x] G96 — Warcraft III: Reign of Chaos / The Frozen Throne.
+- [x] G97 — World of Warcraft.
+- [x] G98 — Assassin's Creed IV: Black Flag.
+- [x] G99 — Assassin's Creed III.
+- [x] G100 — Assassin's Creed Valhalla.
+- [x] G101 — Mass Effect.
+- [x] G102 — Mass Effect 2.
+- [x] G103 — Mass Effect 3.
+- [x] G104 — Mass Effect: Andromeda.
+- [x] G105 — Mass Effect Galaxy.
+- [x] G106 — Mass Effect Infiltrator.
+- [x] G107 — Octopath Traveler.
+- [x] G108 — Octopath Traveler II.
+- [x] G109 — Star Wars: Knights of the Old Republic.
+- [x] G110 — Star Wars: Knights of the Old Republic II — The Sith Lords.
+- [x] G111 — The Legend of Zelda: Tears of the Kingdom.
+- [x] G112 — Fallout: New Vegas.
+- [x] G113 — The Elder Scrolls III: Morrowind.
+- [x] G114 — Kingdom Come: Deliverance II.
+- [x] G115 — Mount & Blade II: Bannerlord.
+- [x] G116 — Middle-earth: Shadow of War.
+- [x] G117 — Deus Ex (2000).
+- [x] G118 — Prey (2017).
+- [x] G119 — Dishonored 2.
+- [x] G120 — Starsector.
+- [x] G121 — Battle Brothers.
+- [x] G122 — Cataclysm: Dark Days Ahead.
+- [x] G123 — Rain World.
+- [x] G124 — Persona 5 Royal.
+- [x] G125 — XCOM 2.
+- [x] G126 — Crusader Kings III.
+- [x] G127 — Dragon's Dogma 2.
+- [x] G128 — Ultima VII: The Black Gate.
+- [x] G129 — Oxygen Not Included.
+- [x] G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl.
+- [x] G131 — Rust.
+- [x] G132 — DayZ.
+- [x] G133 — ARK: Survival Evolved.
+- [x] G134 — ARK: Survival Ascended.
+- [x] G135 — 7 Days to Die.
+- [x] G136 — Conan Exiles.
+- [x] G137 — The Forest.
+- [x] G138 — Sons of the Forest.
+- [x] G139 — Subnautica.
+- [x] G140 — Don't Starve Together.
+- [x] G141 — Raft.
+- [x] G142 — Grounded.
+- [x] G143 — The Long Dark.
+- [x] G144 — Green Hell.
+- [x] Dungeons & Dragons 2024 — baseline edition dossier.
+- [x] Dungeons & Dragons 3.5 — baseline edition dossier.
+
+#### Final continuation completions
+
+All four were read completely at the G141–G148 revision pinned above and committed in `085c7f8e0ee203a144f17a6afa1f8c2258653acc`, before the final inventory edits.
+
+- [x] G145 — Enshrouded; `enshrouded.md`, blob `f0285c8b6689a6ceac014bb9d12aaff6a01b41f0`; complete ranges 1–180, 181–360, 361–540, 541–720, 721–EOF.
+- [x] G146 — V Rising; `v-rising.md`, blob `1d526eca79d9472d813fd6f360217f36f31d6aff`; complete ranges 1–185, 186–370, 371–560, 561–745, 746–EOF.
+- [x] G147 — Once Human; `once-human.md`, blob `dc2024becb2c20e8bd76a9fe308e87e87e0ab446`; complete ranges 1–180, 181–365, 366–550, 551–735, 736–925, 926–EOF.
+- [x] G148 — Abiotic Factor; `abiotic-factor.md`, blob `ee4663c23414de7d94c3005aaf38511beacb0222`; complete ranges 1–185, 186–370, 371–550, 551–735, 736–920, 921–1110, 1111–EOF.
+
+### World and supplementary reading checkpoint
+
+- [x] All 28 dossiers indexed by the [worldbuilding library](../../archive/02-research/worldbuilding/README.md) at the pinned world revision — inherited complete readings.
+- [x] [Dungeons & Dragons world dossier](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md) at the baseline — inherited complete reading; brings the world total to 29.
+- [x] Six main world thematic studies plus the D&D planes/lived-magic study — seven complete; inherited readings.
+- [x] All 38 original game chapters and all 12 game comparative/theme essays at the game-library pin. The final continuation closed the outstanding original chapters rather than inferring them read from their dossiers.
+- [x] All 29 mechanics studies: the 25 original granular studies and four later operational studies. Shared chapters/studies were read in full, not only the half concerning the next numbered game.
+- [x] Dragon Age series supplement, including its required smaller-game contrasts; D&D hub, adjudication study and complete-SRD systems synthesis. Reading the synthesis is not a new claim to have reopened every primary rulebook.
+- [x] All 18 files in the game library's reference directory, including source registers, review notebooks, bibliography, watchlist annotations, packet provenance and range audits; the two root range audits and mechanics interaction lookup. Linked footage remains unwatched unless its original source record explicitly says otherwise.
+- [x] World comparative matrix, research method and source audit; shared repertoire prerequisites, all four seed-world proposals and applicable repository guidance.
+
+**Supplement provenance:** prior branch checkpoints `235a58b0c564722d64d3dd1ae389ad64997f0c6b`, `429ca4745854a87a00b13256d4f379345d575f70` and `e3ba9c0559e9224c1559f3539fe621b304e04c46` preserve the Dragon Age, Divinity, Pathfinder and other operational readings. The saved handoff records Wildermyth (`8cd035161b057cebbaf5e7cc148190ddc7b9e798`), Deadfire (`b9dd911add706a21b27ae13318f7cc67b4708ac3`) and its expedition/relationship supplement (`dd7faacd364e106a1e4745ba7d1341044785f5ef`) at the game-library pin. These records are retained as inherited evidence, not converted into claims of new gameplay or external-source verification.
+
+### Inventory integration and limits
+
+RSH-001–352 and all ten pattern cards remain. The recovered ensemble proposals occupy RSH-321–336 because newer work already occupied their handoff's earlier intended IDs. RSH-337–352 retain the shared-burden and generational synthesis. RSH-353–360 add a selected final set rather than one padded relationship per game. Across Group 4 the finished inventory has **360 Relationships, 304 Institutions and 288 Diplomacy entries: 952 selectable entries plus 30 retained pattern cards**.
+
+No discovered game or world dossier remains unread. This completion concerns the available research corpus; it does not certify the research libraries' separate original-packet reconciliation or claim new access to every external book, wiki, review, video or PDF they cite. Historical versions, cancelled proposals, limited source retrievals and attributed anecdotes retain their limitations. No runtime implementation audit, gameplay test or live-model experiment was performed.
+
+The integration owner should update shared README counts/navigation and source-atlas routes for the final Group 4 inventory and newer D&D, survival and operational sources. Those shared files remain unchanged. Relationships depend on participant-specific memory, disclosure, commitments, schedules and permissions. Economy owns transfers and budgets; Institutions formal rights; Diplomacy faction bargains; Bodies, Technology and Settlements physical accommodation; Magic and Unusual realities exceptional identity, memory and time rules. Shared recovery and created-person bonds require finite reserves and independent agency in those owners. SC crew relationships concern inhabited places and abstract journeys, not player ship piloting. Missing constituents are named by owner rather than invented IDs.
