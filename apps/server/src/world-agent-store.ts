@@ -5,9 +5,11 @@ import type {
   WorldAgentTurnCursor,
   WorldAgentTurnView,
   WorldAgentRequirement,
+  WorldAgentQuestion,
+  WorldAgentQuestionAnswer,
 } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
-import type { AuthoringProfile } from './world-authoring-context.js';
+import type { AuthoringPacket, AuthoringProfile } from './world-authoring-context.js';
 
 /** Operational authoring state is not rewound with gameplay. Domain definitions remain in WorldState.
  * docs/world-agent-runtime.md#durable-write-sessions
@@ -29,6 +31,8 @@ export interface AgentSession {
   policy: string;
   actorId: string;
   activeTurn?: string;
+  questionTurn?: string;
+  recoveryTurn?: string;
   turnSequence?: number;
   profile?: AuthoringProfile;
   initialPurpose?: 'conversation' | 'invention';
@@ -38,6 +42,13 @@ export interface AgentSession {
   pendingProfile?: { kind: Exclude<AuthoringProfile, 'discovery'>; reason: string; turnId: string };
   requirements?: WorldAgentRequirement[];
 }
+export interface AgentQuestionRecord {
+  view: WorldAgentQuestion;
+  source: { runId: string; requestId: string; sequence: string };
+  binding: Pick<AuthoringPacket, 'generation' | 'membership' | 'pins'> & {
+    selected?: AgentSession['selectedDraft'];
+  };
+}
 export interface AgentTurnRecord {
   fingerprint: string;
   text?: string;
@@ -45,6 +56,14 @@ export interface AgentTurnRecord {
   createdAt?: number;
   cancelRequested?: boolean;
   response?: WorldAgentReply;
+  question?: AgentQuestionRecord;
+  answer?: {
+    questionTurnId: string;
+    digest: string;
+    value: WorldAgentQuestionAnswer;
+    principal: string;
+  };
+  continuationOf?: { questionTurnId: string; answerId: string };
 }
 export class WorldAgentStore {
   constructor(readonly db: SqlDatabase) {}
@@ -168,6 +187,7 @@ export class WorldAgentStore {
         createdAt: turn.createdAt ?? null,
         cancelRequested: !!turn.cancelRequested,
         response: turn.response ?? null,
+        ...(turn.question ? { question: turn.question.view } : {}),
       };
     });
     const last = items.at(-1);

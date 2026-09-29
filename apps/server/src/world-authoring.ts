@@ -11,6 +11,8 @@ import type {
   WorldAgentSessionView,
   WorldAgentTurnCursor,
   WorldAgentPreparation,
+  WorldAgentQuestionStatus,
+  WorldAgentQuestionAnswer,
 } from '@open-legend/protocol';
 import { WorldAgentStore, type AgentSession, type AgentTurnRecord } from './world-agent-store.js';
 import {
@@ -42,13 +44,22 @@ import {
   renderAuthoringPacket,
   type AuthoringPacket,
 } from './world-authoring-context.js';
+import {
+  normalizeQuestion,
+  validateQuestionAnswer,
+  questionAnswerSources,
+  questionDigest,
+  type NativeQuestionEvent,
+} from './world-agent-questions.js';
 import { readDefinition } from './world-graph.js';
 import { normalizeInventionProposal } from './invention-service.js';
 import type { WorldToolService, WorldToolResult } from './world-tools.js';
 
 export interface WorldAgentTurn {
+  turnId: string;
   /** In-process cancellation only; never serialized into prompts or durable records. */
   signal?: AbortSignal;
+  onQuestion?: (event: NativeQuestionEvent) => Promise<void>;
   authority: RequestScope;
   sessionId: string;
   contextHandle: string;
@@ -304,6 +315,7 @@ export class WorldAuthoringService {
           createdAt: turn.createdAt ?? null,
           cancelRequested: !!turn.cancelRequested,
           response: turn.response ?? null,
+          ...(turn.question ? { question: turn.question.view } : {}),
         }
       : null;
   }
@@ -313,6 +325,12 @@ export class WorldAuthoringService {
         const s = await this.ownedSession(id, scope);
         const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
         if (!turn) throw new AuthoringRequestError('Turn unavailable.');
+        if (s.questionTurn === requestId && turn.question) {
+          turn.question.view.state = 'abandoned';
+          delete s.questionTurn;
+          await this.records.put(id, 'turn', requestId, turn);
+          await this.records.saveSession(s);
+        }
         if (turn.response || s.activeTurn !== requestId) return false;
         turn.cancelRequested = true;
         // Fence subsequent MCP writes before signalling the remote worker. A committed
@@ -341,6 +359,7 @@ export class WorldAuthoringService {
       available: this.permitted(s, scope),
       closed: s.closed,
       activeTurn: s.activeTurn ?? null,
+      ...(s.questionTurn ? { question: await this.questionStatus(s, scope, exposure) } : {}),
       budget: {
         limitUsd: this.budget(s).limitUsd,
         ...exposure,
@@ -378,20 +397,237 @@ export class WorldAuthoringService {
                   'Server restarted during this turn. Inspect saved drafts and the original remote run; it was not redispatched.',
               },
             });
+          s.recoveryTurn = s.activeTurn;
           delete s.activeTurn;
           s.contextHash = contextHash(randomBytes(32).toString('hex'));
           await this.records.saveSession(s);
-          await this.records.clearPackets(s.id);
+          // Retain the bounded last packet to bind an event recovered from this exact Run.
         });
     }
   }
-  async beginTurn(sessionId: string, requestId: string, text: string, scope: RequestScope) {
+  private async questionStatus(
+    s: AgentSession,
+    scope: RequestScope,
+    exposure?: Awaited<ReturnType<WorldAgentStore['exposure']>>,
+  ): Promise<WorldAgentQuestionStatus | undefined> {
+    if (!s.questionTurn) return;
+    const turn = await this.records.get<AgentTurnRecord>(s.id, 'turn', s.questionTurn);
+    const question = turn?.question;
+    if (!question) throw new Error('Missing retained question.');
+    const fresh = this.questionCurrent(s, question);
+    const allowed =
+      this.permitted(s, scope) && fresh && ['open', 'answered'].includes(question.view.state);
+    const usage = exposure ?? (await this.records.exposure(sessionBudgetId(s)));
+    const stopped =
+      !s.activeTurn && !s.recoveryTurn && turn.response?.code === 'waiting-for-answer';
+    const funded = this.budget(s).limitUsd - usage.spentUsd - usage.reservedUsd >= 0.000001;
+    const accounted = usage.uncertainUsd === 0 && usage.reservedUsd === 0;
+    return {
+      question: { ...question.view, ...(!fresh ? { state: 'invalidated' as const } : {}) },
+      canAnswer: allowed,
+      canContinue:
+        allowed && !question.view.answer?.continuationId && stopped && accounted && funded,
+      reason: !allowed
+        ? 'This question is no longer current. Start a request with current world context.'
+        : !stopped || !accounted
+          ? `${question.view.answer ? 'Answer saved; f' : 'F'}inishing or checking previous work.`
+          : !funded
+            ? 'More usage is needed to continue.'
+            : question.view.answer
+              ? 'Your answer is saved. Continue when ready.'
+              : 'Ready for your answer.',
+    };
+  }
+  private questionCurrent(s: AgentSession, question: NonNullable<AgentTurnRecord['question']>) {
+    const binding = question.binding;
+    return (
+      binding.generation === this.service.timelineId &&
+      binding.membership === contextMembership(this.service.world) &&
+      fingerprint(binding.selected ?? null) === fingerprint(s.selectedDraft ?? null) &&
+      binding.pins.every(
+        (pin) =>
+          readDefinition(this.service.world, pin.kind, pin.id)?.node.ref.version === pin.version,
+      )
+    );
+  }
+  async captureQuestion(
+    id: string,
+    requestId: string,
+    handle: string,
+    scope: RequestScope,
+    event: NativeQuestionEvent,
+    recovering = false,
+  ) {
+    const questions = normalizeQuestion(event.questions);
+    const digest = questionDigest(event.runId, event.requestId, questions);
+    return this.serial(id, () =>
+      this.records.db.transaction(async () => {
+        const s = await this.requireSession(id, scope);
+        const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
+        if (!turn) throw new AuthoringRequestError('Question has no admitted turn.');
+        if (turn.question) {
+          if (turn.question.view.digest !== digest)
+            throw new AuthoringRequestError('Question identity conflicts with retained content.');
+          return;
+        }
+        if (
+          (recovering
+            ? s.recoveryTurn !== requestId
+            : s.activeTurn !== requestId || s.contextHash !== contextHash(handle)) ||
+          turn.cancelRequested ||
+          (!recovering && turn.response)
+        )
+          throw new AuthoringRequestError('The question belongs to an inactive turn.');
+        const packet = s.packetRef
+          ? await this.records.get<AuthoringPacket>(id, 'packet', s.packetRef)
+          : undefined;
+        if (!packet) throw new AuthoringRequestError('Question context is unavailable.');
+        const text = JSON.stringify(questions);
+        // Recovery retains only the hash. Overlapping windows catch a handle even
+        // when model text joins it directly to another identifier.
+        if (
+          handle
+            ? text.includes(handle)
+            : [...text.matchAll(/(?=([a-zA-Z0-9_-]{43}))/g)].some(
+                ([, token]) => contextHash(token!) === packet.contextHash,
+              )
+        )
+          throw new AuthoringRequestError(
+            'The agent included private execution context in its question.',
+          );
+        turn.question = {
+          view: {
+            id: `question-${requestId}`,
+            turnId: requestId,
+            digest,
+            questions,
+            state: 'open',
+          },
+          source: { runId: event.runId, requestId: event.requestId, sequence: event.sequence },
+          binding: {
+            generation: packet.generation,
+            membership: packet.membership,
+            pins: packet.pins,
+            ...(s.selectedDraft ? { selected: s.selectedDraft } : {}),
+          },
+        };
+        if (Buffer.byteLength(JSON.stringify(turn.question.view)) > 16 * 1024)
+          throw new AuthoringRequestError('The question bundle exceeds the supported size.');
+        s.questionTurn = requestId;
+        // Persist the exact question and fence writes together, before remote cancellation.
+        s.contextHash = contextHash(randomBytes(32).toString('hex'));
+        delete s.pendingProfile;
+        await this.records.put(id, 'turn', requestId, turn);
+        await this.records.saveSession(s);
+      }),
+    );
+  }
+  async answerQuestion(
+    id: string,
+    questionTurnId: string,
+    digest: string,
+    answerId: string,
+    answers: unknown,
+    scope: RequestScope,
+    supersedes?: string,
+    continueIfReady = false,
+  ): Promise<{ answer: WorldAgentQuestionAnswer; created: boolean; cancelTurnId?: string }> {
+    return this.serial(id, () =>
+      this.records.db.transaction(async () => {
+        const s = await this.requireSession(id, scope);
+        const source = await this.records.get<AgentTurnRecord>(id, 'turn', questionTurnId);
+        const question = source?.question;
+        if (!question || question.view.digest !== digest)
+          throw new AuthoringRequestError('Question unavailable or changed.');
+        const value: WorldAgentQuestionAnswer = {
+          id: answerId,
+          answers: validateQuestionAnswer(question.view, answers),
+          ...(supersedes ? { supersedes } : {}),
+        };
+        if (Buffer.byteLength(JSON.stringify(value)) > 8 * 1024)
+          throw new AuthoringRequestError('The complete answer exceeds the supported size.');
+        const hash = fingerprint({ questionTurnId, digest, value, continueIfReady });
+        const prior = await this.records.get<AgentTurnRecord>(id, 'turn', answerId);
+        if (prior) {
+          if (prior.fingerprint !== hash || !prior.answer)
+            throw new AuthoringRequestError('Answer identity conflicts with retained content.');
+          return { answer: prior.answer.value, created: false };
+        }
+        if (
+          !this.questionCurrent(s, question) ||
+          !['open', 'answered'].includes(question.view.state)
+        )
+          throw new AuthoringRequestError(
+            'This question is no longer current. Start a request with current context.',
+          );
+        const previous = question.view.answer;
+        if (previous && supersedes !== previous.id)
+          throw new AuthoringRequestError(
+            'This question already has an answer. Review it before making a correction.',
+          );
+        if (!previous && supersedes)
+          throw new AuthoringRequestError('The answer to correct is unavailable.');
+        if (s.questionTurn && s.questionTurn !== questionTurnId)
+          throw new AuthoringRequestError(
+            'Resolve the newer question before changing an earlier answer.',
+          );
+        if (
+          s.activeTurn &&
+          s.activeTurn !== questionTurnId &&
+          s.activeTurn !== previous?.continuationId
+        )
+          throw new AuthoringRequestError(
+            'A newer turn is running. Stop it before changing an earlier answer.',
+          );
+        if ((await this.records.count(id, 'turn')) >= 256)
+          throw new AuthoringRequestError('Session retained-turn limit reached.');
+        let cancelTurnId: string | undefined;
+        if (s.activeTurn && s.activeTurn === previous?.continuationId) {
+          const running = await this.records.get<AgentTurnRecord>(id, 'turn', s.activeTurn);
+          if (!running) throw new Error('Missing admitted continuation.');
+          running.cancelRequested = true;
+          s.contextHash = contextHash(randomBytes(32).toString('hex'));
+          await this.records.put(id, 'turn', s.activeTurn, running);
+          cancelTurnId = s.activeTurn;
+        }
+        s.turnSequence = (s.turnSequence ?? 0) + 1;
+        s.questionTurn = questionTurnId;
+        question.view.answer = value;
+        question.view.state = 'answered';
+        const text = questionAnswerSources(question.view, value)
+          .map((q) => q.text)
+          .join('\n\n');
+        await this.records.put(id, 'turn', answerId, {
+          fingerprint: hash,
+          text,
+          sequence: s.turnSequence,
+          createdAt: Date.now(),
+          answer: { questionTurnId, digest, value, principal: scope.accountId },
+          response: {
+            ok: true,
+            code: 'answer-saved',
+            message: 'Your answer is saved. Continue when ready.',
+          },
+        } satisfies AgentTurnRecord);
+        await this.records.put(id, 'turn', questionTurnId, source);
+        await this.records.saveSession(s);
+        return { answer: value, created: true, ...(cancelTurnId ? { cancelTurnId } : {}) };
+      }),
+    );
+  }
+  async beginTurn(
+    sessionId: string,
+    requestId: string,
+    text: string,
+    scope: RequestScope,
+    continuation?: { questionTurnId: string; answerId: string },
+  ) {
     return this.serial(
       sessionId,
       async (): Promise<{ turn?: WorldAgentTurn; response?: AgentReply }> => {
         const s = await this.requireSession(sessionId, scope),
           config = this.service.config;
-        const hash = fingerprint({ text, sessionId });
+        const hash = fingerprint({ text, sessionId, ...(continuation ? { continuation } : {}) });
         const prior = await this.records.get<AgentTurnRecord>(sessionId, 'turn', requestId);
         if (prior) {
           if (prior.fingerprint !== hash)
@@ -405,8 +641,36 @@ export class WorldAuthoringService {
             },
           };
         }
-        if (s.activeTurn)
-          throw new AuthoringRequestError('This session already has a running turn.');
+        if (s.activeTurn || s.recoveryTurn)
+          throw new AuthoringRequestError(
+            'This session has earlier work still running or awaiting confirmation.',
+          );
+        let answered: AgentTurnRecord['question'];
+        if (continuation) {
+          const source = await this.records.get<AgentTurnRecord>(
+            s.id,
+            'turn',
+            continuation.questionTurnId,
+          );
+          answered = source?.question;
+          const status = await this.questionStatus(s, scope);
+          if (
+            !answered ||
+            s.questionTurn !== continuation.questionTurnId ||
+            answered.view.answer?.id !== continuation.answerId ||
+            !status?.canContinue
+          )
+            throw new AuthoringRequestError(status?.reason ?? 'This answer cannot continue.');
+          if (
+            answered.view.answer.continuationId &&
+            answered.view.answer.continuationId !== requestId
+          )
+            throw new AuthoringRequestError('This answer already has a continuation.');
+        } else if (s.questionTurn) {
+          throw new AuthoringRequestError(
+            'Answer or stop the pending question before sending another request.',
+          );
+        }
         const availability = this.availability();
         if (!availability.configured) throw new AuthoringRequestError(availability.reason);
         if ((await this.records.count(sessionId, 'turn')) >= 256)
@@ -445,6 +709,32 @@ export class WorldAuthoringService {
         }
         s.profile = profile;
         delete s.pendingProfile;
+        if (answered?.view.answer) {
+          const answer = answered.view.answer;
+          s.requirements = (s.requirements ?? []).map((r) =>
+            r.source.questionTurnId === continuation?.questionTurnId && r.source.answerId
+              ? {
+                  ...r,
+                  status: 'superseded' as const,
+                  supersededBy: `answer-${answer.id}-${r.source.questionId}`,
+                }
+              : r,
+          );
+          for (const source of questionAnswerSources(answered.view, answer))
+            s.requirements.push({
+              id: `answer-${answer.id}-${source.questionId}`,
+              source: {
+                turnId: requestId,
+                answerId: answer.id,
+                questionTurnId: continuation!.questionTurnId,
+                ...source,
+              },
+              strength: 'request',
+              status: 'human-review',
+              finding:
+                'Explicit human answer; native mechanics and exact approval remain separate.',
+            });
+        }
         const packet = buildAuthoringPacket(
           this.service.world,
           s,
@@ -453,7 +743,11 @@ export class WorldAuthoringService {
           profile,
           selected,
         );
-        const prompt = renderAuthoringPacket(packet, contextHandle);
+        const prompt = renderAuthoringPacket(
+          packet,
+          contextHandle,
+          this.service.config.macrofoldHarness === 'opencode',
+        );
         s.packetRef = packet.id;
         s.requirements = packet.requirements;
         // Commit both identity and handle before any external dispatch.
@@ -463,7 +757,22 @@ export class WorldAuthoringService {
             text,
             sequence: s.turnSequence,
             createdAt: Date.now(),
+            ...(continuation ? { continuationOf: continuation } : {}),
           });
+          if (answered?.view.answer && continuation) {
+            const source = await this.records.get<AgentTurnRecord>(
+              s.id,
+              'turn',
+              continuation.questionTurnId,
+            );
+            if (!source) throw new Error('Missing source question.');
+            answered.view.answer.continuationId = requestId;
+            await this.records.put(s.id, 'turn', continuation.questionTurnId, {
+              ...source,
+              question: answered,
+            });
+            delete s.questionTurn;
+          }
           await this.records.saveSession(s);
           await this.records.clearPackets(s.id);
           await this.records.put(s.id, 'packet', packet.id, packet);
@@ -471,6 +780,11 @@ export class WorldAuthoringService {
         return {
           turn: {
             authority: scope,
+            turnId: requestId,
+            onQuestion:
+              config.macrofoldHarness === 'opencode'
+                ? (event) => this.captureQuestion(sessionId, requestId, contextHandle, scope, event)
+                : undefined,
             sessionId,
             contextHandle,
             connectionId: config.macrofoldWorldConnectionId,
@@ -497,13 +811,60 @@ export class WorldAuthoringService {
         await this.records.put(sessionId, 'turn', requestId, { ...record, response });
         if (s.activeTurn === requestId) {
           delete s.activeTurn;
+          if (
+            response.code === 'uncertain' ||
+            (record.question && response.code !== 'waiting-for-answer')
+          )
+            s.recoveryTurn = requestId;
           // Terminal or failed runs cannot keep writing through a copied handle.
           s.contextHash = contextHash(randomBytes(32).toString('hex'));
           await this.records.saveSession(s);
-          await this.records.clearPackets(s.id);
+          if (!s.recoveryTurn) await this.records.clearPackets(s.id);
         }
       });
     });
+  }
+  async reconcileQuestion(
+    id: string,
+    scope: RequestScope,
+    reconcile: (
+      turnId: string,
+      capture: NonNullable<WorldAgentTurn['onQuestion']>,
+    ) => Promise<AgentReply | undefined>,
+  ) {
+    const session = await this.ownedSession(id, scope);
+    const turnId = session.recoveryTurn;
+    if (!turnId || session.activeTurn || !this.permitted(session, scope)) return;
+    // Network work is outside the session transaction. The final write rechecks identity.
+    const response = await reconcile(turnId, (event) =>
+      this.captureQuestion(id, turnId, '', scope, event, true),
+    );
+    if (!response) return;
+    await this.serial(id, () =>
+      this.records.db.transaction(async () => {
+        const current = await this.ownedSession(id, scope);
+        if (current.recoveryTurn !== turnId || current.activeTurn) return;
+        const turn = await this.records.get<AgentTurnRecord>(id, 'turn', turnId);
+        if (!turn) throw new Error('Missing interrupted turn.');
+        const outcome =
+          turn.cancelRequested || turn.question?.view.state === 'abandoned'
+            ? {
+                ok: false,
+                code: 'cancelled',
+                message:
+                  'This request was stopped. Saved work and recorded usage remain available.',
+              }
+            : response;
+        if (outcome.code === 'failed' && turn.question) {
+          turn.question.view.state = 'invalidated';
+          if (current.questionTurn === turnId) delete current.questionTurn;
+        }
+        await this.records.put(id, 'turn', turnId, { ...turn, response: outcome });
+        delete current.recoveryTurn;
+        await this.records.saveSession(current);
+        await this.records.clearPackets(id);
+      }),
+    );
   }
   async nextRecipeStage(
     sessionId: string,
@@ -538,7 +899,11 @@ export class WorldAuthoringService {
         turn.text ?? '',
         'recipe',
       );
-      const prompt = renderAuthoringPacket(packet, contextHandle);
+      const prompt = renderAuthoringPacket(
+        packet,
+        contextHandle,
+        this.service.config.macrofoldHarness === 'opencode',
+      );
       s.packetRef = packet.id;
       await this.records.db.transaction(async () => {
         await this.records.put(s.id, 'packet', packet.id, packet);
@@ -546,6 +911,11 @@ export class WorldAuthoringService {
       });
       return {
         authority: scope,
+        turnId: requestId,
+        onQuestion:
+          this.service.config.macrofoldHarness === 'opencode'
+            ? (event) => this.captureQuestion(sessionId, requestId, contextHandle, scope, event)
+            : undefined,
         sessionId,
         contextHandle,
         connectionId: this.service.config.macrofoldWorldConnectionId,
@@ -987,7 +1357,7 @@ export class WorldAuthoringService {
           }
           requirements.push({
             id: findingId,
-            source: { turnId: source.source.turnId, text: requirement.quote },
+            source: { ...source.source, text: requirement.quote },
             strength: requirement.strength,
             status: requirement.status,
             finding: requirement.finding,
@@ -999,7 +1369,13 @@ export class WorldAuthoringService {
           id: old?.id ?? randomUUID(),
           revision: (old?.revision ?? 0) + 1,
           kind,
-          intent: [...new Set(packet.requirements.map((r) => r.source.text))].join('\n'),
+          intent: [
+            ...new Set(
+              packet.requirements
+                .filter((r) => r.status !== 'superseded')
+                .map((r) => r.source.text),
+            ),
+          ].join('\n'),
           payload,
           actorId: s.actorId,
           policyRevision: old?.policyRevision ?? snapshot.inventionPolicy.revision,

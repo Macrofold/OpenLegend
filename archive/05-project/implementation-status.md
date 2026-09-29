@@ -171,3 +171,7 @@ The [implemented context flow](../../docs/world-agent-runtime.md#scoped-context-
 ## Action records and learned activities
 
 The September 28 AE implementation adds nested English action descriptions, actual multi-output/effect records, bounded connected learning, world-scoped method reuse with private evidence, typed idle assessment and finite selected-method execution through existing agency. Own/private creator inspection pages historical actions and learned methods. [Current behavior](../../docs/action-experience.md), [AE01–AE10](../../docs/maintainers/action-experience.md) and [evidence](../../docs/verification/action-experience.md) distinguish native, PostgreSQL, browser and live-provider results from broader unqualified workloads.
+
+## Structured invention questions
+
+The [question bridge](../../docs/world-agent-runtime.md#structured-human-questions) captures exact OpenCode choices, fences and stops the originating Run, retains immutable scoped human answers/corrections and explicitly continues with fresh context under the same allowance. Native fixtures and real BYOK recipe/policy journeys cover cancellation, restart, privacy, accounting and exact approval/receipt replay. [WW25–WW30](../../docs/maintainers/world-agent-writes.md#structured-invention-questions) retain required browser acceptance and the question-enabled initial-size diagnostic; implementation is not full release acceptance. [Current evidence](../../docs/verification/invention-questions.md) records those limits.

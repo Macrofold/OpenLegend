@@ -15,6 +15,37 @@ export type WorldAuthoringKind =
   | 'status-effect-policy'
   | 'cognition-policy'
   | 'action';
+export interface WorldAgentQuestionAnswer {
+  id: string;
+  answers: Array<
+    | { questionId: string; kind: 'options'; optionIds: string[] }
+    | { questionId: string; kind: 'text'; text: string }
+  >;
+  continuationId?: string;
+  supersedes?: string;
+}
+export interface WorldAgentQuestion {
+  id: string;
+  digest: string;
+  turnId: string;
+  questions: Array<{
+    id: string;
+    text: string;
+    header: string;
+    multiple: boolean;
+    custom: boolean;
+    options: Array<{ id: string; label: string; description: string }>;
+  }>;
+  state: 'open' | 'answered' | 'abandoned' | 'invalidated';
+  answer?: WorldAgentQuestionAnswer;
+}
+export interface WorldAgentQuestionStatus {
+  question: WorldAgentQuestion;
+  canAnswer: boolean;
+  /** A saved answer may continue now; an open question may offer Send and continue. */
+  canContinue: boolean;
+  reason: string;
+}
 export interface WorldAgentTurnView {
   id: string;
   sequence: number;
@@ -22,6 +53,7 @@ export interface WorldAgentTurnView {
   createdAt: number | null;
   cancelRequested: boolean;
   response: WorldAgentReply | null;
+  question?: WorldAgentQuestion;
 }
 export interface WorldAgentTurnCursor {
   sequence: number;
@@ -46,7 +78,14 @@ export interface WorldAgentDraftView {
 }
 export interface WorldAgentRequirement {
   id: string;
-  source: { turnId: string; text: string };
+  source: {
+    turnId: string;
+    text: string;
+    answerId?: string;
+    questionTurnId?: string;
+    questionId?: string;
+    question?: string;
+  };
   strength: 'request' | 'hard' | 'preference';
   finding: string;
   status: 'human-review' | 'satisfied' | 'unsupported' | 'superseded';
@@ -103,6 +142,7 @@ export interface WorldAgentSessionView {
   available: boolean;
   closed: boolean;
   activeTurn: string | null;
+  question?: WorldAgentQuestionStatus;
   budget: {
     limitUsd: number;
     spentUsd: number;

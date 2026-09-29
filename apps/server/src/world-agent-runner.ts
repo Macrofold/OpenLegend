@@ -1,6 +1,7 @@
 import type { RequestScope } from './authority.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
 import { contextHash, type WorldAgentTurn, type WorldAuthoringService } from './world-authoring.js';
+import { AuthoringRequestError } from './world-authoring-contracts.js';
 import { fingerprint } from './relationship-index.js';
 
 export interface WorldAgentMessage {
@@ -10,6 +11,7 @@ export interface WorldAgentMessage {
   conversationId: string;
   worldId: string;
   text: string;
+  questionContinuation?: { questionTurnId: string; answerId: string };
 }
 type Execute = (message: WorldAgentMessage, turn: WorldAgentTurn) => Promise<WorldAgentReply>;
 
@@ -51,6 +53,7 @@ export class WorldAgentRunner {
       message.requestId,
       message.text,
       message.authority,
+      message.questionContinuation,
     );
     if (started.response) return started.response;
     const controller = new AbortController();
@@ -88,7 +91,7 @@ export class WorldAgentRunner {
       } else {
         dispatched = true;
         reply = await this.execute(message, turn);
-        if (reply.ok && !turn.signal?.aborted) {
+        if (reply.ok && reply.code !== 'waiting-for-answer' && !turn.signal?.aborted) {
           const next = await this.authoring.nextRecipeStage(
             message.sessionId,
             message.requestId,
@@ -119,6 +122,74 @@ export class WorldAgentRunner {
       };
     }
     await this.authoring.finishTurn(message.sessionId, message.requestId, reply);
+  }
+  async answer(
+    message: Omit<WorldAgentMessage, 'requestId' | 'text'>,
+    questionTurnId: string,
+    digest: string,
+    answerId: string,
+    answers: unknown,
+    continueIfReady: boolean,
+    supersedes?: string,
+  ): Promise<WorldAgentReply> {
+    const saved = await this.authoring.answerQuestion(
+      message.sessionId,
+      questionTurnId,
+      digest,
+      answerId,
+      answers,
+      message.authority,
+      supersedes,
+      continueIfReady,
+    );
+    if (saved.cancelTurnId)
+      this.running.get(`${message.sessionId}:${saved.cancelTurnId}`)?.controller.abort();
+    // A replay only reads the original outcome. It cannot turn a previously blocked
+    // Send into paid work after reconnect, replenishment or restart.
+    if (!saved.created) {
+      const original = await this.authoring.turn(
+        message.sessionId,
+        this.continuationId(answerId),
+        message.authority,
+      );
+      if (original)
+        return (
+          original.response ?? {
+            ok: true,
+            code: 'running',
+            message: 'Your continuation is already admitted.',
+            jobId: original.id,
+          }
+        );
+    } else if (continueIfReady) {
+      try {
+        const reply = await this.continue(message, questionTurnId, answerId);
+        if (reply.ok) return reply;
+      } catch (error) {
+        if (!(error instanceof AuthoringRequestError)) throw error;
+      }
+    }
+    return {
+      ok: true,
+      code: 'answer-saved',
+      message:
+        'Your answer is saved. Continue explicitly when previous work is settled and usage is available.',
+    };
+  }
+  private continuationId(answerId: string) {
+    return `continue-${fingerprint(answerId).slice(0, 48)}`;
+  }
+  continue(
+    message: Omit<WorldAgentMessage, 'requestId' | 'text'>,
+    questionTurnId: string,
+    answerId: string,
+  ) {
+    return this.submit({
+      ...message,
+      requestId: this.continuationId(answerId),
+      text: 'Continue with my saved answer.',
+      questionContinuation: { questionTurnId, answerId },
+    });
   }
   async cancel(sessionId: string, requestId: string, scope: RequestScope) {
     const cancelled = await this.authoring.cancelTurn(sessionId, requestId, scope);

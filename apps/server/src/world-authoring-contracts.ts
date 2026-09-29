@@ -308,3 +308,15 @@ export class AuthoringRequestError extends Error {
     super(message);
   }
 }
+
+export const sessionQuestionContinueRequest = sessionRequest
+  .extend({ questionTurnId: id, answerId: id })
+  .strict();
+export const sessionQuestionAnswerRequest = sessionQuestionContinueRequest
+  .extend({
+    digest: z.string().regex(/^[a-f0-9]{64}$/),
+    answers: z.unknown(),
+    supersedes: id.optional(),
+    continueIfReady: z.boolean(),
+  })
+  .strict();

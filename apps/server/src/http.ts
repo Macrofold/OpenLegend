@@ -22,6 +22,8 @@ import {
   sessionListRequest,
   AuthoringRequestError,
   sessionTurnRequest,
+  sessionQuestionAnswerRequest,
+  sessionQuestionContinueRequest,
   sessionOpenRequest,
   sessionDecisionRequest,
   authoringToolRequest,
@@ -2132,6 +2134,15 @@ async function initializeGameServer(
               if (value.worldId !== service.world.id)
                 return send(response, 409, { ok: false, message: 'World mismatch.' });
               const exists = await authoring.records.session(value.sessionId);
+              if (exists?.recoveryTurn) {
+                try {
+                  await authoring.reconcileQuestion(value.sessionId, scope, (turnId, capture) =>
+                    director.macrofold.reconcileQuestion(value.sessionId, turnId, capture),
+                  );
+                } catch {
+                  // The unchanged uncertain outcome remains visible; status never redispatches.
+                }
+              }
               return send(response, 200, {
                 ok: true,
                 data: exists
@@ -2161,6 +2172,48 @@ async function initializeGameServer(
                 ok: true,
                 data: await authoring.turn(value.sessionId, value.requestId, scope),
               });
+            }
+            case '/api/world-agent/session/question-answer': {
+              const value = sessionQuestionAnswerRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await agentRuns.answer(
+                  {
+                    authority: scope,
+                    worldId: value.worldId,
+                    sessionId: value.sessionId,
+                    conversationId: value.sessionId,
+                  },
+                  value.questionTurnId,
+                  value.digest,
+                  value.answerId,
+                  value.answers,
+                  value.continueIfReady,
+                  value.supersedes,
+                ),
+              );
+            }
+            case '/api/world-agent/session/question-continue': {
+              const value = sessionQuestionContinueRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await agentRuns.continue(
+                  {
+                    authority: scope,
+                    worldId: value.worldId,
+                    sessionId: value.sessionId,
+                    conversationId: value.sessionId,
+                  },
+                  value.questionTurnId,
+                  value.answerId,
+                ),
+              );
             }
             case '/api/world-agent/session/cancel': {
               const value = sessionTurnRequest.parse(body);

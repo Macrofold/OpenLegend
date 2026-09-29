@@ -9,6 +9,7 @@ import { Button, EmptyState, Tag } from '../design-system/components';
 import { post } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
+import { WorldAgentQuestionCard } from './world-agent-question';
 import { WorldAgentReview } from './world-agent-review';
 import { UsageRemaining } from './usage-remaining';
 
@@ -147,6 +148,14 @@ export function WorldAgentSession({
         }>('turns', prefix);
         if (!alive.current) return;
         mergeTurns(history.turns);
+        const questionTurn = response.data.question?.question.turnId;
+        if (questionTurn && !history.turns.some((turn) => turn.id === questionTurn)) {
+          const source = await read<WorldAgentTurnView | null>('turn', {
+            ...prefix,
+            requestId: questionTurn,
+          });
+          if (alive.current && source) mergeTurns([source]);
+        }
         if (!historyInitialized.current) {
           setBefore(history.next);
           historyInitialized.current = true;
@@ -238,6 +247,7 @@ export function WorldAgentSession({
       !current?.data?.available ||
       !current.availability.configured ||
       current.data.activeTurn ||
+      current.data.question ||
       current.data.budget.availableUsd <= 0 ||
       (!existing && pendingRef.current) ||
       (!existing && !text.trim())
@@ -265,7 +275,7 @@ export function WorldAgentSession({
     });
   }
   async function cancel() {
-    const requestId = session?.activeTurn;
+    const requestId = session?.activeTurn ?? session?.question?.question.turnId;
     if (!requestId) return;
     await perform(async () => {
       const reply = await post<WorldAgentReply>('/api/world-agent/session/cancel', {
@@ -318,6 +328,45 @@ export function WorldAgentSession({
         />
       ),
     },
+    ...(turn.question
+      ? [
+          {
+            id: `${turn.id}:question`,
+            content: (
+              <WorldAgentQuestionCard
+                key={turn.question.digest}
+                question={
+                  session?.question?.question.turnId === turn.id
+                    ? session.question.question
+                    : turn.question
+                }
+                storageKey={key}
+                worldId={worldId}
+                sessionId={sessionId}
+                connected={connected}
+                canAnswer={
+                  session?.question?.question.turnId === turn.id
+                    ? session.question.canAnswer
+                    : !!session?.available &&
+                      !session.question &&
+                      turn.question.state === 'answered'
+                }
+                canContinue={
+                  (session?.question?.question.turnId === turn.id &&
+                    session.question.canContinue) ||
+                  false
+                }
+                reason={
+                  session?.question?.question.turnId === turn.id
+                    ? session.question.reason
+                    : undefined
+                }
+                onChanged={() => void refresh()}
+              />
+            ),
+          },
+        ]
+      : []),
     ...(turn.response
       ? [
           {
@@ -380,9 +429,9 @@ export function WorldAgentSession({
             <Button size="sm" variant="quiet" onPress={() => void refresh()}>
               Refresh
             </Button>
-            {!!session.activeTurn && (
+            {(!!session.activeTurn || !!session.question) && (
               <Button size="sm" disabled={busy} onPress={() => void cancel()}>
-                Stop this turn
+                Stop this request
               </Button>
             )}
           </div>
@@ -514,6 +563,7 @@ export function WorldAgentSession({
               !connected ||
               busy ||
               !!session.activeTurn ||
+              !!session.question ||
               !!pending ||
               !session.available ||
               !status.availability.configured ||

@@ -16,6 +16,7 @@ export function clearAccess(): void {
     for (const key of Object.keys(localStorage))
       if (
         key.startsWith('open-legend:world-agent:') ||
+        key.startsWith('open-legend:authoring:') ||
         key.startsWith('open-legend:invention-draft:')
       )
         localStorage.removeItem(key);
@@ -41,6 +42,7 @@ export function acceptAccess(view: GameView): void {
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
+          key.startsWith('open-legend:authoring:') ||
           key.startsWith('open-legend:invention-draft:')
         )
           localStorage.removeItem(key);
