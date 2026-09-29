@@ -4,11 +4,13 @@
 
 **Branch:** `repertoires-v2-group-3`. A checkmark means a complete repository-document read, including corrections, examples and source/access notes. It does not mean external citations were reopened, videos watched, games played or claims independently verified. Counts are cumulative across resumes.
 
-**Repository research reading complete at the pin: 306/306 documents — 264 game-library documents and 42 worldbuilding documents.** This comprises **151 game dossiers, 39 original game chapters, 31 mechanics studies, four indexes/roster documents, 39 other supplementary/reference/administrative documents, 29 world dossiers and 13 worldbuilding root documents.** Psychology and Traits catalogue delivery remains pending; reading is not a substitute for those edits.
+**Group 3 delivery complete: 1,236 catalogue entries, with research coverage reconciled in all four assigned files. Repository research reading complete at the pin: 306/306 documents — 264 game-library documents and 42 worldbuilding documents.** This comprises **151 game dossiers, 39 original game chapters, 31 mechanics studies, four indexes/roster documents, 39 other supplementary/reference/administrative documents, 29 world dossiers and 13 worldbuilding root documents.** The catalogue commits below deliver the inventories; reading completion is not being substituted for catalogue work.
 
 ## Revisions and discovery
 
-Research pin: **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This continuation began at `c324cdf1cf2b46887e60ed5dd31f5ec2aa2410fc`; comparison confirmed only reading-ledger changes since the preceding known checkpoint. Research and instructions were unchanged. Sources were read through Git objects without unrelated merges.
+Research pin: **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. The final reading continuation began at `c324cdf1cf2b46887e60ed5dd31f5ec2aa2410fc`; its comparison confirmed only reading-ledger changes since the preceding known checkpoint. Research and instructions were unchanged. Sources were read through Git objects without unrelated merges.
+
+The final delivery reconciliation resumed at **`03163424841d13f5afee3dfd8f355cd985957011`**. Comparison with the preceding known checkpoint confirmed documentation-only changes to the four assigned catalogues and this ledger. The actual catalogue commits had already completed Psychology, Traits and all four coverage notes while this ledger still said those deliveries were pending. This reconciliation corrects that stale status, preserves the committed inventories and reuses the completed research rather than claiming another fresh corpus read.
 
 [Research-branch revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery). [Tree discovery and complete supplementary queue](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md). Final dossier-tree inspection (`27b3a1fc949c54c866999b9d089e0c12cfd2e9ad`) identified its separate README, now read below. **This corrects the earlier 263-game-document / 305-total census to 264 / 306; the 151 subject count was already correct.** Discovery alone is never counted as reading.
 
@@ -48,17 +50,25 @@ New repertoire examples are **creative synthesis**, not copied franchise events,
 
 ## Catalogue delivery
 
-| Catalogue | Starting entries | Current entries | Delivery |
+| Catalogue | Starting entries | Final entries | Added entries and delivery |
 | --- | --- | --- | --- |
-| Psychology and behavior | 276 | 276 | Expansion pending. |
-| Traits | 240 | 240 | Expansion pending. |
-| Needs | 240 | 300 | ND-241–ND-300: `90867e97edaef849212d2952f0160870b6584715`. |
-| Characters and backstories | 240 | 300 | CB-241–CB-300: `edc8fa2ddea94441ba41afb23eb1311b209ce658`. |
+| [Psychology and behavior](psychology-behavior.md) | 276 | 336 | PB-277–PB-336: [7df4443](https://github.com/Macrofold/OpenLegend/commit/7df4443241746d22ac43b567dc810faacfb6224f). Sixty additions; classification, Inspiration and coverage reconciliation. |
+| [Traits](traits.md) | 240 | 300 | TR-241–TR-300: [3cb0b25](https://github.com/Macrofold/OpenLegend/commit/3cb0b251894289f63303b2fe2551449c6285a610). Sixty additions; G99 title, category-owner, Inspiration and coverage corrections. |
+| [Needs](needs.md) | 240 | 300 | ND-241–ND-300: [90867e9](https://github.com/Macrofold/OpenLegend/commit/90867e97edaef849212d2952f0160870b6584715). Final corpus-coverage note: [2d2c59d](https://github.com/Macrofold/OpenLegend/commit/2d2c59d6ebbd9e31a98ce4e547af165cdfca7799). |
+| [Characters and backstories](characters-backstories.md) | 240 | 300 | CB-241–CB-300: [edc8fa2](https://github.com/Macrofold/OpenLegend/commit/edc8fa2ddea94441ba41afb23eb1311b209ce658). Final corpus-coverage note: [0316342](https://github.com/Macrofold/OpenLegend/commit/03163424841d13f5afee3dfd8f355cd985957011). |
+| **Total** | **996** | **1,236** | **240 additions across the recorded continuation checkpoints.** |
 
-Earlier continuations added 120 entries, for **1,116** total. Inherited rows are not newly written work.
+Inherited rows are not newly written work. Psychology retains its earlier 276 entries, including the prior Disco Elysium/Culture additions; the other catalogues retain their earlier 240 each. Each expansion adds six ten-entry domains while preserving existing IDs and linked pattern headings.
 
-## Remaining delivery and integration
+- [x] All four assigned inventories delivered within the requested substantial per-category range.
+- [x] All four research-coverage notes reconciled with the completed repository corpus, retaining earlier narrower delivery history.
+- [x] Recorded editorial corrections delivered: seed proposals separated from Inspiration, Traits' G99 label corrected to Assassin's Creed III, the nonexistent Food owner replaced, and ordinary appraisals/preferences under admitted unusual bodies distinguished from new reusable rules.
+- [x] Final continuation reviewed the complete Psychology and Traits expansion diffs and the Needs and Characters coverage diffs against this delivery record. No runtime or gameplay checks were required or run for this documentation reconciliation; no automated link-check or exhaustive external-link audit is claimed.
 
-Expand Psychology and Traits. Repair seed proposals in Inspiration, Traits' “Animal Crossing III” / G99 error, nonexistent owner names and D classifications caused only by unusual bodies. Preserve IDs/headings and reconcile research coverage in all four assigned catalogues. Prior checkpoints record completed instruction/classification/seed prerequisites; no research rerun is needed unless a source changes.
+## Integration handoff
 
-Respect medieval supernatural limits, Veyra Reach's exclusion of playable spaceflight and Borrowed Dawn's bounded initial magic with compatible expansion. Wider-library ideas remain welcome. Shared atlas/navigation/count/history reconciliation belongs to the integration owner. Other catalogues, research libraries, proposals, shared trackers and runtime remain unchanged.
+**No assigned Group 3 inventory expansion or research-reading task remains open at the recorded pin.** Shared integration is deliberately separate: update the repertoire README/source-atlas navigation, corpus and entry counts, and the shared documentation history when integrating the groups. The atlas still needs the newer D&D additions and revised 29-world coverage. These shared documents are read-only for this assignment and remain unchanged.
+
+The catalogues name broad dependencies rather than create runtime commitments: memory and attention, physiology and accommodation, skills and teaching, object history, care and work, agreement and relationships, institutional custody, performance, identity continuity and supernatural transfers. Missing entries remain with their existing category owners; no fabricated cross-catalogue IDs or implementation tasks were added.
+
+Respect medieval supernatural limits, Veyra Reach's exclusion of playable spaceflight and Borrowed Dawn's bounded initial magic with compatible expansion. Wider-library ideas remain welcome. Other groups' catalogues, research libraries, proposals, shared trackers, the changelog and runtime remain unchanged. Further work should begin from the delivered catalogues, not from the superseded pending statuses in historical checkpoints.
