@@ -7,6 +7,7 @@ import {
   capabilitySchema,
   type Capability,
   type RequestScope,
+  type WorldGrant,
 } from './authority.js';
 import type { WorldState } from '@open-legend/domain';
 import type { SqlDatabase, SqlGameRepository } from './store.js';
@@ -110,24 +111,35 @@ export class InviteRepository {
   constructor(private readonly db: SqlDatabase) {}
   async initialize(): Promise<void> {
     await this.db.exec(`
-      CREATE TABLE IF NOT EXISTS auth_invites (id TEXT PRIMARY KEY, world_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, created_at BIGINT NOT NULL, payload TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS auth_invites (id TEXT PRIMARY KEY, world_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, closed BOOLEAN NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS auth_invites_world ON auth_invites(world_id, created_at);
+      CREATE INDEX IF NOT EXISTS auth_invites_open ON auth_invites(world_id, closed, expires_at);
     `);
   }
-  private parse(row: Record<string, unknown> | undefined): InviteRecord | undefined {
-    return row ? recordSchema.parse(JSON.parse(String(row['payload']))) : undefined;
+  private parse(row: Record<string, unknown>): InviteRecord {
+    return recordSchema.parse(JSON.parse(String(row['payload'])));
   }
-  /** Newest first. Bounded by the pending limit plus retained terminal history. */
+  private parseOptional(row: Record<string, unknown> | undefined): InviteRecord | undefined {
+    return row && this.parse(row);
+  }
+  /** Newest first, bounded for the console; admission uses {@link pending}. */
   async list(worldId: string, limit = 200): Promise<InviteRecord[]> {
     const rows = await this.db
       .prepare(
         'SELECT payload FROM auth_invites WHERE world_id=? ORDER BY created_at DESC, id DESC LIMIT ?',
       )
       .all(worldId, limit);
-    return rows.map((row) => this.parse(row)!);
+    return rows.map((row) => this.parse(row));
+  }
+  /** Every unexpired invite that is neither redeemed nor revoked (at most the pending limit). */
+  async pending(worldId: string, now: number): Promise<InviteRecord[]> {
+    const rows = await this.db
+      .prepare('SELECT payload FROM auth_invites WHERE world_id=? AND closed=? AND expires_at>?')
+      .all(worldId, false, now);
+    return rows.map((row) => this.parse(row));
   }
   async byId(worldId: string, id: string): Promise<InviteRecord | undefined> {
-    return this.parse(
+    return this.parseOptional(
       await this.db
         .prepare('SELECT payload FROM auth_invites WHERE world_id=? AND id=?')
         .get(worldId, id),
@@ -135,7 +147,7 @@ export class InviteRepository {
   }
   async byToken(token: string): Promise<InviteRecord | undefined> {
     if (!inviteTokenPattern.test(token)) return undefined;
-    return this.parse(
+    return this.parseOptional(
       await this.db
         .prepare('SELECT payload FROM auth_invites WHERE token_hash=?')
         .get(tokenHash(token)),
@@ -148,9 +160,7 @@ export class InviteRepository {
     now: number,
   ): Promise<{ invite: InviteRecord; token: string }> {
     if (await this.byId(scope.worldId, request.id)) throw new AuthorityError('conflict');
-    const pending = (await this.list(scope.worldId)).filter(
-      (invite) => inviteStatus(invite, now) === 'pending',
-    );
+    const pending = await this.pending(scope.worldId, now);
     if (pending.length >= INVITE_LIMITS.pending)
       throw new InviteError('Too many pending invites. Revoke unused invites first.');
     if (request.actorId && pending.some((invite) => invite.actorId === request.actorId))
@@ -168,23 +178,40 @@ export class InviteRepository {
       expiresAt: now + request.expiresInHours * 3_600_000,
     };
     await this.db
-      .prepare('INSERT INTO auth_invites VALUES (?,?,?,?,?)')
-      .run(invite.id, invite.worldId, tokenHash(token), invite.createdAt, JSON.stringify(invite));
+      .prepare('INSERT INTO auth_invites VALUES (?,?,?,?,?,?,?)')
+      .run(
+        invite.id,
+        invite.worldId,
+        tokenHash(token),
+        invite.createdAt,
+        invite.expiresAt,
+        false,
+        JSON.stringify(invite),
+      );
     return { invite, token };
   }
   async save(invite: InviteRecord): Promise<void> {
     await this.db
-      .prepare('UPDATE auth_invites SET payload=? WHERE world_id=? AND id=?')
-      .run(JSON.stringify(recordSchema.parse(invite)), invite.worldId, invite.id);
+      .prepare('UPDATE auth_invites SET closed=?,payload=? WHERE world_id=? AND id=?')
+      .run(
+        invite.redeemedAt !== undefined || invite.revokedAt !== undefined,
+        JSON.stringify(recordSchema.parse(invite)),
+        invite.worldId,
+        invite.id,
+      );
   }
 }
 export class InviteError extends Error {}
 
 /** Characters with a current grant or a historical human owner are never offered again;
  * transferring a human's private history needs consent rules (docs/limits/multiplayer.md#mp06). */
-export async function ownedActors(store: SqlGameRepository, worldId: string): Promise<Set<string>> {
+export async function ownedActors(
+  store: SqlGameRepository,
+  worldId: string,
+  grants?: readonly WorldGrant[],
+): Promise<Set<string>> {
   const owned = new Set((await store.authority.actorOwners(worldId)).keys());
-  for (const grant of await store.authority.listGrants(worldId))
+  for (const grant of grants ?? (await store.authority.listGrants(worldId)))
     if (grant.actorId) owned.add(grant.actorId);
   return owned;
 }

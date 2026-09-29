@@ -43,9 +43,10 @@ export function MaintenanceSection({
         body,
       );
       setMessage(result.message ?? '');
+      const field = result.field;
       if (result.ok) setAmbiguous([]);
-      else if (result.code === 'ambiguous-time' && result.field)
-        setAmbiguous((fields) => [...new Set([...fields, result.field!])]);
+      else if (result.code === 'ambiguous-time' && field)
+        setAmbiguous((fields) => [...new Set([...fields, field])]);
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : String(reason));
     } finally {

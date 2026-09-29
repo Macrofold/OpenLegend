@@ -118,7 +118,6 @@ function isJournalEvent(event: { type: string; text: string; data?: Record<strin
   );
 }
 
-/** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 /** Calendar projection shared by embodied views and the characterless operations view. */
 export const calendarFields = (world: WorldState) => ({
   seconds: world.simTime,
@@ -126,6 +125,7 @@ export const calendarFields = (world: WorldState) => ({
   hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
 });
 
+/** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 export async function projectView(
   service: WorldService,
   executionSource: 'live-model' | 'test-fixture' = 'live-model',

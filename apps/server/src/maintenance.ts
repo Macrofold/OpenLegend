@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { MaintenanceWindowView } from '@open-legend/protocol';
 import type { RequestScope } from './authority.js';
 import type { SqlDatabase } from './store.js';
+import { OverloadError } from './work-lane.js';
 import type { WorldService } from './world-service.js';
 
 /** Operational bounds for creator maintenance; docs/limits/multiplayer.md#mp16. */
@@ -112,21 +113,19 @@ export function canonicalTimeZone(timeZone: string): string {
   }
 }
 function wallClock(instant: number, timeZone: string): number {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-      .formatToParts(instant)
-      .map((part) => [part.type, Number(part.value)]),
-  );
-  return Date.UTC(parts.year!, parts.month! - 1, parts.day!, parts.hour!, parts.minute!);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(instant);
+  // A missing part yields NaN, which never matches a requested wall time.
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((item) => item.type === type)?.value ?? NaN);
+  return Date.UTC(part('year'), part('month') - 1, part('day'), part('hour'), part('minute'));
 }
 /** Wall-clock date/time in an IANA zone → UTC instant. A time skipped by a daylight-saving
  * change is rejected; a repeated time requires an explicit earlier/later occurrence. */
@@ -155,19 +154,21 @@ export function zonedInstant(local: LocalTime, timeZone: string, field: 'start' 
     .map((offset) => wall - offset)
     .filter((instant) => wallClock(instant, timeZone) === wall)
     .sort((a, b) => a - b);
-  if (!candidates.length)
+  const first = candidates[0],
+    last = candidates.at(-1);
+  if (first === undefined || last === undefined)
     throw new MaintenanceError(
       `${local.date} ${local.time} does not occur in ${timeZone} because the clocks change. Choose another ${field} time.`,
       'maintenance',
       field,
     );
-  if (candidates.length > 1 && !local.occurrence)
+  if (first !== last && !local.occurrence)
     throw new MaintenanceError(
       `${local.date} ${local.time} occurs twice in ${timeZone} because the clocks change. Choose the earlier or later occurrence for the ${field}.`,
       'ambiguous-time',
       field,
     );
-  return local.occurrence === 'later' ? candidates.at(-1)! : candidates[0]!;
+  return local.occurrence === 'later' ? last : first;
 }
 
 export function maintenanceView(window: MaintenanceWindow): MaintenanceWindowView {
@@ -485,6 +486,13 @@ export class MaintenanceSchedule {
         else this.arm();
       });
     } catch (error) {
+      if (error instanceof OverloadError && !this.closed) {
+        // Queued work expired before it started, so nothing changed; try the same start again.
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => void this.due(id), 1_000);
+        this.timer.unref?.();
+        return;
+      }
       // Failing closed: the store could not record the start, so keep the world paused.
       this.service.storageError =
         'Scheduled maintenance could not start safely; simulation is paused. Restart after resolving storage.';

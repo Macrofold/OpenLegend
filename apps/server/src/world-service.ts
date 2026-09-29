@@ -2470,7 +2470,9 @@ export class WorldService {
       // Speed changes preserve already-admitted time; pausing/resuming starts a fresh clock.
       if (next.world.paused || this.world.paused) this.debtSeconds = 0;
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
+      const resuming = this.world.paused && !next.world.paused;
       const ok = await this.commit(next, undefined, 'unchanged');
+      if (ok && resuming) this.clockStartedAt = performance.now();
       return {
         ok,
         code: ok ? 'control' : 'storage',
@@ -2483,12 +2485,17 @@ export class WorldService {
     });
   }
 
+  /** Host monotonic instant (`performance.now`) of the latest resume. The host clock never
+   * charges real time from before it, so a tick left waiting across a pause (for example a
+   * maintenance window) adds no catch-up. docs/projects/multiplayer-entry-maintenance.md */
+  clockStartedAt = 0;
   private async syncPause(): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
 
       this.debtSeconds = 0;
       gaugeMetric('clock.pendingSimSeconds', 0);
+      const resuming = this.world.paused && !this.paused;
       if (this.world.paused !== this.paused)
         await this.commit(
           { ...this.saved, world: { ...this.world, paused: this.paused } },
@@ -2496,6 +2503,7 @@ export class WorldService {
           'unchanged',
         );
       else this.notify(false);
+      if (resuming && !this.world.paused) this.clockStartedAt = performance.now();
     });
   }
 

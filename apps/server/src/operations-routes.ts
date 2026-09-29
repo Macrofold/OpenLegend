@@ -56,7 +56,8 @@ const MAINTENANCE_GAMEPLAY = new Set([
   '/api/narration/regenerate',
 ]);
 
-/** Bounded spectator payload; worlds above this report how many bodies were omitted. */
+/** Bounded spectator payload; worlds above this report how many bodies were omitted.
+ * docs/limits/multiplayer.md#mp17 */
 const OVERVIEW_BODY_LIMIT = 2_000;
 const CATEGORY: Record<Entity['kind'], WorldOverview['bodies'][number]['category']> = {
   player: 'person',
@@ -155,11 +156,9 @@ export class OperationsRoutes {
     }
     if (capabilities.includes('manage-access')) {
       const worldId = world.id;
-      const [grants, invites, owned] = [
-        await this.store.authority.listGrants(worldId),
-        await this.store.invites.list(worldId),
-        await ownedActors(this.store, worldId),
-      ];
+      const grants = await this.store.authority.listGrants(worldId);
+      const invites = await this.store.invites.list(worldId);
+      const owned = await ownedActors(this.store, worldId, grants);
       const labels = new Map(
         invites.flatMap((invite) => (invite.accountId ? [[invite.accountId, invite.label]] : [])),
       );
@@ -182,12 +181,15 @@ export class OperationsRoutes {
     this.capabilities(scope);
     return view;
   }
-  /** POST operations; undefined leaves the route to the existing router. */
+  /** POST routes owned here; each checks its own capability inside the writer lane. */
+  owns(path: string): boolean {
+    return path.startsWith('/api/invites/') || path.startsWith('/api/maintenance/');
+  }
   async post(
     path: string,
     scope: RequestScope,
     body: unknown,
-  ): Promise<{ status: number; value: unknown } | undefined> {
+  ): Promise<{ status: number; value: unknown }> {
     try {
       if (path === '/api/invites/create') return await this.createInvite(scope, body);
       if (path === '/api/invites/revoke') return await this.revokeInvite(scope, body);
@@ -203,6 +205,7 @@ export class OperationsRoutes {
           status: 200,
           value: { ok: true, message: 'Maintenance updated.', maintenance: await maintenance() },
         };
+      return { status: 404, value: { ok: false, code: 'route', message: 'Unknown API route.' } };
     } catch (error) {
       if (error instanceof InviteError)
         return { status: 409, value: { ok: false, code: 'invite', message: error.message } };
@@ -213,7 +216,6 @@ export class OperationsRoutes {
         };
       throw error;
     }
-    return undefined;
   }
   private async createInvite(scope: RequestScope, body: unknown) {
     const request = inviteRequestSchema.parse(body);
@@ -251,12 +253,13 @@ export class OperationsRoutes {
       const status = inviteStatus(invite, this.now());
       if (status === 'redeemed')
         throw new InviteError('Already used. Remove that account’s access instead.');
-      if (status === 'pending')
-        await this.store.invites.save({
-          ...invite,
-          revokedAt: this.now(),
-          revokedBy: scope.accountId,
-        });
+      if (status !== 'pending')
+        return { status: 200, value: { ok: true, message: `That invite is already ${status}.` } };
+      await this.store.invites.save({
+        ...invite,
+        revokedAt: this.now(),
+        revokedBy: scope.accountId,
+      });
       return { status: 200, value: { ok: true, message: 'Invite revoked.' } };
     });
   }

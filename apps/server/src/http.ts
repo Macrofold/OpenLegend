@@ -1120,11 +1120,13 @@ async function initializeGameServer(
           submittedScope !== scopeKey(scope)
         )
           throw new AuthorityError('stale-scope');
-        const operation = await operations.post(url.pathname, scope, body);
-        if (operation) {
+        if (operations.owns(url.pathname)) {
+          // Operations routes check their own capability; a validation error stays a 400.
           responseScope = undefined;
+          const operation = await operations.post(url.pathname, scope, body);
           return send(response, operation.status, operation.value);
         }
+        if (url.pathname.startsWith('/api/access')) responseCapability = 'manage-access';
         if (url.pathname === '/api/access') {
           const value = z
             .object({
@@ -2915,7 +2917,8 @@ async function initializeGameServer(
           }
           ticking = true;
           const current = performance.now();
-          const elapsed = (current - previous) / 1000;
+          // Real time from before the latest resume is never simulated.
+          const elapsed = (current - Math.max(previous, service.clockStartedAt)) / 1000;
           previous = current;
           const excluded = suspendedSeconds;
           suspendedSeconds = 0;
