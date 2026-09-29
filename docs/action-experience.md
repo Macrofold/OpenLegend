@@ -1,0 +1,58 @@
+# Action records and learned activities
+
+Characters record their own attempted actions, notice their actual results, and can learn connected methods during eligible downtime. A learned method is a tentative way to attempt something. It neither assigns a goal nor guarantees its outcome.
+
+## Maintained records
+
+- Implementation and acceptance: [AE01–AE10](maintainers/action-experience.md).
+- Operating bounds and unsupported extensions: [AEL01–AEL08](limits/action-experience.md).
+- Project history and accepted scenarios: [project](projects/action-experience.md), [feature specification](projects/action-experience-feature-spec.md), [technical design](projects/action-experience-tech-design.md).
+- Measured evidence, exact model inputs and costs: [verification](verification/action-experience.md).
+
+## What a character sees
+
+The engine builds permitted structured facts, then renders compact English. Names, targets, tools, distances, observed health, costs, requirements, uncertainty and results appear where relevant. Internal IDs, schema tags, reference tables and result codes remain outside action descriptions. Exact request bindings still identify the selected objects internally.
+
+The syntax explanation is: “Each action says what to do and with what. When brackets appear, they contain smaller actions in order; semicolons separate them. Results say what actually happened.” A leaf needs no brackets. Parent actions preserve the chosen purpose, including “Hunt once,” while children describe stages that actually ran. Completion of an attempt does not mean the animal died or the character obtained food.
+
+A choice states the current straight-line target distance and the configured stopping distance separately from attack reach. Later travel is uncertain, not a prediction from today's position. The selected weapon retains its relevant known damage, speed, reach, accuracy and ammunition information. Same-named possessions receive distinct readable positions within the actor's inventory. Past records retain event-time equipment and observations; a later tool or moving target cannot rewrite them.
+
+Known facts use templates or readable labels. Critical nested details without a template use narrow, readable JSON; ordinary actions have no duplicate JSON representation. Projection tracks covered facts. Optional information may be omitted explicitly, but required information that cannot fit prevents dispatch. Collapsed layout still carries critical descendant facts with their enclosing action names.
+
+Shared decision context supplies body state, goals, feelings and active commitments. A method adds its remaining steps, future prerequisites, actual or still-unproduced materials, aggregate consumption and supported shortages. These summaries follow the supplied finite structure; they do not search for every plan or simulate a future world. Known blockers, unknown facts and incomplete preparation remain distinct. Other options remain available and replace or interrupt current work through ordinary agency admission.
+
+## What is recorded
+
+`packages/domain/src/action-experience.ts` stores actor-owned occurrences with selected parent meaning, native command/definition pins, actual stages, terminal outcome, multiple output ports, observed effects and links to permitted evidence. Body, status and item owners supply actual committed values and quantities. A final eight-damage hit against two remaining health records two damage. Several subjects have separate effects, not one success flag. Numeric display removes floating-point noise without changing stored values.
+
+The kernel remains the only physical executor. Recording is in the same transition as the action/effect. A miss, blocked step, cancellation and successful attempt remain different. Already spent ammunition, materials, injury and produced items survive interruption. A failed sequence stops; later use of a partial product requires a new choice or an explicitly supported control path. Duplicate command receipts and terminal occurrence checks prevent duplicate effects.
+
+Output consumption connects actual lots across independently chosen actions. Split/merge handling preserves contributors; mixed indistinguishable units do not acquire invented per-source precision. Family-supplied state links retain contributing injuries. Missing or externally changed support makes the candidate incomplete rather than establishing that a last hit defeated a healthy animal. Purpose links connect the actor's chosen ordered work; temporal adjacency or sharing a tool alone does not prove causality.
+
+## Learning and shared definitions
+
+`activity-learning.ts` considers a bounded repertoire: direct material pairs with native support, endpoint dependency slices, selected-purpose spans, and compatible known spans. It preserves the raw trace and larger/overlapping candidates. A recognized four-action span does not prevent learning an eight-action span, and overlapping matches do not execute the same source step twice. Misses accompany the evidence without becoming mandatory failed steps. The exact ten-action example remains in the [technical design](projects/action-experience-tech-design.md#exact-ten-action-example).
+
+Server preparation reads actor-scoped indexed pages and bounded dependencies before description construction. Durable cursors and retained records allow later passes; the small pending list is a coalesced wake signal, not the complete history. Time controls when processing happens, not sequence membership.
+
+Existing maintenance admits a separate typed assessment at safe idle opportunities. The bundled world owns its health/fullness/controller eligibility. The assessment batches retain/decline/uncertain choices over the character's own permitted evidence, including the chosen purpose when recorded. That private purpose does not enter shared definitions or their identity. It is available in strict Jev-only mode without enabling generation, embeddings or workspaces. Native retention preflight checks capacity before paid dispatch. Existing spending admission, cancellation and timeline fences apply; dispatched signatures are recorded before calling the provider, so malformed/uncertain work is not automatically paid for again. New action selection is independent of optional learning.
+
+A retain atomically inserts or reuses an immutable world-scoped structural definition and the actor's private acquisition/support. The definition excludes private words and places; those remain in personal bindings. Exact matching includes module and item-definition pins. Existing recipe IDs remain immutable under their own authority. Independent reproduction can reuse structure while retaining independent evidence. Catalogue existence never grants knowledge. Decline/uncertain publishes no definition; capacity refuses optional retention without deleting existing support.
+
+Acquisitions remain tentative; success once is not calibrated confidence. Only personally acquired compatible methods enter relevant offers or explicit inspection. Revoking sole support suppresses use; independent lawful support may preserve it. Current forgetting overlays also apply after restoring older saves. Routine memory compaction does not revoke an acquisition.
+
+## Selected execution and inspection
+
+`activity-execution.ts` extends the existing `ActorPlan` with a bounded frontier. Supported controls are native invocation, sequence, branch, bounded repeat and bounded wait. Predicates are registered observations such as availability, life, equipment, fire and actual output quantity. There is no generated code or predicate evaluation from prose. Learning retains realized traces; it does not infer new stopping rules or a universal hunting loop.
+
+Each ready step passes through the existing kernel and its current authority, access, range and resource checks. Outputs bind only when actually committed. A completed step is not replayed on continuation or same-version restore. Failed native steps require a new choice; an explicitly blocked control may be reconsidered with current bindings. Unknown predicates stop honestly. Another actor's response or cooperation cannot be executed as the learner's action.
+
+Own action history and personally learned activities are available through explicit cognition inspection and the existing private-mind UI, with separate history/method pages. The private panel reports whether learning is pending, including its need for safe idle time, storage and an authorized model budget. The server rechecks actor/account/timeline scope around asynchronous reads. Creator inspection cannot access another human's private mind. Ordinary public views never publish private action history or other actors' acquisitions.
+
+## Storage and extension boundary
+
+Occurrences, methods, acquisitions and learning cursors use the existing PostgreSQL record repository and saved-world transaction. Cold completed history is paged independently of the small native plan window. Current-format manual saves include active control frames, actual output bindings and private evidence. Incompatible development saves are explicitly rejected under the unchanged [development save policy](../AGENTS.md#development-save-policy); no migration or automatic reset was added.
+
+The engine owns representation, finite execution, provenance, projection coverage and sharing integrity. The bundled world owns hunting labels, animal-health disclosure, weapon/food/fire mechanics and safe-downtime eligibility. Future native families can supply permitted facts and actual effects without changing the English grammar or adding arbitrary executable extensions.
+
+This delivery does not add new multi-target combat, robotics, cooperation, teaching of methods, approximate semantic matching, confidence promotion, suspension of every physical family, or a whole-population performance guarantee. Revision-bound transfers/splits/merges are recorded, but are not replayed as reusable invocations without fresh native revision admission. These boundaries and expansion triggers are recorded in [AEL](limits/action-experience.md); broader action/agency work retains its own tracker.

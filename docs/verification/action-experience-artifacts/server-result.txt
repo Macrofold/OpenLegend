@@ -1,0 +1,27 @@
+server { port: 3271, rows: 10, candidates: 4, methods: 4 }
+idleGuard { activePlan: 'no paid learning dispatch' }
+capacity {
+  assessment: 'deferred without dispatch or cursor loss',
+  uncertain: 'no definition'
+}
+publication {
+  concurrent: 'idempotent',
+  decline: 'no definition',
+  rollback: 'unique structural key failure rolled back all changes',
+  hydration: 'SQL byte cap before decoding',
+  credentials: 'no dispatch'
+}
+checkpoint 1
+durability {
+  restorePrivacy: 'passed',
+  reopen: 'passed',
+  rows: 510,
+  pages: 5,
+  resident: 128,
+  methods: 2
+}
+commitment {
+  context: 'actual spoken promise preserved in action-choice context',
+  providerCalls: 0
+}
+UI_READY http://127.0.0.1:3271

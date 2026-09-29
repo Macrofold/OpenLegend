@@ -48,6 +48,8 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG03 — Bounded plan frontier and one native physical lane
 
+[Action records and learned activities](action-experience.md) implements richer receipts, contributing effects and finite nested method execution through this plan/output/continuation owner. Overlapping discovery matches do not replay shared steps. AE evidence covers its named slices; broader gaps below remain independently tracked.
+
 - [x] Retain actual single-item/stack outputs from gather/prepare/craft/cook; resolve earlier-step references at native dispatch and preserve them through restart. The decision envelope supports equip/eat output consumers.
 - [ ] Extend result references only when a concrete consumer needs quantities, multi-output selection, recipe outputs, cross-frontier references or model-selected cook targets. Freeform grounding can now bind move/follow parameters alongside existing concrete commands; its generated sequences still have no general future-output reference contract. Qualify that contract before extending it.
 

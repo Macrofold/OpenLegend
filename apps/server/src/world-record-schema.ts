@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
  * docs/architecture.md#current-consuming-data-contracts
@@ -99,6 +100,16 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         statusEffects: map('sim_status_effects'),
         attributes: map('sim_attributes'),
         mechanismFields: map('sim_mechanism_fields'),
+      }),
+      actionExperience: one('activity_state', {
+        occurrences: actorLists('activity_occurrences', 'id'),
+        methods: map('activity_methods'),
+        acquisitions: actorMaps('activity_acquisitions'),
+        learning: map('activity_learning'),
+        current: map('activity_current'),
+        active: map('activity_active'),
+        items: map('activity_item_sources'),
+        changes: map('activity_state_sources'),
       }),
       objectState: one('sim_object_state'),
       objectLineage: map('sim_object_lineage'),
@@ -288,3 +299,33 @@ columns(
 );
 
 export const WORLD_RECORD_TABLES = ['world_head', ...RECORD_NODES.keys()] as const;
+
+columns(
+  'activity_occurrences',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[3] },
+    source_id: textColumn('id'),
+    at: numberColumn('at'),
+    status: textColumn('status'),
+    purpose_id: textColumn('parentId'),
+  },
+  [
+    ['actor_id', 'position'],
+    ['actor_id', 'source_id'],
+    ['actor_id', 'status'],
+    ['actor_id', 'purpose_id'],
+  ],
+);
+columns(
+  'activity_methods',
+  {
+    signature_key: {
+      sql: 'TEXT',
+      value: (value) => createHash('sha256').update(String(value['signature'])).digest('hex'),
+    },
+  },
+  [['signature_key']],
+);
+RECORD_NODES.get('activity_methods')!.uniqueIndexes = [['signature_key']];
+RECORD_NODES.get('activity_methods')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
+RECORD_NODES.get('activity_occurrences')!.constraints = ['CHECK (octet_length(payload)<=32768)'];

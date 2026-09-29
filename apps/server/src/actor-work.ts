@@ -37,6 +37,7 @@ export class ActorWork {
     world: WorldState,
     inputs: (id: string, world: WorldState) => unknown[],
     scope = world.id,
+    actorIds?: Iterable<string>,
   ): void {
     this.inputs = inputs;
     if (this.worldId !== world.id || this.scope !== scope) {
@@ -45,7 +46,7 @@ export class ActorWork {
       this.scope = scope;
     }
     const present = new Set<string>();
-    for (const id of Object.keys(world.minds ?? {})) {
+    for (const id of actorIds ?? Object.keys(world.minds ?? {})) {
       const entity = world.entities[id];
       if (!entity?.actor?.alive || !hasMemory(entity)) continue;
       present.add(id);

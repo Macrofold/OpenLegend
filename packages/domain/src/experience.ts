@@ -1,3 +1,4 @@
+import { revokeActivityEvidence } from './activity-learning.js';
 import {
   invalidateAppraisals,
   changeAppraisal,
@@ -839,6 +840,7 @@ export function invalidateExperience(
         expanded = true;
       }
   }
+  revokeActivityEvidence(world, actorId, [...affected]);
   if (forget) {
     state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(

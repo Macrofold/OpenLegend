@@ -12,7 +12,12 @@ import {
 /** Placement only: all evicted sources remain in their canonical tables.
  * docs/performance.md#inactive-history-residency
  */
-export const HISTORY_TABLES = new Set(['mind_memories', 'mind_awareness', 'mind_summaries']);
+export const HISTORY_TABLES = new Set([
+  'mind_memories',
+  'mind_awareness',
+  'mind_summaries',
+  'activity_occurrences',
+]);
 // Awareness consumers needing more than the presentation tail use SQL source IDs.
 // This is placement, not eligibility: important incidents remain fully recallable.
 export const HOT_AWARENESS_ROWS = 256;
@@ -178,9 +183,29 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     summaries[actorId] = compact(entries, undefined, () => -Infinity);
     changed ||= summaries[actorId] !== entries;
   }
+  const occurrences = { ...world.actionExperience.occurrences };
+  for (const [actorId, entries] of Object.entries(occurrences)) {
+    if (entries.length <= 128) continue;
+    const prior = historyPositions.get(entries);
+    const sourcePositions = new Map(entries.map((entry, index) => [entry.id, index]));
+    const retained = entries.filter(
+      (entry, index) => entry.status === 'running' || index >= entries.length - 128,
+    );
+    if (retained.length === entries.length) continue;
+    const positions = new Map(
+      retained.map((entry) => [
+        entry.id,
+        prior?.positions.get(entry.id) ?? sourcePositions.get(entry.id)!,
+      ]),
+    );
+    historyPositions.set(retained, { positions, next: prior?.next ?? entries.length });
+    occurrences[actorId] = retained;
+    changed = true;
+  }
   return changed
     ? updateWorld(world, (draft) => {
         draft.memories = memories;
+        draft.actionExperience.occurrences = occurrences;
         if (draft.experience) {
           draft.experience.awareness = awareness;
           draft.experience.summaries = summaries;

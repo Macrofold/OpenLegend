@@ -10,6 +10,8 @@ Each task must update implementation status with actual evidence when delivered.
 
 ## Delivery order
 
+Delivered [AE05–AE08 activity learning](action-experience.md) uses CR preparation, maintenance scheduling and relevant retrieval. Individual and learned-method descriptions retain later requirements, costs and uncertainty. A separate typed idle-learning operation runs in Jev-only mode; full generative reflection remains disabled there. Existing admission/accounting controls it; [evidence](../verification/action-experience.md) owns measured qualification.
+
 The [NC track](narration-and-conversations.md) retains speech/recall, conversation and Narrator integration acceptance for its delivered foundations; private immediate thoughts remain distinct from god-only reflection presentation, and notable unseen retention grants no awareness. [AG](agent-agency.md) extends universal decisions and operational pursuit. Existing CR/NC failure and behavioral acceptance tasks remain open; current implementation is recorded in Architecture.
 
 Keep CR identifiers stable for existing links. Execute in the following dependency order; a task's number does not imply that its integrations can precede their prerequisites:

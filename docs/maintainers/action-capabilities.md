@@ -119,6 +119,8 @@ The first playable slice is **parameterized movement through the existing native
 
 ## AC06 — Typed method composition and result ports
 
+The delivered [AE project](../action-experience.md) is a concrete consumer of this work: structured nested records, decision-relevant context, committed partial/multiple-output experience links and learned method continuation. AE uses the canonical invoke/sequence/branch/repeat/wait vocabulary; output commitment is separate from terminal success and grants no automatic failure continuation. [AE01/AE02/AE09](action-experience.md) coordinate those slices under AC/AG ownership; this does not mark AC06 delivered or authorize a second interpreter.
+
 **Owner:** AG03 continuation and family-output adapters. **Depends on:** AC02–AC04. **Touchpoints:** `agency.ts`, `response.ts`, native completion receipts, request schemas and plan projection.
 
 - [ ] AC06.1 Extend the existing frontier to bound family invocations with typed successful-result ports; preserve actual item outputs before adding additional result kinds with concrete consumers.

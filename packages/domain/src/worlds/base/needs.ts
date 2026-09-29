@@ -72,3 +72,15 @@ export function advanceWildernessNeeds(
   );
   return actor.health !== previous;
 }
+
+/** Bundled physiology decides safe downtime, not the generic learning worker. */
+export function safeCognitiveDowntime(actor: ActorComponent): boolean {
+  return (
+    actor.controller === 'npc' &&
+    actor.alive &&
+    !actor.incapacitated &&
+    actor.health >= 0.4 * (actor.body?.maxHealth ?? 100) &&
+    !nativeNeedBelow(actor, 'fullness', 30) &&
+    (!actor.action || actor.action.type === 'status-effect')
+  );
+}

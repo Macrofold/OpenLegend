@@ -1,3 +1,6 @@
+import { activeActivity, connectActivityState } from './action-experience.js';
+import { seesEntity } from './perception.js';
+import { observerDescription } from './worlds/base/knowledge.js';
 import { reconcileConditions } from './conditions.js';
 import { recordSemanticChange } from './dependencies.js';
 import { worldSupport } from './spatial-state.js';
@@ -229,6 +232,17 @@ export function commitBodyEffects(
     actor.health + totals.health + totals.healing - totals.injury - totals.burning,
   );
   reconcileBody(world, entity, events, cause);
+  const experience = activeActivity(world, cause);
+  const observer = experience && world.entities[experience.actorId];
+  connectActivityState(
+    world,
+    entity.id,
+    cause,
+    before,
+    actor.health,
+    !!observer && (observer.id === entity.id || seesEntity(world, observer, entity)),
+    observer ? observerDescription(world, observer.id, entity.id) : undefined,
+  );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
   emit(world, events, 'body-effect', `${entity.name}'s body changed.`, entity, entity.id, {
     effectId: cause,

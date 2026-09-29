@@ -19,6 +19,8 @@ This page is the master navigation index for active implementation work.
 
 ## Focused work
 
+[Action records and learned activities (AE01–AE10)](action-experience.md) records delivered nested action/effect descriptions, choice context, connected experience, idle learning and shared structure with private acquisition. Start with [current behavior](../action-experience.md); the tracker links design, operating limits and actual evidence without closing broader AC/AG/CR work.
+
 [Macrofold Worker API cutover (MW01–MW04)](macrofold-worker-api.md) tracks the shared-compute caller migration, cancellation/state preservation and coordinated deployment gates.
 
 | Area                                                                   | Tracker                                                               | Design owner                                                                                                                                                                                                                                                   |

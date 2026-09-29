@@ -1023,6 +1023,7 @@ async function initializeGameServer(
         }
         const inspection = [
           '/api/god/mind',
+          '/api/god/activity-history',
           '/api/god/trigger',
           '/api/god/triggers',
           '/api/god/intelligence-details',
@@ -1923,6 +1924,26 @@ async function initializeGameServer(
                         : await inspectGodMind(service, value.actorId, scope),
                     }
                   : {}),
+              });
+            }
+            case '/api/activity-history':
+            case '/api/god/activity-history': {
+              const { actorId, after, methodAfter } = z
+                .object({
+                  actorId: requestIdSchema,
+                  after: z.number().int().min(-1).default(-1),
+                  methodAfter: z.number().int().min(0).max(64).default(0),
+                })
+                .strict()
+                .parse(body);
+              if (
+                (url.pathname === '/api/activity-history' && actorId !== scope.actorId) ||
+                (url.pathname.startsWith('/api/god/') && !config.godMode)
+              )
+                throw new AuthorityError('forbidden');
+              return send(response, 200, {
+                ok: true,
+                page: await service.inspectActivities(actorId, after, scope, methodAfter),
               });
             }
             case '/api/mind': {

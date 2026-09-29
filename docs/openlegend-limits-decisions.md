@@ -24,6 +24,8 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 
 Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D01–A3D14](limits/3d-pixel-art.md) inventory the new asset-pipeline envelopes and unqualified device targets; [V3D01–V3D12](maintainers/3d-pixel-art.md) own delivery. Existing lighting, spending, physical-world and persistence limits above remain controlling. These are proposals, not changes to current runtime limits.
 
+Current [action records and learned activities](action-experience.md): [AEL01–AEL08](limits/action-experience.md) record finite representation, projection, hydration, candidate, storage, learning and retrieval limits. [AE01–AE10](maintainers/action-experience.md) and [evidence](verification/action-experience.md) record delivery and qualification; no unlimited execution is implied.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

@@ -277,6 +277,7 @@ export interface WorldEvent {
   data?: Record<string, string | number | boolean | null>;
 }
 export interface Outcome {
+  outputs?: import('./action-experience.js').ActivityOutput[];
   ok: boolean;
   code: string;
   message: string;
@@ -290,6 +291,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
@@ -355,11 +357,19 @@ export interface WorldState {
   nextId: number;
 }
 interface Envelope {
+  /** Selected meaning only; never native effect authority. */
+  purpose?: string;
   id: string;
   actorId: string;
 }
 export type Command = Envelope &
   (
+    | {
+        type: 'activity';
+        methodId: string;
+        bindings: Record<string, import('./action-experience.js').ActivityBinding>;
+        resume?: boolean;
+      }
     | {
         type: 'conversation';
         operation: 'join' | 'leave';
@@ -395,6 +405,7 @@ export type Command = Envelope &
         operation: 'activate' | 'deactivate';
       }
     | { type: 'inspect-inventory'; after?: string; expectedRevision?: number }
+    | { type: 'inspect-activities'; after: number; methodAfter?: number }
     | { type: 'cancel' | 'recover' }
     | {
         type: 'say';

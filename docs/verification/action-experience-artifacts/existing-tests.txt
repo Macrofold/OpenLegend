@@ -1,0 +1,9 @@
+
+ RUN  v5.0.1 /Users/mzw/Documents/ChatGPT/OpenLegend
+
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  03:50:27
+   Duration  2.52s (transform 52%, tests 27%, setup 17%, import 4%)
+

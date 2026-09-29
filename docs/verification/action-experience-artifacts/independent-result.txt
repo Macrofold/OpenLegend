@@ -1,0 +1,11 @@
+jobs [{"status":"completed","message":"Maintenance accepted."}]
+Could not persist intelligence diagnostics.
+/private/tmp/ol-activity-independent.mts:40
+ assert(calls[0].request.state.includes('Cook'));assert(calls[0].request.state.includes('Eat'));assert.equal(game.service.world.actionExperience.acquisitions[second][methods[0].id].evidence[0].every(id=>id.includes(second)),true);
+                                                                                                                                                                                     ^
+
+TypeError: Cannot read properties of undefined (reading '0')
+    at <anonymous> (/private/tmp/ol-activity-independent.mts:40:182)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.2

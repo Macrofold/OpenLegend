@@ -26,6 +26,7 @@ import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateActionExperience } from './action-experience.js';
 import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
@@ -591,6 +592,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  validateActionExperience(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
     if (

@@ -8,6 +8,8 @@ Historical migration/recovery observations in the linked reports describe the pi
 
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
+- [Action records and learned activities](verification/action-experience.md): native learning/execution, private PostgreSQL history, browser inspection, automatic meal behavior and exact provider costs.
+
 ## Storage, startup and recovery
 
 - [History storage efficiency](verification/history-storage-efficiency.md): indexed startup, selective edits, query plans and storage costs.

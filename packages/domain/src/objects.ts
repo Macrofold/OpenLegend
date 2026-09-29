@@ -1,3 +1,4 @@
+import { connectActivityItem } from './action-experience.js';
 import { chargeWork, WorkBudgetError } from './work-budget.js';
 import { contributionSourceBound } from './status-capabilities.js';
 import { isDraft, original } from 'immer';
@@ -364,6 +365,7 @@ function lineage(
   cause: string,
   targetId?: string,
 ) {
+  connectActivityItem(world, type, sourceId, quantity, cause, targetId);
   const source = world.entities[sourceId]!,
     pin = source.item?.unitPin ?? ITEM_COUNT_PIN;
   const id = nextId(world, 'object-history');

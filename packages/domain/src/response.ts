@@ -523,6 +523,8 @@ export function commitActorResponse(
       else if (
         selected &&
         [
+          'activity',
+          'inspect-activities',
           'conversation',
           'teach',
           'cancel',
@@ -530,9 +532,11 @@ export function commitActorResponse(
           'withdraw-attempt',
           'confirm-attempt',
         ].includes(selected.type)
-      )
+      ) {
+        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace')
+          command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
         command('act', { ...selected, actorId, id: `${id}:${localId}` });
-      else if (selected)
+      } else if (selected)
         components[localId] = arrangePlan(
           world,
           world.entities[actorId]!.actor!,

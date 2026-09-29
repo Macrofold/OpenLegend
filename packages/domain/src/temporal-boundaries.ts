@@ -45,6 +45,10 @@ export function nativeInterval(
       actor = entity?.actor;
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
+    const plan = actor.agency.plan;
+    const waiting = plan?.status === 'active' && !action && plan.activity?.pending.at(-1);
+    if (waiting && waiting.node.kind === 'wait' && waiting.startedAt !== undefined)
+      bound = Math.min(bound, waiting.startedAt + waiting.node.seconds - world.simTime);
     bound = Math.min(bound, nextConditionReview(entity) - world.simTime);
     for (const d of manifest.definitions) {
       const value = readAttribute(actor, d);

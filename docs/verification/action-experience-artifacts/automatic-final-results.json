@@ -1,0 +1,1768 @@
+{
+  "sent": 86,
+  "generated": 0,
+  "reportedCost": 0.02349249,
+  "methods": [
+    "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+    "Harvest, then Cook",
+    "Cook, then Eat",
+    "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest, then Cook, then Eat"
+  ],
+  "recent": [
+    {
+      "id": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+      "commandId": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+      "actionId": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+      "actorId": "entity-0002",
+      "parentId": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence",
+      "at": 2455.000000000002,
+      "command": {
+        "actorId": "entity-0002",
+        "id": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+        "type": "equip",
+        "itemId": "item-8"
+      },
+      "objects": {
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Equip",
+        "facts": [
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "weapon",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          }
+        ],
+        "tool": "Knife",
+        "result": "Equipped Knife."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [],
+      "evidenceIds": [
+        "event-78"
+      ],
+      "parentName": "Hunt once",
+      "endedAt": 2455.000000000002,
+      "outcome": {
+        "ok": true,
+        "code": "equipped",
+        "message": "Equipped Knife.",
+        "itemId": "item-8"
+      }
+    },
+    {
+      "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:2",
+      "commandId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:2",
+      "actionId": "action-79",
+      "actorId": "entity-0002",
+      "parentId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action",
+      "at": 2460.000000000002,
+      "command": {
+        "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.0 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "to my right",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "18/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.0 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "The strike missed; this one attempt has ended."
+          }
+        ],
+        "result": "The strike missed; this one attempt has ended."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-80",
+        "event-81"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 2489.000000000002,
+      "outcome": {
+        "ok": true,
+        "code": "miss",
+        "message": "The strike missed; this one attempt has ended."
+      }
+    },
+    {
+      "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:3",
+      "commandId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:3",
+      "actionId": "action-82",
+      "actorId": "entity-0002",
+      "parentId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action",
+      "at": 2489.000000000002,
+      "command": {
+        "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:3",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.4 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "18/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.4 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "The strike missed; this one attempt has ended."
+          }
+        ],
+        "result": "The strike missed; this one attempt has ended."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-83",
+        "event-84"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 2531.590909090911,
+      "outcome": {
+        "ok": true,
+        "code": "miss",
+        "message": "The strike missed; this one attempt has ended."
+      }
+    },
+    {
+      "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:4",
+      "commandId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:4",
+      "actionId": "action-85",
+      "actorId": "entity-0002",
+      "parentId": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action",
+      "at": 2531.590909090911,
+      "command": {
+        "id": "thought-123634f9-7366-4da5-8209-2f3075ca45e5:action:step:4",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.7 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "18/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.7 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "the target or route keeps changing; choose a new action."
+          }
+        ],
+        "result": "the target or route keeps changing; choose a new action."
+      },
+      "status": "blocked",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-86"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 2553.4545454545473,
+      "outcome": {
+        "ok": false,
+        "code": "action-failed",
+        "message": "the target or route keeps changing; choose a new action."
+      }
+    },
+    {
+      "id": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+      "commandId": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+      "actionId": "action-89",
+      "actorId": "entity-0002",
+      "parentId": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+      "at": 2555.000000000002,
+      "command": {
+        "actorId": "entity-0002",
+        "id": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+        "purpose": "Hunt once",
+        "type": "strike",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "0.6 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "18/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          },
+          {
+            "name": "observed changes",
+            "critical": true,
+            "value": [
+              {
+                "target": "a hare",
+                "property": "health",
+                "before": 18,
+                "after": 10
+              }
+            ],
+            "sentence": "a hare: health 18 to 10 (-8)"
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "0.6 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "The strike hit; this one attempt has ended."
+          }
+        ],
+        "result": "The strike hit; this one attempt has ended."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        },
+        {
+          "from": "experience-3",
+          "relation": "state"
+        },
+        {
+          "from": "experience-4",
+          "relation": "state"
+        },
+        {
+          "from": "experience-5",
+          "relation": "state"
+        }
+      ],
+      "evidenceIds": [
+        "event-90",
+        "event-91",
+        "event-92"
+      ],
+      "parentName": "Hunt once",
+      "effects": [
+        {
+          "subjectId": "hare-1",
+          "label": "a hare",
+          "property": "health",
+          "before": 18,
+          "after": 10,
+          "id": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action:effect:0"
+        }
+      ],
+      "endedAt": 2584.000000000002,
+      "outcome": {
+        "ok": true,
+        "code": "hit",
+        "message": "The strike hit; this one attempt has ended."
+      }
+    },
+    {
+      "id": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:2",
+      "commandId": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:2",
+      "actionId": "action-94",
+      "actorId": "entity-0002",
+      "parentId": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action",
+      "at": 2585.000000000002,
+      "command": {
+        "id": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.7 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "10/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          },
+          {
+            "name": "observed changes",
+            "critical": true,
+            "value": [
+              {
+                "target": "a hare",
+                "property": "health",
+                "before": 10,
+                "after": 2
+              }
+            ],
+            "sentence": "a hare: health 10 to 2 (-8)"
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.7 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "The strike hit; this one attempt has ended."
+          }
+        ],
+        "result": "The strike hit; this one attempt has ended."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        },
+        {
+          "from": "experience-3",
+          "relation": "state"
+        },
+        {
+          "from": "experience-4",
+          "relation": "state"
+        },
+        {
+          "from": "experience-5",
+          "relation": "state"
+        },
+        {
+          "from": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+          "relation": "state"
+        }
+      ],
+      "evidenceIds": [
+        "event-95",
+        "event-96",
+        "event-97"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "effects": [
+        {
+          "subjectId": "hare-1",
+          "label": "a hare",
+          "property": "health",
+          "before": 10,
+          "after": 2,
+          "id": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:2:effect:0"
+        }
+      ],
+      "endedAt": 2631.272727272729,
+      "outcome": {
+        "ok": true,
+        "code": "hit",
+        "message": "The strike hit; this one attempt has ended."
+      }
+    },
+    {
+      "id": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:3",
+      "commandId": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:3",
+      "actionId": "action-99",
+      "actorId": "entity-0002",
+      "parentId": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action",
+      "at": 2631.272727272729,
+      "command": {
+        "id": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:3",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.6 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.6 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-100"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 2635.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-7bdd91a7-2607-48d9-a63b-a89521bbcaa7:action:step:2",
+      "commandId": "thought-7bdd91a7-2607-48d9-a63b-a89521bbcaa7:action:step:2",
+      "actionId": "action-101",
+      "actorId": "entity-0002",
+      "parentId": "thought-7bdd91a7-2607-48d9-a63b-a89521bbcaa7:action",
+      "at": 2635.000000000002,
+      "command": {
+        "id": "thought-7bdd91a7-2607-48d9-a63b-a89521bbcaa7:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.2 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.2 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-102",
+        "event-103"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 2655.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-40e0eeb3-e921-4269-b3cc-d1739229ebdf:action",
+      "commandId": "thought-40e0eeb3-e921-4269-b3cc-d1739229ebdf:action",
+      "actionId": "action-105",
+      "actorId": "entity-0002",
+      "parentId": "thought-40e0eeb3-e921-4269-b3cc-d1739229ebdf:action",
+      "at": 3020.000000000002,
+      "command": {
+        "actorId": "entity-0002",
+        "id": "thought-40e0eeb3-e921-4269-b3cc-d1739229ebdf:action",
+        "purpose": "Hunt once",
+        "type": "strike",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "6.3 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead and to my left",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "6.3 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-106"
+      ],
+      "parentName": "Hunt once",
+      "endedAt": 3060.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-0eea2a69-9a64-4eda-86e8-bfabb8c77f38:action:step:2",
+      "commandId": "thought-0eea2a69-9a64-4eda-86e8-bfabb8c77f38:action:step:2",
+      "actionId": "action-107",
+      "actorId": "entity-0002",
+      "parentId": "thought-0eea2a69-9a64-4eda-86e8-bfabb8c77f38:action",
+      "at": 3060.000000000002,
+      "command": {
+        "id": "thought-0eea2a69-9a64-4eda-86e8-bfabb8c77f38:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.9 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.9 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-108"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 3065.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-53256b79-3640-4edd-9978-32e71961b7c8:action:step:2",
+      "commandId": "thought-53256b79-3640-4edd-9978-32e71961b7c8:action:step:2",
+      "actionId": "action-109",
+      "actorId": "entity-0002",
+      "parentId": "thought-53256b79-3640-4edd-9978-32e71961b7c8:action",
+      "at": 3065.000000000002,
+      "command": {
+        "id": "thought-53256b79-3640-4edd-9978-32e71961b7c8:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "1.4 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "1.4 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-110"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "endedAt": 3070.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action:step:2",
+      "commandId": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action:step:2",
+      "actionId": "action-111",
+      "actorId": "entity-0002",
+      "parentId": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action",
+      "at": 3070.000000000002,
+      "command": {
+        "id": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action:step:2",
+        "actorId": "entity-0002",
+        "type": "strike",
+        "purpose": "Hunt once",
+        "targetId": "hare-1",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "0.8 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "2/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          },
+          {
+            "name": "observed changes",
+            "critical": true,
+            "value": [
+              {
+                "target": "a hare",
+                "property": "health",
+                "before": 2,
+                "after": 0
+              }
+            ],
+            "sentence": "a hare: health 2 to 0 (-2)"
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "0.8 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          },
+          {
+            "name": "Attack once",
+            "facts": [],
+            "result": "The strike hit; this one attempt has ended."
+          }
+        ],
+        "result": "The strike hit; this one attempt has ended."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        },
+        {
+          "from": "experience-3",
+          "relation": "state"
+        },
+        {
+          "from": "experience-4",
+          "relation": "state"
+        },
+        {
+          "from": "experience-5",
+          "relation": "state"
+        },
+        {
+          "from": "thought-1d6ccfb2-8a3e-4e14-bc1c-03958a0038e5:action",
+          "relation": "state"
+        },
+        {
+          "from": "thought-4e727387-d3c6-4c33-af58-2cb0d30f9ca7:action:step:2",
+          "relation": "state"
+        }
+      ],
+      "evidenceIds": [
+        "event-112",
+        "event-114",
+        "event-115"
+      ],
+      "parentName": "Equip, then Hunt once, then Hunt once, then Hunt once, then Harvest",
+      "methodId": "activity-197de0o",
+      "effects": [
+        {
+          "subjectId": "hare-1",
+          "label": "a hare",
+          "property": "health",
+          "before": 2,
+          "after": 0,
+          "id": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action:step:2:effect:0"
+        }
+      ],
+      "endedAt": 3099.000000000002,
+      "outcome": {
+        "ok": true,
+        "code": "hit",
+        "message": "The strike hit; this one attempt has ended."
+      }
+    },
+    {
+      "id": "thought-92d3de73-e8fc-4d27-b49b-c6f5a8d45802:action",
+      "commandId": "thought-92d3de73-e8fc-4d27-b49b-c6f5a8d45802:action",
+      "actionId": "action-117",
+      "actorId": "entity-0002",
+      "parentId": "thought-92d3de73-e8fc-4d27-b49b-c6f5a8d45802:action",
+      "at": 3100.000000000002,
+      "command": {
+        "actorId": "entity-0002",
+        "id": "thought-92d3de73-e8fc-4d27-b49b-c6f5a8d45802:action",
+        "type": "harvest",
+        "targetId": "hare-1"
+      },
+      "objects": {
+        "hare-1": {
+          "kind": "animal"
+        }
+      },
+      "view": {
+        "name": "Harvest",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "0.3 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "0/18",
+            "critical": true
+          },
+          {
+            "name": "requirements",
+            "value": "Requires a cutting tool and unharvested remains; 84 game seconds plus approach",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 1.6 m; the route length is not known",
+            "critical": true
+          },
+          {
+            "name": "produced",
+            "value": "2 Raw meat, 2 Bone fragment",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "result": "harvest completed."
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "port": "raw_meat",
+          "itemId": "item-119",
+          "definitionId": "raw_meat",
+          "quantity": 2
+        },
+        {
+          "port": "bone",
+          "itemId": "item-120",
+          "definitionId": "bone",
+          "quantity": 2
+        }
+      ],
+      "connections": [
+        {
+          "from": "thought-d9b9dc78-2ad2-47ef-943b-af096bdb2edc:action:step:2",
+          "relation": "material",
+          "port": "remains"
+        }
+      ],
+      "evidenceIds": [
+        "event-118",
+        "event-121"
+      ],
+      "endedAt": 3184.000000000002,
+      "outcome": {
+        "ok": true,
+        "code": "completed",
+        "message": "harvest completed.",
+        "outputs": [
+          {
+            "port": "raw_meat",
+            "itemId": "item-119",
+            "definitionId": "raw_meat",
+            "quantity": 2
+          },
+          {
+            "port": "bone",
+            "itemId": "item-120",
+            "definitionId": "bone",
+            "quantity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "thought-784fffce-3536-4fc1-a134-a8fb3b7f5111:action",
+      "commandId": "thought-784fffce-3536-4fc1-a134-a8fb3b7f5111:action",
+      "actionId": "action-124",
+      "actorId": "entity-0002",
+      "parentId": "thought-784fffce-3536-4fc1-a134-a8fb3b7f5111:action",
+      "at": 3200.000000000002,
+      "command": {
+        "actorId": "entity-0002",
+        "id": "thought-784fffce-3536-4fc1-a134-a8fb3b7f5111:action",
+        "purpose": "Hunt once",
+        "type": "strike",
+        "targetId": "hare-2",
+        "definitionId": "knife",
+        "weaponItemId": "item-8"
+      },
+      "objects": {
+        "hare-2": {
+          "kind": "animal"
+        },
+        "item-8": {
+          "kind": "item",
+          "definitionId": "knife",
+          "definitionVersion": 1,
+          "definitionDigest": "1jd3ibq"
+        }
+      },
+      "view": {
+        "name": "Hunt once",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "7.8 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "behind",
+            "critical": true
+          },
+          {
+            "name": "health before the attempt",
+            "value": "18/18",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "A small sharp blade for close-range cutting and stabbing.",
+            "critical": false
+          },
+          {
+            "name": "attack",
+            "value": "8 injury per hit; 24 game seconds plus approach; reach 1.3 m; 75% base hit chance in reach.",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 0.8 m; route length is not known",
+            "critical": true
+          }
+        ],
+        "target": "a hare",
+        "tool": "Knife",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "7.8 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 0.8 m; route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Stopped by choice; already committed effects remain."
+          }
+        ],
+        "result": "Stopped by choice; already committed effects remain."
+      },
+      "status": "cancelled",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-462bec71-6baa-48a6-a949-fba4efe80f77:sequence:0",
+          "relation": "support"
+        }
+      ],
+      "evidenceIds": [
+        "event-125"
+      ],
+      "parentName": "Hunt once",
+      "endedAt": 3205.000000000002,
+      "outcome": {
+        "ok": false,
+        "code": "cancelled",
+        "message": "Stopped by choice; already committed effects remain."
+      }
+    },
+    {
+      "id": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:1",
+      "commandId": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:1",
+      "actionId": "action-126",
+      "actorId": "entity-0002",
+      "parentId": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action",
+      "at": 3205.000000000002,
+      "command": {
+        "id": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:1",
+        "actorId": "entity-0002",
+        "type": "cook",
+        "purpose": "Cook",
+        "itemId": "item-119",
+        "heatId": "campfire"
+      },
+      "objects": {
+        "item-119": {
+          "kind": "item",
+          "definitionId": "raw_meat",
+          "definitionVersion": 1,
+          "definitionDigest": "192ugy0"
+        },
+        "campfire": {
+          "kind": "campfire"
+        }
+      },
+      "view": {
+        "name": "Cook",
+        "facts": [
+          {
+            "name": "distance before the attempt",
+            "value": "15.3 m",
+            "critical": true
+          },
+          {
+            "name": "direction",
+            "value": "ahead and to my right",
+            "critical": true
+          },
+          {
+            "name": "description",
+            "value": "Fresh meat. Cook it at a lit campfire before eating.",
+            "critical": false
+          },
+          {
+            "name": "cost",
+            "value": "Uses one raw meat at the start; 90 game seconds; requires a lit fire throughout; spent meat is not returned on interruption",
+            "critical": true
+          },
+          {
+            "name": "approach",
+            "value": "Move to within 1.6 m; the route length is not known",
+            "critical": true
+          },
+          {
+            "name": "fire",
+            "value": "Lit now; it must stay lit until cooking ends",
+            "critical": true
+          },
+          {
+            "name": "produced",
+            "value": "1 Cooked meat",
+            "critical": true
+          }
+        ],
+        "target": "Banked campfire",
+        "tool": "Raw meat",
+        "children": [
+          {
+            "name": "Move into reach",
+            "facts": [
+              {
+                "name": "distance",
+                "value": "15.3 m",
+                "critical": true
+              },
+              {
+                "name": "approach",
+                "value": "Move to within 1.6 m; the route length is not known",
+                "critical": true
+              }
+            ],
+            "result": "Reached the required working distance."
+          }
+        ],
+        "result": "cook completed."
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "port": "cooked_meat",
+          "itemId": "item-131",
+          "definitionId": "cooked_meat",
+          "quantity": 1
+        }
+      ],
+      "connections": [
+        {
+          "from": "thought-92d3de73-e8fc-4d27-b49b-c6f5a8d45802:action",
+          "relation": "material",
+          "port": "raw_meat",
+          "quantity": 1
+        }
+      ],
+      "evidenceIds": [
+        "event-127",
+        "event-132"
+      ],
+      "parentName": "Cook, then Eat",
+      "methodId": "activity-18biwvs",
+      "endedAt": 3429.090909090911,
+      "outcome": {
+        "ok": true,
+        "code": "completed",
+        "message": "cook completed.",
+        "itemId": "item-131",
+        "outputs": [
+          {
+            "port": "cooked_meat",
+            "itemId": "item-131",
+            "definitionId": "cooked_meat",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:2",
+      "commandId": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:2",
+      "actionId": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:2",
+      "actorId": "entity-0002",
+      "parentId": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action",
+      "at": 3429.090909090911,
+      "command": {
+        "id": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:2",
+        "actorId": "entity-0002",
+        "type": "eat",
+        "purpose": "Eat",
+        "itemId": "item-131"
+      },
+      "objects": {
+        "item-131": {
+          "kind": "item",
+          "definitionId": "cooked_meat",
+          "definitionVersion": 1,
+          "definitionDigest": "1b3mmpz"
+        }
+      },
+      "view": {
+        "name": "Eat",
+        "facts": [
+          {
+            "name": "description",
+            "value": "Meat cooked through over a dependable fire.",
+            "critical": false
+          },
+          {
+            "name": "food",
+            "value": "Uses one; restores up to 38 fullness",
+            "critical": true
+          },
+          {
+            "name": "observed changes",
+            "critical": true,
+            "value": [
+              {
+                "target": "Me",
+                "property": "fullness",
+                "before": 15.06272727272718,
+                "after": 53.06272727272718
+              }
+            ],
+            "sentence": "Me: fullness 15.062727 to 53.062727 (+38)"
+          }
+        ],
+        "tool": "Cooked meat",
+        "result": "Food restored fullness."
+      },
+      "status": "completed",
+      "outputs": [],
+      "connections": [
+        {
+          "from": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:1",
+          "relation": "material",
+          "port": "cooked_meat",
+          "quantity": 1
+        }
+      ],
+      "evidenceIds": [
+        "event-134"
+      ],
+      "parentName": "Cook, then Eat",
+      "methodId": "activity-18biwvs",
+      "effects": [
+        {
+          "subjectId": "entity-0002",
+          "label": "Me",
+          "property": "fullness",
+          "before": 15.06272727272718,
+          "after": 53.06272727272718,
+          "id": "thought-3b3d6251-97c2-403b-adb1-4cd060fbe172:action:step:2:effect:0"
+        }
+      ],
+      "endedAt": 3429.090909090911,
+      "outcome": {
+        "ok": true,
+        "code": "ate",
+        "message": "Food restored fullness."
+      }
+    }
+  ],
+  "decisions": 0
+}

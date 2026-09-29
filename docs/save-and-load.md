@@ -186,3 +186,7 @@ Retention counts are targets, not hard filesystem quotas: new files publish befo
 
 - Implementation: [Feature tasks](maintainers/save-and-load.md).
 - Limits and constraints: [Persistence, checkpoints and recovery inventory](limits/persistence.md).
+
+## Action-experience state
+
+The current development format is `development-2026-09-28-action-experience`. The PostgreSQL record catalogue and manual saves include actor-scoped action occurrences, immutable method definitions, private acquisitions/evidence, learning cursors and active nested control/output state. Cold history residency does not delete canonical records. Restoration applies current forgetting overlays before methods become available; old paid completions remain fenced by generation. [AE evidence](verification/action-experience.md) covers current-format checkpoints, active continuation and privacy. The unchanged [development save policy](../AGENTS.md#development-save-policy) requires explicit rejection of incompatible saves, with no migration, deletion or automatic reset.

@@ -106,6 +106,7 @@ export function readableDecisionContext(
       : 'None supplied.';
   const sections = [
     `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''} ${context['kinship'] ?? ''}${context['food'] ? `\n${context['food']}` : ''}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; talk must be null.' : ''}`,
+    `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
     `## Trigger\n${context['stimulus']}`,
     `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
     `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
@@ -120,9 +121,15 @@ export function readableDecisionContext(
           `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to accept the exact revised action or withdraw an unresolved intent. Withdrawal does not cancel physical work; neither control can be queued in a plan. Never accept for another actor.`,
         ]
       : []),
-    `## Private intentions and native work\n${JSON.stringify(context['agency'] ?? { goals: [], plan: null })}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
+    `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
     `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
     `## Current time\n${context['now']}`,
+    ...(context['inspectedActions']
+      ? [`## Actions I chose to inspect\n${list(context['inspectedActions'])}`]
+      : []),
+    ...(context['inspectedMethods']
+      ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
+      : []),
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
     `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
     `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
@@ -217,4 +224,26 @@ export function responseReferences(
     });
   });
   return { entityIds: ids, references, entityReferences: entityReferenceMap(world, ids, actorId) };
+}
+
+function formatIntentions(value: unknown): string {
+  const agency = value as
+    | {
+        goals?: { id: string; revision: number; objective: string; status: string }[];
+        plan?: unknown;
+        planRevision?: number;
+        attempts?: { description: string }[];
+      }
+    | undefined;
+  return [
+    ...(agency?.goals ?? []).map((goal) => `${goal.status} goal: ${goal.objective}`),
+    typeof agency?.plan === 'string' ? agency.plan : 'No remaining work supplied.',
+    `For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`,
+    ...(agency?.goals?.length
+      ? [
+          `Goal controls for structured goal changes: ${JSON.stringify(agency.goals.map(({ id, revision, objective }) => ({ id, revision, objective })))}`,
+        ]
+      : []),
+    ...(agency?.attempts ?? []).map((attempt) => `Unresolved intention: ${attempt.description}`),
+  ].join('\n');
 }

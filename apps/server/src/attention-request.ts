@@ -20,9 +20,14 @@ export function attentionRequest(
   let longestQuestion = 0;
   let count = 0;
   for (const [id, text] of entries) {
-    const question = batchedAttentionQuestions([id], purpose)[id]!;
+    const label = purpose === 'context' ? id : `Option ${count + 1}`;
+    const original = batchedAttentionQuestions([id], purpose)[id]!;
+    const question = {
+      ...original,
+      instructions: original.instructions.replaceAll(`candidates.${id}`, label),
+    };
     const questionCharacters = JSON.stringify(question).length;
-    const candidateAddition = JSON.stringify({ [id]: text }).length - 2 + (count ? 1 : 0);
+    const candidateAddition = JSON.stringify({ [label]: text }).length - 2 + (count ? 1 : 0);
     const questionAddition = JSON.stringify({ [id]: question }).length - 2 + (count ? 1 : 0);
     const longest = Math.max(longestQuestion, questionCharacters);
     if (
@@ -30,7 +35,7 @@ export function attentionRequest(
       requestCharacters + candidateAddition + questionAddition > JUDGMENT_MAX_CHARACTERS
     )
       continue;
-    candidates[id] = text;
+    candidates[label] = text;
     questions[id] = question;
     count++;
     stateCharacters += candidateAddition;

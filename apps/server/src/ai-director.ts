@@ -1249,6 +1249,9 @@ export class AiDirector {
     if (!selected) return null;
     if (prepared.binding.actions[selected] === null) return { operations: [] };
     const steps = prepared.knownPlans[selected];
+    // Choosing a new alternative interrupts the chosen plan. The separately
+    // offered continue option leaves its remaining work untouched.
+    const mode = prepared.replaceChosenPlan ? 'replace' : 'enqueue';
     if (steps)
       return {
         operations: [
@@ -1262,7 +1265,7 @@ export class AiDirector {
             goal: null,
             act: null,
             plan: {
-              mode: 'enqueue',
+              mode,
               expectedRevision: prepared.expectedPlanRevision,
               goalId: null,
               steps: steps.map((actionId) => ({ actionId, itemFromStep: null, useItemAs: null })),
@@ -1272,7 +1275,7 @@ export class AiDirector {
       };
     return actionResponse({
       kind: 'known',
-      mode: 'enqueue',
+      mode,
       actionId: selected,
       verb: null,
       targetEntityId: null,
@@ -1980,10 +1983,7 @@ export class AiDirector {
   async considerThought(): Promise<void> {
     return this.admission(async () => {
       if (!this.service.config.macrofoldKey && !this.service.config.jevKey) return;
-      if (
-        !this.service.config.jevOnly &&
-        (this.service.config.macrofoldKey || this.service.config.llmKey)
-      )
+      if (this.service.config.macrofoldKey || this.service.config.jevKey)
         void this.maintenance.tick(!!this.running).catch(() => {
           this.service.storageError =
             'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
