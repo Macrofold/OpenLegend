@@ -14,7 +14,7 @@ Preserve branch history, IDs and unrelated work; commit meaningful checkpoints a
 
 ## Preserved records and corpus discovery
 
-The [W01–W26 checkpoint](https://github.com/Macrofold/OpenLegend/blob/cdc0b5b28657bbe8e4916dedcbb1fbf51c7a7f2c/docs/repertoires/group-6-reading-progress.md) preserves individual marks, exact blobs, full source cautions, every predecessor link and detailed branch reconciliation. Earlier world checkpoints: [W19–W22](https://github.com/Macrofold/OpenLegend/blob/52b2354a9b92106953c2368a3f00cf528ebeb35e/docs/repertoires/group-6-reading-progress.md), [W15–W18](https://github.com/Macrofold/OpenLegend/blob/ab48499e2b9a75a0810c5041ce3eacd26846216b/docs/repertoires/group-6-reading-progress.md), [W11–W14](https://github.com/Macrofold/OpenLegend/blob/7808f0999144b05237fdf3c81d1a631f786b879b/docs/repertoires/group-6-reading-progress.md), [W01–W10](https://github.com/Macrofold/OpenLegend/blob/47e8dc6bab4530799f0d6e97919710385fa6fd6f/docs/repertoires/group-6-reading-progress.md). The [G01–G106 checkpoint](https://github.com/Macrofold/OpenLegend/blob/027c0e1b2ed38ebef4f9588190a363b2acdc276d/docs/repertoires/group-6-reading-progress.md) retains game marks, exact blobs, cautions and predecessors. These immutable records remain part of this ledger; condensation does not discard unique findings.
+The [complete world-dossier checkpoint](https://github.com/Macrofold/OpenLegend/blob/c9b37dfac0802f6f045b7fe694f83eb2918bbb04/docs/repertoires/group-6-reading-progress.md) preserves all 29 marks, exact blobs, full source cautions and predecessor links. Earlier records: [W23–W26](https://github.com/Macrofold/OpenLegend/blob/cdc0b5b28657bbe8e4916dedcbb1fbf51c7a7f2c/docs/repertoires/group-6-reading-progress.md), [W19–W22](https://github.com/Macrofold/OpenLegend/blob/52b2354a9b92106953c2368a3f00cf528ebeb35e/docs/repertoires/group-6-reading-progress.md), [W15–W18](https://github.com/Macrofold/OpenLegend/blob/ab48499e2b9a75a0810c5041ce3eacd26846216b/docs/repertoires/group-6-reading-progress.md), [W11–W14](https://github.com/Macrofold/OpenLegend/blob/7808f0999144b05237fdf3c81d1a631f786b879b/docs/repertoires/group-6-reading-progress.md), [W01–W10](https://github.com/Macrofold/OpenLegend/blob/47e8dc6bab4530799f0d6e97919710385fa6fd6f/docs/repertoires/group-6-reading-progress.md). The [G01–G106 checkpoint](https://github.com/Macrofold/OpenLegend/blob/027c0e1b2ed38ebef4f9588190a363b2acdc276d/docs/repertoires/group-6-reading-progress.md) retains game marks, exact blobs, cautions and predecessors. These immutable records remain part of this ledger; condensation does not discard unique findings.
 
 September 29 continuation resumed actual branch head `47e8dc6`, not the old chat summary. Root `AGENTS.md` and documentation guidance reread; connector push permission verified. Matching refs rechecked all eleven research heads unchanged. All ten game heads are snapshot ancestors; [G102's record](https://github.com/Macrofold/OpenLegend/blob/babd8cf170e5e653773b2a92e2eca1226a54c4c2/docs/repertoires/group-6-reading-progress.md) preserves comparisons. Main game library: `065309db37067c8e0a213bc1ed14446a4ea20eea`.
 
@@ -40,7 +40,7 @@ Pending: D&D chapter/two studies; mechanics README/lookup; twelve essays; sevent
 
 ## Fresh worldbuilding reading
 
-**All 29 world dossiers complete; 3 of 13 supporting manuscripts complete; 0 partial.** The older 39-document reading remains separate inherited evidence. Fresh revised-world incorporation is pending.
+**All 29 world dossiers complete; 7 of 13 supporting manuscripts complete; 0 partial.** The older 39-document reading remains separate inherited evidence. Fresh revised-world incorporation is pending.
 
 | Read | Complete dossiers | Exact revision / blob | Incorporation |
 | --- | --- | --- | --- |
@@ -49,13 +49,7 @@ Pending: D&D chapter/two studies; mechanics README/lookup; twelve essays; sevent
 | [x] | W28 — [Fallout](../../archive/02-research/worldbuilding/worlds/28-fallout.md) | `f3392ac8af9fcb5f60cda77ce2482a4d8afc1cc0` | Pending |
 | [x] | W29 — [Dungeons & Dragons](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md) | `c9e2264af612e68e9f2c54fa13a636731bcd9b8a` | Pending |
 
-All three additional dossiers were read continuously through their closing reassessment; D&D includes the complete fourteen-section manuscript, source register and requirement map.
-
-**W27 — The Elder Scrolls:** an archive's interested voices differ from publication revisions; neither makes every contradiction a metaphysical secret. Recognition as Hortator includes a lethal duel, not only persuasion or all House advancement. Restoring a festival through invented verse can provide real pleasure while manufacturing public history; it does not fulfill a player's wish for an actual musical vocation. Courtship can join paid poetry and religious service without magically compelling affection. Sanguine's farce has both rewards and others' grievances. Serana's protection by imprisonment, chosen companionship and Harkon's defeated threat are distinct; family reunion is not required. Preserve actually coercive reward routes, implied versus explicit sexual history, original/DLC/mod/Online boundaries, and demonstrated power versus justified religious authority.
-
-**W28 — Fallout:** an apocalypse is not the end of subsequent social history. Recruitment can lead to continuing scheduled performances with distinct artists' obstacles and aspirations. Paid sexual work, a robot's underdeveloped autonomy and Joana's captivity are not one condition; the dialogue access gap stays marked. Freeing particular people need not reform their former venue. Understanding the Master's reasoning and exposing its flaw can end destructively without reconciliation. An inherited technological ambition can be realized while other politics remain unresolved; do not import playable flight into SC. Raul's alternatives preserve both fighting and maintenance as chosen competences, not one universally superior recovery. Keep companion identity separate from faction inheritance, branching outcomes separate, individual radio/dialogue criticism attributed, and fictional science distinct from safety guidance.
-
-**W29 — D&D worlds:** settings, editions, published adventures, film events, creator proposals and table outcomes remain separate. Eberron's professional magewright is not an incomplete adventuring wizard; access to services differs from possessing a power. Gala enjoyment, temporary performer access and hereditary standing have distinct meanings. Baker's personal Elvish and selected Oargev genealogy are disclosed inventions/reconciliations, not universal canon. Divine magic does not settle virtue or every afterlife interpretation. Holga's desired reunion is refused without making Marlamin cruel, and a useful gift does not compensate away the ended marriage. Death House's conditional escape, defeated creature, children's rest and enduring domain are different outcomes; no unprinted rescue branch is invented. Preserve paid-book/primary-text limits, Greyhawk/Planescape orientation-level evidence, artist materials as production testimony and comparison not an engine contract.
+The complete W27–W29 cautions remain in the immutable world-dossier checkpoint above, alongside every earlier world's notes. New comparisons supplement rather than replace that evidence.
 
 ### Supporting manuscripts
 
@@ -66,16 +60,18 @@ Every path below is at the research snapshot; a checked navigation/guidance file
 | [x] | [README](../../archive/02-research/worldbuilding/README.md) | `5c94d3c9c3424aa05133d05310b585fe60c0fe08` |
 | [x] | [Research method](../../archive/02-research/worldbuilding/research-method.md) | `ffcf29781f9023f29596fdc05373015b3cda024b` |
 | [x] | [Reassessment progress](../../archive/02-research/worldbuilding/reassessment-progress.md) | `13bd88234cebaf439932845a171f5f4dabee0c43` |
-| [ ] | [Authorship, medium and accessibility](../../archive/02-research/worldbuilding/authorship-medium-and-accessibility.md) | Pending |
-| [ ] | [Character formation](../../archive/02-research/worldbuilding/character-formation.md) | Pending |
-| [ ] | [Comparative synthesis](../../archive/02-research/worldbuilding/comparative-synthesis.md) | Pending |
-| [ ] | [Institutions, history and power](../../archive/02-research/worldbuilding/institutions-history-and-power.md) | Pending |
+| [x] | [Authorship, medium and accessibility](../../archive/02-research/worldbuilding/authorship-medium-and-accessibility.md) | `bae7508481d40a54de245961afc7250533b1bfcf` |
+| [x] | [Character formation](../../archive/02-research/worldbuilding/character-formation.md) | `316d5a045d1b5bca5f5f4b846fbb6b7da95b3379` |
+| [x] | [Comparative synthesis](../../archive/02-research/worldbuilding/comparative-synthesis.md) | `60fb11aa1c57e2554b694c4bd982da3bcda05726` |
+| [x] | [Institutions, history and power](../../archive/02-research/worldbuilding/institutions-history-and-power.md) | `7698346e6ea8c82c213037dc5fbaddbae5f362c5` |
 | [ ] | [Languages and communication](../../archive/02-research/worldbuilding/languages-and-communication.md) | Pending |
 | [ ] | [Magic, technology and ecology](../../archive/02-research/worldbuilding/magic-technology-and-ecology.md) | Pending |
 | [ ] | [Comparative matrix](../../archive/02-research/worldbuilding/comparative-matrix.md) | Pending |
 | [ ] | [Source audit](../../archive/02-research/worldbuilding/source-audit.md) | Pending |
 | [ ] | [Historical research progress](../../archive/02-research/worldbuilding/research-progress.md) | Pending |
 | [ ] | [D&D planes and lived magic](../../archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) | Pending |
+
+The four new essays are complete, including recovered truncations, direct-source annotations and reconciliation notes. **Authorship:** elaboration, reinterpretation, editorial replacement and table realization differ; sensory performance is not preserved by event summary alone. An accessible individual work need not turn broader participation into compulsory expertise. **Character formation:** biography, self-explanation and present conduct differ; work and chosen pleasure can form a life without hidden trauma. Affection, trust, admiration, consent, obedience and agreement do not share one scale. **Synthesis:** causal, social, experiential, historical and symbolic credibility are different achievements; a purposeful selection supplies no popularity experiment or matched control group. A meaningful ornament need not become a plot device. **Institutions:** purpose, operation, effectiveness and legitimacy differ; useful provision and unequal reward can coexist. Secular rituals are not automatically religions, and structural causes do not erase deliberate acts. All four inherit the dossiers' evidentiary limits rather than independently upgrading them.
 
 ## Catalogue checkpoint
 
@@ -94,4 +90,4 @@ Baseline inventories/shared guidance/actions/four proposals were fully read earl
 
 Worlds Adrift research's save-discard assertion conflicts with safe in-place migrations preserving identity/unrelated state and never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Shared owner should reconcile it. No runtime contract changes here.
 
-Continue the **ten remaining world supporting manuscripts**, then **G107 — Octopath Traveler** and the remaining game corpus. Finish actual incorporation, including second-batch Arts/G69. Shared atlas/README counts, other groups, research libraries, proposals, shared trackers and changelog remain unchanged; their updates belong to the integration owner.
+Continue the **six remaining world supporting manuscripts**, then **G107 — Octopath Traveler** and the remaining game corpus. Finish actual incorporation, including second-batch Arts/G69. Shared atlas/README counts, other groups, research libraries, proposals, shared trackers and changelog remain unchanged; their updates belong to the integration owner.
