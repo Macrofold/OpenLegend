@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 102/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 105/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 102 complete
+## Game dossiers — 105 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -114,6 +114,9 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G96 — `warcraft-iii.md`
 - [x] G97 — `world-of-warcraft.md`
 - [x] G98 — `assassins-creed-iv-black-flag.md`
+- [x] G99 — `assassins-creed-iii.md`
+- [x] G100 — `assassins-creed-valhalla.md`
+- [x] G101 — `mass-effect.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -163,7 +166,7 @@ Relative to [games](../../archive/02-research/game-inspiration/games/):
 - [x] `core-keeper.md`
 - [x] `peak.md`
 
-The preceding checkpoint accidentally inserted a nonexistent standalone original `lethal-company.md` chapter and altered the original Garry's Mod chapter spelling. This list restores the established 39 actual paths. Lethal Company remains fully covered by its shared original chapter, separate dossier and mechanics study; no extra chapter read is claimed.
+The checkpoint at `3393faf` accidentally inserted a nonexistent standalone original `lethal-company.md` chapter and altered the original Garry's Mod chapter spelling. The next commit restored these established 39 paths. Lethal Company remains fully covered by its shared original chapter, separate dossier and mechanics study; no extra chapter read is claimed.
 
 ## Game supplements — 31 complete
 
@@ -267,13 +270,13 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/3393faf1416de1447f1ddb7b40a60259214be436/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Final Fantasy XVI and Warcraft I–II findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/a354bdf0f118576e0444241f4d792f0f7fcaf2ae/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Warcraft III, World of Warcraft and Black Flag findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Warcraft III:** dossier `6bc6d7fdb164fcc5870225e8f238c2f774cbedc2`. Returning with an intact identity does not restore lost companions, opportunities or surroundings. A familiar routine can become an adversary's resource when circumstances change; interrupting it differs from rejecting all routine. Protection may depend on a vulnerable protector, and apparent safety against one danger can increase another vulnerability. Full original/expansion/remaster/new-campaign distinctions, upkeep versus confiscation, hero-versus-carrier item persistence, temporary bodies, live/PTR and separate Classic Client boundaries, campaign perspectives, all reviews and 45 sources were read. Dated release claims remain the dossier's record, not new live verification; a controlled campaign actor is not necessarily morally vindicated by successful execution.
+**Assassin's Creed III:** dossier `a900629b9a49001a030331c3d7b056c3a90cb3aa`. Ordinary work can reveal a life without requiring a spectacular event. A person can matter through remembered history, useful competence and an unremarkable habit; reducing them to an unlock discards those distinctions. A completed objective need not deliver the security that motivated it. A practiced technique can be valuable yet wrong for the intended aftermath. The full original/DLC/remaster/retired-service boundaries, Homestead dependencies, observation versus autonomous routines, recruit recovery, background clocks, optional versus mandatory objectives, cultural-consultation limits, five reviews and 40 sources were read. The incorrect Aveline description is rejected; supernatural counterfactual fiction and authored historical figures are not real-world evidence. G99 is Assassin's Creed III, not the Traits catalogue's mistaken Animal Crossing III label.
 
-**World of Warcraft:** dossier `4cb7e0d8c318fcf0bfdd4b085e7b79e7b1aa4312`. Mastery, collecting, friendship, making and decorating can be parallel purposes rather than a ladder of superior activities. The same calendar can supply a satisfying endpoint or a felt obligation. Changed circumstances can alter someone's interests without invalidating their earlier affection. Expertise can make a person useful while access friction makes seeking help unpleasant. Old possessions and places can gain new uses after their numerical advantage ends. The full historical/retail/Classic/future-service distinctions, flight and crafting corrections, ownership, group expectations, housing, death contracts, historical subscription definitions, five reviews and complete annotated evidence were read. No current service, price, population or clinical claim is independently certified.
+**Assassin's Creed Valhalla:** dossier `b99c0aa68b84b5e908aaa96ae1a95f5d39072701`. Appearance, capability and social permission are different states. Endless victory can fail to supply someone's wanted life, while another person can genuinely desire further conquest. Familiar people can give returning home a purpose beyond spending resources. Helping a fallen companion can compete with preserving an expedition; the cost depends on the actual recovery contract rather than an imagined permanent death. All paid/free/educational activity boundaries, earned versus equipped abilities, cosmetic hood, crew recovery, Orlog ordering, regional transformation limits, conclusion versus replay, five reviews and 56 sources were read. Fictional myth, romance gates and player anecdotes are not religious, psychological or population evidence; contradictory ending thresholds remain unresolved rather than invented.
 
-**Assassin's Creed IV: Black Flag:** dossier `69ee4d526a31f27972e19a9d20c939b8a7894c91`. A growing fortune can coexist with a shrinking circle of friends without making that outcome mandatory for every ambitious person. A collected song changes ordinary travel rather than merely increasing a completion score. Similar acts can serve plunder, rescue or personal loyalty; motives need not be inferred from controls alone. One successful encounter can supply safety now, reduced pursuit or a future asset, with different priorities for different captains. The complete original/Freedom Cry/standalone/Resynced distinctions, cargo versus money, Fleet versus direct command, crew versus autonomous minds, contextual diversion side effects, all reviews and 39 sources were read. Announced New Game+, legacy connectivity and publisher commercial claims retain their evidence boundaries; no pirate history or real-world political claim is newly established.
+**Mass Effect:** dossier `3a1254287971a44958455d217a5a3175dec63f98`. Prior trust, persuasive skill and unavoidable loss create different choices. A cooperation can survive a fundamental disagreement without requiring either person to abandon it. Intent to protect people does not make an actually destructive action harmless. A specialist's presence can change the available vocabulary, while choosing companions also expresses attachment and curiosity. Personal history can persist without transferring every owned capability. The full original/PC/PS3/Legendary distinctions, backgrounds, actual versus announced squad control, skills versus interaction execution, tactical recovery versus narrative death, bounded romance, six worked examples, DLC/source-code-access limitations and complete second-pass corrections and sources were read. None of the original's authored profiles is a clinical diagnosis or proof of generated childhood; no native helpful Steam sample was accessible in the underlying research.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
