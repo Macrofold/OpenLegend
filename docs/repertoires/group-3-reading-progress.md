@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 93/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 96/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 93 complete
+## Game dossiers — 96 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -105,6 +105,9 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G87 — `final-fantasy-x.md`
 - [x] G88 — `final-fantasy-xi.md`
 - [x] G89 — `final-fantasy-xii.md`
+- [x] G90 — `final-fantasy-xiii.md`
+- [x] G91 — `final-fantasy-xiv.md`
+- [x] G92 — `final-fantasy-xv.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -256,13 +259,13 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/893d938365d81cd97c4b88b9e9dfe636399fd566/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Final Fantasy VII–IX findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/7a21f5d124a38b39acd508cbaf3db31ba44ee335/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Final Fantasy X–XII findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Final Fantasy X:** dossier `574b852c5ac476163cd3c79d7238591fa17daead`. Different people can enter a heightened state for different reasons without sharing one universal stress rule. A person's duty can organize other people's journey even when they are not the viewpoint character. Understanding familiar speech can change without changing its speaker. Ending an obligation can open a wanted freedom without automatically supplying a new purpose. The complete X/X-2 contrast, Mix recipes and activation gate, Primer persistence, Cloister consequences, audiovisual testimony, nonhuman-party correction and source limitations were read. Narrative sacrifice, optional challenge restrictions and involuntary loss are distinct; a sport's role in advancement does not make every leisure interest a progression duty.
+**Final Fantasy XIII:** dossier `208907b2b39aca654488ddaa21ba287f50377878`. Imposed purpose and chosen purpose can conflict without prescribing one response to fear or obligation. Planning time and perceived urgency differ. Recovery can restore one capacity while leaving other preparations depleted; a high visible rating can favor a different reward from the one a person actually wants. A desired outcome can require a different act from the apparently effective one. The full XIII/XIII-2/Lightning Returns comparison, TP versus EP, clock pauses and Ultimate Lair exception, Retry and reward rules, weapon-lineage correction, artistic production and complete source set were read. The dossier's PDF-chart inspection is not a fresh inspection by this continuation. No timed fictional crisis is treated as a clinical rule or an obligation to optimize every leisure moment.
 
-**Final Fantasy XI:** dossier `8b95993f1d7197755310ef2a34725ebef787373c`. One person can retain social history while changing careers; formal role, learned knowledge, practiced fluency and current permission differ. Dependence can produce friendship and frustration; dependable substitutes can restore access without reproducing human companionship. First journeys and repeated journeys can have different meanings. A finished story, a mastered trade and an ordinary life after extraordinary power are all valid outcomes. The entire launch/modern-service comparison, Trust limits, scroll learning, Rare/Ex distinction, garden/rearing, named recipe, Ballista/Brenner, Prishe/Ulmia story, endgame entry/reward contracts and all sources were read. Historical schedules, prices, congestion and inaccessible Steam bodies remain qualified records, not new service verification, global population estimates or a general psychology experiment.
+**Final Fantasy XIV:** dossier `b55c902686a71ad63ce90ceabb4dff72fe0ef656`. One identity can sustain different professions, hobbies and social roles, while each still needs its own learning and resources. Matching roles is not matching intentions: discovery, efficiency, teaching and a relaxed evening differ. A supporting role can be welcome or frustrating without making either preference a defect. A familiar place or saved appearance can carry history; obtaining the place does not guarantee belonging. The full edition/access boundaries, limited jobs, crafting/gathering, conversion losses, regional expeditions, production, housing, ritual, NPC-support distinctions, contrasting reviews and 59-source register were read. The stated 2026 service changes and future announcements remain the dossier's dated records, not newly verified availability. Authored continuity, player culture and autonomous private lives remain distinct evidence.
 
-**Final Fantasy XII:** dossier `bf7797e3c95f329e127b741b3ec3d38a8f97ffc7`. A faithfully executed rule can pursue the wrong goal when its condition is only a proxy. Relief at delegation, pride in tuning a routine, boredom with automation and resentment of oversight can coexist as different preferences. Changing a policy does not supply a missing capability. A failed attempt can call for better execution, different information or another tool; treating every failure as laziness or insufficient confidence is misleading. The complete original/IZJS/Zodiac comparison, corrected Gambit priorities and full-HP Steal loop, Bazaar counters, weapon formulas, support measures, fishing chain, score-production account and sources were read. Source recommendations are not adopted engine requirements; no clinical inference, contemporary political judgment or developer-health speculation is made.
+**Final Fantasy XV:** dossier `0fbbb688a93d1a00329b9b09cfef0d41bd25e5f6`. Getting somewhere important and enjoying company along the way can both be genuine purposes. Distributed everyday competence can make companions familiar without proving psychological depth. Someone can capture moments first and choose later which mattered; a selected personal record can enrich an authored farewell without rewriting its outcome. Injury can change practical contribution as well as conversation. The full launch/Royal/Episodes/Comrades distinctions, retired versus cancelled content, Danger/Stasis, recipe and upgrade chains, rest/experience separation, fishing/photos, minigames, alternative perspectives, production and all sources were read. Partial media consumption in the underlying research remains partial; no full film, novel, GDC talk or live game session is claimed.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
