@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 77/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 81/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 77 complete
+## Game dossiers — 81 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -89,6 +89,10 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G71 — `the-elder-scrolls-v-skyrim.md`
 - [x] G72 — `the-witcher-3-wild-hunt.md`
 - [x] G73 — `the-legend-of-zelda-breath-of-the-wild.md`
+- [x] G74 — `fallout-4.md`
+- [x] G75 — `elden-ring.md`
+- [x] G76 — `black-myth-wukong.md`
+- [x] G77 — `clair-obscur-expedition-33.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -240,17 +244,19 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/cc5f289365494410f61992a873bcdeebbe4e907a/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Cyberpunk and both Red Dead findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/d1e630e8995dfe2d1395fc9a530658cb172ce355/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Skyrim, The Witcher 3 and Breath of the Wild findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Skyrim:** dossier `d0754e460b66a26eb663f44fb6a45d562664e3e8`. Practiced skill, chosen specialization, current occupation and personal identity are different states. A useful home can join storage, making, family and a desired future. Repeated requests need an actual personal cause, not only a template. Parallel prestigious roles can create conflicting obligations rather than universal compatibility. A familiar routine provides continuity without proving arbitrary social memory. Optional Survival Mode changes the meaning of the same road through hunger, fatigue, warmth and travel constraints; these are not base-2011 rules or clinical laws. All editions, corrections, examples, reviews and source limitations were read. Dated patch and sales claims were not independently reverified.
+**Fallout 4:** dossier `57d5d715523b35aa2643523ddfa4635bc509f652`. Maintenance can create affectionate ownership or discourage using a prized possession; scarcity does not guarantee attachment. One journey can serve several ambitions while a fixed urgent backstory conflicts with chosen leisure. Companion approval, romance, knowledge and faction allegiance differ. A locality's aggregate happiness does not describe each resident. Refusing lucrative opportunities can preserve a role at a genuine cost. Survival's impulse to push onward while powerful competes with rest and recovery, but these authored needs and Adrenaline rules are not clinical laws. All six add-ons, the Survival correction, platform-specific Creations boundaries and source qualifications were read. Configurable robot appearance or voice is not evidence of a generated biography.
 
-**The Witcher 3:** dossier `40e5e06101518c5c39f02199eb9f9b3bfb3f960b`. A defined past can constrain and enrich a person's choices without eliminating agency. Knowing an ability differs from currently preparing it. Professional perception can supply observations without guaranteeing a correct interpretation. A client, a victim and a creature can each have particular motives without every apparent threat requiring a benevolent twist. A shared game creates low-stakes reasons to revisit people. Retirement can mean inhabiting a wanted place rather than being assigned another endless goal. The complete expansion, New Game+, current-versus-announced and source-register material was read; no new verification of its dated release announcements is claimed.
+**Elden Ring:** dossier `f04c1ed56bb61279673d4cb1b29b3439842030b5`. Retreat can advance a goal when another route provides a useful discovery. Readiness, practiced execution and available tactics differ; uncertainty about which failed can frustrate rather than fascinate. Revising a build need not erase attachment to the journey. Service access can remove an old scarcity instead of restoring it forever. Attachment to a place need not require understanding its entire mythology. The enemy stance/player Poise and status-threshold corrections, regional versus carried progression, Journey 2 boundaries, edition evidence and complete source register were read. Developer intent, player experience and authored exceptions retain separate status.
 
-**Breath of the Wild:** dossier `2606396be6aaa70f14bc62fa4ea1ef14d20af7ff`. Permission to try and readiness to survive differ. People can prefer self-chosen destinations or a clear assignment; neither preference is a defect. Discovering a new use for a familiar tool can change confidence without changing its owner or capabilities. Routine preparation can become either comforting or burdensome, and a lasting solution can genuinely satisfy a need. Favorite possessions can conflict with an expendable-equipment economy. Naming, repeated interaction and possible loss can make a useful animal particular without assuming human speech. The horse correction, constructed examples, source limits, original-versus-upgrade boundary and contrasting player preferences were all read. Tarrey Town remains an authored recruitment sequence, not general migration or marriage simulation.
+**Black Myth: Wukong:** dossier `76f2735a248c46cd8450496686f5c6a535a4a697`. Practice, a full replay and reward seeking are different return motives. Repeating a narrow technique can feel like mastery or monotony. A favor can make a helper easier to revisit without creating universal friendship. Recovering an earned but uncollected reward differs from reversing a missed encounter. Borrowing a brief action differs from inhabiting a changed body. The no-drop death correction, transformation health/Might versus Spirit Qi, Relics, secret-ending/New Cycle limits, revised maps/challenges and translated-interview limitations were all read. None of the supernatural systems is treated as a psychological law.
+
+**Clair Obscur: Expedition 33:** dossier `8e835d42499b1a17a21693d647cf133715dd780c`. A person can enjoy strategic planning yet dislike repeated timing tests, or enjoy both. Shared interfaces can accommodate distinct internal rhythms without making people interchangeable. Mortality can give leisure weight without imposing a literal countdown. Party turnover can change responsibility as well as attachment. Learning, equipping and activating a capacity differ. Ordinary bonds can progress after romance is declined; a relationship gate is not evidence of universal consent or simulated affection. The Sciel charge-label correction, six individual resource models, beach minigames, updated Steam-access record, all examples and source qualifications were read. Dramatic death, combat defeat and repeat-campaign resets are distinct.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
-Catalogue extrapolations are labelled **creative synthesis**, not copied lore, clinical prediction, causal popularity proof or an implementation claim. No personal gameplay, live-model experiments, proprietary-code inspection, representative sentiment coding or exhaustive external-bibliography rereading is claimed.
+Catalogue extrapolations are labelled **creative synthesis**, not copied lore, clinical prediction, causal popularity proof or an implementation claim. No personal gameplay, live-model experiments, proprietary-code inspection, representative sentiment coding or exhaustive external-bibliography rereading is claimed. Dated release, commercial and patch claims remain the dossiers' source records, not a new live audit.
 
 ## Catalogue delivery checkpoints
 
