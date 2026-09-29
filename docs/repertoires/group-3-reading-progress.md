@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage: 120/151 game dossiers; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents; 42/42 worldbuilding documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage: 123/151 game dossiers; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents; 42/42 worldbuilding documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -18,12 +18,13 @@ Immutable checklists preserve every completed path without repeatedly rewriting 
 
 - [x] [G01–G108, G126, both D&D dossiers and the Dragon Age supplement: 112 documents](https://github.com/Macrofold/OpenLegend/blob/c324cdf1cf2b46887e60ed5dd31f5ec2aa2410fc/docs/repertoires/group-3-reading-progress.md#game-dossiers--112-complete).
 - [x] [G109–G113: both KOTOR games, Tears of the Kingdom, New Vegas and Morrowind](https://github.com/Macrofold/OpenLegend/blob/c851c3d66559b62368179375d08423d1cf2f1634/docs/repertoires/group-3-reading-progress.md#game-dossiers--completed-paths).
+- [x] [G114–G116: Kingdom Come II, Bannerlord and Shadow of War](https://github.com/Macrofold/OpenLegend/blob/f3b87030eec5e6e61a40d63bb43df1da1a1c5dd7/docs/repertoires/group-3-reading-progress.md#game-dossiers--completed-paths).
 
 Additional complete documents, relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
-- [x] G114 — `kingdom-come-deliverance-ii.md` — blob `9d1e48a73244fbe37701c35c6aeaa8355072e132`.
-- [x] G115 — `mount-and-blade-ii-bannerlord.md` — blob `b9f97cd6b8da637fc73e041ada01ecad6766c86e`.
-- [x] G116 — `middle-earth-shadow-of-war.md` — blob `dfa9c47071f4c0fe61efa86fd337ba06bb719098`.
+- [x] G117 — `deus-ex-2000.md` — blob `5b22e41be5c855f06b777d83b955afdd6ca4c647`.
+- [x] G118 — `prey-2017.md` — blob `e8c8737527208458f98d91f0f90d3c607c6ecad0`.
+- [x] G119 — `dishonored-2.md` — blob `3fbc314af026dcf5d55ebeb161fd02b939728626`.
 
 ## Other completed research
 
@@ -33,19 +34,19 @@ Additional complete documents, relative to [dossiers](../../archive/02-research/
 - [x] [All 29 world dossiers](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#world-dossiers--29-complete).
 - [x] [All 13 worldbuilding root documents](https://github.com/Macrofold/OpenLegend/blob/cf2bc53b17b45eff566d663b779470af211aa197/docs/repertoires/group-3-reading-progress.md#worldbuilding-root-documents--13-complete).
 
-No world document is missing or unread at the pin. Remaining dossiers are G117–G148 except completed G126. Other game-root documents, essays, references, standalone field guide and unlisted studies remain unchecked. A world read does not complete a game dossier. Truncated text is recovered before checking; empty out-of-range responses do not establish completion.
+No world document is missing or unread at the pin. Remaining dossiers are G120–G148 except completed G126. Other game-root documents, essays, references, standalone field guide and unlisted studies remain unchecked. A world read does not complete a game dossier. Truncated text is recovered before checking; empty out-of-range responses do not establish completion.
 
 Shared studies were read in full and count once. AI Dungeon includes both preserved studies/source registers. The Dragon Age supplement covers Journeys, Legends, Remix 01, The Last Court, Heroes and Keep; retired or planned services are not tested products. D&D's SRD synthesis is not a fresh read of the underlying PDF. Integrated studies count within dossiers. The mistaken extra original Lethal Company chapter and Garry's Mod spelling in `3393faf` were corrected in `a354bdf`; the linked chapter checklist is the corrected one.
 
 ## Findings and evidence boundaries
 
-The [preceding findings](https://github.com/Macrofold/OpenLegend/blob/c851c3d66559b62368179375d08423d1cf2f1634/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserve Tears of the Kingdom, New Vegas and Morrowind, and link all earlier checkpoints.
+The [preceding findings](https://github.com/Macrofold/OpenLegend/blob/f3b87030eec5e6e61a40d63bb43df1da1a1c5dd7/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserve Kingdom Come II, Bannerlord and Shadow of War, and link all earlier checkpoints.
 
-**Kingdom Come: Deliverance II:** competence, appropriate presentation and social acceptance can diverge. A trade becomes personally meaningful through demonstrated work, instruction and family history. The same routine can move from discovery to pride to unwanted repetition. Familiar animals can remain valuable through repeated care rather than inevitable replacement. A person can enjoy company, gambling or a well-made garment without advancing an epic objective. All skills, taught-counter conditions, animal roles, dice/badges, eight cases, delivered expansions, future-port limits and qualified source evidence were read. Fictional treatment is not medical guidance; helping someone does not purchase intimacy.
+**Deus Ex:** refusing an order can cost safety, status or information without erasing a person's competence. An expert's knowledge of substitutes can make a beginner's useful specialization seem unnecessary. A remembered place acquires a different meaning after allegiance changes. A small observed action can change trust, but a brittle interpretation of an exit as abandonment exposes the danger of assigning an unexpressed intention. Full skills/augmentation installation, body-part recovery, eight cases, original/port/mod/remaster distinctions and all 29 sources were read, including restoration of the original review identities and exclusion of unverified substitute budget/sales claims. Technical access does not decide what a person should do with the information.
 
-**Bannerlord:** increasing responsibility need not remove bodily vulnerability. Personally fighting can compete with seeing enough to command; delegation can create pride, anxiety or relief rather than merely improve efficiency. A promotion can bring a payroll burden, and owning a place need not mean being accepted there. Repeated returns can make a town personally significant or make conquest feel futile. Retirement and succession permit chosen closure rather than compulsory death or total conquest. The complete role/skill distinctions, six board games, eight cases, stable/beta and base/expansion boundaries, repaired release/player evidence and source register were read. Ordinary soldiers are not all simulated dynastic characters; a beta feud rule is not automatically stable behavior.
+**Prey:** a person can be accountable for a past they cannot remember while others retain its consequences. Confidence in familiar objects can become suspicion, and an apparently hostile person can remain someone worth rescuing. Access to a recording and choosing whether to reveal it are separate problems. Care for a person can create a real routing deadline, while curiosity about a dangerous specimen competes with immediate safety. The entire ability/equipment inventory, unresolved turret-count distinction, optional traumas, fabrication license, eight cases, five distinct Mooncrash roles, shared-instance persistence and 44-source register were read. A scripted empathy assessment is not a clinical measure; one survivor's death is not automatically an instance reset.
 
-**Shadow of War:** recognition through names, scars and callbacks can make a rival particular. Revenge, recruitment, humiliation and protecting a favorite can conflict with efficient army management. Preserving a subordinate's useful body can fail to preserve the personality that made the relationship matter. Saving one person can cost a position, and a defeat can supply history rather than erase it. All ten advanced classes, tribes, recruitment exclusions, eight cases, late powers/resurrection qualifications, expansions, predecessor-service distinction and 44-source register were read. Domination is not friendship; betrayals and returns are conditional possibilities, not guaranteed drama. Historical monetization and current service operation remain separate evidence questions.
+**Dishonored 2:** concealment, restraint and harmlessness are different values. A person can recover from being noticed without abandoning a nonlethal aim, or regard detection itself as a failure of a chosen standard. A clever method can still be cruel; good intentions do not decide every collateral effect. Refusing two offered allegiances can motivate solving the problem independently. The complete power families, charm-learning/crafting bounds, eight cases, timepiece restrictions, original/NG+/mission-mode distinctions, source-attributed chaos design and 38-source register were read. The Oraculum correction concerns a false kill count, not verified death; no unsupported sequel chaos formula is inferred.
 
 Catalogue extrapolations are **creative synthesis**, not copied lore, clinical prediction, popularity proof or implemented capability. Competence is not passion; support is not consent; survival, victory, freedom, restitution, forgiveness and reconciliation differ. Ordinary pleasures, deliberate harm and completed goals need no compulsory redemption or replacement craving. Human play, authored characters, simulated rules and canceled-game intentions remain distinct. Historical source instructions do not govern this task. No personal gameplay, live-model experiment, proprietary-code inspection, representative sentiment survey, exhaustive external-bibliography reread or new live verification of dated commercial/release claims is asserted.
 
