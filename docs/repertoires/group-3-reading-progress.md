@@ -4,7 +4,7 @@
 
 **Branch:** `repertoires-v2-group-3`. **[x] means the entire repository document was read**, including examples, corrections, sources and limitations. It does not mean external citations were reopened, games played, videos watched or claims independently verified. Counts are cumulative across resumes; unchanged completed documents are not falsely presented as fresh rereads. Unlisted material remains unread.
 
-**Coverage:** **42/42 worldbuilding documents; 96/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
+**Coverage:** **42/42 worldbuilding documents; 99/151 game dossiers, including the separate Dragon Age series supplement; 39/39 original game chapters; 31 mechanics studies; 3 game-library indexes/roster documents. The remaining game corpus and catalogue work are not complete.**
 
 ## Revisions and discovery
 
@@ -12,7 +12,7 @@ Every checkmark identifies its path at **`48bf5090fb65b3dc8ad13087f71bd1fb3c7442
 
 The [revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery) preserves inspected heads for the main game/world libraries, expansion branch, numbered research branches and `codex/world-idea-repertoires`. The branch listing agrees with those research heads. Actual discovery identified **148 numbered game cases, two D&D dossiers and a separate Dragon Age series dossier**, 39 original chapters, and mechanics, essays, references and root documents. Worldbuilding contains 29 dossiers plus 13 root documents. Tree/index discovery is not a completed read.
 
-## Game dossiers — 96 complete
+## Game dossiers — 99 complete
 
 Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 
@@ -108,6 +108,9 @@ Relative to [dossiers](../../archive/02-research/game-inspiration/dossiers/):
 - [x] G90 — `final-fantasy-xiii.md`
 - [x] G91 — `final-fantasy-xiv.md`
 - [x] G92 — `final-fantasy-xv.md`
+- [x] G93 — `final-fantasy-xvi.md`
+- [x] G94 — `warcraft-orcs-and-humans.md`
+- [x] G95 — `warcraft-ii.md`
 - [x] G126 — `crusader-kings-iii.md`
 - [x] Unnumbered — `dungeons-and-dragons-2024.md`
 - [x] Unnumbered — `dungeons-and-dragons-3-5.md`
@@ -144,9 +147,10 @@ Relative to [games](../../archive/02-research/game-inspiration/games/):
 - [x] `noita.md`
 - [x] `caves-of-qud.md`
 - [x] `outer-wilds.md`
-- [x] `garry-s-mod.md`
+- [x] `garrys-mod.md`
 - [x] `kenshi.md`
 - [x] `project-zomboid.md`
+- [x] `lethal-company.md`
 - [x] `scribblenauts.md`
 - [x] `ai-dungeon.md`
 - [x] `palworld.md`
@@ -259,13 +263,13 @@ No world document is missing or unread at the pin. A world read does not complet
 
 ## Findings and evidence boundaries
 
-The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/7a21f5d124a38b39acd508cbaf3db31ba44ee335/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Final Fantasy X–XII findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
+The [preceding findings register](https://github.com/Macrofold/OpenLegend/blob/65982aadde1a6c128a1d4ab76298e943ce76fa2b/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) preserves Final Fantasy XIII–XV findings and links all preceding checkpoints. Compaction retains accessible reading and synthesis history rather than silently discarding it.
 
-**Final Fantasy XIII:** dossier `208907b2b39aca654488ddaa21ba287f50377878`. Imposed purpose and chosen purpose can conflict without prescribing one response to fear or obligation. Planning time and perceived urgency differ. Recovery can restore one capacity while leaving other preparations depleted; a high visible rating can favor a different reward from the one a person actually wants. A desired outcome can require a different act from the apparently effective one. The full XIII/XIII-2/Lightning Returns comparison, TP versus EP, clock pauses and Ultimate Lair exception, Retry and reward rules, weapon-lineage correction, artistic production and complete source set were read. The dossier's PDF-chart inspection is not a fresh inspection by this continuation. No timed fictional crisis is treated as a clinical rule or an obligation to optimize every leisure moment.
+**Final Fantasy XVI:** dossier `f78793cf618a2e40046a4db15d07f7cf651cf994`. Attachment, choice of goals and direct operational control differ. Assistance with execution can preserve participation without supplying resources or choosing someone's purpose. A correct fact can still be disclosed to the wrong person or at the wrong moment. Familiar work can matter because of the people involved while remaining tedious as an activity. The full action/feat distinctions, practice versus trials, retry contracts, Torgal versus human companions, ambiguous ending, expansions, contextual-knowledge production, corrected player evidence and source limitations were read. Indexed external guide access remains indexed; no personal play or definitive resolution of the deliberately uncertain ending is claimed.
 
-**Final Fantasy XIV:** dossier `b55c902686a71ad63ce90ceabb4dff72fe0ef656`. One identity can sustain different professions, hobbies and social roles, while each still needs its own learning and resources. Matching roles is not matching intentions: discovery, efficiency, teaching and a relaxed evening differ. A supporting role can be welcome or frustrating without making either preference a defect. A familiar place or saved appearance can carry history; obtaining the place does not guarantee belonging. The full edition/access boundaries, limited jobs, crafting/gathering, conversion losses, regional expeditions, production, housing, ritual, NPC-support distinctions, contrasting reviews and 59-source register were read. The stated 2026 service changes and future announcements remain the dossier's dated records, not newly verified availability. Authored continuity, player culture and autonomous private lives remain distinct evidence.
+**Warcraft: Orcs & Humans:** dossier `e2dbe853e0b7ed2b7c230563037d42bf921ec642`. Small-scale attention can feel like stewardship or burdensome supervision. Preserving an irreplaceable companion differs from trading a replaceable investment. Competent orders can fail through blocked routes or poor execution rather than mistaken goals. Care prompted by cost, voice and survival is not proof of simulated private psychology. The full original/remaster boundaries, four-unit selection correction, noncombat workers, resource/terrain dependencies, temporary undead versus restored persons, asymmetric campaign AI, rejected avatar-carryover correction, seven reviews and all sources were read. Future catalogue people are original synthesis, not claims that the source simulates friendships or household lives.
 
-**Final Fantasy XV:** dossier `0fbbb688a93d1a00329b9b09cfef0d41bd25e5f6`. Getting somewhere important and enjoying company along the way can both be genuine purposes. Distributed everyday competence can make companions familiar without proving psychological depth. Someone can capture moments first and choose later which mattered; a selected personal record can enrich an authored farewell without rewriting its outcome. Injury can change practical contribution as well as conversation. The full launch/Royal/Episodes/Comrades distinctions, retired versus cancelled content, Danger/Stasis, recipe and upgrade chains, rest/experience separation, fishing/photos, minigames, alternative perspectives, production and all sources were read. Partial media consumption in the underlying research remains partial; no full film, novel, GDC talk or live game session is claimed.
+**Warcraft II:** dossier `d3185e551bbcbdb5059d85f54e128b53e5025578`. Remembering a place differs from knowing its current safety. Choosing who accompanies a journey expresses what the group expects to need, not only whom it values most. Preparation and reactive help put attention under pressure at different moments. Keeping an indispensable person completely safe can conflict with enabling that person's actual contribution. The full base/expansion/console/Battle.net/GOG/remaster distinctions, remembered-versus-observed fog, repair and transport limits, counterintuitive spell exceptions, legacy-versus-patched balance, named-hero objective, editor limits, production and complete source register were read. The inaccessible historical sales disclosure remains unverified; no original or current multiplayer population is inferred.
 
 Across all findings, competence is not passion; support is not consent; victory, survival, freedom, restitution, forgiveness and reconciliation differ. Preserve ordinary pleasure, deliberate harm, and completed goals without compulsory redemption or replacement craving. Appearance, memory, testimony, interpretation and acts have different owners. Source corrections qualify older overviews. Human play, authored characters, simulated rules and cancelled-game intentions are distinct evidence. Historical source text never overrides current AGENTS instructions.
 
