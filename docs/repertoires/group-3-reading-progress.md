@@ -2,79 +2,61 @@
 
 [Psychology](psychology-behavior.md#research-coverage) · [Traits](traits.md#research-coverage) · [Needs](needs.md#research-coverage) · [Characters](characters-backstories.md#research-coverage)
 
-**Branch:** `repertoires-v2-group-3`. **[x] means a complete repository-document read**, including corrections, examples and source/access notes. It does not mean external citations were reopened, media watched, games played or source claims independently verified. Counts are cumulative across resumes.
+**Branch:** `repertoires-v2-group-3`. A checkmark means a complete repository-document read, including corrections, examples and sources. It does not mean external citations were reopened, media watched, games played or claims independently verified. Counts are cumulative across resumes.
 
-**Coverage: 151/151 dossiers; 39/39 original game chapters; 31/31 mechanics studies; 3 previously read indexes/roster documents; 42/42 worldbuilding documents; 17/39 additional supplementary/reference/administrative documents. Catalogue expansion remains pending for Psychology and Traits.**
+**Coverage: 151/151 game dossiers; 39/39 original chapters; 31/31 mechanics studies; three previously read indexes/roster documents; 42/42 worldbuilding documents; 29/39 additional supplementary/reference/administrative documents. Psychology and Traits expansion remains pending.**
 
 ## Revisions and discovery
 
-Research pin: **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This continuation began at `c324cdf1cf2b46887e60ed5dd31f5ec2aa2410fc`; comparison confirmed only reading-ledger changes since the preceding known checkpoint. Sources and instructions were unchanged. Reading uses Git objects, not unrelated branch merges.
+Research pin: **`48bf5090fb65b3dc8ad13087f71bd1fb3c74420e`**. This continuation began at `c324cdf1cf2b46887e60ed5dd31f5ec2aa2410fc`; comparison confirmed only reading-ledger changes since the preceding known checkpoint. Research and instructions were unchanged. Sources are read through Git objects, not unrelated merges.
 
-[Revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery). [Complete discovery and incoming checklists](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md). The latter records exact tree hashes and all 39 extra paths. There are 263 documents in the game library and 42 in worldbuilding at this pin; discovery alone is not reading.
+[Revision register](https://github.com/Macrofold/OpenLegend/blob/a5d704c2b75e4a985f7c475032e00f4b0d677db6/docs/repertoires/group-3-reading-progress.md#revisions-and-discovery). [Exact tree discovery and full additional-file queue](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md). The pin contains 263 game-library documents and 42 worldbuilding documents. Discovery is not reading.
 
-## Dossiers and earlier completed research
+## Completed research
 
-- [x] [All 151 game dossiers, including both D&D dossiers and the separate Dragon Age supplement](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md#game-dossiers--complete). The immutable checkpoint chain preserves every completed path.
-- [x] [39 original chapters, 31 mechanics studies, three indexes, all 29 worlds and all 13 worldbuilding root documents](https://github.com/Macrofold/OpenLegend/blob/c3101880604a52953b36183eeb56e22b4885efab/docs/repertoires/group-3-reading-progress.md#other-completed-research).
+- [x] [All 151 game dossiers, including both D&D dossiers and the separate Dragon Age supplement](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md#game-dossiers--complete).
+- [x] [39 original chapters, 31 mechanics studies, three indexes, 29 world dossiers and 13 worldbuilding root documents](https://github.com/Macrofold/OpenLegend/blob/c3101880604a52953b36183eeb56e22b4885efab/docs/repertoires/group-3-reading-progress.md#other-completed-research).
+- [x] [17 supplementary files: all 12 essays, three game-range audits, earlier findings and field-guide navigation](https://github.com/Macrofold/OpenLegend/blob/1d24d69bfec0e18b51b805fd9e7c62b51d3fc14a/docs/repertoires/group-3-reading-progress.md#additional-documents--17-complete).
 
-Shared documents count once; integrated studies count within dossiers. D&D's SRD synthesis is not a fresh read of the underlying PDF. Earlier corrected chapter names/counts remain in the immutable record. No truncated output is counted as a complete read.
+Additional complete paths relative to `archive/02-research/game-inspiration/`:
 
-## Additional documents — 17 complete
+- [x] `mechanics/interaction-lookup.md`
+- [x] `references/packet-provenance.md`
+- [x] `references/popularity-and-economics.md`
+- [x] `references/review-evidence.md`
+- [x] `references/review-evidence-field-guide-01.md`
+- [x] `references/review-evidence-field-guide-02.md`
+- [x] `references/games-40-60-fork-baseline.md`
+- [x] `references/games-40-60-coverage-audit.md`
+- [x] `references/games-51-60-coverage-audit.md`
+- [x] `references/dragon-age-inquisition-completion-evidence.md`
+- [x] `references/sources-01.md`
+- [x] `references/sources-02.md`
 
-Paths relative to `archive/02-research/game-inspiration/`:
+## Remaining research — 10 files
 
-- [x] `essays/a-practical-validation-program.md`
-- [x] `essays/camera-audience-popularity-and-the-non-fps-argument.md`
-- [x] `essays/comparative-map.md`
-- [x] `essays/contents.md`
-- [x] `essays/executive-judgment.md`
-- [x] `essays/how-to-interpret-the-evidence.md`
-- [x] `essays/implications-for-openlegend.md`
-- [x] `essays/introduction.md`
-- [x] `essays/prioritized-study-itinerary.md`
-- [x] `essays/production-and-platform-pitfalls.md`
-- [x] `essays/virality-and-discovery.md`
-- [x] `essays/what-actually-makes-these-worlds-fun.md`
-- [x] `references/earlier-additional-findings.md`
-- [x] `references/field-guide.md`
-- [x] `coverage-audit-g81-g100.md`
-- [x] `coverage-audit-g121-g130.md`
-- [x] `coverage-audit-g141-g148.md`
-
-## Additional documents — 22 remaining
-
-- [ ] `mechanics/interaction-lookup.md`
+- [ ] `references/sources-03.md`
+- [ ] `references/sources-04.md`
+- [ ] `references/sources-05.md`
+- [ ] `references/master-bibliography.md`
+- [ ] `references/youtube-watchlist.md`
 - [ ] `research-progress-audit-start-2026-09-26.md`
 - [ ] `research-progress-audit-start-2026-09-27.md`
 - [ ] `research-progress-base-2026-09-26.md`
 - [ ] `research-progress.md`
 - [ ] `research-requirements.md`
-- [ ] `references/dragon-age-inquisition-completion-evidence.md`
-- [ ] `references/games-40-60-coverage-audit.md`
-- [ ] `references/games-40-60-fork-baseline.md`
-- [ ] `references/games-51-60-coverage-audit.md`
-- [ ] `references/master-bibliography.md`
-- [ ] `references/packet-provenance.md`
-- [ ] `references/popularity-and-economics.md`
-- [ ] `references/review-evidence-field-guide-01.md`
-- [ ] `references/review-evidence-field-guide-02.md`
-- [ ] `references/review-evidence.md`
-- [ ] `references/sources-01.md`
-- [ ] `references/sources-02.md`
-- [ ] `references/sources-03.md`
-- [ ] `references/sources-04.md`
-- [ ] `references/sources-05.md`
-- [ ] `references/youtube-watchlist.md`
+
+Shared studies count once; integrated studies count within dossiers. Field-guide navigation points to already-read chapter content, not another duplicate corpus. D&D's SRD synthesis is not a new read of the underlying PDF. Truncated text is recovered before checking. Earlier chapter-name/count corrections remain in the immutable record.
 
 ## Synthesis and evidence boundaries
 
-[Prior dossier findings](https://github.com/Macrofold/OpenLegend/blob/aba6f33fffe1d583f4761bb8f40e1bd2b2a15935/docs/repertoires/group-3-reading-progress.md#findings-and-evidence-boundaries) retain Abiotic Factor and link the full earlier chain.
+[Previous findings](https://github.com/Macrofold/OpenLegend/blob/1d24d69bfec0e18b51b805fd9e7c62b51d3fc14a/docs/repertoires/group-3-reading-progress.md#synthesis-and-evidence-boundaries) retain essay conclusions and the full dossier-finding chain.
 
-The essays distinguish mastery, creative expression, discovery, care, spectacle, strategy and personal narrative. They motivate particular remembered consequences rather than indiscriminate acknowledgement, and distinguish choosing a purpose from delegating its execution. A useful new catalogue entry must change a person's choices or interpretation, not merely rename a familiar behavior. Silence, continued work, pleasure and voluntary closure can be meaningful outcomes. Capability is not desire; attendance is not satisfaction; persistent data alone does not create attachment.
+The interaction lookup connects useful differences rather than equivalent implementations: knowing, possessing, preparing and applying a capability; affection versus optimization; intended help versus effective help; and continuing identity versus retained power. The review notebook and both enrichment parts preserve mixed testimony, authored versus reported cases, comfort versus pressure, delegation versus lost control, knowledge versus opacity, and different reasons to return. A declared personality does not by itself produce believable individual choice.
 
-The field-guide page now owns navigation and provenance; its 22 complete entries are in the already-read original chapters. The retained earlier findings are historical synthesis, not an alternative current game ruleset. All three corrective audits were read in full, including their baseline matrices, actual repair records, source-access limitations and separate packet-integration gates. Their corrections qualify older descriptions; this task does not silently adopt their former implementation or stopping instructions.
+The economics ledger and source annotations were read as dated evidence with explicit denominators, not as current figures or causal popularity proof. Packet provenance distinguishes original uploads, reorganized owners and a duplicate convenience extract. The older fork/audit records preserve past missing work; the Inquisition supplement supplies the later class/resource/preparation and independent multiplayer-progression remedy, including all three additional cases and access notes. Reading historical pending states does not reopen already repaired source content or authorize edits outside this group.
 
-Catalogue ideas are **creative synthesis**, not franchise occurrences, clinical laws or implemented OpenLegend behavior. External current-state and commercial claims remain dated source records, not freshly verified facts. No gameplay, audiovisual inspection, live-model experiment or representative player study is asserted.
+New catalogue examples are **creative synthesis**, not copied franchise events, clinical predictions or implemented OpenLegend behavior. Sources retain their access/version limits. No external-bibliography reread, gameplay, audiovisual inspection, live-model experiment or representative player study is claimed.
 
 ## Catalogue delivery
 
@@ -89,6 +71,6 @@ Earlier continuations added 120 entries, for **1,116** total. Reading is not cat
 
 ## Remaining delivery and integration
 
-Finish the unchecked files and Psychology/Traits expansion. Repair seed proposals in Inspiration, Traits' “Animal Crossing III” / G99 error, nonexistent owner names and D classifications caused only by unusual bodies. Preserve IDs/headings and reconcile coverage in all four assigned files. The prior checkpoint records completed AGENTS/documentation/classification/seed prerequisites.
+Finish the ten files and Psychology/Traits expansion. Repair seed proposals in Inspiration, Traits' “Animal Crossing III” / G99 error, nonexistent owner names and D classifications caused only by unusual bodies. Preserve IDs/headings and update coverage in all four assigned files. Prior checkpoints record completed instruction/classification/seed prerequisites.
 
 Respect medieval supernatural limits, Veyra Reach's exclusion of playable spaceflight and Borrowed Dawn's bounded initial magic with compatible expansion. Wider-library ideas remain welcome. Shared atlas/navigation/count/history reconciliation belongs to the integration owner. Other catalogues, research libraries, proposals, shared trackers and runtime remain unchanged.
