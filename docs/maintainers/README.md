@@ -21,7 +21,7 @@ This page is the master navigation index for active implementation work.
 - [Gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) — current native/NPC support, player and creator surfaces, and linked next steps.
 - [Remaining foundational work](remaining-foundational-work.md) — ranked gaps, branch coverage and accepted-decision delivery map.
 - [Priorities 1–5 implementation and design package](../projects/foundations-1-5.md) — five paired feature/technical specifications, source baseline, cross-project sequence and links to 46 completed implementation/qualification slices, measured limits and branch migration seams.
-- [Multiplayer authority and operations](multiplayer.md) — control, private projections, special player permissions, maintenance and absence integration.
+- [Multiplayer authority and operations](multiplayer.md) — control, private projections, world entry, special player permissions, maintenance and absence integration.
 - [Production deployment and scale (PD01–PD12)](production-deployment.md) — researched AWS/Auth0 deployment, assets, inference, release gates and expansion path under D5/D6; links the paired specifications and deployment limits. Proposed infrastructure, not delivered hosting or measured capacity.
 
 ## Elapsed simulation

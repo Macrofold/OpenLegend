@@ -234,6 +234,30 @@ work retains its existing provider admission. Current implementation and exact n
 browser evidence are tracked in [MP01/MP04](maintainers/multiplayer.md#execution-notes--september-26-2026).
 Hosted security, regional/distributed ownership and full-load acceptance remain open.
 
+## World entry and maintenance
+
+A grant either binds one character or none. A characterless operator/spectator grant never
+includes play, holds no control lease and is invisible to exit and shared-pause accounting;
+its session reaches only an explicit route allowlist and lands on **World operations**
+(`/?view=operations`), which polls instead of streaming. `spectate` permits a public overview:
+terrain plus generic body categories and positions, with no names, identifiers, human/NPC
+distinction, possessions, speech or knowledge. Access managers issue hashed, single-use,
+expiring, revocable invites; the OIDC callback redeems a remembered invite after verified
+sign-in, and a player invite binds an unowned living person in the same world commit as its
+grant. Issuers delegate only capabilities they hold. There is no open sign-up.
+
+Creator maintenance is an operational record outside gameplay saves: one scheduled or active
+window with UTC instants and an IANA display zone. Skipped local times are rejected and repeated
+times need an explicit earlier/later choice. A writer-lane timer starts the window; a start
+missed offline activates at startup and an active window holds across restart. The hold
+overrides manual, presence and unattended settings. Entering or leaving it drops pending
+simulation debt, rotates the world generation (fencing earlier jobs and requests) and resets the
+host clock's resume instant, so no paused real time is simulated later. Ordinary gameplay
+mutations and pause/speed controls are refused; creators keep paused-world editing. Only an
+explicit Ready resumes, never while storage has failed. Players receive notices in `GameView`
+with full dates, zone names/offsets and their local time. Bounds are in
+[MP15–MP17](limits/multiplayer.md#mp15); [evidence](verification/multiplayer-entry-maintenance.md).
+
 The current rendering adapter shares billboard depth/CPU picking transforms, removes shadow-only proxies from color layers, batches decorative plank seams and reuses reveal uniforms. Navigation support projection queries only spatially relevant candidate surfaces. A supercover terrain traversal checks every crossed terrain cell, including short diagonal water crossings; continuous coordinates remain independent of that representation. Worker failure and shutdown rules are in [performance](performance.md#navigation-failure-and-shutdown).
 
 ## State and transitions

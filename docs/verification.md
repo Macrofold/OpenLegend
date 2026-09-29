@@ -81,6 +81,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Foundations and integration history
 
 - [Foundations 1–5](verification/foundations-1-5.md): implementation evidence and follow-up review.
+- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks.
 - [Native action integration](verification/native-action-integration.md) and [action reconciliation](verification/action-reconciliation.md).
 - [Historical integration summaries](verification/integration-summaries.md): earlier overview notes and links to action, perception and persistence artifacts.
 - [Historical baseline and acceptance snapshot](verification/historical-baseline.md): earlier automated/provider results, product limits and acceptance owners. This is not the current branch’s test status.

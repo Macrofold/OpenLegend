@@ -72,11 +72,11 @@ Original recommendation: **Review**.
 
 ## MP02
 
-**Reported · Restrictiveness: Very safe.**
+**Current (September 28, 2026) · Restrictiveness: Safe.** Previously reported as five permissions with every session requiring play plus a character binding.
 
-Five fixed permissions: play, create, inspect, save and manage access. Every ordinary world session requires **play plus a character binding**; no independent spectator/admin session.
+Six fixed permissions: play, spectate, create, inspect, save and manage access. A grant either binds **one character** (the only grant that may include play) or **no character**. A characterless operator/spectator session holds no control lease, never counts as a participating connection for exit or shared pause, and reaches only the explicit route allowlist in [operations-routes.ts](../../apps/server/src/operations-routes.ts); every character route rejects it with `characterless`. Characterless creator editing (god/editor routes) and promoting a characterless account to a character are not supported.
 
-**Reason / tradeoff:** Use the first playable account model; spectators and characterless operators need separate sessions.
+**Reason / tradeoff:** Operators and spectators need entry without a playable embodiment; an allowlist keeps character-assuming routes from receiving a scope with no actor. Characterless god tools need their own UI and caller audit. [Design](../projects/multiplayer-entry-maintenance.md#decisions).
 
 ## MP03
 
@@ -88,11 +88,11 @@ Login supports local mode or **one configured OpenID Connect provider**—an ext
 
 ## MP05
 
-**Reported · Restrictiveness: Very safe.**
+**Current (September 28, 2026) · Restrictiveness: Safe.** Previously reported as operator provisioning only.
 
-New world access comes from operator provisioning; no self-service character enrollment. Startup bindings initialize access once; later configuration changes do not overwrite existing grants.
+New world access comes from startup bindings or an **operator-issued invite** ([MP15](#mp15)) redeemed through OIDC sign-in; no manual database edits are needed. There is **no open public sign-up**. Startup bindings initialize access once and may omit the character for a characterless operator; later configuration changes do not overwrite existing grants.
 
-**Reason / tradeoff:** Keep enrollment under explicit operator grants; self-service onboarding has not been implemented.
+**Reason / tradeoff:** Invites keep every grant attributable to a manager's explicit decision. Open sign-up needs an owner decision on abuse controls and default grants ([D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites)).
 
 ## MP06
 
@@ -149,6 +149,30 @@ Shared-world simulation pauses when no controlling connection satisfies the pres
 The world-assistant discussion feature requires creator permission.
 
 **Reason / tradeoff:** World editing discussion uses creator authority; collaborative authoring roles are not yet supported.
+
+## MP15
+
+**Current (September 28, 2026) · Restrictiveness: Safe.**
+
+Invite links are **single-use** bearer links with a 256-bit token stored only as a SHA-256 hash and shown once. Expiry is **1 hour to 30 days** (default **7 days**); a world has at most **100 pending invites**, and one character can have one pending player invite. The token survives the OIDC round trip in an HttpOnly cookie for **15 minutes**. A redeemer that already holds a grant in the world leaves the invite unused. Issuers delegate only capabilities they hold; player invites bind a living person with no current or historical human owner ([MP06](#mp06)). The console lists the newest **200** invites and **500** grants.
+
+**Reason / tradeoff:** Short-lived, revocable, one-time links limit exposure of a forwarded link; bounded pending/list sizes keep the console and admission checks small. Expired or used links require a new invite. [Implementation](../../apps/server/src/invites.ts).
+
+## MP16
+
+**Current (September 28, 2026) · Restrictiveness: Safe.**
+
+Creator maintenance allows **one scheduled or active window** per world. A start may be at most **366 days** ahead; the announced duration is **5 minutes to 7 days**, and an active window can be extended up to **7 days** past the current time. Messages are at most **280 characters**. Each window keeps **20** audit changes, and **20** finished or cancelled windows are retained for creators. Players see cancelled or finished notices for **30 minutes**. A scheduled start that loses the writer lane to overload retries after **1 second**; any other persistence failure pauses the world with a storage error.
+
+**Reason / tradeoff:** One window keeps notices unambiguous; the announced end is an estimate, never an automatic resume. Recurring or overlapping schedules need a product decision. [Implementation](../../apps/server/src/maintenance.ts).
+
+## MP17
+
+**Current (September 28, 2026) · Restrictiveness: Safe.**
+
+The World operations console refreshes every **5 seconds** while visible and opens no event stream. The spectator overview contains terrain and at most **2,000** bodies as generic categories with positions rounded to 0.1, sorted to remove creation order; further bodies are counted as omitted. It contains no names, identifiers, human/NPC distinction, possessions, speech or knowledge, and departed humans are absent.
+
+**Reason / tradeoff:** Polling keeps operator/spectator tabs out of presence and control accounting; the overview bound caps payload size in dense worlds. Richer spectator presentation (for example a 3D camera) needs renderer support and a privacy decision. [Implementation](../../apps/server/src/operations-routes.ts).
 
 ## AU01
 

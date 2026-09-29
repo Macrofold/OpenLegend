@@ -161,3 +161,14 @@ Accepted direction lives in the [product-scalability suite](../../docs/product-s
 - **PS-D06 — Quiet-world funding and continued service.** Before offering sustained unattended progression, choose funded activity allowances and explicit behavior when funding or capacity runs out. D04/D17/D35 remain the economic owners; no price, retention deadline, deletion authority or departure from accepted membership directions is selected here.
 
 World-policy owners choose fictional risk and world rules; the product owner resolves shared participation promises; engineering selects measured operating values within those contracts. Review triggers are linked from [RP03, RP05 and RP06](../../docs/maintainers/revisitable-policies.md). No unresolved choice grants permission to weaken human privacy, acknowledged outcomes, real accounting, or the protected development-save policy.
+
+## D68 — World entry beyond invites
+
+Mike authorized [invite enrollment and characterless sessions](../../docs/projects/multiplayer-entry-maintenance.md) on September 28, 2026 and explicitly excluded open public sign-up. Current behavior: every world grant comes from startup bindings or an operator-issued, expiring, single-use invite ([MP05](../../docs/limits/multiplayer.md#mp05), [MP15](../../docs/limits/multiplayer.md#mp15)). Residual owner choices:
+
+- Whether any world offers open sign-up, and if so its default grant (spectator or player), abuse and rate controls, and whether it needs hosted-security review (D05).
+- Whether a player invite may create a new character from authored base-world starting content instead of binding an existing unowned person.
+- Whether an operator may promote a characterless account to a character, and whether characterless creators need god/editor tools outside the embodied game UI.
+- How much a spectator may see. The current overview is a generic top-down map with no names or identities ([MP17](../../docs/limits/multiplayer.md#mp17)); a 3D spectator camera or named bodies would change the privacy contract and needs renderer support.
+
+None of these blocks invited play or current operator work.

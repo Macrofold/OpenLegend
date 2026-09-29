@@ -23,7 +23,7 @@ This file owns audit lifecycle and candidate ranking. Linked focused trackers ow
 
 Consider the permitted action path, automatic growth rate, hot-path frequency, protections before expensive work, scope of harm, recoverability and actual evidence. Do not assign precise probabilities without measurements. A world-wide pause is more serious than a refused optional request; a rapidly growing memory corpus deserves earlier attention than 10,000 manually created bows. A page/result limit, serialized lane or timeout is not automatically an input-work, backlog or resident-memory bound. Do not fix unbounded work by silently dropping protected information.
 
-**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). R04 (merge targets beyond the inventory page) is likewise removed; see [QU05](../limits/objects.md#qu05) and [player clarity evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
+**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). R04 (merge targets beyond the inventory page) is likewise removed; see [QU05](../limits/objects.md#qu05) and [player clarity evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page). E08 (characterless operator/spectator sessions and invite enrollment) is also implemented and removed; [MP02/MP05/MP15/MP17](../limits/multiplayer.md#mp02) retain behavior and [its evidence](../verification/multiplayer-entry-maintenance.md) records the checks. Open public sign-up is an owner decision in [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
 
 Original source-review baseline: `af1eb02`. The subsequent [implementation](../projects/immediate-gameplay-limits.md) adds runtime evidence; broader LA01–LA04 acceptance remains open. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
 
@@ -258,14 +258,6 @@ The subject-picker half is delivered: the private-mind pickers now search every 
 Expand plan/dependency, reflection-update, recipe and authoring transaction capacity where complete supported content does not fit.
 
 Retain per-request complexity/atomicity and staged execution; no demonstrated benefit from globally multiplying every cap now. [LA022](../limits/memory.md#la022), [LA062](../limits/cognition.md#la062), [LA109](../limits/inventions.md#la109), [LA129](../limits/state-effects.md#la129), [LA134](../limits/state-effects.md#la134), [LA135](../limits/state-effects.md#la135), [LA215](../limits/interface.md#la215), [LA235](../limits/narration.md#la235) · [Work](extensible-world-foundation.md)
-
-### E08
-
-**P2. Before external shared play: new players/operators need entry.** Operator setup remains cumbersome; existing provisioned sessions can play.
-
-Add characterless operator/spectator sessions and self-service enrollment before external shared release; keep explicit grants and human-private boundaries.
-
-An operator or invited player should not need manual DB provisioning and a playable embodiment merely to perform their authorized role. [MP02](../limits/multiplayer.md#mp02), [MP05](../limits/multiplayer.md#mp05) · [Work](multiplayer.md)
 
 ### E06
 

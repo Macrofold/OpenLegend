@@ -1,6 +1,6 @@
 # Multiplayer entry and scheduled maintenance
 
-Approved in chat on 2026-09-28 (Mike's go-ahead in the task message): deliver [E08](../maintainers/limits-audit.md#e08) characterless operator/spectator sessions and invite enrollment, then [MP03](../maintainers/multiplayer.md) scheduled creator maintenance. Base: `origin/main` `be68b1e0`. Estimated 1,700–2,300 changed logic lines across authority, HTTP, the world clock, protocol and client. Authority, privacy and clock/pause risk warrants this durable plan.
+Approved in chat on 2026-09-28 (Mike's go-ahead in the task message): deliver audit item E08 (characterless operator/spectator sessions and invite enrollment), then [MP03](../maintainers/multiplayer.md) scheduled creator maintenance. Base: `origin/main` `be68b1e0`. Estimated 1,700–2,300 changed logic lines across authority, HTTP, the world clock, protocol and client. Authority, privacy and clock/pause risk warrants this durable plan.
 
 Canonical contracts reused, not restated: [multiplayer authority design](multiplayer-authority-tech-design.md), [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [maintenance pause contract](../../archive/03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause), [development save policy](../../AGENTS.md#development-save-policy) and [RP05](../maintainers/revisitable-policies.md#rp05--prototype-account-and-native-work-operating-envelopes).
 
@@ -37,22 +37,24 @@ Static: pinned Prettier on changed files, `pnpm typecheck`, `pnpm build`. Runtim
 
 Done when, with two real browser sessions:
 
-- [ ] A characterless operator signs in and performs only granted operations; a spectator's overview payload contains no human-private data, names or account/character identifiers; characterless sessions are rejected on character routes.
-- [ ] Invite → OIDC sign-in → enrollment → play works without database edits; a revoked pending invite and a revoked enrolled account both lose access.
-- [ ] Maintenance: schedule → player notice → scheduled start pauses with no catch-up → restart keeps the hold → explicit Ready resumes; cancel and extend update notices; ordinary gameplay is rejected and creator editing works during maintenance; a stale pre-maintenance job does not apply.
-- [ ] Midnight and daylight-saving windows display unambiguously in the creator's zone and the viewer's zone.
-- [ ] E08, MP03, limits, README setup, architecture, verification and changelog updated; full review complete.
+- [x] A characterless operator signs in and performs only granted operations; a spectator's overview payload contains no human-private data, names or account/character identifiers; characterless sessions are rejected on character routes.
+- [x] Invite → OIDC sign-in → enrollment → play works without database edits; a revoked pending invite and a revoked enrolled account both lose access.
+- [x] Maintenance: schedule → player notice → scheduled start pauses with no catch-up → restart keeps the hold → explicit Ready resumes; cancel and extend update notices; ordinary gameplay is rejected and creator editing works during maintenance; a stale pre-maintenance job does not apply (fixture AI client; live models not exercised).
+- [x] Midnight and daylight-saving windows display unambiguously in the creator's zone and the viewer's zone.
+- [x] E08, MP03, limits, README setup, architecture, verification and changelog updated; full review complete.
 
 ## Progress
 
 - [x] Context, contracts and trackers read; plan written.
-- [ ] Characterless sessions.
-- [ ] Invite enrollment.
-- [ ] Scheduled maintenance.
-- [ ] Documentation reconciliation, review and verification.
+- [x] Characterless sessions (`e94aa3c8`).
+- [x] Invite enrollment (`2106525f`).
+- [x] Scheduled maintenance (`061f54db`).
+- [x] Documentation reconciliation, review and verification; [evidence](../verification/multiplayer-entry-maintenance.md).
+
+Decisions added during review and verification: operations routes own their response checks (characterless validation errors had been masked as stale scope); a scheduled start that expires in the writer queue retries after one second while real persistence failures still fail closed; the host clock never simulates real time from before the latest resume, closing a bounded catch-up path for a tick left waiting across a pause; pending invites are counted through an indexed query instead of the bounded console list.
 
 ## Maintained records
 
-- Implementation: [MP03 and entry work](../maintainers/multiplayer.md); [E08](../maintainers/limits-audit.md#e08).
+- Implementation: [MP03 and entry work](../maintainers/multiplayer.md#entry-and-maintenance-execution-notes--september-28-2026); E08 is removed from the [limits audit](../maintainers/limits-audit.md#ranking-method) as delivered.
 - Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).
 - Related contract/design: [Multiplayer authority technical design](multiplayer-authority-tech-design.md).
