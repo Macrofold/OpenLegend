@@ -403,14 +403,14 @@ async function initializeGameServer(
   let activeRequests = 0;
   let retainedBodyBytes = 0;
   const now = options.now ?? Date.now;
-  const operations = new OperationsRoutes(service, config, now);
+  const operations = new OperationsRoutes(service, store, config, now);
   const authentication =
     config.authentication.mode === 'oidc'
       ? new OpenIdAuthentication(config.authentication, now)
       : undefined;
   const cookie = (name: string, value: string, maxAge?: number) =>
     `${name}=${value}; HttpOnly; SameSite=Lax; Path=/${config.authentication.mode === 'oidc' && !config.authentication.insecureLoopback ? '; Secure' : ''}${maxAge === undefined ? '' : `; Max-Age=${maxAge}`}`;
-  const readCookie = (request: IncomingMessage, name: 'ol_session' | 'ol_login') =>
+  const readCookie = (request: IncomingMessage, name: 'ol_session' | 'ol_login' | 'ol_invite') =>
     new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]{64})(?:;|$)`).exec(request.headers.cookie ?? '')?.[1];
   type StreamState = {
     scope: RequestScope;
@@ -626,6 +626,18 @@ async function initializeGameServer(
         : `http://${request.headers.host}`;
     if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
       try {
+        if (url.pathname === '/auth/invite') {
+          // The bearer token survives only the OIDC round trip; redemption needs verified identity.
+          const token = url.searchParams.get('token') ?? '';
+          const landing = await operations.inviteLanding(token);
+          response.setHeader(
+            'Set-Cookie',
+            cookie('ol_invite', landing.usable ? token : '', landing.usable ? 900 : 0),
+          );
+          response.writeHead(303, { Location: landing.location, 'Cache-Control': 'no-store' });
+          response.end();
+          return;
+        }
         if (config.authentication.mode === 'local' && url.pathname === '/auth/login') {
           // A database reset invalidates saved browser sessions. Let the existing
           // loopback-only /api/state bootstrap issue the current local session.
@@ -666,11 +678,16 @@ async function initializeGameServer(
               return replacement;
             }),
           );
+          const invite = readCookie(request, 'ol_invite');
+          const location = invite
+            ? await operations.completeInvite(invite, login.session.accountId)
+            : '/';
           response.setHeader('Set-Cookie', [
             cookie('ol_session', login.token, Math.floor(config.authentication.sessionMs / 1000)),
             cookie('ol_login', '', 0),
+            cookie('ol_invite', '', 0),
           ]);
-          response.writeHead(303, { Location: '/', 'Cache-Control': 'no-store' });
+          response.writeHead(303, { Location: location, 'Cache-Control': 'no-store' });
           response.end();
           return;
         }
@@ -1098,6 +1115,11 @@ async function initializeGameServer(
           submittedScope !== scopeKey(scope)
         )
           throw new AuthorityError('stale-scope');
+        const operation = await operations.post(url.pathname, scope, body);
+        if (operation) {
+          responseScope = undefined;
+          return send(response, operation.status, operation.value);
+        }
         if (url.pathname === '/api/access') {
           const value = z
             .object({

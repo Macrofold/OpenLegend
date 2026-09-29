@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
 import { AccessError, getOperations, post } from '../api';
 import { Button, Section, Tag } from '../design-system/components';
+import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
+import { AccessSection } from './operations-access';
 import { useLocal } from './storage';
 import './operations.css';
 
@@ -75,6 +77,7 @@ export function OperationsConsole() {
           )}
         </div>
       </header>
+      <EntryNotice />
       {!view ? (
         <div className="ol-card ol-operations-card">
           <p role="status">{error || 'Loading world operations…'}</p>
@@ -113,6 +116,16 @@ export function OperationsConsole() {
               <Section title="World overview">
                 <OverviewMap overview={view.overview} />
               </Section>
+            </section>
+          )}
+          {view.access && (
+            <section className="ol-card ol-operations-card" aria-label="Access and invites">
+              <AccessSection
+                view={view}
+                access={view.access}
+                describe={(capability) => CAPABILITY_TEXT[capability]}
+                onChanged={() => void refresh()}
+              />
             </section>
           )}
           {can('save') && (

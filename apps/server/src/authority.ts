@@ -4,6 +4,8 @@ import { isSafeRecordId, type WorldState } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
 // Dependency order for operational recovery; these records never enter gameplay checkpoints.
+// Invites are operational access records owned by invites.ts; they back up and restore
+// with current authority.
 export const AUTHORITY_TABLES = [
   'auth_accounts',
   'auth_sessions',
@@ -14,6 +16,7 @@ export const AUTHORITY_TABLES = [
   'auth_actor_owners',
   'auth_binding_receipts',
   'auth_access_audit',
+  'auth_invites',
 ];
 
 export const capabilitySchema = z.enum([
@@ -523,6 +526,19 @@ export class AuthorityRepository {
       throw new AuthorityError('conflict');
     return JSON.parse(String(prior['payload'])) as ControlLease;
   }
+  /** One bounded read for the access console; it does not refresh the currency cache. */
+  async listGrants(worldId: string, limit = 500): Promise<WorldGrant[]> {
+    const rows = await this.db
+      .prepare('SELECT * FROM auth_grants WHERE world_id=? ORDER BY account_id LIMIT ?')
+      .all(worldId, limit);
+    return rows.map((row) => ({
+      worldId,
+      accountId: String(row['account_id']),
+      actorId: grantActor(row['actor_id']),
+      revision: Number(row['revision']),
+      capabilities: z.array(capabilitySchema).parse(JSON.parse(String(row['capabilities']))),
+    }));
+  }
   async worldGrants(worldId: string): Promise<WorldGrant[]> {
     const rows = await this.db
       .prepare('SELECT account_id FROM auth_grants WHERE world_id=?')
@@ -649,9 +665,20 @@ export class AuthorityRepository {
     payload: unknown,
     now: number,
   ): Promise<void> {
+    await this.recordAudit(scope.worldId, accountId, scope.accountId, payload, now);
+  }
+  /** Access audit for changes whose issuer is not the current request, such as redemption
+   * of an invite issued earlier. */
+  async recordAudit(
+    worldId: string,
+    accountId: string,
+    issuerId: string,
+    payload: unknown,
+    now: number,
+  ): Promise<void> {
     await this.db
       .prepare('INSERT INTO auth_access_audit VALUES (?,?,?,?,?,?)')
-      .run(randomUUID(), scope.worldId, accountId, scope.accountId, now, JSON.stringify(payload));
+      .run(randomUUID(), worldId, accountId, issuerId, now, JSON.stringify(payload));
   }
   async exitAttempts(worldId: string): Promise<ExitAttempt[]> {
     const rows = await this.db

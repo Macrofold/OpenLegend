@@ -3,6 +3,7 @@ import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { OperationsConsole } from './ui/operations-console';
+import { EntryNotice } from './ui/entry-notice';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
@@ -1078,6 +1079,7 @@ function App({
         {!view ? (
           <div id="loading" className="ol-loading ol-card">
             <h1 className="ol-heading">OPEN LEGEND</h1>
+            <EntryNotice />
             <p>{error || 'Entering the clearing…'}</p>
             {error && (
               <>
@@ -1197,6 +1199,9 @@ function App({
                   </p>
                 </div>
               )}
+              <div className="ol-hud-notices">
+                <EntryNotice />
+              </div>
             </div>
             <div className="ol-top-tools">
               <Button id="aiLabel" size="sm" variant="quiet" onPress={() => toggle('ai')}>

@@ -1009,6 +1009,7 @@ export class WorldService {
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
+      operationalChange?: () => Promise<void>;
     },
   ): Promise<boolean> {
     // Synchronous save. One writer in snapshot order: an in-flight background save commits
@@ -2204,26 +2205,9 @@ export class WorldService {
       // Both embodiments settle through the existing departure owner. Native progress and
       // inventory stay with the actor; explicit control acquisition is required afterward.
       for (const actorId of [previousActorId, request.actorId]) {
-        const actor = world.entities[actorId]?.actor;
-        if (!actor) throw new AuthorityError('forbidden');
-        if (actor.participation?.phase === 'inactive') continue;
-        const attemptId = actor.participation?.exitAttemptId ?? randomUUID();
-        if (actor.participation?.phase !== 'exiting') {
-          const exit = changeParticipation(world, actorId, actor.participation?.revision ?? 0, {
-            type: 'begin-exit',
-            attemptId,
-          });
-          if (!exit.outcome.ok) return exit.outcome;
-          world = exit.world;
-        }
-        const departure = changeParticipation(
-          world,
-          actorId,
-          world.entities[actorId]!.actor!.participation!.revision,
-          { type: 'depart', attemptId },
-        );
-        if (!departure.outcome.ok) return departure.outcome;
-        world = departure.world;
+        const departed = this.departImmediately(world, actorId);
+        if (!departed.ok) return departed.outcome;
+        world = departed.world;
       }
       if (
         !(await this.commit(
@@ -2247,6 +2231,78 @@ export class WorldService {
         code: 'bound',
         message: 'Character binding changed. Choose Control here to enter the character.',
       };
+    });
+  }
+  /** Settle a body out of active participation now through the existing departure owner. */
+  private departImmediately(
+    world: WorldState,
+    actorId: string,
+  ): { ok: true; world: WorldState } | { ok: false; outcome: ApiResult } {
+    const actor = world.entities[actorId]?.actor;
+    if (!actor) throw new AuthorityError('forbidden');
+    if (actor.participation?.phase === 'inactive') return { ok: true, world };
+    const attemptId = actor.participation?.exitAttemptId ?? randomUUID();
+    if (actor.participation?.phase !== 'exiting') {
+      const exit = changeParticipation(world, actorId, actor.participation?.revision ?? 0, {
+        type: 'begin-exit',
+        attemptId,
+      });
+      if (!exit.outcome.ok) return { ok: false, outcome: exit.outcome };
+      world = exit.world;
+    }
+    const departure = changeParticipation(
+      world,
+      actorId,
+      world.entities[actorId]!.actor!.participation!.revision,
+      { type: 'depart', attemptId },
+    );
+    return departure.outcome.ok
+      ? { ok: true, world: departure.world }
+      : { ok: false, outcome: departure.outcome };
+  }
+  /** Invite enrollment: an unowned person becomes a human character in the same commit that
+   * redeems the invite and records its grant. The caller validates inside this writer lane.
+   * Like a rebinding, the body departs until its new controller explicitly takes control.
+   * docs/projects/multiplayer-entry-maintenance.md#decisions */
+  async enrollCharacter(
+    actorId: string,
+    accountId: string,
+    persist: () => Promise<void>,
+  ): Promise<ApiResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      const entity = this.world.entities[actorId];
+      if (!entity?.actor?.alive || entity.retirement || entity.actor.controller === 'player')
+        return {
+          ok: false,
+          code: 'character-unavailable',
+          message: 'That character is no longer available.',
+        };
+      const departed = this.departImmediately(
+        updateWorld(this.world, (draft) => {
+          draft.entities[actorId]!.actor!.controller = 'player';
+          draft.authorship.playerAccountIds[actorId] = accountId;
+        }),
+        actorId,
+      );
+      if (!departed.ok) return departed.outcome;
+      if (
+        !(await this.commit(
+          { ...this.saved, world: departed.world },
+          undefined,
+          'append',
+          undefined,
+          undefined,
+          undefined,
+          { operationalChange: persist },
+        ))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      this.exits.delete(actorId);
+      this.humanActorIds = Object.values(this.world.entities)
+        .filter((entity) => entity.actor?.controller === 'player')
+        .map((entity) => entity.id);
+      return { ok: true, code: 'enrolled', message: 'Character bound to the invited account.' };
     });
   }
   private async reconcileParticipation(): Promise<void> {

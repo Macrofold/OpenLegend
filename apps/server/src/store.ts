@@ -7,6 +7,7 @@ import {
   type ExitAttempt,
   type BindingRequest,
 } from './authority.js';
+import { InviteRepository } from './invites.js';
 import {
   compactHistory,
   compactObjectHistory,
@@ -357,6 +358,7 @@ export interface WorldStore {
       controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
+      operationalChange?: () => Promise<void>;
     },
   ): Promise<number>;
   close(): Promise<void>;
@@ -436,6 +438,7 @@ export interface GameRepository extends WorldStore {
 export class SqlGameRepository implements GameRepository {
   readonly commands: CommandReceipts;
   readonly authority: AuthorityRepository;
+  readonly invites: InviteRepository;
   readonly db: SqlDatabase;
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
@@ -600,6 +603,7 @@ export class SqlGameRepository implements GameRepository {
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
     this.commands = new CommandReceipts(this.db);
     this.authority = new AuthorityRepository(this.db);
+    this.invites = new InviteRepository(this.db);
     this.ready = this.initialize();
   }
 
@@ -677,6 +681,7 @@ export class SqlGameRepository implements GameRepository {
       await this.saves.initialize();
       await this.commands.initialize();
       await this.authority.initialize();
+      await this.invites.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', '4');
@@ -872,6 +877,8 @@ export class SqlGameRepository implements GameRepository {
       controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
+      /** Operational records that must commit with this world change (invite enrollment). */
+      operationalChange?: () => Promise<void>;
     },
   ): Promise<number> {
     await this.ready;
@@ -947,6 +954,7 @@ export class SqlGameRepository implements GameRepository {
           const { actorId, attempt } = historyProjection.participationChange;
           await this.authority.saveExit(state.world.id, actorId, attempt);
         }
+        await historyProjection?.operationalChange?.();
         const revision = await this.records.advance(
           state.world.id,
           expectedRevision,
