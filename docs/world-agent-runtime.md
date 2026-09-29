@@ -118,6 +118,8 @@ Cancellation first revokes the session context for that exact active turn, then 
 
 Human waiting is not an active model run. The agent saves its draft/review, ends with its question, and later receives a deliberately submitted reply under the same session allowance. Streaming partial provider output is optional future UX; durable status/replies are the required recovery path.
 
+The [structured-question proposal](projects/invention-questions-feature-spec.md) adds inline choices and durable answer provenance. Its proposed first version captures native questions, stops the Run and uses an explicit fresh admitted continuation; it does not depend on Macrofold’s active `waiting_for_input` state being free or suspended. [WW24–WW30](maintainers/world-agent-writes.md#structured-invention-questions) track implementation. Current OpenCode question denial and ordinary-text clarification remain unchanged until that path is qualified.
+
 ## Unified owner conversation interface
 
 The owner-facing conversation is the natural-language entry point for both investigation and supported action preparation. It explicitly creates one funded session before paid dispatch, retains the same session across messages, and displays remaining usage. A separate owner disclosure exposes spending, reservations and uncertain exposure. Starting or browsing a session makes no model call. Configuration readiness is not proof that a remote connector or provider is reachable.

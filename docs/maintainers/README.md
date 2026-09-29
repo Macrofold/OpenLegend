@@ -55,6 +55,8 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 ## Reviewed World Agent writes
 
+[Structured invention questions](../projects/invention-questions-feature-spec.md) and [technical design](../projects/invention-questions-tech-design.md) propose inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md#structured-invention-questions) track this new design and unimplemented delivery under INV-2.3/INV-21; existing release gates remain.
+
 [World Agent context and invention loop](../projects/world-agent-context/README.md) proposes compact source-backed mechanics/context, YAML templates and medium-effort execution. [WW17–WW23](world-agent-writes.md#context-and-invention-loop-design) track this design and future implementation beneath INV-21, preserving existing live-harness gates.
 
 [World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) and [transport/funding evidence](../verification/workshop-transport-funding.md) record actual runtime scope. WW08/WW09 cover the shared JSON transport and native worker/run allocation. WW12–WW15 cover [bounded investigation and exact custom-value edits](../world-agent-inspection-and-edits.md), with [navigation/edit runtime evidence](../verification/workshop-navigation.md). Remaining provider/browser/payer qualification stays with the focused tracker.
