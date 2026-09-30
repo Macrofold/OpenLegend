@@ -183,12 +183,8 @@
     "name": "fallback",
     "projection": {
       "text": "Can do: Equipment I inspected. Extra details: {\"available weapons\":[{\"weapon\":\"Hunting knife\",\"reach\":\"1.3 m\",\"available\":true},{\"weapon\":\"Bow\",\"reach\":\"20 m\",\"available\":false,\"reason\":\"No arrows\"}]}",
-      "covered": [
-        "action.facts.0"
-      ],
-      "fallback": [
-        "action.facts.0"
-      ],
+      "covered": ["action.facts.0"],
+      "fallback": ["action.facts.0"],
       "omitted": false,
       "bytes": 200
     },

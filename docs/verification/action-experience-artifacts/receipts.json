@@ -2703,7 +2703,7 @@
           "providerRequestId": "01a0e6ec-44b2-735a-9e5a-56c38a251929",
           "providerLatencyMs": 366,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 4.9518e-05,
+          "estimatedCostUsd": 4.9518e-5,
           "usage": {
             "inputTokens": 1179,
             "outputTokens": 139
@@ -2724,7 +2724,7 @@
           "providerRequestId": "01a0e6ec-468b-759e-b59c-468db5e7edae",
           "providerLatencyMs": 352,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 5.7456e-05,
+          "estimatedCostUsd": 5.7456e-5,
           "usage": {
             "inputTokens": 1368,
             "outputTokens": 139
@@ -2745,7 +2745,7 @@
           "providerRequestId": "01a0e6ec-486b-72d8-a91e-ef2aed2a5727",
           "providerLatencyMs": 414,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 1.7892e-05,
+          "estimatedCostUsd": 1.7892e-5,
           "usage": {
             "inputTokens": 426,
             "outputTokens": 38
@@ -5853,7 +5853,7 @@
           "providerRequestId": "01a0e718-88ea-75ac-ac77-da27a55d77aa",
           "providerLatencyMs": 1047,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 2.4696e-05,
+          "estimatedCostUsd": 2.4696e-5,
           "usage": {
             "inputTokens": 588,
             "outputTokens": 43
@@ -5881,7 +5881,7 @@
           "providerRequestId": "01a0e719-b1ab-7189-af2c-18968a01c2e6",
           "providerLatencyMs": 455,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 2.4948e-05,
+          "estimatedCostUsd": 2.4948e-5,
           "usage": {
             "inputTokens": 594,
             "outputTokens": 43
@@ -5909,7 +5909,7 @@
           "providerRequestId": "01a0e71a-ce94-7168-89b4-d741795d688a",
           "providerLatencyMs": 650,
           "providerQueueLatencyMs": 0,
-          "estimatedCostUsd": 2.8938e-05,
+          "estimatedCostUsd": 2.8938e-5,
           "usage": {
             "inputTokens": 689,
             "outputTokens": 42

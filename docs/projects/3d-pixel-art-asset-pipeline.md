@@ -25,14 +25,14 @@ Create or select an immutable AppearanceDefinition before production. Its brief 
 
 The following artifacts have different purposes:
 
-| Artifact | Purpose | Authority and reuse |
-| --- | --- | --- |
-| Runtime fallback | Immediate readable depiction of current supported state | Existing approved family; never waits on generation |
-| Construction/reference image | Communicate form, separated parts, neutral pose/materials and identity to production | Authoring input, not automatically public or runtime-ready |
-| Runtime sprite or directional set | A usable pixel-art representation at known scale, pivots and view coverage | Can publish independently after its own validation |
-| Source model candidate | Generated or authored geometry/textures before runtime normalization | Quarantined; not downloaded directly by players |
-| Sanitized runtime model | Bounded geometry/materials and, when supported, a validated rig/animation set | Immutable approved manifest, exact dependencies and compatible fallback |
-| Derived icon, portrait, LOD or imposter | Optional alternate presentation of the same identity | Generated or compiled only when useful and authorized; not mandatory for each object |
+| Artifact                                | Purpose                                                                              | Authority and reuse                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Runtime fallback                        | Immediate readable depiction of current supported state                              | Existing approved family; never waits on generation                                  |
+| Construction/reference image            | Communicate form, separated parts, neutral pose/materials and identity to production | Authoring input, not automatically public or runtime-ready                           |
+| Runtime sprite or directional set       | A usable pixel-art representation at known scale, pivots and view coverage           | Can publish independently after its own validation                                   |
+| Source model candidate                  | Generated or authored geometry/textures before runtime normalization                 | Quarantined; not downloaded directly by players                                      |
+| Sanitized runtime model                 | Bounded geometry/materials and, when supported, a validated rig/animation set        | Immutable approved manifest, exact dependencies and compatible fallback              |
+| Derived icon, portrait, LOD or imposter | Optional alternate presentation of the same identity                                 | Generated or compiled only when useful and authorized; not mandatory for each object |
 
 A tiny sprite is not a full blueprint of hidden geometry. It may exaggerate edges, omit backside features, or bake a light direction. Prefer separate higher-resolution, neutral-light construction views when the generation route needs them, while preserving the artistic identity of the actual sprite. Multiple generated views must be checked for agreement; more images do not guarantee consistency.
 
@@ -134,18 +134,18 @@ Pack export includes permitted runtime bytes, exact manifests/compatible family 
 
 ## 9. Failure contract
 
-| Failure | Required result |
-| --- | --- |
-| No generation permission, budget, provider, or queue capacity | Existing visuals continue; explain the specific art limitation without marking mechanics failed |
-| Duplicate demand or reconnect | Subscribe/read the same durable work; no duplicate paid dispatch |
-| Lost admission response or ambiguous cancellation | Preserve unresolved attempt and reserve; reconcile the original work or require explicit recovery |
-| Image succeeds, model fails | Keep the approved sprite; retain failed-stage evidence and actual cost |
-| Technically valid but wrong identity, pose coverage, or mechanical fit | Quarantine/reject candidate; no automatic paid repair and no silent physical change |
-| Entity harvested, dropped, transformed, or removed before result | Bind only if current identity/state is eligible; never replay old gameplay or resurrect anything |
-| Grant revoked or world restored while a job runs | Reject obsolete binding/publication scope; preserve actual external obligations |
-| Object storage write/validation/publication conflict | Keep current approved asset; no partial manifest publication or overwrite of newer work |
-| GPU decode, device/context loss, or memory budget exhaustion | Reuse compatible local fallback, clean partial resources, expose diagnostics; no paid generation |
-| Provider result expires before collection | Report missing external artifact; do not claim the save contains it or silently buy another attempt |
+| Failure                                                                | Required result                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| No generation permission, budget, provider, or queue capacity          | Existing visuals continue; explain the specific art limitation without marking mechanics failed     |
+| Duplicate demand or reconnect                                          | Subscribe/read the same durable work; no duplicate paid dispatch                                    |
+| Lost admission response or ambiguous cancellation                      | Preserve unresolved attempt and reserve; reconcile the original work or require explicit recovery   |
+| Image succeeds, model fails                                            | Keep the approved sprite; retain failed-stage evidence and actual cost                              |
+| Technically valid but wrong identity, pose coverage, or mechanical fit | Quarantine/reject candidate; no automatic paid repair and no silent physical change                 |
+| Entity harvested, dropped, transformed, or removed before result       | Bind only if current identity/state is eligible; never replay old gameplay or resurrect anything    |
+| Grant revoked or world restored while a job runs                       | Reject obsolete binding/publication scope; preserve actual external obligations                     |
+| Object storage write/validation/publication conflict                   | Keep current approved asset; no partial manifest publication or overwrite of newer work             |
+| GPU decode, device/context loss, or memory budget exhaustion           | Reuse compatible local fallback, clean partial resources, expose diagnostics; no paid generation    |
+| Provider result expires before collection                              | Report missing external artifact; do not claim the save contains it or silently buy another attempt |
 
 ## 10. Provider selection and evidence
 
