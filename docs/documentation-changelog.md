@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-30 — Integrate Group 6 research and shared source navigation
+
+Integrated the Group 6 History, Faith, Languages and Knowledge, and Arts catalogues with their completed reading ledger. Updated the shared repertoire README and source atlas to record 148 numbered game dossiers plus the Dragon Age series and D&D studies, all 29 world dossiers, W29 navigation, and cross-catalogue dependency guidance. The atlas now resolves the Spore branching-dialogue wording in favor of the detailed Q&A and keeps Worlds Adrift's historical save/discard behavior separate from OpenLegend's in-place migration policy. No runtime contracts, research-library files, seed proposals or other groups' catalogues changed.
+
 ## 2026-09-27 — Whole-world research reassessment and 29-world synthesis
 
 Revised the [worldbuilding library](../archive/02-research/worldbuilding/README.md), preserving useful research while deepening ordinary pleasure, ambition, functioning institutions, relationships, deliberate harm and differentiated outcomes. All 28 original dossiers received individual correction commits; the subsequently incorporated D&D dossier was included without altering its separate game-research packet. The six comparative essays and all-world matrix were rebuilt from the revised corpus rather than receiving only a prefatory change of emphasis.

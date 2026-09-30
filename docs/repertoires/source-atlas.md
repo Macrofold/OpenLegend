@@ -4,7 +4,7 @@
 
 ## Method and limits
 
-This atlas gives an individual design takeaway, caution and destination for **all 148 game subjects and all 28 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
+This atlas gives an individual design takeaway, caution and destination for **all 148 numbered game subjects and all 29 fictional worlds**, with navigation to the additional Dragon Age series and D&D studies. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
 
 The [research roster](../../archive/02-research/game-inspiration/research-roster.md) contains 148 subjects. The eighteen survival dossiers G131–G148 are now present in this checkout and included below. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) owns research completion and audit status; this proposal synthesis does not close its separate acceptance gates.
 
@@ -18,19 +18,25 @@ The active research branches can continue changing independently. The original p
 
 - [G01–G120 integrated research](https://github.com/Macrofold/OpenLegend/blob/cfa1611dc95418fa36d1805c13f2502ed64060d6/archive/02-research/game-inspiration) — `cfa1611dc95418fa36d1805c13f2502ed64060d6`.
 - [G121–G130 continuation](https://github.com/Macrofold/OpenLegend/blob/757bafba40efa875733aba635c3aec829d4c92ad/archive/02-research/game-inspiration) — `757bafba40efa875733aba635c3aec829d4c92ad`.
-- [28-world research and thematic essays](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding) — `b387e7caeda5cec301045b877ca50a2815a869dd`.
+- [29-world research and thematic essays](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding) — `b387e7caeda5cec301045b877ca50a2815a869dd`.
 
 ## Research basis for the foundation revision
 
-The [revised foundation](design-foundation.md) uses the integrated **148-game snapshot at [`9c24bc58bd6d640ba475bc9bd3030332704f7809`](https://github.com/Macrofold/OpenLegend/tree/9c24bc58bd6d640ba475bc9bd3030332704f7809/archive/02-research/game-inspiration)** and the **28-world snapshot at `b387e7caeda5cec301045b877ca50a2815a869dd`** linked above. These pins establish the research available for this pass while the source branches continue independently.
+The [revised foundation](design-foundation.md) uses the integrated **148-game snapshot at [`9c24bc58bd6d640ba475bc9bd3030332704f7809`](https://github.com/Macrofold/OpenLegend/tree/9c24bc58bd6d640ba475bc9bd3030332704f7809/archive/02-research/game-inspiration)** and the **29-world snapshot at `b387e7caeda5cec301045b877ca50a2815a869dd`** linked above. The current reading also covers the Dragon Age series dossier, both D&D edition dossiers, the D&D adjudication and SRD studies, and the D&D planes/lived-magic study. These pins establish the research available for this pass while the source branches continue independently.
 
-The fresh reading covered selected substantive mechanics, worked situations, character/institution dynamics and reception or criticism across every game and world dossier. The work was divided across G01–G50 / W01–W10, G51–G100 / W11–W20, and G101–G148 / W21–W28, with an additional synthesis of the game essays on enjoyment, evidence, comparison, implications and production, and the world essays on comparative design, character formation, institutions and magic/ecology. Focused rereads of The Sims, Baldur's Gate 3, Kenshi, The Wire, The Sopranos and Austen's social worlds informed the shared foundation and modern proposal.
+The fresh reading covered selected substantive mechanics, worked situations, character/institution dynamics and reception or criticism across every game and world dossier. The work was divided across G01–G50 / W01–W10, G51–G100 / W11–W20, and G101–G148 / W21–W29, with additional study of the Dragon Age series, D&D editions and systems, D&D planes and lived magic, and the game essays on enjoyment, evidence, comparison, implications and production. The world essays on comparative design, character formation, institutions and magic/ecology were also included. Focused rereads of The Sims, Baldur's Gate 3, Kenshi, The Wire, The Sopranos and Austen's social worlds informed the shared foundation and modern proposal.
 
 The purpose was to recover the full range of the sources: discovery, mastery, affection, beauty, care, creativity, belonging, ambition, danger, power, deception, conquest and loss. Concrete interactions and criticism guide selection within each source's particular character and appeal. The revised category coverage, factions, active characters and worked situations are our design interpretations, not copied world canon or demonstrated player preferences.
 
 Depth varies by dossier. This was not a line-by-line reread of every appendix, audit register or bibliography, an independent reopening of every external citation, or a new current-version verification of the games. New G131–G148 takeaways and targeted corrections below reflect this pass; useful earlier takeaways remain where they still express a particular lesson. Neither broad coverage nor retained references proves these proposed worlds will be fun: they still require playable selection and evaluation.
 
 All 148 game dossier links below are local and can develop beyond this snapshot. The world corpus still uses immutable remote links because it is not in this checkout; those committed paths were checked against the world snapshot. Remote access may require repository permissions. Later research can inform another selection without turning this atlas into a duplicate live progress ledger.
+
+## Research corrections and policy boundaries
+
+The detailed Spore Galactic Adventures Q&A and the dossier's later study govern the catalogue's source interpretation: the editor supports objectives, acts, conditions and dialogue attachments, but **native branching dialogue is not established as a released authoring feature**. Catalogue entries may propose a bounded dialogue system as original OpenLegend work; they must not describe it as a delivered Spore capability. The older broad overview is retained as a qualified historical statement.
+
+Worlds Adrift's historical development and save-discard language remains comparative evidence about that project. OpenLegend's canonical policy is the [safe in-place migration rule](../save-and-load.md#active-development-policy): preserve world identity and unrelated state, migrate narrowly, and never automatically reset an ordinary development world. A source's reset or legacy branch cannot authorize a runtime reset.
 
 Related game research: [what makes these worlds fun](../../archive/02-research/game-inspiration/essays/what-actually-makes-these-worlds-fun.md), [implications](../../archive/02-research/game-inspiration/essays/implications-for-openlegend.md), [production pitfalls](../../archive/02-research/game-inspiration/essays/production-and-platform-pitfalls.md), [evidence interpretation](../../archive/02-research/game-inspiration/essays/how-to-interpret-the-evidence.md), and the [mechanics studies](../../archive/02-research/game-inspiration/mechanics/README.md). The earlier broad essays and later dossiers have different scope and dates; use the individual dossier when resolving a subject-specific detail.
 
@@ -1550,6 +1556,19 @@ These primary-author or estate-published sources were consulted on September 27,
 
 **New catalogue:** [technology](technology.md)
 
+## Additional studies and navigation
+
+These studies deepen the numbered game and world dossiers without creating invented G149–G151 identifiers. Their source-specific evidence remains in the research library; the catalogue entries link them where a lesson was actually incorporated.
+
+| Study                      | Research route                                                                                                | Repertoire destinations                                                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dragon Age series          | [Series dossier](../../archive/02-research/game-inspiration/dossiers/dragon-age-series.md)                    | [Languages and knowledge](languages-knowledge.md), [History and myth](history-myth.md), [Faith and ritual](faith-ritual.md)                                                  |
+| D&D 2024                   | [Edition dossier](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)           | [Magic](magic.md), [Abilities and progression](abilities-progression.md), [Institutions and politics](institutions-politics.md)                                              |
+| D&D 3.5                    | [Edition dossier](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)            | [Magic](magic.md), [Combat and rescue](combat-rescue.md), [Abilities and progression](abilities-progression.md)                                                              |
+| D&D adjudication           | [Mechanics study](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-adjudication.md)  | [Actions](actions.md), [Mechanics](mechanics.md), [Languages and knowledge](languages-knowledge.md)                                                                          |
+| D&D SRD systems            | [Systems synthesis](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md) | [Magic](magic.md), [Combat and rescue](combat-rescue.md), [Objects](objects.md), [Work and crafting](work-crafting.md)                                                       |
+| D&D planes and lived magic | [Worldbuilding study](../../archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) | [Magic](magic.md), [Ecology and weather](ecology-weather.md), [Settlements and architecture](settlements-architecture.md), [Languages and knowledge](languages-knowledge.md) |
+
 ## Worlds
 
 ### W01
@@ -1831,3 +1850,13 @@ These primary-author or estate-published sources were consulted on September 27,
 **Caution to carry forward:** Do not confuse unequal factions with morally equivalent choices, or freeze every settlement in rubble; rebuilding and political victory should be allowed to change ordinary life.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
+
+### W29
+
+[Dungeons & Dragons](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md)
+
+**Design takeaway:** A large setting becomes inhabitable through consequential local differences: institutions, occupations, faiths, magical infrastructure, borders, portals and social pleasures give people understandable footholds before they master the cosmology. Distinct settings and editions must remain separate continuities, while inherited laws can shape ordinary work and belonging.
+
+**Caution to carry forward:** Do not collapse D&D's settings, editions, published stories, creator interpretations and table outcomes into one universal canon. Extraordinary powers need limits, access conditions and local consequences; a broad setting can offer many entrances without requiring every resident to know its entire history.
+
+**New catalogue:** [magic](magic.md)
