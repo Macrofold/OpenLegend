@@ -186,8 +186,8 @@ All eleven additional supplied findings were checked against the local source on
 | Two supported streamed table layouts                      | New [SB15](persistence.md#sb15); retain explicit compatibility, link SL01/DF02.                                       |
 | Snapshot held through publication                         | New [SB16](persistence.md#sb16); C23 / SL09-C, without an unmeasured growth claim.                                    |
 | Mandatory complete-slot backup, canonical source required | New [SB17](persistence.md#sb17); update operational runbook; existing C03 owns optional partial-backup consideration. |
-| Failed restore leaves copied slots                        | New [SB18](persistence.md#sb18); C22 / D1-D2 file reconciliation.                                                     |
-| Restart loses autosave failure status                     | Extend [SB12](persistence.md#sb12); C05 / SL08-A.                                                                     |
+| Failed restore leaves copied slots                        | [SB18](persistence.md#sb18) (in-process reconciliation 2026-09-28); C22 / D1-D2 file reconciliation.                  |
+| Restart loses autosave failure status                     | [SB12](persistence.md#sb12) (durable until acknowledged, 2026-09-28); C05 / SL08-A.                                   |
 | Stress-tool ranges/defaults                               | New [SV18](observability.md#sv18); tooling-only, no change recommended.                                               |
 
 The stale main-process checkpoint description in Architecture is corrected: configured server capture uses a worker; workerless operational callers still run the codec in their own process. Source inspection establishes these implementation distinctions, not restore or load-capacity certification.

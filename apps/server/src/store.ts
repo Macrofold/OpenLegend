@@ -317,6 +317,17 @@ export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): Sav
   return result as SavedWorld;
 }
 
+/** Record changes prepared for one exact baseline and expected revision. Preparation assigns
+ * canonical list/map positions that history release then reuses, so it must precede release.
+ * docs/projects/ordered-async-saves.md#ordering-rules */
+export interface PreparedCommit {
+  readonly baseline: SavedWorld | null;
+  readonly revision: number;
+  readonly state: SavedWorld;
+  readonly changes: ReturnType<WorldRecords['prepare']>;
+  readonly history?: ReturnType<typeof prepareHistory>;
+}
+
 /** Replaceable persistence boundary for committed world state. */
 export interface WorldStore {
   load(active?: boolean): Promise<{ revision: number; state: SavedWorld } | null>;
@@ -336,6 +347,7 @@ export interface WorldStore {
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
+      prepared?: PreparedCommit;
     },
   ): Promise<number>;
   close(): Promise<void>;
@@ -344,6 +356,13 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   releaseHistory?(state: SavedWorld): SavedWorld;
+  /** Same residency compaction as releaseHistory, without changing the durable baseline. */
+  releasedHistory?(state: SavedWorld): SavedWorld;
+  prepareCommit?(
+    expectedRevision: number,
+    state: SavedWorld,
+    history: { before?: WorldState; after: WorldState },
+  ): PreparedCommit;
   adoptHistory?(original: SavedWorld, prepared: SavedWorld): void;
   hydrateHistory?(
     state: SavedWorld,
@@ -410,6 +429,10 @@ export class SqlGameRepository implements GameRepository {
   private readonly integrationValues: IntegrationValues;
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
+  /** Set when a commit rolled back after replacing the baseline. The live world may have
+   * released history since, so reloading a complete baseline and diffing against it could
+   * delete evicted rows; only an explicit load (restart) may continue. */
+  private baselineLost = false;
   private intelligenceWrites = 0;
   vectors?: VectorStore;
   get persistence() {
@@ -638,14 +661,56 @@ export class SqlGameRepository implements GameRepository {
   releaseHistory(state: SavedWorld): SavedWorld {
     if (state !== this.acceptedState)
       throw new Error('Only committed history may leave the working set.');
-    const released = {
+    const released = this.releasedHistory(state);
+    this.acceptedState = released;
+    return released;
+  }
+  releasedHistory(state: SavedWorld): SavedWorld {
+    return {
       ...state,
       world: compactContributionHistory(
         compactAppraisalHistory(compactObjectHistory(compactHistory(state.world))),
       ),
     };
-    this.acceptedState = released;
-    return released;
+  }
+  /** Preparation half of a snapshot's commit, computed immediately inside the mutation queue
+   * (no I/O); the transaction consumes it later, for example in a background save. */
+  prepareCommit(
+    expectedRevision: number,
+    state: SavedWorld,
+    history: { before?: WorldState; after: WorldState },
+  ): PreparedCommit {
+    if (this.acceptedRevision !== expectedRevision)
+      throw new Error('Save conflict: the committed baseline changed before preparation.');
+    const baseline = this.acceptedState;
+    return {
+      baseline,
+      revision: expectedRevision,
+      state,
+      changes: timedSync('persistence.prepareRecords', () =>
+        this.records.prepare(baseline ?? undefined, state),
+      ),
+      history: this.prepareHistoryWrite(state, history.before ?? baseline?.world, history.after),
+    };
+  }
+  // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
+  // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
+  private prepareHistoryWrite(
+    state: SavedWorld,
+    historyBefore: WorldState | undefined,
+    historyAfter: WorldState,
+    restore = false,
+  ) {
+    return this.readyHistoryWorlds.has(state.world.id) &&
+      !restore &&
+      Object.isFrozen(historyAfter) &&
+      (!historyBefore || Object.isFrozen(historyBefore))
+      ? prepareHistory(
+          historyBefore,
+          historyAfter,
+          historyBefore ? provenAppendCount(historyBefore.events, historyAfter.events) : undefined,
+        )
+      : undefined;
   }
   adoptHistory(original: SavedWorld, prepared: SavedWorld): void {
     if (original !== this.acceptedState || original.world.id !== prepared.world.id)
@@ -664,6 +729,8 @@ export class SqlGameRepository implements GameRepository {
   }
   async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
     await this.ready;
+    // An explicit load re-derives its caller's world from SQL; a lost baseline no longer matters.
+    this.baselineLost = false;
 
     const canonical = await this.records.load(active);
     if (canonical) {
@@ -784,22 +851,47 @@ export class SqlGameRepository implements GameRepository {
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
+      prepared?: PreparedCommit;
     },
   ): Promise<number> {
     await this.ready;
 
     if (this.acceptedRevision !== expectedRevision) {
+      if (this.baselineLost)
+        throw new Error(
+          'The committed baseline is unknown after a failed save; restart to reload it.',
+        );
       const persisted = await this.load();
       if ((persisted?.revision ?? 0) !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
     }
-    if (historyProjection?.restore) this.acceptedState = (await this.records.load())?.state ?? null;
+    // A restore diffs against the complete stored world. If it fails before its rollback hook
+    // runs (refused admission, a fence failure), the released baseline must come back: a later
+    // commit diffing the released live world against the complete one would delete cold rows.
+    const releasedBaseline = this.acceptedState;
+    const restoreBaseline = historyProjection?.restore
+      ? ((await this.records.load())?.state ?? null)
+      : undefined;
+    if (historyProjection?.restore) this.acceptedState = restoreBaseline ?? null;
+    const prepared = historyProjection?.prepared;
+    // A prepared change set is valid only against the exact baseline it was diffed from.
+    if (
+      prepared &&
+      (prepared.state !== state ||
+        prepared.revision !== expectedRevision ||
+        prepared.baseline !== this.acceptedState ||
+        this.acceptedRevision !== expectedRevision ||
+        historyProjection?.restore)
+    )
+      throw new Error('Prepared world changes no longer match the committed baseline.');
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
-    const changes = timedSync('persistence.prepareRecords', () =>
-      this.records.prepare(this.acceptedState ?? undefined, state),
-    );
+    const changes =
+      prepared?.changes ??
+      timedSync('persistence.prepareRecords', () =>
+        this.records.prepare(this.acceptedState ?? undefined, state),
+      );
     const publish = () => {
       this.readyHistoryWorlds.add(state.world.id);
       this.records.needsHotPrune = false;
@@ -807,24 +899,15 @@ export class SqlGameRepository implements GameRepository {
       this.memories.committed(changes, !!historyProjection?.restore);
     };
     let publicationDeferred = false;
-    const historyBefore = historyProjection?.before ?? this.acceptedState?.world;
-    const historyAfter = historyProjection?.after ?? state.world;
-    // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
-    // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
-    const preparedHistory =
-      this.readyHistoryWorlds.has(state.world.id) &&
-      !historyProjection?.restore &&
-      Object.isFrozen(historyAfter) &&
-      (!historyBefore || Object.isFrozen(historyBefore))
-        ? prepareHistory(
-            historyBefore,
-            historyAfter,
-            historyBefore
-              ? provenAppendCount(historyBefore.events, historyAfter.events)
-              : undefined,
-          )
-        : undefined;
-    const revision = await timed('persistence.transaction', () =>
+    const preparedHistory = prepared
+      ? prepared.history
+      : this.prepareHistoryWrite(
+          state,
+          historyProjection?.before ?? this.acceptedState?.world,
+          historyProjection?.after ?? state.world,
+          !!historyProjection?.restore,
+        );
+    const transaction = timed('persistence.transaction', () =>
       this.db.transaction(async () => {
         for (const binding of historyProjection?.authorityBindings ?? [])
           await this.authority.provision(state.world.id, binding);
@@ -994,6 +1077,7 @@ export class SqlGameRepository implements GameRepository {
         this.db.afterRollback?.(() => {
           this.acceptedRevision = -1;
           this.acceptedState = null;
+          this.baselineLost = true;
           this.readyHistoryWorlds.clear();
         });
         this.acceptedRevision = revision;
@@ -1005,6 +1089,14 @@ export class SqlGameRepository implements GameRepository {
         return revision;
       }),
     );
+    let revision: number;
+    try {
+      revision = await transaction;
+    } catch (error) {
+      if (historyProjection?.restore && this.acceptedState === restoreBaseline)
+        this.acceptedState = releasedBaseline;
+      throw error;
+    }
     if (!publicationDeferred) publish();
     return revision;
   }

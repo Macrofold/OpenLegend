@@ -10,8 +10,10 @@ import { isDeepStrictEqual } from 'node:util';
 import {
   readOperationalBackup,
   restoreBackupSlots,
+  discardRestoredSlots,
   BACKUP_TABLES,
 } from '../apps/server/src/operational-backup.js';
+import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
@@ -31,9 +33,18 @@ if (!statSync(file).isDirectory())
   );
 const config = readConfig();
 const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+// Slots this attempt copied, and whether its installation reached COMMIT (SB18).
+let published: string[] = [];
+// Mutated inside the transaction callback, so keep it in an object rather than a narrowed local.
+const install: { state: 'not-committed' | 'uncertain' | 'committed' } = { state: 'not-committed' };
+let keep = new Set<string>();
+let restoring: Awaited<ReturnType<typeof readOperationalBackup>> | undefined;
+// The pre-restore recovery checkpoint this attempt published (existing-world restore only).
+let recoveryId: string | undefined;
 try {
   await store.ready;
   const backup = await readOperationalBackup(file, store.db);
+  restoring = backup;
   let current = await store.load();
   const state = backup.state;
   upgradeWorldState(state.world);
@@ -65,7 +76,7 @@ try {
         throw new Error('Target is not empty; full restore refused.');
     if (await store.db.prepare("SELECT key FROM meta WHERE key<>'schema' LIMIT 1").get())
       throw new Error('Target has existing operational metadata; full restore refused.');
-    await restoreBackupSlots(backup, config.dataDirectory);
+    published = await restoreBackupSlots(backup, config.dataDirectory);
     await store.db.transaction(async () => {
       for (const table of [...tables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
@@ -73,7 +84,8 @@ try {
           if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
             throw new Error('Invalid backup columns.');
           if (table === 'meta' && row['key'] === 'schema') {
-            if (String(row['value']) !== '1') throw new Error('Unsupported backup schema.');
+            // Current database format only (store.ts writes schema '2'); older backups are refused.
+            if (String(row['value']) !== '2') throw new Error('Unsupported backup schema.');
             continue;
           }
           await store.db
@@ -91,7 +103,9 @@ try {
       state.world.paused = true;
       await fenceCommands();
       await store.commit(0, state);
+      install.state = 'uncertain';
     });
+    install.state = 'committed';
     current = await store.load();
     if (!current || !isDeepStrictEqual(current.state, state))
       throw new Error('Restored world recovery digest mismatch.');
@@ -100,7 +114,21 @@ try {
       'Full backup restored into an empty target; identities, jobs and accounting retained.',
     );
   } else {
-    await restoreBackupSlots(backup, config.dataDirectory);
+    // A retained slot the target's current recovery pointer names is never removed.
+    const pointer = await store.db
+      .prepare("SELECT payload,checksum FROM game_saves WHERE world_id=? AND id='before-load'")
+      .get(state.world.id);
+    let referenced: string | undefined;
+    try {
+      referenced = pointer
+        ? recoveryFile(JSON.parse(String(pointer['payload'])), pointer['checksum'])
+        : undefined;
+    } catch {
+      // The restore replaces a damaged pointer; there is simply no slot to protect.
+      console.error('The target recovery pointer is damaged; it will be replaced by this restore.');
+    }
+    if (referenced) keep = new Set([referenced]);
+    published = await restoreBackupSlots(backup, config.dataDirectory, keep);
     migrateActors(state.world);
     migrateCognition(state.world);
     await store.authority.restoreBindings(state.world);
@@ -129,6 +157,14 @@ try {
         }
       : state.world;
     state.world = retainHotEvents(after);
+    // Preserve the world being replaced before the installation transaction, as gameplay loads
+    // do (SL09-A); a failed install can then remove exactly this file (SB18).
+    const recovery = randomUUID();
+    await store.saves!.create(current.state, 'Before last load', recovery, {
+      kind: 'recovery',
+      expectedRevision: current.revision,
+    });
+    recoveryId = recovery;
     await store.db.transaction(async () => {
       for (const row of backup.tables['memory_vector_cache'] ?? []) {
         if (row['world_id'] !== state.world.id)
@@ -155,7 +191,8 @@ try {
       // Use the normal restore contract so timeline and vector publication are fenced.
       const epoch = (await store.getIntegration(`command-epoch:${state.world.id}`)) as CommandEpoch;
       const payload = {
-        format: 'backup',
+        // The backup's gameplay checkpoint is a current-format save package.
+        format: SAVE_FORMAT,
         state,
         history: Object.fromEntries(
           HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
@@ -167,9 +204,18 @@ try {
       await store.commit(current!.revision, state, undefined, undefined, {
         before,
         after,
-        restore: { id: 'backup', requestId: randomUUID(), payload, epoch, timeline: randomUUID() },
+        restore: {
+          id: 'backup',
+          requestId: randomUUID(),
+          payload,
+          epoch,
+          timeline: randomUUID(),
+          recoveryId: recovery,
+        },
       });
+      install.state = 'uncertain';
     });
+    install.state = 'committed';
     for (const actorId of Object.keys(state.world.entities)) {
       await store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
       await store.putIntegration(`interests:${state.world.id}:${actorId}`, null);
@@ -180,6 +226,27 @@ try {
       throw new Error('Restore recovery digest mismatch.');
     console.log('World restored paused; present-day spending and forgetting retained.');
   }
+} catch (error) {
+  // Reconcile files only when the database install definitely did not commit.
+  if (restoring && (published.length || recoveryId) && install.state === 'not-committed') {
+    const retained = published.length
+      ? await discardRestoredSlots(restoring, config.dataDirectory, published, keep)
+      : [];
+    // Nothing references the recovery file this attempt wrote: the pointer switch rolled back.
+    let recovery = '';
+    if (recoveryId)
+      recovery = await store
+        .saves!.delete(restoring.state.world.id, recoveryId)
+        .then(() => ' and its pre-restore recovery checkpoint')
+        .catch(() => `; its pre-restore recovery checkpoint ${recoveryId} could not be removed`);
+    console.error(
+      `Restore failed before its database commit; removed ${published.length - retained.length} slot(s) this attempt copied${recovery}${retained.length ? `, kept ${retained.join(', ')} (referenced or changed)` : ''}. The source backup is unchanged.`,
+    );
+  } else if ((published.length || recoveryId) && install.state === 'uncertain')
+    console.error(
+      `Restore commit outcome is uncertain; files were kept for inspection: ${[...published, ...(recoveryId ? [`${recoveryId} (pre-restore recovery checkpoint)`] : [])].join(', ')}. Reload the target to check whether the restore committed before retrying.`,
+    );
+  throw error;
 } finally {
   await store.close();
 }

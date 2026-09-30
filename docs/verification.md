@@ -17,6 +17,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Data foundation](verification/data-foundation.md): record storage, retrieval, recovery and review evidence.
 - [Data runtime hardening](verification/data-runtime-hardening.md): cold history, dense native work, failure drills and history consumers.
 - [Save/load, checkpoints and recovery](verification/checkpoints-and-recovery.md): manual saves, bounded capture, restore and failure drills.
+- [Background world saves and save recovery](verification/ordered-async-saves.md): save-path attribution, background saves in snapshot order, failure/crash drills and recovery gaps.
 - [Development world startup](verification/world-startup.md): startup recovery, disposable worlds and editor observations.
 
 ## Characters, cognition and creation

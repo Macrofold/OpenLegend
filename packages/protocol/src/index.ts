@@ -689,16 +689,48 @@ export interface TranscriptPage {
 export interface GameSaveSummary {
   id: string;
   label: string;
+  /** Server wall-clock time, for display only. */
   createdAt: string;
   simTime: number;
   compatible: boolean;
   kind?: 'manual' | 'auto' | 'recovery';
+  /** Durable capture order; retention and paging use it instead of wall-clock time. */
+  sequence?: number;
+}
+/** Operator autosave policy for this world, outside gameplay rewind. */
+export interface AutosaveSettings {
+  enabled: boolean;
+  intervalMinutes: number;
+  retain: number;
+  revision: number;
+}
+/** Latest checkpoint failure until an operator acknowledges it; survives restart. */
+export interface CheckpointFailure {
+  id: string;
+  at: string;
+  kind: 'auto' | 'manual' | 'recovery';
+  message: string;
 }
 export interface AutosaveStatus {
+  /** Any checkpoint capture (automatic, manual or recovery) is running. */
   saving: boolean;
+  /** A manual save is waiting for the capture in progress. */
+  pendingManual: boolean;
   lastCompletedAt?: string;
-  error?: string;
+  failure?: CheckpointFailure;
   unavailableSaves: number;
+  /** Bytes currently in the save directory, including damaged or interrupted entries. */
+  storageBytes?: number;
+  settings: AutosaveSettings;
+  /** Stored settings are unreadable; automatic saves are off until settings are saved again. */
+  settingsError?: string;
+}
+export interface GameSaveCatalog {
+  ok: boolean;
+  message?: string;
+  saves: GameSaveSummary[];
+  autosaves: AutosaveStatus;
+  next?: Pick<GameSaveSummary, 'id' | 'createdAt' | 'sequence'>;
 }
 
 /** Bounded attribute presentation projected by the server. */

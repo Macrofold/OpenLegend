@@ -4,7 +4,7 @@ import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
-import type { GameSaveSummary } from '@open-legend/protocol';
+import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
 import { writeCheckpoint, readCheckpoint } from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
@@ -14,6 +14,40 @@ import { z } from 'zod';
 // Physical storage changes reject incompatible development checkpoints without conversion.
 // docs/save-and-load.md#active-development-policy.
 export class GameSaveError extends Error {}
+/** The capture slot is taken; an automatic save simply waits for its next opportunity. */
+export class CheckpointBusyError extends GameSaveError {}
+
+/** Operator policy, outside gameplay rewind (docs/limits/persistence.md#sv01). */
+export const AUTOSAVE_DEFAULTS = { enabled: true, intervalMinutes: 5, retain: 3 } as const;
+const settingsSchema = z
+  .object({
+    enabled: z.boolean(),
+    intervalMinutes: z.number().int().min(1).max(1440),
+    retain: z.number().int().min(1).max(20),
+  })
+  .strict();
+const storedSettingsSchema = settingsSchema.extend({ revision: z.number().int().positive() });
+const failureSchema = z
+  .object({
+    id: z.string().uuid(),
+    at: z.string().datetime(),
+    kind: z.enum(['auto', 'manual', 'recovery']),
+    message: z.string().min(1).max(500),
+    acknowledgedAt: z.string().datetime().optional(),
+  })
+  .strict();
+// Checkpoint operations own these meta keys; they are outside the checkpoint tables, so a
+// load never rewinds them, and operational backup carries them with the database.
+const metaKey = (kind: 'settings' | 'failure' | 'sequence', worldId: string) =>
+  `checkpoint:${kind}:${worldId}`;
+const DAMAGED_FAILURE_ID = '00000000-0000-4000-8000-00000000dead';
+const safeJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+};
 /** The recovery row may contain a legacy payload or an integrity-checked file pointer. */
 export function recoveryFile(payload: unknown, checksum: unknown): string | undefined {
   if (!payload || typeof payload !== 'object' || !('file' in payload)) return;
@@ -37,6 +71,9 @@ export interface RestoreSave {
   payload: SavePayload;
   epoch: { generation: number; openedAt: number; token: string };
   timeline: string;
+  /** Recovery checkpoint every caller publishes before the restore transaction (SL09-A, SB18),
+   * so a refused or failed installation can never leave one it cannot account for. */
+  recoveryId: string;
 }
 
 /** The database captures authority; manual slots publish to local files after capture. */
@@ -51,16 +88,221 @@ export class GameSaves {
     done: Promise<void>;
     captured: Promise<void>;
   };
+  /** A capture owns the slot from admission until completion, or one manual save waits. */
   get busy() {
-    return !!this.active;
+    return !!this.active || !!this.claim || !!this.waiting;
+  }
+  get pendingManual() {
+    return !!this.waiting;
   }
   get catalogIssues() {
     return this.files.issueCount;
   }
-  lastError?: string;
+  private claim?: { id: string; release: Promise<void> };
+  private waiting?: { id: string; turn: Promise<void> };
+  /** Reserve the single capture slot before the world mutation queue. One manual save may wait
+   * for the capture in progress and goes ahead of the next automatic save; an automatic save
+   * never waits. Returns the release for the caller's completion path.
+   * docs/limits/persistence.md#la167 */
+  async admit(id: string, kind: SaveFileMetadata['kind'] = 'manual'): Promise<() => void> {
+    // An identical request shares the admitted capture's completion inside create().
+    if (this.claim?.id === id || this.active?.id === id) return () => undefined;
+    // A waiting manual save also blocks automatic saves in the moment between the release of
+    // the previous capture and its own claim.
+    if (this.claim || this.active || this.waiting) {
+      if (kind !== 'manual')
+        throw new CheckpointBusyError(
+          'Another checkpoint is in progress; the next opportunity will retry.',
+        );
+      if (this.waiting && this.waiting.id !== id)
+        throw new CheckpointBusyError(
+          'Another save is already waiting for the current checkpoint. Try again after it finishes.',
+        );
+      this.waiting ??= {
+        id,
+        turn: (async () => {
+          while (this.claim || this.active)
+            await (this.claim?.release ?? this.active!.done.catch(() => undefined));
+        })(),
+      };
+      const waiting = this.waiting;
+      await waiting.turn;
+      if (this.waiting === waiting) this.waiting = undefined;
+      if (this.claim?.id === id) return () => undefined;
+    }
+    let free!: () => void;
+    const claim = { id, release: new Promise<void>((resolve) => (free = resolve)) };
+    this.claim = claim;
+    return () => {
+      if (this.claim !== claim) return;
+      this.claim = undefined;
+      free();
+    };
+  }
+
+  /** Durable, monotonic capture order for this world; survives restart and backup/restore. */
+  private reconciledWorlds = new Set<string>();
+  private async nextSequence(worldId: string): Promise<number> {
+    // Once per process and world: the first capture also covers slots restored from a backup.
+    if (!this.reconciledWorlds.has(worldId)) {
+      await this.reconcileSequence(worldId);
+      this.reconciledWorlds.add(worldId);
+    }
+    const row = await this.db
+      .prepare(
+        `INSERT INTO meta VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value=(CAST(meta.value AS BIGINT)+1)::text RETURNING value`,
+      )
+      .get(metaKey('sequence', worldId));
+    const sequence = Number(row?.['value']);
+    if (!Number.isSafeInteger(sequence) || sequence < 1)
+      throw new GameSaveError('Checkpoint order could not be allocated.');
+    return sequence;
+  }
+  /** Raise the capture counter above every slot of this world already on disk. After an
+   * operational restore the database counter can be older than the copied slots; new captures
+   * must still sort as newest, or rotation would delete them at once. */
+  async reconcileSequence(worldId: string): Promise<number> {
+    const highest = Math.max(
+      0,
+      ...(await this.files.list(worldId)).map((metadata) => metadata.sequence ?? 0),
+    );
+    const row = await this.db
+      .prepare(
+        `INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=GREATEST(CAST(meta.value AS BIGINT), CAST(excluded.value AS BIGINT))::text RETURNING value`,
+      )
+      .get(metaKey('sequence', worldId), String(highest));
+    return Number(row?.['value']);
+  }
+  /** Shutdown: wait until no capture is running, admitted or waiting (restore must not use
+   * this while it holds the mutation queue a waiting capture needs). */
+  async settle(): Promise<void> {
+    while (this.active || this.claim || this.waiting)
+      await (this.active?.done.catch(() => undefined) ??
+        this.claim?.release ??
+        this.waiting?.turn ??
+        Promise.resolve());
+  }
+  storageBytes(): Promise<number> {
+    return this.files.usage();
+  }
+  async settings(worldId: string): Promise<AutosaveSettings> {
+    const row = await this.db
+      .prepare('SELECT value FROM meta WHERE key=?')
+      .get(metaKey('settings', worldId));
+    if (!row) return { ...AUTOSAVE_DEFAULTS, revision: 0 };
+    // Text that is not JSON is the same damage case, replaceable by an explicit save.
+    const parsed = storedSettingsSchema.safeParse(safeJson(String(row['value'])));
+    // Never guess operator policy from a damaged record.
+    if (!parsed.success)
+      throw new GameSaveError('Stored autosave settings are invalid; save them again.');
+    return parsed.data;
+  }
+  async updateSettings(
+    worldId: string,
+    input: unknown,
+    expectedRevision: number,
+  ): Promise<AutosaveSettings> {
+    const next = settingsSchema.parse(input);
+    return this.db.transaction(async () => {
+      // A damaged record may be replaced by an explicit save; it is never guessed. Storage
+      // errors are not damage and propagate.
+      const current = await this.settings(worldId).catch((error: unknown) => {
+        if (error instanceof GameSaveError) return undefined;
+        throw error;
+      });
+      if (current && current.revision !== expectedRevision)
+        throw new GameSaveError('Autosave settings changed elsewhere. Refresh and try again.');
+      const stored = { ...next, revision: Math.max(current?.revision ?? 0, expectedRevision) + 1 };
+      await this.db
+        .prepare(
+          'INSERT INTO meta VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        )
+        .run(metaKey('settings', worldId), JSON.stringify(stored));
+      return stored;
+    });
+  }
+
+  private memoryFailure?: CheckpointFailure & { worldId: string };
+  /** The latest checkpoint failure survives restart until an operator acknowledges it (SL08-A).
+   * If storage cannot record it, it is still reported from memory and says so. */
+  async recordFailure(worldId: string, kind: CheckpointFailure['kind'], message: string) {
+    const failure = {
+      id: randomUUID(),
+      at: new Date().toISOString(),
+      kind,
+      message: message.slice(0, 500) || 'Checkpoint failed.',
+    };
+    this.memoryFailure = { ...failure, worldId };
+    try {
+      await this.db
+        .prepare(
+          'INSERT INTO meta VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        )
+        .run(metaKey('failure', worldId), JSON.stringify(failure));
+    } catch {
+      this.memoryFailure = {
+        ...failure,
+        worldId,
+        message: `${failure.message} (Not recorded durably; it will not survive a restart.)`.slice(
+          0,
+          500,
+        ),
+      };
+    }
+  }
+  async failure(worldId: string): Promise<CheckpointFailure | undefined> {
+    const row = await this.db
+      .prepare('SELECT value FROM meta WHERE key=?')
+      .get(metaKey('failure', worldId));
+    const parsed = row ? failureSchema.safeParse(safeJson(String(row['value']))) : undefined;
+    // A damaged record is reported (and can be acknowledged) instead of breaking the catalog.
+    const stored = parsed
+      ? parsed.success
+        ? parsed.data
+        : {
+            id: DAMAGED_FAILURE_ID,
+            at: new Date(0).toISOString(),
+            kind: 'auto' as const,
+            message: 'The stored checkpoint failure record is unreadable. Acknowledge to clear it.',
+          }
+      : undefined;
+    const memory = this.memoryFailure?.worldId === worldId ? this.memoryFailure : undefined;
+    // This process's newest record wins unless it is the stored one; wall-clock order is not
+    // trusted (a clock can move backwards).
+    const latest = memory && memory.id !== stored?.id ? memory : stored;
+    if (!latest || ('acknowledgedAt' in latest && latest.acknowledgedAt)) return undefined;
+    return { id: latest.id, at: latest.at, kind: latest.kind, message: latest.message };
+  }
+  /** Explicit operator acknowledgment; the record is kept with its acknowledgment time. */
+  async acknowledgeFailure(worldId: string, id: string): Promise<boolean> {
+    if (this.memoryFailure?.id === id) this.memoryFailure = undefined;
+    return this.db.transaction(async () => {
+      const row = await this.db
+        .prepare('SELECT value FROM meta WHERE key=?')
+        .get(metaKey('failure', worldId));
+      if (!row) return false;
+      const parsed = failureSchema.safeParse(safeJson(String(row['value'])));
+      if (!parsed.success) {
+        if (id !== DAMAGED_FAILURE_ID) return false;
+        await this.db.prepare('DELETE FROM meta WHERE key=?').run(metaKey('failure', worldId));
+        return true;
+      }
+      const stored = parsed.data;
+      if (stored.id !== id) return false;
+      await this.db
+        .prepare('UPDATE meta SET value=? WHERE key=?')
+        .run(
+          JSON.stringify({ ...stored, acknowledgedAt: new Date().toISOString() }),
+          metaKey('failure', worldId),
+        );
+      return true;
+    });
+  }
   async drain() {
     // The requesting caller receives the failure. A failed optional checkpoint
     // must not prevent native shutdown flushing or a subsequent explicit restore.
+    // Admitted captures still waiting for the mutation queue are not awaited here:
+    // a restore holding that queue would otherwise wait for itself.
     await this.active?.done.catch(() => undefined);
   }
   constructor(
@@ -93,16 +335,31 @@ export class GameSaves {
   ): Promise<GameSaveSummary[]> {
     const rows = await this.db
       .prepare(
-        "SELECT id,label,created_at,sim_time,format FROM game_saves WHERE world_id=? AND id='before-load'",
+        "SELECT id,label,created_at,sim_time,format,payload,checksum FROM game_saves WHERE world_id=? AND id='before-load'",
       )
       .all(worldId);
-    const recovery = rows.map((row) => ({
-      id: String(row['id']),
-      label: String(row['label']),
-      createdAt: String(row['created_at']),
-      simTime: Number(row['sim_time']),
-      compatible: row['format'] === SAVE_FORMAT,
-    }));
+    const recovery = await Promise.all(
+      rows.map(async (row) => {
+        // Order the pointer row by its recovery file's capture sequence when readable.
+        const pointer = (() => {
+          try {
+            return recoveryFile(JSON.parse(String(row['payload'] ?? 'null')), row['checksum']);
+          } catch {
+            return undefined;
+          }
+        })();
+        const target = pointer ? await this.files.metadata(pointer).catch(() => null) : null;
+        return {
+          id: String(row['id']),
+          label: String(row['label']),
+          createdAt: String(row['created_at']),
+          simTime: Number(row['sim_time']),
+          kind: 'recovery' as const,
+          compatible: row['format'] === SAVE_FORMAT,
+          ...(target?.sequence ? { sequence: target.sequence } : {}),
+        };
+      }),
+    );
     const manual = (await this.files.list(worldId, { ...options, excludeRecovery: true })).map(
       (metadata) => ({
         id: metadata.id,
@@ -111,6 +368,7 @@ export class GameSaves {
         simTime: metadata.simTime,
         kind: metadata.kind ?? 'manual',
         compatible: metadata.format === SAVE_FORMAT,
+        ...(metadata.sequence ? { sequence: metadata.sequence } : {}),
       }),
     );
     return [...manual, ...recovery]
@@ -126,6 +384,8 @@ export class GameSaves {
       captured?: () => void;
       expectedRevision?: number;
       kind?: SaveFileMetadata['kind'];
+      /** Backup artifacts are not catalog slots and may run on a read-only connection. */
+      unordered?: boolean;
     } = {},
   ): Promise<void> {
     if (this.active) {
@@ -136,7 +396,9 @@ export class GameSaves {
         this.active.kind !== (options.kind ?? 'manual')
       )
         return Promise.reject(
-          new GameSaveError('Another checkpoint is in progress. Try again after it finishes.'),
+          new CheckpointBusyError(
+            'Another checkpoint is in progress. Try again after it finishes.',
+          ),
         );
       void this.active.captured.then(() => options.captured?.());
       return this.active.done;
@@ -163,6 +425,7 @@ export class GameSaves {
           await this.files.confirmPublished(prior);
           return;
         }
+        const sequence = options.unordered ? undefined : await this.nextSequence(state.world.id);
         if (this.worker) {
           await this.worker.capture(
             {
@@ -173,6 +436,7 @@ export class GameSaves {
               format: SAVE_FORMAT,
               kind: options.kind ?? 'manual',
               expectedRevision: options.expectedRevision,
+              sequence,
             },
             finishCapture,
           );
@@ -187,16 +451,10 @@ export class GameSaves {
             label,
             format: SAVE_FORMAT,
             kind: options.kind ?? 'manual',
+            sequence,
           },
           { expectedRevision: options.expectedRevision, captured: finishCapture },
         );
-      })
-      .then(() => {
-        this.lastError = undefined;
-      })
-      .catch((error: unknown) => {
-        this.lastError = error instanceof Error ? error.message : 'Checkpoint failed.';
-        throw error;
       })
       .finally(() => {
         this.active = undefined;
@@ -236,11 +494,17 @@ export class GameSaves {
       const pointer = row
         ? recoveryFile(JSON.parse(String(row['payload'])), row['checksum'])
         : undefined;
-      if (pointer) await this.rotate(worldId, 'recovery', 2, pointer);
+      // No pointer yet: every recovery file came from a refused load. A pointer row that cannot
+      // be read protects nothing, so rotation waits rather than risk deleting its file.
+      if (pointer || !row) await this.rotate(worldId, 'recovery', 2, pointer);
     } catch (error) {
-      // Installation already committed. Report cleanup failure without telling
-      // the caller that its successful timeline replacement failed.
-      this.lastError = `Recovery retention failed: ${error instanceof Error ? error.message : 'unknown error'}`;
+      // Runs after the load settles. Report a cleanup failure without changing the load's own
+      // outcome (a committed timeline replacement stays successful).
+      await this.recordFailure(
+        worldId,
+        'recovery',
+        `Recovery retention failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
     }
   }
   async read(worldId: string, id: string): Promise<SavePayload> {
@@ -287,6 +551,11 @@ export class GameSaves {
     return payload;
   }
   async delete(worldId: string, id: string) {
+    // A creation still waiting for its capture would publish after this deletion.
+    if (this.claim?.id === id || this.waiting?.id === id)
+      throw new CheckpointBusyError(
+        'That save is still being created. Try again after it finishes.',
+      );
     if (this.active?.id === id) {
       if (this.active.worldId !== worldId)
         throw new GameSaveError('Save belongs to another world.');
@@ -303,19 +572,25 @@ export class GameSaves {
     await this.db.prepare('DELETE FROM game_saves WHERE world_id=? AND id=?').run(worldId, id);
   }
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
-  async install(current: SavedWorld, restore: RestoreSave) {
-    if (restore.payload.format !== SAVE_FORMAT)
+  /** Checks that need no database; loads run them before writing the pre-load checkpoint. */
+  validatePayload(payload: SavePayload) {
+    if (payload.format !== SAVE_FORMAT)
       throw new GameSaveError('Unsupported save format; existing data was not changed.');
-    const totals = restore.payload.history.history_totals;
+    const totals = payload.history.history_totals;
     if (
       totals.length !== 1 ||
-      Number(totals[0]!['event_count']) !== restore.payload.history.history_events.length
+      Number(totals[0]!['event_count']) !== payload.history.history_events.length
     )
       throw new GameSaveError('Save event count disagrees with retained records.');
-    validateWorldModules(restore.payload.state.world);
-    const recoveryId = randomUUID();
-    await this.create(current, 'Before last load', recoveryId, { kind: 'recovery' });
-    // Publish the immutable recovery file first. Its pointer switches atomically
+    validateWorldModules(payload.state.world);
+  }
+  async install(current: SavedWorld, restore: RestoreSave) {
+    this.validatePayload(restore.payload);
+    const { recoveryId } = restore;
+    const prepared = await this.files.metadata(recoveryId);
+    if (!prepared || prepared.worldId !== current.world.id || prepared.kind !== 'recovery')
+      throw new GameSaveError('The pre-load recovery checkpoint is missing; nothing was changed.');
+    // The immutable recovery file is already published. Its pointer switches atomically
     // with the world; a failed install retains the previous pointer and authority.
     const pointer = { file: recoveryId };
     await this.db

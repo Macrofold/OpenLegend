@@ -17,7 +17,7 @@ export const CHECKPOINT_TABLES = [
 export async function writeCheckpoint(
   db: SqlDatabase,
   files: SaveFiles,
-  identity: Pick<SaveFileMetadata, 'id' | 'worldId' | 'label' | 'format' | 'kind'>,
+  identity: Pick<SaveFileMetadata, 'id' | 'worldId' | 'label' | 'format' | 'kind' | 'sequence'>,
   options: { expectedRevision?: number; captured?: () => void } = {},
 ) {
   const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);

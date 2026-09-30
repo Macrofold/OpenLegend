@@ -25,6 +25,7 @@ port.on('message', async (request: CheckpointRequest) => {
         label: request.label,
         format: request.format,
         kind: request.kind,
+        ...(request.sequence ? { sequence: request.sequence } : {}),
       },
       {
         expectedRevision: request.expectedRevision,

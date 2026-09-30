@@ -9,6 +9,7 @@ export interface CheckpointRequest {
   format: string;
   kind: SaveFileMetadata['kind'];
   expectedRevision?: number;
+  sequence?: number;
 }
 /** One owned worker, no world-sized structured clone or parallel capture backlog. */
 export class CheckpointWorker {

@@ -63,7 +63,9 @@ function validateRecoveryReferences(
   }
 }
 
-async function copySlot(source: string, target: string, id: string) {
+/** Returns true only when this call published a new slot directory; an existing identical
+ * slot is confirmed in place and belongs to whoever created it. */
+async function copySlot(source: string, target: string, id: string): Promise<boolean> {
   const from = new SaveFiles(source),
     to = new SaveFiles(target);
   const metadata = await from.metadata(id);
@@ -74,7 +76,7 @@ async function copySlot(source: string, target: string, id: string) {
     if (existing.checksum !== metadata.checksum || existing.worldId !== metadata.worldId)
       throw new Error('Retained save identity conflicts with target.');
     await to.confirmPublished(existing);
-    return;
+    return false;
   }
   await mkdir(target, { recursive: true, mode: 0o700 });
   const staging = join(target, `.pending-${process.pid}-${randomUUID()}`);
@@ -92,6 +94,7 @@ async function copySlot(source: string, target: string, id: string) {
     await syncDirectory(staging);
     await rename(staging, join(target, id));
     await syncDirectory(target);
+    return true;
   } catch (error) {
     await rm(staging, { recursive: true, force: true });
     throw error;
@@ -123,7 +126,7 @@ export async function writeOperationalBackup(
         state,
         'Operational backup',
         checkpoint,
-        { expectedRevision: head.revision },
+        { expectedRevision: head.revision, unordered: true },
       );
       await new SaveFiles(join(staging, 'checkpoints')).writeStream(
         {
@@ -229,8 +232,65 @@ export async function readOperationalBackup(
   }
   return { state: payload.state, tables, sourceDirectory: directory, saves: manifest.saves };
 }
-export async function restoreBackupSlots(backup: OperationalBackup, directory: string) {
-  if (backup.sourceDirectory)
+/** Copy retained slots into the target and return the identities this attempt newly
+ * published, so a failed installation can reconcile exactly those (SB18). A copy failure
+ * removes this call's earlier publications before rethrowing. */
+export async function restoreBackupSlots(
+  backup: OperationalBackup,
+  directory: string,
+  keep: ReadonlySet<string> = new Set(),
+): Promise<string[]> {
+  const published: string[] = [];
+  if (!backup.sourceDirectory) return published;
+  try {
     for (const id of backup.saves ?? [])
-      await copySlot(join(backup.sourceDirectory, 'saves'), join(directory, 'saves'), id);
+      if (await copySlot(join(backup.sourceDirectory, 'saves'), join(directory, 'saves'), id))
+        published.push(id);
+  } catch (error) {
+    const retained = await discardRestoredSlots(backup, directory, published, keep);
+    if (retained.length)
+      throw new Error(
+        `${error instanceof Error ? error.message : 'Slot copy failed.'} Copied slots kept (referenced or changed): ${retained.join(', ')}.`,
+        { cause: error },
+      );
+    throw error;
+  }
+  return published;
+}
+
+/** After an installation that definitely did not commit, remove only slots this attempt
+ * published: never the backup source, a slot referenced by `keep` (such as the target's
+ * current recovery pointer), or a slot whose identity or checksum no longer matches the
+ * backup (another operation owns it). Returns the identities left in place. Assumes the
+ * target data directory is used exclusively by this restore. */
+export async function discardRestoredSlots(
+  backup: OperationalBackup,
+  directory: string,
+  published: readonly string[],
+  keep: ReadonlySet<string> = new Set(),
+): Promise<string[]> {
+  if (!backup.sourceDirectory) return [];
+  const source = new SaveFiles(join(backup.sourceDirectory, 'saves')),
+    target = new SaveFiles(join(directory, 'saves'));
+  if (join(backup.sourceDirectory, 'saves') === join(directory, 'saves')) return [...published];
+  const retained: string[] = [];
+  for (const id of published) {
+    try {
+      const [original, installed] = await Promise.all([source.metadata(id), target.metadata(id)]);
+      if (
+        keep.has(id) ||
+        !original ||
+        !installed ||
+        installed.worldId !== original.worldId ||
+        installed.checksum !== original.checksum
+      ) {
+        if (installed) retained.push(id);
+        continue;
+      }
+      await target.delete(id);
+    } catch {
+      retained.push(id);
+    }
+  }
+  return retained;
 }

@@ -8,11 +8,11 @@ Implementation starting points: [checkpoint-format.ts](../../apps/server/src/che
 
 ## LA167
 
-**Changed — current checkpoint path · Restrictiveness: Safe.**
+**Changed — current checkpoint path (2026-09-28, C05) · Restrictiveness: Safe.**
 
-Only one checkpoint capture is admitted at once. Different manual requests receive busy; identical requests share completion. Restore fences concurrent mutation; simulation can continue while a pinned checkpoint is written.
+Only one checkpoint capture runs at once. The slot is reserved before the world mutation queue, so a waiting capture never holds that queue. One manual save may wait for the capture in progress and runs before the next automatic save; automatic saves never wait in admission: while a capture runs or a manual save waits, the due automatic save is held and starts on the first tick after the slot frees, with no failure recorded; if the world mutation queue refuses it as busy, it retries after 30 s of running time, and the third consecutive busy refusal is recorded as a checkpoint failure ([SB12](#sb12)). A second, different manual save while one waits receives busy; identical requests share completion. Restore fences concurrent mutation; simulation can continue while a pinned checkpoint is written.
 
-**Reason / tradeoff:** Bound capture work and preserve a coherent revision. Single-capture admission is tunable; atomic restore/authorization are correctness requirements.
+**Reason / tradeoff:** Bound capture work and preserve a coherent revision while not failing routine manual intent behind an autosave. Single-capture admission is tunable; atomic restore/authorization are correctness requirements. [Admission](../../apps/server/src/game-saves.ts) (`admit`).
 
 [Implementation starting point](../../apps/server/src/game-saves.ts).
 
@@ -22,9 +22,9 @@ Original finding and recommendation superseded by the merged implementation; the
 
 **Current — checked September 27 · Restrictiveness: Safe.**
 
-Routine simulation progress is durably saved about once per real second; explicit commands are saved before acknowledgment. Computed navigation results now join routine progress instead of forcing another save before movement; after a crash, the durable request can prepare its route again.
+**Changed 2026-09-28 (background saves).** Saves are now [background or synchronous](../save-and-load.md#background-and-synchronous-world-saves). Simulation progress is snapshotted about once per real second and written in a background save, without holding the world mutation queue; native time continues during the write. Commands, AI results and other effects still use synchronous saves and are saved before acknowledgment. After an abrupt crash, the simulation progress since the last completed background save is lost: about one second (up to 5 s with an [SV21](#sv21) deferral), plus the previous write's full duration (including any [SV20](#sv20) retry pauses and busy waits), plus up to about 4 s of the in-flight write ([SV19](#sv19)). Backpressure delays native time but does not discard it, and the next snapshot is due one second after a write finishes, so a slow previous write counts in full. A wall clock stepped backwards starts a save at once instead of suspending the cadence. Computed navigation results join simulation progress (saved in the background) instead of forcing a synchronous save before movement; after a crash, the durable request can prepare its route again.
 
-**Reason / tradeoff:** Keep the documented tradeoff between write cost and losing the latest unsaved routine progress after an abrupt crash.
+**Reason / tradeoff:** Keep the documented tradeoff between write cost and losing the latest unsaved simulation progress after an abrupt crash, while removing storage latency from native time. The loss window now grows with storage latency until backpressure applies. [Design](../projects/ordered-async-saves.md#ordered-persistence-design).
 
 [Implementation starting point](../../apps/server/src/world-service.ts).
 
@@ -114,17 +114,17 @@ Original recommendation: **Keep**.
 
 ## SV01
 
-**Reported · Restrictiveness: Safe.**
+**Changed 2026-09-28 (C05) · Restrictiveness: Safe.**
 
-**Autosave cadence:** Every 5 minutes of running real time. Paused time does not count. This is not five in-game minutes.
+**Autosave cadence:** operator setting, default every 5 minutes of running real time, allowed 1–1440 minutes ([SV23](#sv23)). Paused time does not count. This is not in-game minutes.
 
-**Reason / tradeoff:** Periodic crash-recovery points without capturing every commit; exact cadence was an engineering default.
+**Reason / tradeoff:** Periodic crash-recovery points without capturing every commit; operators can trade disk/work for recovery granularity. The default is an engineering choice.
 
 ## SV02
 
-**Reported · Restrictiveness: Safe.**
+**Changed 2026-09-28 (C05) · Restrictiveness: Safe.**
 
-**Autosave retention:** 3 integrity-checked checkpoints selected for retention. Normally about ten minutes between the oldest and newest retained points. This is not a hard count/byte limit on files: replacement publishes first, cleanup can fail, and damaged slots omitted from listing or protected recovery files can remain. Rotation checks byte/record counts and checksums, not successful world restoration ([SB08](#sb08)).
+**Autosave retention:** operator setting, default 3 integrity-checked checkpoints selected for retention, allowed 1–20 ([SV23](#sv23)); lowering it removes older automatic checkpoints after the next successful autosave. Normally about ten minutes between the oldest and newest retained points. This is not a hard count/byte limit on files: replacement publishes first, cleanup can fail, and damaged slots omitted from listing or protected recovery files can remain. Rotation checks byte/record counts and checksums, not successful world restoration ([SB08](#sb08)).
 
 **Reason / tradeoff:** Bound automatic disk use; three points offer only a short recovery window.
 
@@ -226,11 +226,11 @@ Original recommendation: **Keep**.
 
 ## SB01
 
-**Reported · Restrictiveness: Safe.**
+**Changed 2026-09-28 (C05) · Restrictiveness: Safe.**
 
-Autosaves are always enabled. There is currently no setting to disable them or change cadence/retention.
+Autosaves are enabled by default. Holders of the save grant can disable them or change cadence and retention in the Game panel; the settings are stored per world outside gameplay rewind (a load does not change them) and survive restart. Disabling them leaves only manual saves and database commits for recovery.
 
-**Reason / tradeoff:** Provide recovery by default; operator control has not been implemented.
+**Reason / tradeoff:** Provide recovery by default while giving operators disk and recovery control. [Settings](../../apps/server/src/game-saves.ts) (`settings`, `updateSettings`).
 
 ## SB02
 
@@ -300,9 +300,9 @@ The save worker starts with the server and is not automatically restarted after 
 
 **Reported · Restrictiveness: Safe.**
 
-Autosave status is displayed in the creator’s Game panel and refreshed through catalog requests. It is not a continuously updating global notification. The last error is held only in process memory and is lost on restart; catalog requests can rediscover damaged slots and the latest saved completion time, but cannot recover the previous failure message. [Implementation](../../apps/server/src/autosaves.ts), source inspected 2026-09-26.
+**Changed 2026-09-28 (SL08-A).** Checkpoint status is displayed in the creator’s Game panel and refreshed through catalog requests; it is not a continuously updating global notification. The latest checkpoint failure (automatic, manual or recovery) is stored with the world outside gameplay rewind and shown until a save-grant holder acknowledges it, including after restart. If storage cannot record it, it is shown from memory with that caveat. Catalog health (damaged/unlisted slots) stays separate. The last automatic checkpoint time comes from the catalog after restart, so the panel does not imply protection it cannot see. [Implementation](../../apps/server/src/game-saves.ts) (`recordFailure`, `acknowledgeFailure`).
 
-**Reason / tradeoff:** Keep operational feedback in the existing creator surface; no global status delivery was added.
+**Reason / tradeoff:** Operators must not lose failure evidence to a restart; one retained record avoids a failure log without bounds.
 
 ## BW04
 
@@ -328,19 +328,19 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Very safe.**
 
-**Loading depends on a new complete recovery save.** Gameplay installation creates a full “Before last load” checkpoint before switching the world. Exhausted disk space, capture limits or capture failure can therefore prevent loading a healthy older checkpoint. There is no supported bypass of this prerequisite.
+**Changed 2026-09-28 (SL09-A).** **Loading depends on a new complete recovery save.** A gameplay load first writes a full “Before last load” checkpoint pinned to the exact revision it replaces, before any database write. The candidate save is validated first; exhausted disk space, capture limits or capture failure then refuse the load. The current world is kept, still paused by the load request (in-flight AI work was already stopped), without a storage error, and the refusal is recorded as a recovery failure. If the load is refused or fails after the checkpoint was written (busy writer, revoked access, failed restore transaction), that recovery file is not listed; recovery rotation after every load attempt keeps the two newest recovery files plus the one the current “Before last load” entry references, and waits if that entry cannot be read. There is no supported bypass. Operator guidance: free disk space or resolve the limit and load again. If the world can no longer be captured at all, the operational backup cannot preserve it either (it uses the same capture limits); stop the server and take a PostgreSQL-level dump plus a copy of the data directory, and ask for an explicit, verified load path, which does not exist yet.
 
-**Reason / tradeoff:** Preserve the current world before a rewind; the same safeguard can obstruct recovery from a world that can no longer be saved. A future escape path needs a recoverable current state, not silent deletion.
+**Reason / tradeoff:** Preserve the current world before a rewind; the same safeguard can obstruct recovery from a world that can no longer be saved. A future escape path needs a verified independent preservation, not silent deletion. [Open decision](../maintainers/save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 [Implementation](../../apps/server/src/game-saves.ts).
 
 ## SB14
 
-**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+**Changed 2026-09-28 (SL09-B) · Restrictiveness: Safe.**
 
-**Retention uses wall-clock order.** Catalog pagination and rotation sort descending by server-created timestamp, then UUID. A backwards clock adjustment can rank a newly captured save behind an older capture; UUID tie-breaking is deterministic but not chronological. There is no monotonic capture-order key.
+**Retention and paging use a durable capture sequence.** Each capture receives the next per-world sequence from the database before it starts; the value survives restart. The first capture in each server process raises the counter to at least the highest sequence among the slots on disk, so a restored slot never outranks a new capture. Catalog order, pagination cursors and rotation sort by sequence, then wall-clock time and UUID only as tie-breakers; wall-clock time is display only. Slots without a sequence (captured before this change) sort as oldest. A capture whose sequence allocation rolls back with a failed restore transaction can share a number with a later capture; ties then fall back to time and UUID.
 
-**Reason / tradeoff:** Timestamp ordering keeps the first catalog simple, but newest-by-clock is not necessarily newest-by-capture. Display timestamps and retention order should be distinct if clock changes must be tolerated.
+**Reason / tradeoff:** A backwards clock can no longer make rotation delete the newest capture. [Implementation](../../apps/server/src/save-files.ts) (`compareSaves`).
 
 [Implementation](../../apps/server/src/save-files.ts).
 
@@ -360,7 +360,9 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; it does not guarantee a deadline for final filesystem writes/sync/rename or a stalled operation.
 
-**Reason / tradeoff:** Preserve one consistent cut without copying the world into RAM; database version retention trades against output speed. The gameplay barrier ending is not the read snapshot ending. This is source-based risk analysis, not a measured storage-growth result.
+**Reason / tradeoff:** Preserve one consistent cut without copying the world into RAM; database version retention trades against output speed. The gameplay barrier ending is not the read snapshot ending.
+
+**Measured 2026-09-28 (shared host, SL09-C):** throttled output kept the snapshot open until the two-minute deadline aborted the capture; the oldest-snapshot age reached 85–132 transactions, command latency did not rise materially (p95 160 against 147 ms on the quietest run), and the abort released the snapshot and removed staging. A stall inside one write, sync or rename is still unbounded. [Evidence](../verification/ordered-async-saves.md#slow-output-snapshot-pressure-sl09-c).
 
 [Implementation](../../apps/server/src/checkpoint.ts).
 
@@ -378,9 +380,9 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
 
-**Failed operational restore can leave copied save files.** Both fresh-target and existing-world operational restore copy retained slots before their database installation. Failure afterward can leave those files in the target; no rollback cleanup removes them. Database rollback alone does not return the entire data directory to its former state.
+**Changed 2026-09-28 (D1/D2 reconciliation).** Operational restore still copies retained slots before its database installation, but records which slots the attempt newly published. An existing-world restore also writes its pre-restore recovery checkpoint before the installation transaction. If the installation definitely did not commit, it removes exactly those slots and that recovery checkpoint, keeping any slot the target's current recovery pointer references and any whose identity or checksum changed; the source backup is never touched. If the failure came from `COMMIT` itself (outcome uncertain), copied slots and the recovery checkpoint are kept and listed for inspection. A process kill between copying and installing still leaves copied slots and, once written, the unlisted recovery checkpoint (a later in-game load's recovery rotation trims it), and the reconciliation assumes the target data directory is used only by that restore.
 
-**Reason / tradeoff:** Immutable copied files avoid overwriting a different slot, but filesystem publication is outside the database transaction. Cleanup/reconciliation ownership is missing; inspect isolated failed targets rather than treating leftover files as proof of a completed restore.
+**Reason / tradeoff:** Immutable copied files avoid overwriting a different slot; filesystem publication stays outside the database transaction, so reconciliation is in-process and conservative. [Implementation](../../apps/server/src/operational-backup.ts) (`restoreBackupSlots`, `discardRestoredSlots`).
 
 [Implementation](../../scripts/restore-world.ts).
 
@@ -389,3 +391,59 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 **Removed — PostgreSQL-only storage, 2026-09-27.**
 
 The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/postgresql-cognition-preparation.md).
+
+## SV19
+
+**Current 2026-09-28 · Restrictiveness: Safe.**
+
+**Background save backpressure: 4 s.** At most one background save is in flight. When the next one is due while one is still writing, new simulation progress stays in memory; once the in-flight background save has been outstanding for 4 s, native time waits for it before advancing again. Backpressure delays native time; it does not discard it: time held back while waiting is simulated after the write finishes, and the next snapshot is due about one second later. Simulation progress lost in a crash is therefore bounded in real time by about one second (up to 5 s with an [SV21](#sv21) deferral), plus the previous write's full duration (including any [SV20](#sv20) retry pauses and busy waits), plus up to about 4 s of the in-flight write.
+
+**Reason / tradeoff:** Bound memory and pending work under slow storage while absorbing ordinary write latency (without injected delay on the loaded shared host, background saves peaked below 1 s and the slowest world commit, a synchronous save, took 3.4 s). [Implementation](../../apps/server/src/world-service.ts) (`BACKGROUND_SAVE_BACKPRESSURE_MS`).
+
+## SV20
+
+**Current 2026-09-28 · Restrictiveness: Safe.**
+
+**Background save admission retries: 4 attempts.** If the PostgreSQL writer queue refuses a background save before `BEGIN` (busy for 5 s or full), the same prepared change set is re-submitted after pauses of 0.5, 1 and 2 s, four attempts in total, then storage latches. A full queue refuses instantly, so the pauses give it about 3.5 s to drain; a busy queue adds its own 5-s wait per attempt. Nothing ran on a refused attempt. Simulation progress that is saved synchronously instead ([SB20](#sb20)) makes one attempt, because it holds the mutation queue; a refusal leaves its progress for the next tick, as before. This is admission of an unsent write, not a retry of a statement that may have executed; no other query is retried.
+
+**Reason / tradeoff:** Once a released snapshot is live, only its own prepared change set may follow the durable baseline; latching after a bounded wait is safer than diffing a new snapshot against the old baseline, which would delete released records. [Design](../projects/ordered-async-saves.md#ordering-rules).
+
+## SV21
+
+**Current 2026-09-28 · Restrictiveness: Safe.**
+
+**Background save deferral: up to 5 s.** While a command or any other operation that is not simulation progress waits for, or holds, the mutation queue, no new background save starts; that operation's own synchronous save carries the simulation progress with it. After 5 s without a completed save, a background save starts anyway. One 5-second admission budget covers both the wait for an in-flight background save and the wait for the queue; the operation receives busy after it. Exception: when the cap starts a background save while operations are already queued (a stream of requests, or the first tick after any gap of 5 s or more without a save), a queued command's synchronous save waits for that background save inside the queue for the rest of its write, as simulation-progress saves did before this change, and operations behind it may get busy.
+
+**Reason / tradeoff:** A command should not wait inside the queue behind a background save started just before it; the cap prevents a stream of read-only operations from starving background saves.
+
+## SV22
+
+**Current 2026-09-28 (PF06) · Restrictiveness: Safe.**
+
+**Shutdown deadline: 30 s, backstop 45 s.** Graceful shutdown stops admitting requests, then gives each stage (tick, checkpoint drain, AI director, navigation, final world save, projection, HTTP, storage) a share of one 30-second budget; a late or failed stage is reported and the next stage still runs. Storage close is always attempted; if it does not finish in the remaining budget (a stalled database), that is reported and the process exits one second after its report, which drops the connections. A latched storage failure skips the final save. The process reports whether the final save completed and the last revision it confirmed durable; without a confirmed save it says the database may be ahead if a commit was still outstanding. A repeated signal within one second of the first is treated as the same request (under `pnpm dev`, `tsx watch` relays Ctrl-C as a second SIGINT); a later one exits immediately, and a 45-second backstop exits a shutdown whose report never arrives. Under `pnpm dev`, `tsx watch` also force-kills the server 5 s after relaying a signal, so the 30-second budget applies only to `pnpm start` or a direct run.
+
+**Reason / tradeoff:** A stalled database or checkpoint must not keep the process and its writer lock alive indefinitely; unsaved simulation progress is reported rather than hidden. [Implementation](../../apps/server/src/http.ts) (`shutdown`), [signals](../../apps/server/src/main.ts).
+
+## SV23
+
+**Current 2026-09-28 (C05) · Restrictiveness: Safe.**
+
+**Autosave setting bounds:** cadence 1–1440 minutes of running time; retention 1–20 automatic checkpoints. Invalid stored settings disable automatic saves and are reported until saved again; they are never guessed.
+
+**Reason / tradeoff:** Allow day-long cadence and a longer rolling window while bounding automatic disk use (20 complete packages at the 256 MiB package limit is 5 GiB).
+
+## SB20
+
+**Current 2026-09-28 · Restrictiveness: Safe.**
+
+**Some simulation progress is still saved synchronously.** Simulation progress is saved in the background only if every record its hot-event trimming and history release would remove from memory is the exact object SQL already holds. Otherwise (for example an entity retired, an appraisal resolved or a contribution ended since the last completed save) that snapshot uses a synchronous save in the previous order, write then release, holding the mutation queue for its write. The collection responsible is recorded for attribution.
+
+**Reason / tradeoff:** Keeps “not in memory implies already in SQL” for every reader during a write, instead of evicting records before they are durable. Frequency is not yet established: the drills and matched scene runs produced few background saves and no synchronous fallback ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)). Measure it on a retirement-heavy or long-running world before choosing durable-only release per record.
+
+## SB21
+
+**Current 2026-09-28 · Restrictiveness: Safe.**
+
+**Commands and AI results still use synchronous saves.** Player commands, AI characters' finished actions and replies (including conversation updates) and other background-job results, world-editor changes, pause/resume and loads change the live world only after their own save completes, so each holds the mutation queue until it is written. Only simulation progress, which is already visible before it is saved, uses background saves. Under a slow database these synchronous saves are what still freeze the world ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)).
+
+**Reason / tradeoff:** Preserves the durable publication boundary (no effect is visible before it is durable). Pipelining these writes would need durability-gated view publication; see [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness).

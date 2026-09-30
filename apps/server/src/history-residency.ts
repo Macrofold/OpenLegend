@@ -46,6 +46,14 @@ const compactedObjects = new WeakSet<object>();
 export function materializedObjectHistory(world: WorldState): void {
   compactedObjects.delete(world.objectState);
 }
+/** A release that was computed but discarded (its save was refused) must not suppress the
+ * next release of the same unchanged maps. */
+export function discardedHistoryRelease(world: WorldState): void {
+  materializedObjectHistory(world);
+  if (!world.appraisals) return;
+  compactedAppraisals.delete(world.appraisals);
+  for (const records of Object.values(world.appraisals)) compactedAppraisalOwners.delete(records);
+}
 /** Only call after canonical commit. Eviction changes residency, never physical identity
  * or SQL lifecycle rows; complete capture rehydrates them from the same records. */
 export function compactObjectHistory(world: WorldState): WorldState {

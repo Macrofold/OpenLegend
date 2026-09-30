@@ -117,7 +117,7 @@ Saving otherwise stays unavailable until a server restart. [SB11](../limits/pers
 
 Expose autosave enable/cadence/retention settings, initially retaining 5 minutes and 3 points as defaults; admit one pending manual save ahead of the next automatic capture.
 
-Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
+**Done 2026-09-28:** persisted enable/cadence/retention settings (defaults 5 minutes, keep 3; bounds [SV23](../limits/persistence.md#sv23)), one waiting manual save ahead of the next autosave, restart-surviving failure record with acknowledgment and bounded shutdown ([SV22](../limits/persistence.md#sv22)); [evidence](../verification/ordered-async-saves.md#save-recovery-stages-47). Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
 
 ### C12
 
@@ -171,19 +171,19 @@ Carried objects cannot participate in existing continuous processing; source lif
 
 **P2. Failure recovery: operational restore fails after copying slots.** Database rollback can leave newly copied save files behind.
 
-Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
+Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. **In-process reconciliation done 2026-09-28**; process death between copy and install and shared data directories remain. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
 
 ### C23
 
 **P2. Conditional: slow checkpoint output prolongs a database snapshot.** Worker/page bounds do not bound retained WAL/row versions or final filesystem stalls.
 
-Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. **Measured 2026-09-28 (shared host):** with output throttled, the existing two-minute capture deadline aborted the capture, released its snapshot and left no staging files; command latency did not rise materially while the snapshot was held, so no new cancellation was added. A stall inside one filesystem write, sync or rename remains unbounded. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 ### C24
 
 **P2. Conditional: the server clock moves backward or timestamps tie.** New captures can be ranked behind old ones during retention.
 
-Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. **Done 2026-09-28.** [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 ### C03
 

@@ -19,6 +19,8 @@ const metadataSchema = z
     bytes: z.number().int().positive().max(CHECKPOINT_LIMITS.bytes).optional(),
     rows: z.number().int().positive().max(CHECKPOINT_LIMITS.rows).optional(),
     revision: z.number().int().nonnegative().optional(),
+    // Durable capture order (SL09-B). Wall-clock createdAt is display only.
+    sequence: z.number().int().positive().optional(),
   })
   .refine(
     (metadata) =>
@@ -31,9 +33,15 @@ export type SaveFileMetadata = z.infer<typeof metadataSchema>;
 export interface SavePosition {
   id: string;
   createdAt: string;
+  sequence?: number;
 }
+/** Newest first by durable capture sequence, so a backward clock cannot rank a new capture as
+ * old during retention. Slots without a sequence sort as oldest; time and id only break ties.
+ * docs/limits/persistence.md#sb14 */
 export const compareSaves = (a: SavePosition, b: SavePosition) =>
-  b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id);
+  (b.sequence ?? 0) - (a.sequence ?? 0) ||
+  b.createdAt.localeCompare(a.createdAt) ||
+  b.id.localeCompare(a.id);
 export async function syncDirectory(path: string) {
   const directory = await open(path, 'r');
   try {
@@ -212,6 +220,26 @@ export class SaveFiles {
       await rm(staging, { recursive: true, force: true });
       throw error;
     }
+  }
+  /** Actual bytes under the save directory, including damaged, unlisted and interrupted
+   * entries; retention counts are not a disk quota. */
+  async usage(): Promise<number> {
+    await mkdir(this.directory, { recursive: true, mode: 0o700 });
+    let bytes = 0;
+    for await (const entry of await opendir(this.directory)) {
+      const path = join(this.directory, entry.name);
+      try {
+        if (!entry.isDirectory()) {
+          bytes += (await stat(path)).size;
+          continue;
+        }
+        for await (const file of await opendir(path))
+          if (file.isFile()) bytes += (await stat(join(path, file.name))).size;
+      } catch {
+        // An entry removed during the scan no longer uses space.
+      }
+    }
+    return bytes;
   }
   async read(id: string, maxBytes: number): Promise<string> {
     const path = join(this.path(id), 'world.json');
