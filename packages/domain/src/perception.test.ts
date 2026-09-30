@@ -1,9 +1,9 @@
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { expect, it } from 'vitest';
-import { canSee, createWorld, executeCommand, observeActor } from './index.js';
+import { canSee, createWorld, executeCommand, experienceEntry, observeActor } from './index.js';
 
-it('sees distant objects across prototype obstacles without extending speech exposure', () => {
+it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
   setSpatialPosition(
     world,
@@ -17,11 +17,17 @@ it('sees distant objects across prototype obstacles without extending speech exp
     { y: 0, x: 22, z: 2 },
     worldSupport(world.entities[NPC_ID]!),
   );
-  world.map.tiles[2]!.fill('grass');
-  world.map.tiles[2]![10] = 'rock';
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(true);
+  // Sight reaches past the partial-word range: the NPC may notice speech, never its words.
+  // docs/hearing-and-speech.md#initial-default-world-tuning
+  const npcEvidence = (transition: ReturnType<typeof executeCommand>) =>
+    experienceEntry(
+      transition.world,
+      NPC_ID,
+      `awareness:${transition.events.find((event) => event.type === 'speech')!.id}`,
+    )?.value;
   const directed = executeCommand(world, {
     id: 'fixture-distant-speech',
     actorId: PLAYER_ID,
@@ -29,14 +35,19 @@ it('sees distant objects across prototype obstacles without extending speech exp
     targetId: NPC_ID,
     text: 'Can you hear me?',
   });
-  expect(directed.outcome.code).toBe('not-heard');
+  // Addressing is intention, not delivery: the words are spoken aloud but still unheard.
+  // docs/hearing-and-speech.md#4-speech-volume-and-admission
+  expect(directed.outcome.code).toBe('spoken');
+  expect(npcEvidence(directed)).toMatchObject({
+    speech: { intelligibility: 'none', segments: [] },
+  });
   const spoken = executeCommand(world, {
     id: 'fixture-local-speech',
     actorId: PLAYER_ID,
     type: 'say',
     text: 'A quiet observation.',
   });
-  expect(spoken.world.events.at(-1)!.audience).not.toContain(NPC_ID);
+  expect(npcEvidence(spoken)).toMatchObject({ speech: { intelligibility: 'none', segments: [] } });
 });
 
 it('keeps an authoritative outer sight boundary even though the renderer can remember old images', () => {

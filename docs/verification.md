@@ -57,6 +57,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Native action integration](verification/native-action-integration.md) and [action reconciliation](verification/action-reconciliation.md).
 - [Historical integration summaries](verification/integration-summaries.md): earlier overview notes and links to action, perception and persistence artifacts.
 - [Historical baseline and acceptance snapshot](verification/historical-baseline.md): earlier automated/provider results, product limits and acceptance owners. This is not the current branch’s test status.
+- [Existing test repairs](verification/existing-test-repairs.md): stale hearing/starting-world expectations and the AI-director usage race.
 
 ## Bounded live playtest protocol
 

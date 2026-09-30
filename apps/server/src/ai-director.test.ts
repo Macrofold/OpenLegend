@@ -127,6 +127,9 @@ async function harness(
     ...readConfig({
       TYPESAFE_API_KEY: 'test-fixture-key',
       OPENAI_API_KEY: 'test-fixture-key',
+      // The fixture client does not replace memory-recall embeddings, which otherwise inherit
+      // OPENAI_API_KEY and send live background requests that race usage assertions.
+      OPENAI_EMBEDDING_API_KEY: '',
       AI_BUDGET_USD: '1',
     }),
     ...options.config,

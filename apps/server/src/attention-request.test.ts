@@ -14,7 +14,7 @@ it('admits 300 independent Noul questions with a shared rubric and explicit cand
   expect(Object.keys(request.questions)).toHaveLength(300);
   expect(request.questions.c299).toEqual({
     type: 'noul',
-    instructions: 'Is `candidates.c299` relevant under `attentionPolicy`?',
+    instructions: 'Is `c299` relevant under `attentionPolicy`?',
   });
   expect(Object.values(request.questions).every((q) => !('criteria' in q))).toBe(true);
 });

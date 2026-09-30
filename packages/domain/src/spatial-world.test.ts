@@ -10,11 +10,12 @@ import {
   canReachEntity,
   createWorld,
   executeCommand,
-  hearsEntity,
   quantityOf,
   replaceSpatialLayout,
   seesEntity,
   setSpatialPosition,
+  soundOrigin,
+  speechExposure,
   validateSpatialWorld,
   type WorldState,
 } from './index.js';
@@ -73,17 +74,19 @@ describe('native spatial-world integration without providers', () => {
     setSpatialPosition(world, b, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
     expect(canReachEntity(world, a, b, 1.6)).toBe(false);
     expect(seesEntity(world, a, b)).toBe(false);
-    expect(hearsEntity(world, a, b)).toBe(false);
+    // The timber deck attenuates rather than blocks sound: ordinary speech carries through it,
+    // but its loss makes a whisper that would be detectable in open air inaudible below.
+    // docs/architecture.md#hearing-captions-and-perceived-events
+    expect(speechExposure(world, a, b, 'whisper').detail).toBe('undetected');
     const speech = executeCommand(world, {
       id: 'above-speech',
       actorId: b.id,
       type: 'say',
       text: 'Private words above the floor',
+      volume: 'whisper',
     });
     expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
-    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(
-      worldPosition(b),
-    );
+    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(soundOrigin(b));
     const bird = world.entities['bird-1']!;
     setSpatialPosition(world, bird, { x: 20, y: 6, z: 5.5 }, null);
     expect(canReachEntity(world, a, bird, 1.6)).toBe(false);

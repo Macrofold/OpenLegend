@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { quantityOf } from '@open-legend/domain';
+import { createItemLot, quantityOf, seedAgency } from '@open-legend/domain';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository } from './store.js';
 import { projectView } from './view.js';
@@ -30,6 +30,12 @@ async function setup(path: string | undefined = undefined, existingClock?: { now
 }
 async function activate(service: WorldService): Promise<void> {
   await service.setPresence('test-client', true);
+}
+/** New starts carry no food; see docs/worlds/base/survival.md. */
+async function withFixtureFood(service: WorldService): Promise<void> {
+  await editWorld(service, (world) =>
+    createItemLot(world, PLAYER_ID, 'berries', 3, 'fixture-food'),
+  );
 }
 async function run(
   service: WorldService,
@@ -243,6 +249,7 @@ describe('world presence, time and durable commands', () => {
     const clock = { now: 1_800_000_000_000 };
     const initial = await setup(path, clock);
     await activate(initial.service);
+    await withFixtureFood(initial.service);
     const berry = (await projectView(initial.service)).player.inventory.find(
       (item) => item.definitionId === 'berries',
     )!;
@@ -281,6 +288,7 @@ describe('world presence, time and durable commands', () => {
   it('pauses on ambiguous persistence completion and recovers its committed receipt', async () => {
     const { service, store, clock } = await setup();
     await activate(service);
+    await withFixtureFood(service);
     const berry = (await projectView(service)).player.inventory.find(
       (item) => item.definitionId === 'berries',
     )!;
@@ -313,7 +321,7 @@ describe('public projection', () => {
     const { service, store } = await setup();
     await activate(service);
     await editWorld(service, (world) => {
-      world.entities[NPC_ID]!.actor!.agency.goals[0]!.objective = 'secret-npc-intention';
+      world.entities[NPC_ID]!.actor!.agency = seedAgency(['secret-npc-intention']);
       world.memories[NPC_ID]!.push({
         id: 'private-memory',
         actorId: NPC_ID,
