@@ -21,6 +21,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Actor agency and invention workflows](verification/actor-agency-and-inventions.md): identity, native attempts, plans and supported invention loops.
 - [Invention foundation](verification/invention-foundation.md): crafting, gathering, proposal revision and provider evidence.

@@ -125,13 +125,13 @@ Source labels identify bullets in their original order: OB objects, ST state/res
 - **Foundation QU02:** [QU02](objects.md#qu02) — Tracked.
 - **Foundation QU03:** [QU03](objects.md#qu03) — Tracked.
 - **Foundation QU04:** [QU04](objects.md#qu04) — Tracked.
-- **Foundation QU05:** [QU05](objects.md#qu05) — Tracked.
+- **Foundation QU05:** [QU05](objects.md#qu05) — Updated to removed.
 - **Foundation QU06:** [QU06](objects.md#qu06) — Tracked.
 - **Foundation QU07:** [QU07](objects.md#qu07) — Tracked.
 - **Foundation QU08:** [QU08](objects.md#qu08) — Tracked.
 - **Foundation QU09:** [QU09](feelings.md#qu09) — Tracked.
 - **Foundation QU10:** [QU10](memory.md#qu10) — Tracked.
-- **Foundation QU11:** [QU11](interface.md#qu11) — Tracked.
+- **Foundation QU11:** [QU11](interface.md#qu11) — Updated: 40-person cap removed; paged search retained.
 - **Foundation QU12:** [QU12](interface.md#qu12) — Tracked.
 - **Foundation QU13:** [QU13](native-work.md#qu13) — Tracked.
 - **Foundation QU14:** [QU14](native-work.md#qu14) — Tracked.

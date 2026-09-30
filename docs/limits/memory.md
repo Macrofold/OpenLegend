@@ -430,15 +430,15 @@ Original recommendation: **Review**.
 
 ## LA208
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — rechecked 2026-09-28 · Restrictiveness: Safe (compact snapshot; history is paged).**
 
-The live player panel receives 20 memory summaries, and the world-owner thought-inspection view receives 100 thoughts.
+The live player snapshot (`GameView.player.memories`) still carries the newest **20** eligible memories. The Character panel's **Older memories** control and search now page through every eligible retained memory 20 at a time through `/api/memories` ([MH08](#mh08)). God inspection of a non-player character shows the same paged, searchable history with a **Private thoughts only** filter for remembered private thoughts; reflection thoughts in the mind state are shown in full, because only the latest 100 are retained ([LA023](#la023)). Another human's memories are never available.
 
-**Reason / tradeoff:** Keep small initial panels while making additional stored memories or thoughts available through history navigation where retained.
+**Reason / tradeoff:** Keep the live update small while making all retained memories reachable. Only eligible sources are read (forgotten sources, inferred duplicates and summaries built on forgotten or corrected sources stay excluded), so paging never widens recall eligibility. A corrected memory stays visible as witnessed history, as in the live snapshot, and its correction is a separate event; labelling corrected entries would need a separate decision.
 
-[Implementation starting point](../../apps/server/src/intelligence-log.ts).
+[Snapshot](../../apps/server/src/view.ts), [history pages](../../apps/server/src/memory-history.ts).
 
-Original recommendation: **Replace**.
+Original recommendation: **Replace** — delivered.
 
 ## LA219
 
@@ -591,6 +591,14 @@ Resident awareness: latest 256 records/actor, targeting 1 MiB while always prese
 **Reason / tradeoff:** Preserve complete correction/forgetting semantics while reducing unnecessary reads and mutation-lane occupancy. The former whole-world creator-edit preparation is removed. Resumable preparation remains a future response to measured large dependency closures, rather than speculative infrastructure.
 
 **Evidence:** [Implementation](../../apps/server/src/history-edit.ts), [verification](../verification/history-storage-efficiency.md#history-storage-efficiency). [Revisit C21](../maintainers/limits-audit.md#c21); D2/PF08 retain larger dependency and hosted qualification.
+
+## MH08
+
+**Current — implemented 2026-09-28 · Restrictiveness: Safe per request; no cap on reachable history.**
+
+Owner memory history and search (`/api/memories`, god variant for inspectable non-player characters) return pages of **20**, newest first by (time, ID, source kind), with a fenced continuation cursor of at most 2,048 characters. A search accepts up to **200** characters, which become at most **8** distinct letter/number words of at most **64** characters each; every word must match the start of a word in the memory text the viewer is shown (`recall_sources.search_text`, AND semantics). The server matches in JavaScript after NFKC normalization and lowercasing, so matching does not depend on the database locale; accents must match (“eloise” does not find “Éloise”). A search or the **Private thoughts only** filter examines at most **2,000** eligible memories per request, read in chunks of 250 that stop once a page of matches is found; when that window holds no more matches, the response says so and the cursor continues into older memories. The same bounds apply to perceived-event search ([HR06](hearing-and-speech.md#hr06--history-paging-and-growth)). A plain browse request reads 21 index rows and hydrates at most 20 bodies within the shared [preparation allowance](#la014).
+
+**Reason / tradeoff:** Predictable work per request on a growing corpus, while every eligible retained memory stays reachable through continuation. Matching only displayed text means a search adds no exposure beyond that text: it cannot confirm unheard words or forgotten sources. Displayed gesture text can still contain a target's global name until the [targeted-event text leak](../maintainers/TODO.md#future-character-reaction-bubbles) is fixed, and search then finds that name too. Prefix matching is weaker for scripts without spaces; semantic search would need paid query embeddings and is not used. Measured on one host with the earlier SQL matcher: a 2,000-row window with no match took 107 ms, the following continuation 21 ms; the chunked JavaScript matcher's private-thoughts window with no match took 38 ms ([evidence](../verification/player-clarity-ui.md#review-follow-up)). Matching in the database would reuse its index but depends on the database locale (the lexical recall in [MH03](#mh03) still does). [Implementation](../../apps/server/src/memory-history.ts), [search terms](../../apps/server/src/text-search.ts).
 
 ## KG01
 

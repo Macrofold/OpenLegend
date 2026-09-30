@@ -60,6 +60,26 @@ export interface Obligation {
   fulfilledBy?: string;
   fulfilledAt?: number;
 }
+/** Unresolved obligations per actor; further promise speech is still spoken but not
+ * recorded. docs/limits/base-world.md#bw04 */
+export const COMMITMENT_ADMISSION_LIMIT = 16;
+/** The count admission checks against the limit: every unresolved commitment record,
+ * including forgotten ones and commitments without a native obligation. */
+export function unresolvedCommitmentCount(world: WorldState, actorId: string): number {
+  return (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment' && !m.resolved)
+    .length;
+}
+/** An actor's current (active or overdue) obligations that it has not forgotten. */
+export function openObligations(world: WorldState, actorId: string): MemoryRecord[] {
+  const forgotten = new Set(world.experience?.forgotten[actorId] ?? []);
+  return (world.memories[actorId] ?? []).filter(
+    (memory) =>
+      !!memory.obligation &&
+      !memory.resolved &&
+      (memory.obligation.status === 'active' || memory.obligation.status === 'overdue') &&
+      !forgotten.has(memory.id),
+  );
+}
 /** Only committed, self-attributed explicit promise speech creates an obligation. */
 export function recordSpokenPromise(world: WorldState, event: WorldEvent): void {
   if (
@@ -69,11 +89,7 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
   )
     return;
   const actorId = event.actorId;
-  if (
-    (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment' && !m.resolved).length >=
-    16
-  )
-    return;
+  if (unresolvedCommitmentCount(world, actorId) >= COMMITMENT_ADMISSION_LIMIT) return;
   const words = String(event.data?.['text'] ?? '')
     .trim()
     .replace(/[.!]$/, '');

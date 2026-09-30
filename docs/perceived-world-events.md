@@ -64,6 +64,8 @@ Apply actor authorization, forgetting/revocation, external/permitted-occurrence 
 
 Newer events arriving during older-page navigation must neither duplicate nor skip rows in that snapshot. A separate refresh supplies the new tail. Use an appropriate existing actor-perspective/order index; add a measured type-query index if plans require it. Do not scan or serialize the entire event archive to open a panel. Avoid expensive total counts; any displayed count must be actor-scoped and clearly describe its filter/retention window.
 
+An optional text search (`q`) filters the same authorized, type-filtered rows before paging. It matches only each row's permitted perspective text, the text the reader is shown, so a search adds no exposure beyond that text and can never confirm unheard words or raw payload content. (Gesture text that names a target by global name is a tracked [leak in the displayed text itself](maintainers/TODO.md#future-character-reaction-bubbles); search finds what is displayed.) Every word must match a word start. One request examines a bounded window of rows; when that window holds no more matches the response says so and the cursor continues into older history, so every retained row stays reachable without unbounded work per request ([HR06](limits/hearing-and-speech.md#hr06--history-paging-and-growth)).
+
 Cold-history read failure never falls back to unredacted raw events. A missing expected perspective is an explicit integrity/unavailable condition, not an excuse to show full speech. Preserve current history backpressure and storage-failure boundaries.
 
 ## 5. Invalidation and privacy

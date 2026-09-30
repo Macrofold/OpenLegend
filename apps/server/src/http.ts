@@ -1,6 +1,8 @@
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
-import { continuityView } from './continuity-view.js';
+import { continuitySubjects, continuityView } from './continuity-view.js';
+import { memoryHistory } from './memory-history.js';
+import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
   capabilitySchema,
@@ -735,6 +737,7 @@ async function initializeGameServer(
                 .optional(),
               cursor: z.string().max(2048).optional(),
               limit: z.coerce.number().int().min(1).max(100).optional(),
+              q: z.string().max(200).optional(),
             })
             .strict()
             .parse(Object.fromEntries(url.searchParams));
@@ -1023,6 +1026,8 @@ async function initializeGameServer(
         }
         const inspection = [
           '/api/god/mind',
+          '/api/god/mind/subjects',
+          '/api/god/memories',
           '/api/god/activity-history',
           '/api/god/trigger',
           '/api/god/triggers',
@@ -1218,6 +1223,7 @@ async function initializeGameServer(
                   containerId: requestIdSchema.optional(),
                   query: z.string().max(160).optional(),
                   cursor: z.string().max(3000).optional(),
+                  mergeSourceId: requestIdSchema.optional(),
                 })
                 .strict()
                 .parse(body);
@@ -1978,6 +1984,50 @@ async function initializeGameServer(
                   ? continuityView(service, actorId, scope, cursor)
                   : await inspectGodMind(service, actorId, scope),
               });
+            }
+            case '/api/mind/subjects':
+            case '/api/god/mind/subjects': {
+              const { actorId, ...request } = z
+                .object({
+                  actorId: requestIdSchema,
+                  query: z.string().max(120).optional(),
+                  after: z.string().max(2048).optional(),
+                  subjectId: requestIdSchema.optional(),
+                })
+                .strict()
+                .parse(body);
+              if (
+                (url.pathname === '/api/mind/subjects' && actorId !== scope.actorId) ||
+                (url.pathname.startsWith('/api/god/') && !config.godMode)
+              )
+                throw new AuthorityError('forbidden');
+              return send(response, 200, continuitySubjects(service, actorId, scope, request));
+            }
+            case '/api/memories':
+            case '/api/god/memories': {
+              const { actorId, ...request } = z
+                .object({
+                  actorId: requestIdSchema,
+                  cursor: z.string().max(2048).optional(),
+                  query: z.string().max(200).optional(),
+                  thoughts: z.boolean().optional(),
+                })
+                .strict()
+                .parse(body);
+              if (
+                (url.pathname === '/api/memories' && actorId !== scope.actorId) ||
+                (url.pathname.startsWith('/api/god/') && !config.godMode)
+              )
+                throw new AuthorityError('forbidden');
+              return send(response, 200, await memoryHistory(service, actorId, scope, request));
+            }
+            case '/api/commitments': {
+              // Owner-only by construction: there is no actor parameter to name anyone else.
+              const value = z
+                .object({ cursor: z.string().max(2048).optional() })
+                .strict()
+                .parse(body);
+              return send(response, 200, await commitmentPage(service, scope, value));
             }
             case '/api/control':
               return send(response, 200, await service.control(controls.parse(body), scope));

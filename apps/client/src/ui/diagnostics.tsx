@@ -13,9 +13,13 @@ import type {
   AuthoredAppraisalRequest,
   GodMindView,
   IntelligenceCall,
+  MindSubject,
+  MindSubjectPage,
 } from '@open-legend/protocol';
 import { post } from '../api';
 import { EventTime } from './event-time';
+import { SubjectPicker, subjectPath } from './subject-picker';
+import { MemoryHistory } from './memory-history';
 import { Button, Icon, IconButton, Section, Tag } from '../design-system/components';
 
 type JsonObject = Record<string, unknown>;
@@ -60,6 +64,8 @@ function InlineJson({ title, value }: { title: string; value: unknown }) {
   );
 }
 
+type SubjectDetails = NonNullable<MindSubjectPage['selected']>;
+
 function KnowledgeEditor({
   mind,
   onSaved,
@@ -69,56 +75,106 @@ function KnowledgeEditor({
   mind: GodMindView;
   onSaved: (mind: GodMindView) => void;
 }) {
-  const [subject, setSubject] = useState('');
-  const document = mind.notepads?.find((doc) => doc.subjectId === (subject || null));
-  const identity = subject ? mind.identities?.[subject] : undefined;
+  const [subject, setSubject] = useState<MindSubject | null>(null);
+  // A subject's notes may lie on another notes page; load them by exact subject instead.
+  const [details, setDetails] = useState<SubjectDetails | null | undefined>(null);
+  const [reload, setReload] = useState(0);
+  const general = mind.notepads?.find((doc) => doc.subjectId === null);
+  const document = subject ? details?.notepad : general;
+  const identity = subject ? details?.identity : undefined;
   const [text, setText] = useState(document?.text ?? '');
   const [name, setName] = useState(identity?.givenName ?? '');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-  useEffect(() => setMessage(''), [subject]);
+  const [failed, setFailed] = useState(false);
+  // The details refresh after a save; editing waits for the saved revisions.
+  const [refreshing, setRefreshing] = useState(false);
+  const loadedFor = useRef('');
+  // Only a different person or character clears the status; a refresh after saving keeps it.
+  useEffect(() => setMessage(''), [subject?.id, mind.actorId, owned]);
+  useEffect(() => {
+    setFailed(false);
+    if (!subject) {
+      loadedFor.current = '';
+      setRefreshing(false);
+      return setDetails(null);
+    }
+    const key = JSON.stringify([mind.actorId, owned, subject.id]);
+    // A refresh after saving keeps the saved text on screen until the fresh copy arrives.
+    if (loadedFor.current !== key) setDetails(undefined);
+    let active = true;
+    void post<MindSubjectPage | { ok: false; message?: string }>(subjectPath(owned), {
+      actorId: mind.actorId,
+      subjectId: subject.id,
+    })
+      .then((result) => {
+        if (!active) return;
+        if (!result.ok) throw new Error(result.message ?? 'These notes are unavailable.');
+        loadedFor.current = key;
+        setRefreshing(false);
+        setDetails(result.selected ?? null);
+        if (result.selected) setSubject(result.selected.subject);
+        else setMessage('This person is no longer available for notes.');
+      })
+      .catch((error) => {
+        if (!active) return;
+        loadedFor.current = '';
+        setRefreshing(false);
+        setDetails(null);
+        setFailed(true);
+        setMessage(error instanceof Error ? error.message : String(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [subject?.id, mind.actorId, owned, reload]);
   useEffect(() => {
     setText(document?.text ?? '');
     setName(identity?.givenName ?? '');
-  }, [subject, document?.revision, identity?.revision]);
+  }, [subject?.id, document?.revision, identity?.revision, details === undefined]);
+  const loading = (!!subject && details === undefined) || refreshing;
+  const unavailable = !!subject && details === null;
   const limit =
     document?.maxCharacters ?? mind.knowledgeLimits?.[subject ? 'subject' : 'general'] ?? 0;
   const characters = Array.from(text).length;
   return (
     <Section title="Knowledge notepads">
-      <label>
-        Person or general knowledge
-        <select
-          aria-label="Person or general knowledge"
-          disabled={saving}
-          value={subject}
-          onChange={(event) => setSubject(event.target.value)}
+      <SubjectPicker
+        actorId={mind.actorId}
+        owned={owned}
+        label="Person or general knowledge"
+        none="General knowledge"
+        value={subject}
+        onSelect={setSubject}
+        disabled={saving}
+      />
+      {loading && <p role="status">Loading notes…</p>}
+      {failed && (
+        <Button
+          size="sm"
+          onPress={() => {
+            setMessage('');
+            setReload((value) => value + 1);
+          }}
         >
-          <option value="">General knowledge</option>
-          {(
-            mind.continuity?.subjects ??
-            mind.notepads?.flatMap((doc) =>
-              doc.subjectId ? [{ id: doc.subjectId, label: doc.label }] : [],
-            ) ??
-            []
-          ).map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      {subject && (
+          Retry loading notes
+        </Button>
+      )}
+      {subject && !unavailable && (
         <label>
           Given name known by this observer
-          <input disabled={saving} value={name} onChange={(event) => setName(event.target.value)} />
+          <input
+            disabled={saving || loading}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
         </label>
       )}
       <label>
         Editable knowledge
         <textarea
           rows={8}
-          disabled={saving}
+          disabled={saving || loading || unavailable}
           value={text}
           onChange={(event) => setText(event.target.value)}
         />
@@ -132,7 +188,7 @@ function KnowledgeEditor({
             : 'Record current understanding; rewrite when space is needed.'}
       </p>
       <Button
-        disabled={saving || characters > limit}
+        disabled={saving || loading || unavailable || characters > limit}
         onPress={() => {
           setSaving(true);
           setMessage('');
@@ -142,7 +198,7 @@ function KnowledgeEditor({
               actorId: mind.actorId,
               worldId: mind.worldId,
               generation: mind.generation,
-              subjectId: subject || null,
+              subjectId: subject?.id ?? null,
               expectedRevision: document?.revision ?? 0,
               text,
               ...(subject && name.trim() && name !== identity?.givenName
@@ -153,6 +209,10 @@ function KnowledgeEditor({
             .then((result) => {
               setMessage(result.message ?? '');
               if (result.ok && result.mind) onSaved(result.mind);
+              if (result.ok && subject) {
+                setRefreshing(true);
+                setReload((value) => value + 1);
+              }
             })
             .catch((error) => setMessage(String(error)))
             .finally(() => setSaving(false));
@@ -175,7 +235,7 @@ function AuthoredFeeling({
   send: (change: AuthoredAppraisalRequest['change']) => void;
 }) {
   const [policyId, setPolicyId] = useState(''),
-    [subject, setSubject] = useState('');
+    [subject, setSubject] = useState<MindSubject | null>(null);
   const policies = mind.continuity?.authoring?.policies ?? [];
   const policy = policies.find((value) => value.pin.id === policyId) ?? policies[0];
   if (!policy) return null;
@@ -194,21 +254,20 @@ function AuthoredFeeling({
           ))}
         </select>
       </label>
-      <label>
-        About
-        <select value={subject} onChange={(event) => setSubject(event.target.value)}>
-          <option value="">No particular person</option>
-          {mind.continuity?.subjects.map((value) => (
-            <option key={value.id} value={value.id}>
-              {value.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      {/* Feelings need a currently recognized subject; notes-only people stay visible but disabled. */}
+      <SubjectPicker
+        actorId={mind.actorId}
+        owned={false}
+        label="About"
+        none="No particular person"
+        value={subject}
+        onSelect={setSubject}
+        onlyRecognized
+      />
       <Button
         disabled={busy}
         onPress={() =>
-          send({ kind: 'create', definitionPin: policy.pin, targetId: subject || null })
+          send({ kind: 'create', definitionPin: policy.pin, targetId: subject?.id ?? null })
         }
       >
         Author feeling
@@ -333,8 +392,9 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
                 </details>
               ))}
           </Section>
+          {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
           <KnowledgeEditor
-            key={`${mind.actorId}:${mind.continuity?.cursor ?? 'last'}`}
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
             mind={mind}
             onSaved={setMind}
             owned={owned}
@@ -354,7 +414,7 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
                   .catch((error) => setError(String(error)));
               }}
             >
-              More feelings and people
+              More feelings and notes
             </Button>
           )}
           <ActivityHistory
@@ -362,6 +422,15 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
             actorId={mind.actorId}
             owned={owned}
           />
+          {!owned && (
+            <Section title="Memory and thought history">
+              <MemoryHistory
+                key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+                actorId={mind.actorId}
+                owned={false}
+              />
+            </Section>
+          )}
           <InlineJson
             title="Memories, experiences and commitments"
             value={{

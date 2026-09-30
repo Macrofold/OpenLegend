@@ -559,6 +559,17 @@
 .ol-select-option[data-selected] > .ol-icon-wrap:last-child {
   opacity: 1;
 }
+.ol-select-option[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+.ol-select-empty,
+.ol-select-more {
+  margin: 0;
+  padding: 6px 8px;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
 
 /* Launcher (circular left/right rail) */
 .ol-rail {

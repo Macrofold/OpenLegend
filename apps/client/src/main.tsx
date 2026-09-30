@@ -29,6 +29,10 @@ import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
 import type { ScreenRect, WorldRenderer } from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
+import { WorldHover } from './ui/world-hover';
+import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
+import { Promises } from './ui/promises';
+import { captionScope } from './speech-captions';
 import { CameraControls } from './ui/camera-controls';
 import type { CameraState } from './world-camera';
 import {
@@ -161,6 +165,10 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     (v): v is number => typeof v === 'number' && [1, 1.5, 2, 3].includes(v),
   );
   const [captionOcclusions, setCaptionOcclusions] = useState<ScreenRect[]>([]);
+  const missedCaptions = useMissedCaptions(captionsEnabled);
+  const [eventsType, setEventsType] = useState('all');
+  // Opening speech history from the missed-caption notice starts a fresh, unsearched list.
+  const [eventsReset, setEventsReset] = useState(0);
   const canvas = useRef<HTMLCanvasElement>(null),
     hud = useRef<HTMLDivElement>(null),
     survival = useRef<HTMLElement>(null),
@@ -351,6 +359,8 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     return result;
   }
   function show(id: PanelId) {
+    // Opening speech history is the recovery path, so it settles the missed-caption notice.
+    if (id === 'events') missedCaptions.clear();
     setOpen((v) => fit([...v.filter((p) => p !== id), id]));
   }
   function hide(id: PanelId) {
@@ -366,6 +376,10 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     else show(id);
   }
   useEffect(() => setOpen((v) => fit(v)), [width, scale]);
+  // The event filter lasts while World Events is open, as it did when the panel owned it.
+  useEffect(() => {
+    if (!open.includes('events')) setEventsType('all');
+  }, [open]);
   async function command(action: ActionOption) {
     if (!connected) {
       notify('Reconnect to the world.');
@@ -469,6 +483,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
   useEffect(() => {
     scene.current?.setCaptionOptions({
       enabled: captionsEnabled,
+      onMissedCaptions: missedCaptions.report,
       paused: captionsPaused,
       readingScale: captionReadingScale,
       uiScale: scale,
@@ -770,8 +785,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       case 'events':
         return (
           <WorldEvents
-            scope={`${view.worldId}:${view.saveTimeline}:${view.access?.scope}:${view.player.id}:${view.historyEpoch}`}
+            key={eventsReset}
+            scope={captionScope(view)}
             revision={view.worldEventsRevision}
+            type={eventsType}
+            onTypeChange={setEventsType}
           />
         );
       case 'journal':
@@ -783,6 +801,9 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                   <Icon name={m.done ? 'ui.check' : 'ui.more'} size={16} /> {m.label}
                 </p>
               ))}
+            </Section>
+            <Section title="Promises">
+              <Promises key={captionScope(view)} />
             </Section>
             <Section title="Your story">
               <History
@@ -1282,6 +1303,28 @@ function App({ resetApplication }: { resetApplication: () => void }) {
         <div id="toast" role="status" className="ol-toast" hidden={!notice}>
           {notice}
         </div>
+        {view && (
+          <CaptionGapNotice
+            missed={missedCaptions.value}
+            scope={captionScope(view)}
+            enabled={captionsEnabled}
+            onOpen={() => {
+              setEventsType('speech');
+              setEventsReset((value) => value + 1);
+              show('events');
+              // Opening history hides this notice; keep keyboard focus in the opened history.
+              requestAnimationFrame(() =>
+                document
+                  .querySelector<HTMLElement>('select[aria-label="World event type"]')
+                  ?.focus(),
+              );
+            }}
+            onDismiss={() => {
+              missedCaptions.clear();
+              canvas.current?.focus();
+            }}
+          />
+        )}
         {!connected && view && (
           <div id="connection" role="status" className="ol-connection ol-card">
             Connection interrupted. Reconnecting to your saved world…
@@ -1303,19 +1346,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
         )}
       </div>
       {hover && !picker && (
-        <div
-          className="ol-world-hover"
-          style={{ left: Math.min(hover.point.x + 16, width - 220), top: hover.point.y + 18 }}
-        >
-          {hover.entity.name}
-          {view?.entities
-            .find((entity) => entity.id === hover.entity.id)
-            ?.contents?.map((item) => (
-              <div key={item.id}>
-                {item.name} × {item.quantity}
-              </div>
-            ))}
-        </div>
+        <WorldHover
+          name={hover.entity.name}
+          point={hover.point}
+          contents={view?.entities.find((entity) => entity.id === hover.entity.id)?.contents}
+        />
       )}
     </>
   );

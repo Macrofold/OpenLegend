@@ -34,7 +34,6 @@ export async function inspectGodMind(
       const projection = continuityView(service, actorId, scope);
       return {
         notepads: projection.notepads,
-        identities: projection.identities,
         continuity: projection.continuity,
       };
     })(),

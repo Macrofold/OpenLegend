@@ -2,7 +2,7 @@ import { GodCharacterActions, type GodCharacterControls } from './god-character-
 import { playerEntity } from '../entity-view';
 import { ActionAttempts } from './action-attempts';
 import { useState } from 'react';
-import { EventTime } from './event-time';
+import { MemoryHistory } from './memory-history';
 import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
 import {
@@ -211,16 +211,12 @@ export function Character({
         <p className="ol-caption">Starting dispositions, with no mechanical bonuses.</p>
       </Section>
       <Section title="Memories">
-        {view.player.memories?.length ? (
-          view.player.memories.map((m) => (
-            <div className="ol-memory" key={m.id}>
-              <EventTime time={m.time} />
-              <span>{m.text}</span>
-            </div>
-          ))
-        ) : (
-          <p className="ol-meta">Your experiences will leave memories here.</p>
-        )}
+        <MemoryHistory
+          key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.player.id}`}
+          actorId={view.player.id}
+          owned
+          recent={view.player.memories}
+        />
       </Section>
     </>
   );

@@ -61,6 +61,94 @@ function InventoryHistory({ scope, revision }: { scope: string; revision: number
   );
 }
 
+/** Matching lots anywhere in this container, found by the server with the merge admission
+ * rules rather than only among the displayed page (docs/limits/objects.md#qu05). */
+function MergeTargets({
+  item,
+  containerId,
+  pageKey,
+  canAct,
+  onMerge,
+}: {
+  item: InventoryItemView;
+  containerId: string;
+  pageKey: string;
+  canAct: boolean;
+  onMerge(target: InventoryItemView): void;
+}) {
+  const [cursor, setCursor] = useState<string>();
+  const [targetId, setTargetId] = useState('');
+  const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();
+  const key = JSON.stringify([pageKey, containerId, item.id, item.revision, cursor]);
+  useEffect(() => {
+    let active = true;
+    void post<ContainerPage>('/api/inventory', { containerId, mergeSourceId: item.id, cursor })
+      .then((page) => {
+        if (active)
+          setResult({
+            key,
+            ...(page.ok ? { page } : { error: page.message ?? 'Matching lots are unavailable.' }),
+          });
+      })
+      .catch((error) => {
+        if (active) setResult({ key, error: String(error) });
+      });
+    return () => {
+      active = false;
+    };
+  }, [key]);
+  // While another page loads, keep the previous controls so keyboard focus stays in place;
+  // merging waits for the current result.
+  const loading = result?.key !== key;
+  const current = result;
+  if (!current) return <p role="status">Finding matching lots…</p>;
+  if (current.error && !loading) return <p role="alert">{current.error}</p>;
+  const targets = current.page?.items ?? [];
+  const target = targets.find((other) => other.id === targetId) ?? targets[0];
+  if (!target && !current.page?.next && !cursor && !loading) return null;
+  return (
+    <div className="ol-actions" aria-busy={loading}>
+      {target ? (
+        <>
+          <label>
+            Merge into{' '}
+            <select value={target.id} onChange={(event) => setTargetId(event.target.value)}>
+              {targets.map((other, index) => (
+                <option key={other.id} value={other.id}>
+                  {other.name} × {other.quantity} · matching lot {index + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            size="sm"
+            variant="quiet"
+            disabled={!canAct || loading}
+            onPress={() => onMerge(target)}
+          >
+            Merge lots
+          </Button>
+        </>
+      ) : (
+        <p className="ol-caption">No matching lot in this part of the container.</p>
+      )}
+      <span className="ol-caption" role="status">
+        {loading ? 'Finding matching lots…' : ''}
+      </span>
+      {current.page?.next && (
+        <Button size="sm" variant="quiet" onPress={() => setCursor(current.page!.next)}>
+          Search more lots
+        </Button>
+      )}
+      {cursor && (
+        <Button size="sm" variant="quiet" onPress={() => setCursor(undefined)}>
+          First matching lots
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function Inventory({
   view,
   addItem,
@@ -76,7 +164,6 @@ export function Inventory({
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [mergeTargetId, setMergeTargetId] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();
   const [moving, setMoving] = useState<{
@@ -145,14 +232,6 @@ export function Inventory({
     };
   }, [key, location.id, location.cursor, query]);
   const item = page?.items.find((entry) => entry.id === selected);
-  const mergeTargets =
-    item && !item.individual
-      ? page!.items.filter(
-          (other) =>
-            other.id !== item.id && other.definitionId === item.definitionId && !other.individual,
-        )
-      : [];
-  const mergeTarget = mergeTargets.find((other) => other.id === mergeTargetId) ?? mergeTargets[0];
   const validQuantity =
     !!item && Number.isSafeInteger(quantity) && quantity > 0 && quantity <= item.quantity;
   const canAct = connected && view.player.canUseInventory;
@@ -165,6 +244,8 @@ export function Inventory({
     command(action);
     setSelected(null);
     setMoving(undefined);
+    // A command changes this container's revision, which invalidates a later-page cursor.
+    setLocation((current) => ({ id: current.id }));
   };
   const arrange = (
     type: 'transfer-item' | 'merge-item',
@@ -415,40 +496,17 @@ export function Inventory({
           >
             Move to a container
           </Button>
-          {!!mergeTarget && (
-            <div className="ol-actions">
-              <label>
-                Merge into{' '}
-                <select
-                  value={mergeTarget.id}
-                  onChange={(event) => setMergeTargetId(event.target.value)}
-                >
-                  {mergeTargets.map((other, index) => (
-                    <option key={other.id} value={other.id}>
-                      {other.name} × {other.quantity} · lot {index + 1}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Button
-                size="sm"
-                variant="quiet"
-                disabled={!canAct}
-                onPress={() =>
-                  dispatch(
-                    arrange(
-                      'merge-item',
-                      item,
-                      mergeTarget.id,
-                      mergeTarget.revision,
-                      item.quantity,
-                    ),
-                  )
-                }
-              >
-                Merge lots
-              </Button>
-            </div>
+          {!item.individual && !item.container && !item.equipped && (
+            <MergeTargets
+              key={item.id}
+              item={item}
+              containerId={page!.container.id}
+              pageKey={key}
+              canAct={canAct}
+              onMerge={(target) =>
+                dispatch(arrange('merge-item', item, target.id, target.revision, item.quantity))
+              }
+            />
           )}
           {view.godMode && (
             <details>
@@ -501,7 +559,6 @@ export function Inventory({
                 onPress={() => {
                   setSelected(entry.id);
                   setQuantity(entry.quantity);
-                  setMergeTargetId('');
                   setMessage('');
                 }}
               />

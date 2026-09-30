@@ -138,7 +138,7 @@ Direct-contents query: **201 entries maximum**, including lookahead.
 
 **Reported · Restrictiveness: Safe.**
 
-Inventory page: **40 results**, scanning at most **200 entries** before continuation.
+Inventory page: **40 results**, scanning at most **200 entries** before continuation. The same windows bound merge-target lookups ([QU05](#qu05)).
 
 **Reason / tradeoff:** Bound projected page and scan work while exposing continuation.
 
@@ -152,11 +152,11 @@ Inventory search matches definition names within the **current container only**.
 
 ## QU05
 
-**Reported · Restrictiveness: Safe.**
+**Removed — implemented 2026-09-28 · Restrictiveness: — (removed).**
 
-Inventory merge UI offers targets from the **current page only**.
+The inventory merge control formerly offered targets from the **current page only**, filtered by definition alone. Selecting a lot now asks the server for merge targets across the **whole current container** through `/api/inventory` with `mergeSourceId`: the same [QU03](#qu03) windows (40 results, at most 200 children scanned, explicit “Search more lots” continuation) list only lots that pass the merge admission rules mirrored in `mergeTargetAvailable` (same direct container, equivalent free lots, same definition version and declared owner, no reservations, state or ongoing work). Move destinations are omitted from these responses.
 
-**Reason / tradeoff:** Reuse displayed candidates; a valid matching stack on a later page cannot be chosen yet.
+**Remaining controls:** merging stays within one direct container; the merge command still rechecks handling, access and revisions; a changed container revision restarts the page. Implementation: [inventory-view.ts](../../apps/server/src/inventory-view.ts), [object-access.ts](../../packages/domain/src/object-access.ts).
 
 ## QU06
 
