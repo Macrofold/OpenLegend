@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-28 — Wellbeing vision ideation
+
+At Mike's request, added the [Wellbeing Vision](../archive/08-wellbeing-vision/README.md): open ideation on how Open Legend could strengthen players' real lives — connection, rest, skills, civic life and wisdom — instead of deepening isolation or substituting AI for people. It contains top picks, a proposed north star and charter, idea catalogues, moonshots, literary and real-world precedents, guardrails with a September 2026 legal survey, measurement and business-alignment proposals, open questions, first experiments, and ten AI-assisted research briefs with their verification limits. The request is preserved in [00-source](../archive/00-source/wellbeing-vision-followup.md). Documentation only: no requirement, decision, task, limit or runtime behavior changes; any adopted idea would first be recorded in [open decisions](../archive/05-project/open-decisions.md).
+
 ## 2026-09-28 — Action experience and learned native methods
 
 Delivered [action records and learned activities](action-experience.md) after Mike's explicit implementation approval. Native outcomes now retain chosen parent meaning, actual stages/effects and multiple output quantities. Bounded connected discovery and typed idle learning publish shared immutable structure with private personal evidence, under existing spending and authority. Chosen nested methods use the existing agency/kernel, actual output bindings and explicit remaining work; interruptions preserve committed effects. English-first projection retains critical choice facts and only uses narrow JSON for untemplated details.
