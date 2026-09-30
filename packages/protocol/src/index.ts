@@ -208,6 +208,58 @@ export interface PerceivedSpeech {
 export interface PerceivedEventsPage {
   events: PublicEvent[];
   nextCursor?: string;
+  /** A text search examined its per-request window without filling the page; the cursor
+   * continues into older history. */
+  scanLimited?: boolean;
+}
+/** One of the viewer's own spoken promises. Terms and evidence are server-written; raw
+ * completion rules and event IDs never reach the client. */
+export interface OwnPromise {
+  /** The owner's own record identity and revision, for a later amendment slice. */
+  id: string;
+  revision: number;
+  words: string;
+  /** The addressed person as the viewer's character knows them, if any. */
+  recipient: string | null;
+  madeAt: number;
+  status: 'open' | 'overdue' | 'kept' | 'cancelled';
+  terms: string;
+  dueAt: number | null;
+  keptAt: number | null;
+  evidence: string | null;
+}
+/** The viewer's promises (`/api/commitments`): open ones first, then paged past ones. */
+export interface OwnPromisePage {
+  ok: true;
+  worldId: string;
+  generation: string;
+  /** First page only; at most `openLimit`. */
+  open: OwnPromise[];
+  openLimit: number;
+  /** Unresolved commitments counted against `openLimit`; can exceed `open.length` when some
+   * are forgotten or were never spoken promises. */
+  counted: number;
+  past: OwnPromise[];
+  next: string | null;
+  /** Past promises could only be read from the live world, not history storage. */
+  partial: boolean;
+}
+/** One remembered experience as its owner is shown it. */
+export interface MemoryEntryView {
+  id: string;
+  text: string;
+  time: number;
+}
+/** Paged, optionally searched memory history (`/api/memories`, god NPC variant). */
+export interface MemoryHistoryPage {
+  ok: true;
+  worldId: string;
+  generation: string;
+  /** Oldest first within the page. */
+  entries: MemoryEntryView[];
+  next: string | null;
+  /** A search examined its per-request window without filling the page. */
+  scanLimited: boolean;
 }
 
 export interface PublicEvent {
@@ -321,7 +373,7 @@ export interface GameView {
       advancing: boolean;
     } | null;
     traits?: Array<{ id: string; name: string; description: string }>;
-    memories?: Array<{ id: string; text: string; time: number }>;
+    memories?: MemoryEntryView[];
     history?: string;
     inventory: InventoryItemView[];
     inventoryRevision: number;
@@ -482,7 +534,6 @@ export interface GodMindView {
       policies: { label: string; pin: { id: string; version: number; digest: string } }[];
     };
     cursor: string | null;
-    subjects: { id: string; label: string }[];
     appraisals: {
       id: string;
       revision: number;
@@ -504,10 +555,6 @@ export interface GodMindView {
     characters: number;
     maxCharacters: number;
   }[];
-  identities?: Record<
-    string,
-    { givenName: string; revision: number; encounterId: string | null; authored: boolean }
-  >;
   corrections?: Record<string, string>;
   legacyThoughts?: Array<{
     decisionId: string;
@@ -545,6 +592,34 @@ export interface GodMindView {
     evidence: Array<{ id: string; relation: string }>;
   }>;
   thoughts: Array<{ decisionId: string; at: number; text: string; kind: string; source: string }>;
+}
+
+/** One subject for private notes/feelings, as the inspected character knows them.
+ * Labels are that character's own given names or species descriptions, never global names. */
+export interface MindSubject {
+  id: string;
+  label: string;
+  status: 'in-view' | 'known' | 'notes-only';
+  detail: string;
+}
+/** Searchable private subject choices (`/api/mind/subjects`, god NPC variant). */
+export interface MindSubjectPage {
+  ok: true;
+  worldId: string;
+  generation: string;
+  subjects: MindSubject[];
+  next: string | null;
+  /** Exact-subject lookup only (no search page); null when it is not a permitted subject. */
+  selected?: {
+    subject: MindSubject;
+    notepad: NonNullable<GodMindView['notepads']>[number] | null;
+    identity: {
+      givenName: string;
+      revision: number;
+      encounterId: string | null;
+      authored: boolean;
+    } | null;
+  } | null;
 }
 
 /** Owner-only debugging payload; never included in GameView or public event streams. */
@@ -614,16 +689,48 @@ export interface TranscriptPage {
 export interface GameSaveSummary {
   id: string;
   label: string;
+  /** Server wall-clock time, for display only. */
   createdAt: string;
   simTime: number;
   compatible: boolean;
   kind?: 'manual' | 'auto' | 'recovery';
+  /** Durable capture order; retention and paging use it instead of wall-clock time. */
+  sequence?: number;
+}
+/** Operator autosave policy for this world, outside gameplay rewind. */
+export interface AutosaveSettings {
+  enabled: boolean;
+  intervalMinutes: number;
+  retain: number;
+  revision: number;
+}
+/** Latest checkpoint failure until an operator acknowledges it; survives restart. */
+export interface CheckpointFailure {
+  id: string;
+  at: string;
+  kind: 'auto' | 'manual' | 'recovery';
+  message: string;
 }
 export interface AutosaveStatus {
+  /** Any checkpoint capture (automatic, manual or recovery) is running. */
   saving: boolean;
+  /** A manual save is waiting for the capture in progress. */
+  pendingManual: boolean;
   lastCompletedAt?: string;
-  error?: string;
+  failure?: CheckpointFailure;
   unavailableSaves: number;
+  /** Bytes currently in the save directory, including damaged or interrupted entries. */
+  storageBytes?: number;
+  settings: AutosaveSettings;
+  /** Stored settings are unreadable; automatic saves are off until settings are saved again. */
+  settingsError?: string;
+}
+export interface GameSaveCatalog {
+  ok: boolean;
+  message?: string;
+  saves: GameSaveSummary[];
+  autosaves: AutosaveStatus;
+  next?: Pick<GameSaveSummary, 'id' | 'createdAt' | 'sequence'>;
 }
 
 /** Bounded attribute presentation projected by the server. */

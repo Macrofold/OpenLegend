@@ -4,6 +4,10 @@
 
 The [worldbuilding research library](02-research/worldbuilding/README.md) contains 28 world dossiers, six comparative essays, and a cross-world matrix covering fictional history, societies, characters, language, religion, power, ordinary life, and audience experience. It is independent literary and cultural research, not a product proposal or implementation specification. See its [source audit](02-research/worldbuilding/source-audit.md) for evidence and access limits.
 
+## Wellbeing vision
+
+The [Wellbeing Vision](08-wellbeing-vision/README.md) is open ideation on how Open Legend could improve players' real lives — connection, rest, real skills, civic life and wisdom — rather than becoming another reason to stay home alone with AI. It gathers about two hundred ideas behind fifteen [top picks](08-wellbeing-vision/00-top-picks.md), a proposed north star and charter, guardrails and a September 2026 legal survey, measurement and business-alignment proposals, and ten research briefs. It creates no requirement, decision or task; see the [source request](00-source/wellbeing-vision-followup.md).
+
 ## Spatial-world research and delivery
 
 [3D-world research](02-research/three-dimensional-worlds-and-navigation.md) and the [historical code review](02-research/spatial-world-repository-review.md) support the [spatial behavior owner](../docs/spatial-world.md), [runtime contract](07-technical-architecture/spatial-world-runtime.md) and [SW tracker](../docs/maintainers/spatial-world.md). Current delivered limits belong to [Architecture](../docs/architecture.md#spatial-world-foundation), not the original research snapshot.
@@ -42,7 +46,7 @@ M10/M11 clarify the first playable: live LLM decisions and NPC conversation, Jev
 
 | Location | Purpose | Documents |
 |---|---|---|
-| `00-source/` | Preserve the requests | [Original brief](00-source/original-brief.txt); [design follow-ups](00-source/design-followups.md); [open-source/community follow-ups](00-source/open-source-and-community-followups.md) |
+| `00-source/` | Preserve the requests | [Original brief](00-source/original-brief.txt); [design follow-ups](00-source/design-followups.md); [open-source/community follow-ups](00-source/open-source-and-community-followups.md); [wellbeing vision follow-up](00-source/wellbeing-vision-followup.md) |
 | `01-requirements/` | User-stated direction, separate from recommendations | [Product baseline and F01–F61](01-requirements/product-baseline.md) |
 | `02-research/` | Verified external evidence, attributed limits and comparisons | [Source guide](02-research/source-guide.md); [games](02-research/games-and-emergence.md); [human models](02-research/human-models-and-memory.md); [Jev](02-research/jev-and-semantic-routing.md); [engines/art/audio](02-research/engines-art-and-audio.md); [hosting/scale](02-research/hosting-and-scale.md) |
 | `03-design-proposals/` | Concrete proposals implementing accepted directions; details remain open | [Overview](03-design-proposals/overview.md); [visual direction](03-design-proposals/visual-direction.md); [survival baseline](03-design-proposals/survival-baseline.md); [time and speed](03-design-proposals/time-and-simulation-speed.md); [architecture](03-design-proposals/system-architecture.md); [interaction protocol](03-design-proposals/interaction-protocol.md); [capability lifecycle](03-design-proposals/generative-capability-lifecycle.md); [agents](03-design-proposals/agents-and-social-simulation.md); [world/player experience](03-design-proposals/world-and-player-experience.md) |
@@ -50,6 +54,7 @@ M10/M11 clarify the first playable: live LLM decisions and NPC conversation, Jev
 | `05-project/` | Running project records | [First playable MVP](05-project/first-playable-mvp.md); [roadmap](05-project/roadmap.md); [decisions](05-project/open-decisions.md); [research backlog](05-project/research-backlog.md); [implementation status](05-project/implementation-status.md) |
 | `06-marketing/` | Positioning, channels and accepted creator/community directions; commercial details open | [Marketing overview](06-marketing/README.md); [positioning/copy](06-marketing/positioning-and-copy.md); [ideas/channels](06-marketing/ideas-channels-and-experiments.md); [open platform/private worlds](06-marketing/open-platform-and-private-worlds.md); [creator economy/packs](06-marketing/creator-economy-and-mechanics-packs.md); [patrons/history](06-marketing/patrons-contributors-and-world-history.md); [token exploration](06-marketing/tokens-and-community-funding.md) |
 | `07-technical-architecture/` | Focused future technical designs and service boundaries | [Index](07-technical-architecture/README.md); [current architecture](../docs/architecture.md); [context/inference](07-technical-architecture/context-and-inference.md); [declarations](07-technical-architecture/declarations-and-evolution.md); [Macrofold handoff](07-technical-architecture/macrofold-implementation-brief.md) |
+| `08-wellbeing-vision/` | Open ideation on real-life wellbeing, connection and humane design; nothing accepted | [Index](08-wellbeing-vision/README.md); [top picks](08-wellbeing-vision/00-top-picks.md); [principles](08-wellbeing-vision/02-the-return-principles.md); [guardrails and law](08-wellbeing-vision/11-guardrails-risks-and-law.md); [research briefs](08-wellbeing-vision/research/README.md) |
 
 ## Reading paths
 

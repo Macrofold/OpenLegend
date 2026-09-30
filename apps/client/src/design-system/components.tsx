@@ -20,6 +20,8 @@ import {
   Popover,
   ListBox,
   ListBoxItem,
+  ListBoxLoadMoreItem,
+  Collection,
   type ButtonProps as AriaButtonProps,
 } from 'react-aria-components';
 import icons from './icons/icons.json';
@@ -151,6 +153,12 @@ export function SelectField({
   autoFocus,
   placeholder = 'Search quick actions…',
   placement = 'top start',
+  inputValue,
+  onInputChange,
+  onLoadMore,
+  loading = false,
+  toggleLabel,
+  disabledKeys,
 }: {
   label: string;
   value?: string | null;
@@ -159,6 +167,13 @@ export function SelectField({
   autoFocus?: boolean;
   placeholder?: string;
   placement?: 'top start' | 'bottom start';
+  /** Server-searched mode: the caller owns the text and supplies already-matched options. */
+  inputValue?: string;
+  onInputChange?(value: string): void;
+  onLoadMore?(): void;
+  loading?: boolean;
+  toggleLabel?: string;
+  disabledKeys?: string[];
 }) {
   const trigger = useRef<HTMLDivElement>(null);
   const [popupWidth, setPopupWidth] = useState<number>();
@@ -171,28 +186,48 @@ export function SelectField({
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+  const remote = !!onInputChange;
+  const option = (option: SelectOption) => (
+    <ListBoxItem className="ol-select-option" id={option.id} textValue={option.label}>
+      {option.icon ? <Icon name={option.icon} badge={option.badge} size={18} /> : <span />}
+      <span>
+        <strong>{option.label}</strong>
+        {option.description && (
+          <small className="ol-option-description">{option.description}</small>
+        )}
+      </span>
+      <Icon name="ui.check" size={16} />
+    </ListBoxItem>
+  );
   return (
     <ComboBox<SelectOption>
       className="ol-select"
       selectedKey={value}
       onSelectionChange={(key) => key !== null && onChange(String(key))}
-      defaultItems={options}
       menuTrigger="focus"
-      defaultFilter={(text, query) =>
-        query
-          .normalize('NFKC')
-          .toLocaleLowerCase()
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .every((word) => text.normalize('NFKC').toLocaleLowerCase().includes(word))
-      }
+      disabledKeys={disabledKeys}
+      {...(remote
+        ? { items: options, inputValue, onInputChange, allowsEmptyCollection: true }
+        : {
+            defaultItems: options,
+            defaultFilter: (text: string, query: string) =>
+              query
+                .normalize('NFKC')
+                .toLocaleLowerCase()
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .every((word) => text.normalize('NFKC').toLocaleLowerCase().includes(word)),
+          })}
     >
       <Label className="ol-select-label">{label}</Label>
       <div className="ol-select-trigger" ref={trigger}>
         <Icon name="ui.search" size={16} />
         <Input className="ol-select-input" autoFocus={autoFocus} placeholder={placeholder} />
-        <AriaButton className="ol-select-toggle" aria-label={`Show ${label.toLowerCase()} actions`}>
+        <AriaButton
+          className="ol-select-toggle"
+          aria-label={toggleLabel ?? `Show ${label.toLowerCase()} actions`}
+        >
           <span className="ol-select-chevron" aria-hidden="true" />
         </AriaButton>
       </div>
@@ -202,18 +237,27 @@ export function SelectField({
         placement={placement}
         style={{ width: popupWidth }}
       >
-        <ListBox<SelectOption> className="ol-select-list">
-          {(option) => (
-            <ListBoxItem className="ol-select-option" id={option.id} textValue={option.label}>
-              {option.icon ? <Icon name={option.icon} badge={option.badge} size={18} /> : <span />}
-              <span>
-                <strong>{option.label}</strong>
-                {option.description && (
-                  <small className="ol-option-description">{option.description}</small>
-                )}
-              </span>
-              <Icon name="ui.check" size={16} />
-            </ListBoxItem>
+        <ListBox<SelectOption>
+          className="ol-select-list"
+          renderEmptyState={() => (
+            <p className="ol-select-empty">{loading ? 'Searching…' : 'No matches.'}</p>
+          )}
+        >
+          {remote ? (
+            <>
+              <Collection items={options}>{option}</Collection>
+              {(onLoadMore || loading) && (
+                <ListBoxLoadMoreItem
+                  className="ol-select-more"
+                  onLoadMore={onLoadMore}
+                  isLoading={loading}
+                >
+                  Loading…
+                </ListBoxLoadMoreItem>
+              )}
+            </>
+          ) : (
+            option
           )}
         </ListBox>
       </Popover>

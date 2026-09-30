@@ -1,15 +1,22 @@
 import { createRoot, type Root } from 'react-dom/client';
 import type { GameView } from '@open-legend/protocol';
+import { reactionNotice } from './reaction-notices';
+import { captionScope } from './speech-captions';
 type Tone = 'gain' | 'loss' | 'neutral';
 type Entry = {
   id: string;
   text: string;
+  /** Gesture notices: styled apart from status text; `actor` names who acted for screen readers. */
+  kind?: 'reaction';
+  actor?: string;
   expires: number;
   progress?: number;
   timing?: { elapsed: number; duration: number; rate: number; at: number };
 };
 export type StatusPresentation = {
   text: string;
+  kind?: 'reaction';
+  actor?: string;
   progress?: number;
   timing?: { elapsedSeconds: number; durationSeconds: number; rate: number };
 };
@@ -40,7 +47,13 @@ export class CharacterStatuses {
     }
     let entry = queue.entries.find((e) => e.id === statusId);
     if (!entry) {
-      entry = { id: statusId, text: status.text, expires: performance.now() + 4000 };
+      entry = {
+        id: statusId,
+        text: status.text,
+        kind: status.kind,
+        actor: status.actor,
+        expires: performance.now() + 4000,
+      };
       queue.entries.unshift(entry);
     }
     entry.text = status.text.slice(0, 240);
@@ -92,7 +105,9 @@ export class CharacterStatuses {
   observe(view: GameView): void {
     const previous = this.previous;
     this.previous = view;
-    if (!previous || previous.worldId !== view.worldId) {
+    // A control, timeline or history change starts a new baseline so old events are not
+    // replayed as live notices (docs/perceived-world-events.md#5-invalidation-and-privacy).
+    if (!previous || captionScope(previous) !== captionScope(view)) {
       this.clear();
       this.seen = new Set(view.events.map((event) => event.id));
       this.activityId = null;
@@ -140,6 +155,11 @@ export class CharacterStatuses {
     for (const event of view.events) {
       if (this.seen.has(event.id)) continue;
       this.seen.add(event.id);
+      const reaction = reactionNotice(view, event);
+      if (reaction) {
+        this.upsert(event.actorId!, `event:${event.id}`, { ...reaction, kind: 'reaction' });
+        continue;
+      }
       if (!event.actorId || !statusTypes.has(event.type)) continue;
       const actor =
         event.actorId === view.player.id
@@ -182,7 +202,13 @@ export class CharacterStatuses {
                     : 0
                   : e.progress;
                 return (
-                  <div key={e.id} className="ol-status-line" data-age={Math.min(index, 2)}>
+                  <div
+                    key={e.id}
+                    className="ol-status-line"
+                    data-age={Math.min(index, 2)}
+                    data-kind={e.kind}
+                  >
+                    {e.actor && <span className="ol-sr">{e.actor} </span>}
                     <span>{e.text}</span>
                     {p !== undefined && (
                       <div

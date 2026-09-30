@@ -14,7 +14,7 @@ A pile is a spatial entity holding item entities. Each active lot has one tagged
 
 Several item types and multiple units may occupy one pile. Coincident placements on the same support merge; the initial positional tolerance is 0.01 world units. Nearby floors never share a pile. Removing the last stack removes the pile. Empty piles have no separate lifetime or inventory copy.
 
-Visible piles expose their contents and quantities through ordinary perception. Unseen piles expose neither contents nor actions. Pile artwork disappears when the pile leaves the authorized view; it does not retain a last-seen ghost. This treats collection and loss of visibility alike without revealing which occurred. Hovering lists all visible contents; inspection also provides a structured list. The renderer overlaps representative item sprites into a small heap. Rendering uses up to 18 marks from the first 12 stacks and at most three marks per stack; this bounds artwork only, never stored quantities or the contents list. There is no falling-object solver, physical scattering or per-unit scene object.
+Visible piles expose their contents and quantities through ordinary perception. Unseen piles expose neither contents nor actions. Pile artwork disappears when the pile leaves the authorized view; it does not retain a last-seen ghost. This treats collection and loss of visibility alike without revealing which occurred. Hovering shows a bounded preview of the first eight stacks with an explicit count of the rest, placed to stay inside the viewport ([HV01](../../limits/interface.md#hv01)); **Look closer** (the In view detail) lists every visible stack, and **Pick Up ▸** searches every portable stack. The renderer overlaps representative item sprites into a small heap. Rendering uses up to 18 marks from the first 12 stacks and at most three marks per stack; this bounds artwork only, never stored quantities or the contents list. There is no falling-object solver, physical scattering or per-unit scene object.
 
 ## Pickup and drop
 
@@ -60,7 +60,9 @@ active action dependencies or reservations, including descendants of a moved bag
 Equipment changes retain their separate active-work restriction.
 
 Inventory supports scoped direct-child pages, search, breadcrumbs, split/merge and explicit
-container movement. A page must restart when contents, custody or current access changes.
+container movement. Merge choices come from the whole current container, filtered by the merge
+admission rules, not only the displayed page. A page must restart when contents, custody or
+current access changes.
 Declared ownership can be corrected through the authorized creator control without moving
 the item or granting access. Clearing it retains a monotonic revision. Ordinary hidden bag
 contents and load totals do not become public through the bag's appearance in a pile.

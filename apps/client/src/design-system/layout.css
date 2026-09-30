@@ -707,6 +707,49 @@ body,
   z-index: var(--z-sheet);
   pointer-events: auto;
 }
+.ol-caption-gap {
+  /* Sits above the toast position so both can show; persistent until dismissed or opened. */
+  position: absolute;
+  bottom: calc(var(--dock-bottom) + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: var(--space-2) var(--space-3);
+  z-index: var(--z-hud);
+  pointer-events: auto;
+  animation: ol-interaction-in calc(220ms * var(--motion-scale)) var(--ease-out) both;
+}
+.ol-hud[data-narrow='true'] .ol-caption-gap {
+  /* The narrow bottom belongs to quick actions, the camera toolbar and sheets; sit between
+     the launcher rails instead. */
+  top: var(--dock-top);
+  bottom: auto;
+  left: calc(var(--hud-inset) + var(--launcher) + var(--space-3));
+  right: calc(var(--hud-inset) + var(--launcher) + var(--space-3));
+  transform: none;
+  max-width: none;
+  /* Above an open panel sheet, like the toast; it stays until opened or dismissed. */
+  z-index: calc(var(--z-sheet) + 1);
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-caption-gap {
+  /* With a sheet open, cover the sheet's header rather than the open-panel tabs. */
+  top: calc(45% + var(--space-2));
+  left: var(--hud-inset);
+  right: var(--hud-inset);
+}
+.ol-hud[data-tight='true'] .ol-caption-gap {
+  /* Tight layouts turn the rails into a launcher row at the dock top; sit below it. */
+  top: var(--mobile-tabs-top);
+  left: var(--hud-inset);
+  right: var(--hud-inset);
+}
+.ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-caption-gap {
+  top: calc(var(--mobile-tabs-top) + var(--space-8) + 2 * var(--space-1) + var(--space-2));
+}
 .ol-connection {
   position: absolute;
   bottom: var(--space-2);
@@ -724,12 +767,65 @@ body,
   max-width: 80vw;
 }
 .ol-world-hover {
-  position: absolute;
+  position: fixed;
+  max-width: min(320px, calc(100vw - 24px));
   pointer-events: none;
-  z-index: var(--z-world-label);
+  /* A transient pointer label: it flips near edges and must not hide behind HUD controls.
+     It ignores the pointer and is never shown together with the action menu. */
+  z-index: var(--z-menu);
   color: var(--world-text);
   text-shadow: var(--world-text-shadow);
   font: 500 14px/20px var(--font-ui);
+}
+/* The preview is bounded (docs/limits/interface.md#hv01); long names truncate, not wrap. */
+.ol-world-hover > div {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ol-world-hover-more {
+  font-size: 12px;
+  opacity: 0.85;
+}
+/* The player's own promises (docs/projects/readable-promises-feature-spec.md). */
+.ol-promises {
+  display: grid;
+  gap: var(--space-3);
+}
+.ol-promise {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+.ol-promise p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ol-promise .ol-tag {
+  margin-left: var(--space-1);
+}
+/* Paged, searchable memory history (docs/limits/memory.md#mh08). */
+.ol-memory-history {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-memory-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-memory-search .ol-search {
+  flex: 1 1 12rem;
+  margin: 0;
+}
+/* These fields provide their own labelled Clear button. */
+.ol-memory-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.ol-memory-history .ol-memory span {
+  overflow-wrap: anywhere;
 }
 .ol-filter-grid {
   display: grid;
@@ -1045,6 +1141,10 @@ body,
   white-space: nowrap;
   text-align: center;
 }
+/* An accepted gesture, not speech or a stat change (docs/ui-design-brief.md#future-character-reactions). */
+.ol-status-line[data-kind='reaction'] {
+  font-style: italic;
+}
 .ol-status-line[data-age='1'] {
   opacity: 0.8;
 }
@@ -1324,6 +1424,10 @@ body,
   gap: var(--space-2);
 }
 .ol-pullout-popover {
+  /* Short viewports clamp the popover; the flex chain lets the list shrink and scroll
+     instead of extending past the viewport edge (BW11). */
+  display: flex;
+  flex-direction: column;
   width: 300px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -1332,6 +1436,9 @@ body,
   pointer-events: auto;
 }
 .ol-pullout-dialog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   outline: none;
 }
 .ol-pullout-head {
@@ -1345,6 +1452,8 @@ body,
 }
 .ol-pullout-list {
   display: grid;
+  flex: 0 1 auto;
+  min-height: 0;
   max-height: 384px;
   padding: 0 var(--space-2) var(--space-2);
   overflow: auto;

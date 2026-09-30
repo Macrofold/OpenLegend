@@ -20,6 +20,7 @@ import {
   type ActorEvent,
 } from '@open-legend/domain';
 import { publicEvent } from './perceived-events.js';
+import { memoryEntryView } from './memory-history.js';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import type {
@@ -753,7 +754,7 @@ export async function projectView(
           async () =>
             (await service.memoryContext(player.id, null, 20))
               .sort((a, b) => a.at - b.at)
-              .map((m) => ({ id: m.id, text: `[${m.source}] ${m.summary}`, time: m.at })),
+              .map(memoryEntryView),
         ),
         [],
       ),

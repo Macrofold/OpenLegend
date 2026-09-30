@@ -36,7 +36,7 @@ import {
   type ExitAttempt,
   type BindingRequest,
 } from './authority.js';
-import { compactHistory } from './history-residency.js';
+import { compactHistory, discardedHistoryRelease } from './history-residency.js';
 import { consolidationBatch, type ConsolidationBatch } from './memory-consolidation.js';
 import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
@@ -57,7 +57,12 @@ import {
 } from '@open-legend/domain';
 import { createReservoirDemo, createTouchDemo } from '@open-legend/domain';
 import { validateWorldModules } from '@open-legend/domain';
-import type { SavePayload, RestoreSave } from './game-saves.js';
+import {
+  CheckpointBusyError,
+  GameSaveError,
+  type SavePayload,
+  type RestoreSave,
+} from './game-saves.js';
 import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
 import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
@@ -119,7 +124,7 @@ import type {
   PlayerPreferencePatch,
 } from '@open-legend/protocol';
 import type { AppConfig } from './config.js';
-import { digest, type SavedWorld, type GameRepository } from './store.js';
+import { digest, type SavedWorld, type GameRepository, type PreparedCommit } from './store.js';
 
 const id = z
   .string()
@@ -268,6 +273,82 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
   return { ...current, actorMilestones: byActor };
 }
 
+/** Latest durable world commit, in one process-local `generation` (it changes on restart and
+ * load). `sequence` orders snapshots: a durability ticket is saved once `sequence >= ticket`.
+ * Bounds for records created at or before the cut: awareness/memory `sequence <= nextId`,
+ * event `sequence <= eventSequence`. Revisions of older records need a ticket.
+ * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
+export interface DurableMark {
+  revision: number;
+  generation: string;
+  sequence: number;
+  nextId: number;
+  eventSequence: number;
+  simTime: number;
+}
+/** A background save outstanding beyond this age makes the native tick wait for it (SV19). */
+const BACKGROUND_SAVE_BACKPRESSURE_MS = 4000;
+/** A background save refused before BEGIN (writer queue busy) re-submits the same prepared
+ * write, up to this many attempts in total (SV20). */
+const BACKGROUND_SAVE_ATTEMPTS = 4;
+/** Waiting commands defer new background saves, but not beyond this unsaved age (SV21). */
+const BACKGROUND_SAVE_DEFERRAL_MS = 5000;
+interface BackgroundSave {
+  snapshot: SavedWorld;
+  historyWorld: WorldState;
+  appendEventCount: number | undefined;
+  currentAppendCount: number | undefined;
+  changes: PreparedCommit;
+  released: SavedWorld;
+  allocation: { commit(): void; rollback(): void };
+  sequence: number;
+}
+/** Undefined when every record this snapshot removes from memory (hot-event trimming and
+ * history release) is the exact object the durable baseline holds, so SQL already has that
+ * value; otherwise the collection that would lose a not-yet-durable record. */
+function nonDurableEviction(
+  durable: WorldState | undefined,
+  history: WorldState,
+  snapshot: WorldState,
+  released: WorldState,
+): string | undefined {
+  if (!durable) return 'baseline';
+  if (history.events !== snapshot.events) {
+    const kept = new Set(snapshot.events),
+      held = new Set(durable.events);
+    if (history.events.some((event) => !kept.has(event) && !held.has(event))) return 'events';
+  }
+  return evictedFrom(snapshot, released, durable, []);
+}
+function evictedFrom(
+  before: unknown,
+  after: unknown,
+  durable: unknown,
+  path: string[],
+): string | undefined {
+  const where = () => path.slice(0, path[0] === 'experience' ? 2 : 1).join('.') || 'world';
+  if (before === after || before === durable || !before || typeof before !== 'object') return;
+  if (!after || typeof after !== 'object') return where();
+  if (Array.isArray(before)) {
+    if (!Array.isArray(after)) return where();
+    const kept = new Set<unknown>(after),
+      held = new Set<unknown>(Array.isArray(durable) ? durable : []);
+    return before.every((entry) => kept.has(entry) || held.has(entry)) ? undefined : where();
+  }
+  const prior =
+    durable && typeof durable === 'object' ? (durable as Record<string, unknown>) : undefined;
+  for (const [key, value] of Object.entries(before)) {
+    const next = [...path, key];
+    const failed = !Object.hasOwn(after, key)
+      ? prior?.[key] === value
+        ? undefined
+        : next.slice(0, next[0] === 'experience' ? 2 : 1).join('.')
+      : evictedFrom(value, (after as Record<string, unknown>)[key], prior?.[key], next);
+    if (failed) return failed;
+  }
+  return;
+}
+
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
 export class WorldService {
   private saved!: SavedWorld;
@@ -293,7 +374,7 @@ export class WorldService {
     this.notify(false);
   }
   private viewRevision = 0;
-  private lastRoutinePersistAt = 0;
+  private lastProgressSaveAt = 0;
   private unpersisted = false;
   private readonly listeners = new Set<() => void>();
   private readonly presence = new Map<string, number>();
@@ -391,21 +472,86 @@ export class WorldService {
   }
   private readonly mutationLane = new WorkLane('mutation');
   private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
-  private async mutate<T>(operation: () => Promise<T>): Promise<T> {
+  /** Run one change to the world in the mutation queue. `progress` marks simulation progress
+   * (ticks, computed routes), whose own saves are background saves; every other operation
+   * (commands, AI results, reads) saves synchronously if it saves at all. */
+  private async mutate<T>(operation: () => Promise<T>, progress = false): Promise<T> {
     if (this.mutationContext.getStore()?.active) return await operation();
+    if (progress) return this.runMutation(operation);
+    // Commands and reads should not own the queue while waiting for a background save's I/O;
+    // native ticks and computed-route publication keep running meanwhile. The wait keeps the
+    // queue's admission deadline, so a stalled write still yields a busy result, not a hang.
+    // While this operation is pending no new background save starts; its own synchronous
+    // save, if any, carries the simulation progress.
+    // docs/projects/ordered-async-saves.md#ordering-rules
+    this.pendingOperations++;
+    const arrived = performance.now();
+    try {
+      if (this.backgroundSave) await this.awaitBackgroundSave(this.mutationLane.waitMs);
+      // One admission budget covers the wait above and the queue.
+      return await this.runMutation(
+        operation,
+        this.mutationLane.waitMs - (performance.now() - arrived),
+      );
+    } finally {
+      if (--this.pendingOperations === 0) this.releaseSnapshotRequest();
+    }
+  }
+  /** Top-level operations other than simulation progress that are waiting for, or holding,
+   * the queue. While any is pending, no new background save starts (SV21). */
+  private pendingOperations = 0;
+  private runMutation<T>(operation: () => Promise<T>, waitMs?: number): Promise<T> {
     return this.mutationLane.run(() => {
       const scope = { active: true };
+      const startedAt = performance.now();
       return this.mutationContext.run(scope, async () => {
         try {
           return await operation();
         } finally {
           scope.active = false;
+          // How long one operation owned the queue (PF00 save-path attribution).
+          recordDuration('mutation.hold', performance.now() - startedAt);
         }
       });
+    }, waitMs);
+  }
+  /** Wait, without the admission deadline, until no background save remains (shutdown).
+   * Settling one can release a waiting durability request, which starts the next save (in the
+   * background, or synchronously inside the queue) before this method resumes; the caller's
+   * deadline bounds it. */
+  async settleBackgroundSaves(): Promise<void> {
+    do {
+      await this.backgroundSave?.done;
+      await this.mutationLane.idle();
+    } while (this.backgroundSave);
+  }
+  private async awaitBackgroundSave(deadlineMs: number): Promise<void> {
+    const write = this.backgroundSave;
+    if (!write) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const expired = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(true), deadlineMs);
     });
+    try {
+      if (await Promise.race([write.done.then(() => false), expired])) throw new OverloadError();
+    } finally {
+      clearTimeout(timer);
+    }
   }
   private debtSeconds = 0;
-  storageError: string | null = null;
+  private storageFailure: string | null = null;
+  /** Latched storage failure. Every assignment, from any caller, rejects durability waiters:
+   * no later snapshot will be written in this process. */
+  get storageError(): string | null {
+    return this.storageFailure;
+  }
+  set storageError(message: string | null) {
+    this.storageFailure = message;
+    if (message) {
+      this.snapshotRequested = false;
+      this.rejectDurableWaiters(new Error(message));
+    }
+  }
   memoryBacklog: string | null = null;
   generation = randomUUID();
   timelineId: string = randomUUID();
@@ -551,7 +697,8 @@ export class WorldService {
       .map((entity) => entity.id);
     store.authority.subscribe(() => this.notify(false));
     this.viewRevision = this.persistedRevision;
-    this.lastRoutinePersistAt = this.now();
+    this.lastProgressSaveAt = this.now();
+    this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
     await store.recoverInterruptedWork();
     this.exits = new Map(
       (await store.authority.exitAttempts(this.world.id)).map((attempt) => [
@@ -782,6 +929,52 @@ export class WorldService {
     for (const listener of this.listeners) listener();
   }
 
+  /** Milestones and hot-event placement shared by every world write. */
+  private prepareSnapshot(saved: SavedWorld): {
+    snapshot: SavedWorld;
+    historyWorld: WorldState;
+    appendEventCount: number | undefined;
+    currentAppendCount: number | undefined;
+  } {
+    // Measure from durable state, including simulation progress a synchronous save carried.
+    const appendEventCount = appendedEventCount(this.persistedEvents, saved.world.events);
+    const currentAppendCount = appendedEventCount(this.saved.world.events, saved.world.events);
+    let snapshot = updateMilestones(
+      saved,
+      currentAppendCount === undefined
+        ? saved.world.events
+        : currentAppendCount
+          ? saved.world.events.slice(-currentAppendCount)
+          : [],
+    );
+    const historyWorld = snapshot.world;
+    if (this.store.history) {
+      const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
+      snapshot = {
+        ...snapshot,
+        world: updateWorld(historyWorld, (draft) => {
+          draft.events = hot.events;
+          draft.archivedEventCount = hot.archivedEventCount;
+        }),
+      };
+    }
+    return { snapshot, historyWorld, appendEventCount, currentAppendCount };
+  }
+
+  private installWorld(
+    saved: SavedWorld,
+    historyWorld: WorldState,
+    currentAppendCount: number | undefined,
+  ): void {
+    freezeWorld(saved.world);
+    this.saved = saved;
+    if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
+      this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
+    else
+      for (const event of saved.world.events.slice(this.worldEventsById.size))
+        this.worldEventsById.set(event.id, event);
+  }
+
   private async commit(
     saved: SavedWorld,
     invalidatedMemoryIds: Record<string, string[]> | undefined,
@@ -795,6 +988,10 @@ export class WorldService {
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
     },
   ): Promise<boolean> {
+    // Synchronous save. One writer in snapshot order: an in-flight background save commits
+    // first, and a failed one stops every later write
+    // (docs/projects/ordered-async-saves.md#ordering-rules).
+    await this.backgroundSave?.done;
     if (this.storageError) return false;
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
@@ -804,29 +1001,10 @@ export class WorldService {
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
-      // Measure from durable state, including routine progress flushed by a control/editor save.
-      const appendEventCount = appendedEventCount(this.persistedEvents, saved.world.events);
-      const currentAppendCount = appendedEventCount(this.saved.world.events, saved.world.events);
-      saved = updateMilestones(
-        saved,
-        currentAppendCount === undefined
-          ? saved.world.events
-          : currentAppendCount
-            ? saved.world.events.slice(-currentAppendCount)
-            : [],
-      );
-      const historyWorld = saved.world;
-      if (this.store.history) {
-        const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
-        saved = {
-          ...saved,
-          world: updateWorld(historyWorld, (draft) => {
-            draft.events = hot.events;
-            draft.archivedEventCount = hot.archivedEventCount;
-          }),
-        };
-      }
-      this.persistedRevision = await timed('world.commit', () =>
+      const prepared = this.prepareSnapshot(saved);
+      const { historyWorld, appendEventCount, currentAppendCount } = prepared;
+      saved = prepared.snapshot;
+      const revision = await timed('world.commit', () =>
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
           before: historyBefore,
           after: historyWorld,
@@ -838,6 +1016,7 @@ export class WorldService {
             : {}),
         }),
       );
+      this.persistedRevision = revision;
       allocation.commit();
       this.updateHistoryRevision(
         historyBefore?.events ?? this.persistedEvents,
@@ -853,17 +1032,14 @@ export class WorldService {
         this.transcriptEpoch++;
       }
       if (this.store.releaseHistory) saved = this.store.releaseHistory(saved);
-      freezeWorld(saved.world);
-      this.saved = saved;
-      if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
-        this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
-      else
-        for (const event of saved.world.events.slice(this.worldEventsById.size))
-          this.worldEventsById.set(event.id, event);
+      this.installWorld(saved, historyWorld, currentAppendCount);
       this.persistedEvents = saved.world.events;
       this.rememberPersistedMemorySources();
       this.unpersisted = false;
-      this.lastRoutinePersistAt = this.now();
+      this.lastProgressSaveAt = this.now();
+      // A load publishes its first mark only after the new timeline generation is installed.
+      if (restore) this.durableSequence = ++this.snapshotSequence;
+      else this.publishDurable(revision, ++this.snapshotSequence, saved.world);
       this.notify(false);
       return true;
     } catch (error) {
@@ -881,7 +1057,314 @@ export class WorldService {
     }
   }
 
-  private acceptRoutine(saved: SavedWorld): boolean {
+  // Saves come in two kinds (docs/save-and-load.md#background-and-synchronous-world-saves):
+  // - Background save: simulation progress (ticks, computed routes) is prepared in the queue,
+  //   then written while the game keeps running (`backgroundSave`, `commitBackgroundSave`).
+  //   It is shown before it is saved, as it always was.
+  // - Synchronous save: commands, AI results, pause/resume, editors and loads hold the queue
+  //   until written and are shown only afterwards (`commit`). Simulation progress is also
+  //   saved synchronously when a background save would drop an unsaved record from memory
+  //   (the synchronous branch of `saveProgress`, SB20).
+  // docs/projects/ordered-async-saves.md#ordered-persistence-design
+  private backgroundSave?: { startedAt: number; sequence: number; done: Promise<void> };
+  private snapshotSequence = 0;
+  private durableSequence = 0;
+  private snapshotRequested = false;
+  private durableWaiters: Array<{
+    sequence: number;
+    resolve: (mark: DurableMark) => void;
+    reject: (error: Error) => void;
+  }> = [];
+  private readonly durableListeners = new Set<(mark: DurableMark) => void>();
+  /** Latest durable world commit; see DurableMark. */
+  durable: DurableMark = {
+    revision: 0,
+    generation: '',
+    sequence: 0,
+    nextId: 0,
+    eventSequence: 0,
+    simTime: 0,
+  };
+  /** Collections that forced a synchronous save of simulation progress (SB20), for PF00. */
+  readonly synchronousProgressSaves = new Map<string, number>();
+
+  /** Sequence of the first snapshot that will contain the live world as it is now. */
+  durabilityTicket(): number {
+    return this.unpersisted ? this.snapshotSequence + 1 : this.snapshotSequence;
+  }
+  isDurable(ticket: number): boolean {
+    return this.durableSequence >= ticket;
+  }
+
+  /** Notified after every durable world commit, in revision order, after the PostgreSQL
+   * COMMIT and its after-commit hooks. Listeners must not throw or mutate the world directly. */
+  onDurable(listener: (mark: DurableMark) => void): () => void {
+    this.durableListeners.add(listener);
+    return () => {
+      this.durableListeners.delete(listener);
+    };
+  }
+
+  private publishDurable(revision: number, sequence: number, world: WorldState): void {
+    this.durableSequence = sequence;
+    const mark = (this.durable = {
+      revision,
+      generation: this.generation,
+      sequence,
+      nextId: world.nextId,
+      eventSequence: world.sequence,
+      simTime: world.simTime,
+    });
+    const covered = this.durableWaiters.filter((waiter) => waiter.sequence <= sequence);
+    this.durableWaiters = this.durableWaiters.filter((waiter) => waiter.sequence > sequence);
+    for (const waiter of covered) waiter.resolve(mark);
+    if (!this.durableListeners.size) return;
+    // Deliver from a root context: a listener never runs as nested work of the committing
+    // operation, never inherits its request authority and cannot fail the save.
+    this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, () =>
+        queueMicrotask(() => {
+          for (const listener of this.durableListeners)
+            try {
+              listener(mark);
+            } catch {
+              // Optional observers do not affect durability.
+            }
+        }),
+      ),
+    );
+  }
+
+  private releaseSnapshotRequest(): void {
+    if (
+      !this.snapshotRequested ||
+      this.backgroundSave ||
+      this.pendingOperations ||
+      this.storageError
+    )
+      return;
+    this.snapshotRequested = false;
+    void this.mutate(() => this.saveRequestedProgress(), true).catch((error: unknown) =>
+      // A lost follow-up request must not leave callers waiting forever.
+      this.rejectDurableWaiters(error instanceof Error ? error : new Error(String(error))),
+    );
+  }
+
+  private rejectDurableWaiters(error: Error): void {
+    for (const waiter of this.durableWaiters.splice(0)) waiter.reject(error);
+  }
+
+  /** Resolves once the live world as it is now has been durably committed. Outside the
+   * mutation queue this waits without holding it; inside, it commits synchronously.
+   * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
+  async whenDurable(): Promise<DurableMark> {
+    await this.ready;
+    if (this.mutationContext.getStore()?.active) {
+      await this.flush();
+      return this.durable;
+    }
+    const target = await this.mutate(() => this.requestDurable(), true);
+    if (target === undefined || this.durableSequence >= target) return this.durable;
+    if (this.storageError) throw new Error(this.storageError);
+    return new Promise((resolve, reject) =>
+      this.durableWaiters.push({ sequence: target, resolve, reject }),
+    );
+  }
+
+  /** In the queue: the snapshot sequence that will cover the current live world. */
+  private async requestDurable(): Promise<number | undefined> {
+    if (this.storageError) throw new Error(this.storageError);
+    if (this.backgroundSave) {
+      if (!this.unpersisted) return this.backgroundSave.sequence;
+      this.snapshotRequested = true;
+      return this.snapshotSequence + 1;
+    }
+    if (!this.unpersisted) return undefined;
+    // A waiting command's synchronous save will cover this; do not make it wait behind a write.
+    if (this.pendingOperations) {
+      this.snapshotRequested = true;
+      return this.snapshotSequence + 1;
+    }
+    if (!(await this.saveProgress(this.saved)))
+      throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
+    // Background save: the write just started. Synchronous fallback: already durable.
+    return this.pendingWriteSequence();
+  }
+  private pendingWriteSequence(): number | undefined {
+    return this.backgroundSave?.sequence;
+  }
+
+  /** Save one snapshot of simulation progress: a background save when every record it removes
+   * from memory is already durable; otherwise a synchronous save, as before (SB20).
+   * docs/projects/ordered-async-saves.md#ordering-rules */
+  private async saveProgress(saved: SavedWorld): Promise<boolean> {
+    const { store } = this;
+    if (this.storageError) return false;
+    if (this.backgroundSave) return this.acceptProgress(saved);
+    if (!store.prepareCommit || !store.releasedHistory || !store.adoptHistory)
+      return this.commit(saved, undefined, 'append');
+    let allocation: ReturnType<HostWork['reserve']> | undefined;
+    let write: BackgroundSave;
+    try {
+      freezeWorld(saved.world);
+      allocation = this.hostWork.reserve(saved.world);
+      const prepared = this.prepareSnapshot(saved);
+      // Preparation assigns canonical record positions; release reuses them.
+      const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
+        after: prepared.historyWorld,
+      });
+      const released = store.releasedHistory(prepared.snapshot);
+      freezeWorld(released.world);
+      write = { ...prepared, changes, released, allocation, sequence: 0 };
+    } catch (error) {
+      allocation?.rollback();
+      if (error instanceof WorkBudgetError) {
+        this.storageError = `${error.message} Required native work is paused before publication.`;
+        this.notify(false);
+        return false;
+      }
+      return this.failProgressSave(error);
+    }
+    const unsafe = nonDurableEviction(
+      write.changes.baseline?.world,
+      write.historyWorld,
+      write.snapshot.world,
+      write.released.world,
+    );
+    if (unsafe) {
+      // A record created or changed since the last durable save would leave memory before
+      // SQL has it. Keep the invariant with today's order: write, then release (reusing the
+      // same prepared change set and release, which are not idempotent to recompute).
+      countMetric('persistence.synchronousProgressSaves');
+      this.synchronousProgressSaves.set(
+        unsafe,
+        (this.synchronousProgressSaves.get(unsafe) ?? 0) + 1,
+      );
+      let revision: number;
+      try {
+        // One attempt: this path holds the queue, so a refusal is retried by the next tick.
+        revision = await this.commitProgress(write);
+      } catch (error) {
+        write.allocation.rollback();
+        // Nothing was installed or written; the next tick recomputes this progress and release.
+        discardedHistoryRelease(write.snapshot.world);
+        if (error instanceof OverloadError) throw error;
+        return this.failProgressSave(error);
+      }
+      write.allocation.commit();
+      this.installWorld(write.released, write.historyWorld, write.currentAppendCount);
+      this.unpersisted = false;
+      this.publishDurable(revision, ++this.snapshotSequence, write.released.world);
+      this.notify(false);
+      return true;
+    }
+    countMetric('persistence.backgroundSaves');
+    write.allocation.commit();
+    this.installWorld(write.released, write.historyWorld, write.currentAppendCount);
+    this.unpersisted = false;
+    write.sequence = ++this.snapshotSequence;
+    const startedAt = performance.now();
+    gaugeMetric('persistence.backgroundSavesInFlight', 1);
+    // A fresh context: the write outlives this mutation, and its settle hooks must not be
+    // mistaken for nested queue work or inherit a request's authority fence.
+    // Settles without rejecting: a failure is recorded in storageError, never thrown here.
+    // The released world is already live, so this prepared change set is the only valid
+    // successor of the durable baseline: it either commits or latches storageError. A new
+    // snapshot is never diffed against the unreleased baseline, which would delete the
+    // records this release evicted.
+    const done = this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, async () => {
+        try {
+          const revision = await this.commitBackgroundSave(write);
+          this.backgroundSave = undefined;
+          this.publishDurable(revision, write.sequence, write.released.world);
+          this.notify(false);
+        } catch (error) {
+          this.backgroundSave = undefined;
+          this.failProgressSave(error, false);
+        } finally {
+          gaugeMetric('persistence.backgroundSavesInFlight', 0);
+          recordDuration('persistence.backgroundSave', performance.now() - startedAt);
+        }
+        this.releaseSnapshotRequest();
+      }),
+    );
+    this.backgroundSave = { startedAt, sequence: write.sequence, done };
+    this.notify(false);
+    return true;
+  }
+
+  private async saveRequestedProgress(): Promise<void> {
+    if (this.storageError) return;
+    if (this.backgroundSave || this.pendingOperations) {
+      this.snapshotRequested = true;
+      return;
+    }
+    if (this.unpersisted) await this.saveProgress(this.saved);
+    // Already covered by a later synchronous save.
+    else for (const waiter of this.durableWaiters.splice(0)) waiter.resolve(this.durable);
+  }
+
+  /** A write refused before BEGIN (writer queue full or busy) ran nothing, so the same prepared
+   * change set is re-submitted after a growing pause; a full queue refuses instantly and needs
+   * time to drain. Any other error, or the last refusal, is returned to the caller. */
+  private async commitBackgroundSave(write: BackgroundSave): Promise<number> {
+    for (let attempt = 1; ; attempt++)
+      try {
+        return await this.commitProgress(write);
+      } catch (error) {
+        if (!(error instanceof OverloadError) || attempt >= BACKGROUND_SAVE_ATTEMPTS) throw error;
+        countMetric('persistence.backgroundSaveRetries');
+        await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+      }
+  }
+
+  /** Commit a prepared snapshot of simulation progress (background or synchronous) and adopt
+   * its released form as the durable baseline in the same continuation, before any other
+   * preparation can run. */
+  private async commitProgress(write: BackgroundSave): Promise<number> {
+    const revision = await timed('world.commit', () =>
+      this.store.commit(write.changes.revision, write.snapshot, undefined, write.appendEventCount, {
+        after: write.historyWorld,
+        prepared: write.changes,
+      }),
+    );
+    this.store.adoptHistory!(write.snapshot, write.released);
+    this.persistedRevision = revision;
+    this.updateHistoryRevision(
+      this.persistedEvents,
+      write.historyWorld.events,
+      write.appendEventCount,
+    );
+    if (
+      write.changes.baseline?.world.experience?.forgotten !==
+      write.snapshot.world.experience?.forgotten
+    ) {
+      this.transcriptRevision++;
+      this.transcriptEpoch++;
+    }
+    this.persistedEvents = write.released.world.events;
+    this.persistedMemorySources = {
+      memories: write.released.world.memories,
+      experience: write.released.world.experience,
+    };
+    this.lastProgressSaveAt = this.now();
+    return revision;
+  }
+
+  private failProgressSave(error: unknown, rethrowAuthority = true): false {
+    if (rethrowAuthority && error instanceof AuthorityError) throw error;
+    // The snapshot never became durable. Every later commit re-checks this latch, so no
+    // newer state is written on top of an unknown baseline; restart reloads the last revision.
+    this.unpersisted = true;
+    this.storageError =
+      'The save could not be committed. Simulation is paused; restart after resolving storage access.';
+    this.rejectDurableWaiters(new Error(this.storageError));
+    this.notify(false);
+    return false;
+  }
+
+  private acceptProgress(saved: SavedWorld): boolean {
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
       allocation = this.hostWork.reserve(saved.world);
@@ -914,9 +1397,12 @@ export class WorldService {
     }
   }
 
+  /** Inside the mutation queue: after this returns, SQL holds the live world and the store
+   * baseline is the live world (hydration, history edits, capture and restore rely on it). */
   async flush(): Promise<void> {
     await this.mutate(async () => {
       await this.ready;
+      await this.backgroundSave?.done;
       if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
         throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
     });
@@ -929,25 +1415,26 @@ export class WorldService {
 
   /** Persist sources needed by SQL, not unrelated pose/need progression. Appends
    * cannot change a previously selected source; edits and revocations still flush.
+   * Outside the queue this waits for ordered durability without holding the queue.
    * docs/architecture.md#performance-critical-path */
   async flushMemorySources(actorId: string, includeAppends = true): Promise<void> {
-    return this.mutate(async () => {
-      await this.ready;
-      if (!this.unpersisted) return;
-      const before = this.persistedMemorySources,
-        after = this.world;
-      const unchanged = (a: unknown[] | undefined, b: unknown[] | undefined) =>
-        a === b || (!includeAppends && !!a && !!b && appendedRecordCount(a, b) !== undefined);
-      if (
-        !before ||
-        !unchanged(before.memories[actorId], after.memories[actorId]) ||
-        !unchanged(before.experience?.awareness[actorId], after.experience?.awareness[actorId]) ||
-        !unchanged(before.experience?.summaries[actorId], after.experience?.summaries[actorId]) ||
-        before.experience?.forgotten[actorId] !== after.experience?.forgotten[actorId] ||
-        before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId]
-      )
-        await this.flush();
-    });
+    await this.ready;
+    // Take one queue turn first so an earlier forget/correction commits before this check.
+    if (!this.mutationContext.getStore()?.active) await this.mutate(async () => undefined);
+    if (!this.unpersisted && !this.backgroundSave) return;
+    const before = this.persistedMemorySources,
+      after = this.world;
+    const unchanged = (a: unknown[] | undefined, b: unknown[] | undefined) =>
+      a === b || (!includeAppends && !!a && !!b && appendedRecordCount(a, b) !== undefined);
+    if (
+      !before ||
+      !unchanged(before.memories[actorId], after.memories[actorId]) ||
+      !unchanged(before.experience?.awareness[actorId], after.experience?.awareness[actorId]) ||
+      !unchanged(before.experience?.summaries[actorId], after.experience?.summaries[actorId]) ||
+      before.experience?.forgotten[actorId] !== after.experience?.forgotten[actorId] ||
+      before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId]
+    )
+      await this.whenDurable();
   }
 
   /** Cold actor history is scoped to one serialized operation, then released. */
@@ -979,12 +1466,17 @@ export class WorldService {
     if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
     const original = this.saved;
     const generation = this.generation;
+    const revision = this.persistedRevision;
     const prepared = await prepareHistoryEdit(this.store.records.db, original, selection);
     return this.mutate(async () => {
       await this.flush();
       // A newer world may have added a dependency or changed authority while the read
       // snapshot was open. Refuse stale preparation instead of dropping that dependency.
-      if (original !== this.saved || generation !== this.generation)
+      if (
+        original !== this.saved ||
+        generation !== this.generation ||
+        revision !== this.persistedRevision
+      )
         return {
           ok: false,
           code: 'stale',
@@ -1418,7 +1910,22 @@ export class WorldService {
     return generation === this.generation ? batch : null;
   }
   async createSave(label: string, id: string, scope = this.localScope): Promise<void> {
-    return this.captureSave(label, id, 'manual', scope);
+    try {
+      await this.captureSave(label, id, 'manual', scope);
+    } catch (error) {
+      // Busy and permission refusals are answers, not checkpoint failures (SL08-A).
+      if (
+        !(error instanceof CheckpointBusyError) &&
+        !(error instanceof AuthorityError) &&
+        !(error instanceof OverloadError)
+      )
+        await this.store.saves?.recordFailure(
+          this.world.id,
+          'manual',
+          `Manual save failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+        );
+      throw error;
+    }
   }
   /** Host-owned whole-world recovery. No player request can choose this entry point.
    * docs/save-and-load.md#compatibility-and-retention */
@@ -1433,6 +1940,9 @@ export class WorldService {
     kind: 'manual' | 'auto',
     scope?: RequestScope,
   ): Promise<void> {
+    // Reserve the capture slot before the mutation queue: a manual save may wait here for a
+    // capture in progress without holding the queue, and goes ahead of the next autosave.
+    const release = (await this.store.saves?.admit(id, kind)) ?? (() => undefined);
     let completion: Promise<void> | undefined;
     const capture = async () => {
       await this.flush();
@@ -1452,9 +1962,13 @@ export class WorldService {
       // the gameplay mutation queue; later commits cannot change this candidate.
       await timed('save.captureBarrier', () => Promise.race([ready, completion!]));
     };
-    if (scope) await this.authorized(scope, 'save', false, capture);
-    else await this.mutate(capture);
-    await completion;
+    try {
+      if (scope) await this.authorized(scope, 'save', false, capture);
+      else await this.mutate(capture);
+      await completion;
+    } finally {
+      release();
+    }
   }
 
   async deleteSave(id: string, scope = this.localScope): Promise<void> {
@@ -1478,73 +1992,108 @@ export class WorldService {
     payload: SavePayload,
     scope = this.localScope,
   ): Promise<void> {
-    await this.mutate(async () => {
-      await this.ready;
-      this.assertScope(scope, 'save');
-      const prior = (await this.store.getIntegration(`load-request:${requestId}`)) as
-        | { saveId: string }
-        | undefined;
-      if (prior) {
-        if (prior.saveId !== id) throw new Error('Load request identity conflicts.');
-        return;
-      }
-      await this.flush();
-      await this.store.saves?.drain();
-      if (!this.mayManageSaves(scope))
-        throw new Error('World creator or host operator access required.');
-      const restored = structuredClone(payload.state);
-      await this.store.authority!.restoreBindings(restored.world);
-      // Candidate loading applies the current in-place migrations before timeline installation.
-      const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
-        | Record<string, string[]>
-        | undefined;
-      const events = payload.history.history_events.map(
-        (row) => JSON.parse(String(row['payload'])) as WorldEvent,
-      );
-      if (events.length !== restored.world.events.length + (restored.world.archivedEventCount ?? 0))
-        throw new Error('Save history is incomplete.');
-      restored.world.events = events.sort(
-        (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
-      );
-      restored.world.archivedEventCount = 0;
-      const baseline = structuredClone(restored.world);
-      for (const [actorId, ids] of Object.entries(ledger ?? {}))
-        for (const sourceId of ids)
-          restored.world = forgetExperience(restored.world, actorId, sourceId).world;
-      restored.manuallyPaused = true;
-      restored.world.paused = true;
-      const epoch = {
-        generation: this.epoch.generation + 1,
-        openedAt: this.now(),
-        token: randomUUID(),
-      };
-      const timeline = randomUUID();
-      if (
-        !(await this.commit(restored, undefined, 'diff', baseline, undefined, {
-          id,
-          requestId,
-          payload,
-          epoch,
-          timeline,
-        }))
-      )
-        throw new Error(this.storageError ?? 'Load failed.');
-      this.epoch = epoch;
-      this.timelineId = timeline;
-      this.generation = randomUUID();
-      this.humanActorIds = Object.values(this.world.entities)
-        .filter((entity) => entity.actor?.controller === 'player')
-        .map((entity) => entity.id);
-      this.connections.clear();
-      this.presence.clear();
-      this.presenceOrders.clear();
-      if (this.config.authentication.mode === 'oidc')
-        await this.authorityContext.run(undefined, () => this.reconcileParticipation());
-      this.debtSeconds = 0;
-      this.memoryBacklog = null;
-      this.notify();
-    });
-    await this.store.saves?.retainRecovery(this.world.id);
+    try {
+      await this.mutate(async () => {
+        await this.ready;
+        this.assertScope(scope, 'save');
+        const prior = (await this.store.getIntegration(`load-request:${requestId}`)) as
+          | { saveId: string }
+          | undefined;
+        if (prior) {
+          if (prior.saveId !== id) throw new Error('Load request identity conflicts.');
+          return;
+        }
+        await this.flush();
+        await this.store.saves?.drain();
+        if (!this.mayManageSaves(scope))
+          throw new Error('World creator or host operator access required.');
+        const restored = structuredClone(payload.state);
+        await this.store.authority!.restoreBindings(restored.world);
+        // Candidate loading applies the current in-place migrations before timeline installation.
+        const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
+          | Record<string, string[]>
+          | undefined;
+        const events = payload.history.history_events.map(
+          (row) => JSON.parse(String(row['payload'])) as WorldEvent,
+        );
+        if (
+          events.length !==
+          restored.world.events.length + (restored.world.archivedEventCount ?? 0)
+        )
+          throw new Error('Save history is incomplete.');
+        restored.world.events = events.sort(
+          (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
+        );
+        restored.world.archivedEventCount = 0;
+        const baseline = structuredClone(restored.world);
+        for (const [actorId, ids] of Object.entries(ledger ?? {}))
+          for (const sourceId of ids)
+            restored.world = forgetExperience(restored.world, actorId, sourceId).world;
+        restored.manuallyPaused = true;
+        restored.world.paused = true;
+        const epoch = {
+          generation: this.epoch.generation + 1,
+          openedAt: this.now(),
+          token: randomUUID(),
+        };
+        const timeline = randomUUID();
+        // Preserve the current world before any database write, pinned to the revision this load
+        // replaces. If it cannot be written (full disk, capture limits), the load is refused and
+        // the current world stays active, without a storage latch. No bypass (SB13, SL09-A).
+        const recoveryId = randomUUID();
+        // Validate the candidate before writing the recovery file; a later refusal (busy writer,
+        // fence) can still leave that file unreferenced, and recovery rotation below bounds it.
+        this.store.saves?.validatePayload(payload);
+        if (this.store.saves)
+          try {
+            await this.store.saves.create(this.saved, 'Before last load', recoveryId, {
+              kind: 'recovery',
+              expectedRevision: this.persistedRevision,
+            });
+          } catch (error) {
+            const reason = error instanceof Error ? error.message : 'unknown error';
+            await this.store.saves.recordFailure(
+              this.world.id,
+              'recovery',
+              `Load refused: the current world could not be preserved first. ${reason}`,
+            );
+            throw new GameSaveError(
+              `Load refused; the current world was kept (paused) because it could not be preserved first. ${reason} Free disk space or resolve the capture limit, then load again.`,
+            );
+          }
+        if (
+          !(await this.commit(restored, undefined, 'diff', baseline, undefined, {
+            id,
+            requestId,
+            payload,
+            epoch,
+            timeline,
+            recoveryId,
+          }))
+        )
+          throw new Error(this.storageError ?? 'Load failed.');
+        this.epoch = epoch;
+        this.timelineId = timeline;
+        this.generation = randomUUID();
+        // One mark per revision, only under the new generation; abandoned-timeline waiters fail.
+        this.rejectDurableWaiters(new Error('The world timeline was replaced by a load.'));
+        this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
+        this.humanActorIds = Object.values(this.world.entities)
+          .filter((entity) => entity.actor?.controller === 'player')
+          .map((entity) => entity.id);
+        this.connections.clear();
+        this.presence.clear();
+        this.presenceOrders.clear();
+        if (this.config.authentication.mode === 'oidc')
+          await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        this.debtSeconds = 0;
+        this.memoryBacklog = null;
+        this.notify();
+      });
+    } finally {
+      // Also after a refused or failed load: keeps two recovery files plus the pointer's.
+      await this.store.saves?.retainRecovery(this.world.id);
+    }
   }
 
   async changeEmbodiment(scope: RequestScope, request: ControlRequest): Promise<ApiResult> {
@@ -1855,7 +2404,7 @@ export class WorldService {
     });
   }
 
-  /** Boundary-limited elapsed integration; routine durability retains its real-time policy. */
+  /** Boundary-limited elapsed integration; background saves keep their real-time cadence. */
   async tick(
     elapsedRealSeconds: number,
     suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
@@ -1868,6 +2417,16 @@ export class WorldService {
     )
       throw new Error('Tick durations must be finite nonnegative seconds.');
     do {
+      // Bound unsaved simulation progress: once a background save has been outstanding this
+      // long, native time waits for it (outside the queue) instead of accumulating more.
+      const outstanding = this.backgroundSave;
+      if (
+        outstanding &&
+        performance.now() - outstanding.startedAt >= BACKGROUND_SAVE_BACKPRESSURE_MS
+      ) {
+        countMetric('persistence.backpressureWaits');
+        await outstanding.done;
+      }
       await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
@@ -1976,16 +2535,20 @@ export class WorldService {
       recordDuration('tick.nativeWork', nativeMs);
       const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
-      if (this.now() - this.lastRoutinePersistAt >= 1000) {
-        if (await this.commit(saved, undefined, 'append'))
-          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
-      } else {
-        if (this.acceptRoutine(saved))
-          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
-      }
+      // Simulation progress is saved about once per real second as a background save, which no
+      // longer holds this queue (docs/projects/ordered-async-saves.md#ordering-rules).
+      // A wall clock stepped backwards must not suspend these saves (LA171, SV19).
+      const sinceSave = this.now() - this.lastProgressSaveAt;
+      const unsavedMs = sinceSave < 0 ? Number.POSITIVE_INFINITY : sinceSave;
+      const due =
+        !this.backgroundSave &&
+        unsavedMs >= 1000 &&
+        (!this.pendingOperations || unsavedMs >= BACKGROUND_SAVE_DEFERRAL_MS);
+      if (due ? await this.saveProgress(saved) : this.acceptProgress(saved))
+        this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
-    });
+    }, true);
   }
 
   async conversation(
@@ -2084,11 +2647,12 @@ export class WorldService {
       if (this.storageError || this.world.map !== map || this.timelineId !== timeline) return;
       const transition = completeNavigation(this.world, actorId, actionId, request, result);
       if (transition.world === this.world) return;
-      // The action/request is already durable. A computed route belongs to routine
-      // progress; restart can prepare it again from that request. Avoid a second save
-      // before the character takes its first step. docs/performance.md#navigation-failure-and-shutdown
-      this.acceptRoutine({ ...this.saved, world: transition.world });
-    });
+      // The action/request is already durable. A computed route is simulation progress,
+      // saved in the next background save; restart can prepare it again from that request.
+      // Avoid a synchronous save before the character takes its first step.
+      // docs/performance.md#navigation-failure-and-shutdown
+      this.acceptProgress({ ...this.saved, world: transition.world });
+    }, true);
   }
 
   /** Apply an exact reviewed tool operation with its receipt in the existing world transaction.

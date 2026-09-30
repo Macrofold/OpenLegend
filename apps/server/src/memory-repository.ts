@@ -1,6 +1,7 @@
 import { tableRows } from './record-pages.js';
 import { insertRows } from './sql-rows.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
+import { matchesSearch, scanMatches } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
 export const RETRIEVAL_ROWS = 8192;
 export const RETRIEVAL_BYTES = 4 * 1024 * 1024;
@@ -831,6 +832,97 @@ export class MemoryRepository {
           .all(...this.params(scope)),
       ),
     );
+  }
+  /** Resolved (kept or cancelled) eligible commitments, newest spoken first, for the owner's
+   * promise list. Reads the partial commitment index; open obligations stay resident.
+   * docs/projects/readable-promises-tech-design.md#3-algorithm-appsserversrccommitment-viewts */
+  async resolvedCommitments(
+    scope: MemoryScope,
+    before: { at: number; id: string } | undefined,
+    limit: number,
+  ): Promise<{ entries: RetrievedMemory[]; next?: { at: number; id: string } }> {
+    return this.snapshot(async () => {
+      const rows = await this.db
+        .prepare(
+          `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible}
+          AND r.source_kind='memory' AND r.memory_kind='commitment' AND r.required=0
+          ${before ? 'AND (r.at,r.id)<(?,?)' : ''} ORDER BY r.at DESC,r.id DESC LIMIT ?`,
+        )
+        .all(...this.params(scope), ...(before ? [before.at, before.id] : []), limit + 1);
+      const page = rows.slice(0, limit);
+      const entries = (await this.hydrate(page)).sort(
+        (a, b) => b.memory.at - a.memory.at || (a.memory.id < b.memory.id ? 1 : -1),
+      );
+      const last = page.at(-1);
+      return rows.length > limit && last
+        ? { entries, next: { at: Number(last['at']), id: String(last['id']) } }
+        : { entries };
+    });
+  }
+  /** Read-only owner/inspector browse, newest first by (time, id, source kind). A search or
+   * the private-thoughts filter examines at most `scan` eligible rows and matches only
+   * `search_text`, the text the viewer is shown; `resume` then continues after the last row
+   * examined. docs/limits/memory.md#mh08 */
+  async browse(
+    scope: MemoryScope,
+    options: {
+      before?: { at: number; id: string; kind: string };
+      terms?: string[];
+      thoughts?: boolean;
+      limit: number;
+      scan: number;
+    },
+  ): Promise<{
+    entries: RetrievedMemory[];
+    resume?: { at: number; id: string; kind: string };
+    scanLimited: boolean;
+  }> {
+    type Row = Record<string, unknown>;
+    const { terms, thoughts, limit } = options;
+    const position = (row: Row) => ({
+      at: Number(row['at']),
+      id: String(row['id']),
+      kind: String(row['source_kind']),
+    });
+    const rowsBefore = (
+      before: { at: number; id: string; kind: string } | undefined,
+      count: number,
+    ) =>
+      this.db
+        .prepare(
+          `SELECT ${sourceColumns}${terms ? ',r.search_text' : ''} FROM recall_sources r
+          WHERE ${this.eligible}${before ? ' AND (r.at,r.id,r.source_kind)<(?,?,?)' : ''}
+          ORDER BY r.at DESC,r.id DESC,r.source_kind DESC LIMIT ?`,
+        )
+        .all(...this.params(scope), ...(before ? [before.at, before.id, before.kind] : []), count);
+    return this.snapshot(async () => {
+      // Plain browsing reads one page; filters scan a bounded window instead of walking an
+      // unindexed condition through the whole history.
+      const { matched, last, scanLimited } =
+        terms || thoughts
+          ? await scanMatches<Row>(
+              (after, count) => rowsBefore(after ? position(after) : options.before, count),
+              (row) =>
+                (!thoughts ||
+                  (row['source_kind'] === 'memory' && row['acquisition'] === 'self_thought')) &&
+                (!terms || matchesSearch(terms, String(row['search_text'] ?? ''))),
+              limit,
+              options.scan,
+            )
+          : {
+              matched: await rowsBefore(options.before, limit + 1),
+              last: undefined,
+              scanLimited: false,
+            };
+      const page = matched.slice(0, limit);
+      const entries = (await this.hydrate(page)).sort(
+        (a, b) => b.memory.at - a.memory.at || (a.memory.id < b.memory.id ? 1 : -1),
+      );
+      if (matched.length > limit)
+        return { entries, resume: position(page.at(-1)!), scanLimited: false };
+      if (scanLimited && last) return { entries, resume: position(last), scanLimited: true };
+      return { entries, scanLimited: false };
+    });
   }
   /** Indexed scheduling facts only; a wakeup must not reconstruct an actor's past. */
   async maintenanceStatus(scope: Pick<MemoryScope, 'worldId' | 'actorId'>, simTime: number) {

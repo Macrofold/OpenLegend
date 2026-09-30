@@ -23,19 +23,11 @@ This file owns audit lifecycle and candidate ranking. Linked focused trackers ow
 
 Consider the permitted action path, automatic growth rate, hot-path frequency, protections before expensive work, scope of harm, recoverability and actual evidence. Do not assign precise probabilities without measurements. A world-wide pause is more serious than a refused optional request; a rapidly growing memory corpus deserves earlier attention than 10,000 manually created bows. A page/result limit, serialized lane or timeout is not automatically an input-work, backlog or resident-memory bound. Do not fix unbounded work by silently dropping protected information.
 
-**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
+**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits). R04 (merge targets beyond the inventory page) is likewise removed; see [QU05](../limits/objects.md#qu05) and [player clarity evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
 
 Original source-review baseline: `af1eb02`. The subsequent [implementation](../projects/immediate-gameplay-limits.md) adds runtime evidence; broader LA01–LA04 acceptance remains open. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
 
 ## Remove
-
-### R04
-
-**P2. Conditional: matching stack lies beyond the 40-result inventory page.** A merge target is unavailable; paging/rearranging offers a workaround.
-
-Remove page-local merge-target selection; search eligible matching stacks across pages.
-
-A valid stack on the next page is currently impossible to select. [QU05](../limits/objects.md#qu05) · [Work](persistent-objects.md)
 
 ### R01
 
@@ -125,7 +117,7 @@ Saving otherwise stays unavailable until a server restart. [SB11](../limits/pers
 
 Expose autosave enable/cadence/retention settings, initially retaining 5 minutes and 3 points as defaults; admit one pending manual save ahead of the next automatic capture.
 
-Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
+**Done 2026-09-28:** persisted enable/cadence/retention settings (defaults 5 minutes, keep 3; bounds [SV23](../limits/persistence.md#sv23)), one waiting manual save ahead of the next autosave, restart-surviving failure record with acknowledgment and bounded shutdown ([SV22](../limits/persistence.md#sv22)); [evidence](../verification/ordered-async-saves.md#save-recovery-stages-47). Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
 
 ### C12
 
@@ -159,14 +151,6 @@ Keep full retained diagnostic history separately from UI caches; cursor-page old
 
 1,000 records or broad numeric-array redaction can erase the evidence needed to diagnose failures. [LA198](../limits/observability.md#la198), [LA199](../limits/observability.md#la199), [LA200](../limits/observability.md#la200), [LA201](../limits/observability.md#la201), [LA203](../limits/observability.md#la203) · [Work](performance-profiling.md)
 
-### C11
-
-**P2. Sustained: journal/conversation display exceeds its first page.** Older retained information is inaccessible in that UI; simulation continues.
-
-Add paged older journal, conversation, memory and thought views; keep compact initial snapshots.
-
-Small display prefixes should not be the only route to retained history. [LA207](../limits/interface.md#la207), [LA208](../limits/memory.md#la208) · [Work](narration-and-conversations.md)
-
 ### C09
 
 **P2. Conditional: old request identities are replayed after retention.** Potential duplicate effects are severe, but the legacy path must first be confirmed reachable.
@@ -187,19 +171,19 @@ Carried objects cannot participate in existing continuous processing; source lif
 
 **P2. Failure recovery: operational restore fails after copying slots.** Database rollback can leave newly copied save files behind.
 
-Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
+Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. **In-process reconciliation done 2026-09-28**; process death between copy and install and shared data directories remain. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
 
 ### C23
 
 **P2. Conditional: slow checkpoint output prolongs a database snapshot.** Worker/page bounds do not bound retained WAL/row versions or final filesystem stalls.
 
-Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. **Measured 2026-09-28 (shared host):** with output throttled, the existing two-minute capture deadline aborted the capture, released its snapshot and left no staging files; command latency did not rise materially while the snapshot was held, so no new cancellation was added. A stall inside one filesystem write, sync or rename remains unbounded. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 ### C24
 
 **P2. Conditional: the server clock moves backward or timestamps tie.** New captures can be ranked behind old ones during retention.
 
-Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. **Done 2026-09-28.** [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 ### C03
 
@@ -253,19 +237,19 @@ Relevant entities/items/evidence may fit but still be omitted. Measure quality a
 
 ### E02
 
-**P2. Sustained: player/actor needs older retained conversation evidence.** Recall/history access may omit relevant material; distinguish missing UI access from already-unbounded preparation.
+**P2. Sustained: an actor's cognition needs older retained conversation evidence.** Model-facing recall may omit relevant older material; the player/inspector history views are delivered.
 
-Offer search/paging across all eligible retained speech and memory; keep per-call output/model bytes bounded.
+Let actor recall reach older retained speech beyond the latest-512 verbatim pool and continue memory queries past one page; keep per-call output/model bytes bounded.
 
-The SQL raw-history preselection issue is already addressed; check older-speech exposure and query continuation separately. [LA007](../limits/memory.md#la007), [LA029](../limits/memory.md#la029), [LA014](../limits/memory.md#la014) · [Work](cognition-redesign.md)
+Player and god-inspector paging and bounded search across all eligible retained speech and memory are delivered ([MH08](../limits/memory.md#mh08), [HR06](../limits/hearing-and-speech.md#hr06--history-paging-and-growth)); C11 is removed on the same delivery. The SQL raw-history preselection issue is already addressed; model-facing older-speech exposure and query continuation remain. [LA007](../limits/memory.md#la007), [LA029](../limits/memory.md#la029), [LA014](../limits/memory.md#la014) · [Work](cognition-redesign.md)
 
 ### E05
 
-**P2. Conditional: many visible people or richer creator feeling edits.** Some subjects/authoring operations cannot be selected; current 40-person picker is the nearer issue.
+**P2. Conditional: richer creator feeling edits.** Some authoring operations cannot be selected; current authoring only supports qualitative NPC creation/resolution.
 
-Add searchable subject selection beyond the first 40 visible people and richer authored feeling/process controls as consumers need them.
+Add richer authored feeling/process controls as consumers need them.
 
-A visible subject can be omitted from the picker; current authoring only supports qualitative NPC creation/resolution. [QU11](../limits/interface.md#qu11), [FL16](../limits/feelings.md#fl16) · [Work](agent-agency.md)
+The subject-picker half is delivered: the private-mind pickers now search every recognized visible person and note subject with continuation ([QU11](../limits/interface.md#qu11)). [FL16](../limits/feelings.md#fl16) · [Work](agent-agency.md)
 
 ### E07
 

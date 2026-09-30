@@ -1,5 +1,6 @@
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { mkdtemp, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir, availableParallelism, loadavg } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Session } from 'node:inspector/promises';
@@ -24,9 +25,52 @@ if (!output || !Number.isFinite(seconds) || seconds < 3 || seconds > 120)
   );
 const cognitionFixture = process.env['OPENLEGEND_PROFILE_COGNITION'] === '1';
 const speechFixture = process.env['OPENLEGEND_PROFILE_SPEECH'] === '1';
+// PF00 storage-latency case: added after lane admission, per statement on this fixture's
+// connections only (docs/maintainers/performance-profiling.md#full-server-scene-profiler).
+const sqlDelayMs = Number(process.env['OPENLEGEND_PROFILE_SQL_DELAY_MS'] ?? '0');
+if (!Number.isInteger(sqlDelayMs) || sqlDelayMs < 0 || sqlDelayMs > 1000)
+  throw new Error('OPENLEGEND_PROFILE_SQL_DELAY_MS must be an integer from 0 to 1000.');
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-scene-profile-'));
 const disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
+// Named so an interrupted run's leftover fixture can be attributed and removed.
+console.error(`fixture database: ${disposable.details.database}`);
 let closeResources: () => Promise<void> = () => disposable.close();
+// `pg` resolves from the server package; scripts see only this narrow driver surface.
+interface PgClientLike {
+  database?: string;
+  connect(): Promise<unknown>;
+  end(): Promise<unknown>;
+  on(event: 'error', listener: () => void): unknown;
+  query(text: string): Promise<unknown>;
+}
+const { Client: PgClient } = createRequire(new URL('../apps/server/package.json', import.meta.url))(
+  'pg',
+) as {
+  Client: (new (config: {
+    connectionString: string;
+    connectionTimeoutMillis: number;
+  }) => PgClientLike) & {
+    prototype: { query: (...args: unknown[]) => unknown };
+  };
+};
+// Host-scheduling reference: an idle SELECT 1 on its own undelayed connection. Its round
+// trip includes PostgreSQL/OS scheduling on this host but none of the game's statement work.
+const probe = new PgClient({ connectionString: disposable.url, connectionTimeoutMillis: 5000 });
+if (sqlDelayMs) {
+  const query = PgClient.prototype.query;
+  PgClient.prototype.query = function (this: PgClientLike, ...args: unknown[]) {
+    // Promise-form queries only; the admin client, probe and callback forms are not delayed.
+    if (
+      this === probe ||
+      this.database !== disposable.details.database ||
+      typeof args.at(-1) === 'function'
+    )
+      return query.apply(this, args);
+    return new Promise((resolveDelay) => setTimeout(resolveDelay, sqlDelayMs)).then(() =>
+      query.apply(this, args),
+    );
+  };
+}
 try {
   const config = readConfig({
     OPEN_LEGEND_DATA_DIR: directory,
@@ -50,15 +94,44 @@ try {
   let measuring = false;
   const sql = new Map<string, { count: number; ms: number }>();
   const slowSql: Array<{ sql: string; ms: number }> = [];
-  const commitTrace = new AsyncLocalStorage<{ count: number; statements: string[] }>();
+  type CommitTrace = {
+    count: number;
+    statements: string[];
+    firstAt?: number;
+    lastAt?: number;
+    statementMs: number;
+  };
+  const commitTrace = new AsyncLocalStorage<CommitTrace>();
   const commits = { count: 0, ms: 0, statements: 0, maxStatements: 0 };
-  const slowCommits: Array<{ ms: number; count: number; statements: string[] }> = [];
+  const slowCommits: Array<{
+    ms: number;
+    count: number;
+    preMs: number;
+    statementMs: number;
+    betweenMs: number;
+    statements: string[];
+  }> = [];
+  // Attribution per world commit: preparation plus writer-lane wait before the first
+  // statement, statement round trips (storage, including any injected delay), and time
+  // between statements (main-thread work, GC and event-loop contention on this host).
+  const commitSamples: Array<{
+    ms: number;
+    preMs: number;
+    statementMs: number;
+    betweenMs: number;
+  }> = [];
   const query = database.query.bind(database);
   database.query = async (statement, params) => {
     const at = performance.now();
+    const trace = commitTrace.getStore();
+    if (trace) trace.firstAt ??= at;
     try {
       return await query(statement, params);
     } finally {
+      if (trace) {
+        trace.lastAt = performance.now();
+        trace.statementMs += trace.lastAt - at;
+      }
       if (measuring) {
         const metadataKind =
           /\bmeta\b/.test(statement) &&
@@ -105,7 +178,7 @@ try {
   const commit = store.commit.bind(store);
   store.commit = async (...args) => {
     if (!measuring) return commit(...args);
-    const trace = { count: 0, statements: [] as string[] };
+    const trace: CommitTrace = { count: 0, statements: [], statementMs: 0 };
     const at = performance.now();
     try {
       return await commitTrace.run(trace, () => commit(...args));
@@ -116,7 +189,14 @@ try {
         commits.ms += ms;
         commits.statements += trace.count;
         commits.maxStatements = Math.max(commits.maxStatements, trace.count);
-        slowCommits.push({ ms, count: trace.count, statements: trace.statements });
+        const preMs = (trace.firstAt ?? at + ms) - at;
+        const betweenMs = Math.max(
+          0,
+          (trace.lastAt ?? at) - (trace.firstAt ?? at) - trace.statementMs,
+        );
+        const sample = { ms, preMs, statementMs: trace.statementMs, betweenMs };
+        if (commitSamples.length < 4000) commitSamples.push(sample);
+        slowCommits.push({ ...sample, count: trace.count, statements: trace.statements });
         slowCommits.sort((a, b) => b.ms - a.ms);
         slowCommits.length = Math.min(slowCommits.length, 10);
       }
@@ -207,6 +287,8 @@ try {
     }
   };
   await new Promise<void>((done) => game.server.listen(0, '127.0.0.1', done));
+  probe.on('error', () => {});
+  await probe.connect();
   const address = game.server.address();
   if (!address || typeof address === 'string') throw new Error('Missing server address.');
   const base = `http://127.0.0.1:${address.port}`;
@@ -222,6 +304,9 @@ try {
   let speechOffered = 0,
     speechAccepted = 0,
     speechSkipped = 0;
+  const probeSamples: number[] = [];
+  let probeTimer: ReturnType<typeof setInterval> | undefined;
+  let probeBusy = false;
   let failureCount = 0;
   const failures: Array<{ source: string; message: string }> = [];
   const failed = (source: string, error: unknown) => {
@@ -386,9 +471,24 @@ try {
     bytes = updates = 0;
     measuring = true;
     const before = performanceSnapshot();
+    probeTimer = setInterval(() => {
+      if (probeBusy) return;
+      probeBusy = true;
+      const at = performance.now();
+      probe
+        .query('SELECT 1')
+        .then(() => {
+          if (measuring && probeSamples.length < 4000) probeSamples.push(performance.now() - at);
+        })
+        .catch((error: unknown) => failed('probe', error))
+        .finally(() => {
+          probeBusy = false;
+        });
+    }, 200);
     sql.clear();
     Object.assign(commits, { count: 0, ms: 0, statements: 0, maxStatements: 0 });
     slowCommits.length = 0;
+    commitSamples.length = 0;
     slowSql.length = 0;
     profiler.connect();
     await profiler.post('Profiler.enable');
@@ -404,6 +504,7 @@ try {
     await new Promise<void>((done) => setTimeout(done, seconds * 1000));
     clearInterval(commandTimer);
     clearInterval(speechTimer);
+    clearInterval(probeTimer);
     await Promise.all([commandTask, speechTask]);
     const elapsedMs = performance.now() - start;
     const simulatedSeconds = game.service.world.simTime - simStart;
@@ -437,6 +538,13 @@ try {
       host: { logicalCpus: availableParallelism(), startingLoad, endingLoad: loadavg() },
       cognition: cognitionFixture ? 'native-route-fixture' : 'spending-disabled',
       adapter: 'postgres',
+      sqlDelayMs,
+      hostProbe: {
+        count: probeSamples.length,
+        p50Ms: percentile(probeSamples, 0.5),
+        p95Ms: percentile(probeSamples, 0.95),
+        maxMs: Math.max(0, ...probeSamples),
+      },
       setupMs,
       elapsedMs,
       simulatedSeconds,
@@ -501,6 +609,20 @@ try {
       sql: [...sql].sort((a, b) => b[1].ms - a[1].ms).slice(0, 30),
       slowSql,
       commits,
+      commitAttribution: Object.fromEntries(
+        (['ms', 'preMs', 'statementMs', 'betweenMs'] as const).map((field) => {
+          const values = commitSamples.map((sample) => sample[field]);
+          return [
+            field,
+            {
+              p50: percentile(values, 0.5),
+              p95: percentile(values, 0.95),
+              max: Math.max(0, ...values),
+              total: values.reduce((sum, value) => sum + value, 0),
+            },
+          ];
+        }),
+      ),
       slowCommits,
       longGaps,
     };
@@ -516,6 +638,7 @@ try {
         sql: undefined,
         slowSql: undefined,
         commits: undefined,
+        commitAttribution: undefined,
         slowCommits: undefined,
         longGaps: undefined,
       }),
@@ -524,11 +647,13 @@ try {
     stopTrace();
     if (commandTimer) clearInterval(commandTimer);
     if (speechTimer) clearInterval(speechTimer);
+    if (probeTimer) clearInterval(probeTimer);
     streamAbort.abort();
     try {
       await Promise.all([commandTask, speechTask, streamTask]);
     } finally {
       profiler.disconnect();
+      await probe.end().catch(() => {});
     }
   }
 } finally {

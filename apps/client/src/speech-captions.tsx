@@ -55,6 +55,9 @@ function chunks(text: string): string[] {
   }
   return result.length ? result : [''];
 }
+/** The caption presentation scope; a change clears captions and the missed count. */
+export const captionScope = (view: GameView) =>
+  `${view.worldId}:${view.saveTimeline}:${view.access?.scope}:${view.player.id}:${view.historyEpoch}`;
 const captionText = (event: PublicEvent & { speech: PerceivedSpeech }) =>
   event.speech.intelligibility === 'none'
     ? event.text
@@ -85,6 +88,20 @@ export class SpeechCaptions {
   };
   private reducedMotion = false;
   private readonly resizeObserver: ResizeObserver;
+  // Missed-caption accounting: perceived speech from others that left or never entered the
+  // overlay unseen. A lower bound; history is the recovery path, never replay.
+  // docs/hearing-and-speech.md#7-caption-component-and-lifetime
+  private missed = 0;
+  private incomplete = false;
+  private reportedAt = -Infinity;
+  private drop(event: PublicEvent): void {
+    if (event.speech && event.speech.perception !== 'self') this.missed++;
+  }
+  /** Entries whose first chunk never became visible were never shown. */
+  private dropUnshown(entries: Entry[]): void {
+    for (const entry of entries)
+      if (entry.chunk === 0 && entry.lifetime.startedAt === null) this.drop(entry.event);
+  }
   constructor(canvas: HTMLCanvasElement) {
     this.layer.className = 'ol-speech-layer';
     canvas.after(this.layer);
@@ -104,6 +121,7 @@ export class SpeechCaptions {
   private visibility = () => {
     // Resume treats the next snapshot as history, not an avalanche of missed live captions.
     this.rebase = true;
+    this.dropUnshown(this.pending);
     this.pending = [];
     this.clock.sample(performance.now(), true);
   };
@@ -113,17 +131,32 @@ export class SpeechCaptions {
     this.reducedMotion = options.reducedMotion;
     this.layer.style.setProperty('--caption-scale', String(options.uiScale));
     this.options = { ...options, readingScale: Math.max(0.5, Math.min(3, options.readingScale)) };
-    if (!enabled && wasEnabled) this.clear();
+    // Turning captions off is a preference, not a drop.
+    if (!enabled && wasEnabled) {
+      this.clear();
+      this.missed = 0;
+      this.incomplete = false;
+    }
   }
   resetBaseline(): void {
+    this.dropUnshown([...this.active, ...this.pending]);
     this.clear();
     this.rebase = true;
   }
   observe(view: GameView): void {
     this.view = view;
-    const scope = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}:${view.player.id}:${view.historyEpoch}`;
+    const scope = captionScope(view);
     if (scope !== this.scope || (this.rebase && !document.hidden)) {
-      if (scope !== this.scope) this.clear();
+      if (scope !== this.scope) {
+        this.clear();
+        this.missed = 0;
+        this.incomplete = false;
+      } else if (this.options.enabled) {
+        // A reset/reconnect snapshot is history, not live speech: count what it skips.
+        for (const event of view.events) if (!this.seen.has(event.id)) this.drop(event);
+        if (this.previousEvents?.length && !view.events.some((event) => this.seen.has(event.id)))
+          this.incomplete = true;
+      }
       this.scope = scope;
       this.seen = new Set(view.events.map((e) => e.id));
       this.previousEvents = view.events;
@@ -131,11 +164,23 @@ export class SpeechCaptions {
       return;
     }
     if (view.events === this.previousEvents) return;
+    // The bounded live event window turned over between updates: more may have been missed.
+    if (
+      this.options.enabled &&
+      this.previousEvents?.length &&
+      view.events.length &&
+      !view.events.some((event) => this.seen.has(event.id))
+    )
+      this.incomplete = true;
     this.previousEvents = view.events;
     for (const event of view.events) {
       if (this.seen.has(event.id)) continue;
       this.seen.add(event.id);
-      if (!event.speech || !this.options.enabled || document.hidden) continue;
+      if (!event.speech || !this.options.enabled) continue;
+      if (document.hidden) {
+        this.drop(event);
+        continue;
+      }
       const speaker = event.speech.speaker?.entityId;
       const queueSize = speaker
         ? [...this.active, ...this.pending].filter(
@@ -143,13 +188,19 @@ export class SpeechCaptions {
           ).length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
-      if (queueSize >= 3) continue;
+      if (queueSize >= 3) {
+        this.drop(event);
+        continue;
+      }
       const priority =
         event.speech.perception === 'self' || event.targetId === view.player.id ? 1 : 0;
       if (this.pending.length >= 24) {
         const evict = this.pending.findIndex((entry) => entry.priority < priority);
-        if (evict < 0) continue;
-        this.pending.splice(evict, 1);
+        if (evict < 0) {
+          this.drop(event);
+          continue;
+        }
+        this.dropUnshown(this.pending.splice(evict, 1));
       }
       const perceived = event as Entry['event'];
       const parts = chunks(captionText(perceived));
@@ -193,13 +244,26 @@ export class SpeechCaptions {
     // Never-fitting labels must not occupy the bounded queue forever. Pausing this clock
     // also pauses staleness; currently visible speech always keeps its reading lifetime.
     for (let i = this.pending.length - 1; i >= 0; i--)
-      if (now - this.pending[i]!.lastVisibleAt >= MAX_DEFERRED_MS) this.pending.splice(i, 1);
+      if (now - this.pending[i]!.lastVisibleAt >= MAX_DEFERRED_MS)
+        this.dropUnshown(this.pending.splice(i, 1));
     for (let i = this.active.length - 1; i >= 0; i--) {
       const entry = this.active[i]!;
       if (!entry.visible && now - entry.lastVisibleAt >= MAX_DEFERRED_MS) {
-        this.active.splice(i, 1);
+        this.dropUnshown(this.active.splice(i, 1));
         this.dirty = true;
       }
+    }
+    // Report through the caption options seam at most once a second; no per-frame HUD render.
+    const at = performance.now();
+    if ((this.missed || this.incomplete) && this.options.enabled && at - this.reportedAt >= 1000) {
+      this.reportedAt = at;
+      this.options.onMissedCaptions?.({
+        scope: this.scope,
+        count: this.missed,
+        incomplete: this.incomplete,
+      });
+      this.missed = 0;
+      this.incomplete = false;
     }
     // Hidden by layout is not reading time. Reuse this one clock; no per-caption timer.
     for (const entry of this.active)

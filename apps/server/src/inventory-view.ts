@@ -3,6 +3,7 @@ import {
   canAccessContainer,
   accessiblePossession,
   inventoryWorkReason,
+  mergeTargetAvailable,
   worldRootEntities,
   dropItemReason,
   hasWildernessNeeds,
@@ -24,6 +25,7 @@ import type {
 import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
 import { z } from 'zod';
+import { HistoryCursorError } from './perceived-events.js';
 
 /** A historical successor is descriptive only; no redirect to an actionable object. */
 export async function objectHistoryPage(
@@ -40,7 +42,7 @@ export async function objectHistoryPage(
       .strict()
       .parse(JSON.parse(Buffer.from(request.cursor, 'base64url').toString()));
     if (cursor.scope !== scopeKey(scope) || cursor.objectId !== request.objectId)
-      throw new Error('History access changed; reload this page.');
+      throw new HistoryCursorError('History access changed; reload this page.');
     after = cursor.after;
   }
   await service.flush();
@@ -75,25 +77,38 @@ const cursorSchema = z
     revision: z.number().int().nonnegative(),
     rootRevision: z.number().int().nonnegative(),
     query: z.string(),
+    source: z.string(),
     after: z.string(),
   })
   .strict();
 /** Live pages restart on any inventory/custody revision. Search scans at most 200
- * permitted children; a continuation is returned even when that window has no match. */
+ * permitted children; a continuation is returned even when that window has no match.
+ * With `mergeSourceId`, the same windows list only lots that source can merge into,
+ * across the whole container rather than the displayed page (docs/limits/objects.md#qu05).
+ * Stale-page and access refusals use the readable 400 refusal so players see their
+ * refresh guidance instead of a generic server failure. */
 export function containerPage(
   service: WorldService,
   scope: RequestScope,
-  request: { containerId?: string; query?: string; cursor?: string },
+  request: { containerId?: string; query?: string; cursor?: string; mergeSourceId?: string },
 ): ContainerPage {
   service.assertScope(scope);
   const world = service.world,
     containerId = request.containerId ?? scope.actorId;
   const entity = world.entities[containerId];
   if (!entity || !canAccessContainer(world, scope.actorId, containerId))
-    throw new Error('This container is unavailable.');
+    throw new HistoryCursorError('This container is unavailable.');
   const revision = entity.inventoryRevision ?? 0,
     rootRevision = world.entities[scope.actorId]!.inventoryRevision ?? 0;
-  const query = (request.query ?? '').trim().toLocaleLowerCase();
+  const query = (request.query ?? '').trim().toLocaleLowerCase(),
+    source = request.mergeSourceId ?? '';
+  if (source && itemFor(world, source)?.ownerId !== containerId)
+    throw new HistoryCursorError('This lot changed. Refresh this container.');
+  // A lot that ongoing work needs cannot be merged anywhere; list no targets.
+  const sourceBlocked =
+    !!source &&
+    (!!inventoryWorkReason(world, scope.actorId, source) ||
+      world.itemDefinitions[itemFor(world, source)!.definitionId]?.portable !== true);
   let after = '';
   if (request.cursor) {
     let cursor: z.infer<typeof cursorSchema>;
@@ -102,16 +117,17 @@ export function containerPage(
         JSON.parse(Buffer.from(request.cursor, 'base64url').toString('utf8')),
       );
     } catch {
-      throw new Error('Invalid inventory page. Refresh this container.');
+      throw new HistoryCursorError('Invalid inventory page. Refresh this container.');
     }
     if (
       cursor.scope !== scopeKey(scope) ||
       cursor.containerId !== containerId ||
       cursor.revision !== revision ||
       cursor.rootRevision !== rootRevision ||
-      cursor.query !== query
+      cursor.query !== query ||
+      cursor.source !== source
     )
-      throw new Error('Contents or access changed. Refresh this container.');
+      throw new HistoryCursorError('Contents or access changed. Refresh this container.');
     after = cursor.after;
   }
   const page = contentsQuery(world, containerId, scopeKey(scope), after);
@@ -121,7 +137,7 @@ export function containerPage(
     children = page.values;
   let scanned = 0,
     next: string | undefined;
-  for (const id of children) {
+  for (const id of sourceBlocked ? [] : children) {
     if (scanned === 200 || items.length === 40) {
       next = Buffer.from(
         JSON.stringify({
@@ -130,6 +146,7 @@ export function containerPage(
           revision,
           rootRevision,
           query,
+          source,
           after,
         }),
       ).toString('base64url');
@@ -140,7 +157,10 @@ export function containerPage(
     const item = itemFor(world, id);
     if (
       item &&
-      (!query || world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query))
+      (source
+        ? mergeTargetAvailable(world, scope.actorId, source, item.id)
+        : !query ||
+          world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query))
     )
       items.push(inventoryItemView(service, scope, item));
   }
@@ -166,7 +186,8 @@ export function containerPage(
         name: parent.name,
         revision: parent.inventoryRevision ?? 0,
       })),
-    destinations: worldRootEntities(world)
+    // Merge lookups need no move destinations; skip the world-root scan.
+    destinations: (source ? [] : worldRootEntities(world))
       .filter(
         (target) =>
           target.id !== scope.actorId && canAccessContainer(world, scope.actorId, target.id, true),

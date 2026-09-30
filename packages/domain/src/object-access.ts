@@ -1,4 +1,4 @@
-import { directChildIds, itemFor, objectAncestors, custodian } from './objects.js';
+import { directChildIds, itemFor, objectAncestors, custodian, mergeCompatible } from './objects.js';
 import { canReachEntity } from './spatial.js';
 import { seesEntity } from './perception.js';
 import { itemHasReservations } from './resource-claims.js';
@@ -85,4 +85,27 @@ export function inventoryWorkReason(world: WorldState, actorId: string, id: stri
     return false;
   };
   return visit(id) ? 'This item or its contents are needed by ongoing work.' : null;
+}
+/** Discovery mirror of merge-item admission (the kernel merge case and `mergeLots`): an
+ * equivalent free lot in the same container that no ongoing work needs. Merge commands
+ * still recheck handling, access and revisions when submitted. The caller checks the
+ * source lot's own work reason once. */
+export function mergeTargetAvailable(
+  world: WorldState,
+  actorId: string,
+  sourceId: string,
+  targetId: string,
+): boolean {
+  const source = itemFor(world, sourceId),
+    target = itemFor(world, targetId);
+  return (
+    !!source &&
+    !!target &&
+    sourceId !== targetId &&
+    source.ownerId === target.ownerId &&
+    source.definitionId === target.definitionId &&
+    world.itemDefinitions[source.definitionId]?.portable === true &&
+    mergeCompatible(world, sourceId, targetId) &&
+    !inventoryWorkReason(world, actorId, targetId)
+  );
 }

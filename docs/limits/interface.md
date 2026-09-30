@@ -56,15 +56,15 @@ Original recommendation: **Keep**.
 
 ## LA207
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — rechecked 2026-09-28 · Restrictiveness: Safe (live snapshot only).**
 
-The live browser snapshot scans only the newest 512 perceived events, then shows at most 30 conversation entries and 60 journal entries.
+The live browser snapshot still scans only the newest 512 perceived events and carries at most 30 conversation entries and 60 journal entries. These feed live consumers (captions, overhead notices, reply status); they are not the history views. Journal (**Older entries**), per-person Talk (**Older messages**) and World Events (**Load older events**, plus search) page through every retained permitted record with keyset cursors ([HR06](hearing-and-speech.md#hr06--history-paging-and-growth)).
 
-**Reason / tradeoff:** Keep the initial update small while allowing the player to load older conversation and journal entries separately.
+**Reason / tradeoff:** Keep the live update small; durable history routes provide complete older access.
 
-[Implementation starting point](../../apps/server/src/intelligence-log.ts).
+[Snapshot](../../apps/server/src/view.ts), [transcript pages](../../apps/server/src/history.ts).
 
-Original recommendation: **Replace**.
+Original recommendation: **Replace** — delivered through the durable history routes.
 
 ## LA211
 
@@ -170,7 +170,7 @@ A rendered ground-item pile uses only its first 12 item types, at most 3 decorat
 
 **Reason / tradeoff:** Keep decorative geometry small while showing the pile's real contents and quantities through the item interface.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Implementation starting point](../../apps/client/src/art.ts).
 
 Original recommendation: **Keep**.
 
@@ -190,11 +190,11 @@ Original recommendation: **Review**.
 
 **Historical — needs recheck · Restrictiveness: Safe.**
 
-Over-character status messages show at most 3 temporary notices, lasting 4 seconds and cut to 240 characters.
+Over-character status messages show at most 3 temporary notices, lasting 4 seconds and cut to 240 characters. Accepted gesture notices (2026-09-28) share these bounds; a burst beyond three per character keeps only the newest, and the gesture stays in World Events and Talk history.
 
 **Reason / tradeoff:** Keep brief overhead messages while providing important full explanations in the appropriate panel or history.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Implementation starting point](../../apps/client/src/character-status.tsx).
 
 Original recommendation: **Keep**.
 
@@ -284,11 +284,11 @@ Original recommendation: **Review**.
 
 ## QU11
 
-**Reported · Restrictiveness: Safe.**
+**Current — implemented 2026-09-28 · Restrictiveness: Medium.**
 
-Character-view subject picker adds only the first **40 visible people**, plus subjects represented by displayed notes.
+The private-mind subject pickers (knowledge notepads and creator-authored feelings) search the inspected character's subjects on the server: every currently recognized visible person plus every subject that character has notes about. The former cap of the **first 40 visible people** is **removed**. Results come in pages of **40** with a fenced continuation cursor (at most 2,048 characters, shared with [PB04](#pb04)); queries are at most 120 characters and debounced by [QU15](#qu15). A search request makes one in-memory pass over that character's current sightings and note subjects with no independent cap on either count and no storage read. Paging is keyed by (status, label, ID): entries can appear, leave or move to a later status group between pages as sightings change, so a person can come back on a later page; the picker lists each person once. A changed query, scope or world generation restarts the search. When a search finds no one, a status line under the field says so, because the fixed first choice keeps the list itself non-empty.
 
-**Reason / tradeoff:** Keep selection UI compact; otherwise valid visible subjects can be absent.
+**Reason / tradeoff:** Every permitted subject is reachable without sending an unbounded list on each mind load. Search and ordering use only the character's own labels (learned given names or species descriptions), never global names, so a query cannot reveal who an unnamed stranger is. Identical labels such as “a person” are distinguished only by status and distance. Measure large crowds or note collections before caching sorted candidates. Implementation: [continuity-view.ts](../../apps/server/src/continuity-view.ts), [subject-picker.tsx](../../apps/client/src/ui/subject-picker.tsx).
 
 ## QU12
 
@@ -305,6 +305,14 @@ Inventory/character cursors restart after relevant state changes; they are not s
 UI search debounce: **150 ms**; departure fade: **0.4 seconds**; displayed numeric feelings: **3 decimal places**.
 
 **Reason / tradeoff:** Reduce query churn and visual noise; rounding is display-only.
+
+## HV01
+
+**Current — implemented 2026-09-28 · Restrictiveness: Safe (display only).**
+
+The world hover card previews at most the first **8** item stacks of a pile, followed by “+N more · Look closer lists all N”. It flips and clamps to stay at least 12 px inside the viewport, is at most 320 px wide (long names truncate) and renders above the HUD because it follows the pointer and ignores pointer events. Stored contents, the projected `EntityView.contents`, In view inspection and the searchable Pick Up pullout are not capped.
+
+**Reason / tradeoff:** A pointer-following card cannot scroll, so an unbounded list overflowed the viewport at edges and rebuilt every row on each pointer update. The complete lists stay one action away. Eight rows matches the pullout convention of eight visible rows before scrolling. Measured complete-list costs at 1,001 stacks (production build): In view detail 130–190 ms to commit; Pick Up pullout 438 ms to open and 109–268 ms per search keystroke. No virtualization yet; reconsider if ordinary play produces piles of hundreds of stacks or these costs rise. [Evidence](../verification/player-clarity-ui.md#bw11--very-large-piles), [world-hover.tsx](../../apps/client/src/ui/world-hover.tsx).
 
 ## PB04
 

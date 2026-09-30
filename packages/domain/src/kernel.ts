@@ -63,7 +63,11 @@ import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions
 import { nativeInterval } from './temporal-boundaries.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
-import { advanceCommitments } from './commitments.js';
+import {
+  advanceCommitments,
+  COMMITMENT_ADMISSION_LIMIT,
+  unresolvedCommitmentCount,
+} from './commitments.js';
 import {
   canHandleItems,
   portableItems,
@@ -772,6 +776,7 @@ function executeCommandNative(
     case 'merge-item': {
       // Scope checks precede all hidden-item/capacity diagnostics. Fictional ownership
       // grants neither physical access nor another human's private contents.
+      // Merge-target discovery mirrors these checks in object-access mergeTargetAvailable.
       const item = itemFor(world, command.itemId),
         destination = getOwn(world.entities, command.targetId);
       if (!canHandleItems(world, actor) || !item || !destination)
@@ -3082,9 +3087,7 @@ export function remember(
   if (
     proposal.kind === 'commitment' &&
     !proposal.resolved &&
-    (original.memories[actorId] ?? []).filter(
-      (record) => record.kind === 'commitment' && !record.resolved,
-    ).length >= 16
+    unresolvedCommitmentCount(original, actorId) >= COMMITMENT_ADMISSION_LIMIT
   )
     return {
       world: original,

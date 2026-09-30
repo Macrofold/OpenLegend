@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { PerceivedEventsPage, PublicEvent } from '@open-legend/protocol';
-import { Button, Icon } from '../design-system/components';
+import { Button, Icon, IconButton } from '../design-system/components';
 import { EventTime } from './event-time';
 import { ConversationThread } from './conversation';
 import { getScoped } from '../api';
@@ -22,11 +22,26 @@ const filters = [
 ] as const;
 /** A durable, read-only perspective. Opening this panel never creates awareness or captions. */
 type Props = { scope: string; revision: string | undefined };
-/** Keyed ownership clears old rows during the same render, not a later effect. */
-export const WorldEvents = memo(function WorldEvents(props: Props) {
-  const [type, setType] = useState('all');
+/** Keyed ownership clears old rows during the same render, not a later effect. The owner may
+ * control the filter, for example to open Speech from the missed-caption notice. */
+export const WorldEvents = memo(function WorldEvents({
+  type: controlledType,
+  onTypeChange,
+  ...props
+}: Props & { type?: string; onTypeChange?: (type: string) => void }) {
+  const [localType, setLocalType] = useState('all');
+  const type = controlledType ?? localType;
+  const setType = onTypeChange ?? setLocalType;
+  const [query, setQuery] = useState('');
   return (
-    <ScopedWorldEvents key={`${props.scope}:${type}`} {...props} type={type} setType={setType} />
+    <ScopedWorldEvents
+      key={`${props.scope}:${type}`}
+      {...props}
+      type={type}
+      setType={setType}
+      query={query}
+      setQuery={setQuery}
+    />
   );
 });
 function ScopedWorldEvents({
@@ -34,7 +49,17 @@ function ScopedWorldEvents({
   revision,
   type,
   setType,
-}: Props & { type: string; setType: (type: string) => void }) {
+  query,
+  setQuery,
+}: Props & {
+  type: string;
+  setType: (type: string) => void;
+  query: string;
+  setQuery: (query: string) => void;
+}) {
+  const [draft, setDraft] = useState(query);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const [scanLimited, setScanLimited] = useState(false);
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -53,9 +78,13 @@ function ScopedWorldEvents({
     setBusy(true);
     setError('');
     try {
-      const query = new URLSearchParams({ type });
-      if (older && cursor) query.set('cursor', cursor);
-      const page = await getScoped<PerceivedEventsPage>(`/api/world-events?${query}`, abort.signal);
+      const params = new URLSearchParams({ type });
+      if (query) params.set('q', query);
+      if (older && cursor) params.set('cursor', cursor);
+      const page = await getScoped<PerceivedEventsPage>(
+        `/api/world-events?${params}`,
+        abort.signal,
+      );
       if (request !== generation.current) return;
       setEvents((previous) => {
         if (!older) return page.events;
@@ -63,6 +92,7 @@ function ScopedWorldEvents({
         return [...page.events.filter((event) => !seen.has(event.id)), ...previous];
       });
       setCursor(page.nextCursor);
+      setScanLimited(!!page.scanLimited);
       if (!older) {
         loadedRevision.current = atRevision;
         setNewEntries(false);
@@ -83,7 +113,7 @@ function ScopedWorldEvents({
       generation.current++;
       controller.current?.abort();
     };
-  }, [scope, type]);
+  }, [scope, type, query]);
   useEffect(() => {
     if (loadedRevision.current !== revision) setNewEntries(true);
   }, [revision, busy]);
@@ -121,29 +151,83 @@ function ScopedWorldEvents({
             ))}
           </select>
         </label>
-        <Button size="sm" isDisabled={busy} onPress={() => void load()}>
+        <Button size="sm" isPending={busy} onPress={() => void load()}>
           {newEntries ? 'New events — refresh' : 'Refresh'}
         </Button>
       </div>
-      <p className="ol-meta">
-        {type === 'speech'
-          ? 'Speech you perceived across all conversations.'
-          : 'Events you perceived, in time order.'}
+      {/* Matches only the text shown for each event you perceived, never unheard words. */}
+      <form
+        className="ol-memory-search"
+        role="search"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (draft.trim() === query) return;
+          setEvents([]);
+          setQuery(draft.trim());
+        }}
+      >
+        <div className="ol-search">
+          <Icon name="ui.search" size={16} />
+          <input
+            ref={searchInput}
+            type="search"
+            aria-label="Search perceived events"
+            placeholder={type === 'speech' ? 'Search speech you heard…' : 'Search events…'}
+            value={draft}
+            maxLength={200}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          {draft && (
+            <IconButton
+              icon="ui.close"
+              label="Clear event search"
+              onPress={() => {
+                setDraft('');
+                if (query) {
+                  setEvents([]);
+                  setQuery('');
+                }
+                searchInput.current?.focus();
+              }}
+            />
+          )}
+        </div>
+        <Button size="sm" type="submit" isPending={busy}>
+          Search
+        </Button>
+      </form>
+      <p className="ol-meta" role="status">
+        {query && busy
+          ? 'Searching…'
+          : query
+            ? `${events.length} ${events.length === 1 ? 'match' : 'matches'} for “${query}”${
+                scanLimited ? '. No more matches among the last 2,000 events searched.' : ''
+              }`
+            : type === 'speech'
+              ? 'Speech you perceived across all conversations.'
+              : 'Events you perceived, in time order.'}
       </p>
       {error && <p role="alert">{error}</p>}
-      {!busy && !error && !events.length && <p>No perceived events match this filter.</p>}
+      {!busy && !error && !events.length && (
+        <p>
+          {query
+            ? 'No perceived events match this search yet.'
+            : 'No perceived events match this filter.'}
+        </p>
+      )}
       <ConversationThread
-        conversationKey={`${scope}:${type}`}
+        conversationKey={`${scope}:${type}:${query}`}
         ariaLabel="Perceived world events"
         openingRevision={openingRevision}
         before={
           <>
             {cursor && (
-              <Button size="sm" isDisabled={busy} onPress={() => void load(true)}>
-                Load older events
+              <Button size="sm" isPending={busy} onPress={() => void load(true)}>
+                {query ? 'Search older events' : 'Load older events'}
               </Button>
             )}
-            {busy && <p role="status">Loading events…</p>}
+            {/* During a search the status line above announces progress. */}
+            {busy && !query && <p role="status">Loading events…</p>}
           </>
         }
         items={items}

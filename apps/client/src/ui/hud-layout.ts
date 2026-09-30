@@ -11,7 +11,7 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-timebar, .ol-time-settings, .ol-qa, .ol-camera, .ol-panel',
+      '.ol-survival, .ol-timebar, .ol-time-settings, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap',
     ),
   ];
   let previous: ScreenRect[] = [];

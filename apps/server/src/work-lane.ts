@@ -19,7 +19,7 @@ export class WorkLane {
   constructor(
     private readonly name: string,
     private readonly maximum = 256,
-    private readonly waitMs = 5000,
+    readonly waitMs = 5000,
   ) {}
   get depth() {
     return this.pending.length;
@@ -29,8 +29,10 @@ export class WorkLane {
       ? new Promise((resolve) => this.waiters.push(resolve))
       : Promise.resolve();
   }
-  run<T>(operation: () => T | Promise<T>): Promise<T> {
-    if (this.pending.length >= this.maximum) return Promise.reject(new OverloadError());
+  /** `waitMs` narrows the admission deadline for a caller that already waited elsewhere. */
+  run<T>(operation: () => T | Promise<T>, waitMs = this.waitMs): Promise<T> {
+    if (this.pending.length >= this.maximum || waitMs <= 0)
+      return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
     // A queued operation belongs to its submitter, not whoever finishes before it.
     // Preserve request/diagnostic/transaction contexts across the queue boundary.
@@ -41,7 +43,7 @@ export class WorkLane {
           clearTimeout(timer);
           recordDuration(`${this.name}.wait`, performance.now() - queuedAt);
           // Timers cannot fire during synchronous native work; check age on admission too.
-          if (performance.now() - queuedAt > this.waitMs) {
+          if (performance.now() - queuedAt > waitMs) {
             reject(new OverloadError());
             this.finish();
             return;
@@ -58,7 +60,7 @@ export class WorkLane {
           reject(new OverloadError());
         },
       };
-      const timer = setTimeout(entry.expire, this.waitMs);
+      const timer = setTimeout(entry.expire, waitMs);
       timer.unref();
       this.pending.push(entry);
       this.pump();

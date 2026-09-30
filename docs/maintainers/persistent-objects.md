@@ -126,6 +126,8 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 
 **Dependencies:** PO04–PO06; MP01 and existing catalogue/knowledge owners. **Exit:** real ordinary clients can navigate/use all authorized contents without private payload leaks or an alternate mutation path.
 
+R04 follow-through (2026-09-28): merge choices are found by the server across the whole current container using the merge admission rules, not only the displayed 40-item page ([QU05](../limits/objects.md#qu05), [evidence](../verification/player-clarity-ui.md#r04--merge-targets-beyond-the-page)). Automated coverage for `containerPage` merge mode remains unwritten.
+
 ## PO08 — Save, inactivity and cold continuity
 
 - [x] Join active lots/placements, required cold tombstones/lineage, reservations, container state and exact pins to SL00 consistent capture and restore.

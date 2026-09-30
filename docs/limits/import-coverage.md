@@ -125,13 +125,13 @@ Source labels identify bullets in their original order: OB objects, ST state/res
 - **Foundation QU02:** [QU02](objects.md#qu02) — Tracked.
 - **Foundation QU03:** [QU03](objects.md#qu03) — Tracked.
 - **Foundation QU04:** [QU04](objects.md#qu04) — Tracked.
-- **Foundation QU05:** [QU05](objects.md#qu05) — Tracked.
+- **Foundation QU05:** [QU05](objects.md#qu05) — Updated to removed.
 - **Foundation QU06:** [QU06](objects.md#qu06) — Tracked.
 - **Foundation QU07:** [QU07](objects.md#qu07) — Tracked.
 - **Foundation QU08:** [QU08](objects.md#qu08) — Tracked.
 - **Foundation QU09:** [QU09](feelings.md#qu09) — Tracked.
 - **Foundation QU10:** [QU10](memory.md#qu10) — Tracked.
-- **Foundation QU11:** [QU11](interface.md#qu11) — Tracked.
+- **Foundation QU11:** [QU11](interface.md#qu11) — Updated: 40-person cap removed; paged search retained.
 - **Foundation QU12:** [QU12](interface.md#qu12) — Tracked.
 - **Foundation QU13:** [QU13](native-work.md#qu13) — Tracked.
 - **Foundation QU14:** [QU14](native-work.md#qu14) — Tracked.
@@ -186,8 +186,8 @@ All eleven additional supplied findings were checked against the local source on
 | Two supported streamed table layouts                      | New [SB15](persistence.md#sb15); retain explicit compatibility, link SL01/DF02.                                       |
 | Snapshot held through publication                         | New [SB16](persistence.md#sb16); C23 / SL09-C, without an unmeasured growth claim.                                    |
 | Mandatory complete-slot backup, canonical source required | New [SB17](persistence.md#sb17); update operational runbook; existing C03 owns optional partial-backup consideration. |
-| Failed restore leaves copied slots                        | New [SB18](persistence.md#sb18); C22 / D1-D2 file reconciliation.                                                     |
-| Restart loses autosave failure status                     | Extend [SB12](persistence.md#sb12); C05 / SL08-A.                                                                     |
+| Failed restore leaves copied slots                        | [SB18](persistence.md#sb18) (in-process reconciliation 2026-09-28); C22 / D1-D2 file reconciliation.                  |
+| Restart loses autosave failure status                     | [SB12](persistence.md#sb12) (durable until acknowledged, 2026-09-28); C05 / SL08-A.                                   |
 | Stress-tool ranges/defaults                               | New [SV18](observability.md#sv18); tooling-only, no change recommended.                                               |
 
 The stale main-process checkpoint description in Architecture is corrected: configured server capture uses a worker; workerless operational callers still run the codec in their own process. Source inspection establishes these implementation distinctions, not restore or load-capacity certification.

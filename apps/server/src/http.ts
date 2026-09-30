@@ -1,6 +1,8 @@
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
-import { continuityView } from './continuity-view.js';
+import { continuitySubjects, continuityView } from './continuity-view.js';
+import { memoryHistory } from './memory-history.js';
+import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
   capabilitySchema,
@@ -56,7 +58,7 @@ import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
 import { projectPatch, projectView } from './view.js';
-import type { GameView } from '@open-legend/protocol';
+import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
 import { containerPage, objectHistoryPage } from './inventory-view.js';
 
@@ -302,6 +304,17 @@ function writeJson(response: ServerResponse, status: number, value: unknown) {
   response.end(JSON.stringify(value));
 }
 
+/** Whole-shutdown budget: stages share it, then resource close is attempted regardless (PF06). */
+export const SHUTDOWN_DEADLINE_MS = 30_000;
+export interface ShutdownReport {
+  /** The final world save completed in this process. When false, a commit abandoned at its
+   * deadline may still have reached the database; `durableRevision` is the last one confirmed. */
+  saved: boolean;
+  durableRevision: number;
+  durableSimTime?: number;
+  problems: string[];
+}
+
 /** One serialized world host with explicit local or verified OIDC account authority. */
 interface GameServerOptions {
   config?: AppConfig;
@@ -345,6 +358,7 @@ async function initializeGameServer(
   const autosaves = new Autosaves(service);
   onFailure(() => autosaves.close());
   await service.ready;
+  await autosaves.initialize();
   const navigation = new NavigationCoordinator(service);
   onFailure(() => navigation.close());
   let director = new AiDirector(service, options.aiClient, options.now);
@@ -479,6 +493,7 @@ async function initializeGameServer(
   let publishQueued = false;
   let nextPublicationAt = 0;
   let disposed = false;
+  let shuttingDown: Promise<ShutdownReport> | undefined;
   const publish = () => {
     if (disposed) return;
     if (publishTimer) return;
@@ -684,6 +699,13 @@ async function initializeGameServer(
           message: new OverloadError().message,
         });
       }
+      // Shutdown stops intake before draining, so its final save covers every admitted command.
+      if (disposed)
+        return send(response, 503, {
+          ok: false,
+          code: 'shutdown',
+          message: 'The server is shutting down. No request was admitted.',
+        });
       activeRequests++;
       if (writing) activeWrites++;
       try {
@@ -772,6 +794,7 @@ async function initializeGameServer(
                 .optional(),
               cursor: z.string().max(2048).optional(),
               limit: z.coerce.number().int().min(1).max(100).optional(),
+              q: z.string().max(200).optional(),
             })
             .strict()
             .parse(Object.fromEntries(url.searchParams));
@@ -1061,6 +1084,8 @@ async function initializeGameServer(
         const inspection = [
           '/api/world-agent/inspect',
           '/api/god/mind',
+          '/api/god/mind/subjects',
+          '/api/god/memories',
           '/api/god/activity-history',
           '/api/god/trigger',
           '/api/god/triggers',
@@ -1144,7 +1169,11 @@ async function initializeGameServer(
               const page = z
                 .object({
                   before: z
-                    .object({ createdAt: z.string().datetime(), id: requestIdSchema })
+                    .object({
+                      createdAt: z.string().datetime(),
+                      id: requestIdSchema,
+                      sequence: z.number().int().nonnegative().optional(),
+                    })
                     .strict()
                     .optional(),
                 })
@@ -1155,15 +1184,45 @@ async function initializeGameServer(
                 before: page.before,
               });
               const saves = candidates.slice(0, 100);
-              autosaves.observeCatalog(saves);
+              autosaves.observeCatalog(saves, await store.saves.storageBytes(), !page.before);
+              const last = saves.at(-1);
               return send(response, 200, {
                 ok: true,
                 saves,
-                autosaves: autosaves.status,
+                autosaves: await autosaves.status(),
                 next:
-                  candidates.length > 100
-                    ? { id: saves.at(-1)!.id, createdAt: saves.at(-1)!.createdAt }
+                  candidates.length > 100 && last
+                    ? { id: last.id, createdAt: last.createdAt, sequence: last.sequence }
                     : undefined,
+              } satisfies GameSaveCatalog);
+            }
+            case '/api/saves/settings': {
+              const value = z
+                .object({
+                  enabled: z.boolean(),
+                  intervalMinutes: z.number(),
+                  retain: z.number(),
+                  revision: z.number().int().nonnegative(),
+                })
+                .strict()
+                .parse(body);
+              const { revision, ...settings } = value;
+              await autosaves.updateSettings(settings, revision);
+              return send(response, 200, {
+                ok: true,
+                message: 'Autosave settings saved.',
+                autosaves: await autosaves.status(),
+              });
+            }
+            case '/api/saves/acknowledge': {
+              const value = z.object({ id: z.string().uuid() }).strict().parse(body);
+              const acknowledged = await store.saves.acknowledgeFailure(service.world.id, value.id);
+              return send(response, 200, {
+                ok: true,
+                message: acknowledged
+                  ? 'Checkpoint failure acknowledged.'
+                  : 'That failure was already acknowledged or replaced by a newer one.',
+                autosaves: await autosaves.status(),
               });
             }
             case '/api/saves/create': {
@@ -1206,11 +1265,13 @@ async function initializeGameServer(
                   message: 'Another request is finishing. Try loading again shortly.',
                 });
               loadingSave = true;
+              let stopping = false;
               let drained = false;
               try {
                 // Drain real background writers before replacing authority; no new worker framework.
                 const paused = await service.control({ paused: true }, scope);
                 if (!paused.ok) throw new GameSaveError(paused.message);
+                stopping = true;
                 director.macrofold.stop();
                 await mcp.close();
                 await agentRuns.drain();
@@ -1231,7 +1292,10 @@ async function initializeGameServer(
                   director = new AiDirector(service, options.aiClient, options.now);
                   mcp = makeMcp();
                   agentRuns.resume();
-                } else {
+                }
+                // A load refused before background work began stopping (busy, or the pause
+                // failed) changed nothing, so it is an ordinary refusal, not a latch.
+                else if (stopping) {
                   service.storageError =
                     'Loading stopped before background work drained. Restart before continuing.';
                   service.notify();
@@ -1263,6 +1327,7 @@ async function initializeGameServer(
                   containerId: requestIdSchema.optional(),
                   query: z.string().max(160).optional(),
                   cursor: z.string().max(3000).optional(),
+                  mergeSourceId: requestIdSchema.optional(),
                 })
                 .strict()
                 .parse(body);
@@ -2024,6 +2089,50 @@ async function initializeGameServer(
                   : await inspectGodMind(service, actorId, scope),
               });
             }
+            case '/api/mind/subjects':
+            case '/api/god/mind/subjects': {
+              const { actorId, ...request } = z
+                .object({
+                  actorId: requestIdSchema,
+                  query: z.string().max(120).optional(),
+                  after: z.string().max(2048).optional(),
+                  subjectId: requestIdSchema.optional(),
+                })
+                .strict()
+                .parse(body);
+              if (
+                (url.pathname === '/api/mind/subjects' && actorId !== scope.actorId) ||
+                (url.pathname.startsWith('/api/god/') && !config.godMode)
+              )
+                throw new AuthorityError('forbidden');
+              return send(response, 200, continuitySubjects(service, actorId, scope, request));
+            }
+            case '/api/memories':
+            case '/api/god/memories': {
+              const { actorId, ...request } = z
+                .object({
+                  actorId: requestIdSchema,
+                  cursor: z.string().max(2048).optional(),
+                  query: z.string().max(200).optional(),
+                  thoughts: z.boolean().optional(),
+                })
+                .strict()
+                .parse(body);
+              if (
+                (url.pathname === '/api/memories' && actorId !== scope.actorId) ||
+                (url.pathname.startsWith('/api/god/') && !config.godMode)
+              )
+                throw new AuthorityError('forbidden');
+              return send(response, 200, await memoryHistory(service, actorId, scope, request));
+            }
+            case '/api/commitments': {
+              // Owner-only by construction: there is no actor parameter to name anyone else.
+              const value = z
+                .object({ cursor: z.string().max(2048).optional() })
+                .strict()
+                .parse(body);
+              return send(response, 200, await commitmentPage(service, scope, value));
+            }
             case '/api/control':
               return send(response, 200, await service.control(controls.parse(body), scope));
             case '/api/presence': {
@@ -2447,6 +2556,8 @@ async function initializeGameServer(
         // Authoring takes its session lane before the world lane; wrapping it here would invert
         // MCP Apply versus browser review/cancel ordering. Every Apply rechecks the world grant.
         // Read-only access is checked above and again by send after asynchronous work.
+        // Autosave settings and failure acknowledgment are short writes without a service entry
+        // point, so they run fenced in the lane and are ordered after any revocation.
         return [
           '/api/saves/list',
           '/api/saves/load',
@@ -2605,35 +2716,117 @@ async function initializeGameServer(
     get director() {
       return director;
     },
-    async close() {
-      if (disposed) return;
-      disposed = true;
-      stopRuntimeMonitoring();
-      if (interval) clearInterval(interval);
-      if (publishTimer) clearTimeout(publishTimer);
-      unsubscribe();
-      director.macrofold.stop();
-      await mcp.close();
-      await agentRuns.drain();
-      await activeTick;
-      await thinking;
-      await autosaves.close();
-      await director.close();
-      await publicationDone;
-      await navigation.close();
-      await service.flush();
-      await projectionLane.idle();
-      for (const [stream, state] of streams) {
-        clearTimeout(state.timeout);
-        stream.end();
-      }
-      streams.clear();
-      await new Promise<void>((resolveClose, reject) =>
-        server.close((error) => (error ? reject(error) : resolveClose())),
-      );
-      await vite?.close();
-      service.releaseHostWork();
-      await store.close();
+    async close(): Promise<void> {
+      await this.shutdown();
+    },
+    /** Every caller, including a concurrent one, receives the first shutdown's report. */
+    shutdown(deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownReport> {
+      shuttingDown ??= shutdownOnce(deadlineMs);
+      return shuttingDown;
     },
   };
+  /** Finite shutdown (PF06): every stage has a share of one deadline, a failed or late
+   * stage is reported instead of stopping the rest, and resource close is always attempted
+   * (a close past the deadline is reported; main.ts exits one second after the report). The
+   * report states whether the final save completed and the last revision confirmed durable. */
+  async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
+    disposed = true;
+    const until = performance.now() + deadlineMs;
+    const problems: string[] = [];
+    const stage = async (name: string, work: () => unknown, share = 1) => {
+      const remaining = Math.max(0, until - performance.now());
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const running = Promise.resolve().then(work);
+      // A stage abandoned at its deadline may still fail later; that must not crash shutdown.
+      running.catch(() => undefined);
+      try {
+        const late = await Promise.race([
+          running.then(() => false),
+          new Promise<boolean>((resolve) => {
+            timer = setTimeout(() => resolve(true), remaining * share);
+          }),
+        ]);
+        if (late) problems.push(`${name} did not finish before the shutdown deadline`);
+        return !late;
+      } catch (error) {
+        problems.push(
+          `${name} failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+        );
+        return false;
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+    stopRuntimeMonitoring();
+    if (interval) clearInterval(interval);
+    if (publishTimer) clearTimeout(publishTimer);
+    unsubscribe();
+    director.macrofold.stop();
+    // Authoring owns a separate transport and runner; drain both before the final world save
+    // under the same finite shutdown deadline, retaining unfinished turns for recovery.
+    await stage('MCP requests', () => mcp.close(), 0.2);
+    await stage('World Agent turns', () => agentRuns.drain(), 0.2);
+    await stage('Native tick', () => activeTick, 0.2);
+    await stage('Background admission', () => thinking, 0.2);
+    await stage('Checkpoint drain', () => autosaves.close(), 0.3);
+    await stage('AI director', () => director.close(), 0.2);
+    await stage('Publication', () => publicationDone, 0.1);
+    await stage('Navigation', () => navigation.close(), 0.1);
+    // Intake stopped when shutdown began; let already admitted requests finish first.
+    await stage(
+      'Admitted requests',
+      async () => {
+        while (activeRequests > 0) await new Promise((resolve) => setTimeout(resolve, 20));
+      },
+      0.3,
+    );
+    // A latched storage failure means no later state can be written honestly.
+    const latched = service.storageError;
+    let saved = false;
+    if (latched) problems.push(`Final world save skipped: ${latched}`);
+    else
+      await stage(
+        'Final world save',
+        // Wait for in-flight background saves within this stage's share rather than the
+        // queue's 5-second admission limit, then save the remaining progress synchronously.
+        async () => {
+          await service.settleBackgroundSaves();
+          await service.flush();
+          saved = true;
+        },
+        0.8,
+      );
+    await stage('Projection drain', () => projectionLane.idle(), 0.3);
+    for (const [stream, state] of streams) {
+      clearTimeout(state.timeout);
+      stream.end();
+    }
+    streams.clear();
+    await stage(
+      'HTTP server',
+      () =>
+        new Promise<void>((resolveClose, reject) => {
+          server.close((error) =>
+            error && (error as NodeJS.ErrnoException).code !== 'ERR_SERVER_NOT_RUNNING'
+              ? reject(error)
+              : resolveClose(),
+          );
+          server.closeAllConnections?.();
+        }),
+      0.5,
+    );
+    await stage('Development assets', () => vite?.close(), 0.5);
+    service.releaseHostWork();
+    await stage('Storage', () => store.close(), 1);
+    // A final save that finished after its stage deadline still counts as saved.
+    const durable = service.durable;
+    return {
+      saved,
+      durableRevision: durable.revision,
+      durableSimTime: durable.simTime,
+      problems: saved
+        ? problems.filter((problem) => !problem.startsWith('Final world save did not finish'))
+        : problems,
+    };
+  }
 }

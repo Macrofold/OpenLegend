@@ -20,6 +20,8 @@ export interface SceneCallbacks {
  */
 export interface SpeechCaptionOptions {
   enabled: boolean;
+  /** Perceived speech from others that the overlay dropped or never showed, at most once a second. */
+  onMissedCaptions?(report: { scope: string; count: number; incomplete: boolean }): void;
   paused: boolean;
   readingScale: number;
   uiScale: number;

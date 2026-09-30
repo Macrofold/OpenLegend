@@ -986,7 +986,7 @@ export class HistoryRepository {
     ownerId: string,
     actorId: string,
     epoch: string,
-    options: { type?: string; cursor?: string; limit?: number } = {},
+    options: { type?: string; cursor?: string; limit?: number; q?: string } = {},
   ) {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
