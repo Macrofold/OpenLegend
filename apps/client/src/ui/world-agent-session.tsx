@@ -139,6 +139,7 @@ export function WorldAgentSession({
       );
       if (!response.ok) throw new Error(response.message ?? 'Session unavailable.');
       if (!alive.current) return;
+      const previousQuestionTurn = statusRef.current?.data?.question?.question.turnId;
       statusRef.current = response;
       setStatus(response);
       if (response.data) {
@@ -148,7 +149,9 @@ export function WorldAgentSession({
         }>('turns', prefix);
         if (!alive.current) return;
         mergeTurns(history.turns);
-        const questionTurn = response.data.question?.question.turnId;
+        // Refresh the formerly active card too: Stop or a saved revision can retire
+        // it while its original turn sits outside the latest history page.
+        const questionTurn = response.data.question?.question.turnId ?? previousQuestionTurn;
         if (questionTurn && !history.turns.some((turn) => turn.id === questionTurn)) {
           const source = await read<WorldAgentTurnView | null>('turn', {
             ...prefix,
@@ -340,7 +343,6 @@ export function WorldAgentSession({
                     ? session.question.question
                     : turn.question
                 }
-                storageKey={key}
                 worldId={worldId}
                 sessionId={sessionId}
                 connected={connected}

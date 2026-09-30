@@ -301,11 +301,11 @@ export class WorldAuthoringService {
     return s;
   }
   async turns(id: string, before?: WorldAgentTurnCursor, scope = this.service.localScope) {
-    await this.ownedSession(id, scope);
-    return this.records.turns(id, before);
+    const session = await this.ownedSession(id, scope);
+    return this.records.turns(id, before, (question) => this.questionView(session, question));
   }
   async turn(id: string, requestId: string, scope = this.service.localScope) {
-    await this.ownedSession(id, scope);
+    const session = await this.ownedSession(id, scope);
     const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
     return turn
       ? {
@@ -315,7 +315,7 @@ export class WorldAuthoringService {
           createdAt: turn.createdAt ?? null,
           cancelRequested: !!turn.cancelRequested,
           response: turn.response ?? null,
-          ...(turn.question ? { question: turn.question.view } : {}),
+          ...(turn.question ? { question: this.questionView(session, turn.question) } : {}),
         }
       : null;
   }
@@ -422,21 +422,36 @@ export class WorldAuthoringService {
       !s.activeTurn && !s.recoveryTurn && turn.response?.code === 'waiting-for-answer';
     const funded = this.budget(s).limitUsd - usage.spentUsd - usage.reservedUsd >= 0.000001;
     const accounted = usage.uncertainUsd === 0 && usage.reservedUsd === 0;
+    const controlling = this.service.currentScope(scope, 'play', true);
     return {
       question: { ...question.view, ...(!fresh ? { state: 'invalidated' as const } : {}) },
       canAnswer: allowed,
       canContinue:
-        allowed && !question.view.answer?.continuationId && stopped && accounted && funded,
+        allowed &&
+        !question.view.answer?.continuationId &&
+        stopped &&
+        accounted &&
+        funded &&
+        controlling,
       reason: !allowed
         ? 'This question is no longer current. Start a request with current world context.'
-        : !stopped || !accounted
-          ? `${question.view.answer ? 'Answer saved; f' : 'F'}inishing or checking previous work.`
-          : !funded
-            ? 'More usage is needed to continue.'
-            : question.view.answer
-              ? 'Your answer is saved. Continue when ready.'
-              : 'Ready for your answer.',
+        : !controlling
+          ? 'Your answer can be saved. Choose Control here before continuing.'
+          : !stopped || !accounted
+            ? `${question.view.answer ? 'Answer saved; f' : 'F'}inishing or checking previous work.`
+            : !funded
+              ? 'More usage is needed to continue.'
+              : question.view.answer
+                ? 'Your answer is saved. Continue when ready.'
+                : 'Ready for your answer.',
     };
+  }
+  // Historical cards must reflect current dependency validity too. Keep the saved
+  // answer immutable; only the public card becomes non-actionable.
+  private questionView(s: AgentSession, question: NonNullable<AgentTurnRecord['question']>) {
+    return this.questionCurrent(s, question)
+      ? question.view
+      : { ...question.view, state: 'invalidated' as const };
   }
   private questionCurrent(s: AgentSession, question: NonNullable<AgentTurnRecord['question']>) {
     const binding = question.binding;
@@ -641,6 +656,10 @@ export class WorldAuthoringService {
             },
           };
         }
+        // Match provider admission before recording an accepted turn. Saving an
+        // answer and reading history remain available in a non-controlling tab.
+        if (!this.service.currentScope(scope, 'play', true))
+          throw new AuthoringRequestError('Choose Control here before starting agent work.');
         if (s.activeTurn || s.recoveryTurn)
           throw new AuthoringRequestError(
             'This session has earlier work still running or awaiting confirmation.',

@@ -487,14 +487,136 @@
           "unchosenAnswerOccurrences": null
         }
       ]
+    },
+    "compactBeforeRootGuide": {
+      "runId": "01a0efde-6afe-754c-b3fc-6cafebc43970",
+      "generations": [
+        {
+          "bytes": 11982,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:12:50.133Z",
+          "endedAt": "2026-09-30T01:14:25.967Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 3786,
+            "output": 5163,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 9062
+          },
+          "calls": ["platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5"]
+        },
+        {
+          "bytes": 13853,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:14:27.270Z",
+          "endedAt": "2026-09-30T01:14:59.998Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 4378,
+            "output": 1986,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 6477
+          },
+          "calls": ["platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5"]
+        },
+        {
+          "bytes": 15681,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:15:00.778Z",
+          "endedAt": "2026-09-30T01:15:39.080Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 4988,
+            "output": 2384,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 7485
+          },
+          "calls": ["platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5"]
+        },
+        {
+          "bytes": 18102,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:15:40.102Z",
+          "endedAt": "2026-09-30T01:15:45.219Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 5702,
+            "output": 315,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 6130
+          },
+          "calls": []
+        }
+      ],
+      "settledUsd": 0.003904,
+      "nativeOutcome": "succeeded",
+      "persistence": "verified",
+      "savedReviews": 1,
+      "byok": true
+    },
+    "compactFinal": {
+      "runId": "01a0efe4-0209-7550-91eb-46deef19a402",
+      "generations": [
+        {
+          "bytes": 11967,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:18:45.735Z",
+          "endedAt": "2026-09-30T01:19:39.858Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 3781,
+            "output": 4689,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 8583
+          },
+          "calls": ["platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5"]
+        },
+        {
+          "bytes": 14600,
+          "toolsBytes": 8209,
+          "startedAt": "2026-09-30T01:19:44.506Z",
+          "endedAt": "2026-09-30T01:19:50.118Z",
+          "reasoning": {
+            "effort": "medium"
+          },
+          "usage": {
+            "input": 4533,
+            "output": 340,
+            "input_cached": 113,
+            "input_cache_write": 0,
+            "total": 4986
+          },
+          "calls": []
+        }
+      ],
+      "settledUsd": 0.001861,
+      "nativeOutcome": "succeeded",
+      "persistence": "verified",
+      "savedReviews": 1,
+      "byok": true
     }
   },
   "accounting": {
-    "newSettledUsd": 0.019012,
-    "cumulativeSettledUsd": 0.066171,
+    "newSettledUsd": 0.024777,
+    "cumulativeSettledUsd": 0.071936,
     "priorUncertainUsd": 5,
     "newUncertainUsd": 0,
-    "cumulativeExposureUsd": 5.066171,
+    "cumulativeExposureUsd": 5.071936,
     "ceilingUsd": 10,
     "additionalJevUsd": 0
   },
@@ -511,10 +633,72 @@
     "fullHistoryStatusMs": 8.093582999999853,
     "correctionsMs": 3093.186417
   },
-  "browserAcceptance": "Blocked by automatic approval review; explicit user permission pending for the authenticated synthetic loopback page.",
+  "browserAcceptance": "Complete for the approved bounded scope; actual native browser interaction on disposable PostgreSQL, with synthetic no-cost execution.",
   "limitations": [
-    "No large-world population claim.",
-    "Question-enabled initial control is 13873 bytes, above the existing 12000-byte diagnostic target; no mechanics were dropped or target weakened.",
+    "No large-world population or universal model-quality claim.",
+    "Final question-enabled simple control meets the unchanged 12000-byte initial and three-generation targets; broader inventions remain separately qualified.",
     "Raw provider traces are private; reported settled costs are not an invoice."
-  ]
+  ],
+  "acceptance": {
+    "date": "2026-09-29",
+    "localTimeZone": "America/New_York",
+    "baseCommit": "4acfcc9a60f3b77a912d8773f443f279cb57abdd",
+    "browser": {
+      "engine": "Codex in-app browser",
+      "viewports": [
+        [390, 844],
+        [1280, 720],
+        [1280, 900],
+        [1280, 1000]
+      ],
+      "checks": [
+        "single/multiple/custom choices, no defaults and explicit submission",
+        "keyboard arrows/Space/Tab, visible focus and wrapped mobile labels",
+        "draft survives panel hide/reopen and page reload",
+        "lost answer acknowledgement reconciles accepted answer without resending",
+        "non-controlling tab saves only; Control here never automatically continues",
+        "competing tab answer rejects stale overwrite, reveals winner, no extra dispatch",
+        "correction during execution cancels exact old continuation",
+        "saved review remains separate from human approval/Apply",
+        "21 save-only corrections create paged history; earlier messages recover exact text",
+        "Stop retires card outside latest page; End retains read-only history"
+      ],
+      "providerCalls": 0
+    },
+    "native": {
+      "date": "2026-09-30T01:18:51.645Z",
+      "realProviderCalls": 0,
+      "checks": [
+        "Native event capture, exact defaults, cancellation, final persistence, BYOK/medium and accounting through real HTTP/MCP adapter",
+        "Captured question fences old MCP authority",
+        "Competing tabs, identical replay and changed-body rejection; save-only never dispatches",
+        "Explicit continuation uses a fresh native session, compact exact answers and one admitted Run",
+        "Changed draft dependencies make historical question cards non-actionable",
+        "Continued recipe reaches exact review, separate human approval, Apply and receipt replay",
+        "Answer during stopping is retained; duplicate Send after settlement does not create a latent continuation",
+        "Real PostgreSQL/server restart reconciles retained native events, final persistence and delayed usage without generation",
+        "Correction during admitted execution fences/cancels exactly the old continuation and reconciles its usage",
+        "Save-only corrections remain immutable retained turns; superseded answers cannot continue",
+        "Non-controlling tabs can save answers but cannot admit a turn",
+        "Repeated bounded status/history reads do not dispatch",
+        "Malformed, ambiguous, oversized question and incomplete answer rejection",
+        "Interrupted capture retains exact question and recovers without admission (injected terminal receipt)",
+        "Stopping a waiting request abandons actionability while retaining history"
+      ],
+      "measurements": {
+        "status": {
+          "samples": 20,
+          "p50Ms": 24.73016700000153,
+          "p95Ms": 150.06324999999924
+        }
+      }
+    },
+    "schemaComparison": "All strict tool constraints equal the captured baseline after removing only descriptions; no validator relaxation.",
+    "additionalSettledUsd": 0.005765,
+    "cumulativeSettledUsd": 0.071936,
+    "retainedUncertainUsd": 5,
+    "conservativeExposureUsd": 5.071936,
+    "additionalJevUsd": 0,
+    "cumulativeJevUsd": 0
+  }
 }

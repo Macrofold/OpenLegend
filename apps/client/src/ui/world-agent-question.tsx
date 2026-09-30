@@ -31,7 +31,6 @@ const message = (error: unknown) =>
  * reconnect only reads status and never sends an answer or starts generation. */
 export function WorldAgentQuestionCard({
   question,
-  storageKey,
   worldId,
   sessionId,
   canAnswer,
@@ -41,7 +40,6 @@ export function WorldAgentQuestionCard({
   onChanged,
 }: {
   question: WorldAgentQuestion;
-  storageKey: string;
   worldId: string;
   sessionId: string;
   canAnswer: boolean;
@@ -50,7 +48,9 @@ export function WorldAgentQuestionCard({
   connected: boolean;
   onChanged(): void;
 }) {
-  const key = `${storageKey}:question:${question.digest}`;
+  // The server must authorize this session/question before rendering the card.
+  // Connection IDs change on reload; using them here would lose unsent answers.
+  const key = `open-legend:authoring:question:${worldId}:${sessionId}:${question.digest}`;
   const [answers, setAnswers] = useState<Answers>(() =>
     readLocal(
       `${key}:draft`,
@@ -290,7 +290,7 @@ export function WorldAgentQuestionCard({
           Change my answer
         </Button>
       )}
-      {question.answer && !editing && !question.answer.continuationId && (
+      {question.answer && canAnswer && !editing && !question.answer.continuationId && (
         <Button busy={busy} disabled={!connected || !canContinue} onPress={() => void resume()}>
           Continue
         </Button>

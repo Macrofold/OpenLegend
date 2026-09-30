@@ -58,7 +58,7 @@ export const WORLD_READ_TOOLS = {
   },
   ol_find: {
     description:
-      'Find current definitions by label/ID with bounded lexical paging. No paid semantic search. Empty pages may have a continuation.',
+      'Find definitions by label/ID with lexical paging. No paid search; empty pages may continue.',
     schema: z
       .object({
         query: z.string().max(200).default(''),
@@ -81,7 +81,7 @@ export const WORLD_READ_TOOLS = {
   },
   ol_inspect: {
     description:
-      'Inspect a current exact definition, live item/entity, or retained memory-record ref. Optional version detects stale selection. Owner evidence stays separate from private authoring provenance, learning and mutation.',
+      'Inspect an exact definition, live item/entity or memory-record ref. Optional version checks freshness. No private authoring/learning provenance.',
     schema: select,
   },
   ol_graph: {

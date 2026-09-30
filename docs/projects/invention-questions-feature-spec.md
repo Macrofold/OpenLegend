@@ -1,6 +1,6 @@
 # Invention questions: feature specification
 
-**Status: approved implementation target; implementation in progress.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The working branch implements the structured OpenCode bridge and passes real question/answer/review journeys. Required browser acceptance remains blocked; other harnesses retain ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../world-agent-runtime.md).
+**Status: implemented; bounded acceptance complete.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The working branch implements the structured OpenCode bridge and passes real question/answer/review journeys. Actual browser interaction and matched complete-request measurements pass; other harnesses retain ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../world-agent-runtime.md).
 
 ## Purpose and scope
 

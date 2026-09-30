@@ -15,10 +15,10 @@ const revision = z.number().int().min(1).max(1_000_000);
 const draft = { draftId: id, revision };
 const mutation = {
   operationId: id.describe(
-    'Reuse this ID only for an identical replay. Any changed body, including a new packetRef, needs a new ID.',
+    'Exact replay: same ID/body. Any change (including packetRef) needs a new ID.',
   ),
 };
-const packetRef = id.describe('Use the latest returned packetRef.');
+const packetRef = id.describe('Latest packetRef.');
 const requirementAnnotations = z
   .array(
     z
@@ -29,9 +29,7 @@ const requirementAnnotations = z
         status: z.enum(['human-review', 'unsupported']),
         finding: z.string().min(1).max(1000),
         supersedes: id
-          .describe(
-            'Prior finding ID replaced by an explicit change in the current human request. Original wording remains in review.',
-          )
+          .describe('Finding ID superseded by an explicit human change; preserve original wording.')
           .optional(),
       })
       .strict(),
@@ -138,7 +136,7 @@ export const WORLD_AUTHORING_TOOLS = {
   },
   ol_recipe_submit: {
     description:
-      'Save a complete recipe with native checks for human review. On ready_for_review, explain the tradeoff and finish; nothing is installed or crafted. For new recipes omit deriveFrom; never guess a base ID.',
+      'Save a complete recipe for human review. On ready_for_review, explain the tradeoff and stop; no install/craft. Omit deriveFrom for new recipes; inspect any base first.',
     schema: z
       .object({
         ...mutation,
@@ -160,7 +158,7 @@ export const WORLD_AUTHORING_TOOLS = {
   },
   ol_request_capability: {
     description:
-      'Select the supported profile for this request, then stop tools and explain the next stage in final text. Selection grants no approval, spending or broader scope. Do not request unsupported engine mechanics.',
+      'Select a supported profile, then explain and stop. Grants no approval, funding or scope. No unsupported mechanics.',
     schema: z
       .object({ ...mutation, kind: authoringKind, reason: z.string().min(1).max(500) })
       .strict(),

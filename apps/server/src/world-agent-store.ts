@@ -168,7 +168,13 @@ export class WorldAgentStore {
       .prepare("DELETE FROM world_agent_records WHERE session_id=? AND kind='packet'")
       .run(sessionId);
   }
-  async turns(sessionId: string, before?: WorldAgentTurnCursor) {
+  async turns(
+    sessionId: string,
+    before?: WorldAgentTurnCursor,
+    projectQuestion: (question: NonNullable<AgentTurnRecord['question']>) => WorldAgentQuestion = (
+      question,
+    ) => question.view,
+  ) {
     const cursor = before ?? { sequence: Number.MAX_SAFE_INTEGER, id: '\uffff' };
     const rows = await this.db
       .prepare(
@@ -187,7 +193,7 @@ export class WorldAgentStore {
         createdAt: turn.createdAt ?? null,
         cancelRequested: !!turn.cancelRequested,
         response: turn.response ?? null,
-        ...(turn.question ? { question: turn.question.view } : {}),
+        ...(turn.question ? { question: projectQuestion(turn.question) } : {}),
       };
     });
     const last = items.at(-1);

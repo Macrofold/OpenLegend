@@ -125,11 +125,11 @@ export const INVENTION_FAMILY_INTERFACES = {
  * not add effects; update it with the corresponding craft/hunt/gather owners. */
 export const INVENTION_CONSUMER_GUIDE = {
   craft:
-    'Inputs are consumed at work start. One output arrives on completion. Interrupted work does not refund inputs. Installation learns the method; it does not craft or spawn an item.',
+    'Inputs consumed at start; one output on completion; no refund on interruption. Installation teaches, never spawns/crafts.',
   hunting:
-    'One compatible projectile per resolved shot, hit or miss. Range is world metres, damage health points, accuracy base probability modified by fleeing. Only native animal hunting; no homing or new on-hit effects.',
+    'One compatible projectile per resolved shot, hit or miss. Range: metres; damage: health points; accuracy: base probability modified by fleeing. Animals only; no homing/new hit effects.',
   gathering:
-    'Body material must be BOTH rigid and flexible, plus binding. Quantity is total batch yield capped by remaining source. Best compatible carried tool only; no stacking or equip prerequisite.',
+    'Body must be rigid AND flexible, plus binding. Quantity: batch yield capped by supply. Best compatible carried tool only; no stacking/equip prerequisite.',
   needs:
-    'Ordinary work expenditure still applies. Recipe fields cannot add nutrition, fuel, sleep effects, arbitrary status operations or autonomous machines.',
+    'Ordinary work expenditure applies. No nutrition, fuel, sleep/status effects or autonomous machines.',
 } as const;
