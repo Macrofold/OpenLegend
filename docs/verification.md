@@ -23,7 +23,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
-- [Invention question implementation](verification/invention-questions.md): merged baseline, incremental recovery checks and pending question qualification.
+- [Invention question implementation](verification/invention-questions.md): completed finite native/browser/live acceptance, request-size measurements, historical recovery failures and retained accounting/deployment limits.
 
 - [Invention integration with main](verification/invention-main-integration.md): exact integrated heads, PostgreSQL/HTTP/MCP/browser checks and remaining gates.
 - [World Agent context and preparation](verification/world-agent-context.md): scoped context, native save-for-review, recovery and actual Macrofold journeys.
