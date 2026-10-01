@@ -9,7 +9,9 @@ import {
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { scopeKey, type RequestScope } from './authority.js';
-import { observerDescription } from '@open-legend/domain';
+import { observerDescription, fireFuelDescription } from '@open-legend/domain';
+import { fireCareOptions } from './fire-actions.js';
+import { handoverOptions } from './handover-actions.js';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
@@ -250,6 +252,10 @@ export async function projectView(
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' ? pileContents.get(entity.id) : undefined,
+          // Fire care availability depends on the player's carried tinder, drill and fuel.
+          entity.heat ? player.inventoryRevision : undefined,
+          // Offer replies appear and disappear with pending offers between the two people.
+          entity.actor ? world.itemOffers : undefined,
           world.itemDefinitions,
           active,
           paused,
@@ -366,6 +372,26 @@ export async function projectView(
                   : `Carry compatible ${launcher.ammunitionKind} ammunition.`,
               ),
             );
+          if (entity.actor)
+            for (const option of handoverOptions(
+              world,
+              scope.actorId,
+              observation.inventory,
+              entity,
+              { offers: false },
+            )) {
+              const preview = service.previewCommand(option.command, scope.actorId);
+              actions.push(
+                action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
+              );
+            }
+          if (entity.heat)
+            for (const option of fireCareOptions(world, observation.inventory, entity)) {
+              const preview = service.previewCommand(option.command, scope.actorId);
+              actions.push(
+                action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
+              );
+            }
           if (entity.remains)
             actions.push(
               action(
@@ -439,6 +465,7 @@ export async function projectView(
                         strike: 'Striking',
                         harvest: 'Harvesting',
                         cook: 'Cooking',
+                        'tend-fire': 'Tending a fire',
                         prepare: 'Preparing',
                         craft: 'Crafting',
                       }[entity.actor.action.type] ?? 'Working')
@@ -459,8 +486,8 @@ export async function projectView(
                     : 'Fresh remains'
                   : entity.heat
                     ? entity.heat.lit
-                      ? 'Lit · cooking heat'
-                      : 'Cold'
+                      ? `Lit · cooking heat · ${fireFuelDescription(entity.heat)}`
+                      : `Cold · ${fireFuelDescription(entity.heat)}`
                     : entity.replenisher
                       ? `${Math.round(entity.replenisher.remaining)} units of supply`
                       : entity.kind === 'item-pile'
@@ -621,6 +648,12 @@ export async function projectView(
     strike: `Striking${targetName ? ` ${targetName}` : ''}`,
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     cook: 'Cooking meat',
+    'tend-fire':
+      work?.fireOperation === 'light'
+        ? 'Lighting the fire'
+        : work?.fireOperation === 'fuel'
+          ? 'Adding fuel'
+          : 'Putting out the fire',
     prepare: work?.preparation === 'fiber' ? 'Cleaning fibers' : 'Twisting cord',
     craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.output.name}` : ''}`,
   };
@@ -732,6 +765,7 @@ export async function projectView(
                   'hunt',
                   'strike',
                   'replenish',
+                  'tend-fire',
                 ].includes(actor.action.type)),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:

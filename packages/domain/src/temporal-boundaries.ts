@@ -1,3 +1,4 @@
+import { nextItemOfferDeadline } from './handover.js';
 import { isDraft, original } from 'immer';
 import { distance3D } from '@open-legend/spatial';
 import { capabilityBlocked } from './status-capabilities.js';
@@ -159,6 +160,7 @@ export function nativeInterval(
     nextCommitmentDeadline(world) - world.simTime,
     nextResourceReservationDeadline(world) - world.simTime,
     nextAppraisalDeadline(world) - world.simTime,
+    nextItemOfferDeadline(world) - world.simTime,
   );
   for (const process of Object.values(world.appraisalProcesses ?? {}))
     bound = Math.min(bound, process.nextAt - world.simTime);

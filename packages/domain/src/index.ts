@@ -135,6 +135,17 @@ export { isConversationEvent } from './events.js';
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
 export { BASE_HUNTING, huntingDescription, observedAnimalHealth } from './worlds/base/hunting.js';
+export * from './handover.js';
+export { BASE_HANDOVER } from './worlds/base/handover.js';
+export {
+  BASE_FIRE_CARE,
+  FIRE_OPERATIONS,
+  fireCareProblem,
+  fireFuelDescription,
+  isFireCareCommand,
+  isFuel,
+  type FireOperation,
+} from './worlds/base/fire.js';
 export { memoryPerspective } from './memory-perspective.js';
 
 export * from './participation.js';

@@ -1,4 +1,4 @@
-import type { Entity, ItemDefinition } from '@open-legend/domain';
+import { fireFuelDescription, type Entity, type ItemDefinition } from '@open-legend/domain';
 /** Called only for entities in the player's permitted observation. No private mind. */
 export function describeEntity(
   entity: Entity,
@@ -16,7 +16,7 @@ export function describeEntity(
     return `A ${entity.actor!.species!} of the clearing. ${entity.actor!.alive ? (entity.animal.fleeSeconds > 0 ? 'It is fleeing.' : 'It is foraging nearby.') : 'It is no longer alive.'}`;
   if (entity.heat)
     return entity.heat.lit
-      ? 'A banked fire that provides heat for cooking raw meat.'
-      : 'A cold campfire. It cannot cook food without heat.';
+      ? `A burning fire that provides heat for cooking raw meat, with ${fireFuelDescription(entity.heat)}.`
+      : `A cold campfire with ${fireFuelDescription(entity.heat)}. It cannot cook food until it is lit.`;
   return entity.name;
 }

@@ -13,7 +13,8 @@ export function actionResponse(act: NonNullable<ResponseOperation['act']>): Acto
         think: null,
         goal: null,
         plan: null,
-        act: { ...act, invocation: act.invocation ?? null },
+        // The decision schema requires every act field; absent references are explicit nulls.
+        act: { ...act, invocation: act.invocation ?? null, slots: act.slots ?? null },
       },
     ],
   };

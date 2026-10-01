@@ -25,6 +25,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 - [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
+- [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers.
 - [Actor agency and invention workflows](verification/actor-agency-and-inventions.md): identity, native attempts, plans and supported invention loops.
 - [Invention foundation](verification/invention-foundation.md): crafting, gathering, proposal revision and provider evidence.
 - [Agency documentation integration](verification/agency-documentation-integration.md): documentation checks and retained memory-perspective observations.

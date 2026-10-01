@@ -184,9 +184,16 @@ function recordEvent(
       : type === 'speech'
         ? 7
         : data?.['semanticTrigger'] === true ||
-            ['crafted', 'declaration-admitted', 'shot', 'struck', 'fire-out', 'rested'].includes(
-              type,
-            )
+            [
+              'crafted',
+              'declaration-admitted',
+              'shot',
+              'struck',
+              'fire-out',
+              'fire-lit',
+              'fire-extinguished',
+              'rested',
+            ].includes(type)
           ? 6
           : 3,
   );
@@ -263,6 +270,9 @@ function recordEvent(
       'crafted',
       'harvested',
       'cooked',
+      'fire-lit',
+      'fire-fueled',
+      'fire-extinguished',
       'struck',
       'shot',
       'body-effect',

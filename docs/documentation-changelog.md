@@ -34,6 +34,26 @@ Mike authorized the [ordered-save project](projects/ordered-async-saves.md). Sav
 
 Save recovery also changed: autosave enable/cadence/retention are operator settings (defaults unchanged), a manual save waits ahead of the next autosave instead of failing busy, the latest checkpoint failure survives restart until acknowledged, retention and paging use a durable capture sequence instead of wall-clock order, a load that cannot first preserve the current world is refused without latching a storage error, a failed operational restore removes only the slots and the pre-restore recovery checkpoint it wrote, and shutdown is finite and reports whether the final save was confirmed. Operational restore had refused every current backup since 2026-09-27 (a stale schema-marker check and payload format); it now accepts only the current format again. A load refused as busy at its pause step no longer latches a storage error, and the two new autosave routes run under the same authority fence as other save writes ([C05](maintainers/limits-audit.md#c05), SL08-A, SL09-A/B, [SB18](limits/persistence.md#sb18), [SV22](limits/persistence.md#sv22)). A pre-implementation adversarial review found that a refused background save would have let the next save delete released history; the delivered design prevents that. Evidence is shared-host and does not establish scene acceptance; see the [verification report](verification/ordered-async-saves.md).
 
+## 2026-09-28 — Camp fire care and consent-aware sharing
+
+Mike approved starting-scene priorities 2 and 3 ([plan](projects/camp-fire-and-sharing.md)).
+
+- **Fire care.** People can now light, fuel and put out campfires.
+  - The base-world `tend-fire` family has a real ignition requirement: laid fuel, spent tinder and a kept drill.
+  - Fuel is conserved: one `fuel` unit adds one hour, up to 48 hours, spent together with the fuel credit when the work finishes.
+  - Putting a fire out keeps unburnt fuel and waits while another person cooks there.
+  - Burning follows the fire's state at the start of each simulation slice.
+- **Handover.** Items pass to another person only when that person accepts.
+  - The recipient-only `handover` family (offer, accept, decline, withdraw, expiry) moves custody atomically at acceptance.
+  - Offers are unreserved pending records, bounded per person and kept in the world-settings save record. That is a recorded deviation until save code can catalogue them.
+  - This reverses the 2026-09-26 unilateral deposit into a reachable living person (E04/R03, [OB12](limits/objects.md#ob12)). Privacy is unchanged.
+- **Scope and trackers.**
+  - Each family adds one concrete command as a local v1 exception to AC09.3 until the AC02 descriptor exists.
+  - Handover is deliberately immediate rather than plan- or learning-eligible, so consent cannot be queued late or replayed.
+  - Reserving portions for a named person is deferred (tracker BW21): claims cannot yet hold stock without a live process.
+  - Rules: [survival](worlds/base/survival.md#tending-the-campfire) and [social](worlds/base/social.md#offering-and-accepting-possessions). Limits: [BW10/BW11](limits/base-world.md#bw10). Trackers: BW19–BW21, AC08.3 and AC09.7.
+- **Evidence.** [Native, PostgreSQL and fixture-Jev evidence](verification/camp-life.md). No live model calls. Browser and live behavior remain open.
+
 ## 2026-09-28 — Action experience and learned native methods
 
 Delivered [action records and learned activities](action-experience.md) after Mike's explicit implementation approval. Native outcomes now retain chosen parent meaning, actual stages/effects and multiple output quantities. Bounded connected discovery and typed idle learning publish shared immutable structure with private personal evidence, under existing spending and authority. Chosen nested methods use the existing agency/kernel, actual output bindings and explicit remaining work; interruptions preserve committed effects. English-first projection retains critical choice facts and only uses narrow JSON for untemplated details.

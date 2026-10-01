@@ -35,7 +35,7 @@ Original source-review baseline: `af1eb02`. The subsequent [implementation](../p
 
 Before integrating a recurring reservation consumer, move completed receipts out of live admission accounting while retaining durable idempotency evidence.
 
-The retained-byte issue is real, but no non-test gameplay caller of `reserveResource` was found at `af1eb02`; ordinary crafting must not be described as already growing these receipts. Reprioritize immediately when a consumer lands. [ST09](../limits/state-effects.md#st09) · [Work](state-contributions.md)
+The retained-byte issue is real, but no non-test gameplay caller of `reserveResource` was found at `af1eb02`; ordinary crafting must not be described as already growing these receipts. Reprioritize immediately when a consumer lands. The 2026-09-28 camp sharing work evaluated one (reserving portions, tracker BW21) and deferred it partly for this reason; consent-aware offers deliberately use no holds. [ST09](../limits/state-effects.md#st09) · [Work](state-contributions.md)
 
 ### R02
 

@@ -294,7 +294,7 @@ Native `contextmenu` timing differs by platform. During a secondary pointer sequ
 
 ## Action discovery and player preferences
 
-The authenticated `/api/actions` query returns the finite catalogue scoped to the selected object or self, including relevant unavailable entries with missing prerequisites. A specific world-object context restricts the catalogue to that target before preview: reeds offer walking/gathering, a person offers walking/conversation/teaching, and a fire offers walking/cooking. Relevant missing prerequisites remain discoverable, such as cooking without raw meat; unrelated work and other targets are excluded. Self context includes personal work. Empty-ground context supplies only a destination for Walk here; personal work is available in self context and panel controls. Private NPC knowledge and unimplemented mechanics are not exposed as usable definitions. Labels, category tags and aliases are searchable without inference or a retrieval top-k cutoff.
+The authenticated `/api/actions` query returns the finite catalogue scoped to the selected object or self, including relevant unavailable entries with missing prerequisites. A specific world-object context restricts the catalogue to that target before preview: reeds offer walking/gathering, a person offers walking/conversation/teaching/offering items or replying to offers, and a fire offers walking, cooking and [lighting, fuelling or putting it out](worlds/base/survival.md#tending-the-campfire). Relevant missing prerequisites remain discoverable, such as cooking without raw meat; unrelated work and other targets are excluded. Self context includes personal work. Empty-ground context supplies only a destination for Walk here; personal work is available in self context and panel controls. Private NPC knowledge and unimplemented mechanics are not exposed as usable definitions. Labels, category tags and aliases are searchable without inference or a retrieval top-k cutoff.
 
 `apps/server/src/action-catalogue.ts` enumerates options and uses `WorldService.previewCommand` to run the same command mapping and pure admission transition used by execution. Preview effects, consumed inputs, RNG changes and receipts are discarded. The browser queries on opening and coalesces refreshes while the menu is open; this does not add a catalogue scan to every simulation step. Scheduled-work previews stop after the same scope, path, work and interruption admission used by execution, before recording action-start events or receipts. Scope checks use the immutable source snapshot so perception caches are shared across candidates. Immediate-command preview mutations remain confined to disposable drafts; execution revalidates current state.
 
@@ -601,8 +601,9 @@ AI allowance configuration honors its existing accepted range of $0–$100 per a
 change-fed exposure reuse, private native-step yields and bounded awareness residency.
 [Memory architecture](memory-architecture.md#retrieval-preparation-admission) owns
 pre-hydration checks and revision-bound retrieval caches. [Items](worlds/base/items.md)
-owns shared reachable containers, explicit access restrictions, giving and recursive
-possession use. These reuse current transitions, records, immutable publication and scoped
+owns shared reachable containers, explicit access restrictions and recursive possession use;
+[social rules](worlds/base/social.md#offering-and-accepting-possessions) own consent-aware
+offers, the only way items pass to another person. These reuse current transitions, records, immutable publication and scoped
 projections. Capacity settings and implementation do not close the [measured release gates](verification/immediate-gameplay-limits.md#immediate-gameplay-limits).
 
 ## Spatial rebase integration

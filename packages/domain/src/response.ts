@@ -645,6 +645,7 @@ export function commitActorResponse(
           'inspect-activities',
           'conversation',
           'teach',
+          'handover',
           'cancel',
           'recover',
           'withdraw-attempt',
@@ -868,6 +869,7 @@ export function commitActorResponse(
           [
             'conversation',
             'teach',
+            'handover',
             'cancel',
             'recover',
             'withdraw-attempt',

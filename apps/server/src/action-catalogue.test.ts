@@ -47,7 +47,12 @@ it('scopes object menus to their target, including relevant missing prerequisite
   const before = JSON.stringify(service.world);
   const saved = await service.store.load();
   const fire = () => actionCatalogue(service, { targetId: 'campfire' }).actions;
-  expect(fire().map((action) => action.id)).toEqual(['move', 'cook']);
+  // The lit fire also offers putting it out and adding the player's carried fuel.
+  const care = () => [
+    'fire-extinguish:campfire',
+    `fire-fuel:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'wood')!.id}:campfire`,
+  ];
+  expect(fire().map((action) => action.id)).toEqual(['move', ...care(), 'cook']);
   expect(fire().find((action) => action.id === 'cook')).toMatchObject({
     targetId: 'campfire',
     enabled: false,
@@ -58,7 +63,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
   expect(actionCatalogue(service, {}).actions).toEqual([]);
   const meat = 'fixture-meat';
   await editWorld(service, (world) => createItemLot(world, PLAYER_ID, 'raw_meat', 1, meat));
-  expect(fire().map((action) => action.id)).toEqual(['move', `cook-${meat}-campfire`]);
+  expect(fire().map((action) => action.id)).toEqual(['move', `cook-${meat}-campfire`, ...care()]);
   await editWorld(service, (world) => {
     world.entities.campfire!.heat!.lit = false;
   });
@@ -73,9 +78,18 @@ it('scopes object menus to their target, including relevant missing prerequisite
       (action) => action.id === 'gather-reeds',
     )?.enabled,
   ).toBe(false);
-  expect(actionCatalogue(service, { targetId: NPC_ID }).actions.map((action) => action.id)).toEqual(
-    [`follow:${NPC_ID}`, 'move', `punch-${NPC_ID}`, `talk-${NPC_ID}`, 'teach'],
-  );
+  const person = actionCatalogue(service, { targetId: NPC_ID }).actions;
+  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([
+    `follow:${NPC_ID}`,
+    'move',
+    `punch-${NPC_ID}`,
+    `talk-${NPC_ID}`,
+    'teach',
+  ]);
+  // Offers are listed for the selected person and remain unavailable out of arm's reach.
+  const offers = person.filter((action) => action.id.startsWith('offer:'));
+  expect(offers.length).toBeGreaterThan(0);
+  expect(offers.every((action) => action.targetId === NPC_ID)).toBe(true);
   expect(
     actionCatalogue(service, {
       position: { y: 0, x: 11, z: 13, surfaceId: 'terrain' },

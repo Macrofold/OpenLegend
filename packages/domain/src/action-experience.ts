@@ -652,6 +652,7 @@ const invocationFields: Partial<
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
   cook: { required: ['itemId', 'heatId'] },
+  'tend-fire': { required: ['targetId', 'operation'], optional: ['itemId'] },
   'status-effect': { required: ['targetId', 'definitionId', 'operation'] },
   say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
 };

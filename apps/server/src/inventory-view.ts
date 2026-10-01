@@ -14,6 +14,7 @@ import {
   capabilityBlocked,
   custodian,
   objectAncestors,
+  offerRecipientProblem,
   type ItemInstance,
 } from '@open-legend/domain';
 import type {
@@ -187,16 +188,18 @@ export function containerPage(
         revision: parent.inventoryRevision ?? 0,
       })),
     // Merge lookups need no move destinations; skip the world-root scan.
+    // Reachable people receive offers; their possessions stay closed to this page.
     destinations: (source ? [] : worldRootEntities(world))
-      .filter(
-        (target) =>
-          target.id !== scope.actorId && canAccessContainer(world, scope.actorId, target.id, true),
+      .filter((target) =>
+        target.actor
+          ? !offerRecipientProblem(world, world.entities[scope.actorId]!, target)
+          : target.id !== scope.actorId && canAccessContainer(world, scope.actorId, target.id),
       )
       .map((target) => ({
         id: target.id,
         name: observerDescription(world, scope.actorId, target.id),
         revision: target.inventoryRevision ?? 0,
-        depositOnly: !!target.actor,
+        recipient: !!target.actor,
       })),
     items,
     ...(next ? { next } : {}),

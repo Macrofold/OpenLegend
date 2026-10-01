@@ -21,9 +21,12 @@ import {
   inventionFamily,
   SUPPORTED_INVENTION_FAMILIES,
 } from '@open-legend/domain';
-import { attributeDefinition, readAttribute } from '@open-legend/domain';
+import { attributeDefinition, readAttribute, offerRecipientProblem } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
+import { fireCareOptions } from './fire-actions.js';
+import { handoverOptions } from './handover-actions.js';
 import {
+  BASE_FIRE_CARE,
   findPath,
   NATIVE_PREPARATIONS,
   queryMemories,
@@ -434,6 +437,35 @@ export function npcCandidates(
   ])
     for (const option of statusEffectActions(service.world, observed.actor, target))
       actions.push({ id: option.id, description: option.label, command: option.command });
+  // Offers and replies are immediate and never interrupt work. Replies to every pending
+  // offer with a visible party are listed (bounded by three offers per offerer). New offers
+  // go only to the nearest three people who can take items within reach. A player's typed
+  // request names what to offer, so it may bind more lots than a character's shortlist.
+  const typed = actor.controller === 'player';
+  const here = worldPosition(observed.actor);
+  const people = observed.visibleEntities.filter((e) => e.actor?.alive && e.id !== actorId);
+  const recipients = people
+    .filter((e) => !offerRecipientProblem(service.world, observed.actor, e))
+    .sort(
+      (a, b) =>
+        Math.hypot(worldPosition(a).x - here.x, worldPosition(a).z - here.z) -
+        Math.hypot(worldPosition(b).x - here.x, worldPosition(b).z - here.z),
+    )
+    .slice(0, 3);
+  let offerCandidates = 0;
+  for (const person of people) {
+    const offering = recipients.includes(person);
+    for (const option of handoverOptions(service.world, actorId, inventory, person, {
+      offers: offering,
+      maxLots: typed ? 12 : 4,
+    })) {
+      const isOffer = option.command.handoverOperation === 'offer';
+      if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
+      if (!service.previewCommand(option.command, actorId).ok) continue;
+      if (isOffer) offerCandidates++;
+      actions.push({ id: option.id, description: option.description, command: option.command });
+    }
+  }
   // Starting another timed task would discard actual work/materials. The actor can
   // explicitly cancel work; listing alternatives must not silently interrupt it.
   if (actor.action) return actions;
@@ -638,6 +670,11 @@ export function npcCandidates(
           .join(', ')} from ${entity.name} using a carried cutting tool.`,
         command: { type: 'harvest', targetId: entity.id },
       });
+    // Fire care is offered per perceived fire from current state; native admission rechecks it.
+    if (entity.heat)
+      for (const option of fireCareOptions(service.world, inventory, entity))
+        if (service.previewCommand(option.command, actorId).ok)
+          actions.push({ id: option.id, description: option.description, command: option.command });
     if (entity.heat?.lit) {
       let previous = worldPosition(observed.actor);
       // Pending detours are not yet a travel-time promise; fuel is rechecked at work start.
@@ -708,6 +745,33 @@ export function planningCandidates(
       description: `Prepare ${recipe.outputQuantity} ${service.world.itemDefinitions[recipe.output]?.name ?? 'material'}; needs ${recipe.inputQuantity} ${service.world.itemDefinitions[recipe.input]?.name ?? 'material'} at start, ${recipe.workSeconds} work seconds.`,
       command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
     })),
+    // Fuel and tinder may be gathered by earlier steps; each step rechecks at dispatch.
+    ...observed.visibleEntities
+      .filter((entity) => entity.heat)
+      .flatMap((entity) => [
+        {
+          id: `plan-fire-fuel:${entity.id}`,
+          description: `Add one piece of carried fuel (such as a Supple branch) to ${entity.name}; about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour of burning each, ${BASE_FIRE_CARE.fuel.workSeconds} work seconds; the fuel must be carried when this step starts.`,
+          command: {
+            type: 'tend-fire' as const,
+            fireOperation: 'fuel' as const,
+            targetId: entity.id,
+          },
+        },
+        ...(entity.heat!.lit
+          ? []
+          : [
+              {
+                id: `plan-fire-light:${entity.id}`,
+                description: `Light ${entity.name} once it has fuel, using one carried bundle of plain fibers as tinder and a rigid shaft as a drill; ${BASE_FIRE_CARE.light.workSeconds} work seconds.`,
+                command: {
+                  type: 'tend-fire' as const,
+                  fireOperation: 'light' as const,
+                  targetId: entity.id,
+                },
+              },
+            ]),
+      ]),
     ...observed.knownRecipes.map((recipe) => ({
       id: `plan-craft:${recipe.id}`,
       description: `Craft one ${service.world.itemDefinitions[recipe.outputDefinitionId]?.name ?? recipe.name} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${service.world.itemDefinitions[input.definitionId]?.name ?? 'material'}`).join(', ')} at start.`,

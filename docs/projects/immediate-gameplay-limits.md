@@ -21,7 +21,7 @@ Approved in chat on 2026-09-26: implement C18, C17, E01, E04, R03 and C19 from t
 
 ## Decisions
 
-Shared world-container access does not imply access to another human's private notes or carried contents. Giving allows depositing into a reachable recipient's root inventory, not arbitrary access to their bags. Container restriction state must be explicit, validated and durable. Unrelated inventory moves do not cancel work; dependency-changing moves reject with a useful explanation. Exact vector search stays the initial baseline; output count is not advertised as a corpus-work bound. Numerical admission settings are operational defaults, documented with rationale and measured limits.
+Shared world-container access does not imply access to another human's private notes or carried contents. Giving allows depositing into a reachable recipient's root inventory, not arbitrary access to their bags (superseded 2026-09-28: giving is now an offer the recipient accepts; [camp fire and sharing decision 6](camp-fire-and-sharing.md#decisions)). Container restriction state must be explicit, validated and durable. Unrelated inventory moves do not cancel work; dependency-changing moves reject with a useful explanation. Exact vector search stays the initial baseline; output count is not advertised as a corpus-work bound. Numerical admission settings are operational defaults, documented with rationale and measured limits.
 
 ## Verification and completion
 

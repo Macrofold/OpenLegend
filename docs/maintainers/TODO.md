@@ -576,3 +576,24 @@ No automated tests were written for the [player clarity](../projects/player-clar
 - [ ] Measure memory and speech search/paging on large histories (tens of thousands of retained memories and perceived events per actor, several concurrent readers): time per 2,000-row window, chunk count and reader-lane wait. The recorded timings (107/21/38 ms) come from one host and about 2,000 rows ([MH08](../limits/memory.md#mh08), [HR06](../limits/hearing-and-speech.md#hr06--history-paging-and-growth)).
 - [ ] Keyboard focus when a final page removes its load-more control: **Search more lots** (merge targets) and **Show earlier promises** disappear after the last page, and focus returns to the page body. Move focus to the newly loaded entries or a stable neighbour. Also qualify the new surfaces (subject picker, memory search, promises, missed-caption notice, gesture notices) with assistive technology, and confirm that covering the open sheet's header with the narrow missed-caption notice is acceptable ([evidence](../verification/player-clarity-ui.md#review-follow-up)).
 - [ ] Character lexical recall ([MH03](../limits/memory.md#mh03)) still matches through the database parser, which under a C-locale database glues non-ASCII punctuation to words and does not lowercase non-ASCII letters, so model recall can miss such words. Found 2026-09-29 during the player-history search review; decide whether recall should reuse the locale-independent normalizer in `text-search.ts` (for example by storing normalized search text) and qualify the ranking change.
+
+## Camp fire care and sharing — deferred automated coverage
+
+The [camp fire and sharing](../projects/camp-fire-and-sharing.md) evidence is recorded in [Verification](../verification/camp-life.md) from ad hoc runs, with no committed suites. Committed regression coverage is still to be added for:
+
+- fire refusal codes;
+- cancel-spends-nothing;
+- completion-time fuel credit;
+- lit-at-slice-start burning;
+- the cooking guard;
+- fire plan steps and learned-activity invocation (AX33, AX36, AX50, AX55);
+- a same-version restore of a burning fire, an in-progress `tend-fire` action and a queued fire plan step (AX61);
+- handover:
+  - offer, accept, decline, withdraw, expiry and lapse outcomes;
+  - forged or wrong-party replies (AX39, AX41);
+  - last-lot and changed-bag races (AX37);
+  - name-free refusals and scoped offer projections (AX58);
+  - direct-deposit refusal;
+  - caps and shape-only load validation;
+  - an NPC reply through a fixture decision (AX51).
+- Pre-existing, not caused by this work: `http.test.ts` “supports presence, controls and idempotent native actions without AI” expects Mike to carry starter berries, which the lean-camp start ([BW18](base-world.md#bw18--ada-and-the-lean-starting-camp)) removed. Give the test its own berries through the fixture.

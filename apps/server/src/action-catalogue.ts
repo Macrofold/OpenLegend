@@ -8,6 +8,8 @@ import { availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
+import { fireCareOptions } from './fire-actions.js';
+import { handoverOptions } from './handover-actions.js';
 import type {
   ActionCatalogue,
   ActionContext,
@@ -329,6 +331,23 @@ export function actionCatalogue(
         );
     }
   }
+  // Offers and replies involve only the selected person; the recipient alone can accept.
+  for (const option of selected?.actor
+    ? handoverOptions(world, scope.actorId, observation.inventory, selected)
+    : [])
+    add(
+      option.id,
+      option.label,
+      'Social',
+      option.command,
+      ['offer', 'give', 'share'],
+      selected!.id,
+    );
+  // Fire care binds the exact selected fire; one of light/put out applies to its current state.
+  for (const option of selected?.heat
+    ? fireCareOptions(world, observation.inventory, selected)
+    : [])
+    add(option.id, option.label, 'Survival', option.command, ['fire'], selected!.id);
   for (const recipe of observation.knownRecipes)
     add(
       `craft-${recipe.id}`,
@@ -373,6 +392,12 @@ export function actionCatalogue(
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   family('eat', 'Eat food', 'Survival', 'Gather or cook edible food.');
   family('cook', 'Cook meat', 'Create', 'Carry raw meat and find a lit campfire.');
+  family(
+    'tend-fire',
+    'Tend a campfire',
+    'Survival',
+    'Select a campfire to light, fuel or put out.',
+  );
   family('craft', 'Craft a known recipe', 'Create', 'Invent or learn a recipe first.');
   family('teach', 'Teach a technique', 'Social', 'Learn a recipe and find a nearby listener.');
   family('talk', 'Talk to someone', 'Social', 'Move within sight of a living person.');

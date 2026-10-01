@@ -107,7 +107,8 @@ export type ActionType =
   | 'harvest'
   | 'cook'
   | 'status-effect'
-  | 'replenish';
+  | 'replenish'
+  | 'tend-fire';
 export interface Action {
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
@@ -153,6 +154,7 @@ export interface Action {
   weaponItemId?: string;
   ammoItemId?: string;
   heatId?: string;
+  fireOperation?: import('./worlds/base/fire.js').FireOperation;
   /** Inputs leave inventory at work start, never refunded by cancel or restart. */
   consumed: { definitionId: string; quantity: number }[];
 }
@@ -314,6 +316,8 @@ export interface WorldState {
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
+  /** Pending offers only, bounded per offerer; saved with the world settings record. */
+  itemOffers?: Record<string, import('./handover.js').ItemOffer>;
   knowledgeRevisions?: Record<string, number>;
   knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
   actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
@@ -439,6 +443,19 @@ export type Command = Envelope &
     | { type: 'strike'; definitionId: string; targetId: string; weaponItemId?: string }
     | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | { type: 'cook'; itemId: string; heatId: string }
+    | { type: 'handover'; operation: 'offer'; targetId: string; itemId: string; quantity: number }
+    | {
+        type: 'handover';
+        operation: 'accept' | 'decline' | 'withdraw';
+        targetId: string;
+        offerId: string;
+      }
+    | {
+        type: 'tend-fire';
+        operation: import('./worlds/base/fire.js').FireOperation;
+        targetId: string;
+        itemId?: string;
+      }
     | {
         type: 'status-effect';
         targetId: string;

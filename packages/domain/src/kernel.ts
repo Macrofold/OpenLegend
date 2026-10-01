@@ -8,6 +8,14 @@ import {
 } from './action-experience.js';
 import { nativeActivityView } from './worlds/base/action-views.js';
 import { rangedApproachRange } from './worlds/base/actions.js';
+import { executeHandover, offerRecipientProblem, reconcileItemOffers } from './handover.js';
+import {
+  BASE_FIRE_CARE,
+  completeFireCare,
+  fireCareProblem,
+  fireCareStartText,
+  isFireCareCommand,
+} from './worlds/base/fire.js';
 import { isRecordedActivityCommand, recordActivityEffect } from './action-experience.js';
 import { startLearnedActivity, startRequestedActivity } from './activity-execution.js';
 import { isSpeechVolume } from './acoustics.js';
@@ -537,6 +545,16 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
   }
   if (action.type === 'cook' && !world.entities[action.heatId ?? '']?.heat?.lit)
     return outcome(false, 'no-heat', 'Cooking requires a lit campfire.');
+  if (action.type === 'tend-fire') {
+    const problem = fireCareProblem(
+      world,
+      actor,
+      world.entities[action.targetId ?? ''],
+      action.fireOperation!,
+      action.itemId,
+    );
+    if (problem) return outcome(false, problem.code, problem.message);
+  }
   if (
     claims.length &&
     applyResourceGroup(
@@ -675,9 +693,10 @@ function executeCommandNative(
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
-    ['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
+    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
       command.type,
-    ) &&
+    ) ||
+      command.type === 'tend-fire') &&
     !supportsManualWork(source)
   )
     return reject(
@@ -694,9 +713,11 @@ function executeCommandNative(
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
+      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
             command.type,
-          ) && 'targetId' in command
+          ) ||
+            command.type === 'tend-fire') &&
+          'targetId' in command
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
@@ -815,6 +836,19 @@ function executeCommandNative(
       if (!canHandleItems(world, actor) || !item || !destination)
         return reject('unavailable', 'Choose an accessible item and destination.');
       try {
+        // Another person's carried inventory changes hands only through their acceptance.
+        // Scope checks run first, so the refusal cannot probe hidden items or people.
+        // docs/worlds/base/items.md#shared-containers-and-active-work
+        if (
+          destination.actor &&
+          destination.id !== actor.id &&
+          canAccessContainer(world, actor.id, item.ownerId) &&
+          !offerRecipientProblem(world, actor, destination)
+        )
+          return reject(
+            'needs-acceptance',
+            'Offer it to that person instead; it moves only if they accept.',
+          );
         if (
           !canAccessContainer(world, actor.id, item.ownerId) ||
           !canAccessContainer(
@@ -823,7 +857,6 @@ function executeCommandNative(
             command.type === 'merge-item'
               ? (itemFor(world, destination.id)?.ownerId ?? '')
               : destination.id,
-            command.type === 'transfer-item',
           )
         )
           return reject('unavailable', 'Choose an accessible possession and destination.');
@@ -1178,6 +1211,24 @@ function executeCommandNative(
       action.heatId = heat.id;
       break;
     }
+    case 'handover': {
+      const done = executeHandover(world, actor, command, events);
+      if (!done.ok) return reject(done.code, done.message);
+      result = done;
+      break;
+    }
+    case 'tend-fire': {
+      if (!isFireCareCommand(command))
+        return reject('invalid-command', 'Choose to light, fuel or put out a campfire.');
+      const fire = getOwn(world.entities, command.targetId);
+      const problem = fireCareProblem(world, actor, fire, command.operation, command.itemId);
+      if (problem) return reject(problem.code, problem.message);
+      action = createAction(world, 'tend-fire', BASE_FIRE_CARE[command.operation].workSeconds);
+      action.targetId = fire!.id;
+      action.fireOperation = command.operation;
+      if (command.itemId) action.itemId = command.itemId;
+      break;
+    }
     case 'eat': {
       if (!hasWildernessNeeds(component))
         return reject('not-applicable', 'This body does not consume food.');
@@ -1445,7 +1496,8 @@ function executeCommandNative(
     if (
       ['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish', 'strike', 'pickup'].includes(
         action.type,
-      )
+      ) ||
+      action.type === 'tend-fire'
     ) {
       const error = approach(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
@@ -1487,7 +1539,9 @@ function executeCommandNative(
       'action-started',
       action.type === 'move' && action.destination
         ? `${actor.name} started moving to ${Number(action.destination.x.toFixed(1))}, ${Number(action.destination.z.toFixed(1))}.`
-        : `${actor.name} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+        : action.type === 'tend-fire'
+          ? `${actor.name} ${fireCareStartText(action.fireOperation!, world.entities[action.targetId!]?.name ?? 'a fire')}.`
+          : `${actor.name} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
       actor,
       action.targetId,
       { actionType: action.type },
@@ -1519,6 +1573,7 @@ function completeAction(
 ): void {
   const component = actor.actor!;
   let outputItemId: string | undefined;
+  let completion: string | undefined;
   const outputs: ActivityOutput[] = [];
   const produce = (definitionId: string, quantity: number): string => {
     const itemId = addItem(world, actor.id, definitionId, quantity);
@@ -1793,6 +1848,23 @@ function completeAction(
       );
       break;
     }
+    case 'tend-fire': {
+      const done = completeFireCare(
+        world,
+        actor,
+        world.entities[action.targetId ?? ''],
+        action.fireOperation!,
+        action.id,
+        events,
+        action.itemId,
+      );
+      if (!done.ok) {
+        failAction(world, actor, events, done.message);
+        return;
+      }
+      completion = done.message;
+      break;
+    }
   }
   finishPlanAction(world, actor.id, action.id, {
     ...outcome(
@@ -1800,7 +1872,7 @@ function completeAction(
       action.strikeOutcome ?? 'completed',
       action.strikeOutcome
         ? `The ${action.type === 'hunt' ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
-        : `${action.type} completed.`,
+        : (completion ?? `${action.type} completed.`),
     ),
     ...(outputItemId ? { itemId: outputItemId } : {}),
     ...(outputs.length ? { outputs } : {}),
@@ -2031,7 +2103,7 @@ function advanceAction(
     seconds = 0;
   }
   if (
-    ['gather', 'harvest', 'cook', 'pickup'].includes(action.type) &&
+    ['gather', 'harvest', 'cook', 'pickup', 'tend-fire'].includes(action.type) &&
     !actionInReach(world, actor, action)
   ) {
     failAction(
@@ -2388,6 +2460,7 @@ function* advanceWorldNative(
     let statusIds = participants.statuses;
     if (!mechanics) {
       reconcileResourceReservations(world);
+      reconcileItemOffers(world, events);
       advanceAppraisals(world, events);
       for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
       advanceCommitments(world, []);
@@ -2575,6 +2648,9 @@ function* advanceWorldNative(
           : [];
       }),
     );
+    // Fires burn for the state they had when this slice began: one lit by work finishing
+    // at the endpoint gained no burn, and one put out at the endpoint burned throughout.
+    const burning = new Set(participants.ambient.filter((id) => world.entities[id]?.heat?.lit));
     world.simTime += seconds;
     remaining = Math.max(0, remaining - seconds);
     mechanics.remainingSeconds = Math.max(0, mechanics.remainingSeconds - seconds);
@@ -2664,9 +2740,9 @@ function* advanceWorldNative(
     }
     for (const id of participants.ambient) {
       const entity = world.entities[id];
-      if (entity?.heat?.lit) {
+      if (entity?.heat && burning.has(id)) {
         entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
-        if (entity.heat.fuelSeconds === 0) {
+        if (entity.heat.fuelSeconds === 0 && entity.heat.lit) {
           entity.heat.lit = false;
           emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
         }
@@ -2689,6 +2765,7 @@ function* advanceWorldNative(
         advanceAction(world, actor, 0, events);
     }
     reconcileResourceReservations(world);
+    reconcileItemOffers(world, events);
     advanceAppraisals(world, events);
     const sharedBoundary =
       mechanics.remainingSeconds === 0 ||

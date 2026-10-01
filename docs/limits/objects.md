@@ -90,9 +90,11 @@ Transfer/split/merge/drop no longer require all work to stop. Moves reject activ
 
 **Changed · Restrictiveness: Safe.**
 
-Visible reachable world containers/piles are shared by default. Explicit actor lists restrict access through ancestors; carried bags require custody or a grant on the outer carried bag. Direct giving permits deposit into reachable living actors, without inspection. Creator editing is limited to world containers and the creator's own carried bags. Access lists allow 100 actors; absence means shared and an empty list denies everyone.
+Visible reachable world containers/piles are shared by default. Explicit actor lists restrict access through ancestors; carried bags require custody or a grant on the outer carried bag. Handing items to another person requires their acceptance of an offer ([BW11](base-world.md#bw11)); direct deposit into another actor's carried inventory is refused. Neither path inspects the recipient's possessions. Creator editing is limited to world containers and the creator's own carried bags. Access lists allow 100 actors; absence means shared and an empty list denies everyone.
 
-**Reason / tradeoff:** Enable ordinary sharing while keeping physical access separate from title and human-private data. A bounded explicit grant list supports the release population; roles/locks/trade consent need authored consumers. The former custody-only/no-giving rule is removed. [Contract](../worlds/base/items.md).
+**Reason / tradeoff:** Enable ordinary sharing while keeping physical access separate from title and human-private data. A bounded explicit grant list supports the release population; roles, locks and trading need authored consumers. The former custody-only/no-giving rule is removed.
+
+**Changed 2026-09-28:** the unilateral deposit into a reachable living person (E04/R03, 2026-09-26) was replaced by consent-aware offers, following Mike's rule that nothing changes hands without acceptance ([camp fire and sharing decision 6](../projects/camp-fire-and-sharing.md#decisions)). Privacy is unchanged. [Contract](../worlds/base/items.md).
 
 ## OB13
 

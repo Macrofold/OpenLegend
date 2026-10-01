@@ -9,8 +9,8 @@ The Character panel's action box and NPC proposals first try a free, non-AI read
 
 ## Requests without an action
 
-- **Giving:** "give", "hand", "pass" and "offer" are refused with "Handing things to someone else is not an action in this world yet; you can drop them nearby instead."
-- **Tending a fire:** "tend", "feed", "fuel", "stoke", "keep" or "mind" the fire (optionally "burning", "going", "lit" or "alive") until a named time becomes a disclosed revision, staying by the heat source until that time, because no fuelling action exists yet (AC09). The player sees the omission "keep the fire fuelled: No action adds fuel to a fire in this world yet." and must accept it. Without a time it is refused with "Adding fuel to a fire is not an action in this world yet; nothing was started."
+- **Giving:** "give", "hand", "pass" and "offer" are not refused here; they reach ordinary grounding, which binds them to [offers](social.md#offering-and-accepting-possessions) the recipient must accept.
+- **Tending a fire:** single requests such as "feed", "fuel" or "stoke the fire", "light the fire" or "put the fire out" ground to [fire care](survival.md#tending-the-campfire). Ongoing tending ("tend", "keep" or "mind" the fire, optionally "burning", "going", "lit" or "alive") until a named time becomes a disclosed revision, staying by the heat source until that time, because repeated fuelling is not an ongoing activity yet (AC06). The player sees the omission "keep the fire fuelled: Fuelling a fire again and again is not an ongoing activity yet; add fuel yourself." and must accept it. Without a time it is refused with "Keeping a fire going is not an ongoing activity yet; add fuel to it or light it instead."
 
 ## Examples
 

@@ -34,7 +34,7 @@ SQL adapters and the whole-step refusal boundary. Consumption updates the same r
 index as admission, retaining canonical continuous summation and exact receipt occupancy.
 Warm/cold/fork/deadline checks and repeated whole-unit consumption stress qualify the repair.
 
-New holds bind a current action or admitted native process and claimant. Derived
+New holds bind a current action or admitted native process and claimant. (Reserving a portion for a named person, tracker BW21, was deferred for this reason: it needs a standing claimant process accepted at load plus R01's receipt pruning.) Derived
 reservation occupancy joins actor/module/world/host work admission; legacy holds without
 claimant evidence retain world/host accounting without invented ownership. Both SQL
 adapters preserve exact 17.125-unit holds and their accounting; cancellation releases live

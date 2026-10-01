@@ -155,6 +155,8 @@ export const commandInputSchema = z
       'hunt',
       'harvest',
       'cook',
+      'tend-fire',
+      'handover',
       'eat',
       'status-effect',
       'replenish',
@@ -192,6 +194,9 @@ export const commandInputSchema = z
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
+    fireOperation: z.enum(['light', 'fuel', 'extinguish']).optional(),
+    handoverOperation: z.enum(['offer', 'accept', 'decline', 'withdraw']).optional(),
+    offerId: id.optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
     distance: z.number().min(1.5).max(12).optional(),
@@ -3631,6 +3636,47 @@ export class WorldService {
         command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
         break;
       }
+      case 'tend-fire':
+        // Always an explicitly chosen perceived fire; never a world-wide search.
+        if (!input.targetId || !input.fireOperation)
+          return {
+            ok: false,
+            code: 'target',
+            message: 'Choose a campfire and what to do with it.',
+          };
+        command = {
+          ...envelope,
+          type: 'tend-fire',
+          operation: input.fireOperation,
+          targetId: input.targetId,
+          ...(input.itemId ? { itemId: input.itemId } : {}),
+        };
+        break;
+      case 'handover':
+        if (!input.targetId || !input.handoverOperation)
+          return { ok: false, code: 'target', message: 'Choose a person and an offer.' };
+        if (input.handoverOperation === 'offer') {
+          if (!input.itemId || input.quantity === undefined)
+            return { ok: false, code: 'item', message: 'Choose what to offer and how many.' };
+          command = {
+            ...envelope,
+            type: 'handover',
+            operation: 'offer',
+            targetId: input.targetId,
+            itemId: input.itemId,
+            quantity: input.quantity,
+          };
+        } else {
+          if (!input.offerId) return { ok: false, code: 'offer', message: 'Choose an offer.' };
+          command = {
+            ...envelope,
+            type: 'handover',
+            operation: input.handoverOperation,
+            targetId: input.targetId,
+            offerId: input.offerId,
+          };
+        }
+        break;
       case 'inspect-activities':
         command = {
           ...envelope,

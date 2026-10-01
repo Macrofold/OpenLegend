@@ -15,6 +15,7 @@ BW07 now includes the finite nested-bag, exact-lot/individual equipment and decl
 Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--deferred-automated-validation); native scale qualification stays with [performance](performance.md).
 
 - [x] **BW08 — Knowledge and observer names:** authored YAML limits/policy, observer-owned given names, deliberate individuation, explicit creator acquaintances, self-name projection, species fallback and conservative continuous-encounter recognition. Canonical behavior: [knowledge](../worlds/base/knowledge.md); engine documents: CR13.
+- [ ] **BW22 — Observer-safe names in event text:** shared event text can reveal a person's given name to observers who have not learned it. Per-observer projection (`memory-perspective.ts`) renames only the leading acting subject, while the teach, strike and shot events in `kernel.ts` embed the target's true name (for example “Mike struck Ada” shown to someone who knows Ada only as “a person”). Decide between renaming the event target per observer as well, or keeping target references generic as the offer events now do; then verify that an observer without the name sees none, one with it still does, and quoted speech is untouched. Found during [camp sharing verification](../verification/camp-life.md#review-fixes).
 - [ ] **BW09 — Richer recognition:** add supported face/voice/distinguishing-feature evidence, ambiguous matches and disguise/mistaken identity when the perception owner provides that consumer. Do not infer recognition from canonical IDs or permanently stable unknown-subject handles. Retain knowledge when a match is unresolved.
 
 - [x] **BW10 — Item interaction review:** preserve scheduled-preview admission while avoiding discarded event/receipt finalization, index immutable custody reads, cancel pickup on required capability loss, validate pile placement, remove unseen pile ghosts, isolate pullout keyboard handling, keep Pick Up All first and make single-stack pickup searchable by item name. Reject invalid drop quantities visibly and lock creation controls during submission. Runtime evidence is in Verification; automated qualification remains in TODO.
@@ -69,3 +70,29 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 - [ ] Expose world-authored body meaning and equipment capability through ordinary inspection and actual cognitive context. Keep permanent-death claims and inaccessible future revival capabilities out of Ada's factual instructions.
 
 **Depends on:** EPR04/AG06/AG07 integration and AC09.6 for the complete journey. **Exit:** a newly created world presents the agreed character and supplies accurately; only Mike/Ada receive knives, Ada begins without an operational goal, and reload preserves the current authored state. [AG13](agent-agency.md#ag13--embodied-survival-demonstration) owns the live autonomous demonstration and comparison evidence; no claim of full harvest/cook/eat autonomy follows from starter content.
+
+## Camp fire care and sharing
+
+Approved by Mike on 2026-09-28 as starting-scene priorities 2 and 3; plan and decisions: [camp fire and sharing](../projects/camp-fire-and-sharing.md). Canonical rules: [survival](../worlds/base/survival.md#tending-the-campfire), [items](../worlds/base/items.md) and [social](../worlds/base/social.md). Limits: [BW10](../limits/base-world.md#bw10).
+
+### BW19 — Camp fire care
+
+- [x] Light, fuel and put out a campfire through one `tend-fire` family owned by `worlds/base/fire.ts`, reusing the saved heat state. Real ignition requirement, conserved fuel consumed at completion, fuel cap, retained unburnt fuel, cooking guard and lit-at-slice-start burning.
+- [x] Player menu and fire quick actions, typed text, NPC candidates, planning vocabulary, persistent plan steps and learned-activity invocation; readable events, action-record facts and coarse visible fuel.
+- [ ] Ongoing tending (“keep the fire going until dawn”) waits for AC06 predicates, waits and bounded repetition; no automatic refuelling loop.
+- [ ] Flame transfer from another fire, flint/ember items, weather, failure chances, warmth and spreading need their own mechanics and owners.
+
+**Evidence:** native, PostgreSQL service and fixture-Jev scenarios in [Verification](../verification/camp-life.md). **Deferred automated coverage:** [TODO](TODO.md#camp-fire-care-and-sharing--deferred-automated-coverage).
+
+### BW20 — Consent-aware handover
+
+- [x] Offer, accept, decline, withdraw and expire through one immediate `handover` family owned by `packages/domain/src/handover.ts`. Only the named recipient accepts; custody moves atomically at acceptance through `moveLot`; nothing is reserved or moved before acceptance. Generic refusals, pinned bag contents, whole-object offers, caps, lapse and exact-deadline expiry, shape-only load validation.
+- [x] Player menu and person quick replies, typed text, inventory **Offer to**, NPC offer and reply candidates; direct deposit into another person's carried inventory refused ([decision 6](../projects/camp-fire-and-sharing.md#decisions)).
+- [ ] Move pending offers from the world-settings record to a catalogued `sim_item_offers` table (with a save-format change) when save code may be edited; the current bounded storage is a recorded deviation from [save and load](../save-and-load.md#current-subsystem-integration).
+- [ ] Protect offered units from the offerer's own use only when claims can bind a standing consent process (see BW21); exact-quantity offer candidates beyond one unit or the whole lot, trading and feeding remain separate consumers.
+
+### BW21 — Reserve a portion for a named person
+
+- [ ] Deferred ([decision 7](../projects/camp-fire-and-sharing.md#decisions)). A reserved portion needs a hold with no live action or native process. `validateResourceReservations` and `validateNativeWork` reject such holds at load, and [R01](limits-audit.md#r01) must first move finished holds out of live accounting. Deliver through the [state-contribution owner](state-contributions.md) rather than a family-local store. Standing offers are only a partial substitute, since they do not protect the portion.
+
+**Evidence:** [Verification](../verification/camp-life.md). **Deferred automated coverage:** [TODO](TODO.md#camp-fire-care-and-sharing--deferred-automated-coverage).

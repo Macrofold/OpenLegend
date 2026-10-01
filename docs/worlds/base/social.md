@@ -34,12 +34,33 @@ For example, “I promise to gather berries” can bind the installed berries de
 
 The English parser and gathering interpretation currently live beside reusable obligation state in the general domain module. Their semantic home is this bundled-world contract. [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) calls for extracting policy when that slice needs it, reusing the existing mutation owner rather than adding another promise store. A world with ritual vows or negotiated contracts can differ without changing engine evidence and revision integrity.
 
+## Offering and accepting possessions
+
+Handing carried items to another person is a consent exchange, owned by `packages/domain/src/handover.ts` with world values in `worlds/base/handover.ts`:
+
+- **Offering** holds out a quantity of one carried portable lot to a person the offerer can see within arm's reach (the saved item-handling reach). It moves nothing and reserves nothing.
+- **Accepting** can be done only by the named recipient, through their own command. The items move atomically into the recipient's own inventory through the ordinary custody owner. The offer must not have expired; both people must be alive, active and able to see each other within reach; and the offerer must still carry that lot, with enough free units and unchanged bag contents.
+- **Declining**, by the recipient, or **withdrawing**, by the offerer, moves nothing.
+- **Expiry:** an unanswered offer expires after **30 game minutes** (30 wall seconds at 1×).
+- **Lapse:** an offer lapses at the next simulation moment if its items leave the offerer, change, or are needed by work, or if either person dies, becomes incapacitated or leaves.
+
+Nobody else can accept, decline or withdraw an offer, and an offer never transfers anything on its own. A person may hold out at most three offers at once, and a lot can be in only one offer. Bags are offered whole, and offer text never lists their contents. A bag carrying an access grant must have it cleared first. Partial quantities of individual objects are refused.
+
+For example, Mike holds out two Wild berries to Ada. If she accepts, the berries become hers. If she declines, ignores the offer or Mike withdraws it, nothing moves. If Mike eats them first, her acceptance is refused with “The offered items are no longer available.” Refusal messages never name the other person or explain their private circumstances. The offer and its outcome are ordinary visible events. Only the offer itself is notable enough to invite an NPC recipient to decide.
+
+A character decides through its ordinary choices:
+
+- **Characters:** they are offered accept and decline replies for offers made to them, even while busy. A reply never interrupts their work.
+- **Players** use the other person's menu or quick actions, typed text, or **Offer to** in the inventory.
+
+Characters may also offer carried items to people within reach; food is listed first, and the list is bounded. Replies are immediate social choices: they are deliberately not persistent plan steps or learned methods, so consent cannot be queued late or replayed. Direct deposit into another person's carried inventory is refused ([items](items.md#shared-containers-and-active-work)). Feeding someone, trading, reserving portions for a named person, and contested ownership are not implemented. Reserving portions waits for a claim owner that can hold stock without a live process (tracker BW21). Values and rationale: [BW11](../../limits/base-world.md#bw11).
+
 ## Delivery and evidence
 
 Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). Family UI, promise management and process authoring are future tasks, not delivered by this documentation pass. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; no new live cognition, UI or persistence qualification is claimed here.
 
 ## Maintained records
 
-- Implementation: [BW16/BW17](../../maintainers/base-world.md#social-playable-slices), [ACT07/ACT08 and ACT09](../../maintainers/actor-model.md).
+- Implementation: [BW16/BW17](../../maintainers/base-world.md#social-playable-slices), [BW20/BW21](../../maintainers/base-world.md#camp-fire-care-and-sharing), [ACT07/ACT08 and ACT09](../../maintainers/actor-model.md).
 - Limits and constraints: [base-world defaults](../../limits/base-world.md), [feelings](../../limits/feelings.md), [memory](../../limits/memory.md).
 - Related contract/design: [appraisal/social continuity](../../projects/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/appraisal-social-continuity-tech-design.md), [knowledge](knowledge.md).

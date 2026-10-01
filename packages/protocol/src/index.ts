@@ -27,6 +27,8 @@ export interface CommandInput {
     | 'hunt'
     | 'harvest'
     | 'cook'
+    | 'tend-fire'
+    | 'handover'
     | 'eat'
     | 'replenish'
     | 'status-effect'
@@ -47,6 +49,9 @@ export interface CommandInput {
   generation?: number;
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
+  fireOperation?: 'light' | 'fuel' | 'extinguish';
+  handoverOperation?: 'offer' | 'accept' | 'decline' | 'withdraw';
+  offerId?: string;
   targetId?: string;
   definitionId?: string;
   itemId?: string;
@@ -821,7 +826,8 @@ export interface ObjectHistoryPage {
 }
 
 export interface ContainerPage {
-  destinations?: Array<{ id: string; name: string; revision: number; depositOnly: boolean }>;
+  /** `recipient` marks a reachable person: possessions are offered to them, never deposited. */
+  destinations?: Array<{ id: string; name: string; revision: number; recipient: boolean }>;
   ok: boolean;
   message?: string;
   container: {

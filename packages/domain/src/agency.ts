@@ -34,6 +34,7 @@ import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { supportedPosition } from './spatial-state.js';
+import { isFireCareCommand } from './worlds/base/fire.js';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
@@ -1153,6 +1154,8 @@ export function isPhysicalCommand(command: Command): boolean {
       );
     case 'cook':
       return isSafeRecordId(command.itemId) && isSafeRecordId(command.heatId);
+    case 'tend-fire':
+      return isFireCareCommand(command);
     case 'status-effect':
       return (
         isSafeRecordId(command.targetId) &&

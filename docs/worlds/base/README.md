@@ -13,7 +13,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 ## Code boundary
 
-The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.
+The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, fire care (`fire.ts`), item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.
 
 Generic engine code owns command authority, identity, saved state, atomic transfers, spatial queries, registered effect execution and observation boundaries. Temporary public composition exports preserve existing imports while referring to the single base-world owner; they are not duplicate definitions. Visual assets remain in the renderer, and never grant mechanics.
 

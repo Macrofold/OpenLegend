@@ -81,3 +81,39 @@ Each chosen action performs one strike. Repetition uses the existing bounded pla
 **Current — starter scenario, September 27 · Restrictiveness: Medium.** New bundled-world starts give **one knife each to Mike and Ada only**, Ada **35/100 fullness**, her existing healthy/rested body, a consistent authored biography and **zero initial operational goals**. The starters' carried berries are removed and the two nearby berry patches start at zero with truthful depleted presentation. Retain existing animals, camp equipment and nonfood materials. Omitted goal defaults for other authored starts need not change; an explicitly empty goal list must stay empty.
 
 **Reason / tradeoff:** A lean camp makes the requested survival decision observable sooner without telling Ada what to choose. This owner-approved difficulty/content change replaces Ada fullness 66, three berries per starter and full nearby berry patches. It does not guarantee hunting or demonstrate behavior when easy food is available. Qualification must include food-present comparisons. No existing save is reseeded or reset; no other character gains a knife through generic creation. [Starting scene](../projects/embodied-survival-feature-spec.md#proposed-starting-scene) · [BW18](../maintainers/base-world.md#bw18--ada-and-the-lean-starting-camp).
+
+## BW10
+
+**Current — implemented September 28 · Restrictiveness: Medium.** Fire care in [fire.ts](../../packages/domain/src/worlds/base/fire.ts):
+
+- **Fuel:** one `fuel` unit adds **3,600 game seconds** after **20 seconds** of work. A fire holds at most **172,800 seconds** (48 hours), the banked fire's authored start.
+- **Lighting:** needs laid fuel, **one tinder unit** (used up) and a rigid shaft drill (kept), and takes **150 seconds**. It always succeeds.
+- **Putting out:** takes **30 seconds** and keeps unburnt fuel. It is refused while another actor is already cooking there (not while they are still approaching).
+- **Reach and costs:** reach is the ordinary **1.6-unit** interaction radius. Materials are spent only when the work finishes.
+- **Visible fuel:** rounded to whole hours, or “less than an hour”.
+
+**Reason / tradeoff:** One branch per game hour makes fuel a real, visible cost at 60:1 speed (one wall minute per branch) without constant chores. The 48-hour cap stops a fire from storing unlimited wood; it matches the camp's authored banked fire rather than a measured combustion value. A plain friction method with deterministic success gives a real ignition requirement from starting possessions, while flint, embers, weather and failure chances wait for their own mechanics. Completion-time spending avoids losing wood on an interrupted placement, at the cost of differing from cooking and crafting, which spend at work start. The cooking guard protects another person's already-spent meat; it can delay putting a fire out by up to one cooking duration (90 seconds). None of these are universal combustion laws. [Survival rules](../worlds/base/survival.md#tending-the-campfire) · [tracker BW19](../maintainers/base-world.md#bw19--camp-fire-care).
+
+## BW11
+
+**Current — implemented September 28 · Restrictiveness: Medium.** Consent-aware handover in [handover.ts](../../packages/domain/src/worlds/base/handover.ts):
+
+- **Offer life:** an offer stays open for **1,800 game seconds** (30 wall seconds at 1×, 3.75 at 8×).
+- **Pending limits:** at most **3** pending offers per offerer, **1** per lot. Only pending offers are retained, so the world-settings record holds at most three per person.
+- **Reach:** offering needs the offerer to see the recipient within the saved item-handling reach (**1.6** units by default); accepting needs mutual sight within that reach.
+- **Bags with access grants** are refused until the grant is cleared, because a grant would otherwise keep reaching into the recipient's bag.
+- **No reservation:** offered units are not reserved.
+- **Whole objects:** bags and individual objects are offered whole.
+- **Candidate bounds:**
+  - **Character decisions:** new offers go to the nearest 3 people who can take items within reach; lots per person: 4; offer candidates: 12; quantities: one unit or the whole lot.
+  - **Player typed requests:** lots per person: 12; offer candidates: 24.
+  - **Always:** replies to existing offers are always listed.
+
+**Reason / tradeoff:**
+
+- **Expiry:** long enough for a player to notice or a character's next decision. It can be too short at 8× speed, where pausing helps.
+- **Caps:** bound stored records and the choices a character rates. A player's typed request needs more lots because it names what to offer.
+- **No reservation:** avoids the unresolved claim-lifetime work (R01/ST09), at the cost that an offerer can still use offered items, which then makes acceptance fail.
+- **Visibility:** the offer is visible to people who see the offerer; refusals stay generic so neither side learns private circumstances.
+
+[Social rules](../worlds/base/social.md#offering-and-accepting-possessions) · [tracker BW20](../maintainers/base-world.md#bw20--consent-aware-handover).

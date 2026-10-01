@@ -47,11 +47,14 @@ Reachable, visible world containers and piles are shared by default. An admitted
 access list can restrict which actors may open/use it; absence means unrestricted physical
 access, while an empty list denies it. Restrictions apply through the containment chain.
 Carried bags remain private to their custodian unless the outer carried bag explicitly grants
-access. Giving deposits into a reachable living recipient's inventory without reading it.
+access. Handing items to another person is an offer that only they can accept
+([social rules](social.md#offering-and-accepting-possessions)); moving items directly into
+another person's carried inventory is refused. Neither path reads the recipient's possessions.
 Declared ownership remains separate from these permissions and from human-private notes.
 Creator controls can set/clear restrictions on world containers and their own carried bags;
 ordinary actors cannot grant themselves access. This is a physical-access foundation, not a
-lock-picking, trade-consent or contested-ownership mechanic.
+lock-picking, trading or contested-ownership mechanic; consent to receive items is the offer
+exchange above.
 
 Ingredient, food, ammunition and tool discovery includes accessible nested possessions.
 Equipping a nested tool moves it into the actor's equipment location through the same object

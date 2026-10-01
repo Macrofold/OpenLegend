@@ -1,3 +1,4 @@
+import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
   itemsForOwner,
@@ -361,6 +362,7 @@ export function validateItemHandling(world: WorldState): void {
   )
     throw new Error('Invalid generated-item packing policy.');
   validateObjects(world);
+  validateItemOffers(world);
 }
 
 export interface ContainerAccessRequest {

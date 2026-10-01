@@ -8,6 +8,7 @@ import { observerDescription } from './knowledge.js';
 import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
+import { fireCareFacts, fireFuelDescription } from './fire.js';
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
  * No later observation may fill in a hidden historical target or effect. */
@@ -34,6 +35,7 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
     hunt: 'Hunt once',
     harvest: 'Harvest',
     cook: 'Cook',
+    'tend-fire': 'Tend a fire',
     eat: 'Eat',
     equip: 'Equip',
     move: 'Move',
@@ -189,7 +191,21 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
       value: `Requires a cutting tool and unharvested remains; ${BASE_ACTION_DEFAULTS.harvestSeconds} game seconds plus approach`,
       critical: true,
     });
-  if (['harvest', 'cook', 'gather', 'pickup', 'replenish'].includes(command.type))
+  if (command.type === 'tend-fire') {
+    view.name =
+      command.purpose ??
+      { light: 'Light a fire', fuel: 'Add fuel to a fire', extinguish: 'Put out a fire' }[
+        command.operation
+      ];
+    view.facts.push(...fireCareFacts(command.operation));
+    if (perceived && target.heat)
+      view.facts.push({
+        name: 'fire',
+        value: `${target.heat.lit ? 'Burning' : 'Cold'} now, with ${fireFuelDescription(target.heat)}`,
+        critical: true,
+      });
+  }
+  if (['harvest', 'cook', 'gather', 'pickup', 'replenish', 'tend-fire'].includes(command.type))
     view.facts.push({
       name: 'approach',
       value: `Move to within ${command.type === 'pickup' ? world.itemHandling.reach : BASE_ACTION_DEFAULTS.interactionRadius} m; the route length is not known`,

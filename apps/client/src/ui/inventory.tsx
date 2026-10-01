@@ -304,25 +304,28 @@ export function Inventory({
           My possessions
         </Button>
         {page?.destinations?.map((target) =>
-          target.depositOnly ? (
+          target.recipient ? (
             moving && (
               <Button
                 key={target.id}
                 size="sm"
                 disabled={!canAct}
                 onPress={() =>
-                  dispatch(
-                    arrange(
-                      'transfer-item',
-                      moving.item,
-                      target.id,
-                      target.revision,
-                      moving.quantity,
-                    ),
-                  )
+                  dispatch({
+                    id: `offer-${moving.item.id}-${target.id}`,
+                    label: `Offer to ${target.name}`,
+                    enabled: canAct,
+                    command: {
+                      type: 'handover',
+                      handoverOperation: 'offer',
+                      targetId: target.id,
+                      itemId: moving.item.id,
+                      quantity: moving.quantity,
+                    },
+                  })
                 }
               >
-                Give to {target.name}
+                Offer to {target.name}
               </Button>
             )
           ) : (

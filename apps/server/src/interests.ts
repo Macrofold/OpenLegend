@@ -1,5 +1,5 @@
 import { itemFor, inventoryFor, accessiblePossession } from '@open-legend/domain';
-import { currentGoal, NATIVE_PREPARATIONS } from '@open-legend/domain';
+import { currentGoal, isFuel, NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type { WorldState } from '@open-legend/domain';
 import { digest } from './store.js';
 import type { AttentionCandidate } from './recall.js';
@@ -35,6 +35,10 @@ function planDefinitions(world: WorldState, actorId: string): string[] {
               ? (world.recipes[command.recipeId]?.inputs.map((input) => input.definitionId) ?? [])
               : [];
           if (command.type === 'cook') return ['raw_meat'];
+          if (command.type === 'tend-fire' && command.operation === 'fuel')
+            return Object.values(world.itemDefinitions)
+              .filter(isFuel)
+              .map((definition) => definition.id);
           return [];
         }),
     ),

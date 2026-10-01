@@ -1,4 +1,4 @@
-import { worldPosition, observedAnimalHealth } from '@open-legend/domain';
+import { worldPosition, observedAnimalHealth, fireFuelDescription } from '@open-legend/domain';
 import { entityLabel } from './entity-references.js';
 import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
 import type { AttentionCandidate } from './recall.js';
@@ -28,6 +28,7 @@ const activities: Record<Action['type'], string | undefined> = {
   cook: 'cooking',
   strike: 'striking',
   replenish: 'replenishing a supply',
+  'tend-fire': 'tending a fire',
   // The internal effect identifier is not itself an observable activity description.
   'status-effect': undefined,
 };
@@ -64,7 +65,10 @@ export function perceivedEntityText(
     facts.push(
       `Contents: ${contents.map((item) => `${item.quantity} × ${definitions.get(item.definitionId)?.name ?? 'unidentified item'}`).join('; ')}.`,
     );
-  if (entity.heat) facts.push(entity.heat.lit ? 'The fire is lit.' : 'The fire is unlit.');
+  if (entity.heat)
+    facts.push(
+      `The fire is ${entity.heat.lit ? 'lit' : 'unlit'}, with ${fireFuelDescription(entity.heat)}.`,
+    );
   return facts.join(' ');
 }
 

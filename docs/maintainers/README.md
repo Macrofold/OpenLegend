@@ -47,6 +47,7 @@ This page is the master navigation index for active implementation work.
 
 - [Action branch reconciliation and recovery](action-reconciliation.md) — AR01–AR08 integration tasks, source checkpoints and recovery order beneath the existing AC/PF owners.
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
+- [Camp fire care and sharing](../projects/camp-fire-and-sharing.md) — approved plan for fire care and consent-aware handover; tracked by BW19–BW21, AC08.3 and AC09.7.
 - [Embodied survival](../projects/embodied-survival-feature-spec.md) and [technical plan](../projects/embodied-survival-tech-design.md) — Ada's bodily observations, actor-chosen intentions, relevant inventory and equipped melee; implementation tracked by AG06/AG07/AG13, EPR04–EPR06, AC09.6 and BW18. Mechanics and concise equipment-derived hunt options implemented; Jev-only hunting/retry and complete meals demonstrated, with broader qualification still open.
 
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).

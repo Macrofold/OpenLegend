@@ -7,24 +7,22 @@ import type { TypedRequestVocabulary } from '../../typed-requests.js';
 export const BASE_TYPED_REQUESTS: TypedRequestVocabulary = {
   heatSources: ['fire', 'campfire'],
   beings: [...BASE_SPECIES, 'person', 'people', 'animal', 'being'],
-  unsupported: [
-    {
-      verbs: ['give', 'hand', 'pass', 'offer'],
-      reason:
-        'Handing things to someone else is not an action in this world yet; you can drop them nearby instead.',
-    },
-  ],
+  // Giving is an offer the recipient accepts; typed requests reach it through grounding.
+  unsupported: [],
   revisions: [
     {
-      // No fuelling family exists yet (AC09): tending becomes staying by the heat source.
-      verbs: ['tend', 'feed', 'fuel', 'stoke', 'keep', 'mind'],
+      // Single fuel, light and put-out requests ground to fire care (AC09.7). Keeping a fire
+      // going over time needs repeated fuelling, which no activity offers yet (AC06).
+      verbs: ['tend', 'keep', 'mind'],
       states: ['burning', 'going', 'lit', 'alive'],
       becomes: 'stay-by-heat',
       omitted: {
         requirement: 'keep the fire fuelled',
-        reason: 'No action adds fuel to a fire in this world yet.',
+        reason:
+          'Fuelling a fire again and again is not an ongoing activity yet; add fuel yourself.',
       },
-      withoutTime: 'Adding fuel to a fire is not an action in this world yet; nothing was started.',
+      withoutTime:
+        'Keeping a fire going is not an ongoing activity yet; add fuel to it or light it instead.',
     },
   ],
   examples: [

@@ -1,5 +1,7 @@
 import { strikeDefinition } from '@open-legend/domain';
 import {
+  BASE_FIRE_CARE,
+  fireFuelDescription,
   gatheringYield,
   hasWildernessNeeds,
   NATIVE_ITEMS,
@@ -47,6 +49,10 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   harvest:
     'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
   cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',
+  handover:
+    'Offer carried items to a person within reach, or accept, decline or withdraw an offer. Nothing changes hands unless the recipient accepts; an unanswered offer expires.',
+  'tend-fire':
+    'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
   eat: 'Eat one portion from your inventory to restore fullness immediately, up to full. Raw meat must be cooked first.',
   replenish:
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
@@ -128,6 +134,31 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
         : `${common} ${target.name} yields: ${target.remains.yields.map((yielded) => `${yielded.quantity} ${name(yielded.definitionId).toLowerCase()}`).join(', ')}.`;
     case 'cook':
       return target ? `${common} Use ${target.name} for this portion.` : common;
+    case 'handover': {
+      const what =
+        item && itemDefinition ? `${command.quantity ?? item.quantity} ${itemDefinition.name}` : '';
+      return command.handoverOperation === 'offer'
+        ? `Offer ${what || 'these items'} to ${target?.name ?? 'this person'}. Nothing moves unless they accept; you keep the items meanwhile and can withdraw the offer.`
+        : command.handoverOperation === 'accept'
+          ? `Take the offered items from ${target?.name ?? 'this person'}. You must be within arm's reach of each other.`
+          : command.handoverOperation === 'decline'
+            ? `Decline ${target?.name ?? 'this person'}'s offer; nothing moves.`
+            : command.handoverOperation === 'withdraw'
+              ? `Withdraw your offer to ${target?.name ?? 'this person'}; nothing moves.`
+              : common;
+    }
+    case 'tend-fire': {
+      const state = target?.heat
+        ? ` ${target.name} is ${target.heat.lit ? 'burning' : 'cold'}, with ${fireFuelDescription(target.heat)}.`
+        : '';
+      return command.fireOperation === 'light'
+        ? `Light ${target?.name ?? 'the campfire'} with a fire drill (a carried rigid shaft, kept) and one bundle of plain fibers as tinder (used up). The fire must already have fuel.${state}`
+        : command.fireOperation === 'fuel'
+          ? `Add ${itemDefinition?.name ?? 'one piece of carried fuel'} to ${target?.name ?? 'the campfire'}. It burns for about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour; a fire holds at most ${BASE_FIRE_CARE.fuel.maximumFuelSeconds / 3600} hours of fuel.${state}`
+          : command.fireOperation === 'extinguish'
+            ? `Put out ${target?.name ?? 'the campfire'}. Unburnt fuel stays for relighting; cooking there stops working.${state}`
+            : common;
+    }
     case 'eat':
       if (!hasWildernessNeeds(observation.actor.actor!)) return 'This body has no fullness need.';
       return itemDefinition?.nutrition
@@ -174,6 +205,20 @@ export function commandFacts(
       ['Costs', `${p.inputQuantity} ${name(p.input)}`],
       ['Yields', `${p.outputQuantity} ${name(p.output)}`],
       ['Time', duration(p.workSeconds)],
+    ];
+  }
+  if (command.type === 'tend-fire' && command.fireOperation) {
+    const operation = command.fireOperation;
+    return [
+      [
+        'Costs',
+        operation === 'light'
+          ? '1 tinder bundle; a drill is kept'
+          : operation === 'fuel'
+            ? `1 ${command.itemId ? name(observation.inventory.find((i) => i.id === command.itemId)?.definitionId ?? '') : 'fuel item'}`
+            : 'Nothing',
+      ],
+      ['Time', duration(BASE_FIRE_CARE[operation].workSeconds)],
     ];
   }
   if (command.type === 'craft') {

@@ -108,8 +108,13 @@ describe('local HTTP boundary', () => {
     const response = await post('/api/actions', { targetId: 'campfire' });
     expect(response.status).toBe(200);
     const report = await response.json();
+    const wood = allItems(game.service.world).find(
+      (item) => item.ownerId === PLAYER_ID && item.definitionId === 'wood',
+    )!;
     expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
       'move',
+      'fire-extinguish:campfire',
+      `fire-fuel:${wood.id}:campfire`,
       'cook',
     ]);
     expect(JSON.stringify(game.service.world)).toBe(original);

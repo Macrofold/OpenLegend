@@ -657,6 +657,8 @@ export function symbol(id: string): string {
     prepare: 'action.craft',
     harvest: 'action.gather',
     cook: 'action.fire',
+    'tend-fire': 'action.fire',
+    handover: 'ui.inventory',
     equip: 'ui.inventory',
     pickup: 'ui.inventory',
     drop: 'ui.inventory',
