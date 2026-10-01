@@ -2053,8 +2053,22 @@ body,
   color: #75b58a;
 }
 .ol-diagnostic-status[data-status='failed'],
+.ol-diagnostic-status[data-status='rejected'],
 .ol-diagnostic-error {
   color: var(--danger);
+}
+/* No-effect outcomes stay distinct from success and failure. */
+.ol-diagnostic-status:is(
+  [data-status='skipped'],
+  [data-status='deferred'],
+  [data-status='coalesced'],
+  [data-status='canceled'],
+  [data-status='stale']
+) {
+  color: var(--ink-muted);
+}
+.ol-diagnostic-status[data-status='uncertain'] {
+  color: #d8b35e;
 }
 .ol-diagnostic-error {
   font-size: 12px;

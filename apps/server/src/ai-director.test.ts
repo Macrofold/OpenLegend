@@ -2,7 +2,7 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems } from '@open-legend/domain';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   AiClient,
   AiReceipt,
@@ -111,8 +111,21 @@ function deferred<T>() {
   return { promise, resolve };
 }
 const cleanup: (() => Promise<void>)[] = [];
+// Fixtures must never reach a real provider through the global transport.
+let network: ReturnType<typeof vi.fn>;
+beforeEach(() => {
+  network = vi.fn(async () => {
+    throw new Error('network blocked in fixture');
+  });
+  vi.stubGlobal('fetch', network);
+});
 afterEach(async () => {
-  for (const close of cleanup.splice(0)) await close();
+  try {
+    for (const close of cleanup.splice(0)) await close();
+    expect(network).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 
 async function harness(

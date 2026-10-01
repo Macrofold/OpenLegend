@@ -489,15 +489,55 @@ function Preview({
   );
 }
 function levelLabel(route?: string): string | undefined {
-  const match = route?.match(/level[ -]?(\d)/i);
-  return match
-    ? `Level ${match[1]}`
-    : route === 'native'
-      ? 'Level 1 · Native'
-      : route === 'full-harness'
-        ? 'Full harness'
-        : undefined;
+  // An escalated level-1 decision records both levels, e.g. `level1→level2`.
+  const levels = [...(route?.matchAll(/level[ -]?(\d)/gi) ?? [])].map((match) => match[1]);
+  return levels.length > 1
+    ? `Level ${levels.join(' → ')}`
+    : levels.length
+      ? `Level ${levels[0]}`
+      : route === 'native'
+        ? 'Native'
+        : route === 'full-harness'
+          ? 'Full harness'
+          : undefined;
 }
+/** Outcome kinds shown distinctly; the job status alone merges cancellation, staleness,
+ * provider outcomes and deferral. docs/memory-architecture.md#god-mode-cognition-debugger */
+function outcomeKind(status: string, disposition?: string): string {
+  // A queued reflection opportunity merged into an existing one stays running but is coalesced.
+  if (disposition === 'coalesced') return 'coalesced';
+  if (status === 'running') return 'pending';
+  switch (disposition) {
+    case 'skipped':
+    case 'deferred':
+    case 'coalesced':
+    case 'stale':
+    case 'uncertain':
+      return disposition;
+    case 'cancelled':
+    case 'actor-unavailable':
+      return 'canceled';
+    case 'response-rejected':
+      return 'rejected';
+    case 'queued':
+    case 'judging':
+    case 'generating':
+      return status === 'completed' ? 'completed' : 'pending';
+  }
+  return status === 'failed' ? 'failed' : 'completed';
+}
+const outcomeLabels: Record<string, string> = {
+  pending: 'Pending',
+  skipped: 'Skipped',
+  deferred: 'Deferred',
+  coalesced: 'Coalesced',
+  canceled: 'Canceled',
+  stale: 'Stale',
+  uncertain: 'Uncertain completion',
+  rejected: 'Rejected',
+  failed: 'Failed',
+  completed: 'Completed',
+};
 function ResponsePreview({ row }: { row: Row }) {
   return (
     <dl className="ol-preview-facts">
@@ -545,17 +585,32 @@ function stageResult(call: IntelligenceCall): string {
     object(path(call.output, 'value', 'answers')) ?? object(path(call.output, 'answers'));
   if (answers) {
     const entries = Object.entries(answers);
-    if (entries.some(([, answer]) => path(answer, 'type') === 'noul')) {
-      const yes = entries.filter(([, answer]) => answerBucket(answer) === 'yes').length;
-      return `${yes} included · ${entries.length - yes} excluded`;
-    }
-    return entries
+    const rated = entries.filter(([, answer]) => path(answer, 'type') === 'noul');
+    const choices = entries
+      .filter(([, answer]) => path(answer, 'type') !== 'noul')
       .map(
         ([key, answer]) =>
           `${humanize(key)}: ${levelLabel(answerLabel(answer)) ?? answerLabel(answer)}`,
-      )
-      .join(' · ');
+      );
+    // Level-1 action ratings carry explicit criteria and a separate selection threshold, so
+    // the 50% relevance line would misstate them.
+    const actionRatings = rated.some(
+      ([key]) => !!object(path(call.input, 'questions', key, 'criteria')),
+    );
+    if (rated.length && (choices.length || actionRatings)) {
+      const best = Math.max(...rated.map(([, answer]) => Number(path(answer, 'noul') ?? 0)));
+      return [...choices, `${rated.length} actions rated · best ${Math.round(best * 100)}%`].join(
+        ' · ',
+      );
+    }
+    if (rated.length) {
+      const yes = rated.filter(([, answer]) => answerBucket(answer) === 'yes').length;
+      return `${yes} included · ${rated.length - yes} excluded`;
+    }
+    return choices.join(' · ');
   }
+  if (call.kind === 'Decision accounting')
+    return `${usd(path(call.output, 'total', 'settledUsd'))} across ${String(path(call.output, 'total', 'requests') ?? 0)} requests`;
   return (
     textAt(call.output, 'reason') ??
     textAt(call.output, 'error') ??
@@ -577,18 +632,21 @@ function stageGroups(calls: IntelligenceCall[]) {
             textAt(c.input, 'requestId') === textAt(call.input, 'requestId')) &&
           c.kind !== 'Accounting',
       );
-    const purpose =
-      call.kind === 'Action context'
-        ? 'Action relevance'
-        : call.kind === 'Semantic decision'
-          ? 'Response routing'
+    // A combined request carries routing and action ratings in one Jev call.
+    const questionIds = (c: IntelligenceCall) =>
+      Object.keys(object(path(c.input, 'questions')) ?? {});
+    const consumes =
+      call.kind === 'Semantic decision'
+        ? (c: IntelligenceCall) => questionIds(c).includes('route')
+        : call.kind === 'Action context' || call.kind === 'Level-1 selection'
+          ? (c: IntelligenceCall) => questionIds(c).some((id) => /^a\d+$/.test(id))
           : undefined;
     const attempt = call.id.match(/^(.*:attempt:\d+):/)?.[1];
-    if (purpose && attempt)
+    if (consumes && attempt)
       owner = calls.find(
         (c) =>
           c.kind === 'Jev' &&
-          jevPurpose(c) === purpose &&
+          consumes(c) &&
           (textAt(c.input, 'requestId') ?? c.id).startsWith(`${attempt}:`),
       );
     if (owner && owner.id !== call.id) {
@@ -611,6 +669,10 @@ function stageTitle(call: IntelligenceCall): string {
       return 'Semantic retrieval · Memory context';
     case 'Semantic decision':
       return 'Routing · Selected response level';
+    case 'Level-1 selection':
+      return 'Level 1 · Action selection';
+    case 'Decision accounting':
+      return 'Accounting · Cost by level';
     case 'Response admission':
       return 'Response · Admission';
     case 'Workflow failure':
@@ -692,7 +754,14 @@ function jevPurpose(call: IntelligenceCall): string {
   const ids = Object.keys(object(path(call.input, 'questions')) ?? {});
   const requestId = textAt(call.input, 'requestId') ?? '';
   if (ids.includes('admissibility')) return 'Invention judgment';
+  if (ids.includes('route') && ids.some((id) => /^a\d+$/.test(id)))
+    return 'Routing and action selection';
   if (ids.includes('route')) return 'Response routing';
+  // Level-1 selection questions carry explicit criteria; relevance questions do not.
+  if (
+    ids.some((id) => /^a\d+$/.test(id) && !!object(path(call.input, 'questions', id, 'criteria')))
+  )
+    return 'Level-1 action selection';
   if (requestId.includes('action-attention') || ids.some((id) => /^a\d+$/.test(id)))
     return 'Action relevance';
   if (ids.some((id) => /^c\d+$/.test(id))) return 'Context relevance';
@@ -756,9 +825,13 @@ function answerBucket(answer: unknown): string {
   return answerLabel(answer);
 }
 
+/** Action questions name their target by a request label such as `Option 3`, not by handle. */
+const optionLabel = (question: JsonObject | undefined) =>
+  valueText(question?.['instructions'])?.match(/\bOption \d+\b/)?.[0];
 function jevQuestionText(question: JsonObject | undefined, id: string): string {
   const instructions = valueText(question?.['instructions']) ?? 'No question text was recorded.';
-  return instructions
+  const label = optionLabel(question);
+  return (label ? instructions.replace(label, 'each option') : instructions)
     .replace(`Is \`candidates.${id}\``, 'Is each candidate')
     .replace(`Would candidate ${id}`, 'Would each candidate')
     .replace(
@@ -777,8 +850,13 @@ function jevOptions(question: JsonObject | undefined): [string, string | undefin
   ]);
 }
 
-function jevTarget(state: JsonObject | undefined, id: string): { handle: string; text: string } {
-  const candidate = object(state?.['candidates'])?.[id];
+function jevTarget(
+  state: JsonObject | undefined,
+  id: string,
+  question?: JsonObject,
+): { handle: string; text: string } {
+  const candidates = object(state?.['candidates']);
+  const candidate = candidates?.[id] ?? candidates?.[optionLabel(question) ?? ''];
   const data = object(candidate);
   const candidateText =
     valueText(candidate) ??
@@ -807,8 +885,28 @@ function jevScores(answer: JsonObject | undefined, options: string[]): string {
   return '';
 }
 
-function JevSummary({ call }: { call: IntelligenceCall }) {
+function JevSummary({
+  call,
+  selectionPolicy,
+}: {
+  call: IntelligenceCall;
+  selectionPolicy?: JsonObject;
+}) {
   const [excluded, setExcluded] = useState<Record<string, string[]>>({});
+  // Level-1 action ratings (Noul questions with explicit criteria) use the recorded selection
+  // policy, not the 50% relevance line. docs/memory-architecture.md#god-mode-cognition-debugger
+  const selectAt = Number(selectionPolicy?.['selectAt'] ?? NaN);
+  const uncertainAt = Number(selectionPolicy?.['uncertainAt'] ?? NaN);
+  const selecting = (question: JsonObject | undefined) =>
+    question?.['type'] === 'noul' &&
+    !!object(question['criteria']) &&
+    Number.isFinite(selectAt) &&
+    Number.isFinite(uncertainAt);
+  const bucket = (question: JsonObject | undefined, answer: JsonObject | undefined) => {
+    const noul = answer?.['noul'];
+    if (!selecting(question) || typeof noul !== 'number') return answerBucket(answer);
+    return noul >= selectAt ? 'selectable' : noul >= uncertainAt ? 'uncertain' : 'no fit';
+  };
   const questions = object(path(call.input, 'questions'));
   const answers =
     object(path(call.output, 'value', 'answers')) ?? object(path(call.output, 'answers'));
@@ -849,20 +947,22 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
         const options = jevOptions(group.question);
         const labels = [
           ...new Set([
-            ...(group.question?.['type'] === 'noul'
-              ? ['yes', 'no']
-              : options.map(([label]) => label)),
-            ...group.entries.map(({ answer }) => answerBucket(answer)),
+            ...(selecting(group.question)
+              ? ['selectable', 'uncertain', 'no fit']
+              : group.question?.['type'] === 'noul'
+                ? ['yes', 'no']
+                : options.map(([label]) => label)),
+            ...group.entries.map(({ answer }) => bucket(group.question, answer)),
           ]),
         ];
         const hidden = excluded[groupKey] ?? [];
         const counts = new Map<string, number>();
         for (const entry of group.entries) {
-          const label = answerBucket(entry.answer);
+          const label = bucket(group.question, entry.answer);
           counts.set(label, (counts.get(label) ?? 0) + 1);
         }
         const visible = group.entries.filter(
-          ({ answer }) => !hidden.includes(answerBucket(answer)),
+          ({ answer }) => !hidden.includes(bucket(group.question, answer)),
         );
         return (
           <section className="ol-diagnostic-card ol-jev-question" key={groupKey}>
@@ -873,10 +973,18 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
               </span>
             </div>
             <p className="ol-prose">{group.text}</p>
-            {group.question?.['type'] === 'noul' && (
+            {selecting(group.question) ? (
               <p className="ol-caption">
-                Yes ≥ 50%; No &lt; 50%. Exact probabilities remain visible.
+                Level-1 selection: selectable ≥ {Math.round(selectAt * 100)}%; uncertain{' '}
+                {Math.round(uncertainAt * 100)}–{Math.round(selectAt * 100)}%; no fit below{' '}
+                {Math.round(uncertainAt * 100)}%. Exact probabilities remain visible.
               </p>
+            ) : (
+              group.question?.['type'] === 'noul' && (
+                <p className="ol-caption">
+                  Yes ≥ 50%; No &lt; 50%. Exact probabilities remain visible.
+                </p>
+              )
             )}
             {!!options.length && (
               <details className="ol-jev-options">
@@ -921,7 +1029,7 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
             </p>
             <ul className="ol-jev-target-list">
               {visible.map(({ id, answer }) => {
-                const target = jevTarget(state, id);
+                const target = jevTarget(state, id, object(questions?.[id]));
                 const scores = jevScores(
                   answer,
                   options.map(([option]) => option),
@@ -1083,6 +1191,20 @@ function LmSummary({ call, trigger }: { call: IntelligenceCall; trigger?: string
       <dl className="ol-diagnostic-fields">
         <Labeled label="Purpose">{lmPurpose(task)}</Labeled>
         {trigger && <Labeled label={requestLabel}>{trigger}</Labeled>}
+        {(valueText(path(call.input, 'model')) || valueText(path(call.input, 'execution'))) && (
+          <Labeled label="Requested execution">
+            {[
+              valueText(path(call.input, 'model')),
+              valueText(path(call.input, 'execution')),
+              valueText(path(call.input, 'reasoningEffort')) &&
+                `${valueText(path(call.input, 'reasoningEffort'))} effort`,
+              valueText(path(call.input, 'maxOutputTokens')) &&
+                `≤ ${valueText(path(call.input, 'maxOutputTokens'))} output tokens`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Labeled>
+        )}
         {valueText(context?.['selectedFamily']) && (
           <Labeled label="Jev-selected family">{valueText(context?.['selectedFamily'])}</Labeled>
         )}
@@ -1319,22 +1441,22 @@ function StructuredValue({ value }: { value: unknown }) {
   );
 }
 
+const outcomeIcons: Record<string, string> = {
+  skipped: 'ui.minus',
+  deferred: 'ui.pause',
+  coalesced: 'ui.next',
+  canceled: 'ui.close',
+  stale: 'ui.refresh',
+  uncertain: 'ui.help',
+  rejected: 'ui.close',
+  failed: 'ui.close',
+  completed: 'ui.check',
+};
 function StatusIcon({ status }: { status: string }) {
+  const label = outcomeLabels[status] ?? humanize(status);
   return (
-    <span className="ol-diagnostic-status" data-status={status} title={humanize(status)}>
-      <Icon
-        name={
-          status === 'skipped'
-            ? 'ui.minus'
-            : status === 'failed'
-              ? 'ui.close'
-              : status === 'completed'
-                ? 'ui.check'
-                : 'ui.more'
-        }
-        label={humanize(status)}
-        size={16}
-      />
+    <span className="ol-diagnostic-status" data-status={status} title={label}>
+      <Icon name={outcomeIcons[status] ?? 'ui.more'} label={label} size={16} />
     </span>
   );
 }
@@ -1434,18 +1556,204 @@ function BillingDetails({ value }: { value: unknown }) {
 function RoutingResult({ call }: { call: IntelligenceCall }) {
   const answers =
     object(path(call.output, 'answers')) ?? object(path(call.output, 'value', 'answers')) ?? {};
+  const offered = object(path(call.input, 'offeredRoutes'));
+  const gates = object(path(call.input, 'nativeGates'));
+  const route = textAt(call.output, 'route');
+  const mode = textAt(call.input, 'selectionRequest');
   return (
-    <dl className="ol-preview-facts">
-      {Object.entries(answers).map(([key, answer]) => (
-        <Labeled key={key} label={humanize(key)}>
-          <strong>{levelLabel(answerLabel(answer)) ?? humanize(answerLabel(answer))}</strong>
-          <span className="ol-route-probabilities">{jevScores(object(answer), [])}</span>
-        </Labeled>
-      ))}
-      {path(call.output, 'confidence') != null && (
-        <Labeled label="Confidence">{String(path(call.output, 'confidence'))}</Labeled>
+    <>
+      <dl className="ol-preview-facts">
+        {route && (
+          <Labeled label="Routed to">
+            <strong>{levelLabel(route) ?? humanize(route)}</strong>
+          </Labeled>
+        )}
+        {Object.entries(answers).map(([key, answer]) => (
+          <Labeled key={key} label={humanize(key)}>
+            <strong>{levelLabel(answerLabel(answer)) ?? humanize(answerLabel(answer))}</strong>
+            <span className="ol-route-probabilities">{jevScores(object(answer), [])}</span>
+          </Labeled>
+        ))}
+        {path(call.output, 'confidence') != null && (
+          <Labeled label="Confidence">{String(path(call.output, 'confidence'))}</Labeled>
+        )}
+        {mode && (
+          <Labeled label="Action selection">
+            {mode === 'combined'
+              ? 'Rated in this routing request'
+              : 'Dependent second request, only when the route needs actions'}
+          </Labeled>
+        )}
+      </dl>
+      {offered && (
+        <details className="ol-jev-options">
+          <summary>Offered routes ({Object.keys(offered).length})</summary>
+          <ul className="ol-choice-list">
+            {Object.entries(offered).map(([option, description]) => (
+              <li key={option}>
+                <span>
+                  <strong>{levelLabel(option) ?? humanize(option)}</strong>
+                  {valueText(description) && <small>{valueText(description)}</small>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
-    </dl>
+      {gates && (
+        <details className="ol-jev-options">
+          <summary>Native policy gates</summary>
+          <dl className="ol-preview-facts">
+            {Object.entries(gates).map(([gate, value]) => (
+              <Labeled key={gate} label={humanize(gate)}>
+                {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+              </Labeled>
+            ))}
+          </dl>
+        </details>
+      )}
+    </>
+  );
+}
+
+const percent = (value: number) => `${Math.round(value * 100)}%`;
+const usd = (value: unknown) =>
+  typeof value === 'number' ? `$${value.toFixed(6)}` : 'Not reported';
+/** Per-decision totals by level, including preparation and grounding requests. Unpriced or
+ * uncertain requests keep their reservation charged; absent usage is unknown, not zero. */
+function DecisionAccounting({ call }: { call: IntelligenceCall }) {
+  const groups = object(path(call.output, 'groups')) ?? {};
+  const total = object(path(call.output, 'total'));
+  const limits = object(path(call.input, 'limits')) ?? {};
+  const label = (key: string) =>
+    key.startsWith('level') ? (levelLabel(key) ?? key) : humanize(key);
+  return (
+    <div className="ol-lm-summary">
+      <dl className="ol-diagnostic-fields">
+        <Labeled label="Decision total">
+          {usd(total?.['settledUsd'])} charged across {String(total?.['requests'] ?? 0)} paid
+          requests{total?.['uncertain'] ? '; includes uncertain or unpriced reservations' : ''}
+        </Labeled>
+      </dl>
+      <p className="ol-caption">
+        Sizes are UTF-8 bytes as submitted. Jev's own request limit is checked separately in
+        serialized characters.
+      </p>
+      <ul className="ol-jev-target-list">
+        {Object.entries(groups).map(([key, raw]) => {
+          const group = object(raw);
+          const limit = object(limits[key]);
+          return (
+            <li key={key}>
+              <span className="ol-jev-target">
+                <small>{label(key)}</small>
+                <span>
+                  {Number(group?.['requests'] ?? 0)}{' '}
+                  {Number(group?.['requests']) === 1 ? 'request' : 'requests'} · size{' '}
+                  {Number(group?.['inputBytes'] ?? 0).toLocaleString()} input +{' '}
+                  {Number(group?.['schemaBytes'] ?? 0).toLocaleString()} schema/questions · tokens{' '}
+                  {String(group?.['inputTokens'] ?? 0)} in / {String(group?.['outputTokens'] ?? 0)}{' '}
+                  out ({String(group?.['reasoningTokens'] ?? 0)} reasoning)
+                  {group?.['usageMissing'] ? ' · some usage not reported' : ''}
+                  {limit &&
+                    ` · limits: ${String(limit['requestsPerDecision'])} requests, ${usd(limit['decisionUsd'])}`}
+                </span>
+              </span>
+              <span className="ol-jev-result">
+                <Tag>{usd(group?.['settledUsd'])}</Tag>
+                <small>reserved {usd(group?.['reservedUsd'])}</small>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+/** Level-1 selection result: every offered rating against the recorded policy, the outcome and
+ * its reason. Reasons are policy results, not model explanations. */
+function Level1Selection({ call }: { call: IntelligenceCall }) {
+  const outcome = object(path(call.output, 'outcome'));
+  const policy = object(path(call.input, 'policy'));
+  const ratings = path(call.input, 'ratings');
+  const ignored = path(call.input, 'ignoredAnswers');
+  const selectAt = Number(policy?.['selectAt'] ?? 0.7);
+  const uncertainAt = Number(policy?.['uncertainAt'] ?? 0.5);
+  const kind = valueText(outcome?.['kind']);
+  const selected = valueText(outcome?.['handle']);
+  const refused = path(call.input, 'escalationRefused') === true;
+  return (
+    <div className="ol-lm-summary">
+      <dl className="ol-diagnostic-fields">
+        <Labeled label="Outcome">
+          <strong>
+            {kind === 'act'
+              ? 'Act on the selected binding'
+              : kind === 'continue'
+                ? 'Continue existing work'
+                : kind === 'escalate'
+                  ? `Escalate to level ${String(outcome?.['level'])}`
+                  : kind === 'defer'
+                    ? 'Defer'
+                    : 'Not recorded'}
+          </strong>
+        </Labeled>
+        {valueText(outcome?.['reason']) && (
+          <Labeled label="Reason">{humanize(String(outcome?.['reason']))}</Labeled>
+        )}
+        {valueText(outcome?.['escalationBlocked']) && (
+          <Labeled label="Escalation blocked">
+            {humanize(String(outcome?.['escalationBlocked']))}
+          </Labeled>
+        )}
+        <Labeled label="Thresholds">
+          Select at {percent(selectAt)} or above; {percent(uncertainAt)}–{percent(selectAt)} is
+          uncertain; below {percent(uncertainAt)} no supplied action fits. Provisional policy, not
+          calibrated probability.
+        </Labeled>
+        {valueText(policy?.['version']) && (
+          <Labeled label="Policy version">{valueText(policy?.['version'])}</Labeled>
+        )}
+      </dl>
+      {refused ? (
+        <p className="ol-caption">
+          The escalation's allowance was refused before any generative request; the ratings are in
+          the preceding selection stage.
+        </p>
+      ) : Array.isArray(ratings) && ratings.length > 0 ? (
+        <ul className="ol-jev-target-list">
+          {ratings.map((raw, index) => {
+            const rating = object(raw);
+            const handle = valueText(rating?.['handle']) ?? String(index);
+            const value = rating?.['rating'];
+            return (
+              <li key={handle}>
+                <span className="ol-jev-target">
+                  <small>{handle}</small>
+                  <span>{valueText(rating?.['description']) ?? 'Description not captured'}</span>
+                </span>
+                <span className="ol-jev-result">
+                  <Tag tone={handle === selected ? 'accent' : undefined}>
+                    {typeof value === 'number'
+                      ? `${percent(value)} ${value >= selectAt ? 'selectable' : value >= uncertainAt ? 'uncertain' : 'no fit'}`
+                      : humanize(String(rating?.['status'] ?? 'missing'))}
+                  </Tag>
+                  {handle === selected && <small>Selected</small>}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="ol-caption">No supplied action was offered for rating.</p>
+      )}
+      {Array.isArray(ignored) && ignored.length > 0 && (
+        <p className="ol-caption">
+          Ignored answers for unoffered handles: {ignored.map(String).join(', ')}. They were never
+          executed.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -1453,12 +1761,16 @@ function StageReadable({
   call,
   retrieval,
   trigger,
+  selectionPolicy,
 }: {
   call: IntelligenceCall;
   retrieval?: Retrieval;
   trigger?: string;
+  selectionPolicy?: JsonObject;
 }) {
   const routing = call.kind === 'Semantic decision';
+  const level1Stage = call.kind === 'Level-1 selection';
+  const accounting = call.kind === 'Decision accounting';
   const jev = call.kind === 'Jev' || !!path(call.input, 'questions');
   const lm = call.kind.startsWith('LM ·');
   const worldAgent = call.kind.toLowerCase().includes('world agent');
@@ -1488,19 +1800,23 @@ function StageReadable({
         (!lm && task) ||
         speech ||
         proposedAction ||
-        (!lm && !worldAgent && message)) && (
+        (!lm && !worldAgent && !level1Stage && message)) && (
         <dl className="ol-diagnostic-fields">
           {stimulus && <Labeled label="Trigger">{trigger ?? stimulus}</Labeled>}
           {!lm && task && <Labeled label="Task">{humanize(task)}</Labeled>}
           {speech && <Labeled label="Actor response">“{speech}”</Labeled>}
           {proposedAction && <Labeled label="Decision">{proposedAction}</Labeled>}
-          {!lm && !worldAgent && message && (
-            <Labeled label={failureStage ? 'Error' : 'Outcome'}>{message}</Labeled>
+          {!lm && !worldAgent && !level1Stage && message && (
+            <Labeled label={failureStage ? 'Error' : routing ? 'Routing reason' : 'Outcome'}>
+              {message}
+            </Labeled>
           )}
         </dl>
       )}
       {routing && <RoutingResult call={call} />}
-      {jev && <JevSummary key={call.id} call={call} />}
+      {level1Stage && <Level1Selection call={call} />}
+      {accounting && <DecisionAccounting call={call} />}
+      {jev && <JevSummary key={call.id} call={call} selectionPolicy={selectionPolicy} />}
       {lm && <LmSummary call={call} trigger={trigger} />}
       {worldAgent && <WorldAgentSummary call={call} />}
       {embedding && (
@@ -1517,22 +1833,31 @@ function StageReadable({
         </dl>
       )}
       {showRetrieval && retrieval && <RetrievalSummary retrieval={retrieval} />}
-      {!routing && !jev && !lm && !worldAgent && !embedding && !showRetrieval && (
-        <>
-          <StructuredValue value={call.output} />
-          {call.input != null && (
-            <details>
-              <summary>Decision context</summary>
-              <StructuredValue value={call.input} />
-            </details>
-          )}
-        </>
-      )}
+      {!routing &&
+        !level1Stage &&
+        !accounting &&
+        !jev &&
+        !lm &&
+        !worldAgent &&
+        !embedding &&
+        !showRetrieval && (
+          <>
+            <StructuredValue value={call.output} />
+            {call.input != null && (
+              <details>
+                <summary>Decision context</summary>
+                <StructuredValue value={call.input} />
+              </details>
+            )}
+          </>
+        )}
       {!stimulus &&
         !task &&
         !speech &&
         !proposedAction &&
         !message &&
+        !level1Stage &&
+        !accounting &&
         !jev &&
         !lm &&
         !worldAgent &&
@@ -1647,7 +1972,7 @@ function Stage({
     <section className="ol-diagnostic-stage">
       <details>
         <summary>
-          <StatusIcon status={failure ? 'failed' : call.status} />
+          <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
           <span className="ol-stage-heading">
             <strong>{stageTitle(call)}</strong>
             <span className="ol-stage-peek">
@@ -1679,11 +2004,18 @@ function Stage({
           <CopyValue label="Copy input" value={call.input} />
           <CopyValue label="Copy output" value={call.output} />
         </div>
-        <StageReadable call={call} retrieval={retrieval} trigger={trigger} />
+        <StageReadable
+          call={call}
+          retrieval={retrieval}
+          trigger={trigger}
+          selectionPolicy={object(
+            path(supporting.find((c) => c.kind === 'Level-1 selection')?.input, 'policy'),
+          )}
+        />
         {supporting.map((context) => (
           <details key={context.id} className="ol-supporting-stage">
             <summary>
-              <StatusIcon status={context.status} />{' '}
+              <StatusIcon status={outcomeKind(context.status, context.disposition)} />{' '}
               {context.kind === 'Action context'
                 ? 'Action options and retrieval'
                 : stageTitle(context)}{' '}
@@ -1789,6 +2121,15 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
     : [];
   const retrieval = detail ? retrievalFrom(calls) : undefined;
   const response = detail?.responseSummary;
+  const rootMessage = textAt(detail?.root.output, 'message');
+  const level1 = object(path(detail?.root.output, 'result', 'level1'));
+  const coalesced = path(detail?.root.input, 'coalescedCount');
+  const routeList = path(detail?.root.input, 'offeredRoutes');
+  // Earlier roots stored a numeric placeholder before routing; show only recorded route keys.
+  const offeredRoutes =
+    Array.isArray(routeList) && routeList.every((route) => typeof route === 'string')
+      ? routeList
+      : undefined;
   return (
     <div className="ol-trace-detail">
       {error && <p role="alert">{error}</p>}
@@ -1839,10 +2180,35 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
               ${row.knownCostUsd.toFixed(6)}
               {row.costIncomplete ? ' + unreported usage' : ''}
             </Labeled>
-            <Labeled label="Route">{detail.root.route ?? 'No route recorded'}</Labeled>
-            <Labeled label="Outcome">
-              {humanize(detail.root.disposition ?? detail.root.status)}
+            <Labeled label="Route">
+              {levelLabel(detail.root.route) ?? detail.root.route ?? 'No route recorded'}
             </Labeled>
+            <Labeled label="Outcome">
+              <StatusIcon status={outcomeKind(detail.root.status, detail.root.disposition)} />{' '}
+              {outcomeLabels[outcomeKind(detail.root.status, detail.root.disposition)]}
+              {detail.root.disposition &&
+                !outcomeLabels[detail.root.disposition] &&
+                ` · ${humanize(detail.root.disposition)}`}
+            </Labeled>
+            {rootMessage && <Labeled label="Outcome detail">{rootMessage}</Labeled>}
+            {level1 && (
+              <Labeled label="Level-1 selection">
+                {humanize(String(level1['kind']))} · {humanize(String(level1['reason']))}
+                {valueText(level1['escalationBlocked']) &&
+                  ` · escalation blocked: ${humanize(String(level1['escalationBlocked']))}`}
+              </Labeled>
+            )}
+            {typeof coalesced === 'number' && coalesced > 0 && (
+              <Labeled label="Coalesced changes">
+                {coalesced} earlier {coalesced === 1 ? 'change' : 'changes'} folded into this
+                opportunity
+              </Labeled>
+            )}
+            {offeredRoutes && (
+              <Labeled label="Offered routes">
+                {offeredRoutes.map((route) => levelLabel(route) ?? humanize(route)).join(', ')}
+              </Labeled>
+            )}
           </dl>
           {detail.root.disposition === 'skipped' && !calls.length && (
             <p className="ol-caption">Cognition was skipped. No execution stages were recorded.</p>
@@ -1936,7 +2302,7 @@ function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
           <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
         </span>
       </span>
-      <StatusIcon status={row.disposition === 'skipped' ? 'skipped' : row.status} />
+      <StatusIcon status={outcomeKind(row.status, row.disposition)} />
     </button>
   );
 }

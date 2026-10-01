@@ -502,7 +502,6 @@ export class SqlGameRepository implements GameRepository {
     const fields: Record<string, string> = {
       actor: 'actorName',
       route: 'route',
-      outcome: 'disposition',
     };
     for (const [key, value] of Object.entries(filters)) {
       if (!value) continue;
@@ -517,6 +516,14 @@ export class SqlGameRepository implements GameRepository {
           "id IN (SELECT (payload::jsonb #>> '{parentId}') FROM intelligence_calls WHERE LOWER((payload::jsonb #>> '{kind}')) LIKE LOWER(?))",
         );
         params.push(`%${value}%`);
+      } else if (key === 'outcome') {
+        // Panel outcome labels (Failed, Canceled) cover both the root status and its finer
+        // disposition, such as `refused` or `cancelled`.
+        const term = `%${value.replace(/canceled/i, 'cancel')}%`;
+        clauses.push(
+          "(LOWER((payload::jsonb ->> 'disposition')) LIKE LOWER(?) OR LOWER((payload::jsonb ->> 'status')) LIKE LOWER(?))",
+        );
+        params.push(term, term);
       } else if (fields[key]) {
         clauses.push(`LOWER((payload::jsonb ->> '${fields[key]}')) LIKE LOWER(?)`);
         params.push(`%${value}%`);

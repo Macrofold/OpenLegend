@@ -1,4 +1,10 @@
-import { decisionAllowance } from './cognition-budget.js';
+import {
+  decisionAllowance,
+  DecisionLedger,
+  levelLimits,
+  type CognitionLevel,
+  type LedgerCategory,
+} from './cognition-budget.js';
 import { namedClockTimes, spatialQuery } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
@@ -35,7 +41,15 @@ import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
 import { entityVisionQuery, visionRadius } from '@open-legend/domain';
-import { decisionQuestions, JEV_QUESTIONS_VERSION, JEV_ACTION_THRESHOLD } from './jev-questions.js';
+import { decisionQuestions, JEV_QUESTIONS_VERSION, LEVEL1_POLICY } from './jev-questions.js';
+import {
+  escalationLevel,
+  level1Message,
+  offeredForRating,
+  resolveLevel1,
+  type Level1Outcome,
+  type Level1Resolution,
+} from './level1-selection.js';
 import { retrieveActions } from './action-retrieval.js';
 import { interestMatches, relevantPossessions, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
@@ -66,9 +80,13 @@ import { MacrofoldBackend } from './macrofold.js';
 import { randomUUID } from 'node:crypto';
 import {
   createAiClient,
+  InvalidData,
+  validateJudgmentSize,
   type AiClient,
   type AiResult,
   type GenerateRequest,
+  type JudgeRequest,
+  type JudgeValue,
   type JudgmentAnswer,
 } from '@open-legend/ai';
 import type { DeclarationProvenance } from '@open-legend/domain';
@@ -77,10 +95,13 @@ import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
 
+/** `outcome` keeps provider refusal, unavailability, invalid output, uncertain completion and
+ * budget refusal distinct in job results and traces; the job status stays coarse. */
 class StopJob extends Error {
   constructor(
     readonly status: 'failed' | 'cancelled' | 'stale',
     message: string,
+    readonly outcome?: string,
   ) {
     super(message);
   }
@@ -94,7 +115,35 @@ interface ResponseInterruption {
   triggerKind?: string;
   text: string;
 }
+/** What a paid request serves and its submitted sizes; see DecisionLedger. */
+interface Meter {
+  category: LedgerCategory;
+  level?: CognitionLevel;
+  size: { instructions: number; context: number; schema: number };
+}
+const textBytes = (value: unknown) =>
+  value === undefined
+    ? 0
+    : Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value));
+/** Ledger sizes are UTF-8 bytes for every provider; Jev's own size limit is enforced by its
+ * client in serialized characters. */
+const judgeMeter = (
+  category: LedgerCategory,
+  request: { state: unknown; questions: unknown },
+): Meter => ({
+  category,
+  ...(category === 'level' ? { level: 1 as const } : {}),
+  size: {
+    instructions: 0,
+    context: textBytes(request.state),
+    schema: textBytes(request.questions),
+  },
+});
 interface Running {
+  /** Per-decision accounting and level limits; absent for non-decision jobs. */
+  ledger?: DecisionLedger;
+  /** The resolved level-1 outcome, kept with any later failure of its escalation. */
+  level1?: Level1Outcome;
   actorInvention?: {
     actorId: string;
     purpose: string;
@@ -369,8 +418,13 @@ export class AiDirector {
       signal: run.controller.signal,
       retryUnresolved: run.job.kind === 'action',
       judge: (request) =>
-        this.call(run, 'jev', `${operation}:classify:${serial++}`, (requestId) =>
-          this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+        this.call(
+          run,
+          'jev',
+          `${operation}:classify:${serial++}`,
+          (requestId) =>
+            this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+          judgeMeter('grounding', request),
         ),
       generate: (request) =>
         this.generate<unknown>(
@@ -942,6 +996,19 @@ export class AiDirector {
             },
       );
     }
+    if (terminal && run.ledger?.entries.length) {
+      const used = new Set(run.ledger.entries.flatMap((entry) => entry.level ?? []));
+      await this.log.record(
+        `${run.job.id}:decision-accounting`,
+        'Decision accounting',
+        {
+          limits: Object.fromEntries(
+            [...used].map((level) => [`level${level}`, run.ledger!.limits[level]]),
+          ),
+        },
+        { ...run.ledger.summary(), entries: run.ledger.entries },
+      );
+    }
     const trace = this.log.get(run.job.id);
     if (trace)
       await this.log.save({
@@ -1031,6 +1098,9 @@ export class AiDirector {
       job,
       controller: new AbortController(),
       generation: this.service.generation,
+      ...(job.kind === 'chat' || job.kind === 'thought'
+        ? { ledger: new DecisionLedger(levelLimits(this.service.config)) }
+        : {}),
     };
     if (job.kind === 'chat') run.playerSpeechEventId = job.playerSpeechEventId;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
@@ -1108,11 +1178,22 @@ export class AiDirector {
           await this.update(
             run,
             known ? error.status : cancelled ? 'cancelled' : 'failed',
-            known || error instanceof InventionFailure
+            known || error instanceof InventionFailure || error instanceof ContextBudgetError
               ? error.message
               : cancelled
                 ? (run.cancelReason ?? 'The request was cancelled before completion.')
                 : 'The workflow failed safely. No automatic paid retry was sent.',
+            // Invention results keep their own code; decisions record the distinct outcome.
+            run.job.kind === 'invention'
+              ? undefined
+              : known && error.outcome
+                ? { disposition: error.outcome, ...(run.level1 ? { level1: run.level1 } : {}) }
+                : error instanceof ContextBudgetError
+                  ? {
+                      disposition: 'context-exceeded',
+                      ...(run.level1 ? { level1: run.level1 } : {}),
+                    }
+                  : undefined,
           );
         }),
       )
@@ -1202,6 +1283,7 @@ export class AiDirector {
     provider: 'jev' | 'openai',
     suffix: string,
     dispatch: (requestId: string) => Promise<AiResult<T>>,
+    meter?: Meter,
   ): Promise<T> {
     if (this.service.paused) await this.awaitResume(run);
     this.current(run);
@@ -1210,6 +1292,17 @@ export class AiDirector {
     // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
     // Exact provider invoices remain external; custom prices must match the selected model.
     const reserve = decisionAllowance(config, provider);
+    // A decision's own level work stays within that level's per-decision limits.
+    // docs/limits/cognition.md#cg08
+    const category =
+      meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
+    const admitted = run.ledger?.admit(category, meter?.level, reserve);
+    if (admitted && !admitted.ok)
+      throw new StopJob(
+        'failed',
+        `${admitted.reason} No further paid request was sent.`,
+        'budget-exhausted',
+      );
     if (
       !(await this.service.store.reserve(
         id,
@@ -1224,7 +1317,17 @@ export class AiDirector {
       throw new StopJob(
         'failed',
         'AI spending cap reached. Already chosen native actions and learned recipes still work.',
+        'budget-exhausted',
       );
+    run.ledger?.record({
+      requestId: id,
+      stage: suffix,
+      category,
+      ...(meter?.level ? { level: meter.level } : {}),
+      provider,
+      size: meter?.size ?? { instructions: 0, context: 0, schema: 0 },
+      reservedUsd: reserve,
+    });
     await this.update(
       run,
       provider === 'jev' ? 'judging' : 'generating',
@@ -1237,6 +1340,7 @@ export class AiDirector {
     const result = await dispatch(id);
     const accountingStartedAt = new Date().toISOString();
     await this.service.store.settle(id, result.receipt);
+    run.ledger?.settle(id, result.receipt, result.outcome);
     await this.log.record(
       `${id}:accounting`,
       'Accounting',
@@ -1258,29 +1362,21 @@ export class AiDirector {
       throw new StopJob(
         result.outcome === 'cancelled' ? 'cancelled' : 'failed',
         `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
+        // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
+        result.outcome !== 'cancelled' && result.receipt.completionUncertain
+          ? 'uncertain'
+          : result.outcome,
       );
     if (provider === 'openai') run.generatedBy = result.receipt.model;
     return result.value;
   }
 
+  /** Translate the one binding chosen by `resolveLevel1` into an ordinary response for the
+   * shared admission path; selection itself grants no authority. */
   private selectKnownAction(
     prepared: Awaited<ReturnType<typeof prepareDecision>>,
-    answers: Record<string, JudgmentAnswer>,
-  ): ActorResponse | null {
-    // Noul rates each action independently. Many viable alternatives cannot dilute
-    // a good choice below a multiclass majority threshold; no adequate option defers.
-    const selected = prepared.offered
-      .map((option) => ({ option, answer: answers[option.id] }))
-      .filter(
-        (
-          entry,
-        ): entry is {
-          option: (typeof prepared.offered)[number];
-          answer: Extract<JudgmentAnswer, { type: 'noul' }>;
-        } => entry.answer?.type === 'noul' && entry.answer.noul >= JEV_ACTION_THRESHOLD,
-      )
-      .sort((a, b) => b.answer.noul - a.answer.noul)[0]?.option.id;
-    if (!selected) return null;
+    selected: string,
+  ): ActorResponse {
     if (prepared.binding.actions[selected] === null) return { operations: [] };
     const steps = prepared.knownPlans[selected];
     // Choosing a new alternative interrupts the chosen plan. The separately
@@ -1321,6 +1417,9 @@ export class AiDirector {
     run: Running,
     request: Omit<GenerateRequest, 'requestId' | 'signal'>,
     operation = 'generate',
+    meter: Omit<Meter, 'size'> = {
+      category: /interpret/.test(operation) ? 'grounding' : 'preparation',
+    },
   ): Promise<T> {
     if (
       this.service.config.jevOnly ||
@@ -1331,13 +1430,18 @@ export class AiDirector {
       throw new StopJob(
         'failed',
         'Generation is unavailable; Jev decisions and native actions remain available.',
+        'unavailable',
       );
     if (
       request.execution === 'full' &&
       this.executionSource === 'live-model' &&
       !this.service.config.macrofoldKey
     )
-      throw new StopJob('failed', 'Full deliberation requires the configured Macrofold harness.');
+      throw new StopJob(
+        'failed',
+        'Full deliberation requires the configured Macrofold harness.',
+        'unavailable',
+      );
     return await this.call(
       run,
       'openai',
@@ -1351,6 +1455,14 @@ export class AiDirector {
             request.maxOutputTokens ??
             (this.service.config.macrofoldKey ? cognitionOutputTokens(request.execution) : 1800),
         }),
+      {
+        ...meter,
+        size: {
+          instructions: textBytes(request.instructions),
+          context: textBytes(request.context),
+          schema: textBytes(request.schema),
+        },
+      },
     );
   }
 
@@ -1452,6 +1564,8 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
+    // An urgent refresh decides again; an earlier attempt's level-1 outcome no longer applies.
+    run.level1 = undefined;
     // A known spending shortfall cannot produce a decision. Skip retrieval and its
     // source flushes; the paid call still performs the authoritative reservation.
     // Display totals are invalidated by accounting writes and month rollover.
@@ -1466,6 +1580,7 @@ export class AiDirector {
       throw new StopJob(
         'failed',
         'AI spending cap reached. Already chosen native actions and learned recipes still work.',
+        'budget-exhausted',
       );
 
     run.responseWatch = {
@@ -1536,6 +1651,7 @@ export class AiDirector {
           `attempt:${attempt}:attention:${attentionCall++}`,
           async (id) =>
             await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          judgeMeter('level', request),
         ),
       run.controller.signal,
       this.service.config.budgetUsd,
@@ -1584,34 +1700,127 @@ export class AiDirector {
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
+    const offeredRoutes = Object.keys(criteria);
+    const judge =
+      (suffix: string) =>
+      async (request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue> =>
+        await this.call(
+          run,
+          'jev',
+          `attempt:${attempt}:${suffix}`,
+          async (id) =>
+            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          judgeMeter('level', request),
+        );
+    // Refresh cheap feasibility after earlier provider latency, then bound candidates.
+    const prepareActionBindings = async () => {
+      const refreshed = refreshDecisionActions(this.service, prepared);
+      const retrieval = await retrieveActions(
+        this.service,
+        this.log,
+        actorId,
+        `${run.job.id}:attempt:${attempt}`,
+        `${currentGoal(this.service.world.entities[actorId]!.actor!)}\n${stimulus}`,
+        refreshed.actionCandidates,
+        run.controller.signal,
+        async () => {
+          await this.awaitResume(run);
+          this.current(run);
+        },
+      );
+      this.current(run);
+      return { prepared: { ...refreshed, actionCandidates: retrieval.candidates }, retrieval };
+    };
+    // Generation after rated candidates reuses those ratings at the relevance line rather
+    // than buying a second relevance judgment; no request is dispatched here.
+    const offerRated = async (base: typeof prepared, answers: Record<string, JudgmentAnswer>) =>
+      await selectDecisionActions(base, async () => ({ answers }), 'actions');
+    // Level-1 bindings must exist before the question that selects them. Non-speech triggers
+    // always consider actions, so their bindings are prepared first and rated in the routing
+    // request. Route, reflection and per-action ratings are independent questions; a request
+    // over Jev's size limits falls back to the dependent second request before any dispatch.
+    // archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation
+    let combined:
+      | {
+          routing: JudgeValue;
+          base: typeof prepared;
+          selected: Awaited<ReturnType<typeof selectDecisionActions>>;
+          offered: ReturnType<typeof offeredForRating>;
+          retrieval: Awaited<ReturnType<typeof retrieveActions>>;
+          startedAt: string;
+        }
+      | undefined;
     const routingStartedAt = new Date().toISOString();
-    const judged = await this.call(
-      run,
-      'jev',
-      `attempt:${attempt}:route`,
-      async (id) =>
-        await this.client.judge({
-          requestId: id,
-          signal: run.controller.signal,
-          state: prepared.prompt,
-          questions,
-        }),
-    );
+    let earlyBindings: Awaited<ReturnType<typeof prepareActionBindings>> | undefined;
+    if (!speechTrigger) {
+      const bindings = (earlyBindings = await prepareActionBindings());
+      // Written by the rating callback; a holder avoids stale control-flow narrowing.
+      const captured: { routing?: JudgeValue; offered: ReturnType<typeof offeredForRating> } = {
+        offered: [],
+      };
+      try {
+        const selected = await selectDecisionActions(
+          bindings.prepared,
+          async (request) => {
+            captured.offered = offeredForRating(request);
+            const all = { ...request.questions, ...questions };
+            validateJudgmentSize(request.state, all);
+            const answers = (await judge('route')({ state: request.state, questions: all }))
+              .answers;
+            captured.routing = {
+              answers: Object.fromEntries(
+                Object.keys(questions).flatMap((key) => {
+                  const answer = answers[key];
+                  return answer ? [[key, answer]] : [];
+                }),
+              ),
+            };
+            return {
+              answers: Object.fromEntries(
+                Object.entries(answers).filter(([key]) => !Object.hasOwn(questions, key)),
+              ),
+            };
+          },
+          'choose-action',
+        );
+        if (captured.routing)
+          combined = {
+            routing: captured.routing,
+            base: bindings.prepared,
+            selected,
+            offered: captured.offered,
+            retrieval: bindings.retrieval,
+            startedAt: routingStartedAt,
+          };
+      } catch (error) {
+        // Only the pre-dispatch size check falls back; provider outcomes stop the job.
+        if (!(error instanceof InvalidData) || captured.routing) throw error;
+      }
+    }
+    const judged =
+      combined?.routing ?? (await judge('route')({ state: prepared.prompt, questions }));
     if (await retryForUrgentAwareness()) return;
     const routeAnswer = judged.answers['route'];
     // Routing spends a bounded allowance; it does not authorize a world effect.
     // Use the winning probability, not the provider's separate confidence score.
+    const routeProbability =
+      routeAnswer && 'choice' in routeAnswer
+        ? (routeAnswer.probabilities[routeAnswer.choice] ?? 0)
+        : 0;
     const selectedRoute =
-      routeAnswer &&
-      'choice' in routeAnswer &&
-      (routeAnswer.probabilities[routeAnswer.choice] ?? 0) >= 0.5
-        ? routeAnswer.choice
-        : null;
+      routeAnswer && 'choice' in routeAnswer && routeProbability >= 0.5 ? routeAnswer.choice : null;
     // Uncertain escalation must not silence an addressed ordinary reply.
     const route =
       generationAvailable && addressedSpeech && selectedRoute === 'native'
         ? 'level2'
         : (selectedRoute ?? (generationAvailable && addressedSpeech ? 'level2' : null));
+    const routeReason = !selectedRoute
+      ? route
+        ? 'Uncertain route; addressed speech defaults to level 2.'
+        : 'Uncertain route; the decision is deferred.'
+      : route !== selectedRoute
+        ? 'Addressed speech overrides a native route with an ordinary reply.'
+        : `Jev chose ${selectedRoute === 'native' ? 'native behavior' : selectedRoute.replace(/^level(\d)$/, 'level $1')} with probability ${routeProbability.toFixed(2)}.`;
     const actionGate = judged.answers['possibleAction'];
     const shouldOfferActions =
       !speechTrigger ||
@@ -1632,6 +1841,7 @@ export class AiDirector {
           checkActionSelection: true,
           reason: 'non-speech semantic decision',
         };
+    const selectionMode = combined ? 'combined' : 'dependent';
     if (generationAvailable && policy.reflection && choice(judged.answers['reflection']) === 'yes')
       await this.maintenance.enqueue(actorId, run.job.id, stimulus);
     await this.log.record(
@@ -1643,12 +1853,31 @@ export class AiDirector {
         policyRevision: policy.revision,
         questionVersion: JEV_QUESTIONS_VERSION,
         trigger: semanticTrigger,
+        selectionRequest: selectionMode,
+        // Policy results that shaped the offered routes; not model explanations.
+        nativeGates: {
+          generationAvailable,
+          jevOnly: this.service.config.jevOnly,
+          maxImmediateLevel: policy.maxImmediateLevel,
+          reflectionPolicy: policy.reflection,
+          addressedSpeech,
+          speechTrigger,
+          actionSelection: semanticTrigger.checkActionSelection,
+        },
       },
-      judged,
+      { ...judged, selectedRoute, route: route ?? null, reason: routeReason },
       routingStartedAt,
     );
     const trace = this.log.get(run.job.id);
-    if (trace) await this.log.save({ ...trace, route: route ?? 'deferred' });
+    if (trace)
+      await this.log.save({
+        ...trace,
+        route: route ?? 'deferred',
+        input: {
+          ...(trace.input && typeof trace.input === 'object' ? trace.input : {}),
+          offeredRoutes,
+        },
+      });
     if (await retryForUrgentAwareness()) return;
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
       run.responseWatch = undefined;
@@ -1666,49 +1895,50 @@ export class AiDirector {
       return;
     }
     let actionAnswers: Record<string, JudgmentAnswer> = {};
+    let offeredForSelection: ReturnType<typeof offeredForRating> = [];
+    // Candidates before the level-1 threshold filter, for offering rated actions to generation.
+    let ratedBase: typeof prepared | undefined;
     if (semanticTrigger.checkActionSelection) {
-      const actionsStartedAt = new Date().toISOString();
-      prepared = refreshDecisionActions(this.service, prepared);
-      const retrieval = await retrieveActions(
-        this.service,
-        this.log,
-        actorId,
-        `${run.job.id}:attempt:${attempt}`,
-        `${currentGoal(this.service.world.entities[actorId]!.actor!)}\n${stimulus}`,
-        prepared.actionCandidates,
-        run.controller.signal,
-        async () => {
-          await this.awaitResume(run);
-          this.current(run);
-        },
-      );
-      this.current(run);
-      prepared = { ...prepared, actionCandidates: retrieval.candidates };
+      const actionsStartedAt = combined?.startedAt ?? new Date().toISOString();
       let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
-      try {
-        withActions = await selectDecisionActions(
-          prepared,
-          async (request) =>
-            await this.call(
-              run,
-              'jev',
-              `attempt:${attempt}:action-attention`,
-              async (id) =>
-                await this.client.judge({
-                  ...request,
-                  requestId: id,
-                  signal: run.controller.signal,
-                }),
-            ),
-          route === 'level1' ? 'choose-action' : 'actions',
-        );
-        actionAnswers = withActions.diagnostics.actionSelection.answers;
-      } catch (error) {
-        if (run.controller.signal.aborted || run.cancelReason || run.supersession) throw error;
-        withActions = fallbackDecisionActions(
-          prepared,
-          error instanceof Error ? error.message : 'Action relevance unavailable',
-        );
+      let retrieval: Awaited<ReturnType<typeof retrieveActions>>;
+      if (combined) {
+        retrieval = combined.retrieval;
+        ratedBase = combined.base;
+        offeredForSelection = combined.offered;
+        actionAnswers = combined.selected.diagnostics.actionSelection.answers;
+        withActions =
+          route === 'level1' ? combined.selected : await offerRated(combined.base, actionAnswers);
+      } else {
+        // An oversized combined request already prepared bindings; admission rechecks them.
+        const bindings = earlyBindings ?? (await prepareActionBindings());
+        retrieval = bindings.retrieval;
+        ratedBase = bindings.prepared;
+        try {
+          withActions = await selectDecisionActions(
+            bindings.prepared,
+            async (request) => {
+              offeredForSelection = offeredForRating(request);
+              return await judge('action-attention')(request);
+            },
+            route === 'level1' ? 'choose-action' : 'actions',
+          );
+          actionAnswers = withActions.diagnostics.actionSelection.answers;
+        } catch (error) {
+          // Level-1 ratings are the decision itself: a provider failure is reported with its
+          // outcome, never converted into a deferral or an escalation.
+          if (
+            route === 'level1' ||
+            run.controller.signal.aborted ||
+            run.cancelReason ||
+            run.supersession
+          )
+            throw error;
+          withActions = fallbackDecisionActions(
+            bindings.prepared,
+            error instanceof Error ? error.message : 'Action relevance unavailable',
+          );
+        }
       }
       prepared = withActions;
       await this.log.record(
@@ -1722,17 +1952,75 @@ export class AiDirector {
             returned: retrieval.candidates.length,
           },
           trigger: semanticTrigger,
+          selectionRequest: selectionMode,
         },
         prepared.offered,
         actionsStartedAt,
       );
       if (await retryForUrgentAwareness()) return;
     }
-    const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
+    let executedRoute: string = route;
+    let level1: Level1Resolution | undefined;
+    if (route === 'level1') {
+      const startedAt = new Date().toISOString();
+      const chosenPrepared = prepared;
+      level1 = resolveLevel1({
+        offered: offeredForSelection,
+        answers: actionAnswers,
+        isContinue: (handle) => chosenPrepared.binding.actions[handle] === null,
+        escalation: generationAvailable
+          ? { available: true, level: escalationLevel(routeAnswer, offeredRoutes) }
+          : { available: false, blocked: 'generation-unavailable' },
+      });
+      run.level1 = level1.outcome;
+      await this.log.record(
+        `${run.job.id}:attempt:${attempt}:level1`,
+        'Level-1 selection',
+        {
+          policy: LEVEL1_POLICY,
+          selectionRequest: selectionMode,
+          ratings: level1.ratings,
+          ignoredAnswers: level1.ignored,
+        },
+        { outcome: level1.outcome, message: level1Message(level1.outcome) },
+        startedAt,
+      );
+      if (level1.outcome.kind === 'defer') {
+        run.responseWatch = undefined;
+        await this.update(run, 'completed', level1Message(level1.outcome), {
+          disposition: 'deferred',
+          reason: level1.outcome.reason,
+          level1: level1.outcome,
+          trigger: semanticTrigger,
+        });
+        return;
+      }
+      if (level1.outcome.kind === 'escalate') {
+        executedRoute = `level${level1.outcome.level}`;
+        if (ratedBase) {
+          const offered = await offerRated(ratedBase, actionAnswers);
+          prepared = offered;
+          // The actions generation actually receives, for inspection and response summaries.
+          await this.log.record(
+            `${run.job.id}:attempt:${attempt}:action-context:escalated`,
+            'Action context',
+            {
+              actionSelection: offered.diagnostics.actionSelection,
+              escalation: { level: level1.outcome.level, relevanceLine: 0.5 },
+              selectionRequest: selectionMode,
+            },
+            offered.offered,
+          );
+        }
+        const escalated = this.log.get(run.job.id);
+        if (escalated) await this.log.save({ ...escalated, route: `level1→${executedRoute}` });
+      }
+    }
+    const level = executedRoute === 'level4' ? 4 : executedRoute === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
     const actorInvention =
-      route === 'level1'
+      executedRoute === 'level1'
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
         : await prepareActorInvention(this.service, actorId);
     const baseSchema = boundResponseSchema(
@@ -1754,59 +2042,122 @@ export class AiDirector {
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
     await prepared.validateConversation();
-    const value =
-      route === 'level1'
-        ? this.selectKnownAction(prepared, actionAnswers)
-        : await this.generate<unknown>(
-            run,
-            {
-              task: 'npc_response',
-              actorScope: actorId,
-              execution: level === 2 ? 'fast' : 'complex',
-              model: c.macrofoldKey
-                ? level === 2
-                  ? c.macrofoldMiniModel
-                  : c.macrofoldComplexModel
-                : level === 2
-                  ? c.miniModel
-                  : c.complexModel,
-              reasoningEffort: limits.effort,
-              maxOutputTokens: actorInvention.enabled
-                ? Math.max(1800, limits.outputTokens)
-                : limits.outputTokens,
-              instructions,
-              context,
-              schema: z.toJSONSchema(schema, { target: 'draft-7' }),
-            },
-            `attempt:${attempt}:generate`,
+    const selectedHandle =
+      level1?.outcome.kind === 'act' || level1?.outcome.kind === 'continue'
+        ? level1.outcome.handle
+        : undefined;
+    const levelLimit = levelLimits(c)[level];
+    const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+    let value: unknown;
+    if (executedRoute === 'level1') {
+      if (selectedHandle === undefined) throw new Error('Level 1 reached admission unselected.');
+      value = this.selectKnownAction(prepared, selectedHandle);
+    } else
+      try {
+        // Schemas count toward the level input allowance, separately from context.
+        if (textBytes(responseSchema) > levelLimit.schemaBytes)
+          throw new ContextBudgetError(
+            `The level ${level} response schema exceeds its ${levelLimit.schemaBytes}-byte allowance; this request was not sent.`,
           );
+        value = await this.generate<unknown>(
+          run,
+          {
+            task: 'npc_response',
+            actorScope: actorId,
+            execution: level === 2 ? 'fast' : 'complex',
+            model: c.macrofoldKey
+              ? level === 2
+                ? c.macrofoldMiniModel
+                : c.macrofoldComplexModel
+              : level === 2
+                ? c.miniModel
+                : c.complexModel,
+            reasoningEffort: limits.effort,
+            maxOutputTokens: actorInvention.enabled
+              ? Math.max(1800, limits.outputTokens)
+              : limits.outputTokens,
+            instructions,
+            context,
+            schema: responseSchema,
+          },
+          `attempt:${attempt}:generate`,
+          { category: 'level', level },
+        );
+        // Oversized output is rejected rather than repaired with another paid call. Measure the
+        // operations exactly as the domain envelope does; the invention field has its own caps.
+        if (
+          textBytes(
+            value && typeof value === 'object' && 'operations' in value
+              ? { operations: (value as { operations: unknown }).operations }
+              : value,
+          ) > levelLimit.visibleOutputBytes
+        )
+          throw new StopJob(
+            'failed',
+            `The level ${level} response exceeded its ${levelLimit.visibleOutputBytes}-byte visible-output allowance. No paid repair was attempted.`,
+            'invalid',
+          );
+      } catch (error) {
+        // Escalation needs the normal spending allowance; if it cannot be reserved, defer.
+        if (
+          level1?.outcome.kind === 'escalate' &&
+          error instanceof StopJob &&
+          error.outcome === 'budget-exhausted'
+        ) {
+          const deferred: Level1Outcome = {
+            kind: 'defer',
+            reason: level1.outcome.reason,
+            ...(level1.outcome.best ? { best: level1.outcome.best } : {}),
+            escalationBlocked: 'budget-exhausted',
+          };
+          run.level1 = deferred;
+          // No generative request ran: record the blocked escalation and restore the route.
+          await this.log.record(
+            `${run.job.id}:attempt:${attempt}:level1:blocked`,
+            'Level-1 selection',
+            { policy: LEVEL1_POLICY, selectionRequest: selectionMode, escalationRefused: true },
+            { outcome: deferred, message: level1Message(deferred) },
+          );
+          const blocked = this.log.get(run.job.id);
+          if (blocked) await this.log.save({ ...blocked, route: 'level1' });
+          run.responseWatch = undefined;
+          await this.update(run, 'completed', level1Message(deferred), {
+            disposition: 'deferred',
+            reason: deferred.reason,
+            level1: deferred,
+            trigger: semanticTrigger,
+          });
+          return;
+        }
+        throw error;
+      }
     this.current(run);
     if (await retryForUrgentAwareness()) return;
-    if (route === 'level1' && value === null) {
-      run.responseWatch = undefined;
-      await this.update(
-        run,
-        'completed',
-        'Jev deferred the action choice; no automatic escalation.',
-        { disposition: 'deferred' },
-      );
-      return;
-    }
-    const reply = await this.log.run(
-      'Response parsing',
-      { schema: 'actor-response', value },
-      async () => {
-        const parsed = schema.parse(value);
-        // Provider schemas describe fields; cross-field admission rules still need validation.
-        // docs/architecture.md#actor-agency-foundation
-        if (!validResponseEnvelope({ operations: parsed.operations }))
-          throw new Error(
-            'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
-          );
-        return parsed;
-      },
-      { id: `${run.job.id}:attempt:${attempt}:parse` },
-    );
+    const reply = await this.log
+      .run(
+        'Response parsing',
+        { schema: 'actor-response', value },
+        async () => {
+          const parsed = schema.parse(value);
+          // Provider schemas describe fields; cross-field admission rules still need validation.
+          // docs/architecture.md#actor-agency-foundation
+          if (!validResponseEnvelope({ operations: parsed.operations }))
+            throw new Error(
+              'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
+            );
+          return parsed;
+        },
+        { id: `${run.job.id}:attempt:${attempt}:parse` },
+      )
+      .catch(() => {
+        // Output that fails validation is invalid data, distinct from provider failure; it is
+        // rejected without a paid repair request. The parsing stage keeps the exact error.
+        throw new StopJob(
+          'failed',
+          'The response did not match the decision contract. No paid repair was attempted.',
+          'invalid',
+        );
+      });
     // Authoring metadata must not invalidate the strict native response envelope.
     // docs/architecture.md#shared-invention-workflow
     // Grounding consumes canonical references, not the provider's opaque presentation handles.
@@ -1897,6 +2248,8 @@ export class AiDirector {
       { ...result, components: receipt?.components },
       commitStartedAt,
     );
+    // Deliberate continuation is an admitted level-1 choice, not a generic empty reply.
+    const continued = result.ok && level1?.outcome.kind === 'continue';
     await this.update(
       run,
       result.ok || awaitingConfirmation
@@ -1904,11 +2257,16 @@ export class AiDirector {
         : result.code === 'actor-unavailable'
           ? 'cancelled'
           : 'failed',
-      result.message,
+      continued && level1 ? level1Message(level1.outcome) : result.message,
       {
-        disposition: awaitingConfirmation ? 'awaiting-confirmation' : result.code,
+        disposition: awaitingConfirmation
+          ? 'awaiting-confirmation'
+          : continued
+            ? 'continued'
+            : result.code,
         components: receipt?.components,
         trigger: semanticTrigger,
+        ...(level1 ? { level1: level1.outcome } : {}),
       },
     );
     if (result.ok && proposedInvention) {

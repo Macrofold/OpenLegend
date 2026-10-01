@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-30 — “main” means the local branch
+
+Mike directed that `main` in a request means the local `main` branch unless `origin` or another remote is named. [AGENTS.md](../AGENTS.md#work-discipline) now says so beside the rebase route, so base selection uses local `main` rather than `origin/main` by default.
+
 ## 2026-09-30 — Verification reports without committed raw output
 
 At Mike's request, [documentation policy](../.agents/rules/documentation.md#verification-reports) now keeps observed results and limitations in the report while leaving generated probe logs and similar raw verification output out of Git. This reverses the earlier instruction to store raw artifacts beside each report. The 20 composed-activities probe outputs were removed; their distinct findings remain in the [verification report](verification/composed-activities.md). Authored fixtures and reusable verification tools remain source files.
@@ -53,6 +57,12 @@ Mike approved starting-scene priorities 2 and 3 ([plan](projects/camp-fire-and-s
   - Reserving portions for a named person is deferred (tracker BW21): claims cannot yet hold stock without a live process.
   - Rules: [survival](worlds/base/survival.md#tending-the-campfire) and [social](worlds/base/social.md#offering-and-accepting-possessions). Limits: [BW10/BW11](limits/base-world.md#bw10). Trackers: BW19–BW21, AC08.3 and AC09.7.
 - **Evidence.** [Native, PostgreSQL and fixture-Jev evidence](verification/camp-life.md). No live model calls. Browser and live behavior remain open.
+
+## 2026-09-28 — Level-1 decisions escalate instead of stalling
+
+Delivered the [level-1 decisions plan](projects/level1-decisions.md) under Mike's go-ahead. A level-1 decision now ends in one explicit outcome: act on the selected binding, deliberately continue, escalate once to an offered generative level through the normal spending allowance, or defer with its reason. This reverses the September 27 behavior in which any decision without a qualifying action deferred (“no automatic escalation”), which stalled routine choices; the tradeoff is an occasional generation charge. Missing or invalid ratings and failed rating requests still never escalate, so a defective judgment cannot buy an automatic paid repair.
+
+Bindings now exist before the question that selects them: non-speech triggers rate their actions in the routing request, and speech keeps a dependent second request after its action gate. The CR02/CR12 “combined Choice” wording is delivered as one combined request with independent Noul ratings, preserving the September 27 decision against a mutually exclusive action Choice ([runtime §2.4](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation), [CG05](limits/cognition.md#cg05)). Decision jobs keep provider refusal, unavailability, invalid output, uncertain completion and budget refusal distinct. [CG08](limits/cognition.md#cg08) adds independent per-level limits and a per-decision ledger; [CG09](limits/cognition.md#cg09) exposes that the accepted inner-world quota defeats the greeting token target. The Intelligence panel shows routing gates and reasons, level-1 ratings and outcomes, escalations, per-level cost and distinct outcome kinds. Evidence is fixture/native only with zero external requests ([verification](verification/level1-decisions.md)); live provider verification remains a separately authorized gate.
 
 ## 2026-09-28 — Action experience and learned native methods
 

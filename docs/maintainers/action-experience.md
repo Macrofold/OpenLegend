@@ -126,6 +126,15 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 
 **Exit:** linked actual evidence for every accepted slice, all in-scope review fixes, no generation in strict trials, and honest remaining qualification state. Full-suite/browser checks are selected by actual changed surfaces and required gates, not this prose alone.
 
+## Known bugs
+
+Ordered by impact. **High:** breaks play, saves or data. **Medium:** wrong in-memory state or a latent failure with no current player-visible effect. **Low:** cosmetic or diagnostic only.
+
+- [ ] **Medium — action history keeps an immer draft instead of plain data.** Found 2026-09-29 during the [level-1 live check](../verification/level1-decisions.md#live-check-september-29); reproduced on `origin/main` `0382be76` with fake model clients.
+  - **What happens:** when a queued plan step runs (for example a second eat queued behind another action), `beginActivity` in `packages/domain/src/action-experience.ts` stores the step's `command` object directly in the new history entry. That object is still the immer draft proxy, so the in-memory world keeps a proxy at `actionExperience.occurrences[actorId][n].command` after the change finishes.
+  - **Impact today:** none for players. The in-memory world uses immer with auto-freeze off, so the proxy still reads normally: saves to PostgreSQL write correct JSON, and reopening the world from the database gives clean plain data. Anything that `structuredClone`s the in-memory world fails with “could not be cloned” until the next reload. This happens today in the test helper `editWorld` (`tests/fixtures/service.ts`) after a queued meal, and would happen in any future runtime code that copies the world.
+  - **Fix:** store a plain copy (`current(command)` when `isDraft(command)`, or a structured copy) and check other places that store caller-supplied objects into `actionExperience`. Verify with a queued second meal followed by `structuredClone(world)`.
+
 ## Delivery evidence and boundaries
 
 AE01–AE03 use validated internal records and English-first projection with explicit required-fact coverage; exact binding and execution metadata stay internal. AE04/AE06 use indexed existing repository records, atomic publication and current privacy overlays. Output ports are read within the bounded actor/source-selected occurrence records, not from a new global output search service. AE05/AE07 preserve durable cursors and forbid automatic paid retries; capacity preflight and active-plan fences keep optional learning separate from immediate actions. AE08/AE09 provide scoped inspection, pending-learning diagnostics and finite selected execution through existing agency/kernel.

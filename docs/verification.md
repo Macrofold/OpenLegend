@@ -32,6 +32,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Attributes, status effects and sleep](verification/attributes-and-actor-state.md): native, service and browser observations.
 - [Items, editable knowledge and learned names](verification/items-and-knowledge.md): item handling, private knowledge and introductions.
 - [Cognition context, triggers and pacing](verification/cognition-context.md): request context, conversation snapshots, relevance and trace attribution.
+- [Level-1 decisions](verification/level1-decisions.md): act/continue/escalate/defer fixtures, CR02 verification, per-level accounting, payload inspection and Intelligence rows.
 - [Simulation and cognition audit](verification/simulation-and-cognition-audit.md): native, persistence and limited provider observations.
 - [Conversation compaction](verification/conversation-compaction.md): summary reuse, privacy, measurements and integration review.
 - [Narration failures and explicit chat retry](verification/narration-and-chat-retry.md): failed narration presentation, retries and editor follow-up.

@@ -100,7 +100,7 @@ During implementation, keep known remaining work relevant to the task accurately
 
 ## Work discipline
 
-For development tasks, after initial planning and before implementation, follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns target precedence, worktree/history protections and the mandatory all-work conflict stop; report the exact remote/ref used.
+For development tasks, after initial planning and before implementation, follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns target precedence, worktree/history protections and the mandatory all-work conflict stop; report the exact remote/ref used. When the developer says `main` without naming `origin` or another remote, they mean the local `main` branch, not `origin/main`.
 
 Whenever you change the branch you are working on, explicitly report each change as `previous branch → new branch` in your response, including the final handoff. This includes switching to a newly created branch, renaming the working branch, or moving to a checkout/worktree on a different branch; identify detached HEAD by its commit.
 

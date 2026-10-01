@@ -41,6 +41,13 @@ Accepted target: application/world compute ownership, separate actor Worktrees a
 - [ ] Obtain passing normal CI, including the migrated `apps/server/src/cognition.test.ts` fixture. The fixture now uses the selected Worker and retained Worktree; full static typechecking and production build pass after rebasing onto main, which already resolved the old 168 test-source errors. Automated suites were not manually run. CI on `6324c82` reached tests and failed 107 cases across 17 files; the Worker fixture fails on inherited fixed actor IDs before provider dispatch. Resolve [suite compatibility](TODO.md#existing-automated-suite-compatibility) and rerun this gate; static checks and local HTTP scenarios do not close it.
 - [ ] Extend failure/recovery qualification beyond the observed single-process caller, especially process loss while an acceptance is arriving, unresolved persistence and financial settlement, and restore while old remote work remains in flight. Existing WorldService ownership is not a distributed cancellation guarantee.
 
+## MW05 — Outcome classification and request-body fixtures
+
+Found by the [level-1 decisions](../projects/level1-decisions.md) work. Not done on `codex/level1-decisions` because `codex/integrate-invention` changes about 170 lines of `apps/server/src/macrofold.ts`; editing it in parallel would guarantee merge conflicts. Do it after that branch merges.
+
+- [ ] Map Macrofold results to the shared outcome kinds: `singleInference` reports an `uncertain` inference as `failed`; rejected credentials on generation become `uncertain` and on judgment `failed` instead of `unavailable`; timeouts become `cancelled`; malformed Jev answers become `failed`/`uncertain` instead of `invalid`. A refused connection is certain non-dispatch but is booked `uncertain` with its reservation charged, as the [September 29 live attempt](../verification/level1-decisions.md#live-check-attempt-september-29) showed. The director already reports any receipt marked completion-uncertain as `uncertain`.
+- [ ] Add a transport fixture for `/v1/inferences` request bodies (model binding, `max_tokens`, reasoning effort, `require_parameters`). Forwarding is confirmed by code inspection and one live run, not by a fixture.
+
 ## Decisions and handoff
 
 The application/world operator owns Worker creation, lifetime, rates and lifecycle. The runtime selects an existing Worker instead of adding a second allocation policy, requiring admin credentials, or converting a finite allowance into recurring spend. This is an intentional setup change; a blank Worker ID leaves inference available but disables native calls. Changing the ID is an explicit drained/reconciled owner reconfiguration, never an automatic fallback.

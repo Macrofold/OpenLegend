@@ -68,8 +68,10 @@ function describeTargets(
 
 export const CONTEXT_BYTE_LIMIT = 100_000;
 export class ContextBudgetError extends Error {
-  constructor() {
-    super('Required actor facts exceed the 100KB context budget; this context was not sent.');
+  constructor(
+    message = 'Required actor facts exceed the 100KB context budget; this context was not sent.',
+  ) {
+    super(message);
     this.name = 'ContextBudgetError';
   }
 }
