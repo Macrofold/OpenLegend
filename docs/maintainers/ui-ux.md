@@ -1,43 +1,45 @@
 # UI/UX standards and qualification follow-through
 
-[Handbook](../ui-ux/README.md) · [Essential agent rules](../../.agents/rules/ui-ux.md) · [Verification scenarios](../ui-ux/verification.md) · [Maintainer index](README.md)
+[Handbook](../ui-ux/README.md) · [Essential rules](../../.agents/rules/ui-ux.md) · [Verification](../ui-ux/verification.md) · [Maintainer index](README.md)
 
-This tracker owns follow-through introduced by the 2026-09-30 interaction-design documentation request. It does not authorize a runtime redesign or duplicate the existing inventory, spatial, hearing, narration, invention or save/load implementation trackers. Read those owners when changing their behavior. Baseline: `0382be7`.
+This tracker owns follow-through from the 2026-09-30 interaction-design request and the 2026-10-01 primary-source critique. It does not authorize runtime redesign or duplicate inventory, spatial, hearing, narration, invention or save/load trackers. Original runtime baseline: `0382be7`; second-pass handbook baseline: `e8d6c89`.
 
 ## UIUX01
 
-**Documentation delivered in this branch; runtime conformance not asserted.** The handbook covers information hierarchy/layout, controls/overlays, inventory/trading, world interaction, chat/invention, system feedback, React and verification, with a dated source ledger. Root/client routing loads one short essential rule and only matching chapters. Existing aesthetics, authority, save compatibility and subsystem contracts remain unchanged.
+**Documentation delivered on the PR #26 branch; runtime conformance not asserted.** The handbook covers hierarchy/layout, controls/overlays, inventory/trading, world interaction, chat/invention, feedback, React and verification. Root/client guidance routes to a short core and matching sections only. Current aesthetics, authority, save compatibility and subsystem contracts remain unchanged.
 
-Completion is delivery of the requested documentation and routes, not retroactive compliance of every existing screen. Machine checks and native dispatch are separately tracked below; do not describe the entire guidance system as verified from Markdown links alone.
+The second pass adds [20 source groups](../ui-ux/research-second-pass.md), including pinned Primer/Adobe implementation observations and Vercel's guideline repository. It directly corrects searchable-picker semantics, disabled explanations, utility/focus color interpretation and child-overlay priority, then strengthens composition, adaptive continuity, persistence and calibrated agent feedback. First-pass research remains labeled historical evidence rather than being silently rewritten.
+
+Completion means requested documentation/routes, not retroactive conformance of every screen. Tooling/native dispatch remain separately open. A company's pattern and a valid Markdown route are not proof of runtime accessibility or agent compliance.
 
 ## UIUX02
 
-**Open — reproduce reported control defects before assigning a cause.** Inspect the clear-X and typeahead in the affected browser, theme, UI scale and caller. Source inspection found an integrated React Aria `SelectField`, a shared remote `SubjectPicker` and a native inventory search input. It did not reproduce the earlier nested-control problem or prove why an X appears blue.
+**Open — reproduce reported control defects before assigning a cause.** Inspect clear-X and typeahead in the affected browser, theme, scale and caller. Source inspection found integrated React Aria `SelectField`, shared remote `SubjectPicker` and native inventory search. Neither pass reproduced the historical nesting problem or established the blue-X cause.
 
-Acceptance when implemented: one coherent searchable choice; no duplicate native/custom clear utility; quiet semantic styling with visible focus; keyboard, IME, blur, clearing, remote results and popup placement behave consistently across relevant callers. Use the [control contract](../ui-ux/controls.md) and [verification matrix](../ui-ux/verification.md#interaction-and-failure-scenarios). Do not rewrite the shared selector solely on the assumption that the historical defect remains present.
+Acceptance when implemented: coherent combobox or intentional searchable picker, no input inside a trigger button, no duplicate native/custom clear control, quiet utility styling with visible focus, and consistent keyboard/IME/blur/clear/remote/popup behavior. Important disabled reasons need a reachable explanation. Use [Controls](../ui-ux/controls.md) and [scenarios](../ui-ux/verification.md#interaction-and-failure-scenarios); do not rewrite a functioning component from an unconfirmed diagnosis.
 
 ## UIUX03
 
-**Open — qualify layout and input boundaries when those surfaces change.** Prioritize actual panel collisions, short/narrow viewport overflow, text scaling, popup placement, dismissed-picker walk-through, wheel-through and drag/click ambiguity. Existing spatial and hearing trackers retain full-scene, touch and assistive-device qualification; this entry links the common [world/input contract](../ui-ux/world-interaction.md) rather than creating a second camera specification.
+**Open — qualify layout/input boundaries when those surfaces change.** Prioritize actual collisions, short/narrow overflow, text scaling, popup placement, dismissed-picker movement, wheel-through and drag/click ambiguity. Preserve selection/drafts through pane adaptation; child dismissal must not close the parent. Existing spatial/hearing trackers retain full-scene, touch and assistive-device qualification. [World contract](../ui-ux/world-interaction.md)
 
-Acceptance evidence must identify the build, viewport/scale, content and input method. A screenshot of an empty panel or a passing build does not close the interaction cases. Proposed spacing/target values are in [UXL01–05](../limits/ui-ux.md), not implemented changes.
+Record build, viewport/scale, realistic content and input method. An empty-panel screenshot or build cannot close interaction acceptance. [UXL01–05](../limits/ui-ux.md) remain proposed tuning, not runtime changes.
 
 ## UIUX04
 
-**Future feature guidance — no advanced inventory/trading implementation authorized by this request.** When inventory grows, apply the [inventory chapter](../ui-ux/inventory.md) to scoped search, comparison, stable identity, nested storage, exact quantities, multi-selection and clear results. Preserve the current persistent-object and action authority owners.
+**Future guidance — advanced inventory/trading implementation not authorized by these requests.** Apply [Inventory](../ui-ux/inventory.md) to scoped search, comparison, stable identity, nested storage, exact quantities, row/batch semantics and actual results. Existing persistent-object/action owners remain controlling.
 
-Select a concrete task and measure it before choosing grid/list density, virtualization, presets or a larger workspace. Existing [HV01](../limits/interface.md#hv01) performance evidence remains a real starting point, not a new pass. Trading needs a separately scoped transaction contract before UI work; offer changes, renewed agreement, totals and receipts cannot be invented in presentation alone.
+Choose a concrete task and measure before grid/list density, virtualization, presets or enlarged workspaces. [HV01](../limits/interface.md#hv01) is prior performance evidence, not a fresh pass. Trading needs separately scoped transaction semantics; offer changes, renewed acceptance, totals and receipts cannot be invented in presentation.
 
 ## UIUX05
 
-**Open qualification, tied to affected feature work.** Apply [chat/invention scenarios](../ui-ux/chat-and-invention.md) to draft retention, conversation identity, scroll anchoring, late results, exact candidate revisions and consequential approval. Existing narration/invention/save owners retain behavior and implementation work. This handbook introduces no automatic paid retries, new typed-question protocol, generated-code permission or background execution.
+**Open qualification, tied to affected feature work.** Apply [Chat/invention](../ui-ux/chat-and-invention.md) to draft identity, scroll anchors, late results, selective correction, candidate revisions and consequential approval. Distinguish capability/validation evidence from invented confidence. Existing narration/invention/save owners retain implementation; no paid retries, questionnaire protocol, generated-code permission or new background execution was added.
 
-Use the relevant existing tracker when a concrete defect is reproduced. Keep hypothetical enhancements separate from required fixes; do not turn every reference-product feature into a delivery commitment.
+File concrete reproduced defects with existing feature owners. Keep optional ideas distinct from fixes; reference-product features are not automatically delivery commitments. Classify any new retained navigation/draft state under [persistence guidance](../ui-ux/system-feedback.md#classify-navigation-drafts-and-persistence).
 
 ## UIUX06
 
-**Open — tooling and native instruction-dispatch verification.** This connector-only pass did not execute `pnpm guidance:check`, the pinned changed-file formatter, native agent-loading probes or browser/assistive-technology checks. Static content and Git diff review are narrower evidence.
+**Open — tooling and native instruction-dispatch verification.** The first pass did not run the guidance checker, pinned formatter, native agent probes or browser/assistive checks. The second pass inspected additional primary-source code and revised the docs; it still did not run those checks. The local environment had no `pnpm`, and fetching a pinned repository snapshot into it failed DNS resolution. Connector Git writes remained available; this is not a claim that GitHub access was unavailable.
 
-In a runnable checkout, run the existing guidance checker and changed-file formatter without repository-wide formatting churn. For loading, inspect actual context in a matching frontend task, backend-only negative case, new-component case and client-package working directory. The expected route is one short core plus only relevant chapters; no mandatory research/corpus preload. Record agent versions and missing/irrelevant reads under the existing agent-guidance verification workflow. Fix concrete link/trigger failures without weakening unrelated policy.
+In a runnable checkout, run `pnpm guidance:check` and the pinned changed-file formatter without repository-wide churn. Probe a matching frontend task, backend-only negative case, new component and client-package working directory. Inspect actual context/reads: one short core plus relevant chapter sections, no compulsory research/corpus preload. Record agent versions and missing/irrelevant reads with the existing [agent-guidance tracker](agent-guidance.md). Fix concrete failures without weakening policy.
 
-The current core is deliberately a summary, not a substitute for the relevant interaction contract. Reassess its length if agents consistently omit important rules or load excessive detail; do not duplicate the full guide into root instructions.
+The second pass does not change root/client entrypoint routing or add vendor skills. Core wording now permits valid alternatives and points to focused details. Reassess loading size if evidence shows omission or excessive context; do not copy the handbook into root instructions. Static source/document review does not close native dispatch or gameplay qualification.

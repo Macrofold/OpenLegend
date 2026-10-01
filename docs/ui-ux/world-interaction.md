@@ -12,19 +12,22 @@ Current camera bindings belong to the existing owners, not this handbook. The ac
 
 ## One owner for each gesture
 
-Determine ownership from the event's origin and active interaction layer before interpreting it. The priority is the active modal, its popups/controls, ordinary focused UI, then the world. Implement this through existing shared behavior where possible, not a patchwork of global listeners.
+Determine ownership from the event origin and active interaction scope. A modal excludes background interaction; **inside that permitted scope, the active child popup/control handles its interaction before the parent**. Without a modal, active UI or a captured gesture is resolved before eligible world input. This corrects a simplistic parent-modal-first ordering: a dialog must not close when Escape was meant for its child combobox. Reuse shared primitives, not competing global listeners. Adobe's overlay source demonstrates explicit top-layer and child-scope handling. [S04](research-second-pass.md#s04)
 
 | Gesture/context | Required result |
 | --- | --- |
-| Type, paste, select text or compose with an IME in a field | Edit text only; no movement, hotkey action or accidental send |
+| Type, paste, select text or compose with an IME in a field | Edit text only; no world hotkey or accidental send; retain the owning workflow's explicit Send behavior |
 | Wheel over a scrollable panel or popup | Scroll that content, not the camera underneath |
-| Click outside an open action picker | Dismiss according to its contract; the same click does not walk |
+| World click used to dismiss an action picker | Dismiss according to its contract; the same click does not walk |
 | Drag the world beyond the established drag threshold | Pan/orbit only; release does not select or invoke a context action |
 | Drag a panel or item | Continue the captured interaction; release cannot activate a world target |
 | Escape with a popup open | Close that popup first; do not also hide its panel or open the pause menu |
+| Focus moves from a dialog into its child popover | Preserve the parent and its draft; entering the child is not an outside-dismissal gesture |
 | Window blur, pointer cancellation or lost capture | End/cancel transient gesture state; no stuck movement or delayed click |
 
 Use pointer capture and a tested drag threshold; do not invent a new pixel threshold in each component. The threshold is an implementation tuning value, not a player's intent guarantee. A stationary click and a drag must remain distinguishable under scaling, trackpads and different pointing devices. Mouse, touch and keyboard actions need equivalent meanings, not necessarily identical gestures.
+
+Consuming a world-dismissal click does not establish that every non-modal popover must swallow intentional clicks on other UI controls. Keep that distinction in the component contract. Preventing propagation alone is not the same as cancelling a default action or blocking a server mutation. [React event composition](react.md#component-composition-must-preserve-behavior)
 
 ## Camera orientation and recovery
 
@@ -52,6 +55,8 @@ Selection and preview are read-only. Use the current action admission route for 
 
 For target selection, show that targeting mode is active, the permitted target class/range when known, a clear cancel route and the intended effect before commitment when practical. A changed selected entity must not retarget an already reviewed operation silently. Repeated hotkeys and double-clicks must not duplicate a costly command.
 
+Where a targeting footprint represents a known area of effect, range or direction, its graphic must agree with the applicable geometry. Decorative glow must not imply additional affected space, precision or certainty. If prediction is approximate or incomplete, communicate that distinction rather than draw a falsely exact boundary. This adapts Riot's gameplay-clarity rationale, without adopting its combat rules or revealing information the player cannot know. [S19](research-second-pass.md#s19)
+
 Quick actions accelerate a known task; they do not become the only route to the full action catalogue. Preserve current contextual suggestions and pinned shortcuts. Do not reorder a player's pins based on a relevance model without their explicit choice. Cooldown rings are for actual cooldowns; work progress follows the work contract, not whatever indicator component is visually convenient.
 
 ## Navigation and world search
@@ -66,10 +71,12 @@ Use persistent player-created pins for meaningful goals, not an uncontrolled flo
 
 Status placement must survive dense scenes, tall entities, camera edges and open panels. Preserve source attribution and avoid covering the action target. When visible caption capacity is exceeded, use the current missed-caption notice and permitted history route; do not silently pretend every utterance was shown.
 
+Visual/audio prominence should track actionable importance and urgency, not how much machinery generated an event. Keep routine updates quiet so a consequential warning remains distinguishable. Do not amplify every new notification to compete with an already noisy scene; reduce or aggregate the low-value competition while retaining meaningful history. Riot's clarity discussion supplies a game-specific rationale. [S19](research-second-pass.md#s19)
+
 [Hearing](../hearing-and-speech.md), [timed UI](../timed-ui.md) and [perceived events](../perceived-world-events.md) own what may be displayed and how time works. A speech lifetime, native work bar, request spinner and cooldown are different clocks. Pausing simulation freezes the appropriate simulated progress; it does not justify inventing a completed action or losing a drafted message.
 
 Do not fake audible words or speaker identity when only faint/unattributed sound was perceived. Give hearing/caption settings and readable history a discoverable route, not one dependent on tiny overhead text. Reduced motion must preserve the same information and task access.
 
 ## Acceptance scenes
 
-Exercise a world-edge popup, two open panels at enlarged UI scale, an active chat composer while pressing movement keys, a drag ending over a button, a dismissed picker over walkable ground, a rotated multi-floor scene and a dense caption burst. Check that selection, focus and action authority remain separate. Current full-scene, touch and assistive-device qualification remains with the existing spatial/hearing trackers; source inspection does not close it.
+Exercise a world-edge popup, two open panels at enlarged UI scale, an active chat composer while pressing movement keys, a drag ending over a button, a dismissed picker over walkable ground, a rotated multi-floor scene and a dense caption burst. Add a child popup inside a dialog, a short viewport with a keyboard, and any known targeting footprint against the actual supported geometry. Check that selection, focus and action authority remain separate. Current full-scene, touch and assistive-device qualification remains with the existing spatial/hearing trackers; source inspection does not close it.

@@ -2,40 +2,44 @@
 
 [Handbook](../ui-ux/README.md) · [Foundations](../ui-ux/foundations.md) · [Follow-through](../maintainers/ui-ux.md) · [Tracking rules](README.md)
 
-These are **Proposed display-only starting values**, introduced by the 2026-09-30 research/documentation pass at baseline `0382be7`. They are not implemented changes, universal scientific optima, content/collection caps or a claim of accessibility compliance. Existing accepted values remain in the production design-system guide and [interface inventory](interface.md); do not duplicate or silently replace their entries. Evaluate a starting value when its surface is implemented or changed, and record adopted deviations with their owner and evidence.
+These are **Proposed display-only starting values**, introduced by the 2026-09-30 documentation pass at baseline `0382be7` and clarified on 2026-10-01. They are not implemented changes, universal optima, content/collection caps or an accessibility-conformance claim. Existing accepted values remain in the production guide and [interface inventory](interface.md). Evaluate these when changing a relevant surface; record adopted deviations with their owner and evidence rather than silently replacing current contracts.
 
 ## UXL01
 
-**Proposed · Restrictiveness: Medium (layout envelope).** Use the existing 4px rhythm; initial relationship ranges in CSS pixels are 4–8 label-to-field, 8 icon-to-label, 12–16 between fields, 24–32 between semantic groups, and 16–24 comfortable panel inset. The [foundations table](../ui-ux/foundations.md#spacing-and-dimensions) owns application guidance.
+**Proposed · Restrictiveness: Medium (layout envelope).** Use the existing 4px rhythm; initial CSS-pixel relationship ranges are 4–8 label-to-field, 8 icon-to-label, 12–16 between fields, 24–32 between semantic groups, and 16–24 comfortable panel inset. [Foundations](../ui-ux/foundations.md#spacing-and-dimensions) owns application guidance.
 
-**Reason/tradeoff:** Consistent proximity and enough room for focus/errors without turning every compact game panel into a spacious desktop form. At the boundary, wrap/stack and grow content; do not clip labels or erase validation. Existing compact adaptations remain authoritative until deliberately revised. Revisit with long content, enlarged text and actual task observations; these ranges are not measured optima.
+**Reason/tradeoff:** Consistent proximity with room for focus/errors, without turning compact game panels into spacious desktop forms. At the boundary, wrap/stack and grow content; do not clip labels or hide validation. Preserve compact adaptations until deliberately revised. Revisit with long content, enlarged text and real task observations; these are not measured optima.
 
 ## UXL02
 
-**Proposed · Restrictiveness: Medium (reading measure).** Start longer prose at approximately 45–75 characters per line where the available workspace permits. Short contextual labels, narrow chat panels and numerical tables need different measures.
+**Proposed · Restrictiveness: Medium (reading measure).** Start longer prose at about 45–75 characters per line where the workspace permits. Short contextual labels, narrow chat and numerical tables need different measures.
 
-**Reason/tradeoff:** A readable line length without taking the world away from the player. Wrap to available width rather than enforce a fixed minimum or shrink text. This does not change existing 336/504px panel adaptations. Revisit after actual reading/scrolling tasks at supported text scales.
+**Reason/tradeoff:** Readability without taking the world away. Wrap rather than enforce a fixed minimum or shrink text. Existing 336/504px panel adaptations remain unchanged. Revisit through reading/scrolling tasks at supported text scales.
 
 ## UXL03
 
-**Proposed · Restrictiveness: Safe (preferred pointer-target envelope, not a content cap).** Prefer roughly 40px targets for new ordinary desktop controls and 44–48px for coarse-pointer/touch operation, while preserving existing explicitly accepted 32px compact controls until reviewed. The glyph can remain smaller. The web AA baseline of 24×24 CSS px has criterion-specific exceptions and is not a recommended comfortable default; see [accessibility guidance](../ui-ux/react.md#accessibility-is-a-behavior-contract).
+**Proposed · Restrictiveness: Safe (preferred target envelope, not content cap).** Prefer roughly 40px targets for new ordinary desktop controls and 44–48px for coarse-pointer/touch operation, while retaining explicitly accepted 32px compact controls until reviewed. Glyphs may remain smaller. The web AA 24×24 CSS-pixel baseline has criterion-specific exceptions; it is not a comfortable-default recommendation. [Accessibility](../ui-ux/react.md#accessibility-is-a-behavior-contract)
 
-**Reason/tradeoff:** Easier targeting costs HUD space. Increase the hit region without overlapping neighboring targets, or change layout/density; do not expand invisible hitboxes across other controls. When a compact exception is retained, qualify it in the actual input mode and document the tradeoff. No accessibility pass is inferred from dimensions alone.
+**Reason/tradeoff:** Easier targeting costs HUD space. Increase hit area without overlapping neighbors or adjust layout/density; never extend invisible hitboxes across another control. Qualify a retained compact exception in the actual input mode and record the tradeoff. Dimensions alone establish no accessibility pass. Viewport width alone does not identify pointer type.
 
 ## UXL04
 
-**Proposed · Restrictiveness: Medium (composer viewport only).** Preserve the current one-line initial composer. For a future bounded growth behavior, evaluate a visible growth envelope around six text lines or about 30% of the available panel height, then internal scrolling or an explicit expanded editor, whichever provides usable editing in that surface.
+**Proposed · Restrictiveness: Medium (composer viewport only).** Keep the current one-line initial composer. For future bounded growth, evaluate approximately six visible text lines or about 30% of available panel height, then internal scrolling or an explicit expanded editor, whichever fits the task.
 
-**Reason/tradeoff:** Keep conversation context and the send/recovery controls visible while supporting long drafts. This is not a character limit and never permits truncating text. Short viewports and software keyboards require an alternate fit strategy, not mechanically enforcing both numbers. Existing message/draft caps remain with their interface/server owners. Revisit through multiline/IME/draft-retention tasks before adoption.
+**Reason/tradeoff:** Preserve conversation context and Send/recovery while allowing long drafts. This is not a character limit and never permits truncation. Short viewports/keyboards need another fit strategy, not mechanically enforcing both numbers. Existing message/draft caps stay with interface/server owners. Revisit through multiline/IME/draft-retention scenarios before adoption.
 
 ## UXL05
 
-**Proposed · Restrictiveness: Medium (local feedback target).** Aim for visible local input/selection feedback within roughly 100ms under a declared representative device/workload. This is an engineering target for local responsiveness, not a guaranteed end-to-end server, storage or model latency and not a new timeout.
+**Proposed · Restrictiveness: Medium (local feedback target).** Aim for visible local input/selection feedback within roughly 100ms under a declared representative device/workload. This is not a guaranteed server/storage/model duration or a new timeout.
 
-**Reason/tradeoff:** A responsive interaction should not wait for optional computation. Measure latency distribution and worst visible stalls rather than cite one favorable run. At the boundary, show truthful pending state, reduce expensive work or use bounded rendering; never discard a command or invent success to meet the target. Existing 150ms search debounce remains recorded in [QU15](interface.md#qu15), separately from immediate text echo.
+**Reason/tradeoff:** Input should not wait for optional computation. Measure distributions and visible stalls instead of one favorable run. If the target is missed, expose truthful pending state and reduce expensive work or bound rendering; do not discard commands or invent success. The 150ms search debounce remains separately recorded in [QU15](interface.md#qu15), not applied to immediate text echo.
+
+**Second-pass clarification:** Google's good-INP threshold is at most 200ms at the 75th percentile of page visits, with device-class segmentation. It is a different field metric, not an alternate value for this target, a camera frame budget or an end-to-end completion SLA. No INP measurement or telemetry collection was performed. [Source and scope](../ui-ux/research-second-pass.md#s15)
+
+No universal spinner-delay/minimum-duration or sub-500ms mutation requirement is introduced. If a future feature selects such a behavioral value, record its purpose, boundary behavior and evidence with that feature. Visual smoothing must not falsely extend pending status after a consequential completion/failure.
 
 ## Existing bounds and non-limits
 
-This pass changes no existing popup row count, notice lifetime, quick-action count, search query length, page size, camera angle, save retention or data capacity. Current values and historical qualifications remain with their owners, including [HV01](interface.md#hv01), [QU11](interface.md#qu11), [QU15](interface.md#qu15), [LA223](interface.md#la223) and [object queries](objects.md).
+Neither pass changes existing popup row counts, notice lifetimes, quick-action counts, query lengths, page sizes, camera angles, save retention or data capacity. Current values and historical qualifications remain with their owners: [HV01](interface.md#hv01), [QU11](interface.md#qu11), [QU15](interface.md#qu15), [LA223](interface.md#la223) and [object queries](objects.md).
 
-Responsive fit equations are decision methods, not new fixed minimum world dimensions. The handbook deliberately supplies no universal maximum menu-item count, inventory size or number of tabs. That is not a declaration that runtime work is unbounded: existing data, authority and performance limits still apply. Test workloads in the verification chapter are fixtures, not product restrictions.
+Responsive fit equations are methods, not fixed minimum world dimensions. The handbook supplies no universal maximum menu items, inventory size or tabs; that does not declare runtime work unbounded. Existing data/authority/performance limits still apply. Test workloads are fixtures, not product restrictions. Vendor-specific pane ratios, card counts and timing conventions are not silently adopted.

@@ -4,83 +4,103 @@
 
 ## Every operation has a readable state
 
-A reusable asynchronous surface needs a contract for initial, loading, ready, empty, failed and stale states, plus partial results when the backend supports them. Do not let an empty array ambiguously mean all of these.
+A reusable asynchronous surface needs a contract for initial, loading, ready, empty, failed and stale states, plus partial results when supported. An empty array must not ambiguously mean all of these.
 
 | State | What the player should understand | Wrong implication to avoid |
 | --- | --- | --- |
-| Not yet requested | What opening or searching will do | Pretending the collection is empty |
-| Loading | What is being retrieved; whether an old view is still usable | Erasing the interface or showing fake progress |
-| Truly empty | Nothing exists in the requested permitted scope, with a useful next step | Suggesting a retry will create data |
-| No filter/search matches | Data may exist; explain scope and offer to change the filter | Saying the player owns nothing |
-| Partial/windowed result | What was examined and how to continue | Calling a page the complete collection |
-| Unavailable/unauthorized | Why the operation cannot proceed, without leaking hidden facts | A mystery disabled button or a misleading empty state |
-| Stale | Which displayed facts may have changed and which actions await refresh | Allowing a stale price, quantity or target to look final |
-| Failed | What did not finish, whether anything changed, and a recovery action | A disappearing error with no retained work |
-| Completed | The actual authoritative result | Treating request dispatch as success |
+| Not yet requested | What opening/searching will do | Pretending the collection is empty |
+| Loading | What is being retrieved and whether an old view is usable | Erasing the interface or fake progress |
+| Truly empty | Nothing exists in the requested permitted scope, with a useful next step | Suggesting retry will create data |
+| No matches | Data may exist; show scope and filter recovery | Saying the player owns nothing |
+| Partial/windowed | What was examined and how to continue | Calling a page complete |
+| Unavailable/unauthorized | Why it cannot proceed, without hidden facts | Mystery disabled buttons or misleading emptiness |
+| Stale | Which facts may have changed and actions await refresh | Making an old price/quantity look final |
+| Failed | What did not finish, whether anything changed, and recovery | Disappearing errors and lost work |
+| Completed | The actual authoritative result | Treating dispatch as success |
 
-Put feedback where the action happened. Preserve the stable panel, selection and prior readable content during refresh where safe. Block only the operation whose prerequisites are stale, not the whole game. Do not disguise an error as a zero, an empty meter or a successful-but-blank response.
+Put feedback where the action happened. Preserve stable panels, selection and readable prior content during safe refresh. Block the operation whose prerequisites are stale, not the whole game. Do not disguise error/unknown as zero or a successful blank response.
+
+A loading control should retain its action identity, accessible name and stable geometry. Show prompt local acknowledgement without forcing every brief read to flash a spinner. A delayed visual loader must not delay duplicate-submit protection; a minimum animation duration must not keep presenting false pending state after completion/failure. Prefer truthful state over importing exact vendor delays. These are task-specific decisions, not new timer defaults. Vercel's stable-control guidance informs the approach. [S07](research-second-pass.md#s07)
+
+Distinguish local input echo from network/storage/model duration. An arbitrary sub-500ms mutation target is not a valid promise for saves or AI work. Performance terminology and proposed local targets are separate in [UXL05](../limits/ui-ux.md#uxl05).
 
 ## Search is a scoped read, not a side effect
 
-Use a persistent label or accessible name, an informative placeholder and an unambiguous clear control. Distinguish searching a catalogue from choosing a value in a form. Search should not equip, buy, move, generate or activate merely because the player pressed Enter. Where the current action search opens an invention draft, preserve its explicit-send boundary.
+Use a persistent label/accessibility name, informative placeholder and unambiguous clear utility. Catalogue search differs from choosing a form value. Searching cannot equip, buy, move, generate or activate merely on Enter; current action search may open an invention draft but preserves explicit Send.
 
-Scope, filters and continuation belong together. Indicate **this container**, **this conversation**, **perceived events**, **known people** or another honest domain. A broad search must use a permitted server endpoint; do not pull hidden world data into the browser and then filter it visually.
+Keep scope, filters and continuation together: **this container**, **this conversation**, **perceived events**, **known people**. Broad search uses a permitted server endpoint, not hidden-world data downloaded and filtered visually. Place search according to its importance to the task, and clearly distinguish any local search from a broader entry point. Apple's searching guidance supports intentional location and scope, not the same toolbar on every surface. [S13](research-second-pass.md#s13)
 
-Retain query and search context when returning from detail. Match by stable identity, not display-name uniqueness. Use explicit ranking/sort semantics and stable ties; keyboard focus must not jump as late results arrive. Reject responses from an old query, actor, scope or world generation. A query change clears or invalidates old selectable results immediately when selecting them would be unsafe.
+Retain query/context when returning from detail. Use stable identity, explicit ranking/sort semantics and ties; late results must not jump focus. Ignore old query/actor/scope/generation results and immediately invalidate unsafe selectable rows after query changes.
 
-Current subject search uses a 150ms debounce, and [QU15](../limits/interface.md#qu15) records the shared reported search value. Debounce network work, not text entry. A local filter may not need debounce; expensive work needs measurement or a better query, not a longer unexplained delay. The proposed local-feedback target is separate from end-to-end server/model latency. [UXL05](../limits/ui-ux.md#uxl05)
+Current subject search debounces by 150ms; [QU15](../limits/interface.md#qu15) retains that reported shared value. Debounce network work, not text entry. Local filtering may need no debounce; expensive work needs measurement/better queries, not an unexplained longer delay. This differs from end-to-end latency and [UXL05](../limits/ui-ux.md#uxl05).
 
-Support no-results recovery: change query, clear filters, widen scope only when supported, or continue scanning older/remaining records. Do not recommend broadening to private data. Searchable history can remain bounded per request while preserving complete permitted access through continuation; this is already a meaningful distinction in Open Legend's history contracts.
+Provide recovery: change query, clear filters, widen scope only when supported, or continue older/remaining records. Never suggest broadening to private data. Bounded per-request work can preserve complete permitted access through continuation. Recent-search suggestions, if added, require an explicit storage/scope/clear-history policy; they must not resurrect a private query in another account or world.
 
-## Notifications: match the interruption to the consequence
+## Classify navigation, drafts and persistence
+
+Do not adopt “put all state in the URL.” Decide what the state means, who may see it, how long it persists and what restoration does. Vercel's deep-link guidance is useful for navigation, not a reason to expose private work. [S07](research-second-pass.md#s07)
+
+| State | Appropriate ownership | Boundary |
+| --- | --- | --- |
+| Sharable view/filter or permitted object reference | URL when the feature supports meaningful navigation | Validate current permission on opening; the URL grants no authority |
+| Popup, hover, drag and temporary focus | Local interaction state | Restoring a page must not resume a half-finished gesture |
+| Unsent message or dirty editor | Existing scoped draft owner | Do not put private text/credentials in URLs, analytics or broad diagnostic logs; define retention and clearing |
+| UI scale, accessibility or camera preferences | Existing account/device preference owner | Distinct from gameplay rewind and another user's settings |
+| Trade, save, installed invention or world effect | Authoritative server state/receipt | Browser navigation or local storage cannot establish completion or authorization |
+
+Preserve safe navigation through Back/Forward or panel return when supported, including list position. Do not serialize every component boolean or duplicate writable authority. On account/world changes, re-scope or clear sensitive retained state according to its owner before rendering it; a stale key prefix alone is not an access policy. New persistence, telemetry or history collection is a feature decision, not automatically authorized by these recommendations.
+
+## Notifications: match interruption to consequence
 
 | Importance and duration | Appropriate presentation |
 | --- | --- |
-| Immediate local acknowledgement | In-place state change or brief status near the control |
-| Noncritical completed background work | Quiet notice with a route to its result |
-| Information needed later | Persistent history/inbox entry or durable panel state |
-| Recoverable failure affecting current work | Inline error with retained draft and retry/repair route |
-| Save/storage failure or unresolved consequential outcome | Persistent visible status until resolved/acknowledged; not only a timed toast |
-| Decision requiring exclusive attention | A bounded dialog only when continuing without a decision would be unsafe |
+| Immediate local acknowledgement | In-place change or brief nearby status |
+| Noncritical background completion | Quiet notice linking to result |
+| Needed later | Persistent history/inbox or durable panel state |
+| Recoverable current-work failure | Inline error retaining draft and repair/retry |
+| Storage failure or unresolved consequential outcome | Persistent visible status until resolved/acknowledged, not only timed toast |
+| Decision requiring exclusive attention | Bounded dialog only when proceeding without it would be unsafe |
 
-Do not notify for every low-level stage or send the same event through a toast, banner, modal and chat message. Deduplicate by event identity rather than equal text. Aggregate repetitive low-importance events while preserving a route to their underlying permitted history. Avoid escalating quiet simulation updates into an attention alarm.
+Do not announce every stage or duplicate one event as toast, banner, modal and chat. Deduplicate by identity, not equal text. Aggregate repetitive low-importance events with access to underlying permitted history. Avoid escalating quiet simulation updates into attention alarms.
 
-Respect existing per-character notice and history limits, including [LA223](../limits/interface.md#la223) and the hearing/caption owners. The current three-overhead-notice bound is not a universal rule that every notification queue may discard everything after three. Critical errors and missed information need their own persistent recovery path.
+Carbon's notification distinctions reinforce selecting the surface by context, action and persistence. Do not import a version-specific notification's automatic focus behavior wholesale. A background completion should not steal focus or displace typed text; reserve intentional focus moves for an active task/error/decision that requires them. [S10](research-second-pass.md#s10)
 
-A disappearing notice cannot be the only place to act on an important failure. Do not put a time-limited essential action in a hover-only toast. Use live regions deliberately: polite for normal status, assertive only where interruption is warranted. A meter changing every simulation tick must not continually interrupt a screen reader. Reduced motion removes animation, not the message.
+Respect current per-character notice/history limits, including [LA223](../limits/interface.md#la223) and hearing/caption owners. Three overhead notices is not a universal license to discard all later notifications; critical failures and missed information need recovery.
+
+A timed notice cannot be the sole important failure/action route. Use live regions deliberately: polite normal status; assertive only when interruption is warranted. Per-tick meters must not continually interrupt screen readers. Reduced motion removes animation, not the information.
 
 ## Settings, menus and preference persistence
 
-Group settings by player goals: controls/camera, readability/accessibility, audio/captions, gameplay preferences and authorized creator/operator settings. Keep accessibility discoverable before a player is stuck in a difficult interaction. A search result should take the player to the actual setting and preserve its group context.
+Group by goals: controls/camera, readability/accessibility, audio/captions, gameplay preferences and authorized creator/operator settings. Keep accessibility discoverable before the player is stuck. Settings search should take them to the real setting/group.
 
-Show the current value and describe the effect in ordinary words. Use immediate preview for reversible local appearance settings when safe, with reset; use staged Apply/Save for coordinated or consequential changes. Do not mix both models without an explicit indication. **Reset this section** and **Reset all settings** need distinct scope. Resetting presentation is not resetting the world.
+Show current value and explain its effect. Reversible local appearance can preview immediately with reset; coordinated/consequential changes use staged Apply/Save. Do not silently mix models. **Reset this section** differs from **Reset all settings**; presentation reset is not a world reset.
 
-Keep account/device presentation preferences separate from gameplay saves where the current contract does. A rewind must not unexpectedly restore someone else's UI scale, camera sensitivity or accessibility configuration. Operator autosave settings and creator permissions stay under their authority; a friendly switch cannot grant the player access to them.
+Account/device presentation preferences stay separate from gameplay saves where the owner specifies. Rewind must not restore someone else's UI scale, sensitivity or accessibility setup. Autosave operator controls and creator permissions retain their authority boundaries.
 
-Use Advanced for genuinely specialist options and summarize non-default hidden choices. Do not put basic text size, captions, camera recovery, input help or the only load/recovery route behind an unlabeled overflow control. [F16](research.md#f16)
+Advanced is for specialist options with summaries of hidden non-defaults. Do not bury text size, captions, camera recovery, help or the only load/recovery route behind unlabeled overflow. Essential configuration should not require console commands or pasted scripts; Blizzard's Classic UI follow-up illustrates replacing temporary script workarounds with discoverable settings. This is a design direction, not authorization to add every imagined setting. [F16](research.md#f16) [S20](research-second-pass.md#s20)
 
 ## Save UI: show what is durable
 
-Saving is a trust contract, not a button animation. Distinguish **queued**, **capturing/writing**, **durably saved**, **failed** and **outcome not confirmed** when those distinctions exist in the backend. A queued request or locally disabled Save button is not a receipt. Keep the last confirmed save visible independently from a pending one.
+Saving is a trust contract. Distinguish **queued**, **capturing/writing**, **durably saved**, **failed** and **outcome not confirmed** where the backend has those states. Dispatch or a disabled button is not a receipt. Retain the last confirmed save independently of a pending one.
 
-Identify the save meaningfully: world/character, label, manual or automatic origin, and readable timestamp. Use the server's actual capture/order information when ordering saves, not an invented browser time. Relative age can help scanning; an exact timestamp and timezone resolve ambiguity. Do not derive a fake thumbnail or progress percentage when unavailable.
+Identify world/character, label, manual/automatic origin and timestamp meaningfully. Order by actual capture/order information, not invented browser time. Relative age helps scanning; exact timestamp/timezone resolves ambiguity. No fake thumbnail or percentage when unavailable.
 
-A failed save preserves the current world and the last known-good save. Surface a persistent, actionable reason and a safe retry under the existing persistence contract. Do not mark the save successful because the request eventually timed out or the panel was closed. Do not automatically delete older saves, clear storage or reset the world to repair an error.
+A save failure must not destroy the current world or last known-good save. Provide a persistent reason and safe retry under the current contract. Timeout/panel closure is not success. Never automatically delete saves, clear storage or reset the world as error repair.
 
-The existing [save/load owner](../save-and-load.md) distinguishes background simulation persistence, synchronous command effects, checkpoints and recovery. This handbook does not change those guarantees or promise zero crash-loss for background work. UI copy must describe the actual guarantee relevant to the player's save action, not conflate all persistence into a green check.
+The [save/load owner](../save-and-load.md) distinguishes background simulation persistence, synchronous command effects, checkpoints and recovery. These guarantees are unchanged; background work does not acquire zero crash-loss through optimistic copy. Describe the guarantee relevant to the actual save action rather than conflate all persistence into a green check.
 
 ## Load and recovery
 
-Show enough context to choose the correct world state and distinguish Load, Rename and Delete. Separate destructive controls from ordinary selection. Opening a save row is inspection, not immediate loading. Before replacing current gameplay state, use the current confirmation and recovery contract; explain what will be replaced and whether current progress has been preserved.
+Provide enough context to choose the correct state; distinguish Load, Rename and Delete and separate destructive controls. Opening a row is inspection, not immediate load. Before replacing gameplay state, use existing confirmation/recovery; explain what is replaced and whether current progress is preserved.
 
-Validate compatibility and integrity before presenting a save as loadable. Under the root [development save policy](../../AGENTS.md#development-save-policy), incompatible development saves are rejected explicitly, without legacy migration, automatic deletion, reset or replacement. UX convenience is not permission to weaken that rule. Keep credentials, real spending/accounting and account preferences separate from gameplay rewind.
+Validate compatibility/integrity before presenting a save as loadable. The root [development save policy](../../AGENTS.md#development-save-policy) rejects incompatible development saves without legacy migration, automatic deletion, reset or replacement. UX convenience cannot weaken it. Credentials, real spending/accounting and preferences stay separate from rewind.
 
-When preserving the current world fails, do not pretend the load can safely proceed. When the restore outcome is uncertain, show that state rather than guessing success and continuing play against inconsistent data. A retry or reconnect should reconcile the actual world/save identity before enabling another destructive action.
+If preserving the current world fails, do not imply load can safely proceed. An uncertain restore outcome stays uncertain until reconciled, rather than guessing success and resuming against inconsistent data. Reconnect/retry must establish actual world/save identity before another destructive operation.
 
-For future cloud conflict UI, compare meaningful save identities and timestamps, offer deliberate choices and preserve both versions where supported. Do not implement cloud sync or invent a conflict-resolution guarantee as part of a local save panel. This is a future pattern, not current delivery.
+Future cloud-conflict UI should compare meaningful identities/timestamps, offer deliberate choices and preserve versions where supported. That is a future pattern, not authorization to add cloud sync or invent its guarantees.
 
 ## Failure copy that helps
 
-Use a concrete message: **Could not save this world. Your previous save is unchanged. Retry.** Include only facts the backend establishes; when outcome is uncertain, say **Save outcome not confirmed** instead. Avoid **Something went wrong** as the only explanation, internal exception codes as the title, or cheerful wording that minimizes possible data loss.
+Use concrete copy such as **Could not save this world. Your previous save is unchanged. Retry.** only when the backend establishes those facts. Say **Save outcome not confirmed** when uncertain. Avoid a lone **Something went wrong**, raw codes as titles or cheerful wording that minimizes possible loss.
 
-Technical detail can be expandable or copyable for diagnosis. Do not expose secrets, private records or unfiltered provider payloads in player errors. Keep the primary recovery action near the error, retain user input and avoid sending them through a global Settings hunt to repair a local problem.
+Offer diagnostic details progressively without secrets, private records or unfiltered provider payloads. Keep recovery near the error and retain input rather than sending the player through global Settings to repair a local issue. Alerts should earn their interruption with an important actionable consequence; a common genuinely undoable operation does not need repetitive confirmation. Existing protected approvals remain. [S14](research-second-pass.md#s14)
