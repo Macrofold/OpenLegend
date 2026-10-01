@@ -23,6 +23,11 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [Invention question implementation](verification/invention-questions.md): merged baseline, incremental recovery checks and pending question qualification.
+
+- [Invention integration with main](verification/invention-main-integration.md): exact integrated heads, PostgreSQL/HTTP/MCP/browser checks and remaining gates.
+- [World Agent context and preparation](verification/world-agent-context.md): scoped context, native save-for-review, recovery and actual Macrofold journeys.
+
 - [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers.

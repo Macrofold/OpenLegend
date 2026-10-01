@@ -1,0 +1,13 @@
+{
+  "kind": "manual-disposable-postgresql-17",
+  "sourceCommit": "11526e88736944afd863894c2251114539e64169",
+  "workflowRun": 36090188462,
+  "providerCalls": 0,
+  "initialization": "completed-twice",
+  "sessionOrder": [100, 10, 2],
+  "turnOrder": [100, 11, 10, 9, 2],
+  "beforeTen": [9, 2],
+  "interrupted": ["a"],
+  "scope": "Actual PostgresDatabase and WorldAgentStore with isolated synthetic records; no model calls or automated test suite.",
+  "limitations": "Small record set, not full-game PostgreSQL recovery, concurrency, large-history query plans or production capacity."
+}

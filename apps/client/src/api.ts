@@ -16,6 +16,7 @@ export function clearAccess(): void {
     for (const key of Object.keys(localStorage))
       if (
         key.startsWith('open-legend:world-agent:') ||
+        key.startsWith('open-legend:authoring:') ||
         key.startsWith('open-legend:invention-draft:')
       )
         localStorage.removeItem(key);
@@ -41,6 +42,7 @@ export function acceptAccess(view: GameView): void {
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
+          key.startsWith('open-legend:authoring:') ||
           key.startsWith('open-legend:invention-draft:')
         )
           localStorage.removeItem(key);
@@ -149,10 +151,12 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
 export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
   path: string,
   body: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   const generation = accessGeneration;
   const response = await fetch(path, {
     method: 'POST',
+    signal,
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',

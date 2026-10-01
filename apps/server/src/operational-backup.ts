@@ -1,3 +1,4 @@
+import { WORLD_AGENT_TABLES } from './world-agent-store.js';
 import { AUTHORITY_TABLES } from './authority.js';
 import { constants } from 'node:fs';
 import { copyFile, mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises';
@@ -24,6 +25,8 @@ export const OPERATION_TABLES = [
   'memory_index_attempts',
   ...MEMORY_CACHE_TABLES,
   'attempt_scopes',
+  'attempt_budgets',
+  ...WORLD_AGENT_TABLES,
   ...AUTHORITY_TABLES,
 ];
 // Import/restore consume this same catalog so new external owners cannot silently

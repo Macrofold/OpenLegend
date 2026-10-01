@@ -297,7 +297,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);
-    expect((await h.job('budget-zero'))?.message).toContain('spending cap');
+    expect((await h.job('budget-zero'))?.message).toContain('usage allowance is used up');
   });
 
   it('cannot bypass the minimum reservation by lowering configured per-call reserves', async () => {

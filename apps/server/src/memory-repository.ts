@@ -717,42 +717,49 @@ export class MemoryRepository {
   async page(
     scope: MemoryScope,
     before?: string,
+    selection?: { source: SourceKind; limit: number },
   ): Promise<{ entries: ExperienceEntry[]; more: boolean } | undefined> {
-    return this.snapshot(() => this.readPage(scope, before));
+    return this.snapshot(() => this.readPage(scope, before, selection));
   }
   private async readPage(
     scope: MemoryScope,
     before?: string,
+    selection?: { source: SourceKind; limit: number },
   ): Promise<{ entries: ExperienceEntry[]; more: boolean } | undefined> {
+    const limit = selection?.limit ?? 100;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+      throw new Error('Invalid memory page size.');
     const cursor = before ? await this.entry(scope, before) : undefined;
-    if (before && !cursor) return undefined;
+    if (before && (!cursor || (selection && cursor.source !== selection.source))) return undefined;
     const time = cursor
       ? cursor.source === 'summary'
         ? cursor.value.to
         : cursor.value.at
       : undefined;
     const params: unknown[] = [];
-    const queries = Object.entries(sourceTables).map(([kind, table], index) => {
-      params.push(scope.worldId, scope.actorId, ...(cursor ? [time, time, time, before] : []));
-      return `SELECT * FROM (SELECT '${kind}' AS source,'${kind}:' || source_id AS key,at,payload FROM ${table}
+    const queries = Object.entries(sourceTables)
+      .filter(([kind]) => !selection || kind === selection.source)
+      .map(([kind, table], index) => {
+        params.push(scope.worldId, scope.actorId, ...(cursor ? [time, time, time, before] : []));
+        return `SELECT * FROM (SELECT '${kind}' AS source,'${kind}:' || source_id AS key,at,payload FROM ${table}
         WHERE world_id=? AND actor_id=?${cursor ? ` AND at<=? AND (at<? OR (at=? AND '${kind}:' || source_id>?))` : ''}
-        ORDER BY at DESC,source_id LIMIT 101) AS family${index}`;
-    });
+        ORDER BY at DESC,source_id LIMIT ${limit + 1}) AS family${index}`;
+      });
     const rows = await this.db
       .prepare(
         `SELECT * FROM (${queries.join(' UNION ALL ')}) AS sources
-      WHERE (SELECT generation FROM world_head WHERE id=1)=? ORDER BY at DESC,key LIMIT 101`,
+      WHERE (SELECT generation FROM world_head WHERE id=1)=? ORDER BY at DESC,key LIMIT ${limit + 1}`,
       )
       .all(...params, scope.generation);
     return {
-      entries: rows.slice(0, 100).map(
+      entries: rows.slice(0, limit).map(
         (row) =>
           ({
             source: row['source'],
             value: JSON.parse(String(row['payload'])),
           }) as ExperienceEntry,
       ),
-      more: rows.length > 100,
+      more: rows.length > limit,
     };
   }
   /** Optional policy-owned metadata. No classifier or importance/retention rule lives

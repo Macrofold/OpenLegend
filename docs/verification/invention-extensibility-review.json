@@ -1,0 +1,460 @@
+{
+  "reviewedBase": "24f970566f5ed400fd25e197dd3aa624fa0accc9",
+  "mainAtReview": "7bba4866819e5623fc4e42d6f8d82f96ca25877d",
+  "date": "2026-09-23",
+  "environment": {
+    "os": "Linux",
+    "arch": "x64",
+    "node": "22.16.0",
+    "visibleCpus": 5,
+    "cpu": "Intel Xeon Platinum 8370C @ 2.80GHz",
+    "database": "local disposable SQLite"
+  },
+  "actualProviderSpendUsd": 0,
+  "scope": "manual isolated HTTP/native execution, injected HTTP transport, synthetic accounting, existing native profilers; not unit/test suites, browser automation, live provider or PostgreSQL qualification",
+  "runtime": {
+    "kind": "manual isolated application exercise, not a unit suite or live-model qualification",
+    "node": "v22.16.0",
+    "actualProviderSpendUsd": 0,
+    "observations": [
+      {
+        "name": "tool discovery and scope",
+        "catalogueStatus": 200,
+        "families": ["gathering-tool", "swing", "flex", "arrow"],
+        "moduleAttributes": ["wilderness:health", "wilderness:fullness", "wilderness:energy"],
+        "unknownRecipe": {
+          "ok": false,
+          "message": "That recipe is not available to this inventor."
+        }
+      },
+      {
+        "name": "paused zero-provider preview",
+        "submitted": {
+          "ok": true,
+          "code": "queued",
+          "message": "Checking known techniques and supported mechanisms.",
+          "jobId": "native-preview"
+        },
+        "latencyMs": 32.70151499999997,
+        "code": "draft-ready",
+        "paused": true,
+        "recipeCountBefore": 0,
+        "recipeCountAfter": 0,
+        "inventoryUnchanged": true,
+        "digest": "15821173ed17ad65f641f08a6c966c4376c111c7e724fb9dfac777f46d3b3b52",
+        "historyCode": "draft-ready"
+      },
+      {
+        "name": "explicit saved-draft apply",
+        "duplicatePreview": "completed",
+        "badDigest": "invalid",
+        "pausedApply": "paused",
+        "resumed": true,
+        "applied": "admitted",
+        "repeatApply": "completed",
+        "recipeId": "recipe-1uahd7q",
+        "knowledge": true,
+        "spentRows": 0
+      },
+      {
+        "name": "native craft continuation",
+        "craft": {
+          "ok": true,
+          "code": "accepted",
+          "message": "Action started."
+        },
+        "simTime": 72,
+        "crafted": true
+      },
+      {
+        "name": "invalid draft retained",
+        "status": "failed",
+        "code": "invalid-declaration",
+        "candidateRetained": true,
+        "validation": {
+          "valid": false,
+          "errors": ["The proposal uses materials unavailable to this inventor."],
+          "dependencies": [],
+          "limits": [
+            "Checks cover the current native recipe envelope, not arbitrary physical plausibility or complete cross-system verification.",
+            "Apply rechecks current authority, world capacity, base references and actor state; a valid preview is not guaranteed installation. Crafting and use remain separate native actions."
+          ]
+        }
+      },
+      {
+        "name": "restart",
+        "recipeRetained": true,
+        "jobCode": "admitted",
+        "workshopHistory": true
+      },
+      {
+        "name": "synthetic three-turn tool loop",
+        "rounds": 3,
+        "contexts": [
+          {
+            "id": "model-preview:workshop:1",
+            "history": 0,
+            "task": "invention_workshop",
+            "bytes": 7196
+          },
+          {
+            "id": "model-preview:workshop:2",
+            "history": 1,
+            "task": "invention_workshop",
+            "bytes": 10336
+          },
+          {
+            "id": "model-preview:workshop:3",
+            "history": 2,
+            "task": "invention_workshop",
+            "bytes": 11666
+          }
+        ],
+        "code": "draft-ready",
+        "base": {
+          "recipeId": "recipe-1uahd7q",
+          "version": 1,
+          "digest": "{\"description\":\"A fiber pouch held by two lengths of cord.\",\"inputs\":[{\"definitionId\":\"cord\",\"quantity\":1,\"role\":\"binding\"},{\"definitionId\":\"prepared_fiber\",\"quantity\":2,\"role\":\"pouch\"}],\"name\":\"Review reed sling\",\"output\":{\"description\":\"Swings one stone from a flexible pouch.\",\"kind\":\"launcher\",\"launcher\":{\"accuracy\":0.9,\"ammunitionKind\":\"stone\",\"damage\":18,\"mechanism\":\"swing\",\"range\":7},\"name\":\"Review reed sling\",\"properties\":[\"flexible\"]},\"schemaVersion\":1,\"workSeconds\":60}"
+        },
+        "message": "I have prepared the requested revision.\n\nDerived from Review reed sling. Changed sections: name, workSeconds, output. The original recipe and existing objects stay unchanged.\n\nswing launcher; stone ammunition; range 7; damage 19; accuracy 0.9; 72 game seconds to craft\n\nDraft ready for review. Nothing was installed or crafted. Apply the saved proposal to learn this technique.",
+        "originalUnchanged": true,
+        "attempts": [
+          {
+            "id": "model-preview:workshop:1",
+            "status": "settled",
+            "spent": 680
+          },
+          {
+            "id": "model-preview:workshop:2",
+            "status": "settled",
+            "spent": 680
+          },
+          {
+            "id": "model-preview:workshop:3",
+            "status": "settled",
+            "spent": 680
+          }
+        ],
+        "budgetRows": [
+          {
+            "attempt_id": "model-preview:workshop:1",
+            "budget_id": "invention:wilderness-1086:model-preview"
+          },
+          {
+            "attempt_id": "model-preview:workshop:2",
+            "budget_id": "invention:wilderness-1086:model-preview"
+          },
+          {
+            "attempt_id": "model-preview:workshop:3",
+            "budget_id": "invention:wilderness-1086:model-preview"
+          }
+        ]
+      },
+      {
+        "name": "derived Apply",
+        "request": {
+          "ok": true,
+          "code": "queued",
+          "message": "Checking known techniques and supported mechanisms.",
+          "jobId": "model-apply"
+        },
+        "code": "admitted",
+        "newRecipe": "recipe-1f5327u",
+        "baseUnchanged": true,
+        "modelCallsAfterApply": 3,
+        "episodeCap": 0.8
+      },
+      {
+        "name": "dry validation workload",
+        "iterations": 300,
+        "medianMs": 0.9528239999999641,
+        "p95Ms": 1.621737999999823,
+        "maxMs": 6.379365000000007
+      },
+      {
+        "name": "catalogue workload",
+        "iterations": 3000,
+        "totalMs": 18.725956000000224,
+        "worldUnchanged": true
+      },
+      {
+        "name": "atomic root cap and uncertainty",
+        "concurrentReservations": [true, false],
+        "afterRestart": false,
+        "rows": [
+          {
+            "id": "a",
+            "status": "uncertain",
+            "reserved": 300000,
+            "spent": 300000
+          }
+        ],
+        "memberships": [
+          {
+            "attempt_id": "a",
+            "budget_id": "root"
+          }
+        ]
+      }
+    ]
+  },
+  "authoringLimit": {
+    "kind": "manual native application boundary exercise",
+    "zeroBudget": true,
+    "previewDepth": 8,
+    "previewsPaused": true,
+    "initialCount": 2,
+    "finalCount": 3,
+    "applyRequested": {
+      "ok": true,
+      "code": "queued",
+      "message": "Checking known techniques and supported mechanisms.",
+      "jobId": "limit-apply"
+    },
+    "applyOutcome": "admitted",
+    "syntheticAttemptCount": 3
+  },
+  "operationalBackup": {
+    "backup-world.ts": {
+      "exitCode": 0,
+      "stdout": "Consistent world, spending, integration and forgetting backup written."
+    },
+    "restore-world.ts": {
+      "exitCode": 0,
+      "stdout": "Full backup restored into an empty target; identities, jobs and accounting retained."
+    },
+    "attempts": 3,
+    "budgetMemberships": 3,
+    "backupFormat": 2
+  },
+  "nativeStress": {
+    "gems": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 8.890386999999919,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "setupMs": 73.02595099999996,
+      "cpuMs": 5361.584,
+      "heapUsedBytes": 47234360,
+      "nativeHeadroomAtRequestedSpeed": 0.23539230326609586,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 4248.227261999999,
+      "p50Ms": 12.811517999999523,
+      "p95Ms": 21.27384200000006,
+      "maxStepMs": 1774.036288,
+      "nativeSecondsPerWallSecond": 42.37061458789726,
+      "finalWorldDigest": "205faf3d6a45c33829cba9484211a182d4c93e8962e57b2122bb2a507de269f1",
+      "hottestSelfMs": [
+        ["emit src/events.ts:1", 551.7510000000002],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 336.47599999999983],
+        ["get dist/immer.mjs:382", 324.5439999999999],
+        ["intersectsSegment src/geometry.ts:1", 225.6059999999999],
+        ["advanceWorld src/kernel.ts:1", 206.2969999999999],
+        ["(anonymous) src/kernel.ts:1", 198.973],
+        ["finalizeProperty dist/immer.mjs:314", 171.0049999999999],
+        ["updateEncounters src/kernel.ts:1", 150.97299999999987],
+        ["experienceEntry src/experience.ts:1", 150.05300000000005],
+        ["(anonymous) src/bounds-index.ts:1", 147.08199999999997],
+        ["has dist/immer.mjs:90", 142.68500000000003],
+        ["(garbage collector) :0", 134.17099999999996]
+      ]
+    },
+    "gemsBaseline": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 6.299213000000009,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "setupMs": 66.71848799999998,
+      "cpuMs": 5590.017,
+      "heapUsedBytes": 36702696,
+      "nativeHeadroomAtRequestedSpeed": 0.2300201374050547,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 4347.445451,
+      "p50Ms": 13.224945999999818,
+      "p95Ms": 22.445244000000002,
+      "maxStepMs": 1760.2073739999998,
+      "nativeSecondsPerWallSecond": 41.40362473290985,
+      "finalWorldDigest": "205faf3d6a45c33829cba9484211a182d4c93e8962e57b2122bb2a507de269f1",
+      "hottestSelfMs": [
+        ["emit src/events.ts:1", 535.1619999999998],
+        ["get dist/immer.mjs:382", 319.82900000000006],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 295.73699999999997],
+        ["intersectsSegment src/geometry.ts:1", 269.10199999999986],
+        ["(anonymous) src/kernel.ts:1", 243.01800000000006],
+        ["advanceWorld src/kernel.ts:1", 211.98699999999988],
+        ["isPlainObject dist/immer.mjs:60", 178.4839999999999],
+        ["updateEncounters src/kernel.ts:1", 173.42999999999998],
+        ["finalizeProperty dist/immer.mjs:314", 166.274],
+        ["(anonymous) src/geometry.ts:1", 148.34399999999997],
+        ["(garbage collector) :0", 138.616],
+        ["has dist/immer.mjs:90", 137.90099999999993]
+      ]
+    },
+    "mixed": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 6.7696979999999485,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["food"],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["fuel"]
+            }
+          }
+        ]
+      },
+      "setupMs": 185.62127299999997,
+      "cpuMs": 22642.443,
+      "heapUsedBytes": 45954264,
+      "nativeHeadroomAtRequestedSpeed": 0.04952170743957793,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3254,
+        "awareness": 31756
+      },
+      "steps": 180,
+      "totalMs": 20193.16481,
+      "p50Ms": 8.348191000000952,
+      "p95Ms": 10.322842000001401,
+      "maxStepMs": 18648.812687,
+      "nativeSecondsPerWallSecond": 8.913907339124027,
+      "finalWorldDigest": "e30340506b1b36aa95f8fd7742899ebc7ddf203935abf14e794b366ef734738c",
+      "hottestSelfMs": [
+        ["experienceEntry src/experience.ts:1", 5191.3429999999835],
+        ["get dist/immer.mjs:382", 2108.5370000000025],
+        ["isPlainObject dist/immer.mjs:60", 1859.5650000000012],
+        ["arrayTraps.<computed> dist/immer.mjs:471", 1698.6440000000016],
+        ["(anonymous) src/experience.ts:1", 1342.7390000000019],
+        ["emit src/events.ts:1", 1285.458],
+        ["peek dist/immer.mjs:486", 816.4890000000005],
+        ["getArchtype dist/immer.mjs:86", 694.2380000000007],
+        ["finalizeProperty dist/immer.mjs:314", 535.8599999999999],
+        ["has dist/immer.mjs:90", 462.66999999999956],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 446.1219999999996],
+        ["(garbage collector) :0", 381.8919999999999]
+      ]
+    }
+  },
+  "limitations": [
+    "Wall-time/profile samples vary with shared-host load; no stable production percentile or population guarantee.",
+    "The completed ground-object baseline and review digests match; native simulation behavior was not changed.",
+    "A separate mixed baseline attempt was interrupted by the local command timeout while writing results; no comparative throughput is claimed from that incomplete run.",
+    "The injected model responses are synthetic. Passing real encoder/decoder/native validation does not establish semantic generation quality.",
+    "A direct-result injection initially missed a non-JSON undefined context field; injected HTTP execution caught it, the optional field was omitted, and the final repeated exercise passed.",
+    "No world-law composition, general creator mutation, generated artwork or complete payer/runtime budget was implemented."
+  ]
+}

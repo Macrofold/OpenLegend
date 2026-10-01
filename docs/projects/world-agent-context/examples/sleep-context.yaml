@@ -1,0 +1,47 @@
+# Illustrative selected-mechanics projection, not an authorable bed or status policy.
+request: Make a bed that restores energy faster while I sleep.
+capability_check:
+  existing_mechanic: Sleeping restores energy through an entity status effect.
+  requested_invention: A crafted item that changes sleep while it is used.
+  missing_capability: The current recipe adapter has no bed output or item-to-sleep-effect binding.
+  next: Explain the missing capability. Do not substitute a world-wide policy change.
+mechanic:
+  id: wilderness:restorative-rest
+  name: Sleeping
+  acts_on: The receiving entity, called the subject.
+  bindings:
+    subject: Entity receiving the status; it must have the required native attributes.
+    source: Explicit entity that caused activation; automatic activation uses the subject.
+    action_target: Explicit admission-time entity binding; not a dynamically selected nearby object.
+  requires: A living, conscious, grounded subject.
+  manual_activation: Energy must be below 100.
+  automatic_activation:
+    who: Non-player-controlled subjects satisfying the requirements.
+    when: Energy is zero, or local time is between 22 and 6 with energy below 70.
+  reads: [energy, alive, incapacitated, grounded, controller, world local time]
+  changes:
+    - attribute: wilderness:energy
+      operation: Add a bounded rate while active.
+      amount: 0.003472222222222222
+      unit: energy percentage points per simulation second
+    - capability_restrictions: [actions, locomotion, speech, perception]
+  lifecycle:
+    occupies_actor_action: true
+    finishes: Energy reaches 100.
+    interrupt_reasons: [injury, hunger, recovery, new-action, voluntary, revived]
+    automatic_reactivation_delay_seconds: 300
+    explicit_sleep: Manual Sleep can still be requested during this automatic cooldown.
+    unavailable_body: Death or incapacity clears the action/status through its lifecycle owner.
+  interactions:
+    - Fullness still drains at 0.003 percentage points per simulation second during sleep.
+    - At zero fullness, native starvation applies health damage; sleep does not create food.
+    - Awake expenditure is a separate effect, paused by the sleeping condition.
+    - Dream eligibility belongs to cognition policy, not the energy restoration operation.
+    - Self Wake Up remains available despite the action restriction.
+    - Another actor may wake a visible, reachable sleeper but cannot force sleep. Ordinary speech does not wake the sleeper.
+    - Missing required attributes make the effect inapplicable; missing is not zero.
+  authoring_scope:
+    recipe: Cannot attach this behavior to a generated item.
+    world_owner: A separately requested reviewed status-policy revision can change supported policy fields.
+    replacement_warning: Current policy submission replaces the whole policy; omissions remove definitions.
+    no_implicit_scope_change: A request for a bed is not permission to alter everyone's sleep.

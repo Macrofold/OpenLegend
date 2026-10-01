@@ -1,0 +1,56 @@
+# Illustrative synthetic model packet. Pins/eligibility must be rebuilt for a real world.
+# These values explain the inspected baseline; never load this file as mechanical authority.
+# Structural field bounds live in the selected tool schema; this packet explains consequences and cross-field rules.
+request: Make a sling using cord and prepared fiber. Favor accuracy even if crafting takes longer.
+packet_ref: example-context-1
+current_work:
+  draft: null
+  review: null
+  next_action: Submit a new candidate for review. No draft has been saved yet.
+capability:
+  id: swing
+  name: Stone-throwing sling
+  support: A new recipe can be designed within this native launcher family.
+  acts_on: A perceived living animal within the launcher's reach.
+  requires:
+    - The crafter knows the installed recipe and has its material inputs.
+    - Hunting needs an accessible launcher and compatible carried stone ammunition.
+  crafting:
+    work_unit: simulation seconds
+    effect: Consume the specified inputs when crafting starts; produce one launcher when work completes.
+    interruption: Consumed inputs are not refunded when crafting is interrupted.
+  shot:
+    work_seconds: 18
+    ammunition: One stone per resolved shot, including a miss.
+    damage: Health points applied through the native injury owner after a hit.
+    range: Maximum reach in world metres.
+    accuracy: Base hit probability; fleeing prey multiplies it by 0.85.
+    resolution: Uses saved random state. No guaranteed hit or homing behavior.
+  interactions:
+    - Crafting and hunting use ordinary work energy. Fullness continues draining.
+    - Learning a recipe, crafting its output and completing a hunt are separate steps.
+  unsupported:
+    - Homing projectiles, status effects on impact and arbitrary projectile physics.
+materials:
+  - id: cord
+    name: Fiber cord
+    properties: [binding, flexible]
+    eligible_for_this_inventor: true
+    role: binding
+  - id: prepared_fiber
+    name: Prepared fibers
+    properties: [fiber, flexible, pouch]
+    eligible_for_this_inventor: true
+    role: pouch
+material_rules:
+  role_rule: Each required role appears once; combine its quantity.
+  cross_field_rule: At most 20 material units total across roles.
+  note: These are material definitions, not a claim about current inventory quantities.
+output_rules:
+  kind: launcher
+  mechanism: swing
+  ammunition_kind: stone
+  required_roles: [binding, pouch]
+  field_bounds: The selected swing submission schema supplies the current numeric ranges.
+  properties: Use only supported input properties or the explicitly allowed projectile property. No food, fuel or new effects.
+completion: A ready_for_review receipt means preparation is complete. Briefly explain the tradeoff and finish.

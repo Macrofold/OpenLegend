@@ -38,6 +38,46 @@ Mike authorized the [ordered-save project](projects/ordered-async-saves.md). Sav
 
 Save recovery also changed: autosave enable/cadence/retention are operator settings (defaults unchanged), a manual save waits ahead of the next autosave instead of failing busy, the latest checkpoint failure survives restart until acknowledged, retention and paging use a durable capture sequence instead of wall-clock order, a load that cannot first preserve the current world is refused without latching a storage error, a failed operational restore removes only the slots and the pre-restore recovery checkpoint it wrote, and shutdown is finite and reports whether the final save was confirmed. Operational restore had refused every current backup since 2026-09-27 (a stale schema-marker check and payload format); it now accepts only the current format again. A load refused as busy at its pause step no longer latches a storage error, and the two new autosave routes run under the same authority fence as other save writes ([C05](maintainers/limits-audit.md#c05), SL08-A, SL09-A/B, [SB18](limits/persistence.md#sb18), [SV22](limits/persistence.md#sv22)). A pre-implementation adversarial review found that a refused background save would have let the next save delete released history; the delivered design prevents that. Evidence is shared-host and does not establish scene acceptance; see the [verification report](verification/ordered-async-saves.md).
 
+## 2026-09-29 — Durable invention questions and explicit continuation
+
+Implemented the approved [question lifecycle](world-agent-runtime.md#structured-human-questions): exact native choices are saved before their Run is stopped; answers and corrections are immutable human sources, and only an explicit ready continuation starts fresh work under the same allowance. This supersedes OpenCode question denial for the qualified owner conversation. Answering never approves an invention or grants spending/Apply authority. Durable dependency fingerprints replace process-local membership pins so unchanged questions survive restart; changed grants, definitions and timelines still invalidate them. Bounded event cursors recover interrupted inspection independently of settled cost.
+
+OpenLegend opts into Macrofold's new optional `limits.stop_on_model_error` fence because native retry behavior otherwise conflicts with the existing no-automatic-paid-retry contract. Other callers retain their default behavior. [Evidence](verification/invention-questions.md) records native fault scenarios and real BYOK recipe/policy reviews, exact approval/receipt replay and measured context. [WW25–WW30](maintainers/world-agent-writes.md#structured-invention-questions) now record completed bounded browser acceptance and the simple-reference size target. Browser findings were fixed without broadening authority, and schema-derived compact guidance reached 11,967 initial bytes with one valid submit and two generations. No broader roadmap gate or byte target is waived.
+
+## 2026-09-28 — Structured invention question proposal
+
+Added the requested [feature specification](projects/invention-questions-feature-spec.md) and [technical design](projects/invention-questions-tech-design.md) for inline choices/free text, immutable human-answer provenance and scoped recovery. Native Macrofold waiting does not suspend execution/deadlines, so the proposed first version saves the question, stops its Run and continues only on explicit user intent with fresh context under the same allowance. This proposes extending ordinary-text clarification, not reversing current question denial before qualification. [WW24–WW30](maintainers/world-agent-writes.md#structured-invention-questions) route implementation beneath existing INV/UI tasks; [QST01–QST04](limits/inventions.md#structured-invention-question-proposal) retain provisional bounds and tradeoffs. No runtime changes, new authoring access, approval delegation, paid work or live qualification are claimed.
+
+## 2026-09-28 — Explicit invention preparation and qualified harness affordances
+
+Explicit Invent/New invention now starts recipe preparation directly, without a paid discovery turn or retargeting another conversation. The recipe profile changes from five tools to four because its complete guide is already in the packet; native family facts remain. Policy examples identify their already-incremented revision, repairs distinguish immutable replay from new operations, and identical source-bound findings retain their IDs. OpenCode opts into Macrofold native-question denial with unchanged defaults elsewhere. The subsequent accepted graph slice distinguishes custom-resource definitions, scoped body targets and exact value/revision evidence; native draining invalidates only the affected value review. This extends the earlier definition-only projection without introducing supply or automatic activation. Real custom-resource qualification also exposed and fixed zero-time replenishment cancelling itself on a rejected zero transfer. Source-owned guidance now distinguishes simultaneous drain from gross replenishment. Exact human review, immutable revisions, PostgreSQL and conservative accounting remain controlling. [Runtime](world-agent-runtime.md#scoped-context-and-native-save-for-review), [WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) and [local evidence](verification/world-agent-context.md#final-local-qualification) distinguish delivered behavior from deployment and broader roadmap gates.
+
+## 2026-09-28 — Portable recursive-policy submission
+
+The selected status-policy tool now transports its complete candidate as bounded JSON text, retaining strict native shape/condition validation, exact revisions and replay. This supersedes embedding the recursive schema in that agent-facing tool: a real Muse request rejected it before execution, matching an upstream reported incompatibility. Native field guidance remains source-backed; other kinds keep typed objects. The owner approved six connector submission names and optional Macrofold question suppression with unchanged defaults. [Verification](verification/world-agent-context.md) separates native evidence from pending live activation.
+
+## 2026-09-28 — Scoped invention context and native preparation
+
+Implemented the approved [context foundation](world-agent-runtime.md#scoped-context-and-native-save-for-review): source-backed English/YAML, typed atomic save-for-review, derived candidate dependencies, attributable requirements and native checks/presentation readiness. These extend existing PostgreSQL, authority, approval and receipt owners; no new effects engine or legacy support. The recipe profile now includes five tools instead of the proposed four so a typed capability request keeps other supported kinds reachable. World Agent uses medium with strict parameter support; generic cognition is unchanged. Fresh remote contexts retain the same conversation and spending ledger.
+
+Native/browser evidence and real Macrofold saved creation/refinement are recorded in [verification](verification/world-agent-context.md). Reconnect testing fixed evidence that incorrectly depended on a browser connection; semantic grant/timeline freshness and command control remain enforced. [WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) retain unfulfilled full-input, external-harness and live acceptance checks; smaller component inputs alone do not close them.
+
+## 2026-09-27 — Initial invention graph and pipeline foundation
+
+Expanded the proposed [context design](projects/world-agent-context/initial-foundation.md) at the owner’s request: its initial version must include a real candidate dependency graph, attributable requirements, native validation records and separate presentation/review/activation/use readiness. This supersedes treating graph/pipeline integration as optional later investigation while retaining compact model inputs and existing mutation owners. The design reuses the canonical foundation, graph, validation, composition and art contracts, with complex action-repertoire cases as structural/refusal checks rather than promises of new mechanics. Full graph editing, universal interaction analysis and generated art remain broader work. [WW18/WW19/WW22/WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) retain their IDs and expanded initial gates; [CTX06](limits/inventions.md#ctx06--initial-graph-validation-and-pipeline-scope) records bounds and tradeoffs. Documentation/examples only; runtime and live qualification remain open.
+
+## 2026-09-27 — World Agent context and invention-loop design
+
+Added the requested [feature specification](projects/world-agent-context-feature-spec.md), [technical design](projects/world-agent-context-tech-design.md) and [mechanics/YAML examples](projects/world-agent-context/README.md). The proposal uses deterministic scoped context, selected typed tools, native save-for-review and permission-appropriate Macrofold instructions. The owner requested medium effort; runtime behavior remains unchanged until implementation. Byte/turn targets are unqualified and never permit dropping required facts. [WW17–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) and [CTX01–CTX05](limits/inventions.md#world-agent-context-proposal) track work and tradeoffs. No new mechanics, paid execution or closure of the live-harness gate is claimed.
+
+## 2026-09-27 — World Agent honors configured BYOK
+
+The owner selected BYOK for invention authoring. Removed the native authoring override that forced managed billing and omitted the saved provider connection; the [runtime](world-agent-runtime.md#4-execution-adapter) now honors the same operator settings as other native calls. This supersedes the request to fund managed credits. Existing admission caps, provider-cost accounting, conservative missing-usage holds and the abstract player usage display are preserved. [Real BYOK execution](verification/invention-main-integration.md#byok-authoring-and-connector-schema-blocker) reaches the model but exposes a Macrofold tool-schema validation failure; WW07 remains open rather than claiming successful invention qualification.
+
+## 2026-09-27 — Invention foundation integration
+
+Merged the published foundation with current main while preserving ancestry. Updated the existing production integration plan, canonical runtime/budgets/MCP handoff, architecture and WW/INV trackers for PostgreSQL, current account/privacy and mutation owners, immutable review receipts, current-format save recovery and main’s shared Worker APIs. The owner explicitly superseded both the old rebase workflow and all-inclusive workshop compute guarantee: players now see abstract remaining usage; owner details explain attributable Run caps and separately billed shared capacity. Root no-legacy-support policy remains authoritative; historical import/replay machinery is not reinstated. [Evidence and limits](verification/invention-main-integration.md) distinguish current native/fixture/browser results from earlier SQLite/Sandbox results and open release gates.
+
 ## 2026-09-28 — Camp fire care and consent-aware sharing
 
 Mike approved starting-scene priorities 2 and 3 ([plan](projects/camp-fire-and-sharing.md)).
@@ -487,6 +527,40 @@ The accepted clock conversion (one real second to one game minute) no longer imp
 
 [Simulation time](simulation-time.md) owns the contract; [base time](worlds/base/time.md) and RP06 (renumbered during current-main reconciliation) own revisitable fidelity choices. [PF13](maintainers/simulation-time.md) owns delivery, the [boundary catalogue](maintainers/simulation-boundaries.md) collects future exact/local bounds, and [sound coordination](maintainers/speech-time-integration.md) prevents reintroducing a fixed-second loop while merging graded speech. Native/application observations are in [evidence](verification/simulation-cadence.md); regional scheduling, exact fleeting exposure and general coupled-flow integration remain future work. This supersedes the previous mandatory 480-ticks-per-second performance premise, not its historical measurements or the existing collision/privacy/durability rules.
 
+## 2026-09-23 — Repertoire source and MCP foundation
+
+- Integrated the complete repertoire review into one detailed cross-domain specification: action/use versus invention, live n-ary relationships, ongoing labor, information carriers/claims, agreements versus enforcement, temporal method checks, observer-relative presentation and preserved exotic-world seams. Added INV-20 and AC/EWF integration tasks without inventing unsupported mechanics.
+- Added source-backed definition/live/evidence adjacency, one shared world-authorized read/preview service, a demand-driven owner relationship list and a disabled-by-default read-only official-SDK MCP endpoint. Preserved actor privacy, native admission, existing personal commitments and save/accounting owners.
+- Recorded local SDK/HTTP/native/restart and bounded stress observations separately from unqualified browser, actual Macrofold native harness, hosted authorization and full graph/interaction capability. Added IRF regression TODOs; did not complete broader parent gates.
+- Continued from the prepared feature branch and preserved current main and previous invention work. Removed temporary export scaffolding and restored normal CI configuration; no new automated suites or paid calls.
+
+## 2026-09-23 — Reconcile current main with World Agent specification
+
+- Replayed the review branch onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`, preserving the earlier integrated invention changes and all incoming domain/spatial work. Retained both changelog additions at the sole replay conflict; no runtime conflict was resolved by discarding a side.
+- Updated encounter/PF guidance to reuse delivered source-audience, experience membership, native roster and observation-copy optimizations. Historical performance measurements remain pinned to their original workloads; private EPR acquisition and full-stack qualification stay pending. Preserved existing upstream checkboxes and SR regression cases.
+- Removed temporary source/publication tooling. The current change remains a specification update plus the previously recorded $5 configuration default, not a new MCP server, graph implementation or live-agent acceptance.
+
+- The MCP stack selection distinguishes SDK major versions from protocol revisions: prefer the official v2 server with its documented 2025-era compatibility handler for the inspected Macrofold client. No custom dual protocol or forced client upgrade is required; actual interoperability remains unqualified.
+
+## 2026-09-23 — Unified World Agent and end-to-end authoring
+
+- Accepted one unified action-capable conversation with consequential approval and a $5 explicitly funded session including images, without a compulsory art allocation. The World Agent has authorized world-level inspection; NPC knowledge remains a separate caller boundary.
+- Added canonical typed relationship graph, composition/live-revision, MCP transport and native-harness runtime specifications, plus player/NPC scenario gates and primary-source MCP tooling research. Reconciled the old handoff and shared tool owner rather than introduce parallel registries or mutation paths.
+- Added INV-15–INV-19 integration tasks, focused PF09 acquisition work and deferred UWA regression coverage. Existing unchecked implementation/acceptance work remains open. Current finite workshop-root default becomes $5; the broader runtime remains target design.
+- Recorded protocol-version compatibility: inspected Macrofold uses SDK v1 while current official SDK/spec is v2/2026-07-28. Require an explicitly qualified pair rather than assume interoperability. Cleaned the previous unfinished publication workflow/partial patch without claiming its prepared changes had been delivered.
+
+## 2026-09-23 — Invention extensibility and workshop tools
+
+- Added the application tool contract and recorded the finite review-before-install recipe workshop, shared cognition/material validation, descriptive family discovery, current-world-relative premise routing and distinct preview/Apply semantics. General Discuss, privileged creator tools, compositional law validation and generated art remain separately scoped.
+- Recorded root-budget membership on the existing attempt ledger and current operational backup format 2; no gameplay save schema change or legacy reader was added.
+- Marked delivered INV subsets without completing broader parent tasks, added IER regression TODOs, and recorded separate HTTP/native/typed-transport/backup/stress evidence. No automated test suite or paid API was executed.
+
+## 2026-09-23 — Invention performance and foundation review
+
+- Reconciled the accepted invention packet from `69897a356c959677cfbf7fe1785f2b9db0271b43` with spatial/runtime main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`, preserving the existing engine boundary and XYZ/camera work rather than reintroducing a flat-world assumption.
+- Added small server query/serialization fixes, recorded exact current limits and measured evidence, and kept unimplemented art/constitution/episode-budget/verification features pending. Corrected funded-result publication semantics and specified bounded validation-planner work and camera-valid art.
+- Preserved existing task states; new requested regression cases live in `docs/maintainers/TODO.md`. No unit suites, browser automation or paid model calls were executed. Native stress failures remain disclosed under their existing PF/EPR owners.
+
 ## In-place development updates
 
 **Superseded as policy by [the owner-requested restoration](#2026-09-27--development-save-policy-restored).** The following records the earlier change, not current instructions.
@@ -520,6 +594,21 @@ Added the SW delivery ledger separating implemented native subsets from broader 
 ## Spatial-world integration and first native provider
 
 Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A\*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
+
+## 2026-09-22 — Coordinated invention foundation
+
+Integrated the accepted invention discussion against `3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232`, including the latest actor-method and gathering-tool implementation. The review read the actual invention service, policy and module bindings, current architecture/status, engine/world principles, save and billing contracts, and existing INV work. It did not run the game, automated/runtime suites, paid providers, or performance experiments.
+
+- Added [Invention foundation](invention-foundation.md) as the coordination/ownership entry point, plus [World constitution](world-constitution.md), [Validation](invention-validation.md), [Runtime art](invention-art-pipeline.md), and [Budgets](invention-budgets.md). These are accepted target contracts, not claims of completed implementation.
+- Preserved the established four-layer engine/world architecture rather than introducing a competing meta-kernel. Replaceable world systems and invented laws/validation obligations remain beneath protected host integrity and current authority. A resolved constitution references existing manifest/policy records rather than duplicating them.
+- Replaced the conceptual production-line model with editable projects, immutable submitted revisions, independent mechanics/art evidence and publication, scope-sensitive redesign, and bounded repair that reuses valid work. Active versions remain intact while replacements are prepared. Late/superseded results cannot publish into the wrong candidate or restored timeline.
+- Made immutable versions, exact installation pins, author refinement locks, owner review/freeze, origin locks and quarantine orthogonal. Added indirect-change checks without claiming every emergent consequence can be frozen. Current origin defaults and the separately unresolved owner-authoring exception remain unchanged.
+- Added dependency/interaction planning, invented-obligation hierarchy, reusable native scenarios and evidence, focused Jev questions, targeted LLM investigation, and runtime amplification checks. Root spending survives revisions and rewind; authoring cost, runtime sustainability and invention entitlements remain separate.
+- Reconciled this design with delivered behavior: complete supplied proposals already bypass search/routing/generation; private NPC proposals/revisions reuse agency and durable feedback; four finite families include a gathering tool; schema-8 manifest/attribute/sense foundations exist but are not a general interpreter. No second designer, actor store, wallet, installer or service is required.
+- Expanded the existing INV tracker with INV-9–INV-14 and 49 unchecked tasks, retaining the existing INV-1–INV-8 IDs and completion states. Updated its next-slice guidance to extend delivered work instead of rebuilding it. Added entry-point navigation and moved detailed runtime-art ownership out of the visual-style brief while retaining its inbound headings.
+- Reconciled declarations with separate candidate/installation/protection lifecycles and the new specification owners. Preserved mechanical property, source, privacy, activation, migration and retention contracts. Existing broader workshop, conjuring, portability, and conditional G2 gates remain open.
+
+This is documentation-only: no executable code, live settings, origin locks, allowance amounts, model defaults, or implementation-status claims were changed. Current-format integrity remains required; obsolete development-save compatibility is still not requested. Documentation inspection is not runtime, browser, live-model, or scale acceptance.
 
 ## 2026-09-22 — Shared invention and plan-output slice
 
@@ -573,7 +662,7 @@ Added engine/world principles, shared reusable-construct/effect contracts, world
 
 ## 2026-09-21 — Game menu and local save files
 
-- Moved manual save/load controls from Settings & help to Game below World agent and moved manual slots to the gitignored local save folder. The pre-load recovery slot remains transactional in the authority database.
+- Moved manual save/load controls from Settings & help to Game below world agent and moved manual slots to the gitignored local save folder. The pre-load recovery slot remains transactional in the authority database.
 - Updated storage/backup guidance, runtime evidence and deferred validation; earlier database-only manual development slots are not migrated under the active no-legacy policy.
 
 ## 2026-09-21 — Development save/load implementation policy
@@ -702,3 +791,11 @@ Imported the full 238-entry limits decision report from its temporary working ar
 ## Spatial main rebase and eight-times budget
 
 Preserved current-main world/status/item/identity/camera and in-place save semantics while replaying the spatial commits. Removed superseded fresh-save instructions from active spatial guidance and reconciled own-observer story eligibility. Added actual-progress profiling, thresholded acoustic rejection, current runtime evidence and PF12's budgeted optimization direction. Existing task IDs/remaining qualification are retained; historical measurements do not certify the rebased runtime.
+
+## Reviewed MCP write foundation
+
+Added native kind-backed operational draft/review sessions, a thin writable MCP transport and a server-selected Macrofold native owner execution profile. The initial read-only bootstrap remains the disabled-by-default transport configuration, not the product destination. Permanent world receipts, not model text, certify Apply; the existing ledger owns session exposure. Updated current status, manual evidence and deferred MW regression coverage without marking live harness or unimplemented art/physics complete.
+
+## Unified conversation delivery
+
+Connected the native owner session/turn/review APIs to the World Agent panel, replacing tool-less Discuss as its privileged conversation path. Retained the finite native recipe shortcut and read-only earlier local transcripts. Updated implementation status and exact approval/recovery guidance; wider physical/social/art capabilities remain independently tracked. Added MW06/MW07 rather than claiming manual native observations replace automated or browser/live qualification.

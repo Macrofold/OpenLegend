@@ -1,4 +1,4 @@
-import { serialize, record, compileSchema } from './validation.js';
+import { serialize, record, compileSchema, InvalidData } from './validation.js';
 import type { FetchTransport } from './types.js';
 
 /** Structured HTTP failure; application code decides whether admission was rejected. */
@@ -12,6 +12,8 @@ export class MacrofoldHttpError extends Error {
   get admissionRejected(): boolean {
     return (
       this.code === 'execution_disabled' ||
+      // Macrofold rejects insufficient credit before creating a Run or reserving spend.
+      (this.status === 402 && this.code === 'insufficient_credit') ||
       [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );
   }
@@ -87,7 +89,14 @@ export class MacrofoldTransport {
     body?: unknown,
     operationId?: string,
     signal?: AbortSignal,
+    maxResponseBytes = 1_000_000,
   ): Promise<unknown> {
+    if (
+      !Number.isSafeInteger(maxResponseBytes) ||
+      maxResponseBytes < 1 ||
+      maxResponseBytes > 1_000_000
+    )
+      throw new Error('Invalid Macrofold response limit.');
     const url = new URL(path, this.base);
     // Returned polling URLs may not redirect bearer credentials to another host.
     if (url.origin !== this.base.origin) throw new Error('Macrofold returned a foreign URL.');
@@ -113,7 +122,8 @@ export class MacrofoldTransport {
         const chunk = await reader.read();
         if (chunk.done) break;
         length += chunk.value.byteLength;
-        if (length > 1_000_000) throw new Error('Macrofold response exceeds the size limit.');
+        if (length > maxResponseBytes)
+          throw new InvalidData('Macrofold response exceeds the size limit.');
         chunks.push(chunk.value);
       }
     } finally {
@@ -136,12 +146,12 @@ export class MacrofoldTransport {
 }
 
 export function macrofoldObject(value: unknown): Record<string, unknown> {
-  if (!record(value)) throw new Error('Invalid Macrofold response.');
+  if (!record(value)) throw new InvalidData('Invalid Macrofold response.');
   return value;
 }
 export function macrofoldString(value: unknown): string {
   if (typeof value !== 'string' || !value.length)
-    throw new Error('Missing Macrofold response field.');
+    throw new InvalidData('Missing Macrofold response field.');
   return value;
 }
 export function validateMacrofoldValue<T>(schema: unknown, value: unknown): T {

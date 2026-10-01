@@ -35,6 +35,15 @@ import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } f
 import { canonicalJson, contentLabel, emit } from './events.js';
 
 export type AttributeValue = number | string;
+/** Consequences of advanceReservoirs and kernel's native replenish action. These
+ * describe the supported host, not a promise that a world supplies a charging source. */
+export const RESERVOIR_CONSUMER_GUIDE = {
+  drain: 'Drain continues during replenishment; work does not suspend it.',
+  replenish:
+    'Replenishment transfers from a nearby compatible finite supply, bounded by its stock, recipient capacity and remaining work time. Defining or attaching the reservoir creates no supply.',
+  netChange:
+    'Transferred amount is not net gain. Away from bounds and other effects, net rate is replenishPerSecond minus drainPerSecond; equal rates maintain the value while consuming supply.',
+} as const;
 export interface AttributeState {
   value: AttributeValue;
   revision: number;

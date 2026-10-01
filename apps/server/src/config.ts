@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
+import { readMcpConfig } from './mcp-config.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
 
@@ -122,6 +123,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
+    mcpRead: readMcpConfig(env),
     embeddingKey:
       env['AI_JEV_ONLY'] === 'true'
         ? ''
@@ -154,6 +156,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     conversationDisconnectMs:
       numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),
+    // New workshop-root default; unified session/art funding remains a separate integration.
+    // docs/world-agent-runtime.md#8-shared-5-allowance-and-external-runs
+    inventionWorkshopUsd: numberSetting(env, 'INVENTION_WORKSHOP_MAX_USD', 5, 0, 10),
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     aiTimeoutMs: numberSetting(env, 'AI_TIMEOUT_SECONDS', 35, 5, 120) * 1000,
@@ -167,6 +172,15 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       env['MACROFOLD_JEV_CONNECTION_ID'] || env['MACROFOLD_PROVIDER_CONNECTION_ID'] || '',
     macrofoldModel: env['MACROFOLD_MODEL'] ?? DEFAULT_MACROFOLD_MODEL,
     macrofoldHarness: env['MACROFOLD_HARNESS'] ?? 'opencode',
+    macrofoldWorldConnectionId: env['MACROFOLD_WORLD_CONNECTION_ID'] ?? '',
+    macrofoldWorldRunUsd: numberSetting(env, 'MACROFOLD_WORLD_RUN_MAX_USD', 1, 0.000001, 5),
+    macrofoldWorldTimeoutSeconds: numberSetting(
+      env,
+      'MACROFOLD_WORLD_TIMEOUT_SECONDS',
+      900,
+      5,
+      1800,
+    ),
     macrofoldRunUsd: numberSetting(env, 'MACROFOLD_RUN_MAX_USD', 0.25, 0.000001, 10),
     // Selected by the application/world compute owner; never allocated by an actor lane.
     macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',

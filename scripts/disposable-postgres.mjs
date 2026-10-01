@@ -30,7 +30,9 @@ export async function createDisposableDatabase(connectionString) {
     const client = new Client({
       connectionString: adminUrl.toString(),
       connectionTimeoutMillis: 5000,
-      statement_timeout: 5000,
+      // DROP DATABASE can wait for a cluster checkpoint (6.08s on hosted CI).
+      // This administrative bound is separate from interactive application queries.
+      statement_timeout: 30000,
     });
     // The awaited operation reports failure; an idle socket error must not bypass cleanup.
     client.on('error', () => {});

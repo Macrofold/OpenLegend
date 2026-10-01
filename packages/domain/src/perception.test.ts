@@ -32,6 +32,7 @@ it('sees distant objects without extending speech exposure', () => {
     id: 'fixture-distant-speech',
     actorId: PLAYER_ID,
     type: 'say',
+    volume: 'whisper',
     targetId: NPC_ID,
     text: 'Can you hear me?',
   });
@@ -45,6 +46,7 @@ it('sees distant objects without extending speech exposure', () => {
     id: 'fixture-local-speech',
     actorId: PLAYER_ID,
     type: 'say',
+    volume: 'whisper',
     text: 'A quiet observation.',
   });
   expect(npcEvidence(spoken)).toMatchObject({ speech: { intelligibility: 'none', segments: [] } });

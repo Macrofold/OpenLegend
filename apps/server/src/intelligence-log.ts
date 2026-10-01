@@ -7,7 +7,11 @@ import type { GameRepository } from './store.js';
 function clean(value: unknown): unknown {
   const ancestors = new WeakSet<object>();
   const visit = (item: unknown, key = '', embeddingContext = false): unknown => {
-    if (/authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(key))
+    if (
+      /authorization|context[_-]?handle|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(
+        key,
+      )
+    )
       return '[redacted]';
     if (/signal|abort/i.test(key) || item instanceof AbortSignal || item instanceof AbortController)
       return undefined;

@@ -1,0 +1,615 @@
+import type { RequestScope } from './authority.js';
+import { EntityDirectory } from './entity-directory.js';
+import { traceRelationships, TRACE_LIMITS } from './relationship-trace.js';
+import { authoringKind } from './world-authoring-contracts.js';
+import { describeAuthoringKind } from './world-authoring-metadata.js';
+import { memoryRef, projectMemoryRecord } from './evidence-relationships.js';
+import { z } from 'zod';
+import {
+  itemFor,
+  objectAncestors,
+  DECLARATION_CONTRACT,
+  projectAttributes,
+  validateDeclaration,
+  type WorldState,
+} from '@open-legend/domain';
+import { RELATIONSHIP_KINDS, type RelationshipRef } from '@open-legend/protocol';
+import { declarationSchema } from './ai-schemas.js';
+import { normalizeInventionProposal } from './invention-service.js';
+import { fingerprint, GraphReadError, GRAPH_LIMITS, refKey } from './relationship-index.js';
+import { inspectableEntity, projectLiveSubject } from './live-relationships.js';
+import { DEFINITION_KINDS, WorldGraphReader, readDefinition } from './world-graph.js';
+import type { WorldService } from './world-service.js';
+
+const id = z.string().min(1).max(200);
+const version = z.string().min(1).max(100);
+const ref = z.object({ kind: id, id: z.string().min(1).max(500), version }).strict();
+const subject = z.object({ kind: z.enum(['entity', 'item']), id }).strict();
+const select = z
+  .object({
+    kind: id,
+    id: z.string().min(1).max(500),
+    version: version.optional(),
+    sections: z
+      .array(z.enum(['facts', 'mechanics', 'relationships']))
+      .min(1)
+      .max(3)
+      .optional(),
+  })
+  .strict();
+const paging = {
+  cursor: z.string().min(1).max(512).optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+};
+
+/** Shared descriptors generate MCP and local discovery. They do not grant authority.
+ * docs/world-agent-mcp.md#implemented-read-only-bootstrap
+ */
+export const WORLD_READ_TOOLS = {
+  ol_schema: {
+    description:
+      'Read the actual supported authoring shape, current example, limits and change semantics for a native kind. Guidance is not validation or permission.',
+    schema: z.object({ kind: authoringKind }).strict(),
+  },
+  ol_context: {
+    description:
+      'Inspect the authorized world profile, installed families, policy and implemented tool coverage. This is an out-of-world read, not NPC knowledge.',
+    schema: z.object({}).strict(),
+  },
+  ol_find: {
+    description:
+      'Find definitions by label/ID with lexical paging. No paid search; empty pages may continue.',
+    schema: z
+      .object({
+        query: z.string().max(200).default(''),
+        kinds: z.array(id).max(8).optional(),
+        ...paging,
+      })
+      .strict(),
+  },
+  ol_entities: {
+    description:
+      'Find current world entities by name/ID, optional kind or controller. Use this to locate bodies for inspection and reviewed changes, independently of character knowledge. Inventory items use ol_instances. Empty pages can have a continuation.',
+    schema: z
+      .object({
+        query: z.string().max(200).default(''),
+        kind: id.optional(),
+        controller: id.optional(),
+        ...paging,
+      })
+      .strict(),
+  },
+  ol_inspect: {
+    description:
+      'Inspect an exact definition, live item/entity or memory-record ref. Optional version checks freshness. No private authoring/learning provenance.',
+    schema: select,
+  },
+  ol_graph: {
+    description:
+      'Page direct outgoing/incoming relationships from exact source records. Coverage is projection-only, never complete behavioral validation. Expand returned refs to navigate.',
+    schema: z
+      .object({
+        root: ref,
+        subject: subject.optional(),
+        direction: z.enum(['out', 'in', 'both']).default('both'),
+        relations: z.array(z.enum(RELATIONSHIP_KINDS)).max(RELATIONSHIP_KINDS.length).optional(),
+        ...paging,
+      })
+      .strict(),
+  },
+  ol_trace: {
+    description:
+      'Trace projected definition dependencies or reverse consumers, optionally explaining a path to an exact target. Bounded witness tree with explicit frontier; never a complete interaction proof. Use ol_graph to continue from frontier refs.',
+    schema: z
+      .object({
+        root: ref,
+        target: ref.optional(),
+        direction: z.enum(['out', 'in', 'both']).default('out'),
+        relations: z.array(z.enum(RELATIONSHIP_KINDS)).max(RELATIONSHIP_KINDS.length).optional(),
+        maxDepth: z.number().int().min(1).max(TRACE_LIMITS.depth).default(4),
+        maxNodes: z.number().int().min(2).max(TRACE_LIMITS.nodes).default(40),
+      })
+      .strict(),
+  },
+  ol_instances: {
+    description:
+      'Page current items by optional definition or inventory owner, with snapshot-bound continuation. Inventory owner is not a general legal title or custody system.',
+    schema: z.object({ definitionId: id.optional(), ownerId: id.optional(), ...paging }).strict(),
+  },
+  ol_evidence: {
+    description:
+      'Page retained private memory/commitment records of an actor under explicit world-owner inspection. These are claims/evidence, not mutual agreements, universal truth or a complete event archive.',
+    schema: z.object({ actorId: id, ...paging }).strict(),
+  },
+  ol_activity: {
+    description:
+      "Inspect an actor's existing action, selected plan and goals at world-authorized scope. This does not command the actor or implement new activity templates.",
+    schema: z.object({ actorId: id }).strict(),
+  },
+  ol_validate_recipe: {
+    description:
+      'Unpaid native validation of supplied finite recipe JSON using world-level material facts. Returns findings, not installation, character knowledge, general interaction proof or a physical experiment.',
+    schema: z.object({ candidateJson: z.string().min(2).max(12000) }).strict(),
+  },
+} as const;
+export type WorldReadToolName = keyof typeof WORLD_READ_TOOLS;
+export const worldReadRequest = z
+  .object({
+    name: z.enum(Object.keys(WORLD_READ_TOOLS) as [WorldReadToolName, ...WorldReadToolName[]]),
+    arguments: z.unknown(),
+  })
+  .strict();
+export interface WorldReadGrant {
+  worldId: string;
+  principal: string;
+  scope?: RequestScope;
+}
+export interface WorldToolResult {
+  status: 'ok' | 'invalid' | 'stale' | 'unavailable' | 'capacity' | 'forbidden';
+  data?: unknown;
+  message?: string;
+  snapshot?: { worldId: string; generation: string; sequence: number; simTime: number };
+  cost: 'no-paid-work';
+}
+const RESULT_BYTES = 64 * 1024;
+
+function pageOffset(cursor: string | undefined, binding: string, size: number) {
+  if (!cursor) return 0;
+  let value: unknown;
+  try {
+    value = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+  } catch {
+    throw new GraphReadError('invalid', 'Invalid cursor.');
+  }
+  if (!Array.isArray(value) || value.length !== 2 || value[0] !== binding)
+    throw new GraphReadError(
+      'stale',
+      'The selected source or query changed. Restart this listing.',
+    );
+  if (!Number.isSafeInteger(value[1]) || value[1] < 0 || value[1] > size)
+    throw new GraphReadError('invalid', 'Invalid cursor offset.');
+  return value[1] as number;
+}
+const nextPage = (binding: string, offset: number, total: number) =>
+  offset < total ? Buffer.from(JSON.stringify([binding, offset])).toString('base64url') : null;
+
+/** One service per world host; UI and MCP call exactly the same strictly validated read path.
+ * Grants are transport-established. No tool can create grants or submit effects.
+ */
+export class WorldToolService {
+  private readonly graph = new WorldGraphReader();
+  private readonly entities = new EntityDirectory();
+  private items?: { source: WorldState['entities']; keys: string[]; revision: string };
+  constructor(private readonly service: WorldService) {}
+
+  async execute(name: string, args: unknown, grant: WorldReadGrant): Promise<WorldToolResult> {
+    const world = this.service.world,
+      generation = this.service.timelineId;
+    if (
+      grant.worldId !== world.id ||
+      !grant.principal ||
+      (grant.scope && !this.service.currentScope(grant.scope, 'inspect'))
+    )
+      return {
+        status: 'forbidden',
+        message: 'World inspection grant is unavailable.',
+        cost: 'no-paid-work',
+      };
+    if (!Object.hasOwn(WORLD_READ_TOOLS, name))
+      return { status: 'invalid', message: 'Unknown tool.', cost: 'no-paid-work' };
+    try {
+      const checked = WORLD_READ_TOOLS[name as WorldReadToolName].schema.safeParse(args);
+      if (!checked.success)
+        return {
+          status: 'invalid',
+          message: 'Arguments do not match this tool.',
+          cost: 'no-paid-work',
+        };
+      const result: WorldToolResult = {
+        status: 'ok',
+        data: await this.read(name as WorldReadToolName, checked.data, world, generation, grant),
+        snapshot: {
+          worldId: world.id,
+          generation,
+          sequence: world.sequence,
+          simTime: world.simTime,
+        },
+        cost: 'no-paid-work',
+      };
+      if (
+        this.service.timelineId !== generation ||
+        (grant.scope && !this.service.currentScope(grant.scope, 'inspect'))
+      )
+        throw new GraphReadError('forbidden', 'World inspection grant changed.');
+      // The whole result is rejected, never silently truncated into a misleading complete response.
+      const serialized = JSON.stringify(result);
+      if (Buffer.byteLength(serialized) > RESULT_BYTES)
+        return {
+          status: 'capacity',
+          message: 'Result exceeds the read envelope. Select a smaller page or subject.',
+          cost: 'no-paid-work',
+        };
+      // All adapters receive detached JSON, never writable references to authoritative state.
+      return JSON.parse(serialized) as WorldToolResult;
+    } catch (error) {
+      if (error instanceof GraphReadError)
+        return { status: error.code, message: error.message, cost: 'no-paid-work' };
+      return {
+        status: 'unavailable',
+        message: 'World inspection failed; no effect or paid work was performed.',
+        cost: 'no-paid-work',
+      };
+    }
+  }
+
+  private canReadSubject(world: WorldState, id: string, grant: WorldReadGrant): boolean {
+    const entity = world.entities[id];
+    if (!entity || entity.retirement) return false;
+    return objectAncestors(world, id).every(
+      (entry) =>
+        !entry.actor ||
+        (grant.scope
+          ? this.service.mayInspectPrivate(entry.id, grant.scope)
+          : entry.actor.controller !== 'player'),
+    );
+  }
+
+  private async memoryScope(worldId: string, actorId: string) {
+    // Cold records use the persistent repository generation, not the host's reconnect token.
+    await this.service.flushMemorySources(actorId);
+    const head = await this.service.store.records?.head();
+    if (!head || head.worldId !== worldId)
+      throw new GraphReadError('stale', 'World evidence changed. Refresh this inspection.');
+    return { worldId, actorId, generation: head.generation };
+  }
+
+  private async memoryRecord(
+    world: WorldState,
+    generation: string,
+    id: string,
+    grant: WorldReadGrant,
+  ) {
+    let pair: unknown;
+    try {
+      pair = JSON.parse(id);
+    } catch {
+      throw new GraphReadError('invalid', 'Invalid memory reference.');
+    }
+    if (
+      !Array.isArray(pair) ||
+      pair.length !== 2 ||
+      pair.some((v) => typeof v !== 'string' || v.length > 120)
+    )
+      throw new GraphReadError('invalid', 'Invalid memory reference.');
+    const [actorId, memoryId] = pair as [string, string];
+    if (!this.canReadSubject(world, actorId, grant))
+      throw new GraphReadError('forbidden', 'Evidence is unavailable.');
+    const scope = await this.memoryScope(world.id, actorId);
+    const entry = await this.service.store.memories?.entry(scope, `memory:${memoryId}`);
+    if (!entry || entry.source !== 'memory')
+      throw new GraphReadError('unavailable', 'Retained memory is unavailable.');
+    return projectMemoryRecord(world, generation, actorId, entry.value);
+  }
+
+  private async read(
+    name: WorldReadToolName,
+    raw: unknown,
+    world: WorldState,
+    generation: string,
+    grant: WorldReadGrant,
+  ): Promise<unknown> {
+    const canRead = (id: string) => this.canReadSubject(world, id, grant);
+    switch (name) {
+      case 'ol_schema':
+        return describeAuthoringKind(world, (raw as { kind: z.infer<typeof authoringKind> }).kind);
+      case 'ol_context':
+        return {
+          profile: world.profile,
+          controlledActorId: grant.scope?.actorId ?? null,
+          policy: world.inventionPolicy,
+          manifestRevision: world.moduleManifest.revision,
+          tools: Object.entries(WORLD_READ_TOOLS).map(([name, tool]) => ({
+            name,
+            description: tool.description,
+          })),
+          definitionKinds: DEFINITION_KINDS,
+          authoringKinds: authoringKind.options,
+          recipeContract: DECLARATION_CONTRACT,
+          recipeSchema: declarationSchema,
+          limitations: [
+            'Read tools do not authorize writes. Authoring requires an application-issued session context and exact human approval.',
+            'No complete interaction proof, arbitrary process compiler, joint physics, information-artifact or agreement authoring is implemented.',
+          ],
+        };
+      case 'ol_find': {
+        const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_find.schema>;
+        if (input.kinds?.some((kind) => !DEFINITION_KINDS.some((supported) => supported === kind)))
+          throw new GraphReadError(
+            'unavailable',
+            'A requested definition kind has no implemented reader.',
+          );
+        const projection = this.graph.read(world, generation),
+          query = input.query.toLowerCase();
+        const binding = fingerprint([
+          projection.index.snapshot,
+          query,
+          [...new Set(input.kinds ?? [])].sort(),
+        ]);
+        let offset = pageOffset(input.cursor, binding, projection.ordered.length),
+          examined = 0;
+        const nodes = [];
+        while (
+          offset < projection.ordered.length &&
+          nodes.length < input.limit &&
+          examined++ < GRAPH_LIMITS.examined
+        ) {
+          const node = projection.ordered[offset++]!.node;
+          if (input.kinds?.length && !input.kinds.includes(node.ref.kind)) continue;
+          if (
+            query &&
+            !node.label.toLowerCase().includes(query) &&
+            !node.ref.id.toLowerCase().includes(query)
+          )
+            continue;
+          nodes.push(node);
+        }
+        return {
+          nodes,
+          snapshot: projection.index.snapshot,
+          nextCursor: nextPage(binding, offset, projection.ordered.length),
+          coverage: 'Current projected definitions; lexical matching only.',
+        };
+      }
+      case 'ol_entities':
+        return this.entities.read(
+          world,
+          generation,
+          raw as z.infer<typeof WORLD_READ_TOOLS.ol_entities.schema>,
+          grant.principal,
+          canRead,
+        );
+      case 'ol_inspect': {
+        const input = raw as z.infer<typeof select>;
+        if (!input.sections?.includes('relationships')) {
+          const exact = readDefinition(world, input.kind, input.id);
+          if (exact) {
+            if (input.version && input.version !== exact.node.ref.version)
+              throw new GraphReadError('stale', 'Definition changed.');
+            return { ...exact, ref: exact.node.ref };
+          }
+        }
+        const definitions = this.graph.read(world, generation);
+        if (input.kind === 'memory-record') {
+          const record = await this.memoryRecord(world, generation, input.id, grant);
+          if (input.version && input.version !== record.node.ref.version)
+            throw new GraphReadError('stale', 'Memory record changed.');
+          return {
+            ref: record.node.ref,
+            node: record.node,
+            data: record.data,
+            relationships: record.index.neighborhood({ root: record.node.ref, direction: 'out' }),
+          };
+        }
+        if (input.kind === 'entity' || input.kind === 'item') {
+          const projection = projectLiveSubject(
+            world,
+            generation,
+            definitions,
+            input.kind,
+            input.id,
+            canRead,
+          );
+          if (input.version && input.version !== projection.root.version)
+            throw new GraphReadError('stale', 'Live subject changed.');
+          const item = input.kind === 'item' ? itemFor(world, input.id) : undefined;
+          const entity = input.kind === 'entity' ? world.entities[input.id] : undefined;
+          return {
+            ref: projection.root,
+            data: item ?? (entity && inspectableEntity(world, entity)),
+            relationships: {
+              ...projection.index.neighborhood({ root: projection.root, direction: 'both' }),
+              subject: { kind: input.kind, id: input.id },
+            },
+          };
+        }
+        const entry = definitions.resolve(input.kind, input.id);
+        if (!entry)
+          throw new GraphReadError(
+            'unavailable',
+            'Definition is not available in the implemented projection.',
+          );
+        if (input.version && input.version !== entry.node.ref.version)
+          throw new GraphReadError('stale', 'Definition changed.');
+        return {
+          ...entry,
+          ref: entry.node.ref,
+          relationships: definitions.index.neighborhood({ root: entry.node.ref, direction: 'out' }),
+        };
+      }
+      case 'ol_graph': {
+        const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_graph.schema>;
+        const definitions = this.graph.read(world, generation);
+        if (input.root.kind === 'memory-record')
+          return (
+            await this.memoryRecord(world, generation, input.root.id, grant)
+          ).index.neighborhood(input);
+        const source =
+          input.subject ??
+          (input.root.kind === 'entity' || input.root.kind === 'item'
+            ? { kind: input.root.kind, id: input.root.id }
+            : undefined);
+        if (source) {
+          const live = projectLiveSubject(
+            world,
+            generation,
+            definitions,
+            source.kind as 'entity' | 'item',
+            source.id,
+            canRead,
+          );
+          return { ...live.index.neighborhood(input), subject: source };
+        }
+        return definitions.index.neighborhood(input);
+      }
+      case 'ol_trace':
+        return traceRelationships(
+          this.graph.read(world, generation).index,
+          raw as z.infer<typeof WORLD_READ_TOOLS.ol_trace.schema>,
+        );
+      case 'ol_instances': {
+        const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_instances.schema>;
+        let items = this.items;
+        if (!items || items.source !== world.entities || !Object.isFrozen(world.entities)) {
+          const keys = Object.keys(world.entities)
+            .filter((id) => !!itemFor(world, id))
+            .sort();
+          if (keys.length > GRAPH_LIMITS.nodes)
+            throw new GraphReadError(
+              'capacity',
+              'Instance projection needs a larger indexed reader.',
+            );
+          items = {
+            source: world.entities,
+            keys,
+            revision: fingerprint(
+              keys.map((id) => {
+                const item = itemFor(world, id)!;
+                return [id, item.definitionId, item.ownerId];
+              }),
+            ),
+          };
+          this.items = items;
+        }
+        const binding = fingerprint([
+          world.id,
+          generation,
+          items.revision,
+          grant.principal,
+          input.definitionId ?? null,
+          input.ownerId ?? null,
+        ]);
+        let offset = pageOffset(input.cursor, binding, items.keys.length),
+          examined = 0;
+        const values = [];
+        while (
+          offset < items.keys.length &&
+          values.length < input.limit &&
+          examined++ < GRAPH_LIMITS.examined
+        ) {
+          const item = itemFor(world, items.keys[offset++]!)!;
+          if (!canRead(item.id)) continue;
+          if (input.definitionId && input.definitionId !== item.definitionId) continue;
+          if (input.ownerId && input.ownerId !== item.ownerId) continue;
+          values.push({ ...item, ref: { kind: 'item', id: item.id, version: fingerprint(item) } });
+        }
+        return {
+          items: values,
+          nextCursor: nextPage(binding, offset, items.keys.length),
+          coverage:
+            'Current native item instances only; not all entities, joint arrangements or legal ownership.',
+        };
+      }
+      case 'ol_evidence': {
+        const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_evidence.schema>;
+        if (!canRead(input.actorId) || !world.entities[input.actorId]?.actor)
+          throw new GraphReadError('forbidden', 'Actor evidence is unavailable.');
+        const repository = this.service.store.memories;
+        if (!repository)
+          throw new GraphReadError('unavailable', 'Evidence storage is unavailable.');
+        const scope = await this.memoryScope(world.id, input.actorId);
+        const binding = fingerprint([
+          world.id,
+          generation,
+          input.actorId,
+          grant.principal,
+          repository.actorRevision(input.actorId),
+        ]);
+        let before: string | undefined;
+        if (input.cursor) {
+          const cursor: unknown = JSON.parse(
+            Buffer.from(input.cursor, 'base64url').toString('utf8'),
+          );
+          if (
+            !Array.isArray(cursor) ||
+            cursor.length !== 2 ||
+            cursor[0] !== binding ||
+            typeof cursor[1] !== 'string'
+          )
+            throw new GraphReadError('stale', 'Evidence changed. Restart this listing.');
+          before = cursor[1];
+        }
+        const page = await repository.page(scope, before, {
+          source: 'memory',
+          limit: Math.min(input.limit, 10),
+        });
+        if (
+          !page ||
+          binding !==
+            fingerprint([
+              world.id,
+              generation,
+              input.actorId,
+              grant.principal,
+              repository.actorRevision(input.actorId),
+            ])
+        )
+          throw new GraphReadError('stale', 'Evidence changed. Restart this listing.');
+        const records = page.entries.flatMap((entry) =>
+          entry.source === 'memory' ? [entry.value] : [],
+        );
+        const last = records.at(-1);
+        return {
+          records: records.map((record) => ({
+            ref: memoryRef(input.actorId, record),
+            summary: record.summary,
+            kind: record.kind,
+            source: record.source,
+            obligation: record.obligation,
+          })),
+          nextCursor:
+            page.more && last
+              ? Buffer.from(JSON.stringify([binding, `memory:${last.id}`])).toString('base64url')
+              : null,
+          coverage:
+            'Canonical retained actor memories, including cold records. Stored claims are not proof of world truth.',
+        };
+      }
+      case 'ol_activity': {
+        const { actorId } = raw as { actorId: string };
+        if (!canRead(actorId))
+          throw new GraphReadError('forbidden', 'Actor activity is unavailable.');
+        const entity = Object.hasOwn(world.entities, actorId) ? world.entities[actorId] : undefined;
+        if (!entity?.actor) throw new GraphReadError('unavailable', 'Actor is unavailable.');
+        const { path, ...action } = entity.actor.action ?? { path: [] };
+        return {
+          actorId,
+          action: entity.actor.action ? { ...action, pathLength: path.length } : null,
+          agency: entity.actor.agency,
+          attributes: projectAttributes(world, entity, 'owner'),
+          senses: entity.actor.senses ?? world.moduleManifest.defaultSenses,
+          controller: entity.actor.controller,
+          actorState: { alive: entity.actor.alive, incapacitated: entity.actor.incapacitated },
+          coverage:
+            'Current native action, goals and plan; no new wait/repeat/joint-activity executor is implied. Private actor state is owner-inspection evidence, not an NPC observation.',
+        };
+      }
+      case 'ol_validate_recipe': {
+        let candidate: unknown;
+        try {
+          candidate = normalizeInventionProposal(
+            JSON.parse((raw as { candidateJson: string }).candidateJson),
+          );
+        } catch {
+          throw new GraphReadError('invalid', 'Candidate is not valid recipe JSON.');
+        }
+        const errors = validateDeclaration(world, candidate);
+        return {
+          valid: errors.length === 0,
+          errors,
+          coverage:
+            'Finite native recipe validator only. No full interaction validation, current actor admission, installation, experiment or learning occurred.',
+        };
+      }
+    }
+  }
+}

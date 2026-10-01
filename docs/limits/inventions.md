@@ -10,7 +10,7 @@ Implementation starting points: [context.ts](../../apps/server/src/context.ts).
 
 **Historical — needs recheck · Restrictiveness: Safe.**
 
-An invention request can start another invention request, but that chain can be at most 8 requests deep.
+The current finite invention flow permits eight linked authoring follow-ups. Applying an exact saved ready proposal is exempt because it makes no provider call and grants no additional allowance.
 
 **Reason / tradeoff:** Keep an explicit recursion stop so generated authoring work cannot repeatedly invoke itself without end.
 
@@ -257,3 +257,85 @@ Generated inventions can use only reviewed launcher, ammunition and gathering-to
 [Implementation starting point](../../apps/server/src/context.ts).
 
 Original recommendation: **Keep**.
+
+## Reviewed authoring and remaining usage
+
+**Current — September 2026 integration.** The finite recipe loop retains four model rounds, eight tool calls, 48,000 context bytes and 20,000 bytes per tool result. Owner sessions retain 64 drafts, 256 revisions per draft, 512 review plans, 2,048 edit receipts, 256 turns and a seven-day authorization lifetime; old records are not deleted on expiry. Four active/admitting turns and 32 short queued session operations bound local concurrency. These existing foundation guards bound work and retained operational growth; richer long-lived projects require INV-21 qualification before expansion. Paging does not grant additional work or money.
+
+The default owner session cap is $5 and may be lowered; the finite workshop root defaults to $5 and is configurable from $0–$10, under the existing per-character monthly ceiling. Attributable Run reservations use remaining session exposure. Shared Worker capacity is separately owner-managed; the earlier all-inclusive compute allocation is removed by the owner’s decision. Players see abstract remaining usage, with no dollars, provider terms or invention-count estimates. See [runtime ownership](../world-agent-runtime.md#1-product-decisions), [budget accounting](../invention-budgets.md), and WW09/WW11 in [write delivery](../maintainers/world-agent-writes.md).
+
+The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entries and 50 public results per page; traces retain 100 visited nodes, depth 12 and 16 pages with explicit unfinished frontiers. These are synchronous safety ceilings, not measured population capacity. Current PostgreSQL memory inspection pages ten records through canonical cold storage, removing the obsolete 1,000-record hot-world cutoff. INV-15 and WW15 own expansion; current limits remain until evidence justifies it.
+
+## World Agent context proposal
+
+**Implemented finite foundation. The original no-question sample met the complete-request targets; the question-enabled control exceeds the initial-size diagnostic target. Broader complexity/variance remains unqualified.** [Design](../projects/world-agent-context-tech-design.md) and [WW17–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own context work. Existing runtime/session/recipe guards remain controlling. These entries are defaults and qualification targets, not gameplay laws. No extra limits-audit task is needed before the proposed path exists; WW18/WW23 own measurement and revision.
+
+### CTX01 — Context size and measured efficiency
+
+**Qualification targets · Restrictiveness: Safe for the simple reference journey; unqualified for complex work.** Target at most 12,000 compact-JSON-equivalent bytes for the complete initial simple-recipe request, including tools/instructions, and 25,000 bytes for each subsequent request in that journey. Target at most three model generations to saved review plus explanation when no correction/clarification is needed. These are diagnostic acceptance targets, not truncation or turn limits. The old capture's initial/final sizes were 21,514/71,948 bytes; it failed to save and is not a successful matched baseline. Measure provider tokens/quality and complete matched journeys separately. The final explicit-invention sample measured 11,973 / 14,442 bytes, two model generations and one valid save; the same-model/medium matched earlier recipe stage measured 13,710 / 15,270 / 17,665 bytes plus a separate discovery Run. The earlier question-enabled control missed the initial target at 13,873 / 15,585 / 17,947 bytes. The final compact question-enabled control measures 11,967 / 14,600 bytes, two generations and one successful save, including the 1,514-byte native question descriptor. Schema-derived field/range guidance and removed duplication preserve required mechanics and strict validation. [Final question evidence](../verification/invention-questions.md#final-acceptance--september-29) records the successful matched run and intervening repair failure. This supports the tested path, not a size guarantee for every invention; [evidence](../verification/world-agent-context.md#final-local-qualification) retains scope and limitations.
+
+**Reason / tradeoff:** A readable goal, selected mechanics/materials and typed submission should fit below the broad catalogue/history. Preserve units, consequences and uncertainty if a target is missed. Complex policy/investigation may exceed these targets under current resource admission; record why. No invention-count estimate or player-visible token budget is introduced.
+
+### CTX02 — Preparation and disclosure work
+
+**Current · Restrictiveness: Safe for measured finite fixtures; broader qualification remains open.** Packets bound observed material and accumulated reference records to 64; candidate extraction bounds nodes to 64 and examined dependency operations to 256. Existing search/page limits still apply. Each admitted turn, including a planned recipe stage, permits 32 new tool calls in total. Exact committed write replay and authenticated operation-result lookup remain available after this quota. Generated prompt text has a 64,000-byte ceiling. Required oversize packets fail before dispatch; oversized candidate analysis is retained as incomplete and cannot produce a review. There is no general resumable analysis executor in this version.
+
+**Reason / tradeoff:** Tiny output does not bound scans, graph construction or hydration. These provisional bounds cover a selected family and direct dependencies with explicit overflow. Current whole-graph paths retain their larger construction ceilings; this design does not make them incremental automatically. WW18 measures and prefers direct reads; WW15/PF retain broader index work. No global cap on world definitions, relevant knowledge or eventual investigation completeness is proposed.
+
+### CTX03 — Retention, deduplication and cache scope
+
+**Current · Restrictiveness: Safe.** Use request-scoped live-fact reuse and versioned immutable schema/description fragments. No new cross-session live-state cache or time-to-live initially. Match grants/audience, generation, dependency and projection versions. Derived packet versions remain while an active turn/unresolved operation needs them; at most one new packet per tool response under the existing admitted tool-work ceiling. The server enforces the aggregate tool ceiling across reads and writes; native quota/replay evidence is recorded in [context verification](../verification/world-agent-context.md). Never discard unresolved operations, exact approvals, selected candidate or required constraints to hit a byte target. Existing record/session caps apply to invalid drafts and receipts; capacity refusal preserves records. Session payloads are bounded at 128 KiB; tool arguments at 28,000 bytes and 64 JSON-container levels before recursive parsing (native status predicates still have their tighter domain limit); normalized candidates retain the existing 24,000-byte bound. One submission accepts at most 16 source-quoted annotations, with at most 64 retained requirements. These storage/transport guards reject oversize work without deleting prior records.
+
+**Reason / tradeoff:** Observed duplication is largely within requests and schema reads. Global caching or lossy administrative memory adds privacy/invalidation risk before demonstrated need. Audit history stays with its current owner; no unlimited retention promise or automatic deletion policy. Harness compaction and provider-cache billing are not assumed.
+
+### CTX04 — Tool profiles and templates
+
+**Current qualified application profiles · Restrictiveness: Medium per run, not a global capability limit.** The recipe profile uses four named find/inspect/submit/capability-request operations; its complete guide is preloaded. Capability requests keep another supported kind reachable without broadening the active grant. Open-ended discovery has four tools; other kinds have five, or seven when entity/activity reads are required. Broader profiles remain reachable within grants through qualified session transitions. No-file runs expose no filesystem tools; legitimate file tasks retain appropriate affordances. YAML is readable generated context, not executable mutation syntax.
+
+**Reason / tradeoff:** Smaller catalogues reduce irrelevant choices but require retained continuity when changing profiles. No dynamic grant expansion is assumed. A tested codec may omit irrelevant representation branches, never required effects or checks. Selected profiles are not a universal investigation ceiling. The intermediate five-tool profile is superseded by four: omit the redundant guide tool while retaining typed profile changes.
+
+### CTX05 — Reasoning effort and paid work
+
+**Implemented with actual provider-wire medium capture · Restrictiveness: Medium.** World Agent uses medium effort with strict forwarding and no silent fallback. Keep configured model/BYOK and existing session/monthly/Run admission, timeouts and output ceilings. This replaces authoring's former xhigh selection, not generic full cognition. New remote profiles/sessions preserve funding identity and reconcile prior exposure.
+
+**Reason / tradeoff:** The owner requested medium. Lower effort may affect latency/cost and difficult-task quality; measure separately from context changes. Do not invent a lower output cap without evidence, increase spending automatically or treat continuation as a new allowance. Existing uncertainty and no-paid-retry rules remain binding.
+
+### CTX06 — Initial graph, validation and pipeline scope
+
+**Implemented finite scope · Restrictiveness: Medium; unsupported guarantees remain blocked.** Reuse existing relationship reader/index limits and aggregate CTX02 work accounting for candidate extraction/analysis; a nested graph call does not receive a fresh slice allowance. Required overflow retains pending coverage and a continuation or explicit unsupported blocker. Complete finite-family admission is distinct from broader interaction coverage, which remains unevaluated unless a named analyzer establishes it. Only resolved exact edges enter the index; missing required endpoints remain findings.
+
+Retained requirements, check plans, findings and readiness inherit existing authoring record/session/byte bounds and CTX03 retention rules; native quota/overflow evidence is recorded separately from live qualification. Large evidence stays referenced through bounded authorized readers, not copied into every draft/prompt. Do not add unbounded graph generations, hydration fan-out or a second history. A bounded native slice may refuse unsupported long analysis; it cannot keep a transaction/paid harness open or silently pass truncated checks.
+
+**Reason / tradeoff:** The owner requested a real initial foundation for every critical invention stage, including dependencies. This adds native records and shared projections while keeping simple model inputs small. A candidate graph is derived, never independent write authority. Separate readiness and truthful existing/no-new-asset presentation can serve current families without compulsory paid art. Full interaction solvers, graphical editing and general job scheduling remain with their existing INV/PF owners. WW18/WW19/WW22/WW23 own supported-path delivery, measurement and explicit refusal/continuation; revisit these restrictions when a real supported family requires wider analysis.
+
+## Structured invention question proposal
+
+**Implemented safeguards; bounded native, browser and live acceptance complete.** [Feature spec](../projects/invention-questions-feature-spec.md), [technical design](../projects/invention-questions-tech-design.md) and [WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions) own design/delivery. [Native and live evidence](../verification/invention-questions.md) qualifies bounded recipe and policy journeys, not general model quality or large-world capacity. These application safeguards do not restrict what an authored world can express. Existing authorization, context, record/session and spending limits remain controlling; these entries do not create fresh allowances.
+
+### QST01 — Question and answer envelopes
+
+**Current defaults · Restrictiveness: Medium.** One active question bundle per conversation; 1–3 questions per bundle, with 2–5 choices when choices are offered. A custom-only question may have zero options if the qualified adapter permits it. Prefer one question. Bound the normalized bundle to 16 KiB and accepted answer to 8 KiB UTF-8 including their envelope; validate the full source question payload under a 64 KiB raw parsing ceiling before retaining only the normalized original fields/digest. Existing 128 KiB operational-record bounds still apply; refusal preserves earlier records. Custom text replaces selections for that question in v1. No optional/unanswered entries, nested conditional forms, attachments or executable/rich widgets.
+
+**Reason / tradeoff:** A small group avoids an overwhelming interview and bounds parsing/rendering/persistence. Accepting arbitrary native objects or silently dropping choices would change meaning. Reject unsupported/oversize bundles explicitly and stop their Run; never truncate a required choice. Native malformed/oversize and real recipe/policy event checks qualify these initial defaults; they are not token-efficiency measurements. Expand only when a supported real journey needs more; broader questionnaires are outside this feature.
+
+### QST02 — Event work and retained growth
+
+**Current defaults · Restrictiveness: Medium.** Read at most 100 Run events per page and four pages per reconciliation pass, with a 256 KiB response-body ceiling checked before JSON hydration. Persist progress and continue later under existing scheduling; a page cutoff is not proof of no question. Refuse an oversized response or unrecoverable cursor gap explicitly rather than skip events or resubmit paid work. Use the provider's chronological Run cursor; never scan every session or world to discover a question.
+
+Retain at most one accepted bundle for each originating Run/turn. Duplicate events reuse it; changed payload under the same identity conflicts. After capture, fence and stop that Run rather than accumulate further bundles. Follow-up questions belong to deliberately continued turns under the existing 256-turn session ceiling. Each answer correction consumes a retained human turn under the same ceiling, including save-only corrections, and supersedes older unadmitted continuation. Thus retained bundles/answers/corrections have bounded growth without a separate arbitrary total interview cap. No automatic paid question loop or automatic deletion of old history. Existing session-wide discovery/retention remains under INV-21.7; this feature does not establish an unlimited archival guarantee.
+
+**Reason / tradeoff:** A bounded visible card alone would not bound event downloads, object allocation, polling or stored history. These values may refuse large unrelated provider events. Actual event envelopes, pagination beyond four pages and interrupted reads have been qualified; each pass persists its cursor and later resumes without a new generation. No new global cache, cross-session hydration or general event bus. WW26/WW30 own measurement and explicit overflow/recovery behavior; unchanged broader retention gaps stay with WW11/INV-21.7.
+
+### QST03 — Human waiting and continuation
+
+**Current lifecycle · Restrictiveness: Medium.** No live paid Run is retained for human waiting after capture-and-stop completes. Existing cancellation/deadline/reconciliation bounds govern stopping, and uncertain exposure remains reserved. Do not add a human-answer countdown or auto-answer; current session authorization lifetime governs whether an old question remains actionable. No application executor slot or lock is held merely for an open question once its Run terminates. Shared Worker capacity is not shut down by this conversation.
+
+Saving an answer is allowed while allowance or previous-work reconciliation blocks continuation. Only an explicit operation made when admission is ready may continue; a blocked send retains the answer but does not queue later paid work. Reconnect, restart, status reads and funding changes never resume it automatically. Fresh execution uses the original funding session and current scoped provider context.
+
+**Reason / tradeoff:** Current Macrofold waiting keeps execution/deadline/Worker occupancy and is not a qualified suspension contract. End-and-readmit may add startup/context cost, but avoids indefinite human waits and stale native question state. Native same-run answer/suspension is deferred until actual identity, cost and restart behavior are qualified; it is not an initial release requirement. The existing no-paid-retry and uncertain-accounting rules are unchanged.
+
+### QST04 — Initial audience and native support
+
+**Current rollout boundary · Restrictiveness: Medium.** First release uses the current authorized owner World Agent conversation and a specifically qualified OpenCode adapter. Other profiles/harnesses retain existing ordinary-text behavior and permissions; enable structured questions only when the complete capture/UI/answer/continuation path is ready. No new permission to author, broaden tool grants, approve Apply, raise allowance or consume inventory follows from answering. A selected option grants only the design intent it actually describes.
+
+**Reason / tradeoff:** Harness question schemas/defaults and answer APIs differ, and native availability alone does not establish safe application handling. Keep provider-specific normalization with the adapter while shared scoped records/UI support more harnesses later. This is not a new restriction on world mechanics or a substitute for player/multiplayer authorization design. Preserve separate complex-invention, NPC-clarification and module/conjuring roadmap work.

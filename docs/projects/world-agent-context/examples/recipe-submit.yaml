@@ -1,0 +1,52 @@
+# Proposed API illustration, not a live call or canned production recipe.
+# Serialize arguments as JSON when invoking the tool. All IDs here are synthetic.
+tool: ol_recipe_submit
+arguments:
+  operationId: example-sling-create-1
+  packetRef: example-context-1
+  contextHandle: <application-issued-handle>
+  candidate:
+    schemaVersion: 1
+    name: Steady Fiber Sling
+    description: A cord-and-fiber sling prioritizing accuracy with additional crafting work.
+    inputs:
+      - definitionId: cord
+        quantity: 2
+        role: binding
+      - definitionId: prepared_fiber
+        quantity: 2
+        role: pouch
+    workSeconds: 120
+    output:
+      kind: launcher
+      name: Steady Fiber Sling
+      description: A carefully woven pouch with balanced cord arms for throwing stones.
+      properties: [binding, pouch]
+      gatheringTool: null
+      launcher:
+        mechanism: swing
+        ammunitionKind: stone
+        damage: 12
+        range: 4
+        accuracy: 0.8
+      ammunition: null
+success_example:
+  status: ready_for_review
+  draft: { id: example-draft-1, revision: 1 }
+  review: { id: example-plan-1 }
+  summary: Saved the sling design. Human review is ready; nothing has been installed.
+  next: Briefly explain the accuracy and crafting-work choice, then finish.
+invalid_example:
+  status: needs_revision
+  packetRef: example-context-2
+  draft: { id: example-draft-2, revision: 1 }
+  review: null
+  findings:
+    - field: output.launcher.accuracy
+      message: The supplied value exceeds this family's supported range.
+      correction: Use the current field guide and submit a corrected revision.
+  next: Revise the saved candidate using its exact expected revision and a new operation ID.
+uncertain_example:
+  status: outcome_unknown
+  operationId: example-sling-create-1
+  next: Reconcile this operation through the native coordinator or the scoped ol_inspect operation-outcome view; do not create a candidate with a new operation ID.

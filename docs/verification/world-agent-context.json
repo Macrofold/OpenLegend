@@ -1,0 +1,1181 @@
+{
+  "date": "2026-09-28",
+  "scope": "Native, transport, recovery and local measurements; live data tracked separately",
+  "native": {
+    "checks": [
+      "Typed submission saves exact candidate, dependencies, native checks, original intent and pending review through HTTP",
+      "Same operation/body replays exact saved outcome without a new revision",
+      "Operation lookup recovers committed result; operation ID collision is rejected",
+      "Exact inspected revision refines into an immutable second revision",
+      "Exact human approval and Apply commit once; repeated Apply recovers receipt",
+      "Missing required endpoint retains invalid draft/findings without dangling graph edges or a review",
+      "Whole status policy records actual attribute reads/rates, restrictions and cognition linkage with independent no-new-asset readiness",
+      "Attributable unsupported requirement blocks review without discarding candidate",
+      "Non-weapon gathering candidate records resource, native family, input roles and quantities",
+      "Explicit newer human change supersedes an unsupported requirement while preserving both immutable revisions",
+      "Exhausted new-work allowance still recovers the exact committed save",
+      "Injected review-storage failure rolls candidate, revision and operation outcome back together",
+      "Changed required policy rejects the old packet before draft storage",
+      "Direct selected-source reads match installed graph identities and data exactly",
+      "Large candidate analysis stops at measured work bounds and explicitly retains incomplete coverage",
+      "Another principal cannot recover a private operation through its copied handle",
+      "Actual MCP discovery exposes shared strict descriptors and exact cross-transport receipt replay",
+      "Native flow has no provider attempts or spending",
+      "Temporal status self-read is retained without inventing recursive execution or a workflow cycle",
+      "Missing required representation independently blocks readiness",
+      "10,000 irrelevant definitions do not grow candidate graph work; cold/warm source costs measured",
+      "Native profile stages rotate handles, retain original request/shared funding, and require a human turn before broader policy scope"
+    ],
+    "providerCalls": 0,
+    "recipePromptBytes": 4494,
+    "recipeToolBytes": 7578,
+    "mcpToolCount": 24,
+    "nativeScale": {
+      "extraDefinitions": 10000,
+      "coldEvidenceHashMs": 8.629917000000205,
+      "selectedRead": {
+        "medianMs": 0.0029580000000350992,
+        "p95Ms": 0.04625000000032742
+      },
+      "fullProjection": {
+        "medianMs": 113.20049999999992,
+        "p95Ms": 164.99420800000007
+      },
+      "warmEvidence": {
+        "medianMs": 0.056582999999591266,
+        "p95Ms": 0.14691700000003038
+      },
+      "candidateGraph": {
+        "medianMs": 0.03650000000016007,
+        "p95Ms": 0.062291000000186614
+      }
+    }
+  },
+  "recovery": {
+    "database": {
+      "adapter": "postgres",
+      "topology": "loopback",
+      "version": "14.17 (Homebrew)"
+    },
+    "realProviderCalls": 0,
+    "checks": [
+      "Opening the same session cannot increase its allowance",
+      "Exact review digest, human approval, concurrent HTTP/MCP Apply and repeated Apply commit once",
+      "Custom binding/value edits and world-receipt recovery after lost plan projection",
+      "Immutable submitted revisions reject stale selected-draft approval",
+      "Real HTTP/MCP discovers the updated tool catalogue; service bearer cannot read human-private body state",
+      "Cross-account authoring history and approvals stay inaccessible",
+      "Player supplied workshop proposal stays uninstalled until exact saved Apply, with complete history DTO",
+      "Native investigation, drafts, review, and Apply make no paid attempts",
+      "Concurrent session reservations and per-character monthly caps share one ledger",
+      "Injected executor cancellation revokes tools, keeps terminal text and never redispatches a duplicate identity",
+      "Current operational backup preserves authoring sessions, immutable records and attempt-budget links",
+      "PostgreSQL restart retains revisions/receipts and marks interrupted work uncertain without redispatch",
+      "Current-format gameplay restore fences old authoring context and retains operational records/accounting",
+      "Another human body is rejected before a draft or base fingerprint is disclosed",
+      "Revoking current account grants immediately fences an already issued authoring handle"
+    ]
+  },
+  "reviewFixes": [
+    "Browser reconnect preserves definition review evidence; current identity/grant/audience/timeline still fence it; commands additionally bind control generation.",
+    "Preview wording describes validation, not installation or complete readiness.",
+    "Graph work counts stop exactly at the examined-operation ceiling."
+  ],
+  "additionalNativeCheck": "Bounded graph accounting and stable/revoked semantic authority fingerprint comparisons passed.",
+  "liveRecipeProviderRequests": {
+    "runId": "01a0e662-fc76-7673-ad24-ef3cf2492336",
+    "traceId": "464191d7f8b3d109fe318cf4dffcdae2",
+    "requests": [
+      {
+        "requestBytes": 15059,
+        "messagesBytes": 5708,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 4384,
+          "output": 2586,
+          "input_cached": 113,
+          "input_cache_write": 0,
+          "total": 7083
+        },
+        "providerReportedCostUsd": 0.000955826,
+        "settlementEstimateMicroUsd": 968
+      },
+      {
+        "requestBytes": 16941,
+        "messagesBytes": 7590,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 5018,
+          "output": 2227,
+          "input_cached": 113,
+          "input_cache_write": 0,
+          "total": 7358
+        },
+        "providerReportedCostUsd": 0.000947426,
+        "settlementEstimateMicroUsd": 960
+      },
+      {
+        "requestBytes": 19423,
+        "messagesBytes": 10072,
+        "toolsBytes": 9056,
+        "toolCount": 6,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "usage": {
+          "input": 764,
+          "output": 637,
+          "input_cached": 5105,
+          "input_cache_write": 0,
+          "total": 6506
+        },
+        "providerReportedCostUsd": 0.00021401,
+        "settlementEstimateMicroUsd": 715
+      }
+    ],
+    "source": "Langfuse generation input and committed usage; compact UTF-8 JSON; private content excluded",
+    "limits": "Before later explain-only prompt fix; unmatched against historical failure; not provider invoice reconciliation"
+  },
+  "reviewFollowup": [
+    "Current human request separated from earlier requirements; real explain-only run left drafts unchanged",
+    "Authenticated operation lookup passes after new-work quota",
+    "900-level malformed input rejected before recursive parsing",
+    "Unsupported state/capability identifiers remain unresolved instead of becoming graph facts"
+  ],
+  "selectedProfileFollowup": {
+    "source": "native Zod JSON Schema; compact UTF-8, before MCP/provider framing",
+    "genericSubmissionSchemaBytes": 15143,
+    "profiles": [
+      {
+        "kind": "status-effect-policy",
+        "name": "ol_status_policy_submit",
+        "bytes": 7788
+      },
+      {
+        "kind": "cognition-policy",
+        "name": "ol_cognition_policy_submit",
+        "bytes": 2283
+      },
+      {
+        "kind": "attribute",
+        "name": "ol_attribute_submit",
+        "bytes": 4195
+      },
+      {
+        "kind": "attribute-bindings",
+        "name": "ol_attribute_bindings_submit",
+        "bytes": 1855
+      },
+      {
+        "kind": "attribute-values",
+        "name": "ol_attribute_values_submit",
+        "bytes": 2136
+      },
+      {
+        "kind": "action",
+        "name": "ol_action_submit",
+        "bytes": 3664
+      }
+    ],
+    "checks": [
+      "All six selected profiles expose exactly one candidate kind",
+      "Generic submission tool denied in an active selected profile",
+      "22 existing native HTTP/MCP observations pass with the selected status-policy tool"
+    ],
+    "live": "Pending explicit approval for six new organization-wide connector names; provider HTTP 400 is not claimed resolved"
+  },
+  "recursivePolicyTransport": {
+    "schemaBytes": 1786,
+    "nativeRoundTripAndReplay": true,
+    "malformedUnknownAndDeepInputRejected": true,
+    "providerAcceptance": "pending",
+    "priorSelectedPolicyRun": "01a0e6ef-db5e-75ba-a5f5-a95788a30377",
+    "priorCompleteRequestBytes": 22663,
+    "settledTaskUsageUsd": 0.017658,
+    "priorUncertainUsd": 4
+  },
+  "finalQualification": {
+    "date": "2026-09-28",
+    "nativeChecks": [
+      "Explicit invention starts recipe preparation without a model selection turn; reopen cannot change purpose and ordinary conversation retains discovery",
+      "Typed submission saves exact candidate, dependencies, native checks, original intent and pending review through HTTP",
+      "Same operation/body replays exact saved outcome without a new revision",
+      "Operation lookup recovers committed result; operation ID collision is rejected",
+      "Exact inspected revision refines into an immutable second revision",
+      "Repair keeps identical source-bound finding IDs and retains changed explanations separately",
+      "Exact human approval and Apply commit once; repeated Apply recovers receipt",
+      "Selected native action saves an exact review, refuses paused execution and replays one approved command receipt",
+      "Missing required endpoint retains invalid draft/findings without dangling graph edges or a review",
+      "Whole status policy records actual attribute reads/rates, restrictions and cognition linkage with independent no-new-asset readiness",
+      "Attributable unsupported requirement blocks review without discarding candidate",
+      "Non-weapon gathering candidate records resource, native family, input roles and quantities",
+      "Explicit newer human change supersedes an unsupported requirement while preserving both immutable revisions",
+      "Exhausted new-work allowance still recovers the exact committed save",
+      "Injected review-storage failure rolls candidate, revision and operation outcome back together",
+      "Changed required policy rejects the old packet before draft storage",
+      "Direct selected-source reads match installed graph identities and data exactly",
+      "Large candidate analysis stops at measured work bounds and explicitly retains incomplete coverage",
+      "Another principal cannot recover a private operation through its copied handle",
+      "Actual MCP discovery exposes shared strict descriptors and exact cross-transport receipt replay",
+      "Native flow has no provider attempts or spending",
+      "Temporal status self-read is retained without inventing recursive execution or a workflow cycle",
+      "Missing required representation independently blocks readiness",
+      "10,000 irrelevant definitions do not grow candidate graph work; cold/warm source costs measured",
+      "Native profile stages rotate handles, retain original request/shared funding, and require a human turn before broader policy scope"
+    ],
+    "mcpDescriptorCount": 30,
+    "mediumComparison": "Held constant across matched context samples; no causal comparison against other effort settings.",
+    "runs": [
+      {
+        "run": "01a0e701-f55b-747a-912b-9d2d60deb685",
+        "generations": [
+          {
+            "requestBytes": 16921,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 4453,
+              "output": 3077,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7643
+            }
+          },
+          {
+            "requestBytes": 23208,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 5798,
+              "output": 638,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6549
+            }
+          },
+          {
+            "requestBytes": 24284,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 6223,
+              "output": 216,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6552
+            }
+          },
+          {
+            "requestBytes": 24878,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 6511,
+              "output": 299,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6923
+            }
+          },
+          {
+            "requestBytes": 29284,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1929,
+              "output": 1794,
+              "input_cached": 5873,
+              "input_cache_write": 0,
+              "total": 9596
+            }
+          },
+          {
+            "requestBytes": 34922,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 2775,
+              "output": 1256,
+              "input_cached": 6257,
+              "input_cache_write": 0,
+              "total": 10288
+            }
+          },
+          {
+            "requestBytes": 40401,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1289,
+              "output": 415,
+              "input_cached": 8945,
+              "input_cache_write": 0,
+              "total": 10649
+            }
+          },
+          {
+            "requestBytes": 44726,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 1136,
+              "output": 1390,
+              "input_cached": 10225,
+              "input_cache_write": 0,
+              "total": 12751
+            }
+          },
+          {
+            "requestBytes": 50137,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 12435,
+              "output": 1620,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 14168
+            }
+          },
+          {
+            "requestBytes": 56410,
+            "toolBytes": 7084,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_01a0e4a23c8672ef_02fc95b1f3b028a9",
+              "platform_c_01a0e4a23c8672ef_7694b596f29cbaf6",
+              "platform_c_01a0e4a23c8672ef_a18ddcdbd94e8226",
+              "platform_c_01a0e4a23c8672ef_a96b70f6c49ff211",
+              "platform_c_01a0e4a23c8672ef_bebb4d52983662ff",
+              "question"
+            ],
+            "usage": {
+              "input": 7437,
+              "output": 268,
+              "input_cached": 6513,
+              "input_cache_write": 0,
+              "total": 14218
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T07:54:20.166Z",
+        "endedAt": "2026-09-28T07:55:56.155Z"
+      },
+      {
+        "run": "01a0e70f-972b-7109-aeee-cfc00f24aa9a",
+        "generations": [
+          {
+            "requestBytes": 6105,
+            "toolBytes": 3418,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1881,
+              "output": 1150,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3144
+            }
+          },
+          {
+            "requestBytes": 7139,
+            "toolBytes": 3418,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 2205,
+              "output": 1205,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3523
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:09:13.529Z",
+        "endedAt": "2026-09-28T08:09:56.690Z"
+      },
+      {
+        "run": "01a0e710-424c-72f9-b220-02a33e570d73",
+        "generations": [
+          {
+            "requestBytes": 13710,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4003,
+              "output": 2023,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6139
+            }
+          },
+          {
+            "requestBytes": 15270,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4526,
+              "output": 2276,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6915
+            }
+          },
+          {
+            "requestBytes": 17665,
+            "toolBytes": 7956,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1271,
+              "output": 293,
+              "input_cached": 4081,
+              "input_cache_write": 0,
+              "total": 5645
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:09:57.487Z",
+        "endedAt": "2026-09-28T08:11:26.009Z"
+      },
+      {
+        "run": "01a0e714-8f43-739f-aeb3-b88e39577af8",
+        "generations": [
+          {
+            "requestBytes": 15915,
+            "toolBytes": 5988,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d",
+              "platform_c_ol_status_policy_sub_e2b4f0fa2aa1470f84dcaf7a"
+            ],
+            "usage": {
+              "input": 4134,
+              "output": 2820,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7067
+            }
+          },
+          {
+            "requestBytes": 22382,
+            "toolBytes": 5988,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d",
+              "platform_c_ol_status_policy_sub_e2b4f0fa2aa1470f84dcaf7a"
+            ],
+            "usage": {
+              "input": 5533,
+              "output": 385,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6031
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:14:39.263Z",
+        "endedAt": "2026-09-28T08:15:33.971Z"
+      },
+      {
+        "run": "01a0e71d-2e13-7528-8450-d96a02f545b0",
+        "generations": [
+          {
+            "requestBytes": 12157,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3681,
+              "output": 5448,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 9242
+            }
+          },
+          {
+            "requestBytes": 14172,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 717,
+              "output": 3930,
+              "input_cached": 3697,
+              "input_cache_write": 0,
+              "total": 8344
+            }
+          },
+          {
+            "requestBytes": 16639,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 5037,
+              "output": 359,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 5509
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:24:04.058Z",
+        "endedAt": "2026-09-28T08:26:06.669Z"
+      },
+      {
+        "run": "01a0e723-0924-7749-ae1a-16f95523bdf3",
+        "generations": [
+          {
+            "requestBytes": 11973,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3639,
+              "output": 3580,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7332
+            }
+          },
+          {
+            "requestBytes": 14442,
+            "toolBytes": 7061,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_recipe_submit_d10b37e8e16b36f501de9ff5",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 782,
+              "output": 496,
+              "input_cached": 3697,
+              "input_cache_write": 0,
+              "total": 4975
+            }
+          }
+        ],
+        "startedAt": "2026-09-28T08:30:27.923Z",
+        "endedAt": "2026-09-28T08:31:44.729Z"
+      }
+    ],
+    "settledTaskUsd": 0.040373,
+    "uncertainTaskUsd": 4.5,
+    "taskCeilingUsd": 10,
+    "jevUsd": 0,
+    "qualificationImage": "sha256:50acfc2b82b47183ca7f98c6bb2989388862631d20881297b16508588db7acbb",
+    "deployment": "Isolated loopback API/scheduler and temporary source overlay; original owner checkout and preview preserved. Not deployed or merged."
+  },
+  "customResourceFollowup": {
+    "date": "2026-09-28",
+    "analysisVersion": "native-authoring-analysis-v2",
+    "database": "Disposable PostgreSQL 14.17 loopback",
+    "checks": [
+      "Selected attribute and attachment submissions expose the exact permitted body identity without inventing a supply source",
+      "Value review reads the exact current value/revision and its installed definition, separately from the body target",
+      "Native draining invalidates value review and its value reference, while an unrelated attachment retains its body identity and approved Apply",
+      "Denied body reads expose no live label/value/hash; missing binding stays unresolved without a fabricated endpoint",
+      "Actual selected submission for another human body retains no private live dependency",
+      "PostgreSQL restart preserves exact graph evidence and current resource state without rewinding values"
+    ],
+    "providerCalls": 0,
+    "additionalJevUsd": 0
+  },
+  "resourceExecutionQualification": {
+    "runs": [
+      {
+        "run": "01a0e733-f805-76ca-951c-a840fdfb6286",
+        "settledUsd": 0.000837,
+        "generations": [
+          {
+            "requestBytes": 6207,
+            "toolBytes": 3387,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1920,
+              "output": 1237,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3270
+            }
+          },
+          {
+            "requestBytes": 7220,
+            "toolBytes": 3387,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 2254,
+              "output": 736,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 3103
+            }
+          }
+        ]
+      },
+      {
+        "run": "01a0e734-e87c-737e-aedc-2ed6347d96da",
+        "settledUsd": 0.001411,
+        "generations": [
+          {
+            "requestBytes": 12178,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3763,
+              "output": 2448,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6324
+            }
+          },
+          {
+            "requestBytes": 14890,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4588,
+              "output": 307,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 5008
+            }
+          }
+        ]
+      },
+      {
+        "run": "01a0e73b-70ad-720c-a3d8-17483847c35d",
+        "settledUsd": 0.000655,
+        "generations": [
+          {
+            "requestBytes": 14828,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1319,
+              "output": 1017,
+              "input_cached": 3185,
+              "input_cache_write": 0,
+              "total": 5521
+            }
+          }
+        ]
+      },
+      {
+        "run": "01a0e742-75e0-777e-bf59-1cb67e90eec7",
+        "settledUsd": 0.003883,
+        "uncertainReserveUsd": 0,
+        "generations": [
+          {
+            "requestBytes": 15427,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 1470,
+              "output": 1007,
+              "input_cached": 3185,
+              "input_cache_write": 0,
+              "total": 5662
+            }
+          },
+          {
+            "requestBytes": 17509,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 5045,
+              "output": 705,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 5863
+            }
+          },
+          {
+            "requestBytes": 18465,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 5362,
+              "output": 1012,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6487
+            }
+          },
+          {
+            "requestBytes": 20119,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 6039,
+              "output": 1005,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7157
+            }
+          },
+          {
+            "requestBytes": 21694,
+            "toolBytes": 8212,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_attribute_submit_c4c58e932beef41887114734",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 6567,
+              "output": 1607,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 8287
+            }
+          }
+        ]
+      },
+      {
+        "run": "01a0e747-cef3-74bc-8331-fa322d73e984",
+        "settledUsd": null,
+        "uncertainReserveUsd": 0.5,
+        "generations": [
+          {
+            "requestBytes": 11853,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3484,
+              "output": 413,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 4010
+            }
+          },
+          {
+            "requestBytes": 12862,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 3869,
+              "output": 165,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 4147
+            }
+          },
+          {
+            "requestBytes": 15129,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4490,
+              "output": 232,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 4835
+            }
+          },
+          {
+            "requestBytes": 16058,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {}
+          },
+          {
+            "requestBytes": 16058,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 4863,
+              "output": 355,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 5331
+            }
+          },
+          {
+            "requestBytes": 17349,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 5325,
+              "output": 1971,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 7409
+            }
+          },
+          {
+            "requestBytes": 20002,
+            "toolBytes": 7367,
+            "reasoning": {
+              "effort": "medium"
+            },
+            "tools": [
+              "platform_c_ol_activity_c33b0cf0195bdb7845c9e1f8",
+              "platform_c_ol_attribute_binding_9beae3fd1dc716533905fd52",
+              "platform_c_ol_authoring_guide_278d24cabd07bca2191070a2",
+              "platform_c_ol_entities_97641b2c062fa8d36c99b343",
+              "platform_c_ol_find_e16bb384b8129c0c010f6d69",
+              "platform_c_ol_inspect_2e845a90eae0edb5ec8565bb",
+              "platform_c_ol_request_capabilit_a74851288c7412c15f64f10d"
+            ],
+            "usage": {
+              "input": 6107,
+              "output": 310,
+              "input_cached": 113,
+              "input_cache_write": 0,
+              "total": 6530
+            }
+          }
+        ]
+      }
+    ],
+    "checks": [
+      "Exact definition approval and Apply; no implicit attachment or supply",
+      "Explanation-only response correctly distinguishes simultaneous drain and gross transfer without saving",
+      "Zero-time native pass preserves remaining work and supply",
+      "Two equal-rate consumers maintain values and consume two shared supply units per second",
+      "Finite stock stops at zero without negative quantity"
+    ],
+    "comparisonLimit": "The explanation recheck explicitly asks about simultaneous rates; not a controlled guide-only causal comparison.",
+    "settledTaskUsd": 0.047159,
+    "uncertainTaskUsd": 5,
+    "additionalJevUsd": 0,
+    "conservativeTaskUsd": 5.047159,
+    "terminalAttachmentOutcome": "OpenLegend five-minute turn deadline expired after the exact save. Macrofold later succeeded with verified persistence. Browser exact approval/Apply attached Charge 50 to Mike and retained Health 100, Food 76, Energy 85.",
+    "accountingLimit": "One native OpenCode model attempt returned a streamed provider 504 with provisional/missing usage; the harness retried internally. The complete run reservation remains held. No task-level paid redispatch or accounting override. Further paid qualification must explicitly control native harness retries.",
+    "recipeStopWordingStaticByteDelta": 13
+  }
+}

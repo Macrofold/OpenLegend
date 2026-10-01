@@ -449,10 +449,9 @@ describe('perception, survival and continuity', () => {
     expect(
       queryMemories(world, NPC_ID).some((record) => record.summary.includes('moonflower')),
     ).toBe(false);
+    // Seeing a distant speaker is allowed; moving closer must never reveal unheard words.
     expect(
-      observeActor(world, NPC_ID)!.recentEvents.some(
-        (event) => event.type === 'speech' && event.text.includes('moonflower'),
-      ),
+      observeActor(world, NPC_ID)!.recentEvents.some((event) => event.text.includes('moonflower')),
     ).toBe(false);
     world = command(world, { type: 'say', text: 'I will bring you berries.', targetId: NPC_ID });
     const event = world.events.at(-1)!;

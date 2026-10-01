@@ -111,6 +111,9 @@ export * from './invention-attribution.js';
 
 export {
   SUPPORTED_INVENTION_FAMILIES,
+  INVENTION_FAMILY_INTERFACES,
+  INVENTION_CONSUMER_GUIDE,
+  describeInvention,
   inventionFamily,
   type InventionFamily,
 } from './invention-families.js';

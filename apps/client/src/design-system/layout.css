@@ -396,8 +396,7 @@ body,
   height: 100%;
   max-height: none;
 }
-.ol-panel-body:has(> #composer),
-.ol-panel-body:has(> .ol-agent) {
+.ol-panel-body:has(> #composer) {
   overflow: hidden;
 }
 .ol-thread-entry {
@@ -1318,8 +1317,10 @@ body,
 .ol-agent {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  min-height: 100%;
+}
+.ol-agent > * {
+  flex-shrink: 0;
 }
 .ol-inventions {
   flex: 1;
@@ -1349,12 +1350,13 @@ body,
   display: flex;
   flex-direction: column;
 }
+/* Owner controls and a long question must not shrink the conversation to zero.
+   The panel scrolls its controls; the bounded thread keeps its own message position. */
 .ol-agent .ol-thread-shell {
-  flex: 1;
-  min-height: 0;
+  flex: none;
 }
 .ol-agent .ol-thread {
-  height: 100%;
+  height: clamp(240px, 40vh, 480px);
   max-height: none;
 }
 .ol-agent .ol-composer,
@@ -2322,8 +2324,103 @@ body,
   white-space: pre-wrap;
 }
 
+/* World Agent drafts use ordinary panels; no generated markup enters a review. */
+.ol-agent-reviews {
+  max-height: 240px;
+  overflow: auto;
+}
+.ol-agent-reviews article {
+  padding: 8px 0;
+}
+.ol-agent-json {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+}
+.ol-agent-tools select {
+  max-width: 260px;
+}
+
+.ol-usage-remaining {
+  min-width: 180px;
+  flex: none;
+}
+.ol-agent-tools > .ol-usage-remaining {
+  flex: 1;
+}
+.ol-usage-remaining > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+}
+.ol-usage-remaining .ol-meter-track {
+  display: block;
+  margin-top: var(--space-1);
+  --c: var(--accent);
+}
+
 .ol-condition-description {
   grid-column: 2 / -1;
   font: 12px/16px var(--font-ui);
   color: var(--ink-muted);
+}
+
+/* Inline questions share the conversation's width and remain ordinary text. */
+.ol-agent-question {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.ol-agent-question-item + .ol-agent-question-item {
+  margin-top: 16px;
+}
+.ol-agent-question-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.ol-agent-question-option .ol-caption {
+  display: block;
+}
+.ol-agent-choice-mark {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+.ol-agent-question-option[data-selected] .ol-agent-choice-mark {
+  background: currentColor;
+}
+.ol-agent-question-radio .ol-agent-choice-mark {
+  border-radius: 50%;
+}
+.ol-agent-question-option[data-focus-visible] {
+  outline: 2px solid currentColor;
+}
+.ol-agent-question-option[data-disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+.ol-agent-custom-answer {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.ol-agent-custom-answer textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+}
+.ol-agent-saved-answer {
+  white-space: pre-wrap;
 }

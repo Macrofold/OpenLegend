@@ -8,11 +8,18 @@ import { readConfig } from '../fixtures/database.js';
 test('playable elevated world, mixed artwork, camera controls and exact surface picking', async ({
   page,
 }, info) => {
+  // Hosted software rendering spends ~18s on the two screenshots alone.
+  // Bound the complete journey separately from its unchanged assertion deadlines.
+  test.setTimeout(120_000);
+  // This graphics fixture advances world time manually. Slow software-rendered
+  // clicks must not expire presence; heartbeat expiry has separate service coverage.
+  const now = Date.now();
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
     store: await testRepository(),
     production: true,
     tick: false,
+    now: () => now,
   });
   await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   const address = game.server.address();
@@ -26,12 +33,12 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     if (request.url().endsWith('/api/command')) commands.push(request.postDataJSON());
   });
   try {
-    await page.goto(`http://127.0.0.1:${address.port}`);
+    await page.goto(`http://127.0.0.1:${address.port}/auth/login`);
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-floor', 'all');
     await page.screenshot({ path: info.outputPath('spatial-clearing.png') });
-    // A fresh in-memory fixture starts unpaused; no wall-clock ticks run.
+    // The first local browser owns control in this fresh database; no wall-clock ticks run.
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
     // Project a known public deck point through the default orthographic camera.
     // This clicks actual scene geometry, not a hidden test-only move endpoint.

@@ -1,5 +1,7 @@
 # Extensible world foundation — implementation tracker
 
+[INV-15–INV-19](inventions-and-world-evolution.md#unified-world-agent-delivery) now own the agent-facing graph/MCP/kind-adapter integration and capability journeys. EWF remains responsible for the actual shared host/state/port interfaces; tool descriptions or graph edges do not complete them. Use [Composition](../invention-composition.md) and [target scenarios](../invention-scenarios.md) when qualifying unlike consumers.
+
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
@@ -97,6 +99,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 - [ ] Remove hard-coded dependence on the selected first need from generic consumers. Native mechanics may retain their domain-specific adapters; generic context, inspection, and scheduler wiring must obtain its meaning through the common contract.
 - [ ] Define a concern projection and supported response references for that need. Reuse native action eligibility; do not infer execution from an English description or automatically create goals.
 - [x] Add one reviewed fixture module for charge or lunar reserve with an actual supported replenishment action. Use the selected same interfaces; do not add a new `if charge` branch to generic controller, protocol, or meter logic.
+  - Current resource qualification fixed zero-time replenishment attempting a zero transfer; two equal-rate consumers and finite shared stock pass through the native command/timing owners. [Evidence](../verification/world-agent-context.md#custom-resource-follow-up). This does not close broader EWF qualification.
 - [x] Use EX01 as the first end-to-end example, and keep broader anatomy or psychology out of this extraction.
 - [x] Prove a non-human actor can omit the human need without receiving fake hunger, sleep, or verbal mind state. Keep ordinary native animals inexpensive and cognition opt-in.
 - [ ] When the first body policy is exposed, isolate death/collapse/revival choices from runtime permission/identity rules. Preserve the current accepted full god-revival behavior; do not reopen it as an unresolved decision.
@@ -252,6 +255,10 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 ## Required implementation report
 
 For each delivered slice report: task IDs and exact changed files; behavior preserved versus deliberately changed; canonical owner updates; native/fixture tests run; same-version save implications; deliberate v1 limitations and code/design seam links; measured performance where applicable; remaining blockers and unverified claims. Never claim a whole subsystem complete because its adapter compiles.
+
+## Repertoire integration consumers
+
+[INV-20](inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) owns the new cross-domain integration slices. EWF continues to own the shared host/manifest and state interfaces; [AC](action-capabilities.md) owns invocation/activity semantics. A source-backed inspection graph is delivered without a new registry. Positive material/port contracts, carrier/interaction/clock/topology consumers and qualified effects must still be implemented by their actual owners before general compositional or exotic-world support is claimed.
 
 ## Targeted-strike slice
 

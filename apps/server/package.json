@@ -5,6 +5,8 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
     "@open-legend/ai": "workspace:*",
     "@open-legend/domain": "workspace:*",
     "@open-legend/protocol": "workspace:*",

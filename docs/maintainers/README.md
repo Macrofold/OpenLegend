@@ -25,6 +25,12 @@ This page is the master navigation index for active implementation work.
 
 [Macrofold Worker API cutover (MW01–MW04)](macrofold-worker-api.md) tracks the shared-compute caller migration, cancellation/state preservation and coordinated deployment gates.
 
+For a fresh conversation continuing invention and World Agent work, start with [the no-context handoff](../invention-handoff.md). It maps settled decisions, source files and existing task owners without creating another specification.
+
+## Invention foundation packet
+
+Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
+
 | Area                                                                   | Tracker                                                               | Design owner                                                                                                                                                                                                                                                   |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Maintenance / cross-cutting deferred validation                        | [TODO](TODO.md)                                                       | Relevant canonical specifications                                                                                                                                                                                                                              |
@@ -52,6 +58,14 @@ This page is the master navigation index for active implementation work.
 - [Camp fire care and sharing](../projects/camp-fire-and-sharing.md) — approved plan for fire care and consent-aware handover; tracked by BW19–BW21, AC08.3 and AC09.7.
 - [Embodied survival](../projects/embodied-survival-feature-spec.md) and [technical plan](../projects/embodied-survival-tech-design.md) — Ada's bodily observations, actor-chosen intentions, relevant inventory and equipped melee; implementation tracked by AG06/AG07/AG13, EPR04–EPR06, AC09.6 and BW18. Mechanics and concise equipment-derived hunt options implemented; Jev-only hunting/retry and complete meals demonstrated, with broader qualification still open.
 
+## Reviewed World Agent writes
+
+[Structured invention questions](../projects/invention-questions-feature-spec.md) and [technical design](../projects/invention-questions-tech-design.md) specify inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md#structured-invention-questions) track the approved implementation and remaining browser acceptance and initial-size diagnostic under INV-2.3/INV-21; existing release gates remain.
+
+[World Agent context and invention loop](../projects/world-agent-context/README.md) provides compact source-backed mechanics/context, YAML templates and medium-effort execution. [WW17–WW23](world-agent-writes.md#context-and-invention-loop-design) track the implemented finite foundation and its qualification beneath INV-21, preserving existing live-harness gates.
+
+[World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) and [transport/funding evidence](../verification/workshop-transport-funding.md) record actual runtime scope. WW08/WW09 cover the shared JSON transport and native worker/run allocation. WW12–WW15 cover [bounded investigation and exact custom-value edits](../world-agent-inspection-and-edits.md), with [navigation/edit runtime evidence](../verification/workshop-navigation.md). Remaining provider/browser/payer qualification stays with the focused tracker.
+
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
 
 ## Supporting references
@@ -64,6 +78,11 @@ This page is the master navigation index for active implementation work.
 - [Mechanics repertoire](../repertoires/mechanics.md) — related concepts, reusable mechanisms and authored-world choices; ideas, not another backlog.
 - [Social playable slices](base-world.md#social-playable-slices) — proposed family and promise UI; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Documentation only; runtime implementation is not authorized by these entries.
 
+- [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
+- [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
+- [Relationship graph](../invention-graph.md), [composition](../invention-composition.md), and [target scenarios](../invention-scenarios.md)
+- [Encounter scaling](../encounter-scaling.md) and [MCP tooling research](../../archive/02-research/mcp-tooling-and-integration.md)
+- [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)
 - [Open decisions](../../archive/05-project/open-decisions.md)
@@ -71,7 +90,7 @@ This page is the master navigation index for active implementation work.
 - [Verification index and shared playtest protocol](../verification.md) — topic reports retain actual results and limitations.
 - [Implementation status](../../archive/05-project/implementation-status.md)
 - [World-agent Macrofold handoff](../macrofold-world-agent-handoff.md)
-- [Runtime-art design owner](../../archive/03-design-proposals/procedural-art-and-animation.md)
+- [Hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)
 - [Documentation changelog](../documentation-changelog.md)
 
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.

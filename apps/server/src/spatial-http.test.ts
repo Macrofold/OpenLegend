@@ -8,6 +8,7 @@ import { expect, it } from 'vitest';
 import { advanceWorld } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
+import { SAVE_FORMAT } from './game-saves.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 
 it('requires exact 3D surface intentions and preserves the HTTP retry boundary', async () => {
@@ -107,7 +108,7 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
     const id = randomUUID();
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
-    expect(stored.format).toBe('development-2026-09-22-spatial1');
+    expect(stored.format).toBe(SAVE_FORMAT);
     await game.close();
     game = await createGameServer({
       config,

@@ -1,0 +1,87 @@
+{
+  "runId": "01a0e5b3-1dc3-7697-a9ac-528d7450bae1",
+  "sessionId": "01a0e4e3-0659-7155-ac6a-dfe5ce385a17",
+  "requestId": "live-byok-draft-3",
+  "runtimeSourceHead": "2c7fa707",
+  "macrofoldCheckoutHead": "9948ba644bceb9ad03d0ee3b18cea4acc5f7415e",
+  "timeoutSeconds": 900,
+  "maxCostUsd": 1,
+  "billingMode": "byok",
+  "model": "meta/muse-spark-1.3-contributor",
+  "timestamps": {
+    "admitted": "2026-09-28T01:48:35.788Z",
+    "runStarted": "2026-09-28T01:48:44.991Z",
+    "runtimeStarted": "2026-09-28T01:48:52.454Z",
+    "runtimeFailed": "2026-09-28T01:53:56.643Z",
+    "persisting": "2026-09-28T01:53:57.786Z",
+    "terminal": "2026-09-28T01:54:02.380Z"
+  },
+  "terminal": {
+    "status": "failed",
+    "executionOutcome": "failure",
+    "persistenceStatus": "verified",
+    "failureCode": "harness_error"
+  },
+  "runtimeFailure": {
+    "code": "unknown_error",
+    "stage": "turn_execute",
+    "harness": "opencode",
+    "message": "Native execution failed; untrusted error text was withheld.",
+    "error_type": "TypeError"
+  },
+  "snapshot": {
+    "entries": 3,
+    "bytes": 4939352,
+    "runtimeStartupSeconds": 16.666,
+    "persistenceSeconds": 4.594
+  },
+  "liveArtifacts": {
+    "drafts": 0,
+    "plans": 0,
+    "applied": false,
+    "invalidBaseDraftCalls": 5,
+    "failureMessage": "The base recipe is unavailable."
+  },
+  "usage": {
+    "completeModelEntries": 24,
+    "inputTokens": 382077,
+    "outputTokens": 21974,
+    "completeReportedMicroUsd": 42622,
+    "incompleteModelEntries": 1,
+    "provisionalMicroUsd": 9488,
+    "incompleteRequestId": "01a0e5b7-e099-7008-ad4b-c6bbae450143",
+    "providerInvoiceCost": "unavailable",
+    "platformChargedMicroUsd": 0,
+    "conservativeTaskExposureUsd": 3,
+    "taskCeilingUsd": 10,
+    "additionalJevCostUsd": 0,
+    "cumulativeTaskJevCostUsd": 0
+  },
+  "cancellation": "Requested after repeated blocked draft calls; Run had already ended, so application returned completed and did not change it.",
+  "nativeGuidanceFixVerification": {
+    "evidence": "native HTTP/MCP; no model",
+    "toolDiscovery": "optional field and explicit new-recipe guidance",
+    "invalidBase": {
+      "status": "blocked",
+      "message": "The base recipe is unavailable; no new draft or revision was saved. For a new recipe, omit baseRecipeId. To derive from an existing recipe, inspect and supply its exact recipe ID; do not guess one.",
+      "savedDrafts": 0
+    },
+    "omittedBase": {
+      "status": "ok",
+      "revision": 1,
+      "exactReadDigestMatches": true,
+      "baseRecipePinAbsent": true
+    },
+    "budget": {
+      "limitUsd": 0,
+      "spentUsd": 0,
+      "reservedUsd": 0,
+      "uncertainUsd": 0,
+      "availableUsd": 0,
+      "note": "Uncertain cost is included in spent, not an additional charge. Image generation is not implemented yet."
+    },
+    "plans": 0,
+    "applied": false
+  },
+  "limits": "The descriptor/error repair was verified natively after this Run; model recovery, saved live refinement, human approval/Apply and unsupported-request explanation remain unverified. No additional paid Run was dispatched."
+}

@@ -1,0 +1,529 @@
+{
+  "reviewDate": "2026-09-23",
+  "sourceCommit": "7bba4866819e5623fc4e42d6f8d82f96ca25877d",
+  "foundationCommit": "69897a356c959677cfbf7fe1785f2b9db0271b43",
+  "scope": "Manual application execution and synthetic native/SQLite profiling; no unit/test suites, browser automation, real PostgreSQL or paid providers.",
+  "modelsDispatched": 0,
+  "actualProviderSpendUsd": 0,
+  "method": {
+    "jobs": "Direct SqliteStore execution; history rows have an 8000-character candidate description. Newest 100 history rows are in abandoned timeline. Eight unfinished rows belong to another actor. Setup and index creation excluded from regular recovery samples; index creation measured separately. Recent retrieval repeated 30 times. Recovery RSS is before/after process RSS, not an allocation count.",
+    "search": "Single ordered native comparison plus captured actual VectorStore SQL parameter; no PostgreSQL ranking/network/model timing. Extra source text is 2000 characters.",
+    "native": "Existing scripts/stress-native.ts; 180 native one-simulation-second steps; scenarios retain complete parameters below. Profiling/short-run variability and cold first-exposure effects included; no database/browser/providers. Warmup variant excludes 30 steps only from measured loop."
+  },
+  "samples": {
+    "jobs-baseline-20000": {
+      "label": "baseline",
+      "count": 20000,
+      "payloadBytes": 8000,
+      "initializeMs": 0.8912279999999555,
+      "recoveryMs": 324.2336089999999,
+      "recoveryRssDelta": 201981952,
+      "recentMedianMs": 0.3927969999999732,
+      "recentP95Ms": 0.7588829999999689,
+      "recentCount": 0,
+      "recentIds": [],
+      "completed": 20000,
+      "interrupted": 8,
+      "peakRss": 295079936
+    },
+    "jobs-revised-20000": {
+      "label": "revised",
+      "count": 20000,
+      "payloadBytes": 8000,
+      "initializeMs": 0.7879219999999805,
+      "recoveryMs": 1.7918819999999869,
+      "recoveryRssDelta": 0,
+      "recentMedianMs": 0.05425700000000688,
+      "recentP95Ms": 0.19117000000005646,
+      "recentCount": 3,
+      "recentIds": ["history-00019899", "history-00019898", "history-00019897"],
+      "completed": 20000,
+      "interrupted": 8,
+      "peakRss": 93163520
+    },
+    "jobs-baseline-50000": {
+      "label": "baseline",
+      "count": 50000,
+      "payloadBytes": 8000,
+      "initializeMs": 0.6417700000001787,
+      "recoveryMs": 768.316648,
+      "recoveryRssDelta": 469876736,
+      "recentMedianMs": 0.41083099999923434,
+      "recentP95Ms": 1.0309550000001764,
+      "recentCount": 0,
+      "recentIds": [],
+      "completed": 50000,
+      "interrupted": 8,
+      "peakRss": 558551040
+    },
+    "jobs-revised-50000": {
+      "label": "revised",
+      "count": 50000,
+      "payloadBytes": 8000,
+      "initializeMs": 0.6732819999997446,
+      "recoveryMs": 1.6327540000002045,
+      "recoveryRssDelta": 0,
+      "recentMedianMs": 0.05395000000044092,
+      "recentP95Ms": 0.32171700000071723,
+      "recentCount": 3,
+      "recentIds": ["history-00049899", "history-00049898", "history-00049897"],
+      "completed": 50000,
+      "interrupted": 8,
+      "peakRss": 91426816
+    },
+    "extra-profile": {
+      "indexBuildMs": 629.257584,
+      "plan": [
+        {
+          "id": 7,
+          "parent": 0,
+          "notused": 49,
+          "detail": "SEARCH jobs USING INDEX jobs_inventor_timeline (<expr>=? AND <expr>=? AND <expr>=? AND (created_at,id)<(?,?))"
+        }
+      ],
+      "recoveryMs": 28.551081000000067,
+      "pending": 137,
+      "remaining": {
+        "n": 0
+      },
+      "syntheticAttempt": {
+        "status": "uncertain",
+        "spent": 12000,
+        "reserved": 12000
+      },
+      "uncertainJob": "uncertain",
+      "machine": {
+        "node": "v22.16.0",
+        "platform": "linux",
+        "arch": "x64",
+        "cpus": 5,
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C"
+      },
+      "sqlite": {
+        "version": "3.49.1"
+      }
+    },
+    "search-profile": {
+      "kind": "Native membership and actual VectorStore parameter-serialization microprofile; no PostgreSQL query or provider was executed",
+      "results": [
+        {
+          "count": 1000,
+          "oldMissing": false,
+          "newMissing": false,
+          "scanMs": 4.308580000000006,
+          "setMs": 0.16838300000000572,
+          "fullEncodeMs": 6.560363999999993,
+          "pinEncodeMs": 0.23826599999998166,
+          "oldBytes": 2050781,
+          "pinBytes": 40781
+        },
+        {
+          "count": 10000,
+          "oldMissing": false,
+          "newMissing": false,
+          "scanMs": 187.060163,
+          "setMs": 1.8226760000000013,
+          "fullEncodeMs": 56.97600699999998,
+          "pinEncodeMs": 2.3884520000000293,
+          "oldBytes": 20527781,
+          "pinBytes": 427781
+        },
+        {
+          "count": 20000,
+          "oldMissing": false,
+          "newMissing": false,
+          "scanMs": 697.0864250000002,
+          "setMs": 3.8120159999998577,
+          "fullEncodeMs": 131.68989800000008,
+          "pinEncodeMs": 9.895974000000024,
+          "oldBytes": 41077781,
+          "pinBytes": 877781
+        }
+      ]
+    },
+    "gems-baseline": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 4.262100000000004,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "setupMs": 28.090236000000004,
+      "cpuMs": 2645.814,
+      "heapUsedBytes": 37249520,
+      "nativeHeadroomAtRequestedSpeed": 0.46989467870891205,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 2128.1364639999997,
+      "p50Ms": 6.5972800000001826,
+      "p95Ms": 9.319770000000062,
+      "maxStepMs": 884.663698,
+      "nativeSecondsPerWallSecond": 84.58104216760417,
+      "finalWorldDigest": "205faf3d6a45c33829cba9484211a182d4c93e8962e57b2122bb2a507de269f1",
+      "hottestSelfMs": [
+        ["emit src/events.ts:1", 244.15900000000002],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 181.59099999999992],
+        ["get dist/immer.mjs:382", 151.2609999999999],
+        ["intersectsSegment src/geometry.ts:1", 143.15300000000002],
+        ["(anonymous) src/kernel.ts:1", 114.84199999999991],
+        ["advanceWorld src/kernel.ts:1", 103.52599999999994],
+        ["has dist/immer.mjs:90", 98.60499999999996],
+        ["finalizeProperty dist/immer.mjs:314", 78.27999999999997],
+        ["updateEncounters src/kernel.ts:1", 68.421],
+        ["experienceEntry src/experience.ts:1", 68.21799999999999],
+        ["(anonymous) src/bounds-index.ts:1", 67.57699999999998],
+        ["(garbage collector) :0", 61.29]
+      ]
+    },
+    "gems-revised": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 3.178522000000015,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "setupMs": 24.943576000000007,
+      "cpuMs": 2637.298,
+      "heapUsedBytes": 45487488,
+      "nativeHeadroomAtRequestedSpeed": 0.46901276887403964,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 2132.138113,
+      "p50Ms": 6.5436449999999695,
+      "p95Ms": 8.707799000000023,
+      "maxStepMs": 902.981959,
+      "nativeSecondsPerWallSecond": 84.42229839732714,
+      "finalWorldDigest": "205faf3d6a45c33829cba9484211a182d4c93e8962e57b2122bb2a507de269f1",
+      "hottestSelfMs": [
+        ["emit src/events.ts:1", 252.454],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 198.89],
+        ["get dist/immer.mjs:382", 172.97300000000013],
+        ["intersectsSegment src/geometry.ts:1", 154.73099999999988],
+        ["advanceWorld src/kernel.ts:1", 116.35499999999996],
+        ["(anonymous) src/kernel.ts:1", 105.60799999999993],
+        ["has dist/immer.mjs:90", 80.258],
+        ["updateEncounters src/kernel.ts:1", 76.13399999999999],
+        ["experienceEntry src/experience.ts:1", 72.18199999999999],
+        ["(anonymous) src/geometry.ts:1", 65.21499999999999],
+        ["finalizeProperty dist/immer.mjs:314", 63.84399999999999],
+        ["(garbage collector) :0", 60.579999999999984]
+      ]
+    },
+    "mixed-revised": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 3.643936999999994,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["food"],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["fuel"]
+            }
+          }
+        ]
+      },
+      "setupMs": 70.663014,
+      "cpuMs": 11465.942,
+      "heapUsedBytes": 40850560,
+      "nativeHeadroomAtRequestedSpeed": 0.09459695674196464,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3254,
+        "awareness": 31756
+      },
+      "steps": 180,
+      "totalMs": 10571.164596,
+      "p50Ms": 4.42859899999894,
+      "p95Ms": 5.0806959999990795,
+      "maxStepMs": 9754.863426,
+      "nativeSecondsPerWallSecond": 17.027452213553634,
+      "finalWorldDigest": "e30340506b1b36aa95f8fd7742899ebc7ddf203935abf14e794b366ef734738c",
+      "hottestSelfMs": [
+        ["experienceEntry src/experience.ts:1", 2807.659000000004],
+        ["get dist/immer.mjs:382", 1134.1300000000003],
+        ["arrayTraps.<computed> dist/immer.mjs:471", 1031.4459999999988],
+        ["isPlainObject dist/immer.mjs:60", 734.722999999999],
+        ["emit src/events.ts:1", 618.1539999999998],
+        ["(anonymous) src/experience.ts:1", 612.2409999999999],
+        ["peek dist/immer.mjs:486", 598.5659999999992],
+        ["getArchtype dist/immer.mjs:86", 380.2539999999998],
+        ["has dist/immer.mjs:90", 327.44199999999984],
+        ["finalizeProperty dist/immer.mjs:314", 289.42400000000004],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 271.2909999999999],
+        ["updateEncounters src/kernel.ts:1", 144.32399999999996]
+      ]
+    },
+    "mixed-warm-report": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 6.159711000000016,
+      "warmupSteps": 30,
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 30,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["food"],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["fuel"]
+            }
+          }
+        ]
+      },
+      "setupMs": 90.781093,
+      "cpuMs": 1629.45,
+      "heapUsedBytes": 74649960,
+      "nativeHeadroomAtRequestedSpeed": 0.8464598073855989,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3265,
+        "awareness": 31854
+      },
+      "steps": 180,
+      "totalMs": 1181.3910020000003,
+      "p50Ms": 4.57851699999992,
+      "p95Ms": 7.991218999999546,
+      "maxStepMs": 82.84168800000043,
+      "nativeSecondsPerWallSecond": 152.3627653294078,
+      "finalWorldDigest": "736947108ab2b0a80d4bd214e226aaa46443800bd7c983ac3b380f79c6e306e2",
+      "hottestSelfMs": [
+        ["finalizeProperty dist/immer.mjs:314", 169.83399999999997],
+        ["updateEncounters src/kernel.ts:1", 107.82299999999991],
+        ["get dist/immer.mjs:382", 93.83599999999998],
+        ["advanceWorld src/kernel.ts:1", 89.48399999999997],
+        ["(anonymous) src/kernel.ts:1", 65.962],
+        ["getOwnPropertyDescriptor dist/immer.mjs:447", 43.19700000000001],
+        ["post node:inspector:115", 42.816],
+        ["isDraftable dist/immer.mjs:54", 42.81099999999999],
+        ["(garbage collector) :0", 38.546],
+        ["(anonymous) src/spatial.ts:1", 35.527000000000015],
+        ["experienceEntry src/experience.ts:1", 35.51299999999999],
+        ["has dist/immer.mjs:90", 30.149999999999995]
+      ]
+    }
+  },
+  "httpObservations": [
+    {
+      "stage": "submitted",
+      "response": {
+        "status": 200,
+        "ms": 39.735371999999984,
+        "body": {
+          "ok": true,
+          "code": "queued",
+          "message": "Checking known techniques and supported mechanisms.",
+          "jobId": "review-invention"
+        }
+      },
+      "job": "admitted",
+      "recipeId": "recipe-mtqzkj"
+    },
+    {
+      "stage": "duplicate-and-craft",
+      "duplicate": {
+        "status": 200,
+        "ms": 24.16379500000005,
+        "body": {
+          "ok": true,
+          "code": "completed",
+          "message": "Review reed sling is now an available technique. It still needs materials and work.",
+          "jobId": "review-invention"
+        }
+      },
+      "craft": {
+        "status": 200,
+        "ms": 18.24799900000005,
+        "body": {
+          "ok": true,
+          "code": "accepted",
+          "message": "Action started."
+        }
+      }
+    },
+    {
+      "stage": "native-progress",
+      "recipeId": "recipe-mtqzkj",
+      "simTime": 80,
+      "crafted": true,
+      "worldKeys": ["inventionPolicy", "items", "itemDefinitions"]
+    },
+    {
+      "stage": "history",
+      "http": 200,
+      "count": 1,
+      "keys": ["ok", "requests"]
+    },
+    {
+      "stage": "restart",
+      "recipePresent": true,
+      "jobCode": "admitted",
+      "usage": {
+        "limitUsd": 0,
+        "period": "2026-09",
+        "perAgent": true,
+        "accounts": {},
+        "spentUsd": 0,
+        "reservedUsd": 0,
+        "estimated": true
+      },
+      "spendAttempts": {
+        "n": 0
+      }
+    }
+  ],
+  "build": {
+    "productionTypeScript": "passed",
+    "clientBuild": "passed; existing large bundle warning",
+    "automatedTests": "not written or run"
+  }
+}
