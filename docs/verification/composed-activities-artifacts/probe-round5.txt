@@ -1,0 +1,95 @@
+[
+ {
+  "label": "ids",
+  "pile": "pile-24",
+  "stones": "item-25",
+  "cord": "item-17",
+  "meat": "item-32"
+ },
+ {
+  "label": "pile stack chosen: pick up the item then wait",
+  "result": "pickup(\"item-25\")@\"pile-24\" -> wait [exact]"
+ },
+ {
+  "label": "pile stack chosen: pick up the items then wait",
+  "result": "pickup(\"item-25\")@\"pile-24\" -> wait [exact]"
+ },
+ {
+  "label": "pile stack chosen: pick up the item (single)",
+  "result": "pickup(item-25)"
+ },
+ {
+  "label": "carried cord chosen: drop the item then wait",
+  "result": "drop(\"item-17\") -> wait [exact]"
+ },
+ {
+  "label": "carried meat chosen: pick up the items then cook the raw meat",
+  "result": "pickup@\"pile-24\" -> cook(\"item-32\") [exact]"
+ },
+ {
+  "label": "carried cord chosen: pick up the knife then drop the item",
+  "result": "pickup(\"item-2\")@\"pile-24\" -> drop(\"item-17\") [exact]"
+ },
+ {
+  "label": "carried meat chosen: drop the item then eat the raw meat",
+  "result": "interpretation"
+ },
+ {
+  "label": "no item chosen: pick up the item (two stacks)",
+  "result": "refused: That pile holds several stacks; select the one you mean."
+ },
+ {
+  "label": "knife chosen: pick up the knife then pick up everything",
+  "result": "pickup(\"item-2\")@\"pile-24\" -> pickup@\"pile-24\" [exact]"
+ },
+ {
+  "label": "knife chosen: pick up everything then pick up the knife",
+  "result": "pickup@\"pile-24\" -> pickup(\"item-2\")@\"pile-24\" [exact]"
+ },
+ {
+  "label": "knife chosen: pick up the item then equip the knife",
+  "result": "pickup(\"item-2\")@\"pile-24\" -> equip(undefined) [exact]"
+ },
+ {
+  "label": "meat chosen: drop the items then cook the meat",
+  "result": "interpretation"
+ },
+ {
+  "label": "meat chosen: cook the meat then eat the item",
+  "result": "interpretation"
+ },
+ {
+  "label": "stones chosen (carried): drop the item then drop the stones",
+  "result": "interpretation"
+ },
+ {
+  "label": "cord chosen: drop the item then gather wood",
+  "result": "drop(\"item-17\") -> gather@\"branches\" [exact]"
+ },
+ {
+  "label": "stones in pile chosen, amount 7: pick up the stones, then pick up the items, then drop the cord",
+  "result": "pickup(\"item-25\")@\"pile-24\" -> pickup@\"pile-24\" -> drop(\"item-17\") [confirm]"
+ },
+ {
+  "label": "carried berries chosen, amount 9: eat the berries then drop the items",
+  "result": "interpretation"
+ },
+ {
+  "label": "commit: pick up the item then wait (stones chosen)",
+  "text": "pick up the item then wait until dusk",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "after",
+  "pile": [
+   "knife"
+  ]
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

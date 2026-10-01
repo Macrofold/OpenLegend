@@ -80,7 +80,11 @@ export const CONSOLIDATION_OUTPUT_TOKENS = 8192;
 // docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall
 const INPUT_CHARACTERS = 55_000 * 4;
 const OUTPUT_CHARACTERS = CONSOLIDATION_OUTPUT_TOKENS * 4 * 0.75;
-export function consolidationRequests(batch: ConsolidationBatch, memoryOwner?: string) {
+export function consolidationRequests(
+  batch: ConsolidationBatch,
+  clockOffsetHours: number,
+  memoryOwner?: string,
+) {
   const positions = new Map(batch.sources.map((source, index) => [source.id, index]));
   const base = { mode: batch.mode, memoryOwner };
   const requests: {
@@ -104,7 +108,7 @@ export function consolidationRequests(batch: ConsolidationBatch, memoryOwner?: s
     const handle = `s${index}`;
     const value = {
       text: source.summary,
-      at: gameTime(source.at),
+      at: gameTime(source.at, clockOffsetHours),
       chronologicalPosition: positions.get(source.id),
       source: source.source,
       existingSummary: source.kind === 'reflection',

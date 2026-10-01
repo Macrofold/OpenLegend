@@ -9,7 +9,7 @@ import {
 import { nativeActivityView } from './worlds/base/action-views.js';
 import { rangedApproachRange } from './worlds/base/actions.js';
 import { isRecordedActivityCommand, recordActivityEffect } from './action-experience.js';
-import { startLearnedActivity } from './activity-execution.js';
+import { startLearnedActivity, startRequestedActivity } from './activity-execution.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
@@ -59,7 +59,11 @@ import {
   type ResourceOperation,
 } from './resource-claims.js';
 import { sameDefinitionPin } from './state-owners.js';
-import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
+import {
+  BASE_ACTION_DEFAULTS,
+  BASE_FAMILY_FACTS,
+  nativeMovementSpeed,
+} from './worlds/base/actions.js';
 import { nativeInterval } from './temporal-boundaries.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
@@ -80,7 +84,7 @@ import { inspectPossessions } from './inventory-inspection.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { visibleFeature } from './perception-frame.js';
-import { FOLLOW_RULES, updateFollowPath, followUnavailable } from './follow.js';
+import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
 import { updateContactEpisodes } from './contact-acquisition.js';
 import { confirmActionRevision } from './agency.js';
 import { current, isDraft } from 'immer';
@@ -102,6 +106,8 @@ import {
   replaceGoals,
   seedAgency,
   cancelPlan,
+  discardSuspended,
+  suspendCurrentWork,
   finishPlanAction,
   readyPlanStep,
   resolvePlanCommand,
@@ -492,7 +498,8 @@ function materialRequirements(
       totals.set(input.definitionId, (totals.get(input.definitionId) ?? 0) + input.quantity);
     return [...totals].map(([definitionId, quantity]) => ({ definitionId, quantity }));
   }
-  if (action.type === 'cook') return [{ definitionId: 'raw_meat', quantity: 1 }];
+  if (action.type === 'cook')
+    return [{ definitionId: BASE_FAMILY_FACTS.cooking.input, quantity: 1 }];
   return [];
 }
 function startWork(world: WorldState, actor: Entity, action: Action): Outcome | null {
@@ -701,12 +708,29 @@ function executeCommandNative(
     const target = getOwn(original.entities, command.targetId);
     if (!canHandleItems(original, source) || target?.kind !== 'item-pile')
       return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
+    const stack = command.itemId
+      ? portableItems(original, target.id).find((item) => item.id === command.itemId)
+      : undefined;
     if (
       !portableItems(original, target.id).some(
         (item) => !command.itemId || item.id === command.itemId,
       )
     )
       return reject('empty', 'No matching portable items remain.');
+    if (command.quantity !== undefined) {
+      if (
+        !stack ||
+        !Number.isSafeInteger(command.quantity) ||
+        command.quantity < 1 ||
+        command.quantity > stack.quantity
+      )
+        return reject('unavailable', `Only ${stack?.quantity ?? 0} are in that stack.`);
+      if (
+        command.quantity < stack.quantity &&
+        (original.entities[stack.id]?.container || stack.individuality === 'individual')
+      )
+        return reject('indivisible', 'That item cannot be divided; pick up the whole of it.');
+    }
     if (
       capabilityBlocked(original, source, 'locomotion') &&
       !canReachEntity(original, source, target, original.itemHandling.reach)
@@ -755,6 +779,10 @@ function executeCommandNative(
   }
   switch (command.type) {
     case 'activity':
+      if (command.interrupt && !command.resume) {
+        const refused = suspendCurrentWork(world, actor.id);
+        if (refused) return { world: original, events: [], outcome: refused };
+      }
       result = startLearnedActivity(
         world,
         actor.id,
@@ -765,10 +793,15 @@ function executeCommandNative(
       );
       if (!result.ok) return { world: original, events: [], outcome: result };
       break;
+    case 'compose':
+      result = startRequestedActivity(world, actor.id, command.id, command);
+      if (!result.ok) return { world: original, events: [], outcome: result };
+      break;
     case 'pickup': {
       action = createAction(world, 'pickup', world.itemHandling.pickupSeconds);
       action.targetId = command.targetId;
       action.itemId = command.itemId;
+      if (command.quantity !== undefined) action.quantity = command.quantity;
       break;
     }
     case 'transfer-item':
@@ -881,9 +914,11 @@ function executeCommandNative(
           'invalid-follow',
           'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
         );
+      if (command.until !== undefined && command.until <= world.simTime)
+        return reject('invalid-follow', 'That stopping time has already passed.');
       action = createAction(world, 'follow', 0);
       action.targetId = command.targetId;
-      action.follow = { distance: desiredDistance, nextRepathAt: 0 };
+      action.follow = followState(world, actor, command, desiredDistance);
       const error = updateFollowPath(world, actor, action);
       if (error) return reject('follow-unavailable', error);
       break;
@@ -1130,11 +1165,14 @@ function executeCommandNative(
       if (
         !item ||
         !accessiblePossession(world, actor.id, item.id) ||
-        item.definitionId !== 'raw_meat'
+        item.definitionId !== BASE_FAMILY_FACTS.cooking.input
       )
-        return reject('not-cookable', 'Choose raw meat in this actor’s inventory.');
+        return reject(
+          'not-cookable',
+          `Choose ${world.itemDefinitions[BASE_FAMILY_FACTS.cooking.input]?.name ?? 'something cookable'} in this actor’s inventory.`,
+        );
       if (!heat?.heat?.lit || !visible(world, actor, heat))
-        return reject('no-heat', 'A visible lit campfire is needed.');
+        return reject('no-heat', 'A visible lit heat source is needed.');
       action = createAction(world, 'cook', SIMULATION_RULES.cookSeconds);
       action.itemId = item.id;
       action.heatId = heat.id;
@@ -1238,7 +1276,7 @@ function executeCommandNative(
         (attempt) => attempt.id === command.attemptId,
       )?.alternative;
       const first = alternative?.commands[0];
-      if (first && alternative?.mode === 'replace') {
+      if (first && alternative && alternative.mode !== 'enqueue') {
         // Disposable native admission, just like menu preview: no effects or RNG are published.
         const preview = executeCommand(original, {
           ...first,
@@ -1248,6 +1286,8 @@ function executeCommandNative(
         if (!preview.outcome.ok) return reject(preview.outcome.code, preview.outcome.message);
       }
       result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
+      // A refused acceptance leaves no partially installed plan behind.
+      if (!result.ok) return { world: original, events: [], outcome: result };
       break;
     }
     case 'withdraw-attempt': {
@@ -1268,6 +1308,7 @@ function executeCommandNative(
         releaseInvocationResources(world, component.action.id);
       }
       cancelPlan(world, component);
+      discardSuspended(component);
       component.action = null;
       component.planGeneration++;
       result = outcome(
@@ -1491,10 +1532,16 @@ function completeAction(
         failAction(world, actor, events, 'the pile is no longer visible or within reach.');
         return;
       }
-      const reason = pickUpItems(world, actor, target.id, action.itemId, events);
-      if (reason) {
-        failAction(world, actor, events, reason);
+      const moved = pickUpItems(world, actor, target.id, action.itemId, events, action.quantity);
+      if (typeof moved === 'string') {
+        failAction(world, actor, events, moved);
         return;
+      }
+      // One selected stack is a typed output a later step may bind (equip, eat, drop).
+      if (moved.length === 1) {
+        const [lot] = moved;
+        outputItemId = lot!.itemId;
+        outputs.push({ port: lot!.definitionId, ...lot! });
       }
       break;
     }
@@ -1735,7 +1782,7 @@ function completeAction(
         failAction(world, actor, events, 'the fire went out before cooking finished.');
         return;
       }
-      outputItemId = produce('cooked_meat', 1);
+      outputItemId = produce(BASE_FAMILY_FACTS.cooking.output, 1);
       emit(
         world,
         events,
@@ -1825,7 +1872,13 @@ function advanceAction(
     failAction(world, actor, events, 'human conflict is not enabled.');
     return;
   }
-  if (action.targetId && !activelyParticipates(world.entities[action.targetId])) {
+  // Follow judges its target only through perception and its loss policy; an unseen
+  // target's participation must not leak through a different stop reason.
+  if (
+    action.targetId &&
+    action.type !== 'follow' &&
+    !activelyParticipates(world.entities[action.targetId])
+  ) {
     failAction(world, actor, events, 'the target is no longer participating.');
     return;
   }
@@ -1867,6 +1920,10 @@ function advanceAction(
     return;
   }
   if (action.type === 'follow') {
+    if (action.follow?.until !== undefined && world.simTime >= action.follow.until) {
+      completeAction(world, actor, action, events);
+      return;
+    }
     if (
       capabilityBlocked(world, actor, 'actions') ||
       capabilityBlocked(world, actor, 'locomotion')

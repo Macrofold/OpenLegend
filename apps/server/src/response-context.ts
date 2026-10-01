@@ -1,4 +1,4 @@
-import { worldPosition } from '@open-legend/domain';
+import { accessiblePossession, ITEM_OUTPUT_FAMILIES, worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
   awarenessBindsSubject,
@@ -30,7 +30,7 @@ export function responseTrigger(
     : undefined;
   if (!aware) return `Situation change: ${fallback}`;
   const triggerKind = aware.triggerKind;
-  const time = `(${gameTime(aware.at)})`;
+  const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours)})`;
   if (aware.eventType === 'speech') {
     if (!aware.speech) throw new Error('Speech is missing its committed listener perspective.');
     return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech)} ${time}`;
@@ -63,7 +63,7 @@ export function responseTriggerContext(
   const observer = world.entities[actorId];
   return {
     eventId: aware.eventId,
-    eventTime: gameTime(aware.at),
+    eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),
     observerRelationship: aware.triggerKind ?? 'observed_event',
     // Omit inapplicable roles: strict AI serialization rejects undefined before dispatch.
@@ -97,6 +97,12 @@ export function readableDecisionContext(
   const capabilities = context['capabilities'] as
     | { speech: boolean; expressions: boolean }
     | undefined;
+  // Stopping-time names and output families come from the world, never from this text.
+  const namedTimes = Array.isArray(context['namedTimes'])
+    ? (context['namedTimes'] as string[])
+    : [];
+  const outputs =
+    ITEM_OUTPUT_FAMILIES.slice(0, -1).join(', ') + ' and ' + ITEM_OUTPUT_FAMILIES.at(-1);
   const expressionGuidance = capabilities?.expressions
     ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
     : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';
@@ -143,9 +149,9 @@ export function readableDecisionContext(
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier localIds only), and exactly one non-null field among talk, act, think, goal, plan, note, name; all six unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
 Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null,"volume":"normal"}, max 1200 characters. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
-Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"mode":"enqueue|replace"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500) and optionally targetEntityId. For invoke, fill invocation using Native navigation; actionId, verb, description and top-level targetEntityId remain null. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
+Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation; actionId, verb, description and top-level targetEntityId remain null. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
 Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
-Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only gather, prepare, craft and cook supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
+Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
 ${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}
 Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID","selfIntroduction":null,"volume":"normal"},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal's admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.`,
   );
@@ -163,6 +169,10 @@ export function responseReferences(
   evidenceIds: string[],
   rememberedIds: string[] = [],
   retainedEvidence?: Awareness[],
+  /** Own accessible possessions already selected into context; usable in action slots. */
+  possessionIds: string[] = [],
+  /** Portable stacks lying in visible piles; usable for pickup and slots. */
+  pileItemIds: string[] = [],
 ) {
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
@@ -201,6 +211,10 @@ export function responseReferences(
       roles.set(id, entries);
     }
   }
+  const possessions = possessionIds.filter(
+    (id) => !ids.includes(id) && accessiblePossession(world, actorId, id),
+  );
+  const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
     const entity = world.entities[id]!;
     return JSON.stringify({
@@ -223,7 +237,24 @@ export function responseReferences(
       triggerRoles: roles.get(id) ?? [],
     });
   });
-  return { entityIds: ids, references, entityReferences: entityReferenceMap(world, ids, actorId) };
+  for (const id of possessions)
+    references.push(
+      JSON.stringify({
+        entityId: entityHandles(world, actorId).get(id),
+        label: entityLabel(world, world.entities[id]!, actorId),
+        relation: 'my possession',
+      }),
+    );
+  for (const id of piled)
+    references.push(
+      JSON.stringify({
+        entityId: entityHandles(world, actorId).get(id),
+        label: entityLabel(world, world.entities[id]!, actorId),
+        relation: 'lying in a visible pile',
+      }),
+    );
+  const all = [...ids, ...possessions, ...piled];
+  return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId) };
 }
 
 function formatIntentions(value: unknown): string {
@@ -231,6 +262,7 @@ function formatIntentions(value: unknown): string {
     | {
         goals?: { id: string; revision: number; objective: string; status: string }[];
         plan?: unknown;
+        paused?: unknown;
         planRevision?: number;
         attempts?: { description: string }[];
       }
@@ -238,6 +270,7 @@ function formatIntentions(value: unknown): string {
   return [
     ...(agency?.goals ?? []).map((goal) => `${goal.status} goal: ${goal.objective}`),
     typeof agency?.plan === 'string' ? agency.plan : 'No remaining work supplied.',
+    ...(typeof agency?.paused === 'string' ? [agency.paused] : []),
     `For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`,
     ...(agency?.goals?.length
       ? [

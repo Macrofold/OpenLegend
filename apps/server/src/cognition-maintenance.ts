@@ -539,7 +539,11 @@ export class CognitionMaintenance {
         }));
         if (batch.routine.length) {
           const positions = new Map(batch.sources.map((source, i) => [source.id, i]));
-          const requests = consolidationRequests(batch, this.service.world.entities[actorId]?.name);
+          const requests = consolidationRequests(
+            batch,
+            this.service.world.statusEffectPolicy.clockOffsetHours,
+            this.service.world.entities[actorId]?.name,
+          );
           for (const [index, { context, handles }] of requests.entries()) {
             const request: GenerateRequest = {
               requestId: `${job.id}:summary:${index}`,

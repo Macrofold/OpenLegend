@@ -1,6 +1,7 @@
 {
   "revision": 1,
   "clockOffsetHours": 8,
+  "namedTimes": { "dawn": 6, "dusk": 18 },
   "definitions": [
     {
       "id": "wilderness:restorative-rest",

@@ -84,7 +84,9 @@ export function relativeLocation(observer: Entity, target: Entity): string {
     'to my left',
     'ahead and to my left',
   ];
-  const bearing = Math.atan2(dx, dz) - observer.spatial.heading;
+  // Right-handed, Y-up: facing +Z puts the right hand at -X, so clockwise bearing is
+  // heading minus the target's angle (the same frame as actor-relative movement).
+  const bearing = observer.spatial.heading - Math.atan2(dx, dz);
   const direction = directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8];
   const height =
     Math.abs(dy) < 0.1

@@ -1,0 +1,4 @@
+{"label":"no subjects","subject":null,"ok":true,"code":"queued"}
+{"label":"unseen subject","subject":"bird-1","ok":true,"code":"queued"}
+{"label":"missing subject","subject":"entity-9999","ok":true,"code":"queued"}
+{"label":"unsafe subject","subject":"bad id!","ok":true,"code":"queued"}

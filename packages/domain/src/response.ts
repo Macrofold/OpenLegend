@@ -1,4 +1,5 @@
 import { worldPosition } from './spatial-state.js';
+import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
@@ -14,12 +15,16 @@ import {
 } from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import {
-  bindNavigationInvocation,
+  bindActionInvocation,
   validActionFulfillment,
-  type NavigationInvocation,
+  validIntentSlotShape,
+  validIntentSlots,
+  type ActionResolution,
+  type IntentSlots,
+  type ActionInvocation,
   type ActionFulfillment,
 } from './action-capabilities.js';
-import { proposeActionRevision } from './agency.js';
+import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
@@ -39,6 +44,7 @@ import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js'
 import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
+import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 
 export interface ResponseOperation {
   note?: KnowledgeEdit | null;
@@ -53,17 +59,19 @@ export interface ResponseOperation {
   } | null;
   act: {
     kind: 'known' | 'expression' | 'proposal' | 'invoke';
-    invocation?: NavigationInvocation | null;
+    invocation?: ActionInvocation | null;
+    /** Proposal-only exact references; see unmetSlots for the admission check. */
+    slots?: IntentSlots | null;
     actionId: string | null;
     verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
     targetEntityId: string | null;
     description: string | null;
-    mode: 'enqueue' | 'replace';
+    mode: 'enqueue' | 'replace' | 'interrupt';
   } | null;
   think: { text: string; aboutEntityIds: string[] } | null;
   goal: GoalChange | null;
   plan: {
-    mode: 'enqueue' | 'replace' | 'cancel';
+    mode: 'enqueue' | 'replace' | 'interrupt' | 'cancel';
     expectedRevision: number;
     goalId: string | null;
     steps: {
@@ -82,6 +90,11 @@ export interface AttemptBinding {
   manifestRevision?: number;
   targetEpisodes?: ActionTargetEpisodes;
   fulfillment?: ActionFulfillment;
+  /** A recognized request that cannot bind; commands are empty. */
+  resolution?: ActionResolution;
+  /** Retain the unresolved intent (paid interpretation failed); free typed refusals are
+   * restated on resubmission and occupy no pending slot. */
+  keep?: boolean;
   description: string;
   commands: Command[];
 }
@@ -163,9 +176,11 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         'description',
         'mode',
         ...(op.act.invocation !== undefined ? ['invocation'] : []),
+        ...(op.act.slots !== undefined ? ['slots'] : []),
       ]) ||
         !['known', 'expression', 'proposal', 'invoke'].includes(op.act.kind) ||
-        !['enqueue', 'replace'].includes(op.act.mode) ||
+        !(op.act.slots == null || validIntentSlotShape(op.act.slots)) ||
+        !['enqueue', 'replace', 'interrupt'].includes(op.act.mode) ||
         ![op.act.actionId, op.act.verb, op.act.targetEntityId, op.act.description].every(
           nullableText,
         ))
@@ -187,7 +202,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     if (
       op.plan &&
       (!record(op.plan, ['mode', 'expectedRevision', 'goalId', 'steps']) ||
-        !['enqueue', 'replace', 'cancel'].includes(op.plan.mode) ||
+        !['enqueue', 'replace', 'interrupt', 'cancel'].includes(op.plan.mode) ||
         !Number.isSafeInteger(op.plan.expectedRevision) ||
         op.plan.expectedRevision < 0 ||
         !nullableText(op.plan.goalId) ||
@@ -228,6 +243,73 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   return true;
 }
 export const RESPONSE_RECEIPT_LIMIT = 300;
+
+/** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
+function activityConditions(node: ActivityNode): ActivityPredicate[] {
+  if (node.kind === 'invoke') {
+    const until = node.command === 'follow' ? node.args['until'] : undefined;
+    return until && 'literal' in until && typeof until.literal === 'number'
+      ? [{ test: 'time', at: until.literal }]
+      : [];
+  }
+  if (node.kind === 'sequence') return node.children.flatMap(activityConditions);
+  if (node.kind === 'branch')
+    return [
+      node.when,
+      ...activityConditions(node.yes),
+      ...(node.no ? activityConditions(node.no) : []),
+    ];
+  if (node.kind === 'repeat') return [node.until, ...activityConditions(node.body)];
+  return [node.until];
+}
+
+/** Names the requested details a bound native result would not keep. Methods have no
+ * native enforcement yet, so a requested method is always reported as not kept.
+ * docs/action-capabilities.md#preserve-the-consequential-slots
+ */
+export function unmetSlots(commands: readonly Command[], slots?: IntentSlots | null): string[] {
+  if (!slots) return [];
+  const field = (command: Command, key: string): unknown =>
+    Object.getOwnPropertyDescriptor(command, key)?.value;
+  // A composition keeps a reference through its bindings and control through its conditions.
+  const composed = commands.flatMap((c) => (c.type === 'compose' ? [c] : []));
+  const bound = new Set(composed.flatMap((c) => Object.values(c.bindings)));
+  const conditions = composed.flatMap((c) => activityConditions(c.root));
+  const uses = (id: string, keys: string[]) =>
+    bound.has(id) || commands.some((command) => keys.some((key) => field(command, key) === id));
+  const unmet: string[] = [];
+  if (slots.itemId && !uses(slots.itemId, ['itemId'])) unmet.push('the requested item');
+  // Which fields name a tool, and which families handle one unit per command, are facts the
+  // world declares about its families (worlds/base/actions.ts), not engine knowledge.
+  const facts = BASE_FAMILY_FACTS;
+  if (
+    slots.instrumentId &&
+    !bound.has(slots.instrumentId) &&
+    !commands.some((c) =>
+      (facts.toolFields[c.type] ?? []).some((key) => field(c, key) === slots.instrumentId),
+    )
+  )
+    unmet.push('the requested tool');
+  if (slots.recipientId && !uses(slots.recipientId, ['targetId', 'intendedRecipientId']))
+    unmet.push('the requested recipient');
+  if (
+    slots.quantity !== null &&
+    !(slots.quantityMode === 'exact'
+      ? commands.some((command) => field(command, 'quantity') === slots.quantity) ||
+        commands.filter((c) => (facts.unitPerCommand as readonly string[]).includes(c.type))
+          .length === slots.quantity
+      : conditions.some((p) => p.test === 'holding' && p.quantity === slots.quantity))
+  )
+    unmet.push('the requested amount');
+  if (
+    slots.until &&
+    !conditions.some((p) => p.test === 'time') &&
+    !commands.some((command) => command.type === 'follow' && command.until !== undefined)
+  )
+    unmet.push(`the requested stopping time (${slots.until})`);
+  if (slots.method) unmet.push(`the requested method (${slots.method})`);
+  return unmet;
+}
 
 /** One saved transition, independent component outcomes, no generated effects. */
 export function commitActorResponse(
@@ -381,7 +463,20 @@ export function commitActorResponse(
           : [];
     const directTarget =
       op.talk?.addresseeEntityId ?? op.act?.invocation?.targetEntityId ?? op.act?.targetEntityId;
-    if (directTarget && !permitted.has(directTarget)) {
+    const slotReferences = [
+      op.act?.slots?.itemId,
+      op.act?.slots?.instrumentId,
+      op.act?.slots?.recipientId,
+    ].filter((ref): ref is string => !!ref);
+    const slots = op.act?.slots;
+    const kindOf = (id: string | null | undefined) =>
+      id ? getOwn(input.entities, id)?.kind : undefined;
+    // Scope first: an unpermitted reference gets one answer whatever it names, so hidden
+    // entity kinds cannot be probed through slot errors.
+    if (
+      (directTarget && !permitted.has(directTarget)) ||
+      slotReferences.some((ref) => !permitted.has(ref))
+    ) {
       components[localId] = outcome(
         false,
         'unpermitted-target',
@@ -389,7 +484,29 @@ export function commitActorResponse(
       );
       continue;
     }
+    if (
+      (slots?.itemId && kindOf(slots.itemId) !== 'item') ||
+      (slots?.instrumentId && kindOf(slots.instrumentId) !== 'item') ||
+      (slots?.recipientId && !getOwn(input.entities, slots.recipientId)?.actor)
+    ) {
+      components[localId] = outcome(
+        false,
+        'invalid-slot',
+        'An item or tool reference must name an item, and a recipient must name a living being.',
+      );
+      continue;
+    }
+    if (slots && !validIntentSlots(input, slots)) {
+      components[localId] = outcome(
+        false,
+        'invalid-slot',
+        'That stopping time is not one this world names.',
+      );
+      continue;
+    }
     if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
+    if (op.act?.slots?.recipientId)
+      actionCommands.push({ actorId, targetId: op.act.slots.recipientId });
     if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
       components[localId] = outcome(
         false,
@@ -469,6 +586,7 @@ export function commitActorResponse(
     const invalidActShape =
       !!act &&
       ((act.kind !== 'invoke' && act.invocation != null) ||
+        (act.kind !== 'proposal' && act.slots != null) ||
         (act.kind === 'invoke' &&
           (!act.invocation || act.actionId || act.verb || act.targetEntityId || act.description)) ||
         (act.kind === 'known' &&
@@ -487,7 +605,7 @@ export function commitActorResponse(
         'The proposed action fields do not match its kind.',
       );
     } else if (act?.kind === 'invoke') {
-      const bound = bindNavigationInvocation(
+      const bound = bindActionInvocation(
         world,
         actorId,
         `${id}:${localId}`,
@@ -496,7 +614,7 @@ export function commitActorResponse(
       );
       if ('ok' in bound) components[localId] = bound;
       else if (
-        act.mode === 'replace' &&
+        act.mode !== 'enqueue' &&
         input.entities[actorId]!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
@@ -518,7 +636,7 @@ export function commitActorResponse(
       );
     } else if (act?.kind === 'known') {
       const selected = actions[act.actionId!];
-      if (act.mode === 'replace' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
+      if (act.mode !== 'enqueue' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else if (
         selected &&
@@ -535,7 +653,15 @@ export function commitActorResponse(
       ) {
         if (selected.type === 'activity' && !selected.resume && act.mode === 'replace')
           command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
-        command('act', { ...selected, actorId, id: `${id}:${localId}` });
+        // The kernel pauses and starts together, so a refused start leaves work running.
+        command('act', {
+          ...selected,
+          ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
+            ? { interrupt: true }
+            : {}),
+          actorId,
+          id: `${id}:${localId}`,
+        });
       } else if (selected)
         components[localId] = arrangePlan(
           world,
@@ -613,7 +739,27 @@ export function commitActorResponse(
         (binding) => binding.operationId === localId && binding.description === act.description,
       );
       const component = world.entities[actorId]!.actor!;
-      if (matches.length === 1) {
+      if (matches.length === 1 && matches[0]!.resolution) {
+        // Nothing physical starts; the plain reason is the result.
+        const resolution = matches[0]!.resolution;
+        const held = matches[0]!.keep
+          ? deferAttempt(
+              world,
+              actorId,
+              `${id}:${localId}`,
+              act.description!,
+              act.targetEntityId,
+              act.mode,
+              act.slots ?? null,
+              resolution,
+            )
+          : undefined;
+        components[localId] = outcome(
+          false,
+          resolution.category,
+          !held || held.ok ? resolution.reason : `${resolution.reason} ${held.message}`,
+        );
+      } else if (matches.length === 1) {
         const binding = matches[0]!;
         if (binding.manifestRevision !== world.moduleManifest.revision) {
           components[localId] = outcome(
@@ -641,7 +787,15 @@ export function commitActorResponse(
               ('targetId' in command &&
                 command.targetId !== undefined &&
                 command.targetId !== act.targetEntityId) ||
-              ('heatId' in command && command.heatId !== act.targetEntityId),
+              ('heatId' in command && command.heatId !== act.targetEntityId) ||
+              // A composition naming things, in its steps or as what it is about (where a
+              // walk goes), must name the selected one; one that records only places (a bare
+              // offset, a wait) carries no competing target.
+              (command.type === 'compose' &&
+                (Object.values(command.bindings).some((value) => typeof value === 'string') ||
+                  !!command.subjects?.length) &&
+                !Object.values(command.bindings).some((value) => value === act.targetEntityId) &&
+                !command.subjects?.some((id) => id === act.targetEntityId)),
           )
         ) {
           components[localId] = outcome(
@@ -664,9 +818,20 @@ export function commitActorResponse(
           );
           continue;
         }
+        // A binding that drops a requested tool, recipient, item or amount can only be
+        // offered as a disclosed revision, never admitted as an exact fulfillment.
+        const unmet = unmetSlots(selected, act.slots);
+        if (unmet.length && fulfillment.verdict === 'exact') {
+          components[localId] = outcome(
+            false,
+            'slot-mismatch',
+            `The resolved action does not keep ${unmet.join(', ')}.`,
+          );
+          continue;
+        }
         if (fulfillment.verdict === 'confirm') {
           if (
-            act.mode === 'replace' &&
+            act.mode !== 'enqueue' &&
             input.entities[actorId]!.actor!.planGeneration !== expectedPlan
           ) {
             components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
@@ -676,19 +841,28 @@ export function commitActorResponse(
             world,
             actorId,
             `${id}:${localId}`,
-            selected.map((c, index) => ({ ...c, actorId, id: `${id}:${localId}:${index}` })),
+            selected.map((c, index) => ({
+              ...c,
+              // A held composition runs in the mode the initiator chose.
+              ...(c.type === 'compose' ? { mode: act.mode } : {}),
+              actorId,
+              id: `${id}:${localId}:${index}`,
+            })),
             fulfillment,
             act.mode,
             component.planGeneration,
             act.targetEntityId,
+            act.slots ?? null,
           );
           continue;
         }
         if (
-          act.mode === 'replace' &&
+          act.mode !== 'enqueue' &&
           input.entities[actorId]!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
+        else if (selected.length === 1 && selected[0]!.type === 'compose')
+          command('act', { ...selected[0]!, mode: act.mode, actorId, id: `${id}:${localId}` });
         else if (
           selected.length === 1 &&
           [
@@ -721,6 +895,7 @@ export function commitActorResponse(
             act.description!,
             act.targetEntityId,
             act.mode,
+            act.slots ?? null,
           );
       } else
         components[localId] = deferAttempt(
@@ -730,6 +905,7 @@ export function commitActorResponse(
           act.description!,
           act.targetEntityId,
           act.mode,
+          act.slots ?? null,
         );
     }
 
@@ -806,6 +982,8 @@ export function commitActorResponse(
           );
         else {
           cancelPlan(world, component);
+          // Cancelling ends paused work too, as the player's Stop does.
+          discardSuspended(component);
           components[localId] = outcome(
             true,
             'cancelled',

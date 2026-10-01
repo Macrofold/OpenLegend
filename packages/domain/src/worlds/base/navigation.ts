@@ -8,4 +8,8 @@ export const FOLLOW_RULES = {
   resumeMargin: 0.75,
   repathSeconds: 4,
   targetDisplacement: 1,
+  /** Observed travel this far gives behind/beside a direction; less is no evidence. */
+  headingEvidence: 0.5,
+  /** Holding a behind/beside stance allows this much drift before moving again. */
+  slotTolerance: 1,
 } as const;

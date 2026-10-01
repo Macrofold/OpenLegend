@@ -11,7 +11,8 @@ export const ACTIVITY_LIMITS = {
   nodes: 64,
   depth: 12,
   iterations: 16,
-  waitSeconds: 36000,
+  /** One game day, so "until dawn" is expressible from any hour. */
+  waitSeconds: 86400,
   facts: 48,
   text: 500,
   outputs: 16,
@@ -101,7 +102,11 @@ export interface ActivityOccurrence {
 
 export type ActivityPredicate =
   | { test: 'alive' | 'available' | 'equipped' | 'lit'; role: string }
-  | { test: 'output'; step: string; port: string; quantity: number };
+  | { test: 'output'; step: string; port: string; quantity: number }
+  /** The actor's own accessible possessions hold at least this many of a definition. */
+  | { test: 'holding'; definitionId: string; quantity: number }
+  /** Simulation time has reached an absolute deadline bound when the request was admitted. */
+  | { test: 'time'; at: number };
 export type ActivityBinding = string | import('@open-legend/spatial').SurfacePoint;
 export type ActivityArgument =
   | { role: string }
@@ -381,8 +386,11 @@ export function beginActivity(
   };
   const plan = world.entities[command.actorId]?.actor?.agency.plan;
   if (parentId && plan?.id === parentId) {
-    const method = plan.activity && state.methods[plan.activity.methodId];
-    const name = method?.name ?? plan.steps.find((step) => step.command.purpose)?.command.purpose;
+    const method = plan.activity?.methodId ? state.methods[plan.activity.methodId] : undefined;
+    const name =
+      plan.activity?.request?.name ??
+      method?.name ??
+      plan.steps.find((step) => step.command.purpose)?.command.purpose;
     if (name) record.parentName = name;
     if (method) record.methodId = method.id;
   }
@@ -627,10 +635,12 @@ export function endActivity(
 const invocationFields: Partial<
   Record<Command['type'], { required: string[]; optional?: string[] }>
 > = {
-  pickup: { required: ['targetId'], optional: ['itemId'] },
+  pickup: { required: ['targetId'], optional: ['itemId', 'quantity'] },
   drop: { required: ['itemId', 'quantity'] },
   move: { required: ['destination'] },
-  follow: { required: ['targetId'], optional: ['distance'] },
+  // Requested activities may end a follow at an absolute deadline; learning refuses to
+  // generalize one (activity-learning.ts), since a past deadline is not reusable.
+  follow: { required: ['targetId'], optional: ['distance', 'relation', 'onLost', 'until'] },
   gather: { required: ['targetId'] },
   harvest: { required: ['targetId'] },
   prepare: { required: ['preparation'] },
@@ -673,17 +683,32 @@ export function validateActivityNode(root: ActivityNode): void {
     const predicate = (p: ActivityPredicate): void => {
       if (
         !p ||
-        !['alive', 'available', 'equipped', 'lit', 'output'].includes(p.test) ||
+        !['alive', 'available', 'equipped', 'lit', 'output', 'holding', 'time'].includes(p.test) ||
         (p.test === 'output'
           ? !keys.has(p.step) ||
             !ports.get(p.step)?.has(p.port) ||
             !isSafeRecordId(p.port) ||
             !Number.isSafeInteger(p.quantity) ||
             p.quantity <= 0
-          : !isSafeRecordId(p.role))
+          : p.test === 'holding'
+            ? !isSafeRecordId(p.definitionId) ||
+              !Number.isSafeInteger(p.quantity) ||
+              p.quantity <= 0
+            : p.test === 'time'
+              ? !Number.isFinite(p.at) || p.at < 0
+              : !isSafeRecordId(p.role))
       )
         throw new Error('Invalid activity condition.');
-      exactFields(p, p.test === 'output' ? ['test', 'step', 'port', 'quantity'] : ['test', 'role']);
+      exactFields(
+        p,
+        p.test === 'output'
+          ? ['test', 'step', 'port', 'quantity']
+          : p.test === 'holding'
+            ? ['test', 'definitionId', 'quantity']
+            : p.test === 'time'
+              ? ['test', 'at']
+              : ['test', 'role'],
+      );
     };
     switch (node.kind) {
       case 'invoke': {
@@ -893,7 +918,7 @@ export function validateActionExperience(world: WorldState): void {
       } else if (node.kind === 'sequence') node.children.forEach(walk);
       else {
         const p = node.kind === 'branch' ? node.when : node.until;
-        if (p.test !== 'output' && method.roles[p.role]?.kind !== 'object')
+        if ('role' in p && method.roles[p.role]?.kind !== 'object')
           throw new Error('Unbound activity condition.');
         if (node.kind === 'branch') {
           walk(node.yes);
@@ -1092,13 +1117,58 @@ export function validateActionExperience(world: WorldState): void {
       validateActivityBindings(state.methods[acquisition.methodId]!, acquisition.bindings);
     }
   }
-  for (const entity of Object.values(world.entities)) {
-    const execution = entity.actor?.agency.plan?.activity;
-    if (!execution) continue;
-    const method = state.methods[execution.methodId];
+  for (const execution of Object.values(world.entities).flatMap((entity) =>
+    [entity.actor?.agency.plan?.activity, entity.actor?.agency.suspended?.activity].flatMap(
+      (activity) => (activity ? [{ entity, activity }] : []),
+    ),
+  )) {
+    const { entity, activity } = execution;
+    validateExecution(state, entity.id, activity, world.simTime);
+  }
+}
+
+/** A requested activity carries its own validated root; a learned one names its method. */
+function validateExecution(
+  state: ActionExperienceState,
+  actorId: string,
+  execution: import('./activity-execution.js').ActivityExecution,
+  simTime: number,
+): void {
+  {
+    const method = execution.request
+      ? undefined
+      : execution.methodId
+        ? state.methods[execution.methodId]
+        : undefined;
+    const root = execution.request?.root ?? method?.root;
+    if (execution.request) {
+      if (
+        execution.methodId !== undefined ||
+        typeof execution.request.name !== 'string' ||
+        !execution.request.name.trim() ||
+        execution.request.name.length > ACTIVITY_LIMITS.text
+      )
+        throw new Error('Invalid saved requested activity.');
+      validateActivityNode(execution.request.root);
+      if (
+        Object.keys(execution.bindings).length > ACTIVITY_LIMITS.nodes ||
+        Object.entries(execution.bindings).some(
+          ([role, value]) =>
+            !isSafeRecordId(role) ||
+            !(
+              isSafeRecordId(value) ||
+              (typeof value === 'object' &&
+                value !== null &&
+                [value.x, value.y, value.z].every(Number.isFinite) &&
+                isSafeRecordId(value.surfaceId))
+            ),
+        )
+      )
+        throw new Error('Invalid saved requested activity bindings.');
+    }
     if (
-      !method ||
-      !state.acquisitions[entity.id]?.[method.id] ||
+      !root ||
+      (!execution.request && (!method || !state.acquisitions[actorId]?.[method.id])) ||
       !Number.isSafeInteger(execution.serial) ||
       execution.serial < 0 ||
       execution.serial > ACTIVITY_LIMITS.expandedWork ||
@@ -1112,7 +1182,7 @@ export function validateActionExperience(world: WorldState): void {
       execution.pending.length > ACTIVITY_LIMITS.nodes
     )
       throw new Error('Invalid saved activity execution.');
-    validateActivityBindings(method, execution.bindings);
+    if (method) validateActivityBindings(method, execution.bindings);
     const subtrees = new Set<string>(),
       keys = new Set<string>();
     const visit = (node: ActivityNode): void => {
@@ -1125,7 +1195,7 @@ export function validateActionExperience(world: WorldState): void {
       }
       if (node.kind === 'repeat') visit(node.body);
     };
-    visit(method.root);
+    visit(root);
     for (const frame of execution.pending)
       if (
         !subtrees.has(canonicalJson(frame.node)) ||
@@ -1133,9 +1203,7 @@ export function validateActionExperience(world: WorldState): void {
         frame.iteration < 0 ||
         frame.iteration > ACTIVITY_LIMITS.iterations ||
         (frame.startedAt !== undefined &&
-          (!Number.isFinite(frame.startedAt) ||
-            frame.startedAt < 0 ||
-            frame.startedAt > world.simTime))
+          (!Number.isFinite(frame.startedAt) || frame.startedAt < 0 || frame.startedAt > simTime))
       )
         throw new Error('Invalid saved activity frontier.');
     if (

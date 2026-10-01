@@ -1,0 +1,142 @@
+[
+ {
+  "label": "bundled",
+  "namedTimes": [
+   "dawn",
+   "dusk"
+  ],
+  "examples": {
+   "examples": [
+    "gather wood until I have 6",
+    "follow the deer behind at 4 m",
+    "cook the meat at the fire then eat it"
+   ],
+   "placeholder": "Pick up 2 stones, or follow the deer"
+  },
+  "forms": [
+   "until dawn|dusk",
+   "until dawn|dusk",
+   "until dawn|dusk",
+   "until dawn|dusk"
+  ]
+ },
+ {
+  "label": "noon world: validation",
+  "result": "ok"
+ },
+ {
+  "label": "noon world: view",
+  "namedTimes": [
+   "noon"
+  ]
+ },
+ {
+  "label": "noon world: help text",
+  "until": [
+   "until noon",
+   "until noon",
+   "until noon",
+   "until noon"
+  ]
+ },
+ {
+  "label": "noon world: AI instructions",
+  "follow": "until noon to end it",
+  "capability": "until noon ends"
+ },
+ {
+  "label": "wait until noon",
+  "text": "wait until noon",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "noon deadline",
+  "at": 14400,
+  "clock": 14400,
+  "expected": 14400
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "wait until dawn (not a noon-world name)",
+  "text": "wait until dawn",
+  "ok": false,
+  "code": "ai-unavailable",
+  "message": "This wording needs configured Jev and language-model access with an allowance. Typed actions that need no AI: go to X, Z; move N m forward/back/left/right; go to NAME; go to where I last saw NAME; follow NAME [behind|beside|on the left|on the right] [at N m] [until noon] [and go to where I last saw them]; pick up [N|all] ITEM; drop [N|all] ITEM; gather RESOURCE [until I have N|until noon]; gather N RESOURCE; cook ITEM [at NAME]; eat [N] FOOD; equip ITEM; wait N minutes|until noon; stay by NAME until noon; A then B; stop."
+ },
+ {
+  "label": "slot until dawn in noon world",
+  "text": "wait",
+  "ok": false,
+  "code": "invalid-action",
+  "message": "A chosen detail is not valid here, such as a stopping time this world does not name."
+ },
+ {
+  "label": "follow the person until noon",
+  "text": "follow the person until noon",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "stop 2",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "no-names world: view",
+  "namedTimes": [],
+  "helpUntil": null
+ },
+ {
+  "label": "no-names world: wait",
+  "text": "wait",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "Say until when, for example \"wait 30 minutes\"."
+ },
+ {
+  "label": "no-names world: wait 30 minutes",
+  "text": "wait 30 minutes",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "stop 3",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "missing namedTimes (older save)",
+  "result": "Invalid status effect: unknown or missing fields."
+ },
+ {
+  "label": "bad name",
+  "result": "Invalid status effect: named time name."
+ },
+ {
+  "label": "bad hour",
+  "result": "Invalid status effect: numeric value out of range."
+ },
+ {
+  "label": "too many",
+  "result": "Invalid status effect: named times."
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

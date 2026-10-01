@@ -74,7 +74,7 @@ Explicit findings-only/read-only requests prohibit code, documentation and branc
 
 ### Engine and bundled world separation
 
-Base-world rules/content belong in `docs/worlds/base/` and `packages/domain/src/worlds/base/`, with one authored source per rule. Native implementation does not make a world law universal.
+**Always respect this boundary; it is a hard rule, not a preference.** Base-world rules/content belong in `docs/worlds/base/` and `packages/domain/src/worlds/base/`, with one authored source per rule. Content includes the world's action families, things, creatures, clock names and tuning, and the wording about them: vocabulary, synonyms, parser patterns, examples, help/refusal text, schema enums, UI options and AI instructions. Engine code in every layer (domain, server, protocol, client, prompts) reads it from that source and never restates it; keep only generic mechanisms and language grammar there. Native implementation does not make a world law universal. If a needed world seam is missing, add it rather than bypass it.
 
 ### Authored-reality design principles
 

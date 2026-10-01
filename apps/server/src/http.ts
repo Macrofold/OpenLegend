@@ -31,6 +31,7 @@ import { randomBytes } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { z } from 'zod';
+import { intentSlotsSchema } from './navigation-contracts.js';
 import type { AiClient } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
@@ -1109,7 +1110,8 @@ async function initializeGameServer(
                   requestId: requestIdSchema,
                   text: z.string().trim().min(1).max(500),
                   targetId: requestIdSchema.optional(),
-                  mode: z.enum(['enqueue', 'replace']),
+                  mode: z.enum(['enqueue', 'replace', 'interrupt']),
+                  slots: intentSlotsSchema.optional(),
                 })
                 .strict()
                 .parse(body);
@@ -1122,6 +1124,7 @@ async function initializeGameServer(
                   value.mode,
                   value.targetId,
                   scope,
+                  value.slots ?? null,
                 ),
               );
             }

@@ -4,7 +4,9 @@ import type { LivingBody } from '../../living.js';
 
 // Authored starting anatomy and animal capabilities; lifecycle integrity remains generic.
 // docs/worlds/base/survival.md
-export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct' | 'bird'): LivingBody {
+/** The bundled world's species; typed requests and bodies read this one list. */
+export const BASE_SPECIES = ['human', 'deer', 'hare', 'construct', 'bird'] as const;
+export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
   return {
     plan:
       species === 'human' || species === 'construct'

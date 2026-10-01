@@ -175,7 +175,13 @@ export function actionCatalogue(
   if (selected)
     for (const option of statusEffectActions(world, world.entities[scope.actorId]!, selected))
       add(option.id, option.label, 'States', option.command, [], selected.id);
-  if (world.entities[scope.actorId]!.actor!.action)
+  const self = world.entities[scope.actorId]!.actor!;
+  if (
+    self.action ||
+    self.agency.suspended ||
+    self.agency.plan?.status === 'active' ||
+    self.agency.plan?.status === 'blocked'
+  )
     add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
   add('recover', 'Recover at camp', 'Survival', { type: 'recover' }, ['revive', 'recovery']);

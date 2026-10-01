@@ -32,3 +32,6 @@ Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecyc
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
 - [Navigation behavior](navigation.md) — bundled follow tuning and its current boundaries.
+- [Typed-request wording](typed-requests.md) — the words the free typed-request reader uses for this world's things and missing actions.
+- [Action family facts](actions.md) — what engine code reads about the bundled families (item outputs, tool fields, pausing, cooking).
+- [Time](time.md) — clock fidelity and the named stopping times (dawn, dusk).

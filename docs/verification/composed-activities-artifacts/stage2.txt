@@ -1,0 +1,225 @@
+[
+ {
+  "label": "point move",
+  "text": "go to 9, 12",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "position after move",
+  "position": {
+   "x": 9,
+   "z": 12
+  },
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "move:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "drop amount",
+  "text": "drop 2 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "stones after drop",
+  "stones": 4
+ },
+ {
+  "label": "pick up whole stack",
+  "text": "pick up stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "stones after pickup",
+  "stones": 6,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "drop again",
+  "text": "drop 2 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "part of a stack",
+  "text": "pick up 1 stone",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "too many",
+  "text": "drop 99 stones",
+  "ok": false,
+  "code": "blocked",
+  "message": "You carry only 4 Small stone in that stack."
+ },
+ {
+  "label": "gather wood",
+  "text": "gather wood",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "wood after gather",
+  "wood": 4,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed",
+    "gather:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "not carried",
+  "text": "eat 2 berries",
+  "ok": false,
+  "code": "blocked",
+  "message": "You are not carrying any berries."
+ },
+ {
+  "label": "negation",
+  "text": "don't pick up the stone",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "That describes something not to do; nothing was started."
+ },
+ {
+  "label": "hypothetical",
+  "text": "I might follow the deer tomorrow",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "That describes a possibility, not an action to take now; nothing was started."
+ },
+ {
+  "label": "quote",
+  "text": "say \"hello\"",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "That is speech or a request to someone, not a physical action; nothing was started."
+ },
+ {
+  "label": "fire tending",
+  "text": "tend the fire until dawn",
+  "ok": false,
+  "code": "needs-confirmation",
+  "message": "Accept revised action? Walk near Banked campfire, then wait there until dawn. Not fulfilled: keep the fire fuelled"
+ },
+ {
+  "label": "missing target",
+  "text": "follow the dragon",
+  "ok": false,
+  "code": "ai-unavailable",
+  "message": "This wording needs configured Jev and language-model access with an allowance. Typed actions that need no AI: go to X, Z; move N m forward/back/left/right; go to NAME; go to where I last saw NAME; follow NAME [behind|beside|on the left|on the right] [at N m] [until dawn|dusk] [and go to where I last saw them]; pick up [N|all] ITEM; drop [N|all] ITEM; gather RESOURCE [until I have N|until dawn|dusk]; gather N RESOURCE; cook ITEM [at NAME]; eat [N] FOOD; equip ITEM; wait N minutes|until dawn|dusk; stay by NAME until dawn|dusk; A then B; stop."
+ },
+ {
+  "label": "visible names",
+  "names": [
+   "a person",
+   "Banked campfire",
+   "River reeds",
+   "Dry grass fibers",
+   "Fallen branches",
+   "River stones",
+   "Berry bush",
+   "Berry thicket",
+   "a hare",
+   "a hare",
+   "a deer",
+   "Lookout supply crate",
+   "Items on the ground"
+  ]
+ },
+ {
+  "label": "follow",
+  "text": "follow the person",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "following",
+  "action": "follow",
+  "stage": "approaching"
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "after stop",
+  "action": null,
+  "plan": {
+   "status": "cancelled",
+   "steps": [
+    "follow:cancelled:cancelled"
+   ]
+  }
+ },
+ {
+  "label": "unrecognized",
+  "text": "dance wildly under the moon",
+  "ok": false,
+  "code": "ai-unavailable",
+  "message": "This wording needs configured Jev and language-model access with an allowance. Typed actions that need no AI: go to X, Z; move N m forward/back/left/right; go to NAME; go to where I last saw NAME; follow NAME [behind|beside|on the left|on the right] [at N m] [until dawn|dusk] [and go to where I last saw them]; pick up [N|all] ITEM; drop [N|all] ITEM; gather RESOURCE [until I have N|until dawn|dusk]; gather N RESOURCE; cook ITEM [at NAME]; eat [N] FOOD; equip ITEM; wait N minutes|until dawn|dusk; stay by NAME until dawn|dusk; A then B; stop."
+ },
+ {
+  "label": "slot amount",
+  "text": "drop stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "slot method",
+  "text": "drop 1 stone",
+  "ok": false,
+  "code": "needs-confirmation",
+  "message": "Accept revised action? Drop 1 Small stone on the ground. Not fulfilled: the requested method (quietly)"
+ },
+ {
+  "label": "duplicate retry",
+  "note": "same request id replay",
+  "ok": true,
+  "code": "duplicate",
+  "message": "Native work queued; it has not completed.",
+  "jobId": "human:638c3f9550380715a39600e348a006edbfcaec3dd5b1736388e6ee526feaf75c"
+ },
+ {
+  "label": "attempts",
+  "attempts": [
+   {
+    "description": "tend the fire until dawn",
+    "status": "awaiting-confirmation"
+   },
+   {
+    "description": "drop 1 stone",
+    "status": "awaiting-confirmation"
+   }
+  ]
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

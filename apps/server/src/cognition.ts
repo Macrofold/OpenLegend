@@ -122,6 +122,7 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         type: 'pickup',
         targetId: input.targetId!,
         ...(input.itemId ? { itemId: input.itemId } : {}),
+        ...(input.itemId && input.quantity ? { quantity: input.quantity } : {}),
       };
     case 'drop':
       return { ...base, type: 'drop', itemId: input.itemId!, quantity: input.quantity! };

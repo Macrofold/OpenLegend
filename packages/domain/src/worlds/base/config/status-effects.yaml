@@ -2,6 +2,11 @@
 # Sleep/waking uses generic status-effect operations; no named runtime behavior.
 revision: 1
 clockOffsetHours: 8
+# Clock hours a request may name as a stopping time ("until dawn"). This world's names and
+# hours; engine code reads them from the saved world. docs/worlds/base/time.md#named-clock-times
+namedTimes:
+  dawn: 6
+  dusk: 18
 definitions:
   - id: wilderness:restorative-rest
     type: statusEffect

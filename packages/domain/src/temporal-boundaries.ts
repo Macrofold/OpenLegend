@@ -123,6 +123,9 @@ export function nativeInterval(
       }
     }
     if (!action || action.type === 'status-effect') continue;
+    // A follow's chosen stopping time is an exact boundary, like a wait's timeout.
+    if (action.type === 'follow' && action.follow?.until !== undefined)
+      bound = Math.min(bound, Math.max(TIME_EPSILON, action.follow.until - world.simTime));
     if (action.stage === 'working' && action.remainingSeconds > 0)
       bound = Math.min(bound, action.remainingSeconds);
     if (

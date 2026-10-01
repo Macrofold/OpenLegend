@@ -346,6 +346,10 @@ export interface GameView {
     pauseReason: 'manual' | 'away' | 'storage' | null;
     /** Technical preparation only; this exposes no other actor's route or intent. */
     preparingNavigation?: boolean;
+    /** Stopping-time names this world defines ("dawn"); empty when it names none. */
+    namedTimes: string[];
+    /** The world's clock offset in hours: day 1 starts at this hour. */
+    offsetHours: number;
   };
   player: {
     participation?: 'active' | 'exiting' | 'inactive';
@@ -379,6 +383,10 @@ export interface GameView {
     inventoryRevision: number;
     canUseInventory: boolean;
     actionAttempts: PlayerActionAttempt[];
+    /** The controlled character's plan steps and states; projected only in God mode. */
+    work?: WorkView | null;
+    /** Example typed requests in this world's own words, for the action form. */
+    actionWording?: { examples: string[]; placeholder: string };
     actions: ActionOption[];
   };
   entities: EntityView[];
@@ -829,11 +837,40 @@ export interface ContainerPage {
   next?: string;
 }
 
+/** Actor-safe state of chosen work; "understood" requests are PlayerActionAttempt cards. */
+export type WorkState =
+  | 'queued'
+  | 'running'
+  | 'waiting'
+  | 'blocked'
+  | 'completed'
+  | 'cancelled'
+  | 'paused';
+export interface WorkStepView {
+  id: string;
+  label: string;
+  state: WorkState;
+  reason?: string;
+}
+export interface WorkView {
+  /** Identity of the shown work (plan, paused plan, direct action); a retried Stop reuses
+   * its command only while this is unchanged. */
+  id: string;
+  label: string;
+  state: WorkState;
+  reason?: string;
+  steps: WorkStepView[];
+  /** Work paused for the current work; it resumes after rechecking when this ends. */
+  paused: { label: string; steps: WorkStepView[] } | null;
+}
 export interface PlayerActionAttempt {
-  mode: 'enqueue' | 'replace';
+  mode: 'enqueue' | 'replace' | 'interrupt';
   id: string;
   description: string;
   status: 'needs-interpretation' | 'awaiting-confirmation';
+  /** Why an unresolved request did not bind, in words safe for this actor. */
+  reason?: string;
+  category?: string;
   fulfillment?: {
     requested: string;
     executableDescription: string;

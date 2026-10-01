@@ -1,0 +1,49 @@
+[
+ {
+  "label": "no selection",
+  "text": "cook the raw meat",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "fire selected",
+  "text": "cook the raw meat",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "stop 2",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "person selected",
+  "text": "cook the raw meat",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "A person is not something to cook over; select what to cook over, or clear the selection."
+ },
+ {
+  "label": "pile selected: pick up then cook",
+  "text": "pick up the raw meat then cook the raw meat",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

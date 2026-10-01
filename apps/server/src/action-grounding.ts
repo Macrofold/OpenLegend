@@ -3,27 +3,69 @@ import {
   actionGroundingQuestions,
   actionFulfillmentQuestions,
 } from './jev-questions.js';
-import { navigationInvocationSchema } from './navigation-contracts.js';
+import { namedTimeSchema, navigationInvocationSchema } from './navigation-contracts.js';
 import { z } from 'zod';
+import { actionReferencePermitted, applySlotControl, typedAction } from './typed-actions.js';
 import {
   captureActionTargets,
   worldPosition,
   worldSupport,
   observerDescription,
-  bindNavigationInvocation,
-  NAVIGATION_CAPABILITIES,
+  bindActionInvocation,
+  navigationCapabilities,
   FOLLOW_RULES,
   normalizeAttempt,
   sameAttempt,
+  slotsKey,
+  unmetSlots,
+  validIntentSlots,
+  refuseAction,
+  resolutionSignature,
+  possessionItems,
+  portableItems,
+  itemFor,
+  type ResolutionCategory,
   observeActor,
   type ActionFulfillment,
+  type IntentSlots,
   type ActorResponse,
   type AttemptBinding,
   type Command,
-  type NavigationInvocation,
+  type Entity,
   type WorldState,
 } from '@open-legend/domain';
 import type { GenerateRequest, JudgeRequest, JudgeValue } from '@open-legend/ai';
+
+/** At most 32 own accessible possessions, scanned lazily; omission is disclosed. */
+function possessionSample(world: WorldState, actorId: string) {
+  const items = [];
+  for (const item of possessionItems(world, actorId)) {
+    if (items.length === 32) return { items, more: true };
+    items.push({
+      id: item.id,
+      name: world.itemDefinitions[item.definitionId]?.name ?? item.definitionId,
+      quantity: item.quantity,
+    });
+  }
+  return { items, more: false };
+}
+
+/** Stacks in visible piles, selected pile first (visible order); the scan stops at the
+ * limit and says when more exist so the interpreter can ask for a selection. */
+function pileSample(world: WorldState, piles: readonly Entity[]) {
+  const items = [];
+  for (const pile of piles)
+    for (const item of portableItems(world, pile.id)) {
+      if (items.length === 32) return { items, more: true };
+      items.push({
+        id: item.id,
+        pileId: pile.id,
+        name: world.itemDefinitions[item.definitionId]?.name ?? item.definitionId,
+        quantity: item.quantity,
+      });
+    }
+  return { items, more: false };
+}
 
 interface GroundingPorts {
   judge(request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue>;
@@ -41,53 +83,8 @@ const confident = (value: JudgeValue, key: string) => {
     : undefined;
 };
 
-/** Exact complete forms only: never strip a qualifier to manufacture a free fast path. */
-export function exactNavigation(
-  text: string,
-  world: WorldState,
-  actorId: string,
-  targetId?: string | null,
-  visibleEntities?: NonNullable<ReturnType<typeof observeActor>>['visibleEntities'],
-): NavigationInvocation | undefined {
-  const number = '(-?\\d+(?:\\.\\d+)?)';
-  const point = new RegExp(
-    `^(?:go|move|walk)(?: to)?\\s+(?:x\\s*=\\s*)?${number}\\s*,\\s*(?:z\\s*=\\s*)?${number}(?:\\s+(?:on|surface)\\s+([a-zA-Z0-9_:-]+))?[.!]?$`,
-    'i',
-  ).exec(text.trim());
-  if (point)
-    return {
-      family: 'move',
-      x: Number(point[1]),
-      z: Number(point[2]),
-      surfaceId: point[3] ?? null,
-      targetEntityId: null,
-      distance: null,
-    };
-  const following = /^follow\s+(.+?)[.!]?$/iu.exec(text.trim());
-  if (!following) return;
-  const name = normalize(following[1]!).replace(/^the\s+/u, '');
-  const visible = (visibleEntities ?? observeActor(world, actorId)?.visibleEntities ?? []).filter(
-    (e) => e.actor?.alive && e.id !== actorId,
-  );
-  const matches = visible.filter(
-    (e) =>
-      (normalize(observerDescription(world, actorId, e.id)).replace(/^(?:an?|the)\s+/u, '') ===
-        name ||
-        e.id === following[1] ||
-        (targetId === e.id &&
-          ['this', 'that', 'this actor', 'that actor', 'this deer', 'that deer'].includes(name))) &&
-      (!targetId || targetId === e.id),
-  );
-  if (matches.length !== 1) return;
-  return {
-    family: 'follow',
-    x: null,
-    z: null,
-    surfaceId: null,
-    targetEntityId: matches[0]!.id,
-    distance: null,
-  };
-}
+const slotReferences = (slots?: IntentSlots | null) =>
+  [slots?.itemId, slots?.instrumentId, slots?.recipientId].filter((id): id is string => !!id);
 
 /** One bounded interpretation path shared by player action text and NPC proposals.
  * docs/architecture.md#jev-first-action-grounding
@@ -108,7 +105,12 @@ export async function groundActionAttempts(
       (op) =>
         op.act?.kind === 'proposal' &&
         op.act.description &&
-        (!op.act.targetEntityId || entityIds.includes(op.act.targetEntityId)),
+        (!op.act.targetEntityId || entityIds.includes(op.act.targetEntityId)) &&
+        slotReferences(op.act.slots).every((id) =>
+          actionReferencePermitted(world, actorId, entityIds, id),
+        ) &&
+        // A stopping time this world does not name is refused at commit, before paid work.
+        (!op.act.slots || validIntentSlots(world, op.act.slots)),
     )
     .slice(0, 4);
   const additions: AttemptBinding[] = [];
@@ -118,93 +120,125 @@ export async function groundActionAttempts(
     const act = op.act!;
     const text = act.description!;
     ports.signal?.throwIfAborted();
-    const normalized = JSON.stringify([normalize(text), act.targetEntityId, act.mode]);
+    const slots = act.slots ?? null;
+    const normalized = JSON.stringify([
+      normalize(text),
+      act.targetEntityId,
+      act.mode,
+      slotsKey(slots),
+    ]);
     const priorOperation = seen.get(normalized);
     if (priorOperation) {
       const prior = additions.find((binding) => binding.operationId === priorOperation);
-      if (prior?.fulfillment)
+      if (prior)
         additions.push({
           ...prior,
           operationId: op.localId,
           description: text,
-          fulfillment: { ...prior.fulfillment, requested: text },
+          ...(prior.fulfillment ? { fulfillment: { ...prior.fulfillment, requested: text } } : {}),
         });
       continue; // Repeat the chosen invocation, not its paid interpretation.
     }
+    const scoped = bindings.filter(
+      (binding) =>
+        binding.commands.length === 1 &&
+        (!act.targetEntityId ||
+          binding.commands.some(
+            (command) =>
+              ('targetId' in command && command.targetId === act.targetEntityId) ||
+              ('heatId' in command && command.heatId === act.targetEntityId),
+          )),
+    );
+    // Main's exact authored descriptions remain a free path, checked before typed forms so
+    // an authored description is never re-parsed; ambiguity still needs grounding.
+    const description = normalize(text).replace(/[.!?]+$/u, '');
+    const matches = scoped.filter(
+      (binding) =>
+        normalize(binding.description).replace(/[.!?]+$/u, '') === description &&
+        !unmetSlots(binding.commands, slots).length,
+    );
+    if (matches.length === 1) {
+      seen.set(normalized, op.localId);
+      const fulfillment: ActionFulfillment = {
+        requested: text,
+        executableDescription: text,
+        verdict: 'exact',
+        supported: [text],
+        omitted: [],
+        reason: 'Complete native form bound without inference.',
+      };
+      additions.push({
+        operationId: op.localId,
+        manifestRevision: world.moduleManifest.revision,
+        description: text,
+        commands: matches[0]!.commands,
+        fulfillment,
+      });
+      await ports.record('Action fulfillment', { text }, fulfillment);
+      continue;
+    }
+    // Recognized typed forms are free: they always rebind or restate their plain reason.
+    const typed = typedAction(
+      world,
+      actorId,
+      { text, targetId: act.targetEntityId, slots },
+      op.localId,
+    );
+    if (typed) {
+      seen.set(normalized, op.localId);
+      additions.push(typed);
+      await ports.record(
+        typed.resolution ? 'Action refused' : 'Action fulfillment',
+        { text, slots },
+        typed.resolution ?? typed.fulfillment ?? null,
+      );
+      continue;
+    }
+    // Paid interpretation is not repeated for an unchanged autonomous failure; a changed
+    // dependency signature (the reason's evidence) or an explicit player retry reopens it.
     if (
       actor.agency.attempts.some(
         (pending) =>
-          sameAttempt(pending, text, act.targetEntityId, act.mode) &&
+          sameAttempt(pending, text, act.targetEntityId, act.mode, slots) &&
           pending.manifestRevision === world.moduleManifest.revision &&
-          (pending.status === 'awaiting-confirmation' || !ports.retryUnresolved),
+          (pending.status === 'awaiting-confirmation' ||
+            (!ports.retryUnresolved &&
+              (!pending.resolution ||
+                pending.resolution.signature ===
+                  resolutionSignature(world, actorId, pending.resolution.depends)))),
       )
     )
       continue;
     seen.set(normalized, op.localId);
+    const unresolved = async (
+      kind: string,
+      detail: unknown,
+      category: ResolutionCategory,
+      reason: string,
+      depends: string[] = [],
+    ) => {
+      await ports.record(kind, { text }, detail);
+      additions.push({
+        operationId: op.localId,
+        manifestRevision: world.moduleManifest.revision,
+        description: text,
+        commands: [],
+        resolution: refuseAction(world, actorId, category, reason, depends),
+        keep: true,
+      });
+    };
     try {
-      const scoped = bindings.filter(
-        (binding) =>
-          binding.commands.length === 1 &&
-          (!act.targetEntityId ||
-            binding.commands.some(
-              (command) =>
-                ('targetId' in command && command.targetId === act.targetEntityId) ||
-                ('heatId' in command && command.heatId === act.targetEntityId),
-            )),
-      );
-      let commands: Command[] | undefined;
-      const exact = exactNavigation(
-        text,
-        world,
-        actorId,
-        act.targetEntityId,
-        observed.visibleEntities,
-      );
-      if (exact) {
-        const bound = bindNavigationInvocation(world, actorId, op.localId, exact, entityIds);
-        if (!('ok' in bound)) commands = [bound];
-        else {
-          await ports.record('Action binding unavailable', { text, invocation: exact }, bound);
-          continue;
-        }
-      }
-      if (!commands) {
-        // Main's exact authored descriptions remain a free path; ambiguity still needs grounding.
-        const description = normalize(text).replace(/[.!?]+$/u, '');
-        const matches = scoped.filter(
-          (binding) => normalize(binding.description).replace(/[.!?]+$/u, '') === description,
-        );
-        if (matches.length === 1) commands = matches[0]!.commands;
-      }
-      if (commands) {
-        const fulfillment: ActionFulfillment = {
-          requested: text,
-          executableDescription: text,
-          verdict: 'exact',
-          supported: [text],
-          omitted: [],
-          reason: 'Complete native form bound without inference.',
-        };
-        additions.push({
-          operationId: op.localId,
-          manifestRevision: world.moduleManifest.revision,
-          description: text,
-          commands,
-          fulfillment,
-        });
-        await ports.record('Action fulfillment', { text }, fulfillment);
-        continue;
-      }
       // Full pending storage cannot admit a new revision. Exact no-cost forms above
       // remain usable, and an explicit retry may resolve its existing slot.
       const existingIntent = actor.agency.attempts.some((pending) =>
-        sameAttempt(pending, text, act.targetEntityId, act.mode),
+        sameAttempt(pending, text, act.targetEntityId, act.mode, slots),
       );
       if (actor.agency.attempts.length + interpretedNewIntents >= 4 && !existingIntent) {
-        await ports.record(
+        await unresolved(
           'Action grounding deferred',
-          { text },
-          { reason: 'Withdraw a pending intent before requesting another interpretation.' },
+          { reason: 'pending-limit' },
+          'unavailable',
+          'Four requests already await a decision; withdraw one before asking for another interpretation.',
         );
         continue;
       }
@@ -243,9 +277,17 @@ export async function groundActionAttempts(
           ],
         });
       }
+      // Jev may only choose a complete handle that already keeps every requested detail.
+      const honoring = scoped.filter((binding) => !unmetSlots(binding.commands, slots).length);
       const context = {
         request: text,
         targetEntityId: act.targetEntityId,
+        slots: slots && {
+          ...slots,
+          names: Object.fromEntries(
+            slotReferences(slots).map((id) => [id, observerDescription(world, actorId, id)]),
+          ),
+        },
         actor: {
           name: observed.actor.name,
           goals: actor.agency.goals.filter((g) => g.status === 'active').map((g) => g.objective),
@@ -261,18 +303,27 @@ export async function groundActionAttempts(
           living: !!e.actor?.alive,
         })),
         entityCoverage: { available: visible.length, included: Math.min(visible.length, 64) },
+        // Scoped item references let pickup/drop be interpreted without any shortlist.
+        possessions: possessionSample(world, actorId),
+        pileItems: pileSample(
+          world,
+          visible.filter((entity) => entity.kind === 'item-pile'),
+        ),
         publicSupports:
           world.map.spatial.disclosure === 'public'
             ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
             : [],
-        capabilities: NAVIGATION_CAPABILITIES,
+        capabilities: navigationCapabilities(world),
         choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
       };
+      const selectable = new Set(honoring.map((binding) => scoped.indexOf(binding)));
       if (Buffer.byteLength(JSON.stringify(context)) > 100000) {
-        await ports.record(
+        await unresolved(
           'Action grounding deferred',
-          { text },
           { reason: 'Scoped input budget exceeded.' },
+          'unavailable',
+          'Too much is in view to interpret this request safely; nothing was started.',
+          ['@visible'],
         );
         continue;
       }
@@ -284,7 +335,10 @@ export async function groundActionAttempts(
       });
       const route = confident(selected, 'route');
       await ports.record('Action classification', context, selected);
-      const chosen = route && /^n\d+$/u.test(route) ? scoped[Number(route.slice(1))] : undefined;
+      const chosen =
+        route && /^n\d+$/u.test(route) && selectable.has(Number(route.slice(1)))
+          ? scoped[Number(route.slice(1))]
+          : undefined;
       if (chosen) {
         const fulfillment: ActionFulfillment = {
           requested: text,
@@ -304,7 +358,15 @@ export async function groundActionAttempts(
         await ports.record('Action fulfillment', { text }, fulfillment);
         continue;
       }
-      if (route === 'unresolved') continue;
+      if (route === 'unresolved') {
+        await unresolved(
+          'Action unresolved',
+          { route },
+          'needs_planning',
+          'No supported way to do that was found; nothing was started.',
+        );
+        continue;
+      }
       const handle = scoped.length
         ? z.enum(scoped.map((_, index) => `n${index}`) as [string, ...string[]]).nullable()
         : z.null();
@@ -327,7 +389,12 @@ export async function groundActionAttempts(
           steps: z
             .array(
               z
-                .object({ actionId: handle, invocation: navigationInvocationSchema.nullable() })
+                .object({
+                  actionId: handle,
+                  invocation: navigationInvocationSchema
+                    .extend({ until: namedTimeSchema(world) })
+                    .nullable(),
+                })
                 .strict(),
             )
             .max(8),
@@ -337,16 +404,21 @@ export async function groundActionAttempts(
         await ports.generate({
           instructions:
             ACTION_GROUNDING_POLICY +
-            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or navigation invocation. Only move/follow support generated parameters. Follow has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
+            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Only move/follow/pickup/drop invocations support generated parameters; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
           context,
           schema: z.toJSONSchema(schema, { target: 'draft-7' }),
         }),
       );
       if (result.disposition === 'unresolved' || !result.steps.length) {
-        await ports.record('Action unresolved', { text }, result);
+        await unresolved(
+          'Action unresolved',
+          result,
+          'needs_planning',
+          'No supported way to do that was found; nothing was started.',
+        );
         continue;
       }
-      const boundCommands: Command[] = [];
+      let boundCommands: Command[] = [];
       let invalid = false;
       for (const [index, step] of result.steps.entries()) {
         if ((step.actionId === null) === (step.invocation === null)) {
@@ -356,7 +428,7 @@ export async function groundActionAttempts(
         const selectedCommand =
           step.actionId !== null
             ? scoped[Number(step.actionId.slice(1))]?.commands[0]
-            : bindNavigationInvocation(
+            : bindActionInvocation(
                 world,
                 actorId,
                 `${op.localId}:${index}`,
@@ -376,34 +448,77 @@ export async function groundActionAttempts(
         boundCommands.push(selectedCommand);
       }
       if (invalid) {
-        await ports.record('Action binding rejected', { text }, result);
-        continue;
-      }
-      const nativeDescription = boundCommands
-        .map((command) => {
-          if (command.type === 'move')
-            return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
-          if (command.type === 'follow')
-            return `Follow ${observerDescription(world, actorId, command.targetId)} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
-          return (
-            scoped.find((choice) => choice.commands[0] === command)?.description ??
-            `Perform ${command.type}.`
-          );
-        })
-        .join(' Then: ');
-      if (nativeDescription.length > 1000) {
-        await ports.record(
-          'Action explanation budget exceeded',
-          { text },
-          { steps: boundCommands.length },
+        await unresolved(
+          'Action binding rejected',
+          result,
+          'needs_clarification',
+          'The interpretation did not match a permitted action in view; nothing was started.',
+          ['@visible'],
         );
         continue;
       }
-      if (boundCommands.slice(0, -1).some((command) => command.type === 'follow')) {
-        await ports.record(
+      // Only a follow with a stopping time can truthfully complete before another step. The
+      // guard runs before slot control wraps the steps into one composed activity.
+      if (
+        boundCommands
+          .slice(0, -1)
+          .some((command) => command.type === 'follow' && command.until === undefined)
+      ) {
+        await unresolved(
           'Action continuation unavailable',
-          { text },
           { reason: 'Indefinite following cannot truthfully complete before another step.' },
+          'unsupported_capability',
+          'Following has no natural end, so nothing can be queued after it.',
+        );
+        continue;
+      }
+      const describe = (command: Command) => {
+        if (command.type === 'move')
+          return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
+        if (command.type === 'pickup')
+          return `Pick up ${command.quantity ?? 'all'} ${command.itemId ? (world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.name ?? 'items') : 'portable items'} from the pile.`;
+        if (command.type === 'drop')
+          return `Drop ${command.quantity} ${world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.name ?? 'items'} on the ground.`;
+        if (command.type === 'follow')
+          return `Follow ${observerDescription(world, actorId, command.targetId)} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units${command.relation ? ` (${command.relation}, judged from their observed travel)` : ''} until ${command.until !== undefined ? 'the chosen clock time' : 'cancelled or interrupted'}; ${command.onLost ? 'on losing sight, walk to where they were last seen and stop there unless seen again' : 'stops on losing sight'}. No stealth.`;
+        return (
+          scoped.find((choice) => choice.commands[0] === command)?.description ??
+          `Perform ${command.type}.`
+        );
+      };
+      // Slot control either keeps the steps or appends one stopping rule: a repeat that
+      // replaces the final gather, or a clock wait after the final move. Describe every step.
+      const wrapped = applySlotControl(world, actorId, boundCommands, slots, op.localId);
+      const composed =
+        wrapped.length === 1 && wrapped[0]!.type === 'compose' ? wrapped[0] : undefined;
+      const tail =
+        composed?.type === 'compose'
+          ? composed.root.kind === 'sequence'
+            ? composed.root.children.at(-1)!
+            : composed.root
+          : undefined;
+      const nativeDescription = [
+        ...(composed
+          ? tail?.kind === 'repeat'
+            ? boundCommands.slice(0, -1)
+            : boundCommands
+          : wrapped
+        ).map(describe),
+        ...(tail?.kind === 'repeat'
+          ? [
+              `Repeat: ${tail.name} (at most ${tail.maximum} attempts; stops early if the source runs out).`,
+            ]
+          : tail?.kind === 'wait'
+            ? [`${tail.name}.`]
+            : []),
+      ].join(' Then: ');
+      boundCommands = wrapped;
+      if (nativeDescription.length > 1000) {
+        await unresolved(
+          'Action explanation budget exceeded',
+          { steps: boundCommands.length },
+          'needs_clarification',
+          'That request expands into too many steps to describe; ask for fewer at once.',
         );
         continue;
       }
@@ -411,6 +526,16 @@ export async function groundActionAttempts(
         result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
       let reason = result.reason;
       let omitted = result.omitted;
+      // Native slot checks outrank the interpreter's claim that nothing was dropped.
+      const unmet = unmetSlots(boundCommands, slots);
+      if (unmet.length && verdict === 'exact') {
+        verdict = 'confirm';
+        reason = 'The native action does not keep every requested detail; accept it only as shown.';
+        omitted = unmet.map((requirement) => ({
+          requirement,
+          reason: 'The chosen native action does not keep this requested detail.',
+        }));
+      }
       // Review actual decoded behavior, including candidates that claim no omissions.
       // docs/architecture.md#action-fulfillment-and-revision-approval
       if (verdict !== 'confirm') {
@@ -431,7 +556,15 @@ export async function groundActionAttempts(
           review,
         );
         const assessment = confident(review, 'fulfillment');
-        if (assessment === 'reject') continue;
+        if (assessment === 'reject') {
+          await unresolved(
+            'Action fulfillment rejected',
+            { assessment },
+            'needs_clarification',
+            'The only executable interpretation did not match the request; nothing was started.',
+          );
+          continue;
+        }
         const exact = assessment === 'exact' && omitted.length === 0;
         const partial = assessment === 'tolerable' && omitted.length > 0;
         if (!exact && !partial) {
@@ -466,13 +599,15 @@ export async function groundActionAttempts(
       await ports.record('Action fulfillment', { text, commands: boundCommands }, fulfillment);
     } catch (error) {
       ports.signal?.throwIfAborted();
-      await ports.record(
+      await unresolved(
         'Action grounding unavailable',
-        { text, operationId: op.localId },
         {
+          operationId: op.localId,
           reason: error instanceof Error ? error.message.slice(0, 1000) : 'Unavailable',
           retry: 'explicit only',
         },
+        'unavailable',
+        'Interpreting this wording is unavailable right now; nothing was started. Retry it explicitly later.',
       );
     }
   }

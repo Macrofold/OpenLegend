@@ -1,0 +1,109 @@
+[
+ {
+  "label": "follow behind",
+  "text": "follow the person behind at 2 m",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "before npc moves",
+  "rel": {
+   "dx": -2,
+   "dz": 1,
+   "d": 2.24
+  },
+  "stage": "working",
+  "travel": null
+ },
+ {
+  "label": "npc walk east",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "settled behind (npc travelled +x)",
+  "rel": {
+   "dx": -2.72,
+   "dz": 0,
+   "d": 2.72
+  },
+  "stage": "working",
+  "travel": 1.5707963267948966
+ },
+ {
+  "label": "npc walk north",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "settled behind (npc travelled -z)",
+  "rel": {
+   "dx": -0.01,
+   "dz": 2.75,
+   "d": 2.75
+  },
+  "stage": "working",
+  "travel": 3.141592653589793
+ },
+ {
+  "label": "switch to beside",
+  "text": "follow the person on the left at 2 m",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "npc walk south",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "settled left (npc travelled +z; left of +z is +x)",
+  "rel": {
+   "dx": 2,
+   "dz": -0.6,
+   "d": 2.09
+  },
+  "stage": "working",
+  "side": -1
+ },
+ {
+  "label": "follow until dusk",
+  "text": "follow the person until dusk",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "deadline",
+  "now": 365.00000000000006,
+  "until": 36000,
+  "hoursAway": 9.9
+ },
+ {
+  "label": "after dusk",
+  "simTime": 36365.00000000061,
+  "clockHour": 18.1,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "follow:completed:completed"
+   ]
+  },
+  "action": null,
+  "outcome": {
+   "ok": true,
+   "code": "completed",
+   "message": "follow completed."
+  }
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

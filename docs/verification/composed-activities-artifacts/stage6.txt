@@ -1,0 +1,187 @@
+[
+ {
+  "label": "drop 5 stones",
+  "text": "drop 5 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pile",
+  "pile": [
+   "stonex5"
+  ],
+  "stones": 1
+ },
+ {
+  "label": "pick up 2",
+  "text": "pick up 2 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "after pick up 2",
+  "pile": [
+   "stonex3"
+  ],
+  "stones": 3,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "pick up 9",
+  "text": "pick up 9 stones",
+  "ok": false,
+  "code": "blocked",
+  "message": "Only 3 Small stone lie in that pile."
+ },
+ {
+  "label": "drop knife",
+  "text": "drop the knife",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pickup then equip",
+  "text": "pick up the knife then equip it",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "knife equipped",
+  "equipped": true,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed",
+    "equip:completed:equipped"
+   ]
+  },
+  "pile": [
+   "stonex3"
+  ]
+ },
+ {
+  "label": "walk away",
+  "text": "move 5 m back",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pick up 1 far",
+  "text": "pick up 1 stone",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "approaching",
+  "action": "pickup:approaching"
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "pile unchanged",
+  "before": [
+   "stonex3"
+  ],
+  "after": [
+   "stonex3"
+  ],
+  "stones": 3
+ },
+ {
+  "label": "quietly",
+  "text": "pick up 1 stone",
+  "ok": false,
+  "code": "needs-confirmation",
+  "message": "Accept revised action? Pick up 1 Small stone from the pile, leaving 2. Not fulfilled: the requested method (quietly)"
+ },
+ {
+  "label": "held",
+  "command": {
+   "id": "human:a3e9934c200c2eb119b9c76216fc2e977998f342b85ee91bca65676924384908:action:0",
+   "actorId": "entity-0001",
+   "type": "pickup",
+   "targetId": "pile-23",
+   "itemId": "item-24",
+   "quantity": 1
+  }
+ },
+ {
+  "label": "accept",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "after accept",
+  "pile": [
+   "stonex2"
+  ],
+  "stones": 4,
+  "plan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "npc invoke pickup",
+  "components": {
+   "take": {
+    "ok": true,
+    "code": "queued",
+    "message": "Native work queued; it has not completed.",
+    "planId": "npc-pick-1:take"
+   }
+  }
+ },
+ {
+  "label": "npc duplicate",
+  "components": {
+   "take": {
+    "ok": true,
+    "code": "queued",
+    "message": "Native work queued; it has not completed.",
+    "planId": "npc-pick-1:take"
+   }
+  }
+ },
+ {
+  "label": "npc after",
+  "npcStones": 7,
+  "pile": [
+   "stonex1"
+  ],
+  "npcPlan": {
+   "status": "completed",
+   "steps": [
+    "pickup:completed:completed"
+   ]
+  }
+ },
+ {
+  "label": "validate",
+  "ok": true
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]
