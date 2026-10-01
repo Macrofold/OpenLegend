@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-30 — Verification reports without committed raw output
+
+At Mike's request, [documentation policy](../.agents/rules/documentation.md#verification-reports) now keeps observed results and limitations in the report while leaving generated probe logs and similar raw verification output out of Git. This reverses the earlier instruction to store raw artifacts beside each report. The 20 composed-activities probe outputs were removed; their distinct findings remain in the [verification report](verification/composed-activities.md). Authored fixtures and reusable verification tools remain source files.
+
 ## 2026-09-29 — The engine/world boundary is a hard rule, including wording
 
 Mike directed that the engine/world boundary always be respected. [AGENTS.md](../AGENTS.md#engine-and-bundled-world-separation) now states it as a hard rule and names what counts as world content: action families, things, creatures, clock names and tuning, and the wording about them (vocabulary, parser patterns, examples, help and refusal text, schema enums, UI options and AI instructions). Engine code in every layer reads that content from the world's single source and never restates it.

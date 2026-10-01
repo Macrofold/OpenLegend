@@ -1,8 +1,0 @@
-{"text":"Follow a deer while visible; no stealth or automatic sunset stop.","result":"not recognized (goes to interpretation)"}
-{"text":"Eat one Berries to restore fullness.","result":"not recognized (goes to interpretation)"}
-{"text":"Cook one raw meat over the nearby lit campfire before eating it.","result":"not recognized (goes to interpretation)"}
-{"text":"Gather Fallen branches: base yield 2 Supple branch per batch, up to 4 with a compatible tool.","result":"not recognized (goes to interpretation)"}
-{"text":"Pick up 6 Small stone from Items on the ground.","result":"not recognized (goes to interpretation)"}
-{"text":"Equip Knife: a small blade.","result":"not recognized (goes to interpretation)"}
-{"text":"cook the meat over the fire","result":{"refused":"blocked","reason":"You are not carrying any meat."}}
-{"text":"cook the meat over the dragon forge","result":"not recognized (goes to interpretation)"}
