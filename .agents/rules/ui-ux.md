@@ -29,4 +29,4 @@ For UI/UX design, implementation or review, and frontend code changes including 
 | React components, CSS, state, events, async or accessibility implementation | [React](../../docs/ui-ux/react.md) |
 | Review or acceptance planning | Relevant scenarios in [verification](../../docs/ui-ux/verification.md) |
 
-The [index](../../docs/ui-ux/README.md) explains authority and numbers. Research ledgers are optional unless researching or revising a principle. Do not preload them, all chapters, every game dossier or every linked specification.
+The [index](../../docs/ui-ux/README.md) explains authority and numbers. The [research ledger](../../docs/ui-ux/research.md) is optional unless researching or revising a principle. Integrate findings into their existing chapter and this single ledger, not pass-specific supplements. Do not preload all chapters, every game dossier or every linked specification.

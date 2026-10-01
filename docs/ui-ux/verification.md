@@ -2,21 +2,21 @@
 
 [Handbook](README.md) · [Repository policy](../../.agents/rules/verification.md) · [Follow-through](../maintainers/ui-ux.md)
 
-## What this pass establishes
+## What this evidence establishes
 
-The first pass inspected UI structure, relevant design owners and selected implementation bodies at runtime baseline `0382be76648879cf8a8397ad6c3534b4431916f5` on 2026-09-30. The second pass on 2026-10-01 reviewed that handbook at `e8d6c8950cadd715cfed97df4a0e379ff1593d02` against new authoritative sources and pinned company code. Neither launched the game, inspected computed styles, ran assistive technology or conducted a user study. This coverage map routes work; it does not certify components.
+Research conducted September 30–October 1, 2026 inspected UI structure, relevant design owners and selected implementation bodies at runtime baseline `0382be76648879cf8a8397ad6c3534b4431916f5`, then evaluated the handbook against authoritative sources and pinned company code. Handbook revision `e8d6c8950cadd715cfed97df4a0e379ff1593d02` identifies the version critiqued, not a different runtime baseline. No game launch, computed-style inspection, assistive-technology run or user study was performed. This coverage map routes work; it does not certify components.
 
 | Evidence class | Finding | Implication |
 | --- | --- | --- |
-| First-pass implementation inspection | SelectField already uses React Aria ComboBox, Input, Popover and ListBox | Preserve the composite; the historical nested-widget report is not a confirmed current defect |
-| First-pass implementation inspection | SubjectPicker has 150ms debounce, request guards, scoped labels and paged deduplication | Shared changes must preserve remote-search/privacy behavior |
-| First-pass implementation inspection | Inventory has native search, quantities, nested containers, movement, split/merge and history | Browser clear chrome is only an unconfirmed cause; build on existing capabilities |
+| Implementation inspection | SelectField already uses React Aria ComboBox, Input, Popover and ListBox | Preserve the composite; the historical nested-widget report is not a confirmed current defect |
+| Implementation inspection | SubjectPicker has 150ms debounce, request guards, scoped labels and paged deduplication | Shared changes must preserve remote-search/privacy behavior |
+| Implementation inspection | Inventory has native search, quantities, nested containers, movement, split/merge and history | Browser clear chrome is only an unconfirmed cause; build on existing capabilities |
 | Existing accepted contract | UI brief/production guide specify spacing, panel adaptations, tooltips, camera and conversation feedback | Research supplements instead of silently replacing these |
 | User report, not reproduced | Nested/overlapping typeahead and inappropriate blue clear-X | Retain concrete reproduction scenarios |
-| New primary-source evidence | Primer searchable panels; Adobe prop/overlay code; company design/engineering notes | Correct overgeneralized rules and strengthen contracts, without certifying local runtime |
+| Primary-source evidence | Primer searchable panels; Adobe prop/overlay code; company design/engineering notes | Support precise interaction contracts without certifying local runtime |
 | Future guidance | Advanced comparisons, bulk management, loadouts and trading | Not delivered game features |
 
-Implementation references: [shared controls](../../apps/client/src/design-system/components.tsx), [subject picker](../../apps/client/src/ui/subject-picker.tsx), [inventory](../../apps/client/src/ui/inventory.tsx). Contracts: [production guide](../../apps/client/src/design-system/README.md), [UI brief](../ui-design-brief.md). New evidence: [second-pass ledger](research-second-pass.md).
+Implementation references: [shared controls](../../apps/client/src/design-system/components.tsx), [subject picker](../../apps/client/src/ui/subject-picker.tsx), [inventory](../../apps/client/src/ui/inventory.tsx). Contracts: [production guide](../../apps/client/src/design-system/README.md), [UI brief](../ui-design-brief.md). Sources, pins and retrieval limits: [research ledger](research.md).
 
 ## Current-surface coverage
 
@@ -80,7 +80,7 @@ Pass conditions: no accidental overlap, clipped essential text, inaccessible fin
 | Notices | Routine burst plus failure, typing while result arrives, reduced motion | Important information retrievable; no routine focus theft or forced fake pending |
 | Shared wrapper | Consumer/internal handlers, ref, label/error IDs, keyboard/pointer activation | No overwritten behavior, wrong node, lost association or duplicate mutation |
 
-Large fixtures are not caps. [HV01](../limits/interface.md#hv01) retains earlier 1,001-stack observations; this pass adds no measurements.
+Large fixtures are not caps. [HV01](../limits/interface.md#hv01) retains earlier 1,001-stack observations; the handbook adds no measurements.
 
 ## Accessibility and input qualification
 
@@ -96,16 +96,14 @@ Record task, input mode, build, device, viewport/scale and collection size. Obse
 
 ## Agent-routing and documentation checks
 
-Root/client routes must send matching UI/UX/frontend work, including new files, to one short core and only relevant chapter sections. Both ledgers and the game corpus stay optional. A backend task mentioning React in prose should not load the handbook.
+Root/client routes must send matching UI/UX/frontend work, including new files, to one short core and only relevant chapter sections. The research ledger and game corpus stay optional. A backend task mentioning React in prose should not load the handbook.
 
-Review paths/anchors, source attribution/dates, proposed/current labels and preserved policies. Run `pnpm guidance:check` and pinned changed-file formatting in a runnable checkout. The checker does not prove semantic triggers or agent compliance.
+Review paths/anchors, source attribution/dates, proposed/current labels and preserved policies. When incorporating research, retain useful evidence and source IDs in the unified ledger, update the relevant principles in place, and repair inbound links before removing a redundant document. Do not make readers reconcile separate revision-specific findings.
 
-For native dispatch, inspect actual injected/read context in a frontend task, unrelated negative case, new-file case and client-package working directory. Record installed versions. Existing sessions may need their normal reload; do not mass-import chapters to bypass selective routing.
+Run `pnpm guidance:check` and pinned changed-file formatting in a runnable checkout. The checker does not prove semantic triggers or agent compliance. For native dispatch, inspect actual injected/read context in a frontend task, unrelated negative case, new-file case and client-package working directory. Record installed versions. Existing sessions may need their normal reload; do not mass-import chapters to bypass selective routing.
 
-## Evidence for these documentation changes
+## Evidence and outstanding checks
 
-First-pass evidence was selected source inspection, research and documentation/diff review. Its browser, assistive-technology, usability, guidance-check, formatting and native-dispatch checks were not run.
+Evidence consists of selected Open Legend source/specification inspection, authoritative design/engineering guidance, the specified Primer source excerpts, complete Adobe overlay/prop-composition files at pinned commits, and documentation/diff review. The [ledger](research.md) records source scope and web retrieval limits. Reading these implementations does not establish their runtime behavior in Open Legend.
 
-Second-pass evidence adds new authoritative design/engineering guidance, the specified Primer source excerpts and complete Adobe overlay/prop-composition files at pinned commits, plus the critique incorporated in these chapters. The [ledger](research-second-pass.md) records exact scope and web retrieval limits. This is not execution evidence for those libraries or Open Legend.
-
-The second-pass local environment lacked `pnpm`; fetching a pinned repository snapshot failed DNS resolution. GitHub connector reads/writes worked, but no local pinned formatter or guidance checker was run. No game/browser, assistive or native agent-loading test was performed. [UIUX06](../maintainers/ui-ux.md#uiux06) retains these gaps; the final commit/PR records the actual committed diff review separately. No runtime acceptance criterion is closed here.
+The recorded October 1 research environment lacked `pnpm`, and fetching a pinned repository snapshot failed DNS resolution. GitHub connector reads/writes worked, but the pinned formatter and guidance checker were not run. Browser, assistive-technology, usability and native agent-loading checks also remain unrun. [UIUX06](../maintainers/ui-ux.md#uiux06) retains those gaps. Documentation consolidation does not change the evidence baseline or close runtime acceptance; its commit/PR records the affected-diff review separately.

@@ -2,11 +2,11 @@
 
 A practical standard for deciding what the player sees, how controls behave and how React implements them. This is not an aesthetic replacement, a gallery to copy, or a claim that the current game passes every rule.
 
-**First research snapshot:** 2026-09-30, repository baseline `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. **Second research and critique:** 2026-10-01, reviewing the first handbook at `e8d6c8950cadd715cfed97df4a0e379ff1593d02` on PR #26. The first pass inspected UI structure, selected implementation owners and specifications; the second adds new company guidance and pinned upstream implementation evidence. Neither ran the game or a usability study.
+**Research updated:** October 1, 2026. **Runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
 
 ## Start here, not everywhere
 
-Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or either research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
+Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
 
 | Decision | Chapter |
 | --- | --- |
@@ -18,8 +18,7 @@ Every UI/UX or frontend task loads the short [essential rules](../../.agents/rul
 | Search, notices, settings, persistence, saves and recovery | [System feedback](system-feedback.md) |
 | Component composition, state, events and accessibility | [React implementation](react.md) |
 | Interaction/geometry checks and current-surface coverage | [Verification](verification.md) |
-| First-pass companies, games and player reports; optional research | [First research ledger](research.md) |
-| New authoritative evidence, pinned company code and corrections; optional research | [Second-pass critique and ledger](research-second-pass.md) |
+| Authoritative guidance, company code, games, player reports and applicability limits; optional research | [Research and exemplar ledger](research.md) |
 
 ## Authority and interpretation
 
@@ -37,14 +36,10 @@ Use measurable fit, target size, decision-information coverage, task completion 
 
 [UX tuning](../limits/ui-ux.md) records starting values and tradeoffs. Existing implemented/historical values remain in [interface limits](../limits/interface.md), [object limits](../limits/objects.md) and feature owners. A 1,000-item fixture is not an inventory cap; eight visible popup rows do not limit the searchable catalogue. The local-feedback target and a field web metric such as INP measure different things.
 
-## Decision record: 2026-09-30
+## One maintained set of principles
 
-Mike requested reusable researched interaction principles and selective agent loading. The first handbook established task-first decisions, coherent controls, semantic reuse, input ownership and behavior verification while retaining current aesthetics/gameplay. Root/client guidance routes to one short rule body; details and research remain conditional.
+Integrate accepted findings and corrections into the owning topic chapter and add their evidence to the research ledger. Do not create revision-specific handbooks or research supplements that readers must reconcile. Preserve useful sources, stable anchors, qualifications and decision rationale when consolidating; keep significant change history in the repository changelog rather than interleaving superseded instructions with current rules.
 
-## Decision record: 2026-10-01
+The handbook combines task-first decisions, coherent control alternatives, semantic reuse, preserved working context and behavior verification. Searchable pickers and comboboxes have distinct legitimate contracts; disabled explanations remain reachable; child popups dismiss before their modal parent; utility styling preserves accessibility colors. Composition, persistence and agent confidence require explicit behavior, privacy and evidence rather than wholesale adoption of vendor checklists. The [principle-to-evidence map](research.md#principle-to-evidence-map) connects these decisions to their sources.
 
-At Mike's request, a second primary-source pass corrected overly broad wording and filled engineering gaps. A searchable picker is now explicitly a valid alternative to an editable combobox; disabled explanations need a reachable route; modal scope no longer implies parent-before-child dismissal. Utility styling preserves deliberate focus/forced colors. Component guidance now specifies prop/ref/event composition, and responsive guidance preserves the actual selection/draft. Persistence and agent-confidence advice is qualified by privacy and evidence rather than inherited wholesale from vendor checklists.
-
-The [second ledger](research-second-pass.md) records sources, pins, counterexamples, rejected advice and applicability limits. These are handbook corrections, not runtime implementation or a change to existing camera bindings, dependencies, approved panel sizes, save formats or permissions. No vendor library/agent skill was added.
-
-Browser reproduction of reported defects, numerical tuning and native agent-loading qualification remain open in [UI/UX follow-through](../maintainers/ui-ux.md). Existing subsystem trackers still own implementation; the documentation does not close their acceptance criteria.
+Root/client guidance routes to one short core; details and research remain conditional. No vendor library/skill, runtime behavior, camera binding, approved dimension, save format or permission changes are implied. Browser reproduction of reported defects, numerical tuning and native agent-loading qualification remain open in [UI/UX follow-through](../maintainers/ui-ux.md); subsystem trackers still own implementation.

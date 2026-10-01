@@ -2,7 +2,7 @@
 
 [Handbook](../ui-ux/README.md) · [Foundations](../ui-ux/foundations.md) · [Follow-through](../maintainers/ui-ux.md) · [Tracking rules](README.md)
 
-These are **Proposed display-only starting values**, introduced by the 2026-09-30 documentation pass at baseline `0382be7` and clarified on 2026-10-01. They are not implemented changes, universal optima, content/collection caps or an accessibility-conformance claim. Existing accepted values remain in the production guide and [interface inventory](interface.md). Evaluate these when changing a relevant surface; record adopted deviations with their owner and evidence rather than silently replacing current contracts.
+These are **Proposed display-only starting values**, documented September 30–October 1, 2026 against runtime baseline `0382be7`. They are not implemented changes, universal optima, content/collection caps or an accessibility-conformance claim. Existing accepted values remain in the production guide and [interface inventory](interface.md). Evaluate these when changing a relevant surface; record adopted deviations with their owner and evidence rather than silently replacing current contracts.
 
 ## UXL01
 
@@ -34,12 +34,12 @@ These are **Proposed display-only starting values**, introduced by the 2026-09-3
 
 **Reason/tradeoff:** Input should not wait for optional computation. Measure distributions and visible stalls instead of one favorable run. If the target is missed, expose truthful pending state and reduce expensive work or bound rendering; do not discard commands or invent success. The 150ms search debounce remains separately recorded in [QU15](interface.md#qu15), not applied to immediate text echo.
 
-**Second-pass clarification:** Google's good-INP threshold is at most 200ms at the 75th percentile of page visits, with device-class segmentation. It is a different field metric, not an alternate value for this target, a camera frame budget or an end-to-end completion SLA. No INP measurement or telemetry collection was performed. [Source and scope](../ui-ux/research-second-pass.md#s15)
+**Measurement scope:** Google's good-INP threshold is at most 200ms at the 75th percentile of page visits, with device-class segmentation. It is a different field metric, not an alternate value for this target, a camera frame budget or an end-to-end completion SLA. No INP measurement or telemetry collection was performed. [Source and scope](../ui-ux/research.md#s15)
 
 No universal spinner-delay/minimum-duration or sub-500ms mutation requirement is introduced. If a future feature selects such a behavioral value, record its purpose, boundary behavior and evidence with that feature. Visual smoothing must not falsely extend pending status after a consequential completion/failure.
 
 ## Existing bounds and non-limits
 
-Neither pass changes existing popup row counts, notice lifetimes, quick-action counts, query lengths, page sizes, camera angles, save retention or data capacity. Current values and historical qualifications remain with their owners: [HV01](interface.md#hv01), [QU11](interface.md#qu11), [QU15](interface.md#qu15), [LA223](interface.md#la223) and [object queries](objects.md).
+The handbook changes no existing popup row counts, notice lifetimes, quick-action counts, query lengths, page sizes, camera angles, save retention or data capacity. Current values and historical qualifications remain with their owners: [HV01](interface.md#hv01), [QU11](interface.md#qu11), [QU15](interface.md#qu15), [LA223](interface.md#la223) and [object queries](objects.md).
 
 Responsive fit equations are methods, not fixed minimum world dimensions. The handbook supplies no universal maximum menu items, inventory size or tabs; that does not declare runtime work unbounded. Existing data/authority/performance limits still apply. Test workloads are fixtures, not product restrictions. Vendor-specific pane ratios, card counts and timing conventions are not silently adopted.

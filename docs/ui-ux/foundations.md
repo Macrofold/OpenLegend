@@ -71,11 +71,11 @@ Intentional anchored popovers may cover background content; accidental panel ove
 
 ## Adapt the task, not just the boxes
 
-Choose a recognizable arrangement: a collection for browsing, list/detail for choosing and inspecting, or a main task with a supporting pane for conversation/explanation. On a wide view, inventory and selected-item detail may be simultaneous; on a narrow view, the detail can replace the list with a clear Back route. Keep the same selected object, query, filters, draft and list reading anchor. Resizing is not a new task or permission to discard work. Google's canonical layouts provide a useful behavioral reference without dictating React implementation or a pane ratio. [S08](research-second-pass.md#s08)
+Choose a recognizable arrangement: a collection for browsing, list/detail for choosing and inspecting, or a main task with a supporting pane for conversation/explanation. On a wide view, inventory and selected-item detail may be simultaneous; on a narrow view, the detail can replace the list with a clear Back route. Keep the same selected object, query, filters, draft and list reading anchor. Resizing is not a new task or permission to discard work. Google's canonical layouts provide a useful behavioral reference without dictating React implementation or a pane ratio. [S08](research.md#s08)
 
 Supporting content must remain reachable when it cannot stay beside the task. Do not shrink three panels into unusable columns or hide the only validation explanation. Preserve a deliberate return to the world, and distinguish temporary overlay dismissal from navigating back through a task.
 
-Test available width and height independently. A wide-but-short window can still hide a popup's final option. Account for software keyboards, safe areas, browser zoom and scrollbars; layout viewport size alone is not always the usable visible region. A popup-to-sheet adaptation should preserve selection and give its new modality a correct focus contract. Adobe's mobile combobox account explains why this matters. [S03](research-second-pass.md#s03)
+Test available width and height independently. A wide-but-short window can still hide a popup's final option. Account for software keyboards, safe areas, browser zoom and scrollbars; layout viewport size alone is not always the usable visible region. A popup-to-sheet adaptation should preserve selection and give its new modality a correct focus contract. Adobe's mobile combobox account explains why this matters. [S03](research.md#s03)
 
 Width does not prove input method. A narrow window may use a keyboard, and a wide device may use touch. Keep keyboard access and non-hover routes across layouts; use pointer capabilities to improve targeting without removing essential alternatives. Never lock browser zoom to make one mobile layout appear stable. These are design checks, not a claim of newly supported device combinations.
 
@@ -85,7 +85,7 @@ Use text for unfamiliar actions and distinctions where the verb matters: **Move*
 
 Use the existing semantic icon resolver and fallback sigil. Do not let generated artwork be required to identify or use a new item. A decorative icon alongside text is hidden from assistive technology; the control's accessible name includes its visible label. Do not put an icon on every menu item merely to fill a column; use consistent grouping and only meaningful symbols.
 
-Color expresses role and state, not the browser default. Clear-X and close are quiet utilities using theme tokens; danger styling is for destructive consequences, primary styling for the main commitment. Focus remains visible, including system forced colors. A deliberate focus color is not the same defect as accidental default-blue utility styling. [F06](research.md#f06) [S12](research-second-pass.md#s12)
+Color expresses role and state, not the browser default. Clear-X and close are quiet utilities using theme tokens; danger styling is for destructive consequences, primary styling for the main commitment. Focus remains visible, including system forced colors. A deliberate focus color is not the same defect as accidental default-blue utility styling. [F06](research.md#f06) [S12](research.md#s12)
 
 ## Menus, More and Advanced
 

@@ -12,7 +12,7 @@ Current camera bindings belong to the existing owners, not this handbook. The ac
 
 ## One owner for each gesture
 
-Determine ownership from the event origin and active interaction scope. A modal excludes background interaction; **inside that permitted scope, the active child popup/control handles its interaction before the parent**. Without a modal, active UI or a captured gesture is resolved before eligible world input. This corrects a simplistic parent-modal-first ordering: a dialog must not close when Escape was meant for its child combobox. Reuse shared primitives, not competing global listeners. Adobe's overlay source demonstrates explicit top-layer and child-scope handling. [S04](research-second-pass.md#s04)
+Determine ownership from the event origin and active interaction scope. A modal excludes background interaction; **inside that permitted scope, the active child popup/control handles its interaction before the parent**. Without a modal, active UI or a captured gesture is resolved before eligible world input. A dialog must not close when Escape was meant for its child combobox. Reuse shared primitives, not competing global listeners. Adobe's overlay source demonstrates explicit top-layer and child-scope handling. [S04](research.md#s04)
 
 | Gesture/context | Required result |
 | --- | --- |
@@ -55,7 +55,7 @@ Selection and preview are read-only. Use the current action admission route for 
 
 For target selection, show that targeting mode is active, the permitted target class/range when known, a clear cancel route and the intended effect before commitment when practical. A changed selected entity must not retarget an already reviewed operation silently. Repeated hotkeys and double-clicks must not duplicate a costly command.
 
-Where a targeting footprint represents a known area of effect, range or direction, its graphic must agree with the applicable geometry. Decorative glow must not imply additional affected space, precision or certainty. If prediction is approximate or incomplete, communicate that distinction rather than draw a falsely exact boundary. This adapts Riot's gameplay-clarity rationale, without adopting its combat rules or revealing information the player cannot know. [S19](research-second-pass.md#s19)
+Where a targeting footprint represents a known area of effect, range or direction, its graphic must agree with the applicable geometry. Decorative glow must not imply additional affected space, precision or certainty. If prediction is approximate or incomplete, communicate that distinction rather than draw a falsely exact boundary. This adapts Riot's gameplay-clarity rationale, without adopting its combat rules or revealing information the player cannot know. [S19](research.md#s19)
 
 Quick actions accelerate a known task; they do not become the only route to the full action catalogue. Preserve current contextual suggestions and pinned shortcuts. Do not reorder a player's pins based on a relevance model without their explicit choice. Cooldown rings are for actual cooldowns; work progress follows the work contract, not whatever indicator component is visually convenient.
 
@@ -71,7 +71,7 @@ Use persistent player-created pins for meaningful goals, not an uncontrolled flo
 
 Status placement must survive dense scenes, tall entities, camera edges and open panels. Preserve source attribution and avoid covering the action target. When visible caption capacity is exceeded, use the current missed-caption notice and permitted history route; do not silently pretend every utterance was shown.
 
-Visual/audio prominence should track actionable importance and urgency, not how much machinery generated an event. Keep routine updates quiet so a consequential warning remains distinguishable. Do not amplify every new notification to compete with an already noisy scene; reduce or aggregate the low-value competition while retaining meaningful history. Riot's clarity discussion supplies a game-specific rationale. [S19](research-second-pass.md#s19)
+Visual/audio prominence should track actionable importance and urgency, not how much machinery generated an event. Keep routine updates quiet so a consequential warning remains distinguishable. Do not amplify every new notification to compete with an already noisy scene; reduce or aggregate the low-value competition while retaining meaningful history. Riot's clarity discussion supplies a game-specific rationale. [S19](research.md#s19)
 
 [Hearing](../hearing-and-speech.md), [timed UI](../timed-ui.md) and [perceived events](../perceived-world-events.md) own what may be displayed and how time works. A speech lifetime, native work bar, request spinner and cooldown are different clocks. Pausing simulation freezes the appropriate simulated progress; it does not justify inventing a completed action or losing a drafted message.
 

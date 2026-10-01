@@ -20,7 +20,7 @@ A reusable asynchronous surface needs a contract for initial, loading, ready, em
 
 Put feedback where the action happened. Preserve stable panels, selection and readable prior content during safe refresh. Block the operation whose prerequisites are stale, not the whole game. Do not disguise error/unknown as zero or a successful blank response.
 
-A loading control should retain its action identity, accessible name and stable geometry. Show prompt local acknowledgement without forcing every brief read to flash a spinner. A delayed visual loader must not delay duplicate-submit protection; a minimum animation duration must not keep presenting false pending state after completion/failure. Prefer truthful state over importing exact vendor delays. These are task-specific decisions, not new timer defaults. Vercel's stable-control guidance informs the approach. [S07](research-second-pass.md#s07)
+A loading control should retain its action identity, accessible name and stable geometry. Show prompt local acknowledgement without forcing every brief read to flash a spinner. A delayed visual loader must not delay duplicate-submit protection; a minimum animation duration must not keep presenting false pending state after completion/failure. Prefer truthful state over importing exact vendor delays. These are task-specific decisions, not new timer defaults. Vercel's stable-control guidance informs the approach. [S07](research.md#s07)
 
 Distinguish local input echo from network/storage/model duration. An arbitrary sub-500ms mutation target is not a valid promise for saves or AI work. Performance terminology and proposed local targets are separate in [UXL05](../limits/ui-ux.md#uxl05).
 
@@ -28,7 +28,7 @@ Distinguish local input echo from network/storage/model duration. An arbitrary s
 
 Use a persistent label/accessibility name, informative placeholder and unambiguous clear utility. Catalogue search differs from choosing a form value. Searching cannot equip, buy, move, generate or activate merely on Enter; current action search may open an invention draft but preserves explicit Send.
 
-Keep scope, filters and continuation together: **this container**, **this conversation**, **perceived events**, **known people**. Broad search uses a permitted server endpoint, not hidden-world data downloaded and filtered visually. Place search according to its importance to the task, and clearly distinguish any local search from a broader entry point. Apple's searching guidance supports intentional location and scope, not the same toolbar on every surface. [S13](research-second-pass.md#s13)
+Keep scope, filters and continuation together: **this container**, **this conversation**, **perceived events**, **known people**. Broad search uses a permitted server endpoint, not hidden-world data downloaded and filtered visually. Place search according to its importance to the task, and clearly distinguish any local search from a broader entry point. Apple's searching guidance supports intentional location and scope, not the same toolbar on every surface. [S13](research.md#s13)
 
 Retain query/context when returning from detail. Use stable identity, explicit ranking/sort semantics and ties; late results must not jump focus. Ignore old query/actor/scope/generation results and immediately invalidate unsafe selectable rows after query changes.
 
@@ -38,7 +38,7 @@ Provide recovery: change query, clear filters, widen scope only when supported, 
 
 ## Classify navigation, drafts and persistence
 
-Do not adopt “put all state in the URL.” Decide what the state means, who may see it, how long it persists and what restoration does. Vercel's deep-link guidance is useful for navigation, not a reason to expose private work. [S07](research-second-pass.md#s07)
+Do not adopt “put all state in the URL.” Decide what the state means, who may see it, how long it persists and what restoration does. Vercel's deep-link guidance is useful for navigation, not a reason to expose private work. [S07](research.md#s07)
 
 | State | Appropriate ownership | Boundary |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Preserve safe navigation through Back/Forward or panel return when supported, in
 
 Do not announce every stage or duplicate one event as toast, banner, modal and chat. Deduplicate by identity, not equal text. Aggregate repetitive low-importance events with access to underlying permitted history. Avoid escalating quiet simulation updates into attention alarms.
 
-Carbon's notification distinctions reinforce selecting the surface by context, action and persistence. Do not import a version-specific notification's automatic focus behavior wholesale. A background completion should not steal focus or displace typed text; reserve intentional focus moves for an active task/error/decision that requires them. [S10](research-second-pass.md#s10)
+Carbon's notification distinctions reinforce selecting the surface by context, action and persistence. Do not import a version-specific notification's automatic focus behavior wholesale. A background completion should not steal focus or displace typed text; reserve intentional focus moves for an active task/error/decision that requires them. [S10](research.md#s10)
 
 Respect current per-character notice/history limits, including [LA223](../limits/interface.md#la223) and hearing/caption owners. Three overhead notices is not a universal license to discard all later notifications; critical failures and missed information need recovery.
 
@@ -77,7 +77,7 @@ Show current value and explain its effect. Reversible local appearance can previ
 
 Account/device presentation preferences stay separate from gameplay saves where the owner specifies. Rewind must not restore someone else's UI scale, sensitivity or accessibility setup. Autosave operator controls and creator permissions retain their authority boundaries.
 
-Advanced is for specialist options with summaries of hidden non-defaults. Do not bury text size, captions, camera recovery, help or the only load/recovery route behind unlabeled overflow. Essential configuration should not require console commands or pasted scripts; Blizzard's Classic UI follow-up illustrates replacing temporary script workarounds with discoverable settings. This is a design direction, not authorization to add every imagined setting. [F16](research.md#f16) [S20](research-second-pass.md#s20)
+Advanced is for specialist options with summaries of hidden non-defaults. Do not bury text size, captions, camera recovery, help or the only load/recovery route behind unlabeled overflow. Essential configuration should not require console commands or pasted scripts; Blizzard's Classic UI follow-up illustrates replacing temporary script workarounds with discoverable settings. This is a design direction, not authorization to add every imagined setting. [F16](research.md#f16) [S20](research.md#s20)
 
 ## Save UI: show what is durable
 
@@ -103,4 +103,4 @@ Future cloud-conflict UI should compare meaningful identities/timestamps, offer 
 
 Use concrete copy such as **Could not save this world. Your previous save is unchanged. Retry.** only when the backend establishes those facts. Say **Save outcome not confirmed** when uncertain. Avoid a lone **Something went wrong**, raw codes as titles or cheerful wording that minimizes possible loss.
 
-Offer diagnostic details progressively without secrets, private records or unfiltered provider payloads. Keep recovery near the error and retain input rather than sending the player through global Settings to repair a local issue. Alerts should earn their interruption with an important actionable consequence; a common genuinely undoable operation does not need repetitive confirmation. Existing protected approvals remain. [S14](research-second-pass.md#s14)
+Offer diagnostic details progressively without secrets, private records or unfiltered provider payloads. Keep recovery near the error and retain input rather than sending the player through global Settings to repair a local issue. Alerts should earn their interruption with an important actionable consequence; a common genuinely undoable operation does not need repetitive confirmation. Existing protected approvals remain. [S14](research.md#s14)

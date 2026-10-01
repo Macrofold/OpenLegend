@@ -32,7 +32,7 @@ The reported nested-typeahead failure is a regression case, not a reason to proh
 
 For the combobox, use one exterior field treatment rather than a complete bordered search field nested inside a second closed-select treatment. For the picker, separate trigger and search appearances are legitimate because they have different jobs. Its modality, initial focus, selection, confirmation and cancellation must be explicit. It may adapt to a sheet/dialog on a small viewport without losing the choice under review.
 
-GitHub Primer documents and implements the second pattern. Its source distinguishes direct anchored selection from an intermediate modal choice. Neither component callbacks nor closing an overlay inherently establish durable game mutation. Retain Open Legend's existing Save/Send/approval boundaries. [S01](research-second-pass.md#s01)
+GitHub Primer documents and implements the second pattern. Its source distinguishes direct anchored selection from an intermediate modal choice. Neither component callbacks nor closing an overlay inherently establish durable game mutation. Retain Open Legend's existing Save/Send/approval boundaries. [S01](research.md#s01)
 
 ### State contract
 
@@ -60,7 +60,7 @@ Use only permitted names/facts; do not broaden scope to obtain a nicer label. Pr
 
 Use the shared neutral utility treatment, a `currentColor` glyph, a specific accessible name such as **Clear item search**, and a usable hit area. Reserve trailing space so text does not run under it. Keep input focus when clearing supports further typing; appearing/disappearing utilities should not shift nearby controls. A clear control must never submit the form or delete the underlying object.
 
-This is a semantic-role rule, **not a prohibition on blue everywhere**. Browser default-blue decoration that conflicts with the theme is different from a deliberate focus ring or user-selected forced-color palette. Preserve accessibility colors and visible focus instead of overriding them to satisfy a screenshot. Adobe's close-button guidance likewise separates the utility from its focus treatment. [S12](research-second-pass.md#s12)
+This is a semantic-role rule, **not a prohibition on blue everywhere**. Browser default-blue decoration that conflicts with the theme is different from a deliberate focus ring or user-selected forced-color palette. Preserve accessibility colors and visible focus instead of overriding them to satisfy a screenshot. Adobe's close-button guidance likewise separates the utility from its focus treatment. [S12](research.md#s12)
 
 A native `input[type=search]` can provide browser-specific cancellation. MDN documents the non-standard WebKit/Blink cancel pseudo-element. The current inventory's native search input makes browser chrome a **possible, unconfirmed** explanation of the report. [F09](research.md#f09)
 
@@ -68,7 +68,7 @@ Inspect the rendered control and computed styles. Either deliberately qualify na
 
 ## Disabled controls and reachable explanations
 
-A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current unavailable-actions disclosure policy; once that section is opened, its reasons still need a usable route. [S02](research-second-pass.md#s02) [S11](research-second-pass.md#s11)
+A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current unavailable-actions disclosure policy; once that section is opened, its reasons still need a usable route. [S02](research.md#s02) [S11](research.md#s11)
 
 Where discoverability genuinely requires focus on an unavailable action, an appropriate `aria-disabled` pattern may retain focus. It must also suppress activation in every relevant handler and preserve server enforcement: the attribute alone changes neither behavior nor focus order. `pointer-events: none` alone does not prevent keyboard activation. Do not make every disabled action a Tab stop, and do not disable a container indiscriminately when its children still need interaction.
 
@@ -97,16 +97,16 @@ Use plain sections when most content is needed or simultaneous comparison matter
 | Modal dialog | Bounded task requiring exclusive attention or consequential confirmation | Background inert, managed focus, clear exit, focus restoration |
 | Dedicated workspace | Larger comparison or authoring task | Clear return to the prior world and selection |
 
-A tooltip cannot contain interactive links or controls. Use an explicitly opened popover/detail view for that content. Keep supplementary hover content dismissible and usable when the pointer moves onto it as required by the pattern; never use a tooltip to hide a required decision. [S02](research-second-pass.md#s02) [S11](research-second-pass.md#s11)
+A tooltip cannot contain interactive links or controls. Use an explicitly opened popover/detail view for that content. Keep supplementary hover content dismissible and usable when the pointer moves onto it as required by the pattern; never use a tooltip to hide a required decision. [S02](research.md#s02) [S11](research.md#s11)
 
-Do not use a modal for routine success, every parameter edit or each invention turn. Confirmations should address meaningful irreversible consequences rather than routine reversible operations; offer undo only when actually supported. Existing Person creation, Similar inventions and confirmed-conjuring behavior stays controlling. [S14](research-second-pass.md#s14)
+Do not use a modal for routine success, every parameter edit or each invention turn. Confirmations should address meaningful irreversible consequences rather than routine reversible operations; offer undo only when actually supported. Existing Person creation, Similar inventions and confirmed-conjuring behavior stays controlling. [S14](research.md#s14)
 
 A true modal has a label, deliberate initial focus, keyboard containment and defined cancellation. Long content may warrant initial focus on a heading rather than a destructive action. Return focus to the opener or a sensible surviving target. An unavoidable nested confirmation cannot also dismiss/submit its parent. Modal styling without modal behavior is a defect. [F10](research.md#f10)
 
 ## Overlay ownership prevents overlap bugs
 
-Reuse placement/dismissal behavior rather than patching each menu with z-index escalation. Account for portals, theme scope, stacking contexts, zoom, moving anchors, focus rings and software keyboards. Preserve context across a popup-to-sheet adaptation and use actual visible viewport space where needed; browser layout height alone may not describe space above an on-screen keyboard. Adobe's mobile combobox engineering is a useful historical explanation of this problem, not a reason to copy its old browser workaround without rechecking. [S03](research-second-pass.md#s03)
+Reuse placement/dismissal behavior rather than patching each menu with z-index escalation. Account for portals, theme scope, stacking contexts, zoom, moving anchors, focus rings and software keyboards. Preserve context across a popup-to-sheet adaptation and use actual visible viewport space where needed; browser layout height alone may not describe space above an on-screen keyboard. Adobe's mobile combobox engineering is a useful historical explanation of this problem, not a reason to copy its old browser workaround without rechecking. [S03](research.md#s03)
 
-The modal defines the eligible interaction boundary; **within it, the active child layer handles dismissal before its parent**. Moving focus into a child popover must not close the parent dialog. Escape dismisses one eligible layer; an outside gesture has one owner across start and release. Adobe's overlay source explicitly manages these cases. [S04](research-second-pass.md#s04)
+The modal defines the eligible interaction boundary; **within it, the active child layer handles dismissal before its parent**. Moving focus into a child popover must not close the parent dialog. Escape dismisses one eligible layer; an outside gesture has one owner across start and release. Adobe's overlay source explicitly manages these cases. [S04](research.md#s04)
 
 A world click consumed to dismiss a picker must not become movement. Wheel interaction with its scrollable results must not zoom the camera. Reuse shared input ownership rather than scattered suppression handlers. This does not mean every ordinary non-modal popover must swallow an intentional click on another UI control: document that component's contract separately from the protected world-action boundary. [World contract](world-interaction.md#one-owner-for-each-gesture)
