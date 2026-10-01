@@ -62,7 +62,8 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
       value: `${Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z).toFixed(1)} m`,
       critical: true,
     });
-    const bearing = Math.atan2(b.x - a.x, b.z - a.z) - actor.spatial.heading;
+    // Right-handed, Y-up (packages/spatial): facing +Z puts the right hand at -X.
+    const bearing = actor.spatial.heading - Math.atan2(b.x - a.x, b.z - a.z);
     const directions = [
       'ahead',
       'ahead and to my right',
@@ -237,8 +238,9 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
       critical: true,
     });
   if (
-    ['drop', 'transfer-item', 'split-item', 'merge-item'].includes(command.type) &&
-    'quantity' in command
+    ['pickup', 'drop', 'transfer-item', 'split-item', 'merge-item'].includes(command.type) &&
+    'quantity' in command &&
+    command.quantity !== undefined
   )
     view.facts.push({ name: 'quantity', value: command.quantity, critical: true });
   if (command.type === 'status-effect') {

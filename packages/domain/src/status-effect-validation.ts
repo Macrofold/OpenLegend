@@ -112,9 +112,21 @@ export function validateStatusEffectPolicy(
   world: WorldState,
   value: unknown,
 ): asserts value is StatusEffectPolicy {
-  object(value, ['revision', 'clockOffsetHours', 'definitions']);
+  object(value, ['revision', 'clockOffsetHours', 'namedTimes', 'definitions']);
   if (!Number.isSafeInteger(value.revision) || value.revision < 1) fail('revision.');
   number(value.clockOffsetHours, 0, 23.999999);
+  // A world may name no times; each name is a short lowercase word usable in a sentence.
+  if (
+    !value.namedTimes ||
+    typeof value.namedTimes !== 'object' ||
+    Array.isArray(value.namedTimes) ||
+    Object.keys(value.namedTimes).length > 8
+  )
+    fail('named times.');
+  for (const [name, hour] of Object.entries(value.namedTimes)) {
+    if (!/^[a-z]+(?: [a-z]+)?$/u.test(name) || name.length > 24) fail('named time name.');
+    number(hour, 0, 23.999999);
+  }
   if (!Array.isArray(value.definitions)) fail('definition budget exceeded.');
   const ids = new Set<string>();
   for (const d of value.definitions) {

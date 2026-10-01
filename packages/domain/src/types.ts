@@ -111,7 +111,24 @@ export type ActionType =
 export interface Action {
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
-  follow?: { distance: number; nextRepathAt: number; lastObservedPosition?: Position };
+  follow?: {
+    distance: number;
+    nextRepathAt: number;
+    lastObservedPosition?: Position;
+    /** Where the follower last saw the target, and its observed direction of travel. */
+    lastSeen?: { point: SurfacePoint; at: number };
+    /** The encounter being followed; a later sighting must be the same one or recognized. */
+    episode?: string;
+    travelHeading?: number;
+    relation?: 'behind' | 'beside';
+    /** Beside: +1 is the target's right, -1 its left, fixed when the relation starts. */
+    side?: 1 | -1;
+    onLost?: 'last-seen';
+    /** Moving to the last-seen point after losing sight; never the hidden live position. */
+    pursuing?: boolean;
+    /** Absolute simulation deadline; reaching it completes the activity. */
+    until?: number;
+  };
   id: string;
   type: ActionType;
   stage: 'approaching' | 'working';
@@ -128,6 +145,8 @@ export interface Action {
   definitionVersion?: number;
   resourceDefinition?: import('./world-modules.js').DefinitionPin;
   transferred?: number;
+  /** Exact units a pickup moves from its one selected stack. */
+  quantity?: number;
   recipeId?: string;
   preparation?: NativePreparation;
   itemId?: string;
@@ -369,6 +388,19 @@ export type Command = Envelope &
         methodId: string;
         bindings: Record<string, import('./action-experience.js').ActivityBinding>;
         resume?: boolean;
+        /** Pause current work first; a refused start rolls the pause back too. */
+        interrupt?: boolean;
+      }
+    | {
+        /** A requested bounded composition run by the activity executor; no new effects. */
+        type: 'compose';
+        name: string;
+        root: import('./action-experience.js').ActivityNode;
+        bindings: Record<string, import('./action-experience.js').ActivityBinding>;
+        mode: 'enqueue' | 'replace' | 'interrupt';
+        /** Things the request is about that no step names (e.g. where a walk goes). Used
+         * only for target matching and encounter pins; grants nothing. */
+        subjects?: string[];
       }
     | {
         type: 'conversation';
@@ -376,7 +408,8 @@ export type Command = Envelope &
         conversationId: string;
         generation: number;
       }
-    | { type: 'pickup'; targetId: string; itemId?: string }
+    /** quantity picks up exactly that many from one divisible stack (itemId required). */
+    | { type: 'pickup'; targetId: string; itemId?: string; quantity?: number }
     | { type: 'drop'; itemId: string; quantity: number }
     | {
         type: 'transfer-item' | 'split-item' | 'merge-item';
@@ -389,7 +422,15 @@ export type Command = Envelope &
       }
     | { type: 'unequip'; itemId: string; expectedRevision: number; placementRevision: number }
     | { type: 'move'; destination: SurfacePoint }
-    | { type: 'follow'; targetId: string; distance?: number }
+    | {
+        type: 'follow';
+        targetId: string;
+        distance?: number;
+        /** Beside picks the side the follower starts on; left/right fix it. */
+        relation?: 'behind' | 'beside' | 'left' | 'right';
+        onLost?: 'last-seen';
+        until?: number;
+      }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }

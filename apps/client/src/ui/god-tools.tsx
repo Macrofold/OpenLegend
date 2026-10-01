@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
+import { ClockOffsetContext, clockParts } from './event-time';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ApiResult,
@@ -412,11 +421,13 @@ export function PersonCreationModal({
   );
 }
 
-function gameDate(time: number) {
-  const day = Math.floor(time / 86400) + 1;
-  const hours = Math.floor((time % 86400) / 3600);
-  const minutes = Math.floor((time % 3600) / 60);
-  return `Day ${day}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+function GameDate({ time }: { time: number }) {
+  const { day, hour, minute } = clockParts(time, useContext(ClockOffsetContext));
+  return (
+    <time>
+      Day {day}, {hour}:{minute}
+    </time>
+  );
 }
 
 function RefreshHead({
@@ -489,7 +500,7 @@ function MemoryEditor({
                 <Tag tone={entry.label === 'Consolidated' ? 'highlight' : undefined}>
                   {entry.label}
                 </Tag>
-                <time>{gameDate(entry.time)}</time>
+                <GameDate time={entry.time} />
               </span>
               <strong>{entry.text}</strong>
               <small>{entry.tags.join(' · ')}</small>
@@ -889,7 +900,7 @@ export function PersonEditor({
                     <button type="button" disabled>
                       <span>
                         <Tag>{event.eventType ?? 'Observed event'}</Tag>
-                        <time>{gameDate(event.time)}</time>
+                        <GameDate time={event.time} />
                       </span>
                       <strong>{event.text}</strong>
                     </button>
@@ -1188,7 +1199,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
                       <button type="button" onClick={() => void openEvent(event.id)}>
                         <span>
                           <Tag>{event.type}</Tag>
-                          <time>{gameDate(event.time)}</time>
+                          <GameDate time={event.time} />
                         </span>
                         <strong>{event.text}</strong>
                         <small>{event.actors.join(' · ')}</small>

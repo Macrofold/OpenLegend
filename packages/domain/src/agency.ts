@@ -1,5 +1,16 @@
-import { activityFrontier, type ActivityExecution } from './activity-execution.js';
-import { endActivity, occurrenceFor, renderActivity } from './action-experience.js';
+import { itemFor } from './objects.js';
+import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
+import {
+  activityFrontier,
+  startRequestedActivity,
+  type ActivityExecution,
+} from './activity-execution.js';
+import {
+  endActivity,
+  occurrenceFor,
+  renderActivity,
+  validateActivityNode,
+} from './action-experience.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import {
   actionTargetsCurrent,
@@ -8,15 +19,64 @@ import {
   type ActionTargetEpisodes,
 } from './action-targets.js';
 import { capabilityBlocked } from './status-capabilities.js';
-import { validActionFulfillment, type ActionFulfillment } from './action-capabilities.js';
+import {
+  slotsKey,
+  validActionFulfillment,
+  validActionResolution,
+  validIntentSlotShape,
+  validIntentSlots,
+  type ActionFulfillment,
+  type ActionResolution,
+  type IntentSlots,
+} from './action-capabilities.js';
 import { FOLLOW_RULES } from './follow.js';
-import { finitePoint } from '@open-legend/spatial';
+import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
+import { seesEntity } from './perception.js';
+import { observerDescription } from './worlds/base/knowledge.js';
+import { supportedPosition } from './spatial-state.js';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import type { ActorComponent, Command, Outcome, WorldState } from './types.js';
 
-export const AGENCY_LIMITS = { goals: 8, goalHistory: 16, steps: 8, history: 32 } as const;
+/** Families whose completed step records a single item a plain later step may use: the world
+ * declares its own; picking up is the engine's. Validation and prompt text read this list. */
+export const ITEM_OUTPUT_FAMILIES: readonly string[] = [
+  ...BASE_FAMILY_FACTS.singleItemReceipt,
+  'pickup',
+];
+/** Families whose outputs a later step may use through a named output port. */
+const PORT_OUTPUT_FAMILIES: readonly string[] = [...BASE_FAMILY_FACTS.itemOutputs, 'pickup'];
+/** The item kind a producing step yields when that is known before it runs, from the step's
+ * own target or the world's family facts (cooking's output). */
+export function producedItemDefinition(world: WorldState, command: Command): string | undefined {
+  if (command.type === 'gather') return world.entities[command.targetId]?.resource?.definitionId;
+  if (command.type === 'cook') return BASE_FAMILY_FACTS.cooking.output;
+  if (command.type === 'pickup' && command.itemId)
+    return itemFor(world, command.itemId)?.definitionId;
+  return undefined;
+}
+export const AGENCY_LIMITS = {
+  goals: 8,
+  goalHistory: 16,
+  steps: 8,
+  history: 32,
+  places: 8,
+} as const;
+/** Where this actor itself last saw something while acting on or following it. Private
+ * evidence, never a live position; the oldest place is forgotten first.
+ * docs/action-capabilities.md#62-binding-time-is-part-of-meaning
+ */
+export interface RememberedPlace {
+  subjectId: string;
+  /** How the actor described it then; matching never consults the live entity. */
+  label: string;
+  /** The perception episode of that sighting; a new encounter is not the same subject
+   * unless recognition holds (subjectReferenceCurrent). */
+  episode: string | null;
+  point: SurfacePoint;
+  at: number;
+}
 export interface ActorGoal {
   id: string;
   revision: number;
@@ -47,6 +107,8 @@ export type ItemOutputCommand = {
 export type PlannedCommand = Command | ItemOutputCommand;
 export interface PlanStep {
   targetEpisodes?: ActionTargetEpisodes;
+  /** The activity node that produced this step; its outputs bind only under this key. */
+  activityKey?: string;
   id: string;
   command: PlannedCommand;
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
@@ -67,21 +129,28 @@ export interface ActorAgency {
     description: string;
     normalized: string;
     targetEntityId: string | null;
-    mode: 'enqueue' | 'replace';
+    /** Exact references/amounts from the request; part of the intent identity. */
+    slots?: IntentSlots;
+    mode: 'enqueue' | 'replace' | 'interrupt';
     manifestRevision: number;
     status: 'needs-interpretation' | 'awaiting-confirmation';
+    /** Why it did not bind; its signature suppresses unchanged autonomous retries. */
+    resolution?: ActionResolution;
     alternative?: {
       targetEpisodes?: ActionTargetEpisodes;
       commands: Command[];
       fulfillment: ActionFulfillment;
-      mode: 'enqueue' | 'replace';
+      mode: 'enqueue' | 'replace' | 'interrupt';
       expectedPlan: number;
     };
   }[];
   revision: number;
   goals: ActorGoal[];
   plan: ActorPlan | null;
+  /** One paused frontier, resumed after the interrupting work ends and revalidates. */
+  suspended?: ActorPlan | null;
   history: PlanStep[];
+  places?: RememberedPlace[];
 }
 export function seedAgency(objectives: string[] = []): ActorAgency {
   return {
@@ -100,6 +169,41 @@ export function seedAgency(objectives: string[] = []): ActorAgency {
     history: [],
     attempts: [],
   };
+}
+export function rememberSighting(
+  world: WorldState,
+  actorId: string,
+  subjectId: string,
+  point: SurfacePoint,
+): void {
+  const actor = world.entities[actorId]!.actor!;
+  const places = (actor.agency.places ??= []);
+  const episode = world.perceptionEpisodes?.[actorId]?.[subjectId] ?? null;
+  const last = places.at(-1);
+  if (last?.subjectId === subjectId && last.episode === episode) {
+    // Continuous observation updates one record instead of churning the list.
+    last.point = { x: point.x, y: point.y, z: point.z, surfaceId: point.surfaceId };
+    last.at = world.simTime;
+    // A name learned during the same encounter describes this sighting too.
+    last.label = observerDescription(world, actorId, subjectId).slice(0, 120);
+    return;
+  }
+  const index = places.findIndex((place) => place.subjectId === subjectId);
+  if (index >= 0) places.splice(index, 1);
+  places.push({
+    subjectId,
+    label: observerDescription(world, actorId, subjectId).slice(0, 120),
+    episode,
+    point: { x: point.x, y: point.y, z: point.z, surfaceId: point.surfaceId },
+    at: world.simTime,
+  });
+  if (places.length > AGENCY_LIMITS.places) places.shift();
+}
+export function rememberedPlace(
+  actor: ActorComponent,
+  subjectId: string,
+): RememberedPlace | undefined {
+  return actor.agency.places?.find((place) => place.subjectId === subjectId);
 }
 export function goalTexts(actor: ActorComponent): string[] {
   return actor.agency.goals
@@ -177,6 +281,7 @@ export function changeGoal(
       (entry) =>
         terminal(entry) &&
         agency.plan?.goalId !== entry.id &&
+        agency.suspended?.goalId !== entry.id &&
         !agency.goals.some((child) => child.parentId === entry.id),
     );
     if (agency.goals.length >= AGENCY_LIMITS.goals + AGENCY_LIMITS.goalHistory && !removable.length)
@@ -266,7 +371,7 @@ export function arrangePlan(
   actor: ActorComponent,
   id: string,
   commands: PlannedCommand[],
-  mode: 'enqueue' | 'replace',
+  mode: 'enqueue' | 'replace' | 'interrupt',
   expectedRevision: number,
   goalId: string | null,
 ): Outcome {
@@ -274,7 +379,7 @@ export function arrangePlan(
   const current = agency.plan;
   if (
     !isSafeRecordId(id) ||
-    !['enqueue', 'replace'].includes(mode) ||
+    !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     new Set(commands.map((command) => command.id)).size !== commands.length
   )
     return outcome(false, 'invalid-plan', 'Plan and child identities must be valid and unique.');
@@ -323,17 +428,12 @@ export function arrangePlan(
     );
     current.revision++;
   } else {
-    if (current) {
-      cancelPlan(world, actor);
-      agency.history.push(...current.steps.map(cloneValue));
-      agency.history = agency.history.slice(-AGENCY_LIMITS.history);
+    if (mode === 'replace') stopCurrentWork(world, commands[0]!.actorId);
+    else if (mode === 'interrupt') {
+      const refused = suspendCurrentWork(world, commands[0]!.actorId);
+      if (refused) return refused;
     }
-    // Explicit replacement follows native cancellation: spent inputs are never refunded.
-    if (mode === 'replace' && actor.action) {
-      releaseInvocationResources(world, actor.action.id);
-      actor.action = null;
-      actor.planGeneration++;
-    }
+    if (agency.plan) retirePlan(world, actor);
     agency.plan = {
       id,
       revision: (current?.revision ?? 0) + 1,
@@ -356,6 +456,211 @@ export function arrangePlan(
     planId: agency.plan!.id,
   };
 }
+/** Move a finished or cancelled frontier's steps into bounded history. */
+function retirePlan(world: WorldState, actor: ActorComponent): void {
+  const current = actor.agency.plan;
+  if (!current) return;
+  cancelPlan(world, actor);
+  actor.agency.history.push(...current.steps.map(cloneValue));
+  actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
+}
+/** Explicit replacement follows native cancellation: spent inputs are never refunded, and
+ * work that was paused for later resumption is discarded too. */
+export function stopCurrentWork(world: WorldState, actorId: string): void {
+  const actor = world.entities[actorId]!.actor!;
+  retirePlan(world, actor);
+  discardSuspended(actor);
+  if (actor.action) {
+    endActivity(
+      world,
+      actorId,
+      actor.action.id,
+      outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
+    );
+    releaseInvocationResources(world, actor.action.id);
+    actor.action = null;
+    actor.planGeneration++;
+  }
+}
+/** Why the current native work cannot stop at a safe boundary, if it cannot. Families that
+ * already spent inputs or committed a strike finish or are replaced instead; nothing is
+ * refunded and no progress is invented. docs/action-capabilities.md#15-resource-claims-interruption-and-timing
+ */
+export function pauseRefusal(action: ActorComponent['action']): string | null {
+  if (!action) return null;
+  if (action.type === 'status-effect') return 'This state cannot be paused.';
+  if (
+    action.strikePhase ||
+    ((BASE_FAMILY_FACTS.unpausableWhileWorking as readonly string[]).includes(action.type) &&
+      action.stage === 'working')
+  )
+    return 'An attack already under way cannot be paused; let it finish or replace it.';
+  if (action.stage === 'working' && action.consumed.length)
+    return 'Materials are already in use for this step; let it finish or replace it.';
+  return null;
+}
+
+/** Pause the current frontier for other work. The running step stops at a safe boundary and
+ * is re-queued to restart from scratch later: effects already committed stay, elapsed work
+ * on that step is not kept. One paused frontier at most. */
+export function suspendCurrentWork(world: WorldState, actorId: string): Outcome | null {
+  const actor = world.entities[actorId]!.actor!;
+  const plan = actor.agency.plan;
+  if (!plan || plan.status !== 'active') return null;
+  if (actor.agency.suspended)
+    return outcome(
+      false,
+      'already-paused',
+      'Other paused work is already waiting to resume; let it resume, or replace it.',
+    );
+  const running = plan.steps.findIndex((step) => step.status === 'running');
+  const step = running >= 0 ? plan.steps[running]! : undefined;
+  // Every refusal is decided before anything stops. Only the plan's own running step can
+  // restart later; a separate direct action is not chosen work that can be paused.
+  if (actor.action && step?.actionId !== actor.action.id)
+    return outcome(
+      false,
+      'cannot-pause',
+      'This work is not a chosen plan that can be paused; replace it or let it finish.',
+    );
+  const refusal = pauseRefusal(actor.action);
+  if (refusal) return outcome(false, 'cannot-pause', refusal);
+  const restartId = step && `${step.id}:r${plan.revision}`;
+  if (restartId && !isSafeRecordId(restartId))
+    return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
+  if (actor.action) {
+    endActivity(
+      world,
+      actorId,
+      actor.action.id,
+      outcome(false, 'paused', 'Paused for other work; this step restarts later.'),
+    );
+    releaseInvocationResources(world, actor.action.id);
+    actor.action = null;
+  }
+  if (step && restartId) {
+    actor.agency.history.push({
+      ...cloneValue(step),
+      status: 'cancelled',
+      outcome: outcome(false, 'paused', 'Paused for other work; restarted later as a new step.'),
+    });
+    actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
+    const { actionId: _action, outcome: _outcome, ...rest } = cloneValue(step);
+    plan.steps[running] = {
+      ...rest,
+      id: restartId,
+      command: { ...rest.command, id: restartId },
+      status: 'queued',
+    };
+    // Later steps that use this step's item follow the restarted step.
+    for (const other of plan.steps)
+      if ('itemFromStep' in other.command && other.command.itemFromStep === step.id)
+        other.command = { ...other.command, itemFromStep: restartId };
+  }
+  plan.revision++;
+  actor.agency.suspended = plan;
+  actor.agency.plan = null;
+  actor.agency.revision++;
+  actor.planGeneration++;
+  return null;
+}
+
+/** Entity references among an activity's bindings. Learned methods also bind spoken text,
+ * which is not an entity and must not be checked as one. */
+function activityObjectBindings(world: WorldState, plan: ActorPlan): string[] {
+  const activity = plan.activity;
+  if (!activity) return [];
+  const roles = activity.methodId
+    ? world.actionExperience.methods[activity.methodId]?.roles
+    : undefined;
+  return Object.entries(activity.bindings).flatMap(([role, value]) =>
+    typeof value === 'string' && (!roles || roles[role]?.kind === 'object') ? [value] : [],
+  );
+}
+
+/** After the interrupting work ends, revalidate and reinstate the paused frontier. An
+ * invalid resumption becomes an explicit blocked plan, never a silent retarget. */
+function resumeSuspended(world: WorldState, actorId: string): void {
+  const actor = world.entities[actorId]!.actor!;
+  const paused = actor.agency.suspended!;
+  actor.agency.suspended = null;
+  // Plan revisions keep increasing across the interrupting plan, so a decision made while
+  // that plan ran can never match the resumed one.
+  const latest = Math.max(paused.revision, actor.agency.plan?.revision ?? 0);
+  if (actor.agency.plan) retirePlan(world, actor);
+  // A paused goal only defers dispatch (readyPlanStep); a finished or missing one blocks.
+  const goal = paused.goalId
+    ? actor.agency.goals.find((entry) => entry.id === paused.goalId)
+    : undefined;
+  const objects = activityObjectBindings(world, paused);
+  // Named before any step is marked, so the memory names the work that was stopped.
+  const name =
+    paused.activity?.request?.name ??
+    world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
+    paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
+    'my paused work';
+  const changed = paused.steps.find(
+    (step) =>
+      step.status === 'queued' &&
+      !('itemFromStep' in step.command) &&
+      !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
+  );
+  const reason =
+    paused.goalId && (!goal || (goal.status !== 'active' && goal.status !== 'paused'))
+      ? 'its goal is no longer active.'
+      : changed
+        ? 'a target is no longer the one I saw.'
+        : objects.some((id) => !Object.hasOwn(world.entities, id) || world.entities[id]!.retirement)
+          ? 'something the activity uses no longer exists.'
+          : null;
+  paused.status = reason ? 'blocked' : 'active';
+  if (reason && paused.activity) paused.activity.reason = `Could not resume: ${reason}`;
+  else if (reason) {
+    // A plain plan records the reason on the step whose target changed, or otherwise on
+    // the step that would have run next.
+    const next =
+      (reason === 'a target is no longer the one I saw.' ? changed : undefined) ??
+      paused.steps.find((step) => step.status === 'queued');
+    if (next) {
+      next.status = 'blocked';
+      next.outcome = outcome(false, 'resume-refused', `Could not resume: ${reason}`);
+    }
+  }
+  paused.revision = latest + 1;
+  actor.agency.plan = paused;
+  actor.agency.revision++;
+  actor.planGeneration++;
+  appendMemory(world, actorId, {
+    kind: 'episode',
+    source: 'internal',
+    summary: reason
+      ? `My paused work (${name}) could not resume: ${reason} Nothing more of it was done.`
+      : `I resumed my paused work: ${name}. The step I stopped restarts from its beginning.`,
+    entityIds: [actorId],
+    importance: 5,
+  });
+}
+
+/** An explicit stop ends paused work too; nothing of it resumes. */
+export function discardSuspended(actor: ActorComponent): void {
+  const paused = actor.agency.suspended;
+  if (!paused) return;
+  actor.agency.suspended = null;
+  actor.agency.history.push(
+    ...paused.steps.map((step) =>
+      step.status === 'queued'
+        ? {
+            ...cloneValue(step),
+            status: 'cancelled' as const,
+            outcome: outcome(false, 'cancelled', 'Paused work was cancelled; it will not resume.'),
+          }
+        : cloneValue(step),
+    ),
+  );
+  actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
+  actor.agency.revision++;
+}
+
 export function cancelPlan(world: WorldState, actor: ActorComponent): void {
   const plan = actor.agency.plan;
   if (!plan || plan.status === 'completed' || plan.status === 'cancelled') return;
@@ -396,8 +701,10 @@ export function finishPlanAction(
   );
   if (!step) return;
   step.outcome = result;
-  if (plan!.activity?.activeKey)
-    plan!.activity.outputs[plan!.activity.activeKey] = cloneValue(result.outputs ?? []);
+  // Key outputs by the producing node, never by whichever node ran last: a step queued
+  // outside the activity must not overwrite an activity output binding.
+  if (plan!.activity && step.activityKey)
+    plan!.activity.outputs[step.activityKey] = cloneValue(result.outputs ?? []);
   if (!result.ok && plan!.activity) plan!.activity.reason = result.message;
   step.status = result.ok ? 'completed' : 'blocked';
   plan!.status = !result.ok
@@ -424,7 +731,8 @@ export function finishPlanAction(
           },
       );
     const purpose = plan!.activity
-      ? world.actionExperience.methods[plan!.activity.methodId]?.name
+      ? (plan!.activity.request?.name ??
+        world.actionExperience.methods[plan!.activity.methodId ?? '']?.name)
       : plan!.steps.at(-1)?.command.purpose;
     const results = renderActivity(
       { name: purpose ?? 'Chosen actions', facts: [], children },
@@ -441,6 +749,9 @@ export function finishPlanAction(
 }
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
   const actor = world.entities[actorId]!.actor!;
+  // Paused work resumes once the interrupting frontier has ended, whatever its outcome.
+  if (actor.agency.suspended && !actor.action && actor.agency.plan?.status !== 'active')
+    resumeSuspended(world, actorId);
   const plan = actor.agency.plan;
   if (!plan || plan.status !== 'active') return;
   const running = plan.steps.find((step) => step.status === 'running');
@@ -464,9 +775,14 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
     !actor.agency.goals.some((goal) => goal.id === plan.goalId && goal.status === 'active')
   )
     return;
-  return (
-    plan.steps.find((step) => step.status === 'queued') ?? activityFrontier(world, actorId, plan)
-  );
+  const next =
+    plan.steps.find((step) => step.status === 'queued') ?? activityFrontier(world, actorId, plan);
+  const targetId = next && 'targetId' in next.command ? next.command.targetId : undefined;
+  const target = targetId ? world.entities[targetId] : undefined;
+  const seen = target && supportedPosition(target);
+  if (seen && seesEntity(world, world.entities[actorId]!, target))
+    rememberSighting(world, actorId, target.id, seen);
+  return next;
 }
 export function validateAgency(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
@@ -482,10 +798,40 @@ export function validateAgency(world: WorldState): void {
         !Number.isFinite(action.follow.nextRepathAt) ||
         action.follow.nextRepathAt < 0 ||
         (action.follow.lastObservedPosition !== undefined &&
-          !finitePoint(action.follow.lastObservedPosition)))
+          !finitePoint(action.follow.lastObservedPosition)) ||
+        (action.follow.lastSeen !== undefined &&
+          (!validPlacePoint(action.follow.lastSeen.point) ||
+            !Number.isFinite(action.follow.lastSeen.at))) ||
+        (action.follow.travelHeading !== undefined &&
+          !Number.isFinite(action.follow.travelHeading)) ||
+        (action.follow.episode !== undefined && !isSafeRecordId(action.follow.episode)) ||
+        (action.follow.relation !== undefined &&
+          !['behind', 'beside'].includes(action.follow.relation)) ||
+        (action.follow.side !== undefined && ![1, -1].includes(action.follow.side)) ||
+        (action.follow.onLost !== undefined && action.follow.onLost !== 'last-seen') ||
+        (action.follow.pursuing !== undefined &&
+          (action.follow.pursuing !== true || !action.follow.lastSeen)) ||
+        (action.follow.until !== undefined && !Number.isFinite(action.follow.until)))
     )
       throw new Error('Invalid saved follow activity.');
     const agency = entity.actor.agency;
+    if (
+      agency?.places !== undefined &&
+      (!Array.isArray(agency.places) ||
+        agency.places.length > AGENCY_LIMITS.places ||
+        new Set(agency.places.map((place) => place.subjectId)).size !== agency.places.length ||
+        agency.places.some(
+          (place) =>
+            !isSafeRecordId(place.subjectId) ||
+            typeof place.label !== 'string' ||
+            !place.label.trim() ||
+            place.label.length > 120 ||
+            !(place.episode === null || isSafeRecordId(place.episode)) ||
+            !validPlacePoint(place.point) ||
+            !Number.isFinite(place.at),
+        ))
+    )
+      throw new Error('Invalid saved remembered places.');
     if (
       !agency ||
       !Array.isArray(agency.attempts) ||
@@ -511,10 +857,16 @@ export function validateAgency(world: WorldState): void {
         typeof attempt.normalized !== 'string' ||
         attempt.normalized !== normalizeAttempt(attempt.description) ||
         !(attempt.targetEntityId === null || isSafeRecordId(attempt.targetEntityId)) ||
-        !['enqueue', 'replace'].includes(attempt.mode) ||
+        (attempt.slots !== undefined &&
+          // Shape only at load: a later clock-policy edit must not make a save unloadable;
+          // a stopping time the world no longer names is refused when the request is used.
+          (!validIntentSlotShape(attempt.slots) || !slotsKey(attempt.slots))) ||
+        !['enqueue', 'replace', 'interrupt'].includes(attempt.mode) ||
         !Number.isSafeInteger(attempt.manifestRevision) ||
         attempt.manifestRevision < 1 ||
-        !['needs-interpretation', 'awaiting-confirmation'].includes(attempt.status)
+        !['needs-interpretation', 'awaiting-confirmation'].includes(attempt.status) ||
+        (attempt.resolution !== undefined &&
+          (attempt.status !== 'needs-interpretation' || !validActionResolution(attempt.resolution)))
       )
         throw new Error('Invalid saved unlisted attempt.');
       if (attempt.status === 'awaiting-confirmation') {
@@ -526,14 +878,10 @@ export function validateAgency(world: WorldState): void {
           a.fulfillment.verdict !== 'confirm' ||
           a.fulfillment.requested !== attempt.description ||
           a.mode !== attempt.mode ||
-          !['enqueue', 'replace'].includes(a.mode) ||
+          !['enqueue', 'replace', 'interrupt'].includes(a.mode) ||
           !Number.isSafeInteger(a.expectedPlan) ||
           a.expectedPlan < 0 ||
-          !Array.isArray(a.commands) ||
-          !a.commands.length ||
-          a.commands.length > AGENCY_LIMITS.steps ||
-          !validOutputReferences(a.commands) ||
-          a.commands.some((c) => !isPlannedCommand(c) || c.actorId !== entity.id)
+          !validAlternativeCommands(a.commands, entity.id)
         )
           throw new Error('Invalid saved action alternative.');
       }
@@ -570,28 +918,39 @@ export function validateAgency(world: WorldState): void {
         parentId = parent.parentId;
       }
     }
-    const plan = agency.plan;
     if (
-      plan &&
-      (!isSafeRecordId(plan.id) ||
-        !Number.isSafeInteger(plan.revision) ||
-        plan.revision < 1 ||
-        !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
-        !Array.isArray(plan.steps) ||
-        (!plan.activity && plan.steps.length < 1) ||
-        plan.steps.length > AGENCY_LIMITS.steps ||
-        (plan.goalId && !ids.has(plan.goalId)))
+      agency.suspended &&
+      (agency.suspended.status !== 'active' ||
+        agency.suspended.steps.some((step) => step.status === 'running'))
     )
-      throw new Error('Invalid saved plan.');
-    if (
-      plan &&
-      (new Set(plan.steps.map((step) => step.id)).size !== plan.steps.length ||
-        plan.steps.filter((step) => step.status === 'running').length > 1)
-    )
-      throw new Error('Invalid saved step identities or concurrent work.');
-    if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
-      throw new Error('Invalid saved plan output references.');
-    for (const step of [...(plan?.steps ?? []), ...agency.history]) {
+      throw new Error('Invalid saved paused work.');
+    for (const plan of [agency.plan, agency.suspended ?? null]) {
+      if (
+        plan &&
+        (!isSafeRecordId(plan.id) ||
+          !Number.isSafeInteger(plan.revision) ||
+          plan.revision < 1 ||
+          !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
+          !Array.isArray(plan.steps) ||
+          (!plan.activity && plan.steps.length < 1) ||
+          plan.steps.length > AGENCY_LIMITS.steps ||
+          (plan.goalId && !ids.has(plan.goalId)))
+      )
+        throw new Error('Invalid saved plan.');
+      if (
+        plan &&
+        (new Set(plan.steps.map((step) => step.id)).size !== plan.steps.length ||
+          plan.steps.filter((step) => step.status === 'running').length > 1)
+      )
+        throw new Error('Invalid saved step identities or concurrent work.');
+      if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
+        throw new Error('Invalid saved plan output references.');
+    }
+    for (const step of [
+      ...(agency.plan?.steps ?? []),
+      ...(agency.suspended?.steps ?? []),
+      ...agency.history,
+    ]) {
       if (
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
@@ -599,6 +958,7 @@ export function validateAgency(world: WorldState): void {
         step.command.id !== step.id ||
         step.command.actorId !== entity.id ||
         !['queued', 'running', 'completed', 'blocked', 'cancelled'].includes(step.status) ||
+        (step.activityKey !== undefined && !isSafeRecordId(step.activityKey)) ||
         (step.status === 'running' && !isSafeRecordId(step.actionId)) ||
         (['completed', 'blocked', 'cancelled'].includes(step.status) &&
           (!step.outcome ||
@@ -609,6 +969,10 @@ export function validateAgency(world: WorldState): void {
         throw new Error('Invalid saved plan step.');
     }
   }
+}
+
+function validPlacePoint(point: unknown): point is SurfacePoint {
+  return finitePoint(point) && isSafeRecordId((point as SurfacePoint).surfaceId);
 }
 
 export function normalizeAttempt(description: string): string {
@@ -627,16 +991,19 @@ export function withdrawAttempt(actor: ActorComponent, id: string): Outcome {
   return outcome(true, 'attempt-withdrawn', 'Private intent withdrawn; ongoing work is unchanged.');
 }
 
+/** A different amount, tool or recipient is a different request, never a repeat. */
 export function sameAttempt(
   attempt: ActorAgency['attempts'][number],
   description: string,
   targetEntityId: string | null = null,
-  mode: 'enqueue' | 'replace' = 'enqueue',
+  mode: 'enqueue' | 'replace' | 'interrupt' = 'enqueue',
+  slots: IntentSlots | null = null,
 ): boolean {
   return (
     attempt.normalized === normalizeAttempt(description) &&
     attempt.targetEntityId === targetEntityId &&
-    attempt.mode === mode
+    attempt.mode === mode &&
+    slotsKey(attempt.slots) === slotsKey(slots)
   );
 }
 
@@ -644,10 +1011,11 @@ export function resolveAttempt(
   actor: ActorComponent,
   description: string,
   targetEntityId: string | null = null,
-  mode: 'enqueue' | 'replace' = 'enqueue',
+  mode: 'enqueue' | 'replace' | 'interrupt' = 'enqueue',
+  slots: IntentSlots | null = null,
 ): void {
   const matching = actor.agency.attempts.filter((attempt) =>
-    sameAttempt(attempt, description, targetEntityId, mode),
+    sameAttempt(attempt, description, targetEntityId, mode, slots),
   );
   for (const pending of matching) withdrawAttempt(actor, pending.id);
 }
@@ -659,7 +1027,9 @@ export function deferAttempt(
   id: string,
   description: string,
   targetEntityId: string | null = null,
-  mode: 'enqueue' | 'replace' = 'enqueue',
+  mode: 'enqueue' | 'replace' | 'interrupt' = 'enqueue',
+  slots: IntentSlots | null = null,
+  resolution?: ActionResolution,
 ): Outcome {
   if (
     !isSafeRecordId(id) ||
@@ -667,22 +1037,34 @@ export function deferAttempt(
     !description.trim() ||
     description.length > 500 ||
     !(targetEntityId === null || isSafeRecordId(targetEntityId)) ||
-    !['enqueue', 'replace'].includes(mode)
+    !['enqueue', 'replace', 'interrupt'].includes(mode) ||
+    (slots !== null && !validIntentSlots(world, slots)) ||
+    (resolution !== undefined && !validActionResolution(resolution))
   )
     return outcome(false, 'invalid-attempt', 'An attempt needs 1–500 characters.');
   const actor = world.entities[actorId]!.actor!;
   const normalized = normalizeAttempt(description);
   const prior = actor.agency.attempts.find(
     (attempt) =>
-      sameAttempt(attempt, description, targetEntityId, mode) &&
+      sameAttempt(attempt, description, targetEntityId, mode, slots) &&
       attempt.manifestRevision === world.moduleManifest.revision,
   );
-  if (prior)
+  if (prior) {
+    // A fresh plain reason replaces a stale one; a held revision is never downgraded.
+    if (
+      resolution &&
+      prior.status === 'needs-interpretation' &&
+      JSON.stringify(prior.resolution) !== JSON.stringify(resolution)
+    ) {
+      prior.resolution = cloneValue(resolution);
+      actor.agency.revision++;
+    }
     return outcome(
       true,
       'attempt-pending',
       'This intent already awaits interpretation; no action or paid work was repeated.',
     );
+  }
   if (actor.agency.attempts.length >= 4)
     return outcome(false, 'attempt-limit', 'Four unlisted intents already await interpretation.');
   if (actor.agency.attempts.some((attempt) => attempt.id === id))
@@ -692,9 +1074,11 @@ export function deferAttempt(
     description: description.trim(),
     normalized,
     targetEntityId,
+    ...(slotsKey(slots) ? { slots: cloneValue(slots!) } : {}),
     mode,
     manifestRevision: world.moduleManifest.revision,
     status: 'needs-interpretation',
+    ...(resolution ? { resolution: cloneValue(resolution) } : {}),
   });
   actor.agency.revision++;
   return outcome(
@@ -711,7 +1095,11 @@ export function isPhysicalCommand(command: Command): boolean {
     case 'pickup':
       return (
         isSafeRecordId(command.targetId) &&
-        (command.itemId === undefined || isSafeRecordId(command.itemId))
+        (command.itemId === undefined || isSafeRecordId(command.itemId)) &&
+        (command.quantity === undefined ||
+          (command.itemId !== undefined &&
+            Number.isSafeInteger(command.quantity) &&
+            command.quantity > 0))
       );
     case 'drop':
       return (
@@ -727,7 +1115,11 @@ export function isPhysicalCommand(command: Command): boolean {
         (command.distance === undefined ||
           (Number.isFinite(command.distance) &&
             command.distance >= FOLLOW_RULES.minimumDistance &&
-            command.distance <= FOLLOW_RULES.maximumDistance))
+            command.distance <= FOLLOW_RULES.maximumDistance)) &&
+        (command.relation === undefined ||
+          ['behind', 'beside', 'left', 'right'].includes(command.relation)) &&
+        (command.onLost === undefined || command.onLost === 'last-seen') &&
+        (command.until === undefined || (Number.isFinite(command.until) && command.until >= 0))
       );
     case 'gather':
     case 'harvest':
@@ -810,7 +1202,8 @@ function validOutputReferences(commands: PlannedCommand[]): boolean {
       if (
         !producer ||
         producer.actorId !== command.actorId ||
-        !['gather', 'prepare', 'craft', 'cook', 'harvest'].includes(producer.type)
+        // A plain reference needs a single receipt; a named port may read any output.
+        !(command.outputPort ? PORT_OUTPUT_FAMILIES : ITEM_OUTPUT_FAMILIES).includes(producer.type)
       )
         return false;
     }
@@ -841,6 +1234,34 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
     : { ...base, type: base.type, itemId };
 }
 
+/** A held revision is either a plan-eligible native sequence or one bounded composition. */
+function validAlternativeCommands(commands: Command[], actorId: string): boolean {
+  if (!Array.isArray(commands) || !commands.length || commands.length > AGENCY_LIMITS.steps)
+    return false;
+  const [first] = commands;
+  if (first?.type === 'compose') {
+    if (commands.length !== 1 || first.actorId !== actorId || !isSafeRecordId(first.id))
+      return false;
+    try {
+      validateActivityNode(first.root);
+      return (
+        typeof first.name === 'string' &&
+        first.name.length <= 500 &&
+        (first.subjects === undefined ||
+          (Array.isArray(first.subjects) &&
+            first.subjects.length <= 8 &&
+            first.subjects.every((id) => isSafeRecordId(id))))
+      );
+    } catch {
+      return false;
+    }
+  }
+  return (
+    validOutputReferences(commands) &&
+    commands.every((c) => isPlannedCommand(c) && c.actorId === actorId)
+  );
+}
+
 /** An uncertain relaxation has no execution authority until the owner chooses it.
  * docs/architecture.md#action-fulfillment-and-revision-approval
  */
@@ -850,36 +1271,36 @@ export function proposeActionRevision(
   id: string,
   commands: Command[],
   fulfillment: ActionFulfillment,
-  mode: 'enqueue' | 'replace',
+  mode: 'enqueue' | 'replace' | 'interrupt',
   expectedPlan: number,
   targetEntityId: string | null = null,
+  slots: IntentSlots | null = null,
 ): Outcome {
   if (
     !validActionFulfillment(fulfillment) ||
     fulfillment.verdict !== 'confirm' ||
-    !['enqueue', 'replace'].includes(mode) ||
+    !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     !Number.isSafeInteger(expectedPlan) ||
     expectedPlan < 0 ||
-    !validOutputReferences(commands) ||
-    !commands.length ||
-    commands.length > AGENCY_LIMITS.steps ||
-    commands.some((c) => !isPlannedCommand(c) || c.actorId !== actorId)
+    !validAlternativeCommands(commands, actorId)
   )
     return outcome(
       false,
       'invalid-alternative',
       'The revised action is not a supported native plan.',
     );
-  const held = deferAttempt(world, actorId, id, fulfillment.requested, targetEntityId, mode);
+  const held = deferAttempt(world, actorId, id, fulfillment.requested, targetEntityId, mode, slots);
   if (!held.ok) return held;
   const actor = world.entities[actorId]!.actor!;
   const pending = actor.agency.attempts.find(
     (a) =>
-      sameAttempt(a, fulfillment.requested, targetEntityId, mode) &&
+      sameAttempt(a, fulfillment.requested, targetEntityId, mode, slots) &&
       a.manifestRevision === world.moduleManifest.revision,
   )!;
   if (pending.status !== 'awaiting-confirmation') {
     pending.status = 'awaiting-confirmation';
+    // An understood revision supersedes the earlier plain refusal reason.
+    delete pending.resolution;
     pending.alternative = {
       commands: cloneValue(commands),
       targetEpisodes: captureActionTargets(world, actorId, commands),
@@ -933,22 +1354,31 @@ export function confirmActionRevision(
   if (
     !actionTargetsCurrent(world, actorId, alternative.commands, alternative.targetEpisodes) ||
     pending.manifestRevision !== world.moduleManifest.revision ||
-    (alternative.mode === 'replace' && actor.planGeneration !== alternative.expectedPlan)
+    (alternative.mode !== 'enqueue' && actor.planGeneration !== alternative.expectedPlan)
   )
     return outcome(
       false,
       'stale-alternative',
       'The target encounter, mechanics or current work changed. Submit a fresh action instead of accepting this old revision.',
     );
-  const result = arrangePlan(
-    world,
-    actor,
-    id,
-    alternative.commands.map((c, index) => ({ ...c, actorId, id: `${id}:${index}` })),
-    alternative.mode,
-    actor.agency.plan?.revision ?? 0,
-    null,
-  );
+  const composed = alternative.commands[0]!;
+  const result =
+    composed.type === 'compose'
+      ? startRequestedActivity(world, actorId, id, {
+          ...composed,
+          actorId,
+          id: `${id}:0`,
+          mode: alternative.mode,
+        })
+      : arrangePlan(
+          world,
+          actor,
+          id,
+          alternative.commands.map((c, index) => ({ ...c, actorId, id: `${id}:${index}` })),
+          alternative.mode,
+          actor.agency.plan?.revision ?? 0,
+          null,
+        );
   if (result.ok) withdrawAttempt(actor, attemptId);
   return result;
 }

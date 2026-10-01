@@ -124,6 +124,21 @@ export function resolveResponseEntities(
                     targetEntityId: op.act.invocation.targetEntityId
                       ? resolve(op.act.invocation.targetEntityId)
                       : null,
+                    itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
+                  },
+                }
+              : {}),
+            ...(op.act.slots
+              ? {
+                  slots: {
+                    ...op.act.slots,
+                    itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
+                    instrumentId: op.act.slots.instrumentId
+                      ? resolve(op.act.slots.instrumentId)
+                      : null,
+                    recipientId: op.act.slots.recipientId
+                      ? resolve(op.act.slots.recipientId)
+                      : null,
                   },
                 }
               : {}),

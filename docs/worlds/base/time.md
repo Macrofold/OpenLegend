@@ -20,6 +20,16 @@ Some separately clamped native/status operations cannot yet be combined as one n
 
 Current fidelity limits and their expansion triggers are catalogued in [NW12](../../limits/native-work.md#nw12).
 
+## Named clock times
+
+A request may name **dawn (06:00)** or **dusk (18:00)** as a stopping time, for example "follow her until dusk" or "wait until dawn". These names and hours are this world's choice, authored as `namedTimes` beside `clockOffsetHours` (day 1 starts at 08:00) in `worlds/base/config/status-effects.yaml`, the current authored home of the world clock. They are saved with the world and validated at load: at most eight names, each one or two lowercase words of up to 24 characters, with an hour from 0 to just under 24. A save without `namedTimes` is refused explicitly under the [development save policy](../../../AGENTS.md#development-save-policy).
+
+Engine code never states these names. Deadline binding, request validation, the typed-request parser, AI instructions, capability descriptions, the AI's structured-output choices and the Character panel's "Stop at" options all read the saved world's list, so a world that names only "noon", or no times at all, works without code changes. A named time already reached today, including the current instant, means the next day's occurrence, so a stopping time is always in the future and at most one game day away; a name the world does not define is refused rather than guessed. Stored requests are checked for shape only when a save loads, so removing a name later never makes a save unloadable; such a request is refused when it is used, and the Character panel marks a no-longer-named choice as unavailable.
+
+A follow or wait that ends at a named time is an exact interval boundary: elapsed-time integration stops at that instant instead of running the 60-second fallback horizon past it. Named times are a small clock vocabulary, not a general time-expression parser; "wait N minutes" is the only relative form. A separate clock policy is warranted when another clock consumer (calendar, seasons) appears.
+
+Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view. Daylight is not yet a world setting: the renderer's daylight curve (06:00–18:00, in presentation code outside this project's file ownership) and the HUD's day/night icon (06:00–19:00) keep their own hours; making them read a world daylight policy is tracked in the [base-world tracker](../../maintainers/base-world.md).
+
 ## Review trigger
 
 Revisit these bounds when fleeting encounters matter to a mechanic, new movement/sense ranges create excessive global interval splitting, an admitted operation has unknown within-interval changes, or mixed-load evidence identifies fallback work as a bottleneck. Keep the authored policy, its adapter, the catalogue and [RP06](../../maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits) aligned. Changing fidelity is a visible behavioral decision; rendering performance alone cannot authorize it.

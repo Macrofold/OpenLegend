@@ -1,0 +1,215 @@
+[
+ {
+  "label": "wood before",
+  "wood": 2
+ },
+ {
+  "label": "gather until 8",
+  "text": "gather wood until I have 8",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "admitted",
+  "status": "active",
+  "name": "gather wood until I have 8",
+  "steps": [
+   "gather:queued"
+  ],
+  "pending": [
+   "repeat#1"
+  ]
+ },
+ {
+  "label": "gather until 8 result",
+  "wood": 8,
+  "plan": {
+   "status": "completed",
+   "name": "gather wood until I have 8",
+   "steps": [
+    "gather:completed",
+    "gather:completed",
+    "gather:completed"
+   ],
+   "pending": []
+  }
+ },
+ {
+  "label": "too many attempts",
+  "text": "gather wood until I have 60",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "That needs about 26 gathering attempts; one activity allows at most 16. Ask for a smaller amount."
+ },
+ {
+  "label": "already enough",
+  "text": "gather wood until I have 3",
+  "ok": false,
+  "code": "blocked",
+  "message": "You already carry 8 Supple branch; nothing to gather."
+ },
+ {
+  "label": "vague enough",
+  "text": "gather wood until there is enough",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "Say how much is enough, for example \"gather wood until I have 6\"."
+ },
+ {
+  "label": "gather 4 more stones",
+  "text": "gather 4 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "stones after",
+  "stones": 10,
+  "plan": {
+   "status": "completed",
+   "name": "gather 4 stones",
+   "steps": [
+    "gather:completed",
+    "gather:completed"
+   ],
+   "pending": []
+  }
+ },
+ {
+  "label": "gather then eat",
+  "text": "gather berries then eat one",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "gather then eat admitted",
+  "status": "active",
+  "name": "gather berries then eat one",
+  "steps": [
+   "gather:queued"
+  ],
+  "pending": [
+   "invoke#0"
+  ]
+ },
+ {
+  "label": "gather then eat result",
+  "berries": 1,
+  "fullness": 99.995000003,
+  "plan": {
+   "status": "completed",
+   "name": "gather berries then eat one",
+   "steps": [
+    "gather:completed",
+    "eat:completed"
+   ],
+   "pending": []
+  }
+ },
+ {
+  "label": "wait until dusk",
+  "text": "wait until dusk",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "waiting",
+  "plan": {
+   "status": "active",
+   "name": "wait until dusk",
+   "steps": [],
+   "pending": [
+    "wait#0"
+   ]
+  },
+  "clock": 8.09
+ },
+ {
+  "label": "after dusk",
+  "plan": {
+   "status": "completed",
+   "name": "wait until dusk",
+   "steps": [],
+   "pending": []
+  },
+  "clock": 18.09
+ },
+ {
+  "label": "stay by fire until dawn",
+  "text": "stay by the campfire until dawn",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "staying",
+  "plan": {
+   "status": "active",
+   "name": "stay by the campfire until dawn",
+   "steps": [
+    "move:completed"
+   ],
+   "pending": [
+    "wait#0"
+   ]
+  },
+  "nearFire": {
+   "x": 10,
+   "z": 11
+  }
+ },
+ {
+  "label": "validate mid-activity",
+  "ok": true
+ },
+ {
+  "label": "tend fire",
+  "text": "tend the fire until dawn",
+  "ok": false,
+  "code": "needs-confirmation",
+  "message": "Accept revised action? Walk near Banked campfire, then wait there until dawn. Not fulfilled: keep the fire fuelled"
+ },
+ {
+  "label": "held revision",
+  "status": "awaiting-confirmation",
+  "omitted": [
+   {
+    "requirement": "keep the fire fuelled",
+    "reason": "No action adds fuel to a fire in this world yet."
+   }
+  ],
+  "description": "Walk near Banked campfire, then wait there until dawn."
+ },
+ {
+  "label": "accept",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "accepted plan",
+  "status": "active",
+  "name": "tend the fire until dawn",
+  "steps": [
+   "move:completed"
+  ],
+  "pending": [
+   "wait#0"
+  ]
+ },
+ {
+  "label": "sequence with indefinite follow",
+  "text": "follow the person then go to the campfire",
+  "ok": false,
+  "code": "blocked",
+  "message": "Step 1 (follow the person): No living being called \"person\" is in view to follow."
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

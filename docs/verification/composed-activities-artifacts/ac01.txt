@@ -1,0 +1,84 @@
+{
+ "keptSlots": {
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed.",
+  "planId": "r1:a"
+ },
+ "droppedAmount": {
+  "ok": false,
+  "code": "slot-mismatch",
+  "message": "The resolved action does not keep the requested amount."
+ },
+ "wrongItem": {
+  "ok": false,
+  "code": "slot-mismatch",
+  "message": "The resolved action does not keep the requested item."
+ },
+ "unpermitted": {
+  "ok": false,
+  "code": "unpermitted-target",
+  "message": "The requested target was not in this decision context."
+ },
+ "wrongKind": {
+  "ok": false,
+  "code": "invalid-slot",
+  "message": "An item or tool reference must name an item, and a recipient must name a living being."
+ },
+ "method": {
+  "ok": false,
+  "code": "slot-mismatch",
+  "message": "The resolved action does not keep the requested method (quietly)."
+ },
+ "deferA": {
+  "ok": true,
+  "code": "attempt-deferred",
+  "message": "Intent retained privately without an executable binding; no action was performed or invention admitted."
+ },
+ "deferB": {
+  "ok": true,
+  "code": "attempt-deferred",
+  "message": "Intent retained privately without an executable binding; no action was performed or invention admitted."
+ },
+ "deferRepeat": {
+  "ok": true,
+  "code": "attempt-pending",
+  "message": "This intent already awaits interpretation; no action or paid work was repeated."
+ },
+ "attempts": [
+  {
+   "d": "stack stones neatly",
+   "slots": {
+    "itemId": null,
+    "instrumentId": null,
+    "recipientId": null,
+    "quantity": 3,
+    "quantityMode": "exact",
+    "until": null,
+    "method": null
+   }
+  },
+  {
+   "d": "stack stones neatly",
+   "slots": {
+    "itemId": null,
+    "instrumentId": null,
+    "recipientId": null,
+    "quantity": 4,
+    "quantityMode": "exact",
+    "until": null,
+    "method": null
+   }
+  }
+ ],
+ "planSteps": [
+  {
+   "id": "r1:a:0",
+   "actorId": "entity-0001",
+   "type": "drop",
+   "itemId": "item-6",
+   "quantity": 2
+  }
+ ],
+ "validate": "ok"
+}

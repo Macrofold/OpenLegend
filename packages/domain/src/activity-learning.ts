@@ -65,6 +65,8 @@ export function normalizeActivity(
     const args: Extract<ActivityNode, { kind: 'invoke' }>['args'] = {};
     for (const [field, value] of Object.entries(entry.command)) {
       if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
+      // An absolute deadline belongs to one occasion, not a reusable method.
+      if (entry.command.type === 'follow' && field === 'until') return;
       if (typeof value === 'string' && roleFields.has(field)) {
         const produced = outputs.get(value);
         if (produced && field === 'itemId') {

@@ -1,5 +1,5 @@
 import { decisionAllowance } from './cognition-budget.js';
-import { spatialQuery } from '@open-legend/domain';
+import { namedClockTimes, spatialQuery } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
 import {
@@ -10,11 +10,13 @@ import {
 } from '@open-legend/domain';
 import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
 import { capabilityBlocked } from '@open-legend/domain';
-import { groundActionAttempts, exactNavigation } from './action-grounding.js';
+import { groundActionAttempts } from './action-grounding.js';
+import { actionReferencePermitted, commitTypedAction, typedActionForms } from './typed-actions.js';
 import { actionResponse } from './action-response.js';
 import { npcCandidates, planningCandidates } from './context.js';
 import { domainCommand } from './cognition.js';
-import type { ActorResponse, AttemptBinding } from '@open-legend/domain';
+import type { ActorResponse, AttemptBinding, IntentSlots } from '@open-legend/domain';
+import { validIntentSlots } from '@open-legend/domain';
 import type { SpeechVolume } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
@@ -232,9 +234,10 @@ export class AiDirector {
   async submitAction(
     id: string,
     text: string,
-    mode: 'enqueue' | 'replace',
+    mode: 'enqueue' | 'replace' | 'interrupt',
     targetId?: string,
     authority = this.service.localScope,
+    slots: IntentSlots | null = null,
   ): Promise<ApiResult> {
     return this.admission(() =>
       this.service.authorized(authority, 'play', true, async () => {
@@ -242,11 +245,22 @@ export class AiDirector {
         id = `human:${digest({ account: authority.accountId, world: authority.worldId, id })}`;
         const actorId = authority.actorId;
         const actor = this.service.world.entities[actorId]?.actor;
-        if (!text.trim() || text.length > 500 || !['enqueue', 'replace'].includes(mode))
+        if (
+          !text.trim() ||
+          text.length > 500 ||
+          !['enqueue', 'replace', 'interrupt'].includes(mode)
+        )
           return {
             ok: false,
             code: 'invalid-action',
             message: 'Supply an action of 1–500 characters.',
+          };
+        if (slots !== null && !validIntentSlots(this.service.world, slots))
+          return {
+            ok: false,
+            code: 'invalid-action',
+            message:
+              'A chosen detail is not valid here, such as a stopping time this world does not name.',
           };
         const fingerprint = digest({
           kind: 'action',
@@ -256,6 +270,7 @@ export class AiDirector {
           text,
           mode,
           targetId,
+          slots,
         });
         const previous = await this.service.store.getJob(id);
         if (previous)
@@ -287,6 +302,15 @@ export class AiDirector {
             code: 'target',
             message: 'The selected target is no longer perceived.',
           };
+        // Recognized typed forms bind natively now, even while another request runs.
+        const typed = await commitTypedAction(
+          this.service,
+          { id, authority, fingerprint },
+          actorId,
+          { text, targetId: targetId ?? null, slots },
+          mode,
+        );
+        if (typed) return typed;
         if (this.running || this.stopped)
           return {
             ok: false,
@@ -294,15 +318,11 @@ export class AiDirector {
             message: 'Another intelligence request is in progress; try again after it finishes.',
           };
         const config = this.service.config;
-        if (
-          !exactNavigation(text, this.service.world, actorId, targetId) &&
-          (!config.budgetUsd || (!config.macrofoldKey && !config.jevKey))
-        )
+        if (!config.budgetUsd || (!config.macrofoldKey && !config.jevKey))
           return {
             ok: false,
             code: 'ai-unavailable',
-            message:
-              'This wording needs configured Jev and language-model access with an allowance. Exact coordinate movement and unqualified visible-target following need no AI.',
+            message: `This wording needs configured Jev and language-model access with an allowance. ${typedActionForms(this.service.world)}`,
           };
         this.maintenance.cancel();
         const job: JobRecord = {
@@ -320,6 +340,7 @@ export class AiDirector {
             action: {
               mode,
               targetId,
+              ...(slots ? { slots } : {}),
               expectedPlan: actor.planGeneration,
               targetEpisodes: captureActionTargets(this.service.world, actorId, [
                 { actorId, targetId },
@@ -397,6 +418,7 @@ export class AiDirector {
       verb: null,
       targetEntityId: request.targetId ?? null,
       mode: request.mode,
+      slots: request.slots ?? null,
     });
     const choices = [
       ...npcCandidates(this.service, actorId),
@@ -422,7 +444,19 @@ export class AiDirector {
     await this.awaitResume(run, true);
     this.current(run);
     const observed = this.service.observe(actorId);
-    const refs = [actorId, ...(observed?.visibleEntities.map((e) => e.id) ?? [])];
+    const visibleIds = [actorId, ...(observed?.visibleEntities.map((e) => e.id) ?? [])];
+    const slotIds = [
+      request.slots?.itemId,
+      request.slots?.instrumentId,
+      request.slots?.recipientId,
+    ];
+    const refs = [
+      ...visibleIds,
+      ...slotIds.filter(
+        (ref): ref is string =>
+          !!ref && actionReferencePermitted(this.service.world, actorId, visibleIds, ref),
+      ),
+    ];
     const commit = () =>
       this.service.transition(
         (world) => {
@@ -1709,6 +1743,7 @@ export class AiDirector {
         expressions: supportsManualWork(this.service.world.entities[actorId]),
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
+      namedClockTimes(this.service.world),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })

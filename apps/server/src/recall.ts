@@ -70,10 +70,13 @@ export const HARD_CONTEXT_LIMITS = {
   knowledge: 16,
   memories: 8,
 };
-export function gameTime(at: number): string {
-  // The world clock starts at 08:00; match the player-facing calendar.
-  const hour = (8 + Math.floor(at / 3600)) % 24;
-  return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${Math.floor(at / 60) % 60 < 10 ? '0' : ''}${Math.floor(at / 60) % 60}`;
+/** Day counts from the world's start; the hour reads the world's own clock offset
+ * (`statusEffectPolicy.clockOffsetHours`), never an engine constant. */
+export function gameTime(at: number, offsetHours: number): string {
+  const clock = at + offsetHours * 3600;
+  const hour = Math.floor(clock / 3600) % 24;
+  const minute = Math.floor(clock / 60) % 60;
+  return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 }
 export function memoryCandidate(
   memory: MemoryRecord,
@@ -119,9 +122,11 @@ export function memoryCandidate(
   return {
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
-    text: `${gameTime(memory.at)} [${memory.source}]: ${summary}`,
+    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}`,
     ...(awareness?.speech
-      ? { embeddingText: `${gameTime(memory.at)} [${memory.source}]: ${memory.summary}` }
+      ? {
+          embeddingText: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${memory.summary}`,
+        }
       : {}),
     revision: awareness?.speech ? digest(memory) : digest({ ...memory, summary }),
     required,

@@ -1,0 +1,99 @@
+[
+ {
+  "label": "unseen subject",
+  "subject": "bird-1",
+  "ok": false,
+  "code": "invalid-activity",
+  "message": "The requested activity is not a supported bounded structure."
+ },
+ {
+  "label": "missing subject",
+  "ok": false,
+  "code": "invalid-activity",
+  "message": "The requested activity is not a supported bounded structure."
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "last-seen her then drop the cord",
+  "text": "go back to where i last saw her then drop the cord",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "stop 2",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "pick up the items then cook the meat",
+  "text": "pick up the items then cook the raw meat at the fire",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "composition",
+  "children": [
+   "pickup:{\"targetId\":{\"role\":\"role1\"}}",
+   "cook:{\"itemId\":{\"role\":\"role2\"},\"heatId\":{\"role\":\"role3\"}}"
+  ]
+ },
+ {
+  "label": "stop 3",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "pick up every item",
+  "text": "pick up every item",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pile gone",
+  "pile": false
+ },
+ {
+  "label": "gather",
+  "text": "gather wood until I have 14",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "direct walk",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "card",
+  "work": {
+   "id": "human:e4e224b79e913066386985d2a3376ce20d601b0ac02a6667bce306c2cadc4576:action||action-39",
+   "label": "gather wood until I have 14",
+   "state": "blocked",
+   "reason": "Native work was interrupted; explicitly revise the frontier.",
+   "steps": [
+    "blocked:Gather from Fallen branches",
+    "running:Current action, started directly"
+   ]
+  }
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

@@ -50,9 +50,9 @@ Native objective relations support only **parent and sibling**. The creator API 
 
 ## BW06
 
-**Current — native-action integration source review, 2026-09-26 · Restrictiveness: Medium.**
+**Current — native-action integration source review, 2026-09-26; stances, loss policy and stopping time added September 29, 2026 · Restrictiveness: Medium.**
 
-Visual follow defaults to three world units, accepts 1.5–12 units, resumes after a 0.75-unit margin, and refreshes a moved target's route after four game seconds and one unit of displacement. Empty paths can request a route immediately. It requires current sight and a living active actor, ends on lost support/capability/target, and has no stealth, scent or time-of-day termination. Follow must be the last generated step because it has no promised natural completion.
+Visual follow defaults to three world units, accepts 1.5–12 units, resumes after a 0.75-unit margin, and refreshes a moved target's route after four game seconds and one unit of displacement. Empty paths can request a route immediately. It requires current sight and a living active actor, ends on lost support/capability/target, and has no stealth or scent. Behind/beside/left/right stances need at least **0.5** units of observed target travel for a direction and allow **1** unit of drift while held; otherwise the follower holds near. A disclosed last-seen loss policy walks only to the recorded sighting. An `until` [named clock time](../worlds/base/time.md#named-clock-times) (dawn 06:00, dusk 18:00) completes the follow at that exact instant. A follow without a stopping time must be the last step because it has no natural completion; one with a stopping time may precede later steps.
 
 **Reason / tradeoff:** A finite authored proximity activity with hysteresis avoids route churn. These are base-world tuning choices, not universal pursuit laws. [Authored rules](../../packages/domain/src/worlds/base/navigation.ts), [AC05](../maintainers/action-capabilities.md#ac05--target-relative-ongoing-navigation).
 

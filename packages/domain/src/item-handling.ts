@@ -99,13 +99,15 @@ function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) 
   world.nextId = committed.nextId;
   return result;
 }
+/** Returns the lots actually received, or a plain reason nothing moved. */
 export function pickUpItems(
   world: WorldState,
   actor: Entity,
   pileId: string,
   itemId: string | undefined,
   events: WorldEvent[],
-): string | null {
+  quantity?: number,
+): { itemId: string; definitionId: string; quantity: number }[] | string {
   const pile = getOwn(world.entities, pileId);
   if (pile?.kind !== 'item-pile' || !canHandleItems(world, actor))
     return 'The pile or item-handling capability is unavailable.';
@@ -113,13 +115,21 @@ export function pickUpItems(
   if (!items.length) return 'Those portable items are no longer in the pile.';
   if (items.some((item) => itemHasReservations(world, item.id)))
     return 'Some selected items are committed to ongoing work.';
-  const description = items
-    .map((i) => `${i.quantity} ${world.itemDefinitions[i.definitionId]!.name}`)
+  if (quantity !== undefined && (items.length !== 1 || quantity > items[0]!.quantity))
+    return 'Fewer items remain in that stack than were chosen.';
+  const moving = items.map((item) => ({ item, amount: quantity ?? item.quantity }));
+  const description = moving
+    .map(({ item, amount }) => `${amount} ${world.itemDefinitions[item.definitionId]!.name}`)
     .join(', ');
+  let received: { itemId: string; definitionId: string; quantity: number }[];
   try {
-    atomicObjects(world, (candidate) => {
-      for (const item of items) moveLot(candidate, item.id, actor.id, item.quantity, 'pickup');
-    });
+    received = atomicObjects(world, (candidate) =>
+      moving.map(({ item, amount }) => ({
+        itemId: moveLot(candidate, item.id, actor.id, amount, 'pickup'),
+        definitionId: item.definitionId,
+        quantity: amount,
+      })),
+    );
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;
     return error instanceof Error ? error.message : 'Items are unavailable.';
@@ -129,7 +139,7 @@ export function pickUpItems(
     delete world.entities[pileId];
     rootMembershipChanged(world, pileId);
   }
-  return null;
+  return received;
 }
 /** Shared read-only eligibility keeps inventory menus cheap without simulating a transfer.
  * docs/worlds/base/items.md#pickup-and-drop

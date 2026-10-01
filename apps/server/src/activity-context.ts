@@ -17,6 +17,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
+import { gameTime } from './recall.js';
 import type { CandidateAction } from './context.js';
 import type { WorldService } from './world-service.js';
 
@@ -25,7 +26,7 @@ import type { WorldService } from './world-service.js';
 export function activityChoiceView(
   world: WorldState,
   actorId: string,
-  method: ActivityMethod,
+  method: Pick<ActivityMethod, 'root'> & Partial<Pick<ActivityMethod, 'roles'>>,
   bindings: Record<string, ActivityBinding>,
   root = method.root,
   actualOutputs: Record<string, ActivityOutput[]> = {},
@@ -108,11 +109,21 @@ export function activityChoiceView(
           });
       }
       for (const output of node.outputs ?? [])
-        result.facts.push({
-          name: 'previous result',
-          value: `My earlier attempt produced ${output.quantity} ${world.itemDefinitions[output.definitionId]?.name ?? 'items'}; this attempt may fail or produce less`,
-          critical: true,
-        });
+        result.facts.push(
+          // Learned methods carry real past results; a requested composition only declares
+          // what a later step may use, so it must not claim an earlier attempt.
+          method.roles
+            ? {
+                name: 'previous result',
+                value: `My earlier attempt produced ${output.quantity} ${world.itemDefinitions[output.definitionId]?.name ?? 'items'}; this attempt may fail or produce less`,
+                critical: true,
+              }
+            : {
+                name: 'expected result',
+                value: `A later step uses the ${world.itemDefinitions[output.definitionId]?.name ?? 'items'} this produces, if it actually produces any`,
+                critical: true,
+              },
+        );
       return result;
     }
     if (node.kind === 'sequence') {
@@ -150,20 +161,27 @@ export function activityChoiceView(
       equipped: 'is equipped',
       lit: 'is lit',
       output: 'the earlier work produced enough of the required result',
+      holding:
+        condition.test === 'holding'
+          ? `I carry at least ${condition.quantity} ${world.itemDefinitions[condition.definitionId]?.name ?? condition.definitionId}`
+          : '',
+      time:
+        condition.test === 'time'
+          ? `it is ${gameTime(condition.at, world.statusEffectPolicy.clockOffsetHours)}`
+          : '',
     };
-    const subject =
-      condition.test === 'output'
-        ? ''
-        : (() => {
-            const id = bindings[condition.role];
-            const command = {
-              type: 'follow' as const,
-              id: 'view-only',
-              actorId,
-              targetId: typeof id === 'string' ? id : '',
-            };
-            return nativeActivityView(world, command).target ?? 'the required object';
-          })();
+    const subject = !('role' in condition)
+      ? ''
+      : (() => {
+          const id = bindings[condition.role];
+          const command = {
+            type: 'follow' as const,
+            id: 'view-only',
+            actorId,
+            targetId: typeof id === 'string' ? id : '',
+          };
+          return nativeActivityView(world, command).target ?? 'the required object';
+        })();
     const text = `${subject} ${labels[condition.test]}`.trim();
     if (node.kind === 'branch')
       return {
@@ -313,7 +331,7 @@ export function activityChoiceView(
     });
   }
   if (root === method.root)
-    for (const requirement of Object.values(method.roles))
+    for (const requirement of Object.values(method.roles ?? {}))
       if (requirement.maximumHealth !== undefined)
         result.facts.push({
           name: 'observed entry condition',
@@ -335,7 +353,7 @@ export function learnedActivityCandidates(
   const plan = world.entities[actorId]?.actor?.agency.plan;
   if (
     plan?.status === 'blocked' &&
-    plan.activity &&
+    plan.activity?.methodId &&
     !plan.steps.some((step) => step.status === 'blocked')
   ) {
     results.push({
@@ -435,7 +453,10 @@ export function remainingActivityText(world: WorldState, actorId: string): strin
         ? { name: 'Use an actual earlier output', facts: [] }
         : nativeActivityView(world, step.command),
     );
-  const method = execution && world.actionExperience.methods[execution.methodId];
+  const method =
+    execution &&
+    (execution.request ??
+      (execution.methodId ? world.actionExperience.methods[execution.methodId] : undefined));
   if (execution && method)
     children.push(
       ...[...execution.pending]

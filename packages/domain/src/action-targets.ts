@@ -2,10 +2,23 @@ import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { isSafeRecordId } from './records.js';
 import type { WorldState } from './types.js';
 
-export type ActionTarget = { actorId: string; targetId?: string; heatId?: string };
+export type ActionTarget = {
+  actorId: string;
+  targetId?: string;
+  heatId?: string;
+  /** Composition role bindings; entity references among them are targets too. */
+  bindings?: Record<string, unknown>;
+  /** What a composition is about beyond its bindings (see the compose command). */
+  subjects?: readonly string[];
+};
 export type ActionTargetEpisodes = Record<string, string | null>;
 const targets = (command: ActionTarget) =>
-  [command.targetId, command.heatId].filter((id): id is string => !!id && id !== command.actorId);
+  [
+    command.targetId,
+    command.heatId,
+    ...Object.values(command.bindings ?? {}),
+    ...(command.subjects ?? []),
+  ].filter((id): id is string => typeof id === 'string' && !!id && id !== command.actorId);
 
 /** A saved entity ID is not proof that an anonymous person was re-identified.
  * Reuse the existing perception-episode/creator-authored identity boundary.
@@ -16,12 +29,16 @@ export function captureActionTargets(
   actorId: string,
   commands: readonly ActionTarget[],
 ): ActionTargetEpisodes {
+  // Saved pins stay within their 16-entry bound; an unpinned extra actor later reads as a
+  // changed encounter, which refuses rather than trusting an unchecked identity.
   return Object.fromEntries(
-    commands.flatMap((command) =>
-      targets(command)
-        .filter((id) => !!world.entities[id]?.actor)
-        .map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
-    ),
+    commands
+      .flatMap((command) =>
+        targets(command)
+          .filter((id) => !!world.entities[id]?.actor)
+          .map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null] as const),
+      )
+      .slice(0, 16),
   );
 }
 

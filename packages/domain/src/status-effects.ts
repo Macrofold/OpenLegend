@@ -83,6 +83,8 @@ export interface StatusEffectDefinition {
 export interface StatusEffectPolicy {
   revision: number;
   clockOffsetHours: number;
+  /** Clock hours this world lets a request name as a stopping time ("dawn": 6). */
+  namedTimes: Record<string, number>;
   definitions: StatusEffectDefinition[];
 }
 export interface StatusEffectInstance {

@@ -4,6 +4,7 @@ import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
+import { ClockOffsetContext, clockParts } from './ui/event-time';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type {
   ActionOption,
@@ -971,7 +972,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     }
   }
   return (
-    <>
+    <ClockOffsetContext.Provider value={view?.clock.offsetHours ?? 0}>
       <canvas id="world" ref={canvas} tabIndex={0} aria-label="Wilderness world" />
       <div
         ref={hud}
@@ -1049,8 +1050,8 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                   <div>
                     <span className="ol-timebar-day">Day {view.clock.day}</span>
                     <span className="ol-timebar-clock">
-                      {String(Math.floor(view.clock.hour)).padStart(2, '0')}:
-                      {String(Math.floor(view.clock.seconds / 60) % 60).padStart(2, '0')}
+                      {clockParts(view.clock.seconds, view.clock.offsetHours).hour}:
+                      {clockParts(view.clock.seconds, view.clock.offsetHours).minute}
                     </span>
                     <div className="ol-caption">
                       {view.clock.paused
@@ -1352,7 +1353,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
           contents={view?.entities.find((entity) => entity.id === hover.entity.id)?.contents}
         />
       )}
-    </>
+    </ClockOffsetContext.Provider>
   );
 }
 function ApplicationScope() {

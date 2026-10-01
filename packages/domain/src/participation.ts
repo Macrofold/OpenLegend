@@ -5,7 +5,7 @@ import { draftWorld } from './draft.js';
 import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
-import { cancelPlan } from './agency.js';
+import { cancelPlan, discardSuspended } from './agency.js';
 import { leaveConversation } from './conversations.js';
 import { isSafeRecordId } from './records.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
@@ -84,6 +84,8 @@ export function changeParticipation(
   } else if (operation.type === 'depart') {
     if (actor.action) releaseInvocationResources(world, actor.action.id);
     cancelPlan(world, actor);
+    // Departure ends paused work too; nothing resumes unasked on return.
+    discardSuspended(actor);
     actor.action = null;
     actor.planGeneration++;
     // Occupation cannot veto departure. Applied work/costs remain; nothing is inverted.

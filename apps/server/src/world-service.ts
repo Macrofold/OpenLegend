@@ -3523,6 +3523,7 @@ export class WorldService {
           type: 'pickup',
           targetId: input.targetId,
           ...(input.itemId ? { itemId: input.itemId } : {}),
+          ...(input.itemId && input.quantity ? { quantity: input.quantity } : {}),
         };
         break;
       case 'transfer-item':

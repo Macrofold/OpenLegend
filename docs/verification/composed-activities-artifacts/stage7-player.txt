@@ -1,0 +1,211 @@
+[
+ {
+  "label": "idle",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": false
+ },
+ {
+  "label": "request",
+  "text": "gather wood until I have 8 then go to the campfire",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "queued",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": true
+ },
+ {
+  "label": "running",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": true
+ },
+ {
+  "label": "interrupt",
+  "text": "cook meat at the fire",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "paused + running",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": true
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "cancelled",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": false
+ },
+ {
+  "label": "wait",
+  "text": "wait until dusk",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "waiting",
+  "work": null,
+  "attempts": [],
+  "cancelEnabled": true
+ },
+ {
+  "label": "tend",
+  "text": "tend the fire until dawn",
+  "ok": false,
+  "code": "needs-confirmation",
+  "message": "Accept revised action? Walk near Banked campfire, then wait there until dawn. Not fulfilled: keep the fire fuelled"
+ },
+ {
+  "label": "understood (awaiting decision)",
+  "work": null,
+  "attempts": [
+   {
+    "id": "human:889f0f296dc7b3a0393bcf1a79604925b8257c21313f04e79230705d56e154f8:action",
+    "description": "tend the fire until dawn",
+    "status": "awaiting-confirmation",
+    "mode": "replace",
+    "fulfillment": {
+     "requested": "tend the fire until dawn",
+     "executableDescription": "Walk near Banked campfire, then wait there until dawn.",
+     "verdict": "confirm",
+     "supported": [
+      "Walk near Banked campfire, then wait there until dawn."
+     ],
+     "omitted": [
+      {
+       "requirement": "keep the fire fuelled",
+       "reason": "No action adds fuel to a fire in this world yet."
+      }
+     ],
+     "reason": "Accept only the shown native action; it does not keep every requested detail."
+    }
+   }
+  ],
+  "cancelEnabled": true
+ },
+ {
+  "label": "blocked request",
+  "text": "gather wood until I have 12",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "after blocked request",
+  "work": null,
+  "attempts": [
+   {
+    "id": "human:889f0f296dc7b3a0393bcf1a79604925b8257c21313f04e79230705d56e154f8:action",
+    "description": "tend the fire until dawn",
+    "status": "awaiting-confirmation",
+    "mode": "replace",
+    "fulfillment": {
+     "requested": "tend the fire until dawn",
+     "executableDescription": "Walk near Banked campfire, then wait there until dawn.",
+     "verdict": "confirm",
+     "supported": [
+      "Walk near Banked campfire, then wait there until dawn."
+     ],
+     "omitted": [
+      {
+       "requirement": "keep the fire fuelled",
+       "reason": "No action adds fuel to a fire in this world yet."
+      }
+     ],
+     "reason": "Accept only the shown native action; it does not keep every requested detail."
+    }
+   }
+  ],
+  "cancelEnabled": true
+ },
+ {
+  "label": "gather",
+  "text": "gather wood until I have 12",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "blocked",
+  "work": null,
+  "attempts": [
+   {
+    "id": "human:889f0f296dc7b3a0393bcf1a79604925b8257c21313f04e79230705d56e154f8:action",
+    "description": "tend the fire until dawn",
+    "status": "awaiting-confirmation",
+    "mode": "replace",
+    "fulfillment": {
+     "requested": "tend the fire until dawn",
+     "executableDescription": "Walk near Banked campfire, then wait there until dawn.",
+     "verdict": "confirm",
+     "supported": [
+      "Walk near Banked campfire, then wait there until dawn."
+     ],
+     "omitted": [
+      {
+       "requirement": "keep the fire fuelled",
+       "reason": "No action adds fuel to a fire in this world yet."
+      }
+     ],
+     "reason": "Accept only the shown native action; it does not keep every requested detail."
+    }
+   }
+  ],
+  "cancelEnabled": true
+ },
+ {
+  "label": "drop",
+  "text": "drop 1 stone",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "completed",
+  "work": null,
+  "attempts": [
+   {
+    "id": "human:889f0f296dc7b3a0393bcf1a79604925b8257c21313f04e79230705d56e154f8:action",
+    "description": "tend the fire until dawn",
+    "status": "awaiting-confirmation",
+    "mode": "replace",
+    "fulfillment": {
+     "requested": "tend the fire until dawn",
+     "executableDescription": "Walk near Banked campfire, then wait there until dawn.",
+     "verdict": "confirm",
+     "supported": [
+      "Walk near Banked campfire, then wait there until dawn."
+     ],
+     "omitted": [
+      {
+       "requirement": "keep the fire fuelled",
+       "reason": "No action adds fuel to a fire in this world yet."
+      }
+     ],
+     "reason": "Accept only the shown native action; it does not keep every requested detail."
+    }
+   }
+  ],
+  "cancelEnabled": false
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]

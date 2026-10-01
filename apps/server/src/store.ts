@@ -105,8 +105,9 @@ export interface JobRecord extends AiJobView {
     volume?: import('@open-legend/domain').SpeechVolume;
     text: string;
     action?: {
-      mode: 'enqueue' | 'replace';
+      mode: 'enqueue' | 'replace' | 'interrupt';
       targetId?: string;
+      slots?: import('@open-legend/domain').IntentSlots;
       expectedPlan: number;
       targetEpisodes?: import('@open-legend/domain').ActionTargetEpisodes;
       timelineId: string;

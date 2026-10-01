@@ -1,6 +1,12 @@
 import { learnedActivityCandidates } from './activity-context.js';
+import { projectWork } from './work-view.js';
 import { canUseInventory, inventoryItemView } from './inventory-view.js';
-import { itemFor, itemsForOwner } from '@open-legend/domain';
+import {
+  itemFor,
+  itemsForOwner,
+  namedClockTimes,
+  typedRequestVocabulary,
+} from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { scopeKey, type RequestScope } from './authority.js';
 import { observerDescription } from '@open-legend/domain';
@@ -579,7 +585,17 @@ export async function projectView(
       const preview = service.previewCommand(option.command, scope.actorId);
       return action(option.id, option.label, option.command, preview.ok, preview.message);
     }),
-    action('cancel', 'Stop current work', { type: 'cancel' }, !!actor.action, 'No work to stop.'),
+    // Queued, waiting, stopped and paused work can be stopped too, not only a running action.
+    action(
+      'cancel',
+      'Stop current work',
+      { type: 'cancel' },
+      !!actor.action ||
+        !!actor.agency.suspended ||
+        actor.agency.plan?.status === 'active' ||
+        actor.agency.plan?.status === 'blocked',
+      'No work to stop.',
+    ),
   ];
   if (canRecoverAtCamp(player))
     playerActions.push({
@@ -677,12 +693,14 @@ export async function projectView(
     clock: {
       seconds: world.simTime,
       day: Math.floor(world.simTime / 86400) + 1,
-      hour: (8 + world.simTime / 3600) % 24,
+      hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
       speed: speed,
       baseRatio: service.config.baseRatio,
       paused: paused,
       pauseReason: pauseReason,
       preparingNavigation: navigationBlocked(world),
+      namedTimes: namedClockTimes(world),
+      offsetHours: world.statusEffectPolicy.clockOffsetHours,
     },
     player: {
       participation: actor.participation?.phase ?? 'active',
@@ -768,10 +786,36 @@ export async function projectView(
           description: attempt.description,
           status: attempt.status,
           mode: attempt.mode,
+          ...(attempt.resolution
+            ? { reason: attempt.resolution.reason, category: attempt.resolution.category }
+            : {}),
           ...(attempt.alternative ? { fulfillment: attempt.alternative.fulfillment } : {}),
         })),
       ),
+      // Step-by-step work states are a developer view (God mode); players use Stop current
+      // work and the plain answers to their own requests. Owner decision, 2026-09-29.
+      work:
+        service.config.godMode && service.currentScope(scope, 'create')
+          ? memo(
+              'player-work',
+              // Labels use this observer's names and encounters and learned method names.
+              [
+                actor.agency.plan,
+                actor.agency.suspended,
+                actor.action,
+                observation.visibleEntities,
+                world.observerIdentities?.[player.id],
+                world.perceptionEpisodes?.[player.id],
+                world.actionExperience.methods,
+              ],
+              () => projectWork(world, player.id),
+            )
+          : null,
       actions: playerActions,
+      actionWording: {
+        examples: [...typedRequestVocabulary(world).examples],
+        placeholder: typedRequestVocabulary(world).placeholder,
+      },
     },
     entities,
     recipes: memo<GameView['recipes']>(

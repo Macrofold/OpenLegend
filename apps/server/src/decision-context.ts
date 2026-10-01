@@ -1,8 +1,8 @@
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
-import { worldPosition, worldSupport } from '@open-legend/domain';
-import { knowledgePolicyInstructions } from '@open-legend/domain';
+import { portableItems, worldPosition, worldSupport } from '@open-legend/domain';
+import { knowledgePolicyInstructions, namedClockTimes } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
   entityLabel,
@@ -34,7 +34,7 @@ import {
 import { attentionRequest } from './attention-request.js';
 import { attentionIncludes, JEV_ACTION_THRESHOLD } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
-import { NAVIGATION_INSTRUCTIONS } from './navigation-contracts.js';
+import { navigationInstructions } from './navigation-contracts.js';
 import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
 
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
@@ -78,6 +78,19 @@ function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
       ]),
     ).values(),
   ];
+}
+
+/** Paused work is part of the actor's own intentions: it resumes when current work ends. */
+function pausedWorkText(world: import('@open-legend/domain').WorldState, actorId: string) {
+  const paused = world.entities[actorId]?.actor?.agency.suspended;
+  if (!paused) return null;
+  const name =
+    paused.activity?.request?.name ??
+    world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
+    paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
+    paused.steps.find((step) => step.status === 'queued')?.command.type ??
+    'earlier work';
+  return `Paused: ${name}. It resumes, after rechecking its targets, when my current work ends; stopping or replacing work discards it.`;
 }
 
 export async function prepareDecision(
@@ -235,7 +248,8 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(world.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: NAVIGATION_INSTRUCTIONS,
+    navigation: navigationInstructions(world),
+    namedTimes: namedClockTimes(world),
     currentPosition: worldPosition(observed.actor),
     currentSupport: worldSupport(observed.actor),
     publicSurfaces:
@@ -273,7 +287,7 @@ export async function prepareDecision(
       mindFor(world, actorId)
         .documents.map((document) => `${document.title}\n${document.text}`)
         .join('\n'),
-    now: gameTime(world.simTime),
+    now: gameTime(world.simTime, world.statusEffectPolicy.clockOffsetHours),
     body: bodyContext(world, observed.actor),
     contacts: observed.contacts.map((c) => c.text),
     goal: currentGoal(snapshotActor),
@@ -294,6 +308,7 @@ export async function prepareDecision(
     agency: {
       goals: snapshotActor.agency.goals,
       plan: remainingActivityText(service.world, actorId),
+      paused: pausedWorkText(service.world, actorId),
       planRevision: snapshotActor.agency.plan?.revision ?? 0,
       attempts: snapshotActor.agency.attempts,
     },
@@ -480,7 +495,8 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: NAVIGATION_INSTRUCTIONS,
+    navigation: navigationInstructions(currentWorld),
+    namedTimes: namedClockTimes(currentWorld),
     currentPosition: worldPosition(currentObserved.actor),
     currentSupport: worldSupport(currentObserved.actor),
     publicSurfaces:
@@ -507,7 +523,7 @@ export async function prepareDecision(
       mindFor(currentWorld, actorId)
         .documents.map((d) => `${d.title}\n${d.text}`)
         .join('\n'),
-    now: gameTime(currentWorld.simTime),
+    now: gameTime(currentWorld.simTime, currentWorld.statusEffectPolicy.clockOffsetHours),
     body: bodyContext(currentWorld, currentObserved.actor),
     contacts: currentObserved.contacts.map((contact) => contact.text),
     ...(currentObserved.inventoryCoverage.paged
@@ -519,6 +535,7 @@ export async function prepareDecision(
     agency: {
       goals: actor.agency.goals,
       plan: remainingActivityText(service.world, actorId),
+      paused: pausedWorkText(service.world, actorId),
       planRevision: actor.agency.plan?.revision ?? 0,
       attempts: actor.agency.attempts,
     },
@@ -560,6 +577,14 @@ export async function prepareDecision(
       ...socialEntityIds(currentWorld, actorId),
     ],
     evidence,
+    currentSelection
+      .filter((candidate) => candidate.kind === 'possession')
+      .map((candidate) => candidate.id.slice('item:'.length)),
+    // Bounded: pile contents in view are pickup targets, not a whole-inventory dump.
+    currentObserved.visibleEntities
+      .filter((entity) => entity.kind === 'item-pile')
+      .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
+      .slice(0, 16),
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>

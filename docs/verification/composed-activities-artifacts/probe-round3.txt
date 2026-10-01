@@ -1,0 +1,157 @@
+[
+ {
+  "label": "gather",
+  "text": "gather wood until I have 12",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "direct walk",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "card during direct walk",
+  "work": {
+   "id": "human:638c3f9550380715a39600e348a006edbfcaec3dd5b1736388e6ee526feaf75c:action||action-26",
+   "label": "gather wood until I have 12",
+   "state": "blocked",
+   "reason": "Native work was interrupted; explicitly revise the frontier.",
+   "steps": [
+    "blocked:Gather from Fallen branches (Native work was interrupted; explicitly revise the frontier.)",
+    "running:Current action, started directly"
+   ]
+  }
+ },
+ {
+  "label": "stop",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "direct walk 2",
+  "ok": true,
+  "code": "accepted",
+  "message": "Action started."
+ },
+ {
+  "label": "direct card 2",
+  "work": {
+   "id": "||action-29",
+   "label": "Current action, started directly",
+   "state": "running",
+   "reason": null,
+   "steps": []
+  },
+  "differentIdentity": true
+ },
+ {
+  "label": "drop stones",
+  "text": "drop 3 stones",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "drop knife",
+  "text": "drop the knife",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pick up the item (two stacks)",
+  "text": "pick up the item",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "That pile holds several stacks; select the one you mean."
+ },
+ {
+  "label": "pick up 3 items",
+  "text": "pick up 3 items",
+  "ok": false,
+  "code": "needs_clarification",
+  "message": "Select the stack to take 3 from."
+ },
+ {
+  "label": "pick up the item (knife chosen)",
+  "text": "pick up the item",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pile after",
+  "stacks": [
+   "stonex3"
+  ]
+ },
+ {
+  "label": "pick up all the items",
+  "text": "pick up all the items",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "pile gone",
+  "pile": false
+ },
+ {
+  "label": "stay by fire then eat",
+  "text": "stay by the fire until dusk then eat the raw meat",
+  "ok": true,
+  "code": "queued",
+  "message": "The requested activity was admitted; no result is promised."
+ },
+ {
+  "label": "subjects pinned",
+  "name": "stay by the fire until dusk then eat the raw meat",
+  "status": "active"
+ },
+ {
+  "label": "stop 2",
+  "text": "stop",
+  "ok": true,
+  "code": "cancelled",
+  "message": "Stopped. Materials already used in work remain consumed."
+ },
+ {
+  "label": "interrupt walk",
+  "text": "go to 12, 12",
+  "ok": true,
+  "code": "queued",
+  "message": "Native work queued; it has not completed."
+ },
+ {
+  "label": "resume refused",
+  "status": "blocked",
+  "steps": [
+   "move:queued",
+   "follow:blocked (Could not resume: a target is no longer the one I saw.)"
+  ],
+  "memory": [
+   "My paused work (walk to the clearing) could not resume: a target is no longer the one I saw. Nothing more of it was done."
+  ],
+  "card": {
+   "id": "p2||",
+   "label": "2 chosen steps",
+   "state": "blocked",
+   "reason": "Could not resume: a target is no longer the one I saw.",
+   "steps": [
+    "queued:walk to the clearing: the chosen place at 16.0, 16.0",
+    "blocked:Follow: a person (Could not resume: a target is no longer the one I saw.)"
+   ]
+  },
+  "validate": "ok"
+ },
+ {
+  "label": "provider calls",
+  "judge": 0,
+  "generate": 0
+ }
+]
