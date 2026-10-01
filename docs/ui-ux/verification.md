@@ -23,7 +23,7 @@ Paths below are relative to `apps/client/src/`. Every listed surface has a relev
 
 | Surface | Current entry points | Guidance and particular risks |
 | --- | --- | --- |
-| Shared controls, icons, fields, meters and panels | `design-system/components.tsx`, `components.css`, `layout.css`, `tokens/`, `progress-ring.tsx` | Foundations, Controls, React: one composite control, semantic tokens, focus, overflow, correct time meaning |
+| Shared controls, icons, fields, meters and panels | `design-system/components.tsx`, `design-system/components.css`, `design-system/layout.css`, `design-system/tokens/`, `design-system/progress-ring.tsx` | Foundations, Controls, React: one composite control, semantic tokens, focus, overflow, correct time meaning |
 | Main HUD, docking and launchers | `main.tsx`, `ui/hud-layout.ts`, `ui/panels.tsx` | Foundations, World: panel collision, opening order, narrow sheet, world visibility and focus |
 | Inventory and creation choices | `ui/inventory.tsx`, `ui/item-creation.tsx` | Inventory, Controls: scope, quantities, containers, native clear control and authority |
 | Actions and quick access | `ui/action-picker.tsx`, `ui/quick-actions.tsx`, `ui/action-attempts.tsx`, `action-browser.ts` | World, Controls: target meaning, search/invent boundary, unavailable reasons, no duplicate execution |
@@ -71,7 +71,7 @@ Pass conditions: no unintended control overlap, clipped essential text, inaccess
 | Chat | IME Enter, paste multiline text, hide/reopen, switch conversation, type while a prior send is pending | Correct draft survives in the correct conversation; sending clears only the sent revision |
 | Chat history | Scroll up during reply, prepend older messages, reconnect and receive a late message | Reading anchor and stable chronology retained; no duplicate turn or forced scroll |
 | Invention | Edit during validation, inspect an old revision, receive late art, cancel and revise consequential scope | One current candidate, accurate evidence/status, no stale overwrite or implicit activation |
-| Save/load | Fail a write, time out with uncertain result, fail pre-load preservation, select incompatible save | No false Saved claim; last-known-good state protected; explicit refusal/recovery, no automatic reset/migration |
+| Save/load | Fail a write, time out with uncertain result, fail pre-load preservation, select incompatible save | No false Saved claim; last-known-good save protected; explicit refusal/recovery, no automatic reset/migration |
 | Notices | Burst of routine events plus a persistent failure, reduced motion and keyboard navigation | Important information remains retrievable; no repeated or focus-stealing interruption |
 
 The large fixture is not an inventory cap. Existing [HV01 measurements](../limits/interface.md#hv01) describe a prior 1,001-stack workload and known costs; they are not new measurements from this pass.
