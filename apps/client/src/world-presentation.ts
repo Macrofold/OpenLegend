@@ -1,20 +1,44 @@
 import * as pc from 'playcanvas';
 import type { GameView } from '@open-legend/protocol';
+import { sunlightAtHour } from './sunlight';
+import type { ShadowQuality } from './world-renderer';
+import { shadowSettings } from './shadow-material';
 
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
  */
 const litSprites = new WeakSet<pc.StandardMaterial>();
-export function lightSprite(material: pc.StandardMaterial): void {
+export function lightSprite(material: pc.StandardMaterial, device: pc.GraphicsDevice): void {
   if (litSprites.has(material)) return;
   litSprites.add(material);
   material.twoSidedLighting = true;
   material.specular.set(0, 0, 0);
+  // Painted fronts use a two-sided response: bias toward each light, including
+  // lights behind the displayed card. Retain the pinned engine's filtering and
+  // atlas code; only orient its normal-offset term for these sprite materials.
+  const chunks = pc.ShaderChunks.get(device);
+  for (const name of ['lightFunctionShadowPS', 'clusteredLightShadowsPS']) {
+    const suffix = name === 'clusteredLightShadowsPS' ? ' * clamp' : '';
+    material.shaderChunks.glsl.set(
+      name,
+      chunks
+        .get(name)!
+        .replaceAll(
+          `normal * shadowParams.y${suffix}`,
+          `faceforward(normal, lightDirNorm, normal) * shadowParams.y${suffix}`,
+        ),
+    );
+  }
   material.shaderChunks.glsl.set(
     'normalMapPS',
     `
-    uniform vec3 ol_spriteFoot;
-    uniform vec2 ol_spriteSize;
+    #ifdef OL_INSTANCED_SPRITE
+      varying vec3 ol_spriteFoot;
+      varying vec2 ol_spriteSize;
+    #else
+      uniform vec3 ol_spriteFoot;
+      uniform vec2 ol_spriteSize;
+    #endif
     void getNormal() {
       vec2 uv = {STD_DIFFUSE_TEXTURE_UV};
       float across = uv.x * 2.0 - 1.0;
@@ -24,6 +48,8 @@ export function lightSprite(material: pc.StandardMaterial): void {
       // A rounded virtual body, rather than lighting the entire image as a rotating flat sheet.
       relative += outward * ol_spriteSize.x * 0.5 * sqrt(max(0.08, 1.0 - across * across));
       dNormalW = normalize(relative);
+      // Shadow bias uses the upright sheet, not the camera-pitched display normal.
+      dVertexNormalW = outward;
     }
   `,
   );
@@ -58,10 +84,13 @@ export interface RevealBinding {
 export class WorldPresentation {
   readonly layer: pc.Layer;
   private revealMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
-  private readonly proxyMaterial: pc.StandardMaterial;
-  private proxyMesh?: pc.Mesh;
+  private spriteRevealMesh?: pc.Mesh;
   private readonly worldLayer: pc.Layer;
   private readonly lights: pc.Entity[] = [];
+  private readonly selectedLights = new Set<string>();
+  private readonly sunDirection = new pc.Vec3();
+  private readonly sunRotation = new pc.Quat();
+  private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
   private readonly hiddenMeshes = new WeakSet<pc.MeshInstance>();
   constructor(
@@ -71,19 +100,18 @@ export class WorldPresentation {
   ) {
     this.worldLayer = app.scene.layers.getLayerById(pc.LAYERID_WORLD)!;
     this.layer = new pc.Layer({ name: 'Authorized read-through' });
-    // Last world pass; DOM UI is separate. Depth from the ordinary world is retained.
-    app.scene.layers.push(this.layer);
+    // CameraFrame composites through Immediate, then renders later layers onto
+    // the output target without world depth. Reveal needs the original depth.
+    const immediate = app.scene.layers.getLayerById(pc.LAYERID_IMMEDIATE)!;
+    app.scene.layers.insert(this.layer, app.scene.layers.getOpaqueIndex(immediate));
     camera.camera!.layers = [...camera.camera!.layers, this.layer.id];
     sun.light!.layers = [...sun.light!.layers, this.layer.id];
-    this.proxyMaterial = new pc.StandardMaterial();
-    this.proxyMaterial.useLighting = false;
-    this.proxyMaterial.redWrite =
-      this.proxyMaterial.greenWrite =
-      this.proxyMaterial.blueWrite =
-      this.proxyMaterial.alphaWrite =
-        false;
-    this.proxyMaterial.depthWrite = false;
-    this.proxyMaterial.update();
+    this.setShadowQuality('detailed');
+    // Angular spread, not a world-space blur radius: large values make the
+    // blocker search miss small bodies. Keep the sun close to a small disk.
+    sun.light!.penumbraSize = 0.015;
+    sun.light!.shadowSamples = 16;
+    sun.light!.shadowBlockerSamples = 16;
     this.frame = new pc.CameraFrame(app, camera.camera!);
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.bloom.intensity = 0.025;
@@ -91,6 +119,19 @@ export class WorldPresentation {
     this.frame.grading.enabled = true;
     this.frame.grading.saturation = 1.05;
     this.frame.update();
+  }
+  setShadowQuality(quality: ShadowQuality): boolean {
+    if (this.shadowQuality === quality) return false;
+    this.shadowQuality = quality;
+    const settings = shadowSettings[quality];
+    // Device-local cost/quality choice; both modes retain the same casters and receivers.
+    // Clustered lights use the shared atlas, not individual light resolutions.
+    // docs/world-presentation.md#shadow-quality
+    this.app.scene.lighting.shadowType = settings.local;
+    this.app.scene.lighting.shadowAtlasResolution = settings.resolution;
+    this.sun.light!.shadowType = settings.sun;
+    this.sun.light!.shadowResolution = settings.resolution;
+    return true;
   }
   private revealMaterial(source: pc.StandardMaterial): pc.StandardMaterial {
     let m = this.revealMaterials.get(source);
@@ -127,12 +168,28 @@ export class WorldPresentation {
     this.revealMaterials.set(source, m);
     return m;
   }
-  addReveal(sprite: pc.Entity, material: pc.StandardMaterial): RevealBinding {
+  addReveal(sprite: pc.Entity, material: pc.StandardMaterial, billboard = false): RevealBinding {
+    if (billboard && !this.spriteRevealMesh) {
+      // Reveal only the front image. A relief's back faces are behind its visible
+      // front and would otherwise pass the occluded-fragment depth comparison.
+      this.spriteRevealMesh = pc.Mesh.fromGeometry(
+        this.app.graphicsDevice,
+        new pc.PlaneGeometry({ widthSegments: 1, lengthSegments: 1 }),
+      );
+      this.spriteRevealMesh.incRefCount();
+    }
     const meshes = (sprite.render?.meshInstances ?? []).map((mi) => {
-      const copy = new pc.MeshInstance(mi.mesh, this.revealMaterial(material), mi.node);
+      const copy = new pc.MeshInstance(
+        billboard ? this.spriteRevealMesh! : mi.mesh,
+        this.revealMaterial(material),
+        mi.node,
+      );
       copy.castShadow = false;
       copy.receiveShadow = false;
       copy.visible = false;
+      // Reveal borrows the current pose; it never owns or evaluates a second skeleton.
+      copy.skinInstance = mi.skinInstance;
+      copy.morphInstance = mi.morphInstance;
       return copy;
     });
     this.layer.addMeshInstances(meshes, true);
@@ -198,7 +255,11 @@ export class WorldPresentation {
   }
   removeReveal(binding: RevealBinding): void {
     this.layer.removeMeshInstances(binding.meshes, true);
-    for (const mi of binding.meshes) mi.destroy();
+    for (const mi of binding.meshes) {
+      mi.skinInstance = null;
+      mi.morphInstance = null;
+      mi.destroy();
+    }
   }
   releaseMaterial(source: pc.StandardMaterial): void {
     this.revealMaterials.get(source)?.destroy();
@@ -218,57 +279,32 @@ export class WorldPresentation {
         }
       }
   }
-  shadowProxy(parent: pc.Entity, width: number, height: number, depth = width): pc.Entity {
-    if (!this.proxyMesh) {
-      // Soft shadow proxies need no full-detail sphere. One retained mesh serves every
-      // body/canopy and survives world resets that momentarily remove all instances.
-      // docs/world-presentation.md#continuous-shadows
-      this.proxyMesh = pc.Mesh.fromGeometry(
-        this.app.graphicsDevice,
-        new pc.SphereGeometry({ latitudeBands: 8, longitudeBands: 12 }),
-      );
-      this.proxyMesh.incRefCount();
-    }
-    const proxy = new pc.Entity('Shadow-only body', this.app);
-    proxy.addComponent('render', {
-      meshInstances: [new pc.MeshInstance(this.proxyMesh, this.proxyMaterial, proxy)],
-      castShadows: true,
-      receiveShadows: false,
-      layers: [],
-    });
-    const meshes = [...proxy.render!.meshInstances];
-    this.worldLayer.addShadowCasters(meshes);
-    proxy.on('destroy', () => this.worldLayer.removeShadowCasters(meshes));
-    proxy.setLocalPosition(0, height / 2, 0);
-    proxy.setLocalScale(width, height, depth);
-    parent.addChild(proxy);
-    return proxy;
-  }
-  setShadowVisible(proxy: pc.Entity, visible: boolean): void {
-    // layers:[] means component hierarchy changes cannot reinsert invisible color draws.
-    // The caller supplies current authorization/floor visibility, not the last-seen ghost.
-    for (const mi of proxy.render!.meshInstances) mi.castShadow = visible;
-  }
   lighting(view: GameView): void {
-    const daylight = Math.max(0, Math.sin(((view.clock.hour - 6) * Math.PI) / 12));
+    const { daylight, toSun } = sunlightAtHour(view.clock.hour);
+    this.sunDirection.set(toSun.x, toSun.y, toSun.z);
+    // PlayCanvas directional rays follow local −Y. Use world orientation so camera
+    // motion cannot move the sun; received clock updates also handle pause/load/rewind.
+    this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
     this.app.scene.ambientLight.set(
-      0.09 + 0.32 * daylight,
-      0.12 + 0.32 * daylight,
-      0.18 + 0.29 * daylight,
+      0.18 + 0.26 * daylight,
+      0.22 + 0.25 * daylight,
+      0.3 + 0.2 * daylight,
     );
-    this.sun.light!.intensity = 0.12 + 1.2 * daylight;
+    this.sun.light!.intensity = 1.2 * daylight;
+    this.sun.enabled = daylight > 0.001;
     const p = view.player.position;
     // Only authorized, currently observed fire locations reach the renderer. No ghost lights.
+    const distance = (e: GameView['entities'][number]) =>
+      Math.hypot(e.position.x - p.x, e.position.y - p.y, e.position.z - p.z) -
+      (this.selectedLights.has(e.id) ? 1 : 0);
     const sources = view.entities
       .filter((e) => e.kind === 'station' && e.status.startsWith('Lit'))
-      .sort(
-        (a, b) =>
-          (a.position.x - p.x) ** 2 +
-          (a.position.y - p.y) ** 2 +
-          (a.position.z - p.z) ** 2 -
-          ((b.position.x - p.x) ** 2 + (b.position.y - p.y) ** 2 + (b.position.z - p.z) ** 2),
-      )
-      .slice(0, 8);
+      .sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id))
+      .slice(0, this.shadowQuality === 'economy' ? 2 : 8);
+    // Retain admitted lights through small distance crossovers; a missing or
+    // extinguished source is excluded before this ranking and revoked immediately.
+    this.selectedLights.clear();
+    for (const source of sources) this.selectedLights.add(source.id);
     for (let i = 0; i < Math.max(this.lights.length, sources.length); i++) {
       let light = this.lights[i];
       if (!light) {
@@ -276,10 +312,11 @@ export class WorldPresentation {
         light.addComponent('light', {
           type: 'omni',
           color: new pc.Color(1, 0.47, 0.12),
-          intensity: 3.5,
+          intensity: 2.8,
           range: 8,
-          castShadows: i === 0,
-          shadowResolution: 512,
+          // Every illuminating source needs occlusion, or secondary fires light
+          // through floors/walls. Quality bounds the selected count and shared atlas.
+          castShadows: true,
           normalOffsetBias: 0.025,
           layers: [pc.LAYERID_WORLD, this.layer.id],
         });
@@ -296,12 +333,10 @@ export class WorldPresentation {
     this.app.scene.layers.remove(this.layer);
     for (const m of this.revealMaterials.values()) m.destroy();
     this.revealMaterials.clear();
-    for (const light of this.lights) light.destroy();
-    this.proxyMaterial.destroy();
-    if (this.proxyMesh) {
-      this.proxyMesh.decRefCount();
-      if (this.proxyMesh.refCount === 0) this.proxyMesh.destroy();
-      this.proxyMesh = undefined;
+    if (this.spriteRevealMesh) {
+      this.spriteRevealMesh.decRefCount();
+      if (this.spriteRevealMesh.refCount === 0) this.spriteRevealMesh.destroy();
     }
+    for (const light of this.lights) light.destroy();
   }
 }

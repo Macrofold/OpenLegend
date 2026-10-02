@@ -60,6 +60,20 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Three-times scene performance](verification/three-times-scene-performance.md): measured improvements and unresolved capacity acceptance.
 - [Perception changes and reaction intake](verification/perception-reaction-intake.md): EPR00 counters, native CPU attribution, exposure changes and the fair intake.
 
+## Fixed character pixels
+
+[Mercenary integration evidence](verification/mercenary-default.md) covers the default additional NPC, fixed character resolution, depth compositing, actual animation/cloth, scoped projection, persistence, failure and resource ownership. The larger generated-art pipeline and crowd/low-end qualification remain open.
+
+## Shadow quality
+
+[Command/frame follow-up](verification/command-frame-spikes.md) records isolated route/preview CPU reductions, exact transition comparisons, overloaded-host failures and the still-unavailable physical lower-end device. Whole-game tail improvements remain unqualified.
+
+[Eight-fire 3× evidence](verification/eight-fire-three-times.md) records current full-resolution experiments, shadow draw batching, real PostgreSQL/UI progress and visual/resource checks. It corrects the earlier eight-fire capacity interpretation and keeps physical low-end and real-model qualification separate.
+
+[Full-HD evidence](verification/shadow-1080p.md) records actual 1920×1080 output, sustained moving renderer and production-UI workloads, grass instancing, selected-light occlusion, near-plane picking and thin receiver/cutaway checks. Typical local hardware timings improve with bounded fire counts; the [shader preparation follow-up](verification/shadow-1080p.md#shader-preparation-follow-up) addresses the attributed quality-switch hitch, while cold loading, other UI frame stalls and physical low-end hardware qualification remain open. The supplied real-model pilot is now recorded separately in [mercenary evidence](verification/mercenary-default.md); the older sprite workload does not qualify its added cost.
+
+[Shadow-quality evidence](verification/shadow-quality.md) records device-local Economy filtering and bounded alpha-derived sprite volume, matched Metal/SwiftShader graphics measurements with explicit hardware limits, the PlayCanvas day/night improvements, the clock-driven sun sweep and pause/load/camera checks, and the follow-up replacing misaligned compound proxies with alpha silhouettes, contact/picking and self-shadow pixel comparisons, two focused browser checks, appearance/source/resource lifecycle assertions and historical 7/127-entity and current 6/126-entity renderer samples on Apple M1 Pro. It distinguishes the delivered approximation from remaining art, receiver-extreme and low-end-device qualification.
+
 ## Foundations and integration history
 
 - [Foundations 1–5](verification/foundations-1-5.md): implementation evidence and follow-up review.

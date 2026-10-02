@@ -1,0 +1,21 @@
+{
+  "purpose": "Trusted default-scene NPC art pilot; not a production character family",
+  "source": "Local Peacock Mercenary study, owner-selected 2026-09-28",
+  "provenance": "Meshy body/rig/walk; authored cape and runtime code; AI-assisted texture repaint. Reference design is not bundled or licensed by this derivative.",
+  "clips": ["Idle", "Walk"],
+  "sourceSha256": {
+    "mercenary.glb": "56805f557675bc87dce8512203dcd925fa63a6b6e725706f6e985114173ea9bd",
+    "mercenary-walk.glb": "f4ac53d1425ca772232f463cdb9a493b4faf002a23937097ff1432b78cef1472",
+    "cloth-rest.json": "0dbd5e5fd89fa13b21eb95df314014f9dd680bb7395902aa22f502865e168f9f"
+  },
+  "sha256": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+  "bytes": 14391244,
+  "joints": 34,
+  "triangles": 42426,
+  "remaining": [
+    "Production rights/style acceptance",
+    "Modular equipment",
+    "Unsupported action/pose clips",
+    "Crowd and low-end GPU qualification"
+  ]
+}

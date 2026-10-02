@@ -155,7 +155,7 @@ export interface EntityView {
   position: Position;
   supportSurfaceId: string | null;
   heading: number;
-  appearance: 'sprite' | 'crate-mesh';
+  appearance: 'sprite' | 'crate-mesh' | 'mercenary-model';
   radius: number;
   status: string;
   description?: string;
@@ -357,6 +357,7 @@ export interface GameView {
     offsetHours: number;
   };
   player: {
+    appearance?: EntityView['appearance'];
     participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
     id: string;

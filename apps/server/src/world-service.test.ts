@@ -321,6 +321,7 @@ describe('public projection', () => {
     const { service, store } = await setup();
     await activate(service);
     await editWorld(service, (world) => {
+      // Authored residents can start without goals; this privacy fixture supplies its own.
       world.entities[NPC_ID]!.actor!.agency = seedAgency(['secret-npc-intention']);
       world.memories[NPC_ID]!.push({
         id: 'private-memory',

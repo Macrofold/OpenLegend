@@ -2,9 +2,18 @@ import { useState } from 'react';
 import type { ApiResult, GameView, PlayerPreferencePatch } from '@open-legend/protocol';
 import { post } from '../api';
 import { Section } from '../design-system/components';
+import type { ShadowQuality } from '../world-renderer';
 
-/** Presentation preferences are player-owned, not mutable world laws. */
-export function WorldVisualSettings({ view }: { view: GameView }) {
+/** Visibility preferences are player-owned; graphics quality is device-local. */
+export function WorldVisualSettings({
+  view,
+  shadowQuality,
+  setShadowQuality,
+}: {
+  view: GameView;
+  shadowQuality: ShadowQuality;
+  setShadowQuality(quality: ShadowQuality): void;
+}) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const prefs = view.profile.preferences;
@@ -22,6 +31,21 @@ export function WorldVisualSettings({ view }: { view: GameView }) {
   }
   return (
     <Section title="World visibility">
+      <label>
+        Shadow quality
+        <select
+          aria-label="Shadow quality"
+          value={shadowQuality}
+          onChange={(e) => setShadowQuality(e.target.value === 'economy' ? 'economy' : 'detailed')}
+        >
+          <option value="detailed">Detailed</option>
+          <option value="economy">Economy</option>
+        </select>
+      </label>
+      <p>
+        Detailed lights up to eight nearby fires; Economy lights up to two with simpler shadows.
+        Both use full resolution. Saved on this device.
+      </p>
       <label>
         See-through reveal
         <select

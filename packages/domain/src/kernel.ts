@@ -1519,7 +1519,11 @@ function executeCommandNative(
       ) ||
       action.type === 'tend-fire'
     ) {
-      const error = approach(world, actor, action);
+      // Scheduled-command setup records action/activity bookkeeping, not body or
+      // geometry changes. Route admission reads the unchanged input, avoiding draft copies
+      // and preserving immutable spatial-query reuse. Effects still use the draft.
+      // docs/architecture.md#action-discovery-and-player-preferences
+      const error = approach(original, source, action);
       if (error) return { world: original, events: [], outcome: error };
     }
     if (action.stage === 'working' && action.type !== 'follow') {

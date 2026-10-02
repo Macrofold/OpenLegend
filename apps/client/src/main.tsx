@@ -28,7 +28,7 @@ import {
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
-import type { ScreenRect, WorldRenderer } from './world-renderer';
+import type { ScreenRect, WorldRenderer, ShadowQuality } from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
 import { WorldHover } from './ui/world-hover';
 import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
@@ -149,6 +149,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     'open-legend:reduce-motion',
     false,
     (v): v is boolean => typeof v === 'boolean',
+  );
+  const [shadowQuality, setShadowQuality] = useLocal<ShadowQuality>(
+    'open-legend:shadow-quality',
+    'detailed',
+    (v): v is ShadowQuality => v === 'detailed' || v === 'economy',
   );
   const [captionsEnabled, setCaptionsEnabled] = useLocal(
     'open-legend:captions',
@@ -474,13 +479,14 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                 : { projection, levelId, rotationLocked, following },
             ),
         });
+      scene.current.setShadowQuality(shadowQuality);
       scene.current.setView(view);
     } catch (e) {
       scene.current?.destroy();
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError]);
+  }, [view, sceneError, shadowQuality]);
   useEffect(() => {
     scene.current?.setCaptionOptions({
       enabled: captionsEnabled,
@@ -858,7 +864,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
               </Button>
             )}
             <InventionSettings view={view} />
-            <WorldVisualSettings view={view} />
+            <WorldVisualSettings
+              view={view}
+              shadowQuality={shadowQuality}
+              setShadowQuality={setShadowQuality}
+            />
             <Section title="Appearance">
               <label>
                 World theme

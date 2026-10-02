@@ -2,7 +2,7 @@
 
 [Feature](../projects/3d-pixel-art-feature-spec.md) · [Technical design](../projects/3d-pixel-art-tech-design.md) · [Implementation](../maintainers/3d-pixel-art.md) · [Inventory rules](README.md)
 
-**Every A3D value below is Proposed, not current runtime behavior or measured capacity.** These are conservative starting envelopes for the first controlled asset pipeline. They must be implemented, instrumented, and qualified before enabling production generation. Restrictiveness describes the proposed envelope, not confidence, correctness, security, or image quality. Values are operator/family/device profile data where appropriate, not scattered literals or new universal world laws.
+**A3D01–A3D14 are Proposed, not current runtime behavior or measured capacity. A3D15 records the separate delivered bundled-model pilot.** These are conservative starting envelopes for the first controlled asset pipeline. They must be implemented, instrumented, and qualified before enabling production generation. Restrictiveness describes the proposed envelope, not confidence, correctness, security, or image quality. Values are operator/family/device profile data where appropriate, not scattered literals or new universal world laws.
 
 Existing owners retain [VP01 lighting/reveal](interface.md#vp01), [AI execution and money](ai-execution.md), [invention authority](inventions.md), [physical geometry](spatial.md), [object state](objects.md), and [persistence/retention](persistence.md). This document does not change those values. Exact provider restrictions are additional constraints checked at dispatch, not substitutes for local enforcement.
 
@@ -91,6 +91,14 @@ Unpinned rejected/unclaimed source candidates are eligible for cleanup after **2
 **Proposed — no separate limit · Restrictiveness: Liberal.** Do not add a new global number-of-inventions, number-of-objects, or lifetime-published-assets cap solely for 3D art. Existing mechanics/data limits and A3D's bytes, work, scope and retention envelopes still apply. This is not an unlimited-storage or unlimited-population claim; metadata growth must remain within the existing database/operational budgets before deployment.
 
 **Why / boundary:** Budget the resources that grow instead of forcing every world into a fixed art catalogue. Reuse and pinned immutable variants should remain valuable as a world develops. Owner: V3D07/V3D10.
+
+## A3D15 — Bundled mercenary pilot
+
+**Current · Restrictiveness: Medium.** One trusted bundled model family, with Idle/Walk clips and a 34-joint skeleton. The source package contains 42,426 triangles and 14,391,244 bytes; its original cape surfaces are replaced by four runtime cloth patches. Surface paint is prepared once at up to 256×256 with a 29-color palette. Character output is fixed at 128×192 in a 2.8 m viewing window centered 0.95 m above the foot, using nearest color/depth samples. This is an asset-specific presentation profile, not a universal character size or general import allowance.
+
+Cape simulation uses 366 particles, eight constraint iterations, 60 Hz steps and at most three steps per displayed frame. Sixty initial settling steps are distributed three per frame before the model replaces its sprite. A displacement over 1.5 m resets contact rather than stretching cloth across a teleport. Dead/horizontal/unsupported action states and loading failures use the existing sprite. Exact skinned-silhouette picking, modular equipment, cloth self-collision and broader pose coverage are not delivered. Camera/model targets and cloth are per instance; GLB/materials are shared by the scene owner. There is no qualified crowd population limit yet.
+
+**Why / boundary:** Preserve animated dimensionality while keeping zoom from exposing progressively finer surface detail. Fixed sampling bounds color work; actual geometry still costs skinning and shadow work. The [measured pilot](../verification/mercenary-default.md) is not a 60 FPS crowd or physical low-end guarantee. Expand through V3D01/V3D05/V3D11 when asset LOD, pose/equipment coverage and multiple clothed characters have been qualified. The owner superseded the earlier opt-in player replacement with a default separate NPC; no save migration or generated-art pipeline is implied.
 
 ## Non-tunable boundaries
 

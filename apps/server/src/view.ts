@@ -736,6 +736,7 @@ export async function projectView(
       offsetHours: world.statusEffectPolicy.clockOffsetHours,
     },
     player: {
+      appearance: player.appearance ?? 'sprite',
       participation: actor.participation?.phase ?? 'active',
       id: player.id,
       name: player.name,

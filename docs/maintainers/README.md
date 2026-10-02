@@ -6,7 +6,7 @@
 
 [SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.
 
-[Progressive 3D pixel art (V3D01–V3D12)](3d-pixel-art.md) tracks the proposed hybrid representation, modular appearance, and 2D-first/3D-later art pipeline beneath the existing SW/INV/PO owners. Start with the [feature specification](../projects/3d-pixel-art-feature-spec.md) and [technical design](../projects/3d-pixel-art-tech-design.md); [A3D](../limits/3d-pixel-art.md) contains proposed asset-work envelopes. This is a design package, not delivered runtime behavior or a replacement of the accepted art direction.
+[Progressive 3D pixel art (V3D01–V3D12)](3d-pixel-art.md) tracks the proposed hybrid representation, modular appearance, and 2D-first/3D-later art pipeline beneath the existing SW/INV/PO owners. Start with the [feature specification](../projects/3d-pixel-art-feature-spec.md) and [technical design](../projects/3d-pixel-art-tech-design.md); [A3D](../limits/3d-pixel-art.md) contains proposed asset-work envelopes. The bundled mercenary pilot is implemented; the broader pipeline remains proposed and does not replace the accepted art direction. [Art-direction progress](art-direction.md) indexes individual studies and their exact local source files, starting with the [mercenary](art/mercenary.md).
 
 This page is the master navigation index for active implementation work.
 

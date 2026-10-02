@@ -104,6 +104,8 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     expect(errors).toEqual([]);
     expect(paid).toEqual([]);
   } finally {
+    // Stop the browser's SSE/reconnect requests before closing its fixture server.
+    await page.close();
     await game.close();
   }
 });

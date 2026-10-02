@@ -1,5 +1,6 @@
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
 import type { CameraCommand, CameraState } from './world-camera';
+export type ShadowQuality = 'detailed' | 'economy';
 export interface ScreenPoint {
   x: number;
   y: number;
@@ -29,6 +30,7 @@ export interface SpeechCaptionOptions {
   occlusions?: readonly ScreenRect[];
 }
 export interface WorldRenderer {
+  setShadowQuality(quality: ShadowQuality): void;
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;
   setView(view: GameView): void;

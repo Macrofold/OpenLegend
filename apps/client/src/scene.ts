@@ -1,8 +1,18 @@
 import { itemPileArt } from './art';
-import { configureBillboard, billboardBodyPoint, cameraDepthFraction } from './billboard';
+import {
+  configureBillboard,
+  billboardBodyPoint,
+  instanceBillboards,
+  cameraDepthFraction,
+  spritePadding,
+  updateBillboardBounds,
+} from './billboard';
 import { interpolateVisualFoot } from './world-motion';
 import { WorldPresentation, lightSprite, type RevealBinding } from './world-presentation';
+import { createSpriteRelief } from './sprite-relief';
 import * as pc from 'playcanvas';
+import { ShadowMaterial } from './shadow-material';
+import { SpriteShadowBatches } from './shadow-batches';
 import { StatusIndicators } from './status-indicators';
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
 import {
@@ -24,9 +34,15 @@ import {
   type CameraCommand,
   type CameraState,
 } from './world-camera';
-import type { SceneCallbacks, WorldRenderer, SpeechCaptionOptions } from './world-renderer';
+import type {
+  SceneCallbacks,
+  WorldRenderer,
+  SpeechCaptionOptions,
+  ShadowQuality,
+} from './world-renderer';
 import { birdArt, surfaceMesh, surfaceSeamsMesh } from './spatial-art';
 import { playerEntity } from './entity-view';
+import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { CharacterStatuses } from './character-status';
 import { SpeechCaptions, type CaptionPoint } from './speech-captions';
@@ -42,6 +58,7 @@ import {
 } from './art';
 
 interface RenderedEntity {
+  model?: MercenaryActor;
   departedAt?: number;
   observed: boolean;
   card: boolean;
@@ -49,7 +66,7 @@ interface RenderedEntity {
   assetKey: string;
   root: pc.Entity;
   sprite: pc.Entity;
-  shadow: pc.Entity;
+  meshCasters: pc.MeshInstance[];
   reveal: RevealBinding;
   renderedSupport: string | null;
   view: EntityView;
@@ -66,6 +83,7 @@ interface RenderedEntity {
 export class WildernessScene implements WorldRenderer {
   readonly app: pc.Application;
   private camera!: pc.Entity;
+  private sun!: pc.Entity;
   private landscape!: pc.Entity;
   private actors = new Map<string, RenderedEntity>();
   private knownEvents = new Set<string>();
@@ -77,12 +95,28 @@ export class WildernessScene implements WorldRenderer {
   private cutaways = new Set<string>();
   private cards = new Map<
     pc.Entity,
-    { x: number; y: number; z: number; height: number; horizontalHeight?: number }
+    {
+      x: number;
+      y: number;
+      z: number;
+      height: number;
+      horizontalHeight?: number;
+      padding: ReturnType<typeof spritePadding>;
+      depth: number;
+    }
   >();
   private landscapeCards = new Set<pc.Entity>();
+  private landscapeBuffers: pc.VertexBuffer[] = [];
+  private shadowBatches!: SpriteShadowBatches;
+  private reliefMeshes = new Map<pc.Texture, ReturnType<typeof createSpriteRelief>>();
   private appearanceAssets = new Map<
     string,
-    { materials: pc.StandardMaterial[]; images: ImageData[]; refs: number }
+    {
+      materials: pc.StandardMaterial[];
+      images: ImageData[];
+      padding: ReturnType<typeof spritePadding>;
+      refs: number;
+    }
   >();
   private landscapeMaterials: pc.StandardMaterial[] = [];
   private selected: string | null = null;
@@ -119,6 +153,7 @@ export class WildernessScene implements WorldRenderer {
   private destroyed = false;
   private readyRequested = false;
   private presentation!: WorldPresentation;
+  private mercenary?: MercenaryModels;
   private hoverPoint: { x: number; y: number } | null = null;
   private animations: Array<{ y: number; entity: pc.Entity; x: number; z: number; phase: number }> =
     [];
@@ -164,19 +199,28 @@ export class WildernessScene implements WorldRenderer {
         fov: CAMERA_FOV_DEGREES,
       });
       this.app.root.addChild(this.camera);
-      const sun = new pc.Entity('Afternoon sun', this.app);
+      const sun = (this.sun = new pc.Entity('Sun', this.app));
+      sun.enabled = false;
       sun.addComponent('light', {
         type: 'directional',
         color: new pc.Color(1, 0.91, 0.72),
-        intensity: 1.1,
+        intensity: 0,
         castShadows: true,
-        shadowResolution: 2048,
         shadowDistance: 40,
         normalOffsetBias: 0.04,
       });
-      sun.setEulerAngles(52, -32, 0);
       this.app.root.addChild(sun);
       this.presentation = new WorldPresentation(this.app, this.camera, sun);
+      this.mercenary = new MercenaryModels(
+        this.app,
+        this.presentation,
+        this.camera,
+        this.sun.light!.light,
+      );
+      this.shadowBatches = new SpriteShadowBatches(
+        this.app.graphicsDevice,
+        this.app.scene.layers.getLayerById(pc.LAYERID_WORLD)!,
+      );
       this.app.root.addChild(this.landscape);
       this.marker = this.ring('#e3ca87', 'Selection');
       this.destination = this.ring('#cfdfb6', 'Destination');
@@ -206,6 +250,10 @@ export class WildernessScene implements WorldRenderer {
     }
   }
 
+  setShadowQuality(quality: ShadowQuality): void {
+    if (this.presentation.setShadowQuality(quality) && this.view)
+      this.presentation.lighting(this.view);
+  }
   setView(view: GameView): void {
     this.view = view;
     const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
@@ -260,10 +308,7 @@ export class WildernessScene implements WorldRenderer {
         }
         // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
         // an unobserved ghost has no interaction or current-state knowledge.
-        if (departed.has(id)) {
-          entry.departedAt = this.elapsed;
-          entry.shadow.enabled = false;
-        }
+        if (departed.has(id)) entry.departedAt = this.elapsed;
         entry.observed = false;
         entry.root.setPosition(entry.view.position.x, entry.view.position.y, entry.view.position.z);
       }
@@ -274,7 +319,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -410,6 +455,8 @@ export class WildernessScene implements WorldRenderer {
         !support ||
         support.levelId === level.id ||
         entry.view.id === this.view!.player.id;
+      this.updateModelVisibility(entry);
+      for (const mesh of entry.meshCasters) mesh.castShadow = entry.observed && entry.root.enabled;
       for (const mesh of entry.sprite.render?.meshInstances ?? [])
         mesh.setParameter(
           'material_opacity',
@@ -432,7 +479,7 @@ export class WildernessScene implements WorldRenderer {
       entry.root
         .getPosition()
         .clone()
-        .add(new pc.Vec3(0, entry.height + 0.1, 0)),
+        .add(new pc.Vec3(0, (entry.model?.visible ? entry.model.height : entry.height) + 0.1, 0)),
     );
     return { x: point.x, y: point.y };
   }
@@ -441,7 +488,7 @@ export class WildernessScene implements WorldRenderer {
   private statusAnchor(id: string): { x: number; y: number } | null {
     const entry = this.actors.get(id);
     if (!entry || !this.identifiable(entry)) return null;
-    if (!entry.card) return this.screenPosition(id);
+    if (!entry.card || entry.model?.visible) return this.screenPosition(id);
     const transform = entry.sprite.getWorldTransform();
     const points = [
       new pc.Vec3(-0.5, 0, -0.5),
@@ -532,8 +579,8 @@ export class WildernessScene implements WorldRenderer {
     // Only resize the rendering buffer so viewport changes cannot drift or crop.
     this.app.setCanvasResolution(
       pc.RESOLUTION_FIXED,
-      Math.max(1, Math.round(rect.width * 0.8)),
-      Math.max(1, Math.round(rect.height * 0.8)),
+      Math.max(1, Math.round(rect.width)),
+      Math.max(1, Math.round(rect.height)),
     );
   }
   private texture(source: HTMLCanvasElement): pc.Texture {
@@ -556,7 +603,7 @@ export class WildernessScene implements WorldRenderer {
     transparent = false,
     unlit = false,
   ): pc.StandardMaterial {
-    const material = new pc.StandardMaterial();
+    const material = new ShadowMaterial(this.sun.light!.light);
     material.diffuse.fromString(color);
     material.useMetalness = false;
     material.shininess = 0;
@@ -617,38 +664,90 @@ export class WildernessScene implements WorldRenderer {
     z: number,
     width: number,
     height: number,
+    castShadows = false,
+    padding?: ReturnType<typeof spritePadding>,
   ): pc.Entity {
     const sprite = this.primitive(name, 'plane', material, parent, x, y, z, width, 1, height);
-    this.cards.set(sprite, { x, y, z, height });
+    const texture = material.diffuseMap;
+    if (!padding && texture) {
+      let image = this.alphaMasks.get(texture);
+      if (!image) {
+        const source = texture.getSource();
+        if (source instanceof HTMLCanvasElement) {
+          image = source.getContext('2d')!.getImageData(0, 0, source.width, source.height);
+          this.alphaMasks.set(texture, image);
+        }
+      }
+      padding = spritePadding(image ? [image] : []);
+    }
+    this.cards.set(sprite, { x, y, z, height, padding: padding ?? spritePadding([]), depth: 0 });
+    // Relief depth is normalized to artwork width; facing flips never reverse it.
+    sprite.setLocalScale(width, width, height);
+    sprite.render!.castShadows = castShadows;
     configureBillboard(material);
-    if (material.useLighting) lightSprite(material);
+    if (material.useLighting) lightSprite(material, this.app.graphicsDevice);
     sprite.render!.meshInstances[0]!.setParameter('ol_spriteSize', [width, height]);
     if (parent === this.landscape) this.landscapeCards.add(sprite);
+    if (castShadows) this.setSpriteRelief(sprite, material);
     this.orientCard(sprite);
     return sprite;
+  }
+  private setSpriteRelief(
+    sprite: pc.Entity,
+    material: pc.StandardMaterial,
+    image?: ImageData,
+  ): void {
+    const texture = material.diffuseMap;
+    if (!texture) return;
+    let relief = this.reliefMeshes.get(texture);
+    if (!relief) {
+      image ??= this.alphaMasks.get(texture);
+      if (!image) {
+        const source = texture.getSource();
+        if (!(source instanceof HTMLCanvasElement)) return;
+        image = source.getContext('2d')!.getImageData(0, 0, source.width, source.height);
+        this.alphaMasks.set(texture, image);
+      }
+      relief = createSpriteRelief(this.app.graphicsDevice, image);
+      // Retain inactive animation frames until their texture/appearance is released.
+      relief.mesh.incRefCount();
+      this.reliefMeshes.set(texture, relief);
+    }
+    const mesh = sprite.render!.meshInstances[0]!;
+    if (mesh.mesh === relief.mesh) return;
+    mesh.mesh = relief.mesh;
+    this.cards.get(sprite)!.depth = relief.depth;
+    this.orientCard(sprite);
   }
   private orientCard(sprite: pc.Entity, bob = 0): void {
     const binding = this.cards.get(sprite);
     if (!binding) return;
     // Full camera-facing cards retain their silhouette at every pitch. Body depth is
-    // supplied by the shared billboard shader; collision and shadow proxies never rotate.
+    // supplied by the shared billboard shader, including alpha-tested shadow casting.
     sprite.setRotation(this.camera.getRotation());
     sprite.rotateLocal(90, 0, 0);
     if (binding.horizontalHeight !== undefined) sprite.rotateLocal(0, 90, 0);
     const height = binding.horizontalHeight ?? binding.height;
+    const padding =
+      binding.horizontalHeight === undefined
+        ? binding.padding.bottom
+        : sprite.getLocalScale().x < 0
+          ? binding.padding.right
+          : binding.padding.left;
+    const center = height * (0.5 - padding) + bob;
     const up = this.camera.up;
     sprite.setLocalPosition(
-      binding.x + up.x * (height / 2 + bob),
-      binding.y + up.y * (height / 2 + bob),
-      binding.z + up.z * (height / 2 + bob),
+      binding.x + up.x * center,
+      binding.y + up.y * center,
+      binding.z + up.z * center,
     );
-    const foot = sprite.parent!.getPosition();
+    const foot = sprite
+      .parent!.getPosition()
+      .clone()
+      .add(new pc.Vec3(binding.x, binding.y, binding.z));
+    updateBillboardBounds(sprite, foot, this.camera.right, up, binding.depth);
     for (const mi of sprite.render?.meshInstances ?? [])
-      mi.setParameter('ol_spriteFoot', [
-        foot.x + binding.x,
-        foot.y + binding.y,
-        foot.z + binding.z,
-      ]);
+      mi.setParameter('ol_spriteFoot', [foot.x, foot.y, foot.z]);
   }
   private ring(color: string, name: string): pc.Entity {
     const source = document.createElement('canvas');
@@ -671,9 +770,16 @@ export class WildernessScene implements WorldRenderer {
     return entity;
   }
   private releaseMaterial(material: pc.StandardMaterial): void {
+    this.shadowBatches.releaseMaterial(material);
     this.presentation?.releaseMaterial(material);
     const texture = material.diffuseMap;
     if (texture) {
+      const relief = this.reliefMeshes.get(texture);
+      if (relief) {
+        relief.mesh.decRefCount();
+        if (relief.mesh.refCount === 0) relief.mesh.destroy();
+        this.reliefMeshes.delete(texture);
+      }
       texture.destroy();
       this.textures = this.textures.filter((entry) => entry !== texture);
     }
@@ -681,6 +787,7 @@ export class WildernessScene implements WorldRenderer {
     this.materials = this.materials.filter((entry) => entry !== material);
   }
   private releaseEntity(entry: RenderedEntity): void {
+    entry.model?.destroy();
     this.cards.delete(entry.sprite);
     this.presentation.removeReveal(entry.reveal);
     entry.root.destroy();
@@ -700,6 +807,8 @@ export class WildernessScene implements WorldRenderer {
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
       crate = view.appearance === 'crate-mesh';
+    // Identical procedural inputs produce identical artwork, regardless of identity.
+    const resourceSeed = view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0);
     const key =
       view.kind === 'item-pile'
         ? `pile:${view.contents
@@ -714,7 +823,7 @@ export class WildernessScene implements WorldRenderer {
               ? `animal:${view.subtype}:${dead}`
               : view.kind === 'station'
                 ? 'fire'
-                : `resource:${view.subtype}:${view.id}`;
+                : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
     let width =
       view.kind === 'item-pile'
         ? 1
@@ -766,38 +875,28 @@ export class WildernessScene implements WorldRenderer {
                   )
                 : view.kind === 'station'
                   ? [0, 1, 2].map(fireArt)
-                  : [
-                      resourceArt(
-                        view.subtype + view.name,
-                        view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0),
-                      ),
-                    ];
+                  : [resourceArt(view.subtype + view.name, resourceSeed)];
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => {
             const m = this.material('#ffffff', source, true, view.kind === 'station');
             configureBillboard(m);
-            if (m.useLighting) lightSprite(m);
+            if (m.useLighting) lightSprite(m, this.app.graphicsDevice);
             return m;
           });
       // Read alpha once while creating an asset, not a Canvas readback on each hover frame.
+      const pixels = images.map((image) =>
+        image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
+      );
       asset = {
-        images: images.map((image) =>
-          image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
-        ),
+        images: pixels,
         materials,
+        padding: spritePadding(pixels),
         refs: 0,
       };
       this.appearanceAssets.set(key, asset);
     }
     asset.refs++;
-    // Actual shadow maps project onto every receiver; no center-point receiver snapping.
-    const shadow = this.presentation.shadowProxy(
-      root,
-      Math.max(0.25, view.radius * 1.7),
-      Math.min(height, view.kind === 'actor' ? 1.75 : height * 0.8),
-    );
-    this.presentation.setShadowVisible(shadow, !crate && view.kind !== 'station');
     let sprite: pc.Entity;
     if (crate) {
       sprite = this.primitive(
@@ -837,12 +936,27 @@ export class WildernessScene implements WorldRenderer {
         0.035,
         0.08,
       );
-    } else sprite = this.billboard(view.name, asset.materials[0]!, root, 0, 0.04, 0, width, height);
+    } else
+      sprite = this.billboard(
+        view.name,
+        asset.materials[0]!,
+        root,
+        0,
+        0,
+        0,
+        width,
+        height,
+        view.kind !== 'station',
+        asset.padding,
+      );
     return {
+      model: view.appearance === 'mercenary-model' ? this.mercenary?.create(root) : undefined,
       root,
       sprite,
-      shadow,
-      reveal: this.presentation.addReveal(sprite, asset.materials[0]!),
+      meshCasters: (root.findComponents('render') as pc.RenderComponent[])
+        .flatMap((render) => render.meshInstances)
+        .filter((mesh) => mesh.castShadow),
+      reveal: this.presentation.addReveal(sprite, asset.materials[0]!, !crate),
       renderedSupport: view.supportSurfaceId,
       view,
       materials: asset.materials,
@@ -859,6 +973,8 @@ export class WildernessScene implements WorldRenderer {
   }
   private buildLandscape(map: GameView['map']): void {
     this.landscape.destroy();
+    for (const buffer of this.landscapeBuffers) buffer.destroy();
+    this.landscapeBuffers = [];
     for (const card of this.landscapeCards) this.cards.delete(card);
     this.landscapeCards.clear();
     for (const material of this.landscapeMaterials) this.releaseMaterial(material);
@@ -1006,10 +1122,6 @@ export class WildernessScene implements WorldRenderer {
         z = map.height + 2 + rng() * 5;
       }
       const h = 5.7 + rng() * 3;
-      const shadowRoot = new pc.Entity('Tree shadow anchor', this.app);
-      this.landscape.addChild(shadowRoot);
-      shadowRoot.setLocalPosition(x, 0, z);
-      this.presentation.shadowProxy(shadowRoot, h * 0.65, h, h * 0.55);
       this.billboard(
         'Woodland canopy',
         trees[i % trees.length]!,
@@ -1019,16 +1131,36 @@ export class WildernessScene implements WorldRenderer {
         z,
         h * 0.83,
         h,
+        true,
       );
     }
     // Ground-height texture detail is decorative and does not obstruct movement.
-    const tuft = this.material('#ffffff', resourceArt('grass', map.seed), true);
+    const grassImage = resourceArt('grass', map.seed);
+    const tuft = this.material('#ffffff', grassImage, true);
+    const grassTransforms: number[] = [];
     for (let i = 0; i < 210; i++) {
       const x = rng() * (map.width - 1),
         z = rng() * (map.height - 1);
       if (map.tiles[Math.round(z)]?.[Math.round(x)] !== 'grass') continue;
       const h = 0.16 + rng() * 0.28;
-      this.billboard('Meadow grass', tuft, this.landscape, x, 0, z, h * 1.5, h);
+      const width = h * 1.5;
+      grassTransforms.push(width, 0, 0, 0, 0, width, 0, 0, 0, 0, h, 0, x, 0, z, 1);
+    }
+    if (grassTransforms.length) {
+      const padding = spritePadding([
+        grassImage.getContext('2d')!.getImageData(0, 0, grassImage.width, grassImage.height),
+      ]);
+      const batch = instanceBillboards(
+        this.app.graphicsDevice,
+        tuft,
+        new Float32Array(grassTransforms),
+        padding.bottom,
+      );
+      lightSprite(tuft, this.app.graphicsDevice);
+      this.landscapeBuffers.push(batch.buffer);
+      const node = new pc.Entity('Meadow grass', this.app);
+      node.addComponent('render', { meshInstances: [batch.instance], castShadows: false });
+      this.landscape.addChild(node);
     }
     const waterCanvas = document.createElement('canvas');
     waterCanvas.width = 32;
@@ -1095,7 +1227,6 @@ export class WildernessScene implements WorldRenderer {
           mesh.setParameter('material_opacity', opacity);
       }
       if (!entry.observed) {
-        this.presentation.setShadowVisible(entry.shadow, false);
         this.presentation.updateReveal(
           entry.reveal,
           entry.materials[Math.max(0, entry.lastFrame) % entry.materials.length]!,
@@ -1133,12 +1264,15 @@ export class WildernessScene implements WorldRenderer {
       }
       const positionChanged = position.distance(entry.root.getPosition()) > 1e-6;
       if (positionChanged) entry.root.setPosition(position);
-      this.presentation.setShadowVisible(
-        entry.shadow,
-        entry.root.enabled &&
-          entry.view.appearance !== 'crate-mesh' &&
-          entry.view.kind !== 'station',
+      this.updateModelVisibility(entry);
+      entry.model?.update(
+        entry.view,
+        dt,
+        moving,
+        !!this.view?.clock.paused || !!this.view?.clock.preparingNavigation,
+        this.revealStrength(entry),
       );
+      if (entry.model) entry.sprite.enabled = !entry.model.visible;
       const punch = entry.view.actionAnimation;
       let punchFrame = 0;
       if (
@@ -1178,13 +1312,17 @@ export class WildernessScene implements WorldRenderer {
           ? 1 + (Math.floor(this.elapsed * (entry.view.kind === 'station' ? 4 : 6)) % 2)
           : 0);
       if (frame !== entry.lastFrame) {
-        entry.sprite.render!.material = entry.materials[frame % entry.materials.length]!;
+        const material = entry.materials[frame % entry.materials.length]!;
+        entry.sprite.render!.material = material;
+        if (entry.card && entry.view.kind !== 'station')
+          this.setSpriteRelief(entry.sprite, material, entry.images[frame % entry.images.length]);
         entry.lastFrame = frame;
       }
       if (entry.card) {
         if (entry.facing !== entry.scaleFacing) {
-          entry.sprite.setLocalScale(entry.width * entry.facing, 1, entry.height);
+          entry.sprite.setLocalScale(entry.width * entry.facing, entry.width, entry.height);
           entry.scaleFacing = entry.facing;
+          this.orientCard(entry.sprite);
         }
         if (moving || entry.lastMoving)
           this.orientCard(
@@ -1199,7 +1337,7 @@ export class WildernessScene implements WorldRenderer {
         if (positionChanged) {
           const p = entry.root.getPosition();
           for (const mi of entry.sprite.render!.meshInstances)
-            mi.setParameter('ol_spriteFoot', [p.x, p.y + 0.04, p.z]);
+            mi.setParameter('ol_spriteFoot', [p.x, p.y, p.z]);
         }
       }
       this.presentation.updateReveal(
@@ -1210,7 +1348,7 @@ export class WildernessScene implements WorldRenderer {
         this.cards.get(entry.sprite)?.horizontalHeight ?? entry.height,
         this.revealStrength(entry),
         dt,
-        entry.observed && entry.root.enabled,
+        entry.observed && entry.root.enabled && !entry.model?.visible,
       );
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
@@ -1258,11 +1396,17 @@ export class WildernessScene implements WorldRenderer {
       const entry = this.actors.get(id);
       if (!entry || !this.identifiable(entry)) return null;
       // Top of the original sprite remains its head after the horizontal rotation.
-      const head = entry.sprite.getWorldTransform().transformPoint(new pc.Vec3(0, 0, -0.4));
+      const head = entry.model?.visible
+        ? entry.root
+            .getPosition()
+            .clone()
+            .add(new pc.Vec3(0, entry.model.height * 0.92, 0))
+        : entry.sprite.getWorldTransform().transformPoint(new pc.Vec3(0, 0, -0.4));
       const point = this.camera.camera!.worldToScreen(head);
       return { x: point.x, y: point.y };
     }, !!this.view?.clock.paused);
     this.updateSpeech();
+    this.shadowBatches.sync(this.cards.keys());
     // Reevaluate stationary pointers as actors move or the camera changes.
     if (this.hoverPoint && !this.drag && this.elapsed >= this.nextHoverAt) {
       this.nextHoverAt = this.elapsed + 0.05;
@@ -1297,6 +1441,17 @@ export class WildernessScene implements WorldRenderer {
       Math.max(0, Math.min(1, (radius - d) / Math.min(1.5, radius * 0.3)))
     );
   }
+  private updateModelVisibility(entry: RenderedEntity): void {
+    if (!entry.model) return;
+    const supported =
+      entry.observed &&
+      entry.root.enabled &&
+      entry.view.status !== 'Dead' &&
+      !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
+      !entry.view.actionAnimation;
+    entry.model.setVisible(supported);
+    entry.sprite.enabled = !entry.model.visible;
+  }
   private identifiable(entry: RenderedEntity): boolean {
     const player = this.view && this.actors.get(this.view.player.id);
     if (!entry.observed || !entry.root.enabled || !player || !this.view) return false;
@@ -1323,9 +1478,10 @@ export class WildernessScene implements WorldRenderer {
     this.publishHover(null, { x: 0, y: 0 });
   };
   private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
+    const camera = this.camera.camera!;
     return {
-      from: this.camera.camera!.screenToWorld(x, y, 0.1),
-      to: this.camera.camera!.screenToWorld(x, y, 256),
+      from: camera.screenToWorld(x, y, camera.nearClip),
+      to: camera.screenToWorld(x, y, camera.farClip),
     };
   }
   private cardHit(
@@ -1359,7 +1515,10 @@ export class WildernessScene implements WorldRenderer {
       this.camera.right,
       this.camera.up,
     );
-    return { point, fraction: cameraDepthFraction(point, ray.from, ray.to, this.camera.forward) };
+    const fraction = cameraDepthFraction(point, ray.from, ray.to, this.camera.forward);
+    // The displayed card can intersect a ray while its upright body is clipped.
+    // Match rendered depth before either target selection or canopy obstruction.
+    return fraction >= 0 && fraction <= 1 ? { point, fraction } : null;
   }
   private readonly alphaMasks = new WeakMap<pc.Texture, ImageData>();
   private pick(x: number, y: number): EntityView | null {
@@ -1390,7 +1549,9 @@ export class WildernessScene implements WorldRenderer {
       if (!this.identifiable(entry)) continue;
       let fraction: number | null = null,
         bodyPoint: pc.Vec3 | undefined;
-      if (!entry.card) {
+      if (entry.model?.visible) {
+        fraction = entry.model.hit(ray.from, ray.to);
+      } else if (!entry.card) {
         const p = entry.root.getPosition();
         fraction = intersectBox(ray.from, ray.to, {
           min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
@@ -1407,20 +1568,22 @@ export class WildernessScene implements WorldRenderer {
         nearest = fraction;
         best = entry.view;
       } else if (
-        entry.reveal.strength > 0.05 &&
+        (entry.model?.visible ? entry.model.revealStrength : entry.reveal.strength) > 0.05 &&
         this.revealStrength(entry) > 0.05 &&
         fraction < nearestReveal
       ) {
         const hit = bodyPoint ?? ray.from.clone().lerp(ray.from, ray.to, fraction),
           foot = entry.root.getPosition();
+        const height = entry.model?.visible ? entry.model.height : entry.height;
         const q = Math.hypot(
           (hit.x - foot.x) / Math.max(entry.width * 0.7, 0.1),
-          (hit.y - foot.y - entry.height / 2) / Math.max(entry.height * 0.65, 0.1),
+          (hit.y - foot.y - height / 2) / Math.max(height * 0.65, 0.1),
           (hit.z - foot.z) / Math.max(entry.width * 0.7, 0.1),
         );
         // Match the shader's feather, not the whole bounding rectangle of a hidden sprite.
         const t = Math.max(0, Math.min(1, (q - 0.65) / 0.7));
-        if ((1 - t * t * (3 - 2 * t)) * entry.reveal.strength > 0.05) {
+        const strength = entry.model?.visible ? entry.model.revealStrength : entry.reveal.strength;
+        if ((1 - t * t * (3 - 2 * t)) * strength > 0.05) {
           nearestReveal = fraction;
           revealed = entry.view;
         }
@@ -1607,14 +1770,26 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.removeEventListener('keydown', this.cameraKey);
     window.removeEventListener('blur', this.blur);
     this.cancelDrag();
-    for (const entry of this.actors.values()) this.presentation?.removeReveal(entry.reveal);
+    this.shadowBatches?.destroy();
+    for (const entry of this.actors.values()) {
+      entry.model?.destroy();
+      this.presentation?.removeReveal(entry.reveal);
+    }
     this.presentation?.destroy();
+    this.mercenary?.destroy();
+    for (const { mesh } of this.reliefMeshes.values()) {
+      mesh.decRefCount();
+      if (mesh.refCount === 0) mesh.destroy();
+    }
+    this.reliefMeshes.clear();
     this.textures.forEach((texture) => texture.destroy());
     this.materials.forEach((material) => material.destroy());
     this.visionBlur.destroy();
     this.statuses.destroy();
     this.statusIndicators.destroy();
     this.speech.destroy();
+    for (const buffer of this.landscapeBuffers) buffer.destroy();
+    this.landscapeBuffers = [];
     this.app.destroy();
   }
 }

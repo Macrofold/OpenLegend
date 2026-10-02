@@ -63,10 +63,9 @@ export function canReachEntity(
   reach: number,
   origin: Position = worldPosition(actor),
 ): boolean {
-  return (
-    distance3D(interactionAnchor(actor, origin), interactionAnchor(target)) <= reach &&
-    hasLineOfEffect(world, actor, target, origin)
-  );
+  const from = interactionAnchor(actor, origin),
+    to = interactionAnchor(target);
+  return distance3D(from, to) <= reach && clearSegment(spatialMap(world), from, to);
 }
 /** Strict endpoint projection: Y selects a real height, explicit surface IDs disambiguate seams. */
 export function findPath(
@@ -95,42 +94,50 @@ export function findApproachPath(
   const start = supportedPosition(actor);
   if (!start) return null;
   const map = spatialMap(world),
-    profile = bodyProfile(actor);
+    profile = bodyProfile(actor),
+    targetPosition = worldPosition(target),
+    goal = interactionAnchor(target, targetPosition);
+  // Every candidate uses this call's exact geometry and body state. Capture them once:
+  // repeated reads through an Immer draft create avoidable proxies and allocations.
+  const anchor = (p: Position): Position => ({
+    x: p.x,
+    y: p.y + profile.interactionHeight,
+    z: p.z,
+  });
+  const reaches = (p: Position): boolean => {
+    const from = anchor(p);
+    return distance3D(from, goal) <= reach && clearSegment(map, from, goal);
+  };
   const candidates: SurfacePoint[] = [];
   const targetSupport = supportedPosition(target);
-  if (
-    targetSupport &&
-    canStand(map, targetSupport, profile) &&
-    canReachEntity(world, actor, target, reach, targetSupport)
-  )
+  if (targetSupport && canStand(map, targetSupport, profile) && reaches(targetSupport))
     candidates.push(targetSupport);
   const radius = Math.min(12, Math.max(1, reach));
-  const goal = interactionAnchor(target);
   const footY = goal.y - profile.interactionHeight;
   for (const surface of surfacesInBounds(map, {
     min: {
-      x: worldPosition(target).x - radius,
+      x: targetPosition.x - radius,
       y: footY - reach,
-      z: worldPosition(target).z - radius,
+      z: targetPosition.z - radius,
     },
     max: {
-      x: worldPosition(target).x + radius,
+      x: targetPosition.x + radius,
       y: footY + reach,
-      z: worldPosition(target).z + radius,
+      z: targetPosition.z + radius,
     },
   })) {
     for (
-      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(worldPosition(target).z - radius));
-      z <= Math.min(Math.floor(surface.maxZ), Math.floor(worldPosition(target).z + radius));
+      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(targetPosition.z - radius));
+      z <= Math.min(Math.floor(surface.maxZ), Math.floor(targetPosition.z + radius));
       z++
     ) {
       for (
-        let x = Math.max(Math.ceil(surface.minX), Math.ceil(worldPosition(target).x - radius));
-        x <= Math.min(Math.floor(surface.maxX), Math.floor(worldPosition(target).x + radius));
+        let x = Math.max(Math.ceil(surface.minX), Math.ceil(targetPosition.x - radius));
+        x <= Math.min(Math.floor(surface.maxX), Math.floor(targetPosition.x + radius));
         x++
       ) {
         const p = { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
-        if (distance3D(interactionAnchor(actor, p), goal) <= reach) candidates.push(p);
+        if (distance3D(anchor(p), goal) <= reach) candidates.push(p);
       }
     }
   }
@@ -143,11 +150,7 @@ export function findApproachPath(
   );
   const destinations: SurfacePoint[] = [];
   for (const candidate of candidates) {
-    if (
-      !canReachEntity(world, actor, target, reach, candidate) ||
-      !canStand(map, candidate, profile)
-    )
-      continue;
+    if (!reaches(candidate) || !canStand(map, candidate, profile)) continue;
     if (destinations.length === 12) break;
     destinations.push(candidate);
     const route = findSurfaceRoute(map, start, candidate, profile);

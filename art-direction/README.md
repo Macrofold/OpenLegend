@@ -4,6 +4,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Editable studies live in [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md); this repository folder retains the creative brief, references and feedback.
+
 **Final selection:** [Creative inspiration board](final-board/index.html) · [Creative brief](final-board/creative-brief.md)
 
 **Concept art with Midjourney:** [Prompting guide](midjourney/README.md) · Character prompts: [Halven Rusk](prompts/halven-rusk-midjourney.md), [Maer Fen](prompts/maer-fen-midjourney.md)

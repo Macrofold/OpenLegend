@@ -10,6 +10,7 @@ import {
   canReachEntity,
   createWorld,
   executeCommand,
+  hearsEntity,
   quantityOf,
   replaceSpatialLayout,
   seesEntity,
@@ -21,6 +22,7 @@ import {
 } from './index.js';
 import { commitBodyEffects } from './living.js';
 import { validateWorldModules } from './world-modules.js';
+import { projectEventEvidence } from './speech.js';
 
 function active() {
   const world = createWorld();
@@ -77,7 +79,25 @@ describe('native spatial-world integration without providers', () => {
     // The timber deck attenuates rather than blocks sound: ordinary speech carries through it,
     // but its loss makes a whisper that would be detectable in open air inaudible below.
     // docs/architecture.md#hearing-captions-and-perceived-events
+    expect(hearsEntity(world, a, b)).toBe(true);
     expect(speechExposure(world, a, b, 'whisper').detail).toBe('undetected');
+    const normal = executeCommand(world, {
+      id: 'above-normal-speech',
+      actorId: b.id,
+      type: 'say',
+      text: 'Audible words above the floor',
+    });
+    const event = normal.events.find((event) => event.type === 'speech')!;
+    expect(event.audience).toContain(a.id);
+    const evidence = normal.world.experience!.awareness[a.id]!.find(
+      (entry) => entry.eventId === event.id,
+    )!;
+    const perceived = projectEventEvidence(event, evidence);
+    expect(perceived.speech).toMatchObject({ intelligibility: 'clear', speaker: null });
+    expect(perceived.data?.['text']).toBe('Audible words above the floor');
+    expect(perceived.actorId).toBeUndefined();
+    expect(perceived.origin).toBeUndefined();
+    expect(perceived.text).not.toContain(b.name);
     const speech = executeCommand(world, {
       id: 'above-speech',
       actorId: b.id,
@@ -87,6 +107,11 @@ describe('native spatial-world integration without providers', () => {
     });
     expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
     expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(soundOrigin(b));
+    expect(
+      speech.world.experience?.awareness[a.id]?.some((entry) =>
+        speech.events.some((event) => event.type === 'speech' && event.id === entry.eventId),
+      ) ?? false,
+    ).toBe(false);
     const bird = world.entities['bird-1']!;
     setSpatialPosition(world, bird, { x: 20, y: 6, z: 5.5 }, null);
     expect(canReachEntity(world, a, bird, 1.6)).toBe(false);

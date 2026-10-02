@@ -49,6 +49,8 @@ The [scale/startup continuation](../verification/three-times-scene-performance.m
 
 ### HE05 — Runtime and performance qualification
 
+The [October 1 floor-hearing regression](../verification/hearing-main-integration.md#floor-hearing-regression--october-1-2026) now passes against the graded transmission contract, including hidden-speaker privacy and inaudible whispers. This closes the stale SW08 test assertion; the broader HE05 criteria below remain open.
+
 - [x] Reconcile main's start/rate/end integration, work admission, physical contact, contribution indexes, immutable publication, authority, durable records and renderer with hearing. Retain supply-ID indexing, prepared predicates, batched evidence and stable bounded sensory caches.
 - [x] Retain the independent zero-provider speech-load driver (now disposable PostgreSQL) and cache-overflow driver. Replace obsolete reference/native-slice profiler inputs with main's requested interval and actual progressed-time accounting.
 - [x] Complete the focused current integration checks recorded in [the integration evidence](../verification/hearing-main-integration.md). No historical check automatically qualifies the combined tree.

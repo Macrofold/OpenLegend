@@ -27,6 +27,7 @@ import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../t
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
+const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
 export function createActor(
@@ -108,8 +109,8 @@ export function createWorld(
     objectState: { revision: 0 },
     itemDefinitions: structuredClone(NATIVE_ITEMS),
     recipes: {},
-    memories: { [PLAYER_ID]: [], [NPC_ID]: [] },
-    knowledge: { [PLAYER_ID]: [], [NPC_ID]: [] },
+    memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
+    knowledge: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
     events: [],
     commandReceipts: {},
     declarationReceipts: {},
@@ -151,6 +152,21 @@ export function createWorld(
       kind: 'npc',
       placement: worldPlacement({ y: 0, x: 13, z: 12 }, 'terrain'),
       actor: createActor(world, 'npc', 35, ADA_IDENTITY),
+    },
+    {
+      spatial: { bodyProfileId: 'person', heading: 0 },
+      id: MERCENARY_ID,
+      name: 'Peacock Mercenary',
+      kind: 'npc',
+      appearance: 'mercenary-model',
+      placement: worldPlacement({ y: 0, x: 12, z: 11 }, 'terrain'),
+      actor: createActor(world, 'npc', 76, {
+        initialGoals: [],
+        traits: [],
+        personality: 'Reserved and practical.',
+        backstory:
+          'I am a travelling mercenary wearing a red cape embroidered with peacocks. I have arrived at this clearing. I distinguish what I observe here from what I have yet to learn.',
+      }),
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -271,7 +287,7 @@ export function createWorld(
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
-  for (const id of [PLAYER_ID, NPC_ID]) {
+  for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);

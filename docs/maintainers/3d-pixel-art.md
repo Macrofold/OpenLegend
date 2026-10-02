@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: proposed implementation work; all runtime tasks below remain open.** Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The documentation task does not authorize these code changes or paid provider work.
+**Status: the bundled mercenary pilot is implemented; the broader pipeline tasks below remain open.** Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The documentation task does not authorize these code changes or paid provider work.
 
 ## Maintained records
 
@@ -22,7 +22,13 @@ The character art experiment in V3D01 must happen early even though rigid object
 
 ## V3D01 — Visual comparison and style decision
 
+[Art-direction progress](art-direction.md) owns the study index. The [mercenary art record](art/mercenary.md) tracks editable source locations, visual feedback, milestones and pending art approval; this tracker retains technical delivery and qualification.
+
 **Owners:** client presentation and art direction. **Depends on:** existing WorldRenderer/SW18, no provider integration.
+
+The owner supplied the mercenary study and authorized its [default-scene integration](../projects/mercenary-scene-pilot.md), including fixed character pixels and depth compositing. The default NPC, live idle/walk/cloth, fixed character image and actual-depth composite are implemented. [Evidence](../verification/mercenary-default.md) covers the concrete asset; this does not accept the broader style comparison or production pipeline. [SW18.14](spatial-world.md#sw18--world-presentation-delivery) tracks that handoff; full-HD sprite/shadow qualification proceeds independently. The broader pipeline below remains proposed.
+
+- [ ] Follow up the bundled mercenary with a reduced-geometry/texture asset and a matched moving multi-character benchmark before extending it to crowds. Current single-model cost is measurable; the sprite-only eight-fire performance evidence does not qualify clothed models. Add supported action/condition/equipment poses and exact skinned silhouette picking through V3D05; qualify sloped-foot IK and cloth self-contact separately. Production rights/style acceptance remains required before shipping the study asset.
 
 - [ ] Build the same small camp in sprite/proxy, mixed, and styled-model presets using properly licensed/native fixture assets. Preserve the same mechanics, identity, camera, light setup and comparable artistic effort. No broad environment conversion.
 - [ ] Prototype one recognizable 3D human with tool/backpack plus key scenery. Evaluate normal pixel scale, lighting, orbit/pitch/zoom, smooth versus stepped pose, filtering/dither/outline alternatives and contact/shadows in actual application footage.
@@ -124,7 +130,7 @@ The character art experiment in V3D01 must happen early even though rigid object
 
 **Owners:** client/presentation/performance, with server pipeline attribution. **Depends on:** each delivered slice; runs continuously, not only at the end.
 
-- [ ] Measure actual physical-GPU cold/warm behavior, asset diversity, skinning, material/alpha/shadow cost, decode/upload stalls, simultaneous swap residency and cleanup. Use A3D targets as proposals, not results.
+- [ ] Measure actual physical-GPU cold/warm behavior, asset diversity, skinning, material/alpha/shadow cost, decode/upload stalls, simultaneous swap residency and cleanup. Use A3D targets as proposals, not results. Include a named physical lower-end integrated GPU and the M1 Pro reference at actual 1920×1080, Detailed/Economy, matched sprite and moving mercenary populations, eight shadowed fires and requested 3× native progress. Record achieved game-time ratio/debt, displayed-frame and CPU/GPU p50/p95/p99/max, command-to-display tails, peak/retained memory and visual fallback correctness. Lower-end hardware is not currently available; SwiftShader does not close this gate. The earlier eight-fire sprite result does not establish the model workload. Coordinate long sessions/storage contention with PF00/PF11 and cold/reveal correctness with SW18.16.
 - [ ] Prove quality degradation preserves identity/state/gear, captions, input, reveal permissions and non-canvas alternatives. Test reduced motion, narrow screens, resize/DPR and unsupported/context-lost graphics.
 - [ ] Profile the full application at ordinary and supported accelerated speeds, including the 8× goal. Distinguish renderer work from native spatial/sensory/cognition/persistence limits. Optimize the measured source instead of assuming mesh count or pixel count explains everything.
 

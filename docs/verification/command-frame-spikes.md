@@ -1,0 +1,45 @@
+# Command/frame spikes and physical lower-end hardware
+
+September 28, 2026. Authorized [follow-up plan](../projects/shadow-quality-tech-design.md#follow-up-commandframe-spikes-and-physical-lower-end-hardware), tracked under [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness), SW18.10/SW18.13 and HE05. Refreshed `Macrofold/OpenLegend origin/main@c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` was already contained in `codex/shadow-quality`; no branch switch or rebase. Preserve the existing shadow work and concurrent model pilot.
+
+## Delivered change and limits
+
+Scheduled move/gather/hunt/harvest/cook/replenish/strike/pickup admission reads route geometry from the unchanged command input, before resource or body effects. At this point those cases have only allocated an action ID. Effects, interruption, reservations, receipts and durable publication remain in their existing mutation owners. Reach and candidate-stance queries capture the current map/body/target anchors once per call. There is no retained result cache, relaxed obstruction check, changed command eligibility, shadow reduction or simulation-time policy change.
+
+These changes reduce isolated native query/preview cost. They do **not** establish that whole-game command/frame spikes are fixed. The full-game runs below encountered severe host contention; physical lower-end hardware was unavailable. The requested overall qualification remains incomplete.
+
+## Method and isolated comparisons
+
+Apple M1 Pro, macOS arm64, Node 22.23.2, PostgreSQL 14.17, pinned PlayCanvas 2.22.2 and Chromium ANGLE Metal/WebGL2. Explicit disposable databases, `AI_BUDGET_USD=0`, no provider requests or spending. Full private samples, code snapshots and temporary harnesses are under `/tmp/openlegend-spikes-20260928/`; aggregate findings are recorded below and generated measurements are kept outside Git.
+
+The small spatial comparison alternates original/candidate order for six rounds over the same seeded crowded world and 53 targets. It compares full route results and reach booleans for four distances on ordinary and Immer-draft worlds: **424 exact comparisons**. Each timing batch makes 795 queries. Excluding the first warm-up round, median draft-query batch time is **59.20 → 29.87 ms** (about 50% less); plain-state medians are **23.82 → 22.85 ms**, with substantial variation. This measures one helper, not FPS or total command latency.
+
+The command comparison uses the real executor for both ordinary execution and disposable previews, with original versus final code on identical seed-73 worlds. It covers normal ground, a lookout deck, unsupported airborne placement, death, incapacitation and pause; commands include target-based work/strikes, ordinary/ramp/wrong-floor movement and cooking. All **1,488 cases** match outcomes, event arrays and SHA-256 hashes of the complete serialized resulting world. Every preview returns the original world and no events. The matrix includes 72 accepted cases and scope, support, lifecycle, resource and invalid-target rejections; it is not exhaustive admission qualification.
+
+Five fixed batches of native strike previews measured median wall time **61.63 ms original**, **27.15 ms candidate**, **43.50 ms candidate repeat**. Median process CPU was **89.40 → 53.22 / 52.75 ms** (about 40–41% less). Process CPU includes runtime/GC helper threads and can exceed elapsed wall time. Host variation makes the wall-time percentage unstable; these are isolated batches, not a claim of 40% faster whole-game input.
+
+## Full-game diagnostics
+
+The real production UI/server scenario retains the prior 142-root scene: player, 20 NPCs, 21 animals and 100 other objects, including eight banked fires. It uses PostgreSQL, HTTP commands, SSE, React, moving camera and a 1920×1080 framebuffer. Requested 3× means 180 simulated seconds per wall second. Native NPC meals preserve survival without disabling physiology. This follow-up increases player command frequency from once per five seconds to once per second, with one request in flight; it is not directly comparable to the earlier eight-minute acceptance sample.
+
+- The 120-second original-code CPU-profile diagnostic reached only **1.323×**, with **50.7 FPS**, frame p95/p99/max **27.4/33.7/1,785.1 ms**, and player command p95/p99 **3,924.5/7,089.7 ms**. One command returned `busy`; two HTTP 503 errors were recorded. Load average was 143 → 129. Treat it as failed capacity evidence. Public projection and preview/draft work remained significant; a world commit reached 6.21 seconds and a PostgreSQL statement wait 4.71 seconds. Those wall spans overlap and do not isolate database execution from event-loop/host delay.
+- A spatial-helper-only retry reached **1.256×**, **34.3 FPS**, with all 63 player commands successful but a **21.77-second** maximum frame interval. The browser attributed that gap to a React scheduler callback; elapsed callback time alone cannot separate CPU work from descheduling or memory pressure. This sample also overlapped task-owned correctness diagnostics, so it is not a clean matched comparison.
+- A machine-wide sample during this period recorded load average **180.68**, **4.8% CPU idle**, about **12 GB compressed memory** and **176 MB unused memory**. Other tasks/processes were left untouched. The original profile already showed severe contention before the extra diagnostics.
+- The initial harness used the shared build output; a concurrent rebuild removed its entry page and produced a 404 before measurement. The harness was moved to private build output for subsequent runs. This is a setup failure, not a game FPS sample.
+
+The final 120-second integration run, with no overlapping task-owned diagnostic, crossed 17:34–22:20 game time and retained 142 roots, all 42 living actors and eight shadowed lights. All **101 player commands and 20 NPC meals** succeeded, with no browser/HTTP errors or shader-finalization wait above 10 ms. It averaged **61.98 FPS**; frame p50/p95/p99/max was **15.5/23.5/31.3/471.6 ms**, and command p50/p95/p99/max **284.6/2,324.5/3,909.4/4,192.7 ms**. Actual simulation progress was only **2.385×**, with host load 108 → 119. This verifies live integration, not the requested combined capacity or reduced tails: its dusk workload and host conditions differ from the profiled morning baseline. The final firelit 1080p screenshot was visually inspected. No game performance claim may be inferred from configuring 3× alone.
+
+## Correctness and checks
+
+- All 18 existing `packages/domain/src/kernel.test.ts` cases pass.
+- The two selected server action-catalogue tests pass through disposable PostgreSQL: target-scoped menus/prerequisites and refresh after pause/no hidden-target previews. No provider fixtures or paid calls.
+- `packages/domain/src/spatial-world.test.ts` passes eight of nine tests both before and after the final admission change. The floor-hearing test expects `hearsEntity` to be false through the lookout slab; the same test fails identically with the preserved original code. Reach and sight assertions preceding it pass. SW08/HE05 retain reconciliation against graded hearing, including intelligibility/privacy; this task does not change hearing or weaken the assertion.
+- Final `pnpm typecheck`, normal `pnpm build`, changed-file Prettier and `git diff --check` pass. The build retains its existing large-chunk warning. The complete affected code/doc diff and linked records were reviewed. Temporary harnesses are archived outside the repository, normal client output has been rebuilt and the task-owned PostgreSQL cluster is stopped. No other task’s runtime or model-pilot files were changed.
+
+## Physical device handoff
+
+No physical lower-end machine was exposed by the available execution tools; only the local M1 Pro was accessible. Device/access information was requested and has not been supplied. SwiftShader, browser CPU throttling and the overloaded M1 Pro do not qualify this requirement.
+
+On an available physical device, run the same zero-provider seed-73 fixture from a clean checkout with disposable loopback PostgreSQL. Record CPU/GPU/RAM, OS, browser and backend; verify the actual framebuffer is 1920×1080 and all eight admitted lights cast shadows in Detailed. Warm startup separately, then measure an entire eight-minute day with moving camera, real walking/eating commands and actual simulation progress. Repeat original/candidate runs under comparable host load; retain p50/p95/p99/max command, frame, CPU/GPU and save/queue timings, errors, actor/light counts and excluded clock intervals. Economy is a separate two-light diagnostic, never a substitute for the requested eight-light test. Reuse the private harness bundle, adapting its repository/output paths to that device; never point it at a real save or inherit provider credentials.
+
+PF05/SW18 remain open for reliable complete-path tail reduction and physical device qualification. Remaining measured leads are repeated disposable preview drafts/events, queue/database waits and browser callback/host pauses; no asynchronous-save or admission shortcut is justified by these samples.

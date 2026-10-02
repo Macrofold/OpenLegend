@@ -246,7 +246,7 @@ export interface Entity {
   declaredOwner?: import('./objects.js').DeclaredOwner;
   retirement?: import('./objects.js').ObjectRetirement;
   /** Appearance is never a source of body dimensions or movement capability. */
-  appearance?: 'sprite' | 'crate-mesh';
+  appearance?: 'sprite' | 'crate-mesh' | 'mercenary-model';
   spatial: import('./spatial-state.js').EntitySpatial;
   actor?: ActorComponent;
   replenisher?: { attributeId: string; remaining: number; revision?: number };

@@ -11,7 +11,7 @@ export function playerEntity(view: GameView): EntityView {
     position: view.player.position,
     supportSurfaceId: view.player.supportSurfaceId,
     heading: view.player.heading,
-    appearance: 'sprite',
+    appearance: view.player.appearance ?? 'sprite',
     radius: 0.35,
     status: !view.player.alive
       ? 'Dead'
