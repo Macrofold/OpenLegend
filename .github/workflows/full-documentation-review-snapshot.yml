@@ -8,7 +8,22 @@ permissions:
 jobs:
   tracked-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openlegend
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openlegend -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
+      AI_BUDGET_USD: '0'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,8 +32,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install the repository-pinned tools without lifecycle scripts
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install the repository-pinned tools
+        run: pnpm install --frozen-lockfile
       - name: Package the pinned documentation validators
         run: |
           mkdir -p "$RUNNER_TEMP/review-tools"
@@ -29,12 +44,28 @@ jobs:
         run: |
           git archive --format=tar.gz HEAD > "$RUNNER_TEMP/openlegend-review-source.tar.gz"
           git rev-parse HEAD > "$RUNNER_TEMP/openlegend-review-revision.txt"
+      - name: Check inherited runtime blockers independently of documentation formatting
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/review-checks"
+          set +e
+          pnpm run typecheck > "$RUNNER_TEMP/review-checks/typecheck.txt" 2>&1
+          types=$?
+          pnpm test > "$RUNNER_TEMP/review-checks/tests.txt" 2>&1
+          tests=$?
+          pnpm run build > "$RUNNER_TEMP/review-checks/build.txt" 2>&1
+          build=$?
+          printf '{"typecheck_exit":%s,"tests_exit":%s,"build_exit":%s}\n' "$types" "$tests" "$build" > "$RUNNER_TEMP/review-checks/status.json"
+          cat "$RUNNER_TEMP/review-checks/status.json"
+          test "$types" -eq 0 && test "$tests" -eq 0 && test "$build" -eq 0
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: openlegend-documentation-review-source
           path: |
             ${{ runner.temp }}/openlegend-review-source.tar.gz
             ${{ runner.temp }}/openlegend-review-revision.txt
             ${{ runner.temp }}/openlegend-review-tools.tar.gz
+            ${{ runner.temp }}/review-checks/
           retention-days: 1
           if-no-files-found: error
