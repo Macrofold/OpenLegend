@@ -8,11 +8,23 @@ permissions:
 jobs:
   tracked-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the repository-pinned tools without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Package the pinned documentation validators
+        run: |
+          mkdir -p "$RUNNER_TEMP/review-tools"
+          cp -R "$(readlink -f node_modules/yaml)" "$RUNNER_TEMP/review-tools/yaml"
+          cp -R "$(readlink -f node_modules/prettier)" "$RUNNER_TEMP/review-tools/prettier"
+          tar -czf "$RUNNER_TEMP/openlegend-review-tools.tar.gz" -C "$RUNNER_TEMP" review-tools
       - name: Package only tracked source for the requested review
         run: |
           git archive --format=tar.gz HEAD > "$RUNNER_TEMP/openlegend-review-source.tar.gz"
@@ -23,5 +35,6 @@ jobs:
           path: |
             ${{ runner.temp }}/openlegend-review-source.tar.gz
             ${{ runner.temp }}/openlegend-review-revision.txt
+            ${{ runner.temp }}/openlegend-review-tools.tar.gz
           retention-days: 1
           if-no-files-found: error
