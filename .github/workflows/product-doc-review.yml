@@ -1,0 +1,54 @@
+name: Product documentation review
+on:
+  push:
+    branches: [docs/product-scalability]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Capture exact source and formatting evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          base = '8005f7c7245cfecec128652efe3ef07926604e0a'
+          changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines()
+          changed = [p for p in changed if p.endswith('.md')]
+          before = {p: pathlib.Path(p).read_bytes() for p in changed}
+          result = subprocess.run(['pnpm', 'exec', 'prettier', '--write', *changed], text=True, capture_output=True)
+          with zipfile.ZipFile('/tmp/openlegend-docs-review.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for root in ('docs', 'archive', '.agents'):
+                  for p in pathlib.Path(root).rglob('*.md'):
+                      archive.writestr('head/' + str(p), before.get(str(p), p.read_bytes()))
+              for p in ('AGENTS.md', 'README.md', 'package.json', '.prettierrc.json', '.prettierignore'):
+                  archive.write(p, 'head/' + p)
+              for p in changed:
+                  archive.write(p, 'formatted/' + p)
+                  original = subprocess.run(['git', 'show', base + ':' + p], capture_output=True)
+                  if original.returncode == 0:
+                      archive.writestr('base/' + p, original.stdout)
+              archive.writestr('changed.txt', '\n'.join(changed) + '\n')
+              archive.writestr('format.log', result.stdout + result.stderr)
+              archive.writestr('head-sha.txt', subprocess.check_output(['git', 'rev-parse', 'HEAD']))
+          print(result.stdout)
+          print(result.stderr)
+          if result.returncode:
+              raise SystemExit(result.returncode)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: product-documentation-review
+          path: /tmp/openlegend-docs-review.zip
+          retention-days: 1
