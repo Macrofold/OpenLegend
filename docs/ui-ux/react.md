@@ -6,12 +6,12 @@
 
 Use four conceptual layers without creating four frameworks:
 
-| Layer | Responsibility | Current location / example |
-| --- | --- | --- |
-| Tokens | Semantic spacing, typography, color and roles | `design-system/tokens`, existing CSS |
-| Interaction primitives | Correct button, field, combobox, dialog, tooltip and collection behavior | Existing React Aria-based shared components |
-| Game components | Item row, action choice, meter, panel, composer and quantity/transfer view | `design-system/components.tsx`, focused `ui` components |
-| Connected features | Permitted reads, drafts, server intentions and orchestration | `ui/inventory.tsx`, `ui/world-agent.tsx`, editors |
+| Layer                  | Responsibility                                                             | Current location / example                              |
+| ---------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Tokens                 | Semantic spacing, typography, color and roles                              | `design-system/tokens`, existing CSS                    |
+| Interaction primitives | Correct button, field, combobox, dialog, tooltip and collection behavior   | Existing React Aria-based shared components             |
+| Game components        | Item row, action choice, meter, panel, composer and quantity/transfer view | `design-system/components.tsx`, focused `ui` components |
+| Connected features     | Permitted reads, drafts, server intentions and orchestration               | `ui/inventory.tsx`, `ui/world-agent.tsx`, editors       |
 
 Inspect owners and callers before extracting. Similar syntax is not sufficient shared meaning; equally, five searchable choices should not duplicate clear/focus/keyboard machinery. Use function components, props, children/slots and focused hooks. A Panel owns layout while the feature owns its draft/command; an ItemRow need not know endpoints. Avoid inheritance, a new framework or a universal component with unrelated flags.
 

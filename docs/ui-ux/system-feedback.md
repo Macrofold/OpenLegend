@@ -6,17 +6,17 @@
 
 A reusable asynchronous surface needs a contract for initial, loading, ready, empty, failed and stale states, plus partial results when supported. An empty array must not ambiguously mean all of these.
 
-| State | What the player should understand | Wrong implication to avoid |
-| --- | --- | --- |
-| Not yet requested | What opening/searching will do | Pretending the collection is empty |
-| Loading | What is being retrieved and whether an old view is usable | Erasing the interface or fake progress |
-| Truly empty | Nothing exists in the requested permitted scope, with a useful next step | Suggesting retry will create data |
-| No matches | Data may exist; show scope and filter recovery | Saying the player owns nothing |
-| Partial/windowed | What was examined and how to continue | Calling a page complete |
-| Unavailable/unauthorized | Why it cannot proceed, without hidden facts | Mystery disabled buttons or misleading emptiness |
-| Stale | Which facts may have changed and actions await refresh | Making an old price/quantity look final |
-| Failed | What did not finish, whether anything changed, and recovery | Disappearing errors and lost work |
-| Completed | The actual authoritative result | Treating dispatch as success |
+| State                    | What the player should understand                                        | Wrong implication to avoid                       |
+| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------ |
+| Not yet requested        | What opening/searching will do                                           | Pretending the collection is empty               |
+| Loading                  | What is being retrieved and whether an old view is usable                | Erasing the interface or fake progress           |
+| Truly empty              | Nothing exists in the requested permitted scope, with a useful next step | Suggesting retry will create data                |
+| No matches               | Data may exist; show scope and filter recovery                           | Saying the player owns nothing                   |
+| Partial/windowed         | What was examined and how to continue                                    | Calling a page complete                          |
+| Unavailable/unauthorized | Why it cannot proceed, without hidden facts                              | Mystery disabled buttons or misleading emptiness |
+| Stale                    | Which facts may have changed and actions await refresh                   | Making an old price/quantity look final          |
+| Failed                   | What did not finish, whether anything changed, and recovery              | Disappearing errors and lost work                |
+| Completed                | The actual authoritative result                                          | Treating dispatch as success                     |
 
 Put feedback where the action happened. Preserve stable panels, selection and readable prior content during safe refresh. Block the operation whose prerequisites are stale, not the whole game. Do not disguise error/unknown as zero or a successful blank response.
 
@@ -40,26 +40,26 @@ Provide recovery: change query, clear filters, widen scope only when supported, 
 
 Do not adopt “put all state in the URL.” Decide what the state means, who may see it, how long it persists and what restoration does. Vercel's deep-link guidance is useful for navigation, not a reason to expose private work. [S07](research.md#s07)
 
-| State | Appropriate ownership | Boundary |
-| --- | --- | --- |
-| Sharable view/filter or permitted object reference | URL when the feature supports meaningful navigation | Validate current permission on opening; the URL grants no authority |
-| Popup, hover, drag and temporary focus | Local interaction state | Restoring a page must not resume a half-finished gesture |
-| Unsent message or dirty editor | Existing scoped draft owner | Do not put private text/credentials in URLs, analytics or broad diagnostic logs; define retention and clearing |
-| UI scale, accessibility or camera preferences | Existing account/device preference owner | Distinct from gameplay rewind and another user's settings |
-| Trade, save, installed invention or world effect | Authoritative server state/receipt | Browser navigation or local storage cannot establish completion or authorization |
+| State                                              | Appropriate ownership                               | Boundary                                                                                                       |
+| -------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Sharable view/filter or permitted object reference | URL when the feature supports meaningful navigation | Validate current permission on opening; the URL grants no authority                                            |
+| Popup, hover, drag and temporary focus             | Local interaction state                             | Restoring a page must not resume a half-finished gesture                                                       |
+| Unsent message or dirty editor                     | Existing scoped draft owner                         | Do not put private text/credentials in URLs, analytics or broad diagnostic logs; define retention and clearing |
+| UI scale, accessibility or camera preferences      | Existing account/device preference owner            | Distinct from gameplay rewind and another user's settings                                                      |
+| Trade, save, installed invention or world effect   | Authoritative server state/receipt                  | Browser navigation or local storage cannot establish completion or authorization                               |
 
 Preserve safe navigation through Back/Forward or panel return when supported, including list position. Do not serialize every component boolean or duplicate writable authority. On account/world changes, re-scope or clear sensitive retained state according to its owner before rendering it; a stale key prefix alone is not an access policy. New persistence, telemetry or history collection is a feature decision, not automatically authorized by these recommendations.
 
 ## Notifications: match interruption to consequence
 
-| Importance and duration | Appropriate presentation |
-| --- | --- |
-| Immediate local acknowledgement | In-place change or brief nearby status |
-| Noncritical background completion | Quiet notice linking to result |
-| Needed later | Persistent history/inbox or durable panel state |
-| Recoverable current-work failure | Inline error retaining draft and repair/retry |
+| Importance and duration                             | Appropriate presentation                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| Immediate local acknowledgement                     | In-place change or brief nearby status                                      |
+| Noncritical background completion                   | Quiet notice linking to result                                              |
+| Needed later                                        | Persistent history/inbox or durable panel state                             |
+| Recoverable current-work failure                    | Inline error retaining draft and repair/retry                               |
 | Storage failure or unresolved consequential outcome | Persistent visible status until resolved/acknowledged, not only timed toast |
-| Decision requiring exclusive attention | Bounded dialog only when proceeding without it would be unsafe |
+| Decision requiring exclusive attention              | Bounded dialog only when proceeding without it would be unsafe              |
 
 Do not announce every stage or duplicate one event as toast, banner, modal and chat. Deduplicate by identity, not equal text. Aggregate repetitive low-importance events with access to underlying permitted history. Avoid escalating quiet simulation updates into attention alarms.
 

@@ -8,16 +8,16 @@ A practical standard for deciding what the player sees, how controls behave and 
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
 
-| Decision | Chapter |
-| --- | --- |
-| Information, hierarchy, size, spacing and arrangement | [Foundations and layout](foundations.md) |
-| Input choice, accordion/tab/modal, coherent searchable choices | [Controls and overlays](controls.md) |
-| Finding, inspecting, equipping, comparing, moving and trading objects | [Inventory and trading](inventory.md) |
-| World/camera navigation without accidental actions or obstruction | [World interaction](world-interaction.md) |
-| Conversations, drafts, AI work, correction and inventions | [Chat and invention](chat-and-invention.md) |
-| Search, notices, settings, persistence, saves and recovery | [System feedback](system-feedback.md) |
-| Component composition, state, events and accessibility | [React implementation](react.md) |
-| Interaction/geometry checks and current-surface coverage | [Verification](verification.md) |
+| Decision                                                                                                | Chapter                                     |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Information, hierarchy, size, spacing and arrangement                                                   | [Foundations and layout](foundations.md)    |
+| Input choice, accordion/tab/modal, coherent searchable choices                                          | [Controls and overlays](controls.md)        |
+| Finding, inspecting, equipping, comparing, moving and trading objects                                   | [Inventory and trading](inventory.md)       |
+| World/camera navigation without accidental actions or obstruction                                       | [World interaction](world-interaction.md)   |
+| Conversations, drafts, AI work, correction and inventions                                               | [Chat and invention](chat-and-invention.md) |
+| Search, notices, settings, persistence, saves and recovery                                              | [System feedback](system-feedback.md)       |
+| Component composition, state, events and accessibility                                                  | [React implementation](react.md)            |
+| Interaction/geometry checks and current-surface coverage                                                | [Verification](verification.md)             |
 | Authoritative guidance, company code, games, player reports and applicability limits; optional research | [Research and exemplar ledger](research.md) |
 
 ## Authority and interpretation

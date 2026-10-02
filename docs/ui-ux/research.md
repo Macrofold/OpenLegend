@@ -16,17 +16,17 @@ Borrow the reason a pattern works, not its theme, economic model, exact limits o
 
 ## Principle-to-evidence map
 
-| Decision to get right | Current guidance | Supporting evidence and caution |
-| --- | --- | --- |
-| Searchable selection | Choose an editable combobox or an intentionally opened searchable picker; prohibit invalid nested interactive elements, not the latter workflow | [Controls](controls.md#a-combobox-is-one-composite-control), F07/F08/S01 |
-| Disabled explanations | Keep important reasons reachable; native disabled controls cannot rely on a keyboard-focus tooltip | [Controls](controls.md#disabled-controls-and-reachable-explanations), S02/S11 |
-| Utility colors | Quiet clear/close styling preserves deliberate focus and forced colors | [Controls](controls.md#clear-x-explicit-quiet-and-singular), S12 |
-| Modal and child dismissal | Modality bounds interaction; the active child handles its gesture before the parent | [World](world-interaction.md#one-owner-for-each-gesture), S04 |
-| Adaptive layout | Preserve selected object, draft, filters and reading anchor when panes change | [Foundations](foundations.md#adapt-the-task-not-just-the-boxes), S03/S08 |
-| Component composition | Check prop/ref/ID forwarding, handler ordering, cancellation and installed-version behavior | [React](react.md#component-composition-must-preserve-behavior), S01/S05/S06 |
-| Persistence and performance | Separate sharable navigation, private drafts and server truth; distinguish local feedback from completion and field INP | [System feedback](system-feedback.md), [UXL05](../limits/ui-ux.md#uxl05), S07/S15 |
-| Agent correction and reliance | Communicate supported tasks, enable targeted edits and expose evidence without invented confidence | [Chat](chat-and-invention.md), S16–S18 |
-| Inventory inspection and action | Distinguish focus, inspection, selection and execution; make comparison and bulk scope deliberate | [Inventory](inventory.md), S09/S20 |
+| Decision to get right           | Current guidance                                                                                                                                | Supporting evidence and caution                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Searchable selection            | Choose an editable combobox or an intentionally opened searchable picker; prohibit invalid nested interactive elements, not the latter workflow | [Controls](controls.md#a-combobox-is-one-composite-control), F07/F08/S01          |
+| Disabled explanations           | Keep important reasons reachable; native disabled controls cannot rely on a keyboard-focus tooltip                                              | [Controls](controls.md#disabled-controls-and-reachable-explanations), S02/S11     |
+| Utility colors                  | Quiet clear/close styling preserves deliberate focus and forced colors                                                                          | [Controls](controls.md#clear-x-explicit-quiet-and-singular), S12                  |
+| Modal and child dismissal       | Modality bounds interaction; the active child handles its gesture before the parent                                                             | [World](world-interaction.md#one-owner-for-each-gesture), S04                     |
+| Adaptive layout                 | Preserve selected object, draft, filters and reading anchor when panes change                                                                   | [Foundations](foundations.md#adapt-the-task-not-just-the-boxes), S03/S08          |
+| Component composition           | Check prop/ref/ID forwarding, handler ordering, cancellation and installed-version behavior                                                     | [React](react.md#component-composition-must-preserve-behavior), S01/S05/S06       |
+| Persistence and performance     | Separate sharable navigation, private drafts and server truth; distinguish local feedback from completion and field INP                         | [System feedback](system-feedback.md), [UXL05](../limits/ui-ux.md#uxl05), S07/S15 |
+| Agent correction and reliance   | Communicate supported tasks, enable targeted edits and expose evidence without invented confidence                                              | [Chat](chat-and-invention.md), S16–S18                                            |
+| Inventory inspection and action | Distinguish focus, inspection, selection and execution; make comparison and bulk scope deliberate                                               | [Inventory](inventory.md), S09/S20                                                |
 
 The topic chapters own these principles. This map locates their evidence rather than creating a competing specification. Existing aesthetics, save policy, authority and approved dimensions are not superseded by vendor examples.
 
@@ -250,17 +250,17 @@ The display-mode and interaction guidance explains when structured UI improves a
 
 ## Game exemplars
 
-| Reference | Relevant strength to study | Caution / what not to copy | Open Legend application |
-| --- | --- | --- | --- |
-| Baldur's Gate 3 | Contextual inventory actions, party transfer and rich item decisions | Sorting chores and poorly discovered workflows can remain | Selected-object detail, clear recipient and comparable facts, not a screen clone |
-| Diablo IV, April 2026 update | Configurable loot filtering and inspection of hidden drops | A filtering error hides useful objects; rarity alone is not value | Visible filter state, recoverable hiding and explicit purpose rules |
-| RuneScape | Stable bank organization and placeholders | Historical bank constraints and account economy are game-specific | Preserve organization when stock changes |
-| Old School RuneScape, 2025 QoL | Repeatable withdrawal/charge preferences and shortfall feedback | Consumption must remain deliberate and authorized | Named presets with clear resource consequences |
-| Final Fantasy XIV, inspected UI guide | Equipment comparison, gear sets, market search, HUD and camera options | Jobs, slots, bindings and market rules are not Open Legend's | Consistent comparisons, reusable configurations and explicit modes |
-| Guild Wars 2, 2025 QoL | Consolidating convenience items into a few tools | Some objects need meaningful physical existence | Remove pointless bookkeeping before adding bag space |
-| Factorio | Spatial search, personal pins and organized alerts | Map knowledge and remote capabilities may not suit an embodied actor | Find, orient and retain a reference without gaining hidden knowledge |
-| Riot's League clarity notes | Readable target/effect boundaries and visual priority | Combat rules and aesthetics do not transfer wholesale | Match graphics to known geometry and attention to consequence |
-| Blizzard's Classic UI notes, July 2026 | Shared infrastructure, deliberate comparisons and discoverable settings | Shared changes can introduce player-facing regressions | Qualify other callers; avoid unsolicited comparison clutter |
+| Reference                              | Relevant strength to study                                              | Caution / what not to copy                                           | Open Legend application                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Baldur's Gate 3                        | Contextual inventory actions, party transfer and rich item decisions    | Sorting chores and poorly discovered workflows can remain            | Selected-object detail, clear recipient and comparable facts, not a screen clone |
+| Diablo IV, April 2026 update           | Configurable loot filtering and inspection of hidden drops              | A filtering error hides useful objects; rarity alone is not value    | Visible filter state, recoverable hiding and explicit purpose rules              |
+| RuneScape                              | Stable bank organization and placeholders                               | Historical bank constraints and account economy are game-specific    | Preserve organization when stock changes                                         |
+| Old School RuneScape, 2025 QoL         | Repeatable withdrawal/charge preferences and shortfall feedback         | Consumption must remain deliberate and authorized                    | Named presets with clear resource consequences                                   |
+| Final Fantasy XIV, inspected UI guide  | Equipment comparison, gear sets, market search, HUD and camera options  | Jobs, slots, bindings and market rules are not Open Legend's         | Consistent comparisons, reusable configurations and explicit modes               |
+| Guild Wars 2, 2025 QoL                 | Consolidating convenience items into a few tools                        | Some objects need meaningful physical existence                      | Remove pointless bookkeeping before adding bag space                             |
+| Factorio                               | Spatial search, personal pins and organized alerts                      | Map knowledge and remote capabilities may not suit an embodied actor | Find, orient and retain a reference without gaining hidden knowledge             |
+| Riot's League clarity notes            | Readable target/effect boundaries and visual priority                   | Combat rules and aesthetics do not transfer wholesale                | Match graphics to known geometry and attention to consequence                    |
+| Blizzard's Classic UI notes, July 2026 | Shared infrastructure, deliberate comparisons and discoverable settings | Shared changes can introduce player-facing regressions               | Qualify other callers; avoid unsolicited comparison clutter                      |
 
 These are task-specific references, not a league table. Modern examples complement durable older patterns. This study does not claim to have audited every subsequent patch or input platform.
 

@@ -14,16 +14,16 @@ Current camera bindings belong to the existing owners, not this handbook. The ac
 
 Determine ownership from the event origin and active interaction scope. A modal excludes background interaction; **inside that permitted scope, the active child popup/control handles its interaction before the parent**. Without a modal, active UI or a captured gesture is resolved before eligible world input. A dialog must not close when Escape was meant for its child combobox. Reuse shared primitives, not competing global listeners. Adobe's overlay source demonstrates explicit top-layer and child-scope handling. [S04](research.md#s04)
 
-| Gesture/context | Required result |
-| --- | --- |
+| Gesture/context                                            | Required result                                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Type, paste, select text or compose with an IME in a field | Edit text only; no world hotkey or accidental send; retain the owning workflow's explicit Send behavior |
-| Wheel over a scrollable panel or popup | Scroll that content, not the camera underneath |
-| World click used to dismiss an action picker | Dismiss according to its contract; the same click does not walk |
-| Drag the world beyond the established drag threshold | Pan/orbit only; release does not select or invoke a context action |
-| Drag a panel or item | Continue the captured interaction; release cannot activate a world target |
-| Escape with a popup open | Close that popup first; do not also hide its panel or open the pause menu |
-| Focus moves from a dialog into its child popover | Preserve the parent and its draft; entering the child is not an outside-dismissal gesture |
-| Window blur, pointer cancellation or lost capture | End/cancel transient gesture state; no stuck movement or delayed click |
+| Wheel over a scrollable panel or popup                     | Scroll that content, not the camera underneath                                                          |
+| World click used to dismiss an action picker               | Dismiss according to its contract; the same click does not walk                                         |
+| Drag the world beyond the established drag threshold       | Pan/orbit only; release does not select or invoke a context action                                      |
+| Drag a panel or item                                       | Continue the captured interaction; release cannot activate a world target                               |
+| Escape with a popup open                                   | Close that popup first; do not also hide its panel or open the pause menu                               |
+| Focus moves from a dialog into its child popover           | Preserve the parent and its draft; entering the child is not an outside-dismissal gesture               |
+| Window blur, pointer cancellation or lost capture          | End/cancel transient gesture state; no stuck movement or delayed click                                  |
 
 Use pointer capture and a tested drag threshold; do not invent a new pixel threshold in each component. The threshold is an implementation tuning value, not a player's intent guarantee. A stationary click and a drag must remain distinguishable under scaling, trackpads and different pointing devices. Mouse, touch and keyboard actions need equivalent meanings, not necessarily identical gestures.
 

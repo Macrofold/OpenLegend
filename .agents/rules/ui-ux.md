@@ -18,15 +18,15 @@ For UI/UX design, implementation or review, and frontend code changes including 
 
 ## Read only the matching detail
 
-| Task | Required relevant chapter |
-| --- | --- |
-| Density, spacing, sizing, stacking, icons, menus, More/Advanced | [Foundations](../../docs/ui-ux/foundations.md) |
-| Inputs, combobox/typeahead, forms, accordions, tabs, popovers, modals | [Controls](../../docs/ui-ux/controls.md) |
-| Inventory, equipment, containers, comparison, bulk actions or trading | [Inventory](../../docs/ui-ux/inventory.md) |
-| HUD, camera, picking, world navigation, quick actions or captions | [World interaction](../../docs/ui-ux/world-interaction.md) and existing PlayCanvas route |
-| Agent/NPC chat, composer, conversation history, invention or previews | [Chat and invention](../../docs/ui-ux/chat-and-invention.md) |
-| Search, notifications, settings, save/load, recovery or persistence | [System feedback](../../docs/ui-ux/system-feedback.md) |
-| React components, CSS, state, events, async or accessibility implementation | [React](../../docs/ui-ux/react.md) |
-| Review or acceptance planning | Relevant scenarios in [verification](../../docs/ui-ux/verification.md) |
+| Task                                                                        | Required relevant chapter                                                                |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Density, spacing, sizing, stacking, icons, menus, More/Advanced             | [Foundations](../../docs/ui-ux/foundations.md)                                           |
+| Inputs, combobox/typeahead, forms, accordions, tabs, popovers, modals       | [Controls](../../docs/ui-ux/controls.md)                                                 |
+| Inventory, equipment, containers, comparison, bulk actions or trading       | [Inventory](../../docs/ui-ux/inventory.md)                                               |
+| HUD, camera, picking, world navigation, quick actions or captions           | [World interaction](../../docs/ui-ux/world-interaction.md) and existing PlayCanvas route |
+| Agent/NPC chat, composer, conversation history, invention or previews       | [Chat and invention](../../docs/ui-ux/chat-and-invention.md)                             |
+| Search, notifications, settings, save/load, recovery or persistence         | [System feedback](../../docs/ui-ux/system-feedback.md)                                   |
+| React components, CSS, state, events, async or accessibility implementation | [React](../../docs/ui-ux/react.md)                                                       |
+| Review or acceptance planning                                               | Relevant scenarios in [verification](../../docs/ui-ux/verification.md)                   |
 
 The [index](../../docs/ui-ux/README.md) explains authority and numbers. The [research ledger](../../docs/ui-ux/research.md) is optional unless researching or revising a principle. Integrate findings into their existing chapter and this single ledger, not pass-specific supplements. Do not preload all chapters, every game dossier or every linked specification.
