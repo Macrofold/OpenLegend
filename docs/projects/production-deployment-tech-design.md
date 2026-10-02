@@ -12,31 +12,41 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 ## 2. Reconcile existing work rather than restart it
 
-| Existing owner / reviewed evidence | Consequence for this design |
-| --- | --- |
-| [Current runtime](../architecture.md), [DF03](../maintainers/production-data.md), root README and package manifests | PostgreSQL-only; one database and data directory per world today. Do not copy older SQLite or shared multi-world database claims. No hosting fleet is demonstrated. |
-| [MP01/MP04](../maintainers/multiplayer.md), [authentication.ts](../../apps/server/src/authentication.ts) | Keep server-side OIDC, scoped grants, control generations and private projections. Recorded real-provider evidence used Keycloak, not Auth0. No published branch named multiplayer or indexed Auth0 reference was located during the initial review; Mike's Auth0 choice is authoritative, but its deployment remains to verify. |
-| [Production delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) | Preserve D5/D6, the selected shared-world workloads, transaction semantics and regional transfer design. Its historical SQLite introduction is superseded by DF03. |
-| [Scaling package at d2fa69bd](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/docs/scaling/README.md) and its [architecture](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/archive/02-research/massive-scale/target-architecture.md) | Reuse bounded cells, separate simulation/intelligence/control responsibilities, and G0–G4 sequencing. That branch was 104 commits behind the initial main baseline; its September 25 code audit is not current implementation evidence. This package adds concrete hosting/operations choices, not another SC/SF/LT backlog. |
-| [AI providers](../ai-providers.md), [MW delivery](../maintainers/macrofold-worker-api.md) | Preserve Macrofold Worker, inference, scope and accounting contracts. Full cognition currently requires Macrofold; direct model access is not feature parity. |
-| [Runtime art](../invention-art-pipeline.md), [3D asset pipeline](3d-pixel-art-asset-pipeline.md) | Instantiate their versioned publication/rights/fallback design with storage and delivery services. Do not replace their art semantics or claim the bundled mercenary implements production storage. |
-| [Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts), [CI](../../.github/workflows/check.yml) | The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. CI uses PostgreSQL 16 while this design targets qualified PostgreSQL 18. The playbook makes these concrete PD02/PD04/PD09 prerequisites. |
+**[Current runtime](../architecture.md), [DF03](../maintainers/production-data.md), root README and package manifests:** PostgreSQL-only; one database and data directory per world today. Do not copy older SQLite or shared multi-world database claims. No hosting fleet is demonstrated.
+
+**[MP01/MP04](../maintainers/multiplayer.md) and [authentication.ts](../../apps/server/src/authentication.ts):** Keep server-side OIDC, scoped grants, control generations and private projections. Recorded real-provider evidence used Keycloak, not Auth0. No published branch named multiplayer or indexed Auth0 reference was located during the initial review; Mike's Auth0 choice is authoritative, but its deployment remains to verify.
+
+**[Production delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md):** Preserve D5/D6, the selected shared-world workloads, transaction semantics and regional transfer design. Its historical SQLite introduction is superseded by DF03.
+
+**[Scaling package at d2fa69bd](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/docs/scaling/README.md) and its [architecture](https://github.com/Macrofold/OpenLegend/blob/d2fa69bd8e0a8975ebe3f6976b875305c402a702/archive/02-research/massive-scale/target-architecture.md):** Reuse bounded cells, separate simulation/intelligence/control responsibilities, and G0–G4 sequencing. That branch was 104 commits behind the initial main baseline; its September 25 code audit is not current implementation evidence. This package adds concrete hosting/operations choices, not another SC/SF/LT backlog.
+
+**[AI providers](../ai-providers.md) and [MW delivery](../maintainers/macrofold-worker-api.md):** Preserve Macrofold Worker, inference, scope and accounting contracts. Full cognition currently requires Macrofold; direct model access is not feature parity.
+
+**[Runtime art](../invention-art-pipeline.md) and [3D asset pipeline](3d-pixel-art-asset-pipeline.md):** Instantiate their versioned publication/rights/fallback design with storage and delivery services. Do not replace their art semantics or claim the bundled mercenary implements production storage.
+
+**[Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts) and [CI](../../.github/workflows/check.yml):** The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. CI uses PostgreSQL 16 while this design targets qualified PostgreSQL 18. The playbook makes these concrete PD02/PD04/PD09 prerequisites.
 
 The research branch is linked by immutable commit rather than copied or merged over newer code. On integration, promote these deployment-specific tasks under D5/D6; retain existing SC/SF/LT and subsystem task ownership.
 
 ## 3. Platform comparison
 
-| Option | Assessment and decision |
-| --- | --- |
-| **AWS ECS Fargate** | Preferred launch fit, not a measured winner. Run the existing server in an ordinary container without host administration, Kubernetes or a new game-server SDK. Keep ownership and persistent data outside task lifetime. No claim of uninterrupted process life or world capacity follows from managed hosting. |
-| **ECS Managed Instances / ECS on self-managed EC2** | Compare when CPU choice, packing, GPU access or steady utilization matters. Managed Instances adds EC2 choice with AWS-managed hosts; include whole-instance utilization and its management fee, not just task resource requests. Self-managed EC2 provides more host control at greater operational cost. Neither partitions game state. Managed capacity still undergoes scheduled replacement. [39] [40] |
-| **ECS Express Mode** | Useful simplification for eligible web services, not the initial world owner. Custom task definitions are supported, but current Express Mode uses canary deployments exclusively and requires an ALB. Request splitting between two independent live copies of one world is unsafe. Prefer normal ECS/CDK for the world; consider Express for a later stateless service only after its constraints fit. [41] [42] |
-| **Amazon GameLift Servers** | Serious growth candidate, not dismissed as match-only: AWS documents persistent-world hosting. Eligible generation-6-and-later fleets include network bandwidth at no additional charge from June 15, 2026, including On-Demand/Spot, except China. This benefit is not included in ordinary ECS/EC2 hosting and does not make S3/CDN, databases or inference free. Qualify lifecycle integration, browser HTTPS/routing and persistent-world recovery before comparing total cost. [1] [2] [34] |
-| **GCP Compute Engine, including stateful managed instance groups** | Straightforward non-Kubernetes alternative around the same application, with more VM/container host configuration than Fargate. Managed replacement or preserved disks do not prove exclusive world ownership or coherent recovery. Cloud SQL and object/CDN delivery remain managed. This is the fairer small-deployment comparison than assuming every GCP launch needs GKE. [37] [51] |
-| **GKE Autopilot + Agones** | Credible managed fleet path with production examples; Agones supports Standard and Autopilot and recommends Autopilot when its constraints fit. Qualify scheduling, resource, port and long-session disruption restrictions. It manages allocation, not game-state partitioning or conserved-resource transfers. Choose for existing Kubernetes expertise or demonstrated fleet value, not merely for a future player count. [3] [38] |
-| **Cloud Run services / Cloud Run instances** | Distinguish the products. Services support streaming with bounded request duration and best-effort affinity; a request timeout is not proof the simulation process restarts hourly. Instances, introduced August 2026, provide singleton addressable runtimes but are Preview, use shared CPU/burst budgets and have a bounded continuous runtime. Evaluate them for suitable workloads, but do not select a preview/bursty-CPU environment for the authoritative launch world without production support and sustained-load evidence. [4] [43] [44] |
-| **Azure PlayFab Multiplayer Servers** | An established managed alternative for custom containerized servers, not an indie-only platform. It still needs lifecycle/allocation integration and the same world persistence/authority work. Keep it as an alternative when Azure expertise or commercial terms justify another evaluation, not a third launch cloud. [45] |
-| **i3D.net / OVHcloud dedicated gaming servers** | Evaluate later for sustained regional CPU/network demand. i3D documents bare-metal/cloud hybrid operation and GameLift Anywhere integration. OVH's Game DDoS protection requires an appropriate protocol profile; do not assume every advertised game-specific protection covers browser HTTP traffic. Compare player RTT/jitter/loss, CPU tails, nearby database placement, spares, support and operator labor—not server rent alone. [5] [21] |
+**AWS ECS Fargate.** Preferred launch fit, not a measured winner. Run the existing server in an ordinary container without host administration, Kubernetes or a new game-server SDK. Keep ownership and persistent data outside task lifetime. No claim of uninterrupted process life or world capacity follows from managed hosting.
+
+**ECS Managed Instances / ECS on self-managed EC2.** Compare when CPU choice, packing, GPU access or steady utilization matters. Managed Instances adds EC2 choice with AWS-managed hosts; include whole-instance utilization and its management fee, not just task resource requests. Self-managed EC2 provides more host control at greater operational cost. Neither partitions game state. Managed capacity still undergoes scheduled replacement. [39] [40]
+
+**ECS Express Mode.** Useful simplification for eligible web services, not the initial world owner. Custom task definitions are supported, but current Express Mode uses canary deployments exclusively and requires an ALB. Request splitting between two independent live copies of one world is unsafe. Prefer normal ECS/CDK for the world; consider Express for a later stateless service only after its constraints fit. [41] [42]
+
+**Amazon GameLift Servers.** Serious growth candidate, not dismissed as match-only: AWS documents persistent-world hosting. Eligible generation-6-and-later fleets include network bandwidth at no additional charge from June 15, 2026, including On-Demand/Spot, except China. This benefit is not included in ordinary ECS/EC2 hosting and does not make S3/CDN, databases or inference free. Qualify lifecycle integration, browser HTTPS/routing and persistent-world recovery before comparing total cost. [1] [2] [34]
+
+**GCP Compute Engine, including stateful managed instance groups.** Straightforward non-Kubernetes alternative around the same application, with more VM/container host configuration than Fargate. Managed replacement or preserved disks do not prove exclusive world ownership or coherent recovery. Cloud SQL and object/CDN delivery remain managed. This is the fairer small-deployment comparison than assuming every GCP launch needs GKE. [37] [51]
+
+**GKE Autopilot + Agones.** Credible managed fleet path with production examples; Agones supports Standard and Autopilot and recommends Autopilot when its constraints fit. Qualify scheduling, resource, port and long-session disruption restrictions. It manages allocation, not game-state partitioning or conserved-resource transfers. Choose for existing Kubernetes expertise or demonstrated fleet value, not merely for a future player count. [3] [38]
+
+**Cloud Run services / Cloud Run instances.** Distinguish the products. Services support streaming with bounded request duration and best-effort affinity; a request timeout is not proof the simulation process restarts hourly. Instances, introduced August 2026, provide singleton addressable runtimes but are Preview, use shared CPU/burst budgets and have a bounded continuous runtime. Evaluate them for suitable workloads, but do not select a preview/bursty-CPU environment for the authoritative launch world without production support and sustained-load evidence. [4] [43] [44]
+
+**Azure PlayFab Multiplayer Servers.** An established managed alternative for custom containerized servers, not an indie-only platform. It still needs lifecycle/allocation integration and the same world persistence/authority work. Keep it as an alternative when Azure expertise or commercial terms justify another evaluation, not a third launch cloud. [45]
+
+**i3D.net / OVHcloud dedicated gaming servers.** Evaluate later for sustained regional CPU/network demand. i3D documents bare-metal/cloud hybrid operation and GameLift Anywhere integration. OVH's Game DDoS protection requires an appropriate protocol profile; do not assume every advertised game-specific protection covers browser HTTP traffic. Compare player RTT/jitter/loss, CPU tails, nearby database placement, spares, support and operator labor—not server rent alone. [5] [21]
 
 **GameLift integration is smaller than an engine rewrite, but not zero.** AWS currently lists dedicated server SDKs for C++, C# and Go and also offers a game-server wrapper for basic lifecycle integration. Prototype the wrapper or a narrow supported bridge with the actual Node application before estimating migration cost. The JavaScript AWS management SDK and GameLift Realtime are not interchangeable with a dedicated server integration. The wrapper does not supply our world ownership, checkpoint, shutdown or HTTP routing contract. [46]
 
@@ -101,12 +111,13 @@ A CDN speeds static delivery, not the authoritative interaction across continent
 
 ## 6. Production assets, not repository downloads
 
-| Material | Storage and ownership |
-| --- | --- |
-| Blender/source textures, references, licenses and provenance | Private versioned S3 art storage plus the artist workspace; references are not automatically licensed to ship. |
-| Approved models, textures, sprites, animations and audio | Immutable content-addressed S3 objects through CloudFront; separately published from the application. |
-| Identity, exact versions, rights, dependencies, validation and publication receipts | PostgreSQL metadata through the existing appearance/art owners. |
-| Engine/import scripts, small authored manifests, essential fallback art | Git. Local downloaded library files live in an ignored cache. |
+**Blender/source textures, references, licenses and provenance:** private versioned S3 art storage plus the artist workspace; references are not automatically licensed to ship.
+
+**Approved models, textures, sprites, animations and audio:** immutable content-addressed S3 objects through CloudFront; separately published from the application.
+
+**Identity, exact versions, rights, dependencies, validation and publication receipts:** PostgreSQL metadata through the existing appearance/art owners.
+
+**Engine/import scripts, small authored manifests, essential fallback art:** Git. Local downloaded library files live in an ignored cache.
 
 **First vertical slice:** publish a rights-approved mercenary runtime bundle; create its exact asset/version manifest; resolve it through authorized server metadata; load from the CDN with cache/fallback; verify a clean checkout and a clean browser; then stop adding large runtime binaries to Git. No history rewrite or deletion of current art is authorized here.
 
@@ -158,13 +169,15 @@ The [playbook](production-deployment-playbook.md#8-close-the-non-server-release-
 
 Retain the [selected workloads](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product): first release **100 humans, 100 agents, 100 animals and 1,000 other objects**, with half of each in one scene; growth **10,000 concurrent humans**, with **200 humans and agents combined** in the local scene and an explicit animal/object/activity profile. These are unqualified targets, not stored-content ceilings.
 
-| Stage | Architecture change | Promotion evidence |
-| --- | --- | --- |
-| Pilot → qualified first release | One recoverable world; bounded native/AI/client work; infrastructure above. | Real Auth0/browser mixed play, dense scene, aged history, sustained load, failure/recovery and measured spend. |
-| Many worlds / 50k–100k registered or monthly users | A durable world directory, separate account/control entry point, provision/admission lifecycle and placement across world tasks/database cohorts. | Peak CCU, active-world skew and unattended simulation demand measured independently of account count. |
-| 10k shared-world concurrency and beyond | Bounded regional working sets, then fenced region authorities; partition storage only after CPU/transaction evidence requires it. | Existing D6 crossing, perception/time, contested-resource, inventory and recovery gates. Many independent worlds do not qualify this target. |
-| 50k–100k concurrent players across a fleet | Replicated regional cells with bounded databases, connection gateways and warm/failover headroom; compare Fargate, Managed Instances, EC2 and GameLift on measured total economics. | Capacity and quota tests including reconnect storms, one-cell failure and the largest promised hot world/scene. |
-| Millions of players | Repeat qualified cells/regions; global discovery/social projections, regional write ownership and explicit cross-cell protocols. | Per-cell cost/reliability, control-plane survival, migration and global-service bottlenecks; no single crowd-capacity inference. |
+**Pilot → qualified first release.** One recoverable world; bounded native/AI/client work; infrastructure above. Promotion requires real Auth0/browser mixed play, dense scene, aged history, sustained load, failure/recovery and measured spend.
+
+**Many worlds / 50k–100k registered or monthly users.** A durable world directory, separate account/control entry point, provision/admission lifecycle and placement across world tasks/database cohorts. Promotion requires peak CCU, active-world skew and unattended simulation demand measured independently of account count.
+
+**10k shared-world concurrency and beyond.** Bounded regional working sets, then fenced region authorities; partition storage only after CPU/transaction evidence requires it. Promotion requires the existing D6 crossing, perception/time, contested-resource, inventory and recovery gates. Many independent worlds do not qualify this target.
+
+**50k–100k concurrent players across a fleet.** Replicated regional cells with bounded databases, connection gateways and warm/failover headroom; compare Fargate, Managed Instances, EC2 and GameLift on measured total economics. Promotion requires capacity and quota tests including reconnect storms, one-cell failure and the largest promised hot world/scene.
+
+**Millions of players.** Repeat qualified cells/regions; global discovery/social projections, regional write ownership and explicit cross-cell protocols. Promotion requires per-cell cost/reliability, control-plane survival, migration and global-service bottleneck evidence; no single crowd-capacity inference.
 
 A **cell** is a bounded failure domain; a **world** is a persistent simulation identity; a **region** is a possible authority subdivision. Do not equate any of them with a VM, database instance or account. Current per-world databases can initially share an RDS deployment with bounded pools. Before database-per-world catalog/migration overhead becomes material, implement the existing `world_id`-scoped repository target and consolidate bounded world cohorts into shared shard databases. This requires query/isolation and migration qualification; merely pointing today's isolated-world clients at one database is unsafe. Millions of worlds must not imply millions of RDS instances, permanently open databases/connections or always-running processes.
 

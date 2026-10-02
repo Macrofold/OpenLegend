@@ -10,16 +10,21 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 ## Required journeys and failure behavior
 
-| Journey | Required outcome |
-| --- | --- |
-| A new player arrives | Auth0 sign-in, explicit account provisioning and world admission, a clear character/control choice, and a playable first scene without downloading the whole asset library. Invitation or ordinary signup never grants creator powers. |
-| Two people share a world | Server-authorized commands, private knowledge and account isolation, one current controller per supported binding, and durable possessions. Modified clients cannot grant themselves authority. |
-| A connection or server is lost | Visible reconnect/recovery, no duplicated command or character, no acceptance of stale control, and an explanation when the world is temporarily unavailable. A process restart is not seamless failover. |
-| An NPC/model provider is unavailable | Supported native actions and existing native plans remain functional. Unavailable dialogue is explicit; neither invented fallback replies nor unapproved paid retries conceal the failure. |
-| Art improves during play | Only approved, permitted versions arrive asynchronously. An adequate fallback remains usable. Art does not alter mechanics, and late downloads cannot resurrect removed objects. |
-| An operator deploys or restores | A version-compatible, fenced handover or announced maintenance interval; coherent recovery of gameplay, required files and content pins; current permissions, privacy restrictions and external accounting are not rewound. |
-| A deployment is interrupted | Maintenance remains explicit, the operator can inspect the last durable release phase, and a retry reconciles actual state before acting. A healthy old server after rollback is not reported as a successful new release. |
-| More players/worlds arrive | Placement and admission respect measured capacity. Friends, domain permissions, identity and persistent relationships survive infrastructure changes. A queue is disclosed, not counted as successful service within the promised workload. |
+**A new player arrives.** Auth0 sign-in, explicit account provisioning and world admission, a clear character/control choice, and a playable first scene without downloading the whole asset library. Invitation or ordinary signup never grants creator powers.
+
+**Two people share a world.** Server-authorized commands, private knowledge and account isolation, one current controller per supported binding, and durable possessions. Modified clients cannot grant themselves authority.
+
+**A connection or server is lost.** Visible reconnect/recovery, no duplicated command or character, no acceptance of stale control, and an explanation when the world is temporarily unavailable. A process restart is not seamless failover.
+
+**An NPC/model provider is unavailable.** Supported native actions and existing native plans remain functional. Unavailable dialogue is explicit; neither invented fallback replies nor unapproved paid retries conceal the failure.
+
+**Art improves during play.** Only approved, permitted versions arrive asynchronously. An adequate fallback remains usable. Art does not alter mechanics, and late downloads cannot resurrect removed objects.
+
+**An operator deploys or restores.** A version-compatible, fenced handover or announced maintenance interval; coherent recovery of gameplay, required files and content pins; current permissions, privacy restrictions and external accounting are not rewound.
+
+**A deployment is interrupted.** Maintenance remains explicit, the operator can inspect the last durable release phase, and a retry reconciles actual state before acting. A healthy old server after rollback is not reported as a successful new release.
+
+**More players/worlds arrive.** Placement and admission respect measured capacity. Friends, domain permissions, identity and persistent relationships survive infrastructure changes. A queue is disclosed, not counted as successful service within the promised workload.
 
 ## Scope and stages
 
