@@ -46,16 +46,16 @@ The warning must not reveal invisible enemies, undiscovered traps, private inten
 
 Recommended lifecycle:
 
-| State | Target behavior |
-| --- | --- |
-| Connected, not engaged | Ordinary player control under current authority |
-| Departure requested | Explain relevant policy and assess admitted ongoing interactions without revealing private facts |
-| Disconnect/reconnect grace | Retain one authoritative actor and prevent duplicate control; exact grace policy is unresolved |
-| Continuing an engaged encounter | Use standing player choices or a previously disclosed bounded continuation policy; preserve risks and resources |
-| Encounter resolved or safe exit reached | Apply the world's ordinary absentee/exit policy rather than initiating unlimited new adventures |
-| Player returns | Restore control at the actual resulting location and condition, with a truthful account of outcomes the player may know |
+| State                                   | Target behavior                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Connected, not engaged                  | Ordinary player control under current authority                                                                         |
+| Departure requested                     | Explain relevant policy and assess admitted ongoing interactions without revealing private facts                        |
+| Disconnect/reconnect grace              | Retain one authoritative actor and prevent duplicate control; exact grace policy is unresolved                          |
+| Continuing an engaged encounter         | Use standing player choices or a previously disclosed bounded continuation policy; preserve risks and resources         |
+| Encounter resolved or safe exit reached | Apply the world's ordinary absentee/exit policy rather than initiating unlimited new adventures                         |
+| Player returns                          | Restore control at the actual resulting location and condition, with a truthful account of outcomes the player may know |
 
-Death is not necessarily followed by respawn. Worlds choose revival, recovery, reincarnation, permanent death, or another supported aftermath. Returning after a lethal encounter must respect that rule rather than replaying the fight or restoring the pre-logout state.
+Death is not necessarily followed by respawn in every authored world. Worlds choose revival, recovery, reincarnation, permanent death, or another supported aftermath. The [bundled world](../worlds/base/lifecycle-and-protection.md#human-conflict-and-recovery) retains its accepted recoverable human death and default possession preservation; this suite does not replace that policy with permanent death. Returning after a lethal encounter must respect the selected world rule rather than replaying the fight or restoring the pre-logout state.
 
 ## 6. Limit absentee control and disconnection unfairness
 
@@ -77,11 +77,11 @@ A protected home should not become a launchpad for risk-free attacks across a bo
 
 The desired engine direction permits three distinct concepts:
 
-| Clock | Typical responsibilities; each world must choose explicitly |
-| --- | --- |
-| Mechanical time | Movement, work, combat, status duration, and other physically progressed activity |
-| World calendar | Dates, years, cultural periods, and any biological or environmental systems explicitly assigned to it |
-| Monotonic real time | Interface reading time, connection deadlines, computational budgets, reservations, and operational scheduling |
+| Clock           | Typical responsibilities; each world must choose explicitly                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanical time | Movement, work, combat, status duration, and other physically progressed activity                                                                          |
+| World calendar  | Dates, years, cultural periods, and any biological or environmental systems explicitly assigned to it                                                      |
+| Real time       | Local elapsed timers use a monotonic clock; saved deadlines, reservations, and human event schedules need durable timestamps and explicit restart handling |
 
 A creator may set a fast calendar while a fire-starting action takes the same mechanical/real duration. A fictional year can pass during that activity. That does not imply a million model decisions or a million times faster motion.
 
@@ -102,3 +102,10 @@ Worlds participating in trade or shared campaigns need compatible timing and imp
 Present where the character is, what happened during the bounded continuing encounter, what condition they are in, and which current commitments remain. Distinguish actual personal experience from reports or public news. Do not invent a detailed transcript to make a coarse outcome seem fully observed.
 
 Required cases include: safe logout; deliberate logout while losing a fight; losing the connection during the same fight; reconnect before resolution; return after death under different world aftermath policies; hidden danger without an information-leaking warning; repeated attackers attempting infinite retention; observer arrival after a protected background scene; and fast calendar with unchanged mechanical fire-starting duration. Qualification must evaluate fairness and abuse, not only persistence correctness.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).

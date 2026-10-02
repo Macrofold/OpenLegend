@@ -59,3 +59,9 @@ Initially allow one expensive native analysis worker/job per local world unless 
 Prove receiver-local privacy and actual witness preservation, stable native outcomes for optimization-only changes, controlled differences for the EPR semantic correction, save/restart, and no hidden paid work. Capture both cold stall and warmed throughput. Expand populations and history gradually, stopping at the measured bottleneck.
 
 Do not add distributed event brokers, analytic animal simulation, a replacement ECS, or GPU perception merely because a small profile is slow. Escalate only after phase-level evidence identifies the remaining cost. Exact supported population/density/speed release targets remain open. Re-run the same cold and warmed application workloads on the current tree before deciding whether a remaining native bottleneck requires more engineering. The still-open private-acquisition semantic requirement and unqualified full-stack workloads justify the next focused slice independently of obsolete timings.
+
+## Maintained records
+
+- Implementation: [Existing subsystem work](maintainers/performance.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
+- Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
+- Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.

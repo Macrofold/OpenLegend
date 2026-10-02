@@ -95,16 +95,16 @@ For example, rolling back World A after an export while World B keeps the receiv
 
 ## 10. Qualification workloads
 
-| Workload | What it reveals |
-| --- | --- |
-| One community with many active players versus many communities with one active player each | Fragmentation, fixed background overhead, and social versus infrastructure economics |
-| Clustered versus dispersed players at equal total count | Density, interaction amplification, cold preparation, and cross-area work |
-| Concert versus market versus unrestricted combat | Different capacity envelopes; no universal local player limit |
-| Quiet unattended community followed by mass return | Accumulated required work, cold history, preparation burst, and no optional-thought debt |
-| Repeated promotion/demotion and teleportation | Thrashing, replay exploits, allocation churn, and duplicate history |
-| Dense crowds with limited focus and real attacks | Cost reduction without dropped physical effects or illicit knowledge |
-| Budget-limited long relationships | Whether affordable NPCs remain coherent, responsive, and distinct |
-| Popular official and coordinated worldwide event | Queue fairness, important-character cost, and broad access to meaningful participation |
+| Workload                                                                                   | What it reveals                                                                          |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| One community with many active players versus many communities with one active player each | Fragmentation, fixed background overhead, and social versus infrastructure economics     |
+| Clustered versus dispersed players at equal total count                                    | Density, interaction amplification, cold preparation, and cross-area work                |
+| Concert versus market versus unrestricted combat                                           | Different capacity envelopes; no universal local player limit                            |
+| Quiet unattended community followed by mass return                                         | Accumulated required work, cold history, preparation burst, and no optional-thought debt |
+| Repeated promotion/demotion and teleportation                                              | Thrashing, replay exploits, allocation churn, and duplicate history                      |
+| Dense crowds with limited focus and real attacks                                           | Cost reduction without dropped physical effects or illicit knowledge                     |
+| Budget-limited long relationships                                                          | Whether affordable NPCs remain coherent, responsive, and distinct                        |
+| Popular official and coordinated worldwide event                                           | Queue fairness, important-character cost, and broad access to meaningful participation   |
 
 Numbers used to size experiments are workload inputs, not advertised capacities. Measure tails, cost, backlog, correctness, and player-visible quality together. A million synthetic idle entities is not acceptance for a million concurrent players. Native-only performance does not establish full network, model, storage, or client capacity.
 
@@ -113,3 +113,10 @@ Numbers used to size experiments are workload inputs, not advertised capacities.
 Do not expand a configuration whose sustainable budget makes NPCs incoherent, whose quiet-world liability grows without bounds, whose capacity policy rewards griefing, or whose transitions change decisive outcomes opportunistically. Narrow the supported world/activity envelope before presenting an unqualified scale promise.
 
 A successful early result is a compelling small community with bounded background cost, truthful transitions, fair admission, and memorable relationships. Broader concurrency then becomes an incremental measured program rather than a product promise funded by hypothetical efficiency.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).

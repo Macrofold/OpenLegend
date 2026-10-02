@@ -107,3 +107,10 @@ A scheduled event should not covertly revoke accepted property protection, enabl
 Demonstrate a small multi-community campaign in which one local action changes another front, an invasion is forecast, players delay or prevent it, and the forecast updates coherently. Show distinct local encounters with no duplicated body, contribution, or final death. Include a private opted-out domain, an incompatible creative world, an absent player, and a capacity-constrained peak.
 
 Open tuning includes notice windows, forecast confidence vocabulary, revision commitments, community rotation, participation reservations, contribution recognition, and embodiment costs. These must be decided from playability and sustainable demand, not inferred from the examples. The [limits register](../limits/product-scalability.md) owns these decisions.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).

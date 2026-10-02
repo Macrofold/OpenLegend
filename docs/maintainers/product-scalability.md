@@ -18,7 +18,7 @@ Do not create parallel task queues in every linked topic. Update the relevant ex
 ## PS01 — Documentation and owner reconciliation
 
 - [x] Establish principles, accepted direction, explicitly secondary options, paired feature/technical plans, topic specifications, and a limit inventory.
-- [ ] Integrate substantive target extensions into existing relevant docs, update navigation and decision history, and complete changed-document/link review.
+- [x] Integrate substantive target extensions into existing relevant docs, update navigation and decision history, and complete changed-document/link review.
 
 Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 does not mean background scenes, crowd focus, dangerous-logout continuation, calendar separation, or federation are implemented.
 
@@ -108,4 +108,10 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## Pending policy decisions
 
-The [limits register](../limits/product-scalability.md) owns all unset values and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+
+## Documentation completion evidence
+
+PS01 is documentation-only completion. Review covered all newly authored topics and both project files, the branch's complete documentation delta from `8005f7c7245cfecec128652efe3ef07926604e0a`, and the relevant unchanged consumer contracts. The original changelog was restored using its exact stored blob in commit `3254190ebe5cd4c178ac2925ee6fc255160f3c56`; the final update adds only the product-scalability entry while preserving all earlier historical text byte for byte.
+
+Final checks require exact-source patch guards, preservation of all previous requirements except the explicitly superseded D22 topology proposal, valid newly introduced relative links/anchors, pinned Prettier 3.6.2 on changed Markdown, unchanged runtime/configuration/agent instructions, and PS02–PS08 remaining unchecked. Temporary checking helpers are removed from the final tree. Check output belongs in the task's CI evidence and handoff, not committed raw reports. Repository-wide CI results are reported separately; no runtime, live-model or population qualification follows from PS01.

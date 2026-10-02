@@ -117,4 +117,4 @@ Measure actual player experience, model consistency, perspective errors, transit
 
 ## 7. Release gates
 
-Ship only the stages whose behavior, unsupported cases, and capacity envelope have been qualified. Reconcile current memory, perception, time, logout, and durability contracts before introducing changed semantics. A documentation approval is not implementation evidence or authorization. The [tracker](../maintainers/product-scalability.md) owns the precise staged work and acceptance state.
+Ship only the stages whose behavior, unsupported cases, and capacity envelope have been qualified. Reconcile current memory, perception, time, logout, and durability contracts before introducing changed semantics. This documentation task is not implementation evidence or a request to change gameplay. A later explicit instruction to implement follows the [root task-authorization policy](../../AGENTS.md#task-scope-and-authorization). The [tracker](../maintainers/product-scalability.md) owns the precise staged work and acceptance state.

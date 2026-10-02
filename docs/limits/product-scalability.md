@@ -4,6 +4,24 @@
 
 Each entry identifies the constraint, rationale, current decision, restrictiveness, and reconsideration trigger. Numeric examples in the discussion are not adopted settings. This file is the single product-scalability inventory; implementation-specific measured limits continue to belong to their native owners.
 
+## Status and restrictiveness
+
+All new execution policies in this inventory are **Proposed**, not current runtime limits; their accepted product direction is distinguished in the linked specifications. Existing shared inventories remain controlling. Unselected numerical values are not claims of unlimited capacity. Ratings below apply to the proposed behavioral restriction, not to an unmeasured numerical allowance or a security certification.
+
+**Medium:** PS-L01, PS-L02, PS-L03, PS-L04, PS-L07, PS-L10, PS-L11, PS-L15 and PS-L16. These permit meaningful activity but deliberately constrain admission, attention, initiative, approximation, exact ambient detail, quality tiers, clock compatibility or campaign participation; actual generosity remains workload-dependent.
+
+**Safe:** PS-L05, PS-L06, PS-L08, PS-L09, PS-L12 and PS-L17. These favor ready arrivals, bounded scene/control scope, supported protective outcomes, explicit grants and conservative overload handling; they may exclude otherwise valid activity until it is supported.
+
+**Not a new tunable limit:** PS-L13 selects no funding/retention amount; PS-L14 adopts no new rollback window; PS-L18 records the evidence boundary rather than a capacity restriction. Their independent existing storage, spending and durability controls still apply. Correct identity, privacy, accounting and truthful evidence are guardrails, not candidates to relax under these ratings.
+
+Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive/05-project/open-decisions.md#product-scalability-integration-choices); this inventory owns restrictions, reasons and eventual values, not a competing decision register. The canonical topic linked through the suite index defines behavior at each boundary; the **Restriction** and **Select/revisit** fields below retain the initial disposition and evidence needed before enablement.
+
+## Maintained records
+
+- Implementation: [PS01–PS08](../maintainers/product-scalability.md).
+- Behavior: [Product-scalability suite](../product-scalability/README.md).
+- Tracking rules: [Limits tracking](README.md).
+
 ## PS-L01 — Local concurrency
 
 **Decision:** no universal player-per-region number is accepted. Platform-scale goals do not imply unrestricted same-square scale. **Reason:** density and allowed interactions dominate the actual work. **Restriction:** clear local admission and action limits are permitted, including open-field boundaries where necessary. **Select/revisit:** qualify concert, market, combat, dispersed, and converging-cluster envelopes with end-to-end evidence and fair player UX.

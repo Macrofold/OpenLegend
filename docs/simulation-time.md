@@ -51,3 +51,9 @@ The catalogue records for each candidate: what stays unchanged, how a deadline/b
 See [the branch handoff](maintainers/speech-time-integration.md). Speech emission is a committed occurrence and listener-specific acquisition, not a once-per-tick poll. Stored heard fragments never reroll during interpolation or history reads. Caption reading duration belongs to the real-time presentation clock, with its explicit pause/hidden policy, not accelerated game time. Physical speech duration, if later implemented, needs its own start/end boundaries and movement/occlusion semantics.
 
 [Current evidence](verification/simulation-cadence.md) distinguishes executable elapsed integration, sampled native boundaries and actual 8x server observations from still-open regional, graphical and coupled-law qualification; [regional-time evidence](verification/regional-time-and-navigation.md) covers deferred rates, net flow and fleeting crossings.
+
+## Maintained records
+
+- Implementation: [Existing subsystem work](maintainers/simulation-time.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
+- Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
+- Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.

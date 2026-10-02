@@ -32,6 +32,8 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Implementing engineer under the owner's delegated design judgment, with measured evidence and recorded tradeoffs. Changing product privacy or silently losing confirmed actions is outside this optimization policy.
 
+The accepted [product-scalability direction](../product-scalability/README.md) adds a review trigger before prospective crowd grouping or activity-dependent admission is enabled (PS04/PS06). Treat that as an explicit new world policy, not permission to discard already-acquired evidence; [PS-D02/PS-D04](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) retain the material choices.
+
 ## RP04 — Exact recall and reusable derived artifacts
 
 **Current policy:** [Implemented retrieval](../memory-architecture.md#implemented-retrieval-and-storage) uses exact actor-scoped cosine ranking and retains revision-keyed vector artifacts outside gameplay rewind. Only current eligible sources can enter search; cache/history presence cannot bypass forgetting. The [preparation/index policy](../memory-architecture.md#retrieval-preparation-admission) adds snapshot-fenced caches and indexed optional token-prefix search; exact semantic recall is unchanged.
@@ -52,6 +54,8 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Project maintainer for embodiment/product policy; operator for supported session/grace settings; implementing engineer for measured native bounds within accepted semantics. Bounds never authorize truncating owed effects or creating spending allowances.
 
+Before implementing [dangerous-logout continuation](../product-scalability/participation-and-protection.md), revisit the current exit grace and distinguish encounter continuation from protected post-exit absence. [PS-D01](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns the remaining fairness/ending choices; PS05 does not change today's grace or control rules merely by being documented.
+
 ## Limits inventory and concrete work
 
 [Feature limits](../openlegend-limits-decisions.md) record individual numerical and behavioral constraints. [Remove / Change / Expand](limits-audit.md) ranks concrete candidates, including RP03–RP05 history, retrieval, account and work envelopes. This register continues to own accepted-policy authority and review triggers; it is not a second limit/task list.
@@ -65,6 +69,8 @@ This register tracks accepted decisions likely to change, not unresolved choices
 **Review trigger:** A fast actor or tiny sense forces excessive whole-world work; a fleeting exposure is observably missed; a new timed/coupled mechanic lacks a safe interval bound; or profiling shows useful headroom from region-local integration. Consult the [boundary catalogue](simulation-boundaries.md), retain exact occurrence/collision/permission boundaries, and measure the changed approximation rather than silently increasing time steps.
 
 **Decision authority:** The world policy owner for fidelity/balance, with the simulation and perception maintainers for runtime integrity. Unsupported rate interactions retain their conservative fallback until the owning mechanic supplies and qualifies a better bound. No change to these limits may turn a presentation setting into altered actor knowledge.
+
+The proposed [independent calendar](../product-scalability/participation-and-protection.md#8-calendar-time-is-not-necessarily-mechanical-time) is another explicit review trigger. Assign affected mechanics, needs, memories and shared deadlines before enabling it; current speed conversion and sensing fidelity remain unchanged. [PS-D03](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns the residual clock choices.
 
 ## Maintaining this register
 

@@ -84,11 +84,11 @@ Every beat passes normal world admission. Prose cannot create goods, spend the s
 
 ## 8. Precise speech, gist, and later retelling
 
-| Historical evidence | Later behavior |
-| --- | --- |
-| Exact words were generated and retained under applicable recall rules | Quote only the words this character may legitimately recall or access |
-| A coarse scene established only meaning | State the gist; a request for verbatim wording can receive an honest admission of imperfect recall |
-| A reconstruction is generated later | Present it as approximate retelling, not a newly discovered exact transcript |
+| Historical evidence                                                                         | Later behavior                                                                                             |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Exact words were generated and retained under applicable recall rules                       | Quote only the words this character may legitimately recall or access                                      |
+| A coarse scene established only meaning                                                     | State the gist; a request for verbatim wording can receive an honest admission of imperfect recall         |
+| A reconstruction is generated later                                                         | Present it as approximate retelling, not a newly discovered exact transcript                               |
 | A recording, oath, passphrase, contract, or perfect-recall mechanic requires exact language | Generate and persist the required words at the relevant occurrence, including in an otherwise coarse scene |
 
 For example: "I do not remember every word. I told him I would give him until Friday if he delivered the timber." This is consistent with gist-only evidence. A plausible newly generated transcript is not stronger historical proof.
@@ -116,3 +116,10 @@ On budget exhaustion, preserve necessary evidence and commitments, continue vali
 Test a noisy room with a focused speaker and an unrelated scream; a moving crowd containing a known friend; an unseen attacker; a real hit outside focus; repeated near-equal salience without attention thrashing; and later recall after a focus change. Verify no hidden names or speech appear in summaries.
 
 Test a gist-only negotiation, an exact oath inside a coarse scene, a human joining midbeat, conflicting participant beliefs, and a secret known to only one character. Test stable characterization across quality tiers and paid-cost accounting through the complete workflow. These are future delivery gates, not claims established by this document.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).
