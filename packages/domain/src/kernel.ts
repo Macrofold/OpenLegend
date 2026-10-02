@@ -29,7 +29,15 @@ import {
   type EncounterBaseline,
   type ExposureCapture,
 } from './encounter-cache.js';
-import { motionTravelBounds, nativeMotionInterval } from './motion-boundaries.js';
+import {
+  copyCrossings,
+  crossingCache,
+  forgetCrossings,
+  motionTravelBounds,
+  nativeMotionInterval,
+  sensoryCrossingBound,
+  type CrossingCache,
+} from './motion-boundaries.js';
 import { withStableAudience } from './event-audience.js';
 import { stateChangeRevision } from './dependencies.js';
 import {
@@ -80,7 +88,7 @@ import {
   BASE_FAMILY_FACTS,
   nativeMovementSpeed,
 } from './worlds/base/actions.js';
-import { nativeInterval } from './temporal-boundaries.js';
+import { nativeInterval, refineNativeInterval } from './temporal-boundaries.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import {
@@ -155,6 +163,7 @@ import {
   reconcileStatusEffects,
   prepareStatusRates,
   integrateStatusRates,
+  crossStatusReferences,
   mayAdvanceStatusEffects,
   activateStatusEffect,
   deactivateStatusEffect,
@@ -334,9 +343,12 @@ function actionInReach(
   action: Action,
   origin = worldPosition(actor),
 ): boolean {
+  // A route in progress ends at its last point, not wherever a slice happens to stop inside
+  // the tolerance, so arrival does not depend on how elapsed time was divided.
   if (action.type === 'move')
     return (
       !!action.destination &&
+      !action.path.length &&
       worldSupport(actor) === action.destination.surfaceId &&
       distance(origin, action.destination) <= MOVEMENT.arrivalTolerance
     );
@@ -2280,7 +2292,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
     }
   } else {
     animal.wanderSeconds -= seconds;
-    if (animal.wanderSeconds <= 0) {
+    // A deadline within TIME_EPSILON is due now, whatever residue slicing left on the timer.
+    if (animal.wanderSeconds <= TIME_EPSILON) {
       const angle = nextRandom(world) * Math.PI * 2;
       const destination = {
         y: 0,
@@ -2362,12 +2375,84 @@ type NativeMechanics = {
   status: ReturnType<typeof prepareStatusRates>;
   travelFor: (id: string) => number;
   reactiveActors: string[];
+  /** Captured rates may wait for a boundary: no serial clamps, per-slice damage or transfer. */
+  deferRates: boolean;
+  /** Entities other participants' statuses depend on; their changes re-predict globally. */
+  referenced: ReadonlySet<string>;
+  /** A stored absolute deadline ends this interval; the clock lands on it exactly. */
+  endsAt?: number;
 };
+/** Apply the interval's captured rates over `rateSeconds` in the existing operator order;
+ * work in progress advances by its own slice. Deferred rate time is applied here before any
+ * magnitude reader, prediction or publication (docs/simulation-time.md#native-interval-contract). */
+function* integrateEndpoint(
+  world: WorldState,
+  participants: ReturnType<typeof nativeParticipants>,
+  mechanics: NativeMechanics,
+  rateSeconds: number,
+  events: WorldEvent[],
+  work?: {
+    seconds: number;
+    working: ReadonlyMap<string, string>;
+    /** Fires lit when this slice began; postponed time uses the unchanged current state. */
+    burning: ReadonlySet<string>;
+  },
+): Generator<void> {
+  const { interval } = mechanics;
+  if (rateSeconds)
+    integrateStatusRates(world, mechanics.status, rateSeconds, events, interval.drains);
+  // Drains folded into a status net flow were applied there (PF13.12).
+  const folded = (id: string, kind: 'fullness' | 'reservoir') =>
+    interval.drains.some((drain) => drain.targetId === id && drain.kind === kind);
+  for (const id of participants.actors) {
+    const actor = world.entities[id],
+      component = actor?.actor;
+    if (!actor || !component?.alive || component.incapacitated) continue;
+    if (rateSeconds) {
+      if (
+        hasWildernessNeeds(component) &&
+        advanceWildernessNeeds(
+          actor,
+          folded(id, 'fullness') ? 0 : rateSeconds,
+          interval.exhausted.has(id) ? rateSeconds : 0,
+          interval.starving.has(id) ? rateSeconds : 0,
+        )
+      )
+        reconcileBody(world, actor, events, 'needs');
+      reconcileConditions(world, actor, events);
+      if (!component.alive || component.incapacitated) continue;
+      if (!folded(id, 'reservoir')) advanceReservoirs(world, actor, rateSeconds, events);
+    }
+    if (work && work.working.get(id) === component.action?.id) {
+      const following = component.action?.type === 'follow';
+      const stage = component.action?.stage;
+      advanceAction(world, actor, following ? 0 : work.seconds, events);
+      if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
+    }
+  }
+  if (!rateSeconds) return;
+  for (const id of participants.ambient) {
+    const entity = world.entities[id];
+    // Fires burn for the state they had when the slice began: one lit by work finishing at
+    // the endpoint gained no burn, and one put out at the endpoint burned throughout.
+    if (entity?.heat && (work ? work.burning.has(id) : entity.heat.lit)) {
+      entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - rateSeconds);
+      if (entity.heat.fuelSeconds === 0 && entity.heat.lit) {
+        entity.heat.lit = false;
+        emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
+      }
+    }
+    yield;
+  }
+}
 const nativeContinuations = new WeakMap<
   WorldState,
   {
     mechanics: NativeMechanics;
     participants: ReturnType<typeof nativeParticipants>;
+    crossings: CrossingCache;
+    /** Flyers whose takeoff/landing awaits local re-prediction at the next start boundary. */
+    localChanges?: ReadonlySet<string>;
   }
 >();
 
@@ -2458,6 +2543,31 @@ function* advanceWorldNative(
   let mechanics: NativeMechanics | undefined = continuation
     ? { ...continuation.mechanics }
     : undefined;
+  let crossings = continuation ? copyCrossings(continuation.crossings) : crossingCache();
+  // Regional rate integration (PF13.11): a slice that only moves bodies leaves unrelated
+  // entities' captured linear rates pending. The shared prediction already stops at every
+  // threshold, so no transition can fall due before the pending time is applied at the next
+  // boundary, command, prediction or publication, always at the current clock.
+  let pendingSeconds = 0,
+    pendingMechanics: NativeMechanics | undefined;
+  const materialize = function* (): Generator<void> {
+    if (!pendingSeconds) return;
+    const seconds = pendingSeconds;
+    pendingSeconds = 0;
+    yield* integrateEndpoint(world, participants, pendingMechanics!, seconds, events);
+  };
+  // A flyer's own takeoff or landing changes only its grounded/activeWork predicates. Unless
+  // another entity's status or plan depends on it, re-predict it alone before the next slice.
+  let localChanges: Set<string> | undefined = continuation?.localChanges
+    ? new Set(continuation.localChanges)
+    : undefined;
+  const localize = (ids: readonly string[]) => {
+    const current = mechanics;
+    if (!current || !ids.length) return;
+    if (ids.some((id) => current.referenced.has(id) || current.reactiveActors.includes(id)))
+      mechanics = undefined;
+    else for (const id of ids) (localChanges ??= new Set()).add(id);
+  };
   while (
     remaining > 0 &&
     intervals < maxIntervals &&
@@ -2467,6 +2577,23 @@ function* advanceWorldNative(
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
     if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) mechanics = undefined;
+    if (!mechanics) yield* materialize();
+    // Observers able to perceive before this start boundary's reconciliation and commands.
+    // A change retires or resumes evidence at this instant, not at the slice end (PF13.16).
+    let perceiving: string | undefined;
+    const perceivers = () =>
+      participants.actors
+        .filter((id) => {
+          const e = world.entities[id];
+          return (
+            !!e?.actor?.alive &&
+            hasMemory(e) &&
+            activelyParticipates(e) &&
+            !capabilityBlocked(world, e, 'perception')
+          );
+        })
+        .join('\0');
+    if (!mechanics) perceiving = perceivers();
     const beforeState = mechanicalRevision(world);
     let statusIds = participants.statuses;
     if (!mechanics) {
@@ -2488,6 +2615,8 @@ function* advanceWorldNative(
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
       if (step) {
+        yield* materialize();
+        perceiving ??= perceivers();
         const stepId = step.id;
         const command = resolvePlanCommand(component.agency.plan!, step);
         const transition = command
@@ -2531,6 +2660,7 @@ function* advanceWorldNative(
         component.action?.type === 'follow' ? component.action.stage : undefined;
       const priorFollowPath =
         component.action?.type === 'follow' ? component.action.path : undefined;
+      const priorStage = component.action?.stage;
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
         component.action?.type === 'status-effect' ||
@@ -2542,6 +2672,9 @@ function* advanceWorldNative(
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
       )
+        mechanics = undefined;
+      // Work begun here starts silently; the next prediction must bound its completion.
+      if (priorStage === 'approaching' && component.action?.stage === 'working')
         mechanics = undefined;
     }
     if (world.nextId !== beforeDecisions) mechanics = undefined;
@@ -2560,11 +2693,13 @@ function* advanceWorldNative(
       occurrences.push(args);
     };
     const flushFlight = () => {
+      const sources = occurrences.map((occurrence) => occurrence[4]?.id ?? '');
       withStableAudience(world, () => {
         occurrences.sort((a, b) => (a[4]?.id ?? '').localeCompare(b[4]?.id ?? ''));
         for (const occurrence of occurrences) emit(...occurrence);
       });
       occurrences.length = 0;
+      return sources;
     };
     const beforeStartEvents = events.length;
     for (const id of participants.ambient) {
@@ -2575,19 +2710,55 @@ function* advanceWorldNative(
       advanceAnimal(world, entity, 0);
       trackOccupancy(entity);
     }
-    flushFlight();
+    const takeoffs = flushFlight();
+    const afterFlight = events.length;
     // Grounding predicates may change even without changing an active status episode.
-    if (events.length !== beforeStartEvents || mechanicalRevision(world) !== beforeState)
+    if (
+      mechanicalRevision(world) !== beforeState ||
+      afterFlight - beforeStartEvents !== takeoffs.length
+    )
       mechanics = undefined;
+    else localize(takeoffs);
     // Nested commands can replace entities or status attributes. Reuse the speech branch's
     // conservative roster helper; never retain revoked draft references across that boundary.
     statusIds = participants.statuses;
-    for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
-    if (events.length !== beforeStartEvents || mechanicalRevision(world) !== beforeState)
+    // A retained prediction certifies that no status condition changed since its endpoint
+    // reconciliation: thresholds bound it and every other change above discards it.
+    if (!mechanics || localChanges) {
+      yield* materialize();
+      for (const id of statusIds)
+        if (!mechanics || localChanges!.has(id))
+          reconcileStatusEffects(world, world.entities[id]!, events);
+    }
+    if (events.length !== afterFlight || mechanicalRevision(world) !== beforeState)
       mechanics = undefined;
+    if (perceiving !== undefined && perceivers() !== perceiving) {
+      yield* updateEncounters(world, before, events, participants.actors);
+      before = snapshotEncounters(world);
+    }
     if (navigationBlocked(world, participants.actors)) break;
     const intervalState = mechanicalRevision(world);
+    if (mechanics && localChanges) {
+      const refined = refineNativeInterval(
+        world,
+        localChanges,
+        participants,
+        mechanics.status,
+        mechanics.travelFor,
+      );
+      mechanics = refined && {
+        ...mechanics,
+        status: refined.status,
+        ...(refined.seconds < mechanics.remainingSeconds
+          ? { remainingSeconds: refined.seconds, endsAt: refined.endsAt }
+          : {}),
+      };
+      forgetCrossings(crossings, localChanges);
+    }
+    localChanges = undefined;
     if (!mechanics) {
+      yield* materialize();
+      crossings = crossingCache();
       const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
       const travelFor = motionTravelBounds(
         world,
@@ -2626,18 +2797,33 @@ function* advanceWorldNative(
       });
       mechanics = {
         remainingSeconds: interval.seconds,
+        endsAt: interval.endsAt,
         interval,
         status,
         travelFor,
         reactiveActors,
+        deferRates:
+          !interval.serialClamps &&
+          !interval.exhausted.size &&
+          !interval.starving.size &&
+          participants.actors.every(
+            (id) => world.entities[id]?.actor?.action?.type !== 'replenish',
+          ),
+        referenced: crossStatusReferences(world, statusIds, status),
       };
     }
-    const { interval, status, travelFor } = mechanics;
-    const seconds = nativeMotionInterval(
+    const { travelFor } = mechanics;
+    let seconds = sensoryCrossingBound(
       world,
-      Math.min(remaining, mechanics.remainingSeconds),
+      nativeMotionInterval(
+        world,
+        Math.min(remaining, mechanics.remainingSeconds),
+        participants.ambient,
+        travelFor,
+      ),
+      participants.actors,
       participants.ambient,
-      travelFor,
+      crossings,
     );
     // Fixed contributions become ineffective at the endpoint. Their release grants only
     // future movement, never movement over the interval they restricted.
@@ -2662,9 +2848,12 @@ function* advanceWorldNative(
     // Fires burn for the state they had when this slice began: one lit by work finishing
     // at the endpoint gained no burn, and one put out at the endpoint burned throughout.
     const burning = new Set(participants.ambient.filter((id) => world.entities[id]?.heat?.lit));
-    world.simTime += seconds;
+    // Reaching the interval's stored deadline lands on it exactly (PF13.16).
+    const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
+    if (landing) seconds = mechanics.endsAt! - world.simTime;
+    world.simTime = landing ? mechanics.endsAt! : world.simTime + seconds;
     remaining = Math.max(0, remaining - seconds);
-    mechanics.remainingSeconds = Math.max(0, mechanics.remainingSeconds - seconds);
+    mechanics.remainingSeconds = landing ? 0 : Math.max(0, mechanics.remainingSeconds - seconds);
     motionSlices++;
     slicesSinceBoundary++;
     const beforeMovementEffects = events.length;
@@ -2683,6 +2872,10 @@ function* advanceWorldNative(
     const movementEffects = events.length !== beforeMovementEffects;
     // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
     // Order due RNG draws by deadline then identity, independently of callback chunk size.
+    // Whole-second timers often fall due together; compare them at TIME_EPSILON resolution so
+    // the floating-point residue of how elapsed time was sliced cannot reorder their draws.
+    const wanderDeadline = (id: string) =>
+      Math.round(world.entities[id]!.animal!.wanderSeconds / TIME_EPSILON);
     const wanderers = participants.ambient
       .filter((id) => {
         const e = world.entities[id];
@@ -2697,11 +2890,7 @@ function* advanceWorldNative(
           !movementRestricted.has(id)
         );
       })
-      .sort(
-        (a, b) =>
-          world.entities[a]!.animal!.wanderSeconds - world.entities[b]!.animal!.wanderSeconds ||
-          a.localeCompare(b),
-      );
+      .sort((a, b) => wanderDeadline(a) - wanderDeadline(b) || a.localeCompare(b));
     const wandered = new Set(wanderers);
     for (const id of wanderers) advanceAnimal(world, world.entities[id]!, seconds);
     occupancy = undefined;
@@ -2709,62 +2898,64 @@ function* advanceWorldNative(
       participants.ambient.filter((id) => landingDue(world, world.entities[id]!, seconds)),
     );
     const movementOrder = [...participants.ambient.filter((id) => !landings.has(id)), ...landings];
+    let fleeEnded = false;
     for (const id of movementOrder) {
       yield;
       const entity = world.entities[id];
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
         const flightOwned = !!entity.spatial.flight || entity.spatial.fallVelocity !== undefined;
+        const fleeing = !!entity.animal?.fleeSeconds;
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
         // Landing grants future animal movement, never the flight interval just consumed.
         if (!flightOwned && !wandered.has(id)) advanceAnimal(world, entity, seconds);
+        // A flee end silently changes activeWork, so its captured energy rate ends here.
+        fleeEnded ||= fleeing && !entity.animal?.fleeSeconds;
       }
       trackOccupancy(entity);
     }
-    const movedWithOccurrences = occurrences.length > 0;
-    flushFlight();
+    const flightSources = flushFlight();
+    const movedWithOccurrences = flightSources.length > 0;
     const beforeEffects = events.length;
-    integrateStatusRates(world, status, seconds, events);
-    for (const id of participants.actors) {
-      const actor = world.entities[id],
-        component = actor?.actor;
-      if (!actor || !component?.alive || component.incapacitated) continue;
-      if (
-        hasWildernessNeeds(component) &&
-        advanceWildernessNeeds(
-          actor,
-          seconds,
-          interval.exhausted.has(id) ? seconds : 0,
-          interval.starving.has(id) ? seconds : 0,
-        )
-      )
-        reconcileBody(world, actor, events, 'needs');
-      reconcileConditions(world, actor, events);
-      if (!component.alive || component.incapacitated) continue;
-      advanceReservoirs(world, actor, seconds, events);
-      if (working.get(id) === component.action?.id) {
-        const following = component.action?.type === 'follow';
-        const stage = component.action?.stage;
-        advanceAction(world, actor, following ? 0 : seconds, events);
-        if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
+    // Work that ends or changes phase in this slice has effects (a hit, a meal, a completion);
+    // pending rates must reach every entity before them. Status-effect work such as sleep is
+    // open-ended: its conditions end it at a predicted boundary. A remainder the loop would
+    // discard as floating-point residue is the interval's end, not a reason to defer.
+    const workEnds = [...working].some(([id, actionId]) => {
+      const action = world.entities[id]?.actor?.action;
+      return (
+        action?.id === actionId &&
+        action.type !== 'follow' &&
+        action.type !== 'status-effect' &&
+        action.remainingSeconds <= seconds + TIME_EPSILON
+      );
+    });
+    const deferred =
+      mechanics.deferRates &&
+      mechanics.remainingSeconds > TIME_EPSILON &&
+      !workEnds &&
+      !movementEffects &&
+      !movedWithOccurrences &&
+      !fleeEnded &&
+      mechanicalRevision(world) === intervalState;
+    // Time deferred from earlier slices is applied for everyone before this endpoint's work, so
+    // a death or other effect there cannot erase it. (This slice keeps main's per-actor order.)
+    if (!deferred) yield* materialize();
+    else pendingSeconds += seconds;
+    pendingMechanics = mechanics;
+    yield* integrateEndpoint(world, participants, mechanics, deferred ? 0 : seconds, events, {
+      seconds,
+      working,
+      burning,
+    });
+    if (!deferred)
+      for (const id of statusIds) {
+        const entity = world.entities[id];
+        if (entity) reconcileStatusEffects(world, entity, events);
       }
-    }
-    for (const id of participants.ambient) {
-      const entity = world.entities[id];
-      if (entity?.heat && burning.has(id)) {
-        entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
-        if (entity.heat.fuelSeconds === 0 && entity.heat.lit) {
-          entity.heat.lit = false;
-          emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
-        }
-      }
-      yield;
-    }
-    for (const id of statusIds) {
-      const entity = world.entities[id];
-      if (entity) reconcileStatusEffects(world, entity, events);
-    }
     // Arrival starts new work now; only work already active at the start receives elapsed time.
+    // That work starts silently, so the next prediction must bound its completion (PF13.16).
+    let startedWork = false;
     for (const id of participants.actors) {
       const actor = world.entities[id];
       if (
@@ -2772,8 +2963,12 @@ function* advanceWorldNative(
         !actor.actor.incapacitated &&
         actor.actor.action?.stage === 'approaching' &&
         !capabilityBlocked(world, actor, 'locomotion')
-      )
+      ) {
         advanceAction(world, actor, 0, events);
+        // advanceAction mutates the action; read its stage afresh.
+        const stage: string | undefined = world.entities[id]?.actor?.action?.stage;
+        startedWork ||= stage === 'working';
+      }
     }
     reconcileResourceReservations(world);
     reconcileItemOffers(world, events);
@@ -2787,7 +2982,8 @@ function* advanceWorldNative(
       intervals++;
       slicesSinceBoundary = 0;
     }
-    if (sharedBoundary || movedWithOccurrences) mechanics = undefined;
+    if (sharedBoundary || fleeEnded || startedWork) mechanics = undefined;
+    else localize(flightSources);
     yield* updateEncounters(world, before, events, participants.actors);
     advanceCommitments(world, events);
     reconcileConversations(world);
@@ -2806,6 +3002,10 @@ function* advanceWorldNative(
       before = snapshotEncounters(world);
     }
   }
+  // Every publication, including a coherent early stop, holds materialized values. A pending
+  // local re-prediction travels with the continuation, so where a call ends cannot move
+  // later interval ends.
+  yield* materialize();
   const result = finish(
     world,
     events,
@@ -2820,7 +3020,7 @@ function* advanceWorldNative(
     ),
   );
   if (mechanics && Object.isFrozen(original))
-    nativeContinuations.set(result.world, { mechanics, participants });
+    nativeContinuations.set(result.world, { mechanics, participants, crossings, localChanges });
   return result;
 }
 

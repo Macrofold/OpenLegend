@@ -3,6 +3,7 @@ import { statusDefinitions } from './status-capabilities.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   effectBindings,
+  localHour,
   readEntityAttribute,
   matchesStatusCondition,
   type EffectBindings,
@@ -28,7 +29,10 @@ export function addRate(
 export function untilThreshold(value: number, rate: number, threshold: number): number {
   if (!rate) return Infinity;
   const time = (threshold - value) / rate;
-  return time >= 0 ? Math.max(TIME_EPSILON, time) : Infinity;
+  // A strict-side departure must change a large value representably, or it would repeat.
+  return time >= 0
+    ? Math.max(TIME_EPSILON, time, (2 * Math.abs(value) * Number.EPSILON) / Math.abs(rate))
+    : Infinity;
 }
 interface ConditionTransition {
   matches: boolean;
@@ -67,14 +71,16 @@ function conditionTransition(
   }
   const matches = matchesStatusCondition(world, bindings, condition);
   if ('dailyWindow' in condition) {
-    const hour =
-      (((world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24) + 24) % 24;
+    const hour = localHour(world);
     return {
       matches,
       afterSeconds: Math.min(
         ...[condition.dailyWindow.start, condition.dailyWindow.end].map((h) => {
-          const seconds = ((h - hour + 24) % 24) * 3600;
-          return seconds < TIME_EPSILON ? 86400 : seconds;
+          // h - hour is exact near an edge; adding 24 first would round a residue short of the
+          // edge to zero. Exactly on an edge has passed it; a residue short of it has not (PF13.16).
+          const gap = h - hour;
+          const seconds = (gap < 0 ? gap + 24 : gap) * 3600;
+          return seconds <= 0 ? 86400 : Math.max(TIME_EPSILON, seconds);
         }),
       ),
     };
@@ -107,8 +113,15 @@ function conditionTransition(
           : c.operator === 'greaterThanOrEqual'
             ? rate > 0
             : rate < 0;
-    // A reached threshold only needs the strict-side micro-interval when its truth changes.
-    return { matches, afterSeconds: matches === after ? Infinity : TIME_EPSILON };
+    // A reached threshold only needs the strict-side micro-interval when its truth changes,
+    // long enough to change the value representably.
+    return {
+      matches,
+      afterSeconds:
+        matches === after
+          ? Infinity
+          : Math.max(TIME_EPSILON, (2 * Math.abs(value) * Number.EPSILON) / Math.abs(rate)),
+    };
   }
   return { matches, afterSeconds: untilThreshold(value, rate, c.value) };
 }
@@ -116,6 +129,8 @@ export function statusBoundary(
   world: WorldState,
   entities: readonly string[],
   rates: AttributeRates,
+  /** Receives stored absolute deadlines so the caller can land on them exactly. */
+  at: (time: number) => void = () => {},
 ): number {
   let result = Infinity;
   const definitions = statusDefinitions(world);
@@ -128,7 +143,10 @@ export function statusBoundary(
     for (const state of Object.values(entity.statusEffects ?? {})) {
       if (!state.active || !state.contribution) continue;
       const { lifetime, definitionId } = state.contribution;
-      if (lifetime.kind === 'fixed') result = Math.min(result, lifetime.expiresAt - world.simTime);
+      if (lifetime.kind === 'fixed') {
+        result = Math.min(result, lifetime.expiresAt - world.simTime);
+        at(lifetime.expiresAt);
+      }
       const definition = byId.get(definitionId);
       if (!definition) continue;
       const bindings = effectBindings(world, entity, state);
@@ -149,6 +167,7 @@ export function statusBoundary(
         const delay = (state?.automaticAfter ?? 0) - world.simTime;
         if (delay > 0) {
           result = Math.min(result, delay);
+          at(state!.automaticAfter);
           continue;
         }
         result = Math.min(

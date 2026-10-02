@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import type { NavigationRequest } from '@open-legend/spatial';
-import { activelyParticipates, worldRootEntities, type WorldState } from '@open-legend/domain';
+import { navigationBlocked, worldRootEntities, type WorldState } from '@open-legend/domain';
 import type { WorldService } from '../world-service.js';
 import { recordDuration, gaugeMetric, countMetric } from '../performance.js';
 import { OverloadError } from '../work-lane.js';
@@ -20,8 +20,9 @@ interface Task {
  */
 export class NavigationCoordinator {
   private worker?: Worker;
-  private active?: { id: number; task?: Task; key: string };
+  private active?: { id: number; task?: Task; key: string; sentAt: number };
   private timer?: ReturnType<typeof setTimeout>;
+  private ageTimer?: ReturnType<typeof setInterval>;
   private scheduled?: ReturnType<typeof setImmediate>;
   private queue: Task[] = [];
   private key = '';
@@ -63,14 +64,10 @@ export class NavigationCoordinator {
     this.queue = [];
     for (const actor of worldRootEntities(world)) {
       const a = actor.actor?.action;
-      if (
-        !a?.navigation ||
-        a.navigation.failure ||
-        !actor.actor?.alive ||
-        !activelyParticipates(actor) ||
-        actor.actor.incapacitated
-      )
-        continue;
+      // Admit only requests that still hold the clock. A stale one (moved body, changed
+      // geometry or lost follow authority) is cleared by the next native step; while paused,
+      // re-queuing it would recompute and discard the same route indefinitely.
+      if (!a?.navigation || !navigationBlocked(world, [actor.id])) continue;
       if (
         this.active?.task?.actionId === a.id &&
         this.active.task.map === world.map &&
@@ -89,17 +86,29 @@ export class NavigationCoordinator {
       });
     }
     gaugeMetric('navigation.queued', this.queue.length);
+    this.reportQueueAge();
     this.pump();
+  }
+  /** Oldest waiting request's age, refreshed while any wait: a cold build or a paused world
+   * publishes no reconcile, so an age computed only at queue time would read near zero. */
+  private reportQueueAge() {
+    const oldest = this.queue.reduce((min, task) => Math.min(min, task.queuedAt), Infinity);
+    gaugeMetric('navigation.oldestQueuedMs', oldest === Infinity ? 0 : performance.now() - oldest);
+    if (oldest === Infinity || this.closed) {
+      clearInterval(this.ageTimer);
+      this.ageTimer = undefined;
+    } else this.ageTimer ??= setInterval(() => this.reportQueueAge(), 250).unref();
   }
   private pump() {
     if (this.active || this.retiring || this.closed || this.service.storageError || !this.map)
       return;
     const task = this.queue.shift();
+    if (task) this.reportQueueAge();
     // A failed worker does not restart on an idle timer. A newly requested action permits one retry.
     if (!task && this.failed) return;
     if (!task && this.worker && this.preparedKey === this.key) return;
     const id = ++this.requestId;
-    this.active = { id, task, key: this.key };
+    this.active = { id, task, key: this.key, sentAt: performance.now() };
     try {
       if (!this.worker) {
         this.failed = false;
@@ -127,7 +136,11 @@ export class NavigationCoordinator {
       };
       if (task) recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
       this.timer = setTimeout(() => void this.failedWorker(), 20_000);
+      // Synchronous structured clone of the map (on a key change) and the request.
+      const posting = performance.now();
       this.worker.postMessage(message);
+      this.active.sentAt = performance.now();
+      recordDuration('navigation.dispatch', this.active.sentAt - posting);
     } catch {
       // Launch/serialization can fail before an error event. Use the same terminal path
       // instead of throwing from setImmediate or leaving a saved action pending forever.
@@ -136,7 +149,7 @@ export class NavigationCoordinator {
   }
 
   private preparedKey = '';
-  private async completed(reply: NavigationReply) {
+  private async completed(reply: NavigationReply, publicationRetry = false) {
     const active = this.active;
     if (this.closed || !active || active.id !== reply.id || active.key !== reply.key) return;
     clearTimeout(this.timer);
@@ -144,9 +157,25 @@ export class NavigationCoordinator {
       this.preparedKey = reply.key;
       this.failed = false;
     } else this.failed = true;
-    recordDuration('navigation.build', reply.buildMs);
-    recordDuration('navigation.query', reply.queryMs);
+    // SW06.2a attribution: record each worker reply's work once, and never a placeholder for
+    // a failure or a publication retry. Failures keep their own counters.
+    if (!publicationRetry && reply.timing) {
+      if (reply.timing.startupMs !== undefined)
+        recordDuration('navigation.startup', reply.timing.startupMs);
+      if (reply.timing.prepareMapMs !== undefined)
+        recordDuration('navigation.prepareMap', reply.timing.prepareMapMs);
+      for (const build of reply.timing.builds)
+        recordDuration(
+          build.reason === 'map' ? 'navigation.build' : 'navigation.buildFirstUse',
+          build.ms,
+        );
+      if (active.task && !reply.error) {
+        recordDuration('navigation.query', reply.queryMs);
+        recordDuration('navigation.roundTrip', performance.now() - active.sentAt);
+      }
+    }
     let deferred = false;
+    const publishing = performance.now();
     try {
       if (active.task && reply.result)
         await this.service.preparedNavigation(
@@ -158,18 +187,24 @@ export class NavigationCoordinator {
           active.task.timeline,
         );
     } catch (error) {
-      if (error instanceof OverloadError && !this.closed) {
+      // Retry only while this reply still owns the coordinator; after a world replacement the
+      // action is re-queued, and this.timer already guards the next request.
+      if (error instanceof OverloadError && !this.closed && this.active === active) {
         // Queue admission did not execute the mutation. Retain this one computed reply;
         // retrying publication neither reruns navigation nor labels load as storage damage.
         // docs/performance.md#navigation-failure-and-shutdown
         deferred = true;
         countMetric('navigation.publicationDeferred');
         this.timer = setTimeout(() => {
-          this.completion = this.completed(reply);
+          this.completion = this.completed(reply, true);
         }, 1000);
       } else this.commitFailed();
     } finally {
       if (!deferred) {
+        if (active.task && reply.result) {
+          recordDuration('navigation.publish', performance.now() - publishing);
+          recordDuration('navigation.requestLatency', performance.now() - active.task.queuedAt);
+        }
         if (this.active === active) this.active = undefined;
         this.schedule();
       }
@@ -225,6 +260,7 @@ export class NavigationCoordinator {
     this.unsubscribe();
     clearImmediate(this.scheduled);
     clearTimeout(this.timer);
+    clearInterval(this.ageTimer);
     const worker = this.worker;
     this.worker = undefined;
     // Retirement and reply publication can already be underway when the host closes.

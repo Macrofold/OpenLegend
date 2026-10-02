@@ -37,11 +37,22 @@ interface Prepared {
 export class RecastPlanner {
   private readonly meshes = new Map<string, Prepared>();
   private readonly triangles: ReturnType<typeof navigationTriangles>;
+  /** Validation and triangle export for this map (SW06.2a attribution). */
+  readonly prepareMapMs: number;
+  /** Mesh builds since the last takeBuilds(), attributed separately from route queries. */
+  private builds: Array<{ profile: string; ms: number; reason: 'map' | 'first-use' }> = [];
   constructor(readonly map: SpatialMap) {
+    const started = performance.now();
     validateSpatialMap(map);
     this.triangles = navigationTriangles(map);
+    this.prepareMapMs = performance.now() - started;
   }
-  prepare(body: BodyProfile = BODY_PROFILES.person): Prepared {
+  takeBuilds() {
+    const builds = this.builds;
+    this.builds = [];
+    return builds;
+  }
+  prepare(body: BodyProfile = BODY_PROFILES.person, reason: 'map' | 'first-use' = 'map'): Prepared {
     const key = `${body.radius}:${body.height}:${body.maxSlope}`;
     let prepared = this.meshes.get(key);
     if (prepared) {
@@ -49,6 +60,7 @@ export class RecastPlanner {
       this.meshes.set(key, prepared);
       return prepared;
     }
+    const started = performance.now();
     const { cellSize: cs, cellHeight: ch, skin } = MOVEMENT;
     const generated = generateTiledNavMesh(this.triangles.positions, this.triangles.indices, {
       cs,
@@ -78,6 +90,7 @@ export class RecastPlanner {
       this.meshes.delete(oldest);
     }
     this.meshes.set(key, prepared);
+    this.builds.push({ profile: key, ms: performance.now() - started, reason });
     return prepared;
   }
   private release(p: Prepared) {
@@ -99,7 +112,7 @@ export class RecastPlanner {
       return { status: 'invalid-endpoint', path: [] };
     const { from, body } = request;
     if (!canStand(this.map, from, body)) return { status: 'invalid-endpoint', path: [] };
-    const { query: q } = this.prepare(body);
+    const { query: q } = this.prepare(body, 'first-use');
     let last: NavigationResult = { status: 'no-route', path: [] };
     for (const to of request.destinations) {
       if (!canStand(this.map, to, body)) continue;

@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-01 — Survival rules move into world settings
+
+Mike directed that the bundled world's survival rules leave the engine and become world configuration. The [approved plan](projects/world-configured-survival.md) moves every survival number in two stages: first hunger, starvation and exhaustion damage (the rules that run every step), then the remaining survival numbers: camp recovery, collapse, revival and creator edits, limits on background thinking, eating, meter maximums and what the game screen receives. Decisions: status effects gain a general way to change health over time, because the bundled world's body rules must use mechanisms every world can use ([boundaries](engine-and-world-boundaries.md#semantics-before-meters)); who may author such rules does not change. A victim's hunger is applied even when a blow kills it in the same moment, and the unused energy-level-5 stop is removed. Old development saves will be refused, not converted. Not yet implemented; tracked by [EWF03](maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers).
+
 ## 2026-09-30 — “main” means the local branch
 
 Mike directed that `main` in a request means the local `main` branch unless `origin` or another remote is named. [AGENTS.md](../AGENTS.md#work-discipline) now says so beside the rebase route, so base selection uses local `main` rather than `origin/main` by default.
@@ -7,6 +11,16 @@ Mike directed that `main` in a request means the local `main` branch unless `ori
 ## 2026-09-30 — Verification reports without committed raw output
 
 At Mike's request, [documentation policy](../.agents/rules/documentation.md#verification-reports) now keeps observed results and limitations in the report while leaving generated probe logs and similar raw verification output out of Git. This reverses the earlier instruction to store raw artifacts beside each report. The 20 composed-activities probe outputs were removed; their distinct findings remain in the [verification report](verification/composed-activities.md). Authored fixtures and reusable verification tools remain source files.
+
+## 2026-09-29 — Plain explanations with no internal shorthand
+
+At Mike's request, [root guidance](../AGENTS.md#respond-clearly-and-concisely) now requires every answer, progress update and handoff to be written for someone who knows the game and general software but has never read this codebase. Code names, coined labels and implementation jargon are never explanations; file paths and tracker IDs may follow a plain explanation but never replace it. This replaces the earlier allowance for shorthand "where it remains easy to understand", which in practice produced explanations Mike could not follow.
+
+## 2026-09-29 — Regional elapsed-time integration and exact fleeting crossings
+
+Implemented under Mike's go-ahead for the [regional time and navigation plan](projects/regional-time-and-navigation.md). A slice that only moves bodies now leaves other entities' captured rates pending until a shared boundary, command, re-prediction or publication. Mid-air flight turns stay private to the flyer, and flyer takeoff/landing re-predicts locally. For flyers, walkers carrying out a `move` command and fleeing animals, the scheduler solves when sight or contact can change and never skips a whole fleeting interval; onset and end remain sampled. Net flow, the continuous limit of serial clamps, replaces the one-second fallback for linear opposing and drain-coupled rates; replenishment against a drain and health regeneration against damage keep it.
+
+Two rules changed. A landing is reached exactly on arrival, and only an unavailable landing under one game second away retries at the sensing cadence; this ends main's 17-microsecond retry stall. Simultaneous wander deadlines now draw in entity-ID order instead of by floating-point residue, and a `move` now ends at its route's last point instead of wherever a slice stopped within the 2 cm arrival tolerance; both had made main's own results depend on call size. Navigation attribution found worker startup and first-use builds dominating cold requests, so route reuse, segment certificates and tile updates were not implemented. [Evidence](verification/regional-time-and-navigation.md) shows identical outcomes for staggered flight (204 → 73 slices) and 100 sleepers. Three adversarial reviews (34 confirmed findings) and the PostgreSQL route test drove the final fixes. Deferred rates and pending re-predictions no longer make outcomes depend on where calls end; sampled approaches, refused-landing retries and effects ordered within one endpoint still do, on main as well. PF13.11/PF13.12/PF13.16, PF12.5 and SW06.2a/SW17.7 remain open for dense 8×, the remaining fallbacks and unexercised deadlines; PF12.6 is qualified.
 
 ## 2026-09-29 — The engine/world boundary is a hard rule, including wording
 

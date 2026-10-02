@@ -207,7 +207,7 @@ function prepareCondition(condition: StatusCondition): {
     immutable &&= Object.isFrozen(c);
     const { start, end } = c;
     matches = (world) => {
-      const hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
+      const hour = localHour(world);
       return start < end ? hour >= start && hour < end : hour >= start || hour < end;
     };
   } else {
@@ -226,6 +226,12 @@ function prepareCondition(condition: StatusCondition): {
   };
   if (immutable) predicates.set(condition, matches);
   return { matches, immutable };
+}
+/** Local hour in [0, 24). The daily-window matcher and its forecast share this expression so
+ * a floating-point residue cannot put the forecast on an edge the matcher has not reached. */
+export function localHour(world: WorldState): number {
+  const hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
+  return hour < 0 ? hour + 24 : hour;
 }
 export function matchesStatusCondition(
   world: WorldState,
@@ -566,23 +572,88 @@ export function prepareStatusRates(world: WorldState, entity: Entity): StatusRat
   }
   return result;
 }
+/** Entities that another participant's active status binds as source or action target, or
+ * whose attribute another entity's status changes. A change concerning only one entity can be
+ * re-predicted locally only when no other entity's conditions or rates depend on it. */
+export function crossStatusReferences(
+  world: WorldState,
+  statusIds: readonly string[],
+  status: readonly StatusRateInterval[],
+): Set<string> {
+  const referenced = new Set<string>();
+  for (const id of statusIds)
+    for (const state of Object.values(world.entities[id]?.statusEffects ?? {}))
+      if (state.active) {
+        if (state.sourceId !== id) referenced.add(state.sourceId);
+        if (state.actionTargetId !== id) referenced.add(state.actionTargetId);
+      }
+  for (const interval of status)
+    for (const { targetId } of interval.rates)
+      if (targetId !== interval.entityId) referenced.add(targetId);
+  return referenced;
+}
+/** A native linear drain that a coupled status rate folds into one net flow (PF13.12). */
+export interface NativeDrain {
+  targetId: string;
+  attribute: string;
+  rate: number;
+  kind: 'fullness' | 'reservoir';
+}
+/** Integrate captured status rates. A value changed by one rate, or by several of one sign
+ * with no native drain, keeps its serial clamp exactly. A value with opposing rates or a
+ * folded native drain follows their sum as one projected net flow: the continuous limit of
+ * serial clamps as the step shrinks, pinned at a schema bound while the sum points outward.
+ * Serial clamps there depended on how an interval was divided and could shrink boundaries
+ * toward zero (docs/worlds/base/time.md#physiology-and-effects). */
 export function integrateStatusRates(
   world: WorldState,
   intervals: readonly StatusRateInterval[],
   seconds: number,
   events: WorldEvent[],
+  drains: readonly NativeDrain[] = [],
 ): void {
-  for (const interval of intervals) {
-    const entity = world.entities[interval.entityId];
-    const state = entity?.statusEffects?.[interval.definition.id];
-    if (!entity || !state?.active || state.episode !== interval.episode) continue;
+  const active = intervals.filter((interval) => {
+    const state = world.entities[interval.entityId]?.statusEffects?.[interval.definition.id];
+    return state?.active && state.episode === interval.episode;
+  });
+  const flows = new Map<
+    string,
+    { targetId: string; attribute: string; rate: number; signs: Set<number>; drained: boolean }
+  >();
+  const add = (targetId: string, attribute: string, rate: number, drained: boolean) => {
+    const key = `${targetId}\0${attribute}`;
+    let flow = flows.get(key);
+    if (!flow)
+      flows.set(key, (flow = { targetId, attribute, rate: 0, signs: new Set(), drained: false }));
+    flow.rate += rate;
+    if (rate) flow.signs.add(Math.sign(rate));
+    flow.drained ||= drained;
+  };
+  if (drains.length || active.some((interval) => interval.rates.length > 1) || active.length > 1) {
+    for (const interval of active)
+      for (const { targetId, attribute, rate } of interval.rates)
+        add(targetId, attribute, rate, false);
+    for (const drain of drains) add(drain.targetId, drain.attribute, drain.rate, true);
+  }
+  const net = new Set(
+    [...flows].filter(([, flow]) => flow.drained || flow.signs.size > 1).map(([key]) => key),
+  );
+  for (const interval of active) {
+    const entity = world.entities[interval.entityId]!;
+    const state = entity.statusEffects![interval.definition.id]!;
     chargeStatusWork(world, entity, interval.definition, state);
     chargeWork({ effects: interval.definition.whileActive.length });
     state.elapsedSeconds += seconds;
     for (const { targetId, attribute, rate } of interval.rates) {
       const target = world.entities[targetId];
-      if (target) applyRate(world, target, attribute, rate * seconds, events);
+      if (target && !net.has(`${targetId}\0${attribute}`))
+        applyRate(world, target, attribute, rate * seconds, events);
     }
+  }
+  for (const key of net) {
+    const flow = flows.get(key)!,
+      target = world.entities[flow.targetId];
+    if (target) applyRate(world, target, flow.attribute, flow.rate * seconds, events);
   }
 }
 /** Explicit effect-only advancement; the kernel captures all subjects before integrating. */

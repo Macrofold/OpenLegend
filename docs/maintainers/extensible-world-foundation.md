@@ -94,7 +94,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 **Dependencies:** EWF02. Coordinate with ACT, INV contribution semantics, and EPR04; use the existing native evaluator before full EPR delivery.
 
-- [ ] Move current wilderness physiology/body configuration behind reviewed registered implementations. Preserve its current values, controller defaults, maximum-health logic, food seeking, recovery, and update order in the initial extraction.
+- [ ] Move current wilderness physiology/body configuration behind reviewed registered implementations. Approved plan, not started, to begin after the regional time work merges into main: [survival rules as world settings](../projects/world-configured-survival.md). Stage 1 moves the rules that run every step (hunger, starvation and exhaustion damage); stage 2 moves the remaining survival numbers. Preserve its current values, controller defaults, maximum-health logic, food seeking, recovery, and update order in the initial extraction.
 - [x] Keep eating, food seeking, work continuation, rest, sleep, and cognitive urgency as separately named policies. Do not normalize their different thresholds into one number.
 - [ ] Remove hard-coded dependence on the selected first need from generic consumers. Native mechanics may retain their domain-specific adapters; generic context, inspection, and scheduler wiring must obtain its meaning through the common contract.
 - [ ] Define a concern projection and supported response references for that need. Reuse native action eligibility; do not infer execution from an English description or automatically create goals.

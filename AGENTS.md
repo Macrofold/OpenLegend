@@ -18,13 +18,15 @@ Always inspect the full affected diff, verify changed behavior and fix in-scope 
 
 ## Respond clearly and concisely
 
-Always use concise, plain language with shorthand where it remains easy to understand. Never compress wording at the expense of clarity, accuracy or completeness. Aim for short, clear, accurate and complete responses; include the context needed to understand decisions, results and limitations.
+Write every response to the user (answers, progress updates, handoffs and explanations of completed work) for someone who understands the game's features, purpose and project and general software and technology concepts, but has never read a single line of this codebase. Before relying on a project-specific mechanism, explain it in those terms.
 
-Describe behavior using the people, objects and actions involved. Never use an internal label as the explanation—even if it is an ordinary English word. Say “recording what a character notices,” not “acquisition.” Introduce a technical term only when useful or well-known. Prefer an extra sentence over compressed wording.
+**Never use internal shorthand.** Code identifiers, function or variable names, coined labels and implementation jargon are not explanations, even when the label is an ordinary English word. Say “recording what a character notices,” not “acquisition”; “which animal takes the next number from the world's shared random sequence,” not “draw order.” Describe behavior through the people, objects, actions and game moments involved. File paths, tracker IDs and commits may follow a plain explanation as pointers; they never replace it. Introduce a technical term only when it is widely known or you define it.
 
-**Make references unambiguous.** When mentioning something, identify it specifically enough that the reader knows exactly which thing you mean. Do not use generic terms such as “response,” “state,” “context,” “history,” or “job” unless their referent is already clear. Say “a character’s AI-generated reply to something the player said,” not merely “a response.” Do not assume the reader shares the code or implementation context you inspected. Once you have clearly identified something, shorthand is fine. Before sending, check whether a phrase could reasonably refer to several different things; if so, make it more specific.
+Be concise by cutting filler, never by compressing wording at the expense of clarity, accuracy or completeness; prefer an extra sentence over compressed wording. Include the context needed to understand decisions, results and limitations. When explaining implementation work, say what problem it solved, why it was needed, what it enables, and the major decisions with their tradeoffs.
 
-For requests consisting only of questions or explanations, assume the reader knows software architecture, TypeScript and relevant core technologies but none of this project's internal details. Define unfamiliar project concepts, describe them using widely understood technical or gaming terminology, or link to their code/documentation. When explaining an implementation, include why it was needed, what it enables and the major decisions made. Keep the entire answer concise; cut fluff and filler rather than clarity or accuracy.
+**Make references unambiguous.** When mentioning something, identify it specifically enough that the reader knows exactly which thing you mean. Do not use generic terms such as “response,” “state,” “context,” “history,” or “job” unless their referent is already clear. Say “a character’s AI-generated reply to something the player said,” not merely “a response.” Once you have clearly identified something, a shorter name is fine.
+
+Before sending, reread as that reader. Rewrite any word or phrase they could not understand without opening the code, and make specific any phrase that could refer to several different things.
 
 ## Load only relevant context
 
