@@ -15,6 +15,16 @@ export function visibleFeature(entity: Entity): { feature: string; detail: strin
     entity.actor ? '' : entity.name,
     entity.kind,
     entity.appearance ?? 'sprite',
+    ...outwardStates(entity),
+  ];
+  const value = { feature: JSON.stringify(facts), detail: facts.filter(Boolean).join(', ') };
+  if (Object.isFrozen(entity)) features.set(entity, value);
+  return value;
+}
+/** The coarse outward states of a source, in fixed positions (empty when not applicable):
+ * life, heat, resource and remains. Stimulus salience keys on these, never on names. */
+export function outwardStates(entity: Entity): [string, string, string, string] {
+  return [
     entity.actor
       ? entity.actor.alive
         ? entity.actor.incapacitated
@@ -26,9 +36,6 @@ export function visibleFeature(entity: Entity): { feature: string; detail: strin
     entity.resource ? (entity.resource.quantity > 0 ? 'material present' : 'depleted') : '',
     entity.remains ? (entity.remains.harvested ? 'harvested' : 'unharvested') : '',
   ];
-  const value = { feature: JSON.stringify(facts), detail: facts.filter(Boolean).join(', ') };
-  if (Object.isFrozen(entity)) features.set(entity, value);
-  return value;
 }
 
 export function validatePerceptionState(world: WorldState): void {

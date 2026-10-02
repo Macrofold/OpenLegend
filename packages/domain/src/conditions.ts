@@ -32,6 +32,19 @@ export function conditionText(definition: AttributeDefinition, value: unknown): 
   return severity ? policy.bands[severity - 1]!.text : policy.clearText;
 }
 
+/** Whether an owner-private internal change can become conscious evidence now. While not,
+ * condition notices stay pending and reservoir concerns write no record (their current state
+ * still reaches context by projection); physical state is unaffected either way.
+ * docs/events-perception-and-reactions.md#7-internal-triggers-and-native-survival */
+export function canNoticeInternalChange(world: WorldState, entity: Entity): boolean {
+  const actor = entity.actor;
+  return (
+    !!actor?.alive &&
+    !actor.incapacitated &&
+    actor.capabilities?.cognition !== false &&
+    !capabilityBlocked(world, entity, 'actions')
+  );
+}
 /** Called at each owning write/elapsed boundary. Only meaningful changes mutate episodes.
  * Awake consideration is private; sleeping bodies retain pending state without fake awareness. */
 export function reconcileConditions(world: WorldState, entity: Entity, events: WorldEvent[]): void {
@@ -52,11 +65,7 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
       notified--;
     const due = prior?.nextReviewAt !== undefined && world.simTime >= prior.nextReviewAt;
     const pending = severity > 0 && (changedPolicy || prior.pending || severity > notified || due);
-    const canNotice =
-      actor.alive &&
-      !actor.incapacitated &&
-      actor.capabilities?.cognition !== false &&
-      !capabilityBlocked(world, entity, 'actions');
+    const canNotice = canNoticeInternalChange(world, entity);
     const notice = pending && canNotice;
     const critical = severity >= policy.criticalSeverity;
     const nextReviewAt = critical

@@ -5,8 +5,7 @@ import {
   type CognitionLevel,
   type LedgerCategory,
 } from './cognition-budget.js';
-import { namedClockTimes, spatialQuery } from '@open-legend/domain';
-import { worldPosition } from '@open-legend/domain';
+import { namedClockTimes } from '@open-legend/domain';
 import type { RequestScope } from './authority.js';
 import {
   observerDescription,
@@ -42,7 +41,6 @@ import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { entityVisionQuery, visionRadius } from '@open-legend/domain';
 import { decisionQuestions, JEV_QUESTIONS_VERSION, LEVEL1_POLICY } from './jev-questions.js';
 import {
   escalationLevel,
@@ -53,7 +51,12 @@ import {
   type Level1Resolution,
 } from './level1-selection.js';
 import { retrieveActions } from './action-retrieval.js';
-import { interestMatches, relevantPossessions, type InterestSubscription } from './interests.js';
+import {
+  interestMatches,
+  relevantPossessions,
+  ThoughtIntakeInputs,
+  type InterestSubscription,
+} from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
@@ -71,7 +74,7 @@ import {
 } from './cognition-contracts.js';
 import {
   captureActionTargets,
-  experiences,
+  unseenExperiences,
   DEFAULT_COGNITION_POLICY,
   commitActorResponse,
 } from '@open-legend/domain';
@@ -167,8 +170,13 @@ const choice = (answer: JudgmentAnswer | undefined) =>
 interface ThoughtSchedule {
   fingerprint: string;
   at: number;
+  /** Highest evidence sequence a completed decision considered (consumed, not attempted). */
   watermark?: number;
   attemptedOpportunity?: string;
+  /** Last opportunity natively deferred (for example while asleep); never consumes evidence. */
+  skippedOpportunity?: string;
+  /** Due stimulus reviews already offered (EPR06), so only a new due review is named. */
+  reviewKey?: string;
 }
 
 /** One bounded actor workflow at a time; provider completions never bypass authoritative rules. */
@@ -183,7 +191,8 @@ export class AiDirector {
   }
 
   private readonly schedules = new Map<string, ThoughtSchedule | undefined>();
-  private readonly thoughtWork = new ActorWork();
+  private readonly thoughtWork = new ActorWork('thought', () => this.now());
+  private readonly thoughtInputs = new ThoughtIntakeInputs();
   private readonly unsubscribe: () => void;
   private stopped = false;
   readonly client: AiClient;
@@ -986,6 +995,10 @@ export class AiDirector {
         this.service.notify();
         return { ok: true, code: 'spoken', message: job.message, jobId: id };
       }
+      // Record the directed-speech cause in the shared intake for accounting. The autonomous path
+      // skips this speech because it finds this turn's saved chat job, not because of this wake.
+      if (kind === 'chat' && spokenEventId)
+        this.thoughtWork.wake(targetId!, { reason: 'directed-speech' });
       if (parent && !(await this.service.store.claimInventionContinuation(job, parent.id)))
         return {
           ok: false,
@@ -2457,52 +2470,13 @@ export class AiDirector {
       if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-      const visible = new Map<string, string[]>();
+      // One change-fed intake: cheap per-character tokens; visibility reruns only for a
+      // character whose own exposure or position changed (EPR05).
+      this.thoughtInputs.reset(this.service.generation);
       timedSync('cognition.thoughtRefresh', () =>
         this.thoughtWork.refresh(
           world,
-          (id, world) => {
-            const entity = world.entities[id]!,
-              actor = entity.actor!;
-            const query = spatialQuery(world, worldPosition(entity), visionRadius(world, entity));
-            if (query.status !== 'complete') return [query.status];
-            const sees = entityVisionQuery(world, entity);
-            const ids = query.values
-              .filter((other) => other.id !== id && sees(other))
-              .map((other) => other.id);
-            visible.set(id, ids);
-            return [
-              actor.controller,
-              actor.incapacitated,
-              currentGoal(actor),
-              actor.agency.plan?.revision,
-              nativeProtectionReason(world, id),
-              actor.conditions,
-              entity.inventoryRevision,
-              nativeNeedBelow(actor, 'energy', 15),
-              nativeNeedBelow(actor, 'energy', 10),
-              capabilityBlocked(world, entity, 'actions'),
-              projectAttributes(world, entity, 'owner')
-                .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
-                .map((v) => v.id)
-                .join('|'),
-              ids.join('\0'),
-              // Interest predicates use kind/resource definition, not pose. Detect
-              // an edited target even when visible membership itself is unchanged.
-              ids
-                .map(
-                  (id) =>
-                    `${world.entities[id]!.kind}:${world.entities[id]!.resource?.definitionId ?? ''}`,
-                )
-                .join('\0'),
-              world.recipes,
-              world.memories[id],
-              world.experience?.awareness[id],
-              world.experience?.summaries[id],
-              world.innerWorlds?.[id],
-              world.cognitionPolicy,
-            ];
-          },
+          (id, world, verify) => this.thoughtInputs.read(world, id, verify),
           this.service.generation,
         ),
       );
@@ -2513,7 +2487,7 @@ export class AiDirector {
           (id) =>
             world.entities[id]?.actor?.controller === 'npc' &&
             !world.entities[id]?.actor?.incapacitated &&
-            visible.has(id),
+            this.thoughtInputs.visible(id) !== undefined,
         )
         .map((id) => world.entities[id]!);
       const generations = new Map(
@@ -2527,15 +2501,28 @@ export class AiDirector {
           ),
         ),
       );
-      actors.sort((a, b) => (scheduled.get(a.id)?.at ?? 0) - (scheduled.get(b.id)?.at ?? 0));
+      // `ready` already ordered characters fairly: urgent or long-waiting work, then the
+      // longest-waiting; every returned character is inspected until one is admitted.
       for (const entity of actors) {
         const actor = entity.actor!;
         if (!actor.alive || actor.incapacitated) continue;
         const key = `semantic-schedule:${world.id}:${entity.id}`;
         const last = scheduled.get(entity.id);
-        const all = experiences(world, entity.id);
-        // Completed direct replies already handled exactly their own speech event, not all
-        // intervening awareness. Reuse durable jobs so restart retains this distinction.
+        // Only records newer than the considered-evidence watermark, not all retained history.
+        const { records: all, maxSequence } = unseenExperiences(
+          world,
+          entity.id,
+          last?.watermark ?? 0,
+          undefined,
+          // Keep everything the trigger filter below could select, plus speech for ownership.
+          (memory) =>
+            memory.importance >= 6 ||
+            memory.eventType === 'speech' ||
+            policy.significantEventTypes.includes(memory.eventType ?? ''),
+        );
+        // A directed turn owns exactly its own speech event, whatever its outcome: the
+        // autonomous path never answers it again (no automatic paid retry), while other
+        // intervening awareness stays available. Durable jobs keep this across restart.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
         const speechJobs = await this.service.store.getSpeechJobs(
           all
@@ -2550,14 +2537,17 @@ export class AiDirector {
             const event = this.service.worldEvent(memory.eventId ?? '');
             const speechJob = speechJobs.get(memory.eventId ?? memory.id);
             const handledByChat =
-              speechJob?.status === 'completed' &&
+              !!speechJob &&
               (speechJob.request.npcId ?? this.service.defaultResidentEntityId) === entity.id;
             // Retain history but retract an obsolete bodily urgency before buying cognition.
             const attributeId = event?.type === 'body-condition' && event.data?.['attributeId'];
+            // A notice from a replaced condition policy is superseded by its own 'initial'.
             if (
               typeof attributeId === 'string' &&
-              typeof event?.data?.['severity'] === 'number' &&
-              (actor.conditions?.[attributeId]?.severity ?? 0) < event.data['severity']
+              ((typeof event?.data?.['severity'] === 'number' &&
+                (actor.conditions?.[attributeId]?.severity ?? 0) < event.data['severity']) ||
+                (typeof event?.data?.['definitionVersion'] === 'number' &&
+                  actor.conditions?.[attributeId]?.version !== event.data['definitionVersion']))
             )
               return false;
             const ownResponse =
@@ -2574,19 +2564,20 @@ export class AiDirector {
         const latest = unseen.slice(0, 8);
         // This is a wakeup snapshot, not a queue of memories owed future model calls.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
-        const snapshotWatermark = Math.max(
-          last?.watermark ?? 0,
-          ...all.map((memory) => memory.sequence ?? 0),
-        );
+        const snapshotWatermark = Math.max(last?.watermark ?? 0, maxSequence);
         const subscription = (await this.service.store.getIntegration(
           `interests:${world.id}:${entity.id}`,
         )) as InterestSubscription | undefined;
+        const review = this.thoughtInputs.stimulusReview(world, entity.id);
         if (
           !this.thoughtWork.inspected(
             entity.id,
-            subscription && subscription.expiresAt > world.simTime
-              ? subscription.expiresAt
-              : Infinity,
+            Math.min(
+              subscription && subscription.expiresAt > world.simTime
+                ? subscription.expiresAt
+                : Infinity,
+              review.nextAt,
+            ),
             generations.get(entity.id),
             this.service.world,
             this.service.generation,
@@ -2597,7 +2588,7 @@ export class AiDirector {
           world,
           entity.id,
           subscription,
-          visible.get(entity.id) ?? [],
+          this.thoughtInputs.visible(entity.id) ?? [],
         );
         const nativeProtection = nativeProtectionReason(world, entity.id);
         const fingerprint = digest({
@@ -2615,14 +2606,18 @@ export class AiDirector {
           mind: world.innerWorlds?.[entity.id]?.revision,
           knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
           policy: policy.revision,
+          // A due review of an ongoing salient stimulus is a fresh opportunity (EPR06).
+          reviews: review.key,
         });
         const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
 
         if (
           (last?.fingerprint === fingerprint && !unseen.length) ||
           last?.attemptedOpportunity === opportunity
-        )
+        ) {
+          this.thoughtWork.recordOutcome('unchanged', all.length);
           continue;
+        }
         const sentence = [
           ...latest.map((m) => m.summary),
           ...matches.map(
@@ -2639,6 +2634,7 @@ export class AiDirector {
           ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
         const urgentNeed = nativeProtection;
+        const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
         const diagnosticTrigger = urgentNeed
           ? urgentNeed
           : latest.length
@@ -2650,16 +2646,22 @@ export class AiDirector {
               )
             : matches.length
               ? `A nearby interest became relevant: ${observerDescription(world, entity.id, matches[0]!)}.`
-              : 'A goal, surrounding, or internal state changed.';
+              : newReview
+                ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!)}.`
+                : 'A goal, surrounding, or internal state changed.';
         const diagnosticTriggerType = urgentNeed
           ? `Cognition skipped · ${urgentNeed}`
           : latest.length
             ? 'Autonomous cognition · New experience'
             : matches.length
               ? 'Autonomous cognition · Interest cue'
-              : 'Autonomous cognition · State change';
+              : newReview
+                ? 'Autonomous cognition · Review'
+                : 'Autonomous cognition · State change';
         const id = `thought-${randomUUID()}`;
         if (urgentNeed) {
+          this.thoughtWork.recordOutcome('deferred', all.length);
+          if (last?.skippedOpportunity === opportunity) continue;
           await this.log.save({
             id,
             kind: 'Semantic trigger',
@@ -2680,23 +2682,30 @@ export class AiDirector {
             },
             exchanges: [],
           });
+          // Deferred, not consumed: evidence gathered before or during sleep stays unread
+          // for the next capable opportunity. Native handling queues no paid catch-up.
           await this.writeSchedule(key, {
             fingerprint,
             at: this.now(),
-            // Evidence remains queryable; native handling does not queue semantic catch-up.
-            watermark: snapshotWatermark,
+            ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
             ...(last?.attemptedOpportunity
               ? { attemptedOpportunity: last.attemptedOpportunity }
               : {}),
+            skippedOpportunity: opportunity,
+            ...(review.key ? { reviewKey: review.key } : {}),
           });
           continue;
         }
-        // A failed decision is not a debt to replay. New changes create fresh opportunities.
+        this.thoughtWork.recordOutcome('admitted', all.length);
+        // Attempted, not consumed: the cursor advances only when the decision completes. A
+        // failed decision is not a debt to replay; the same opportunity is not retried and
+        // new changes create fresh opportunities that still include unread evidence.
         await this.writeSchedule(key, {
           fingerprint,
           at: this.now(),
-          watermark: snapshotWatermark,
+          ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
           attemptedOpportunity: opportunity,
+          ...(review.key ? { reviewKey: review.key } : {}),
         });
         const significant = latest.some(
           (m) =>
@@ -2727,6 +2736,7 @@ export class AiDirector {
               at: this.now(),
               watermark: Math.max(current?.watermark ?? 0, snapshotWatermark),
               attemptedOpportunity: opportunity,
+              ...(review.key ? { reviewKey: review.key } : {}),
             });
           },
         );

@@ -16,7 +16,7 @@ Count Unicode code points, including whitespace and Markdown. The admitted world
 
 ## Subject binding
 
-Canonical subject IDs identify storage and mutation targets, not evidence of recognition. Perception supplies saved continuous-exposure episodes; a world identity policy decides whether an observation can bind to an existing subject. A stored note or name alone cannot reveal that a newly seen individual is the previously known person.
+Canonical subject IDs identify storage and mutation targets, not evidence of recognition. Perception supplies saved continuous-exposure episodes; a world identity policy decides whether an observation can bind to an existing subject. A person who returns within the bundled world's short linger window after a recorded departure keeps the same episode ([CG10](limits/cognition.md#cg10)); a longer gap since that recorded departure starts a new one. A stored note or name alone cannot reveal that a newly seen individual is the previously known person.
 
 Model references are opaque observer-scoped tokens, normally four hexadecimal characters and extended on collisions. Unrecognized exposures get episode-scoped references; unavailable exposure uses snapshot scope. Only offered references resolve in responses. Delayed note/name edits recheck their encounter binding. Persist full IDs only inside server state; reproject permitted annotations for later context. Historical unbound references do not become current visible targets through their canonical IDs.
 

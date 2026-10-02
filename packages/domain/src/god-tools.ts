@@ -128,6 +128,9 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
       godMode: true,
     },
   );
+  // Admission owns initial conditions: a newly created hungry person gets one 'initial'
+  // notice now, not a fabricated crossing at the next step (EPR04).
+  reconcileConditions(world, entity, events);
   return finish(world, events, outcome(true, 'spawned', `${entity.name} added.`));
 }
 
@@ -217,6 +220,8 @@ export function enableActorCognition(original: WorldState, actorId: string): Tra
     entity,
     undefined,
     { significant: true, godMode: true },
+    // A creator capability grant is not something anyone, including its subject, perceived.
+    'system',
   );
   return finish(world, events, outcome(true, 'cognition-enabled', 'Actor capabilities enabled.'));
 }
@@ -256,6 +261,18 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     new Set(draft.memoryChanges.map((change) => change.entryId)).size !== draft.memoryChanges.length
   )
     return reject(original, 'invalid-memory', 'A memory may only be changed once per save.');
+  // Importance orders wake-ups and interruptions; say so instead of reporting a conflict.
+  if (
+    draft.memoryChanges.some((change) => {
+      const importance = (change.replacement?.value as { importance?: unknown } | undefined)
+        ?.importance;
+      return (
+        importance !== undefined &&
+        (typeof importance !== 'number' || !(importance >= 0 && importance <= 10))
+      );
+    })
+  )
+    return reject(original, 'invalid-memory', 'Memory importance must be between 0 and 10.');
   const inventory = draft.person.inventory;
   const owned = itemsForOwner(original, draft.actorId);
   const ownedQuantities = new Map<string, number>();
@@ -406,6 +423,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       if (quantity > 0) addItem(world, draft.actorId, definitionId, quantity);
   }
   const events: WorldEvent[] = [];
+  // Creator health edits share the native body owner: death, incapacity and revisions.
+  if (statsChanged) reconcileBody(world, entity, events, 'creator-edit');
   reconcileConditions(world, entity, events);
   migrateCognition(world);
   const invalidated = new Set<string>();

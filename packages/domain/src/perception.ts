@@ -1,3 +1,4 @@
+import { countDomainWork } from './diagnostic-counters.js';
 import { chargeWork } from './work-budget.js';
 import { worldPosition } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
@@ -347,7 +348,11 @@ function unblockedVisionQuery(
     if (radius <= 0 || distance(from, p) > radius) return false;
     if (source.id === observerId) return true;
     const old = cached?.get(source.id);
-    if (old && samePoint(old.position, p) && old.height === source.height) return old.seen;
+    if (old && samePoint(old.position, p) && old.height === source.height) {
+      countDomainWork('senseCacheHits');
+      return old.seen;
+    }
+    countDomainWork('senseTests');
     // Extent samples provide coarse exposure, not recognition or private-state disclosure.
     const seen = [0.85, 0.5, 0.15].some((fraction) =>
       clearSegment(map, eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),

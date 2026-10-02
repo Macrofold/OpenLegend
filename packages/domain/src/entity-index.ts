@@ -1,5 +1,7 @@
+import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
-import { current, isDraft, original } from 'immer';
+import { isDraft, original } from 'immer';
+import { readOnlyDraftView } from './draft.js';
 import type { Entity, WorldState } from './types.js';
 
 // Root membership is rebuildable. Values are read from the current phase, so moving
@@ -36,27 +38,34 @@ export function rootMembershipChanged(world: WorldState, id: string): void {
   if (!changed) draftMembership.set(world, (changed = new Set()));
   changed.add(id);
 }
-export function worldRootEntities(world: WorldState, snapshot = false): Entity[] {
-  if (!isDraft(world)) return snapshotRoots(world.entities).map((id) => world.entities[id]!);
+/** `readOnly` returns a phase view that must never be written through: unchanged roots are
+ * their immutable records and roots already drafted in this transition are live drafts. */
+export function worldRootEntities(world: WorldState, readOnly = false): Entity[] {
+  countDomainWork('rootScans');
+  if (!isDraft(world)) {
+    const ids = snapshotRoots(world.entities);
+    countDomainWork('rootsVisited', ids.length);
+    return ids.map((id) => world.entities[id]!);
+  }
   const base = original(world)!;
   const ids = snapshotRoots(base.entities),
     changed = draftMembership.get(world);
-  // Snapshot only physical roots, not contained inventory or retired records.
-  // The copy is private to that phase; mutations still go through the live world.
-  const entities = world.entities;
-  const value = (entity: Entity) => (snapshot && isDraft(entity) ? current(entity) : entity);
+  // Only physical roots, not contained inventory or retired records. A read-only view
+  // creates no draft per unread root; publication would otherwise finalize each again.
+  const entities = readOnly ? readOnlyDraftView(world.entities) : world.entities;
   const result: Entity[] = [];
   // Membership hooks cover every native root insertion/removal. Unchanged roots do
   // not need repeated placement proxy walks for every emitted event in this phase;
   // values still come from the current draft, including replaced entity records.
   for (const id of ids) {
     const entity = entities[id];
-    if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(value(entity));
+    if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(entity);
   }
   if (changed)
     for (const id of changed)
       if (!physicalRoot(base.entities[id]) && physicalRoot(entities[id]))
-        result.push(value(entities[id]!));
+        result.push(entities[id]!);
+  countDomainWork('rootsVisited', result.length);
   return result;
 }
 /** The draft's exact entity write set routes membership maintenance. No serialized

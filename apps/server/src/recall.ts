@@ -1,4 +1,5 @@
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
+import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type { RetrievedMemory, MemoryScope, CognitionPreparation } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
@@ -290,7 +291,9 @@ export function candidateSet(
       automatic: false,
       entityIds: [e.id],
       at: world.simTime,
-      salience: 3,
+      // Ongoing physical salience ranks a burning fire or a fallen person earlier in
+      // optional attention; it forces nothing into context (EPR06).
+      salience: 3 + stimulusSalience(e, STIMULUS_POLICY),
     });
   }
   for (const item of observed.inventory) {

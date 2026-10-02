@@ -210,6 +210,13 @@ Private visual acquisition batches flush after 128 records; contact acquisition 
 
 **Current — native-action integration source review, 2026-09-26 · Restrictiveness: Safe.**
 
-Cognition and maintenance intake select at most 64 ready eligible actors before asynchronous schedule reads. Successful inspection rotates the ticket after dependency/generation validation; ineligible or incomplete spatial queries cannot occupy the thought batch. The refresh and eligibility scan still traverse the mind roster, so this is a database fan-out bound, not a total CPU bound.
+Cognition and maintenance intake select at most 64 ready eligible actors before asynchronous schedule reads. September 28 ([perception-reaction intake](../projects/perception-reaction-intake.md)):
 
-**Reason / tradeoff:** Bound simultaneous preparation without losing wakeups or starving later eligible actors. [ActorWork](../../apps/server/src/actor-work.ts), [director](../../apps/server/src/ai-director.ts); [PF03](../maintainers/performance.md) retains broader scheduling qualification.
+- Selection is by priority instead of roster order.
+- Tickets with producer urgency at least **7**, or waiting at least **10 real seconds**, come first by wait time; the rest follow by wait time.
+- Every selected actor is inspected until one is admitted, so a ticket whose inspection keeps failing cannot hide others.
+- Ineligible or incomplete spatial queries cannot occupy the thought batch.
+
+Refresh still traverses the mind roster, but compares identity tokens. It reruns a spatial visibility query only for a character whose own exposure lists, position or item definitions changed. This is a database fan-out bound, not a total CPU bound.
+
+**Reason / tradeoff:** Bound simultaneous preparation without losing wakeups or starving later eligible actors. The urgency threshold matches critical condition notices. Aging keeps a stream of urgent work from starving ordinary characters. Both are ordering hints only: they add no concurrency or spending. [ActorWork](../../apps/server/src/actor-work.ts), [director](../../apps/server/src/ai-director.ts); [PF03](../maintainers/performance.md) retains broader scheduling qualification.

@@ -1,0 +1,11 @@
+{
+  "seed": 73,
+  "people": 50,
+  "animals": 100,
+  "layout": "crowded",
+  "steps": 180,
+  "warmup": 30,
+  "speed": 1,
+  "timeoutSeconds": 300,
+  "objects": []
+}

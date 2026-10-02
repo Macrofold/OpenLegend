@@ -3324,7 +3324,8 @@ export class WorldService {
           !(await this.commit(
             { ...this.saved, world: result.world },
             result.invalidatedMemoryIds,
-            'unchanged',
+            // Stat edits reconcile through the body/condition owners and may append events.
+            'append',
           ))
         )
           return { ok: false, code: 'storage', message: this.storageError! };

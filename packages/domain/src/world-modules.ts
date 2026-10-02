@@ -15,6 +15,7 @@ import { strikeDefinition, validMelee } from './strikes.js';
 import {
   conditionText,
   reconcileConditions,
+  canNoticeInternalChange,
   validateConditionPolicy,
   validateConditionEpisodes,
   type ConditionPolicy,
@@ -445,7 +446,9 @@ export function setAttribute(
     const recovery = Math.min(d.schema.max, d.concern.below + (d.schema.max - d.schema.min) * 0.05);
     const concerned = wasConcerned ? value < recovery : value < d.concern.below;
     prior.concernActive = concerned;
-    if (concerned !== wasConcerned)
+    // The latch is physical state; only a character able to notice gains a private record.
+    // A sleeping character's current concern still reaches its next context via projection.
+    if (concerned !== wasConcerned && canNoticeInternalChange(world, entity))
       emit(
         world,
         events,

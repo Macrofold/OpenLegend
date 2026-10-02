@@ -194,11 +194,14 @@ export function selectStory(input: StorySelectionInput, p: StoryPolicy): StorySe
   // receive a designated introduction. docs/narration-and-conversations.md#replaceable-story-selection
   const ownAcquisition =
     event.type === 'encounter' &&
-    event.data?.['acquisition'] === 'visual' &&
+    event.data?.['acquisition'] === true &&
+    // Losing sight of someone is private evidence, never their designated introduction.
+    event.data?.['change'] !== 'end' &&
     event.actorId === input.viewerId &&
     event.audience.length === 1 &&
     event.audience[0] === input.viewerId;
   if (
+    event.scope === 'system' ||
     (event.scope === 'private' && !ownAcquisition) ||
     !p.enabled ||
     !evaluators[p.evaluator] ||

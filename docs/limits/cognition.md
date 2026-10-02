@@ -653,3 +653,32 @@ Allowances are the existing per-call reservations (`decisionAllowance`): with Ma
 **Current — accepted inner-world snapshot versus the greeting target, September 28 · Restrictiveness: Liberal.** Every semantic decision includes the complete accepted “About me” snapshot. Its quota allows 10 documents of up to 8,000 bytes (80,000 bytes, roughly 20,000–27,000 tokens), which alone defeats the requested few-hundred-input-token greeting target. The rest of the request defeats it too: a fixture greeting with only 1,616 bytes of accepted text sent 19,173 bytes of instructions and context plus a 7,598-byte schema, led by the response format (4,792 bytes), “Me” (2,565), references (2,501) and known planning techniques (1,929). Near the top of the quota the snapshot plus required context exceeds the 100,000-byte level-2–4 input allowance: a 79,708-byte snapshot fails before any request is sent, while a 71,737-byte snapshot produced an 89,417-byte request and succeeded. That refusal is explicit in the trace but currently reports a generic failure (the check is in decision preparation).
 
 **Reason / tradeoff:** Truncating accepted identity text would silently change who the character is, so the conflict is exposed instead of hidden. Resolving it needs a product decision: a smaller quota, a greeting-specific projection of accepted text and of the response contract, or accepting larger greetings and occasional refusals near the quota. [CR01](../maintainers/cognition-redesign.md#cr01--separate-model-text-from-execution-metadata) owns the decision; [payload measurements](../verification/level1-decisions.md#payload-inspection) record the sizes.
+
+## CG10
+
+**Current — September 28, [perception-reaction intake](../projects/perception-reaction-intake.md) · Restrictiveness: Medium.** Each observer keeps at most one private arrival record and one departure record per sighted person within a **3,600 game-second** window. The window is measured from its newest resident sighting record. Further comings and goings in the window update current visibility only. Losing sight of someone with memory is recorded at the arrival profile (importance **3**, urgency **0**, no automatic reasoning). Animals and objects stay unrecorded.
+
+A person who returns within **30 game seconds** of a recorded departure keeps their perception episode, so non-authored recognition and plan targets survive a first brief occlusion or edge flicker. Live exposure, new detail and action reach still use exact current sight. The grace period counts only from the first departure recorded in the one-hour re-record window; later exits in that window write no record. A return within 30 seconds of that recorded departure keeps the episode even after further brief exits, and a return more than 30 seconds after it starts a new episode however brief the latest exit was. Outward-change records never re-arm a departure. [Base policy](../../packages/domain/src/worlds/base/senses.ts).
+
+**Reason / tradeoff:** The one-hour window already existed, but it read only `world.memories`. Sightings moved to awareness entries, so every return created a new record. Enforcing it trades individual recall of repeated comings and goings for bounded history under jitter and crowd movement.
+
+- Only resident awareness is consulted. Residency trimming at commits or a restart can therefore add a record that an uninterrupted run would have coalesced; it never loses one. Such outcomes depend on commit timing, like other residency-dependent reads.
+- Linger does not see perception loss: if an observer's perception is blocked for less than 30 seconds after a recorded departure, a return can still reuse the episode. The episode-state clearing on loss otherwise applies.
+- Episode linger covers people only. Animals and objects have no departure records, so their episodes still end on exit (see EPR03 hysteresis).
+- D54 retains tuning. Revisit when authored conspicuous objects, dangerous fauna or a narration consumer of departures appears.
+
+## CG11
+
+**Current — September 28, [perception-reaction intake](../projects/perception-reaction-intake.md) · Restrictiveness: Medium.** Active stimuli are derived from an observer's current exposure, never recorded per tick. At most **8** salient sources are kept per observer, ordered by salience, then novelty, then earlier onset, then ID; the rest are only counted.
+
+- **Base-world salience:** burning **2**, incapacitated **3**, dead **3**; other outward states are 0. Bodies are not yet in visual exposure (an owner decision), so `dead` currently affects attention ranking only and never produces an active stimulus or review.
+- **Novelty:** a source is novel for **60** game seconds after its exposure episode starts.
+- **Attention:** salience raises a visible entity's rank in optional attention (candidate salience 3 + stimulus salience). Nothing is forced into context.
+- **Review:** the base world defines no review cadence, so no periodic opportunity (and no mandatory paid thought) falls due. A policy review cadence adds a simulation-clock deadline to the character's intake ticket. A due review becomes a fresh opportunity through the normal admission and spending checks.
+
+[Base policy](../../packages/domain/src/worlds/base/senses.ts) · [derivation](../../packages/domain/src/stimuli.ts).
+
+**Reason / tradeoff:** Keep compelling ongoing conditions in mind without new records, novelty repeats or paid storms, under a bounded cue set.
+
+- Which cue types may force context inclusion, and a production review cadence, are owner decisions (design §12, D54). Until accepted, the base world forces none and reviews none.
+- Salience keys on coarse outward states only, so authored hidden metadata cannot raise or reveal anything.

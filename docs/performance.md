@@ -122,7 +122,7 @@ This removes idle work, not durable job admission. Do not dispatch from an uncom
 
 ### Cognition, maintenance and deadlines
 
-The proposed [internal-event integration](events-perception-and-reactions.md#7-internal-triggers-and-native-survival), [ongoing stimuli](events-perception-and-reactions.md#8-ongoing-salience-relevance-and-reminders), [actor intake](events-perception-and-reactions.md#9-reaction-intake-and-scheduling) and [consumer boundary](events-perception-and-reactions.md#10-transactions-subscriptions-and-secondary-consumers) define the inputs to this scheduling policy.
+The [internal-event integration](events-perception-and-reactions.md#7-internal-triggers-and-native-survival) (accepted for implementation within a named scope on 2026-09-28), [ongoing stimuli](events-perception-and-reactions.md#8-ongoing-salience-relevance-and-reminders), [actor intake](events-perception-and-reactions.md#9-reaction-intake-and-scheduling) and [consumer boundary](events-perception-and-reactions.md#10-transactions-subscriptions-and-secondary-consumers) define the inputs to this scheduling policy.
 
 Only actors affected by newly perceived evidence, need crossings, action outcomes, relevant inventory/goal changes or elapsed deadlines become scheduling candidates. Retain recurring critical-need reminders, consolidation eligibility and sleep/day boundaries; event-driven does not mean ignoring the passage of time.
 

@@ -108,7 +108,7 @@ export function appendEvents(world: WorldState, owned: WorldEvent[]): void {
     eventBuffers.set(world, buffer);
     world.events = buffer.values;
   }
-  if (buffer) buffer.values.push(...owned.map((event) => freeze(event, true)));
+  if (buffer) buffer.values.push(...owned.map(frozenRecord));
   else world.events.push(...owned);
 }
 function sealEvents(world: WorldState): void {
@@ -147,11 +147,11 @@ export function appendSnapshot<T>(entries: T[], owned: T[], world?: WorldState):
   let buffers = world && isDraft(world) ? snapshotBuffers.get(world) : undefined;
   const existing = buffers?.get(before);
   if (existing) {
-    existing.values.push(...owned.map((value) => freeze(value, true)));
+    existing.values.push(...owned.map(frozenRecord));
     return existing.values as T[];
   }
   if (!Object.isFrozen(before)) return undefined;
-  const after = [...before, ...owned.map((value) => freeze(value, true))];
+  const after = [...before, ...owned.map(frozenRecord)];
   if (world && isDraft(world)) {
     if (!buffers) snapshotBuffers.set(world, (buffers = new Map()));
     buffers.set(after, { before, values: after });
@@ -173,11 +173,94 @@ export function appendedEventCount(previous: WorldEvent[], next: WorldEvent[]): 
     ? next.length - previous.length
     : undefined;
 }
+const IMMER_STATE = Symbol.for('immer-state');
+/** Latest value of a draft container without creating a child draft for every property
+ * later read from it. Unread children are their immutable base records; children already
+ * drafted in this transition are returned as those live drafts. Callers must only read.
+ * Immer 10 exposes its latest copy through this registered state symbol; any other shape
+ * falls back to the ordinary proxied container, which is correct but creates child drafts.
+ * PF03/09: one proxy per unread root was later finalized again at every publication.
+ */
+export function readOnlyDraftView<T extends object>(value: T): T {
+  if (!isDraft(value)) return value;
+  const state = (value as Record<symbol, { copy_?: T | null; base_?: T } | undefined>)[IMMER_STATE];
+  const latest = state?.copy_ ?? state?.base_;
+  return latest && typeof latest === 'object' ? latest : value;
+}
 /** Server ownership boundary; builders remain mutable until explicitly handed off.
  * Frozen unchanged branches skip Immer traversal (docs/architecture.md#state-and-transitions).
  */
 export function freezeWorld(world: WorldState): WorldState {
-  return freeze(world, true);
+  const known = frozenPredecessor.get(world);
+  if (!known || known.entities !== world.entities || Object.isFrozen(world)) {
+    freezeData(world);
+    return world;
+  }
+  // Every other entity is the deep-frozen predecessor's own value. Only the patch write set
+  // and the copies Immer published (including ones whose writes cancelled out and left no
+  // patch) need a deep walk; touching every key was O(all entities) per publication (PF08).
+  Object.freeze(world);
+  for (const key of Object.keys(world))
+    if (key !== 'entities') freezeData((world as unknown as Record<string, unknown>)[key]);
+  Object.freeze(world.entities);
+  for (const id of known.changed) freezeData(world.entities[id]);
+  for (const copy of known.copies) freezeData(copy);
+  frozenPredecessor.delete(world);
+  return world;
+}
+/** Published transitions whose predecessor entity map was already deep-frozen. */
+const frozenPredecessor = new WeakMap<
+  WorldState,
+  { entities: WorldState['entities']; changed: ReadonlySet<string>; copies: readonly object[] }
+>();
+type ImmerState = {
+  copy_?: unknown;
+  parent_?: ImmerState;
+  modified_?: unknown;
+  scope_?: { drafts_?: unknown };
+};
+/** Entity copies this draft will publish, read from Immer 10's draft scope before finishing
+ * revokes it. Undefined when that internal shape is absent, so callers keep the full walk. */
+function publishedEntityCopies(world: WorldState): object[] | undefined {
+  const entities = readOnlyDraftView(world).entities;
+  if (!isDraft(entities)) return [];
+  const state = (entities as unknown as Record<symbol, ImmerState | undefined>)[IMMER_STATE];
+  const drafts = state?.scope_?.drafts_;
+  if (!state || !Array.isArray(drafts) || typeof state.modified_ !== 'boolean') return undefined;
+  const copies: object[] = [];
+  for (const draft of drafts) {
+    const child =
+      draft && typeof draft === 'object'
+        ? (draft as Record<symbol, ImmerState | undefined>)[IMMER_STATE]
+        : undefined;
+    if (child?.parent_ === state && child.modified_ === true && child.copy_)
+      copies.push(child.copy_ as object);
+  }
+  return copies;
+}
+/** Deep-freeze one owned history record without per-key entry allocation. */
+function frozenRecord<T>(value: T): T {
+  freezeData(value);
+  return value;
+}
+/** Immer's deep freeze for plain JSON data without allocating an entry pair per key of every
+ * new container (the copied entity map is walked on every published step). Frozen subtrees
+ * stop the walk exactly as in Immer; any other object type keeps Immer's own semantics. */
+function freezeData(value: unknown): void {
+  if (typeof value !== 'object' || value === null || Object.isFrozen(value) || isDraft(value))
+    return;
+  if (Array.isArray(value)) {
+    Object.freeze(value);
+    for (let i = 0; i < value.length; i++) if (i in value) freezeData(value[i]);
+    return;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    freeze(value, true);
+    return;
+  }
+  Object.freeze(value);
+  for (const key of Object.keys(value)) freezeData((value as Record<string, unknown>)[key]);
 }
 export function draftWorld(world: WorldState): WorldState {
   sealAppends(world);
@@ -186,7 +269,7 @@ export function draftWorld(world: WorldState): WorldState {
 export function finishWorld(world: WorldState): WorldState {
   sealAppends(world);
   if (!isDraft(world)) return world;
-  for (const value of admittedRecords.get(world) ?? []) freeze(value, true);
+  for (const value of admittedRecords.get(world) ?? []) freezeData(value);
   admittedRecords.delete(world);
   const sealedAppends: Array<{ before: unknown[]; after: unknown[] }> = [];
   for (const [owner, keys] of recordArrays.get(world) ?? []) {
@@ -200,7 +283,7 @@ export function finishWorld(world: WorldState): WorldState {
       if (after === before) continue;
       // current() resolves every nested edit; the original array stays immutable even
       // for append-then-edit/delete and branching histories in the same transition.
-      properties[key] = freeze(after, true);
+      properties[key] = frozenRecord(after);
       if (after.length >= before.length && before.every((entry, i) => entry === after[i]))
         sealedAppends.push({ before, after });
     }
@@ -221,6 +304,8 @@ export function finishWorld(world: WorldState): WorldState {
   let appendOnly = true;
   const arrays = new Map<unknown[], { path: (string | number)[]; appendOnly: boolean }>();
   const entityIds = new Set<string>();
+  // Read before finishing: finishing revokes the drafts that identify published entity copies.
+  const copies = publishedEntityCopies(world);
   const result = drafts.finishDraft(world, (patches) => {
     for (const { op, path, value: patchValue } of patches) {
       if (path[0] === 'entities') {
@@ -261,6 +346,10 @@ export function finishWorld(world: WorldState): WorldState {
     );
   });
   changedEntities.set(result, entityIds);
+  // Entity maps are frozen only by the deep boundary freeze; a frozen predecessor lets that
+  // freeze skip every entity it still shares.
+  if (copies && base.entities !== result.entities && Object.isFrozen(base.entities))
+    frozenPredecessor.set(result, { entities: result.entities, changed: entityIds, copies });
   if (base.entities !== result.entities && Object.isFrozen(base.entities))
     entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
   publishChanges(result, result !== base);

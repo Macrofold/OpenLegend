@@ -1,4 +1,17 @@
 export * from './types.js';
+export {
+  activeStimuli,
+  stimulusSalience,
+  type ActiveStimulus,
+  type StimulusPolicy,
+} from './stimuli.js';
+export { STIMULUS_POLICY } from './worlds/base/senses.js';
+export {
+  DOMAIN_COUNTERS,
+  observeDomainCounters,
+  type DomainCounter,
+  type DomainCounters,
+} from './diagnostic-counters.js';
 export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';

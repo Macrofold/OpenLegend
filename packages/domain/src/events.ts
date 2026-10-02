@@ -1,3 +1,4 @@
+import { countDomainWork } from './diagnostic-counters.js';
 import { activeActivity } from './action-experience.js';
 import { chargeWork } from './work-budget.js';
 import { externalAudience } from './event-audience.js';
@@ -17,12 +18,20 @@ import { appraiseEvent } from './social.js';
 import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
-import { finishWorld, cloneValue, appendEvents } from './draft.js';
+import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { memoryPerspective } from './memory-perspective.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
-import type { Entity, MemoryRecord, Outcome, Transition, WorldEvent, WorldState } from './types.js';
+import type {
+  Entity,
+  MemoryRecord,
+  Outcome,
+  Transition,
+  WorldEvent,
+  WorldState,
+  EventScope,
+} from './types.js';
 
 export function outcome(ok: boolean, code: string, message: string): Outcome {
   return { ok, code, message };
@@ -80,7 +89,7 @@ export function emit(
   source?: Entity,
   targetId?: string,
   data?: WorldEvent['data'],
-  scope: 'external' | 'private' = 'external',
+  scope: EventScope = 'external',
 ): WorldEvent {
   return recordEvent(
     world,
@@ -99,8 +108,10 @@ function eventAudience(
   world: WorldState,
   type: string,
   source: Entity | undefined,
-  scope: 'external' | 'private',
+  scope: EventScope,
 ): string[] {
+  // A control notice has no perceiver, not even its subject.
+  if (scope === 'system') return [];
   const audience = scope === 'private' || !source ? [] : externalAudience(world, source);
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   return audience;
@@ -126,13 +137,19 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
     targetId: string,
     stimulus: { importance: number; urgency: number; semanticTrigger: boolean },
     detail?: string,
+    departed = false,
   ): WorldEvent => {
     if (owner !== source.id) {
       flush();
       owner = source.id;
     }
+    // Describe a departing subject before its episode ends, so recognition is event-time.
     const subject = observerDescription(world, source.id, targetId);
-    const observed = detail ? `noticed ${subject}: ${detail}.` : `saw ${subject}.`;
+    const observed = departed
+      ? `lost sight of ${subject}.`
+      : detail
+        ? `noticed ${subject}: ${detail}.`
+        : `saw ${subject}.`;
     const event = recordEvent(
       world,
       events,
@@ -147,7 +164,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
         // docs/events-perception-and-reactions.md#8-ongoing-salience-relevance-and-reminders
         ...stimulus,
         acquisition: true,
-        change: detail ? 'detail' : 'onset',
+        change: departed ? 'end' : detail ? 'detail' : 'onset',
       },
       'private',
       pending,
@@ -169,7 +186,7 @@ function recordEvent(
   source: Entity | undefined,
   targetId: string | undefined,
   data: WorldEvent['data'],
-  scope: 'external' | 'private',
+  scope: EventScope,
   awarenessBatch?: ExperienceMutation[],
   privatePerspective?: string,
 ): WorldEvent {
@@ -203,7 +220,13 @@ function recordEvent(
   );
   const event: WorldEvent = {
     ...(source
-      ? { origin: type === 'speech' ? soundOrigin(source) : { ...worldPosition(source) } }
+      ? {
+          // Copy the committed pose without walking a live draft through proxy traps.
+          origin:
+            type === 'speech'
+              ? soundOrigin(source)
+              : { ...readOnlyDraftView(worldPosition(source)) },
+        }
       : {}),
     scope,
     id: nextId(world, 'event'),
@@ -224,7 +247,7 @@ function recordEvent(
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
   const speechAwareness = new Map<string, Awareness>();
-  if (type === 'speech' && source) {
+  if (type === 'speech' && source && scope !== 'system') {
     const volume = isSpeechVolume(data?.['volume']) ? data['volume'] : 'normal';
     const origin = isDraft(source) ? current(source) : source;
     // The shared source is parsed once; masking and recognition remain listener-local.
@@ -259,6 +282,7 @@ function recordEvent(
     if (conversation) conversation.lastActivityAt = world.simTime;
   }
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
+  countDomainWork('eventsRecorded');
   events.push(event);
   if (
     [
@@ -294,6 +318,7 @@ function recordEvent(
       experience.evidenceIds.push(event.id);
   }
   if (world.experience) {
+    countDomainWork('awarenessWritten', audience.length);
     const acquired: Awareness[] = [];
     for (const actorId of audience) {
       const speech = speechAwareness.get(actorId);
@@ -347,6 +372,10 @@ function recordEvent(
                 ? 'directed_action'
                 : 'observed_event',
         content: typeof data?.['text'] === 'string' ? data['text'] : perceivedText,
+        ...(data?.['acquisition'] === true &&
+        (data['change'] === 'onset' || data['change'] === 'detail' || data['change'] === 'end')
+          ? { change: data['change'] }
+          : {}),
       };
       if (awarenessBatch)
         awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
@@ -358,9 +387,12 @@ function recordEvent(
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
     appendEvents(world, [cloneValue(event)]);
-  appraiseEvent(world, event);
-  recordSpokenPromise(world, event);
-  advanceCommitments(world, [event]);
+  // Control notices are not occurrences characters can appraise, promise on or fulfil.
+  if (scope !== 'system') {
+    appraiseEvent(world, event);
+    recordSpokenPromise(world, event);
+    advanceCommitments(world, [event]);
+  }
   return event;
 }
 export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {

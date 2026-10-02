@@ -3,6 +3,7 @@ import { populateScenario, type Scenario } from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
 import { createHash } from 'node:crypto';
+import * as domain from '../packages/domain/src/index.js';
 import { advanceWorld, freezeWorld, type WorldState } from '../packages/domain/src/index.js';
 
 const [input, output, stepArgument = '180', experiment, scenarioArgument] = process.argv.slice(2);
@@ -21,6 +22,13 @@ if (
 const scenario: Scenario | undefined =
   experiment === '--scenario' ? JSON.parse(scenarioArgument ?? 'null') : undefined;
 const mutable = experiment === '--mutable-snapshots';
+// Optional differential trace (EPR00/PF03): per-step outcome, events with audiences, and
+// RNG/id/sequence scalars. Hashing happens after the timed loop so it cannot inflate cpuMs.
+const tracePath = process.env['OPENLEGEND_PROFILE_TRACE'];
+// Counters exist only on revisions that define them, so the same harness runs on baselines.
+const observeCounters = (domain as Record<string, unknown>)['observeDomainCounters'] as
+  | ((target?: Record<string, number>) => void)
+  | undefined;
 await initializeCollisionRuntime();
 console.error('profile stage: loading/setup');
 const setupAt = performance.now();
@@ -40,6 +48,16 @@ const initial = {
 const freezeStarted = performance.now();
 if (!mutable) freezeWorld(world);
 const initialFreezeMs = performance.now() - freezeStarted;
+type Traced = {
+  outcome: unknown;
+  events: unknown;
+  simTime: number;
+  rngState: unknown;
+  nextId: unknown;
+  sequence: unknown;
+};
+const trace: Traced[] = [];
+let tracing = false;
 const step = () => {
   const transition = advanceWorld(world, scenario?.intervalSeconds ?? 1, { maxIntervals: 1 });
   if (!transition.outcome.ok)
@@ -48,6 +66,15 @@ const step = () => {
     );
   world = transition.world;
   if (!mutable) freezeWorld(world);
+  if (tracing)
+    trace.push({
+      outcome: transition.outcome,
+      events: transition.events,
+      simTime: world.simTime,
+      rngState: world.rngState,
+      nextId: world.nextId,
+      sequence: world.sequence,
+    });
 };
 const setupMs = performance.now() - setupAt;
 const warmupSteps = scenario?.warmup ?? 30;
@@ -64,6 +91,9 @@ try {
   await session.post('Profiler.enable');
   await session.post('Profiler.start');
   const durations: number[] = [];
+  const counters: Record<string, number> = {};
+  observeCounters?.(counters);
+  tracing = !!tracePath;
   const simulationStartedAt = world.simTime;
   let completedSteps = 0;
   const cpuAt = process.cpuUsage();
@@ -81,6 +111,9 @@ try {
   const simulatedSeconds = world.simTime - simulationStartedAt;
   const totalMs = performance.now() - started;
   const cpu = process.cpuUsage(cpuAt);
+  observeCounters?.();
+  tracing = false;
+  const firstStepMs = durations[0];
   console.error('profile stage: writing results');
   const { profile } = await session.post('Profiler.stop');
   // Profiles can contain local paths. Keep them private, outside tracked evidence.
@@ -94,6 +127,19 @@ try {
     self.set(name, (self.get(name) ?? 0) + (profile.timeDeltas?.[index] ?? 0) / 1000);
   }
   durations.sort((a, b) => a - b);
+  const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  let traceDigest: string | undefined;
+  if (tracePath) {
+    const steps = trace.map((entry) => hash(entry));
+    traceDigest = hash(steps);
+    await writeFile(tracePath, JSON.stringify(steps), { mode: 0o600, flag: 'wx' });
+  }
+  const awareness = world.experience?.awareness ?? {};
+  const awarenessDigest = hash(
+    Object.keys(awareness)
+      .sort()
+      .map((id) => [id, awareness[id]]),
+  );
   console.log(
     JSON.stringify(
       {
@@ -124,11 +170,15 @@ try {
         },
         steps,
         totalMs,
+        firstStepMs,
         p50Ms: durations[Math.ceil(durations.length * 0.5) - 1],
         p95Ms: durations[Math.ceil(durations.length * 0.95) - 1],
         maxStepMs: durations.at(-1),
         nativeSecondsPerWallSecond: (simulatedSeconds * 1000) / totalMs,
         finalWorldDigest: createHash('sha256').update(JSON.stringify(world)).digest('hex'),
+        awarenessDigest,
+        ...(traceDigest ? { traceDigest } : {}),
+        counters,
         hottestSelfMs: [...self].sort((a, b) => b[1] - a[1]).slice(0, 12),
       },
       null,

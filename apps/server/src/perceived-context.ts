@@ -49,6 +49,8 @@ export function perceivedEntityText(
   const health = observedAnimalHealth(world, observerId, entity.id);
   if (health) facts.push(health);
   if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
+  // Same coarse outward state that ranks a fallen being earlier in attention (EPR06).
+  else if (entity.actor?.incapacitated) facts.push('It has collapsed and is not moving.');
   else if (entity.actor?.action) {
     const action = entity.actor.action;
     // No action record is not evidence of stillness: native movement uses other state.

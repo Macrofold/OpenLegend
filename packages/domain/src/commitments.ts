@@ -178,9 +178,12 @@ export function advanceCommitments(world: WorldState, events: WorldEvent[]): voi
   // Indexes follow immutable source identities, including edits/recovery; ordering stays native.
   const index = commitmentIndex(world),
     candidates = new Set<Pending>();
-  for (const event of events)
-    for (const entry of index.completions.get(JSON.stringify([event.actorId, event.type])) ?? [])
-      candidates.add(entry);
+  // Dense private acquisition records thousands of events; skip keying them when no
+  // obligation awaits any completion (PF12.3/SW08.4a first-exposure burst).
+  if (index.completions.size)
+    for (const event of events)
+      for (const entry of index.completions.get(JSON.stringify([event.actorId, event.type])) ?? [])
+        candidates.add(entry);
   for (const entry of index.deadlines) {
     if (entry.record.obligation!.dueAt! > world.simTime) break;
     candidates.add(entry);

@@ -1,3 +1,4 @@
+import { countDomainWork } from './diagnostic-counters.js';
 import { chargeWork } from './work-budget.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
@@ -185,6 +186,7 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
   type Entry = { entity: T; order: number };
   type Cell = { x: number; y: number; z: number; entries: Entry[] };
   const cells = new Map<string, Cell>();
+  countDomainWork('spatialBuilds');
   entities.forEach((entity, order) => {
     const p = entity.position,
       x = Math.floor(p.x / cellSize),
@@ -230,6 +232,8 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
             found.push(...entries);
           }
     }
+    countDomainWork('spatialQueries');
+    countDomainWork('spatialCandidates', found.length);
     return found.sort((a, b) => a.order - b.order).map(({ entity }) => entity);
   };
 }

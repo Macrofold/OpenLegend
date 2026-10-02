@@ -1,7 +1,11 @@
 import { current, isDraft, original } from 'immer';
+import { readOnlyDraftView } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
-import { worldPosition } from './spatial-state.js';
-import type { Position, WorldState } from './types.js';
+import { hasMemory } from './living.js';
+import { activelyParticipates } from './participation-state.js';
+import { visibleFeature } from './perception-frame.js';
+import { bodyProfile, worldPosition } from './spatial-state.js';
+import type { Entity, Position, WorldState } from './types.js';
 import { spatialCandidates } from './spatial.js';
 export interface ExposureInput {
   id: string;
@@ -12,6 +16,88 @@ export interface ExposureInput {
   memory: boolean;
   object: boolean;
   feature: string;
+}
+/** A new continuous-exposure episode identity. Its format is owned here with its parser. */
+export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
+  return `${world.sequence}:${world.simTime}:${sourceId}`;
+}
+/** Simulation time an episode began, or undefined for a foreign/unknown identity. */
+export function episodeStartedAt(episode: string | undefined): number | undefined {
+  const at = episode ? Number(episode.split(':')[1]) : Number.NaN;
+  return Number.isFinite(at) ? at : undefined;
+}
+/** Latest private sighting record per subject for one observer (EPR03). */
+export interface SightingRecord {
+  /** False when the latest record is a departure. */
+  present: boolean;
+  at: number;
+  episode?: string;
+}
+/** Read the observer's newest sighting records back to `since`, without copying its
+ * resident awareness. Only records still resident are visible: a missing or evicted record
+ * can cause an extra record later, never a lost one. Awareness is appended in time order.
+ * docs/events-perception-and-reactions.md#hysteresis-and-freshness */
+export function recentSightings(
+  world: WorldState,
+  observerId: string,
+  since: number,
+): Map<string, SightingRecord> {
+  const records = new Map<string, SightingRecord>();
+  const awareness = world.experience ? readOnlyDraftView(world.experience.awareness) : undefined;
+  const entries = readOnlyDraftView(awareness?.[observerId] ?? []);
+  // Presence comes from the newest arrival or departure; an outward-change record only marks
+  // the subject as recently recorded and cannot re-arm a departure.
+  const resolved = new Set<string>();
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const entry = entries[i]!;
+    if (entry.at < since) break;
+    const subject = entry.targetId;
+    if (entry.eventType !== 'encounter' || !subject || resolved.has(subject)) continue;
+    if (entry.change === 'detail') {
+      if (records.has(subject)) continue;
+    } else resolved.add(subject);
+    records.set(subject, {
+      present: entry.change !== 'end',
+      at: entry.at,
+      ...(entry.entityEpisodes?.[subject] ? { episode: entry.entityEpisodes[subject] } : {}),
+    });
+  }
+  return records;
+}
+/** One root's read-only encounter inputs for a phase. */
+export interface ExposureCapture extends ExposureInput {
+  entity: Entity;
+  detail: string;
+}
+const captures = new WeakMap<Entity, ExposureCapture | null>();
+/** Every field depends only on the entity record (and constant body profiles), so an
+ * immutable record reuses its capture across slices; a live draft is captured afresh.
+ * Returns null for a root that does not currently participate. Callers only read it.
+ * PF03/09: static roots otherwise rebuilt identical inputs on every slice. */
+export function captureExposure(entity: Entity): ExposureCapture | null {
+  const frozen = Object.isFrozen(entity);
+  if (frozen) {
+    const cached = captures.get(entity);
+    if (cached !== undefined) return cached;
+  }
+  let capture: ExposureCapture | null = null;
+  if (activelyParticipates(entity)) {
+    const position = worldPosition(entity),
+      profile = bodyProfile(entity);
+    capture = {
+      entity,
+      id: entity.id,
+      position: isDraft(position) ? current(position) : position,
+      height: profile.height,
+      radius: profile.radius,
+      alive: !!entity.actor?.alive,
+      memory: hasMemory(entity),
+      object: !entity.actor && !entity.animal,
+      ...visibleFeature(entity),
+    };
+  }
+  if (frozen) captures.set(entity, capture);
+  return capture;
 }
 interface ObserverInput {
   signature: string;
@@ -50,23 +136,29 @@ export function exposureChanges(
   inputs: ExposureInput[],
 ) {
   const previous = caches.get(base);
-  const next: ExposureCache = {
-    map,
-    inputs: new Map(
-      inputs.map(({ id, position, height, radius, alive, memory, object, feature }) => [
-        id,
-        { id, position: { ...position }, height, radius, alive, memory, object, feature },
-      ]),
-    ),
-    observers: new Map(),
-  };
+  const next: ExposureCache = { map, inputs: new Map(), observers: new Map() };
   const changed: ExposureInput[] = [];
-  for (const input of inputs)
-    if (!equal(previous?.inputs.get(input.id), input)) {
-      changed.push(input);
-      const old = previous?.inputs.get(input.id);
-      if (old) changed.push(old);
+  for (const input of inputs) {
+    const old = previous?.inputs.get(input.id);
+    // Unchanged copies are reused; the cache never retains a caller's mutable position.
+    if (old && equal(old, input)) {
+      next.inputs.set(input.id, old);
+      continue;
     }
+    const { id, position, height, radius, alive, memory, object, feature } = input;
+    next.inputs.set(id, {
+      id,
+      position: { ...position },
+      height,
+      radius,
+      alive,
+      memory,
+      object,
+      feature,
+    });
+    changed.push(input);
+    if (old) changed.push(old);
+  }
   for (const old of previous?.inputs.values() ?? [])
     if (!next.inputs.has(old.id)) changed.push(old);
   pending.set(world, next);

@@ -28,6 +28,28 @@ Delivered Mike's [player clarity plan](projects/player-clarity-ui.md). The priva
 
 Speech search extends the existing GET `/api/world-events` read, so its words appear in that request URL like the existing filters. The missed-caption count is a per-tab lower bound, and the overhead gesture wording avoids the event text because that text can name a target the viewer has not learned; that pre-existing leak in gesture/targeted event text is recorded in the [TODO](maintainers/TODO.md#future-character-reaction-bubbles) rather than fixed here. [Evidence](verification/player-clarity-ui.md) covers each item in the running app at desktop and narrow widths, keyboard paths and direct privacy/authority requests. No save format change, new transport or provider calls.
 
+## 2026-09-28 — Perception changes and one fair reaction intake
+
+Mike approved implementing the proposed [events, perception and reactions contract](events-perception-and-reactions.md) for EPR00, EPR01, EPR03, the remaining EPR04 work, EPR05 (without the durable-evidence hold) and EPR06. The [project plan](projects/perception-reaction-intake.md) records the scope.
+
+**What changed:**
+
+- **Scope.** Occurrences have a closed `external`/`private`/`system` scope. Creator control notices no longer become character evidence.
+- **Departures.** A memory-bearing person leaving view is private evidence. The existing one-hour re-record window is enforced again, and a return within 30 game seconds keeps the perception episode ([CG10](limits/cognition.md#cg10)).
+- **One intake.** `ActorWork` is the single per-character intake, with typed causes, urgency and aging order ([NW14](limits/native-work.md#nw14)). Visibility is recomputed only for characters whose own exposure changed. The considered-evidence cursor advances only when a decision completes.
+- **Ongoing stimuli.** They are derived from live exposure and rank salient sources earlier in optional attention. The base world forces no cue and schedules no review ([CG11](limits/cognition.md#cg11)).
+- **Creator edits and spawns.** Health edits and spawns reconcile through the native body and condition owners.
+
+**Behavior changes and tradeoffs:**
+
+- Fewer repeated sighting records.
+- A failed directed turn's speech is not answered again autonomously.
+- Evidence gathered before sleep is kept for the next capable opportunity.
+- A viewer's own designated introduction reaches its story policy again.
+- Concurrency, spending, thresholds and the single shared execution slot are unchanged.
+
+**Measurements** are in the [verification report](verification/perception-reaction-intake.md). Behavior-preserving native optimizations cut seed-73 CPU about 18% with identical outcome digests, and the write-set boundary freeze removes most freeze cost in large worlds. The 3× target, dense acceptance, sharded entity storage and the durable-evidence hold remain open under PF/SW08/EPR05.
+
 ## 2026-09-28 — Wellbeing vision ideation
 
 At Mike's request, added the [Wellbeing Vision](../archive/08-wellbeing-vision/README.md): open ideation on how Open Legend could strengthen players' real lives — connection, rest, skills, civic life and wisdom — instead of deepening isolation or substituting AI for people. It contains top picks, a proposed north star and charter, idea catalogues, moonshots, literary and real-world precedents, guardrails with a September 2026 legal survey, measurement and business-alignment proposals, open questions, first experiments, and ten AI-assisted research briefs with their verification limits. The request is preserved in [00-source](../archive/00-source/wellbeing-vision-followup.md). Documentation only: no requirement, decision, task, limit or runtime behavior changes; any adopted idea would first be recorded in [open decisions](../archive/05-project/open-decisions.md).

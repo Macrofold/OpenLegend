@@ -38,7 +38,7 @@ interface ReflectionRequest {
 }
 class MaintenanceReadFailure extends Error {}
 export class CognitionMaintenance {
-  private readonly work = new ActorWork();
+  private readonly work = new ActorWork('maintenance', () => this.now());
   private readonly lastStarted = new Map<string, number>();
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;

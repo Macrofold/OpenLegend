@@ -279,8 +279,14 @@ export interface KnowledgeRecord {
   source: 'invented' | 'taught' | 'practiced';
   evidenceId: string;
 }
+/** Closed, trusted occurrence scope; only native/server code assigns it.
+ * - external: exposed through senses to the audience resolved at occurrence time.
+ * - private: owner-only internal change or observer-private acquisition.
+ * - system: control or diagnostic notice; never character evidence or a story candidate.
+ * docs/events-perception-and-reactions.md#4-scope-and-event-identity */
+export type EventScope = 'external' | 'private' | 'system';
 export interface WorldEvent {
-  scope?: 'external' | 'private';
+  scope?: EventScope;
   /** Committed occurrence origin, never recomputed from a source's later position. */
   origin?: Position;
   order?: number;

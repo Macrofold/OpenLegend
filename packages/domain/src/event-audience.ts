@@ -1,3 +1,4 @@
+import { countDomainWork } from './diagnostic-counters.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
@@ -37,6 +38,7 @@ export function externalAudience(world: WorldState, source: Entity): string[] {
     // Only copy receiver scalars below. Snapshotting full actors also copies their
     // plans/body/action state even though none of it survives in this index.
     const roots = worldRootEntities(world);
+    countDomainWork('audienceScans');
     const inputs: Receiver[] = [];
     for (const [order, entity] of roots.entries()) {
       if (!hasMemory(entity) || !entity.actor?.alive || !activelyParticipates(entity)) continue;
@@ -88,8 +90,9 @@ export function externalAudience(world: WorldState, source: Entity): string[] {
   }
   const p = worldPosition(source);
   const origin = { x: p.x, y: p.y, z: p.z };
-  return index.buckets
-    .flatMap((bucket) => bucket.near(origin, bucket.radius))
+  const candidates = index.buckets.flatMap((bucket) => bucket.near(origin, bucket.radius));
+  countDomainWork('audienceCandidates', candidates.length);
+  return candidates
     .filter(
       (receiver) =>
         Math.hypot(

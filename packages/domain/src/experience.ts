@@ -75,6 +75,8 @@ export interface Awareness {
     | 'directed_action'
     | 'observed_event';
   content?: string;
+  /** Observer-private sighting record kind (EPR03): arrival, outward change or departure. */
+  change?: 'onset' | 'detail' | 'end';
 }
 export interface ExperienceSummary {
   id: string;
@@ -163,6 +165,13 @@ function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry
         : new Set(['text', 'importance']);
   const before = previous.value as unknown as Record<string, unknown>;
   const after = next.value as unknown as Record<string, unknown>;
+  // Importance feeds wake and interruption priority; an edit cannot exceed the record scale.
+  const importance = after['importance'];
+  if (
+    importance !== undefined &&
+    (typeof importance !== 'number' || !(importance >= 0 && importance <= 10))
+  )
+    return false;
   return [...new Set([...Object.keys(before), ...Object.keys(after)])].every(
     (key) => editable.has(key) || canonicalJson(before[key]) === canonicalJson(after[key]),
   );
@@ -669,6 +678,72 @@ export function experiences(
         )
         .slice(0, EXPERIENCE_LIMITS.recallRaw);
   return [...personal.filter((m) => m.kind === 'commitment'), ...eligible, ...summaries];
+}
+/** Trigger selection reads only records newer than a character's considered-evidence
+ * watermark. Same visibility rules as `experiences` (forgotten sources, corrected summaries,
+ * awareness superseding its episode copy) without materializing or sorting retained history.
+ * At most `limit` records: protected-importance records, then caller-preferred records, then
+ * newest. `maxSequence` covers every visible resident record, so only records the caller
+ * would not act on can be passed beyond `limit`.
+ * docs/maintainers/events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake */
+export function unseenExperiences(
+  world: WorldState,
+  actorId: string,
+  afterSequence: number,
+  limit = 256,
+  /** Records the caller would act on (for example trigger evidence); kept before truncation. */
+  prefer: (record: MemoryRecord) => boolean = () => false,
+): { records: MemoryRecord[]; maxSequence: number } {
+  if (!Object.hasOwn(world.entities, actorId) || !world.entities[actorId]?.actor)
+    return { records: [], maxSequence: afterSequence };
+  const state = world.experience;
+  const forgotten = new Set(state?.forgotten[actorId] ?? []);
+  const aware = state?.awareness[actorId] ?? [];
+  let maxSequence = afterSequence;
+  const records: MemoryRecord[] = [];
+  for (const entry of aware) {
+    if (forgotten.has(entry.eventId)) continue;
+    maxSequence = Math.max(maxSequence, entry.sequence);
+    if (entry.sequence > afterSequence) records.push(awarenessMemory(entry));
+  }
+  let awareEvents: Set<string> | undefined;
+  for (const memory of world.memories[actorId] ?? []) {
+    if (
+      forgotten.has(memory.id) ||
+      forgotten.has(memory.eventId ?? '') ||
+      !(memory.kind === 'commitment' || (memory.kind === 'episode' && memory.source !== 'inferred'))
+    )
+      continue;
+    if (memory.kind === 'episode' && memory.eventId) {
+      awareEvents ??= new Set(aware.map((entry) => entry.eventId));
+      if (awareEvents.has(memory.eventId)) continue;
+    }
+    maxSequence = Math.max(maxSequence, memory.sequence ?? 0);
+    if ((memory.sequence ?? 0) > afterSequence) records.push(memory);
+  }
+  for (const s of state?.summaries[actorId] ?? []) {
+    if (s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]))
+      continue;
+    maxSequence = Math.max(maxSequence, s.sequence ?? 0);
+    if ((s.sequence ?? 0) > afterSequence)
+      records.push({
+        id: s.id,
+        actorId,
+        at: s.to,
+        kind: 'reflection',
+        source: 'inferred',
+        summary: `Summary of remembered experience: ${s.text}`,
+        entityIds: s.entityIds,
+        importance: s.importance,
+        sequence: s.sequence,
+      });
+  }
+  // Truncation keeps important and caller-preferred records first, so a cursor that passes a
+  // long routine backlog never skips unread evidence its caller would have acted on.
+  const rank = (record: MemoryRecord) =>
+    record.importance >= EXPERIENCE_LIMITS.protectedImportance ? 2 : prefer(record) ? 1 : 0;
+  records.sort((a, b) => rank(b) - rank(a) || (b.sequence ?? 0) - (a.sequence ?? 0));
+  return { records: records.slice(0, limit), maxSequence };
 }
 export interface MemoryGroup {
   sourceIds: string[];

@@ -73,10 +73,16 @@ export function migrateActors(world: WorldState): void {
   world.schemaVersion = 3;
   const result = outcome(true, 'actors-migrated', 'Living actors migrated to schema 3.');
   world.commandReceipts['migration:actors:3'] = { digest: 'living-actors:3', outcome: result };
-  emit(world, [], 'schema-migrated', result.message, undefined, undefined, {
-    significant: true,
-    schemaVersion: 3,
-  });
+  emit(
+    world,
+    [],
+    'schema-migrated',
+    result.message,
+    undefined,
+    undefined,
+    { significant: true, schemaVersion: 3 },
+    'system',
+  );
   world.sequence++;
 }
 /** All health/condition/lifecycle changes reconcile through this native mutation. */

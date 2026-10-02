@@ -597,6 +597,24 @@ The recovered [action slice/review requirements](action-regressions.md#action-ca
 
 Use [perception regression requirements](action-regressions.md#perception-performance) for private acquisition, ownership, sensing lifecycle and reaction intake. Main's elapsed integration and current history owners supersede old fixed-step/raw-array assumptions.
 
+The September 28 [perception-reaction intake](../projects/perception-reaction-intake.md) was verified with ad-hoc native and server scenarios, recorded in the [verification report](../verification/perception-reaction-intake.md). These automated cases were deferred under the root policy:
+
+- **Domain, no database:**
+  - Stationary observer arrival, departure and return inside and outside the 30-second linger; one record per re-record window; departures for dead or removed subjects.
+  - System-scope notices produce no awareness and no story candidate.
+  - Creator health 0 records death; spawn initializes condition episodes.
+  - `unseenExperiences` matches the previous `experiences()` filter for records above a cursor, including forgotten sources and corrections.
+  - `activeStimuli` order, limit and omitted count, plus review epochs on the simulation clock.
+  - The write-set `freezeWorld` leaves no reachable unfrozen object.
+  - Encounter capture-cache and read-only-view equivalence against the full snapshot.
+- **Server, disposable PostgreSQL, zero budget:**
+  - `ActorWork` urgent/aged ordering and captured-cause acknowledgement.
+  - A failed admission is not retried and its cursor is not consumed.
+  - A directed turn owns its speech event.
+  - Sleep deferral keeps evidence.
+  - Change-fed visibility recomputes only affected characters.
+  - A due stimulus review becomes a fresh opportunity under a test policy.
+
 ## Rebased action/perception regression TODOs
 
 [RPR01–RPR08](action-regressions.md#rebased-actionperception-regression-todos) preserve the recovered IDs and unmet checks.

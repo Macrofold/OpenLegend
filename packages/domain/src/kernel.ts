@@ -20,7 +20,15 @@ import { isRecordedActivityCommand, recordActivityEffect } from './action-experi
 import { startLearnedActivity, startRequestedActivity } from './activity-execution.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
-import { exposureChanges, snapshotEncounters, type EncounterBaseline } from './encounter-cache.js';
+import {
+  captureExposure,
+  exposureChanges,
+  perceptionEpisodeId,
+  recentSightings,
+  snapshotEncounters,
+  type EncounterBaseline,
+  type ExposureCapture,
+} from './encounter-cache.js';
 import { motionTravelBounds, nativeMotionInterval } from './motion-boundaries.js';
 import { withStableAudience } from './event-audience.js';
 import { stateChangeRevision } from './dependencies.js';
@@ -91,7 +99,6 @@ import { strikeDefinition } from './strikes.js';
 import { inspectPossessions } from './inventory-inspection.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
-import { visibleFeature } from './perception-frame.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
 import { updateContactEpisodes } from './contact-acquisition.js';
 import { confirmActionRevision } from './agency.js';
@@ -142,6 +149,7 @@ import {
   commitBodyEffects,
 } from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import { experiences } from './experience.js';
 import {
   reconcileStatusEffects,
@@ -2837,24 +2845,11 @@ function* updateEncounters(
       observer.actor.contacts = {};
   }
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
-  // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
+  // Unchanged roots are immutable records and changed roots live drafts: this phase writes only
+  // each observer's own contacts, after reading them. Event mutations use the authoritative draft.
   const entities = worldRootEntities(world, true)
-    .filter(activelyParticipates)
-    .map((entity) => {
-      const position = worldPosition(entity),
-        profile = bodyProfile(entity);
-      return {
-        entity,
-        id: entity.id,
-        position: isDraft(position) ? current(position) : position,
-        height: profile.height,
-        radius: profile.radius,
-        alive: !!entity.actor?.alive,
-        memory: hasMemory(entity),
-        object: !entity.actor && !entity.animal,
-        ...visibleFeature(entity),
-      };
-    });
+    .map(captureExposure)
+    .filter((entity): entity is ExposureCapture => !!entity);
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
   const maximumBodyHeight = entities.reduce(
@@ -2900,9 +2895,12 @@ function* updateEncounters(
     if (
       !changedExposure(actor, Math.max(radius + 2, touch ? touchRadius : 0), signature) &&
       !movingContacts
-    )
+    ) {
+      countDomainWork('observersSkipped');
       continue;
-    // Captured entities are read-only phase snapshots; contact writes belong to the live draft.
+    }
+    countDomainWork('observersExamined');
+    // Captured entities are read-only phase views; contact writes belong to the live draft.
     if (touch || contacts.length)
       yield* updateContactEpisodes(
         world,
@@ -2939,8 +2937,37 @@ function* updateEncounters(
           objectIds.every((id, i) => id === previousObjects[i])));
     if (samePeople) seen = previous;
     if (sameObjects) objectIds = previousObjects!;
-    // Persistent exposure episodes do not imply identity recognition across a disappearance.
-    // docs/knowledge.md#subject-binding
+    // Arrivals, departures and brief returns (EPR03) read this observer's latest private
+    // sighting records once, and only when its visible people changed.
+    const sightings = samePeople
+      ? undefined
+      : recentSightings(world, actor.id, world.simTime - SIGHTING_POLICY.recordWindowSeconds);
+    if (!samePeople) {
+      const stillSeen = new Set(seen);
+      for (const id of previous) {
+        if (stillSeen.has(id)) continue;
+        countDomainWork('exposureExits');
+        const source = world.entities[id];
+        // Death and removal have their own occurrences; one departure per record window.
+        if (
+          source?.actor?.alive &&
+          (hasMemory(source) || SIGHTING_POLICY.retainRoutineOnset) &&
+          sightings!.get(id)?.present !== false
+        )
+          encounter(actor.entity, id, SIGHTING_POLICY.departure, undefined, true);
+        yield;
+      }
+    }
+    // Persistent exposure episodes do not imply identity recognition across a disappearance;
+    // a return within the linger window is the same episode. docs/knowledge.md#subject-binding
+    const lingering = (id: string) => {
+      const record = sightings?.get(id);
+      return record &&
+        !record.present &&
+        world.simTime - record.at <= SIGHTING_POLICY.episodeLingerSeconds
+        ? record.episode
+        : undefined;
+    };
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
     const certified = Object.isFrozen(priorEpisodes)
       ? episodeMembership.get(priorEpisodes)
@@ -2954,7 +2981,7 @@ function* updateEncounters(
         (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
           exposed.map((id) => [
             id,
-            priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`,
+            priorEpisodes[id] ?? lingering(id) ?? perceptionEpisodeId(world, id),
           ]),
         );
       else if (Object.isFrozen(priorEpisodes))
@@ -2969,20 +2996,10 @@ function* updateEncounters(
             (hasMemory(world.entities[id]) || SIGHTING_POLICY.retainRoutineOnset),
         );
     if (newlySeen.length) {
-      // Encounter emission adds awareness, not memories. Read the current immutable
-      // memory snapshot once instead of rescanning/proxying it for every new contact.
-      const entries = world.memories[actor.id] ?? [];
-      const records = isDraft(entries) ? current(entries) : entries;
-      const recent = new Set<string>();
-      for (const memory of records)
-        if (
-          memory.kind === 'episode' &&
-          (memory.summary.startsWith('I saw ') || memory.eventType === 'encounter') &&
-          world.simTime - memory.at < 3600
-        )
-          for (const id of memory.entityIds) recent.add(id);
       for (const id of newlySeen) {
-        if (!recent.has(id))
+        countDomainWork('exposureEntries');
+        // Sightings are awareness, not memories: one record per subject per window.
+        if (!sightings!.has(id))
           // Seeing someone is evidence, not an obligation to reason. Ordinary animals
           // remain visible and interest-matchable without a stored entry on each return.
           // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
@@ -2997,8 +3014,10 @@ function* updateEncounters(
     if (changedFeatures.size)
       for (const id of seen) {
         const detail = changedFeatures.get(id);
-        if (detail && (samePeople || previouslySeen!.has(id)))
+        if (detail && (samePeople || previouslySeen!.has(id))) {
+          countDomainWork('exposureDetails');
           encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
+        }
       }
     if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
@@ -3018,8 +3037,10 @@ function* updateEncounters(
       const priorObjects = sameObjects ? undefined : new Set(previousObjects);
       for (const id of objectIds) {
         const detail = changedFeatures.get(id);
-        if (detail && (sameObjects || priorObjects!.has(id)))
+        if (detail && (sameObjects || priorObjects!.has(id))) {
+          countDomainWork('exposureDetails');
           encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
+        }
       }
     }
     encounter.flush();
