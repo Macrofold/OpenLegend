@@ -1,0 +1,27 @@
+name: Documentation review source snapshot
+on:
+  push:
+    branches: [docs/full-documentation-review-2026-10-01]
+    paths: [.github/workflows/full-documentation-review-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  tracked-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package only tracked source for the requested review
+        run: |
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/openlegend-review-source.tar.gz"
+          git rev-parse HEAD > "$RUNNER_TEMP/openlegend-review-revision.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlegend-documentation-review-source
+          path: |
+            ${{ runner.temp }}/openlegend-review-source.tar.gz
+            ${{ runner.temp }}/openlegend-review-revision.txt
+          retention-days: 1
+          if-no-files-found: error
