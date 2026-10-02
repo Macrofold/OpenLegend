@@ -4,20 +4,20 @@
 
 ## Choose the semantic control first
 
-| Player intent | Preferred pattern | Avoid |
-| --- | --- | --- |
-| Perform a command | Button with a verb | Link styling for a mutation; an interactive row wrapping nested buttons |
-| Navigate to a place/view | Link or established navigation control | A button that silently changes an unrelated object |
-| Choose one of a few visible alternatives | Radio group or segmented choice | Hiding important differences solely for compactness |
-| Choose from a catalogue | Select, editable combobox or explicitly opened searchable picker according to the task below | Treating every searchable selection as the same widget |
-| Find records without selecting a form value | Search field plus results region | Treating highlighted search text as a committed object |
-| Choose independent options | Checkboxes or a checkable collection | Single-select semantics or tags with no selection state |
-| Apply an immediate persistent on/off preference | Switch with current state | Secretly deferring a switch until Save |
-| Edit an on/off value in a staged form | Checkbox within the form's save model | Mixing immediate and staged updates without explanation |
-| Set an exact quantity | Number field with units and validation; optional step controls | Slider alone for precise inventory quantities |
-| Explore continuous visual preference | Slider plus understandable value/reset | Implying simulation changes from visual settings |
-| Reveal optional detail | Disclosure/accordion | Hiding required fields or comparisons |
-| Move among peer views | Tabs with retained context | Tabs for sequential wizard steps or unrelated global navigation |
+| Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Perform a command                               | Button with a verb                                                                           | Link styling for a mutation; an interactive row wrapping nested buttons |
+| Navigate to a place/view                        | Link or established navigation control                                                       | A button that silently changes an unrelated object                      |
+| Choose one of a few visible alternatives        | Radio group or segmented choice                                                              | Hiding important differences solely for compactness                     |
+| Choose from a catalogue                         | Select, editable combobox or explicitly opened searchable picker according to the task below | Treating every searchable selection as the same widget                  |
+| Find records without selecting a form value     | Search field plus results region                                                             | Treating highlighted search text as a committed object                  |
+| Choose independent options                      | Checkboxes or a checkable collection                                                         | Single-select semantics or tags with no selection state                 |
+| Apply an immediate persistent on/off preference | Switch with current state                                                                    | Secretly deferring a switch until Save                                  |
+| Edit an on/off value in a staged form           | Checkbox within the form's save model                                                        | Mixing immediate and staged updates without explanation                 |
+| Set an exact quantity                           | Number field with units and validation; optional step controls                               | Slider alone for precise inventory quantities                           |
+| Explore continuous visual preference            | Slider plus understandable value/reset                                                       | Implying simulation changes from visual settings                        |
+| Reveal optional detail                          | Disclosure/accordion                                                                         | Hiding required fields or comparisons                                   |
+| Move among peer views                           | Tabs with retained context                                                                   | Tabs for sequential wizard steps or unrelated global navigation         |
 
 These are defaults chosen for clarity, not a ban on another accessible pattern with an explicit save/interaction contract. Prefer existing native or React Aria primitives; selecting a pattern does not mean installing another library. [F07](research.md#f07) [F08](research.md#f08)
 
@@ -25,9 +25,9 @@ These are defaults chosen for clarity, not a ban on another accessible pattern w
 
 The reported nested-typeahead failure is a regression case, not a reason to prohibit every search field in an opened picker. Choose between these two legitimate workflows:
 
-| Pattern | Use when | Structure and meaning |
-| --- | --- | --- |
-| Editable combobox | The field itself is where the player types and chooses a value | Label; one field group with input and sibling utilities; associated options popup. Text, active option and selected key remain distinct. |
+| Pattern                         | Use when                                                                 | Structure and meaning                                                                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editable combobox               | The field itself is where the player types and chooses a value           | Label; one field group with input and sibling utilities; associated options popup. Text, active option and selected key remain distinct.                                                      |
 | Button-opened searchable picker | Choosing is a separate task, especially a richer or multi-selection task | Named button displaying the current choice opens a labeled panel/dialog with its own search field and collection. The search field is inside that surface, **not inside the trigger button**. |
 
 For the combobox, use one exterior field treatment rather than a complete bordered search field nested inside a second closed-select treatment. For the picker, separate trigger and search appearances are legitimate because they have different jobs. Its modality, initial focus, selection, confirmation and cancellation must be explicit. It may adapt to a sheet/dialog on a small viewport without losing the choice under review.
@@ -88,14 +88,14 @@ Use plain sections when most content is needed or simultaneous comparison matter
 
 ## Which overlay?
 
-| Pattern | Appropriate use | Focus and dismissal |
-| --- | --- | --- |
-| Tooltip | Short supplementary, noninteractive label/explanation | Hover and focus where supported; no essential-only instruction; current plain-text styling |
-| Popover | Small contextual choice or filter | Defined keyboard route, collision handling and return to anchor |
-| Context menu | Commands for a particular object | Alternative discoverable route; no form inside a menu item |
-| Panel / drawer / narrow sheet | Continued inspection, inventory, chat or authoring | May be modal or non-modal; declare actual behavior rather than infer it from appearance |
-| Modal dialog | Bounded task requiring exclusive attention or consequential confirmation | Background inert, managed focus, clear exit, focus restoration |
-| Dedicated workspace | Larger comparison or authoring task | Clear return to the prior world and selection |
+| Pattern                       | Appropriate use                                                          | Focus and dismissal                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Tooltip                       | Short supplementary, noninteractive label/explanation                    | Hover and focus where supported; no essential-only instruction; current plain-text styling |
+| Popover                       | Small contextual choice or filter                                        | Defined keyboard route, collision handling and return to anchor                            |
+| Context menu                  | Commands for a particular object                                         | Alternative discoverable route; no form inside a menu item                                 |
+| Panel / drawer / narrow sheet | Continued inspection, inventory, chat or authoring                       | May be modal or non-modal; declare actual behavior rather than infer it from appearance    |
+| Modal dialog                  | Bounded task requiring exclusive attention or consequential confirmation | Background inert, managed focus, clear exit, focus restoration                             |
+| Dedicated workspace           | Larger comparison or authoring task                                      | Clear return to the prior world and selection                                              |
 
 A tooltip cannot contain interactive links or controls. Use an explicitly opened popover/detail view for that content. Keep supplementary hover content dismissible and usable when the pointer moves onto it as required by the pattern; never use a tooltip to hide a required decision. [S02](research.md#s02) [S11](research.md#s11)
 

@@ -6,15 +6,15 @@
 
 Research conducted September 30–October 1, 2026 inspected UI structure, relevant design owners and selected implementation bodies at runtime baseline `0382be76648879cf8a8397ad6c3534b4431916f5`, then evaluated the handbook against authoritative sources and pinned company code. Handbook revision `e8d6c8950cadd715cfed97df4a0e379ff1593d02` identifies the version critiqued, not a different runtime baseline. No game launch, computed-style inspection, assistive-technology run or user study was performed. This coverage map routes work; it does not certify components.
 
-| Evidence class | Finding | Implication |
-| --- | --- | --- |
-| Implementation inspection | SelectField already uses React Aria ComboBox, Input, Popover and ListBox | Preserve the composite; the historical nested-widget report is not a confirmed current defect |
-| Implementation inspection | SubjectPicker has 150ms debounce, request guards, scoped labels and paged deduplication | Shared changes must preserve remote-search/privacy behavior |
-| Implementation inspection | Inventory has native search, quantities, nested containers, movement, split/merge and history | Browser clear chrome is only an unconfirmed cause; build on existing capabilities |
-| Existing accepted contract | UI brief/production guide specify spacing, panel adaptations, tooltips, camera and conversation feedback | Research supplements instead of silently replacing these |
-| User report, not reproduced | Nested/overlapping typeahead and inappropriate blue clear-X | Retain concrete reproduction scenarios |
-| Primary-source evidence | Primer searchable panels; Adobe prop/overlay code; company design/engineering notes | Support precise interaction contracts without certifying local runtime |
-| Future guidance | Advanced comparisons, bulk management, loadouts and trading | Not delivered game features |
+| Evidence class              | Finding                                                                                                  | Implication                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Implementation inspection   | SelectField already uses React Aria ComboBox, Input, Popover and ListBox                                 | Preserve the composite; the historical nested-widget report is not a confirmed current defect |
+| Implementation inspection   | SubjectPicker has 150ms debounce, request guards, scoped labels and paged deduplication                  | Shared changes must preserve remote-search/privacy behavior                                   |
+| Implementation inspection   | Inventory has native search, quantities, nested containers, movement, split/merge and history            | Browser clear chrome is only an unconfirmed cause; build on existing capabilities             |
+| Existing accepted contract  | UI brief/production guide specify spacing, panel adaptations, tooltips, camera and conversation feedback | Research supplements instead of silently replacing these                                      |
+| User report, not reproduced | Nested/overlapping typeahead and inappropriate blue clear-X                                              | Retain concrete reproduction scenarios                                                        |
+| Primary-source evidence     | Primer searchable panels; Adobe prop/overlay code; company design/engineering notes                      | Support precise interaction contracts without certifying local runtime                        |
+| Future guidance             | Advanced comparisons, bulk management, loadouts and trading                                              | Not delivered game features                                                                   |
 
 Implementation references: [shared controls](../../apps/client/src/design-system/components.tsx), [subject picker](../../apps/client/src/ui/subject-picker.tsx), [inventory](../../apps/client/src/ui/inventory.tsx). Contracts: [production guide](../../apps/client/src/design-system/README.md), [UI brief](../ui-design-brief.md). Sources, pins and retrieval limits: [research ledger](research.md).
 
@@ -22,25 +22,25 @@ Implementation references: [shared controls](../../apps/client/src/design-system
 
 Paths below are relative to `apps/client/src/`. Each listed surface has a destination, but listing does not claim full implementation-body inspection. Feature owners remain controlling; inspect actual changed callers.
 
-| Surface | Current entry points | Guidance and risks |
-| --- | --- | --- |
+| Surface                                        | Current entry points                                                                                                                                   | Guidance and risks                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
 | Shared controls, icons, fields, meters, panels | `design-system/components.tsx`, `design-system/components.css`, `design-system/layout.css`, `design-system/tokens/`, `design-system/progress-ring.tsx` | Foundations, Controls, React: coherent controls, tokens, focus, composition, overflow, time meaning |
-| HUD, docking, launchers | `main.tsx`, `ui/hud-layout.ts`, `ui/panels.tsx` | Foundations, World: collisions, order, narrow sheet, world visibility and continuity |
-| Inventory and creation | `ui/inventory.tsx`, `ui/item-creation.tsx` | Inventory, Controls: scope, quantities, containers, clear behavior, authority |
-| Actions/quick access | `ui/action-picker.tsx`, `ui/quick-actions.tsx`, `ui/action-attempts.tsx`, `action-browser.ts` | World, Controls: target meaning, search/invent boundary, reasons, duplicate execution |
-| Pullouts/subjects | `ui/pullout.tsx`, `ui/subject-picker.tsx` | Controls, System feedback: popup/picker semantics, remote states, paging, permitted labels |
-| Camera/picking/presentation | `ui/camera-controls.tsx`, `world-camera.ts`, `scene.ts`, `world-renderer.ts`, `world-presentation.ts` | World, React and PlayCanvas: gesture ownership, recovery, floors, occlusion, frame work |
-| Hover/observed entities | `ui/world-hover.tsx`, `entity-view.ts`, `ui/panels.tsx` | World, Inventory: bounded preview, complete inspection, hidden knowledge |
-| Character/overhead status | `character-status.tsx`, `status-indicators.ts`, `status-indicators.css`, `reaction-notices.ts` | Foundations, World: meaning, time, density, importance |
-| Speech/missed information | `speech-captions.tsx`, `ui/caption-gap-notice.tsx`, `ui-lifetime.ts` | World, System feedback: permission, collision, lifetime, history |
-| NPC chat/composer | `ui/conversation.tsx`, `ui/composer.tsx`, `ui/auto-textarea.tsx`, `ui/message-status.tsx`, `ui/use-chat-history.ts` | Chat: IME, drafts, reading anchor, failure, hide/end |
-| World Agent/inventions | `ui/world-agent.tsx`, `ui/inventions.tsx`, `ui/invention-settings.tsx` | Chat, Controls: candidate revision, actual status, correction, approval/installation |
-| Creator/person editors | `ui/editor.tsx`, `ui/god-tools.tsx`, `ui/god-character-actions.tsx` | Controls, React: modal/dirty draft, shared fields, authority, God mode |
-| Saves/recovery | `ui/game-saves.tsx` | System feedback: durable receipt, previous save, compatibility, replacement, uncertain outcomes |
-| Journal/activities/memory/events | `ui/history.tsx`, `ui/activity-history.tsx`, `ui/memory-history.tsx`, `ui/world-events.tsx`, `ui/event-time.tsx` | System feedback, Chat: scope, chronology, continuation, search, timestamps, reading position |
-| Promises | `ui/promises.tsx` | Foundations, System feedback: status/evidence, read-only/actionable distinction |
-| Intelligence/diagnostics | `ui/diagnostics.tsx` | Foundations, Controls, React: detail navigation, JSON isolation, focus, privacy |
-| Preferences/local persistence | `ui/world-visual-settings.tsx`, `ui/storage.ts` | System feedback, World: scope, reset, privacy, accessibility |
+| HUD, docking, launchers                        | `main.tsx`, `ui/hud-layout.ts`, `ui/panels.tsx`                                                                                                        | Foundations, World: collisions, order, narrow sheet, world visibility and continuity                |
+| Inventory and creation                         | `ui/inventory.tsx`, `ui/item-creation.tsx`                                                                                                             | Inventory, Controls: scope, quantities, containers, clear behavior, authority                       |
+| Actions/quick access                           | `ui/action-picker.tsx`, `ui/quick-actions.tsx`, `ui/action-attempts.tsx`, `action-browser.ts`                                                          | World, Controls: target meaning, search/invent boundary, reasons, duplicate execution               |
+| Pullouts/subjects                              | `ui/pullout.tsx`, `ui/subject-picker.tsx`                                                                                                              | Controls, System feedback: popup/picker semantics, remote states, paging, permitted labels          |
+| Camera/picking/presentation                    | `ui/camera-controls.tsx`, `world-camera.ts`, `scene.ts`, `world-renderer.ts`, `world-presentation.ts`                                                  | World, React and PlayCanvas: gesture ownership, recovery, floors, occlusion, frame work             |
+| Hover/observed entities                        | `ui/world-hover.tsx`, `entity-view.ts`, `ui/panels.tsx`                                                                                                | World, Inventory: bounded preview, complete inspection, hidden knowledge                            |
+| Character/overhead status                      | `character-status.tsx`, `status-indicators.ts`, `status-indicators.css`, `reaction-notices.ts`                                                         | Foundations, World: meaning, time, density, importance                                              |
+| Speech/missed information                      | `speech-captions.tsx`, `ui/caption-gap-notice.tsx`, `ui-lifetime.ts`                                                                                   | World, System feedback: permission, collision, lifetime, history                                    |
+| NPC chat/composer                              | `ui/conversation.tsx`, `ui/composer.tsx`, `ui/auto-textarea.tsx`, `ui/message-status.tsx`, `ui/use-chat-history.ts`                                    | Chat: IME, drafts, reading anchor, failure, hide/end                                                |
+| World Agent/inventions                         | `ui/world-agent.tsx`, `ui/inventions.tsx`, `ui/invention-settings.tsx`                                                                                 | Chat, Controls: candidate revision, actual status, correction, approval/installation                |
+| Creator/person editors                         | `ui/editor.tsx`, `ui/god-tools.tsx`, `ui/god-character-actions.tsx`                                                                                    | Controls, React: modal/dirty draft, shared fields, authority, God mode                              |
+| Saves/recovery                                 | `ui/game-saves.tsx`                                                                                                                                    | System feedback: durable receipt, previous save, compatibility, replacement, uncertain outcomes     |
+| Journal/activities/memory/events               | `ui/history.tsx`, `ui/activity-history.tsx`, `ui/memory-history.tsx`, `ui/world-events.tsx`, `ui/event-time.tsx`                                       | System feedback, Chat: scope, chronology, continuation, search, timestamps, reading position        |
+| Promises                                       | `ui/promises.tsx`                                                                                                                                      | Foundations, System feedback: status/evidence, read-only/actionable distinction                     |
+| Intelligence/diagnostics                       | `ui/diagnostics.tsx`                                                                                                                                   | Foundations, Controls, React: detail navigation, JSON isolation, focus, privacy                     |
+| Preferences/local persistence                  | `ui/world-visual-settings.tsx`, `ui/storage.ts`                                                                                                        | System feedback, World: scope, reset, privacy, accessibility                                        |
 
 ## Choose checks by changed behavior
 
@@ -58,27 +58,27 @@ Pass conditions: no accidental overlap, clipped essential text, inaccessible fin
 
 ## Interaction and failure scenarios
 
-| Area | Exercise | Required outcome |
-| --- | --- | --- |
-| Combobox | Type, arrows, Enter, Escape, Tab, pointer, empty query, clear, blur | One coherent field and declared query/selection/active-option contract |
-| Searchable picker | Button-open, search, single/multi choice, cancel/confirm, narrow adaptation | Input outside trigger; clear local-choice versus committed-effect boundary; retained selection |
-| Remote choice | Rapid typing, scope switch, paging, late results/failure | No stale selection/leaked labels; truthful results and continuation |
-| Clear-X | Relevant Blink/WebKit/Firefox, empty/nonempty, keyboard/pointer and forced colors | One quiet utility, retained focus, no submit, accessibility colors preserved |
-| Disabled action | Keyboard/touch discovery of a blocker; attempt activation through all supported inputs | Reachable reason; native-disabled or correctly guarded aria-disabled behavior |
-| Forms | Blank number, invalid quantity, server error, dirty tab switch/remote refresh | Draft retained; associated error; no coercion, silent overwrite or premature save |
-| Nested overlays | Dialog → child picker → Escape; focus moves into child; opener removed | Child handles first, parent draft retained, background inert, sensible focus return |
-| World | Dismiss over walkable ground; drag release; wheel over list; type movement keys; blur | No movement/zoom-through, duplicate action or stuck gesture |
-| Inventory | Duplicate-name objects, nested bags, exact split, changed capacity/revision | Correct identity, quantities, destination and stale recovery |
-| Adaptive panes | Resize selected-item detail, dirty transfer/editor, chat with keyboard visible | Same selected object/draft and useful Back/reading anchor; Send/Save reachable |
-| Large collection | Named fixture such as 1,000 objects with search/long rows | Measure real opening/input costs; complete permitted access and stable focus |
-| Future bulk/trade | Hidden selection, page/all distinction, row/batch ambiguity, partial failure, offer change, duplicate submit | Honest scope, renewed agreement, no invented success or duplicate effect |
-| Chat | IME, multiline paste, hide/reopen, conversation switch, new draft during pending send | Draft stays with its conversation; clear only the sent revision |
-| History | Scroll up during reply, prepend, reconnect/late messages | Stable chronology/anchor, no duplicate or forced scroll |
-| Invention | Selective correction, edit during validation, old revision, late art, cancel/scope change | One candidate, meaningful evidence/status, no stale overwrite or implicit activation |
-| Persistence | Back/Forward, reload, account/world switch with retained draft/search | Correct permitted navigation, no private text exposed in URL or another scope |
-| Save/load | Write failure, uncertain timeout, preservation failure, incompatible save | Truthful receipt/refusal; last-known-good save protected; no reset/migration |
-| Notices | Routine burst plus failure, typing while result arrives, reduced motion | Important information retrievable; no routine focus theft or forced fake pending |
-| Shared wrapper | Consumer/internal handlers, ref, label/error IDs, keyboard/pointer activation | No overwritten behavior, wrong node, lost association or duplicate mutation |
+| Area              | Exercise                                                                                                     | Required outcome                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Combobox          | Type, arrows, Enter, Escape, Tab, pointer, empty query, clear, blur                                          | One coherent field and declared query/selection/active-option contract                         |
+| Searchable picker | Button-open, search, single/multi choice, cancel/confirm, narrow adaptation                                  | Input outside trigger; clear local-choice versus committed-effect boundary; retained selection |
+| Remote choice     | Rapid typing, scope switch, paging, late results/failure                                                     | No stale selection/leaked labels; truthful results and continuation                            |
+| Clear-X           | Relevant Blink/WebKit/Firefox, empty/nonempty, keyboard/pointer and forced colors                            | One quiet utility, retained focus, no submit, accessibility colors preserved                   |
+| Disabled action   | Keyboard/touch discovery of a blocker; attempt activation through all supported inputs                       | Reachable reason; native-disabled or correctly guarded aria-disabled behavior                  |
+| Forms             | Blank number, invalid quantity, server error, dirty tab switch/remote refresh                                | Draft retained; associated error; no coercion, silent overwrite or premature save              |
+| Nested overlays   | Dialog → child picker → Escape; focus moves into child; opener removed                                       | Child handles first, parent draft retained, background inert, sensible focus return            |
+| World             | Dismiss over walkable ground; drag release; wheel over list; type movement keys; blur                        | No movement/zoom-through, duplicate action or stuck gesture                                    |
+| Inventory         | Duplicate-name objects, nested bags, exact split, changed capacity/revision                                  | Correct identity, quantities, destination and stale recovery                                   |
+| Adaptive panes    | Resize selected-item detail, dirty transfer/editor, chat with keyboard visible                               | Same selected object/draft and useful Back/reading anchor; Send/Save reachable                 |
+| Large collection  | Named fixture such as 1,000 objects with search/long rows                                                    | Measure real opening/input costs; complete permitted access and stable focus                   |
+| Future bulk/trade | Hidden selection, page/all distinction, row/batch ambiguity, partial failure, offer change, duplicate submit | Honest scope, renewed agreement, no invented success or duplicate effect                       |
+| Chat              | IME, multiline paste, hide/reopen, conversation switch, new draft during pending send                        | Draft stays with its conversation; clear only the sent revision                                |
+| History           | Scroll up during reply, prepend, reconnect/late messages                                                     | Stable chronology/anchor, no duplicate or forced scroll                                        |
+| Invention         | Selective correction, edit during validation, old revision, late art, cancel/scope change                    | One candidate, meaningful evidence/status, no stale overwrite or implicit activation           |
+| Persistence       | Back/Forward, reload, account/world switch with retained draft/search                                        | Correct permitted navigation, no private text exposed in URL or another scope                  |
+| Save/load         | Write failure, uncertain timeout, preservation failure, incompatible save                                    | Truthful receipt/refusal; last-known-good save protected; no reset/migration                   |
+| Notices           | Routine burst plus failure, typing while result arrives, reduced motion                                      | Important information retrievable; no routine focus theft or forced fake pending               |
+| Shared wrapper    | Consumer/internal handlers, ref, label/error IDs, keyboard/pointer activation                                | No overwritten behavior, wrong node, lost association or duplicate mutation                    |
 
 Large fixtures are not caps. [HV01](../limits/interface.md#hv01) retains earlier 1,001-stack observations; the handbook adds no measurements.
 

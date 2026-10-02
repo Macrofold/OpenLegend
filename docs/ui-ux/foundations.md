@@ -10,11 +10,11 @@ For each visible element, name its job: orientation, evidence, input, action, fe
 
 Present information in three layers:
 
-| Layer | What belongs | Open Legend examples |
-| --- | --- | --- |
+| Layer               | What belongs                                                                                   | Open Legend examples                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Immediately visible | Identity, current state, task-critical comparisons, main action, consequential cost or blocker | Item name and quantity; selected recipient; carrying limit; Save failed; action cannot reach target |
-| Nearby detail | Explanation and alternatives that a player intentionally explores | Item history; modifier breakdown; why a recipe requires a tool; secondary character attributes |
-| Specialist detail | Rare configuration and diagnostic evidence | Trace JSON; generation settings; dependency graph; raw authoring fields |
+| Nearby detail       | Explanation and alternatives that a player intentionally explores                              | Item history; modifier breakdown; why a recipe requires a tool; secondary character attributes      |
+| Specialist detail   | Rare configuration and diagnostic evidence                                                     | Trace JSON; generation settings; dependency graph; raw authoring fields                             |
 
 Frequency alone is insufficient. A rare but irreversible operation still needs conspicuous consequences. Required settings, invalid fields, purchase totals and permission changes must not disappear in Advanced. Unavailable information must say unknown/unobserved where that distinction matters, not display an empty meter or a zero.
 
@@ -42,14 +42,14 @@ Measure with realistic long labels and validation messages. When the inequality 
 
 Use the existing 4px token rhythm. Shared spacing communicates relationships; an arbitrary margin on each child does not. The following are **starting values**, not changes to current tokens or externally validated optima:
 
-| Relationship | Starting value in CSS px | Adjustment rule |
-| --- | --- | --- |
-| Label to field or tightly coupled text | 4–8 | Keep the association unambiguous; allow long hints to wrap |
-| Icon to its label; compact row siblings | 8 | Enlarge when targets would collide; do not include icon artwork padding twice |
-| Adjacent form fields or ordinary row groups | 12–16 | Errors grow the group rather than overlap the next field |
-| Separate semantic sections | 24–32 | Often about twice the within-group gap; heading hierarchy matters more than exact ratio |
-| Comfortable panel inset | 16–24 | Compact HUD may use less under its owner; include focus and scrollbar space |
-| Body prose measure | 45–75 characters as a starting range | Narrow contextual text can be shorter; do not force a chat panel to widen beyond the world budget |
+| Relationship                                | Starting value in CSS px             | Adjustment rule                                                                                   |
+| ------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Label to field or tightly coupled text      | 4–8                                  | Keep the association unambiguous; allow long hints to wrap                                        |
+| Icon to its label; compact row siblings     | 8                                    | Enlarge when targets would collide; do not include icon artwork padding twice                     |
+| Adjacent form fields or ordinary row groups | 12–16                                | Errors grow the group rather than overlap the next field                                          |
+| Separate semantic sections                  | 24–32                                | Often about twice the within-group gap; heading hierarchy matters more than exact ratio           |
+| Comfortable panel inset                     | 16–24                                | Compact HUD may use less under its owner; include focus and scrollbar space                       |
+| Body prose measure                          | 45–75 characters as a starting range | Narrow contextual text can be shorter; do not force a chat panel to widen beyond the world budget |
 
 These are Open Legend proposals [UXL01–02](../limits/ui-ux.md), inspired by tokenized layout practice rather than copied from a vendor's exact scale. Microsoft Fluent and Atlassian both provide systematic spacing/layout guidance; our existing scale remains the local source. [F03](research.md#f03) [F04](research.md#f04)
 
