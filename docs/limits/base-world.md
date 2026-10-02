@@ -117,3 +117,11 @@ Each chosen action performs one strike. Repetition uses the existing bounded pla
 - **Visibility:** the offer is visible to people who see the offerer; refusals stay generic so neither side learns private circumstances.
 
 [Social rules](../worlds/base/social.md#offering-and-accepting-possessions) · [tracker BW20](../maintainers/base-world.md#bw20--consent-aware-handover).
+
+## CR01 — Proposed finite camp activities
+
+**Proposed · Restrictiveness: Very safe.** [PW10](../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) authors finite gathering/packing/fuelling and an explicitly chosen single fire watch. [Camp routines](../worlds/base/camp-routines.md#authored-choices-and-bounds) owns the values: chosen cache quantity 1–16 units, personal available minimum 0–16, one fuel unit in the finite method; watch duration 60–86,400 game seconds or the next named clock occurrence, fuel budget 1–16 and at most 16 fuel attempts. No-effect attempts count toward work, not consumed fuel. The first watch requires an observable burning fire and own stock or direct contents of one exact reachable cache; it cannot relight, follow a moved cache or silently change supply.
+
+A deadline stops further child effects; budget exhaustion stops when another attempt is needed and is reported as incomplete care. Already committed work remains. A personal minimum constrains this routine's writes, not other independently chosen actions or standing claims. Existing activity/host work ceilings still apply; no indefinite loop or per-loop model call. Finite learning retains demonstrated quantities, not guessed conditional policies.
+
+**Reason / tradeoff:** Make chosen camp work useful and bounded without inventing standing NPC duties or learning unobserved branches. These provisional values are not performance optima and can exclude a valid longer/larger project; expand only with a concrete consumer and qualified execution. Current 48-hour starter fuel is unchanged, so refuelling acceptance requires a disclosed low-fuel fixture or naturally aged fire. No new gameplay or live-model result is claimed. [Mechanism/acceptance](../projects/next-playable-week/camp-activities.md).

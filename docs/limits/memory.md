@@ -540,6 +540,8 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 ## MH03
 
+**Proposed change:** [PW09](../maintainers/next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) specifies parser-independent Unicode lexical normalization and actor-scoped cache invalidation. Current behavior below remains until implementation/qualification; this proposal neither caps actor history nor changes required-evidence or top-300 vector admission. Its [brief](../projects/next-playable-week/memory-retrieval.md) also assigns current growth measurements; historical timings are not acceptance for that work.
+
 **Changed · Restrictiveness: Liberal.**
 
 **Indexed lexical recall has no total match-work cap.** selectContext(query != null) uses a derived text projection with PostgreSQL stored tsvector/GIN. Unique query tokens match word prefixes with OR semantics; native text rank replaces historical arbitrary substring-count scoring. Protected required records precede matches, then importance/recent fallback fills the optional limit (maximum 300). The null-query branch remains recent-history selection. Exact vector recall is separate and unchanged.

@@ -5,6 +5,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 ## Mechanics
 
 - [Items, ground piles and possession](items.md)
+- [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
+- [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
 - [Combat](combat.md)

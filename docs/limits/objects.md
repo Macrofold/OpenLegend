@@ -203,3 +203,11 @@ Inventory/history cursor: **3,000 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../packages/protocol/src/index.ts).
+
+## CC01 — Proposed invented camp containers
+
+**Proposed · Restrictiveness: Very safe.** [PW03](../maintainers/next-playable-week.md#pw03--craftable-containers-and-camp-supplies) supports one new generated family: a portable woven container assembled from two native material roles. The [authored world rules](../worlds/base/camp-containers.md#proposed-first-family-rules) own its provisional quantity, capacity, empty-load and work formulas. Those give 8–32 packing-load units of capacity; each craft creates one individual container, and current global/definition nesting limits still apply. A malformed or unsupported design is refused before installation; overflow on a later transfer remains an ordinary capacity refusal.
+
+**Reason / tradeoff:** A finite, useful nonweapon consumer exercises invention without pretending to implement buildings, liquids, preservation or arbitrary material simulation. The size envelope is provisional world tuning, not capacity evidence. Different size/name/material choices must pass the same validator; no privileged exact basket recipe is installed to force success. Broader family composition remains INV-owned.
+
+**Unchanged no-limit dimension:** actors currently have no finite total carrying-load allowance; this proposal does not add one. It does not reduce the number of stored items to make inventory faster. Per-container capacity, indexed/paged reads, access/claims, native-work admission and OB01/OB02 remain separate controls. Retained item growth still needs its existing storage/performance qualification; carrying a bag is organization, not an encumbrance advantage. Baseline: `6664144a`, source inspection only.

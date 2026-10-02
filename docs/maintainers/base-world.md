@@ -1,5 +1,7 @@
 # Open Legend base-world delivery
 
+Proposed next slice: [PW10 chosen camp activities](next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) adds demonstrated finite-method reuse and a separately chosen one-session fire watch, with [world rules](../worlds/base/camp-routines.md). Also proposed: [PW03 craftable containers](next-playable-week.md#pw03--craftable-containers-and-camp-supplies) applies BW07/PO custody through a generated nonweapon recipe family. [World content](../worlds/base/camp-containers.md) owns its proposed material/capacity tradeoff; [feature](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md) describe the coordinated five-engineer week. No container recipe, automatic packing, preservation or carrying-weight change is delivered by this proposal.
+
 Canonical behavior: [base world](../worlds/base/README.md), [items and ground piles](../worlds/base/items.md). Engine/action owners retain their validation, persistence and admission responsibilities.
 
 - [x] **BW01 — Content boundary:** create canonical world documentation/code directories, relocate authored defaults and sleep specification, repair references, and require the boundary in AGENTS.md. Retain stable composition exports for existing consumers.

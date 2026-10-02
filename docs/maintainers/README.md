@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Proposed next engineering week
+
+[Next playable week](next-playable-week.md) assigns five parallel engineers **400 hours** across reliability/accounting fixes, world-owned invention families, full survival extraction, measured simulation/memory improvements, craftable containers and chosen camp activities, inventory/invention workspaces and incremental owner replies. The eleven PW labels are ten delivery packages and one shared integration gate, not eleven engineers. Start with the [feature specification](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md). This is proposed scope, not implemented behavior; existing subsystem trackers retain their broader requirements and release gates.
+
 ## Presentation and navigation delivery
 
 [UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. Existing subsystem trackers retain runtime implementation ownership; the handbook does not authorize a redesign.
