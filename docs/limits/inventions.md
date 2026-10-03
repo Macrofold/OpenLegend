@@ -268,7 +268,7 @@ The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entr
 
 ## World Agent context proposal
 
-**Implemented finite foundation. The original no-question sample met the complete-request targets; the question-enabled control exceeds the initial-size diagnostic target. Broader complexity/variance remains unqualified.** [Design](../projects/world-agent-context-tech-design.md) and [WW17–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own context work. Existing runtime/session/recipe guards remain controlling. These entries are defaults and qualification targets, not gameplay laws. No extra limits-audit task is needed before the proposed path exists; WW18/WW23 own measurement and revision.
+**Implemented finite foundation. Both the original no-question sample and the final compact question-enabled control met the complete-request targets; earlier misses remain recorded as historical evidence. Broader complexity/variance remains unqualified.** [Design](../projects/completed/world-agent-context-tech-design.md) and [WW17–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own context work. Existing runtime/session/recipe guards remain controlling. These entries are defaults and qualification targets, not gameplay laws. WW18/WW23 recorded the finite measurement and revision; broader limits work belongs to the existing release and complexity owners rather than another duplicate implementation task.
 
 ### CTX01 — Context size and measured efficiency
 
@@ -310,7 +310,7 @@ Retained requirements, check plans, findings and readiness inherit existing auth
 
 ## Structured invention question proposal
 
-**Implemented safeguards; bounded native, browser and live acceptance complete.** [Feature spec](../projects/invention-questions-feature-spec.md), [technical design](../projects/invention-questions-tech-design.md) and [WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions) own design/delivery. [Native and live evidence](../verification/invention-questions.md) qualifies bounded recipe and policy journeys, not general model quality or large-world capacity. These application safeguards do not restrict what an authored world can express. Existing authorization, context, record/session and spending limits remain controlling; these entries do not create fresh allowances.
+**Implemented safeguards; bounded native, browser and live acceptance complete.** [Feature spec](../projects/completed/invention-questions-feature-spec.md), [technical design](../projects/completed/invention-questions-tech-design.md) and [WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions) own design/delivery. [Native and live evidence](../verification/invention-questions.md) qualifies bounded recipe and policy journeys, not general model quality or large-world capacity. These application safeguards do not restrict what an authored world can express. Existing authorization, context, record/session and spending limits remain controlling; these entries do not create fresh allowances.
 
 ### QST01 — Question and answer envelopes
 

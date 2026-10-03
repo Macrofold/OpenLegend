@@ -11,7 +11,7 @@ Characters record their own attempted actions, notice their actual results, and 
 
 ## What a character sees
 
-The engine builds permitted structured facts, then renders compact English. Names, targets, tools, distances, observed health, costs, requirements, uncertainty and results appear where relevant. Internal IDs, schema tags, reference tables and result codes remain outside action descriptions. Exact request bindings still identify the selected objects internally.
+The engine builds permitted structured facts, then renders compact English. Names, targets, tools, distances, observed health, costs, requirements, uncertainty and results appear where relevant. The occurrence renderer keeps internal IDs, schema tags, reference tables and result codes out of its descriptions. Typed-choice prompts use readable option labels, but the generative action list and known-plan list still expose their selection handles; [AE03](maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) tracks that remaining English-first presentation gap. Exact server-owned request bindings remain necessary to identify the selected objects without guessing from names.
 
 The syntax explanation is: “Each action says what to do and with what. When brackets appear, they contain smaller actions in order; semicolons separate them. Results say what actually happened.” A leaf needs no brackets. Parent actions preserve the chosen purpose, including “Hunt once,” while children describe stages that actually ran. Completion of an attempt does not mean the animal died or the character obtained food.
 

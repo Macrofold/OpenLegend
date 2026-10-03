@@ -1,6 +1,10 @@
 # Action records and learned activities — technical design
 
-**Status: accepted initial scope implemented; [current behavior](../action-experience.md) and [verification](../verification/action-experience.md) record delivery and evidence.** Logical record names below describe the design; concrete exported types live in the implementation owners. [Project](action-experience.md) owns the baseline and scope; [feature specification](action-experience-feature-spec.md) owns behavior and AXE acceptance scenarios.
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-03   |
+
+**Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** Logical record names below describe the design; concrete exported types live in the implementation owners. [Project](action-experience.md) owns the baseline and scope; [feature specification](action-experience-feature-spec.md) owns behavior and AXE acceptance scenarios.
 
 ## Maintained records
 
@@ -208,7 +212,7 @@ Internal records still need IDs, schema versions, typed reference kinds, role bi
 
 Use one permitted descriptive name directly at each necessary mention. Do not make the model resolve `self`, `prey` or `tool` through another table. Distinguish same-named objects using actual known descriptions, such as `the deer by the oak` and `the deer by the river`, or a stable relative description valid for the observed snapshot. Do not invent visible traits, locations or number tags to avoid ambiguity. If permitted descriptions cannot distinguish targets, the action remains ambiguous and requires inspection/clarification rather than revealing an ID or silently choosing one.
 
-Selection binds back to the existing server-owned offered choice, not a lookup by display name or parsing the rendered sentence. Provider adapters must keep opaque action/object IDs out of model-readable action context; machine-side question/choice binding retains them. If a current adapter requires visible handle text, AE03 must adjust that boundary and verify exact selection without it before claiming this contract delivered. This documentation does not claim the current adapter already does so.
+Selection binds back to the existing server-owned offered choice, not a lookup by display name or parsing the rendered sentence. Provider adapters must keep opaque action/object IDs out of model-readable action context; machine-side question/choice binding retains them. The typed action gate now substitutes readable option labels while retaining question binding separately. The generative caller still prints `aN` action handles and known-plan `{id, description}` records in `readableDecisionContext`; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) now tracks this concrete remaining boundary and its exact-selection verification. Structured response addressing remains separately required; do not satisfy the prose contract by guessing object identity or weakening native admission.
 
 Translate meaningful evidence differences into English only when relevant: `Ada said the deer was hurt` for testimony, `The deer looked hurt` for an observation without an exact measure, or `I do not know whether the deer was hit` for uncertainty. Do not turn testimony into direct sight or strip an important qualification merely to save tokens. Labels such as “observed-exact” remain internal.
 

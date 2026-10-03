@@ -1,12 +1,16 @@
 # Invention questions: technical design
 
-**Status: approved implementation target; implementation in progress.** Implements the design scope of the [feature specification](invention-questions-feature-spec.md). The recommendation below preserves the current contract that human waiting is not active model execution.
+| Status    | Current progress                                                                                                                    | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The question, cancellation, answer and fresh-continuation paths are delivered and qualified; deployment-wide gates remain separate. | 2026-10-03   |
+
+The bounded implementation and acceptance in the [feature specification](invention-questions-feature-spec.md) are complete under [WW24–WW30](../../maintainers/world-agent-writes.md#structured-invention-questions). The [qualification record](../../verification/invention-questions.md#final-acceptance--september-29) retains actual native, browser and live-provider observations. Human waiting is not active model execution; general deployment and broader authoring gates remain with WW07/WW11.
 
 ## 1. Baseline and decision
 
 Research baseline: OpenLegend `eeabd8cb51d9070715bf02c2348c8ef55769f50c`, Macrofold `47db45e75d8b9ad23f1507a7939a20f626763665` ([PR 12](https://github.com/Macrofold/Macrofold/pull/12)). Refreshed OpenLegend main is `be68b1e0d75baac3c2c9f38948824aa4a98ed0d9`; its relevant runtime/question contracts do not change this proposal. The approved implementation section records subsequent integration and qualification. Recheck deployed Macrofold behavior before implementation/enablement; a PR is not a deployment guarantee.
 
-Before this implementation, [the Macrofold adapter](../../apps/server/src/macrofold.ts) rejected `waiting_for_input`; [the runner](../../apps/server/src/world-agent-runner.ts) expected a terminal reply; finishing or recovering a turn invalidates its execution handle. OpenCode questions were explicitly denied. Enabling one permission alone cannot implement the feature.
+Before this implementation, [the Macrofold adapter](../../../apps/server/src/macrofold.ts) rejected `waiting_for_input`; [the runner](../../../apps/server/src/world-agent-runner.ts) expected a terminal reply; finishing or recovering a turn invalidates its execution handle. OpenCode questions were explicitly denied. Enabling one permission alone cannot implement the feature.
 
 **V1: capture → stop → answer → fresh admitted continuation.** On a qualified native question event, persist its exact meaning and fence the originating authoring context, then cancel only that Run through the existing adapter. Preserve the question independently of execution status. Reconcile committed native operations and costs before continuing. Human waiting holds no application execution slot or live native Run once stopping is confirmed. Stopping/uncertain work remains bounded and counted until reconciliation; do not free capacity by pretending it has terminated.
 
@@ -57,7 +61,7 @@ World restore, session close, revocation and disclosure reduction invalidate act
 
 ## 5. Accept an answer and continue exactly once
 
-Use proposed `question-answer` and `question-continue` operations on the existing authenticated session route. The first supplies bundle ID/digest, stable operation ID, answers and an explicit `continueIfReady` intention; the second names the saved answer and its stable continuation operation. Route names may follow local conventions, but keep saved intent distinct from paid admission.
+The implemented `question-answer` and `question-continue` operations use the existing authenticated session route. The first supplies bundle ID/digest, stable operation ID, answers and an explicit `continueIfReady` intention; the second names the saved answer and its stable continuation operation. Both are under `/api/world-agent/session/`; saved intent remains distinct from paid admission.
 
 The server validates current principal/session scope, bundle actionability, answer shape and exact source digest. Under the same serialized owner, it records the immutable human answer before any external dispatch. Same ID/body returns the retained result; same ID/different body conflicts. Competing answers accept one, including submissions from different tabs. A browser saves request identity before sending and reconciles lost acknowledgement by that identity; it does not mint a new operation.
 
@@ -101,15 +105,15 @@ No deterministic domain transition is needed for asking/answering. World-specifi
 
 ## 8. Bounds, storage and extension seams
 
-[QST01–QST04](../limits/inventions.md#structured-invention-question-proposal) own proposed payload, paging, retained-growth, turn and support limits. Reuse the current PostgreSQL operational record owner, indexed active-session recovery and existing session authorization lifetime. No whole-world scans, model calls on UI polling, new background job platform or global question cache. Event reconciliation is bounded before hydration/normalization, not merely at rendered output.
+[QST01–QST04](../../limits/inventions.md#structured-invention-question-proposal) own current payload, paging, retained-growth, turn and support limits and the separately proposed expansions. Reuse the current PostgreSQL operational record owner, indexed active-session recovery and existing session authorization lifetime. No whole-world scans, model calls on UI polling, new background job platform or global question cache. Event reconciliation is bounded before hydration/normalization, not merely at rendered output.
 
-Storage changes validate the current format and reject incompatible development records explicitly under [the protected development policy](../../AGENTS.md#development-save-policy). There are no old-save readers, conversion fixtures or automatic deletion/reset. Preserve same-version transactional integrity and non-rewindable financial/operation records.
+Storage changes validate the current format and reject incompatible development records explicitly under [the protected development policy](../../../AGENTS.md#development-save-policy). There are no old-save readers, conversion fixtures or automatic deletion/reset. Preserve same-version transactional integrity and non-rewindable financial/operation records.
 
 OpenCode-specific question extraction lives in the existing execution adapter. Enable another harness only after its structured transport, defaults and lifecycle pass the same contract tests; no speculative universal provider schema. A genuinely suspended same-run input path can be added behind this semantic owner later without changing the UI's human-answer identity or approval separation. It must first establish resumable authority, typed mapping, answer idempotency and cost/recovery behavior. Question capture uses existing Macrofold events and cancellation. Qualification found a separate necessary explicit native Run option, `limits.stop_on_model_error`, to prevent OpenCode from automatically buying another generation after a provider failure. It defaults off for other callers; OpenLegend opts in. The gateway admits one outstanding model request, fences errors before delivering them, and preserves uncertain cost. This supersedes the earlier expectation that no transport-policy addition would be needed; the question payload/API itself remains unchanged.
 
 ## 9. Delivery, verification and unresolved gates
 
-[WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions) own staged dependencies and implementation exit criteria. Estimated implementation scope is roughly 500–900 logic lines across adapter, authoring records/service, runner/protocol/context and UI, excluding tests; reassess after contract qualification. Risk is material because privacy, concurrent acceptance and paid continuation cross multiple owners. The design itself changes no runtime logic.
+[WW24–WW30](../../maintainers/world-agent-writes.md#structured-invention-questions) own staged dependencies and implementation exit criteria. Estimated implementation scope is roughly 500–900 logic lines across adapter, authoring records/service, runner/protocol/context and UI, excluding tests; reassess after contract qualification. Risk is material because privacy, concurrent acceptance and paid continuation cross multiple owners. The design itself changes no runtime logic.
 
 Qualify native event defaults, cancellation after question capture, exact usage/final persistence, committed-tool races and internal retry controls before paid enablement. Existing WW07's uncertain retry/usage gap remains a dependency, not solved by this proposal. Use deterministic injected failures and existing recovery/approval coverage first; then disposable PostgreSQL, browser and actual Macrofold journeys under the shared spending policy and remaining explicit cap. Do not repeatedly run broad qualification or use fixtures as model-quality evidence.
 
@@ -132,9 +136,9 @@ Completion requires every initial feature requirement and the relevant context-f
 
 ## Maintained records
 
-- Implementation: [WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions), linked from INV-2.3/INV-21 and existing UI/recovery coverage.
-- Limits and constraints: [QST01–QST04](../limits/inventions.md#structured-invention-question-proposal).
-- Related behavior: [feature specification](invention-questions-feature-spec.md), [runtime](../world-agent-runtime.md), [context design](world-agent-context-tech-design.md), [save/load](../save-and-load.md) and [accounting](../invention-budgets.md).
+- Implementation: [WW24–WW30](../../maintainers/world-agent-writes.md#structured-invention-questions), linked from INV-2.3/INV-21 and existing UI/recovery coverage.
+- Limits and constraints: [QST01–QST04](../../limits/inventions.md#structured-invention-question-proposal).
+- Related behavior: [feature specification](invention-questions-feature-spec.md), [runtime](../../world-agent-runtime.md), [context design](world-agent-context-tech-design.md), [save/load](../../save-and-load.md) and [accounting](../../invention-budgets.md).
 
 ### Implementation reassessment — September 29, 2026
 
@@ -154,7 +158,7 @@ Completion requires actual browser acceptance plus a documented, measured resolu
 
 Browser acceptance found that a reloaded/non-controlling tab advertised continuation even though existing provider admission requires control. Check that same authority before accepting a turn and project a save-only question state with an explicit Control here instruction. This preserves existing authority; history and answer saving remain available. Also retain drafts by the already-authorized conversation/question identity rather than ephemeral connection ID.
 
-Acceptance outcome: the bounded browser, native and matched real-provider checks pass; [final evidence](../verification/invention-questions.md#final-acceptance--september-29) records fixes, retained financial exposure and reused coverage. Approximately 125 additional logic lines cover the continuation fixes, including historical-card projection and refreshing a retired card outside the current page. No foundational scope or world mechanics were added.
+Acceptance outcome: the bounded browser, native and matched real-provider checks pass; [final evidence](../../verification/invention-questions.md#final-acceptance--september-29) records fixes, retained financial exposure and reused coverage. Approximately 125 additional logic lines cover the continuation fixes, including historical-card projection and refreshing a retired card outside the current page. No foundational scope or world mechanics were added.
 
 Final base refresh found `origin/main` advanced to `0bf9ceb7f309700405a70e0d65d248e35150a17a` with the wellbeing ideation archive only. Merge it after committing acceptance fixes, preserve both changelog entries, and reuse runtime evidence because no runtime/contracts overlap. No branch transition.
 
