@@ -13,7 +13,7 @@ mechanic:
     subject: Entity receiving the status; it must have the required native attributes.
     source: Explicit entity that caused activation; automatic activation uses the subject.
     action_target: Explicit admission-time entity binding; not a dynamically selected nearby object.
-  requires: A living, conscious, grounded subject.
+  requires: A living, non-incapacitated, grounded subject.
   manual_activation: Energy must be below 100.
   automatic_activation:
     who: Non-player-controlled subjects satisfying the requirements.
@@ -28,7 +28,7 @@ mechanic:
   lifecycle:
     occupies_actor_action: true
     finishes: Energy reaches 100.
-    interrupt_reasons: [injury, hunger, recovery, new-action, voluntary, revived]
+    interrupt_reasons: [injury, recovery, new-action, voluntary, revived]
     automatic_reactivation_delay_seconds: 300
     explicit_sleep: Manual Sleep can still be requested during this automatic cooldown.
     unavailable_body: Death or incapacity clears the action/status through its lifecycle owner.

@@ -15,7 +15,7 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 | [Objects, inventory and equipment](projects/persistent-objects-feature-spec.md)                       | [Limits](limits/objects.md)       | [Tracker](maintainers/persistent-objects.md)             |
 | [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md) | [Tracker](maintainers/state-contributions.md)            |
 | [Native work and invalidation](projects/dependency-invalidation-feature-spec.md)                      | [Limits](limits/native-work.md)   | [Tracker](maintainers/dependency-invalidation.md)        |
-| [Feelings and social continuity](projects/appraisal-social-continuity-feature-spec.md)                | [Limits](limits/feelings.md)      | [Tracker](maintainers/agent-agency.md)                   |
+| [Feelings and social continuity](projects/completed/appraisal-social-continuity-feature-spec.md)      | [Limits](limits/feelings.md)      | [Tracker](maintainers/agent-agency.md)                   |
 | [Accounts, participation and transport](projects/multiplayer-authority-feature-spec.md)               | [Limits](limits/multiplayer.md)   | [Tracker](maintainers/multiplayer.md)                    |
 | [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)       | [Tracker](maintainers/spatial-world.md)                  |
 | [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)     | [Tracker](maintainers/narration-and-conversations.md)    |

@@ -1,6 +1,10 @@
 # Action records and learned activities — feature specification
 
-**Status: accepted initial scope implemented; qualification is recorded in [verification](../verification/action-experience.md).** [Project](action-experience.md) records baseline and authorization; [current behavior](../action-experience.md) owns the shipped contract. The cases below remain acceptance requirements, not promises of unsupported new physical families.
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-03   |
+
+**Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** [Project](action-experience.md) records baseline and authorization; [current behavior](../action-experience.md) owns the shipped contract. The cases below remain acceptance requirements, not promises of unsupported new physical families.
 
 ## Maintained records
 
@@ -128,4 +132,4 @@ Stages follow the [project sequence](action-experience.md#delivery-sequence). Th
 
 ## Decisions and tradeoffs
 
-Following the September 28 owner correction, compact English with optional nested brackets is the required presentation direction. Internal typed records provide exactness without making the model read those records. JSON is only a last resort for otherwise unrenderable permitted detail, and cannot expose internal metadata. Brevity must preserve clear targets, actual effects and important uncertainty. A composite may be coherent through selected purpose without a proven causal chain. Reusing a shared definition is separate from learning it personally. Reflection scheduling and processing budgets may defer learning, but cannot rewrite what happened. These are proposed contracts for review, not newly shipped behavior.
+Following the September 28 owner correction, compact English with optional nested brackets is the required presentation direction. Internal typed records provide exactness without making the model read those records. JSON is only a last resort for otherwise unrenderable permitted detail, and cannot expose internal metadata. Brevity must preserve clear targets, actual effects and important uncertainty. A composite may be coherent through selected purpose without a proven causal chain. Reusing a shared definition is separate from learning it personally. Reflection scheduling and processing budgets may defer learning, but cannot rewrite what happened. These are the accepted initial contracts. The tracker distinguishes delivered mechanisms and recorded evidence from the reopened generative presentation gap; hypothetical witness mechanics are still not shipped capabilities.

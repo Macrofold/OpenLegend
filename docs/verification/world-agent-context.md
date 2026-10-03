@@ -1,6 +1,6 @@
 # World Agent context and preparation verification
 
-September 28, 2026. Work starts at `9e3526d222279e6cbf58bf84b72ae1e4e757e275` on `codex/integrate-invention`; refreshed main `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` is already an ancestor. No branch transition. [Plan](../projects/world-agent-context/README.md), [runtime](../world-agent-runtime.md#scoped-context-and-native-save-for-review) and [WW18–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own scope and acceptance. The final local qualification below supersedes earlier progress blockers; historical observations remain labeled and do not waive broader release gates.
+September 28, 2026. Work starts at `9e3526d222279e6cbf58bf84b72ae1e4e757e275` on `codex/integrate-invention`; refreshed main `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` is already an ancestor. No branch transition. [Plan](../projects/completed/world-agent-context/README.md), [runtime](../world-agent-runtime.md#scoped-context-and-native-save-for-review) and [WW18–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design) own scope and acceptance. The final local qualification below supersedes earlier progress blockers; historical observations remain labeled and do not waive broader release gates.
 
 ## Final local qualification
 
