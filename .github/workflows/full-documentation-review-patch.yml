@@ -28,9 +28,15 @@ jobs:
       - name: Apply exact reviewed text and verify resulting bytes
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, subprocess
+          import base64, hashlib, json, pathlib, subprocess, zlib
           root = pathlib.Path.cwd()
           bundle = json.loads(pathlib.Path('.github/full-documentation-review-patch.json').read_text())
+          if 'compressed_patch' in bundle:
+              packed = base64.b64decode(bundle['compressed_patch'], validate=True)
+              decoder = zlib.decompressobj()
+              decoded = decoder.decompress(packed, 8 * 1024 * 1024)
+              assert decoder.eof and not decoder.unused_data and not decoder.unconsumed_tail, 'invalid or oversized patch'
+              bundle = json.loads(decoded)
           paths = []
           for item in bundle['files']:
               name = item['path']
