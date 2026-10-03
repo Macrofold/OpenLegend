@@ -3,9 +3,11 @@ import type { WorldAgentPreparation, WorldAgentValidation } from '@open-legend/p
 /** Render only recorded native findings. Labels do not infer a new validity class. */
 export function WorldAgentPreparationDetails({
   preparation,
+  preparationRevision,
   validation,
 }: {
   preparation?: WorldAgentPreparation;
+  preparationRevision?: number;
   validation?: WorldAgentValidation;
 }) {
   if (!preparation && !validation)
@@ -36,6 +38,15 @@ export function WorldAgentPreparationDetails({
       )}
       {preparation && (
         <>
+          {preparationRevision !== undefined && (
+            <>
+              <h4>Preparation retained with revision {preparationRevision}</h4>
+              <p className="ol-caption">
+                Saved findings describe this revision when it was prepared. Use Check saved revision
+                in Work to inspect current conditions.
+              </p>
+            </>
+          )}
           <p>{preparation.presentation.description}</p>
           <section aria-label="Source requirements">
             <h4>Requested meaning and source requirements</h4>

@@ -6,12 +6,22 @@ const tabClientId = crypto.randomUUID();
 let presenceSequence = 0;
 let worldGeneration = '';
 let viewScope = '';
+let privateDraftNamespace = '';
 let accessGeneration = 0;
 export class AccessError extends Error {}
+/** Local drafts use a native namespace independent of this tab's connection.
+ * Requests still use the complete viewScope and access-generation fence below.
+ */
+export function privateDraftScope(): string {
+  if (!privateDraftNamespace)
+    throw new Error('Refresh your access before opening private saved work.');
+  return privateDraftNamespace;
+}
 export function clearAccess(): void {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
+  privateDraftNamespace = '';
   try {
     for (const key of Object.keys(localStorage))
       if (
@@ -35,6 +45,7 @@ export function acceptAccess(view: GameView): void {
   accessGeneration++;
   worldGeneration = generation;
   viewScope = scope;
+  privateDraftNamespace = view.access?.privateDraftScope ?? '';
   try {
     const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
     const priorOwner = localStorage.getItem('open-legend:private-owner');

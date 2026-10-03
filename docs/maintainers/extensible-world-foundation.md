@@ -93,7 +93,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 ## EWF03 — Extract default body and need policies through real consumers
 
-[PW07](next-playable-week.md#pw07--world-configured-survival) now assigns both stages of the approved survival extraction, with a [complete implementation brief](../projects/next-playable-week/survival.md). Its explicit alternate-world and consumer checks must pass before the corresponding requirements below close; the broader EWF program is not completed by that slice.
+[PW07](next-playable-week.md#pw07--world-configured-survival) now assigns both stages of the approved survival extraction, with a [complete implementation brief](../projects/next-playable-week/survival.md). Its explicit alternate-world and consumer checks must pass before corresponding requirements close; the broader EWF program is not completed by that slice. Native stage-1/2a results remain distinct from the combined client gate. [Engineer 4's actual current-server browser slices](../verification/next-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending) verify a world-authored 150-point body range, native Save to 75 points, a 240-unit Charge meter and read-only categorical Disposition without copied survival formulas or bundled survival names in React. The observed UI omits food/energy/dream/status equivalents. Complete base/absent-meter, access/generation and integrated lifecycle qualification remains under PW07 and Stage 2b.
 
 **Dependencies:** EWF02. Coordinate with ACT, INV contribution semantics, and EPR04; use the existing native evaluator before full EPR delivery.
 
@@ -116,6 +116,8 @@ The first slice is bounded to numeric/category attributes and native physiology 
 ## EWF04 — Generic permitted inspection, context, and presentation
 
 **Dependencies:** EWF02–EWF03. **Files:** protocol `index.ts`, server `view.ts`, `decision-context.ts`, response/context helpers, god editor projections, React condition/editor components. Coordinate CR/NC presentation owners.
+
+PW07's current native browser confirms authored labels, units, ranges, categorical/read-only presentation and actual Save through the existing editor owner. Same-authority competing editors refuse an older name edit while retaining the attempted field; explicit Discard and Refresh reads the current value. The editor remains within the observed narrow viewport at 130% UI scale, including named icon tabs, blank-input errors and reachable footer actions ([evidence](../verification/next-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending), [IW03](../limits/interface.md#iw03--creator-editor-layout)). These slices strengthen the checked implementation below; they do not assert full native IME/assistive-device, private-generation or integrated survival acceptance.
 
 - [x] Add a bounded server-projected attribute/condition view with stable definition ID, safe name, display kind, value/range/units where permitted, uncertainty/visibility, and approved symbolic presentation reference. Do not expose private declaration data wholesale.
 - [x] Render the applicable meter/label/category from that view instead of requiring every actor to supply health/hunger/energy. Allow specialized native UI to consume the same authoritative projection where useful.

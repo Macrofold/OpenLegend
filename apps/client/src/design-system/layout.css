@@ -1604,7 +1604,8 @@ body,
   font-size: 13px;
   font-weight: 600;
 }
-.ol-root .ol-person-form .ol-meter .ol-meter-editable input[type='number'] {
+/* Override the generic form input's exclusions without widening the meter value. */
+.ol-root .ol-person-form .ol-condition .ol-meter .ol-meter-editable input[type='number'] {
   width: 60px;
   min-width: 0;
   padding: 2px 4px;
@@ -1673,8 +1674,10 @@ body,
   position: fixed;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(860px, calc(100vw - 24px));
-  height: min(700px, calc(100vh - 24px));
+  /* The HUD is scaled; viewport units alone grow the window past the screen. */
+  width: min(860px, calc((100dvw - 24px) / var(--ui-scale, 1)));
+  height: min(700px, calc((100dvh - 24px) / var(--ui-scale, 1)));
+  container-type: inline-size;
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -1768,6 +1771,53 @@ body,
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+@container (max-width: 560px) {
+  .ol-editor .ol-editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .ol-editor .ol-editor-tabs {
+    display: flex;
+    overflow: auto;
+    padding: var(--space-2);
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ol-editor .ol-editor-tab {
+    flex: 0 0 var(--control-md);
+  }
+  .ol-editor .ol-editor-tab-label {
+    display: none;
+  }
+  .ol-editor .ol-editor-content {
+    padding: var(--space-3);
+  }
+  .ol-editor .ol-person-stats {
+    min-inline-size: 0;
+    padding: var(--space-3);
+  }
+  .ol-editor .ol-meter:not(.ol-meter-text) {
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+  }
+  .ol-editor .ol-meter-value {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .ol-editor .ol-meter-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .ol-editor .ol-condition-description {
+    grid-column: 1 / -1;
+  }
+  .ol-editor-actions,
+  .ol-editor-save-actions {
+    flex-wrap: wrap;
+  }
+  .ol-editor-state {
+    flex-basis: 100%;
+  }
 }
 .ol-editor-confirm {
   position: absolute;

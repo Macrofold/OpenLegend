@@ -6,7 +6,7 @@ import type {
   WorldAgentRecipeEditorView,
 } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
-import { post } from '../api';
+import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
 
@@ -118,7 +118,6 @@ export function WorldAgentRecipeEditor({
   draft,
   worldId,
   sessionId,
-  accessScope,
   connected,
   mutationReason,
   onDirty,
@@ -135,7 +134,8 @@ export function WorldAgentRecipeEditor({
   onSaved(draft: WorldAgentExactDraftView): void;
   onRebased(draft: WorldAgentExactDraftView): void;
 }) {
-  const key = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}:${draft.id}:${draft.revision}:recipe-edit`;
+  const storageScope = `${worldId}:${privateDraftScope()}:${sessionId}`;
+  const key = `open-legend:authoring:${storageScope}:${draft.id}:${draft.revision}:recipe-edit`;
   const initial = initialEdit(draft);
   const [edit, setEdit] = useState(() => readLocal(key, initial, localEdit));
   const [preview, setPreview] = useState<{ signature: string; data: WorldAgentDraftPreviewView }>();
@@ -472,11 +472,12 @@ export function WorldAgentRecipeEditor({
       )}
       {fields.map((field, index) => {
         const id = `recipe-${base.id}-${index}`;
+        // The wrapping label also contains validation detail; keep the field name stable.
         const problem = problems.find((entry) => entry.id === fieldKey(field));
         const value = edit.fields[fieldKey(field)] ?? '';
         return (
           <label key={fieldKey(field)} htmlFor={id}>
-            <span>
+            <span id={`${id}-label`}>
               {field.label}
               {field.unit && ` (${field.unit})`}
             </span>
@@ -485,6 +486,8 @@ export function WorldAgentRecipeEditor({
                 id={id}
                 value={value}
                 disabled={pending === 'save'}
+                aria-labelledby={`${id}-label`}
+                aria-invalid={!!problem}
                 aria-describedby={problem ? `${id}-error` : undefined}
                 onChange={(event) =>
                   change({
@@ -508,6 +511,9 @@ export function WorldAgentRecipeEditor({
                 value={value}
                 rows={2}
                 disabled={pending === 'save'}
+                aria-labelledby={`${id}-label`}
+                aria-invalid={!!problem}
+                aria-describedby={problem ? `${id}-error` : undefined}
                 onChange={(event) =>
                   change({
                     ...editRef.current,
@@ -522,6 +528,7 @@ export function WorldAgentRecipeEditor({
                 inputMode="decimal"
                 value={value}
                 disabled={pending === 'save'}
+                aria-labelledby={`${id}-label`}
                 aria-invalid={!!problem}
                 aria-describedby={problem ? `${id}-error` : undefined}
                 onChange={(event) =>
@@ -625,7 +632,7 @@ export function WorldAgentRecipeEditor({
                 intent:
                   editRef.current.intent !== base.intent ? editRef.current.intent : newer.intent,
               };
-              const nextKey = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}:${newer.id}:${newer.revision}:recipe-edit`;
+              const nextKey = `open-legend:authoring:${storageScope}:${newer.id}:${newer.revision}:recipe-edit`;
               writeLocal(nextKey, reapplied);
               writeLocal(key, null);
               onRebased(newer);

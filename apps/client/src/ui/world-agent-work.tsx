@@ -12,7 +12,7 @@ import type {
 } from '@open-legend/protocol';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, EmptyState, Icon, Tag } from '../design-system/components';
-import { post } from '../api';
+import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
 import { WorldAgentRecipeEditor, hasRetainedRecipeEdit } from './world-agent-recipe-editor';
@@ -60,7 +60,9 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const { worldId, sessionId, accessScope, session, connected, visible, onRefresh, onOpenReview } =
     props;
   const scope = `${worldId}:${accessScope}:${sessionId}`;
-  const key = `open-legend:authoring:${scope}:work-selection`;
+  // Local recovery survives a new connection; requests still use the full access scope.
+  const storageScope = `${worldId}:${privateDraftScope()}:${sessionId}`;
+  const key = `open-legend:authoring:${storageScope}:work-selection`;
   const [selected, setSelected] = useState(() =>
     readLocal<{ id: string; revision: number } | null>(key, null, selectionValid),
   );
@@ -82,8 +84,10 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const identityRef = useRef(identity);
   identityRef.current = identity;
   const loadSequence = useRef(0);
+  const workSequence = useRef(0);
   const working = useRef(false);
   const paged = useRef(false);
+  const workspace = useRef<HTMLElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const listPosition = useRef(0);
@@ -141,7 +145,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
           result.kind === 'recipe' &&
           hasRetainedRecipeEdit(
             result,
-            `open-legend:authoring:${scope}:${result.id}:${result.revision}:recipe-edit`,
+            `open-legend:authoring:${storageScope}:${result.id}:${result.revision}:recipe-edit`,
           )
         ) {
           setEditorOpen(true);
@@ -213,6 +217,16 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   async function perform(work: (requestIdentity: string) => Promise<void>) {
     if (working.current) return;
     working.current = true;
+    const sequence = ++workSequence.current;
+    const opener =
+      document.activeElement instanceof HTMLButtonElement &&
+      workspace.current?.contains(document.activeElement)
+        ? document.activeElement
+        : null;
+    const holdingFocus = opener ? (detailHeading.current ?? workspace.current) : null;
+    // Disabled buttons lose focus. Keep keyboard position inside this task while
+    // waiting, and restore it only if the player has not moved elsewhere.
+    holdingFocus?.focus({ preventScroll: true });
     setBusy(true);
     setError('');
     setNotice('');
@@ -224,6 +238,18 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     } finally {
       working.current = false;
       setBusy(false);
+      if (opener)
+        requestAnimationFrame(() => {
+          if (
+            workSequence.current === sequence &&
+            identityRef.current === requestIdentity &&
+            document.activeElement === holdingFocus &&
+            workspace.current?.getClientRects().length &&
+            opener.isConnected &&
+            !opener.disabled
+          )
+            opener.focus();
+        });
     }
   }
   async function loadMore() {
@@ -309,7 +335,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     });
   }
   const prepareKey = selected
-    ? `open-legend:authoring:${scope}:${selected.id}:${selected.revision}:prepare-operation`
+    ? `open-legend:authoring:${storageScope}:${selected.id}:${selected.revision}:prepare-operation`
     : '';
   const prepareBody = selected ? { draftId: selected.id, revision: selected.revision } : null;
   const prepareSerialized = JSON.stringify(prepareBody);
@@ -362,6 +388,8 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
 
   return (
     <section
+      ref={workspace}
+      tabIndex={-1}
       className="ol-agent-work"
       aria-label="Saved invention work"
       hidden={!visible}
@@ -398,7 +426,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   }
                   size={14}
                 />
-                {kindLabel[row.kind]} · revision {row.revision} ·{' '}
+                {kindLabel[row.kind]} · revision {row.revision} · saved preparation:{' '}
                 {(row.state ?? row.preparation?.next)?.replaceAll('_', ' ') ?? 'Saved proposal'}
                 {row.summary && ` — ${row.summary}`}
               </span>
@@ -490,6 +518,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   )}
                   <WorldAgentPreparationDetails
                     preparation={selectedExact.preparation}
+                    preparationRevision={selectedExact.revision}
                     validation={validation}
                   />
                   <div className="ol-agent-tools">
@@ -688,7 +717,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                       )}
                     </section>
                   )}
-                  <div className="ol-agent-work-actions" data-editing={editorOpen || undefined}>
+                  <div className="ol-agent-work-actions">
                     {error && <p role="alert">{error}</p>}
                     {notice && <p role="status">{notice}</p>}
                     {mutationReason && <p role="status">{mutationReason}</p>}
@@ -755,7 +784,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                 variant="quiet"
                 onPress={() => {
                   writeLocal(
-                    `open-legend:authoring:${scope}:${selected?.id}:${selected?.revision}:recipe-edit`,
+                    `open-legend:authoring:${storageScope}:${selected?.id}:${selected?.revision}:recipe-edit`,
                     null,
                   );
                   select(switchTo.id ? switchTo : null, true);

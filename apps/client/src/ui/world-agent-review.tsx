@@ -2,7 +2,7 @@ import type { WorldAgentReviewView, WorldAgentPlanView } from '@open-legend/prot
 import { useEffect, useRef, useState } from 'react';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Tag } from '../design-system/components';
-import { post } from '../api';
+import { post, privateDraftScope } from '../api';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
 import { readLocal, writeLocal } from './storage';
 import './world-agent-work.css';
@@ -34,20 +34,21 @@ export function WorldAgentReview({
   const working = useRef(false);
   const dialog = useRef<HTMLDivElement>(null);
   const scope = `${worldId}:${sessionId}:${planId}`;
-  const applyKey = `open-legend:authoring:${scope}:apply-operation`;
+  const storageScope = `${worldId}:${privateDraftScope()}:${sessionId}:${planId}`;
+  const applyKey = `open-legend:authoring:${storageScope}:apply-operation`;
   type ApplyMarker = { scope: string; digest: string };
   const markerValid = (value: unknown): value is ApplyMarker =>
     !!value &&
     typeof value === 'object' &&
     'scope' in value &&
-    value.scope === scope &&
+    value.scope === storageScope &&
     'digest' in value &&
     typeof value.digest === 'string';
   const [retainedApply, setRetainedApply] = useState(() =>
     readLocal<ApplyMarker | null>(applyKey, null, markerValid),
   );
   const canRetryApply =
-    retainedApply?.scope === scope && retainedApply.digest === review?.plan.digest;
+    retainedApply?.scope === storageScope && retainedApply.digest === review?.plan.digest;
   const currentScope = useRef(scope);
   currentScope.current = scope;
   useEffect(() => {
@@ -101,7 +102,7 @@ export function WorldAgentReview({
     setNotice('');
     try {
       if (decision === 'apply') {
-        const marker = { scope: requestScope, digest: review.plan.digest };
+        const marker = { scope: storageScope, digest: review.plan.digest };
         writeLocal(applyKey, marker);
         setRetainedApply(marker);
         const result = await post<{ ok: boolean; message?: string }>(
@@ -205,6 +206,7 @@ export function WorldAgentReview({
                 <p>{review.draft.intent}</p>
                 <WorldAgentPreparationDetails
                   preparation={review.plan.preparation ?? review.draft.preparation}
+                  preparationRevision={review.plan.revision}
                   validation={review.plan.validation}
                 />
                 <p>Affected records: {review.plan.impact.affected}.</p>

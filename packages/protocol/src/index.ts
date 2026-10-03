@@ -378,6 +378,8 @@ export interface AiJobView {
 export interface GameView {
   access?: {
     scope: string;
+    /** Native private-draft namespace; not a request token or permission. */
+    privateDraftScope: string;
     accountId: string;
     actorId: string;
     controlGeneration: number;

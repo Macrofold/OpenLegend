@@ -1624,12 +1624,14 @@ export class WorldAuthoringService {
         const d = await this.draft(s, args.draftId, args.revision);
         target = d;
         this.assertDraftTarget(d.kind, d.payload, scope);
-        await this.ownedSession(s.id, scope);
-        this.assertDraftTarget(d.kind, d.payload, scope);
-        return workResult('ok', undefined, validateAuthoring(this.service, d, scope));
+        return workResult('ok');
       },
       () => {
-        if (target) this.assertDraftTarget(target.kind, target.payload, scope);
+        if (!target) return;
+        this.assertDraftTarget(target.kind, target.payload, scope);
+        // Check uses the same final synchronous world read as Preview. A storage
+        // wait must not return passed findings for a value that changed meanwhile.
+        return validateAuthoring(this.service, target, scope);
       },
     );
   }
@@ -1737,42 +1739,46 @@ export class WorldAuthoringService {
     decision: 'approve' | 'reject',
     scope = this.service.localScope,
   ) {
-    return this.serial(sessionId, async () => {
-      const { plan, draft } = await this.review(sessionId, planId, scope);
-      if (plan.digest !== digest)
-        throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
-      if (
-        plan.status === 'applied' ||
-        plan.status === (decision === 'approve' ? 'approved' : 'rejected')
-      )
-        return plan;
-      if (plan.status !== 'pending')
-        throw new AuthoringRequestError(
-          'This decision is final; prepare a new plan for another review.',
-        );
-      const current = await this.requireSession(sessionId, scope);
-      this.assertHumanWritable(current);
-      await this.draft(current, draft.id, draft.revision, true);
-      await this.assertOperationalWritable(current, true);
-      if (decision === 'approve') {
-        const validation = validateAuthoring(this.service, draft, scope);
+    return this.serial(sessionId, () =>
+      this.records.db.transaction(async () => {
+        const { plan, draft } = await this.review(sessionId, planId, scope);
+        if (plan.digest !== digest)
+          throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
         if (
-          !validation.ok ||
-          authoringImpact(this.service.world, draft).token !== plan.impact.token ||
-          (plan.preparation &&
-            plan.preparation.evidence.dependencies !==
-              authoringEvidenceDependencies(this.service.world, draft, scope))
+          plan.status === 'applied' ||
+          plan.status === (decision === 'approve' ? 'approved' : 'rejected')
         )
+          return plan;
+        if (plan.status !== 'pending')
           throw new AuthoringRequestError(
-            'The reviewed change is no longer ready. Validate and prepare a new review.',
+            'This decision is final; prepare a new plan for another review.',
           );
-      }
-      plan.status = decision === 'approve' ? 'approved' : 'rejected';
-      await this.records.put(sessionId, 'plan', plan.id, plan);
-      await this.ownedSession(sessionId, scope);
-      this.assertDraftTarget(draft.kind, draft.payload, scope);
-      return plan;
-    });
+        const current = await this.requireSession(sessionId, scope);
+        this.assertHumanWritable(current);
+        await this.draft(current, draft.id, draft.revision, true);
+        await this.assertOperationalWritable(current, true);
+        if (decision === 'approve') {
+          const validation = validateAuthoring(this.service, draft, scope);
+          if (
+            !validation.ok ||
+            authoringImpact(this.service.world, draft).token !== plan.impact.token ||
+            (plan.preparation &&
+              plan.preparation.evidence.dependencies !==
+                authoringEvidenceDependencies(this.service.world, draft, scope))
+          )
+            throw new AuthoringRequestError(
+              'The reviewed change is no longer ready. Validate and prepare a new review.',
+            );
+        }
+        plan.status = decision === 'approve' ? 'approved' : 'rejected';
+        await this.records.put(sessionId, 'plan', plan.id, plan);
+        // Existing decisions above remain readable. A new decision must roll back if
+        // expiry or authority changes while its repository write is waiting.
+        await this.assertOperationalWritable(current, true);
+        this.assertDraftTarget(draft.kind, draft.payload, scope);
+        return plan;
+      }),
+    );
   }
   async readContext(handle: string): Promise<RequestScope | undefined> {
     const session = await this.records.byContext(contextHash(handle));

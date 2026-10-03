@@ -411,6 +411,10 @@ function InventoryWorkspace({
   };
   const dispatch = async (action: ActionOption, success?: string) => {
     if (pendingRef.current || !connected || !action.enabled) return;
+    // Pending controls become disabled, which otherwise drops focus to the world
+    // before the receipt arrives. The detail container survives the whole request.
+    if (workspace.current?.contains(document.activeElement))
+      detail.current?.focus({ preventScroll: true });
     pendingRef.current = true;
     setPending(true);
     setMessage('');
@@ -431,7 +435,17 @@ function InventoryWorkspace({
         );
     } finally {
       pendingRef.current = false;
-      if (alive.current) setPending(false);
+      if (alive.current) {
+        setPending(false);
+        requestAnimationFrame(() => {
+          if (
+            document.activeElement !== detail.current ||
+            !workspace.current?.getClientRects().length
+          )
+            return;
+          detail.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+        });
+      }
     }
   };
   const arrange = (
@@ -753,7 +767,12 @@ function InventoryWorkspace({
             </Button>
           )}
         </div>
-        <section ref={detail} className="ol-inventory-detail" aria-label="Selected possession">
+        <section
+          ref={detail}
+          tabIndex={-1}
+          className="ol-inventory-detail"
+          aria-label="Selected possession"
+        >
           {selection ? (
             <>
               <Button

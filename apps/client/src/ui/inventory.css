@@ -26,6 +26,11 @@
   gap: 8px;
   flex: none;
 }
+.ol-inventory-workspace > .ol-inventory-header > * {
+  /* The header's grid gap owns spacing; general panel paragraph/action margins
+   * otherwise consume the task pane in short and narrow windows. */
+  margin: 0;
+}
 .ol-inventory-header p,
 .ol-inventory-header h2,
 .ol-inventory-destination p,
@@ -183,6 +188,22 @@
 .ol-inventory-toolbar h3 {
   margin: 0;
 }
+.ol-inventory-workspace .ol-actions > .ol-btn,
+.ol-inventory-destinations .ol-actions > .ol-btn {
+  /* Authored names also appear in path and destination actions. Keep their full
+   * labels readable without forcing a narrow task pane to scroll sideways. */
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  block-size: auto;
+  min-block-size: 32px;
+  padding-block: 4px;
+  white-space: normal;
+}
+.ol-inventory-workspace .ol-actions > .ol-btn > span,
+.ol-inventory-destinations .ol-actions > .ol-btn > span {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
 .ol-inventory-destination-list {
   flex: 1 0 12rem;
   min-block-size: 12rem;
@@ -194,9 +215,13 @@
 }
 .ol-inventory-destination {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding-block: 12px;
   border-block-end: 1px solid var(--line);
+}
+.ol-inventory-destination > div {
+  min-inline-size: 0;
 }
 @container (min-width: 40rem) {
   .ol-inventory-panes {

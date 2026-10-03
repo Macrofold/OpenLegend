@@ -10,7 +10,7 @@ import {
   typedRequestVocabulary,
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
-import { scopeKey, type RequestScope } from './authority.js';
+import { privateDraftScopeKey, scopeKey, type RequestScope } from './authority.js';
 import { observerDescription, fireFuelDescription } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
@@ -685,6 +685,7 @@ export async function projectView(
     schemaVersion: 2,
     access: {
       scope: scopeKey(scope),
+      privateDraftScope: privateDraftScopeKey(scope),
       canManageSaves: service.mayManageSaves(scope),
       accountId: scope.accountId,
       actorId: scope.actorId,
