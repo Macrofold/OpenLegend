@@ -145,3 +145,178 @@ The camp need not start perfectly balanced or socially harmonious. It should sta
 Use three clear dispositions: **ready for this start**, **ready with clearly optional deferred work**, or **blocked on a material requirement**. Warnings that affect the core opening cannot be hidden in an expandable appendix while the main action says everything is ready. Optional art polish, an unexplored biome or a nonessential future craft may remain deferred.
 
 Readiness is scoped evidence, not proof of all possible emergent outcomes or a promise that every character survives. The product should say which experience was checked and what remains outside it. New creations use currently admitted compatible definitions; they do not inherit unreviewed future updates merely because a shared library improves.
+
+## 7. Unsupported ideas, contradictions and repair
+
+### 7.1 Preserve the essential idea
+
+When a premise needs unsupported behavior, identify the missing experience in ordinary language and explain the consequence. “People can speak about memory magic, but spending a memory cannot yet power an action” is more useful than an unexplained validation code. Distinguish missing implementation, conflicting rules, insufficient resources and uncertain evaluation; they need different remedies.
+
+Offer a faithful supported approximation when one exists, a narrower starting situation that preserves the larger intent, or a retained draft for the missing capability. State what changes in each option. A memory-cost magic system must not quietly become an ordinary mana bar. If the memory mechanic is essential, its absence blocks that version of the world.
+
+“Exactly like reality” selects substantial familiar defaults and an explicit fidelity boundary. It cannot promise arbitrary real-world correctness. Present material concessions such as accelerated time, selected body approximations and recoverable human death. Resolve a direct conflict with the creator's intention before release; do not bury a contradiction under the preset's name.
+
+### 7.2 Repair the smallest meaningful cause
+
+When preparation fails, preserve the successful chosen parts and explain the conflict. If a settlement cannot obtain food because its only route is blocked, offer a route change, another accessible source or an explicitly harsher start. Do not regenerate every resident and the entire map because the first candidate failed one condition.
+
+When two requested rules cannot coexist, show the actual conflict and concrete alternatives. “All fire needs fuel” and “these lamps burn forever without any source” may need an explicit exception or different lamp rule. A lawful exception can be intentional; unexplained inconsistency is not creativity. Unrelated valid choices should remain stable.
+
+Bound autonomous repairs within the current authorized objective and allowance. Stop when a new repair would change a central requirement, repeat an unresolved failure or need a larger scope. Preserve the best valid candidate and useful findings. An endless stream of increasingly different worlds is not progress toward the creator's chosen world.
+
+### 7.3 Defer without pretending
+
+Optional future mechanics can remain recorded as wishes or anticipated interactions. Their appearance must not imply current support. An abandoned temple can be a supported place with ordinary objects while resurrection remains an unimplemented idea. If the opening requires resurrection to escape, it is no longer optional.
+
+During later play, unsupported actions use the existing invention/missing-capability route. Neither the narrator nor the character should declare a law impossible solely because its implementation is missing. Explain the operational limitation to the appropriate human audience without granting the character forbidden information or inventing a fictional failed experiment.
+
+## 8. Revision, preview and continuity
+
+### 8.1 Keep the creator's selected work
+
+Allow meaningful parts of a draft to be kept while others are revised: premise, named residents, chosen layout, resource assumptions or selected appearance. Keeping a part means future suggestions should preserve it or explain a real conflict. It is not a way to force an invalid combination through readiness.
+
+A revision should show what changed and why it matters. Renaming a place normally needs presentation review; moving a camp across a river may affect navigation, food access and social proximity; changing bodies may invalidate tools and consumption. Recheck affected behavior through the existing validation owner. Do not rerun unrelated expensive creation merely because a string changed.
+
+Provide an understandable previous-candidate comparison and a way to return to a retained valid draft within current retention policy. There is no unlimited undo/archive promise. Deleting a draft and deleting a running world are separate operations with different consequences. A creator should never lose a live world by closing a generation panel.
+
+### 8.2 Preview is a separate experience
+
+A preview can reveal creator-authorized setup information and exercise a copied situation. It cannot spend the live inhabitants' food, establish their memories, advance the real world clock or count as a human's in-world consent. Clearly identify rehearsal and illustrative material. Do not present generated mock dialogue as a guaranteed future conversation.
+
+Changing a preview's camera, reopening it or asking for an explanation should use the existing candidate and evidence where possible. It should not purchase another world. Repeated deliberately requested variations remain part of the same funded objective unless the creator explicitly starts another authorized one; new labels do not reset allowance.
+
+### 8.3 Reproducibility means a retained world, not just a seed
+
+Retain the selected initial candidate, governing definitions and chosen random results through the existing world/draft/save owners. A seed can help generate a new candidate but is not sufficient to promise identical behavior after defaults, mechanics or assets change. Show the distinction between reopening the same prepared world and making a new world inspired by the same premise.
+
+After launch, consequential changes use the current constitution and workshop process. A new law applies from its declared activation, with explicit treatment of existing state and recorded outcomes. The creation wizard cannot be reused as a hidden reset that replaces residents, refunds consumed resources or erases an inconvenient history. A fork is a separate authorized world with its own permissions and operating commitment.
+
+## 9. Real economics and performance
+
+### 9.1 Three offers the creator must understand
+
+Separate preparation cost, recurring live operation and optional later expansion/polish. Preparation includes interpretation, generation, compatible reuse, verification and any commissioned art. Live operation includes admitted mechanics, residents' new decisions, scenes, storage and presentation. Expansion is another scoped piece of authoring with its own continuing consequences.
+
+The interface should show a bounded creation allowance and the selected operating profile before relevant spending. Use the existing payer, session and world controls; choosing a large fictional population cannot authorize a larger bill. Mark estimates, incurred cost and uncertain exposure honestly. Do not present a fixed price derived from historical paper token rates.
+
+A failed candidate can still incur real cost. Cancellation attempts to stop pending work and prevents unwanted activation, but does not erase already executed charges. Useful already-funded results remain available where current permission allows. A provider failure does not restart the same work automatically or reset the project's allowance on reconnect.
+
+### 9.2 Spend first on the opening's real requirements
+
+Prefer compatible qualified defaults and supplied candidates before generating novel alternatives. First establish the causal premise and a useful opening; then verify the required interactions; then refine optional appearances. A simple readable camp with actual behaviors can be ready while premium artwork is pending. An elaborate image must never conceal a missing body, route or mechanic.
+
+Do not prepare every possible creature, building, trade good, conversation and weather event before launch. Generate and admit useful families as real consumers require them. Reuse permitted definitions and valid evidence within their compatibility conditions. Reuse must respect rights, world-private sources and current policy; a cheaper result is not authorization to copy another world's private history.
+
+Use targeted rehearsal of meaningful dependencies, not an unbounded search for a perfect simulated civilization. Long history generation can be an optional separately bounded experience if it has a real player benefit. The default uses authored initial facts and a qualified local loop. More centuries of generated prose do not establish a more coherent society.
+
+### 9.3 Population is both a gameplay and service choice
+
+More residents create additional resource demand, encounters, relationships, history and potential contention. Six residents have 15 possible unordered pairs; 100 have 4,950. This arithmetic illustrates possible relationship growth, not a requirement to evaluate every pair or a forecast of actual cost. Local participation and relevant events should drive new work.
+
+The proposed six-resident default must be qualified as a complete community under the selected operating profile. If that profile cannot sustain it, the creator receives a concrete smaller or differently supported proposal before launch. Do not quietly retain six portraits while only two people can actually make necessary choices. Do not copy a financially unsustainable resident design across a population merely because each individual draft validated.
+
+Starting biographies should establish a manageable set of facts, not a mandatory lifelong diary to retrieve on every decision. Distant lore should remain cheap authored context until a supported live consumer needs it. Continued life uses the [continuing-lives proposal](continuing-lives-feature-spec.md); crowded interaction uses [attention and scenes](attention-and-scenes-feature-spec.md). Their proposed capabilities are dependencies to qualify, not automatically delivered by this spec.
+
+### 9.4 Novel rules can cost more than more land
+
+A small world where every word changes everyone's memories can be more demanding than a large quiet landscape. Creation review must account for ongoing triggers, affected participants, growth of retained state, exact-language requirements and possible reaction cascades. State the supported boundary in experiential terms: for example, a local witnessed ritual rather than an unlimited world-wide effect.
+
+A creator may request a narrower lawful version, another operating profile or a retained unsupported draft. The product must not silently change the rule when the bill becomes inconvenient. Required work and optional ambience have the different service boundaries defined by the scalability owners.
+
+### 9.5 Waiting consumes neither imagination nor an unlimited agent run
+
+Retain questions and drafts while waiting for a human. End or suspend paid work only through the existing qualified workflow; do not leave a live paid process thinking indefinitely. Status views and reconnects show existing progress without causing new paid work. A later answer reuses the same objective and current allowance.
+
+Large preparation should have useful checkpoints: candidate prepared, required coverage incomplete, waiting for a material choice, ready for review. A blocker should identify what remains and offer a concrete next action. Do not use a decorative percentage as the only explanation for an open-ended generation process.
+
+## 10. Failure and recovery behavior
+
+| Situation | Required experience |
+| --- | --- |
+| The premise is unclear but a safe compatible default exists | Propose it visibly and continue useful preparation; ask only if the uncertainty changes a material choice |
+| An essential capability is unsupported | Retain the premise, identify the missing experience and offer a scoped alternative or deferred draft; do not label the world ready |
+| Rules or starting conditions conflict | Preserve unaffected work and show the smallest meaningful conflict and remedies |
+| The creator changes a selected answer during preparation | Preserve the new intent; stale work cannot activate the old or a mixed candidate |
+| A collaborator changes the same draft | Show the current candidate and actual conflict; one person's review cannot silently approve the other's broader change |
+| A provider times out or returns unusable work | Keep the last valid draft and actual cost status; distinguish technical failure from failed fictional experiments |
+| Allowance ends before readiness | Stop new paid work and retain drafts/findings; offer review of completed work, narrower scope or deliberately renewed funding |
+| The creator cancels | Stop further eligible work where possible and prevent unwanted launch; disclose any already incurred or uncertain charge |
+| Refresh occurs after successful creation | Recover the same created world's status and entry route; never create a duplicate world or population |
+| Host or storage is unavailable | Keep the prepared result if durably retained and explain unavailable entry; never claim saved/started without a corresponding result |
+| Art fails but the mechanics are ready | Use a faithful readable fallback and offer later refinement; do not regenerate laws or block usable play solely for polish |
+| A required permission, dependency or operating offer changes before release | Re-evaluate the material affected scope and explain the change before activation |
+
+The starting world remains non-running preparation until admitted and explicitly started through the supported host flow. A stalled creation cannot starve its inhabitants off-screen. After launch, normal world operation and current pause/absence rules apply; leaving the creator panel does not stop a shared world.
+
+## 11. Concrete creator and player scenarios
+
+### WC-J01 — One sentence supplies a familiar world
+
+The creator asks for a small cooperative settlement with ordinary physics. The system proposes a compatible local start, inhabitants, supplies and current supported recovery/time concessions. It does not ask the creator to explain gravity. They change the settlement's name, review the opening and start the exact selected world. The first human can meet someone and perform a useful supported action without understanding the authoring tools.
+
+### WC-J02 — An unfamiliar magic rule is essential
+
+The creator wants memories to be spent to produce light. The system asks which memories may be spent and whether loss is reversible because those answers change agency, knowledge and effects. If the necessary effect is unsupported, the draft remains blocked. A cosmetic glowing object or mana substitution can be offered as a different option, but cannot silently satisfy the request.
+
+### WC-J03 — Harshness is deliberate
+
+The creator requests a stranded expedition with little food. The preview explains accessible supplies, actual consumption and possible methods. It distinguishes a hard start from an impossible preparation dependency. The creator can keep a supported desperate situation. Validation does not secretly insert a rescue caravan or require a happy outcome.
+
+### WC-J04 — A novel body changes ordinary assumptions
+
+The creator chooses a supported charge-based organism. The proposal replaces applicable needs, replenishment and capabilities coherently and does not add hunger by habit. A hand-tool task that the body cannot perform becomes a visible mismatch. If a touch-only organism cannot navigate with current support, that is an essential blocker for a roaming opening, even if the body can be described and drawn.
+
+### WC-J05 — Moving the camp preserves its people
+
+The creator likes the residents but asks to move the camp to the coast. The chosen residents and unrelated biographies remain. The system reports changed routes, resources and any relevant assumptions. If the requested coast requires unsupported water travel, it offers a walkable coastal start or retains the broader draft. It does not reroll relationships merely because geography changed.
+
+### WC-J06 — A dependency hides a shortage
+
+The generated camp contains food, but all of it needs cooking and no one can light the only fire. Readiness catches the combined failure. The creator can provide an explicit starting fire, compatible ignition supplies/knowledge or another food route. The entering characters do not gain hidden information merely because the creator saw this diagnosis.
+
+### WC-J07 — The creator wants an empire
+
+The system distinguishes a large authored setting with one live locality from a request for a fully operating large population. It explains the actual offered scope and cost. If the latter is essential and unsupported, it says so. It may propose a capital district and established surrounding facts, but cannot advertise millions of continuing lives after only generating a map and names.
+
+### WC-J08 — A preview exposes a secret
+
+The creator inspects an NPC's authored initial secret within their actual permissions. Their player character does not acquire it. A rehearsal conversation that reveals it stays outside live history. After launch, the NPC can reveal or conceal it according to actual knowledge and choice; the preview is not a script forcing that disclosure.
+
+### WC-J09 — The last preparation step fails
+
+The rules, population and layout are valid, but optional art generation fails. The world remains mechanically ready with faithful fallback presentation. If the failed step is required navigation instead, readiness stays blocked. The cost display preserves any charge already incurred, and the system does not rerun the entire pipeline to repair one failed part.
+
+### WC-J10 — Creation succeeds during a disconnect
+
+The creator presses Start and loses the connection. On return, the interface resolves the original operation and shows the same world's status. It does not repeat seeding or duplicate charges. If the outcome is genuinely unresolved, it shows that uncertainty and waits for reconciliation rather than guessing that nothing happened.
+
+### WC-J11 — Population changes late
+
+The creator expands the six-resident proposal to a larger group. The system preserves selected residents while reviewing additional resource demand, spatial fit, operating load and new social assumptions. Existing approval covers neither the new population nor its larger operating commitment. If only a smaller scope is supported, present it explicitly before launch.
+
+### WC-J12 — The preset changes after the world is prepared
+
+A library update improves a mechanic. Reopening the prepared candidate preserves its chosen definitions and results. The creator can review an explicit compatible update; a seed or preset label cannot silently change the world's promised start. An existing live world's histories and consumed resources remain intact.
+
+### WC-J13 — The human has no assigned character
+
+An authorized creator finishes a world while signed in through a characterless session. They can inspect the result through granted operations. The product offers the currently supported character-linking or invitation route and states when an additional entry capability is unavailable. It does not silently create control rights, promote a spectator or claim that public registration is enabled.
+
+### WC-J14 — A beautiful premise is financially unworkable
+
+A world asks every inhabitant to continually reconsider every other inhabitant's thoughts. The service identifies both the disclosure conflict and the unbounded interaction demand. It proposes a supported local, voluntarily disclosed version if consistent with the creator's intent. If not, it retains the idea as unsupported. Buying more allowance cannot bypass privacy or turn an unbounded promise into an admitted mechanic.
+
+## 12. Delivery and evidence
+
+**Stage 1: one familiar premise to one usable start.** Assemble a new local bundled-family world through existing drafts and host entry. Deliver visible assumptions, the supported starting cohort, real resources/knowledge, concrete review and exact-result creation. Use faithful simple art. Qualification includes an ordinary first session, a conflicting dependency, a canceled creation and reconnect after success. An internal one-resident probe may reduce development risk, but does not qualify the proposed six-resident default.
+
+**Stage 2: selective revision and meaningful alternatives.** Preserve chosen parts, expose dependent changes and support a second genuinely different qualified composition, such as the existing charge-based family where its complete opening is supported. Validate that the workflow can change meaningful laws without silently restoring survival defaults. Add clear unsupported-essential handling and bounded repair.
+
+**Stage 3: richer starting societies and wider setting.** Expand geography, initial social situations and live population only with actual community, access and complete-cost evidence. Add optional rehearsal depth and author-requested histories when they improve choices enough to justify their cost. Do not make these required setup for a familiar small world.
+
+**Stage 4: creator-quality qualification.** Compare novices and experienced creators across familiar, unusual, intentionally harsh and unsupported premises. Evaluate whether they can identify the material assumptions, explain what is ready, preserve their intent through revision and enter useful play. Record accessibility, reading load, failures, abandonment reasons and costs within existing authorized evaluation; no new analytics collection is approved here.
+
+Measure time to a reviewed playable start, creator corrections required, essential choices silently changed, dependency failures after launch, first-session usefulness, operating cost and how much successful work a revision preserves. Separate model explanation quality from native readiness and from gameplay enjoyment. A pathfinder reaching a goal does not establish a functioning community; a creator liking the description does not establish supported laws.
+
+Capacity evidence must name population, activity mix, geometry, history, optional reasoning and the actual supported service conditions. No generation-time target or recurring price is selected before measurement. Qualify the no-new-paid-work route for unchanged inspection and exact reuse alongside the novel path; a product that is pleasant only on expensive full regeneration has not met the economic goal.

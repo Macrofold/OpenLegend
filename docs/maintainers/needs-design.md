@@ -53,6 +53,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** define premise/default selection, a few consequential questions, population/geography/starting knowledge, visible assumptions, compatible initial rules, and a clear readiness decision. Specify retained drafts, unsupported essential mechanics, conflicting defaults, failed/interrupted creation and the handoff to the current world host. Reuse existing authoring and validation instead of creating a second installer or admission system.
 
+**October 3 product proposal:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) now develops that journey with a concrete local start, creator-intent preservation, scoped readiness, selective revision, cost behavior and cited research. [WC limits](../limits/world-creation.md) record its proposed boundaries. Product recommendations remain pending adoption; technical design and INV-4.10/EWF12 implementation remain open.
+
 ### ND02 — Discover a community, settle there and enter as a character
 
 **Decision before design.** Sources: [worlds and belonging](../product-scalability/worlds-and-belonging.md), especially visiting, settlement and renewed participation; [D68 — world entry beyond invites](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites).
