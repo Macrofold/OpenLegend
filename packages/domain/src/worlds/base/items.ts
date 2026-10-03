@@ -9,6 +9,11 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     name: 'Knife',
     description: 'A small sharp blade for close-range cutting and stabbing.',
     properties: ['rigid', 'point'],
+    characteristics: [
+      { key: 'damage', label: 'Damage', path: 'melee.damage', unit: 'health points' },
+      { key: 'range', label: 'Range', path: 'melee.range', unit: 'metres' },
+      { key: 'accuracy', label: 'Base accuracy', path: 'melee.accuracy', unit: 'probability' },
+    ],
     melee: {
       damage: 8,
       accuracy: 0.75,
@@ -27,6 +32,20 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     description:
       'A portable woven bag with 24 packing-load units of capacity. Nested contents count toward the limit.',
     properties: ['fiber', 'pouch'],
+    characteristics: [
+      {
+        key: 'capacity',
+        label: 'Capacity',
+        path: 'container.capacity',
+        unit: 'packing-load units',
+      },
+      {
+        key: 'packing-load',
+        label: 'Packing requirement',
+        path: 'packingLoad',
+        unit: 'packing-load units',
+      },
+    ],
     container: { capacity: 24, maximumDepth: 16 },
   },
   raw_fiber: {
@@ -74,6 +93,14 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     description: 'A rounded stone that can serve as sling ammunition.',
     properties: ['rigid', 'projectile'],
     ammunition: { kind: 'stone', damageBonus: 0 },
+    characteristics: [
+      {
+        key: 'damage-bonus',
+        label: 'Damage bonus',
+        path: 'ammunition.damageBonus',
+        unit: 'health points',
+      },
+    ],
   },
   bone: {
     id: 'bone',

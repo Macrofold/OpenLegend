@@ -5,6 +5,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 ## Mechanics
 
 - [Items, ground piles and possession](items.md)
+- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
 - [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
 - [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
 - [Sleep and waking](sleep.md)

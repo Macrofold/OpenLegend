@@ -2,7 +2,7 @@
 
 ## Proposed next measured slices
 
-[PW08](next-playable-week.md#pw08--proportional-simulation-work) selects actual sighting membership changes, reverse crossing-cache invalidation and certified reuse; [PW09](next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) selects Unicode lexical correctness, scoped retrieval invalidation and current growing-history measurements. Their linked briefs define workloads and equivalence. PW08's three bounded reductions are implemented on Engineer 1's `oct2-eng-1` branch through `b9b8124b`; matched evidence and unmet latency, restore and server-capacity requirements are recorded below. This branch-ready implementation does not establish completed PW08 or combined-week integration acceptance. PW09 remains a separately reviewed dependency. Neither closes PF08/09, D5 or the complete proportional-step project.
+[PW08](next-playable-week.md#pw08--proportional-simulation-work) selects actual sighting membership changes, reverse crossing-cache invalidation and certified reuse; [PW09](next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) delivers Unicode lexical correctness and scoped retrieval invalidation with [18 matched growing-history runs](../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval). Ordered caller outcomes remain equivalent; unrelated source writes remove one lexical rerank, and unrelated/other-model vector work removes both coverage counts. Exact-vector SQL still accounts for about 94% of the 100k warm caller, whose baseline/candidate p50/p95 are 329/1037 and 450/1440 ms on a heavily shared host. One 100k cold exact request and all six 100k restores fail existing deadlines; rollback preserves committed evidence. Successful large restoration and quiet-host capacity remain unqualified. The installed pgvector supports a separately scoped approximate-index experiment; production ANN remains unimplemented. PW08's three bounded reductions are implemented on Engineer 1's branch and consumed by Engineer 2; matched branch evidence and qualification limits are recorded below. PW08 remains owned by Engineer 1. Neither child closes PF08/09, D5 or the complete proportional-step project.
 
 ## Data foundation follow-up
 
@@ -161,6 +161,8 @@ Exit: idle narrator has no claim traffic, eligible committed jobs execute once t
 ## PF03 — Native CPU and incremental admission
 
 PW08's selected sighting/pair reductions and remaining native finalization, proof overhead and server qualification are recorded under [PF09](#pf09--population-work-follows-relevance) and its matched branch evidence. No additional required-work ceiling was introduced.
+
+- [x] Accumulate simultaneous health-rate causes with the existing target flows instead of rescanning every active interval for every body. [Matched PW07 review](../verification/world-configured-survival.md#health-rate-review-measurement) preserves exact native world/events/accounting and removes quadratic cause lookup; it does not qualify whole-server population capacity.
 
 - [x] Remove repeated attribute-definition proxy traversal and dense sight-cache sequential eviction, with matched snapshot replay digests and measured CPU/elapsed comparisons in [Verification](../verification/simulation-and-cognition-audit.md#simulation-and-cognition-audit).
 
@@ -338,7 +340,7 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 
 The [limits growth-path review](../limits/README.md#growth-path-review-coverage) records source-inspected missing work bounds at `af1eb02`; it is not new benchmark evidence. [C18](limits-audit.md#c18) feeds PF03/PF09 and EPR02/EPR05 dense native work and hot evidence; [C17](limits-audit.md#c17) feeds PF08/CR exact/lexical recall, repeated coverage counts and unbounded mandatory/conversation preparation; completed C19 is recorded under [NW11](../limits/native-work.md#nw11) and PF01/PF07 queue admission. Read the inventory’s actual upstream protections before introducing another limit.
 
-PF08’s mature-world and explicit-owner-edit qualification includes [MH06/MH07](../limits/memory.md#mh06), and existing CR private-note work includes [KG01](../limits/memory.md#kg01). Separate automatic memory growth from extreme authored collections. Serialized/read lanes and output LIMIT clauses are not evidence of bounded queued or pre-selection work. Existing acceptance remains open; no extra duplicate task checklist is introduced here.
+PF08’s mature-world and explicit-owner-edit qualification includes [MH06/MH07](../limits/memory.md#mh06), and existing CR private-note work includes [KG01](../limits/memory.md#kg01). [PW09's matched evidence](../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval) removes redundant rerank/count work while preserving exact top-300 outcomes; C17 retains first-request/100k restore failures, exact corpus scoring, broad lexical work and separately scoped ANN qualification. Separate automatic memory growth from extreme authored collections. Serialized/read lanes and output LIMIT clauses are not evidence of bounded queued or pre-selection work. Existing acceptance remains open; no extra duplicate task checklist is introduced here.
 
 ## Immediate gameplay limits follow-through
 

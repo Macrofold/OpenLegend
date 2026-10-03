@@ -161,11 +161,16 @@ try {
     'Rest well. We can continue later.',
     service.defaultResidentEntityId,
   );
+  const configuredDream = dreamPolicy(service.world);
+  if (!configuredDream)
+    throw new Error(
+      'This installed world has no dream policy; dream qualification is not applicable.',
+    );
   const rest = await service.command(
     `dream-rest-${id}`,
     {
       type: 'status-effect',
-      definitionId: dreamPolicy(service.world).statusEffectId,
+      definitionId: configuredDream.statusEffectId,
       targetId: service.defaultResidentEntityId,
       effectOperation: 'activate',
     },

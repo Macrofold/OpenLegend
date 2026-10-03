@@ -19,8 +19,9 @@ import type {
   StatusEffectInstance,
 } from './status-effects.js';
 import type { Entity, WorldState } from './types.js';
+import type { BodyPolicy } from './body-policy.js';
 
-function conditionCost(condition: StatusCondition | undefined): number {
+function conditionCost(condition: StatusCondition | undefined | null): number {
   if (!condition) return 0;
   return (
     1 +
@@ -29,6 +30,29 @@ function conditionCost(condition: StatusCondition | undefined): number {
       0,
     )
   );
+}
+/** Policy arrays are admitted by their combined work, not an unrelated content quota.
+ * Count optional services even while unused: absence of active damage is not free installation. */
+export function bodyPolicyWork(policy: BodyPolicy | null): WorkDemand {
+  if (!policy) return {};
+  const thinking = policy.backgroundThinking;
+  const tests =
+    conditionCost(policy.recovery?.when) +
+    conditionCost(policy.consumption?.suggestWhen) +
+    conditionCost(thinking.maintenanceBlockedWhen) +
+    conditionCost(thinking.commitBlockedWhen) +
+    conditionCost(thinking.reflectionBlockedWhen) +
+    thinking.reconsiderationInputs.reduce((sum, input) => sum + conditionCost(input.when), 0) +
+    (policy.recovery?.controllers.length ?? 0) +
+    (policy.consumption?.refusals.length ?? 0) +
+    (policy.carryingConcern ? 1 : 0);
+  const effects =
+    (policy.recovery?.floors.length ?? 0) +
+    policy.revival.fillToMaximum.length +
+    (policy.consumption ? 1 : 0);
+  // Recovery/revival/consumption execute only under their admitted command. Their
+  // lookup loops count here; installed policy does not claim those writes every interval.
+  return { tests: tests + effects, subscriptions: 1 };
 }
 const costs = new WeakMap<StatusEffectDefinition, WorkDemand>();
 /** This native family has no generated child calls: selectors bind exactly three
@@ -71,6 +95,7 @@ export function validateStatusInstallation(world: WorldState, policy: StatusEffe
     subscriptions: interfaces,
     retainedBytes: JSON.stringify(manifest).length * 3,
   });
+  combined = addWork(combined, bodyPolicyWork(manifest.bodyPolicy));
   for (const definition of policy.definitions)
     if (definition.enabled) {
       const cost = statusWork(definition);
@@ -101,7 +126,8 @@ export function installedWorkAllocation(world: WorldState): WorkDemand {
       subscriptions:
         manifest.definitions.length +
         manifest.senses.length +
-        (manifest.appraisals?.definitions.length ?? 0),
+        (manifest.appraisals?.definitions.length ?? 0) +
+        (bodyPolicyWork(manifest.bodyPolicy).subscriptions ?? 0),
     };
     for (const definition of policy.definitions)
       if (definition.enabled)
@@ -151,6 +177,13 @@ export function chargeStatusWork(
   definition: StatusEffectDefinition,
   state: StatusEffectInstance,
 ): void {
+  if (
+    !state.active ||
+    !Object.values(entity.statusEffects ?? {}).some(
+      (current) => current.active && current.episode === state.episode,
+    )
+  )
+    return;
   if (!world.workState?.invocations[state.episode])
     admitStatusWork(world, entity, definition, state.episode);
   advanceWorkInterval(world, state.episode);

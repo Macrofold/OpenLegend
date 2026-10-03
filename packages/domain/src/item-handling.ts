@@ -25,6 +25,7 @@ import { availableResource, itemDefinitionPin, itemHasReservations } from './res
 import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
+import { validateItemCharacteristics } from './item-characteristics.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { groundedSpatial, spatialMap } from './spatial-state.js';
 import type { Entity, ItemInstance, Transition, WorldEvent, WorldState } from './types.js';
@@ -331,6 +332,7 @@ export function validateItemHandling(world: WorldState): void {
   )
     throw new Error('Invalid item-handling policy.');
   for (const definition of Object.values(world.itemDefinitions)) {
+    validateItemCharacteristics(definition);
     if (definition.portable !== undefined && typeof definition.portable !== 'boolean')
       throw new Error('Invalid portable item property.');
     if (

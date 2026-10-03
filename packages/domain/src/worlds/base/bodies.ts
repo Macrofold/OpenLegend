@@ -1,3 +1,5 @@
+import { initializeAttributes } from '../../world-modules.js';
+import type { AttributeDefinition } from '../../world-modules.js';
 import { seedAgency } from '../../agency.js';
 import type { ActorComponent } from '../../types.js';
 import type { LivingBody } from '../../living.js';
@@ -27,8 +29,12 @@ export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
           ],
   };
 }
-export function nativeActor(species: 'hare' | 'deer' | 'bird', bornAt: number): ActorComponent {
-  return {
+export function nativeActor(
+  species: 'hare' | 'deer' | 'bird',
+  bornAt: number,
+  bindings: readonly AttributeDefinition[],
+): ActorComponent {
+  const actor: ActorComponent = {
     species,
     body: livingBody(species),
     controller: 'native',
@@ -37,17 +43,27 @@ export function nativeActor(species: 'hare' | 'deer' | 'bird', bornAt: number): 
       memory: false,
       innerWorld: false,
       speech: false,
-      needs: false,
     },
     health: species === 'deer' ? 36 : 18,
     alive: true,
     incapacitated: false,
     bornAt,
-    fullness: 100,
-    energy: 100,
     action: null,
     equippedItemId: null,
     agency: seedAgency(),
     planGeneration: 0,
   };
+  initializeAttributes(
+    actor,
+    [...bindings],
+    Object.fromEntries(
+      bindings
+        .filter((definition) => definition.schema.kind === 'number')
+        .map((definition) => [
+          definition.id,
+          definition.schema.kind === 'number' ? definition.schema.max : definition.schema.initial,
+        ]),
+    ),
+  );
+  return actor;
 }

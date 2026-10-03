@@ -1,9 +1,10 @@
 import {
   HOST_IMPLEMENTATIONS,
-  DEFAULT_COGNITION_POLICY,
+  bodyPolicy,
   type StatusCondition,
-  SUPPORTED_INVENTION_FAMILIES,
-  INVENTION_FAMILY_INTERFACES,
+  installedRecipeFamilies,
+  recipeFamily,
+  recipeItemHandlingPin,
   inventionFamily,
   type WorldState,
 } from '@open-legend/domain';
@@ -28,9 +29,11 @@ export const DEFINITION_KINDS = [
   'sense',
   'host',
   'family',
+  'item-handling-policy',
   'status-effect',
   'status-effect-policy',
   'cognition-policy',
+  'body-policy',
 ] as const;
 
 export const DEFINITION_COVERAGE = [
@@ -97,15 +100,25 @@ export function readDefinition(
       break;
     case 'cognition-policy':
       if (id !== 'current') return;
-      data = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+      data = world.cognitionPolicy;
       label = 'Cognition policy';
       break;
+    case 'body-policy':
+      if (id !== 'current' || !bodyPolicy(world)) return;
+      data = bodyPolicy(world);
+      label = 'Body policy';
+      break;
+    case 'item-handling-policy': {
+      if (id !== 'engine:item-handling-policy') return;
+      data = { ...world.itemHandling, pin: recipeItemHandlingPin(world) };
+      label = 'Item handling policy';
+      break;
+    }
     case 'family': {
-      if (!Object.hasOwn(SUPPORTED_INVENTION_FAMILIES, id)) return;
-      const key = id as keyof typeof SUPPORTED_INVENTION_FAMILIES;
-      const value = SUPPORTED_INVENTION_FAMILIES[key];
-      data = { ...value, ...INVENTION_FAMILY_INTERFACES[key] };
-      label = value.description;
+      const value = recipeFamily(world, id)?.definition;
+      if (!value) return;
+      data = value;
+      label = value.name;
       break;
     }
     case 'host':
@@ -167,11 +180,12 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
   };
   const resolve = (kind: string, id: string) => current.get(JSON.stringify([kind, id]));
   for (const [id, value] of Object.entries(HOST_IMPLEMENTATIONS)) add('host', id, id, value);
-  for (const [id, value] of Object.entries(SUPPORTED_INVENTION_FAMILIES))
-    add('family', id, value.description, {
-      ...value,
-      ...INVENTION_FAMILY_INTERFACES[id as keyof typeof INVENTION_FAMILY_INTERFACES],
-    });
+  add('item-handling-policy', 'engine:item-handling-policy', 'Item handling policy', {
+    ...world.itemHandling,
+    pin: recipeItemHandlingPin(world),
+  });
+  for (const { definition } of installedRecipeFamilies(world))
+    add('family', definition.id, definition.name, definition);
   for (const value of Object.values(world.itemDefinitions))
     add('item-definition', value.id, value.name, value);
   for (const value of Object.values(world.recipes)) {
@@ -206,14 +220,13 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
     'cognition-policy',
     'current',
     'Cognition policy',
-    world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY,
+    world.cognitionPolicy,
   );
   for (const d of world.statusEffectPolicy.definitions)
     link(add('status-effect', d.id, d.label, d), statusPolicy, 'governed_by');
-  const dream = resolve(
-    'status-effect',
-    (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).dream.statusEffectId,
-  );
+  const dream =
+    world.cognitionPolicy.dream &&
+    resolve('status-effect', world.cognitionPolicy.dream.statusEffectId);
   if (dream) link(cognitionPolicy, dream.node.ref, 'requires', 'dream-state');
   for (const d of world.statusEffectPolicy.definitions) {
     const source = resolve('status-effect', d.id)!.node.ref;
@@ -239,9 +252,49 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
       else if ('compare' in c) {
         const target = resolve('attribute', c.compare.attribute);
         if (target) link(source, target.node.ref, 'uses', `condition:${c.compare.target}`);
+      } else if ('hasAttribute' in c) {
+        const target = resolve('attribute', c.hasAttribute.attribute);
+        if (target) link(source, target.node.ref, 'uses', `applicability:${c.hasAttribute.target}`);
       } else if ('statusActive' in c) {
         const target = resolve('status-effect', c.statusActive.definitionId);
         if (target) link(source, target.node.ref, 'requires', `condition:${c.statusActive.target}`);
+      }
+    }
+  }
+  const installedBodyPolicy = bodyPolicy(world);
+  if (installedBodyPolicy) {
+    const source = add('body-policy', 'current', 'Body policy', installedBodyPolicy);
+    const pending: StatusCondition[] = [
+      installedBodyPolicy.recovery?.when,
+      installedBodyPolicy.consumption?.suggestWhen,
+      installedBodyPolicy.backgroundThinking.maintenanceBlockedWhen,
+      installedBodyPolicy.backgroundThinking.commitBlockedWhen,
+      installedBodyPolicy.backgroundThinking.reflectionBlockedWhen,
+      ...installedBodyPolicy.backgroundThinking.reconsiderationInputs.map((input) => input.when),
+    ].filter((condition): condition is StatusCondition => !!condition);
+    for (const id of [
+      ...(installedBodyPolicy.recovery?.floors.map((floor) => floor.attributeId) ?? []),
+      ...installedBodyPolicy.revival.fillToMaximum,
+      installedBodyPolicy.consumption?.attributeId,
+      installedBodyPolicy.carryingConcern?.attributeId,
+    ]) {
+      if (!id) continue;
+      const target = resolve('attribute', id);
+      if (target) link(source, target.node.ref, 'uses', 'body service');
+    }
+    for (let i = 0; i < pending.length; i++) {
+      if (i > 10000)
+        throw new GraphReadError('capacity', 'Body policy relationships are too large.');
+      const condition = pending[i]!;
+      if ('all' in condition) pending.push(...condition.all);
+      else if ('any' in condition) pending.push(...condition.any);
+      else if ('compare' in condition || 'hasAttribute' in condition) {
+        const predicate = 'compare' in condition ? condition.compare : condition.hasAttribute;
+        const target = resolve('attribute', predicate.attribute);
+        if (target) link(source, target.node.ref, 'reads', predicate.target);
+      } else if ('statusActive' in condition) {
+        const target = resolve('status-effect', condition.statusActive.definitionId);
+        if (target) link(source, target.node.ref, 'requires', condition.statusActive.target);
       }
     }
   }
@@ -266,12 +319,18 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
         'A recipe output is missing; graph coverage is unavailable.',
       );
     link(ref, output.node.ref, 'produces');
-    const target =
-      value.output.gatheringTool &&
-      resolve('item-definition', value.output.gatheringTool.resourceId);
-    if (value.output.gatheringTool && !target)
-      throw new GraphReadError('unavailable', 'A gathering target definition is missing.');
-    if (target) link(ref, target.node.ref, 'uses', 'gathering-target');
+    for (const dependency of value.dependencyPins) {
+      if (value.inputs.some((input) => input.definitionId === dependency.id)) continue;
+      const target = resolve(
+        dependency.id === 'engine:item-handling-policy'
+          ? 'item-handling-policy'
+          : 'item-definition',
+        dependency.id,
+      );
+      if (!target)
+        throw new GraphReadError('unavailable', 'A compiled recipe dependency is missing.');
+      link(ref, target.node.ref, 'uses', 'family-dependency');
+    }
     const base = value.provenance.derivedFrom;
     if (base) {
       const actual = world.recipes[base.recipeId];

@@ -33,6 +33,14 @@ import {
 } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
 import { digest } from './store.js';
+import {
+  boundedPreview,
+  consumeProviderStream,
+  providerRunEvent,
+  ProviderEventGap,
+  redactRunFragment,
+  type ProviderRunEvent,
+} from './world-agent-events.js';
 
 type Lane = {
   worktree?: string;
@@ -41,7 +49,25 @@ type Lane = {
   blocked?: boolean;
   closed?: boolean;
   configuration?: string;
+  admissionRequest?: string;
+  targetUnconfirmed?: boolean;
 };
+type RunEventState = {
+  /** Native admission identity; accounting uses a separately scoped receipt key. */
+  requestId?: string;
+  sequence: string;
+  stage: 'investigating' | 'replying';
+  text: string;
+  carry: string;
+  protectedValues: string[];
+  incomplete: boolean;
+  omittedBytes: number;
+  recent: [string, string][];
+  pageLimit?: number;
+  paused?: boolean;
+  cancelRequested?: boolean;
+};
+class ProviderProgressFailure extends Error {}
 const permissions = {
   version: 1,
   shell: 'deny',
@@ -95,6 +121,7 @@ class MacrofoldAdmissionCancelled extends Error {}
  */
 export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
+  private privateApi: Pick<MacrofoldTransport, 'request'>;
   // A restored world starts fresh provider context; old operation records remain auditable.
   private readonly timeline: string;
   readonly provisioner: MacrofoldProvisioner;
@@ -113,6 +140,24 @@ export class MacrofoldBackend implements AiClient {
       service.config.macrofoldKey,
       log?.fetch,
     );
+    // World Agent prompts, event fragments and final results contain private
+    // context handles. Diagnostics receive only the owner's sanitized result.
+    const privateTransport = new MacrofoldTransport(
+      service.config.macrofoldUrl,
+      service.config.macrofoldKey,
+    );
+    this.privateApi = {
+      request: async (...args) => {
+        try {
+          return await privateTransport.request(...args);
+        } catch (error) {
+          // A JSON parser's error can quote a private answer or handle fragment.
+          if (error instanceof SyntaxError)
+            throw new InvalidData('Macrofold private response is invalid JSON.');
+          throw error;
+        }
+      },
+    };
     this.provisioner = new MacrofoldProvisioner(service.config, service.store, service.world.id);
   }
   private key(name: string): string {
@@ -161,6 +206,7 @@ export class MacrofoldBackend implements AiClient {
     body: unknown,
     signal?: AbortSignal,
     admissionSignal?: AbortSignal,
+    privateContent = false,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
     const previous = await this.load<{
@@ -189,7 +235,7 @@ export class MacrofoldBackend implements AiClient {
     }
     try {
       const result = object(
-        await this.api.request(
+        await (privateContent ? this.privateApi : this.api).request(
           path,
           body,
           digest(this.key(attempt ? `${name}:retry:${attempt}` : name)),
@@ -210,71 +256,211 @@ export class MacrofoldBackend implements AiClient {
       throw error;
     }
   }
-  /** Consume only bounded, contiguous pages. Save after capture so a crash replays the
-   * same question into the atomic authoring owner, never skips an unretained input. */
-  private async questionEvents(
+  /** One ordered reader retains questions and sanitized snapshots before its cursor.
+   * Replaying after a crash between these writes is idempotent at the turn owner.
+   * docs/projects/next-playable-week-tech-design.md#durable-progress-and-ordering
+   */
+  private async runEvents(
     id: string,
     signal: AbortSignal,
-    capture: NonNullable<WorldAgentTurn['onQuestion']>,
+    capture?: WorldAgentTurn['onQuestion'],
+    progress?: WorldAgentTurn['onProgress'],
+    stream = false,
+    closing = false,
   ) {
-    const state = (await this.load<{
-      sequence: string;
-      paused?: boolean;
-      cancelRequested?: boolean;
-    }>(`events:${id}`)) ?? {
+    const state: RunEventState = (await this.load<RunEventState>(`events:${id}`)) ?? {
       sequence: '0',
+      stage: 'replying',
+      text: '',
+      carry: '',
+      protectedValues: [],
+      incomplete: false,
+      omittedBytes: 0,
+      recent: [],
     };
-    for (let pageNumber = 0; pageNumber < 4; pageNumber++) {
-      const page = object(
-        await this.api.request(
-          `/v1/runs/${encodeURIComponent(id)}/events?after=${state.sequence}&limit=100`,
-          undefined,
-          undefined,
-          signal,
-          256 * 1024,
-        ),
-      );
-      if (!Array.isArray(page['data']) || page['data'].length > 100)
-        throw new InvalidData('Macrofold question event page is invalid.');
-      for (const raw of page['data']) {
-        const event = object(raw);
-        const sequence = event['sequence'];
-        if (
-          event['run_id'] !== id ||
-          typeof sequence !== 'string' ||
-          !/^[0-9]{1,20}$/.test(sequence) ||
-          BigInt(sequence) !== BigInt(state.sequence) + 1n
-        )
-          throw new InvalidData(
-            'Macrofold question event history has a gap or an invalid identity.',
-          );
-        if (event['type'] === 'input.requested') {
-          if (Buffer.byteLength(JSON.stringify(event)) > 64 * 1024)
-            throw new InvalidData('Macrofold question event exceeds its byte limit.');
-          const data = object(event['data']);
+    let dirty = false;
+    let lastFlush = 0;
+    const flush = async (immediate = false) => {
+      if (!dirty || (!immediate && Date.now() - lastFlush < 250)) return;
+      if (Buffer.byteLength(JSON.stringify(state)) > 128 * 1024)
+        throw new InvalidData('Macrofold retained event progress exceeds its byte limit.');
+      try {
+        await progress?.({
+          runId: id,
+          sequence: state.sequence,
+          stage: state.stage,
+          text: state.stage === 'replying' ? state.text : '',
+          incomplete: state.incomplete,
+          omittedBytes: state.omittedBytes,
+        });
+        await this.save(`events:${id}`, state);
+      } catch (error) {
+        throw new ProviderProgressFailure('Run progress could not be retained.', { cause: error });
+      }
+      lastFlush = Date.now();
+      dirty = false;
+    };
+    const consume = async (event: ProviderRunEvent) => {
+      const sequence = BigInt(event.sequence);
+      const fingerprint = digest(event);
+      if (sequence <= BigInt(state.sequence)) {
+        const previous = state.recent.find(([number]) => number === event.sequence);
+        if (!previous || previous[1] !== fingerprint)
+          throw new InvalidData('Macrofold repeated an event with unconfirmed or changed content.');
+        return;
+      }
+      if (sequence !== BigInt(state.sequence) + 1n)
+        throw new ProviderEventGap('Macrofold event history has a gap.');
+      if (event.type === 'output.delta' && state.stage === 'replying') {
+        const sanitized = redactRunFragment(
+          state.carry,
+          String(event.data['text']),
+          state.protectedValues,
+        );
+        state.carry = sanitized.carry;
+        const preview = boundedPreview(state.text, sanitized.text);
+        state.text = preview.text;
+        state.omittedBytes = Math.min(
+          Number.MAX_SAFE_INTEGER,
+          state.omittedBytes + preview.omitted,
+        );
+        state.incomplete ||= preview.omitted > 0;
+      }
+      if (event.type === 'input.requested') {
+        if (!capture)
+          throw new InvalidData('Macrofold requested input without an authorized question owner.');
+        // Earlier text is retained before the distinct question and its write fence.
+        await flush(true);
+        if (Buffer.byteLength(JSON.stringify(event.data)) > 64 * 1024)
+          throw new InvalidData('Macrofold question event exceeds its byte limit.');
+        try {
           await capture({
             runId: id,
-            sequence,
-            requestId: string(data['input_request_id']),
-            questions: object(data['details'])['questions'],
+            sequence: event.sequence,
+            requestId: string(event.data['input_request_id']),
+            questions: object(event.data['details'])['questions'],
           });
-          state.paused = true;
+        } catch (error) {
+          if (
+            error instanceof InvalidData ||
+            error instanceof AuthoringRequestError ||
+            error instanceof SyntaxError
+          )
+            throw error;
+          throw new ProviderProgressFailure('Run question could not be retained.', {
+            cause: error,
+          });
         }
-        state.sequence = sequence;
+        state.paused = true;
       }
-      if (page['data'].length) await this.save(`events:${id}`, state);
+      state.sequence = event.sequence;
+      state.recent.push([event.sequence, fingerprint]);
+      if (state.recent.length > 100) state.recent.shift();
+      dirty = true;
+      if (
+        event.type === 'input.requested' ||
+        /^run\.(succeeded|failed|cancelled|timed_out)$/.test(event.type)
+      )
+        await flush(true);
+      else await flush();
       if (state.paused && !state.cancelRequested) {
-        await this.cancel(id, signal);
+        await this.cancel(id, signal, true);
         state.cancelRequested = true;
-        await this.save(`events:${id}`, state);
+        dirty = true;
+        await flush(true);
       }
-      if (!page['next_cursor']) return { question: state.paused === true, hasMore: false };
-      if (!page['data'].length)
-        throw new InvalidData('Macrofold question event cursor did not advance.');
+    };
+    if (stream) {
+      try {
+        await consumeProviderStream(
+          this.service.config.macrofoldUrl,
+          this.service.config.macrofoldKey,
+          id,
+          state.sequence,
+          signal,
+          consume,
+          () => flush(),
+        );
+      } catch (error) {
+        signal.throwIfAborted();
+        if (
+          error instanceof InvalidData ||
+          error instanceof AuthoringRequestError ||
+          error instanceof SyntaxError ||
+          error instanceof ProviderProgressFailure
+        )
+          throw error;
+        // Rotation, network failure or a missing live sequence resumes from the
+        // same retained Run history. This never repeats admission or generation.
+      }
     }
-    // A full inspection window is progress, not a malformed history or proof that
-    // no question exists. Resume from the durable cursor on the next bounded pass.
-    return { question: state.paused === true, hasMore: true };
+    let hasMore = false;
+    for (let pageNumber = 0; pageNumber < 4; pageNumber++) {
+      let page: Record<string, unknown>;
+      let limit = state.pageLimit ?? 100;
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+        throw new InvalidData('Macrofold event page limit is invalid.');
+      for (;;) {
+        try {
+          page = object(
+            await this.privateApi.request(
+              `/v1/runs/${encodeURIComponent(id)}/events?after=${state.sequence}&limit=${limit}`,
+              undefined,
+              undefined,
+              signal,
+              256 * 1024 + 1024,
+            ),
+          );
+          break;
+        } catch (error) {
+          if (error instanceof SyntaxError)
+            throw new InvalidData('Macrofold event history is invalid JSON.');
+          if (
+            !(error instanceof InvalidData) ||
+            error.message !== 'Macrofold response exceeds the size limit.' ||
+            limit === 1
+          )
+            throw error;
+          // Read-only replay can contain several individually valid large frames.
+          // Halve its page at the same cursor; no admission or paid retry occurs.
+          limit = Math.max(1, Math.floor(limit / 2));
+          state.pageLimit = limit;
+          dirty = true;
+        }
+      }
+      if (
+        !Array.isArray(page['data']) ||
+        page['data'].length > limit ||
+        (page['next_cursor'] !== null &&
+          page['next_cursor'] !== undefined &&
+          (typeof page['next_cursor'] !== 'string' ||
+            !/^(0|[1-9][0-9]{0,19})$/.test(page['next_cursor'])))
+      )
+        throw new InvalidData('Macrofold event page is invalid.');
+      try {
+        for (const raw of page['data']) await consume(providerRunEvent(raw, id));
+      } catch (error) {
+        if (error instanceof ProviderEventGap)
+          throw new InvalidData('Macrofold retained event history has an unrecoverable gap.');
+        throw error;
+      }
+      hasMore = !!page['next_cursor'];
+      if (hasMore && (!page['data'].length || page['next_cursor'] !== state.sequence))
+        throw new InvalidData('Macrofold event cursor did not advance.');
+      if (!hasMore) break;
+    }
+    if (closing && !hasMore && state.carry) {
+      // A terminal/cancelled Run cannot reveal an unfinished protected prefix.
+      state.carry = '';
+      state.incomplete = true;
+      dirty = true;
+    }
+    if (dirty) {
+      const remaining = 250 - (Date.now() - lastFlush);
+      if (remaining > 0) await delay(remaining, undefined, { signal });
+      await flush(true);
+    }
+    return { question: state.paused === true, hasMore };
   }
   private async waitRun(
     id: string,
@@ -282,6 +468,8 @@ export class MacrofoldBackend implements AiClient {
     signal: AbortSignal,
     maxToolCalls?: number,
     onQuestion?: WorldAgentTurn['onQuestion'],
+    onProgress?: WorldAgentTurn['onProgress'],
+    privateContent = false,
   ): Promise<{
     status: Record<string, unknown>;
     result: Record<string, unknown>;
@@ -290,10 +478,11 @@ export class MacrofoldBackend implements AiClient {
     let eventSequence = '0';
     let missingQuestionPolls = 0;
     const toolCalls = new Set<string>();
+    const api = privateContent ? this.privateApi : this.api;
     for (;;) {
       signal.throwIfAborted();
       const status = object(
-        await this.api.request(string(urls['status']), undefined, undefined, signal),
+        await api.request(string(urls['status']), undefined, undefined, signal),
       );
       if (status['id'] !== id) throw new Error('Macrofold run identity mismatch.');
       if (maxToolCalls !== undefined) {
@@ -318,9 +507,17 @@ export class MacrofoldBackend implements AiClient {
           }
         }
       }
-      const events = onQuestion
-        ? await this.questionEvents(id, signal, onQuestion)
-        : { question: false, hasMore: false };
+      const events =
+        onQuestion || onProgress
+          ? await this.runEvents(
+              id,
+              signal,
+              onQuestion,
+              onProgress,
+              !!onProgress && !terminal.has(String(status['status'])),
+              terminal.has(String(status['status'])),
+            )
+          : { question: false, hasMore: false };
       if (events.hasMore) {
         await delay(500, undefined, { signal });
         continue;
@@ -328,7 +525,7 @@ export class MacrofoldBackend implements AiClient {
       const question = events.question;
       if (terminal.has(String(status['status']))) {
         const result = object(
-          await this.api.request(string(urls['result']), undefined, undefined, signal),
+          await api.request(string(urls['result']), undefined, undefined, signal),
         );
         if (result['run_id'] !== id || result['final'] !== true)
           throw new Error('Macrofold result is not final.');
@@ -347,13 +544,15 @@ export class MacrofoldBackend implements AiClient {
     sessionId: string,
     turnId: string,
     capture: NonNullable<WorldAgentTurn['onQuestion']>,
+    progress?: WorldAgentTurn['onProgress'],
+    beginRun?: WorldAgentTurn['beginRun'],
   ): Promise<WorldAgentReply | undefined> {
     const pending = this.questionReconciliations.get(sessionId);
     if (pending) return pending;
     if (this.questionReconciliations.size >= 4 || this.busy.has(`authoring:${sessionId}`))
       return Promise.resolve(undefined);
-    const work = this.reconcileQuestionRun(sessionId, turnId, capture).finally(() =>
-      this.questionReconciliations.delete(sessionId),
+    const work = this.reconcileQuestionRun(sessionId, turnId, capture, progress, beginRun).finally(
+      () => this.questionReconciliations.delete(sessionId),
     );
     this.questionReconciliations.set(sessionId, work);
     return work;
@@ -362,19 +561,92 @@ export class MacrofoldBackend implements AiClient {
     sessionId: string,
     turnId: string,
     capture: NonNullable<WorldAgentTurn['onQuestion']>,
+    progress?: WorldAgentTurn['onProgress'],
+    beginRun?: WorldAgentTurn['beginRun'],
   ): Promise<WorldAgentReply | undefined> {
     const original = await this.load<{
       turnId: string;
-      runId: string;
+      runId?: string;
       receipt: AiReceipt;
       billingMode: 'managed' | 'byok';
+      stage: 'investigating' | 'replying';
+      requestId: string;
+      applicationRequestId: string;
+      workerId: string;
+      worktreeId: string;
+      sessionId?: string;
+      protectedValues: string[];
     }>(`authoring-run:${sessionId}`);
     if (!original || original.turnId !== turnId) return;
+    const operation = await this.load<{ response?: Record<string, unknown>; rejected?: boolean }>(
+      `operation:run:${original.requestId}`,
+    );
+    if (!original.runId) {
+      // Admission's journal commits its response before returning to the caller.
+      // Recover that exact receipt after a crash; never replay an uncertain POST.
+      if (!operation || operation.rejected) {
+        original.receipt.dispatched = false;
+        original.receipt.completionUncertain = false;
+        original.receipt.completedAt = new Date().toISOString();
+        await this.service.store.settle(original.receipt.requestId, original.receipt);
+        const lane = await this.load<Lane>(`lane:authoring:${sessionId}`);
+        if (lane?.admissionRequest === original.requestId && !lane.run) {
+          lane.blocked = false;
+          delete lane.admissionRequest;
+          await this.save(`lane:authoring:${sessionId}`, lane);
+        }
+        return {
+          ok: false,
+          code: 'failed',
+          message: operation?.rejected
+            ? 'The provider rejected this request before a Run started. No generation was submitted again.'
+            : 'This request stopped before provider admission. No generation started; continue explicitly with current context.',
+        };
+      }
+      if (!operation?.response) return;
+    }
+    const accepted = operation?.response;
+    const expectedLane = await this.load<Lane>(`lane:authoring:${sessionId}`);
+    // The accepted journal may have committed before target checks/callbacks.
+    // Never project, cancel or bill a Run returned for another execution target.
+    if (
+      !accepted ||
+      !original.workerId ||
+      !original.worktreeId ||
+      original.workerId !== this.service.config.macrofoldWorkerId ||
+      expectedLane?.worktree !== original.worktreeId ||
+      accepted['worker_id'] !== original.workerId ||
+      accepted['worktree_id'] !== original.worktreeId ||
+      typeof accepted['session_id'] !== 'string' ||
+      !accepted['session_id'] ||
+      (original.sessionId && accepted['session_id'] !== original.sessionId) ||
+      (original.runId && accepted['run_id'] !== original.runId)
+    )
+      return;
+    if (!original.runId) {
+      original.runId = string(accepted['run_id']);
+      original.receipt.providerRequestId = original.runId;
+      await this.save(`authoring-run:${sessionId}`, original);
+    }
+    const retainedEvents = await this.load<RunEventState>(`events:${original.runId}`);
+    if (retainedEvents?.requestId && retainedEvents.requestId !== original.requestId) return;
+    if (!retainedEvents)
+      await this.save(`events:${original.runId}`, {
+        requestId: original.requestId,
+        sequence: '0',
+        stage: original.stage,
+        text: '',
+        carry: '',
+        protectedValues: original.protectedValues,
+        incomplete: false,
+        omittedBytes: 0,
+        recent: [],
+      } satisfies RunEventState);
     const signal = AbortSignal.timeout(10000);
     // Recovery addresses only the retained Run. It never submits generation or native input.
-    await this.cancel(original.runId, signal);
+    await this.cancel(original.runId, signal, true);
     const status = object(
-      await this.api.request(
+      await this.privateApi.request(
         `/v1/runs/${encodeURIComponent(original.runId)}`,
         undefined,
         undefined,
@@ -388,21 +660,39 @@ export class MacrofoldBackend implements AiClient {
     )
       return;
     const receipt = { ...original.receipt };
-    await this.captureRunUsage(receipt, signal, original.billingMode);
+    if (
+      original.billingMode === 'managed' &&
+      typeof status['cost_micro_usd'] === 'string' &&
+      /^\d+$/.test(status['cost_micro_usd'])
+    )
+      receipt.estimatedCostUsd = Number(status['cost_micro_usd']) / 1e6;
+    await this.captureRunUsage(receipt, signal, original.billingMode, true);
     if (receipt.estimatedCostUsd === undefined) return;
     receipt.completionUncertain = false;
     receipt.completedAt = new Date().toISOString();
     receipt.latencyMs = Date.now() - Date.parse(receipt.startedAt);
     await this.service.store.settle(receipt.requestId, receipt);
     const lane = await this.load<Lane>(`lane:authoring:${sessionId}`);
-    if (lane?.run === original.runId) {
+    if (
+      lane &&
+      (lane.run === original.runId || (!lane.run && lane.admissionRequest === original.requestId))
+    ) {
       lane.blocked = false;
       delete lane.run;
+      delete lane.admissionRequest;
+      delete lane.targetUnconfirmed;
       await this.save(`lane:authoring:${sessionId}`, lane);
     }
     let question: boolean;
     try {
-      const events = await this.questionEvents(original.runId, signal, capture);
+      // Expired delivery authority must not prevent settling the retained Run.
+      await beginRun?.({
+        runId: original.runId,
+        stage: original.stage,
+        requestId: original.requestId,
+        applicationRequestId: original.applicationRequestId,
+      });
+      const events = await this.runEvents(original.runId, signal, capture, progress, false, true);
       if (events.hasMore) return;
       question = events.question;
     } catch (error) {
@@ -420,9 +710,44 @@ export class MacrofoldBackend implements AiClient {
         ok: false,
         code: 'failed',
         message:
-          'The agent question could not be used. Previous work has stopped and its usage is recorded. Start a new request with current context.',
+          'The retained provider events could not be reconciled. Previous work has stopped and its usage is recorded. Start a new request with current context.',
       };
     }
+    if (!question && original.stage === 'replying' && status['status'] === 'succeeded') {
+      const result = object(
+        await this.privateApi.request(
+          `/v1/runs/${encodeURIComponent(original.runId)}/result`,
+          undefined,
+          undefined,
+          signal,
+        ),
+      );
+      if (
+        result['run_id'] !== original.runId ||
+        result['final'] !== true ||
+        result['execution_outcome'] !== 'success' ||
+        !nativePersistenceSettled(status, result['persistence_status'])
+      )
+        return;
+      let message = string(result['output_text']);
+      for (const value of original.protectedValues)
+        message = message.split(value).join('[session context redacted]');
+      return {
+        ok: true,
+        code: 'completed',
+        message:
+          message.length <= 48000
+            ? message
+            : 'The agent result exceeds the conversation limit. Saved drafts and reviews remain available; inspect the remote run for its full text.',
+      };
+    }
+    if (!question && original.stage === 'investigating' && status['status'] === 'succeeded')
+      return {
+        ok: false,
+        code: 'interrupted',
+        message:
+          'Investigation completed, but its reply stage was interrupted before it could finish. Saved work remains available; continue explicitly.',
+      };
     return {
       ok: question,
       code: question ? 'waiting-for-answer' : 'cancelled',
@@ -431,7 +756,7 @@ export class MacrofoldBackend implements AiClient {
         : 'Interrupted work has stopped. Saved drafts and incurred usage are retained.',
     };
   }
-  private cancel(run: string, signal?: AbortSignal): Promise<void> {
+  private cancel(run: string, signal?: AbortSignal, privateContent = false): Promise<void> {
     const pending = this.cancellations.get(run);
     if (pending) return pending;
     const cancellation = this.mutation(
@@ -439,6 +764,8 @@ export class MacrofoldBackend implements AiClient {
       `/v1/runs/${encodeURIComponent(run)}/cancel`,
       {},
       signal,
+      undefined,
+      privateContent,
     )
       .then(() => {})
       .finally(() => this.cancellations.delete(run));
@@ -451,6 +778,7 @@ export class MacrofoldBackend implements AiClient {
     receipt: AiReceipt,
     signal: AbortSignal,
     billingMode = this.service.config.macrofoldBillingMode,
+    privateContent = false,
   ): Promise<void> {
     if (!receipt.providerRequestId) return;
     try {
@@ -461,7 +789,12 @@ export class MacrofoldBackend implements AiClient {
         limit: '100',
       });
       const page = object(
-        await this.api.request(`/v1/billing/usage?${query}`, undefined, undefined, signal),
+        await (privateContent ? this.privateApi : this.api).request(
+          `/v1/billing/usage?${query}`,
+          undefined,
+          undefined,
+          signal,
+        ),
       );
       if (page['next_cursor'] || !Array.isArray(page['data'])) return;
       const entries = page['data'].map(object);
@@ -532,15 +865,16 @@ export class MacrofoldBackend implements AiClient {
     if (this.busy.has(name)) throw new Error('This agent already has work in progress.');
     this.busy.add(name);
     let lane: Lane = {};
+    let runTargetVerified = !worldAgent;
     // Closure has its own record; lane writes need no read/merge race or extra lookup.
     const save = () => this.save(`lane:${name}`, lane);
     try {
       lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
       await this.assertLaneOpen(name, lane);
       const workerId = this.nativeWorkerId();
-      if (lane.blocked && lane.run) {
+      if (lane.blocked && lane.run && !lane.targetUnconfirmed) {
         const previous = object(
-          await this.api.request(
+          await (worldAgent ? this.privateApi : this.api).request(
             `/v1/runs/${encodeURIComponent(lane.run)}`,
             undefined,
             undefined,
@@ -622,9 +956,23 @@ export class MacrofoldBackend implements AiClient {
       await this.assertLaneOpen(name, lane);
       signal.throwIfAborted();
       // A crash between admission and saving IDs cannot admit a second run.
-      lane.blocked = true;
-      await save();
       receipt.dispatched = true;
+      if (worldAgent)
+        await this.save(`authoring-run:${worldAgent.sessionId}`, {
+          turnId: worldAgent.turnId,
+          requestId: id,
+          applicationRequestId: worldAgent.applicationRequestId ?? worldAgent.turnId,
+          workerId,
+          worktreeId: lane.worktree,
+          ...(continuingSession ? { sessionId: continuingSession } : {}),
+          receipt,
+          billingMode,
+          stage: worldAgent.streamStage ?? 'replying',
+          protectedValues: [worldAgent.contextHandle],
+        });
+      lane.blocked = true;
+      lane.admissionRequest = id;
+      await save();
       const accepted = await this.mutation(
         `run:${id}`,
         '/v1/runs',
@@ -649,6 +997,7 @@ export class MacrofoldBackend implements AiClient {
               }),
           worker_id: workerId,
           prompt,
+          ...(worldAgent ? { stream: true } : {}),
           // Worker capacity still queues; only same-Worktree follow-ups are refused.
           queue_if_busy: false,
           scheduling_class: reflection ? 'background' : 'interactive',
@@ -665,25 +1014,64 @@ export class MacrofoldBackend implements AiClient {
         // could not be cancelled. The checks below cancel a late-accepted Run.
         AbortSignal.timeout(config.macrofoldTimeoutSeconds * 1000),
         signal,
+        !!worldAgent,
       );
       lane.run = string(accepted['run_id']);
       receipt.providerRequestId = lane.run;
-      // Keep a known Run cancellable even if the rest of the response is invalid.
+      // A known receipt stays fenced until its execution target is confirmed.
+      if (worldAgent) lane.targetUnconfirmed = true;
       await save();
-      if (worldAgent?.onQuestion)
-        await this.save(`authoring-run:${worldAgent.sessionId}`, {
-          turnId: worldAgent.turnId,
-          runId: lane.run,
-          receipt,
-          billingMode,
-        });
       if (accepted['worker_id'] !== workerId || accepted['worktree_id'] !== lane.worktree)
         throw new Error('Macrofold returned an unexpected execution target.');
       const session = string(accepted['session_id']);
       if (continuingSession && session !== continuingSession)
         throw new Error('Macrofold returned an unexpected conversation identity.');
+      runTargetVerified = true;
+      delete lane.targetUnconfirmed;
       lane.session = session;
       await save();
+      if (worldAgent) {
+        const stage = worldAgent.streamStage ?? 'replying';
+        const retainedEvents = await this.load<RunEventState>(`events:${lane.run}`);
+        if (retainedEvents?.requestId && retainedEvents.requestId !== id) {
+          // This receipt cannot grant another admission ownership of an earlier Run.
+          runTargetVerified = false;
+          lane.targetUnconfirmed = true;
+          await save();
+          throw new Error('Macrofold returned a Run already owned by another request.');
+        }
+        await this.save(`authoring-run:${worldAgent.sessionId}`, {
+          turnId: worldAgent.turnId,
+          runId: lane.run,
+          receipt,
+          billingMode,
+          stage,
+          requestId: id,
+          applicationRequestId: worldAgent.applicationRequestId ?? worldAgent.turnId,
+          workerId,
+          worktreeId: lane.worktree,
+          ...(continuingSession ? { sessionId: continuingSession } : {}),
+          protectedValues: [worldAgent.contextHandle],
+        });
+        if (!retainedEvents)
+          await this.save(`events:${lane.run}`, {
+            requestId: id,
+            sequence: '0',
+            stage,
+            text: '',
+            carry: '',
+            protectedValues: [worldAgent.contextHandle],
+            incomplete: false,
+            omittedBytes: 0,
+            recent: [],
+          } satisfies RunEventState);
+        await worldAgent.beginRun?.({
+          runId: lane.run,
+          stage,
+          requestId: id,
+          applicationRequestId: worldAgent.applicationRequestId ?? worldAgent.turnId,
+        });
+      }
       await this.assertLaneOpen(name, lane);
       signal.throwIfAborted();
       const { status, result, question } = await this.waitRun(
@@ -692,9 +1080,11 @@ export class MacrofoldBackend implements AiClient {
         signal,
         reflection ? 8 : undefined,
         worldAgent?.onQuestion,
+        worldAgent?.onProgress,
+        !!worldAgent,
       ).catch((error: unknown) => {
         if (
-          worldAgent?.onQuestion &&
+          worldAgent &&
           !(error instanceof InvalidData) &&
           !(error instanceof AuthoringRequestError) &&
           !(error instanceof SyntaxError)
@@ -712,13 +1102,14 @@ export class MacrofoldBackend implements AiClient {
         /^\d+$/.test(status['cost_micro_usd'])
       )
         receipt.estimatedCostUsd = Number(status['cost_micro_usd']) / 1e6;
-      await this.captureRunUsage(receipt, signal, billingMode);
+      await this.captureRunUsage(receipt, signal, billingMode, !!worldAgent);
       if (!nativePersistenceSettled(status, result['persistence_status']))
         throw new Error(
           'Macrofold persistence was not verified; this actor lane is blocked to protect conversation continuity.',
         );
       lane.blocked = false;
       delete lane.run;
+      delete lane.admissionRequest;
       await save();
       if (question) {
         if (receipt.estimatedCostUsd === undefined)
@@ -744,13 +1135,14 @@ export class MacrofoldBackend implements AiClient {
         (error instanceof MacrofoldAdmissionCancelled || admissionRejected(error, '/v1/runs'))
       ) {
         lane.blocked = false;
+        delete lane.admissionRequest;
         receipt.dispatched = false;
         receipt.completionUncertain = false;
         await save();
       }
-      if (lane.run) {
+      if (lane.run && runTargetVerified) {
         try {
-          await this.cancel(lane.run);
+          await this.cancel(lane.run, undefined, !!worldAgent);
         } catch {
           /* Retain blocked identity for reconciliation. */
         }
@@ -1439,13 +1831,23 @@ export class MacrofoldBackend implements AiClient {
         ? await this.service.store.attemptReceipt(this.key(`message:${call.id}`))
         : undefined);
     if (storedReceipt?.providerRequestId) runs.add(storedReceipt.providerRequestId);
+    const privateContent = call.kind === 'Full harness · world agent';
+    const api = privateContent ? this.privateApi : this.api;
+    const privateReceiptEvents =
+      privateContent && storedReceipt?.providerRequestId
+        ? await this.load<RunEventState>(`events:${storedReceipt.providerRequestId}`)
+        : undefined;
+    const confirmedPrivateReceipt =
+      !!storedReceipt &&
+      storedReceipt.requestId === this.key(`message:${call.id}`) &&
+      privateReceiptEvents?.requestId === call.id;
     const readPages = async (path: string) => {
       const data: unknown[] = [];
       let cursor: string | null = null;
       for (let page = 0; page < 10; page++) {
         const separator = path.includes('?') ? '&' : '?';
         const result = object(
-          await this.api.request(
+          await api.request(
             `${path}${separator}limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
             undefined,
             undefined,
@@ -1460,6 +1862,16 @@ export class MacrofoldBackend implements AiClient {
     };
     const results = [];
     for (const run of runs) {
+      if (
+        privateContent &&
+        (!confirmedPrivateReceipt || run !== storedReceipt?.providerRequestId)
+      ) {
+        results.push({
+          unavailable:
+            'The World Agent execution target is unconfirmed. Its original receipt remains uncertain; no provider details were attributed to it.',
+        });
+        continue;
+      }
       const query = new URLSearchParams({
         run_id: run,
         from: call.startedAt,
@@ -1476,15 +1888,33 @@ export class MacrofoldBackend implements AiClient {
               unavailable:
                 result.reason instanceof Error ? result.reason.message : 'Request failed.',
             };
-      results.push({ runId: run, events: value(events), billing: value(billing) });
+      results.push({
+        runId: run,
+        // Raw World Agent events include split handle fragments and tool inputs.
+        // Its sanitized answer and required questions have separate durable owners.
+        events:
+          privateContent && events.status === 'fulfilled'
+            ? {
+                unavailable:
+                  'Raw World Agent event content is withheld. Saved questions and sanitized replies remain available.',
+                count: events.value.data.length,
+                truncated: events.value.truncated,
+              }
+            : value(events),
+        billing: value(billing),
+      });
     }
     const output = call.output as { receipt?: AiReceipt } | undefined;
-    if (storedReceipt?.providerRequestId && storedReceipt.estimatedCostUsd === undefined) {
+    if (
+      storedReceipt?.providerRequestId &&
+      storedReceipt.estimatedCostUsd === undefined &&
+      (!privateContent || confirmedPrivateReceipt)
+    ) {
       const receipt = { ...storedReceipt };
       const signal = AbortSignal.timeout(10_000);
       try {
         const status = object(
-          await this.api.request(
+          await api.request(
             `/v1/runs/${encodeURIComponent(receipt.providerRequestId!)}`,
             undefined,
             undefined,
@@ -1492,7 +1922,12 @@ export class MacrofoldBackend implements AiClient {
           ),
         );
         if (status['id'] === receipt.providerRequestId && terminal.has(String(status['status']))) {
-          await this.captureRunUsage(receipt, signal);
+          await this.captureRunUsage(
+            receipt,
+            signal,
+            this.service.config.macrofoldBillingMode,
+            privateContent,
+          );
           if (receipt.estimatedCostUsd !== undefined) {
             receipt.completionUncertain = false;
             await this.service.store.settle(receipt.requestId, receipt);
@@ -1524,7 +1959,7 @@ export class MacrofoldBackend implements AiClient {
     this.controllers.get(name)?.abort();
     await this.save(`closed:${name}`, true);
     const lane = await this.load<Lane>(`lane:${name}`);
-    if (lane?.run) await this.cancel(lane.run);
+    if (lane?.run && !lane.targetUnconfirmed) await this.cancel(lane.run, undefined, worldAgent);
     // The shared Worker and durable Worktree/Session are not owned by this tab.
     // An uncertain admission remains fenced until its original request is reconciled.
   }

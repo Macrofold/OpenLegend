@@ -63,27 +63,15 @@ describe('actor-scoped native decision candidates', () => {
   it('executes a learned tool and food loop through scoped feasible candidates', async () => {
     const service = await setup();
     const draft: DeclarationDraft = {
-      schemaVersion: 1,
+      family: { id: 'base:swing', version: 1 },
       name: 'Fixture sling',
       description: 'Test-only learned composition.',
       inputs: [
         { definitionId: 'cord', quantity: 1, role: 'binding' },
         { definitionId: 'prepared_fiber', quantity: 2, role: 'pouch' },
       ],
-      workSeconds: 60,
-      output: {
-        kind: 'launcher',
-        name: 'Fixture sling',
-        description: 'Test only.',
-        properties: ['flexible'],
-        launcher: {
-          mechanism: 'swing',
-          ammunitionKind: 'stone',
-          damage: 18,
-          range: 7,
-          accuracy: 0.9,
-        },
-      },
+      output: { name: 'Fixture sling', description: 'Test only.' },
+      parameters: { workSeconds: 60, damage: 18, range: 7, accuracy: 0.9 },
     };
     expect(
       (

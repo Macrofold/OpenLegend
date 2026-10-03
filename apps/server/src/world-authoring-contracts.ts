@@ -154,7 +154,9 @@ export const WORLD_AUTHORING_TOOLS = {
   ol_authoring_guide: {
     description:
       'Read missing selected-kind field meanings and native mechanics. The context usually already includes this guide; do not read it again unless needed. Guidance never grants a capability or approval.',
-    schema: z.object({ kind: authoringKind }).strict(),
+    schema: z
+      .object({ kind: authoringKind, familyId: z.string().min(1).max(120).optional() })
+      .strict(),
   },
   ol_request_capability: {
     description:
@@ -263,6 +265,37 @@ export const sessionDecisionRequest = sessionRequest.extend({
   decision: z.enum(['approve', 'reject']),
   digest: z.string().regex(/^[a-f0-9]{64}$/),
 });
+const sessionDraftSelectionRequest = sessionRequest.extend(draft).strict();
+export const sessionDraftReadRequest = sessionDraftSelectionRequest
+  .extend({ afterPlan: id.optional() })
+  .strict();
+export const sessionDraftHistoryRequest = sessionRequest
+  .extend({ draftId: id, before: revision.optional() })
+  .strict();
+export const sessionDraftCompareRequest = sessionRequest
+  .extend({ draftId: id, fromRevision: revision, toRevision: revision })
+  .strict();
+const humanCandidate = z.unknown().refine((value) => {
+  try {
+    return (
+      !!value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      boundedContainers(value) &&
+      Buffer.byteLength(JSON.stringify(value)) <= 24000
+    );
+  } catch {
+    return false;
+  }
+}, 'Supply a bounded candidate object within the 24,000-byte authoring limit.');
+export const sessionDraftPreviewRequest = sessionRequest
+  .extend({ draftId: id, expectedRevision: revision, candidate: humanCandidate })
+  .strict();
+export const sessionDraftSaveRequest = sessionDraftPreviewRequest
+  .extend({ ...mutation, intent: z.string().min(1).max(4000).optional() })
+  .strict();
+export const sessionDraftPrepareRequest = sessionDraftSelectionRequest.extend(mutation).strict();
+export const sessionDraftCheckRequest = sessionDraftSelectionRequest;
 export const authoringToolRequest = z
   .object({
     contextHandle: z.string().min(32).max(256),

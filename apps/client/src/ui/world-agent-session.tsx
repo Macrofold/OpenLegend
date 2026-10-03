@@ -3,14 +3,16 @@ import type {
   WorldAgentSessionStatus,
   WorldAgentTurnView,
   WorldAgentTurnCursor,
+  WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
 import { useEffect, useRef, useState } from 'react';
 import { Button, EmptyState, Tag } from '../design-system/components';
-import { post } from '../api';
+import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
 import { WorldAgentQuestionCard } from './world-agent-question';
 import { WorldAgentReview } from './world-agent-review';
+import { WorldAgentWorkView } from './world-agent-work';
 import { UsageRemaining } from './usage-remaining';
 
 type Pending = { id: string; text: string };
@@ -27,7 +29,7 @@ const pendingValue = (v: unknown): v is Pending | null =>
     typeof v.text === 'string');
 
 /** The session ID and request receipt, not the browser transcript, own continuation.
- * Reopening/polling must never dispatch inference. docs/world-agent-runtime.md#durable-turn-delivery
+ * Reopening/subscribing must never dispatch inference. docs/world-agent-runtime.md#durable-turn-delivery
  */
 export function WorldAgentSession({
   worldId,
@@ -71,11 +73,12 @@ export function WorldAgentSession({
   const [status, setStatus] = useState<WorldAgentSessionStatus>();
   const [turns, setTurns] = useState<WorldAgentTurnView[]>([]);
   const [before, setBefore] = useState<WorldAgentTurnCursor | null>(null);
-  const [page, setPage] = useState<{ afterDraft?: string; afterPlan?: string }>({});
-  const pageRef = useRef(page);
+  const [view, setView] = useState<'conversation' | 'work'>('conversation');
+  const [seenWork, setSeenWork] = useState<string>();
   const [review, setReview] = useState<string>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [subscriptionRevision, setSubscriptionRevision] = useState(0);
   const alive = useRef(true),
     working = useRef(false),
     refreshing = useRef(false);
@@ -109,7 +112,16 @@ export function WorldAgentSession({
   function mergeTurns(values: WorldAgentTurnView[]) {
     setTurns((previous) => {
       const map = new Map(previous.map((turn) => [turn.id, turn]));
-      for (const turn of values) map.set(turn.id, turn);
+      for (const turn of values) {
+        const current = map.get(turn.id);
+        if (
+          (current?.revision ?? 0) > (turn.revision ?? 0) ||
+          (current?.progress?.revision ?? 0) > (turn.progress?.revision ?? 0) ||
+          (current?.response && !turn.response)
+        )
+          continue;
+        map.set(turn.id, turn);
+      }
       return [...map.values()]
         .sort((a, b) => a.sequence - b.sequence || a.id.localeCompare(b.id))
         .slice(-256);
@@ -134,7 +146,7 @@ export function WorldAgentSession({
     try {
       const response = await post<WorldAgentSessionStatus & { ok: boolean; message?: string }>(
         '/api/world-agent/session/status',
-        { ...prefix, ...pageRef.current },
+        prefix,
         AbortSignal.timeout(15000),
       );
       if (!response.ok) throw new Error(response.message ?? 'Session unavailable.');
@@ -188,32 +200,83 @@ export function WorldAgentSession({
       }
     }
   }
-  // Only the visible conversation polls, with no overlapping read batches. Sleeping tabs do no work.
+  async function reconnect() {
+    await refresh();
+    if (alive.current) setSubscriptionRevision((revision) => revision + 1);
+  }
+  // One visible owner stream. Status/history reads serve initial/reconnect or explicit
+  // mutation recovery; they never run a simultaneous fast polling loop.
   useEffect(() => {
     if (!visible || !connected) return;
     let disposed = false;
-    let polling = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      if (disposed || polling || document.visibilityState !== 'visible') return;
-      polling = true;
-      clearTimeout(timer);
-      await refresh();
-      polling = false;
-      if (!disposed) timer = setTimeout(poll, statusRef.current?.data?.activeTurn ? 2000 : 15000);
-    };
+    let stream: EventSource | undefined;
+    let lastState = '';
     const wake = () => {
-      clearTimeout(timer);
-      if (document.visibilityState === 'visible') void poll();
+      stream?.close();
+      stream = undefined;
+      if (disposed || document.visibilityState !== 'visible') return;
+      if (!statusRef.current?.data) {
+        void refresh();
+        return;
+      }
+      stream = new EventSource(worldAgentProgressUrl(worldId, sessionId));
+      stream.onopen = () => {
+        if (!disposed) {
+          setError('');
+          void refresh();
+        }
+      };
+      stream.addEventListener('snapshot', (event) => {
+        if (disposed || !alive.current) return;
+        try {
+          const snapshot = JSON.parse(
+            (event as MessageEvent<string>).data,
+          ) as WorldAgentProgressSnapshot;
+          if (snapshot.sessionId !== sessionId) throw new Error('Conversation changed.');
+          if (snapshot.turn) mergeTurns([snapshot.turn]);
+          const state = JSON.stringify([
+            snapshot.statusRevision,
+            snapshot.activeTurn,
+            snapshot.questionTurn,
+            snapshot.recovering,
+            snapshot.available,
+            snapshot.turn?.response,
+            snapshot.turn?.question,
+          ]);
+          if (state !== lastState) {
+            lastState = state;
+            void refresh();
+          }
+        } catch {
+          setError('The reply update could not be read. Refresh saved progress.');
+          stream?.close();
+        }
+      });
+      stream.addEventListener('access-changed', () => {
+        stream?.close();
+        if (!disposed) {
+          setTurns([]);
+          setStatus(undefined);
+          setError('Access changed. Reopen the conversation with current access.');
+        }
+      });
+      stream.addEventListener('unavailable', () => {
+        stream?.close();
+        if (!disposed)
+          setError('Live delivery stopped. Saved text remains available; refresh to reconnect.');
+      });
+      stream.onerror = () => {
+        if (!disposed) setError('Reconnecting to saved reply progress…');
+      };
     };
     document.addEventListener('visibilitychange', wake);
-    void poll();
+    wake();
     return () => {
       disposed = true;
-      clearTimeout(timer);
+      stream?.close();
       document.removeEventListener('visibilitychange', wake);
     };
-  }, [visible, connected, worldId, sessionId]);
+  }, [visible, connected, worldId, sessionId, accessScope, !!status?.data, subscriptionRevision]);
   async function perform(work: () => Promise<void>) {
     if (working.current) return;
     working.current = true;
@@ -232,6 +295,11 @@ export function WorldAgentSession({
     }
   }
   const session = status?.data;
+  const workRevision = session?.workRevision;
+  const newWork = workRevision !== undefined && seenWork !== undefined && seenWork !== workRevision;
+  useEffect(() => {
+    if (session && seenWork === undefined) setSeenWork(workRevision);
+  }, [!!session, workRevision, seenWork]);
   async function open() {
     await perform(async () => {
       const reply = await post<{ ok: boolean; message?: string }>('/api/world-agent/session/open', {
@@ -311,11 +379,6 @@ export function WorldAgentSession({
       }
     });
   }
-  function changePage(value: typeof page) {
-    pageRef.current = value;
-    setPage(value);
-    void refresh();
-  }
   const entries = turns.flatMap((turn) => [
     {
       id: `${turn.id}:request`,
@@ -324,7 +387,7 @@ export function WorldAgentSession({
           role="you"
           label="You"
           text={turn.text ?? 'Retained earlier turn'}
-          pending={!turn.response}
+          pending={!turn.response && !turn.progress?.text}
           failureReason={
             turn.cancelRequested && !turn.response ? 'Cancellation requested' : undefined
           }
@@ -369,17 +432,31 @@ export function WorldAgentSession({
           },
         ]
       : []),
-    ...(turn.response
+    ...(turn.response || turn.progress?.text
       ? [
           {
             id: `${turn.id}:reply`,
             content: (
               <ConversationMessage
-                role={turn.response.ok ? 'agent' : 'status'}
-                label={turn.response.ok ? 'World agent' : 'Turn result'}
-                text={turn.response.message}
-                failureReason={turn.response.ok ? undefined : turn.response.code}
-              />
+                role={turn.progress?.text || turn.response?.ok ? 'agent' : 'status'}
+                label="World agent"
+                text={
+                  turn.response?.code === 'completed'
+                    ? turn.response.message
+                    : turn.progress?.text || turn.response?.message || ''
+                }
+                failureReason={turn.response && !turn.response.ok ? turn.response.code : undefined}
+              >
+                {turn.response && turn.response.code !== 'completed' && turn.progress?.text && (
+                  <p className="ol-caption">{turn.response.message}</p>
+                )}
+                {turn.progress?.completeness === 'incomplete' && (
+                  <p className="ol-caption">
+                    Some reply text is omitted from this preview. The final result is checked
+                    separately.
+                  </p>
+                )}
+              </ConversationMessage>
             ),
           },
         ]
@@ -428,7 +505,7 @@ export function WorldAgentSession({
               reserved={session.budget.reservedUsd}
               available={connected}
             />
-            <Button size="sm" variant="quiet" onPress={() => void refresh()}>
+            <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
               Refresh
             </Button>
             {(!!session.activeTurn || !!session.question) && (
@@ -459,134 +536,139 @@ export function WorldAgentSession({
               history remains readable; start a new session to act.
             </p>
           )}
-          <ConversationThread
-            conversationKey={key}
-            items={entries}
-            visible={visible}
-            ariaLabel="World Agent conversation"
-            before={
-              before && (
-                <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
-                  Earlier messages
-                </Button>
-              )
-            }
-            empty={
-              <EmptyState title="What might this world become?">
-                Describe an invention, investigate its relationships, or ask the agent to propose a
-                change.
-              </EmptyState>
-            }
-          />
-          {pending && (
-            <div className="ol-notice" role="status">
-              <p>Checking acknowledgement for: {pending.text}</p>
-              <p>No replacement run is started automatically.</p>
-              <Button
-                size="sm"
-                disabled={
-                  busy ||
-                  !!session.activeTurn ||
-                  !session.available ||
-                  !status.availability.configured
-                }
-                onPress={() => void send(pending)}
-              >
-                Resubmit the same request
-              </Button>
-              <Button size="sm" variant="quiet" onPress={() => void refresh()}>
-                Check saved result
-              </Button>
-            </div>
-          )}
-          {!!session.plans.length && (
-            <section className="ol-agent-reviews" aria-label="Changes for review">
-              <h3>Proposed changes</h3>
-              {session.plans.map((plan) => (
-                <article key={plan.id}>
-                  <p>
-                    {plan.validation.semantics} <Tag>{plan.status}</Tag>
-                  </p>
-                  <p className="ol-caption">
-                    Revision {plan.revision} · {plan.validation.message}
-                  </p>
-                  <Button size="sm" variant="quiet" onPress={() => setReview(plan.id)}>
-                    Inspect exact change
-                  </Button>
-                </article>
-              ))}
-              {session.nextPlan && (
-                <Button
-                  size="sm"
-                  variant="quiet"
-                  onPress={() => changePage({ ...page, afterPlan: session.nextPlan! })}
-                >
-                  More changes
-                </Button>
-              )}
-            </section>
-          )}
-          {!!session.drafts.length && (
-            <details>
-              <summary>
-                Saved drafts ({session.drafts.length}
-                {session.nextDraft ? '+' : ''})
-              </summary>
-              {session.drafts.map((d) => (
-                <p key={d.id}>
-                  {d.kind} · revision {d.revision} · {d.intent}
-                </p>
-              ))}
-              {session.nextDraft && (
-                <Button
-                  size="sm"
-                  variant="quiet"
-                  onPress={() => changePage({ ...page, afterDraft: session.nextDraft! })}
-                >
-                  More drafts
-                </Button>
-              )}
-            </details>
-          )}
-          {(page.afterDraft || page.afterPlan) && (
-            <Button size="sm" variant="quiet" onPress={() => changePage({})}>
-              First draft and review page
+          <div className="ol-agent-tools" role="group" aria-label="World Agent views">
+            <Button
+              size="sm"
+              variant="quiet"
+              aria-pressed={view === 'conversation'}
+              onPress={() => setView('conversation')}
+            >
+              Conversation
             </Button>
-          )}
-          <ConversationComposer
-            inputRef={input}
-            ariaLabel="Message to World Agent"
-            placeholder="Investigate, design, or ask for a change…"
-            maxLength={2000}
-            value={text}
-            onChange={setText}
-            onSubmit={() => send()}
-            disabled={
-              !connected ||
-              busy ||
-              !!session.activeTurn ||
-              !!session.question ||
-              !!pending ||
-              !session.available ||
-              !status.availability.configured ||
-              session.budget.availableUsd <= 0 ||
-              !text.trim()
-            }
+            <Button
+              size="sm"
+              variant="quiet"
+              aria-pressed={view === 'work'}
+              onPress={() => {
+                setSeenWork(workRevision);
+                setView('work');
+              }}
+            >
+              Work{newWork && <span> · New work</span>}
+            </Button>
+          </div>
+          <div hidden={view !== 'conversation'}>
+            <ConversationThread
+              conversationKey={key}
+              items={entries}
+              visible={visible && view === 'conversation'}
+              ariaLabel="World Agent conversation"
+              liveAnnouncements="off"
+              contentRevision={turns
+                .map(
+                  (turn) =>
+                    `${turn.id}:${turn.revision ?? 0}:${turn.progress?.revision ?? 0}:${turn.response?.code ?? ''}`,
+                )
+                .join('|')}
+              newMessageLabel="New reply text"
+              preserveReading
+              before={
+                before && (
+                  <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
+                    Earlier messages
+                  </Button>
+                )
+              }
+              empty={
+                <EmptyState title="What might this world become?">
+                  Describe an invention, investigate its relationships, or ask the agent to propose
+                  a change.
+                </EmptyState>
+              }
+            />
+            <p role="status" aria-live="polite" className="ol-caption">
+              {session.question
+                ? 'Waiting for your choice.'
+                : session.activeTurn
+                  ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
+                    'replying'
+                    ? 'Writing a reply.'
+                    : 'Investigating your request.'
+                  : turns.at(-1)?.progress?.completeness === 'complete'
+                    ? 'Reply complete.'
+                    : ''}
+            </p>
+            {pending && (
+              <div className="ol-notice" role="status">
+                <p>Checking acknowledgement for: {pending.text}</p>
+                <p>No replacement run is started automatically.</p>
+                <Button
+                  size="sm"
+                  disabled={
+                    busy ||
+                    !!session.activeTurn ||
+                    !session.available ||
+                    !status.availability.configured
+                  }
+                  onPress={() => void send(pending)}
+                >
+                  Resubmit the same request
+                </Button>
+                <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                  Check saved result
+                </Button>
+              </div>
+            )}
+            <ConversationComposer
+              inputRef={input}
+              ariaLabel="Message to World Agent"
+              placeholder="Investigate, design, or ask for a change…"
+              maxLength={2000}
+              value={text}
+              onChange={setText}
+              onSubmit={() => send()}
+              disabled={
+                !connected ||
+                busy ||
+                !!session.activeTurn ||
+                !!session.question ||
+                !!pending ||
+                !session.available ||
+                !status.availability.configured ||
+                session.budget.availableUsd <= 0 ||
+                !text.trim()
+              }
+            />
+            <p className="ol-caption">
+              Approval and Apply use no model call. Native work and physics stay authoritative.
+              Image generation and general new physics are not enabled yet.
+            </p>
+          </div>
+          <WorldAgentWorkView
+            worldId={worldId}
+            sessionId={sessionId}
+            accessScope={accessScope}
+            session={session}
+            connected={connected}
+            visible={visible && view === 'work'}
+            onRefresh={() => void refresh()}
+            onOpenReview={setReview}
           />
-          <p className="ol-caption">
-            Approval and Apply use no model call. Native work and physics stay authoritative. Image
-            generation and general new physics are not enabled yet.
-          </p>
         </>
       )}
       {error && <p role="alert">{error}</p>}
       {review && (
         <WorldAgentReview
-          key={review}
+          key={`${key}:${review}`}
           worldId={worldId}
           sessionId={sessionId}
           planId={review}
-          canApply={!!session?.available}
+          canApply={connected && !!session?.available}
+          mutationReason={
+            !connected
+              ? 'Reconnect before changing saved work.'
+              : (session?.workspaceMutationReason ?? undefined)
+          }
           onClose={() => setReview(undefined)}
           onChanged={() => void refresh()}
         />

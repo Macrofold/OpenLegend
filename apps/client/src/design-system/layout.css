@@ -238,6 +238,21 @@ body,
 .ol-panel[data-wide] {
   width: var(--panel-wide);
 }
+.ol-panel[data-workspace] {
+  width: var(--workspace-width);
+}
+/* Deliberate task expansion also makes room vertically; a short window must not
+ * squeeze an exact transfer or review into the space below the condition card. */
+.ol-hud:not([data-narrow='true'])
+  .ol-dock:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace]) {
+  top: var(--hud-inset);
+  z-index: calc(var(--z-sheet) + 1);
+}
+.ol-panel-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
 .ol-panel[data-draggable] {
   z-index: calc(var(--z-panel) + 1);
 }
@@ -1248,6 +1263,18 @@ body,
   width: 100%;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
+.ol-hud[data-narrow='true'] .ol-panel[data-workspace] {
+  width: 100%;
+}
+.ol-hud[data-narrow='true'] .ol-dock:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace]) {
+  top: auto;
+  height: calc(100% - 70px);
+}
+.ol-hud[data-narrow='true']:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace])
+  .ol-mobile-tabs {
+  top: auto;
+  bottom: calc(100% - 70px);
+}
 .ol-hud[data-narrow='true'] .ol-mobile-tabs {
   position: absolute;
   bottom: 55%;
@@ -1897,7 +1924,8 @@ body,
   .ol-editor-layout {
     grid-template-columns: 72px minmax(0, 1fr);
   }
-  .ol-editor-tab span {
+  /* Shared icons also use spans; only the section text should collapse. */
+  .ol-editor-tab-label {
     display: none;
   }
   .ol-entry-editor[data-detail] {

@@ -19,7 +19,15 @@ import { digest } from './store.js';
 import { contextSections } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
-import { bodyContext, hasWildernessNeeds, supportsManualWork, canSpeak } from '@open-legend/domain';
+import {
+  bodyContext,
+  bodyPolicy,
+  bodyEligibilityRevision,
+  attributeDefinition,
+  readAttribute,
+  supportsManualWork,
+  canSpeak,
+} from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
 import { compileInterests } from './interests.js';
@@ -396,14 +404,20 @@ export async function prepareDecision(
     possessions: [],
     ...(observed.inventoryCoverage.paged ? { inventoryCoverage: observed.inventoryCoverage } : {}),
   };
+  const carryingConcern = bodyPolicy(world)?.carryingConcern;
+  const carryingMeter = carryingConcern && attributeDefinition(world, carryingConcern.attributeId);
   if (
-    hasWildernessNeeds(snapshotActor) &&
+    carryingConcern &&
+    carryingMeter &&
+    readAttribute(snapshotActor, carryingMeter) !== undefined &&
     !observed.inventoryCoverage.paged &&
     !observed.inventory.some((item) =>
-      world.itemDefinitions[item.definitionId]?.properties.includes('food'),
+      world.itemDefinitions[item.definitionId]?.properties.some(
+        (property) => property === carryingConcern.itemProperty,
+      ),
     )
   )
-    requiredContext['food'] = 'I have no food.';
+    requiredContext['carryingConcern'] = carryingConcern.text;
   if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
     requiredContext['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
@@ -622,14 +636,21 @@ export async function prepareDecision(
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
     context['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
+  const currentCarryingConcern = bodyPolicy(currentWorld)?.carryingConcern;
+  const currentCarryingMeter =
+    currentCarryingConcern && attributeDefinition(currentWorld, currentCarryingConcern.attributeId);
   if (
-    hasWildernessNeeds(actor) &&
+    currentCarryingConcern &&
+    currentCarryingMeter &&
+    readAttribute(actor, currentCarryingMeter) !== undefined &&
     !currentObserved.inventoryCoverage.paged &&
     !currentObserved.inventory.some((i) =>
-      currentWorld.itemDefinitions[i.definitionId]?.properties.includes('food'),
+      currentWorld.itemDefinitions[i.definitionId]?.properties.some(
+        (property) => property === currentCarryingConcern.itemProperty,
+      ),
     )
   )
-    context['food'] = 'I have no food.';
+    context['carryingConcern'] = currentCarryingConcern.text;
   const references = responseReferences(
     currentWorld,
     actorId,
@@ -673,6 +694,7 @@ export async function prepareDecision(
     ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
+    bodyEligibility: bodyEligibilityRevision(currentWorld, currentWorld.entities[actorId]!),
     knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
     actorId,
     decisionId: jobId,

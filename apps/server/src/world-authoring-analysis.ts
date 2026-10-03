@@ -1,4 +1,10 @@
-import { DEFAULT_COGNITION_POLICY, type WorldState } from '@open-legend/domain';
+import {
+  compileRecipeCandidate,
+  recipeDependencyReferences,
+  validateRecipeCandidate,
+  type RecipeCandidate,
+  type WorldState,
+} from '@open-legend/domain';
 import type {
   RelationshipEdge,
   RelationshipKind,
@@ -159,40 +165,40 @@ export function candidateGraph(
       );
     }
     const output = record(p.output);
-    const family =
-      output.kind === 'gathering-tool'
-        ? 'gathering-tool'
-        : output.kind === 'launcher'
-          ? record(output.launcher).mechanism
-          : output.kind === 'ammunition' && record(output.ammunition).kind === 'arrow'
-            ? 'arrow'
-            : undefined;
-    link(candidate, existing('family', family, 'output'), 'implements');
-    if (typeof output.kind === 'string')
-      link(
-        candidate,
-        add({
-          ref: {
-            kind: 'proposed-item-definition',
-            id: `${draft.id}:output`,
-            version: fingerprint(output),
-          },
-          label: typeof output.name === 'string' ? output.name : 'Proposed output',
-          layer: 'proposed',
-        }),
-        'produces',
-      );
-    if (output.kind === 'gathering-tool')
-      link(
-        candidate,
-        existing(
-          'item-definition',
-          record(output.gatheringTool).resourceId,
-          'output.gatheringTool.resourceId',
-        ),
-        'uses',
-        'finite gathering resource; best carried tool, no stacking',
-      );
+    link(candidate, existing('family', record(p.family).id, 'family.id'), 'implements');
+    link(
+      candidate,
+      add({
+        ref: {
+          kind: 'proposed-item-definition',
+          id: `${draft.id}:output`,
+          version: fingerprint(output),
+        },
+        label: typeof output.name === 'string' ? output.name : 'Proposed output',
+        layer: 'proposed',
+      }),
+      'produces',
+    );
+    if (!validateRecipeCandidate(world, p).length) {
+      const compiled = compileRecipeCandidate(world, p as unknown as RecipeCandidate);
+      for (const dependency of recipeDependencyReferences(
+        world,
+        p as unknown as RecipeCandidate,
+        compiled,
+      )) {
+        if (
+          dependency.kind === 'item-definition' &&
+          list(p.inputs).some((input) => record(input).definitionId === dependency.pin.id)
+        )
+          continue;
+        link(
+          candidate,
+          existing(dependency.kind, dependency.pin.id, 'parameters'),
+          'uses',
+          'family-dependency',
+        );
+      }
+    }
     if (draft.base.recipe)
       link(
         candidate,
@@ -225,8 +231,8 @@ export function candidateGraph(
         link(ref, candidate, 'governed_by');
       }
     }
-    const dreamId = (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).dream.statusEffectId;
-    if (!proposed.has(dreamId))
+    const dreamId = world.cognitionPolicy.dream?.statusEffectId;
+    if (dreamId && !proposed.has(dreamId))
       missing('definitions', 'The cognition policy requires a retained dream status.');
     for (const [i, raw] of list(p.definitions).entries()) {
       if (!spend()) break;
@@ -289,8 +295,8 @@ export function candidateGraph(
             }
             pending.push({ value: child, field: `${field}[${j}]` });
           }
-        } else if (condition.compare) {
-          const c = record(condition.compare);
+        } else if (condition.compare || condition.hasAttribute) {
+          const c = record(condition.compare ?? condition.hasAttribute);
           link(source, existing('attribute', c.attribute, field), 'reads', String(c.target));
         } else if (condition.statusActive) {
           const c = record(condition.statusActive);
@@ -359,11 +365,12 @@ export function candidateGraph(
     }
     if (draft.kind === 'cognition-policy') {
       link(candidate, existing('cognition-policy', 'current', 'base.policy'), 'derives_from');
-      link(
-        candidate,
-        existing('status-effect', record(p.dream).statusEffectId, 'dream.statusEffectId'),
-        'requires',
-      );
+      if (p.dream !== null)
+        link(
+          candidate,
+          existing('status-effect', record(p.dream).statusEffectId, 'dream.statusEffectId'),
+          'requires',
+        );
     } else if (draft.kind === 'attribute-bindings') {
       for (const id of list(p.attributeIds)) {
         if (!spend()) break;

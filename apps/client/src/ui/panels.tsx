@@ -1,6 +1,7 @@
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
 import { ActionAttempts } from './action-attempts';
+import { RecipeDetails } from './recipe-details';
 import { useState } from 'react';
 import { MemoryHistory } from './memory-history';
 import { Button as AriaButton } from 'react-aria-components';
@@ -90,21 +91,7 @@ export function Crafting({
                 <span className="ol-heading">{r.name}</span>{' '}
                 <Tag>{r.npcCreated ? 'NPC-created' : 'Player-created'}</Tag>
               </summary>
-              <p>{r.description}</p>
-              <dl>
-                <dt>Needs</dt>
-                <dd>
-                  {r.ingredients.map((i) => (
-                    <div key={`${i.name}-${i.role}`}>
-                      {i.quantity} {i.name} · {i.available} held
-                    </div>
-                  ))}
-                </dd>
-                <dt>Time</dt>
-                <dd>{r.workSeconds} game seconds</dd>
-                <dt>Gives</dt>
-                <dd>{r.name}</dd>
-              </dl>
+              <RecipeDetails recipe={r} />
               <Actions actions={r.actions} command={command} connected={connected} />
               <p className="ol-caption">{r.provenance}</p>
             </details>

@@ -3,7 +3,12 @@ import type { TypedQuestionMap } from '@open-legend/ai';
 import { bindReflectionAppraisals } from './appraisal-context.js';
 import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
-import { safeCognitiveDowntime } from '@open-legend/domain';
+import {
+  bodyThinkingBlocked,
+  bodyEligibilityRevision,
+  hasMemory,
+  type WorldState,
+} from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
 import {
@@ -19,7 +24,6 @@ import {
   acceptConsolidation,
   publishInnerWorld,
   mindFor,
-  DEFAULT_COGNITION_POLICY,
   EXPERIENCE_LIMITS,
 } from '@open-legend/domain';
 import type { AiClient, AiResult, GenerateRequest } from '@open-legend/ai';
@@ -37,12 +41,36 @@ interface ReflectionRequest {
   at: number;
 }
 class MaintenanceReadFailure extends Error {}
+function availableForMaintenance(world: WorldState, actorId: string): boolean {
+  const entity = world.entities[actorId],
+    actor = entity?.actor;
+  return (
+    !!entity &&
+    hasMemory(entity) &&
+    !!actor &&
+    actor.controller === 'npc' &&
+    actor.alive &&
+    !actor.incapacitated &&
+    actor.capabilities?.innerWorld !== false &&
+    (!actor.action || actor.action.type === 'status-effect') &&
+    !bodyThinkingBlocked(world, entity, 'maintenance')
+  );
+}
+
 export class CognitionMaintenance {
   private readonly work = new ActorWork('maintenance', () => this.now());
   private readonly lastStarted = new Map<string, number>();
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
+  private activeAdmission: {
+    actorId: string;
+    generation: string;
+    fence: string;
+    purpose: 'maintenance' | 'reflection';
+    requiresBody: boolean;
+    dreamEpisode?: string;
+  } | null = null;
   private stopped = false;
   private unsubscribe: () => void;
   constructor(
@@ -62,7 +90,7 @@ export class CognitionMaintenance {
   }
   async enqueue(actorId: string, origin: string, reason: string): Promise<void> {
     if (this.service.config.jevOnly) return;
-    if (!(this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).reflection) return;
+    if (!this.service.world.cognitionPolicy.reflection) return;
     const world = this.service.world;
     const actor = world.entities[actorId]?.actor;
     if (!actor?.alive) return;
@@ -155,7 +183,12 @@ export class CognitionMaintenance {
             return [
               actor.controller,
               actor.incapacitated,
-              safeCognitiveDowntime(actor),
+              availableForMaintenance(current, id),
+              JSON.stringify([
+                current.moduleManifest.revision,
+                current.moduleManifest.bodyPolicyPin,
+                current.moduleManifest.pins,
+              ]),
               actor.action?.type,
               actor.agency.plan?.status,
               dreamStatus(current, current.entities[id])?.episode,
@@ -204,7 +237,11 @@ export class CognitionMaintenance {
         const actor = world.entities[entity.id]?.actor;
         // Owner edits can remove an actor while schedule records are loading.
         if (!actor?.alive) continue;
-        const safe = safeCognitiveDowntime(actor);
+        const safe = availableForMaintenance(world, entity.id);
+        const reflectionSafe =
+          safe && !bodyThinkingBlocked(world, world.entities[entity.id]!, 'reflection');
+        const dream = dreamStatus(world, world.entities[entity.id]);
+        const configuredDream = dreamPolicy(world);
         if (
           safe &&
           !actor.action &&
@@ -227,12 +264,8 @@ export class CognitionMaintenance {
         const future = [
           (Math.floor(world.simTime / 3600) + 1) * 3600,
           mind.lastReflectionAt + 3600,
-          ...(dreamStatus(world, world.entities[entity.id])
-            ? [
-                world.simTime +
-                  dreamPolicy(world).afterSeconds -
-                  dreamStatus(world, world.entities[entity.id])!.elapsedSeconds,
-              ]
+          ...(dream && configuredDream
+            ? [world.simTime + configuredDream.afterSeconds - dream.elapsedSeconds]
             : []),
           ...(world.experience?.awareness[entity.id] ?? []).map(
             (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
@@ -253,15 +286,15 @@ export class CognitionMaintenance {
           continue;
         const dreamReady =
           safe &&
-          !!dreamStatus(world, world.entities[entity.id]) &&
-          dreamStatus(world, world.entities[entity.id])!.elapsedSeconds >=
-            dreamPolicy(world).afterSeconds;
+          !!dream &&
+          !!configuredDream &&
+          dream.elapsedSeconds >= configuredDream.afterSeconds;
         const hasMemories = history.hasMemories;
         const day = Math.floor(world.simTime / 86400);
         const reflectedToday =
           mind.lastReflectionAt > 0 && Math.floor(mind.lastReflectionAt / 86400) === day;
         const reflectionDue =
-          safe &&
+          reflectionSafe &&
           !actor.action &&
           hasMemories &&
           !reflectedToday &&
@@ -313,7 +346,7 @@ export class CognitionMaintenance {
           this.service.store.getIntegration(`maintenance-kind:${world.id}:${entity.id}`),
         );
         const prioritizeReflection =
-          safe &&
+          reflectionSafe &&
           !actor.action &&
           queued &&
           previousKind === 'consolidation' &&
@@ -366,6 +399,9 @@ export class CognitionMaintenance {
             ? await this.service.maintenanceBatch(entity.id, 'hourly')
             : null;
         if (batch && previous?.sourceDigest !== digest(batch.sources)) {
+          // Protected-only cleanup preserves exact native text and needs no thinking
+          // opportunity. Routine summarization must wait for the configured body gate.
+          if (batch.routine.length && !safe) continue;
           await this.service.store.putIntegration(cleanupKey, {
             hour,
             timeline: this.service.timelineId,
@@ -376,7 +412,8 @@ export class CognitionMaintenance {
           );
           return;
         }
-        if (!safe || actor.action || !queued || !this.service.config.macrofoldKey) continue;
+        if (!reflectionSafe || actor.action || !queued || !this.service.config.macrofoldKey)
+          continue;
         const attemptKey = `reflection-attempt:${world.id}:${entity.id}`;
         const attempt = (await this.readSchedule(() =>
           this.service.store.getIntegration(attemptKey),
@@ -407,7 +444,21 @@ export class CognitionMaintenance {
     reason: string,
     execute: (controller: AbortController) => Promise<void>,
   ) {
-    if (this.stopped || this.service.paused) return;
+    if (
+      this.stopped ||
+      this.service.paused ||
+      (reason !== 'consolidation' && !availableForMaintenance(this.service.world, actorId))
+    )
+      return;
+    this.activeAdmission = {
+      actorId,
+      generation: this.service.generation,
+      fence: bodyEligibilityRevision(this.service.world, this.service.world.entities[actorId]!),
+      purpose: ['consolidation', 'activity-learning'].includes(reason)
+        ? 'maintenance'
+        : 'reflection',
+      requiresBody: reason !== 'consolidation',
+    };
     const controller = new AbortController();
     this.active = controller;
     await this.service.store.putIntegration(
@@ -425,6 +476,7 @@ export class CognitionMaintenance {
       })
       .finally(() => {
         this.active = null;
+        this.activeAdmission = null;
         this.pending = null;
         this.service.notify();
       });
@@ -501,21 +553,67 @@ export class CognitionMaintenance {
     provider: 'jev' | 'openai',
     execute: () => Promise<AiResult<T>>,
     model?: string,
+    beforeDispatch?: () => Promise<void>,
   ): Promise<T> {
     const c = this.service.config;
     if (this.service.paused || this.active?.signal.aborted)
       throw new Error('Maintenance canceled.');
+    this.assertAdmission();
     const amount = decisionAllowance(c, provider, model);
     // Leave one interactive request allowance untouched by background admission.
     const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
     if (!(await this.service.store.reserve(id, provider, amount, ceiling, this.budgetActor)))
       throw new Error('Background allowance exhausted.');
+    try {
+      await beforeDispatch?.();
+      this.assertAdmission();
+      if (this.service.paused || this.active?.signal.aborted)
+        throw new Error('Maintenance canceled before dispatch.');
+    } catch (error) {
+      // Admission can change while the reservation is persisted. This receipt proves
+      // no dispatch; completed/uncertain provider receipts retain normal accounting.
+      const at = new Date(this.now()).toISOString();
+      await this.service.store.settle(id, {
+        requestId: id,
+        provider,
+        requestedModel: 'not-dispatched',
+        model: 'not-dispatched',
+        modelVersionStatus: 'unavailable',
+        contextDigest: digest({ id }),
+        startedAt: at,
+        completedAt: at,
+        latencyMs: 0,
+        dispatched: false,
+        completionUncertain: false,
+        estimatedCostUsd: 0,
+      });
+      throw error;
+    }
     const result = await execute();
     await this.service.store.settle(id, result.receipt);
     if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
     if (this.service.paused || this.active?.signal.aborted)
       throw new Error('Maintenance canceled before publication.');
+    this.assertAdmission();
     return result.value;
+  }
+  private assertAdmission(world = this.service.world): void {
+    const admission = this.activeAdmission;
+    if (admission && !admission.requiresBody) return;
+    if (
+      !admission ||
+      admission.generation !== this.service.generation ||
+      !availableForMaintenance(world, admission.actorId) ||
+      admission.fence !== bodyEligibilityRevision(world, world.entities[admission.actorId]!) ||
+      (admission.purpose === 'reflection' &&
+        (world.entities[admission.actorId]!.actor!.action ||
+          bodyThinkingBlocked(world, world.entities[admission.actorId]!, 'reflection'))) ||
+      (admission.dreamEpisode !== undefined &&
+        dreamStatus(world, world.entities[admission.actorId])?.episode !== admission.dreamEpisode)
+    )
+      throw new Error(
+        'The body, installed policy or maintenance eligibility changed before completion.',
+      );
   }
   private async consolidate(
     actorId: string,
@@ -523,6 +621,16 @@ export class CognitionMaintenance {
     controller: AbortController,
   ): Promise<boolean> {
     let committed = false;
+    if (this.activeAdmission)
+      this.activeAdmission.requiresBody = batch.mode === 'daily' || batch.routine.length > 0;
+    if (batch.mode === 'daily') {
+      const dream = dreamStatus(this.service.world, this.service.world.entities[actorId]),
+        policy = dreamPolicy(this.service.world);
+      if (!this.activeAdmission || !dream || !policy || dream.elapsedSeconds < policy.afterSeconds)
+        throw new Error('The configured dream opportunity is no longer available.');
+      this.activeAdmission.dreamEpisode = dream.episode;
+    }
+    this.assertAdmission();
     await this.job(
       actorId,
       batch.mode === 'daily' ? 'Daily dream review' : 'Hourly consolidation',
@@ -627,9 +735,10 @@ export class CognitionMaintenance {
               ))
             )
               throw new Error('Consolidation sources or timeline changed before publication.');
-            return this.service.transition((world) =>
-              acceptConsolidation(world, actorId, job.id, batch.sources, groups),
-            );
+            return this.service.transition((world) => {
+              this.assertAdmission(world);
+              return acceptConsolidation(world, actorId, job.id, batch.sources, groups);
+            });
           },
           batch.selection ? batch.sources.map((source) => source.id) : undefined,
         );
@@ -645,6 +754,11 @@ export class CognitionMaintenance {
     controller: AbortController,
   ): Promise<void> {
     await this.job(batch.actorId, 'Learn from my actions', 'activity-learning', async (job) => {
+      const checkCurrent = (world: WorldState) => {
+        controller.signal.throwIfAborted();
+        if (this.service.paused) throw new Error('Learning canceled before publication.');
+        this.assertAdmission(world);
+      };
       const known = new Set(
         acquiredActivities(this.service.world, batch.actorId).map((method) => method.signature),
       );
@@ -668,16 +782,23 @@ export class CognitionMaintenance {
       );
       if (Object.keys(questions).length) {
         const requestId = `${job.id}:activity-learning`;
-        const value = await this.paid(requestId, 'jev', async () => {
-          if (!(await this.service.publishActivityLearning(batch, [], true)))
-            throw new Error('Learning sources changed before dispatch.');
-          return this.client.judge({
-            requestId,
-            signal: controller.signal,
-            state: `${ACTIVITY_SYNTAX}\n${batch.candidates.map((candidate, index) => `Method ${index + 1}: ${candidate.description}`).join('\n')}`,
-            questions,
-          });
-        });
+        const value = await this.paid(
+          requestId,
+          'jev',
+          () =>
+            this.client.judge({
+              requestId,
+              signal: controller.signal,
+              state: `${ACTIVITY_SYNTAX}\n${batch.candidates.map((candidate, index) => `Method ${index + 1}: ${candidate.description}`).join('\n')}`,
+              questions,
+            }),
+          undefined,
+          async () => {
+            if (!(await this.service.publishActivityLearning(batch, [], true, checkCurrent)))
+              throw new Error('Learning sources changed before dispatch.');
+            controller.signal.throwIfAborted();
+          },
+        );
         judgments = batch.candidates.map((candidate, index) => {
           if (known.has(candidate.signature)) return 'retain';
           const answer = value.answers[`learn${index}`];
@@ -688,7 +809,8 @@ export class CognitionMaintenance {
         });
       }
       controller.signal.throwIfAborted();
-      if (!(await this.service.publishActivityLearning(batch, judgments)))
+      this.assertAdmission();
+      if (!(await this.service.publishActivityLearning(batch, judgments, false, checkCurrent)))
         throw new Error('Learning publication was stale or unavailable.');
     });
   }
@@ -827,6 +949,7 @@ export class CognitionMaintenance {
       const accepted = await this.service.transition(
         (world) => {
           controller.signal.throwIfAborted();
+          this.assertAdmission(world);
           if (generation !== this.service.generation)
             throw new Error('Timeline changed during reflection.');
           if (

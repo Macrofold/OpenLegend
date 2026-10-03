@@ -1,8 +1,10 @@
 # Next playable week — delivery tracker
 
-**Implementation authorized in chat; delivery in progress.** Five AI-assisted engineers, **80 hours each / 400 engineer-hours** over the requested week: **312 hours scoped delivery + 88 hours integration/review**. This replaces the initial 200-hour allocation; estimates include focused checks and are not measured throughput. [Feature specification](../projects/next-playable-week-feature-spec.md) · [Technical design](../projects/next-playable-week-tech-design.md). Historical audit baseline: `6664144a`, October 2, 2026; assigned worktrees inherit planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`.
+**Implementation authorized in the assigned engineering chats; combined acceptance pending.** Five AI-assisted engineers, **80 hours each / 400 engineer-hours** over the requested week: **312 hours scoped delivery + 88 hours integration/review**. This replaces the initial 200-hour allocation; estimates include focused checks and are not measured throughput. [Feature specification](../projects/next-playable-week-feature-spec.md) · [Technical design](../projects/next-playable-week-tech-design.md). Baseline: `6664144a`, October 2, 2026.
 
-This tracker owns the bounded week assignment and its integration gate. Existing focused trackers retain broader system requirements and release status. A checked PW item will not close its parent feature. The planning commit delivered documents only; checked implementation items below identify demonstrated branch scope, while PW06 remains the separate combined acceptance gate. Mike subsequently authorized Engineer 1's PW01/PW08 implementation and PW06 coordination in chat; the [execution plan](../projects/next-playable-week-tech-design.md#engineer-1-authorized-execution) records the actual starting commit and verification sequence. Branch-ready scope and integrated acceptance are recorded separately.
+This tracker owns the bounded week assignment and its integration gate. Existing focused trackers retain broader system requirements and release status. A checked PW item identifies demonstrated branch scope and will not close its parent feature or the separate PW06 combined acceptance gate. The inherited planning commit is `8005f7c7`; the historical `6664144a` planning baseline remains context, not a replacement implementation base. Runtime checks below close only with actual evidence. Engineer 2 works on `oct2-eng-2` with a $0 paid-call allowance.
+
+Engineer 5’s [implementation plan](../projects/next-playable-week/engineer-5-plan.md) records its assigned scope and explicit starting commit; checked PW09 children reflect its demonstrated correctness evidence, while combined acceptance remains open.
 
 ## PW01 — Reliable action choices and recovery
 
@@ -22,11 +24,15 @@ Day-one prerequisite: inspect current main and existing ready fixes in `codex/sa
 
 **Engineer 2 · 28 hours plus shared integration · 800–1,300 logic lines · medium/high risk.** Child slice of [INV-3.1/3.2](inventions-and-world-evolution.md#inv-3--expand-beyond-the-three-recipes-through-registered-families), EWF01/02/04/06/07. Design: [family contract](../projects/next-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches).
 
-- [ ] Freeze the descriptor/version/pin, RecipeCandidateV2 and editor metadata contracts in the initial four-hour coordination window with engineers 3 and 4.
-- [ ] Move all four existing recipe families' touched policy, schemas, balance and wording to one base-world owner; every authoring path uses the same trusted validator/compiler. Extend the existing strict manifest with family references/pins and load resolution; do not imply recipe registration already exists.
-- [ ] Preserve authority, candidate digest, review, exact dependencies, idempotent Apply and separate crafting. Ordinary/NPC compatible proposals retain automatic admission; exact human Apply remains specific to paths that already require it.
+- [x] Freeze the descriptor/version/pin, RecipeCandidate and editor metadata contracts in the initial four-hour coordination window with engineers 3 and 4.
+- [x] Move all four existing recipe families' touched policy, schemas, balance and wording to one base-world owner; every authoring path uses the same trusted validator/compiler. Extend the existing strict manifest with family references/pins and load resolution; do not imply recipe registration already exists.
+- [x] Preserve authority, candidate digest, review, exact dependencies, idempotent Apply and separate crafting. Ordinary/NPC compatible proposals retain automatic admission; exact human Apply remains specific to paths that already require it.
 - [ ] Qualify all old families plus the utility-container family; prove a recipe policy can omit weapons while accepting the utility family.
 - [ ] Qualify malformed/forged/stale inputs, duplicate delivery and current-format reopen; reconcile relevant INV/EWF contracts and RF01.
+
+Engineer 2 early handoffs: exact V2/family/editor and generic meter contracts agreed with Engineers 3/4. Shared current-format gate `9854d591` is reviewed and published: database marker 3 and `development-2026-10-02-playable-week`; a disposable PostgreSQL 14.17 probe refuses marker 2 before recall initialization, preserves existing data across reopen and refuses preceding manual formats. Domain/public contracts `edd4d9ad` and the matching server consumers `937c8c44` are reviewed and published. Four-family native craft/use and real disposable-PostgreSQL creator/ordinary admission probes pass; 11 meter/editor groups, nine cognition groups and four learning timing groups pass. Container and combined browser acceptance remain pending; no provider calls have been made.
+
+Independent `8beb506d` verification also validates a whole world whose only recipe family is the existing gathering tool: weapon families are absent from discovery and rejected at admission, while the utility recipe is automatically admitted, materially crafted, used against finite stock and preserved by current JSON/PostgreSQL reopen. This is narrower than the required woven-container consumer; its descriptor and packing loop remain an external semantic dependency for the separate integration pass.
 
 This does not close arbitrary composition, invented-input chaining, world-independent physiology or live-law migration. Keep those parents open. The specified candidate envelope change is required; unrelated schemas and a second registry are not substitutes for the existing admission owner.
 
@@ -46,6 +52,8 @@ No fixed building, encumbrance progression, preservation, locked cache, food res
 
 **Engineer 4 · 24 hours plus shared integration · 550–900 logic lines · medium risk.** Parent owners: PO/BW/AC for semantics, [UIUX02–UIUX04](ui-ux.md) for interaction qualification. Design: [inventory](../projects/next-playable-week-tech-design.md#pw04--inventory-interaction-and-presentation).
 
+**Implemented; partial native/browser qualification, not complete.** Reviewed inventory delivery `99a538be`, held-offer authority `2fec85e4`, workspace/meter fixes `669996f7` and contents-fence integration `4f86b1e1` are available on `oct2-eng-4`. [Engineer 4 evidence](../verification/next-playable-week-engineer-4.md#pw04--native-inventory-and-partial-browser-checks) records 250-owned/230-private-granted destination scenarios, exact 3-of-8 transfer, native equipment comparison, six contents-fence native checks and eleven HTTP groups, plus older actual blank-draft/selection/hide/layout observations. Fresh production-host browser checks include 44 bags/40-result paging, actual three-of-eight receipt, stale held destination retaining a blocked draft and hidden read counts unchanged across three ticks. The reproduced stale selected-snapshot failure after filtering/parent change has a reviewed fix (`73f61bf1`), with its browser requalification still pending. Those slices extend PO04/PO07/PO10 and supply an AC07.1–AC07.2 consumer. All composite requirements below remain open: final large/long-content/picker/stale/focus/world-input proof and paired current-server checks are unfinished; UIUX02–UIUX04 remain open.
+
 - [ ] Adaptive collection/detail layout preserves exact selection, scope, scroll position and drafts across width changes.
 - [ ] Display current capacity, relevant item characteristics and meaningful equipment comparison through permitted projections, with unknowns distinct from zero.
 - [ ] Complete carried and ground-pile/container navigation plus exact transfer with source/destination/quantity, reachable blockers and actual server receipts.
@@ -60,18 +68,24 @@ No blanket theme replacement, decorative grid mandate, bulk trading or unscoped 
 **Engineer 5 · 34 hours plus shared integration · 750–1,150 logic lines · high risk.** Child of INV-21 and [WW lifecycle/recovery](world-agent-writes.md); UIUX05 owns UX qualification. Design: [incremental delivery](../projects/next-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system).
 
 - [ ] Verify the configured service's native incremental-output capability and deployment prerequisites; preserve unsupported outcomes and configured model/funding.
-- [ ] One ordered run-event consumer handles reply text, confirmed phases and existing questions, with sequence validation, bounded replay and no new paid request on recovery.
-- [ ] Redact protected context handles across fragment boundaries before storage/publication; verify replay, EOF/cancellation and absence from diagnostics. Distinguish discovery/reply Runs inside one turn, persist their handoff and finalize only at outer turn completion.
-- [ ] Retain idempotent bounded progress under the existing turn owner and deliver owner-scoped snapshots/SSE with access revocation and backpressure.
-- [ ] Client renders text before completion; preserves older reading position, draft and exact review; final validated text replaces the preview once.
+- [x] One ordered run-event consumer handles reply text, confirmed phases and existing questions, with sequence validation, bounded replay and no new paid request on recovery.
+- [x] Redact protected context handles across fragment boundaries before storage/publication; verify replay, EOF/cancellation and absence from diagnostics. Distinguish discovery/reply Runs inside one turn, persist their handoff and finalize only at outer turn completion.
+- [x] Retain idempotent bounded progress under the existing turn owner and deliver owner-scoped snapshots/SSE with access revocation and backpressure.
+- [x] Client renders text before completion; preserves older reading position, draft and exact review; final validated text replaces the preview once.
 - [ ] Exercise mid-run restart, reconnect/rotation, duplicate/gap events, questions, cancellation after a tool effect, slow readers, private-scope replacement and unsupported harness. Confirm no duplicate run, world effect or charge.
 - [ ] Complete browser/input/accessibility checks and measured delivery latency, update WW/runtime/WS01 evidence; keep unrelated WW07 deployed-release gaps open.
 
 No public-world broadcast of owner text, raw reasoning/tool traces or claim that a spinner completes incremental delivery. Earlier turns remain reachable under the unchanged session ceiling.
 
+The configured deployment refused no-cost capability/health reads and lacks a Worker ID. [Native/browser evidence](../verification/invention-foundation.md#pw05--incremental-owner-delivery) is separate from that missing acceptance. Engineer 4’s reviewed saved-work component is mounted with Conversation; native revisions leave an older exact review unchanged and held snapshots cannot overwrite saved answers. Final shared layout qualification and whole-server process-loss evidence remain in progress. Browser timing currently exceeds the proposed local p95 target; deployment and delivery-capacity acceptance stay open.
+
+Engineer 2 has consumed the reviewed stream and saved-work integration and corrected delayed progress expiry without preventing exact original receipt settlement. Local PostgreSQL before/after evidence is recorded above. Peer command/recovery and prerequisite/layout conflicts blocked the earlier checkpoint. Mike subsequently directed Engineer 2 to finish independent work, abort any currently conflicted integration and reserve further cross-engineer integration for a separate pass. Engineer 2 had no active integration to abort. The woven-container family, final paired PW07 browser matrix and PW06 acceptance remain incomplete; no later peer branch status is inferred from that direction.
+
 ## PW06 — Integrated release evidence
 
 **All five engineers · 88 hours total: engineer 1 has 24; engineers 2–5 have 16 each.** Depends on every other PW package. Engineer 1 coordinates the integration candidate; each semantic owner resolves its own findings. A runnable intermediate branch is not completion.
+
+**Open; closure belongs to Engineer 1.** Engineer 4 supplies reviewed inventory/saved-work/meter UI, native receipt/permission fixes and [bounded evidence](../verification/next-playable-week-engineer-4.md). Independent disposable-host checks use current Engineer 2 metadata, but the final paired browser matrix is unfinished. Reviewed Engineer 5 parent wiring `2157e3a5` was not consumed at Engineer 4's reported cutoff; Engineer 2 has consumed it as `58dacbcb` and supplies the verified expiry/accounting fix `49adc76d`. The original streaming endpoint remains unavailable; Engineer 3's utility descriptor/activity remains a dependency. Further cross-engineer integration is reserved for the separate pass Mike requested. No ordinary utility invention/craft/pack or current live stream/editing journey is qualified, and no combined criterion is checked from an intermediate branch or earlier browser build.
 
 - [ ] Demonstrate ordinary-player invention → automatic compatible admission → inspect learned recipe → craft → pack → drop → return/take with current browser/server/domain code and PostgreSQL.
 - [ ] Demonstrate owner live reply, structured question/review and final result, including interrupted delivery; ordinary players receive no creator powers.
@@ -108,9 +122,14 @@ The current reported actual settled cost and outstanding exposure are **$0/$0**.
 
 **Engineer 2: 36 hours domain/server; engineer 4: 10 hours UI; shared integration additional · 1,300–2,000 logic lines plus mechanical callers · medium/high risk.** Both stages of the already-approved [survival project](../projects/world-configured-survival.md) are required. The [complete task brief](../projects/next-playable-week/survival.md) fixes units, authoritative storage, bindings, lifecycle and behavior-preservation cases. EWF03 and the survival project retain broader ownership.
 
-- [ ] Replace native food/energy rates and damage/recovery with authored policy using the existing transition/rate owners; preserve raw-health versus displayed-percentage units and event causes.
+**Engineer 4 client implemented; paired final acceptance open.** Generic owner/player meters consume authored server labels, ranges, units, read-only status and editor comparisons; client drafts preserve blanks and require explicit native Save. Actual reservoir Charge/read-only Disposition observations and 180-unit draft continuity are recorded in [Engineer 4's report](../verification/next-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending), with the older server build explicitly identified. Engineer 2's [native/lifecycle report](../verification/world-configured-survival.md) owns its separate results. The final latest-metadata browser pairing and complete base/absent-meter matrix remain before closure; this maps to EWF03/EWF04, BW06, both survival stages and UIUX02–UIUX03 without closing those parent gates.
+
+Engineer 2's [independent current-code browser checks](../verification/world-configured-survival.md#focused-current-code-browser-checks) now pass actual health conversion/Save, blank and invalid draft retention, exact manifest/body-policy refusals, keyboard/resize continuity and reservoir Fill/Save to Charge 240 with read-only Disposition and absent food/energy/dreaming. Actual manual restore closes the editor; a synthetic stale-generation caller is separately identified. A narrow-section icon defect is corrected in the shared editor; its actual 390×844/1024×600 recheck passes glyph visibility, keyboard/click navigation, retained invalid drafts, footer reachability and Discard. Dedicated enlarged-text/full long-label checks remain unrun. These bounded results support the later paired matrix and do not check its combined acceptance boxes.
+
+- [x] Replace native food/energy rates and damage/recovery with authored policy using the existing transition/rate owners; preserve raw-health versus displayed-percentage units and event causes.
+- [x] Remove repeated all-interval scans when attributing simultaneous health rates, preserving exact body, cause, event and accounting results; align creator policy submission with the accepted removed count ceilings. [Independent review evidence](../verification/next-playable-week-engineer-2.md#independent-implementation-review).
 - [ ] Move food/energy to the specified generic meter storage/binding seam and remove fixed aliases/DTO/UI assumptions through every caller. Do not maintain two writable representations.
-- [ ] Author base-world thresholds, words, concerns, sleep/dream/death/revival behavior and starting values once; preserve existing timing and eligibility rather than introduce a new survival balance.
+- [x] Author base-world thresholds, words, concerns, sleep/dream/death/revival behavior and starting values once; preserve existing timing and eligibility rather than introduce a new survival balance.
 - [ ] Support a world with absent food/energy meters and absent dreaming; no phantom bars, conditions, quick actions or forced decisions.
 - [ ] Deliver generic player/owner meter presentation and editing with units/ranges, access checks and stale revision handling; pair engineer 4's UI work with engineer 2's projection contract.
 - [ ] Complete the brief's timestep, body, collapse/death, dream, cognition, current-format rejection/reopen and alternate-world matrix. No incompatible save conversion, reset or deletion.
@@ -136,13 +155,15 @@ PW08's selected work reductions are demonstrated; complete acceptance remains op
 
 **Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/next-playable-week/memory-retrieval.md).
 
-- [ ] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
-- [ ] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
-- [ ] Prove relevant edits/forgetting invalidate while another actor's unrelated work does not; exercise privacy, rollback, cancellation and restart through real PostgreSQL callers.
-- [ ] Measure exact current top-300 retrieval with 5k/25k/100k eligible sources plus unrelated histories; record full caller latency, SQL, query plans, examined/selected/hydrated work and hot/cold distinctions.
-- [ ] Reconcile MH03 and the narrower cache findings from actual evidence; leave large-history ANN/retention and broad appraisal invalidation decisions open.
+- [x] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
+- [x] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
+- [x] Prove relevant edits/forgetting invalidate while another actor's unrelated work does not; exercise privacy, rollback, cancellation and restart through real PostgreSQL callers.
+- [x] Measure exact current top-300 retrieval with 5k/25k/100k eligible sources plus unrelated histories; record full caller latency, SQL, query plans, examined/selected/hydrated work and hot/cold distinctions.
+- [x] Reconcile MH03 and the narrower cache findings from actual evidence; leave large-history ANN/retention and broad appraisal invalidation decisions open.
 
 PF14's earlier shared retrieval/body filtering is already delivered and is not repeated here. No old-memory truncation, actor-memory cap, reduced required context or production ANN index is introduced to improve the benchmark.
+
+The 18-report/9-pair growth matrix and narrowly scoped ANN recommendation are recorded with the implementation/correctness [evidence](../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval). All ordered warm full-caller comparisons and current-format reopen checks pass. Standalone cold exact reads are available in 17/18 reports; checkpoint restore succeeds in 12/18. Both versions hit the unchanged writer deadline at 100k in all six reports and preserve committed generation/evidence after rollback. These existing scale limits remain C17/PF08 work, not successful restore qualification or a general speedup claim. Engineer 2’s reviewed shared database/save-format gate `9854d591c2be9942820d18566cc57e7fe12aba08` is consumed as `e1547765` on Engineer 5’s branch. No conversion, deletion or separate marker owner was added.
 
 ## PW10 — Chosen camp activities and reusable finite methods
 
@@ -157,9 +178,13 @@ PF14's earlier shared retrieval/body filtering is already delivered and is not r
 
 No standing protected stock, partner delivery, unseen branch learning, weather, preservation or generated native code. Relevant limit owners retain those follow-ons; no guarantee of Jev preference is inferred from a native fixture.
 
+Engineer 2's read-only integration probe of Engineer 3's unconsumed activity candidate found that an admitted watched activity can move ten stock units despite a selected one-unit spending bound, while recording zero units spent. The saved result still passes current validation. Fix admission to the supported spending commands or enforce the remaining unit budget atomically with the native transfer receipt, then rerun the positive and refusal cases before publishing the dependency. Engineer 3 owns this fix; its current conflict stop is preserved. This finding blocks consumption of those activity commits and does not describe current Engineer 2 runtime behavior.
+
 ## PW11 — Inspectable and editable invention workspace
 
 **Engineer 4 · 30 hours plus shared integration · 650–1,050 logic lines · medium/high risk.** Depends on PW02 family metadata and coordinates with PW05 progress. [Complete task definition](../projects/next-playable-week/invention-workspace.md). Parent owners: INV-21, WW and UIUX05.
+
+**Implemented; native qualification recorded, composite browser/stream acceptance open.** `9d6fb2b0` supplies exact receipt recovery and shared ordinary recipe facts; `b4580543` rechecks delayed authority; `51ebeafa` retains unsupported local fields and ignores hidden/aborted reads. [Evidence](../verification/next-playable-week-engineer-4.md#pw11--exact-saved-work-and-native-receipt-authority) records 67 V2 native checks, ten expiry checks, six held-title/revocation checks, all-seven-kind reads, refusal of six nonrecipe edits, 24-revision paging and PostgreSQL reopen. This extends INV-21 and WW03/inspection/retention; UIUX05 retains Conversation/Work, dirty-dialog/reload/late-preview/input/focus and actual stream integration qualification. Ordinary learned-recipe details use permitted native facts and Craft without creator controls. All composite requirements below remain open until their full demonstrated scope passes.
 
 - [ ] Provide stable Conversation/Work views, draft list, exact revision history/comparison and adaptive detail without losing transcript position or dirty input.
 - [ ] Expose authenticated human read/edit/check/prepare adapters reusing native receipts and validation; no browser context handle, forged local authority, second draft store or paid call for direct edits.
@@ -223,3 +248,7 @@ No provider call, runtime test or benchmark was performed to produce this plan. 
 
 - Design: [feature specification](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md).
 - Limits: [invention](../limits/inventions.md), [objects](../limits/objects.md), [interface](../limits/interface.md), [camp tuning](../limits/base-world.md#cr01--proposed-finite-camp-activities), [finite reuse](../limits/action-experience.md#ael09--proposed-fresh-stock-binding-and-finite-reuse), [survival](../limits/state-effects.md#st17--proposed-passive-meters-and-configured-body-services) and [memory](../limits/memory.md); parent trackers above retain broader acceptance.
+
+## Local branch integration
+
+Mike authorized integrating Engineer 2 into local main after Engineer 1, preserving shared action admission/execution and saved simulation progress. [The local reconciliation plan](../projects/next-playable-week/local-branch-integration.md) records source tips, selected checks and the subsequent Engineer 3 merge. Earlier handoff tables and independent-branch consumption statements describe their original checkpoints; they do not supersede this integration. The full PW06 acceptance matrix and unmet capacity/browser/provider checks remain open.

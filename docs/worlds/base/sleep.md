@@ -14,7 +14,7 @@ The `wilderness:restorative-rest` definition explicitly reads/writes the registe
 - The separate energy-expenditure definition drains 0.0015 points per game second during work/flight/fleeing, or 0.0005 otherwise, only while restorative rest is inactive.
 - Ending the effect suppresses automatic reactivation for 300 game seconds. Explicit activation remains available during this grace period.
 
-The definition restricts actions, locomotion, speech and perception, occupies the actor's current action, and requests a horizontal pose with drifting `zzz`. An airborne actor must first land. Injury, urgent native food intake, recovery and explicit interruption can end the effect without refunding consumed materials or marking interrupted work successful.
+The definition restricts actions, locomotion, speech and perception, occupies the actor's current action, and requests a horizontal pose with drifting `zzz`. An airborne actor must first land. Injury, recovery and explicit interruption can end the effect without refunding consumed materials or marking interrupted work successful.
 
 ## State and observable transitions
 
@@ -26,4 +26,4 @@ The definition emits exactly **“{subject.name} fell asleep.”** and **“{sub
 
 ## Persistence and presentation
 
-The generic registry and entity instances are saved with the world, following the [active development policy](../../save-and-load.md#active-development-policy). Public projections carry generic labels/pose/particle data. Dreams are optional cognition work: [memory architecture](../../memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation) owns their configured effect-episode requirement. Native recovery never waits for provider credentials, paid work or dream completion.
+The generic registry and entity instances are saved with the world, following the [active development policy](../../save-and-load.md#active-development-policy). Public projections carry generic labels/pose/particle data. Dreams are optional cognition work: [memory architecture](../../memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation) owns their configured effect-episode requirement. Native recovery never waits for provider credentials, paid work or dream completion. A world can explicitly set its dream policy to null; that omits dreaming without adding a default rest rule. Quiet configured starvation does not wake this world's sleeper.

@@ -1,15 +1,15 @@
 # Survival rules as world settings
 
-**Status:** approved, not started; no open questions. Mike asked for it in chat on 2026-09-30: the bundled world's built-in survival rules "should not be in the engine. Make them part of the configs." The [decisions](#decisions) were settled on 2026-10-01 by existing rules and the rebase onto main. Work starts after the [regional time work](regional-time-and-navigation.md) (`codex/time-nav-performance`) merges into main. This plan carries out the open items of [EWF03 (extract default body and need policies)](../maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers) for survival. The rules themselves are documented in [survival](../worlds/base/survival.md).
+**Status:** approved; domain/server implemented, combined client acceptance pending; no open questions. Mike asked for it in chat on 2026-09-30: the bundled world's built-in survival rules "should not be in the engine. Make them part of the configs." The [decisions](#decisions) were settled on 2026-10-01 by existing rules and the rebase onto main. The earlier dependency on the [regional time work](regional-time-and-navigation.md) (`codex/time-nav-performance`) is preserved in the execution coordination below; the October 2 explicit inherited planning base governs this implementation. This plan carries out the open items of [EWF03 (extract default body and need policies)](../maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers) for survival. The rules themselves are documented in [survival](../worlds/base/survival.md).
 
 **Goal:** everything about how bodies get hungry and tired, are hurt by starving or exhaustion, collapse, recover and are revived belongs to the bundled world and is read from its settings. The engine keeps only general mechanisms. A world without hunger, such as the clockwork demo, runs with no survival names or numbers in engine code.
 
-The expanded [PW07 execution brief](next-playable-week/survival.md) specifies both approved stages through concrete meter/body/concern and UI contracts, with engineer 2 owning domain/server work and engineer 4 the generic UI. Its week allocation and additional mechanism choices are proposals; it does not narrow the approved outcome or declare delivery. Recheck the regional-work dependency against the implementation baseline.
+The expanded [PW07 execution brief](next-playable-week/survival.md) specifies both approved stages through concrete meter/body/concern and UI contracts, with engineer 2 owning domain/server work and engineer 4 the generic UI. The project owner explicitly authorized PW07 implementation on October 2 despite the week documents' proposed status; its scope does not narrow the approved outcome. Combined client acceptance still determines delivery. Recheck the regional-work dependency against the implementation baseline.
 
 ## Starting point
 
-- **Base:** a new branch from local main after the regional work merges. Follow the [rebase workflow](../../.agents/skills/openlegend-rebase/SKILL.md) and report the exact commit.
-- **Nothing is implemented.** The prototypes and comparison scripts behind [the evidence](#evidence-so-far) were disposable and no longer exist; the figures below are what they showed. Rebuild the comparison as a committed run-on-demand script under `scripts/`, not an automated test.
+- **Executed base:** Engineer 2 uses the assigned worktree's inherited planning commit `8005f7c7` on `oct2-eng-2`, as explicitly requested on October 2. The branch change was detached `8005f7c7` → `oct2-eng-2`. This supersedes the earlier suggested local-main refresh; the historical prototype baseline is not a replacement starting base.
+- **Current execution:** the domain/server implementation and requested [run-on-demand comparison](../../scripts/compare-world-survival.ts) now exist. [October 2 verification](../verification/world-configured-survival.md) records actual results and limits. The earlier prototypes behind [historical evidence](#evidence-so-far) remain historical and are not reused as proof.
 - **Coordination:**
   - `apps/server/src/world-authoring-metadata.ts` belongs to the invention work. Stage 1 needs no edit there (see [costs and risks](#costs-and-risks)); stage 2 changes it only in coordination with that work's owner.
   - Stage 2b changes the game screen (`apps/client`). On 2026-10-01 another agent was actively changing it; check who owns it before starting that part.
@@ -45,7 +45,7 @@ Energy use while awake and sleep are already configuration: two status effects i
 
 ### Evidence so far
 
-Disposable prototypes of steps 1 and 2 were compared with the current game on eight scenarios, each run with 30-second, 1-second and whole-run calls:
+**Historical, October 1:** disposable prototypes of steps 1 and 2 were compared with the current game on eight scenarios, each run with 30-second, 1-second and whole-run calls:
 
 - health, food and energy matched bit for bit;
 - every event matched, including deaths, collapse, sleeping while starving and animals at zero energy.
@@ -55,6 +55,8 @@ There was one intended difference. Today, when a character is killed by a blow i
 The prototypes also exposed a defect a real change must fix. When a status effect kills its own body partway through applying rates, a later rule on that body recreates a bookkeeping record for an ended rule. The world can then no longer be saved.
 
 ### Costs and risks
+
+The figures immediately below describe the historical disposable prototypes. Current matched-workload results and the combined cost of all three rules plus the installed body-policy interface are in [October 2 evidence](../verification/world-configured-survival.md#matched-flock-cost); no limit is raised to obtain admission.
 
 - **Bookkeeping cost:** each active status effect writes its own bookkeeping every time values are brought up to date. One hunger rule per person adds about 10–16% more recorded changes per world update in the bird-flock scenario. The damage rules cost almost nothing, because they are active only while someone is starving or exhausted. Stage 4 of the [step-work plan](proportional-step-work.md) would remove most of this cost.
 - **Lower entity ceiling:** each new rule lowers the largest world the work limits allow by about 7% (about 7,700 to 7,100 top-level entities).
@@ -144,10 +146,12 @@ Settled on 2026-10-01; none needs Mike's input.
 
 ## Progress
 
-- [ ] Stage 1 — rules that run every step (steps 1–7 and verification)
-- [ ] Stage 2a — remaining rules in the simulation and server
+October 2 domain/server work is published in `edd4d9ad6422074175f0f8de4c4770097c45660b` and `937c8c44fd8c71d82c66bcef9eec2f70ef9369c8`: configured per-step survival, passive meters, exact body policy, proportionally converted health, current-format validation, real recovery/eating/revival/cognition consumers and the whole unlike-world composition are implemented. The 27-pair native comparison, 37 focused existing tests, 40 consumer assertions and independent lethal-multi-status/current-state refusal checks pass. Actual disposable-SQL editor/reopen and held-writer/history checks establish server consumers and cancellation/drift refusal with fixture receipts and zero paid calls. The [combined Engineer 2 evidence](../verification/next-playable-week-engineer-2.md) records the additional focused server suites and explicit incompatible-format refusal. Manual checkpoint, stream read, authorized restore and fresh-server reopening now pass for both complete worlds; incompatible-format refusal preserves the live world and file. Current cost evidence is linked above. EWF03, affected limits and the changelog are reconciled for these delivered slices. Engineer 4 owns the combined client/browser acceptance; no stage-2b completion is inferred from the server handoff. Broader composition, live-law evolution, world-package and PW08 performance gates stay open.
+
+- [x] Stage 1 — rules that run every step (steps 1–7 and verification)
+- [x] Stage 2a — remaining rules in the simulation and server
 - [ ] Stage 2b — messages and game screen
-- [ ] EWF03, limits and changelog reconciled after each stage
+- [x] EWF03, limits and changelog reconciled for stages 1 and 2a; stage 2b remains subject to its combined acceptance
 
 ## Maintained records
 

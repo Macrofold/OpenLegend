@@ -20,8 +20,7 @@ import { randomUUID } from 'node:crypto';
 import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
-import { upgradeWorldState } from './upgrade-world.js';
-import { validateWorldModules } from '@open-legend/domain';
+import { validateCurrentWorldState } from './upgrade-world.js';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
@@ -760,11 +759,8 @@ export class SqlGameRepository implements GameRepository {
 
     const canonical = await this.records.load(active);
     if (canonical) {
-      const state = {
-        ...canonical.state,
-        world: updateWorld(canonical.state.world, upgradeWorldState),
-      };
-      validateWorldModules(state.world);
+      const state = canonical.state;
+      validateCurrentWorldState(state.world);
       if (
         (await (active
           ? this.history.retainedEventCount(state.world.id)
@@ -799,11 +795,9 @@ export class SqlGameRepository implements GameRepository {
     const head = await this.getIntegration('world-journal-head');
     if (head !== undefined && head !== null && Number(head) !== revision)
       throw new Error('World journal head mismatch; refusing incomplete recovery.');
-    // Diff against the persisted shape so startup commits the upgrade, not just its later edits.
-    // docs/save-and-load.md#active-development-policy
+    // Keep the exact persisted baseline; restoration does not convert development state.
     const acceptedState = structuredClone(state);
-    upgradeWorldState(state.world);
-    validateWorldModules(state.world);
+    validateCurrentWorldState(state.world);
     if (
       (await (active
         ? this.history.retainedEventCount(state.world.id)

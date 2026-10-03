@@ -1,6 +1,5 @@
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
-import { migrateCognition } from '@open-legend/domain';
-import { upgradeWorldState } from './upgrade-world.js';
+import { validateCurrentWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
@@ -545,9 +544,7 @@ export class GameSaves {
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
-    upgradeWorldState(payload.state.world);
-    migrateCognition(payload.state.world);
-    validateWorldModules(payload.state.world);
+    validateCurrentWorldState(payload.state.world);
     return payload;
   }
   async delete(worldId: string, id: string) {

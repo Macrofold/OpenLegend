@@ -4,7 +4,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { validateNativeWork } from './native-work.js';
 import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
-import { isDraft, original } from 'immer';
+import { isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
@@ -31,7 +31,10 @@ import { validateActionExperience } from './action-experience.js';
 import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
-import { hasWildernessNeeds } from './worlds/base/needs.js';
+import { validateBodyPolicy, type BodyPolicy } from './body-policy.js';
+import { validateCognitionPolicy } from './cognition-policy.js';
+import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
+import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
 import { hasRecordFields } from './records.js';
@@ -53,24 +56,37 @@ export interface AttributeState {
   revision: number;
   concernActive?: boolean;
 }
+export type AttributeCriticalPredicate =
+  | {
+      compare: {
+        operator: 'lessThan' | 'lessThanOrEqual';
+        value: number;
+        rounding: 'none' | 'nearest-integer';
+      };
+    }
+  | { concernActive: true };
 export interface AttributeDefinition {
   meaning?: string;
   condition?: ConditionPolicy;
   id: string;
   version: number;
-  implementation:
-    | 'native-health-v1'
-    | 'native-fullness-v1'
-    | 'native-energy-v1'
-    | 'reservoir-v1'
-    | 'category-v1';
+  implementation: 'native-health-v1' | 'number-v1' | 'reservoir-v1' | 'category-v1';
   name: string;
   disclosure: 'public' | 'owner';
-  presentation: 'health' | 'food' | 'energy' | 'neutral';
+  presentation: { icon: string; color: string };
   schema:
     | { kind: 'number'; min: number; max: number; initial: number; unit: string }
     | { kind: 'category'; choices: string[]; initial: string };
-  concern?: { below: number; text: string };
+  concern?: {
+    below: number;
+    text: string;
+    mode: 'instant' | 'latched';
+    notify: boolean;
+    reconsider: boolean;
+    recoveryMargin?: number;
+  };
+  critical?: AttributeCriticalPredicate;
+  editorCritical?: AttributeCriticalPredicate;
   reservoir?: {
     drainPerSecond: number;
     replenishPerSecond: number;
@@ -87,7 +103,8 @@ export interface WorldModuleManifest {
   appraisals?: AppraisalPolicy;
   revision: number;
   interface: 'world-modules-v1';
-  physiology: 'wilderness-v1';
+  bodyPolicy: BodyPolicy | null;
+  bodyPolicyPin: DefinitionPin | null;
   definitions: AttributeDefinition[];
   pins: DefinitionPin[];
   senses: SenseDefinition[];
@@ -95,6 +112,7 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
+  recipeFamilies: DefinitionPin[];
 }
 export interface AttributeView {
   meaning?: string;
@@ -103,7 +121,7 @@ export interface AttributeView {
   version: number;
   name: string;
   display: 'meter' | 'category';
-  presentation: 'health' | 'food' | 'energy' | 'neutral';
+  presentation: { icon: string; color: string };
   value: AttributeValue | null;
   status: 'known' | 'unknown';
   min?: number;
@@ -111,6 +129,8 @@ export interface AttributeView {
   unit?: string;
   concern?: string;
   critical?: boolean;
+  editorCritical?: boolean;
+  editorCriticalComparison?: Extract<AttributeCriticalPredicate, { compare: unknown }>['compare'];
   revision: number;
 }
 
@@ -123,17 +143,11 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
     execution: 'native',
     storage: 'health',
   },
-  'native-fullness-v1': {
+  'number-v1': {
     interface: 'attribute-number-v1',
-    owner: 'wilderness-needs',
-    execution: 'native',
-    storage: 'fullness',
-  },
-  'native-energy-v1': {
-    interface: 'attribute-number-v1',
-    owner: 'wilderness-needs',
-    execution: 'native',
-    storage: 'energy',
+    owner: 'number',
+    execution: 'passive',
+    storage: 'attributes',
   },
   'reservoir-v1': {
     interface: 'attribute-number-v1',
@@ -149,9 +163,7 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
   },
 } as const);
 const definitionPins = new WeakMap<object, DefinitionPin>();
-export function definitionPin(
-  definition: AttributeDefinition | SenseDefinition | ItemDefinition | AcousticPolicy,
-): DefinitionPin {
+export function definitionPin(definition: { id: string; version: number }): DefinitionPin {
   const cached = definitionPins.get(definition);
   if (cached) return cached;
   const pin = {
@@ -163,24 +175,64 @@ export function definitionPin(
   return pin;
 }
 export function createModuleManifest(
-  definitions = DEFAULT_ATTRIBUTES,
-  senses = DEFAULT_SENSES,
+  definitions: AttributeDefinition[],
+  senses: SenseDefinition[],
+  bodyPolicy: BodyPolicy | null,
+  recipeFamilies: readonly DefinitionPin[],
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
     revision: 1,
     interface: 'world-modules-v1',
-    physiology: 'wilderness-v1',
+    bodyPolicy: bodyPolicy && structuredClone(bodyPolicy),
+    bodyPolicyPin: bodyPolicy && definitionPin(bodyPolicy),
     definitions: structuredClone(definitions),
     pins: definitions.map(definitionPin),
     senses: structuredClone(senses),
-    defaultSenses: DEFAULT_SENSES.map((s) => s.id),
+    defaultSenses: senses.map((s) => s.id),
     sensePins: senses.map(definitionPin),
     acoustics: structuredClone(DEFAULT_ACOUSTICS),
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
+    recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
   };
   validateModuleManifest(manifest);
   return manifest;
+}
+
+// Trusted definitions are immutable host content. Keep their pins once, while checking
+// every live manifest pin; caching mutable world manifests could admit changed meaning.
+const trustedRecipeFamilies = new Map(
+  BASE_RECIPE_FAMILIES.map((family) => {
+    freeze(family.definition, true);
+    return [
+      family.definition.id,
+      { family, pin: Object.freeze(definitionPin(family.definition)) },
+    ] as const;
+  }),
+);
+function exactRecipeFamily(pin: DefinitionPin): RecipeFamilyDescriptor | undefined {
+  const trusted = trustedRecipeFamilies.get(pin.id);
+  return trusted &&
+    Object.keys(pin).length === 3 &&
+    pin.id === trusted.pin.id &&
+    pin.version === trusted.pin.version &&
+    pin.digest === trusted.pin.digest
+    ? trusted.family
+    : undefined;
+}
+/** Resolve only exact trusted capabilities selected by this world's existing manifest. */
+export function recipeFamily(world: WorldState, id: string): RecipeFamilyDescriptor | undefined {
+  if (!Array.isArray(world.moduleManifest.recipeFamilies)) return undefined;
+  const pin = world.moduleManifest.recipeFamilies.find((pin) => pin.id === id);
+  if (!pin) return undefined;
+  return exactRecipeFamily(pin);
+}
+export function installedRecipeFamilies(world: WorldState): RecipeFamilyDescriptor[] {
+  return world.moduleManifest.recipeFamilies.map((pin) => {
+    const family = exactRecipeFamily(pin);
+    if (!family) throw new Error('Missing exact recipe family dependency.');
+    return family;
+  });
 }
 const namespace = /^[a-z][a-z0-9-]{0,39}:[a-z][a-z0-9-]{0,59}$/;
 function object(value: unknown, keys: string[]): asserts value is Record<string, unknown> {
@@ -204,7 +256,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
   object(manifest, [
     'revision',
     'interface',
-    'physiology',
+    'bodyPolicy',
+    'bodyPolicyPin',
     'definitions',
     'pins',
     'senses',
@@ -213,11 +266,11 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'appraisals',
     'acoustics',
     'acousticsPin',
+    'recipeFamilies',
   ]);
   validateAppraisalPolicy(manifest.appraisals);
   if (
     manifest.interface !== 'world-modules-v1' ||
-    manifest.physiology !== 'wilderness-v1' ||
     !Number.isSafeInteger(manifest.revision) ||
     manifest.revision < 1 ||
     !Array.isArray(manifest.definitions) ||
@@ -225,6 +278,15 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     manifest.pins.length !== manifest.definitions.length
   )
     throw new Error('Unsupported world module manifest.');
+  if (!Array.isArray(manifest.recipeFamilies))
+    throw new Error('Recipe family manifest is missing.');
+  const familyIds = new Set<string>();
+  for (const pin of manifest.recipeFamilies) {
+    object(pin, ['id', 'version', 'digest']);
+    if (!namespace.test(pin.id) || familyIds.has(pin.id) || !exactRecipeFamily(pin))
+      throw new Error('Missing, duplicate or incompatible exact recipe family dependency.');
+    familyIds.add(pin.id);
+  }
   if (
     !Array.isArray(manifest.senses) ||
     !Array.isArray(manifest.sensePins) ||
@@ -284,6 +346,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       'reservoir',
       'meaning',
       'condition',
+      'critical',
+      'editorCritical',
     ]);
     if (
       !namespace.test(d.id) ||
@@ -292,10 +356,16 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       d.version < 1 ||
       !Object.hasOwn(HOST_IMPLEMENTATIONS, d.implementation) ||
       !boundedText(d.name, 64) ||
-      !['public', 'owner'].includes(d.disclosure) ||
-      !['health', 'food', 'energy', 'neutral'].includes(d.presentation)
+      !['public', 'owner'].includes(d.disclosure)
     )
       throw new Error('Invalid attribute identity or host implementation.');
+    object(d.presentation, ['icon', 'color']);
+    if (
+      ![d.presentation.icon, d.presentation.color].every(
+        (symbol) => typeof symbol === 'string' && /^[a-z][a-z0-9.-]{0,63}$/.test(symbol),
+      )
+    )
+      throw new Error('Invalid attribute presentation symbols.');
     ids.add(d.id);
     const host = HOST_IMPLEMENTATIONS[d.implementation];
     const owner = host.storage === 'attributes' ? d.id : host.storage;
@@ -332,13 +402,19 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       throw new Error('Invalid categorical attribute.');
     validateConditionPolicy(d);
     if (d.concern) {
-      object(d.concern, ['below', 'text']);
+      object(d.concern, ['below', 'text', 'mode', 'notify', 'reconsider', 'recoveryMargin']);
       if (
         d.schema.kind !== 'number' ||
         !finite(d.concern.below) ||
         d.concern.below < d.schema.min ||
         d.concern.below > d.schema.max ||
-        !boundedText(d.concern.text, 160)
+        !boundedText(d.concern.text, 160) ||
+        !['instant', 'latched'].includes(d.concern.mode) ||
+        typeof d.concern.notify !== 'boolean' ||
+        typeof d.concern.reconsider !== 'boolean' ||
+        (d.concern.mode === 'latched'
+          ? !finite(d.concern.recoveryMargin) || d.concern.recoveryMargin < 0
+          : d.concern.recoveryMargin !== undefined)
       )
         throw new Error('Invalid concern projection.');
     }
@@ -360,19 +436,40 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       )
         throw new Error('Invalid reservoir work limits.');
     }
-    // Native body semantics remain fixed until their owning family supports revision.
-    const native = DEFAULT_ATTRIBUTES.find((a) => a.implementation === d.implementation);
-    if (native && canonicalJson(native) !== canonicalJson(d))
-      throw new Error('Native wilderness bindings require their exact reviewed definition.');
+    for (const predicate of [d.critical, d.editorCritical]) {
+      if (!predicate) continue;
+      object(predicate, ['compare', 'concernActive']);
+      if ('concernActive' in predicate) {
+        if (Object.keys(predicate).length !== 1 || predicate.concernActive !== true || !d.concern)
+          throw new Error('Invalid concern decoration.');
+      } else {
+        object(predicate.compare, ['operator', 'value', 'rounding']);
+        const c = predicate.compare;
+        if (
+          Object.keys(predicate).length !== 1 ||
+          d.schema.kind !== 'number' ||
+          !finite(c.value) ||
+          c.value < d.schema.min ||
+          c.value > d.schema.max ||
+          !['lessThan', 'lessThanOrEqual'].includes(c.operator) ||
+          !['none', 'nearest-integer'].includes(c.rounding)
+        )
+          throw new Error('Invalid numeric decoration.');
+      }
+    }
     const pin = manifest.pins.find((p) => p.id === d.id);
     if (!pin || canonicalJson(pin) !== canonicalJson(definitionPin(d)))
       throw new Error('Missing or changed exact definition pin.');
   }
-  for (const native of DEFAULT_ATTRIBUTES)
-    if (!ids.has(native.id)) throw new Error('Missing required wilderness body/need binding.');
+  validateBodyPolicy(manifest.bodyPolicy, manifest.definitions);
+  if (
+    canonicalJson(manifest.bodyPolicyPin) !==
+    canonicalJson(manifest.bodyPolicy ? definitionPin(manifest.bodyPolicy) : null)
+  )
+    throw new Error('Missing exact body policy dependency.');
 }
 export function attributeDefinition(
-  world: WorldState,
+  world: { moduleManifest: Pick<WorldModuleManifest, 'definitions'> },
   id: string,
 ): AttributeDefinition | undefined {
   // Definitions are replaced at admission, never edited during a native step.
@@ -386,11 +483,24 @@ export function readAttribute(
 ): AttributeValue | undefined {
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   if (storage === 'attributes') return actor.attributes?.[definition.id]?.value;
-  // The native adapter projects body-relative percent without copying authoritative health.
-  if (storage === 'health') return (actor.health / (actor.body?.maxHealth ?? 100)) * 100;
-  if (storage === 'energy') return actor.energy;
-  if (!hasWildernessNeeds(actor)) return undefined;
-  return actor[storage];
+  // Body health remains raw authoritative points; definition units are only a projection.
+  if (
+    storage === 'health' &&
+    definition.schema.kind === 'number' &&
+    actor.body &&
+    Number.isFinite(actor.body.maxHealth) &&
+    actor.body.maxHealth > 0
+  ) {
+    const range = definition.schema.max - definition.schema.min;
+    // Keep equal-unit reads exact, and avoid introducing rounding at proportional thresholds.
+    return (
+      definition.schema.min +
+      (range === actor.body.maxHealth
+        ? actor.health
+        : (actor.health / actor.body.maxHealth) * range)
+    );
+  }
+  return undefined;
 }
 export function applicableAttributes(
   world: WorldState,
@@ -417,6 +527,7 @@ export function setAttribute(
   d: AttributeDefinition,
   value: AttributeValue,
   events: WorldEvent[],
+  conditionTiming: 'now' | 'transition' = 'now',
 ): boolean {
   validateAttributeValue(d, value);
   const storage = HOST_IMPLEMENTATIONS[d.implementation].storage;
@@ -444,14 +555,14 @@ export function setAttribute(
   prior.value = value;
   prior.revision++;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'attribute' });
-  if (d.concern && d.schema.kind === 'number' && typeof value === 'number') {
+  if (d.concern?.mode === 'latched' && d.schema.kind === 'number' && typeof value === 'number') {
     // A small dead band prevents drain/transfer in one step from creating repeated novelty.
-    const recovery = Math.min(d.schema.max, d.concern.below + (d.schema.max - d.schema.min) * 0.05);
+    const recovery = Math.min(d.schema.max, d.concern.below + d.concern.recoveryMargin!);
     const concerned = wasConcerned ? value < recovery : value < d.concern.below;
     prior.concernActive = concerned;
     // The latch is physical state; only a character able to notice gains a private record.
     // A sleeping character's current concern still reaches its next context via projection.
-    if (concerned !== wasConcerned && canNoticeInternalChange(world, entity))
+    if (d.concern.notify && concerned !== wasConcerned && canNoticeInternalChange(world, entity))
       emit(
         world,
         events,
@@ -470,25 +581,51 @@ export function setAttribute(
         'private',
       );
   }
-  reconcileConditions(world, entity, events);
+  if (conditionTiming === 'now') reconcileConditions(world, entity, events);
   return true;
 }
 export function initializeAttributes(
   actor: ActorComponent,
   definitions: AttributeDefinition[],
+  initialValues: Record<string, AttributeValue> = {},
 ): void {
   for (const d of definitions) {
     if (HOST_IMPLEMENTATIONS[d.implementation].storage !== 'attributes')
       throw new Error('Cannot initialize a second native state owner.');
     if (actor.attributes?.[d.id]) throw new Error('Attribute already initialized.');
+    const value = Object.hasOwn(initialValues, d.id) ? initialValues[d.id]! : d.schema.initial;
+    validateAttributeValue(d, value);
     (actor.attributes ??= {})[d.id] = {
-      value: d.schema.initial,
+      value,
       revision: 0,
-      ...(d.concern && typeof d.schema.initial === 'number'
-        ? { concernActive: d.schema.initial < d.concern.below }
+      ...(d.concern?.mode === 'latched' && typeof value === 'number'
+        ? { concernActive: value < d.concern.below }
         : {}),
     };
   }
+}
+export function attributeConcernActive(
+  entity: Entity,
+  d: AttributeDefinition,
+  value: unknown,
+): boolean {
+  if (!d.concern || typeof value !== 'number') return false;
+  return d.concern.mode === 'latched'
+    ? !!(entity.actor?.attributes ?? entity.attributes)?.[d.id]?.concernActive
+    : value < d.concern.below;
+}
+function attributeCritical(
+  entity: Entity,
+  d: AttributeDefinition,
+  value: unknown,
+  predicate: AttributeCriticalPredicate | undefined,
+): boolean {
+  if (!predicate) return false;
+  if ('concernActive' in predicate) return attributeConcernActive(entity, d, value);
+  if (typeof value !== 'number') return false;
+  const c = predicate.compare,
+    compared = c.rounding === 'nearest-integer' ? Math.round(value) : value;
+  return c.operator === 'lessThan' ? compared < c.value : compared <= c.value;
 }
 export function projectAttributes(
   world: WorldState,
@@ -510,23 +647,16 @@ export function projectAttributes(
         presentation: d.presentation,
         value: value ?? null,
         status: value === undefined ? 'unknown' : 'known',
-        critical:
-          typeof value === 'number' &&
-          (d.reservoir
-            ? !!entity.actor!.attributes?.[d.id]?.concernActive
-            : Math.round(value) <= (max ?? 100) * 0.2),
-        revision:
-          d.implementation === 'native-fullness-v1'
-            ? (entity.actor!.fullnessRevision ?? 0)
-            : d.implementation === 'native-energy-v1'
-              ? (entity.actor!.energyRevision ?? 0)
-              : (entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0),
+        critical: attributeCritical(entity, d, value, d.critical),
+        editorCritical: attributeCritical(entity, d, value, d.editorCritical),
+        ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
+          ? { editorCriticalComparison: { ...d.editorCritical.compare } }
+          : {}),
+        revision: entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0,
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
         ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
         ...(audience === 'owner' && d.condition ? { condition: conditionText(d, value) } : {}),
-        ...(audience === 'owner' &&
-        (entity.actor!.attributes?.[d.id]?.concernActive ??
-          (threshold !== undefined && typeof value === 'number' && value < threshold))
+        ...(audience === 'owner' && attributeConcernActive(entity, d, value)
           ? { concern: d.concern!.text }
           : {}),
       };
@@ -538,8 +668,7 @@ export function bodyContext(world: WorldState, entity: Entity): string {
     // Qualitative concerns supplement measurements; they must not replace them.
     // docs/memory-architecture.md#3-one-compact-model-facing-context
     ...projectAttributes(world, entity, 'owner').flatMap((v) => {
-      const fullness = attributeDefinition(world, v.id)?.implementation === 'native-fullness-v1';
-      const name = fullness ? `${v.name} (fullness; lower means hungrier)` : v.name;
+      const name = v.name;
       const measurement =
         v.status === 'unknown'
           ? `${name}: unknown.`
@@ -602,6 +731,7 @@ export function validateWorldModules(world: WorldState): void {
   validatePerceptionState(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
+  validateInstalledRecipes(world);
   validateGatheringTools(world);
   for (const definition of Object.values(world.itemDefinitions))
     if (definition.melee && !validMelee(definition.melee))
@@ -621,7 +751,22 @@ export function validateWorldModules(world: WorldState): void {
   validateAgency(world);
   validateActionExperience(world);
   validateModuleManifest(world.moduleManifest);
+  validateBodyPolicy(
+    world.moduleManifest.bodyPolicy,
+    world.moduleManifest.definitions,
+    new Set(world.statusEffectPolicy.definitions.map((d) => d.id)),
+    world.itemDefinitions,
+  );
+  validateCognitionPolicy(world, world.cognitionPolicy);
   for (const e of Object.values(world.entities)) {
+    if (
+      e.actor &&
+      (['fullness', 'energy', 'fullnessRevision', 'energyRevision'].some((key) =>
+        Object.hasOwn(e.actor!, key),
+      ) ||
+        (e.actor.capabilities && Object.hasOwn(e.actor.capabilities, 'needs')))
+    )
+      throw new Error('Incompatible native meter aliases.');
     if (
       e.resource &&
       (!Number.isSafeInteger(e.resource.quantity) ||
@@ -630,20 +775,22 @@ export function validateWorldModules(world: WorldState): void {
           (!Number.isSafeInteger(e.resource.revision) || e.resource.revision < 0)))
     )
       throw new Error('Invalid gathering stock or revision.');
-    for (const revision of [e.actor?.fullnessRevision, e.actor?.energyRevision])
-      if (revision !== undefined && (!Number.isSafeInteger(revision) || revision < 0))
-        throw new Error('Invalid native need revision.');
     if (e.actor)
       for (const definition of world.moduleManifest.definitions) {
         const value = readAttribute(e.actor, definition);
         if (value !== undefined) validateAttributeValue(definition, value);
       }
+    if (e.actor?.body && (!Number.isFinite(e.actor.body.maxHealth) || e.actor.body.maxHealth <= 0))
+      throw new Error('Invalid body maximum.');
     if (
-      e.actor?.capabilities?.needs !== false &&
-      e.actor &&
-      (!Number.isFinite(e.actor.fullness) || !Number.isFinite(e.actor.energy))
+      e.actor?.body &&
+      (!Number.isFinite(e.actor.health) ||
+        e.actor.health < 0 ||
+        e.actor.health > e.actor.body.maxHealth)
     )
-      throw new Error('Missing required wilderness needs.');
+      throw new Error('Invalid authoritative body health.');
+    if (e.actor?.body && !world.moduleManifest.bodyPolicy)
+      throw new Error('Living bodies require an installed body policy.');
     if (
       e.actor?.senses &&
       (new Set(e.actor.senses).size !== e.actor.senses.length ||
@@ -688,7 +835,11 @@ export function validateWorldModules(world: WorldState): void {
       if (!d || HOST_IMPLEMENTATIONS[d.implementation].storage !== 'attributes')
         throw new Error('Missing attribute definition or duplicate native value.');
       object(state, ['value', 'revision', 'concernActive']);
-      if (d.concern ? typeof state.concernActive !== 'boolean' : state.concernActive !== undefined)
+      if (
+        d.concern?.mode === 'latched'
+          ? typeof state.concernActive !== 'boolean'
+          : state.concernActive !== undefined
+      )
         throw new Error('Invalid concern episode.');
       validateAttributeValue(d, state.value);
       if (!Number.isSafeInteger(state.revision) || state.revision < 0)

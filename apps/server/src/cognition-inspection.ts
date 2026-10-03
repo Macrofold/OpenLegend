@@ -156,17 +156,12 @@ function normalizeRoot(call: IntelligenceCall): IntelligenceCall {
   if (call.triggerType || !call.id.startsWith('thought-')) return call;
   const trigger = call.trigger ?? '';
   const remembered = trigger.match(/Summary of remembered experience:/g)?.length ?? 0;
-  const urgent = /critically hungry|exhausted/i.test(trigger);
   return {
     ...call,
-    triggerType: urgent ? 'Native survival need' : 'Autonomous cognition',
-    trigger: urgent
-      ? /critically hungry/i.test(trigger)
-        ? 'Critical hunger required native survival behavior.'
-        : 'Exhaustion required native survival behavior.'
-      : remembered
-        ? `${remembered} remembered ${remembered === 1 ? 'experience prompted' : 'experiences prompted'} autonomous reconsideration.`
-        : 'Recent events or state changes prompted autonomous reconsideration.',
+    triggerType: 'Autonomous cognition',
+    trigger: remembered
+      ? `${remembered} remembered ${remembered === 1 ? 'experience prompted' : 'experiences prompted'} autonomous reconsideration.`
+      : 'Recent events or state changes prompted autonomous reconsideration.',
   };
 }
 

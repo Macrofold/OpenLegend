@@ -95,6 +95,8 @@ The run also exposed a pre-existing main bug, reproduced at zero cost on `origin
 
 ## PW01 reliability repairs — October 2, 2026
 
+This section records Engineer 1’s branch evidence. At its independent checkpoint, Engineer 2 consumed only the pricing/restart slice; speech-attribution integration was pending then. These historical checks do not claim integrated acceptance on Engineer 2’s checkout.
+
 Engineer 1 started `oct2-eng-1` from inherited planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`, preserving the historical results above. Environment: macOS arm64, Node 22.23.2, pnpm 10.33.0, loopback PostgreSQL 14.17 with pgvector and uniquely owned disposable databases. All checks use `AI_BUDGET_USD=0`; injected accounting is not real spending. Additional and cumulative Jev cost for this implementation task: **$0**.
 
 Stored speech now passes its existing structured speaker identity to personal wording. The focused native promise check in `packages/domain/src/mind.test.ts` passed (1 selected, 15 skipped), and the real director promise/context case in `apps/server/src/cognition-payloads.test.ts` passed (1 selected, 7 skipped), with its global transport guard asserting no provider request. A small native scenario additionally exercised self, recognized other, unknown other and absent speaker identity through stored memories, including unchanged quoted names. Actual native promise speech stores `I said: I promise to gather berries.` with its original speaker and obligation evidence.

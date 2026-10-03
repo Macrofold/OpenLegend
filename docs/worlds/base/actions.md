@@ -9,3 +9,5 @@ The bundled world's action families (gather, prepare, craft, cook, harvest, eat,
 - **Cooking:** turns one raw meat into one cooked meat. The kernel's admission, its produced item and the typed parser's output binding read this pair.
 
 Balance values stay with their owners ([survival](survival.md), [combat](combat.md)). Older native adapters still contain some wording and item literals of their own; those are listed as remaining work in the [base-world tracker](../../maintainers/base-world.md).
+
+Gathering choices use this world's authored description and the same best compatible carried-tool yield as native gathering, capped by the observed remaining supply. A learned technique or an uncarried tool does not increase the advertised yield. When a large inventory is shown as a page, choices identify the yield supported by the inspected possessions and disclose that omitted carried tools may change the final result; preparing choices does not rescan all possessions.

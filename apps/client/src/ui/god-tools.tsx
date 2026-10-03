@@ -11,6 +11,7 @@ import { ClockOffsetContext, clockParts } from './event-time';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ApiResult,
+  AttributeView,
   GodMemoryEditorEntry,
   GodPersonEditorView,
   GodPersonFields,
@@ -78,7 +79,7 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
     backstory: person.backstory.trim(),
     traitIds: [...new Set(person.traitIds)],
     goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
-    stats: { ...person.stats },
+    meters: { ...person.meters },
     inventory: person.inventory?.map((item) => ({ ...item })),
   };
 }
@@ -94,8 +95,8 @@ function validateEditorPerson(person: GodPersonFields): string {
   if (value.goals.length > 8) return 'Add no more than eight goals.';
   if (value.goals.some((goal) => goal.length > 500))
     return 'Each goal must be 500 characters or fewer.';
-  if (Object.values(value.stats).some((stat) => !Number.isFinite(stat) || stat < 0 || stat > 100))
-    return 'Health, fullness, and energy must each be between 0 and 100.';
+  if (Object.values(value.meters).some((meter) => !Number.isFinite(meter)))
+    return 'Enter a finite value for each edited meter.';
   if (value.inventory?.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 0))
     return 'Item quantities must be nonnegative whole numbers.';
   return '';
@@ -219,11 +220,19 @@ function PersonEditorFields({
   section,
   person,
   traits,
+  meters,
+  meterText,
+  meterErrors,
+  onMeterText,
   onChange,
 }: {
   section: 'character' | 'identity';
   person: GodPersonFields;
   traits: TraitOption[];
+  meters: AttributeView[];
+  meterText: Record<string, string>;
+  meterErrors: Record<string, string>;
+  onMeterText(id: string, text: string): void;
   onChange(person: GodPersonFields): void;
 }) {
   const update = <K extends keyof GodPersonFields>(key: K, value: GodPersonFields[K]) =>
@@ -291,51 +300,45 @@ function PersonEditorFields({
       {section === 'character' && (
         <>
           <fieldset className="ol-person-stats">
-            <legend>Needs</legend>
+            <legend>Meters</legend>
             <Condition
-              attributes={(
-                [
-                  ['health', 'Health', 'health', 40],
-                  ['fullness', 'Food', 'food', 30],
-                  ['energy', 'Energy', 'energy', 25],
-                ] as const
-              ).flatMap(([id, name, presentation, threshold]) => {
-                const value = person.stats[id];
-                return value === undefined
-                  ? []
-                  : [
-                      {
-                        id,
-                        name,
-                        presentation,
-                        value,
-                        status: 'known' as const,
-                        display: 'meter' as const,
-                        min: 0,
-                        max: 100,
-                        unit: '%',
-                        critical: value < threshold,
-                      },
-                    ];
+              attributes={meters.map((meter) => {
+                const value = person.meters[meter.id] ?? meter.value;
+                const comparison = meter.editorCriticalComparison;
+                const compared =
+                  typeof value === 'number' && comparison?.rounding === 'nearest-integer'
+                    ? Math.round(value)
+                    : value;
+                return {
+                  ...meter,
+                  value,
+                  critical:
+                    comparison && typeof compared === 'number' && Number.isFinite(compared)
+                      ? comparison.operator === 'lessThan'
+                        ? compared < comparison.value
+                        : compared <= comparison.value
+                      : meter.editorCritical,
+                };
               })}
-              onValueChange={(id, value) => update('stats', { ...person.stats, [id]: value })}
+              valueText={meterText}
+              fieldErrors={meterErrors}
+              onTextChange={onMeterText}
             />
             <Button
               type="button"
               variant="secondary"
-              onPress={() =>
-                update('stats', {
-                  health: 100,
-                  ...(person.stats.fullness === undefined ? {} : { fullness: 100 }),
-                  ...(person.stats.energy === undefined ? {} : { energy: 100 }),
-                })
-              }
+              onPress={() => {
+                for (const meter of meters)
+                  if (
+                    meter.status === 'known' &&
+                    typeof meter.value === 'number' &&
+                    meter.max !== undefined
+                  )
+                    onMeterText(meter.id, String(meter.max));
+              }}
             >
-              Fill needs to 100
+              Fill meters
             </Button>
-          </fieldset>
-          <fieldset className="ol-person-stats">
-            <legend>Stats</legend>
           </fieldset>
         </>
       )}
@@ -549,6 +552,7 @@ export function PersonEditor({
   const [needsReload, setNeedsReload] = useState(false);
   const [loaded, setLoaded] = useState<GodPersonEditorView | null>(null);
   const [person, setPerson] = useState<GodPersonFields | null>(null);
+  const [meterText, setMeterText] = useState<Record<string, string>>({});
   const [memories, setMemories] = useState<GodMemoryEditorEntry[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<string | null>(null);
   const [dirtyMemoryIds, setDirtyMemoryIds] = useState<Set<string>>(() => new Set());
@@ -557,15 +561,57 @@ export function PersonEditor({
   const [error, setError] = useState('');
   const personDirty =
     !!loaded && !!person && JSON.stringify(person) !== JSON.stringify(loaded.person);
-  const dirty = personDirty || dirtyMemoryIds.size > 0;
+  const meterDirty =
+    !!loaded &&
+    Object.entries(meterText).some(([id, text]) => text !== String(loaded.person.meters[id]));
+  const meterErrors = Object.fromEntries(
+    (loaded?.meters ?? []).flatMap((meter) => {
+      // Only native editable numbers participate; read-only categories never block a save.
+      if (
+        meter.status !== 'known' ||
+        meter.display !== 'meter' ||
+        typeof meter.value !== 'number' ||
+        !Number.isFinite(meter.value) ||
+        meter.min === undefined ||
+        meter.max === undefined ||
+        !Number.isFinite(meter.min) ||
+        !Number.isFinite(meter.max) ||
+        meter.min >= meter.max ||
+        typeof meter.unit !== 'string' ||
+        !(meter.id in (person?.meters ?? {}))
+      )
+        return [];
+      const text = meterText[meter.id] ?? String(person?.meters[meter.id] ?? '');
+      if (!text.trim() || !Number.isFinite(Number(text)))
+        return [[meter.id, `Enter a value for ${meter.name}.`]];
+      return Number(text) < meter.min || Number(text) > meter.max
+        ? [[meter.id, `Use ${meter.min}–${meter.max} ${meter.unit}.`]]
+        : [];
+    }),
+  );
+  const dirty = personDirty || meterDirty || dirtyMemoryIds.size > 0;
+  const editMeter = (id: string, text: string) => {
+    setMeterText((current) => ({ ...current, [id]: text }));
+    if (text.trim() && Number.isFinite(Number(text)))
+      setPerson((current) =>
+        current
+          ? {
+              ...current,
+              meters: { ...current.meters, [id]: Number(text) },
+            }
+          : current,
+      );
+  };
   async function older() {
     if (!loaded?.before || loading) return;
+    const requestGeneration = generation.current;
     setLoading(true);
     try {
       const next = await post<GodPersonEditorView>('/api/god/editor/person', {
         actorId,
         before: loaded.before,
       });
+      if (requestGeneration !== generation.current) return;
       setLoaded((current) =>
         current
           ? {
@@ -583,9 +629,9 @@ export function PersonEditor({
         ...next.memories.filter((m) => !current.some((c) => c.id === m.id)),
       ]);
     } catch (reason) {
-      setError(String(reason));
+      if (requestGeneration === generation.current) setError(String(reason));
     } finally {
-      setLoading(false);
+      if (requestGeneration === generation.current) setLoading(false);
     }
   }
   const load = useCallback(async () => {
@@ -601,6 +647,11 @@ export function PersonEditor({
       setNeedsReload(false);
       setLoaded(result);
       setPerson(result.person);
+      setMeterText(
+        Object.fromEntries(
+          Object.entries(result.person.meters).map(([id, value]) => [id, String(value)]),
+        ),
+      );
       setMemories(result.memories);
       setSelectedMemory(null);
       drafts.current.clear();
@@ -625,7 +676,7 @@ export function PersonEditor({
   };
   const save = async () => {
     if (!loaded || !person || loading || saving || needsReload) return false;
-    const invalid = validateEditorPerson(person);
+    const invalid = Object.values(meterErrors)[0] ?? validateEditorPerson(person);
     if (invalid) {
       setError(invalid);
       return false;
@@ -654,22 +705,28 @@ export function PersonEditor({
     }
     setSaving(true);
     setError('');
+    const requestGeneration = generation.current;
     try {
       const result = await post<ApiResult>('/api/god/editor/person/save', {
         actorId,
+        manifestRevision: loaded.manifestRevision,
+        bodyPolicyPin: loaded.bodyPolicyPin,
+        generation: loaded.generation,
         basePerson: loaded.person,
         person: normalizedEditorPerson(person),
         memoryChanges,
       });
+      if (requestGeneration !== generation.current) return false;
       if (!result.ok) throw new Error(result.message);
       setNeedsReload(true);
+      setSaving(false);
       await load();
       return true;
     } catch (reason) {
-      setError(String(reason));
+      if (requestGeneration === generation.current) setError(String(reason));
       return false;
     } finally {
-      setSaving(false);
+      if (requestGeneration === generation.current) setSaving(false);
     }
   };
   const awareEvents = useMemo(() => {
@@ -716,10 +773,16 @@ export function PersonEditor({
       dirty={dirty}
       saving={saving || loading}
       error={error}
+      saveReason={Object.values(meterErrors)[0]}
       onSave={save}
       onDiscard={() => {
         generation.current++;
         setPerson(structuredClone(loaded.person));
+        setMeterText(
+          Object.fromEntries(
+            Object.entries(loaded.person.meters).map(([id, value]) => [id, String(value)]),
+          ),
+        );
         setMemories(structuredClone(loaded.memories));
         setSelectedMemory(null);
         drafts.current.clear();
@@ -746,6 +809,10 @@ export function PersonEditor({
                 section="character"
                 person={person}
                 traits={traits}
+                meters={loaded.meters}
+                meterText={meterText}
+                meterErrors={meterErrors}
+                onMeterText={editMeter}
                 onChange={setPerson}
               />
               <RefreshHead
@@ -849,6 +916,10 @@ export function PersonEditor({
               section="identity"
               person={person}
               traits={traits}
+              meters={loaded.meters}
+              meterText={meterText}
+              meterErrors={meterErrors}
+              onMeterText={editMeter}
               onChange={setPerson}
             />
           ),

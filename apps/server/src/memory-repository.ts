@@ -1,7 +1,7 @@
 import { tableRows } from './record-pages.js';
 import { insertRows } from './sql-rows.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
-import { matchesSearch, scanMatches } from './text-search.js';
+import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
 export const RETRIEVAL_ROWS = 8192;
 export const RETRIEVAL_BYTES = 4 * 1024 * 1024;
@@ -55,6 +55,46 @@ const sourceColumnNames = [
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 const sourceRevision = (payload: string) => createHash('sha256').update(payload).digest('hex');
+// Bound parameters are parsed as full-text values, never as SQL or locale-dependent text.
+const quotedLexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
+const indexedWord = (word: string) => Buffer.byteLength(word) < 2047;
+function lexicalVector(text: string): string {
+  const words = new Map<string, number[]>();
+  let position = 0;
+  for (const word of searchWords(text)) {
+    // PostgreSQL's existing parser skips oversized lexemes without consuming a
+    // position. Keep its byte/position/repetition edges, not a smaller ASCII limit.
+    if (!indexedWord(word)) continue;
+    position = Math.min(position + 1, 16383);
+    const positions = words.get(word) ?? [];
+    if (positions.length < 255 && positions.at(-1) !== position) positions.push(position);
+    words.set(word, positions);
+  }
+  return [...words]
+    .map(([word, positions]) => `${quotedLexeme(word)}:${positions.join(',')}`)
+    .join(' ');
+}
+const lexicalQuery = (words: string[]) =>
+  words
+    .filter(indexedWord)
+    .map((word) => `${quotedLexeme(word)}:*`)
+    .join(' | ');
+interface VectorEpoch {
+  worldId: string;
+  actorId: string;
+  token: number;
+  references: number;
+}
+interface CoverageEpochs {
+  actorKey: string;
+  modelKey: string;
+  actor: VectorEpoch;
+  model: VectorEpoch;
+}
+const actorScopeKey = (scope: MemoryScope) =>
+  JSON.stringify([scope.worldId, scope.actorId, scope.generation]);
+const modelScopeKey = (scope: MemoryScope, model: MemoryModel) =>
+  JSON.stringify([scope.worldId, scope.actorId, scope.generation, model.model, model.dimensions]);
 export const MEMORY_HISTORY_TABLES = ['mind_source_versions', 'mind_source_annotations'] as const;
 // Paid derived artifacts follow operational backup, not gameplay rewind.
 export const MEMORY_CACHE_TABLES = ['memory_vector_cache'] as const;
@@ -141,19 +181,81 @@ export class MemoryRepository {
     string,
     {
       revision: number;
-      vectorRevision: number;
+      reset: number;
+      actorToken: number;
+      modelToken: number;
+      epochs: CoverageEpochs;
       value: { eligible: number; indexed: number; missing: number };
     }
   >();
-  private vectorRevision = 0;
-  private textSelection = new Map<string, { revision: number; rows: Record<string, unknown>[] }>();
+  private resetEpoch = 0;
+  private vectorToken = 0;
+  private actorVectorEpochs = new Map<string, VectorEpoch>();
+  private modelVectorEpochs = new Map<string, VectorEpoch>();
+  private textSelection = new Map<
+    string,
+    { revision: number; reset: number; rows: Record<string, unknown>[] }
+  >();
   private actorRevisions = new Map<string, number>();
   actorRevision(actorId: string): number {
     return this.actorRevisions.get(actorId) ?? 0;
   }
   constructor(private readonly db: SqlDatabase) {}
+  private retainCoverage(scope: MemoryScope, model: MemoryModel): CoverageEpochs {
+    const actorKey = actorScopeKey(scope),
+      modelKey = modelScopeKey(scope, model);
+    const retain = (map: Map<string, VectorEpoch>, key: string) => {
+      let epoch = map.get(key);
+      if (!epoch) {
+        epoch = {
+          worldId: scope.worldId,
+          actorId: scope.actorId,
+          token: ++this.vectorToken,
+          references: 0,
+        };
+        map.set(key, epoch);
+      }
+      epoch.references++;
+      return epoch;
+    };
+    return {
+      actorKey,
+      modelKey,
+      actor: retain(this.actorVectorEpochs, actorKey),
+      model: retain(this.modelVectorEpochs, modelKey),
+    };
+  }
+  private releaseCoverage(epochs: CoverageEpochs) {
+    for (const [map, key, epoch] of [
+      [this.actorVectorEpochs, epochs.actorKey, epochs.actor],
+      [this.modelVectorEpochs, epochs.modelKey, epochs.model],
+    ] as const)
+      if (--epoch.references === 0 && map.get(key) === epoch) map.delete(key);
+  }
+  private evictCoverage(key: string) {
+    const cached = this.coverageCache.get(key);
+    if (cached) this.releaseCoverage(cached.epochs);
+    this.coverageCache.delete(key);
+  }
+  private resetCaches() {
+    this.resetEpoch++;
+    for (const key of this.coverageCache.keys()) this.evictCoverage(key);
+    this.textSelection.clear();
+    this.actorVectorEpochs.clear();
+    this.modelVectorEpochs.clear();
+  }
+  private vectorPublication(scope: MemoryScope, model: MemoryModel) {
+    const epoch = this.modelVectorEpochs.get(modelScopeKey(scope, model));
+    if (epoch) epoch.token = ++this.vectorToken;
+  }
+  private vectorReuse(worldId: string, changed?: MemoryChanges) {
+    if (!changed) return this.resetCaches();
+    for (const epoch of this.actorVectorEpochs.values())
+      if (epoch.worldId === worldId && changed.has(epoch.actorId)) epoch.token = ++this.vectorToken;
+  }
   committed(changes: RecordChanges, restored = false) {
     const actors = new Set<string>();
+    let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
     // Current visibility/encounter bookkeeping is not retained evidence. A bird
     // crossing the view must not invalidate memory counts or wake the indexer.
     // Actual observations still arrive through mind_awareness in this same commit.
@@ -164,22 +266,25 @@ export class MemoryRepository {
       const path = JSON.parse(id) as string[];
       const actor = path[path[1] === 'experience' ? 3 : 2];
       if (actor) actors.add(actor);
+      else unknownScope = true;
     };
     for (const [table, rows] of changes.writes)
       if (affectsMemory(table)) for (const row of rows) mark(row.id);
     for (const [table, ids] of changes.deletes)
       if (affectsMemory(table)) for (const id of ids) mark(id);
-    if (changes.writes.has('experience_state') || changes.deletes.has('experience_state')) {
-      this.coverageCache.clear();
-      this.vectorRevision++;
-    }
+    if (
+      restored ||
+      unknownScope ||
+      changes.writes.has('experience_state') ||
+      changes.deletes.has('experience_state')
+    )
+      this.resetCaches();
     if (restored) {
       this.actorRevisions.clear();
-      this.coverageCache.clear();
-      this.textSelection.clear();
     }
     if (
       restored ||
+      unknownScope ||
       actors.size ||
       changes.writes.has('experience_state') ||
       changes.deletes.has('experience_state')
@@ -190,6 +295,38 @@ export class MemoryRepository {
   }
 
   async initialize() {
+    const existing = await this.db
+      .prepare("SELECT to_regclass('open_legend.recall_sources') AS relation")
+      .get();
+    if (existing?.['relation']) {
+      const columns = await this.db
+        .prepare(
+          `SELECT a.attname AS name,format_type(a.atttypid,a.atttypmod) AS type,
+            a.attgenerated AS generated,a.attnotnull AS required,
+            pg_get_expr(d.adbin,d.adrelid) AS default_value
+          FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+          WHERE a.attrelid=to_regclass('open_legend.recall_sources') AND NOT a.attisdropped
+            AND a.attname IN ('search_text','search_vector')`,
+        )
+        .all();
+      // A shared storage marker can predate this derived-column contract. Reject
+      // that layout before CREATE IF NOT EXISTS hides it; never convert development
+      // databases or replace their indexes/rows (AGENTS.md#development-save-policy).
+      if (
+        columns.length !== 2 ||
+        !columns.every(
+          (column) =>
+            column['generated'] === '' &&
+            column['required'] === true &&
+            column['type'] === (column['name'] === 'search_text' ? 'text' : 'tsvector') &&
+            column['default_value'] ===
+              (column['name'] === 'search_text' ? "''::text" : "''::tsvector"),
+        )
+      )
+        throw new Error(
+          'Unsupported memory search projection. Existing data was not converted or deleted.',
+        );
+    }
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS recall_sources (
         world_id TEXT NOT NULL REFERENCES world_head(world_id), actor_id TEXT NOT NULL,
@@ -197,7 +334,7 @@ export class MemoryRepository {
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
         search_text TEXT NOT NULL DEFAULT '',
-        search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED,
+        search_vector tsvector NOT NULL DEFAULT ''::tsvector,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
@@ -363,6 +500,7 @@ export class MemoryRepository {
           0,
           value['sequence'] ?? 0,
           value[kind === 'memory' ? 'summary' : 'text'] ?? '',
+          lexicalVector(String(value[kind === 'memory' ? 'summary' : 'text'] ?? '')),
         ]);
         touch(actorId, id);
         if (kind === 'summary')
@@ -371,7 +509,7 @@ export class MemoryRepository {
       }
       await insertRows(
         this.db,
-        `recall_sources(${[...sourceColumnNames, 'search_text'].join(',')})`,
+        `recall_sources(${[...sourceColumnNames, 'search_text', 'search_vector'].join(',')})`,
         sourceRows,
       );
       await insertRows(this.db, 'mind_summary_sources', links, 'ON CONFLICT DO NOTHING');
@@ -1086,6 +1224,10 @@ export class MemoryRepository {
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 300)
       throw new Error('Invalid context limit.');
+    // Read this before entering our snapshot: an explicit caller transaction can
+    // contain tentative writes or an older view and must never populate shared reuse.
+    const cacheable = this.db.transactionActive === false;
+    const terms = query === null ? [] : [...new Set(searchWords(query))];
     return this.snapshot(async () => {
       if (query === null)
         return this.hydrate(
@@ -1095,32 +1237,34 @@ export class MemoryRepository {
             )
             .all(...this.params(scope), limit),
         );
-      const cacheKey = JSON.stringify([scope, query, limit]);
-      const cached = this.textSelection.get(cacheKey);
-      const revision = this.publicationRevision;
+      const cacheKey = JSON.stringify([actorScopeKey(scope), terms, limit]);
+      const cached = cacheable ? this.textSelection.get(cacheKey) : undefined;
+      const revision = this.actorRevision(scope.actorId),
+        reset = this.resetEpoch;
       // Bind cached metadata to this database snapshot before hydrating. Publication
       // can race entry into a read transaction; a JS revision check alone is insufficient.
       if (
         cached?.revision === revision &&
+        cached.reset === reset &&
         (await this.current(
           scope,
           cached.rows.map((row) => ({ id: String(row['id']), revision: String(row['revision']) })),
         )) &&
-        revision === this.publicationRevision
+        revision === this.actorRevision(scope.actorId) &&
+        reset === this.resetEpoch
       )
         return this.hydrate(cached.rows);
       // Token-prefix search uses the database's inverted index. Substring matching
       // required reparsing every retained JSON body; docs/memory-architecture.md#retrieval-preparation-admission.
-      const terms = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])];
       let matched: Record<string, unknown>[] = [];
-      if (terms.length) {
-        const expression = terms.map((term) => `'${term}':*`).join(' | ');
+      const expression = lexicalQuery(terms);
+      if (expression) {
         matched = await this.db
           .prepare(
             `SELECT ${sourceColumns},
-            ts_rank(r.search_vector,to_tsquery('simple',?)) AS score
+            ts_rank(r.search_vector,?::tsquery) AS score
             FROM recall_sources r WHERE ${this.eligible}
-            AND r.search_vector @@ to_tsquery('simple',?)
+            AND r.search_vector @@ ?::tsquery
             ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
           )
           .all(expression, ...this.params(scope), expression, limit);
@@ -1144,12 +1288,17 @@ export class MemoryRepository {
           ].map((row) => [`${row['source_kind']}:${row['id']}`, row]),
         ).values(),
       ].slice(0, limit);
-      if (revision === this.publicationRevision) {
+      const result = await this.hydrate(rows);
+      if (
+        cacheable &&
+        revision === this.actorRevision(scope.actorId) &&
+        reset === this.resetEpoch
+      ) {
         if (this.textSelection.size >= 64)
           this.textSelection.delete(this.textSelection.keys().next().value!);
-        this.textSelection.set(cacheKey, { revision, rows });
+        this.textSelection.set(cacheKey, { revision, reset, rows });
       }
-      return this.hydrate(rows);
+      return result;
     });
   }
   private async hydrate(
@@ -1308,19 +1457,41 @@ export class MemoryRepository {
     // use their own snapshot, which may predate the cache or include tentative writes.
     if (this.db.transactionActive !== false)
       return this.snapshot(() => this.readCoverage(scope, model));
-    const key = JSON.stringify([scope, model]);
+    const key = modelScopeKey(scope, model);
     const revision = this.actorRevision(scope.actorId),
-      vectorRevision = this.vectorRevision;
-    const cached = this.coverageCache.get(key);
-    if (cached?.revision === revision && cached.vectorRevision === vectorRevision)
-      return { ...cached.value };
-    const value = await this.snapshot(() => this.readCoverage(scope, model));
-    if (revision === this.actorRevision(scope.actorId) && vectorRevision === this.vectorRevision) {
-      if (this.coverageCache.size >= 512)
-        this.coverageCache.delete(this.coverageCache.keys().next().value!);
-      this.coverageCache.set(key, { revision, vectorRevision, value });
+      reset = this.resetEpoch;
+    const epochs = this.retainCoverage(scope, model);
+    const actorToken = epochs.actor.token,
+      modelToken = epochs.model.token;
+    try {
+      const cached = this.coverageCache.get(key);
+      if (
+        cached?.revision === revision &&
+        cached.reset === reset &&
+        cached.actorToken === actorToken &&
+        cached.modelToken === modelToken
+      )
+        return { ...cached.value };
+      const value = await this.snapshot(() => this.readCoverage(scope, model));
+      if (
+        revision === this.actorRevision(scope.actorId) &&
+        reset === this.resetEpoch &&
+        actorToken === epochs.actor.token &&
+        modelToken === epochs.model.token
+      ) {
+        this.evictCoverage(key);
+        if (this.coverageCache.size >= 512)
+          this.evictCoverage(this.coverageCache.keys().next().value!);
+        // Cache ownership keeps epochs alive; active readers retain their own
+        // references, so eviction cannot reuse a token under an outstanding read.
+        epochs.actor.references++;
+        epochs.model.references++;
+        this.coverageCache.set(key, { revision, reset, actorToken, modelToken, epochs, value });
+      }
+      return { ...value };
+    } finally {
+      this.releaseCoverage(epochs);
     }
-    return { ...value };
   }
   private async readCoverage(scope: MemoryScope, model: MemoryModel) {
     const eligible = await this.count(scope);
@@ -1571,8 +1742,8 @@ export class MemoryRepository {
     return this.db.transaction(() => this.publishVectors(scope, model, values));
   }
   private async publishVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
-    this.vectorRevision++;
-    this.db.afterCommit?.(() => this.vectorRevision++);
+    this.vectorPublication(scope, model);
+    this.db.afterCommit?.(() => this.vectorPublication(scope, model));
     for (const value of values) this.validateVector(model, value.vector);
     await this.db
       .prepare(
@@ -1621,8 +1792,8 @@ export class MemoryRepository {
   /** A restored identical source may reuse paid derived data. Publication still checks
    * the new generation, and dispatched/uncertain attempts stay outside gameplay rewind. */
   async reuseVectors(worldId: string, changed?: MemoryChanges) {
-    this.vectorRevision++;
-    this.db.afterCommit?.(() => this.vectorRevision++);
+    this.vectorReuse(worldId, changed);
+    this.db.afterCommit?.(() => this.vectorReuse(worldId, changed));
     const pairs = changed
       ? [...changed].flatMap(([actor, ids]) => [...(ids ?? [])].map((id) => [actor, id]))
       : [];

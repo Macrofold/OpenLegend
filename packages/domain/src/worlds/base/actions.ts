@@ -16,6 +16,19 @@ export const BASE_ACTION_DEFAULTS = {
   shotSeconds: 18,
 } as const;
 
+/** Describe current carried capability, never a future invention's possible maximum.
+ * Paged possessions disclose the missing tool knowledge. docs/worlds/base/actions.md */
+export function gatheringDescription(
+  targetName: string,
+  materialName: string,
+  quantity: number,
+  available: number,
+  workSeconds: number,
+  completeInventory: boolean,
+): string {
+  return `Gather ${targetName}: ${completeInventory ? 'current' : 'inspected'} carried possessions support up to ${quantity} ${materialName} per batch (${available} currently available), ${workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty. Yield is rechecked on completion.${completeInventory ? '' : ' Other carried possessions were omitted from this inventory page, so final yield may differ.'}`;
+}
+
 /** Facts about the bundled world's action families that engine code reads instead of
  * restating: which completed steps yield an item a later step may use, which command fields
  * name the tool a request chose, which families handle one unit per command, which cannot

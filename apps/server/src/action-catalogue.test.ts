@@ -25,21 +25,18 @@ afterEach(async () => {
   for (const store of stores.splice(0)) await store.close();
 });
 const recipe = (name: string): DeclarationDraft => ({
-  schemaVersion: 1,
+  family: { id: 'base:swing', version: 1 },
   name,
   description: 'Test fixture, not a live invention.',
   inputs: [
     { definitionId: 'cord', quantity: 1, role: 'binding' },
     { definitionId: 'prepared_fiber', quantity: 2, role: 'pouch' },
   ],
-  workSeconds: 60,
   output: {
-    kind: 'launcher',
     name,
     description: 'Test fixture.',
-    properties: ['flexible'],
-    launcher: { mechanism: 'swing', ammunitionKind: 'stone', damage: 18, range: 7, accuracy: 0.9 },
   },
+  parameters: { workSeconds: 60, damage: 18, range: 7, accuracy: 0.9 },
 });
 
 it('scopes object menus to their target, including relevant missing prerequisites', async () => {
@@ -170,19 +167,23 @@ it('updates contextual food descriptions from the player’s current state witho
   const food = actionCatalogue(service, { itemId }).actions.find(
     (action) => action.intent.kind === 'command' && action.intent.command.type === 'eat',
   )!;
-  const fullness = service.world.entities[PLAYER_ID]!.actor!.fullness;
+  const fullness =
+    service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
   if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
-  expect(food.description).toContain(`You currently have ${Math.round(fullness)} / 100 fullness.`);
+  expect(food.description).toContain(
+    `Current Food: ${Math.round(Number(fullness))} %; range 0–100.`,
+  );
   if (food.intent.kind !== 'command') throw new Error('Missing fixture food command');
   expect((await service.command('fixture-eat', food.intent.command)).ok).toBe(true);
   const next = actionCatalogue(service, { itemId }).actions.find(
     (action) => action.id === food.id,
   )!;
   expect(next.description).not.toBe(food.description);
-  const nextFullness = service.world.entities[PLAYER_ID]!.actor!.fullness;
+  const nextFullness =
+    service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
   if (nextFullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(next.description).toContain(
-    `You currently have ${Math.round(nextFullness)} / 100 fullness.`,
+    `Current Food: ${Math.round(Number(nextFullness))} %; range 0–100.`,
   );
   expect(JSON.stringify(actionCatalogue(service, { targetId: PLAYER_ID }))).not.toContain(
     service.world.entities[NPC_ID]!.actor!.agency.goals[0]!.objective,
