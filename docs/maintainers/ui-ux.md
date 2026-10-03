@@ -44,6 +44,8 @@ NP04 completes the selected utility-container camp connection: shared source-fre
 
 ## UIUX05
 
+[NP05's actual browser checks](../verification/npc-reply-preview.md#browser-and-recovery-qualification) demonstrate early speech with dots only, final replacement without duplicates, retained older reading/drafts, hide/reopen, control replacement and restart. Review corrected floating-panel offsets on sheet transitions and reused the expanded sheet for Talk at narrow/short/enlarged sizes. This advances the precise UIUX03 layout/input and UIUX05 preview/recovery children; native IME, assistive-device and broader UI qualification remain open. PW05/PW11's separate workspace gates are unchanged.
+
 **Open qualification, tied to affected feature work.** Apply [Chat/invention](../ui-ux/chat-and-invention.md) to draft identity, scroll anchors, late results, selective correction, candidate revisions and consequential approval. Distinguish capability/validation evidence from invented confidence. Existing narration/invention/save owners retain implementation; no paid retries, questionnaire protocol, generated-code permission or new background execution was added.
 
 File concrete reproduced defects with existing feature owners. Keep optional ideas distinct from fixes; reference-product features are not automatically delivery commitments. Classify any new retained navigation/draft state under [persistence guidance](../ui-ux/system-feedback.md#classify-navigation-drafts-and-persistence).

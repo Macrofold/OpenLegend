@@ -6,6 +6,8 @@ Values describe the stated baseline, not approved future targets. **Reported** m
 
 Implementation starting points: [story-selection.ts](../../packages/domain/src/story-selection.ts).
 
+Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). Provisional Talk text does not enter speech, memory, caption or conversation records; these still require final native admission and actual listener projection. [NP05 evidence](../verification/npc-reply-preview.md) distinguishes private early reading from committed speech. No narration retention or audience policy changed.
+
 ## LA153
 
 **Removed at original audit; not reverified · Restrictiveness: — (removed).**

@@ -1,10 +1,9 @@
 import type { ServerResponse } from 'node:http';
-import type { WorldAgentProgressSnapshot } from '@open-legend/protocol';
 
 /** One replaceable snapshot, no token backlog. Disconnect never cancels paid work.
  * docs/limits/inventions.md#ws01--world-agent-stream-delivery
  */
-export class WorldAgentStream {
+export class PrivateSnapshotStream<T> {
   private dirty = true;
   private reading = false;
   private blocked = false;
@@ -17,10 +16,12 @@ export class WorldAgentStream {
   private unwatch: () => void;
   constructor(
     private response: ServerResponse,
-    private snapshot: () => Promise<WorldAgentProgressSnapshot>,
+    private snapshot: () => Promise<T>,
     private authorized: () => boolean,
     watch: (notify: () => void) => () => void,
     private released: () => void,
+    private cursor: (snapshot: T) => string,
+    private current: (snapshot: T) => boolean = () => true,
   ) {
     this.unwatch = watch(() => this.notify());
     response.on('close', () => this.close());
@@ -70,12 +71,16 @@ export class WorldAgentStream {
     try {
       const snapshot = await this.snapshot();
       if (!this.check()) return;
+      if (!this.current(snapshot)) {
+        this.dirty = true;
+        return;
+      }
       const payload = JSON.stringify(snapshot);
       if (Buffer.byteLength(payload) > 128 * 1024)
-        throw new Error('Owner progress exceeds its delivery envelope.');
+        throw new Error('Private snapshot exceeds its delivery envelope.');
       if (payload !== this.last) {
         this.last = payload;
-        const cursor = `${snapshot.turn?.id ?? 'none'}:${snapshot.turn?.revision ?? 0}`;
+        const cursor = this.cursor(snapshot);
         this.write(`id: ${cursor}\nevent: snapshot\ndata: ${payload}\n\n`);
       }
       this.nextAt = Date.now() + 250;
@@ -97,6 +102,7 @@ export class WorldAgentStream {
     clearTimeout(this.timeout);
     clearInterval(this.heartbeat);
     this.unwatch();
+    this.last = '';
     this.released();
     this.response.end();
   }

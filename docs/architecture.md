@@ -346,6 +346,8 @@ The [events, perception, and reactions proposal](events-perception-and-reactions
 
 ### Narration and conversation boundary
 
+A direct player/NPC conversation can privately display a complete validated first speech operation before the qualified Macrofold inference finishes. The director binds one volatile snapshot to the actual attempt, original player utterance, current control and timeline. The server rechecks clear hearing and visible attribution before publication, including after awaited reads, and permanently withdraws that attempt's words if eligibility changes. No preview enters `GameView`, saved history, captions, awareness or memory. Final schema validation and native speech admission remain authoritative; existing response/utterance identity resolves to actual permitted heard-message IDs for reconciliation. The browser uses existing dots only. [Current restrictions](limits/interface.md#npv01--private-npc-reply-preview) and [evidence](verification/npc-reply-preview.md) distinguish qualified delivery from remaining acceptance.
+
 Immediate response composition, saved conversation lifecycle and bounded generated private narration with deterministic fallback are implemented. Full generated Narrator behavior is specified in [Narration, agent responses and conversations](narration-and-conversations.md) and tracked in the [Narration and conversations implementation tracker](maintainers/narration-and-conversations.md).
 
 ### Conversation context compaction

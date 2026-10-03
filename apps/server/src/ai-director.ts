@@ -9,6 +9,7 @@ import {
 import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
 import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
 import type { RequestScope } from './authority.js';
+import { NpcReplyPreviews } from './npc-reply-preview.js';
 import {
   observerDescription,
   canSpeak,
@@ -78,6 +79,7 @@ import {
   LEVEL_LIMITS,
   boundResponseSchema,
   COGNITION_VERSION,
+  previewSpeechOperation,
 } from './cognition-contracts.js';
 import { captureActionTargets, unseenExperiences, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
@@ -184,6 +186,7 @@ interface ThoughtSchedule {
 
 /** One bounded actor workflow at a time; provider completions never bypass authoritative rules. */
 export class AiDirector {
+  readonly replyPreviews: NpcReplyPreviews;
   private running: Running | null = null;
   private pendingWork = new Set<Promise<void>>();
   private admissionTail: Promise<unknown> = Promise.resolve();
@@ -246,7 +249,9 @@ export class AiDirector {
       this.recall,
       now,
     );
+    this.replyPreviews = new NpcReplyPreviews(service);
     this.unsubscribe = service.subscribe(() => {
+      this.replyPreviews.recheck();
       const run = this.running;
       if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
         run.cancelReason = 'Control or access changed.';
@@ -292,6 +297,7 @@ export class AiDirector {
       run.supersession = { attempt: watch.attempt, interruptions };
       // Abort the provider stage promptly; the attempt wrapper rebuilds context once.
       run.controller.abort();
+      this.replyPreviews.recheck();
     });
   }
 
@@ -611,6 +617,7 @@ export class AiDirector {
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
+      this.replyPreviews.recheck();
       await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
     }
@@ -1264,6 +1271,7 @@ export class AiDirector {
         }),
       )
       .finally(async () => {
+        this.replyPreviews.end(run.job.id);
         try {
           if (this.running === run) {
             this.running = null;
@@ -1579,6 +1587,7 @@ export class AiDirector {
     previousEvidenceIds: string[],
     interruptions: ResponseInterruption[],
   ): Promise<void> {
+    this.replyPreviews.end(run.job.id);
     const watch = run.responseWatch;
     const completeInterruptions = [
       ...new Map(
@@ -2168,6 +2177,49 @@ export class AiDirector {
         ? level1.outcome.handle
         : undefined;
     const levelLimit = levelLimits(c)[level];
+    const authority = run.job.authority;
+    const controller = run.controller;
+    // Only the measured direct-inference route gets a disclosure grant. Other
+    // generation callers and full harnesses keep their existing completed values.
+    const preview =
+      !requestedActivity &&
+      executedRoute !== 'level1' &&
+      run.job.kind === 'chat' &&
+      authority &&
+      run.playerSpeechEventId &&
+      c.macrofoldKey
+        ? this.replyPreviews.start({
+            scope: authority,
+            requestId: run.job.id,
+            npcId: actorId,
+            playerSpeechEventId: run.playerSpeechEventId,
+            conversationId: this.service.worldEvent(run.playerSpeechEventId)?.conversationId,
+            attempt,
+            maxBytes: Math.min(
+              1_000_000,
+              levelLimit.visibleOutputBytes + (actorInvention.enabled ? 80_000 : 0),
+            ),
+            rootKeys: Object.keys(schema.shape),
+            current: () =>
+              this.running === run &&
+              run.controller === controller &&
+              !controller.signal.aborted &&
+              !run.cancelReason &&
+              !run.supersession &&
+              run.generation === this.service.generation,
+            operation: (value) => {
+              const operation = previewSpeechOperation(baseSchema.shape.operations.element, value);
+              return operation
+                ? (resolveResponseEntities(
+                    { operations: [operation] },
+                    prepared.entityReferences,
+                    prepared.binding.knowledgeReferences,
+                    activityRequestDescriptors(this.service.world),
+                  ).operations[0] ?? null)
+                : null;
+            },
+          })
+        : undefined;
     const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
@@ -2201,10 +2253,20 @@ export class AiDirector {
             instructions,
             context,
             schema: responseSchema,
+            ...(preview ? { onProgress: preview.progress } : {}),
           },
           `attempt:${attempt}:generate`,
           { category: 'level', level },
         );
+        try {
+          preview?.finish();
+        } catch {
+          throw new StopJob(
+            'failed',
+            'The response did not match the decision contract. No paid repair was attempted.',
+            'invalid',
+          );
+        }
         // Oversized output is rejected rather than repaired with another paid call. Measure the
         // operations exactly as the domain envelope does; the invention field has its own caps.
         if (
@@ -2325,6 +2387,7 @@ export class AiDirector {
     run.responseWatch = undefined;
     await this.prepareResponseAdmission(run);
     const commitStartedAt = new Date().toISOString();
+    preview?.admitting();
     const commit = () =>
       this.service.transition(
         (world) => {
@@ -2361,6 +2424,7 @@ export class AiDirector {
       result = await authorizedCommit();
     }
     const receipt = this.service.world.responseReceipts?.[run.job.id];
+    await preview?.settle();
     const awaitingConfirmation = Object.values(receipt?.components ?? {}).some(
       (part) => part.code === 'needs-confirmation',
     );
@@ -2853,6 +2917,7 @@ export class AiDirector {
   }
   async close(): Promise<void> {
     this.stopped = true;
+    this.replyPreviews.close();
     this.running?.controller.abort();
     this.unsubscribe();
     await this.admissionTail;

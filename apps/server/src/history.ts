@@ -156,6 +156,30 @@ export class HistoryRepository {
       .get(worldId);
     return Number(row?.['count'] ?? 0);
   }
+  /** Native utterance identity resolves only to existing permitted Talk entries.
+   * The response index bounds this read; no raw event text leaves the repository.
+   */
+  async replySpeechIds(
+    worldId: string,
+    ownerId: string,
+    actorId: string,
+    npcId: string,
+    responseId: string,
+    localId: string,
+  ): Promise<string[]> {
+    if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
+      throw new Error('Unsupported history principal.');
+    const rows = await this.db
+      .prepare(
+        `SELECT e.id FROM history_events e JOIN history_perspectives p
+         ON p.world_id=e.world_id AND p.event_id=e.id
+         WHERE e.world_id=? AND e.response_id=? AND p.actor_id=?
+         AND p.event_type='speech' AND p.speech_peer_id=?
+         AND e.payload::jsonb #>> '{data,utteranceId}'=? ORDER BY e.position,e.id LIMIT 16`,
+      )
+      .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
+    return rows.map((row) => String(row['id']));
+  }
   async retainedEventCount(worldId: string): Promise<number> {
     const row = await this.db
       .prepare('SELECT event_count FROM history_totals WHERE world_id=?')

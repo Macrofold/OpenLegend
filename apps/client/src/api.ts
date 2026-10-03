@@ -85,6 +85,9 @@ export function worldAgentProgressUrl(worldId: string, sessionId: string): strin
   const query = new URLSearchParams({ worldId, sessionId, client: tabClientId, scope: viewScope });
   return `/api/world-agent/session/progress?${query}`;
 }
+export function npcReplyPreviewUrl(worldId: string, requestId: string): string {
+  return `/api/chat/preview?${new URLSearchParams({ worldId, requestId, client: tabClientId, scope: viewScope })}`;
+}
 
 export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   return post('/api/control', {

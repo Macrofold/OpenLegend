@@ -392,6 +392,25 @@ export interface ChatMessage {
   time: number;
 }
 
+/** Volatile, authenticated direct-conversation presentation; never heard history. */
+export interface NpcReplyPreview {
+  requestId: string;
+  attempt: number;
+  generation: string;
+  worldId: string;
+  timelineId: string;
+  conversationId?: string;
+  playerSpeechEventId: string;
+  npcId: string;
+  providerRequestId?: string;
+  sequence: number;
+  state: 'forming' | 'withdrawn' | 'settled';
+  speaker: string;
+  volume?: SpeechVolume;
+  text: string;
+  historyIds: string[];
+}
+
 export interface AiJobView {
   queueLatencyMs?: number;
   totalLatencyMs?: number;

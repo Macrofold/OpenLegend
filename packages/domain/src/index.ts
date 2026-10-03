@@ -26,6 +26,7 @@ export {
   seesEntity,
   entityVisionQuery,
   hearsEntity,
+  speechPerception,
   visionRadius,
   contactViews,
   bodiesTouch,

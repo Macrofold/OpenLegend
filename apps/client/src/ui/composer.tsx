@@ -1,4 +1,5 @@
 import { useChatHistory } from './use-chat-history';
+import { useReplyPreview } from './use-reply-preview';
 import { useEffect, useRef, useState } from 'react';
 import type { GameView, SpeechVolume } from '@open-legend/protocol';
 import { Button, Tag, SegmentedControl } from '../design-system/components';
@@ -10,6 +11,7 @@ import {
   ConversationComposer,
   ConversationMessage,
   ConversationThread,
+  TypingIndicator,
   type ConversationItem,
 } from './conversation';
 
@@ -107,6 +109,25 @@ export function Composer({
             ? 'Recover at camp to continue.'
             : null;
   const history = useChatHistory(view, npcId ?? npc?.id, visible && draft.mode === 'chat');
+  const replyMessage = history.messages.filter((message) => !!message.replyRequestId).at(-1);
+  const preview = useReplyPreview(
+    view,
+    npcId ?? npc?.id,
+    replyMessage?.replyRequestId,
+    visible &&
+      connected &&
+      draft.mode === 'chat' &&
+      view.access?.controlling !== false &&
+      view.player.alive &&
+      view.player.participation !== 'inactive' &&
+      !!npc,
+    history.refresh,
+  );
+  const awaitingHistory =
+    preview?.state === 'settled' &&
+    preview.historyIds.some((id) => !history.messages.some((message) => message.id === id));
+  const previewText =
+    preview?.state === 'forming' && activeReply(replyMessage?.replyStatus) ? preview.text : '';
   const messages: ConversationItem[] = history.messages.map((message) => ({
     id: message.id,
     content:
@@ -115,22 +136,39 @@ export function Composer({
           <p>{message.text}</p>
         </div>
       ) : (
-        <ConversationMessage
-          role={message.speakerId === view.player.id ? 'you' : 'agent'}
-          label={`${message.speaker}${message.speech?.delivery === 'whisper' ? ' · Whispering' : message.speech?.delivery === 'shout' ? ' · Shouting' : ''}${message.speech?.intelligibility === 'partial' ? ' · Partly heard' : ''}`}
-          text={message.text}
-          failureReason={
-            message.replyStatus === 'failed' && !retrying[message.replyRequestId ?? '']
-              ? message.replyFailure
-              : undefined
-          }
-          onRetry={
-            message.retryable && message.replyRequestId
-              ? () => void retry(message.replyRequestId!)
-              : undefined
-          }
-          pending={!!retrying[message.replyRequestId ?? ''] || activeReply(message.replyStatus)}
-        />
+        <>
+          <ConversationMessage
+            role={message.speakerId === view.player.id ? 'you' : 'agent'}
+            label={`${message.speaker}${message.speech?.delivery === 'whisper' ? ' · Whispering' : message.speech?.delivery === 'shout' ? ' · Shouting' : ''}${message.speech?.intelligibility === 'partial' ? ' · Partly heard' : ''}`}
+            text={message.text}
+            failureReason={
+              message.replyStatus === 'failed' && !retrying[message.replyRequestId ?? '']
+                ? message.replyFailure
+                : undefined
+            }
+            onRetry={
+              message.retryable && message.replyRequestId
+                ? () => void retry(message.replyRequestId!)
+                : undefined
+            }
+            pending={
+              !(previewText && message.replyRequestId === preview?.requestId) &&
+              (!!retrying[message.replyRequestId ?? ''] ||
+                activeReply(message.replyStatus) ||
+                (message.replyRequestId === preview?.requestId &&
+                  (!!awaitingHistory || preview?.state === 'forming')))
+            }
+          />
+          {preview && previewText && message.replyRequestId === preview.requestId && (
+            <ConversationMessage
+              role="agent"
+              label={`${preview.speaker}${preview.volume === 'whisper' ? ' · Whispering' : preview.volume === 'shout' ? ' · Shouting' : ''}`}
+              text={previewText}
+            >
+              <TypingIndicator />
+            </ConversationMessage>
+          )}
+        </>
       ),
   }));
   async function submit() {
@@ -208,6 +246,7 @@ export function Composer({
             conversationKey={`${view.worldId}:${npcId ?? npc?.id ?? 'nearby'}`}
             items={messages}
             openingRevision={history.openingRevision}
+            contentRevision={`${preview?.generation ?? ''}:${preview?.sequence ?? 0}`}
             before={
               history.hasOlder ? (
                 <Button

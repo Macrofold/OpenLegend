@@ -382,6 +382,7 @@ export class MacrofoldBackend implements AiClient {
     privateContent = false,
     beforeDispatch?: () => Promise<void>,
     onDispatch?: () => void,
+    onProgress?: GenerateRequest['onProgress'],
   ): Promise<Record<string, unknown>> {
     // Local serialization must fail before transport marks possible dispatch.
     serialize(body, 500_000);
@@ -439,6 +440,15 @@ export class MacrofoldBackend implements AiClient {
           body,
           digest(this.key(name)),
           signal,
+          1_000_000,
+          onProgress
+            ? {
+                text: onProgress,
+                accepted: async (response) => {
+                  await this.save(`operation:${name}`, { fingerprint, response });
+                },
+              }
+            : undefined,
         ),
       );
       await this.save(`operation:${name}`, { fingerprint, response: result });
@@ -1602,6 +1612,7 @@ export class MacrofoldBackend implements AiClient {
           ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
         },
         limits,
+        ...(request.onProgress ? { stream: true } : {}),
       },
       signal,
       undefined,
@@ -1611,6 +1622,7 @@ export class MacrofoldBackend implements AiClient {
         receipt.dispatched = true;
         receipt.completionUncertain = true;
       },
+      request.onProgress,
     );
     const run = string(accepted['run_id']);
     try {

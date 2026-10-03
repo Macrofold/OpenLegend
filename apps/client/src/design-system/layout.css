@@ -1266,11 +1266,15 @@ body,
 .ol-hud[data-narrow='true'] .ol-panel[data-workspace] {
   width: 100%;
 }
-.ol-hud[data-narrow='true'] .ol-dock:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace]) {
+.ol-hud[data-narrow='true']
+  .ol-dock:has(.ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)) {
+  /* Conversations need the same readable sheet as Work, especially at enlarged text sizes. */
   top: auto;
   height: calc(100% - 70px);
 }
-.ol-hud[data-narrow='true']:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace])
+.ol-hud[data-narrow='true']:has(
+    .ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)
+  )
   .ol-mobile-tabs {
   top: auto;
   bottom: calc(100% - 70px);
@@ -1309,6 +1313,17 @@ body,
 }
 .ol-hud[data-narrow='true'] .ol-thread {
   max-height: 25vh;
+}
+.ol-hud[data-narrow='true'] .ol-panel-body:has(> #composer) {
+  /* Keep both the speech and input reachable when the sheet cannot fit all controls. */
+  overflow: auto;
+}
+.ol-hud[data-narrow='true'] #composer {
+  height: auto;
+  min-height: 100%;
+}
+.ol-hud[data-narrow='true'] #composer > .ol-thread-shell {
+  flex: 0 0 160px;
 }
 .ol-hud[data-narrow='true'] .ol-picker {
   zoom: calc(1 / var(--ui-scale));

@@ -1,8 +1,8 @@
 # Next priority batch — feature specification
 
-| Status      | Current progress                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP01–NP04 are delivered with scoped local evidence; NP05 reply previews and broader qualification remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP01–NP04 are delivered; NP05 delivers private early NPC speech with the library parser, with qualification still open. | 2026-10-03   |
 
 The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
@@ -211,7 +211,7 @@ Include role-filtered discovery and continuation, the existing storage picker co
 
 ## NP05 — Read NPC replies before generation finishes
 
-**Proposed.** This implements the first direct-conversation slice of [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies). It is separate from the World Agent's already implemented plain-text progress delivery. No runtime implementation or live streaming qualification is claimed by this document.
+**Authorized October 3, 2026; configured-route feasibility passed; implementation delivered with qualification tracked in NP05.** This defines the first direct-conversation slice of [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), separate from World Agent plain-text delivery. [Evidence](../verification/npc-reply-preview.md) preserves the initial configuration failure, authorized Jev correction, ordinary-route gate, actual browser timing and remaining verification limits. Only the measured Macrofold direct-inference route receives a preview grant; unsupported callers keep completed-value delivery.
 
 ### Feasibility gate before implementation
 
@@ -221,7 +221,7 @@ Proceed with private preview delivery and the Talk UI only if the route supplies
 
 ### Player outcome
 
-A player speaks to a nearby NPC. When the first complete eligible speech operation is available but the model has not yet finished its full structured decision, the player can read that proposed reply in the existing Talk panel. The text is visibly unfinished: **“Reply forming — not spoken yet.”** When the native game accepts and delivers the speech, the ordinary heard message replaces the temporary text once. The final heard message remains the only conversation, caption, memory and world-event evidence.
+A player speaks to a nearby NPC. When the first complete eligible speech operation is available but the model has not yet finished its full structured decision, the player can read that proposed reply in the existing Talk panel. **The existing three dots remain the only visible pending indicator**, including alongside provisional text until admission and final-history reconciliation finish. Mike's October 3 instruction supersedes the proposed visible provisional-status sentence. When the native game accepts and delivers the speech, the ordinary heard message replaces the temporary text once. The final heard message remains the only conversation, caption, memory and world-event evidence.
 
 This makes a long model wait useful without allowing an unfinished JSON decision to perform an action or fabricate something that happened. Other people nearby do not see the temporary text. They hear only speech actually committed by the game through the existing hearing rules.
 

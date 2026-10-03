@@ -23,6 +23,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [NPC reply previews](verification/npc-reply-preview.md): corrected configured-route gate, actual early browser speech, private decoding/native-history/recovery checks, exact estimated/reserved spending and remaining NP05 qualification.
+
 - [World-configured survival](verification/world-configured-survival.md): matched native outcomes, body/meter/alternate-world checks, current cost measurements and combined UI acceptance status.
 - [Playable-week Engineer 2](verification/next-playable-week-engineer-2.md): versioned recipe families, ordinary and creator admission, current-format refusals and reviewed engineering handoffs.
 - [Playable-week Engineer 4](verification/next-playable-week-engineer-4.md): exact inventory/saved-work native authority and receipt checks, partial actual layout/draft/alternate-world meter observations, and remaining current-server/browser/stream integration gates.

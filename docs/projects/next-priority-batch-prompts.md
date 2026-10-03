@@ -1,8 +1,8 @@
 # Five standalone implementation prompts
 
-| Status      | Current progress                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP01–NP04 are delivered with scoped local evidence; NP05 reply previews and broader qualification remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP01–NP04 are delivered; NP05 delivers private early NPC speech with the library parser, with qualification still open. | 2026-10-03   |
 
 These assignments accompany the [feature specification](next-priority-batch-feature-spec.md), [technical design](next-priority-batch-tech-design.md) and [tracker](../maintainers/next-priority-batch.md). The first four can start implementation independently from a checkout containing this planning package and its existing prerequisites; the fifth starts with its explicit feasibility gate. They do not require communication between workers. This document does not execute the assignments or create chats.
 
@@ -80,6 +80,8 @@ Read the NP05 sections of docs/projects/next-priority-batch-feature-spec.md and 
 First perform the NP05 actual-route feasibility/latency gate before substantial decoder/UI work. Demonstrate a safe earlier-display opportunity in representative ordinary replies; a constructed multi-operation fixture alone is insufficient. If the route cannot provide it, retain final-only behavior, document the concrete blocker and owner options, and leave NP05/NC19 implementation incomplete. Do not alter the response contract or force extra operations to manufacture a gain. If the gate passes, use one original provider request, bounded structured decoding and an attempt/viewer/conversation/timeline-scoped preview channel. Establish disclosure eligibility before releasing text; property order and a triggering chat alone do not prove whom generated talk addresses. Follow the design's conservative complete-operation gate where recipient metadata cannot be trusted earlier. Private reasoning, raw JSON and unrelated operations never become a preview. Preserve all final schema validation, current-state admission, gameplay effects and accounting.
 
 Start with packages/ai/src/client.ts and types.ts, apps/server/src/macrofold.ts, cognition-contracts.ts and ai-director.ts, and the current conversation projection/UI. Existing World Agent streaming is reference infrastructure, not proof that structured NPC streaming works. Final outcome/receipt classification remains with its existing owner; do not create another billing path.
+
+Mike's October 3 presentation direction overrides the original visible provisional-status sentence: the player sees only the existing waiting dots as the pending indicator, including beside provisional text until final-history reconciliation. Preserve accessible waiting information without visible provider/generation-status prose. The October 3 gate passed after Mike authorized correcting the decision model to Jev; read docs/verification/npc-reply-preview.md for actual qualified route, browser evidence and remaining acceptance. Do not extend that qualification to another adapter or caller.
 
 Complete NP05 acceptance, including split escapes/Unicode, ambiguous recipients, no-speech/changed final output, malformed/truncated output, cancellation, stale attempts, access loss and reconnect. Show actual browser text before whole-response completion and measure first-readable versus total latency. Unsupported routes remain final-only and cannot count as live streaming success; do not change models or issue another call to simulate it.
 

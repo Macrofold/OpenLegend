@@ -8,6 +8,7 @@ import type { GameRepository } from './store.js';
 function clean(value: unknown): unknown {
   const ancestors = new WeakSet<object>();
   const visit = (item: unknown, key = '', embeddingContext = false): unknown => {
+    if (typeof item === 'function') return undefined;
     if (
       /authorization|context[_-]?handle|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(
         key,
@@ -311,6 +312,12 @@ export class IntelligenceLog {
     try {
       const response = await fetch(url, init);
       exchange.httpStatus = response.status;
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        // Draining a clone here delays live delivery and retains private token frames.
+        // The ordinary final typed result/receipt is still recorded by run().
+        exchange.output = { unavailable: 'Streaming body omitted; final result is recorded.' };
+        return response;
+      }
       // Bound diagnostic capture while leaving the original provider response untouched.
       const reader = response.clone().body?.getReader();
       if (reader) {

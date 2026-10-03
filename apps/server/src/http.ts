@@ -19,7 +19,7 @@ import { HistoryCursorError } from './perceived-events.js';
 import { readHttpJson } from './http-json.js';
 import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
-import { WorldAgentStream } from './world-agent-stream.js';
+import { PrivateSnapshotStream } from './private-snapshot-stream.js';
 import { WorldAuthoringService } from './world-authoring.js';
 import {
   sessionRequest,
@@ -431,7 +431,7 @@ async function initializeGameServer(
   };
   const channels = new Map<string, Channel>();
   const streams = new Map<ServerResponse, StreamState>();
-  const ownerStreams = new Set<WorldAgentStream>();
+  const privateStreams = new Set<{ check(): boolean; close(): void }>();
   let pendingStreams = 0;
   const projectionLane = new WorkLane('projection', config.capacity.requests);
   const invalidateStream = (stream: ServerResponse) => {
@@ -509,7 +509,7 @@ async function initializeGameServer(
   let shuttingDown: Promise<ShutdownReport> | undefined;
   const publish = () => {
     if (disposed) return;
-    for (const stream of ownerStreams) stream.check();
+    for (const stream of privateStreams) stream.check();
     if (publishTimer) return;
     if (publishing) {
       publishQueued = true;
@@ -960,7 +960,7 @@ async function initializeGameServer(
           });
         }
         if (request.method === 'GET' && url.pathname === '/api/events') {
-          if (streams.size + ownerStreams.size + pendingStreams >= config.capacity.connections)
+          if (streams.size + privateStreams.size + pendingStreams >= config.capacity.connections)
             return send(response, 429, {
               ok: false,
               code: 'connections',
@@ -1045,6 +1045,49 @@ async function initializeGameServer(
           }
           return;
         }
+        if (request.method === 'GET' && url.pathname === '/api/chat/preview') {
+          service.assertScope(scope, 'play', true);
+          const requestId = requestIdSchema.parse(url.searchParams.get('requestId'));
+          if (
+            url.searchParams.get('worldId') !== service.world.id ||
+            url.searchParams.get('scope') !== scopeKey(scope)
+          )
+            throw new AuthorityError('stale-scope');
+          if (streams.size + privateStreams.size + pendingStreams >= config.capacity.connections)
+            return send(response, 429, { ok: false, message: 'Too many open connections.' });
+          pendingStreams++;
+          try {
+            director.replyPreviews.snapshot(scope, requestId);
+            service.assertScope(scope, 'play', true);
+            if (response.destroyed) return;
+            response.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-store',
+              Connection: 'keep-alive',
+              'X-Accel-Buffering': 'no',
+            });
+            response.flushHeaders();
+            const stream = new PrivateSnapshotStream(
+              response,
+              async () => director.replyPreviews.snapshot(scope, requestId),
+              () => !loadingSave && service.currentScope(scope, 'play', true),
+              (notify) => director.replyPreviews.watch(notify),
+              () => privateStreams.delete(stream),
+              (snapshot) => (snapshot ? `${snapshot.generation}:${snapshot.sequence}` : 'none'),
+              (snapshot) => {
+                const current = director.replyPreviews.snapshot(scope, requestId);
+                return (
+                  snapshot?.generation === current?.generation &&
+                  snapshot?.sequence === current?.sequence
+                );
+              },
+            );
+            privateStreams.add(stream);
+          } finally {
+            pendingStreams--;
+          }
+          return;
+        }
         if (request.method === 'GET' && url.pathname === '/api/world-agent/session/progress') {
           responseCapability = 'create';
           service.assertScope(scope, 'create');
@@ -1055,7 +1098,7 @@ async function initializeGameServer(
             url.searchParams.get('scope') !== scopeKey(scope)
           )
             throw new AuthorityError('stale-scope');
-          if (streams.size + ownerStreams.size + pendingStreams >= config.capacity.connections)
+          if (streams.size + privateStreams.size + pendingStreams >= config.capacity.connections)
             return send(response, 429, { ok: false, message: 'Too many open connections.' });
           pendingStreams++;
           try {
@@ -1070,7 +1113,7 @@ async function initializeGameServer(
               'X-Accel-Buffering': 'no',
             });
             response.flushHeaders();
-            const stream = new WorldAgentStream(
+            const stream = new PrivateSnapshotStream(
               response,
               () => authoring.progressSnapshot(sessionId, scope),
               () =>
@@ -1079,9 +1122,10 @@ async function initializeGameServer(
                 service.currentScope(scope, 'create') &&
                 service.currentScope(scope, 'inspect'),
               (notify) => authoring.watchProgress(sessionId, notify),
-              () => ownerStreams.delete(stream),
+              () => privateStreams.delete(stream),
+              (snapshot) => `${snapshot.turn?.id ?? 'none'}:${snapshot.turn?.revision ?? 0}`,
             );
-            ownerStreams.add(stream);
+            privateStreams.add(stream);
           } finally {
             pendingStreams--;
           }
@@ -3063,7 +3107,7 @@ async function initializeGameServer(
       stream.end();
     }
     streams.clear();
-    for (const stream of ownerStreams) stream.close();
+    for (const stream of privateStreams) stream.close();
     await stage(
       'HTTP server',
       () =>

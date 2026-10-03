@@ -6,6 +6,8 @@ Values describe the stated baseline, not approved future targets. **Reported** m
 
 Implementation starting points: [validation.ts](../../packages/ai/src/validation.ts), [embedding.ts](../../packages/ai/src/embedding.ts), [config.ts](../../apps/server/src/config.ts).
 
+The qualified Macrofold direct-conversation route uses one original structured inference with optional text progress and the same final receipt/accounting owner. Direct Responses and full-harness callers remain completed-value paths. [NPV01](interface.md#npv01--private-npc-reply-preview) owns disclosure and bounded stream delivery; [NP05 evidence](../verification/npc-reply-preview.md) records measured ordinary-route/browser benefit and remaining qualification. No new paid request, automatic retry or parallel billing path is introduced.
+
 ## LA046
 
 **Historical — needs recheck · Restrictiveness: Safe.**

@@ -55,6 +55,8 @@ export interface JudgeRequest extends RequestControl {
 }
 
 export interface GenerateRequest extends RequestControl {
+  /** Private execution progress, never serialized into a model request. */
+  onProgress?: (progress: GenerationProgress) => void;
   model?: string;
   reasoningEffort?: 'none' | 'low' | 'high';
   actorScope?: string;
@@ -67,6 +69,11 @@ export interface GenerateRequest extends RequestControl {
   schemaName?: string;
   maxOutputTokens?: number;
 }
+
+export type GenerationProgress =
+  | { kind: 'accepted'; providerRequestId: string }
+  | { kind: 'text'; text: string; sequence: number }
+  | { kind: 'withdrawn' };
 
 export interface TokenUsage {
   inputTokens: number;

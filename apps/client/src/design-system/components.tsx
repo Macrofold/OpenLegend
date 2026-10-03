@@ -468,7 +468,12 @@ export function Panel({
     };
   }, [detail]);
   useLayoutEffect(() => {
-    if (!draggable || hidden) return;
+    if (!draggable) {
+      // A floating panel becoming a narrow sheet must drop its desktop offset.
+      setOffset((previous) => (previous.x || previous.y ? { x: 0, y: 0 } : previous));
+      return;
+    }
+    if (hidden) return;
     const panel = panelElement.current;
     if (!panel) return;
     const keepHeaderReachable = () => {

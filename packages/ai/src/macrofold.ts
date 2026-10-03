@@ -1,5 +1,6 @@
 import { serialize, record, compileSchema, InvalidData } from './validation.js';
-import type { FetchTransport } from './types.js';
+import type { FetchTransport, GenerateRequest } from './types.js';
+import { consumeEventStream } from './event-stream.js';
 
 /** Structured HTTP failure; application code decides whether admission was rejected. */
 export class MacrofoldHttpError extends Error {
@@ -90,6 +91,10 @@ export class MacrofoldTransport {
     operationId?: string,
     signal?: AbortSignal,
     maxResponseBytes = 1_000_000,
+    progress?: {
+      text: NonNullable<GenerateRequest['onProgress']>;
+      accepted: (value: Record<string, unknown>) => Promise<void>;
+    },
   ): Promise<unknown> {
     if (
       !Number.isSafeInteger(maxResponseBytes) ||
@@ -115,6 +120,79 @@ export class MacrofoldTransport {
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
       signal: control,
     });
+    if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
+      if (!progress) throw new InvalidData('Unexpected Macrofold stream.');
+      let accepted: Record<string, unknown> | undefined;
+      let terminal: Record<string, unknown> | undefined;
+      let text = '';
+      let textBytes = 0;
+      let sequence = 0;
+      const publish = (value: Parameters<typeof progress.text>[0]) => {
+        try {
+          progress.text(value);
+        } catch {
+          // Presentation failure must not interrupt receipt observation or cause another dispatch.
+        }
+      };
+      try {
+        await consumeEventStream(
+          response,
+          maxResponseBytes * 4,
+          async (value) => {
+            const event = macrofoldObject(value);
+            if (event['schema_version'] !== 1) throw new InvalidData('Unknown inference stream.');
+            const data = macrofoldObject(event['data']);
+            if (event['type'] === 'run.accepted') {
+              if (accepted) throw new InvalidData('Duplicate inference acceptance.');
+              accepted = data;
+              if (event['run_id'] !== macrofoldString(data['run_id']))
+                throw new InvalidData('Inference stream identity mismatch.');
+              await progress.accepted(data);
+              publish({ kind: 'accepted', providerRequestId: macrofoldString(data['run_id']) });
+            } else {
+              if (!accepted || event['run_id'] !== accepted['run_id'] || terminal)
+                throw new InvalidData('Inference stream identity mismatch.');
+              if (event['type'] === 'output.delta') {
+                if (data['choice_index'] !== 0 || typeof data['text'] !== 'string')
+                  throw new InvalidData('Unsupported inference output channel.');
+                text += data['text'];
+                textBytes += Buffer.byteLength(data['text']);
+                if (textBytes > maxResponseBytes)
+                  throw new InvalidData('Inference text exceeds its byte limit.');
+                publish({ kind: 'text', text: data['text'], sequence: ++sequence });
+              } else if (
+                ['run.succeeded', 'run.failed', 'run.cancelled', 'run.timed_out'].includes(
+                  String(event['type']),
+                )
+              ) {
+                if (data['run_id'] !== accepted['run_id'])
+                  throw new InvalidData('Terminal inference identity mismatch.');
+                terminal = data;
+                // A complete terminal receipt is sufficient; an open HTTP stream
+                // must not delay completion or lose known usage at the deadline.
+                return false;
+              } else if (event['type'] === 'transport.error')
+                throw new InvalidData('Inference stream interrupted.');
+            }
+          },
+          control,
+        );
+        if (!terminal) throw new InvalidData('Inference stream has no terminal result.');
+        const result = macrofoldObject(terminal['result']);
+        const inference = macrofoldObject(result['inference']);
+        const native = inference['value'] as
+          | { choices?: { message?: { content?: unknown } }[] }
+          | undefined;
+        if (native?.choices?.[0]?.message?.content !== text) publish({ kind: 'withdrawn' });
+        return terminal;
+      } catch (error) {
+        publish({ kind: 'withdrawn' });
+        // Observe the SAME accepted Run through the existing polling/receipt owner.
+        // There is no replayable direct stream and no second inference request.
+        if (accepted) return accepted;
+        throw error;
+      }
+    }
     const reader = response.body?.getReader();
     if (!reader) {
       if (!response.ok) throw new MacrofoldHttpError(response.status, '');
