@@ -1,4 +1,6 @@
 import { learnedActivityCandidates } from './activity-context.js';
+import { consumptionDescription } from './body-services.js';
+import { applicableConsumption } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
 import { itemFor, directChildIds } from '@open-legend/domain';
@@ -20,7 +22,7 @@ import {
   sameSurfacePoint,
   supportsManualWork,
   inventionFamily,
-  SUPPORTED_INVENTION_FAMILIES,
+  recipeFamily,
 } from '@open-legend/domain';
 import { attributeDefinition, readAttribute, offerRecipientProblem } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
@@ -106,7 +108,9 @@ export function buildContext(
   const rankedRecipes = observed.knownRecipes
     .map((recipe, index) => {
       const family = inventionFamily(recipe);
-      const familyTerms = family ? SUPPORTED_INVENTION_FAMILIES[family].description : '';
+      const familyTerms = family
+        ? (recipeFamily(service.world, family)?.definition.description ?? '')
+        : '';
       const text =
         `${recipe.name} ${recipe.description} ${familyTerms} ${recipe.inputs.map((input) => `${input.definitionId} ${input.role}`).join(' ')}`.toLowerCase();
       return {
@@ -161,13 +165,8 @@ export function buildContext(
       description: excerpt(recipe.description, 120),
       inputs: recipe.inputs,
       workSeconds: recipe.workSeconds,
-      output: {
-        kind: recipe.output.kind,
-        properties: recipe.output.properties,
-        ...(recipe.output.launcher ? { launcher: recipe.output.launcher } : {}),
-        ...(recipe.output.ammunition ? { ammunition: recipe.output.ammunition } : {}),
-        ...(recipe.output.gatheringTool ? { gatheringTool: recipe.output.gatheringTool } : {}),
-      },
+      family: recipe.sourceCandidate.family,
+      facts: recipe.facts,
     })),
     memories: (retained ?? queryMemories(service.world, actorId, { text: query, limit: 12 })).map(
       (memory) => ({
@@ -410,10 +409,10 @@ export function npcCandidates(
     });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
-    if (definition?.nutrition)
+    if (definition?.nutrition && applicableConsumption(service.world, observed.actor))
       actions.push({
         id: `eat:${item.id}`,
-        description: `Eat one ${definition.name} to restore fullness.`,
+        description: consumptionDescription(service.world, observed.actor, definition),
         command: { type: 'eat', itemId: item.id },
       });
   }

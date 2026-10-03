@@ -1,0 +1,23 @@
+.ol-recipe-details {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-recipe-details dl,
+.ol-proposal .ol-recipe-details dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-2);
+}
+.ol-recipe-details dt,
+.ol-recipe-details dd {
+  margin: 0;
+  min-inline-size: 0;
+}
+.ol-recipe-details h5 {
+  font: inherit;
+  font-weight: 600;
+  margin-block: var(--space-2);
+}
+.ol-recipe-details dd p {
+  margin-block: var(--space-1);
+}

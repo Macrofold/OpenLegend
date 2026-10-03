@@ -273,7 +273,7 @@ async function harness(
   // Hungry, conscious Ada with owned edible food: hunger alone does not trigger native protection.
   await editWorld(service, (world) => {
     createItemLot(world, NPC_ID, 'berries', 2, 'fixture-berries');
-    world.entities[NPC_ID]!.actor!.fullness = 30;
+    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 30;
   });
   const ada = () => service.world.entities[NPC_ID]!.actor!;
   const berries = () => quantityOf(service.world, NPC_ID, 'berries');
@@ -378,7 +378,9 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(h.berries()).toBe(2);
     await h.service.tick(0.1);
     expect(h.berries()).toBe(1);
-    expect(h.ada().fullness).toBeGreaterThan(before.fullness! + 10);
+    expect(h.ada().attributes!['wilderness:fullness']!.value).toBeGreaterThan(
+      Number(before.attributes!['wilderness:fullness']!.value) + 10,
+    );
     expect(h.ada().agency.plan?.steps.map((step) => step.command)).toEqual([
       expect.objectContaining({ type: 'eat', itemId: 'fixture-berries' }),
     ]);
@@ -473,14 +475,16 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       rating: 0.9,
     });
 
-    // Nothing new since the completed decision: no job and no model call.
+    // Ada has no new opportunity; other characters may receive their first decision.
     await h.director.considerThought();
     await h.director.idle();
-    expect((await h.store.recentJobs(50)).filter((entry) => entry.kind === 'thought')).toHaveLength(
-      1,
-    );
-    expect(h.calls.judges).toHaveLength(1);
-    expect(h.calls.generations).toHaveLength(0);
+    expect(
+      (await h.store.recentJobs(50)).filter(
+        (entry) => entry.kind === 'thought' && entry.request.npcId === NPC_ID,
+      ),
+    ).toHaveLength(1);
+    expect(h.jobCalls(job.id).judges).toHaveLength(1);
+    expect(h.jobCalls(job.id).generations).toHaveLength(0);
     expect(h.ada().action).toEqual(before.action);
   });
 
@@ -555,7 +559,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       task: 'npc_response',
     });
     // Generation reuses the ratings at the 0.5 relevance line instead of buying another request.
-    expect(String(generation!.context)).toContain('Eat one Wild berries to restore fullness.');
+    expect(String(generation!.context)).toContain('Eat one Wild berries. Restores up to 18');
     expect(String(generation!.context)).not.toContain('Drop 2 Wild berries on the ground.');
     const { root, input, output } = await level1Stage(h, job.id);
     expect(root.route).toBe('level1→level2');
@@ -900,7 +904,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       ).ok,
     ).toBe(true);
     expect(h.berries()).toBe(0);
-    const fullness = h.ada().fullness!;
+    const fullness = h.ada().attributes!['wilderness:fullness']!.value;
     held.resolve(answer(request, {}));
     await h.director.idle();
     const jobs = (await h.store.recentJobs(50)).filter((entry) => entry.kind === 'thought');
@@ -925,7 +929,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         },
       ],
     });
-    expect(h.ada().fullness).toBeLessThanOrEqual(fullness);
+    expect(h.ada().attributes!['wilderness:fullness']!.value).toBeLessThanOrEqual(Number(fullness));
     expect(h.berries()).toBe(0);
     const dropped = itemFor(h.service.world, 'fixture-berries');
     expect(dropped?.quantity).toBe(2);

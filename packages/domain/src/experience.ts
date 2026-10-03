@@ -1026,7 +1026,8 @@ export function publishInnerWorld(
   if (
     dreamEpisode &&
     (dreamStatus(input, input.entities[actorId])?.episode !== dreamEpisode ||
-      dreamStatus(input, input.entities[actorId])!.elapsedSeconds < dreamPolicy(input).afterSeconds)
+      dreamStatus(input, input.entities[actorId])!.elapsedSeconds <
+        (dreamPolicy(input)?.afterSeconds ?? Infinity))
   )
     return reject('Dream interrupted.');
   if (

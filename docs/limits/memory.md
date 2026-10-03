@@ -382,15 +382,11 @@ Original recommendation: **Review**.
 
 ## LA088
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — configured body gates, October 2 · Restrictiveness: Safe.** The bundled world's installed body policy requires health of at least 40% and food of at least 30 for provider-backed maintenance. Reflection additionally requires energy of at least 30. Domain cognition commits use their distinct energy threshold 15, exempting an active configured dream/rest episode; intake watches below 15 and below 10, while the director retains only its former below-15 reconsideration boundary. Action/controller/capability/participation guards still apply. These are separate authored predicates, not a merged universal distress rule.
 
-Background memory processing requires health of at least 40%, fullness of at least 30 and no incompatible active work; the older mind-update path also checks energy against 15.
+Exact body/manifest/status/cognition dependency evidence is captured before asynchronous work and rechecked at completion, alongside current meter eligibility. Missing optional meters remain absent. A world can disable dreaming explicitly and author no body-based thinking gate. Native hourly protected-only cleanup retains its prior ungated housekeeping behavior; it is not a paid maintenance call.
 
-**Reason / tradeoff:** Review whether body condition should delay each kind of mental maintenance, while preserving urgent survival actions.
-
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
-
-Original recommendation: **Review**.
+**Reason / tradeoff:** Preserve the accepted differences between maintenance, commits and reflection while making their thresholds world-owned. Delay does not authorize a survival action or a provider retry. [Body policy](../../packages/domain/src/worlds/base/body-policy.ts), [maintenance consumer](../../apps/server/src/cognition-maintenance.ts), and [current native/server evidence](../verification/world-configured-survival.md) own behavior and its limits. No current live model-quality claim is made; broader maintenance tuning remains open.
 
 ## LA089
 

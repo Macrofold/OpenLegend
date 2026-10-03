@@ -784,6 +784,13 @@
   gap: 8px;
   --ol-icon: 16px;
 }
+.ol-meter-text {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.ol-meter-text > :last-child {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
 .ol-meter-label {
   font-size: 13px;
   line-height: 18px;

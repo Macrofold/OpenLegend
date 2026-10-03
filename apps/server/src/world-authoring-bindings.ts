@@ -61,7 +61,9 @@ export function bindAuthoringAttributes(
   for (const attributeId of attributeIds) {
     const definition = definitions.get(attributeId);
     if (!definition || HOST_IMPLEMENTATIONS[definition.implementation].storage !== 'attributes')
-      return reject('Only installed custom reservoir or category attributes can be attached.');
+      return reject(
+        'Only installed passive number, reservoir or category attributes can be attached.',
+      );
     if (Object.hasOwn(world.entities[entityId]!.actor!.attributes ?? {}, attributeId))
       return reject(
         'An attribute is already attached. This operation never resets existing values.',

@@ -17,8 +17,8 @@ import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
-import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
-import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
+import { forgetExperience } from '@open-legend/domain';
+import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
 // Initialize native geometry before constructing or validating recovered world state.
 await initializeCollisionRuntime();
 
@@ -47,7 +47,7 @@ try {
   restoring = backup;
   let current = await store.load();
   const state = backup.state;
-  upgradeWorldState(state.world);
+  validateCurrentWorldState(state.world);
   const fenceCommands = async () => {
     const key = `command-epoch:${state.world.id}`;
     const epoch = (await store.getIntegration(key)) as CommandEpoch | undefined;
@@ -84,8 +84,8 @@ try {
           if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
             throw new Error('Invalid backup columns.');
           if (table === 'meta' && row['key'] === 'schema') {
-            // Current database format only (store.ts writes schema '2'); older backups are refused.
-            if (String(row['value']) !== '2') throw new Error('Unsupported backup schema.');
+            // Current database format only (store.ts writes schema '3'); older backups are refused.
+            if (String(row['value']) !== '3') throw new Error('Unsupported backup schema.');
             continue;
           }
           await store.db
@@ -97,8 +97,7 @@ try {
       }
       // Keep restored story identities/revisions; projection fills only missing or changed sources.
       await store.db.prepare('DELETE FROM meta WHERE key=?').run('integration:world-journal-head');
-      migrateActors(state.world);
-      migrateCognition(state.world);
+      validateCurrentWorldState(state.world);
       state.manuallyPaused = true;
       state.world.paused = true;
       await fenceCommands();
@@ -129,8 +128,7 @@ try {
     }
     if (referenced) keep = new Set([referenced]);
     published = await restoreBackupSlots(backup, config.dataDirectory, keep);
-    migrateActors(state.world);
-    migrateCognition(state.world);
+    validateCurrentWorldState(state.world);
     await store.authority.restoreBindings(state.world);
     const ledger = (await store.getIntegration(`forget-ledger:${state.world.id}`)) as
       | Record<string, string[]>

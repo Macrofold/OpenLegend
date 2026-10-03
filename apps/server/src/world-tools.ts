@@ -8,7 +8,7 @@ import { z } from 'zod';
 import {
   itemFor,
   objectAncestors,
-  DECLARATION_CONTRACT,
+  installedRecipeFamilies,
   projectAttributes,
   validateDeclaration,
   type WorldState,
@@ -314,7 +314,13 @@ export class WorldToolService {
           })),
           definitionKinds: DEFINITION_KINDS,
           authoringKinds: authoringKind.options,
-          recipeContract: DECLARATION_CONTRACT,
+          recipeFamilies: installedRecipeFamilies(world).map(({ definition }) => ({
+            id: definition.id,
+            version: definition.version,
+            name: definition.name,
+            description: definition.description,
+            limitation: definition.limitation,
+          })),
           recipeSchema: declarationSchema,
           limitations: [
             'Read tools do not authorize writes. Authoring requires an application-issued session context and exact human approval.',

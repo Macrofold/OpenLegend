@@ -3,10 +3,11 @@ import type {
   WorldAgentSessionStatus,
   WorldAgentTurnView,
   WorldAgentTurnCursor,
+  WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
 import { useEffect, useRef, useState } from 'react';
 import { Button, EmptyState, Tag } from '../design-system/components';
-import { post } from '../api';
+import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
 import { WorldAgentQuestionCard } from './world-agent-question';
@@ -76,6 +77,7 @@ export function WorldAgentSession({
   const [review, setReview] = useState<string>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [subscriptionRevision, setSubscriptionRevision] = useState(0);
   const alive = useRef(true),
     working = useRef(false),
     refreshing = useRef(false);
@@ -109,7 +111,15 @@ export function WorldAgentSession({
   function mergeTurns(values: WorldAgentTurnView[]) {
     setTurns((previous) => {
       const map = new Map(previous.map((turn) => [turn.id, turn]));
-      for (const turn of values) map.set(turn.id, turn);
+      for (const turn of values) {
+        const current = map.get(turn.id);
+        if (
+          (current?.progress?.revision ?? 0) > (turn.progress?.revision ?? 0) ||
+          (current?.response && !turn.response)
+        )
+          continue;
+        map.set(turn.id, turn);
+      }
       return [...map.values()]
         .sort((a, b) => a.sequence - b.sequence || a.id.localeCompare(b.id))
         .slice(-256);
@@ -188,32 +198,82 @@ export function WorldAgentSession({
       }
     }
   }
-  // Only the visible conversation polls, with no overlapping read batches. Sleeping tabs do no work.
+  async function reconnect() {
+    await refresh();
+    if (alive.current) setSubscriptionRevision((revision) => revision + 1);
+  }
+  // One visible owner stream. Status/history reads serve initial/reconnect or explicit
+  // mutation recovery; they never run a simultaneous fast polling loop.
   useEffect(() => {
     if (!visible || !connected) return;
     let disposed = false;
-    let polling = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      if (disposed || polling || document.visibilityState !== 'visible') return;
-      polling = true;
-      clearTimeout(timer);
-      await refresh();
-      polling = false;
-      if (!disposed) timer = setTimeout(poll, statusRef.current?.data?.activeTurn ? 2000 : 15000);
-    };
+    let stream: EventSource | undefined;
+    let lastState = '';
     const wake = () => {
-      clearTimeout(timer);
-      if (document.visibilityState === 'visible') void poll();
+      stream?.close();
+      stream = undefined;
+      if (disposed || document.visibilityState !== 'visible') return;
+      if (!statusRef.current?.data) {
+        void refresh();
+        return;
+      }
+      stream = new EventSource(worldAgentProgressUrl(worldId, sessionId));
+      stream.onopen = () => {
+        if (!disposed) {
+          setError('');
+          void refresh();
+        }
+      };
+      stream.addEventListener('snapshot', (event) => {
+        if (disposed || !alive.current) return;
+        try {
+          const snapshot = JSON.parse(
+            (event as MessageEvent<string>).data,
+          ) as WorldAgentProgressSnapshot;
+          if (snapshot.sessionId !== sessionId) throw new Error('Conversation changed.');
+          if (snapshot.turn) mergeTurns([snapshot.turn]);
+          const state = JSON.stringify([
+            snapshot.activeTurn,
+            snapshot.questionTurn,
+            snapshot.recovering,
+            snapshot.available,
+            snapshot.turn?.response,
+            snapshot.turn?.question,
+          ]);
+          if (state !== lastState) {
+            lastState = state;
+            void refresh();
+          }
+        } catch {
+          setError('The reply update could not be read. Refresh saved progress.');
+          stream?.close();
+        }
+      });
+      stream.addEventListener('access-changed', () => {
+        stream?.close();
+        if (!disposed) {
+          setTurns([]);
+          setStatus(undefined);
+          setError('Access changed. Reopen the conversation with current access.');
+        }
+      });
+      stream.addEventListener('unavailable', () => {
+        stream?.close();
+        if (!disposed)
+          setError('Live delivery stopped. Saved text remains available; refresh to reconnect.');
+      });
+      stream.onerror = () => {
+        if (!disposed) setError('Reconnecting to saved reply progress…');
+      };
     };
     document.addEventListener('visibilitychange', wake);
-    void poll();
+    wake();
     return () => {
       disposed = true;
-      clearTimeout(timer);
+      stream?.close();
       document.removeEventListener('visibilitychange', wake);
     };
-  }, [visible, connected, worldId, sessionId]);
+  }, [visible, connected, worldId, sessionId, accessScope, !!status?.data, subscriptionRevision]);
   async function perform(work: () => Promise<void>) {
     if (working.current) return;
     working.current = true;
@@ -324,7 +384,7 @@ export function WorldAgentSession({
           role="you"
           label="You"
           text={turn.text ?? 'Retained earlier turn'}
-          pending={!turn.response}
+          pending={!turn.response && !turn.progress?.text}
           failureReason={
             turn.cancelRequested && !turn.response ? 'Cancellation requested' : undefined
           }
@@ -369,17 +429,31 @@ export function WorldAgentSession({
           },
         ]
       : []),
-    ...(turn.response
+    ...(turn.response || turn.progress?.text
       ? [
           {
             id: `${turn.id}:reply`,
             content: (
               <ConversationMessage
-                role={turn.response.ok ? 'agent' : 'status'}
-                label={turn.response.ok ? 'World agent' : 'Turn result'}
-                text={turn.response.message}
-                failureReason={turn.response.ok ? undefined : turn.response.code}
-              />
+                role={turn.progress?.text || turn.response?.ok ? 'agent' : 'status'}
+                label="World agent"
+                text={
+                  turn.response?.code === 'completed'
+                    ? turn.response.message
+                    : turn.progress?.text || turn.response?.message || ''
+                }
+                failureReason={turn.response && !turn.response.ok ? turn.response.code : undefined}
+              >
+                {turn.response && turn.response.code !== 'completed' && turn.progress?.text && (
+                  <p className="ol-caption">{turn.response.message}</p>
+                )}
+                {turn.progress?.completeness === 'incomplete' && (
+                  <p className="ol-caption">
+                    Some reply text is omitted from this preview. The final result is checked
+                    separately.
+                  </p>
+                )}
+              </ConversationMessage>
             ),
           },
         ]
@@ -428,7 +502,7 @@ export function WorldAgentSession({
               reserved={session.budget.reservedUsd}
               available={connected}
             />
-            <Button size="sm" variant="quiet" onPress={() => void refresh()}>
+            <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
               Refresh
             </Button>
             {(!!session.activeTurn || !!session.question) && (
@@ -464,6 +538,14 @@ export function WorldAgentSession({
             items={entries}
             visible={visible}
             ariaLabel="World Agent conversation"
+            liveAnnouncements="off"
+            contentRevision={turns
+              .map(
+                (turn) => `${turn.id}:${turn.progress?.revision ?? 0}:${turn.response?.code ?? ''}`,
+              )
+              .join('|')}
+            newMessageLabel="New reply text"
+            preserveReading
             before={
               before && (
                 <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
@@ -478,6 +560,18 @@ export function WorldAgentSession({
               </EmptyState>
             }
           />
+          <p role="status" aria-live="polite" className="ol-caption">
+            {session.question
+              ? 'Waiting for your choice.'
+              : session.activeTurn
+                ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
+                  'replying'
+                  ? 'Writing a reply.'
+                  : 'Investigating your request.'
+                : turns.at(-1)?.progress?.completeness === 'complete'
+                  ? 'Reply complete.'
+                  : ''}
+          </p>
           {pending && (
             <div className="ol-notice" role="status">
               <p>Checking acknowledgement for: {pending.text}</p>
@@ -494,7 +588,7 @@ export function WorldAgentSession({
               >
                 Resubmit the same request
               </Button>
-              <Button size="sm" variant="quiet" onPress={() => void refresh()}>
+              <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
                 Check saved result
               </Button>
             </div>

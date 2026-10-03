@@ -72,7 +72,6 @@ definitions:
     occupiesAction: true
     interruptOn:
       - injury
-      - hunger
       - recovery
       - new-action
       - voluntary
@@ -151,3 +150,78 @@ definitions:
             name: activeWork
             operator: equal
             value: false
+  - id: wilderness:metabolism
+    type: statusEffect
+    target: $subject
+    label: Metabolism
+    enabled: true
+    requires:
+      all:
+        - *conscious
+        - &hasFood
+          hasAttribute:
+            target: $subject
+            attribute: wilderness:fullness
+    automaticActivation: *hasFood
+    reactivationDelaySeconds: 0
+    occupiesAction: false
+    interruptOn: []
+    whileActive:
+      - changeRate:
+          target: $subject
+          attribute: wilderness:fullness
+          amount: -0.003
+          per: gameSecond
+  - id: wilderness:starvation
+    type: statusEffect
+    target: $subject
+    label: Starvation
+    lifecycleCause: needs
+    enabled: true
+    requires:
+      all:
+        - *conscious
+        - *hasFood
+        - &emptyFood
+          compare:
+            target: $subject
+            attribute: wilderness:fullness
+            operator: lessThanOrEqual
+            value: 0
+    automaticActivation: *emptyFood
+    reactivationDelaySeconds: 0
+    occupiesAction: false
+    interruptOn: []
+    whileActive:
+      - changeRate:
+          target: $subject
+          attribute: wilderness:health
+          amount: -0.009
+          per: gameSecond
+  - id: wilderness:exhaustion
+    type: statusEffect
+    target: $subject
+    label: Exhaustion
+    lifecycleCause: needs
+    enabled: true
+    requires:
+      all:
+        - *conscious
+        - *hasFood
+        - *awake
+        - &emptyEnergy
+          compare:
+            target: $subject
+            attribute: wilderness:energy
+            operator: lessThanOrEqual
+            value: 0
+    automaticActivation: *emptyEnergy
+    reactivationDelaySeconds: 0
+    occupiesAction: false
+    interruptOn: []
+    whileActive:
+      - changeRate:
+          target: $subject
+          attribute: wilderness:health
+          amount: -0.003
+          per: gameSecond

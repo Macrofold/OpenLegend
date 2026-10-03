@@ -5,7 +5,6 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { worldPosition } from './spatial-state.js';
 import { readAttribute } from './world-modules.js';
 import { hasMemory } from './living.js';
-import { hasWildernessNeeds, WILDERNESS_NEEDS } from './worlds/base/needs.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
@@ -48,8 +47,7 @@ export function nativeInterval(
   travelFor: (id: string) => number,
 ): {
   seconds: number;
-  exhausted: Set<string>;
-  starving: Set<string>;
+  requiresImmediateIntegration: boolean;
   serialClamps: boolean;
   drains: NativeDrain[];
   endsAt?: number;
@@ -71,9 +69,14 @@ export function nativeInterval(
     serialClamps = true;
   };
   const rates = statusAttributeRates(status),
-    exhausted = new Set<string>(),
-    starving = new Set<string>(),
     drains: NativeDrain[] = [];
+  const requiresImmediateIntegration = status.some((interval) =>
+    interval.rates.some((rate) =>
+      world.moduleManifest.definitions.some(
+        (d) => d.id === rate.attribute && d.implementation === 'native-health-v1',
+      ),
+    ),
+  );
   const manifest = isDraft(world.moduleManifest)
     ? original(world.moduleManifest)!
     : world.moduleManifest;
@@ -105,16 +108,6 @@ export function nativeInterval(
       const statusRate = rates.get(id)?.get(d.id) ?? 0;
       // A status rate on a natively drained value integrates with the drain as one net flow
       // (PF13.12). All of an actor's reservoir drains move together; their owner drains them.
-      if (d.implementation === 'native-fullness-v1' && hasWildernessNeeds(actor)) {
-        if (statusRate)
-          drains.push({
-            targetId: id,
-            attribute: d.id,
-            rate: -WILDERNESS_NEEDS.fullnessPerSecond,
-            kind: 'fullness',
-          });
-        addRate(rates, id, d.id, -WILDERNESS_NEEDS.fullnessPerSecond);
-      }
       if (d.reservoir) {
         reservoirs.push({
           targetId: id,
@@ -125,12 +118,6 @@ export function nativeInterval(
         coupledReservoir ||= !!statusRate;
         addRate(rates, id, d.id, -d.reservoir.drainPerSecond);
       }
-      if (
-        d.implementation === 'native-energy-v1' &&
-        value === 0 &&
-        (rates.get(id)?.get(d.id) ?? 0) <= 0
-      )
-        exhausted.add(id);
       if (
         action?.type === 'replenish' &&
         action.stage === 'working' &&
@@ -146,15 +133,7 @@ export function nativeInterval(
           );
       }
       const rate = rates.get(id)?.get(d.id) ?? 0;
-      if (d.implementation === 'native-fullness-v1' && value === 0 && rate <= 0) starving.add(id);
-      const thresholds =
-        d.implementation === 'native-fullness-v1'
-          ? BASE_TIME_POLICY.fullnessBoundaries
-          : d.implementation === 'native-energy-v1'
-            ? BASE_TIME_POLICY.energyBoundaries
-            : [];
       for (const t of [
-        ...thresholds,
         ...(d.condition?.bands.flatMap((b) => [
           b.below,
           Math.min(
@@ -172,21 +151,6 @@ export function nativeInterval(
           bound = Math.min(bound, untilThreshold(value, rate, t));
     }
     if (coupledReservoir) drains.push(...reservoirs);
-    if (hasWildernessNeeds(actor)) {
-      const damage =
-        (starving.has(id) ? WILDERNESS_NEEDS.starvationDamagePerSecond : 0) +
-        (exhausted.has(id) ? WILDERNESS_NEEDS.exhaustionDamagePerSecond : 0);
-      if (damage) {
-        bound = Math.min(bound, actor.health / damage);
-        for (const d of manifest.definitions)
-          if (d.implementation === 'native-health-v1') {
-            // Regeneration is clamped before native damage. A net rate alone misses
-            // saturation at full health; retain the coupled-law fallback here too.
-            if ((rates.get(id)?.get(d.id) ?? 0) > 0) serialClampFallback();
-            addRate(rates, id, d.id, (-damage * 100) / (actor.body?.maxHealth ?? 100));
-          }
-      }
-    }
     if (!action || action.type === 'status-effect') continue;
     // A follow's chosen stopping time is an exact boundary, like a wait's timeout; its owner
     // compares the clock with this stored value, so the clock lands on it (PF13.16).
@@ -245,8 +209,7 @@ export function nativeInterval(
   const seconds = Math.min(requested, Math.max(TIME_EPSILON, bound));
   return {
     seconds,
-    exhausted,
-    starving,
+    requiresImmediateIntegration,
     serialClamps,
     drains,
     ...(deadline - world.simTime <= seconds ? { endsAt: deadline } : {}),
@@ -281,12 +244,7 @@ export function refineNativeInterval(
     local,
     travelFor,
   );
-  if (
-    interval.serialClamps ||
-    interval.drains.length ||
-    interval.exhausted.size ||
-    interval.starving.size
-  )
+  if (interval.serialClamps || interval.drains.length || interval.requiresImmediateIntegration)
     return undefined;
   // Integration order follows the participant roster, exactly as a global rebuild orders it.
   const kept = new Map<string, StatusRateInterval[]>();

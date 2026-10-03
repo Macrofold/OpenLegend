@@ -1,9 +1,10 @@
 import { strikeDefinition } from '@open-legend/domain';
+import { bodyPolicy, type WorldState } from '@open-legend/domain';
+import { consumptionDescription } from './body-services.js';
 import {
   BASE_FIRE_CARE,
   fireFuelDescription,
   gatheringYield,
-  hasWildernessNeeds,
   NATIVE_ITEMS,
   NATIVE_PREPARATIONS,
   type ActorObservation,
@@ -53,7 +54,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
     'Offer carried items to a person within reach, or accept, decline or withdraw an offer. Nothing changes hands unless the recipient accepts; an unanswered offer expires.',
   'tend-fire':
     'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
-  eat: 'Eat one portion from your inventory to restore fullness immediately, up to full. Raw meat must be cooked first.',
+  eat: 'Consume one accessible portion through the installed body service.',
   replenish:
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
   'status-effect': 'Activate or end an applicable state on the selected target.',
@@ -61,7 +62,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
     'Inspect a bounded page of your own accessible possessions; further pages require another explicit request.',
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
-    'Return to camp after collapsing, with health, fullness and energy partially restored. Your current action ends; the world continues from its current state.',
+    'Use the installed recovery service. Your current action ends; world history is retained.',
   teach:
     'Share a learned crafting technique with a nearby person so they can use it themselves. Teaching shares knowledge, not an item.',
   talk: 'Open a conversation with a nearby person. You can review and edit your message before sending it.',
@@ -69,7 +70,11 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
 
 /** Only the player's permitted observation enters this projection. Reuse saved
  * invention prose and trusted mechanics; hovering never starts model work. */
-export function describeCommand(command: CommandInput, observation: ActorObservation): string {
+export function describeCommand(
+  command: CommandInput,
+  observation: ActorObservation,
+  world: WorldState,
+): string {
   const definition = (id: string) =>
     observation.itemDefinitions.find((item) => item.id === id) ?? NATIVE_ITEMS[id];
   const name = (id: string) => definition(id)?.name ?? 'material';
@@ -160,10 +165,9 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
             : common;
     }
     case 'eat':
-      if (!hasWildernessNeeds(observation.actor.actor!)) return 'This body has no fullness need.';
-      return itemDefinition?.nutrition
-        ? `Eat one portion of ${itemDefinition.name.toLowerCase()}. Restores up to ${itemDefinition.nutrition} fullness, capped at full. You currently have ${Math.round(observation.actor.actor!.fullness!)} / 100 fullness.`
-        : common;
+      return consumptionDescription(world, observation.actor, itemDefinition);
+    case 'recover':
+      return bodyPolicy(world)?.recovery?.successText ?? common;
     case 'teach':
       return recipe && target
         ? `Teach ${target.name} how to make ${recipe.name}. ${recipe.description}\n\nShares the technique, not its materials or a finished item. You must be close enough to teach them.`

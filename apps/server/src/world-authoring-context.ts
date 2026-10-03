@@ -1,6 +1,8 @@
 import {
-  DECLARATION_CONTRACT,
-  INVENTION_CONSUMER_GUIDE,
+  installedRecipeFamilies,
+  recipeFamily,
+  selectedRecipeCandidateSchema,
+  familyMaterialEligible,
   observeActor,
   type WorldState,
 } from '@open-legend/domain';
@@ -13,7 +15,6 @@ import { CONTEXT_WORK } from './world-authoring-analysis.js';
 import { fingerprint } from './relationship-index.js';
 import { describeAuthoringKind } from './world-authoring-metadata.js';
 import { readDefinition } from './world-graph.js';
-import { declarationSchema } from './ai-schemas.js';
 
 export type AuthoringProfile = AuthoringKind | 'discovery';
 export interface AuthoringPacket {
@@ -49,7 +50,12 @@ export function profileTools(profile: AuthoringProfile): string[] {
   ];
 }
 
-export function authoringGuide(world: WorldState, kind: AuthoringKind, schemaIncluded = false) {
+export function authoringGuide(
+  world: WorldState,
+  kind: AuthoringKind,
+  _schemaIncluded = false,
+  familyId?: string,
+) {
   if (kind !== 'recipe') {
     const { schema: _schema, ...guide } = describeAuthoringKind(world, kind) as ReturnType<
       typeof describeAuthoringKind
@@ -64,37 +70,27 @@ export function authoringGuide(world: WorldState, kind: AuthoringKind, schemaInc
         'Native checks and a bounded candidate graph are retained by submission. No general interaction proof.',
     };
   }
-  if (schemaIncluded) {
-    // Shape and common bounds already live in the submit tool. Render the stricter
-    // native family rules once, without duplicating their numbers or policy here.
-    const contract = DECLARATION_CONTRACT;
-    const range = (values: readonly number[]) => values.join('–');
-    return [
-      `Inputs: distinct roles; at most ${contract.inputQuantity.maximumTotal} items total. Work: simulation seconds; longer work does not improve accuracy. Candidate root fields ONLY: ${Object.keys(declarationSchema.properties as object).join(',')}. Output: one branch, others null. Properties cannot add effects.`,
-      ...Object.entries(contract.mechanisms).map(([name, mechanism]) =>
-        'ammunitionKind' in mechanism
-          ? `${name}: ${mechanism.ammunitionKind}; roles ${mechanism.requiredRoles.join(', ')}; damage ${range(mechanism.damage)}, range ${range(mechanism.range)}, accuracy ${range(mechanism.accuracy)}.`
-          : `${name}: roles ${mechanism.requiredRoles.join(', ')}; damageBonus ${range(mechanism.damageBonus)}.`,
-      ),
-      `Gathering-tool roles: ${contract.gatheringTool.requiredRoles.join(', ')}. Role requires property: ${Object.entries(
-        contract.roleProperties,
-      )
-        .map(([role, property]) => `${role}=${property}`)
-        .join(', ')}.`,
-      ...Object.entries(INVENTION_CONSUMER_GUIDE).map(([name, text]) => `${name}: ${text}`),
-      'No scripts, free sources or unregistered operations.',
-    ].join('\n');
-  }
-  return {
-    kind,
-    fields: {
-      inputs: 'Registered material IDs; one distinct role per input.',
-      workSeconds: 'Simulation seconds of work; longer work does not improve accuracy.',
-      output:
-        'One item. Put kind, properties, launcher, ammunition and gatheringTool only inside output, never at the candidate root. Use one branch, others null. Inspected definitions have a different shape.',
-    },
-    mechanics: { contract: DECLARATION_CONTRACT, ...INVENTION_CONSUMER_GUIDE },
-  };
+  const family = familyId ? recipeFamily(world, familyId) : undefined;
+  if (familyId && !family) throw new Error('The selected recipe family is not installed.');
+  return family
+    ? {
+        kind,
+        family: family.definition,
+        schema: selectedRecipeCandidateSchema(family),
+        notes:
+          'Supply only the selected family candidate. Native compilation derives all real output components; submission saves an exact review, not a crafted item.',
+      }
+    : {
+        kind,
+        families: installedRecipeFamilies(world).map(({ definition }) => ({
+          id: definition.id,
+          version: definition.version,
+          name: definition.name,
+          description: definition.description,
+          limitation: definition.limitation,
+        })),
+        next: 'Read ol_authoring_guide with kind=recipe and familyId for the selected installed family before submitting its complete candidate.',
+      };
 }
 
 /** Membership binds negative discovery too. Conservative collection pins are intentional until
@@ -150,10 +146,14 @@ export function buildAuthoringPacket(
     const observed = observeActor(world, session.actorId, { includeMemories: false });
     if (!observed) throw new Error('The inventor is unavailable.');
     const materials = inventionMaterials(observed);
+    const families = installedRecipeFamilies(world);
     if (materials.length > CONTEXT_WORK.records)
       throw new Error('Required material context exceeds one preparation slice.');
     facts.materials = materials
-      .filter((m) => m.native && m.nutrition === undefined && m.id !== 'raw_meat')
+      .filter((m) => {
+        const definition = world.itemDefinitions[m.id];
+        return definition && families.some((family) => familyMaterialEligible(family, definition));
+      })
       .map((m) => {
         const definition = readDefinition(world, 'item-definition', m.id);
         if (definition) pins.push(definition.node.ref);
@@ -177,10 +177,10 @@ export function buildAuthoringPacket(
     }
   } else {
     facts.capabilities = {
-      recipe: 'Design a supported launcher, ammunition or gathering tool; no new physics.',
+      recipe: authoringGuide(world, 'recipe'),
       'status-effect-policy':
         'World-owner change to the whole status policy, including sleep/rates/restrictions; not a bed or potion.',
-      attribute: 'Create supported custom reservoir/category definitions.',
+      attribute: 'Create supported passive number, reservoir or category definitions.',
       'attribute-bindings': 'Attach existing custom attributes to one body.',
       'attribute-values': 'Explicit owner intervention in existing custom values.',
       'cognition-policy': 'Change current world cognition policy without changing real spending.',

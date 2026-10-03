@@ -11,6 +11,7 @@ import type {
 import { post } from '../api';
 import { Button, Tag } from '../design-system/components';
 import { Actions } from './panels';
+import { RecipeDetails } from './recipe-details';
 
 const active = (request: InventionRequestView) =>
   ['queued', 'judging', 'generating'].includes(request.status);
@@ -220,9 +221,25 @@ export function Inventions({
   return (
     <div className="ol-inventions">
       <p>
-        Describe one physical sling, bow, arrow or gathering tool and its materials. Inventing makes
-        a technique available; crafting still consumes materials and time.
+        Describe an invention and its materials. The installed world determines which techniques are
+        supported. Learning a recipe makes its technique available; crafting still consumes
+        materials and time.
       </p>
+      <section aria-label="Learned recipes">
+        <h3>Learned recipes</h3>
+        {recipes.length ? (
+          recipes.map((recipe) => (
+            <LearnedRecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              command={command}
+              connected={connected}
+            />
+          ))
+        ) : (
+          <p>No recipes known by this character yet.</p>
+        )}
+      </section>
       <label>
         <input
           type="checkbox"
@@ -394,16 +411,7 @@ export function Inventions({
               </p>
             )}
             {recipe && (
-              <>
-                <h4>{recipe.name}</h4>
-                <p>
-                  {recipe.ingredients
-                    .map((input) => `${input.quantity} ${input.name} (${input.available} held)`)
-                    .join(' · ')}{' '}
-                  · {recipe.workSeconds} game seconds
-                </p>
-                <Actions actions={recipe.actions} command={command} connected={connected} />
-              </>
+              <LearnedRecipeCard recipe={recipe} command={command} connected={connected} />
             )}
             {!request.currentTimeline && <p>Requested before the current save timeline.</p>}
             {request.candidate !== undefined && (
@@ -538,5 +546,24 @@ export function Inventions({
         </ModalOverlay>
       )}
     </div>
+  );
+}
+
+/** This surface uses only the actor's permitted recipe knowledge and ordinary native actions. */
+function LearnedRecipeCard({
+  recipe,
+  command,
+  connected,
+}: {
+  recipe: RecipeView;
+  command(action: ActionOption): void;
+  connected: boolean;
+}) {
+  return (
+    <article className="ol-learned-recipe">
+      <h4>{recipe.name}</h4>
+      <RecipeDetails recipe={recipe} />
+      <Actions actions={recipe.actions} command={command} connected={connected} />
+    </article>
   );
 }

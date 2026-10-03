@@ -3,6 +3,4 @@
 export const BASE_TIME_POLICY = {
   idleHorizonSeconds: 60,
   perceptionTravelMetres: 1,
-  fullnessBoundaries: [0, 100],
-  energyBoundaries: [0, 5, 25, 70, 100],
 } as const;

@@ -23,6 +23,10 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [World-configured survival](verification/world-configured-survival.md): matched native outcomes, body/meter/alternate-world checks, current cost measurements and combined UI acceptance status.
+- [Playable-week Engineer 2](verification/next-playable-week-engineer-2.md): versioned recipe families, ordinary and creator admission, current-format refusals and reviewed engineering handoffs.
+- [Playable-week Engineer 4](verification/next-playable-week-engineer-4.md): exact inventory/saved-work native authority and receipt checks, partial actual layout/draft/alternate-world meter observations, and remaining current-server/browser/stream integration gates.
+
 - [Invention question implementation](verification/invention-questions.md): completed finite native/browser/live acceptance, request-size measurements, historical recovery failures and retained accounting/deployment limits.
 
 - [Invention integration with main](verification/invention-main-integration.md): exact integrated heads, PostgreSQL/HTTP/MCP/browser checks and remaining gates.

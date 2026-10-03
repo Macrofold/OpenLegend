@@ -35,7 +35,15 @@ export function isHandoverCommand(command: Command): boolean {
   return command.operation === 'offer'
     ? isSafeRecordId(command.itemId) &&
         Number.isSafeInteger(command.quantity) &&
-        command.quantity > 0
+        command.quantity > 0 &&
+        [
+          command.expectedRevision,
+          command.placementRevision,
+          command.expectedContentsRevision,
+          command.targetRevision,
+        ].every(
+          (revision) => revision === undefined || (Number.isSafeInteger(revision) && revision >= 0),
+        )
     : (HANDOVER_OPERATIONS as readonly string[]).includes(command.operation) &&
         isSafeRecordId(command.offerId);
 }
@@ -142,6 +150,18 @@ export function executeHandover(
     const definition = item && world.itemDefinitions[item.definitionId];
     if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
       return outcome(false, 'item-unavailable', 'Choose one of your accessible possessions.');
+    // A held inventory selection must not silently offer changed items. Check only after
+    // normal sight and possession admission so these pins cannot probe private revisions.
+    if (
+      (command.expectedRevision !== undefined && item.revision !== command.expectedRevision) ||
+      (command.placementRevision !== undefined &&
+        item.placementRevision !== command.placementRevision) ||
+      (command.expectedContentsRevision !== undefined &&
+        (world.entities[item.id]!.inventoryRevision ?? 0) !== command.expectedContentsRevision) ||
+      (command.targetRevision !== undefined &&
+        (other.inventoryRevision ?? 0) !== command.targetRevision)
+    )
+      return outcome(false, 'stale', 'The item or recipient changed. Refresh before offering it.');
     if (definition.portable !== true)
       return outcome(false, 'not-portable', 'This object cannot be handed over.');
     if (command.quantity > availableItemQuantity(world, item.id))

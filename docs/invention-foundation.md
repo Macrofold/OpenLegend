@@ -2,6 +2,12 @@
 
 **Status: accepted target design.** This is the entry point and canonical coordination contract for OpenLegend invention projects, editable revisions, mechanical acceptance, staged presentation, and later redesign. It defines required behavior as the implementation expands; it is not a claim that every described capability exists. Current execution belongs to [Architecture](architecture.md#shared-invention-workflow), evidence to [Verification](verification.md), and delivery to [INV](maintainers/inventions-and-world-evolution.md). This specification does not enable paid work, change deployed locks, admit G2 execution, or require a replacement engine.
 
+## Current recipe-family slice
+
+The playable-week implementation uses `RecipeCandidateV2`: an exact installed family ID/version, role inputs, an output name/description and family parameters. Trusted authored descriptors own the selected schema, material rules, bounded native compiler, field labels and derived facts. Admission publishes one compiled output definition and recipe under the existing receipts and authorization; it does not construct an item. Ordinary compatible proposals remain automatic, while the creator's existing exact review and Apply remain distinct.
+
+A current saved recipe includes its original candidate, exact family pin and all compiler-read definition/policy pins. Reopening recomputes the native meaning and refuses incompatible bytes instead of substituting a family or converting a save. The compiler derives the supported non-food/non-fuel material-property union from inputs; V2 removes the former option to choose a smaller output-property subset. This preserves native material facts without letting generated text invent properties. No live family installation/removal or general invented-input composition is added. [Authored families](worlds/base/invention-families.md) own bundled rules; [PW02](maintainers/next-playable-week.md#pw02--world-owned-invention-families-and-one-admission-path) owns integration status and [RF01](limits/inventions.md#rf01--world-owned-recipe-families) owns remaining qualification limits.
+
 ## 1. Purpose
 
 An invention lets a player, an eligible NPC, or an authorized creator turn an intention into a supported, reusable change to an authored reality. The result may be an object recipe, material, action, predicate, effect, sense, organism configuration, law, policy, composition, or reusable template. It need not be an item, require art, have a duration, or have an immediate physical instance.

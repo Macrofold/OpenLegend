@@ -19,7 +19,9 @@ import { emit, finish, outcome, canonicalJson, contentLabel } from './events.js'
 import { finishPlanAction } from './agency.js';
 import { nextId } from './data.js';
 import { attributeDefinition, readAttribute, setAttribute } from './world-modules.js';
-import { setWildernessNeed } from './worlds/base/needs.js';
+import { setBodyHealth } from './body-state.js';
+import { reconcileBody } from './living.js';
+import { validateBodyPolicy } from './body-policy.js';
 import { validateStatusEffectPolicy } from './status-effect-validation.js';
 import type { Entity, WorldState, WorldEvent, Transition } from './types.js';
 
@@ -44,6 +46,7 @@ export type StatusCondition =
       };
     }
   | { dailyWindow: { target: '$world'; clock: 'localTime'; start: number; end: number } }
+  | { hasAttribute: { target: EntityReference; attribute: string } }
   | { statusActive: { target: EntityReference; definitionId: string; value: boolean } };
 export type StatusOperation =
   | {
@@ -60,6 +63,7 @@ export interface StatusEffectDefinition {
   type: 'statusEffect';
   target: '$subject';
   label: string;
+  lifecycleCause?: string;
   enabled: boolean;
   requires: StatusCondition;
   activationCondition?: StatusCondition;
@@ -185,6 +189,12 @@ function prepareCondition(condition: StatusCondition): {
     const { target, attribute, operator, value } = c;
     matches = (world, bindings) =>
       compare(readEntityAttribute(world, resolve(target, bindings), attribute), operator, value);
+  } else if ('hasAttribute' in condition) {
+    const c = condition.hasAttribute;
+    immutable &&= Object.isFrozen(c);
+    const { target, attribute } = c;
+    matches = (world, bindings) =>
+      readEntityAttribute(world, resolve(target, bindings), attribute) !== undefined;
   } else if ('field' in condition) {
     const c = condition.field;
     immutable &&= Object.isFrozen(c);
@@ -444,10 +454,7 @@ function applyRate(
   if (d.schema.kind !== 'number' || typeof prior !== 'number') return;
   const value = Math.max(d.schema.min, Math.min(d.schema.max, prior + amount));
   if (value === prior) return;
-  if (d.implementation === 'native-energy-v1') setWildernessNeed(entity.actor!, 'energy', value);
-  else if (d.implementation === 'native-fullness-v1')
-    setWildernessNeed(entity.actor!, 'fullness', value);
-  else setAttribute(world, entity, d, value, events);
+  setAttribute(world, entity, d, value, events);
   reconcileConditions(world, entity, events);
 }
 /** A conservative participation check, not a condition evaluator. Native rate operations
@@ -597,7 +604,7 @@ export interface NativeDrain {
   targetId: string;
   attribute: string;
   rate: number;
-  kind: 'fullness' | 'reservoir';
+  kind: 'reservoir';
 }
 /** Integrate captured status rates. A value changed by one rate, or by several of one sign
  * with no native drain, keeps its serial clamp exactly. A value with opposing rates or a
@@ -605,13 +612,62 @@ export interface NativeDrain {
  * serial clamps as the step shrinks, pinned at a schema bound while the sum points outward.
  * Serial clamps there depended on how an interval was divided and could shrink boundaries
  * toward zero (docs/worlds/base/time.md#physiology-and-effects). */
+export interface BodyRateInterval {
+  targetId: string;
+  attribute: string;
+  amount: number;
+  causes: string[];
+}
+export function applyBodyRate(
+  world: WorldState,
+  rate: BodyRateInterval,
+  events: WorldEvent[],
+): void {
+  const target = world.entities[rate.targetId],
+    actor = target?.actor,
+    definition = attributeDefinition(world, rate.attribute);
+  if (
+    !target ||
+    !actor?.body ||
+    !actor.alive ||
+    actor.incapacitated ||
+    !definition ||
+    definition.schema.kind !== 'number'
+  )
+    return;
+  const prior = readAttribute(actor, definition);
+  if (typeof prior !== 'number') return;
+  const value = Math.max(
+    definition.schema.min,
+    Math.min(definition.schema.max, prior + rate.amount),
+  );
+  if (value === prior) return;
+  setBodyHealth(
+    actor,
+    Math.max(
+      0,
+      Math.min(
+        actor.body.maxHealth,
+        actor.health +
+          rate.amount * (actor.body.maxHealth / (definition.schema.max - definition.schema.min)),
+      ),
+    ),
+  );
+  reconcileBody(
+    world,
+    target,
+    events,
+    rate.causes.length === 1 ? rate.causes[0]! : 'combined-status-rates',
+  );
+}
 export function integrateStatusRates(
   world: WorldState,
   intervals: readonly StatusRateInterval[],
   seconds: number,
   events: WorldEvent[],
   drains: readonly NativeDrain[] = [],
-): void {
+  deferBodyRates = false,
+): BodyRateInterval[] {
   const active = intervals.filter((interval) => {
     const state = world.entities[interval.entityId]?.statusEffects?.[interval.definition.id];
     return state?.active && state.episode === interval.episode;
@@ -629,32 +685,79 @@ export function integrateStatusRates(
     if (rate) flow.signs.add(Math.sign(rate));
     flow.drained ||= drained;
   };
-  if (drains.length || active.some((interval) => interval.rates.length > 1) || active.length > 1) {
+  if (
+    drains.length ||
+    active.some(
+      (interval) =>
+        interval.rates.length > 1 ||
+        interval.rates.some(
+          (rate) =>
+            attributeDefinition(world, rate.attribute)?.implementation === 'native-health-v1',
+        ),
+    ) ||
+    active.length > 1
+  ) {
     for (const interval of active)
       for (const { targetId, attribute, rate } of interval.rates)
         add(targetId, attribute, rate, false);
     for (const drain of drains) add(drain.targetId, drain.attribute, drain.rate, true);
   }
   const net = new Set(
-    [...flows].filter(([, flow]) => flow.drained || flow.signs.size > 1).map(([key]) => key),
+    [...flows]
+      .filter(
+        ([, flow]) =>
+          flow.drained ||
+          flow.signs.size > 1 ||
+          attributeDefinition(world, flow.attribute)?.implementation === 'native-health-v1',
+      )
+      .map(([key]) => key),
   );
+  // Finish captured accounting before health can end any source/target episode.
   for (const interval of active) {
     const entity = world.entities[interval.entityId]!;
     const state = entity.statusEffects![interval.definition.id]!;
     chargeStatusWork(world, entity, interval.definition, state);
     chargeWork({ effects: interval.definition.whileActive.length });
     state.elapsedSeconds += seconds;
+  }
+  for (const interval of active) {
     for (const { targetId, attribute, rate } of interval.rates) {
       const target = world.entities[targetId];
       if (target && !net.has(`${targetId}\0${attribute}`))
         applyRate(world, target, attribute, rate * seconds, events);
     }
   }
+  const health: BodyRateInterval[] = [];
   for (const key of net) {
     const flow = flows.get(key)!,
       target = world.entities[flow.targetId];
-    if (target) applyRate(world, target, flow.attribute, flow.rate * seconds, events);
+    if (!target) continue;
+    const definition = attributeDefinition(world, flow.attribute)!;
+    if (definition.implementation === 'native-health-v1') {
+      const causes = new Set(
+        active
+          .filter((interval) =>
+            interval.rates.some(
+              (rate) =>
+                rate.targetId === flow.targetId &&
+                rate.attribute === flow.attribute &&
+                rate.rate !== 0,
+            ),
+          )
+          .map((interval) => interval.definition.lifecycleCause ?? interval.definition.id),
+      );
+      health.push({
+        targetId: target.id,
+        attribute: flow.attribute,
+        amount: flow.rate * seconds,
+        causes: [...causes].sort(),
+      });
+    } else applyRate(world, target, flow.attribute, flow.rate * seconds, events);
   }
+  // The kernel applies body rates in its existing ordered body/action phase. Captured
+  // accounting above cannot recreate a live invocation after another body's death.
+  if (!deferBodyRates) for (const rate of health) applyBodyRate(world, rate, events);
+  return health;
 }
 /** Explicit effect-only advancement; the kernel captures all subjects before integrating. */
 export function advanceStatusEffects(
@@ -674,6 +777,17 @@ export function admitStatusEffectPolicy(
 ): Transition {
   try {
     validateStatusEffectPolicy(input, proposed);
+    validateBodyPolicy(
+      input.moduleManifest.bodyPolicy,
+      input.moduleManifest.definitions,
+      new Set(proposed.definitions.map((d) => d.id)),
+      input.itemDefinitions,
+    );
+    if (
+      input.cognitionPolicy.dream &&
+      !proposed.definitions.some((d) => d.id === input.cognitionPolicy.dream?.statusEffectId)
+    )
+      throw new Error('Status definition is required by cognition policy.');
   } catch (error) {
     return {
       world: input,

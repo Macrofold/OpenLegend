@@ -1,5 +1,13 @@
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
+import type { InventoryCharacteristic } from './inventory.js';
+export type {
+  InventoryCharacteristic,
+  InventoryTransferSource,
+  InventoryDestinationRequest,
+  InventoryDestination,
+  InventoryDestinationPage,
+} from './inventory.js';
 export type Position = Readonly<WorldPoint>;
 export type { SurfacePoint, SpatialLayout };
 
@@ -64,6 +72,8 @@ export interface CommandInput {
   quantity?: number;
   expectedRevision?: number;
   placementRevision?: number;
+  /** The reviewed contents of a container item, independent of its placement. */
+  expectedContentsRevision?: number;
   targetRevision?: number;
   preparation?: 'fiber' | 'cord';
 }
@@ -181,6 +191,12 @@ export interface InventoryItemView {
   definitionId: string;
   name: string;
   quantity: number;
+  /** Available free units; omitted when availability has not been inspected. */
+  availableQuantity?: number;
+  /** The admitted requirement for one unit, including contents for an indivisible bag. */
+  packingLoad?: number;
+  characteristics?: InventoryCharacteristic[];
+  comparison?: { id: string; name: string; characteristics: InventoryCharacteristic[] };
   category: 'material' | 'food' | 'equipment' | 'ammunition';
   description: string;
   equipped: boolean;
@@ -194,6 +210,9 @@ export interface RecipeView {
   name: string;
   description: string;
   family: string;
+  output: { name: string; description: string };
+  facts: Array<{ id: string; label: string; value: number | string; unit?: string }>;
+  limitations: string[];
   ingredients: Array<{ name: string; quantity: number; available: number; role: string }>;
   workSeconds: number;
   provenance: string;
@@ -306,6 +325,8 @@ export interface AiJobView {
 export interface GameView {
   access?: {
     scope: string;
+    /** Native private-draft namespace; not a request token or permission. */
+    privateDraftScope: string;
     accountId: string;
     actorId: string;
     controlGeneration: number;
@@ -367,11 +388,9 @@ export interface GameView {
     heading: number;
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
-    /** Default-world convenience values; generic presentation uses attributes. */
     actionAnimation?: ActionAnimation | null;
-    health: number;
-    hunger?: number;
-    energy?: number;
+    /** Configured applicable suggestions in authoritative presentation order. */
+    suggestedActionIds: string[];
     alive: boolean;
     action: {
       id: string;
@@ -467,11 +486,7 @@ export interface GodPersonFields {
   backstory: string;
   traitIds: string[];
   goals: string[];
-  stats: {
-    health: number;
-    fullness?: number;
-    energy?: number;
-  };
+  meters: Record<string, number>;
 }
 
 export interface GodMemoryEditorEntry {
@@ -487,6 +502,11 @@ export interface GodMemoryEditorEntry {
 }
 
 export interface GodPersonEditorView {
+  /** Applicable editable numeric attributes in their declared units. */
+  meters: AttributeView[];
+  manifestRevision: number;
+  bodyPolicyPin: { id: string; version: number; digest: string } | null;
+  generation: string;
   statuses: string[];
   itemOptions: Array<{ id: string; name: string }>;
   before?: string;
@@ -753,7 +773,8 @@ export interface AttributeView {
   version: number;
   name: string;
   display: 'meter' | 'category';
-  presentation: 'health' | 'food' | 'energy' | 'neutral';
+  /** Symbolic references only; resolved through the trusted client asset/token catalogue. */
+  presentation: { icon: string; color: string };
   value: number | string | null;
   status: 'known' | 'unknown';
   min?: number;
@@ -763,6 +784,12 @@ export interface AttributeView {
   condition?: string;
   concern?: string;
   critical?: boolean;
+  editorCritical?: boolean;
+  editorCriticalComparison?: {
+    operator: 'lessThan' | 'lessThanOrEqual';
+    value: number;
+    rounding: 'none' | 'nearest-integer';
+  };
   revision: number;
 }
 
@@ -840,13 +867,12 @@ export interface ObjectHistoryPage {
 }
 
 export interface ContainerPage {
-  /** `recipient` marks a reachable person: possessions are offered to them, never deposited. */
-  destinations?: Array<{ id: string; name: string; revision: number; recipient: boolean }>;
   ok: boolean;
   message?: string;
   container: {
     id: string;
     name: string;
+    location?: string;
     revision: number;
     load?: number;
     capacity?: number;

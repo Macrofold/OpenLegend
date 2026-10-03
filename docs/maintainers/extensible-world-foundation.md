@@ -66,6 +66,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 - [ ] Add a typed common descriptor for host implementation identity/interface, definition kind/codec, required services, state/effect domains, and execution category. Use service-specific interfaces rather than one callback accepting arbitrary world JSON.
 - [ ] Add one serializable installed manifest, provisionally `WorldState.moduleManifest`, resolving exact definitions, dependencies, policy bindings, and state-owner bindings. Reuse existing definition identity where available; do not create a competing invention library.
+  - [x] PW02 resolves installed trusted recipe descriptors and exact family pins through this manifest; PW07 adds the exact installed body-policy pin. These specific interfaces do not close general host/service registration or external-world packaging.
 - [x] Resolve the default wilderness composition once during creation/load binding. Reject unknown or incompatible required implementations, duplicate owners, invalid namespace IDs, and missing dependencies before the candidate becomes active.
 - [x] Keep function references in trusted code only. Reject user-supplied module paths, executable expressions, validator replacements, and grants. Data may select only implemented and authorized capabilities.
 - [ ] Adapt the existing story-policy binding as a small reference consumer when useful without exposing hidden story fields or rewriting NC selection behavior.
@@ -80,7 +81,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 **Dependencies:** EWF01. **Contract:** runtime §§3–5. **Files:** domain types/living/state mutations; current god editing; current state projections.
 
 - [x] Implement the minimum schema-validated state definitions needed by the first reservoir and a nonnumeric counterexample. Include semantic type, units/scale where applicable, bounds, applicability, initialization, ownership, and disclosure.
-- [x] Support sparse namespaced state for genuinely new attributes. Keep existing hot fields behind explicit typed providers until cut over; do not permanently dual-write fields and a generic map.
+- [x] Support sparse namespaced state for genuinely new attributes. Food and energy have now cut over to sparse installed numeric values with no native aliases; body health remains raw points behind its proportional typed provider. Do not permanently dual-write fields and a generic map.
 - [x] Route mutations to the registered owner, preserving expected revisions, actual contribution provenance, deterministic aggregation, and existing transaction semantics. Arbitrary JSON paths or unbounded `effects` maps are not mutation APIs.
 - [x] Resolve missing/unknown/not-applicable/default cases under the existing declaration contract. Do not silently materialize zero-valued state on every entity.
 - [x] Expose meaningful change metadata suitable for EPR's existing scope/threshold interfaces. Do not implement a separate threshold detector, event store, or reminder scheduler here.
@@ -92,19 +93,19 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 ## EWF03 — Extract default body and need policies through real consumers
 
-[PW07](next-playable-week.md#pw07--world-configured-survival) now assigns both stages of the approved survival extraction, with a [complete implementation brief](../projects/next-playable-week/survival.md). Its explicit alternate-world and consumer checks must pass before the corresponding requirements below close; the broader EWF program is not completed by that slice.
+[PW07](next-playable-week.md#pw07--world-configured-survival) now assigns both stages of the approved survival extraction, with a [complete implementation brief](../projects/next-playable-week/survival.md). Its explicit alternate-world and consumer checks must pass before corresponding requirements close; the broader EWF program is not completed by that slice. Native stage-1/2a results remain distinct from the combined client gate. [Engineer 4's actual current-server browser slices](../verification/next-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending) verify a world-authored 150-point body range, native Save to 75 points, a 240-unit Charge meter and read-only categorical Disposition without copied survival formulas or bundled survival names in React. The observed UI omits food/energy/dream/status equivalents. Complete base/absent-meter, access/generation and integrated lifecycle qualification remains under PW07 and Stage 2b.
 
 **Dependencies:** EWF02. Coordinate with ACT, INV contribution semantics, and EPR04; use the existing native evaluator before full EPR delivery.
 
-- [ ] Move current wilderness physiology/body configuration behind reviewed registered implementations. Approved plan, not started, to begin after the regional time work merges into main: [survival rules as world settings](../projects/world-configured-survival.md). Stage 1 moves the rules that run every step (hunger, starvation and exhaustion damage); stage 2 moves the remaining survival numbers. Preserve its current values, controller defaults, maximum-health logic, food seeking, recovery, and update order in the initial extraction.
+- [x] Move current wilderness physiology/body configuration behind reviewed registered implementations. Both approved stages are implemented through the native/server consumers; combined client qualification remains under PW07: [survival rules as world settings](../projects/world-configured-survival.md). Stage 1 moves the rules that run every step (hunger, starvation and exhaustion damage); stage 2 moves the remaining survival numbers. Preserve its current values, controller defaults, maximum-health logic, food seeking, recovery, and update order in the initial extraction.
 - [x] Keep eating, food seeking, work continuation, rest, sleep, and cognitive urgency as separately named policies. Do not normalize their different thresholds into one number.
-- [ ] Remove hard-coded dependence on the selected first need from generic consumers. Native mechanics may retain their domain-specific adapters; generic context, inspection, and scheduler wiring must obtain its meaning through the common contract.
-- [ ] Define a concern projection and supported response references for that need. Reuse native action eligibility; do not infer execution from an English description or automatically create goals.
+- [x] Remove hard-coded dependence on the selected first need from generic consumers. Native mechanics may retain their domain-specific adapters; generic context, inspection, and scheduler wiring must obtain its meaning through the common contract.
+- [x] Define a concern projection and supported response references for that need. Reuse native action eligibility; do not infer execution from an English description or automatically create goals.
 - [x] Add one reviewed fixture module for charge or lunar reserve with an actual supported replenishment action. Use the selected same interfaces; do not add a new `if charge` branch to generic controller, protocol, or meter logic.
   - Current resource qualification fixed zero-time replenishment attempting a zero transfer; two equal-rate consumers and finite shared stock pass through the native command/timing owners. [Evidence](../verification/world-agent-context.md#custom-resource-follow-up). This does not close broader EWF qualification.
 - [x] Use EX01 as the first end-to-end example, and keep broader anatomy or psychology out of this extraction.
 - [x] Prove a non-human actor can omit the human need without receiving fake hunger, sleep, or verbal mind state. Keep ordinary native animals inexpensive and cognition opt-in.
-- [ ] When the first body policy is exposed, isolate death/collapse/revival choices from runtime permission/identity rules. Preserve the current accepted full god-revival behavior; do not reopen it as an unresolved decision.
+- [x] When the first body policy is exposed, isolate death/collapse/revival choices from runtime permission/identity rules. Preserve the current accepted full god-revival behavior; do not reopen it as an unresolved decision.
 
 **Tests:** matched current wilderness traces; optional need absent; second need changes through native action; concurrent effects/resources reconcile; no automatic paid decision for every decrement; body effects remain native and cannot be authored by unvalidated prose.
 
@@ -113,6 +114,8 @@ The first slice is bounded to numeric/category attributes and native physiology 
 ## EWF04 — Generic permitted inspection, context, and presentation
 
 **Dependencies:** EWF02–EWF03. **Files:** protocol `index.ts`, server `view.ts`, `decision-context.ts`, response/context helpers, god editor projections, React condition/editor components. Coordinate CR/NC presentation owners.
+
+PW07's current native browser confirms authored labels, units, ranges, categorical/read-only presentation and actual Save through the existing editor owner. Same-authority competing editors refuse an older name edit while retaining the attempted field; explicit Discard and Refresh reads the current value. The editor remains within the observed narrow viewport at 130% UI scale, including named icon tabs, blank-input errors and reachable footer actions ([evidence](../verification/next-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending), [IW03](../limits/interface.md#iw03--creator-editor-layout)). These slices strengthen the checked implementation below; they do not assert full native IME/assistive-device, private-generation or integrated survival acceptance.
 
 - [x] Add a bounded server-projected attribute/condition view with stable definition ID, safe name, display kind, value/range/units where permitted, uncertainty/visibility, and approved symbolic presentation reference. Do not expose private declaration data wholesale.
 - [x] Render the applicable meter/label/category from that view instead of requiring every actor to supply health/hunger/energy. Allow specialized native UI to consume the same authoritative projection where useful.
@@ -152,6 +155,7 @@ Delivered native agency scope and remaining AG/INV boundaries are recorded in [A
 **Dependencies:** EWF01–EWF04 plus the particular INV-3/AG interfaces being consumed. Basic AG01–AG04 can proceed earlier.
 
 - [ ] Bind mechanical family descriptors supplied by INV-3 to the shared manifest/version contract. INV remains the sole owner of action family schema, applicability, execution, and catalogue expansion.
+  - [x] PW02 binds the four existing recipe families to exact manifest/version pins through shared native admission and execution. Utility-container and integrated client qualification remain in PW02; broader mechanical composition remains open.
 - [ ] Define the controller-facing concern/observation/affordance interface. Standard cognition, native animals, and player input use distinct adapters with explicit capabilities, not a mandatory human mind.
 - [ ] Connect module-defined needs and sense evidence to AG06/CR context through bounded projections; connect dependency changes to EPR, not a second work queue.
 - [x] Ensure AG's optional repeated operation kinds and open attempt route survive family registration and provider schema adaptation. Closing action suggestions does not remove the proposal route.
@@ -167,6 +171,7 @@ Delivered native agency scope and remaining AG/INV boundaries are recorded in [A
 **Dependencies:** start design at EWF01; complete after relevant stateful slices. INV-5 owns live version activation, SL owns save/install, data owner owns transactions.
 
 - [ ] Include installed manifest, definition dependency closure, module state, and behaviorally relevant episode/deadline bindings in same-version capture. Register any new authoritative store with the existing save boundary rather than writing an independent save system.
+  - [x] PW02/PW07 retain exact recipe-family/dependency and body-policy pins, sparse meters, status episodes and current native bindings in the existing record/save owners. Native and disposable SQL current-state checks pass; complete combined manual checkpoint/UI acceptance remains in PW07/PW06.
 - [x] Resolve exact host/definition interfaces before installing a loaded candidate. Missing required mechanics or dependency bytes reject the candidate without changing the active world; do not generate replacements.
 - [x] Rebuild only derived indexes and caches. Restoration must not run ordinary spawn/grant hooks, reroll state, dispatch paid work, or reinterpret abandoned-future callbacks.
 - [ ] Supply INV-5 with the module-level dependency and state-owner changes needed for activation and retirement. Do not add a competing module installer or bypass existing authoring/activation permissions.

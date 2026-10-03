@@ -54,6 +54,23 @@ export interface WorldAgentTurnView {
   cancelRequested: boolean;
   response: WorldAgentReply | null;
   question?: WorldAgentQuestion;
+  progress?: WorldAgentProgress;
+}
+/** Sanitized owner-only preview. Provider identities/cursors and private carry are never projected. */
+export interface WorldAgentProgress {
+  revision: number;
+  stage: 'investigating' | 'replying';
+  text: string;
+  completeness: 'live' | 'partial' | 'complete' | 'incomplete';
+  omittedBytes?: number;
+}
+export interface WorldAgentProgressSnapshot {
+  sessionId: string;
+  turn: WorldAgentTurnView | null;
+  activeTurn: string | null;
+  questionTurn: string | null;
+  recovering: boolean;
+  available: boolean;
 }
 export interface WorldAgentTurnCursor {
   sequence: number;
@@ -74,6 +91,9 @@ export interface WorldAgentDraftView {
   kind: WorldAuthoringKind;
   intent: string;
   digest: string;
+  title?: string;
+  summary?: string;
+  state?: WorldAgentPreparation['next'];
   preparation?: WorldAgentPreparation;
 }
 export interface WorldAgentRequirement {
@@ -142,6 +162,8 @@ export interface WorldAgentSessionView {
   available: boolean;
   closed: boolean;
   activeTurn: string | null;
+  /** Reachable human-workspace refusal reason; native writes enforce the same rule. */
+  workspaceMutationReason: string | null;
   question?: WorldAgentQuestionStatus;
   budget: {
     limitUsd: number;
@@ -185,4 +207,82 @@ export interface WorldAgentSessionCursor {
 export interface WorldAgentSessionStatus {
   data: WorldAgentSessionView | null;
   availability: WorldAgentAvailability;
+}
+
+/** Authenticated human workspace operations use no model context handle or paid run. */
+export interface WorldAgentWorkResult<T> {
+  ok: boolean;
+  status:
+    | 'ok'
+    | 'invalid'
+    | 'stale'
+    | 'unavailable'
+    | 'capacity'
+    | 'forbidden'
+    | 'needs_approval'
+    | 'blocked'
+    | 'ready_for_review'
+    | 'needs_revision'
+    | 'pending_analysis';
+  message?: string;
+  data?: T;
+  cost: 'no-paid-work';
+}
+export interface WorldAgentDraftRevisionView extends WorldAgentDraftView {
+  title: string;
+  summary: string;
+}
+export interface WorldAgentRecipeFact {
+  id: string;
+  label: string;
+  value: number | string;
+  unit?: string;
+}
+export interface WorldAgentRecipeEditorView {
+  family: { id: string; version: number };
+  fields: Array<{
+    path: string[];
+    label: string;
+    kind: 'text' | 'number' | 'choice';
+    unit?: string;
+    minimum?: number;
+    maximum?: number;
+    step?: number;
+    choices?: Array<{ value: string; label: string }>;
+  }>;
+  facts: WorldAgentRecipeFact[];
+}
+export interface WorldAgentExactDraftView extends WorldAgentDraftRevisionView {
+  payload: unknown;
+  latestRevision: number;
+  validation: WorldAgentValidation;
+  plans: WorldAgentPlanView[];
+  nextPlan: string | null;
+  recipeEditor?: WorldAgentRecipeEditorView;
+}
+export interface WorldAgentDraftHistoryView {
+  draftId: string;
+  latestRevision: number;
+  revisions: WorldAgentDraftRevisionView[];
+  next: number | null;
+}
+export interface WorldAgentDraftComparisonView {
+  before: WorldAgentExactDraftView;
+  after: WorldAgentExactDraftView;
+  changed: Array<{
+    field: string;
+    path?: string[];
+    beforePresent: boolean;
+    afterPresent: boolean;
+    before?: unknown;
+    after?: unknown;
+  }>;
+  coverage: 'structural-only';
+}
+export interface WorldAgentDraftPreviewView {
+  revision: number;
+  candidateDigest: string;
+  validation: WorldAgentValidation;
+  preparation: WorldAgentPreparation;
+  facts?: WorldAgentRecipeFact[];
 }

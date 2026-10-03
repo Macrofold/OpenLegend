@@ -1,15 +1,14 @@
 import { scopedInventionErrors } from './invention-context.js';
 import type { InventionSearch } from '@open-legend/protocol';
 import {
-  DECLARATION_CONTRACT,
-  SUPPORTED_INVENTION_FAMILIES,
+  installedRecipeFamilies,
+  selectedRecipeCandidateSchema,
   inventionFamily,
   type DeclarationDraft,
   type DeclarationProvenance,
 } from '@open-legend/domain';
 import type { GenerateRequest, JudgeRequest, JudgeValue, JudgmentAnswer } from '@open-legend/ai';
 import { inventionQuestions } from './jev-questions.js';
-import { declarationSchema } from './ai-schemas.js';
 import { buildContext, buildStoredContext } from './context.js';
 import type { JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
@@ -22,16 +21,9 @@ export class InventionFailure extends Error {
     super(message);
   }
 }
-/** Strict provider schemas use null for unused components; this changes representation only. */
+/** Candidate bytes are preserved for native validation and exact reviewed digests. */
 export function normalizeInventionProposal(candidate: unknown): unknown {
-  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return candidate;
-  const value = candidate as Record<string, unknown>;
-  if (!value['output'] || typeof value['output'] !== 'object' || Array.isArray(value['output']))
-    return candidate;
-  const output = { ...(value['output'] as Record<string, unknown>) };
-  for (const key of ['launcher', 'ammunition', 'gatheringTool'])
-    if (output[key] === null) delete output[key];
-  return { ...value, output };
+  return candidate;
 }
 // Provider accounting/lifecycle stay with the director; all authoring surfaces share this pipeline.
 // docs/architecture.md#shared-invention-workflow
@@ -131,26 +123,26 @@ export async function inventSupportedTechnique(
       return;
     }
   }
-  const baseDraft = selected
-    ? {
-        schemaVersion: selected.schemaVersion,
-        name: selected.name,
-        description: selected.description,
-        inputs: selected.inputs,
-        output: selected.output,
-        workSeconds: selected.workSeconds,
-      }
-    : undefined;
+  const baseDraft = selected?.sourceCandidate;
   const context = {
     ...(await buildStoredContext(service, actorId, request.text)),
     ...(scope.previous ? { previousProposal: scope.previous } : {}),
     ...(selected ? { selectedBase: baseDraft } : {}),
   };
+  const families = installedRecipeFamilies(service.world);
   const criteria = Object.fromEntries(
-    Object.entries(SUPPORTED_INVENTION_FAMILIES).map(([key, value]) => [key, value.description]),
+    families.map(({ definition }) => [definition.id, definition.description]),
   );
   const judged = await port.judge({
-    state: { context, contract: DECLARATION_CONTRACT },
+    state: {
+      context,
+      families: families.map(({ definition }) => ({
+        id: definition.id,
+        version: definition.version,
+        description: definition.description,
+        limitation: definition.limitation,
+      })),
+    },
     questions: inventionQuestions(criteria),
   });
   const admissibility = choice(judged.answers['admissibility']);
@@ -164,50 +156,31 @@ export async function inventSupportedTechnique(
       admissibility === 'forbidden'
         ? 'The request conflicts with this world’s installed construction contract. Describe a supported method, or use the authorized world-editing path for a different premise.'
         : admissibility === 'unsupported'
-          ? `That request needs an unsupported mechanism or unsuitable materials. Supported families: ${Object.keys(SUPPORTED_INVENTION_FAMILIES).join(', ')}.`
+          ? `That request needs an unsupported mechanism or unsuitable materials. Installed families: ${families.map(({ definition }) => definition.name).join(', ')}.`
           : `The request was not admitted because the feasibility judgment was uncertain. Specify the intended effect and how the materials achieve it; no materials were consumed.`,
     );
   const route = choice(judged.answers['route']);
-  if (!route || !Object.hasOwn(SUPPORTED_INVENTION_FAMILIES, route))
+  const family = families.find(({ definition }) => definition.id === route);
+  if (!family)
     throw new InventionFailure(
       'needs-clarification',
       'Describe one invention at a time: its purpose and materials. Jev could not select a supported family confidently.',
     );
-  type Generated = Omit<DeclarationDraft, 'output'> & {
-    output: Omit<DeclarationDraft['output'], 'launcher' | 'ammunition' | 'gatheringTool'> & {
-      gatheringTool: DeclarationDraft['output']['gatheringTool'] | null;
-      launcher: DeclarationDraft['output']['launcher'] | null;
-      ammunition: DeclarationDraft['output']['ammunition'] | null;
-    };
-  };
   const generationContext = await buildStoredContext(service, actorId, request.text);
-  const generated = await port.generate<Generated>({
+  const draft = await port.generate<DeclarationDraft>({
     execution: 'complex',
     maxOutputTokens: 1800,
     task: 'invent_supported_technique',
-    schema: declarationSchema,
+    schema: selectedRecipeCandidateSchema(family),
     context: {
       ...generationContext,
       ...(scope.previous ? { previousProposal: scope.previous } : {}),
       ...(baseDraft ? { selectedBase: baseDraft } : {}),
-      selectedFamily: route,
-      contract: DECLARATION_CONTRACT,
+      selectedFamily: family.definition,
     },
-    instructions: `${DATA_RULE} Design one useful recipe from the trusted finite construction contract. The current request is the revised intent; previousProposal is prior candidate/validation feedback, not permission to repeat a rejected method. When selectedBase is present, derive a separate recipe honoring the requested changes and preserving unchanged mechanics; never mutate the base. Honor explicit material and mechanism choices; do not silently substitute different materials. Honor the requested physical materials and selected family. Use native material IDs listed in the context. Respect role requirements, quantity/work/parameter envelopes, required body rigidity for flex launchers, and output properties inherited from inputs. Use only the operations permitted by the supplied installed contract; a new label does not provide a new capability. This is a proposal; independent admission decides validity. For a launcher set ammunition null; for an arrow set launcher null. Use sensible modest costs and describe the preparation/assembly with its use prerequisites. Do not copy a prewritten final recipe; compose one for this request.`,
+    instructions: `${DATA_RULE} Design one useful recipe using the selected installed family and its supplied schema, material roles, parameters and guidance. The current request is revised intent; previousProposal is prior candidate/validation feedback, not permission to repeat a rejected method. Derive a separate recipe when selectedBase is present, honoring requested changes and preserving unchanged mechanics. Honor explicit materials; do not silently substitute. Use only permitted material IDs and the selected family's declared fields. Generated text supplies no native effects or authority. Independent admission decides validity; installation does not craft the item. Do not copy a prewritten final recipe; compose one for this request.`,
   });
   port.current();
-  const draft: DeclarationDraft = {
-    ...generated,
-    output: {
-      kind: generated.output.kind,
-      name: generated.output.name,
-      description: generated.output.description,
-      properties: generated.output.properties,
-      ...(generated.output.launcher ? { launcher: generated.output.launcher } : {}),
-      ...(generated.output.ammunition ? { ammunition: generated.output.ammunition } : {}),
-      ...(generated.output.gatheringTool ? { gatheringTool: generated.output.gatheringTool } : {}),
-    },
-  };
   await port.checkpoint(draft);
   port.current();
   if (inventionFamily(draft) !== route)

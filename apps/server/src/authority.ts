@@ -106,6 +106,14 @@ export class AuthorityError extends Error {
 }
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export const scopeKey = (scope: RequestScope) => hash(JSON.stringify(scope));
+/** Reconnect keeps device drafts; security, embodiment and timeline changes do not.
+ * This namespace grants no request authority and never replaces scopeKey.
+ * docs/invention-workshop-tools.md#implemented-human-saved-work-interface
+ */
+export const privateDraftScopeKey = (scope: RequestScope) => {
+  const { connectionId: _connectionId, ...privateScope } = scope;
+  return hash(JSON.stringify(privateScope));
+};
 const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.

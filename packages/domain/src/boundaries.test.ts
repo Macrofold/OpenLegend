@@ -21,21 +21,19 @@ const inheritedIds = [
   'valueOf',
 ];
 const draft = (): DeclarationDraft => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
+  family: { id: 'base:flex', version: 1 },
   name: 'Fixture bow',
   description: 'A test-only physical composition.',
   inputs: [
     { definitionId: 'wood', quantity: 1, role: 'body' },
     { definitionId: 'cord', quantity: 1, role: 'binding' },
   ],
-  workSeconds: 90,
   output: {
-    kind: 'launcher',
     name: 'Fixture bow',
     description: 'Test-only flex launcher.',
-    properties: ['flexible', 'rigid'],
-    launcher: { mechanism: 'flex', ammunitionKind: 'arrow', damage: 18, range: 7, accuracy: 0.8 },
   },
+  parameters: { workSeconds: 90, damage: 18, range: 7, accuracy: 0.8 },
 });
 
 describe('untrusted dictionary identifiers', () => {

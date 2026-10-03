@@ -1,3 +1,4 @@
+import { recipeFamily, basePlaytestMilestones } from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { canUseInventory, inventoryItemView } from './inventory-view.js';
@@ -8,11 +9,12 @@ import {
   typedRequestVocabulary,
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
-import { scopeKey, type RequestScope } from './authority.js';
+import { privateDraftScopeKey, scopeKey, type RequestScope } from './authority.js';
 import { observerDescription, fireFuelDescription } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { bodyPolicy, applicableConsumption, matchesStatusCondition } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
@@ -229,6 +231,7 @@ export async function projectView(
       observation.inventory,
       world.resourceReservations,
       world.itemDefinitions,
+      world.recipes,
       actor.equippedItemId,
       actor.action,
       world.itemHandling,
@@ -236,7 +239,9 @@ export async function projectView(
       player.placement,
       player.statusEffects,
       world.statusEffectPolicy,
-      actor.capabilities?.needs,
+      actor.attributes,
+      actor.body,
+      world.moduleManifest,
       active,
       paused,
     ],
@@ -624,15 +629,33 @@ export async function projectView(
       'No work to stop.',
     ),
   ];
-  if (canRecoverAtCamp(player))
+  if (canRecoverAtCamp(world, player))
     playerActions.push({
       id: 'recover',
-      label: 'Recover at camp',
+      label: bodyPolicy(world)!.recovery!.label,
       command: { type: 'recover' },
       enabled: !paused,
       reason: 'Personal playtest recovery; world history is retained.',
     });
   const work = actor.action;
+  const consumption = applicableConsumption(world, player);
+  const suggestedConsumption =
+    consumption &&
+    matchesStatusCondition(
+      world,
+      { subject: player, source: player, actionTarget: player },
+      consumption.suggestWhen,
+    )
+      ? inventory
+          .flatMap((item) => item.actions)
+          .find((option) => option.command.type === 'eat' && option.enabled)
+      : undefined;
+  const suggestedActionIds = [
+    ...playerActions
+      .filter((option) => option.id === 'recover' || option.command.type === 'status-effect')
+      .map((option) => option.id),
+    ...(suggestedConsumption ? [suggestedConsumption.id] : []),
+  ];
   const targetName =
     work?.targetId &&
     observation.visibleEntities.find((entity) => entity.id === work.targetId)?.name;
@@ -661,6 +684,7 @@ export async function projectView(
     schemaVersion: 2,
     access: {
       scope: scopeKey(scope),
+      privateDraftScope: privateDraftScopeKey(scope),
       canManageSaves: service.mayManageSaves(scope),
       accountId: scope.accountId,
       actorId: scope.actorId,
@@ -744,10 +768,8 @@ export async function projectView(
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
       attributes: projectAttributes(world, player, 'owner'),
-      health: actor.health,
       actionAnimation: actionAnimation(world, player),
-      hunger: actor.fullness === undefined ? undefined : 100 - actor.fullness,
-      energy: actor.energy,
+      suggestedActionIds,
       alive: actor.alive,
       statusEffects: projectStatusEffects(world, player, 'owner'),
       action: actor.action
@@ -857,6 +879,8 @@ export async function projectView(
       'recipes',
       [
         observation.knownRecipes,
+        world.moduleManifest,
+        world.itemDefinitions,
         world.declarationReceipts,
         world.knowledge[player.id],
         inventory,
@@ -876,11 +900,12 @@ export async function projectView(
             npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
             name: recipe.name,
             description: recipe.description,
-            family: recipe.output.launcher
-              ? `${recipe.output.launcher.mechanism} launcher · ${recipe.output.launcher.ammunitionKind}`
-              : recipe.output.gatheringTool
-                ? `Gathering tool · up to ${recipe.output.gatheringTool.quantity} ${world.itemDefinitions[recipe.output.gatheringTool.resourceId]!.name} per batch`
-                : 'Arrow ammunition',
+            output: recipe.output,
+            facts: recipe.facts,
+            limitations: [
+              recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.limitation,
+            ],
+            family: recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.name,
             ingredients: recipe.inputs.map((input) => ({
               name: world.itemDefinitions[input.definitionId]!.name,
               quantity: input.quantity,
@@ -962,41 +987,7 @@ export async function projectView(
       jobs,
       ...usage,
     },
-    milestones: [
-      {
-        id: 'talk',
-        label: 'Talk with Ada',
-        done: events.some((event) => event.type === 'speech' && event.actorId !== scope.actorId),
-      },
-      {
-        id: 'invent',
-        label: 'Invent a sling',
-        done: observation.knownRecipes.some(
-          (recipe) => recipe.output.launcher?.mechanism === 'swing',
-        ),
-      },
-      { id: 'craft', label: 'Craft and equip a launcher', done: !!launcher },
-      {
-        id: 'hunt',
-        label: 'Hunt and harvest',
-        done: events.some((event) => event.type === 'harvested' && event.actorId === scope.actorId),
-      },
-      {
-        id: 'eat',
-        label: 'Cook and eat a meal',
-        done: events.some(
-          (event) =>
-            event.type === 'ate' && event.actorId === scope.actorId && /meat/i.test(event.text),
-        ),
-      },
-      {
-        id: 'bow',
-        label: 'Discover bow and arrow',
-        done:
-          observation.knownRecipes.some((recipe) => recipe.output.launcher?.mechanism === 'flex') &&
-          observation.knownRecipes.some((recipe) => recipe.output.ammunition?.kind === 'arrow'),
-      },
-    ].map((milestone) => ({
+    milestones: basePlaytestMilestones(world, scope.actorId, events).map((milestone) => ({
       ...milestone,
       done: milestone.done || milestones[milestone.id] === true,
     })),

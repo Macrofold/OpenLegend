@@ -17,7 +17,7 @@ function sleepingTarget() {
     worldSupport(target),
   );
   target.spatial = structuredClone(source.spatial);
-  target.actor!.energy = 40;
+  target.actor!.attributes!['wilderness:energy']!.value = 40;
   const definition = world.statusEffectPolicy.definitions.find((d) => d.actions)!;
   const result = executeCommand(world, {
     id: 'fixture-sleep',
