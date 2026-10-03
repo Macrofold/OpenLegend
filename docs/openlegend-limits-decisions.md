@@ -26,6 +26,8 @@ Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D
 
 Current [action records and learned activities](action-experience.md): [AEL01–AEL08](limits/action-experience.md) record finite representation, projection, hydration, candidate, storage, learning and retrieval limits. [AE01–AE10](maintainers/action-experience.md) and [evidence](verification/action-experience.md) record delivery and qualification; no unlimited execution is implied.
 
+Product-scalability targets: [PS-L01–PS-L18](limits/product-scalability.md) record proposed operating constraints and unselected values; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

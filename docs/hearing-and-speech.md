@@ -247,6 +247,12 @@ Store only perception outcomes required for history/cognition, not every continu
 
 Immutable manifest/sense resolution, per-volume receiver bounds and bounded geometric transfer caches reuse only validated inputs. Receiver IDs rebind to current entities. Speech admission still reads live participation, perception capability and recognition. Cache overflow evaluates the complete query; it never prunes listeners. Main's elapsed-time phases and contribution indexes remain authoritative. Owned append buffers seal at fork/edit/publication boundaries; prepared status predicates cache operators, never live outcomes. Native supply IDs follow the participant roster's invalidation boundaries and read current quantity and visibility.
 
+## Product-scalability attention target
+
+[Attention and scenes](product-scalability/attention-and-scenes.md) adds proposed acoustic competition, stable focus and aggregate commotion through this hearing owner. [PS04](maintainers/product-scalability.md) and [PS-D02](../archive/05-project/open-decisions.md#product-scalability-integration-choices) own integration and residual choices. Physical overlap needs utterance durations or an explicitly authored alternate rule; caption reading time is not sound duration. Current instantaneous speech, thresholds and listener-specific fragments remain unchanged until the new policy is delivered.
+
+Grouping changes what is distinguishable prospectively, not what a listener already understood. Preserve existing exact speech and permitted fragments; later focus cannot recover unheard words. A coarse background scene may establish gist without an exhaustive ambient transcript, but exact-language mechanics must retain their actual words and source/audience evidence. This does not authorize replacing accepted human messages or foreground NPC utterances with generic chatter.
+
 ## 12. Deliberate extension boundaries
 
 Deferred capabilities include timed/streamed physical speech, listening to only a later part of an ongoing sentence, room/portal propagation, reflections/diffraction, frequency bands and audiograms, voice recognition, language competence, head orientation, lip-reading, speaker amplification, sound-triggered waking/damage, and accurate sound-duration/masking processes. Their future additions should preserve the event/evidence/caption boundaries above.

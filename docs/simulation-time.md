@@ -2,6 +2,16 @@
 
 This is the canonical clock/integration contract. [Performance](performance.md) owns measurement and optimization; [PF13](maintainers/simulation-time.md#pf13--elapsed-time-simulation) owns delivery. The [boundary catalogue](maintainers/simulation-boundaries.md) is a running inventory of exact deadlines, conservative limits and still-unknown bounds, not a promise that every scenario is event-driven already.
 
+## Product-scalability time and detail targets
+
+**Accepted direction, not implemented by the current speed control.** [Participation and clocks](product-scalability/participation-and-protection.md) specifies a future option to advance an authored calendar independently of mechanical activity. A date can advance rapidly without making movement, fire-starting, or cognition proportionally faster. Aging, needs, seasons, work, appointments, memory maintenance, and campaign commitments must each declare their clock before this option is enabled. Current elapsed game-time behavior below remains unchanged until explicit integration; [PS05](maintainers/product-scalability.md) owns that cross-feature gate and [PS-L11](limits/product-scalability.md#ps-l11--clocks) records the pending policy.
+
+[Background progression](product-scalability/background-progression.md) separately permits declared coarse activity and fewer optional cognitive initiatives. This is not permission to drop owed mechanical time or reclassify accepted obligations as optional. Missed optional thoughts do not become future debt. A faster calendar does not automatically enqueue one inference or one callback for every crossed day; actual required coupled transitions still need supported bounded handling.
+
+An activity's estimated completion remains conditional on unchanged inputs. A relevant alarm, encounter, resource mutation, or command brings affected work through the actual occurrence time before interruption or continuation. The engine cannot commit a roof's future completion ahead of an earlier interaction that is still unresolved. Observer evidence is determined at the occurrence; knowing about an invader in server state is not character awareness.
+
+Future coarse outcomes need not equal a detailed counterfactual, but must respect committed history, world law, resources, permissions, and scoped evidence. Promotion materializes a valid present and unresolved work, not a replay or invented history. Existing conflicts, random outcomes, and protection at detailed entry must survive mode changes and restoration. This changes supported world semantics only when the relevant family and policy are explicitly implemented; it is not a silent relaxation of the current integration and sensing guarantees.
+
 ## Independent clocks
 
 The bundled world's default rate is 60 game seconds per real second at 1x. This converts elapsed time; it does **not** prescribe 60 simulation transitions per real second. The simulation accepts elapsed game time and divides it only where a relevant mechanical boundary or explicit fidelity bound requires it. Faster clock settings increase the time owed, not a mandatory number of whole-world ticks. At 8x the clock owes 480 game seconds per real second; the number of integration intervals depends on activity, not that number.
@@ -41,3 +51,9 @@ The catalogue records for each candidate: what stays unchanged, how a deadline/b
 See [the branch handoff](maintainers/speech-time-integration.md). Speech emission is a committed occurrence and listener-specific acquisition, not a once-per-tick poll. Stored heard fragments never reroll during interpolation or history reads. Caption reading duration belongs to the real-time presentation clock, with its explicit pause/hidden policy, not accelerated game time. Physical speech duration, if later implemented, needs its own start/end boundaries and movement/occlusion semantics.
 
 [Current evidence](verification/simulation-cadence.md) distinguishes executable elapsed integration, sampled native boundaries and actual 8x server observations from still-open regional, graphical and coupled-law qualification; [regional-time evidence](verification/regional-time-and-navigation.md) covers deferred rates, net flow and fleeting crossings.
+
+## Maintained records
+
+- Implementation: [Existing subsystem work](maintainers/simulation-time.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
+- Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
+- Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.

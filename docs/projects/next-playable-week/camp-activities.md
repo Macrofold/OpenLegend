@@ -1,0 +1,198 @@
+# Chosen camp activities and reusable finite methods
+
+**Proposed design only; no runtime delivery or implementation approval is recorded here.** Baseline: local `main` at `6664144a`, inspected October 2, 2026. This brief expands engineer 3's assignment within the five-engineer, 400-hour proposal: 24 hours for invented containers, 40 hours for the activities below, and 16 hours for combined integration. It depends on the container and shared-family contracts; it is not another action executor.
+
+[Feature specification](../next-playable-week-feature-spec.md) · [Technical design](../next-playable-week-tech-design.md) · [PW10 assignment](../../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) · [Authored rules and wording](../../worlds/base/camp-routines.md)
+
+## Two complete results, with different kinds of reuse
+
+1. A character chooses a finite sequence: gather from a selected source, return to a selected camp container, put a specified amount inside while leaving a personal minimum, and add one unit of fuel to a selected fire. Actual successful steps can become a personally learned method through the existing learning decision. Choosing that method later repeats those finite steps with current compatible bindings and fresh native admission.
+2. A character explicitly chooses to watch an already burning fire until a deadline, using a specified fuel supply and spending limit. The engine continues the chosen waits and fuel actions. This is a requested activity for one occasion. It is **not a learned conditional fire policy**, a daily routine, a machine, or a standing assignment to an NPC.
+
+This division is intentional. A genuinely useful learned gather/pack/fuel method fits the existing evidence model. Claiming that one successful watch teaches unobserved branches, thresholds or a general survival policy would require a different learning contract. The second result makes FIR-03 playable without claiming that further capability.
+
+## Source-confirmed starting point
+
+| Existing behavior                                                                                                            | Source and consequence                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Requested activities and learned methods share `ActorPlan.activity` and one native executor.                                 | [activity-execution.ts](../../../packages/domain/src/activity-execution.ts), [composed activities](../composed-activities.md). Reuse this owner and its finite `invoke`, `sequence`, `branch`, `repeat` and `wait` controls.                                                            |
+| Existing predicates are availability, life, equipment, lit state, actual output, own holding and absolute time.              | [action-experience.ts](../../../packages/domain/src/action-experience.ts), [activity-execution.ts](../../../packages/domain/src/activity-execution.ts). There is no low-fuel predicate or whole-activity deadline today.                                                                |
+| Current method bounds include 64 nodes, depth 12, 16 iterations per repeat, one game day per wait and 4,096 expanded visits. | [AEL01](../../limits/action-experience.md#ael01). These limits remain; no unrestricted loop is introduced.                                                                                                                                                                              |
+| Learning normalizes actual native leaf commands into a finite sequence.                                                      | [activity-learning.ts](../../../packages/domain/src/activity-learning.ts). It preserves demonstrated quantities and exact definition support; it does not learn requested branches/repeats/waits. Absolute follow deadlines are explicitly rejected.                                    |
+| Revision-bound transfers are recorded but excluded from reusable invocations.                                                | [AEL06](../../limits/action-experience.md#ael06), [current action records](../../action-experience.md). Replaying a saved `transfer-item` command with its former revisions is not an implementation of reusable packing.                                                               |
+| NPC unpack suggestions currently become invalid plans when selected.                                                         | [context.ts](../../../apps/server/src/context.ts), [response.ts](../../../packages/domain/src/response.ts), [agency.ts](../../../packages/domain/src/agency.ts). PW03/PW01 must repair immediate selection; PW10 adds the deliberately plan-eligible semantic transfer described below. |
+| Fire care is plan-eligible and already records native work.                                                                  | [fire.ts](../../../packages/domain/src/worlds/base/fire.ts), [camp fire and sharing](../camp-fire-and-sharing.md). Fuelling debits one actual unit only at completion. Lighting has separate tinder/drill requirements.                                                                 |
+| Interrupted safe work restarts its uncommitted step; committed effects remain.                                               | [agency.ts](../../../packages/domain/src/agency.ts), [AC interruption](../../action-capabilities.md#15-resource-claims-interruption-and-timing). There is one suspended frontier. Material-consuming work and attacks have existing refusal rules.                                      |
+| Inventory inspection currently covers the actor's own possessions only.                                                      | [inventory-inspection.ts](../../../packages/domain/src/inventory-inspection.ts), [types.ts](../../../packages/domain/src/types.ts). PW03 supplies selected-container inspection with access/revision-bound pages.                                                                       |
+| Standing resource holds need more lifecycle work.                                                                            | [BW21](../../maintainers/base-world.md#bw21--reserve-a-portion-for-a-named-person), [R01](../../maintainers/limits-audit.md#r01). This slice uses atomic spending constraints, not a new reservation store.                                                                             |
+
+The base-world wording, thresholds, quantities and offered examples have one owner in [camp routines](../../worlds/base/camp-routines.md). Current native fire rules remain in [survival](../../worlds/base/survival.md#tending-the-campfire). This brief owns the new execution and evidence contracts.
+
+## Who chooses the work
+
+The player can compose the supported steps through ordinary action requests and an inspectable parameter form. An NPC can voluntarily propose supported work through its existing optional action channel or select a personally acquired method. The proposed sequence is supplied by that explicit composition, not inserted as every NPC's automatic camp candidate; primitive affordances and the supported composition schema remain available alongside alternatives. Another person's request supplies an opportunity, never a command that controls the recipient's body.
+
+The initiator chooses exact perceived source/container/fire roles, material definition, transfer quantity, personal minimum, replacement/enqueue/interruption mode, and any watch deadline/spending budget. Missing consequential choices receive clarification. An interface may show the world-authored example with all defaults visible before selection; it may not silently create a goal, install a learned method or choose another actor's participation.
+
+The world supplies primitive capabilities and truthful descriptions. It does not preload the finite camp sequence as everyone's learned method or offer a special successful script solely when a hungry Ada is nearby. A reusable method is offered only after that actor's lawful learning path retains it. Explicitly requested one-session control may be compiled natively without a paid planning call, as existing typed compositions are today.
+
+NPC invention locks remain separate. An NPC may use an existing container and learn its own actions while invention is locked. Creating a new container design still follows the configured invention permission. No new words spoken by another character change that permission.
+
+## Finite gather, pack and fuel method
+
+### Requested structure
+
+The request compiles to the following finite sequence using the existing structure owner. This is an example of selected work, not an installed canned recipe:
+
+1. `gather` from the selected, currently perceived source. The world still decides its native batch yield, tool effects, work and depletion.
+2. `move` to an explicitly bound camp approach point obtained through the existing target-relative movement binder. The binding comes from the selected visible container's current location. Reaching that point is not proof that the container is still there or accessible.
+3. Invoke the new semantic stock transfer: put the chosen quantity of the chosen homogeneous material into the selected container, leaving the chosen minimum available among the actor's own accessible possessions.
+4. `tend-fire` with `operation: fuel` on the selected fire, selecting one current compatible unit of the same material and enforcing the same personal minimum.
+
+Travel to the gathering source and fire remains native action approach. The return movement is a real step and appears in the detailed method. If the container moves after its approach point was bound, the transfer rechecks current sight/reach/access and stops; there is no hidden tracking, automatic search or substitution of another basket. A newly selected request can bind a new approach point.
+
+Gathering need not yield the originally hoped-for quantity. Later steps check actual stock and committed results. Starting with too little material, depletion, a different gathered output or another action spending the material can therefore stop the method. The preview distinguishes a known shortage from an uncertain future yield. It must not certify success just because the first gather is feasible.
+
+### Fresh stock binding at the existing custody owner
+
+Add one narrow plan-eligible command, `transfer-stock`, through the existing action/containment boundary. Its closed fields are `sourceId`, `destinationId`, `definitionId`, `definitionVersion`, `definitionDigest`, `quantity` and `minimumHeld`, in addition to ordinary command identity/actor/purpose. The definition fields form the existing exact definition pin, not an item-instance revision. Source/destination IDs bind either this actor or one selected container. The registered activity adapter treats container IDs as object roles and the acting person's ID as self; amounts and definition support remain literals. These meanings are fixed:
+
+- The source is either the acting person's accessible possessions or the direct contents of one explicitly bound accessible container. The destination is that person's inventory or one explicitly bound accessible container. Direct transfer into another person's carried inventory remains unsupported; use an offer and independent acceptance.
+- Selection is of homogeneous units with one exact definition pin. It is not permission to substitute another material, move an individual keepsake, or select a different container. Instance-specific moves keep their existing exact-object path.
+- The generic command accepts any supported homogeneous material. Fuel eligibility belongs only to the installed fire family and the base-world camp example; no engine-wide fire-compatible material restriction is added.
+- The selected quantity is exact. The binder resolves current eligible lots in stable native order, excludes held/in-use units, verifies access through every ancestor, and preflights all destination load/depth/cycle consequences before changing anything. Several matching lots may supply one exact transfer; their identities/provenance are preserved by the existing split/move owners.
+- Resolution and mutation occur in the same serialized native transition. Reuse the existing transfer validation/mutation helper and `moveLot`; do not route around custody checks or create another item writer. Failure after planning leaves the entire quantity transfer unapplied.
+- Exact lot IDs, revisions, placement revisions and destination revision exist in the resulting **one-attempt** native operation/receipt. A learned method instead retains the permitted source/destination roles, exact definition pin, quantity and guard. It never retains an old revision as future authority.
+- Reads use indexed children/own possessions and existing access checks. The proposed host work allowance is at most 16 moved lots and 200 examined candidates per admission, including the personal-minimum proof; record it in the action-experience limits owner. Check selected source/destination stock first and stop reading early once the exact transfer and guard are proved; proving at least K available units does not require a complete census. Incomplete examination returns an explicit need for further inspection/narrowing, not an invented empty source or a partial success. A narrower own-bag request can establish its minimum from that bag's remaining accessible units; inspection itself never grants a saved stale count authority. No all-pairs item/container search is introduced. These operation bounds are engine admission limits; world-authored quantities cannot increase them.
+
+Record both the admitted semantic invocation and its actual native resolution in the existing action occurrence. Only trusted admission constructs that link. The learning normalizer uses the semantic invocation through a strict family adapter; the native command and output/lineage receipts remain the evidence of what actually moved. It must reject an untrusted or incompatible claimed semantic origin.
+
+The world fire family's reusable invocation extends `tend-fire` with the same definition pin fields, `minimumHeld` and `onlyWhenLow`, restricted to `operation: fuel`. The finite method uses `onlyWhenLow: false`; the watch uses `true`. Its fire target is an object role, and an optional `itemId` can reference an actual earlier output. Without that output it binds one current matching carried lot. The fire owner resolves this to its existing per-attempt `itemId` and validates the guard at admission and completion. Once work starts, that attempt pins its chosen lot. Its disappearance causes ordinary failure; it does not silently switch to another lot during the same wind-up/work. A later separately admitted step can bind afresh. Both player requests and NPC choices use these same public, family-validated commands; no camp-only privileged writer or second executor exists.
+
+### Personal minimum is a spending constraint
+
+“Leave at least K available units” means that **this routine's** transfer or consumption may not reduce the actor's accessible, unclaimed quantity of the selected definition below K. Check the actual post-operation quantity in the same transition as transfer or fuel debit, including at fuel completion. Moving material between the actor's own accessible bags does not spend their personal stock.
+
+This grants no standing hold, does not reserve food for another person, and does not prevent the actor later choosing to eat, drop, offer or use that stock. If another chosen action has already reduced it, the routine stops with the actual shortfall. Nothing is replenished by narration. The guard is generic chosen-work semantics; the base world chooses which material and amount a particular request names.
+
+The same definition-derived guard and aggregate quantity owner serve transfer and fuelling. Do not duplicate a second inventory total in the plan. No new `reserveResource` consumer is introduced, so BW21 and R01 remain open.
+
+### Actual outputs and learning
+
+Transfers record every actual moved lot and quantity through existing output/lineage evidence. Fuelling records the unit actually consumed and the actual change to the fire. If a source lot was split or combined, the method cannot invent more precise provenance than the object owner retains.
+
+The method may be considered during the actor's existing eligible learning downtime, using only their own completed occurrences and legitimate connected/selected-purpose evidence. Retain/decline/uncertain remains the existing typed learning decision. No successful run forces retention, and no fixture selection proves live learning. Current automatic learning is NPC-only and requires the configured safe downtime with no active plan; a waiting watch is not learning downtime ([needs.ts](../../../packages/domain/src/worlds/base/needs.ts), [cognition-maintenance.ts](../../../apps/server/src/cognition-maintenance.ts)). PW07 changes the policy's representation, not this eligibility. The live learned-method acceptance therefore uses a voluntarily participating NPC. A player can repeat a newly admitted explicit composition; this package does not silently add automatic player reflection or label that repeat as learned.
+
+Normalization retains a finite sequence of the steps that actually happened, with the demonstrated transfer quantity and personal minimum. It carries exact material/recipe/host support and compatible role requirements; a gathering-source role must still provide the demonstrated material, rather than matching any entity merely because its kind is “resource.” Personal object/place bindings remain private. Another actor must obtain its own lawful support.
+
+No new scalar-parameter language is required for learned methods: quantities and the guard stay demonstrated literals; compatible object/place roles can be rebound through existing admission. Changing the amount or guard is a new requested attempt, not a falsely verified specialization. A learned method is tentative and can fail on reuse. A matching shared definition alone never makes it known.
+
+Current [learned-choice preparation](../../../apps/server/src/activity-context.ts) looks for definition-pinned item roles only in the observed inventory. Extend that same owner to bind a selected ground container from PW03's currently permitted inspected containers; otherwise a method can be stored but never offered after the basket is dropped. Prefer a still-compatible personally remembered binding, with explicit visible alternatives for rebinding. Source roles must produce the demonstrated material and fire roles must have the installed fuel capability. Missing current support produces an inspect/rebind opportunity, not an arbitrary compatible-looking replacement. Reuse bounded prepared facts and one selected binding per method, never every source/cache/fire combination.
+
+Leaf acquisition does not retain an unobserved conditional branch. The watch below remains one-session. Its observations and actions are ordinary evidence, but its low-fuel guard, deadline and control structure are not eligible for this finite-method normalization. Supported native leaf submethods may still be assessed only when their ordinary evidence is sufficient; the normalizer cannot silently strip a guard and claim the guarded watch was learned. Teaching learned methods, conditional-policy induction, daily repetition and confidence promotion remain outside this delivery.
+
+## One-session fire watch
+
+### Entry and chosen parameters
+
+The actor selects one already burning, currently observed fire; one exact fuel definition; a fuel source (own accessible possessions **or** one selected reachable cache); a personal minimum; an absolute stopping deadline; and a maximum number of fuel units the watch may consume. A requested duration or named world-clock time is resolved once at admission. The saved absolute deadline never advances on pause, interruption or restart.
+
+The actor must be at a valid camp position where the chosen fire can be observed and the chosen cache can be accessed. This first watch does not travel out to gather fuel, follow a relocated cache, relight an extinguished fire or choose another supply. Ordinary movement, gather, light and fresh watch requests remain alternatives. These limits keep fire care a legible chosen activity rather than a hidden general survival controller.
+
+### Supported control flow
+
+Compile the request into the existing bounded control vocabulary, adding a world-backed low-fuel observation and a generic whole-activity deadline. The behavior is:
+
+1. At the selected deadline end the watch once, reporting actual fuel use. An uninterrupted watch with valid observation can report fulfillment; a suspended/resumed watch reports its interruption and cannot claim uninterrupted care. A limit stops work only when another attempt is needed, not merely because the last permitted unit has just been spent while the fire has enough fuel.
+2. Read the bound fire through the actor's current permitted observation. Lost observation/access, a cold fire or unavailable body stops with an honest reason. No hidden fire value satisfies the condition.
+3. If the fire is not in the world's visible low-fuel band, wait for that band or the deadline. No model call is needed to wait or to notice the supported transition.
+4. If fuel is low and the spending budget remains, use one unit. For own supply, bind a current compatible carried lot. For cache supply, first transfer exactly one unit from that cache into the actor's inventory, then bind the actual committed output to the fuel step. Never bind a future imagined item.
+5. Recheck the chosen personal minimum and fire conditions when the fuel effect commits. If someone else already resolved the low-fuel condition, do not waste a unit: end that guarded attempt as “no longer needed,” record zero consumption, and return to waiting. This is an explicitly admitted conditional skip, not a blanket failure-recovery rule. Other failures stop.
+6. After a committed fuel unit, increment the saved spending count once and return to observation/waiting. No automatic paid reconsideration happens between these native steps.
+
+The concrete structure is an initial `wait` for the descriptor-owned low-fuel predicate, followed by a bounded `repeat` until the saved deadline. Each iteration performs the chosen fuel attempt (including a preceding one-unit cache transfer when selected), then waits for low fuel again. The whole-activity deadline can finish either wait. Checking fuel/attempt budgets occurs only before a needed attempt; reaching a budget with no present need permits waiting until the deadline or next need. This keeps the last permitted unit useful without requiring an extra loop iteration merely to wait. An attempt increments its saved attempt count once at admission, including a later no-effect completion; its actual consumption receipt alone increments the spend count.
+
+The fuel source mode and all limits are chosen once; the loop cannot switch from a depleted cache to somebody's bag. A unit already transferred before a later interruption/failure stays in the actor's possession, with its receipt. There is no automatic return transfer or retroactive refund. That outcome is stated when the watch stops.
+
+### Predicates, deadlines and scheduling
+
+The low-fuel predicate is supplied by the installed fire family and uses exactly the observable band described by that world. It returns unknown when the actor cannot make that observation. Generic execution must not name campfires, branches or a fixed hour threshold. Do not expose exact hidden burn seconds merely to make a predicate easy to implement.
+
+PW02's recipe descriptors do not supply this condition. Engineer 3 adds the narrow condition adapter beneath the existing installed world-host owner, with engineer 2 reviewing its exact pin/version/load contract. The new condition node carries a supported condition-definition pin and a bound target role; the trusted installed descriptor supplies actor-scoped evaluation, relevant dependency identities and the next native time boundary. The base-world descriptor owns the low-fuel identifier, target requirements and wording. Conditions are trusted typed implementations, not generated expressions or JavaScript. Save only the condition pin and selected role; reject missing/incompatible support through current-format validation. This adds the concrete observation consumer required here, not a second mutable family registry or the whole AC06 predicate project.
+
+The new whole-activity deadline belongs to the existing plan/activity owner. Check it before dispatch and at the simulation boundary governing an in-progress step. A step whose ordinary completion falls on or before the deadline may commit; an unfinished step at the deadline is cancelled by the normal action owner. For fire work, which spends at completion, cancellation spends nothing. Already committed transfers remain. The activity ends once with no further child dispatch. Admission permits a deadline only where every relevant child declares the required safe cancellation semantics; this watch uses immediate transfers and completion-spending fire work. It does not grant a new deadline shortcut around attack recovery or already-consumed cooking inputs.
+
+Predict waiting wakeups from the relevant fire owner's burn boundary, selected deadline and actual dependency changes; do not add one world scan per waiting actor per host tick. Reuse temporal boundaries and dependency invalidation. Another person adding fuel changes the next low-fuel boundary; extinction, access/custody changes, movement, configuration changes and body availability invalidate the pending observation. A clock wait alone does not prove that a fuel threshold will be noticed on time.
+
+The repeat budget, fuel-spend budget and existing expanded-work bound are separate. Guarded no-effect attempts cannot produce an unbounded conflict loop: each attempt counts toward the chosen finite attempt bound even when zero fuel was spent. Bounds and truthful labels are supplied by the world owner. No minimum fuel is conjured to finish the shift.
+
+## Interruption, stop and restart
+
+- Explicit Stop/replace discards future authority and any suspended continuation. Completed gathering, deliveries and fuel effects remain.
+- Explicit interruption uses the existing one-suspended-frontier contract. Uncommitted approach/gather/fire work can restart only as current pause rules allow; spent-input work and attacks retain their refusals. No new universal pause permission is introduced.
+- The finite learned method can resume after the interrupting work ends through existing revalidation. It never repeats completed transfers/fuelling. A failed native step requires a new attempt; it is not silently retried.
+- A suspended watch's simulation deadline keeps approaching while the world runs. Resumption after it must terminate without another transfer. Resumption before it rechecks fire observation, exact bound cache, material availability and remaining budgets. Suspension marks the watch as interrupted, so its final outcome cannot claim continuous care through that gap. Pausing the whole world advances neither deadline nor fuel burn and does not create a care gap; downtime has no catch-up.
+- Same-version persistence retains the selected semantic invocations, actual output bindings, control frame, counters, deadline, interruption fact, definition support and completed receipts. Restore cannot reset spent fuel/attempt counts or reapply a moved unit. Incompatible development formats are rejected explicitly; no migration, save replacement or deletion is authorized.
+- A user/NPC can choose a new request after failure. The new identity and newly selected scope must be visible; it is not recovery of the old receipt or a free model retry.
+
+## Observation, memory and ordinary UI
+
+Record private chosen purpose, personal minimum, bounds and remaining work only for the acting person's permitted context. Public witnesses receive ordinary observed gather/move/transfer/fire events, not the routine's private intent or hidden bag contents. An observer who did not witness a transfer does not learn its contents from a later public completion sentence. Use observer-safe names.
+
+The actor receives actual terminal outcomes once: delivered quantities, fuel units consumed, fuel remaining only at the world's permitted precision, skipped needless work and the exact visible blocker. Already recorded child actions retain their receipts; a summary must not create duplicate material effects or memories claiming unperformed steps. Private support for learning remains with the existing action-experience owner.
+
+The player needs an ordinary compact request/review card showing selected source/cache/fire, material, quantity, personal minimum, current distance/access, possible remaining prerequisites, and watch stop time/budgets. Start is an explicit selection. Existing Stop remains available. A plain “waiting for fuel to run low,” “finished,” or “stopped because…” result is enough; retain the accepted God-only detailed work-step debugger. This slice does not reverse that UI decision.
+
+Engineer 3 owns this ordinary camp request card and its action/result connection inside the six-hour UI/context allocation below. Engineer 4 supplies the existing shared controls, layout conventions and scoped container picker/read model from PW04, and reviews the integration; engineer 4 does not inherit an unbudgeted second activity editor. The player card emits the same closed commands/composition as the NPC route. The ordinary private history remains inspection, not authority to retain a method without the learning decision.
+
+The inventory stream supplies selected-cache inspection and exact transfers. A visible but distant cache may expose its permitted appearance/location; its private contents/load are inspected only once access permits. Returning to it requires fresh inspection. Learned-method inspection and choice reuse the existing private-history/method pages; the task must exercise their ordinary entry point and not rely only on creator diagnostics.
+
+## Verification and expected results
+
+Use focused existing checks and small disposable scenarios through the actual player/NPC/service/domain callers. No provider or runtime work was performed for this design. Native/fixture evidence and live model evidence must be reported separately under the shared task allowance.
+
+| Case                                                             | Required result                                                                                                                    |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Choose and complete gather → return → pack → fuel                | Real source depleted, exact quantity placed, one real fuel unit spent, personal minimum retained; no output before work completes. |
+| Reuse a retained finite method                                   | Same demonstrated quantities/guard, current compatible bindings, fresh lot/revision admission; no old transaction replay.          |
+| A second actor performs equivalent work                          | Separate private learning support is required; no acquisition from catalogue presence or another person's private trace.           |
+| Split matching stock, occupied units, nested own bags            | Exact transfer or explicit unavailable/incomplete result; no lost provenance, double spend or bypass of an ancestor restriction.   |
+| Insufficient source, different gather yield, full or moved cache | Stop at the failing step, keep earlier real effects, explain the scoped reason; never mark the broad camp objective complete.      |
+| Personal minimum conflicts with transfer or fuel                 | Zero effect for that guarded operation; other independently chosen actions retain normal permissions.                              |
+| Lit fire, low fuel, adequate chosen stock                        | Native watch adds actual fuel and waits without a provider call per loop.                                                          |
+| Another person adds fuel during work                             | No redundant fuel debit under the admitted low-fuel guard; bounded no-effect attempt recorded.                                     |
+| Cold/lost fire, moved/private/depleted cache                     | Watch stops; no automatic relight, hidden follow, alternate supply or named-person obligation.                                     |
+| Deadline during wait/approach/fuel or after suspension           | Exactly one terminal result; no post-deadline child effects; already moved items remain accounted for.                             |
+| Fuel/attempt budget used while fire has enough fuel              | Continue the admitted wait; finish at the deadline if no more is needed, otherwise stop when a further attempt is required.        |
+| Further needed attempt exceeds fuel/attempt/work bound           | Explicit incomplete result, not “kept the fire burning until dawn.”                                                                |
+| Restart between cache transfer and fuel completion               | One transferred unit, at most one subsequent consumption, unchanged deadline and counters.                                         |
+| Two worlds use the semantic stock transfer                       | A contrasting material/cache case uses the same custody/guard machinery without fire or survival vocabulary.                       |
+| Real learning and later selection                                | Actual retain/decline/uncertain and later voluntary choice reported, including refusals; no seeded method or forced goal.          |
+
+Include one uncoached player completion, one recurrence, and an intentional failure. Record action steps, time to useful outcome, model calls and exact known/uncertain spend. Existing starter and spawned fires begin with 48 hours of fuel ([world.ts](../../../packages/domain/src/worlds/base/world.ts), [spawn.ts](../../../packages/domain/src/worlds/base/spawn.ts)); a fresh-start watch of at most one day therefore never reaches low fuel. Exercise refuelling using a disclosed low-fuel native fixture and an ordinary naturally aged fire. Do not silently alter starter fuel or label a full-fire waiting run as fuel-care evidence. The finite method also must disclose a known full-fire refusal rather than imply its final step can always succeed.
+
+The repertoire gives concrete reasons for this payoff: [G31, Valheim](../../repertoires/source-atlas.md#g31) connects useful preparation and return while warning against chest chores; [G37, Project Zomboid](../../repertoires/source-atlas.md#g37) makes ordinary objects useful through fuel and placement while warning about inventory friction; [G45, Against the Storm](../../repertoires/source-atlas.md#g45) favors explicit reserves and finite projects. [Teach the workshop one good routine](../../repertoires/work-crafting.md#teach-the-workshop-one-good-routine) supports demonstrated work with visible spending/stops, while [Retire a successful solution](../../repertoires/mechanics.md#retire-a-successful-solution) supports reducing repeated selection after success. This slice transfers those insights without claiming to deliver the cards' teaching or communal delegation. [Action repertoire](../../repertoires/actions.md) coverage is INV-06/INV-09, RES-03/RES-04, FIR-02/FIR-03 and AUT-01/AUT-03/AUT-11/AUT-12; broader standing AUT-07 remains unsupported.
+
+## Allocation and risk
+
+| Work inside the additional 40 hours                                                         | Hours |
+| ------------------------------------------------------------------------------------------- | ----: |
+| Fresh semantic stock binding, atomic personal-minimum guard, actual resolution/evidence     |     8 |
+| Finite method normalization, compatible roles, own-evidence retention/choice and repeat use |     6 |
+| One-session low-fuel watch, deadline/counters, interruption and dependency scheduling       |    10 |
+| Request/review/context integration with existing inventory and method surfaces              |     6 |
+| Focused native/PostgreSQL/browser/live qualification, affected review and documentation     |    10 |
+
+Expected new/changed logic is approximately 1,000–1,600 lines beyond containers, excluding tests and mechanical moves. Risk is medium/high because fresh binding, temporal boundaries and learning evidence meet here. Engineer 1 owns shared response/plan admission repairs; engineer 2 reviews descriptor/pin integration; engineer 4 owns inventory UX and shared controls. The 16 integration hours remain separate and include owner handoffs and combined failure fixes.
+
+Freeze the semantic command, condition adapter and selected-container inspection contracts in the initial coordination window; their implementations can then proceed in parallel through their assigned owners. An incompatible shared descriptor, an inspection dependency that cannot land within its assignment, or a need for broad conditional learning requires a revised estimate before work expands beyond this contract. Do not replace learning evidence with a programmed “retain” choice or sacrifice required lifecycle checks to retain the headline.
+
+## Explicit remaining boundaries
+
+Not delivered by PW10: learning/publishing arbitrary conditional control; general parameterized method templates; automatic daily work; NPC task assignment/obedience; guarantees that a fire can survive every interruption; stock held for a named recipient; shared work/rotation; automatic hunger interruptions; indefinite refuelling; relighting/weather/heat; or general population-scale qualification. BW21 remains a separately scoped claims/lifecycle project. Record these limits without labeling unfinished PW10 acceptance as future work.
+
+## Maintained records
+
+- Implementation: [PW10](../../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods), beneath AC06/AC08/AC09, AE06/AE08/AE09, AG03/AG06/AG09, BW19 and the object/claims owners.
+- Limits: [AEL09 semantic stock binding/reuse](../../limits/action-experience.md#ael09--proposed-fresh-stock-binding-and-finite-reuse) and [CR01 camp choices](../../limits/base-world.md#cr01--proposed-finite-camp-activities); existing AEL01/AEL06 and [BW21/R01](../../maintainers/base-world.md#bw21--reserve-a-portion-for-a-named-person) retain their wider meaning.
+- World policy: [camp routines](../../worlds/base/camp-routines.md), with [containers](../../worlds/base/camp-containers.md) and current [fire care](../../worlds/base/survival.md#tending-the-campfire).

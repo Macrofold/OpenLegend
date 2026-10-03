@@ -2,6 +2,16 @@
 
 **Status: accepted investigation and optimization design.** PF09 owns performance delivery, EPR owns exposure semantics/intake, and SW owns spatial queries. This document defines remaining workload and semantic qualification, not a second implementation of the indexes already recorded in [Architecture](architecture.md) and [PF03](maintainers/performance.md#pf03--native-cpu-and-incremental-admission). [Verification](verification/spatial-scaling-followup.md#spatial-scaling-review-third-pass) retains the latest upstream native evidence; [maintainer TODO](maintainers/TODO.md) owns deferred automated coverage.
 
+## Product-scalability boundary — future semantics versus current optimization
+
+The [product-scalability suite](product-scalability/README.md) adds a distinct design track: which interactions and perceptual detail the world promises at large population. [Attention and scenes](product-scalability/attention-and-scenes.md) and [capacity and economics](product-scalability/capacity-and-economics.md) own those product scenarios; [PS04/PS06](maintainers/product-scalability.md) and [the policy inventory](limits/product-scalability.md) track their future integration. They do not replace the current witness-preserving optimization requirements below.
+
+A future authored sensory policy can make competing voices an indistinct aggregate while retaining a focused speaker, or a distant crowd a perceived group with a few distinguished individuals. That changes what is acquired under an explicit world rule. It is not permission to collapse already-understood speech, remove actual damage, infer hidden group membership, or delete required current evidence because a server is busy. Reduce unnecessary source preparation before paid per-object attention; preserve physical existence and effects independently of cognitive focus.
+
+Qualification must distinguish behavior-preserving optimization from deliberately changed coarse/attention semantics. The first retains equivalent supported outcomes; the second needs source/permission integrity, coherent transitions, player-understandable differences, and exploit/distribution tests. A generic summary that hides lost evidence is not acceptable evidence of improved scaling.
+
+Local capacity follows actual coupling and permitted activity, not merely a count inside a cell. Concerts, markets, and unrestricted combat need separate measured envelopes. Converging crowds and effects crossing cell boundaries remain coupled even when execution is partitioned. Admit new players, summons, machinery, and broad effects only within supported aggregate work; do not accept their consequences and later skip them. Visible queues or open-field congestion boundaries are preferable to an inconsistent simulation, with safe arrival and party/resident/reconnect fairness specified before release.
+
 ## 1. Evidence versus hypotheses
 
 The mixed native stress scenario historically created many events and awareness rows during its cold opening. The earlier [invention review](verification/invention-foundation.md#invention-extensibility-review) used an older spatial/domain baseline and failed its requested 3x throughput. Later native optimizations and their separate workloads are recorded under the spatial reviews. Do not present the older multi-second stalls as a measurement of the current tree, compare different workloads as a speedup, or infer full-stack crowd capacity from isolated improvements.
@@ -49,3 +59,9 @@ Initially allow one expensive native analysis worker/job per local world unless 
 Prove receiver-local privacy and actual witness preservation, stable native outcomes for optimization-only changes, controlled differences for the EPR semantic correction, save/restart, and no hidden paid work. Capture both cold stall and warmed throughput. Expand populations and history gradually, stopping at the measured bottleneck.
 
 Do not add distributed event brokers, analytic animal simulation, a replacement ECS, or GPU perception merely because a small profile is slow. Escalate only after phase-level evidence identifies the remaining cost. Exact supported population/density/speed release targets remain open. Re-run the same cold and warmed application workloads on the current tree before deciding whether a remaining native bottleneck requires more engineering. The still-open private-acquisition semantic requirement and unqualified full-stack workloads justify the next focused slice independently of obsolete timings.
+
+## Maintained records
+
+- Implementation: [Existing subsystem work](maintainers/performance.md); future product integration in [PS01–PS08](maintainers/product-scalability.md).
+- Limits and constraints: [Native-work inventory](limits/native-work.md); proposed product choices in [PS-L01–PS-L18](limits/product-scalability.md).
+- Related design: [Product-scalability suite](product-scalability/README.md) retains strategic scope without replacing current execution.

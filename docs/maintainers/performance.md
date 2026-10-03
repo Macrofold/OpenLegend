@@ -1,5 +1,9 @@
 # Performance implementation tracker
 
+## Proposed next measured slices
+
+[PW08](next-playable-week.md#pw08--proportional-simulation-work) selects actual sighting membership changes, reverse crossing-cache invalidation and certified reuse; [PW09](next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) selects Unicode lexical correctness, scoped retrieval invalidation and current growing-history measurements. Their linked briefs define workloads and equivalence. These are proposed child tasks, not fresh benchmark results or closure of PF08/09, D5 or the complete proportional-step project.
+
 ## Data foundation follow-up
 
 The record/query migration and measurements are in [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence) and [Verification](../verification/data-foundation.md#data-foundation-runtime). Independent PostgreSQL read/write lanes, batched witness eligibility updates, indexed required evidence and skipping discarded memory observation work are implemented. Inactive memory/awareness/summary residency and scoped cold-source consumers are implemented. Dense preparation/copy work is reduced with unchanged native outcomes. PF08/PF09 remain open: initial perception still creates large actor/evidence fan-out and Immer copies growing recent arrays. [Current hardening measurements](../verification/data-runtime-hardening.md#data-runtime-hardening) separate cold-history growth from dense-scene cost. The 100/100/100/1000 and half-size scene runs recovered correctly but did not meet interactive capacity. Bounded worker checkpoints now exceed the former 64 MiB limit under explicit work/package bounds; [current evidence](../verification/checkpoints-and-recovery.md#bounded-history-checkpoints-and-recovery) includes busy-host tail latency and paused restore memory. Do not close D5 from scoped SQL or checkpoint measurements.

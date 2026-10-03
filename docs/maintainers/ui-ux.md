@@ -4,9 +4,11 @@
 
 This tracker owns follow-through for the researched interaction-design handbook, updated October 1, 2026. It does not authorize runtime redesign or duplicate inventory, spatial, hearing, narration, invention or save/load trackers. Runtime evidence baseline: `0382be7`; the research ledger retains relevant handbook and external-source revisions.
 
+Proposed concrete application: [PW04 inventory](next-playable-week.md#pw04--inventory-for-exact-camp-tasks), [PW05 streamed authoring](next-playable-week.md#pw05--streamed-world-agent-replies), [PW11 invention workspace](next-playable-week.md#pw11--inspectable-and-editable-invention-workspace) and PW07 generic meter/editor UI, with a shared [feature specification](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md), select a camp-supply task and owner-chat journey for the next engineering week. These remain proposals; UIUX02–UIUX05 qualification stays open until actual interaction evidence exists.
+
 ## UIUX01
 
-**Documentation delivered on the PR #26 branch; runtime conformance not asserted.** The handbook covers hierarchy/layout, controls/overlays, inventory/trading, world interaction, chat/invention, feedback, React and verification. Root/client guidance routes to a short core and matching sections only. Current aesthetics, authority, save compatibility and subsystem contracts remain unchanged.
+**Documentation delivered and merged; runtime conformance not asserted.** The handbook covers hierarchy/layout, controls/overlays, inventory/trading, world interaction, chat/invention, feedback, React and verification. Root/client guidance routes to a short core and matching sections only. Current aesthetics, authority, save compatibility and subsystem contracts remain unchanged.
 
 One [research ledger](../ui-ux/research.md) integrates all 47 source groups, including pinned Primer/Adobe code and Vercel's guideline repository. Findings live in the appropriate topic chapters, not separate research-round supplements. Source dates, IDs, pins, rejected advice and access qualifications are preserved. The [principle-to-evidence map](../ui-ux/research.md#principle-to-evidence-map) connects control semantics, disabled explanations, accessibility colors, child overlays, composition, adaptive continuity, persistence and calibrated agent feedback to their evidence.
 
@@ -38,7 +40,7 @@ File concrete reproduced defects with existing feature owners. Keep optional ide
 
 ## UIUX06
 
-**Open — tooling and native instruction-dispatch verification.** Source and documentation review did not run the guidance checker, pinned formatter, native agent probes or browser/assistive checks. The recorded October 1 research environment lacked `pnpm`, and fetching a pinned repository snapshot failed DNS resolution. Connector Git reads/writes remained available; this is not a claim that GitHub access was unavailable.
+**Partially qualified — native instruction-dispatch verification remains open.** The original source/documentation review did not run the guidance checker, pinned formatter, native agent probes or browser/assistive checks. The later formatting-only fix `6664144a` passed `pnpm run format:check` and `pnpm guidance:check` on the merged handbook; it did not qualify native dispatch or browser behavior. The recorded October 1 research environment lacked `pnpm`, and fetching a pinned repository snapshot failed DNS resolution. Connector Git reads/writes remained available; this is not a claim that GitHub access was unavailable.
 
 In a runnable checkout, run `pnpm guidance:check` and the pinned changed-file formatter without repository-wide churn. Probe a matching frontend task, backend-only negative case, new component and client-package working directory. Inspect actual context/reads: one short core plus relevant chapter sections, no compulsory research/corpus preload. Record agent versions and missing/irrelevant reads with the existing [agent-guidance tracker](agent-guidance.md). Fix concrete failures without weakening policy.
 

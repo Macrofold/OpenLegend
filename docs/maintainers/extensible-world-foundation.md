@@ -92,6 +92,8 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 ## EWF03 — Extract default body and need policies through real consumers
 
+[PW07](next-playable-week.md#pw07--world-configured-survival) now assigns both stages of the approved survival extraction, with a [complete implementation brief](../projects/next-playable-week/survival.md). Its explicit alternate-world and consumer checks must pass before the corresponding requirements below close; the broader EWF program is not completed by that slice.
+
 **Dependencies:** EWF02. Coordinate with ACT, INV contribution semantics, and EPR04; use the existing native evaluator before full EPR delivery.
 
 - [ ] Move current wilderness physiology/body configuration behind reviewed registered implementations. Approved plan, not started, to begin after the regional time work merges into main: [survival rules as world settings](../projects/world-configured-survival.md). Stage 1 moves the rules that run every step (hunger, starvation and exhaustion damage); stage 2 moves the remaining survival numbers. Preserve its current values, controller defaults, maximum-health logic, food seeking, recovery, and update order in the initial extraction.

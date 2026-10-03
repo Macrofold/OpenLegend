@@ -280,3 +280,15 @@ Do not change the engine, adopt a new ECS, add per-object queues, persist every 
 Advanced index maintenance, reverse observer dependencies, deadline heaps, workers, coarse regional simulation, and analytic needs advancement require named measured gates under the existing performance and scale owners.
 
 Product choices that may need explicit approval are narrowly scoped: production reminder cadence, which cue types can force context inclusion, habituation/re-entry behavior, and any future permission to narrate private internal states. These do not block scoped routing, profiling, or behavior-preserving spatial improvements. Default to current policies and private disclosure until accepted otherwise.
+
+## Product-scalability attention target
+
+The [attention and scene direction](product-scalability/attention-and-scenes.md) proposes observer-permitted group evidence and stable focus before expensive individual cognition. [PS04](maintainers/product-scalability.md) integrates that future sensory policy through this existing event/intake owner; [PS-D02](../archive/05-project/open-decisions.md#product-scalability-integration-choices) retains the unresolved choices. It does not replace currently required individual evidence or add a second reaction queue.
+
+Keep a perceived group distinct from its physical members, their private goals and their independent minds. Grouped commotion can become new evidence without exposing a hidden roster. Individual contact, damage, understood speech and other required sources remain authoritative under the active policy. Corrections, forgetting and changed permissions must invalidate any dependent aggregate text; changing focus cannot grant retrospective awareness. A future explicitly changed perception rule is not a load-shedding shortcut for today's already-acquired evidence.
+
+## Maintained records
+
+- Implementation: [Events and reactions](maintainers/events-perception-and-reactions.md); cross-feature target integration in [PS04](maintainers/product-scalability.md).
+- Limits and constraints: [Native work](limits/native-work.md) and [cognition](limits/cognition.md) own their existing shared mechanisms; proposed product choices are in [PS-L02/PS-L06/PS-L07](limits/product-scalability.md).
+- Related design: [Memory](memory-architecture.md) and [hearing](hearing-and-speech.md) retain attention/recall and acoustic ownership.

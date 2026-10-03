@@ -2,6 +2,10 @@
 
 This subtracker expands [INV-21.6–21.7](inventions-and-world-evolution.md#inv-21--reviewed-mcp-authoring-and-unified-native-execution); it does not replace INV-21 or reset its broader qualification gates. The [runtime](../world-agent-runtime.md), [MCP contract](../world-agent-mcp.md), and [reviewed custom binding contract](../invention-composition.md#reviewed-custom-attribute-binding) own behavior. Actual evidence is in [write continuation verification](../verification/workshop-continuation.md) and [transport/funding verification](../verification/workshop-transport-funding.md). New conversations start with [the handoff and decision map](../invention-handoff.md).
 
+## Proposed incremental delivery
+
+[PW05](next-playable-week.md#pw05--streamed-world-agent-replies) proposes incremental owner-chat text and truthful progress under the existing turn/recovery owners. [Feature specification](../projects/next-playable-week-feature-spec.md#engineer-5--responsive-honest-world-agent-conversations) and [technical design](../projects/next-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system) define the scope. It is not implemented and does not close WW07 or change authoring/spending permission. [WS01](../limits/inventions.md#ws01--proposed-world-agent-stream-delivery) records proposed delivery bounds. [PW11](next-playable-week.md#pw11--inspectable-and-editable-invention-workspace) adds exact revision inspection/comparison and free structured recipe edits through the existing native owner; it retains current seven-kind support and separate Approve/Apply.
+
 ## Implemented slices
 
 - [x] **WW01 — Dependency-correct recipe revision.** Removed inputs leave the draft's material pin set; retained inputs keep the original pin; new inputs receive explicit current pins. Base recipe identity remains immutable. Malformed payloads produce bounded expected findings rather than raw infrastructure errors.

@@ -1,5 +1,13 @@
 # Maintainer work index
 
+## Product scalability and persistent participation
+
+[Product scalability](../product-scalability/README.md) captures the accepted strategic direction for federated communities, protected personal domains, lower-detail background lives, bounded attention and scenes, consequence-preserving logout, and forecast local campaigns against canonical adversaries. Start with the [feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md). [PS01–PS08](product-scalability.md) owns cross-feature delivery and [the policy inventory](../limits/product-scalability.md) owns unresolved tuning. This is documentation and future behavior, not a claim of shipped background simulation or million-player capacity; existing subsystem and operational scalability owners retain their responsibilities.
+
+## Proposed next engineering week
+
+[Next playable week](next-playable-week.md) assigns five parallel engineers **400 hours** across reliability/accounting fixes, world-owned invention families, full survival extraction, measured simulation/memory improvements, craftable containers and chosen camp activities, inventory/invention workspaces and incremental owner replies. The eleven PW labels are ten delivery packages and one shared integration gate, not eleven engineers. Start with the [feature specification](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md). This is proposed scope, not implemented behavior; existing subsystem trackers retain their broader requirements and release gates.
+
 ## Presentation and navigation delivery
 
 [UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. Existing subsystem trackers retain runtime implementation ownership; the handbook does not authorize a redesign.
