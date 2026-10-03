@@ -1,5 +1,9 @@
 # Long-conversation continuity and compaction — feature specification
 
+| Status    | Current progress                                                                                                                      | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The agreed NC14–NC17 slice and follow-up review are delivered and locally qualified; broader NC12 acceptance remains separately open. | 2026-10-03   |
+
 **Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; NC18 tracks conditional future work; [runtime evidence and limits](../verification/conversation-compaction.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 
 ## 1. Outcome

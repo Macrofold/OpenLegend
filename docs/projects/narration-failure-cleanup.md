@@ -1,5 +1,9 @@
 # Narration failure and merge-status cleanup
 
+| Status    | Current progress                                                                                                                            | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Exact failure presentation and removal of player regeneration controls are delivered and verified; broader NC12/CR12 work remains separate. | 2026-10-03   |
+
 ## Scope and baseline
 
 Implement the requested player-facing failure behavior on `codex/narration-failure-cleanup`,
