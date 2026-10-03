@@ -31,6 +31,22 @@ Existing accurate documentation and deferral reasons satisfy this tracking requi
 
 For accepted policies expected to change, maintain [Policies to revisit](../../docs/maintainers/revisitable-policies.md). Keep the current policy in its canonical owner; record why, when and by whom it should be reconsidered. Consult relevant entries when changing that policy or crossing its trigger. Update the owner, affected summaries and register together; a review trigger does not authorize relaxing the rule.
 
+## Project status and completion
+
+Every document describing a project under `docs/projects/`, including its feature spec, technical design, plan and supporting briefs, must have this compact table immediately after its title:
+
+```markdown
+| Status      | Current progress                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Implementation is finished, but the project's browser verification remains open in the linked tracker. | YYYY-MM-DD   |
+```
+
+Keep **Current progress** to one plain-language sentence naming the most important delivered work, remaining work or blocker; include task references when helpful, not a full task inventory. Use **Not started**, **In progress**, **Blocked** or **Completed**. An optional rough percentage belongs in the status cell, such as **In progress (50%)** or **In progress (75%)**, only when the agreed scope and evidence support that estimate; never invent precision. Use the actual date of the status review in `YYYY-MM-DD` format.
+
+Whenever finishing project work, reconcile this table in every affected project document with the owning tracker and actual evidence, and refresh the date even if the broad status remains unchanged. Keep documents for the same project consistent; completing a design, subtask or implementation stage does not make the whole project complete. Add the table to existing project documents when their project is next worked on; navigation-only indexes are not project descriptions. Detailed tasks and acceptance remain in their current owners.
+
+Mark the project **Completed** only when its entire agreed scope, integration, documentation, review fixes and required verification are complete under [root completion](../../AGENTS.md#completion-and-handoff--every-task). In that same change, move its project documents together into `docs/projects/completed/`, retaining filenames and the relative organization of supporting documents. Preserve useful content and completion evidence, repair links inside moved files, and update repository-wide incoming references, including code comments and copyable instructions; do not leave duplicate active copies. A shared document covering unfinished projects cannot be marked wholly complete or moved on the strength of one finished part. If the project is reopened, return its documents to the active project area, revise the status/date and repair references together.
+
 ## Project approval and current truth
 
 For a project authorized under [root task policy](../../AGENTS.md#task-scope-and-authorization), use the [design transition](../skills/openlegend-design/SKILL.md#approval-to-implementation). Before coding, create/update detailed maintainer work referencing both project files and integrate relevant accepted behavior/decisions into their persistent cross-project owners. Mark approved-but-unimplemented capabilities as targets, not current runtime behavior; update those owners and task states as each slice ships. Project docs retain project-specific scope, context and history, referencing canonical contracts rather than becoming competing current specifications.
