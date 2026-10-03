@@ -18,6 +18,7 @@ export const COGNITION_PERMISSIONS = {
 export interface WorkspaceToolProfile {
   id: string;
   permissions: unknown;
+  connectionId: string;
 }
 export interface ActorWorkspace {
   workspaceId: string;
@@ -42,11 +43,48 @@ export class MacrofoldProvisioner {
     if (profile) actorId = `tools:${profile.id}:${actorId}`;
     const previous = this.inFlight.get(actorId);
     if (previous) return previous;
-    const promise = this.create(actorId, name, profile).finally(() =>
-      this.inFlight.delete(actorId),
-    );
+    const promise = this.create(actorId, name, profile)
+      .then(async (resource) => {
+        if (profile) await this.bindConnection(profile.connectionId, resource.workspaceId);
+        return resource;
+      })
+      .finally(() => this.inFlight.delete(actorId));
     this.inFlight.set(actorId, promise);
     return promise;
+  }
+  /** Operator-approved connection ceiling plus a single workspace grant. Never make
+   * the world connection organization-wide or broaden a profile's immutable tools.
+   * Persist the original conditional request so ambiguity cannot create a new grant. */
+  private async bindConnection(connectionId: string, workspaceId: string): Promise<void> {
+    const key = `macrofold-world-access:${connectionId}:${workspaceId}`;
+    const state = (await this.store.getIntegration(key)) as
+      | { granted?: boolean; pending?: boolean; version: string; operationId: string }
+      | undefined;
+    if (state?.granted) return;
+    const access = state?.pending
+      ? state
+      : object(await this.api.request(`/v1/connections/${connectionId}/access`));
+    const version = string(access.version);
+    const operationId = state?.pending ? state.operationId : digest({ key, version });
+    await this.store.putIntegration(key, { pending: true, version, operationId });
+    try {
+      await this.api.request(
+        `/v1/connections/${connectionId}/access/rules`,
+        { scope: 'workspace', workspace_id: workspaceId },
+        operationId,
+        undefined,
+        1_000_000,
+        undefined,
+        version,
+      );
+      await this.store.putIntegration(key, { granted: true, version, operationId });
+    } catch (error) {
+      // A stale access revision proves this grant was not accepted. An explicit
+      // later conversation request can review the new ceiling before dispatch.
+      if (error instanceof MacrofoldHttpError && error.status === 412)
+        await this.store.putIntegration(key, { pending: false, version, operationId });
+      throw error;
+    }
   }
   private async create(
     actorId: string,

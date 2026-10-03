@@ -95,6 +95,7 @@ export class MacrofoldTransport {
       text: NonNullable<GenerateRequest['onProgress']>;
       accepted: (value: Record<string, unknown>) => Promise<void>;
     },
+    matchVersion?: string,
   ): Promise<unknown> {
     if (
       !Number.isSafeInteger(maxResponseBytes) ||
@@ -115,7 +116,11 @@ export class MacrofoldTransport {
       headers: {
         Authorization: `Bearer ${this.key}`,
         'Content-Type': 'application/json',
+        ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
+        // Queue bounded inference at the provider; the caller already polls the
+        // accepted Run and preserves its original deadline and cancellation.
+        ...(body !== undefined && path === '/v1/inferences' ? { Prefer: 'respond-async' } : {}),
       },
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
       signal: control,

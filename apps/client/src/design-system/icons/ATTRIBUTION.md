@@ -34,3 +34,5 @@ Lucide utility icons: Lucide contributors, ISC license (see LUCIDE-LICENSE).
 - resource.pebble: [rock](https://game-icons.net/1x1/lorc/rock.html) by Lorc
 
 `ui.speech` is an original OpenLegend outline glyph, licensed AGPL-3.0-only.
+
+`ui.hearing` is an original OpenLegend ear outline glyph, licensed AGPL-3.0-only.

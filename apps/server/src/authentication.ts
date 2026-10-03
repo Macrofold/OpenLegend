@@ -4,7 +4,7 @@ import type { AppConfig } from './config.js';
 import { AuthorityError, type VerifiedIdentity } from './authority.js';
 
 export interface AuthenticationAdapter {
-  begin(browserToken: string): Promise<URL>;
+  begin(browserToken: string, changeAccount: boolean): Promise<URL>;
   complete(callback: URL, browserToken: string | undefined): Promise<VerifiedIdentity>;
 }
 /** Tokens are exchanged and verified only on the server. Pre-login state is one-use,
@@ -41,7 +41,7 @@ export class OpenIdAuthentication implements AuthenticationAdapter {
     });
     return this.configuration;
   }
-  async begin(browserToken: string): Promise<URL> {
+  async begin(browserToken: string, changeAccount: boolean): Promise<URL> {
     for (const [id, transaction] of this.transactions)
       if (transaction.expiresAt <= this.now()) this.transactions.delete(id);
     if (this.transactions.size >= 256)
@@ -59,6 +59,8 @@ export class OpenIdAuthentication implements AuthenticationAdapter {
       return oidc.buildAuthorizationUrl(await this.client(), {
         redirect_uri: `${this.config.origin}/auth/callback`,
         scope: 'openid',
+        // Account switching needs the provider's login UI instead of silent SSO.
+        ...(changeAccount ? { prompt: 'login' } : {}),
         response_type: 'code',
         state,
         nonce,

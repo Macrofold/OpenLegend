@@ -39,11 +39,13 @@ import type {
   WorldRenderer,
   SpeechCaptionOptions,
   ShadowQuality,
+  PerceptionOptions,
 } from './world-renderer';
 import { birdArt, surfaceMesh, surfaceSeamsMesh } from './spatial-art';
 import { playerEntity } from './entity-view';
 import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
+import { PerceptionOverlay } from './perception-overlay';
 import { CharacterStatuses } from './character-status';
 import { SpeechCaptions, type CaptionPoint } from './speech-captions';
 import {
@@ -134,6 +136,7 @@ export class WildernessScene implements WorldRenderer {
   private lastHover?: { entity: EntityView | null; x: number; y: number };
   private initialized = false;
   private visionBlur: VisionBlur;
+  private readonly perception: PerceptionOverlay;
   readonly statuses: CharacterStatuses;
   private statusIndicators: StatusIndicators;
   private readonly speech: SpeechCaptions;
@@ -178,6 +181,7 @@ export class WildernessScene implements WorldRenderer {
     });
     this.canvas.dataset.ready = 'false';
     this.visionBlur = new VisionBlur(canvas);
+    this.perception = new PerceptionOverlay(this.app, canvas);
     this.statuses = new CharacterStatuses(canvas);
     this.statusIndicators = new StatusIndicators(canvas);
     this.speech = new SpeechCaptions(canvas);
@@ -254,8 +258,12 @@ export class WildernessScene implements WorldRenderer {
     if (this.presentation.setShadowQuality(quality) && this.view)
       this.presentation.lighting(this.view);
   }
+  setPerceptionOptions(options: PerceptionOptions): void {
+    this.perception.setOptions(options);
+  }
   setView(view: GameView): void {
     this.view = view;
+    this.perception.setView(view);
     const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
     const worldKey = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}`;
     if (this.worldKey !== worldKey) {
@@ -1463,6 +1471,34 @@ export class WildernessScene implements WorldRenderer {
     );
   }
   private publishHover(entity: EntityView | null, point: { x: number; y: number }): void {
+    this.perception.hideHint();
+    if (!entity && this.hoverPoint && !this.drag)
+      this.perception.hover(
+        point,
+        (position) => {
+          const worldPoint = new pc.Vec3(position.x, position.y, position.z);
+          const depth = worldPoint.clone().sub(this.camera.getPosition()).dot(this.camera.forward);
+          const camera = this.camera.camera!;
+          // worldToScreen retains clip-space Z; it is negative for many visible
+          // orthographic points. Test physical camera depth instead.
+          return depth >= camera.nearClip && depth <= camera.farClip
+            ? camera.worldToScreen(worldPoint)
+            : null;
+        },
+        (position) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const ray = this.screenRay(point.x - rect.left, point.y - rect.top);
+          return (
+            cameraDepthFraction(
+              new pc.Vec3(position.x, position.y, position.z),
+              ray.from,
+              ray.to,
+              this.camera.forward,
+            ) <=
+            this.cameraObstruction(ray) + 1e-5
+          );
+        },
+      );
     // Stationary hover must not rerender React at the GPU frame rate.
     if (
       this.lastHover?.entity === entity &&
@@ -1521,9 +1557,8 @@ export class WildernessScene implements WorldRenderer {
     return fraction >= 0 && fraction <= 1 ? { point, fraction } : null;
   }
   private readonly alphaMasks = new WeakMap<pc.Texture, ImageData>();
-  private pick(x: number, y: number): EntityView | null {
-    if (!this.view) return null;
-    const ray = this.screenRay(x, y);
+  private cameraObstruction(ray: { from: pc.Vec3; to: pc.Vec3 }): number {
+    if (!this.view) return 0;
     let obstruction =
       rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
     // Decorative canopies obstruct the camera but never grant or remove bodily perception.
@@ -1541,6 +1576,12 @@ export class WildernessScene implements WorldRenderer {
       const hit = this.cardHit(card, image, ray);
       if (hit) obstruction = Math.min(obstruction, hit.fraction);
     }
+    return obstruction;
+  }
+  private pick(x: number, y: number): EntityView | null {
+    if (!this.view) return null;
+    const ray = this.screenRay(x, y);
+    const obstruction = this.cameraObstruction(ray);
     let best: EntityView | null = null,
       revealed: EntityView | null = null,
       nearest = obstruction + 1e-5,
@@ -1785,6 +1826,7 @@ export class WildernessScene implements WorldRenderer {
     this.textures.forEach((texture) => texture.destroy());
     this.materials.forEach((material) => material.destroy());
     this.visionBlur.destroy();
+    this.perception.destroy();
     this.statuses.destroy();
     this.statusIndicators.destroy();
     this.speech.destroy();

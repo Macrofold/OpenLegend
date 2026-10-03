@@ -1,0 +1,87 @@
+.ol-entry {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: var(--space-6);
+  overflow: auto;
+  pointer-events: auto;
+  background:
+    radial-gradient(ellipse at 50% 40%, var(--highlight-quiet), transparent 65%), var(--canvas);
+}
+.ol-entry-card {
+  inline-size: min(100%, 440px);
+  min-inline-size: 0;
+  padding: var(--space-8);
+  display: grid;
+  gap: var(--space-6);
+}
+.ol-entry-brand {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-entry-card p,
+.ol-entry-card h1,
+.ol-entry-card h2 {
+  margin: 0;
+}
+.ol-entry-eyebrow {
+  color: var(--highlight);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ol-entry-brand h1 {
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.1;
+}
+.ol-entry-message {
+  display: grid;
+  gap: var(--space-3);
+  color: var(--ink-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.ol-entry-message h2 {
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.4;
+}
+.ol-entry-message details {
+  font-size: 13px;
+}
+.ol-entry-message summary {
+  cursor: pointer;
+}
+.ol-entry-message details p {
+  margin-block-start: var(--space-2);
+}
+.ol-entry-actions {
+  display: grid;
+  gap: var(--space-3);
+}
+.ol-entry-actions .ol-btn {
+  inline-size: 100%;
+  min-block-size: 44px;
+  height: auto;
+  padding: var(--space-3) var(--space-4);
+  white-space: normal;
+  text-decoration: none;
+}
+.ol-entry-hint {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--space-4);
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+@media (max-width: 480px), (max-height: 480px) {
+  .ol-entry {
+    padding: var(--space-4);
+  }
+  .ol-entry-card {
+    padding: var(--space-6);
+  }
+}

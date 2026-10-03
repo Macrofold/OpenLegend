@@ -29,7 +29,12 @@ export interface SpeechCaptionOptions {
   reducedMotion: boolean;
   occlusions?: readonly ScreenRect[];
 }
+export interface PerceptionOptions {
+  vision: boolean;
+  hearing: boolean;
+}
 export interface WorldRenderer {
+  setPerceptionOptions(options: PerceptionOptions): void;
   setShadowQuality(quality: ShadowQuality): void;
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;

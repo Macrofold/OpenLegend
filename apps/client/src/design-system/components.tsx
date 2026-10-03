@@ -547,7 +547,7 @@ export function Panel({
       data-workspace={workspace?.expanded || undefined}
       style={
         {
-          translate: `${offset.x}px ${offset.y}px`,
+          translate: draggable ? `${offset.x}px ${offset.y}px` : undefined,
           ...(workspace?.expanded ? { '--workspace-width': `${workspace.width}px` } : {}),
         } as CSSProperties
       }

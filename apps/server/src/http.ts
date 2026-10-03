@@ -654,7 +654,10 @@ async function initializeGameServer(
         if (!authentication) throw new AuthorityError('forbidden');
         if (url.pathname === '/auth/login') {
           const browserToken = browserLoginToken();
-          const destination = await authentication.begin(browserToken);
+          const destination = await authentication.begin(
+            browserToken,
+            url.searchParams.get('change-account') === 'true',
+          );
           response.setHeader('Set-Cookie', cookie('ol_login', browserToken, 300));
           response.writeHead(303, { Location: destination.href, 'Cache-Control': 'no-store' });
           response.end();

@@ -108,6 +108,24 @@ Sounds retain their event-time origin even if their source later moves or disapp
 
 Spatial changes flow into the existing exposure and reaction pipeline. Native geometric calculations do not purchase semantic inference. A creature appearing overhead can create a new eligible exposure; unchanged flight frames do not create repeated thoughts.
 
+## Perception range guides
+
+**Implemented display feature.** Two independent bottom-right **Vision** and **Hearing** icon toggles save device-local preferences through the existing preference helper; both start off. Hover/focus explanations identify the complete regions and reference. The same controls remain available below an open narrow conversation sheet. They change only graphics: character senses, observations, recognition, descriptions, memories, AI information, actions and spending admission are unchanged.
+
+Vision uses continuous teal boundaries: **Clear sight → Reduced detail → Outside sight range**. The inner division reuses the existing presentation-only focus fraction; it is a visual guide, never a new observation or description tier. The outer limit uses the character's actual sight range. Native line-of-sight queries from the character's eye to the same-sized reference person's exposed body clip both contours against physical geometry. Camera floor focus, cutaways and read-through do not change that geometry.
+
+Hearing uses dashed amber boundaries: **Clear speech → Partial speech → Indistinct speech → Inaudible**. The reference is **normal-volume speech from someone the controlled character's size**, using their body/ear anchors. Native acoustic thresholds, hearing sensitivity and background sound determine the radii; native barrier transmission adjusts the sampled reach. This is a possible-speaker guide, not a map of actual people or sound sources. Sound can cross a sight-blocking barrier when the authored transmission permits it. Existing hearing, intelligibility and speech-volume rules are unchanged.
+
+All boundaries share a world-space core width and static soft halo; successive bands dim. Depth testing keeps lines behind objects. There are no persistent line labels or pick targets. Boundary hover text appears only over a displayed line when no world object or HUD has priority, is pointer-transparent, and stays beneath other labels/UI. Color is supplemented by solid/dashed lines, eye/ear icons, accessible toggle names and explicit tooltip region names. The effect has no animation, including under reduced motion.
+
+### Display approximation and updates
+
+The guide samples **only already-public map geometry**, never actor/sound-source lists or undiscovered topology. Geometry without public disclosure suppresses the field. Samples use the controlled character's XYZ position and sensory anchors, independently of camera position. Grounded characters prefer their own support surface, then the declared surface nearest their height, with the native ground plane as the remaining candidate. Airborne characters use a horizontal cross-section at their current foot height. This is a surface guide, not the complete three-dimensional volume or every stacked floor simultaneously.
+
+Bounded angular/radial sampling retains separate visible stretches, including ground visible farther beyond a deck edge. Native checks validate neighboring line chords; uncertain wall corners, large gaps and discontinuous support edges leave gaps instead of bridges. Thin obstructions or narrow visible openings can fall between radial/angular samples. Contour interpolation, the reference person's size, surface selection and short gaps are explicit display approximations; actual gameplay queries remain exact to their existing model. Do not interpret a guide gap as a new gameplay refusal.
+
+Only pose/support, sensory parameters, map revision/extents, world/timeline/access and display choices invalidate the cached field. Rebuilds are coalesced outside rendered frames. Camera motion reprojects cached points; unrelated entity motion or speech does not recalculate it. Turning both guides off clears graphics/hints immediately and performs no field calculation. Meshes/materials/timers are scene-owned and released on replacement or teardown. [RG01](limits/interface.md#rg01--perception-range-guide-display) owns the chosen visual threshold, sampling and rendering bounds; [verification](verification/perception-overlays.md) records native/browser checks and their limits. Broader viewport-aware gameplay and sight-blur qualification remain separate SW09 work.
+
 ## Tactical camera and perspective
 
 The camera supports a 3D focus point, horizontal orbit/yaw, vertical viewing angle/pitch, pan, zoom, recenter, and explicit level focus. Orthographic projection is the default tactical view; perspective is supported as a presentation mode. Changing the viewing angle, switching projection, and changing the focus level are distinct operations.
@@ -167,4 +185,4 @@ Existing saved proximity-detector definitions upgrade in place to body contact w
 ## Maintained records
 
 - Implementation: [Feature tasks](maintainers/spatial-world.md).
-- Limits and constraints: [Space, movement and perception inventory](limits/spatial.md).
+- Limits and constraints: [Space, movement and perception inventory](limits/spatial.md); [range-guide presentation](limits/interface.md#rg01--perception-range-guide-display).

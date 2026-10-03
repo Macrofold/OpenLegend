@@ -396,6 +396,30 @@ export function hearingReferenceRadius(world: WorldState, observer: Entity): num
   const { hearingFloor: floor, policy } = resolveSenses(world, observer);
   return floor === null ? 0 : acousticReach(policy, floor, 'normal', policy.thresholdsDb.clear);
 }
+/** Readonly display parameters, never new observation tiers. The client may sample
+ * only the already-public spatial layout; docs/spatial-world.md#perception-range-guides. */
+export function perceptionGuide(world: WorldState, observer: Entity) {
+  const body = bodyProfile(observer);
+  const { hearingFloor: floor, policy } = resolveSenses(world, observer);
+  const enabled =
+    activelyParticipates(observer) && !capabilityBlocked(world, observer, 'perception');
+  return {
+    vision: {
+      enabled,
+      eyeHeight: body.eyeHeight,
+      targetHeights: SIGHT_BODY_FRACTIONS.map((fraction) => fraction * body.height),
+    },
+    hearing: {
+      enabled: enabled && floor !== null,
+      earHeight: body.earHeight,
+      partialRadius:
+        floor === null ? 0 : acousticReach(policy, floor, 'normal', policy.thresholdsDb.partial),
+      detectionRadius:
+        floor === null ? 0 : acousticReach(policy, floor, 'normal', policy.thresholdsDb.detect),
+    },
+  };
+}
+
 function physicalSpeechExposure(
   world: WorldState,
   observer: Entity,

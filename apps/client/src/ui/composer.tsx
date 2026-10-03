@@ -1,6 +1,7 @@
 import { useChatHistory } from './use-chat-history';
 import { useReplyPreview } from './use-reply-preview';
 import { useEffect, useRef, useState } from 'react';
+import { Label, Slider, SliderOutput, SliderTrack, SliderThumb } from 'react-aria-components';
 import type { GameView, SpeechVolume } from '@open-legend/protocol';
 import { Button, Tag, SegmentedControl } from '../design-system/components';
 import { aiSetupReason } from '../ai-readiness';
@@ -42,6 +43,7 @@ export function Composer({
     'normal',
     (v): v is SpeechVolume => v === 'whisper' || v === 'normal' || v === 'shout',
   );
+  const volumeLabel = volume === 'whisper' ? 'Whisper' : volume === 'normal' ? 'Normal' : 'Shout';
   const input = useRef<HTMLTextAreaElement>(null);
   const retryKeys = useRef(new Map<string, string>());
   const retryLock = useRef(new Set<string>());
@@ -206,93 +208,107 @@ export function Composer({
   }
   return (
     <div id="composer">
-      <SegmentedControl
-        label="Conversation mode"
-        options={[
-          { value: 'chat', label: 'Talk' },
-          { value: 'invention', label: 'Invent something' },
-        ]}
-        value={draft.mode}
-        onChange={(v) => setDraft({ ...draft, mode: v as ComposerDraft['mode'] })}
-      />
-      {draft.mode === 'chat' ? (
-        <>
-          <p className="ol-meta">
-            {npc ? `Talk with ${npc.name}` : 'Find someone in the clearing.'}
+      <div className="ol-conversation-toolbar">
+        <SegmentedControl
+          label="Conversation mode"
+          options={[
+            { value: 'chat', label: 'Talk' },
+            { value: 'invention', label: 'Invent something' },
+          ]}
+          value={draft.mode}
+          onChange={(v) => setDraft({ ...draft, mode: v as ComposerDraft['mode'] })}
+        />
+        {draft.mode === 'chat' && (
+          <p className="ol-meta ol-conversation-recipient">
+            {npc ? `With ${npc.name}` : 'Find someone to talk to.'}
           </p>
-          <label className="ol-speech-volume">
-            Speech volume{' '}
-            <select
-              aria-label="Speech volume"
-              value={volume}
-              disabled={sending}
-              onChange={(e) => setVolume(e.target.value as SpeechVolume)}
+        )}
+      </div>
+      <div className="ol-conversation-body" data-mode={draft.mode}>
+        {draft.mode === 'chat' ? (
+          <>
+            <div className="ol-conversation-history">
+              {history.error && <p role="alert">{history.error}</p>}
+              <ConversationThread
+                id="conversation"
+                conversationKey={`${view.worldId}:${npcId ?? npc?.id ?? 'nearby'}`}
+                items={messages}
+                openingRevision={history.openingRevision}
+                contentRevision={`${preview?.generation ?? ''}:${preview?.sequence ?? 0}`}
+                before={
+                  history.hasOlder ? (
+                    <Button
+                      size="sm"
+                      variant="quiet"
+                      onPress={history.loadOlder}
+                      isDisabled={history.loading}
+                    >
+                      Older messages
+                    </Button>
+                  ) : undefined
+                }
+                empty={
+                  <p className="ol-meta">
+                    {history.loading
+                      ? 'Loading conversation…'
+                      : 'No saved messages with this person yet.'}
+                  </p>
+                }
+                ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
+                visible={visible}
+              />
+            </div>
+            <Slider
+              className="ol-speech-volume"
+              orientation="vertical"
+              minValue={0}
+              maxValue={2}
+              step={1}
+              value={volume === 'whisper' ? 0 : volume === 'normal' ? 1 : 2}
+              onChange={(value) =>
+                setVolume(value === 0 ? 'whisper' : value === 1 ? 'normal' : 'shout')
+              }
+              isDisabled={sending}
+              aria-describedby="speechVolumeHint"
             >
-              <option value="whisper">Whisper</option>
-              <option value="normal">Normal</option>
-              <option value="shout">Shout</option>
-            </select>
-          </label>
-          <p className="ol-meta">
-            {volume === 'whisper'
-              ? 'Nearby listeners may still overhear a whisper.'
-              : volume === 'shout'
-                ? 'Shouting can be heard from much farther away.'
-                : 'People nearby can overhear.'}
-          </p>
-          {history.error && <p role="alert">{history.error}</p>}
-          <ConversationThread
-            id="conversation"
-            conversationKey={`${view.worldId}:${npcId ?? npc?.id ?? 'nearby'}`}
-            items={messages}
-            openingRevision={history.openingRevision}
-            contentRevision={`${preview?.generation ?? ''}:${preview?.sequence ?? 0}`}
-            before={
-              history.hasOlder ? (
-                <Button
-                  size="sm"
-                  variant="quiet"
-                  onPress={history.loadOlder}
-                  isDisabled={history.loading}
-                >
-                  Older messages
-                </Button>
-              ) : undefined
-            }
-            empty={
-              <p className="ol-meta">
-                {history.loading
-                  ? 'Loading conversation…'
-                  : 'No saved messages with this person yet.'}
-              </p>
-            }
-            ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
-            visible={visible}
-          />
-        </>
-      ) : (
-        <div className="ol-proposal">
-          <Tag>Invention</Tag>
-          <h3 className="ol-heading">Make something possible</h3>
-          <p>
-            Describe a tool and the materials you want to use. An admitted recipe appears in
-            Crafting; making it still takes materials and work.
-          </p>
-          <p className="ol-meta">
-            The current wilderness supports ranged launchers and arrow ammunition. Conjuring objects
-            is not available.
-          </p>
-          {view.ai.jobs
-            .filter((j) => j.kind === 'invention' && j.status === 'failed')
-            .slice(0, 3)
-            .map((j) => (
-              <div key={j.id}>
-                <Tag>Failed</Tag>
-                <p>{j.message}</p>
-              </div>
-            ))}
-        </div>
-      )}
+              <Label>Volume</Label>
+              <SliderOutput>{volumeLabel}</SliderOutput>
+              <SliderTrack className="ol-volume-track">
+                <SliderThumb
+                  className="ol-volume-thumb"
+                  aria-label={`Speech volume: ${volumeLabel}`}
+                />
+              </SliderTrack>
+              <span id="speechVolumeHint" className="ol-sr">
+                Louder speech can be heard farther away. Use the arrow keys or drag to choose a
+                level.
+              </span>
+            </Slider>
+          </>
+        ) : (
+          <div className="ol-proposal">
+            <Tag>Invention</Tag>
+            <h3 className="ol-heading">Make something possible</h3>
+            <p>
+              Describe a tool and the materials you want to use. An admitted recipe appears in
+              Crafting; making it still takes materials and work.
+            </p>
+            <p className="ol-meta">
+              The current wilderness supports ranged launchers and arrow ammunition. Conjuring
+              objects is not available.
+            </p>
+            {view.ai.jobs
+              .filter((j) => j.kind === 'invention' && j.status === 'failed')
+              .slice(0, 3)
+              .map((j) => (
+                <div key={j.id}>
+                  <Tag>Failed</Tag>
+                  <p>{j.message}</p>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
       <ConversationComposer
         formId="messageForm"
         textareaId="message"
@@ -310,7 +326,9 @@ export function Composer({
         inputDisabledReason={actorBlocked}
       />
       <p id="composerReadiness" className="ol-caption">
-        {reason ?? blocked ?? 'Enter to send · Shift + Enter for a new line'}
+        {reason
+          ? 'AI needs setup. Open settings to continue.'
+          : (blocked ?? 'Enter to send · Shift + Enter for a new line')}
       </p>
     </div>
   );

@@ -1,12 +1,16 @@
 # Auth0 sign-in
 
-On October 1, 2026 Mike selected Auth0 as the world login service ([D05](../../archive/05-project/open-decisions.md)) and asked for a plan to run it locally. This plan covers only repository changes. Creating the Auth0 tenant, its dashboard settings and personal credentials stay outside the repository; credentials live only in an untracked local `.env`. It builds on [entry and maintenance](multiplayer-entry-maintenance.md) (invites and World operations). Estimated 30–60 changed logic lines plus documentation. The change is small but touches the authentication boundary, so this durable plan records its rules and checks. Implementation is not yet authorized.
+| Status      | Current progress                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Real local sign-in, player control and Macrofold operation work; the broader two-account invite and access-removal checks remain open in IDP01. | 2026-10-03   |
+
+On October 1, 2026 Mike selected Auth0 as the world login service ([D05](../../archive/05-project/open-decisions.md)) and asked for a plan to run it locally. This plan covers only repository changes. Creating the Auth0 tenant, its dashboard settings and personal credentials stay outside the repository; credentials live only in an untracked local `.env`. It builds on [entry and maintenance](multiplayer-entry-maintenance.md) (invites and World operations). Estimated 30–60 changed logic lines plus documentation. The change is small but touches the authentication boundary, so this durable plan records its rules and checks. Mike subsequently authorized implementation and the local integration continuation below.
 
 ## Why a code change is needed
 
 OIDC sign-in is a series of browser redirects plus the game server's own outbound HTTPS requests to the login service. Auth0 never connects to the game, so local testing needs no tunnel, webhook or public address.
 
-The current configuration accepts plain HTTP only when **both** the game address and the login service are on the local machine, a rule written for a disposable local Keycloak. Auth0 is always an HTTPS service on the internet. A local game at `http://localhost:<port>` with Auth0 therefore stops at startup with “OIDC requires HTTPS; explicit development HTTP is loopback-only.” Players on other machines still need an HTTPS public address, which is hosting work under D05 and out of scope here.
+The original configuration accepted plain HTTP only when **both** the game address and the login service are on the local machine, a rule written for a disposable local Keycloak. Auth0 is always an HTTPS service on the internet. A local game at `http://localhost:<port>` with Auth0 therefore stopped at startup with “OIDC requires HTTPS; explicit development HTTP is loopback-only.” Players on other machines still need an HTTPS public address, which is hosting work under D05 and out of scope here.
 
 ## Scope (IDP01)
 
@@ -52,3 +56,15 @@ No UI or protocol change is needed. Invites, World operations and account bindin
 - Implementation: [IDP01–IDP03](../maintainers/multiplayer.md#identity-provider--auth0).
 - Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md#au09).
 - Related contract/design: [Multiplayer authority technical design](multiplayer-authority-tech-design.md#3-authentication-adapter-and-local-development).
+
+## Authorized local integration continuation — October 3, 2026
+
+Mike authorized making the current worktree work with real Auth0 and Macrofold, including correcting local configuration and bounded live verification. The remaining setup uses existing implementations; no new authentication, provider protocol or authoring contract is proposed.
+
+- Keep Macrofold on its existing port and the game on the Auth0-approved game origin. Preserve the current world and unrelated Macrofold work.
+- Use the dedicated Jev route, existing encrypted provider credentials, selected isolated Worker and asynchronous inference admission. Verify decisions, structured replies and native memory through real downstream callers within the shared $10 task ceiling. Unknown costs retain their reservations.
+- Replace the obsolete development tool connection with an exact game endpoint, a new random bearer secret stored encrypted by Macrofold, its hash and seven-day expiry in ignored game configuration, and the exact current world. Existing authenticated authoring sessions and human approval continue to control writes. Limit approved tools to the implemented OpenLegend catalogue and select the connection explicitly.
+- Add only the exact game origin to Macrofold's supported local-MCP network allowlist. Reload the existing API and dispatcher through their operator-owned lifecycle; never stop unrelated previews or weaken hosted network checks.
+- Exercise real Auth0 sign-in, player control, NPC dialogue and a bounded World agent read/conversation. Check connector denial without the credential and session-bound authoring. Reconcile the verification report and relevant trackers; configuration readiness alone does not meet completion.
+
+The authorized local continuation is complete: real Auth0 player control, NPC dialogue and native World Agent read-only execution were observed, and exact prepared changes still require human approval. Scoped workspace grants use the existing conditional access API before paid admission. [Initial local evidence](../verification/macrofold-worker.md#local-auth0-and-worker-setup--october-3-2026) and [completed authoring setup](../verification/macrofold-worker.md#scoped-local-authoring-completion--october-3-2026) retain spending and qualification limits. This does not close the broader two-account invite/access-removal checks in IDP01 or hosted IDP02/IDP03.

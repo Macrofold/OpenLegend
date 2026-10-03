@@ -9,6 +9,8 @@ let viewScope = '';
 let privateDraftNamespace = '';
 let accessGeneration = 0;
 export class AccessError extends Error {}
+/** A missing session is a normal entry state, distinct from a refused world grant. */
+export class SignInRequiredError extends AccessError {}
 /** Local drafts use a native namespace independent of this tab's connection.
  * Requests still use the complete viewScope and access-generation fence below.
  */
@@ -107,12 +109,9 @@ export async function getState(): Promise<GameView> {
     if (body.code === 'characterless')
       throw new CharacterlessError(body.message ?? 'Open World operations.');
   }
-  if (response.status === 401 || response.status === 403)
-    throw new AccessError(
-      response.status === 401
-        ? 'Sign in to enter your world.'
-        : 'This account does not currently have access to this world.',
-    );
+  if (response.status === 401) throw new SignInRequiredError('Sign in to enter your world.');
+  if (response.status === 403)
+    throw new AccessError('This account does not currently have access to this world.');
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
   const view = (await response.json()) as GameView;
   return view;

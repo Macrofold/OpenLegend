@@ -3,6 +3,7 @@ import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { OperationsConsole } from './ui/operations-console';
+import { EntryScreen, type EntryStatus } from './ui/entry-screen';
 import { EntryNotice } from './ui/entry-notice';
 import { MaintenanceNotice } from './ui/maintenance-notice';
 import { History, Narrator } from './ui/history';
@@ -19,6 +20,7 @@ import type {
 } from '@open-legend/protocol';
 import {
   AccessError,
+  SignInRequiredError,
   CharacterlessError,
   clearAccess,
   acceptAccess,
@@ -117,7 +119,7 @@ function App({
 }) {
   const [view, setView] = useState<GameView | null>(null),
     [connected, setConnected] = useState(false),
-    [error, setError] = useState(''),
+    [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [notice, setNotice] = useState('');
   const [itemCreation, setItemCreation] = useState<{
@@ -163,6 +165,16 @@ function App({
     'open-legend:reduce-motion',
     false,
     (v): v is boolean => typeof v === 'boolean',
+  );
+  const [visionGuide, setVisionGuide] = useLocal(
+    'open-legend:vision-guide',
+    false,
+    (value): value is boolean => typeof value === 'boolean',
+  );
+  const [hearingGuide, setHearingGuide] = useLocal(
+    'open-legend:hearing-guide',
+    false,
+    (value): value is boolean => typeof value === 'boolean',
   );
   const [shadowQuality, setShadowQuality] = useLocal<ShadowQuality>(
     'open-legend:shadow-quality',
@@ -310,7 +322,7 @@ function App({
         scene.current?.resetTransientCaptions();
         accept(initial, true);
         setConnected(true);
-        setError('');
+        setEntryStatus({ kind: 'loading' });
         stop ??= startPresence();
         connectEvents();
       } catch (e) {
@@ -332,8 +344,16 @@ function App({
             stop?.();
             stop = undefined;
           }
-          setError(String(e));
-          schedule(6000);
+          if (e instanceof AccessError) {
+            setEntryStatus({ kind: e instanceof SignInRequiredError ? 'signed-out' : 'forbidden' });
+            return;
+          }
+          setEntryStatus({
+            kind: 'failed',
+            message: e instanceof Error ? e.message : 'The world could not be loaded.',
+          });
+          // Existing play reconnects automatically; initial entry waits for an explicit retry.
+          if (latest.current) schedule(6000);
         }
       }
     }
@@ -544,6 +564,7 @@ function App({
             ),
         });
       scene.current.setShadowQuality(shadowQuality);
+      scene.current.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
       scene.current.setView(view);
     } catch (e) {
       scene.current?.destroy();
@@ -551,6 +572,9 @@ function App({
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
   }, [view, sceneError, shadowQuality]);
+  useEffect(() => {
+    scene.current?.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
+  }, [hasView, sceneError, visionGuide, hearingGuide]);
   useEffect(() => {
     scene.current?.setCaptionOptions({
       enabled: captionsEnabled,
@@ -1067,7 +1091,13 @@ function App({
   }
   return (
     <ClockOffsetContext.Provider value={view?.clock.offsetHours ?? 0}>
-      <canvas id="world" ref={canvas} tabIndex={0} aria-label="Wilderness world" />
+      <canvas
+        id="world"
+        ref={canvas}
+        tabIndex={view ? 0 : -1}
+        aria-hidden={!view}
+        aria-label="Wilderness world"
+      />
       <div
         ref={hud}
         className="ol-root ol-hud"
@@ -1079,17 +1109,17 @@ function App({
         style={{ '--ui-scale': scale } as CSSProperties}
       >
         {!view ? (
-          <div id="loading" className="ol-loading ol-card">
-            <h1 className="ol-heading">OPEN LEGEND</h1>
-            <EntryNotice />
-            <p>{error || 'Entering the clearing…'}</p>
-            {error && (
-              <>
-                <Button onPress={() => retry.current()}>Retry connection</Button>
-                <a href="/auth/login">Sign in</a>
-              </>
-            )}
-          </div>
+          <EntryScreen
+            status={entryStatus}
+            onRetry={() => {
+              setEntryStatus({
+                kind: 'loading',
+                retryLabel:
+                  entryStatus.kind === 'forbidden' ? 'Check access again' : 'Retry connection',
+              });
+              retry.current();
+            }}
+          />
         ) : (
           <>
             <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
@@ -1347,6 +1377,10 @@ function App({
             />
             <Narrator item={view.narrator} />
             <CameraControls
+              overlays={{ vision: visionGuide, hearing: hearingGuide }}
+              toggleOverlay={(sense) =>
+                sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
+              }
               levels={view.map.spatial.levels}
               state={cameraView}
               send={(command) => scene.current?.cameraCommand(command)}

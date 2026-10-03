@@ -27,6 +27,7 @@ import {
   loudestSpeechVolume,
   projectEventEvidence,
   hearingReferenceRadius,
+  perceptionGuide,
   speechExposure,
   type ActorEvent,
 } from '@open-legend/domain';
@@ -689,6 +690,7 @@ export async function projectView(
     prepare: work?.preparation === 'fiber' ? 'Cleaning fibers' : 'Twisting cord',
     craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.output.name}` : ''}`,
   };
+  const guide = perceptionGuide(world, player);
   return {
     schemaVersion: 2,
     access: {
@@ -748,8 +750,8 @@ export async function projectView(
         }
       : {}),
     profile: profile,
-    vision: { radius: visionRadius(world, player) },
-    hearing: { referenceRadius: hearingReferenceRadius(world, player) },
+    vision: { radius: visionRadius(world, player), ...guide.vision },
+    hearing: { referenceRadius: hearingReferenceRadius(world, player), ...guide.hearing },
     map: memo<GameView['map']>('map', [world.map, world.seed], () => ({
       ...world.map,
       seed: world.seed,

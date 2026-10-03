@@ -72,3 +72,42 @@ Ad-hoc check of the server conversion and the client formatter (`en-US` locale):
 ### Limits of this evidence
 
 Plain running on this host was irregular (2-second samples of 0–109 simulated seconds per real second at 1×) because of concurrent load; rates after Ready are within that jitter. Not qualified: hosted security or abuse review of invite links, hostile clients, live-model jobs straddling maintenance, load during maintenance transitions, touch devices and every locale. The last complete OIDC two-browser maintenance pass ran on `061f54db` plus the response-check and scheduled-start retry fixes; the resume-instant change and the notice layout were verified in local mode, not again through OIDC, because Docker was unavailable. Disposable database creation through the fixture helper timed out twice under host load (`57014`); the final database was created directly with `psql` on the same loopback server and dropped afterward.
+
+## Login entry screen — October 2, 2026
+
+Client change on `codex/auth0-sign-in`, based on `c2e670b0`. An isolated Vite preview served the actual client with simulated unauthenticated, refused-access and unavailable-service replies; no world database or Auth0 credentials were used.
+
+- Browser: signed-out entry shows Welcome, Open Legend and a primary Sign in link, without an error or connection retry. Tab focuses Sign in first; Enter reaches the login route. The unloaded game canvas is excluded from accessibility and keyboard navigation.
+- Browser: refused access shows operator/invitation guidance and Check access again. A service failure exposes optional Connection details; Retry connection recovers to signed-out entry. A delayed retry retains its label and disables duplicate submission while pending.
+- Layout: default desktop, 320×568 narrow, 720×320 short, and 320×568 at the supported 130% UI scale. Content wraps; short/scaled entry scrolls instead of clipping the next action.
+- Static: TypeScript, production build and pinned formatting pass. The build reports existing PlayCanvas worker externalization and bundle-size warnings.
+
+This qualifies the client entry and navigation states, not real Auth0 token exchange, invitation redemption, authenticated gameplay, assistive-technology behavior or provider logout. IDP01's live two-account requirement remains open. The incompatible existing Auth0 test database was left unchanged. No paid model calls were made.
+
+## Change account — October 2, 2026
+
+The refused-access entry now includes a secondary Change account link below the existing retry action. The game requests Auth0’s login UI with `prompt=login`; its existing callback replaces and revokes the old game session only after successful sign-in. This is account-switching UX, not provider logout or an enforced fresh-authentication security guarantee.
+
+- Browser fixture: Tab reaches Change account after Check access again; Enter navigates to `/auth/login?change-account=true`. Check access again still returns both recovery actions when access remains refused. Desktop visual inspection and 320×568 at 130% UI scale confirm wrapping and keyboard scrolling keep the action reachable.
+- Running local server with the real Auth0 configuration: ordinary login and Change account both return 303 with PKCE S256; only Change account includes `prompt=login`. No credentials were entered and no token exchange or completed two-account switch was exercised.
+- Static: TypeScript and production build passed; the existing PlayCanvas worker externalization and bundle-size warnings remain. Focused formatting and affected-diff inspection passed.
+
+IDP01’s live two-account run and IDP03’s provider logout remain open. Social-provider account selection still depends on that provider’s session behavior. No paid model calls were made.
+
+## Conversation input layout — October 3, 2026
+
+On `codex/auth0-sign-in`, the conversation controls and history now occupy a bounded scrolling area above the input. The input and readiness text cannot shrink into the messages. The scrolling region has a keyboard focus target for short panels.
+
+- Actual game client with a disposable PostgreSQL world and 14 long native speech messages: checked 1280×720, 1280×600 and 390×844. Messages remain clipped to the history area; controls can scroll when space is short, while the input stays visible below them.
+- A multiline draft remains separate from history. Hiding and reopening Conversation preserves the draft. Keyboard scrolling of the controls region was checked after adding its focus target.
+- TypeScript and production build pass. Existing PlayCanvas worker externalization and bundle-size warnings remain. Focused formatting and full affected-diff review pass.
+
+Paid AI was disabled throughout. This verifies layout with saved native speech, not live model replies or mobile on-screen keyboard behavior. The real world save was not changed.
+
+## Conversation redesign — October 3, 2026
+
+The preceding nested-controls fix avoided overlap but Mike's screenshot exposed poor usability: controls scrolled away and the transcript had little reading space. This correction separates fixed mode/recipient, message-only scrolling, a vertical volume slider and fixed input. The quoted “own scrolling area” text in the earlier screenshot was seeded test speech, not NPC-generated narration.
+
+Actual production client, disposable PostgreSQL world, zero paid AI: 14 long realistic native speech messages; desktop 1280×720, narrow 320×568, short 1280×420, narrow at 130% UI scale. Pointer drag Shout→Whisper and arrow-key Normal→Shout worked; restored Normal. Multiline draft survived hiding/reopening and resizing. Saved desktop panel translation no longer moves a nondraggable narrow sheet outside its viewport. At 130%, final message bottom 388.23, input form top 398.63/bottom 494.21, slider thumb bottom 369.79: no overlap. Restored 100% scale and reset viewport override. Production build/typecheck and focused formatting pass; no new tests or broad suites. Existing production bundle-size and PlayCanvas externalization warnings remain.
+
+This fixture intentionally reports AI needs setup. Separate actual Auth0 game on localhost:3211 reports AI connected, Jev Configured and Language model Configured; the actual saved world was preserved. Provider/setup evidence remains in the [Macrofold report](macrofold-worker.md#conversation-redesign-ai-readiness--october-3-2026). Software keyboards and a full assistive-device matrix were not qualified.

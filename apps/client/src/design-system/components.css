@@ -74,8 +74,8 @@
 }
 .ol-root {
   font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: lining-nums;
@@ -151,8 +151,8 @@
 }
 [data-theme='scifi'] .ol-narrative {
   font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
 }
 .ol-kbd {
   display: inline-grid;
@@ -846,8 +846,8 @@
 }
 .ol-survival-name h3 {
   margin: 0;
-  font-size: 24px;
-  line-height: 28px;
+  font-size: 22px;
+  line-height: 26px;
 }
 .ol-saved {
   display: inline-flex;
@@ -979,8 +979,8 @@
 }
 .ol-panel-title {
   margin: 0;
-  font-size: 24px;
-  line-height: 28px;
+  font-size: 22px;
+  line-height: 26px;
 }
 [data-theme='scifi'] .ol-panel-title {
   font-size: 20px;

@@ -453,9 +453,15 @@ export interface GameView {
   revision: number;
   worldId: string;
   profile: PlayerProfile;
-  /** Authoritative sight radius; the client may style its boundary, not enlarge it. */
-  vision: { radius: number };
-  hearing: { referenceRadius: number };
+  /** Native sight range/body anchors; presentation bands add no gameplay tier or range. */
+  vision: { radius: number; enabled: boolean; eyeHeight: number; targetHeights: number[] };
+  hearing: {
+    referenceRadius: number;
+    partialRadius: number;
+    detectionRadius: number;
+    enabled: boolean;
+    earHeight: number;
+  };
   map: {
     width: number;
     height: number;

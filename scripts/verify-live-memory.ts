@@ -26,6 +26,8 @@ import { commitCognition, mindFor } from '@open-legend/domain';
 const config = readConfig({
   ...process.env,
   OPEN_LEGEND_DATABASE_URL: process.env['OPENLEGEND_TEST_DATABASE_URL'],
+  // The disposable scenario acquires local control; browser Auth0 is verified separately.
+  OPEN_LEGEND_AUTH_MODE: 'local',
 });
 if (!config.macrofoldKey || config.budgetUsd <= 0 || !config.macrofoldWorkerId)
   throw new Error('Explicit backend credentials, Run caps and MACROFOLD_WORKER_ID required.');
@@ -37,14 +39,24 @@ try {
   store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
   let service = new WorldService(store, config);
   await service.ready;
-  await service.setPresence('live-acceptance', true, 1);
-  await service.control({ paused: false });
-  if (!service.world.id.startsWith('live-memory-'))
-    await service.transition((world) => ({
-      world: { ...world, id: `live-memory-${randomUUID()}` },
-      events: [],
-      outcome: { ok: true, code: 'verification-world', message: 'Isolated acceptance identity.' },
-    }));
+  async function enter(service: WorldService) {
+    const scope = service.localScope;
+    const control = await service.changeEmbodiment(scope, {
+      id: randomUUID(),
+      expectedGeneration: scope.controlGeneration,
+      operation: 'replace',
+    });
+    if (!control.ok) throw new Error(control.message);
+    // Native harness waits can exceed heartbeat expiry. An open background connection
+    // keeps this bounded scenario present without a timer racing database teardown.
+    await service.setPreferences({ pauseWhenHidden: false });
+    await service.setConnection('live-acceptance', true);
+    const resumed = await service.control({ paused: false });
+    if (!resumed.ok) throw new Error(resumed.message);
+  }
+  // The disposable database and fresh timeline isolate provider context; changing
+  // the world's ID here would invalidate its already-provisioned authority grants.
+  await enter(service);
   const backend = new MacrofoldBackend(service);
   const id = randomUUID();
   const speech = await service.say(
@@ -133,8 +145,7 @@ try {
   store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
   service = new WorldService(store, config);
   await service.ready;
-  await service.setPresence('live-acceptance-restart', true, 1);
-  await service.control({ paused: false });
+  await enter(service);
   if (mindFor(service.world, service.defaultResidentEntityId).revision !== revision)
     throw new Error('Mind did not survive restart.');
   const continued = new MacrofoldBackend(service);

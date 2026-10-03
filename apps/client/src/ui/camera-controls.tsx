@@ -1,5 +1,7 @@
 import type { ComponentProps } from 'react';
 import type { SpatialLayout } from '@open-legend/spatial';
+import type { PerceptionOptions } from '../world-renderer';
+import { GUIDE_HINTS } from '../perception-field';
 import type { CameraCommand, CameraState } from '../world-camera';
 import { IconButton, TextTooltip, Toolbar } from '../design-system/components';
 
@@ -18,14 +20,18 @@ export function CameraControls({
   state,
   send,
   center,
+  overlays,
+  toggleOverlay,
 }: {
   levels: SpatialLayout['levels'];
   state: Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>;
   send(command: CameraCommand): void;
   center(): void;
+  overlays: PerceptionOptions;
+  toggleOverlay(sense: keyof PerceptionOptions): void;
 }) {
   return (
-    <Toolbar className="ol-camera ol-card" aria-label="Camera">
+    <Toolbar className="ol-camera ol-card" aria-label="Camera and range guides">
       <CameraButton
         icon="ui.plus"
         label="Zoom in"
@@ -111,6 +117,24 @@ export function CameraControls({
           ))}
         </select>
       )}
+      <span className="ol-range-toggle" data-sense="vision">
+        <CameraButton
+          icon="ui.inview"
+          label="Vision"
+          hint={GUIDE_HINTS.vision}
+          pressed={overlays.vision}
+          onPress={() => toggleOverlay('vision')}
+        />
+      </span>
+      <span className="ol-range-toggle" data-sense="hearing">
+        <CameraButton
+          icon="ui.hearing"
+          label="Hearing"
+          hint={GUIDE_HINTS.hearing}
+          pressed={overlays.hearing}
+          onPress={() => toggleOverlay('hearing')}
+        />
+      </span>
     </Toolbar>
   );
 }

@@ -233,6 +233,7 @@ perception audience through the ordinary composer; it requires no provider setup
 work retains its existing provider admission. Current implementation and exact native/OIDC
 browser evidence are tracked in [MP01/MP04](maintainers/multiplayer.md#execution-notes--september-26-2026).
 Hosted security, regional/distributed ownership and full-load acceptance remain open.
+The game entry screen distinguishes missing sign-in, refused world access and connection failure. Initial entry waits for explicit sign-in or retry rather than repeatedly requesting the world; established play retains automatic reconnection. Refused access also offers Change account, which requests the provider’s login form rather than silent single sign-on. A successful callback replaces and revokes the previous game session; leaving sign-in unfinished preserves it.
 Auth0 is the selected login service. Local development may pair an HTTP loopback game address
 with an HTTPS provider; HTTP is never accepted off this machine ([IDP01](projects/auth0-sign-in.md)).
 
@@ -319,6 +320,8 @@ Both conversation composers use a one-line auto-growing textarea. In-flight turn
 World events and actor awareness carry separate 0–10 importance and urgency scores. Importance describes lasting significance; urgency describes time sensitivity. Ordinary new awareness does not invalidate an in-flight reply. When a newer awareness row reaches both current thresholds (importance 8 and urgency 8), the director aborts the active provider stage, rescans from the original attempt watermark, and rebuilds context once with every qualifying event received before retry as required evidence. Provider and application-stage attempt identities remain distinct. New evidence during the refreshed attempt cannot create another automatic paid retry. Native emergency behavior and deterministic action admission remain authoritative regardless of response refresh.
 
 ## Camera input
+
+Independent device-local Vision/Hearing preferences add display-only public-surface range guides. Native readonly body anchors and speech-threshold radii join the authorized projection; client sampling reuses spatial sight/sound queries, caches by pose/senses/geometry/scope and runs outside rendered frames. Scene-owned depth-tested solid teal/dashed amber ribbons, static halos and lowest-priority pointer-transparent hints add no gameplay visibility tiers, actor/source data or model information. [Current contract](spatial-world.md#perception-range-guides), [display bounds](limits/interface.md#rg01--perception-range-guide-display) and [actual evidence](verification/perception-overlays.md) retain terrain/sampling approximations. The camera toolbar fits the two toggles into its floor row and reserves a strip below open narrow sheets; root clipping prevents focusing a panel from scrolling the whole game.
 
 The bottom-right camera toolbar exposes icon controls directly, with hover/focus labels and shortcut help. Its follow-player toggle tracks the interpolated rendered position without per-frame React updates or preference writes. Follow is a saved local preference; pan and floor selection disable it. The behavior owner is [Picking and controls](spatial-world.md#picking-and-controls).
 

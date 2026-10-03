@@ -59,6 +59,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Hearing runtime and reviews](verification/hearing-runtime-and-reviews.md): privacy, persistence, query work, captions and stress measurements.
 - [Hearing at eight-times speed](verification/hearing-eight-times.md) and [continued qualification](verification/hearing-8x-continuation.md).
 - [Hearing cache review](verification/hearing-cache-review.md) and [integration with main](verification/hearing-main-integration.md).
+- [Optional perception range guides](verification/perception-overlays.md): native sight/sound comparisons, elevation/barriers, unchanged player/AI evidence, responsive persisted controls and representative display cost.
 - [Spatial world and initial scaling reviews](verification/spatial-world-and-scaling.md) and [follow-up reviews](verification/spatial-scaling-followup.md).
 - [Targeted actions, private encounters and physical contact](verification/physical-actions.md).
 - [Mixed spatial review](verification/mixed-spatial-review.md) and [spatial rebase/eight-times review](verification/spatial-rebase-eightx.md).

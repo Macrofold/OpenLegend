@@ -1195,7 +1195,13 @@ export class MacrofoldBackend implements AiClient {
         const resource = await this.provisioner.ensure(
           reflection ? name.slice('reflection-v2:'.length) : name,
           this.service.world.entities[name]?.name ?? name,
-          worldAgent ? { id: digest(toolPermissions), permissions: toolPermissions } : undefined,
+          worldAgent
+            ? {
+                id: digest(toolPermissions),
+                permissions: toolPermissions,
+                connectionId: worldAgent.connectionId,
+              }
+            : undefined,
         );
         lane.worktree = resource.worktreeId;
         await save();
