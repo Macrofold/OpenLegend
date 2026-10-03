@@ -1,4 +1,17 @@
-import type { TokenPrices, TokenUsage } from './types.js';
+import type { ModelTokenPrices, TokenPrices, TokenUsage } from './types.js';
+
+/** Prices belong to the admitted model; a different reported identity needs its explicit alias. */
+export function modelTokenPrices(
+  catalogue: readonly ModelTokenPrices[],
+  requestedModel: string,
+  reportedModel = requestedModel,
+): TokenPrices | undefined {
+  const entry = catalogue.find(({ model }) => model === requestedModel);
+  return entry &&
+    (reportedModel === requestedModel || entry.reportedAliases?.includes(reportedModel))
+    ? entry.prices
+    : undefined;
+}
 
 /** Estimate from explicit rates. Undefined means unpriced, never free. */
 export function estimateCostUsd(

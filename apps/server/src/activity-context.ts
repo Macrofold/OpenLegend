@@ -346,6 +346,7 @@ export function learnedActivityCandidates(
   actorId: string,
   observed = decisionObservation(service.world, actorId),
   methodOffset = 0,
+  methodIds?: readonly string[],
 ): CandidateAction[] {
   const world = service.world;
   if (!observed) return [];
@@ -369,7 +370,14 @@ export function learnedActivityCandidates(
   }
   // The acquisition owner bounds this to 64 private definitions. No shared
   // catalogue is exposed; one bounded binding per method avoids a Cartesian product.
-  for (const method of acquiredActivities(world, actorId).slice(methodOffset)) {
+  const acquired = acquiredActivities(world, actorId);
+  const selected = methodIds
+    ? methodIds.flatMap((id) => {
+        const method = acquired.find((method) => method.id === id);
+        return method ? [method] : [];
+      })
+    : acquired.slice(methodOffset);
+  for (const method of selected) {
     if (!method.executable) continue;
     if (results.length >= 4) break;
     const bindings: Record<string, ActivityBinding> = {};

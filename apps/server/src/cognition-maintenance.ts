@@ -12,7 +12,7 @@ import {
   consolidationRequests,
   CONSOLIDATION_OUTPUT_TOKENS,
 } from './memory-consolidation.js';
-import { interactiveAllowance } from './cognition-budget.js';
+import { decisionAllowance, interactiveAllowance } from './cognition-budget.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -500,16 +500,12 @@ export class CognitionMaintenance {
     id: string,
     provider: 'jev' | 'openai',
     execute: () => Promise<AiResult<T>>,
+    model?: string,
   ): Promise<T> {
     const c = this.service.config;
     if (this.service.paused || this.active?.signal.aborted)
       throw new Error('Maintenance canceled.');
-    const amount =
-      provider === 'jev'
-        ? c.jevReserveUsd
-        : c.macrofoldKey
-          ? c.macrofoldRunUsd
-          : Math.max(c.llmReserveUsd, 0.25);
+    const amount = decisionAllowance(c, provider, model);
     // Leave one interactive request allowance untouched by background admission.
     const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
     if (!(await this.service.store.reserve(id, provider, amount, ceiling, this.budgetActor)))
@@ -559,8 +555,11 @@ export class CognitionMaintenance {
               signal: controller.signal,
             };
             const value = summarySchema.parse(
-              await this.paid(request.requestId, 'openai', () =>
-                this.client.generate<unknown>(request),
+              await this.paid(
+                request.requestId,
+                'openai',
+                () => this.client.generate<unknown>(request),
+                request.model,
               ),
             );
             if (!value.feasible || !value.groups.length)
@@ -730,12 +729,16 @@ export class CognitionMaintenance {
         0,
         undefined,
         (request, operation) =>
-          this.paid(`${job.id}:${operation}`, 'openai', () =>
-            this.client.generate<unknown>({
-              ...request,
-              requestId: `${job.id}:${operation}`,
-              signal: controller.signal,
-            }),
+          this.paid(
+            `${job.id}:${operation}`,
+            'openai',
+            () =>
+              this.client.generate<unknown>({
+                ...request,
+                requestId: `${job.id}:${operation}`,
+                signal: controller.signal,
+              }),
+            request.model ?? this.service.config.llmModel,
           ),
       );
       controller.signal.throwIfAborted();

@@ -1,7 +1,12 @@
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
-import { portableItems, worldPosition, worldSupport } from '@open-legend/domain';
+import {
+  acquiredActivities,
+  portableItems,
+  worldPosition,
+  worldSupport,
+} from '@open-legend/domain';
 import { knowledgePolicyInstructions, namedClockTimes } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
@@ -78,6 +83,85 @@ function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
       ]),
     ).values(),
   ];
+}
+
+interface ActionInspection {
+  actorId: string;
+  generation: string;
+  eventId: string;
+  after: number;
+  methodAfter: number;
+  next: number | null;
+  methodNext: number | null;
+  methodIds: string[];
+  catalogueIds: string[];
+}
+
+/** Inspection offers keep their source page while bindings and prerequisites refresh.
+ * A cursor describes this actor's inspected catalogue, never another actor or timeline.
+ */
+function decisionActionCandidates(
+  service: WorldService,
+  actorId: string,
+  observed: ReturnType<typeof decisionObservation>,
+  inspection?: ActionInspection,
+): CandidateAction[] {
+  const current = service.world.actionExperience.learning[actorId]?.inspection;
+  const sameInspection =
+    inspection &&
+    inspection.actorId === actorId &&
+    inspection.generation === service.generation &&
+    inspection.eventId === current?.eventId &&
+    inspection.after === current.after &&
+    inspection.methodAfter === (current.methodAfter ?? 0);
+  const sameCatalogue =
+    sameInspection &&
+    JSON.stringify(inspection.catalogueIds) ===
+      JSON.stringify(acquiredActivities(service.world, actorId).map((method) => method.id));
+  return distinctActions([
+    ...(sameInspection
+      ? learnedActivityCandidates(service, actorId, observed, 0, inspection.methodIds)
+      : []),
+    ...(sameCatalogue && inspection.methodNext !== null
+      ? [
+          {
+            id: 'inspect-methods-next',
+            description:
+              'Inspect the next page of my own learned activities and their requirements.',
+            command: {
+              type: 'inspect-activities' as const,
+              historyAfter: inspection.after,
+              methodAfter: inspection.methodNext,
+            },
+          },
+        ]
+      : []),
+    ...(sameInspection && inspection.next !== null
+      ? [
+          {
+            id: 'inspect-activities-next',
+            description: 'Inspect the next page of my own recorded actions and results.',
+            command: { type: 'inspect-activities' as const, historyAfter: inspection.next },
+          },
+        ]
+      : []),
+    ...(sameInspection && !sameCatalogue
+      ? [
+          {
+            id: 'inspect-methods-changed',
+            description:
+              'My learned activities changed since inspection. Inspect their current requirements again.',
+            command: {
+              type: 'inspect-activities' as const,
+              historyAfter: inspection.after,
+              methodAfter: 0,
+            },
+          },
+        ]
+      : []),
+    ...npcCandidates(service, actorId, observed),
+    ...planningCandidates(service, actorId, observed),
+  ]);
 }
 
 /** Paused work is part of the actor's own intentions: it resumes when current work ends. */
@@ -166,36 +250,25 @@ export async function prepareDecision(
         }
       : undefined;
   const planning = planningCandidates(service, actorId, observed);
-  const availableActions = distinctActions([
-    ...(inspected && inspection?.methodAfter
-      ? learnedActivityCandidates(service, actorId, observed, inspection.methodAfter)
-      : []),
-    ...(inspected?.methodNext !== null && inspected?.methodNext !== undefined
-      ? [
-          {
-            id: 'inspect-methods-next',
-            description:
-              'Inspect the next page of my own learned activities and their requirements.',
-            command: {
-              type: 'inspect-activities' as const,
-              historyAfter: inspection!.after,
-              methodAfter: inspected.methodNext,
-            },
-          },
-        ]
-      : []),
-    ...(inspected?.next !== null && inspected?.next !== undefined
-      ? [
-          {
-            id: 'inspect-activities-next',
-            description: 'Inspect the next page of my own recorded actions and results.',
-            command: { type: 'inspect-activities' as const, historyAfter: inspected.next },
-          },
-        ]
-      : []),
-    ...npcCandidates(service, actorId, observed),
-    ...planning,
-  ]);
+  const catalogueIds = acquiredActivities(world, actorId).map((method) => method.id);
+  const actionInspection: ActionInspection | undefined =
+    inspected && inspection
+      ? {
+          actorId,
+          generation,
+          eventId: inspection.eventId,
+          after: inspection.after,
+          methodAfter: inspection.methodAfter ?? 0,
+          next: inspected.next,
+          methodNext: inspected.methodNext,
+          methodIds: catalogueIds.slice(
+            inspection.methodAfter ?? 0,
+            inspected.methodNext ?? catalogueIds.length,
+          ),
+          catalogueIds,
+        }
+      : undefined;
+  const availableActions = decisionActionCandidates(service, actorId, observed, actionInspection);
   let planOffers = [...planning]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((candidate, index) => ({
@@ -665,6 +738,7 @@ export async function prepareDecision(
     binding,
     offered,
     actionCandidates: availableActions,
+    actionInspection,
     knownPlans: {} as Record<string, string[]>,
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
     replaceChosenPlan:
@@ -833,10 +907,12 @@ export function refreshDecisionActions(
   const observed = decisionObservation(service.world, prepared.binding.actorId);
   return {
     ...prepared,
-    actionCandidates: distinctActions([
-      ...npcCandidates(service, prepared.binding.actorId, observed),
-      ...planningCandidates(service, prepared.binding.actorId, observed),
-    ]),
+    actionCandidates: decisionActionCandidates(
+      service,
+      prepared.binding.actorId,
+      observed,
+      prepared.actionInspection,
+    ),
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
     replaceChosenPlan:
       actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',

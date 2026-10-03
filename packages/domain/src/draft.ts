@@ -345,6 +345,11 @@ export function finishWorld(world: WorldState): WorldState {
           path[1] >= before.length),
     );
   });
+  // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
+  // (including load validation) preserves it; native advance publishes a new owned value.
+  // docs/simulation-time.md#native-interval-contract
+  if (result !== base && result.nativeInterval === base.nativeInterval)
+    delete result.nativeInterval;
   changedEntities.set(result, entityIds);
   // Entity maps are frozen only by the deep boundary freeze; a frozen predecessor lets that
   // freeze skip every entity it still shares.

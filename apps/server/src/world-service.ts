@@ -2509,26 +2509,39 @@ export class WorldService {
         const stepStarted = performance.now();
         const startTime = world.simTime;
         const slices = advanceWorldSlices(world, offered - advancedSeconds, { maxIntervals: 1 });
+        const nextSlice = (boundary?: boolean) => {
+          const started = performance.now();
+          try {
+            return slices.next(boundary);
+          } finally {
+            recordDuration('native.iteratorCall', performance.now() - started);
+          }
+        };
         let sliceStarted = performance.now(),
-          result = slices.next();
+          result = nextSlice();
         while (!result.done) {
           if (performance.now() - sliceStarted >= 8) {
+            recordDuration('native.noYield', performance.now() - sliceStarted);
             await new Promise<void>((resolve) => setImmediate(resolve));
             sliceStarted = performance.now();
           }
           // Local motion deadlines need not force publication, but they provide a
           // coherent exit when this batch has used its responsiveness budget.
-          result = slices.next(
-            result.value === 'boundary' && performance.now() - batchStarted >= 8,
-          );
+          result = nextSlice(result.value === 'boundary' && performance.now() - batchStarted >= 8);
         }
         const advanced = result.value;
         if (!advanced.outcome.ok) {
+          recordDuration('native.noYield', performance.now() - sliceStarted);
           this.storageError = `Required native work stopped before advancing time: ${advanced.outcome.message} Restart after reconciling the admitted workload.`;
           this.notify(false);
           return;
         }
+        const finalizationStarted = performance.now();
         world = freezeWorld(advanced.world);
+        recordDuration('native.finalization', performance.now() - finalizationStarted);
+        // Wall time from one actual yield to the next includes indivisible native calls
+        // and finalization; queue, storage and cooperative waiting are measured separately.
+        recordDuration('native.noYield', performance.now() - sliceStarted);
         const delta = world.simTime - startTime;
         const stepMs = performance.now() - stepStarted;
         nativeMs += stepMs;

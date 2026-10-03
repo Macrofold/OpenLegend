@@ -97,7 +97,13 @@ export function followUnavailable(world: WorldState, actor: Entity, action: Acti
 }
 
 /** Record only what the follower sees now: position, support and travel direction. */
-function observe(world: WorldState, actor: Entity, action: Action, target: Entity): void {
+function observe(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  target: Entity,
+  recordSighting: boolean,
+): void {
   const follow = action.follow!;
   const point = supportedPosition(target);
   if (!point) return;
@@ -108,7 +114,7 @@ function observe(world: WorldState, actor: Entity, action: Action, target: Entit
     follow.lastSeen = { point: { ...point }, at: world.simTime };
   else follow.lastSeen.at = world.simTime;
   follow.episode ??= world.perceptionEpisodes?.[actor.id]?.[target.id];
-  rememberSighting(world, actor.id, target.id, follow.lastSeen.point);
+  if (recordSighting) rememberSighting(world, actor.id, target.id, follow.lastSeen.point);
 }
 
 /** Behind/beside need an observed travel direction; until one exists, or when that stance
@@ -181,13 +187,19 @@ function pursue(world: WorldState, actor: Entity, action: Action): string | null
   return null;
 }
 
-export function updateFollowPath(world: WorldState, actor: Entity, action: Action): string | null {
+/** Admission may prepare a temporary path without recording a sighting in world history. */
+export function updateFollowPath(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  recordSighting = true,
+): string | null {
   const unavailable = followUnavailable(world, actor, action);
   if (unavailable) return unavailable;
   const follow = action.follow!;
   const target = perceived(world, actor, action);
   if (!target) return pursue(world, actor, action);
-  observe(world, actor, action, target);
+  observe(world, actor, action, target, recordSighting);
   if (follow.pursuing) {
     // Reacquired through real sight: resume ordinary following from here.
     delete follow.pursuing;

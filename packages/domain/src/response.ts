@@ -39,7 +39,7 @@ import {
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
-import { executeCommand, SIMULATION_RULES } from './kernel.js';
+import { executeCommand, nativeOperationAvailable, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
@@ -243,6 +243,20 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   return true;
 }
 export const RESPONSE_RECEIPT_LIMIT = 300;
+
+/** Only the next selected action must be possible now. Later steps may depend on
+ * earlier equipment or typed outputs; their native owner rechecks when they start.
+ * docs/projects/next-playable-week-tech-design.md#admission-before-execution
+ */
+function admitPlan(...args: Parameters<typeof arrangePlan>): Outcome {
+  const [world, , , commands] = args;
+  const first = commands[0];
+  if (first && !('itemFromStep' in first)) {
+    const available = nativeOperationAvailable(world, first);
+    if (!available.ok) return available;
+  }
+  return arrangePlan(...args);
+}
 
 /** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
 function activityConditions(node: ActivityNode): ActivityPredicate[] {
@@ -619,7 +633,7 @@ export function commitActorResponse(
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else
-        components[localId] = arrangePlan(
+        components[localId] = admitPlan(
           world,
           world.entities[actorId]!.actor!,
           `${id}:${localId}`,
@@ -646,6 +660,7 @@ export function commitActorResponse(
           'conversation',
           'teach',
           'handover',
+          'transfer-item',
           'cancel',
           'recover',
           'withdraw-attempt',
@@ -664,7 +679,7 @@ export function commitActorResponse(
           id: `${id}:${localId}`,
         });
       } else if (selected)
-        components[localId] = arrangePlan(
+        components[localId] = admitPlan(
           world,
           world.entities[actorId]!.actor!,
           `${id}:${localId}`,
@@ -870,6 +885,7 @@ export function commitActorResponse(
             'conversation',
             'teach',
             'handover',
+            'transfer-item',
             'cancel',
             'recover',
             'withdraw-attempt',
@@ -878,7 +894,7 @@ export function commitActorResponse(
         )
           command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else
-          components[localId] = arrangePlan(
+          components[localId] = admitPlan(
             world,
             component,
             `${id}:${localId}`,
@@ -993,7 +1009,7 @@ export function commitActorResponse(
           );
         }
       } else
-        components[localId] = arrangePlan(
+        components[localId] = admitPlan(
           world,
           component,
           `${id}:${localId}`,

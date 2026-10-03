@@ -35,6 +35,7 @@ import {
   forgetCrossings,
   motionTravelBounds,
   nativeMotionInterval,
+  reconcileCrossings,
   sensoryCrossingBound,
   type CrossingCache,
 } from './motion-boundaries.js';
@@ -75,6 +76,7 @@ import {
   ResourceReservationError,
   applyResourceGroup,
   availableItemQuantity,
+  itemHasReservations,
   reconcileResourceReservations,
   releaseInvocationResources,
   availableResource,
@@ -101,6 +103,7 @@ import {
   portableItems,
   pickUpItems,
   dropItems,
+  dropItemReason,
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
@@ -133,6 +136,7 @@ import {
   suspendCurrentWork,
   finishPlanAction,
   readyPlanStep,
+  isActivityCommand,
   resolvePlanCommand,
 } from './agency.js';
 import {
@@ -166,6 +170,7 @@ import {
   crossStatusReferences,
   mayAdvanceStatusEffects,
   activateStatusEffect,
+  canActivateStatusEffect,
   deactivateStatusEffect,
   interruptStatusEffects,
   capabilityBlocked,
@@ -290,17 +295,6 @@ function canCut(world: WorldState, actorId: string): boolean {
   return inventoryFor(world, actorId).some((item) =>
     world.itemDefinitions[item.definitionId]?.properties.includes('point'),
   );
-}
-function createAction(world: WorldState, type: Action['type'], seconds: number): Action {
-  return {
-    id: nextId(world, 'action'),
-    type,
-    stage: 'working',
-    path: [],
-    remainingSeconds: seconds,
-    totalSeconds: seconds,
-    consumed: [],
-  };
 }
 function ammoFor(
   world: WorldState,
@@ -530,7 +524,11 @@ function materialRequirements(
     return [{ definitionId: BASE_FAMILY_FACTS.cooking.input, quantity: 1 }];
   return [];
 }
-function startWork(world: WorldState, actor: Entity, action: Action): Outcome | null {
+function workMaterials(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+): ResourceOperation[] | Outcome {
   const requirements = materialRequirements(world, action);
   const claims: ResourceOperation[] = [];
   for (const input of requirements) {
@@ -575,6 +573,13 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
     );
     if (problem) return outcome(false, problem.code, problem.message);
   }
+  return claims;
+}
+function startWork(world: WorldState, actor: Entity, action: Action): Outcome | null {
+  const requirements = materialRequirements(world, action);
+  const selected = workMaterials(world, actor, action);
+  if ('ok' in selected) return selected;
+  const claims = selected;
   if (
     claims.length &&
     applyResourceGroup(
@@ -620,12 +625,487 @@ function prepareReplenishment(
     return outcome(false, 'not-visible', 'The source is not perceived.');
   if (value >= definition.schema.max)
     return outcome(false, 'full', 'The reservoir is already full.');
-  const action = createAction(world, 'replenish', definition.reservoir.workSeconds);
+  const action: Action = {
+    id: 'replenishment-admission',
+    type: 'replenish',
+    stage: 'working',
+    path: [],
+    remainingSeconds: definition.reservoir.workSeconds,
+    totalSeconds: definition.reservoir.workSeconds,
+    consumed: [],
+  };
   action.targetId = target.id;
   action.attributeId = definition.id;
   action.definitionVersion = definition.version;
   action.resourceDefinition = definitionPin(definition);
   return action;
+}
+
+/** Read-only lifecycle, body and perception admission shared by execution and queued choices. */
+function nativeActorProblem(world: WorldState, command: Command): Outcome | null {
+  const reject = (code: string, message: string) => outcome(false, code, message);
+  const source = getOwn(world.entities, command.actorId);
+  if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
+  if (!activelyParticipates(source))
+    return reject('inactive', 'Return to the world before acting.');
+  if (
+    source.actor.controller === 'player' &&
+    command.type === 'strike' &&
+    world.entities[command.targetId]?.actor?.controller === 'player'
+  )
+    return reject(
+      'cooperative',
+      'Harmful actions between human-controlled characters require an explicitly supported participation policy.',
+    );
+  const releaseSelf =
+    command.type === 'status-effect' &&
+    command.operation === 'deactivate' &&
+    command.targetId === source.id;
+  if (
+    capabilityBlocked(world, source, 'actions') &&
+    !releaseSelf &&
+    !['cancel', 'recover'].includes(command.type)
+  )
+    return reject('capability-restricted', 'This actor cannot act in its current state.');
+  if (command.type === 'say' && capabilityBlocked(world, source, 'speech'))
+    return reject('capability-restricted', 'Speech is unavailable.');
+  if (command.type === 'move' && capabilityBlocked(world, source, 'locomotion'))
+    return reject('capability-restricted', 'Movement is unavailable.');
+  if (world.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
+  if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
+    return reject('not-alive', 'This actor cannot act.');
+  if (
+    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
+      command.type,
+    ) ||
+      command.type === 'tend-fire') &&
+    !supportsManualWork(source)
+  )
+    return reject(
+      'unsupported-body',
+      'This native manual-work family requires a supported biped body.',
+    );
+  if (worldSupport(source) === null && !['say', 'teach', 'goal', 'cancel'].includes(command.type))
+    return reject(
+      'unsupported-airborne-action',
+      'This native action requires a supported ground stance.',
+    );
+  // Scope comes before live resource/lifecycle diagnostics, including deferred plan dispatch.
+  // docs/architecture.md#actor-agency-foundation
+  const scopedTargetId =
+    command.type === 'cook'
+      ? command.heatId
+      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
+            command.type,
+          ) ||
+            command.type === 'tend-fire') &&
+          'targetId' in command
+        ? command.targetId
+        : undefined;
+  if (scopedTargetId) {
+    const target = getOwn(world.entities, scopedTargetId);
+    if (!target || !visible(world, source, target))
+      return reject('not-visible', 'The action target is not currently perceived.');
+  }
+  if (
+    isRecordedActivityCommand(command) &&
+    world.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
+  )
+    return reject(
+      'experience-capacity',
+      'The action-record allowance is full. Existing work and history are preserved; new recorded actions need more storage allowance.',
+    );
+  return null;
+}
+
+/** Current first-step feasibility. It reads authority and resources, and builds only a
+ * temporary route/action description; no effects, randomness, receipts or drafts run here.
+ * Later typed plan outputs remain future requirements. docs/projects/next-playable-week-tech-design.md#admission-before-execution
+ */
+export function nativeOperationAvailable(world: WorldState, command: Command): Outcome {
+  const nested = inWorkGroup();
+  try {
+    return withWorkMeter(WORK_LIMITS.group, () => {
+      chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
+      const prepared = prepareNativeOperation(world, command);
+      return 'ok' in prepared
+        ? prepared
+        : outcome(
+            true,
+            'available',
+            'Current prerequisites are available; execution rechecks them.',
+          );
+    });
+  } catch (error) {
+    if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
+      throw error;
+    return outcome(false, error.code, error.message);
+  }
+}
+function prepareNativeOperation(
+  world: WorldState,
+  command: Command,
+  options: { executing?: boolean } = {},
+): Action | Outcome {
+  const reject = (code: string, message: string) => outcome(false, code, message);
+  if (!isActivityCommand(command))
+    return reject('invalid-plan', 'Only supported native physical work can be queued.');
+  const problem = nativeActorProblem(world, command);
+  if (problem) return problem;
+  const actor = world.entities[command.actorId]!;
+  const source = actor;
+  const component = actor.actor!;
+  let action: Action | undefined;
+  const temporary = (type: Action['type'], seconds: number): Action => ({
+    id: command.id,
+    type,
+    stage: 'working',
+    path: [],
+    remainingSeconds: seconds,
+    totalSeconds: seconds,
+    consumed: [],
+  });
+  switch (command.type) {
+    case 'say': {
+      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
+      if (!isSpeechVolume(command.volume ?? 'normal'))
+        return reject('invalid-volume', 'Choose whisper, normal or shout.');
+      const recipient = command.targetId ?? command.intendedRecipientId;
+      if (recipient && !getOwn(world.entities, recipient))
+        return reject('invalid-recipient', 'The intended recipient no longer exists.');
+      const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
+      if (
+        command.targetId &&
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          capabilityBlocked(world, target, 'perception') ||
+          target.actor.incapacitated)
+      )
+        return reject('not-heard', 'The intended listener is unavailable.');
+      break;
+    }
+    case 'pickup': {
+      const target = getOwn(world.entities, command.targetId);
+      if (!canHandleItems(world, source) || target?.kind !== 'item-pile')
+        return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
+      const stack = command.itemId
+        ? portableItems(world, target.id).find((item) => item.id === command.itemId)
+        : undefined;
+      if (
+        !portableItems(world, target.id).some(
+          (item) => !command.itemId || item.id === command.itemId,
+        )
+      )
+        return reject('empty', 'No matching portable items remain.');
+      if (command.quantity !== undefined) {
+        if (
+          !stack ||
+          !Number.isSafeInteger(command.quantity) ||
+          command.quantity < 1 ||
+          command.quantity > stack.quantity
+        )
+          return reject('unavailable', `Only ${stack?.quantity ?? 0} are in that stack.`);
+        if (
+          command.quantity < stack.quantity &&
+          (world.entities[stack.id]?.container || stack.individuality === 'individual')
+        )
+          return reject('indivisible', 'That item cannot be divided; pick up the whole of it.');
+      }
+      if (
+        capabilityBlocked(world, source, 'locomotion') &&
+        !canReachEntity(world, source, target, world.itemHandling.reach)
+      )
+        return reject('capability-restricted', 'Movement is required to reach this pile.');
+
+      action = temporary('pickup', world.itemHandling.pickupSeconds);
+      action.targetId = command.targetId;
+      action.itemId = command.itemId;
+      if (command.quantity !== undefined) action.quantity = command.quantity;
+      break;
+    }
+    case 'follow': {
+      const desiredDistance = command.distance ?? FOLLOW_RULES.defaultDistance;
+      if (
+        command.targetId === actor.id ||
+        !Number.isFinite(desiredDistance) ||
+        desiredDistance < FOLLOW_RULES.minimumDistance ||
+        desiredDistance > FOLLOW_RULES.maximumDistance
+      )
+        return reject(
+          'invalid-follow',
+          'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
+        );
+      if (command.until !== undefined && command.until <= world.simTime)
+        return reject('invalid-follow', 'That stopping time has already passed.');
+      action = temporary('follow', 0);
+      action.targetId = command.targetId;
+      action.follow = followState(world, actor, command, desiredDistance);
+      const error = updateFollowPath(world, actor, action, false);
+      if (error) return reject('follow-unavailable', error);
+      break;
+    }
+    case 'move': {
+      if (
+        visionRadius(world, actor) === 0 &&
+        (!validPosition(command.destination) ||
+          distance(worldPosition(actor), command.destination) > 1)
+      )
+        return reject(
+          'unsupported-navigation',
+          'Only a short direct probe is supported without vision.',
+        );
+      if (
+        !validPosition(command.destination) ||
+        !isWalkable(world, command.destination, command.destination.surfaceId, bodyProfile(actor))
+      )
+        return reject('blocked', 'Choose walkable ground.');
+      action = temporary('move', 0);
+      action.destination = { ...command.destination };
+      break;
+    }
+    case 'strike': {
+      const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
+      const target = getOwn(world.entities, command.targetId);
+      if (!definition) return reject('unknown-action', 'Choose a registered strike.');
+      if ((component.attackReadyAt ?? 0) > world.simTime)
+        return reject(
+          'attack-recovery',
+          'Finish recovering from the last swing before attacking again.',
+        );
+      if (
+        command.weaponItemId &&
+        (component.equippedItemId !== command.weaponItemId ||
+          !accessiblePossession(world, actor.id, command.weaponItemId))
+      )
+        return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
+      if (!target?.actor?.alive || target.id === actor.id)
+        return reject('invalid-target', 'Choose another living actor.');
+      if (!definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
+        return reject('out-of-range', 'Move within strike range first.');
+      action = temporary('strike', definition.workSeconds);
+      action.definitionId = definition.id;
+      action.definitionVersion = definition.version;
+      action.targetId = target.id;
+      if (command.weaponItemId) {
+        action.weaponItemId = command.weaponItemId;
+        action.strikePhase = 'windup';
+      }
+      break;
+    }
+    case 'gather': {
+      const target = getOwn(world.entities, command.targetId);
+      if (!target?.resource || target.resource.quantity < 1)
+        return reject('depleted', 'There is nothing left to gather here.');
+      if (!visible(world, actor, target))
+        return reject('not-visible', 'Move close enough to see that resource.');
+      action = temporary('gather', target.resource.workSeconds);
+      action.targetId = target.id;
+      break;
+    }
+    case 'prepare': {
+      if (!getOwn(NATIVE_PREPARATIONS, command.preparation))
+        return reject('unsupported', 'Unknown preparation.');
+      const preparation = NATIVE_PREPARATIONS[command.preparation];
+      if (quantityOf(world, actor.id, preparation.input) < preparation.inputQuantity)
+        return reject(
+          'missing-material',
+          `Need ${preparation.inputQuantity} ${world.itemDefinitions[preparation.input]!.name}.`,
+        );
+      action = temporary('prepare', preparation.workSeconds);
+      action.preparation = command.preparation;
+      break;
+    }
+    case 'craft': {
+      const recipe = getOwn(world.recipes, command.recipeId);
+      if (!recipe) return reject('unknown-recipe', 'That technique has not been admitted.');
+      if (!world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
+        return reject('not-learned', 'This actor has not learned that technique.');
+      action = temporary('craft', recipe.workSeconds);
+      action.recipeId = recipe.id;
+      break;
+    }
+    case 'equip': {
+      const item = itemFor(world, command.itemId);
+      if (
+        !item ||
+        !accessiblePossession(world, actor.id, item.id) ||
+        !(
+          world.itemDefinitions[item.definitionId]?.launcher ||
+          world.itemDefinitions[item.definitionId]?.melee ||
+          world.itemDefinitions[item.definitionId]?.gatheringTool
+        )
+      )
+        return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
+      if (itemHasReservations(world, item.id) || (options.executing && component.action))
+        return reject('not-equippable', 'Choose a free tool in this inventory.');
+      break;
+    }
+    case 'hunt': {
+      if ((component.attackReadyAt ?? 0) > world.simTime)
+        return reject(
+          'attack-recovery',
+          'Finish recovering from the last swing before attacking again.',
+        );
+      const target = getOwn(world.entities, command.targetId);
+      if (!(target?.animal && target.actor?.alive))
+        return reject('not-huntable', 'Choose a living animal.');
+      if (!visible(world, actor, target))
+        return reject('not-visible', 'The animal is out of sight.');
+      const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
+      const item = itemFor(world, weaponItemId);
+      const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
+      if (!item || !accessiblePossession(world, actor.id, item.id) || !launcher)
+        return reject('no-weapon', 'Equip a suitable ranged tool first.');
+      const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
+      if (!ammo)
+        return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
+      action = temporary('hunt', SIMULATION_RULES.shotSeconds);
+      action.targetId = target.id;
+      action.weaponItemId = item.id;
+      action.ammoItemId = ammo.id;
+      break;
+    }
+    case 'harvest': {
+      const target = getOwn(world.entities, command.targetId);
+      if (!target?.remains || target.remains.harvested)
+        return reject('not-harvestable', 'There are no unharvested remains there.');
+      if (!visible(world, actor, target))
+        return reject('not-visible', 'Move within sight of the remains.');
+      if (!canCut(world, actor.id))
+        return reject('missing-tool', 'A cutting point is needed to prepare the remains.');
+      action = temporary('harvest', SIMULATION_RULES.harvestSeconds);
+      action.targetId = target.id;
+      break;
+    }
+    case 'cook': {
+      const item = itemFor(world, command.itemId);
+      const heat = getOwn(world.entities, command.heatId);
+      if (
+        !item ||
+        !accessiblePossession(world, actor.id, item.id) ||
+        item.definitionId !== BASE_FAMILY_FACTS.cooking.input
+      )
+        return reject(
+          'not-cookable',
+          `Choose ${world.itemDefinitions[BASE_FAMILY_FACTS.cooking.input]?.name ?? 'something cookable'} in this actor’s inventory.`,
+        );
+      if (!heat?.heat?.lit || !visible(world, actor, heat))
+        return reject('no-heat', 'A visible lit heat source is needed.');
+      action = temporary('cook', SIMULATION_RULES.cookSeconds);
+      action.itemId = item.id;
+      action.heatId = heat.id;
+      break;
+    }
+    case 'eat': {
+      const item = itemFor(world, command.itemId);
+      const definition = item && world.itemDefinitions[item.definitionId];
+      if (!hasWildernessNeeds(component))
+        return reject('not-applicable', 'This body does not consume food.');
+      if (!item || !accessiblePossession(world, actor.id, item.id) || !definition?.nutrition)
+        return reject(
+          'not-edible',
+          definition?.id === 'raw_meat'
+            ? 'Cook raw meat before eating.'
+            : 'Choose prepared edible food.',
+        );
+      if (availableItemQuantity(world, item.id) < 1)
+        return reject('unavailable', 'That food is no longer available.');
+      break;
+    }
+    case 'drop': {
+      const reason = dropItemReason(world, actor, command.itemId, command.quantity);
+      if (reason) return reject('cannot-drop', reason);
+      break;
+    }
+    case 'replenish': {
+      const prepared = prepareReplenishment(world, actor, command.attributeId, command.targetId);
+      if ('ok' in prepared) return prepared;
+      action = prepared;
+      break;
+    }
+    case 'tend-fire': {
+      const fire = getOwn(world.entities, command.targetId);
+      const problem = fireCareProblem(world, actor, fire, command.operation, command.itemId);
+      if (problem) return reject(problem.code, problem.message);
+      action = temporary('tend-fire', BASE_FIRE_CARE[command.operation].workSeconds);
+      action.targetId = command.targetId;
+      action.fireOperation = command.operation;
+      action.itemId = command.itemId;
+      break;
+    }
+    case 'inspect-inventory': {
+      try {
+        inspectPossessions(world, actor.id, command.after, command.expectedRevision);
+      } catch (error) {
+        return reject(
+          'inspection-unavailable',
+          error instanceof Error ? error.message : 'Inspection unavailable.',
+        );
+      }
+      break;
+    }
+    case 'status-effect': {
+      const target = getOwn(world.entities, command.targetId);
+      const definition = world.statusEffectPolicy.definitions.find(
+        (d) => d.id === command.definitionId,
+      );
+      if (
+        !target ||
+        !definition?.actions ||
+        !['activate', 'deactivate'].includes(command.operation)
+      )
+        return reject('invalid-effect', 'Choose an available status effect and target.');
+      if (
+        target.id !== actor.id &&
+        (!definition.actions.allowOther ||
+          (command.operation === 'activate' && !definition.actions.activateOther) ||
+          !visible(world, actor, target) ||
+          !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
+      )
+        return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
+      if (
+        command.operation === 'activate' &&
+        !canActivateStatusEffect(
+          world,
+          { subject: target, source: actor, actionTarget: target },
+          definition,
+        )
+      )
+        return reject('not-applicable', 'The status effect activation conditions are not met.');
+      if (
+        command.operation === 'deactivate' &&
+        !(definition.contribution
+          ? activeContributionId(target, definition.id, actor.id)
+          : target.statusEffects?.[definition.id]?.active)
+      )
+        return reject('not-active', 'That status effect is not active.');
+      break;
+    }
+    default:
+      return reject('unsupported', 'This command is not supported.');
+  }
+  if (action) {
+    if (action.type !== 'follow' && !['prepare', 'craft'].includes(action.type)) {
+      const error = approach(world, actor, action);
+      if (error) return error;
+    }
+    const materials = workMaterials(world, actor, action);
+    if ('ok' in materials) return materials;
+    if (
+      component.action?.type === 'status-effect' &&
+      !world.statusEffectPolicy.definitions
+        .find((d) => d.id === component.action?.definitionId)
+        ?.interruptOn.includes('new-action')
+    )
+      return reject(
+        'cannot-interrupt',
+        'The current state must end before starting another activity.',
+      );
+  }
+  return (
+    action ??
+    outcome(true, 'available', 'Current prerequisites are available; execution rechecks them.')
+  );
 }
 
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
@@ -682,116 +1162,18 @@ function executeCommandNative(
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
       : reject('idempotency-conflict', 'This command ID was already used with another body.');
-  const source = getOwn(original.entities, command.actorId);
-  if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
-  if (!activelyParticipates(source))
-    return reject('inactive', 'Return to the world before acting.');
-  if (
-    source.actor.controller === 'player' &&
-    command.type === 'strike' &&
-    original.entities[command.targetId]?.actor?.controller === 'player'
-  )
-    return reject(
-      'cooperative',
-      'Harmful actions between human-controlled characters require an explicitly supported participation policy.',
-    );
-  const releaseSelf =
-    command.type === 'status-effect' &&
-    command.operation === 'deactivate' &&
-    command.targetId === source.id;
-  if (
-    capabilityBlocked(original, source, 'actions') &&
-    !releaseSelf &&
-    !['cancel', 'recover'].includes(command.type)
-  )
-    return reject('capability-restricted', 'This actor cannot act in its current state.');
-  if (command.type === 'say' && capabilityBlocked(original, source, 'speech'))
-    return reject('capability-restricted', 'Speech is unavailable.');
-  if (command.type === 'move' && capabilityBlocked(original, source, 'locomotion'))
-    return reject('capability-restricted', 'Movement is unavailable.');
-  if (original.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
-  if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
-    return reject('not-alive', 'This actor cannot act.');
-  if (
-    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
-      command.type,
-    ) ||
-      command.type === 'tend-fire') &&
-    !supportsManualWork(source)
-  )
-    return reject(
-      'unsupported-body',
-      'This native manual-work family requires a supported biped body.',
-    );
-  if (worldSupport(source) === null && !['say', 'teach', 'goal', 'cancel'].includes(command.type))
-    return reject(
-      'unsupported-airborne-action',
-      'This native action requires a supported ground stance.',
-    );
-  // Scope comes before live resource/lifecycle diagnostics, including deferred plan dispatch.
-  // docs/architecture.md#actor-agency-foundation
-  const scopedTargetId =
-    command.type === 'cook'
-      ? command.heatId
-      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
-            command.type,
-          ) ||
-            command.type === 'tend-fire') &&
-          'targetId' in command
-        ? command.targetId
-        : undefined;
-  if (scopedTargetId) {
-    const target = getOwn(original.entities, scopedTargetId);
-    if (!target || !visible(original, source, target))
-      return reject('not-visible', 'The action target is not currently perceived.');
-  }
-  if (command.type === 'pickup') {
-    const target = getOwn(original.entities, command.targetId);
-    if (!canHandleItems(original, source) || target?.kind !== 'item-pile')
-      return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
-    const stack = command.itemId
-      ? portableItems(original, target.id).find((item) => item.id === command.itemId)
-      : undefined;
-    if (
-      !portableItems(original, target.id).some(
-        (item) => !command.itemId || item.id === command.itemId,
-      )
-    )
-      return reject('empty', 'No matching portable items remain.');
-    if (command.quantity !== undefined) {
-      if (
-        !stack ||
-        !Number.isSafeInteger(command.quantity) ||
-        command.quantity < 1 ||
-        command.quantity > stack.quantity
-      )
-        return reject('unavailable', `Only ${stack?.quantity ?? 0} are in that stack.`);
-      if (
-        command.quantity < stack.quantity &&
-        (original.entities[stack.id]?.container || stack.individuality === 'individual')
-      )
-        return reject('indivisible', 'That item cannot be divided; pick up the whole of it.');
-    }
-    if (
-      capabilityBlocked(original, source, 'locomotion') &&
-      !canReachEntity(original, source, target, original.itemHandling.reach)
-    )
-      return reject('capability-restricted', 'Movement is required to reach this pile.');
-  }
-  if (
-    isRecordedActivityCommand(command) &&
-    original.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
-  )
-    return reject(
-      'experience-capacity',
-      'The action-record allowance is full. Existing work and history are preserved; new recorded actions need more storage allowance.',
-    );
+  const prepared = isActivityCommand(command)
+    ? prepareNativeOperation(original, command, { executing: true })
+    : nativeActorProblem(original, command);
+  if (prepared && 'ok' in prepared && !prepared.ok)
+    return { world: original, events: [], outcome: prepared };
+  const source = getOwn(original.entities, command.actorId)!;
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
   let result = outcome(true, 'accepted', 'Action started.');
-  let action: Action | undefined;
+  const action = prepared && !('ok' in prepared) ? prepared : undefined;
   const experience = isRecordedActivityCommand(command)
     ? beginActivity(
         world,
@@ -803,6 +1185,8 @@ function executeCommandNative(
           : undefined,
       )
     : undefined;
+  if (action) action.id = nextId(world, 'action');
+  if (action?.type === 'follow') updateFollowPath(world, actor, action);
   if (
     experience &&
     (command.type === 'strike' || command.type === 'hunt') &&
@@ -818,714 +1202,504 @@ function executeCommandNative(
       );
     if (prior) experience.connections.push({ from: prior.id, relation: 'support' });
   }
-  switch (command.type) {
-    case 'activity':
-      if (command.interrupt && !command.resume) {
-        const refused = suspendCurrentWork(world, actor.id);
-        if (refused) return { world: original, events: [], outcome: refused };
-      }
-      result = startLearnedActivity(
-        world,
-        actor.id,
-        command.id,
-        command.methodId,
-        command.bindings,
-        command.resume,
-      );
-      if (!result.ok) return { world: original, events: [], outcome: result };
-      break;
-    case 'compose':
-      result = startRequestedActivity(world, actor.id, command.id, command);
-      if (!result.ok) return { world: original, events: [], outcome: result };
-      break;
-    case 'pickup': {
-      action = createAction(world, 'pickup', world.itemHandling.pickupSeconds);
-      action.targetId = command.targetId;
-      action.itemId = command.itemId;
-      if (command.quantity !== undefined) action.quantity = command.quantity;
-      break;
-    }
-    case 'transfer-item':
-    case 'split-item':
-    case 'merge-item': {
-      // Scope checks precede all hidden-item/capacity diagnostics. Fictional ownership
-      // grants neither physical access nor another human's private contents.
-      // Merge-target discovery mirrors these checks in object-access mergeTargetAvailable.
-      const item = itemFor(world, command.itemId),
-        destination = getOwn(world.entities, command.targetId);
-      if (!canHandleItems(world, actor) || !item || !destination)
-        return reject('unavailable', 'Choose an accessible item and destination.');
-      try {
-        // Another person's carried inventory changes hands only through their acceptance.
-        // Scope checks run first, so the refusal cannot probe hidden items or people.
-        // docs/worlds/base/items.md#shared-containers-and-active-work
-        if (
-          destination.actor &&
-          destination.id !== actor.id &&
-          canAccessContainer(world, actor.id, item.ownerId) &&
-          !offerRecipientProblem(world, actor, destination)
-        )
-          return reject(
-            'needs-acceptance',
-            'Offer it to that person instead; it moves only if they accept.',
-          );
-        if (
-          !canAccessContainer(world, actor.id, item.ownerId) ||
-          !canAccessContainer(
-            world,
-            actor.id,
-            command.type === 'merge-item'
-              ? (itemFor(world, destination.id)?.ownerId ?? '')
-              : destination.id,
-          )
-        )
-          return reject('unavailable', 'Choose an accessible possession and destination.');
-        const blocked =
-          inventoryWorkReason(world, actor.id, item.id) ??
-          (command.type === 'merge-item'
-            ? inventoryWorkReason(world, actor.id, destination.id)
-            : null);
-        if (blocked) return reject('in-use', blocked);
-        const targetRevision =
-          command.type === 'merge-item'
-            ? destination.item?.revision
-            : (destination.inventoryRevision ?? 0);
-        if (
-          item.revision !== command.expectedRevision ||
-          item.placementRevision !== command.placementRevision ||
-          targetRevision !== command.targetRevision
-        )
-          return reject('stale', 'The item or destination changed. Refresh before moving it.');
-        if (world.itemDefinitions[item.definitionId]?.portable !== true)
-          return reject('not-portable', 'This object cannot be moved by this action.');
-        if (command.type === 'split-item' && destination.id !== item.ownerId)
-          return reject('stale', 'Split into the current container.');
-        if (command.type === 'merge-item' && command.quantity !== item.quantity)
-          return reject('stale', 'Merge the complete selected lot.');
-        const resultId =
-          command.type === 'split-item'
-            ? splitLot(world, item.id, command.quantity, command.id)
-            : command.type === 'merge-item'
-              ? mergeLots(world, item.id, destination.id, command.id)
-              : moveLot(world, item.id, destination.id, command.quantity, command.id);
-        result = { ...outcome(true, 'items-arranged', 'Possessions updated.'), itemId: resultId };
-        emit(
-          world,
-          events,
-          'items-arranged',
-          `${actor.name} arranged some belongings.`,
-          actor,
-          undefined,
-          undefined,
-          'private',
-        );
-      } catch (error) {
-        if (error instanceof WorkBudgetError) throw error;
-        return reject(
-          'item-unavailable',
-          error instanceof Error ? error.message : 'Item transfer unavailable.',
-        );
-      }
-      break;
-    }
-    case 'unequip': {
-      const equipped = itemFor(world, command.itemId);
-      if (
-        !equipped ||
-        component.equippedItemId !== equipped.id ||
-        equipped.revision !== command.expectedRevision ||
-        equipped.placementRevision !== command.placementRevision
-      )
-        return reject('stale', 'The selected equipment changed. Refresh before releasing it.');
-      try {
-        unequipLot(world, actor.id);
-      } catch (error) {
-        if (error instanceof WorkBudgetError) throw error;
-        return reject(
-          'item-unavailable',
-          error instanceof Error ? error.message : 'Equipment unavailable.',
-        );
-      }
-      result = outcome(true, 'unequipped', 'Equipment released.');
-      break;
-    }
-    case 'drop': {
-      const reason = dropItems(world, actor, command.itemId, command.quantity, events);
-      if (reason) return reject('cannot-drop', reason);
-      result = outcome(true, 'dropped', 'Items dropped on the ground.');
-      break;
-    }
-    case 'follow': {
-      const desiredDistance = command.distance ?? FOLLOW_RULES.defaultDistance;
-      if (
-        command.targetId === actor.id ||
-        !Number.isFinite(desiredDistance) ||
-        desiredDistance < FOLLOW_RULES.minimumDistance ||
-        desiredDistance > FOLLOW_RULES.maximumDistance
-      )
-        return reject(
-          'invalid-follow',
-          'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
-        );
-      if (command.until !== undefined && command.until <= world.simTime)
-        return reject('invalid-follow', 'That stopping time has already passed.');
-      action = createAction(world, 'follow', 0);
-      action.targetId = command.targetId;
-      action.follow = followState(world, actor, command, desiredDistance);
-      const error = updateFollowPath(world, actor, action);
-      if (error) return reject('follow-unavailable', error);
-      break;
-    }
-    case 'move': {
-      if (
-        visionRadius(world, actor) === 0 &&
-        (!validPosition(command.destination) ||
-          distance(worldPosition(actor), command.destination) > 1)
-      )
-        return reject(
-          'unsupported-navigation',
-          'Only a short direct probe is supported without vision.',
-        );
-      if (
-        !validPosition(command.destination) ||
-        !isWalkable(world, command.destination, command.destination.surfaceId, bodyProfile(actor))
-      )
-        return reject('blocked', 'Choose walkable ground.');
-      action = createAction(world, 'move', 0);
-      action.destination = { ...command.destination };
-      break;
-    }
-    case 'inspect-activities': {
-      if (
-        !Number.isSafeInteger(command.after) ||
-        command.after < -1 ||
-        (command.methodAfter !== undefined &&
-          (!Number.isSafeInteger(command.methodAfter) ||
-            command.methodAfter < 0 ||
-            command.methodAfter > ACTIVITY_LIMITS.acquisitions))
-      )
-        return reject('invalid-page', 'Choose a valid action-history page.');
-      const event = emit(
-        world,
-        events,
-        'activity-history-requested',
-        'I chose to inspect my own recorded actions and their results.',
-        actor,
-        undefined,
-        { semanticTrigger: true, importance: 6 },
-        'private',
-      );
-      const cursor = (world.actionExperience.learning[actor.id] ??= {
-        after: null,
-        pending: [],
-        assessed: [],
-      });
-      cursor.inspection = {
-        eventId: event.id,
-        after: command.after,
-        methodAfter: command.methodAfter ?? 0,
-      };
-      result = outcome(
-        true,
-        'history-requested',
-        'Own action history selected for the next decision context.',
-      );
-      break;
-    }
-    case 'inspect-inventory': {
-      try {
-        const { page, ...cursor } = inspectPossessions(
+  if (experience && command.type === 'harvest')
+    experience.connections.push(
+      ...(world.actionExperience.changes[command.targetId] ?? [])
+        .filter((link) => link.actorId === actor.id)
+        .slice(-1)
+        .map((link) => ({
+          from: link.occurrenceId,
+          relation: 'material' as const,
+          port: 'remains',
+        })),
+    );
+  if (!action)
+    switch (command.type) {
+      case 'activity':
+        if (command.interrupt && !command.resume) {
+          const refused = suspendCurrentWork(world, actor.id);
+          if (refused) return { world: original, events: [], outcome: refused };
+        }
+        result = startLearnedActivity(
           world,
           actor.id,
-          command.after,
-          command.expectedRevision,
+          command.id,
+          command.methodId,
+          command.bindings,
+          command.resume,
         );
-        component.inventoryInspection = cursor;
-        emit(
+        if (!result.ok) return { world: original, events: [], outcome: result };
+        break;
+      case 'compose':
+        result = startRequestedActivity(world, actor.id, command.id, command);
+        if (!result.ok) return { world: original, events: [], outcome: result };
+        break;
+      case 'transfer-item':
+      case 'split-item':
+      case 'merge-item': {
+        // Scope checks precede all hidden-item/capacity diagnostics. Fictional ownership
+        // grants neither physical access nor another human's private contents.
+        // Merge-target discovery mirrors these checks in object-access mergeTargetAvailable.
+        const item = itemFor(world, command.itemId),
+          destination = getOwn(world.entities, command.targetId);
+        if (!canHandleItems(world, actor) || !item || !destination)
+          return reject('unavailable', 'Choose an accessible item and destination.');
+        try {
+          // Another person's carried inventory changes hands only through their acceptance.
+          // Scope checks run first, so the refusal cannot probe hidden items or people.
+          // docs/worlds/base/items.md#shared-containers-and-active-work
+          if (
+            destination.actor &&
+            destination.id !== actor.id &&
+            canAccessContainer(world, actor.id, item.ownerId) &&
+            !offerRecipientProblem(world, actor, destination)
+          )
+            return reject(
+              'needs-acceptance',
+              'Offer it to that person instead; it moves only if they accept.',
+            );
+          if (
+            !canAccessContainer(world, actor.id, item.ownerId) ||
+            !canAccessContainer(
+              world,
+              actor.id,
+              command.type === 'merge-item'
+                ? (itemFor(world, destination.id)?.ownerId ?? '')
+                : destination.id,
+            )
+          )
+            return reject('unavailable', 'Choose an accessible possession and destination.');
+          const blocked =
+            inventoryWorkReason(world, actor.id, item.id) ??
+            (command.type === 'merge-item'
+              ? inventoryWorkReason(world, actor.id, destination.id)
+              : null);
+          if (blocked) return reject('in-use', blocked);
+          const targetRevision =
+            command.type === 'merge-item'
+              ? destination.item?.revision
+              : (destination.inventoryRevision ?? 0);
+          if (
+            item.revision !== command.expectedRevision ||
+            item.placementRevision !== command.placementRevision ||
+            targetRevision !== command.targetRevision
+          )
+            return reject('stale', 'The item or destination changed. Refresh before moving it.');
+          if (world.itemDefinitions[item.definitionId]?.portable !== true)
+            return reject('not-portable', 'This object cannot be moved by this action.');
+          if (command.type === 'split-item' && destination.id !== item.ownerId)
+            return reject('stale', 'Split into the current container.');
+          if (command.type === 'merge-item' && command.quantity !== item.quantity)
+            return reject('stale', 'Merge the complete selected lot.');
+          const resultId =
+            command.type === 'split-item'
+              ? splitLot(world, item.id, command.quantity, command.id)
+              : command.type === 'merge-item'
+                ? mergeLots(world, item.id, destination.id, command.id)
+                : moveLot(world, item.id, destination.id, command.quantity, command.id);
+          result = { ...outcome(true, 'items-arranged', 'Possessions updated.'), itemId: resultId };
+          emit(
+            world,
+            events,
+            'items-arranged',
+            `${actor.name} arranged some belongings.`,
+            actor,
+            undefined,
+            undefined,
+            'private',
+          );
+        } catch (error) {
+          if (error instanceof WorkBudgetError) throw error;
+          return reject(
+            'item-unavailable',
+            error instanceof Error ? error.message : 'Item transfer unavailable.',
+          );
+        }
+        break;
+      }
+      case 'unequip': {
+        const equipped = itemFor(world, command.itemId);
+        if (
+          !equipped ||
+          component.equippedItemId !== equipped.id ||
+          equipped.revision !== command.expectedRevision ||
+          equipped.placementRevision !== command.placementRevision
+        )
+          return reject('stale', 'The selected equipment changed. Refresh before releasing it.');
+        try {
+          unequipLot(world, actor.id);
+        } catch (error) {
+          if (error instanceof WorkBudgetError) throw error;
+          return reject(
+            'item-unavailable',
+            error instanceof Error ? error.message : 'Equipment unavailable.',
+          );
+        }
+        result = outcome(true, 'unequipped', 'Equipment released.');
+        break;
+      }
+      case 'drop': {
+        const reason = dropItems(world, actor, command.itemId, command.quantity, events);
+        if (reason) return reject('cannot-drop', reason);
+        result = outcome(true, 'dropped', 'Items dropped on the ground.');
+        break;
+      }
+      case 'inspect-activities': {
+        if (
+          !Number.isSafeInteger(command.after) ||
+          command.after < -1 ||
+          (command.methodAfter !== undefined &&
+            (!Number.isSafeInteger(command.methodAfter) ||
+              command.methodAfter < 0 ||
+              command.methodAfter > ACTIVITY_LIMITS.acquisitions))
+        )
+          return reject('invalid-page', 'Choose a valid action-history page.');
+        const event = emit(
           world,
           events,
-          'inventory-inspected',
-          `I inspect my accessible possessions: ${page.join(' ')}${cursor.more ? ' More possessions remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+          'activity-history-requested',
+          'I chose to inspect my own recorded actions and their results.',
           actor,
           undefined,
           { semanticTrigger: true, importance: 6 },
           'private',
         );
-        result = outcome(true, 'inventory-inspected', 'Accessible possessions inspected.');
-      } catch (error) {
-        return reject(
-          'inspection-unavailable',
-          error instanceof Error ? error.message : 'Inspection unavailable.',
+        const cursor = (world.actionExperience.learning[actor.id] ??= {
+          after: null,
+          pending: [],
+          assessed: [],
+        });
+        cursor.inspection = {
+          eventId: event.id,
+          after: command.after,
+          methodAfter: command.methodAfter ?? 0,
+        };
+        result = outcome(
+          true,
+          'history-requested',
+          'Own action history selected for the next decision context.',
         );
+        break;
       }
-      break;
-    }
-    case 'strike': {
-      const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
-      const target = getOwn(world.entities, command.targetId);
-      if (!definition) return reject('unknown-action', 'Choose a registered strike.');
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
-      if (
-        command.weaponItemId &&
-        (component.equippedItemId !== command.weaponItemId ||
-          !accessiblePossession(world, actor.id, command.weaponItemId))
-      )
-        return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
-      if (!target?.actor?.alive || target.id === actor.id)
-        return reject('invalid-target', 'Choose another living actor.');
-      if (!definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
-        return reject('out-of-range', 'Move within strike range first.');
-      action = createAction(world, 'strike', definition.workSeconds);
-      action.definitionId = definition.id;
-      action.definitionVersion = definition.version;
-      action.targetId = target.id;
-      if (command.weaponItemId) {
-        action.weaponItemId = command.weaponItemId;
-        action.strikePhase = 'windup';
-      }
-      break;
-    }
-    case 'gather': {
-      const target = getOwn(world.entities, command.targetId);
-      if (!target?.resource || target.resource.quantity < 1)
-        return reject('depleted', 'There is nothing left to gather here.');
-      if (!visible(world, actor, target))
-        return reject('not-visible', 'Move close enough to see that resource.');
-      action = createAction(world, 'gather', target.resource.workSeconds);
-      action.targetId = target.id;
-      break;
-    }
-    case 'replenish': {
-      const prepared = prepareReplenishment(world, actor, command.attributeId, command.targetId);
-      if ('ok' in prepared) return { world: original, events: [], outcome: prepared };
-      action = prepared;
-      break;
-    }
-    case 'prepare': {
-      if (!getOwn(NATIVE_PREPARATIONS, command.preparation))
-        return reject('unsupported', 'Unknown preparation.');
-      const preparation = NATIVE_PREPARATIONS[command.preparation];
-      if (quantityOf(world, actor.id, preparation.input) < preparation.inputQuantity)
-        return reject(
-          'missing-material',
-          `Need ${preparation.inputQuantity} ${world.itemDefinitions[preparation.input]!.name}.`,
-        );
-      action = createAction(world, 'prepare', preparation.workSeconds);
-      action.preparation = command.preparation;
-      break;
-    }
-    case 'craft': {
-      const recipe = getOwn(world.recipes, command.recipeId);
-      if (!recipe) return reject('unknown-recipe', 'That technique has not been admitted.');
-      if (!world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
-        return reject('not-learned', 'This actor has not learned that technique.');
-      action = createAction(world, 'craft', recipe.workSeconds);
-      action.recipeId = recipe.id;
-      break;
-    }
-    case 'equip': {
-      const item = itemFor(world, command.itemId);
-      if (
-        !item ||
-        !accessiblePossession(world, actor.id, item.id) ||
-        !(
-          world.itemDefinitions[item.definitionId]?.launcher ||
-          world.itemDefinitions[item.definitionId]?.melee ||
-          world.itemDefinitions[item.definitionId]?.gatheringTool
-        )
-      )
-        return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
-      let equippedId: string;
-      try {
-        equippedId = equipLot(world, actor.id, item.id, command.id);
-      } catch (error) {
-        if (error instanceof WorkBudgetError) throw error;
-        return reject(
-          'not-equippable',
-          error instanceof Error ? error.message : 'Equipment unavailable.',
-        );
-      }
-      result = {
-        ok: true,
-        code: 'equipped',
-        message: `Equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
-        itemId: equippedId,
-      };
-      emit(
-        world,
-        events,
-        'equipped',
-        `${actor.name} equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
-        actor,
-      );
-      break;
-    }
-    case 'hunt': {
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
-      const target = getOwn(world.entities, command.targetId);
-      if (!(target?.animal && target.actor?.alive))
-        return reject('not-huntable', 'Choose a living animal.');
-      if (!visible(world, actor, target))
-        return reject('not-visible', 'The animal is out of sight.');
-      const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
-      const item = itemFor(world, weaponItemId);
-      const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
-      if (!item || !accessiblePossession(world, actor.id, item.id) || !launcher)
-        return reject('no-weapon', 'Equip a suitable ranged tool first.');
-      const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
-      if (!ammo)
-        return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
-      action = createAction(world, 'hunt', SIMULATION_RULES.shotSeconds);
-      action.targetId = target.id;
-      action.weaponItemId = item.id;
-      action.ammoItemId = ammo.id;
-      break;
-    }
-    case 'harvest': {
-      const target = getOwn(world.entities, command.targetId);
-      if (!target?.remains || target.remains.harvested)
-        return reject('not-harvestable', 'There are no unharvested remains there.');
-      if (!visible(world, actor, target))
-        return reject('not-visible', 'Move within sight of the remains.');
-      if (!canCut(world, actor.id))
-        return reject('missing-tool', 'A cutting point is needed to prepare the remains.');
-      if (experience)
-        experience.connections.push(
-          ...(world.actionExperience.changes[target.id] ?? [])
-            .filter((link) => link.actorId === actor.id)
-            .slice(-1)
-            .map((link) => ({
-              from: link.occurrenceId,
-              relation: 'material' as const,
-              port: 'remains',
-            })),
-        );
-      action = createAction(world, 'harvest', SIMULATION_RULES.harvestSeconds);
-      action.targetId = target.id;
-      break;
-    }
-    case 'cook': {
-      const item = itemFor(world, command.itemId);
-      const heat = getOwn(world.entities, command.heatId);
-      if (
-        !item ||
-        !accessiblePossession(world, actor.id, item.id) ||
-        item.definitionId !== BASE_FAMILY_FACTS.cooking.input
-      )
-        return reject(
-          'not-cookable',
-          `Choose ${world.itemDefinitions[BASE_FAMILY_FACTS.cooking.input]?.name ?? 'something cookable'} in this actor’s inventory.`,
-        );
-      if (!heat?.heat?.lit || !visible(world, actor, heat))
-        return reject('no-heat', 'A visible lit heat source is needed.');
-      action = createAction(world, 'cook', SIMULATION_RULES.cookSeconds);
-      action.itemId = item.id;
-      action.heatId = heat.id;
-      break;
-    }
-    case 'handover': {
-      const done = executeHandover(world, actor, command, events);
-      if (!done.ok) return reject(done.code, done.message);
-      result = done;
-      break;
-    }
-    case 'tend-fire': {
-      if (!isFireCareCommand(command))
-        return reject('invalid-command', 'Choose to light, fuel or put out a campfire.');
-      const fire = getOwn(world.entities, command.targetId);
-      const problem = fireCareProblem(world, actor, fire, command.operation, command.itemId);
-      if (problem) return reject(problem.code, problem.message);
-      action = createAction(world, 'tend-fire', BASE_FIRE_CARE[command.operation].workSeconds);
-      action.targetId = fire!.id;
-      action.fireOperation = command.operation;
-      if (command.itemId) action.itemId = command.itemId;
-      break;
-    }
-    case 'eat': {
-      if (!hasWildernessNeeds(component))
-        return reject('not-applicable', 'This body does not consume food.');
-      const item = itemFor(world, command.itemId);
-      const definition = item && world.itemDefinitions[item.definitionId];
-      if (!item || !accessiblePossession(world, actor.id, item.id) || !definition?.nutrition)
-        return reject(
-          'not-edible',
-          definition?.id === 'raw_meat'
-            ? 'Cook raw meat before eating.'
-            : 'Choose prepared edible food.',
-        );
-      if (!takeItem(world, actor.id, item.id, command.id))
-        return reject('unavailable', 'That food is no longer available.');
-      const beforeFullness = component.fullness!;
-      setWildernessNeed(component, 'fullness', component.fullness! + definition.nutrition);
-      recordActivityEffect(world, command.id, {
-        subjectId: actor.id,
-        label: 'Me',
-        property: 'fullness',
-        before: beforeFullness,
-        after: component.fullness!,
-      });
-      emit(
-        world,
-        events,
-        'ate',
-        `${actor.name} ate ${definition.name.toLowerCase()}.`,
-        actor,
-        undefined,
-        { definitionId: definition.id },
-      );
-      result = outcome(true, 'ate', 'Food restored fullness.');
-      break;
-    }
-    case 'status-effect': {
-      const target = getOwn(world.entities, command.targetId);
-      const definition = world.statusEffectPolicy.definitions.find(
-        (d) => d.id === command.definitionId,
-      );
-      if (
-        !target ||
-        !definition?.actions ||
-        !['activate', 'deactivate'].includes(command.operation)
-      )
-        return reject('invalid-effect', 'Choose an available status effect and target.');
-      if (
-        target.id !== actor.id &&
-        (!definition.actions.allowOther ||
-          (command.operation === 'activate' && !definition.actions.activateOther) ||
-          !visible(world, actor, target) ||
-          !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
-      )
-        return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
-      const effectActive = () =>
-        !!(definition.contribution
-          ? activeContributionId(target, definition.id, actor.id)
-          : target.statusEffects?.[definition.id]?.active);
-      const wasActive = effectActive();
-      if (command.operation === 'activate') {
-        if (
-          !activateStatusEffect(
+      case 'inspect-inventory': {
+        try {
+          const { page, ...cursor } = inspectPossessions(
             world,
-            definition,
-            { subject: target, source: actor, actionTarget: target },
+            actor.id,
+            command.after,
+            command.expectedRevision,
+          );
+          component.inventoryInspection = cursor;
+          emit(
+            world,
             events,
-            'voluntary',
-          )
-        )
-          return reject('not-applicable', 'The status effect activation conditions are not met.');
-      } else {
-        if (
-          !(definition.contribution
-            ? activeContributionId(target, definition.id, actor.id)
-            : target.statusEffects?.[definition.id]?.active)
-        )
-          return reject('not-active', 'That status effect is not active.');
-        deactivateStatusEffect(world, target, definition, events, 'voluntary', actor.id);
+            'inventory-inspected',
+            `I inspect my accessible possessions: ${page.join(' ')}${cursor.more ? ' More possessions remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+            actor,
+            undefined,
+            { semanticTrigger: true, importance: 6 },
+            'private',
+          );
+          result = outcome(true, 'inventory-inspected', 'Accessible possessions inspected.');
+        } catch (error) {
+          return reject(
+            'inspection-unavailable',
+            error instanceof Error ? error.message : 'Inspection unavailable.',
+          );
+        }
+        break;
       }
-      result = outcome(
-        true,
-        'status-effect',
-        `${definition.label}: ${command.operation === 'activate' ? 'activated' : 'deactivated'}.`,
-      );
-      recordActivityEffect(world, command.id, {
-        subjectId: target.id,
-        label: observerDescription(world, actor.id, target.id),
-        property: definition.label,
-        before: wasActive,
-        after: effectActive(),
-      });
-      break;
-    }
-    case 'confirm-attempt': {
-      const alternative = component.agency.attempts.find(
-        (attempt) => attempt.id === command.attemptId,
-      )?.alternative;
-      const first = alternative?.commands[0];
-      if (first && alternative && alternative.mode !== 'enqueue') {
-        // Disposable native admission, just like menu preview: no effects or RNG are published.
-        const preview = executeCommand(original, {
-          ...first,
-          actorId: actor.id,
-          id: `${command.id}:preview`,
-        });
-        if (!preview.outcome.ok) return reject(preview.outcome.code, preview.outcome.message);
-      }
-      result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
-      // A refused acceptance leaves no partially installed plan behind.
-      if (!result.ok) return { world: original, events: [], outcome: result };
-      break;
-    }
-    case 'withdraw-attempt': {
-      result = withdrawAttempt(component, command.attemptId);
-      break;
-    }
-    case 'cancel': {
-      interruptStatusEffects(world, actor, events, 'voluntary');
-      if (component.action?.type === 'status-effect')
-        return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
-      if (component.action) {
-        endActivity(
+      case 'equip': {
+        const item = itemFor(world, command.itemId);
+        if (!item) return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
+        let equippedId: string;
+        try {
+          equippedId = equipLot(world, actor.id, item.id, command.id);
+        } catch (error) {
+          if (error instanceof WorkBudgetError) throw error;
+          return reject(
+            'not-equippable',
+            error instanceof Error ? error.message : 'Equipment unavailable.',
+          );
+        }
+        result = {
+          ok: true,
+          code: 'equipped',
+          message: `Equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
+          itemId: equippedId,
+        };
+        emit(
           world,
-          actor.id,
-          component.action.id,
-          outcome(false, 'cancelled', 'Stopped by choice; already committed effects remain.'),
+          events,
+          'equipped',
+          `${actor.name} equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
+          actor,
         );
-        releaseInvocationResources(world, component.action.id);
+        break;
       }
-      cancelPlan(world, component);
-      discardSuspended(component);
-      component.action = null;
-      component.planGeneration++;
-      result = outcome(
-        true,
-        'cancelled',
-        'Stopped. Materials already used in work remain consumed.',
-      );
-      break;
-    }
-    case 'recover': {
-      if (!canRecoverAtCamp(actor))
-        return reject(
-          'cannot-recover',
-          'Camp recovery is available when health or food is critically low.',
-        );
-      const recovery = world.participationPolicy?.safeReturnAnchor;
-      if (!recovery || !isWalkable(world, recovery, recovery.surfaceId, bodyProfile(actor)))
-        return reject('return-unavailable', 'The configured recovery location is unavailable.');
-      setSpatialPosition(world, actor, recovery, recovery.surfaceId);
-      delete actor.spatial.flight;
-      delete actor.spatial.fallVelocity;
-      setBodyHealth(component, Math.max(component.health, 65));
-      if (hasWildernessNeeds(component)) {
-        setWildernessNeed(component, 'fullness', Math.max(component.fullness, 45));
-        setWildernessNeed(component, 'energy', Math.max(component.energy, 65));
+      case 'handover': {
+        const done = executeHandover(world, actor, command, events);
+        if (!done.ok) return reject(done.code, done.message);
+        result = done;
+        break;
       }
-      component.incapacitated = false;
-      component.alive = true;
-      interruptStatusEffects(world, actor, events, 'recovery');
-      if (component.action) releaseInvocationResources(world, component.action.id);
-      component.action = null;
-      component.planGeneration++;
-      reconcileBody(world, actor, events, 'camp-recovery');
-      emit(world, events, 'recovered', `${actor.name} recovered at camp.`, actor);
-      result = outcome(true, 'recovered', 'Recovered at camp.');
-      break;
-    }
-    case 'say': {
-      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
-      if (
-        typeof command.text !== 'string' ||
-        command.text.trim().length < 1 ||
-        command.text.length > 1500
-      )
-        return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
-      const volume = command.volume ?? 'normal';
-      if (!isSpeechVolume(volume))
-        return reject('invalid-volume', 'Choose whisper, normal or shout.');
-      const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
-      const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
-      if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
-        return reject('invalid-recipient', 'The intended recipient no longer exists.');
-      if (
-        command.targetId &&
-        (!target?.actor?.alive ||
-          !hasMemory(target) ||
-          capabilityBlocked(world, target, 'perception') ||
-          target.actor.incapacitated)
-      )
-        return reject('not-heard', 'The intended listener is unavailable.');
-      // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
-      // docs/hearing-and-speech.md#4-speech-volume-and-admission
-      emit(
-        world,
-        events,
-        'speech',
-        `${actor.name}: ${command.text.trim()}`,
-        actor,
-        command.targetId,
-        {
-          text: command.text.trim(),
-          ...(intendedRecipientId ? { intendedRecipientId } : {}),
-          ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
-          utteranceId: command.id,
-          volume,
-          acousticPolicyId: world.moduleManifest.acoustics.id,
-          acousticPolicyVersion: world.moduleManifest.acoustics.version,
-          sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
-        },
-      );
-      result = outcome(true, 'spoken', 'Spoken.');
-      break;
-    }
-    case 'goal': {
-      if (typeof command.text !== 'string' || !command.text.trim() || command.text.length > 350)
-        return reject('invalid-goal', 'Goal must contain 1–350 characters.');
-      result = replaceGoals(
-        component,
-        [command.text.trim()],
-        command.id,
-        component.controller === 'player' ? 'player' : 'god',
-      );
-      if (!result.ok) return reject(result.code, result.message);
-      break;
-    }
-    case 'teach': {
-      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
-      const target = getOwn(world.entities, command.targetId);
-      const recipe = getOwn(world.recipes, command.recipeId);
-      if (
-        !target?.actor?.alive ||
-        !hasMemory(target) ||
-        target.actor.incapacitated ||
-        !hearsEntity(world, target, actor)
-      )
-        return reject('not-heard', 'Teaching needs a nearby listener.');
-      if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
-        return reject('not-learned', 'You cannot teach a technique you do not know.');
-      const knowledge = world.knowledge[target.id] ?? (world.knowledge[target.id] = []);
-      if (!knowledge.some((record) => record.recipeId === recipe.id))
-        knowledge.push({
-          recipeId: recipe.id,
-          learnedAt: world.simTime,
-          source: 'taught',
-          evidenceId: command.id,
+      case 'eat': {
+        const item = itemFor(world, command.itemId);
+        const definition = item && world.itemDefinitions[item.definitionId];
+        if (!item || !definition?.nutrition)
+          return reject('not-edible', 'Choose prepared edible food.');
+        if (!takeItem(world, actor.id, item.id, command.id))
+          return reject('unavailable', 'That food is no longer available.');
+        const beforeFullness = component.fullness!;
+        setWildernessNeed(component, 'fullness', component.fullness! + definition.nutrition);
+        recordActivityEffect(world, command.id, {
+          subjectId: actor.id,
+          label: 'Me',
+          property: 'fullness',
+          before: beforeFullness,
+          after: component.fullness!,
         });
-      emit(
-        world,
-        events,
-        'taught',
-        `${actor.name} taught ${target.name} how to make ${recipe.name.toLowerCase()}.`,
-        actor,
-        target.id,
-        { recipeId: recipe.id },
-      );
-      result = outcome(true, 'taught', 'The listener learned this specific technique.');
-      break;
+        emit(
+          world,
+          events,
+          'ate',
+          `${actor.name} ate ${definition.name.toLowerCase()}.`,
+          actor,
+          undefined,
+          { definitionId: definition.id },
+        );
+        result = outcome(true, 'ate', 'Food restored fullness.');
+        break;
+      }
+      case 'status-effect': {
+        const target = getOwn(world.entities, command.targetId);
+        const definition = world.statusEffectPolicy.definitions.find(
+          (d) => d.id === command.definitionId,
+        );
+        if (
+          !target ||
+          !definition?.actions ||
+          !['activate', 'deactivate'].includes(command.operation)
+        )
+          return reject('invalid-effect', 'Choose an available status effect and target.');
+        if (
+          target.id !== actor.id &&
+          (!definition.actions.allowOther ||
+            (command.operation === 'activate' && !definition.actions.activateOther) ||
+            !visible(world, actor, target) ||
+            !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
+        )
+          return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
+        const effectActive = () =>
+          !!(definition.contribution
+            ? activeContributionId(target, definition.id, actor.id)
+            : target.statusEffects?.[definition.id]?.active);
+        const wasActive = effectActive();
+        if (command.operation === 'activate') {
+          if (
+            !activateStatusEffect(
+              world,
+              definition,
+              { subject: target, source: actor, actionTarget: target },
+              events,
+              'voluntary',
+            )
+          )
+            return reject('not-applicable', 'The status effect activation conditions are not met.');
+        } else {
+          if (
+            !(definition.contribution
+              ? activeContributionId(target, definition.id, actor.id)
+              : target.statusEffects?.[definition.id]?.active)
+          )
+            return reject('not-active', 'That status effect is not active.');
+          deactivateStatusEffect(world, target, definition, events, 'voluntary', actor.id);
+        }
+        result = outcome(
+          true,
+          'status-effect',
+          `${definition.label}: ${command.operation === 'activate' ? 'activated' : 'deactivated'}.`,
+        );
+        recordActivityEffect(world, command.id, {
+          subjectId: target.id,
+          label: observerDescription(world, actor.id, target.id),
+          property: definition.label,
+          before: wasActive,
+          after: effectActive(),
+        });
+        break;
+      }
+      case 'confirm-attempt': {
+        const alternative = component.agency.attempts.find(
+          (attempt) => attempt.id === command.attemptId,
+        )?.alternative;
+        const first = alternative?.commands[0];
+        if (first && alternative && alternative.mode !== 'enqueue') {
+          // Disposable native admission, just like menu preview: no effects or RNG are published.
+          const preview = executeCommand(original, {
+            ...first,
+            actorId: actor.id,
+            id: `${command.id}:preview`,
+          });
+          if (!preview.outcome.ok) return reject(preview.outcome.code, preview.outcome.message);
+        }
+        result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
+        // A refused acceptance leaves no partially installed plan behind.
+        if (!result.ok) return { world: original, events: [], outcome: result };
+        break;
+      }
+      case 'withdraw-attempt': {
+        result = withdrawAttempt(component, command.attemptId);
+        break;
+      }
+      case 'cancel': {
+        interruptStatusEffects(world, actor, events, 'voluntary');
+        if (component.action?.type === 'status-effect')
+          return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
+        if (component.action) {
+          endActivity(
+            world,
+            actor.id,
+            component.action.id,
+            outcome(false, 'cancelled', 'Stopped by choice; already committed effects remain.'),
+          );
+          releaseInvocationResources(world, component.action.id);
+        }
+        cancelPlan(world, component);
+        discardSuspended(component);
+        component.action = null;
+        component.planGeneration++;
+        result = outcome(
+          true,
+          'cancelled',
+          'Stopped. Materials already used in work remain consumed.',
+        );
+        break;
+      }
+      case 'recover': {
+        if (!canRecoverAtCamp(actor))
+          return reject(
+            'cannot-recover',
+            'Camp recovery is available when health or food is critically low.',
+          );
+        const recovery = world.participationPolicy?.safeReturnAnchor;
+        if (!recovery || !isWalkable(world, recovery, recovery.surfaceId, bodyProfile(actor)))
+          return reject('return-unavailable', 'The configured recovery location is unavailable.');
+        setSpatialPosition(world, actor, recovery, recovery.surfaceId);
+        delete actor.spatial.flight;
+        delete actor.spatial.fallVelocity;
+        setBodyHealth(component, Math.max(component.health, 65));
+        if (hasWildernessNeeds(component)) {
+          setWildernessNeed(component, 'fullness', Math.max(component.fullness, 45));
+          setWildernessNeed(component, 'energy', Math.max(component.energy, 65));
+        }
+        component.incapacitated = false;
+        component.alive = true;
+        interruptStatusEffects(world, actor, events, 'recovery');
+        if (component.action) releaseInvocationResources(world, component.action.id);
+        component.action = null;
+        component.planGeneration++;
+        reconcileBody(world, actor, events, 'camp-recovery');
+        emit(world, events, 'recovered', `${actor.name} recovered at camp.`, actor);
+        result = outcome(true, 'recovered', 'Recovered at camp.');
+        break;
+      }
+      case 'say': {
+        if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
+        if (
+          typeof command.text !== 'string' ||
+          command.text.trim().length < 1 ||
+          command.text.length > 1500
+        )
+          return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+        const volume = command.volume ?? 'normal';
+        if (!isSpeechVolume(volume))
+          return reject('invalid-volume', 'Choose whisper, normal or shout.');
+        const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
+        const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
+        if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
+          return reject('invalid-recipient', 'The intended recipient no longer exists.');
+        if (
+          command.targetId &&
+          (!target?.actor?.alive ||
+            !hasMemory(target) ||
+            capabilityBlocked(world, target, 'perception') ||
+            target.actor.incapacitated)
+        )
+          return reject('not-heard', 'The intended listener is unavailable.');
+        // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
+        // docs/hearing-and-speech.md#4-speech-volume-and-admission
+        emit(
+          world,
+          events,
+          'speech',
+          `${actor.name}: ${command.text.trim()}`,
+          actor,
+          command.targetId,
+          {
+            text: command.text.trim(),
+            ...(intendedRecipientId ? { intendedRecipientId } : {}),
+            ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+            utteranceId: command.id,
+            volume,
+            acousticPolicyId: world.moduleManifest.acoustics.id,
+            acousticPolicyVersion: world.moduleManifest.acoustics.version,
+            sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
+          },
+        );
+        result = outcome(true, 'spoken', 'Spoken.');
+        break;
+      }
+      case 'goal': {
+        if (typeof command.text !== 'string' || !command.text.trim() || command.text.length > 350)
+          return reject('invalid-goal', 'Goal must contain 1–350 characters.');
+        result = replaceGoals(
+          component,
+          [command.text.trim()],
+          command.id,
+          component.controller === 'player' ? 'player' : 'god',
+        );
+        if (!result.ok) return reject(result.code, result.message);
+        break;
+      }
+      case 'teach': {
+        if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
+        const target = getOwn(world.entities, command.targetId);
+        const recipe = getOwn(world.recipes, command.recipeId);
+        if (
+          !target?.actor?.alive ||
+          !hasMemory(target) ||
+          target.actor.incapacitated ||
+          !hearsEntity(world, target, actor)
+        )
+          return reject('not-heard', 'Teaching needs a nearby listener.');
+        if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
+          return reject('not-learned', 'You cannot teach a technique you do not know.');
+        const knowledge = world.knowledge[target.id] ?? (world.knowledge[target.id] = []);
+        if (!knowledge.some((record) => record.recipeId === recipe.id))
+          knowledge.push({
+            recipeId: recipe.id,
+            learnedAt: world.simTime,
+            source: 'taught',
+            evidenceId: command.id,
+          });
+        emit(
+          world,
+          events,
+          'taught',
+          `${actor.name} taught ${target.name} how to make ${recipe.name.toLowerCase()}.`,
+          actor,
+          target.id,
+          { recipeId: recipe.id },
+        );
+        result = outcome(true, 'taught', 'The listener learned this specific technique.');
+        break;
+      }
+      default:
+        return reject('unsupported', 'This command is not supported.');
     }
-    default:
-      return reject('unsupported', 'This command is not supported.');
-  }
   if (action) {
     if (experience) bindActivityAction(world, experience, action.id);
-    if (
-      ['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish', 'strike', 'pickup'].includes(
-        action.type,
-      ) ||
-      action.type === 'tend-fire'
-    ) {
-      // Scheduled-command setup records action/activity bookkeeping, not body or
-      // geometry changes. Route admission reads the unchanged input, avoiding draft copies
-      // and preserving immutable spatial-query reuse. Effects still use the draft.
-      // docs/architecture.md#action-discovery-and-player-preferences
-      const error = approach(original, source, action);
-      if (error) return { world: original, events: [], outcome: error };
-    }
     if (action.stage === 'working' && action.type !== 'follow') {
       const error = startWork(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
@@ -2343,6 +2517,7 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
     for (const target of sources) {
       const action = prepareReplenishment(world, actor, id, target.id);
       if ('ok' in action) continue;
+      action.id = nextId(world, 'action');
       if (approach(world, actor, action)) continue;
       component.action = action;
       component.planGeneration++;
@@ -2548,6 +2723,10 @@ function* advanceWorldNative(
     ? { ...continuation.mechanics }
     : undefined;
   let crossings = continuation ? copyCrossings(continuation.crossings) : crossingCache();
+  const discardMechanics = () => {
+    mechanics = undefined;
+    delete world.nativeInterval;
+  };
   // Regional rate integration (PF13.11): a slice that only moves bodies leaves unrelated
   // entities' captured linear rates pending. The shared prediction already stops at every
   // threshold, so no transition can fall due before the pending time is applied at the next
@@ -2569,7 +2748,7 @@ function* advanceWorldNative(
     const current = mechanics;
     if (!current || !ids.length) return;
     if (ids.some((id) => current.referenced.has(id) || current.reactiveActors.includes(id)))
-      mechanics = undefined;
+      discardMechanics();
     else for (const id of ids) (localChanges ??= new Set()).add(id);
   };
   while (
@@ -2580,7 +2759,7 @@ function* advanceWorldNative(
   ) {
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
-    if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) mechanics = undefined;
+    if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) discardMechanics();
     if (!mechanics) yield* materialize();
     // Observers able to perceive before this start boundary's reconciliation and commands.
     // A change retires or resumes evidence at this instant, not at the slice end (PF13.16).
@@ -2646,7 +2825,7 @@ function* advanceWorldNative(
             };
         participants = nativeParticipants(transition.world);
         world = draftWorld(transition.world);
-        mechanics = undefined;
+        discardMechanics();
         events.push(...transition.events);
         actor = world.entities[actorId]!;
         component = actor.actor!;
@@ -2676,12 +2855,11 @@ function* advanceWorldNative(
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
       )
-        mechanics = undefined;
+        discardMechanics();
       // Work begun here starts silently; the next prediction must bound its completion.
-      if (priorStage === 'approaching' && component.action?.stage === 'working')
-        mechanics = undefined;
+      if (priorStage === 'approaching' && component.action?.stage === 'working') discardMechanics();
     }
-    if (world.nextId !== beforeDecisions) mechanics = undefined;
+    if (world.nextId !== beforeDecisions) discardMechanics();
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
     const trackOccupancy = (e: Entity) => occupancy?.update(e);
@@ -2721,7 +2899,7 @@ function* advanceWorldNative(
       mechanicalRevision(world) !== beforeState ||
       afterFlight - beforeStartEvents !== takeoffs.length
     )
-      mechanics = undefined;
+      discardMechanics();
     else localize(takeoffs);
     // Nested commands can replace entities or status attributes. Reuse the speech branch's
     // conservative roster helper; never retain revoked draft references across that boundary.
@@ -2735,7 +2913,7 @@ function* advanceWorldNative(
           reconcileStatusEffects(world, world.entities[id]!, events);
     }
     if (events.length !== afterFlight || mechanicalRevision(world) !== beforeState)
-      mechanics = undefined;
+      discardMechanics();
     if (perceiving !== undefined && perceivers() !== perceiving) {
       yield* updateEncounters(world, before, events, participants.actors);
       before = snapshotEncounters(world);
@@ -2762,7 +2940,7 @@ function* advanceWorldNative(
     localChanges = undefined;
     if (!mechanics) {
       yield* materialize();
-      crossings = crossingCache();
+      reconcileCrossings(world, participants.actors, participants.ambient, crossings);
       const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
       const travelFor = motionTravelBounds(
         world,
@@ -2799,9 +2977,14 @@ function* advanceWorldNative(
               })))
         );
       });
+      // Restore sampling progress, not stale rates. A newly derived earlier bound wins;
+      // only the retained remainder can carry its own exact ending clock value.
+      // docs/simulation-time.md#native-interval-contract
+      const savedInterval = world.nativeInterval;
+      const retainEnd = savedInterval && savedInterval.remainingSeconds < interval.seconds;
       mechanics = {
-        remainingSeconds: interval.seconds,
-        endsAt: interval.endsAt,
+        remainingSeconds: Math.min(interval.seconds, savedInterval?.remainingSeconds ?? Infinity),
+        endsAt: retainEnd ? savedInterval.endsAt : interval.endsAt,
         interval,
         status,
         travelFor,
@@ -2815,6 +2998,7 @@ function* advanceWorldNative(
           ),
         referenced: crossStatusReferences(world, statusIds, status),
       };
+      delete world.nativeInterval;
     }
     const { travelFor } = mechanics;
     let seconds = sensoryCrossingBound(
@@ -2986,7 +3170,7 @@ function* advanceWorldNative(
       intervals++;
       slicesSinceBoundary = 0;
     }
-    if (sharedBoundary || fleeEnded || startedWork) mechanics = undefined;
+    if (sharedBoundary || fleeEnded || startedWork) discardMechanics();
     else localize(flightSources);
     yield* updateEncounters(world, before, events, participants.actors);
     advanceCommitments(world, events);
@@ -2998,7 +3182,7 @@ function* advanceWorldNative(
       if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
         const revision = plan.revision;
         readyPlanStep(world, id);
-        if (plan.revision !== revision) mechanics = undefined;
+        if (plan.revision !== revision) discardMechanics();
       }
     }
     if (remaining > 0 && intervals < maxIntervals && motionSlices < 4096) {
@@ -3010,6 +3194,12 @@ function* advanceWorldNative(
   // local re-prediction travels with the continuation, so where a call ends cannot move
   // later interval ends.
   yield* materialize();
+  if (mechanics && mechanics.remainingSeconds > TIME_EPSILON)
+    world.nativeInterval = {
+      remainingSeconds: mechanics.remainingSeconds,
+      ...(mechanics.endsAt === undefined ? {} : { endsAt: mechanics.endsAt }),
+    };
+  else delete world.nativeInterval;
   const result = finish(
     world,
     events,
@@ -3029,6 +3219,14 @@ function* advanceWorldNative(
 }
 
 const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
+/** Loss retires exactly the active bindings; the empty mapping keeps its existing meaning. */
+function retirePerceptionEpisodes(world: WorldState, actorId: string): void {
+  const ids = Object.keys(world.perceptionEpisodes?.[actorId] ?? {});
+  if (!ids.length) return;
+  const episodes = world.perceptionEpisodes![actorId]!;
+  for (const id of ids) delete episodes[id];
+  countDomainWork('episodeBindingsDeleted', ids.length);
+}
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function* updateEncounters(
   world: WorldState,
@@ -3043,8 +3241,7 @@ function* updateEncounters(
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
-    if (Object.keys(world.perceptionEpisodes?.[id] ?? {}).length)
-      world.perceptionEpisodes![id] = {};
+    retirePerceptionEpisodes(world, id);
     if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
       observer.actor.contacts = {};
   }
@@ -3123,8 +3320,7 @@ function* updateEncounters(
     if (radius === 0 || blocked) {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
-      if (Object.keys(world.perceptionEpisodes?.[actor.id] ?? {}).length)
-        world.perceptionEpisodes![actor.id] = {};
+      retirePerceptionEpisodes(world, actor.id);
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
@@ -3178,17 +3374,21 @@ function* updateEncounters(
       : undefined;
     if (certified?.people !== seen || certified.objects !== objectIds) {
       const exposed = [...seen, ...objectIds];
-      if (
-        exposed.length !== Object.keys(priorEpisodes).length ||
-        exposed.some((id) => !priorEpisodes[id])
-      )
-        (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-          exposed.map((id) => [
-            id,
-            priorEpisodes[id] ?? lingering(id) ?? perceptionEpisodeId(world, id),
-          ]),
-        );
-      else if (Object.isFrozen(priorEpisodes))
+      const membership = new Set(exposed);
+      const removed = Object.keys(priorEpisodes).filter((id) => !membership.has(id));
+      const added = exposed.filter((id) => !priorEpisodes[id]);
+      if (removed.length || added.length) {
+        // Compare immutable membership before obtaining the draft. Continuing bindings are
+        // neither reconstructed nor reassigned. New identities retain exposed-array order.
+        // docs/projects/next-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
+        const episodes = ((world.perceptionEpisodes ??= {})[actor.id] ??= {});
+        for (const id of removed) delete episodes[id];
+        for (const id of added)
+          episodes[id] = priorEpisodes[id] ?? lingering(id) ?? perceptionEpisodeId(world, id);
+        countDomainWork('episodeBindingsAssigned', added.length);
+        countDomainWork('episodeBindingsInserted', added.length);
+        countDomainWork('episodeBindingsDeleted', removed.length);
+      } else if (Object.isFrozen(priorEpisodes))
         episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
     }
     const previouslySeen = samePeople ? null : new Set(previous);

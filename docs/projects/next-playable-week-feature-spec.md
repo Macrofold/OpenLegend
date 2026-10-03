@@ -1,6 +1,6 @@
 # Next playable week — feature specification
 
-**Status: proposed, not implemented or approved for implementation by this document.** Prepared on October 2, 2026 against local `main` / refreshed `origin/main` at `6664144a`. The expanded allocation is **five AI-assisted engineers × 80 hours = 400 engineer-hours** over the requested week: 312 hours of scoped delivery, including focused checks, and 88 hours of shared integration, review and qualification. This supersedes the original 200-hour allocation. Estimates assume repository familiarity; no fixed AI speed multiplier or guaranteed completion time is asserted.
+**Status: implementation authorized in chat; delivery in progress.** The original proposal was prepared on October 2, 2026 against local `main` / refreshed `origin/main` at `6664144a`; assigned implementation worktrees inherit planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`. Branch evidence and combined acceptance remain separate in the delivery tracker. The expanded allocation is **five AI-assisted engineers × 80 hours = 400 engineer-hours** over the requested week: 312 hours of scoped delivery, including focused checks, and 88 hours of shared integration, review and qualification. This supersedes the original 200-hour allocation. Estimates assume repository familiarity; no fixed AI speed multiplier or guaranteed completion time is asserted.
 
 [Technical design](next-playable-week-tech-design.md) · [Assignments and completion tracking](../maintainers/next-playable-week.md)
 

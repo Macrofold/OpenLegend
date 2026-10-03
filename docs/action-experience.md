@@ -47,11 +47,15 @@ Acquisitions remain tentative; success once is not calibrated confidence. Only p
 
 Each ready step passes through the existing kernel and its current authority, access, range and resource checks. Outputs bind only when actually committed. A completed step is not replayed on continuation or same-version restore. Failed native steps require a new choice; an explicitly blocked control may be reconsidered with current bindings. Unknown predicates stop honestly. Another actor's response or cooperation cannot be executed as the learner's action.
 
+Selecting a plan checks only its next action through the same read-only native prerequisite owner used by execution. Later equipment and typed earlier-output dependencies remain deferred until their step starts; selection neither consumes materials nor promises success. Inspected learned-method pages and their continuations survive a feasibility refresh only for the same actor, inspection and timeline. Current bindings are rebuilt; revoked methods disappear and a changed catalogue offers fresh inspection rather than reusing a stale continuation.
+
 Own action history and personally learned activities are available through explicit cognition inspection and the existing private-mind UI, with separate history/method pages. The private panel reports whether learning is pending, including its need for safe idle time, storage and an authorized model budget. The server rechecks actor/account/timeline scope around asynchronous reads. Creator inspection cannot access another human's private mind. Ordinary public views never publish private action history or other actors' acquisitions.
 
 ## Storage and extension boundary
 
 Occurrences, methods, acquisitions and learning cursors use the existing PostgreSQL record repository and saved-world transaction. Cold completed history is paged independently of the small native plan window. Current-format manual saves include active control frames, actual output bindings and private evidence. Incompatible development saves are explicitly rejected under the unchanged [development save policy](../AGENTS.md#development-save-policy); no migration or automatic reset was added.
+
+Recorded commands are plain snapshots owned by action history, including commands dispatched from a learned plan step. A temporary editing reference cannot escape into a committed occurrence. [PW01 evidence](verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026) covers the repaired clone failure, validated learned execution and current-format checkpoint restore.
 
 The engine owns representation, finite execution, provenance, projection coverage and sharing integrity. The bundled world owns hunting labels, animal-health disclosure, weapon/food/fire mechanics and safe-downtime eligibility. Future native families can supply permitted facts and actual effects without changing the English grammar or adding arbitrary executable extensions.
 

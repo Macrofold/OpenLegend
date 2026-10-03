@@ -282,6 +282,10 @@ These pending checks directly define cognition completion and were moved from th
 
 ### Individual memory perspective
 
+PW01's [branch evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026) now qualifies native self/recognized/unknown speech wording, exact quoted words and the real director's promise/commitment context. Its pricing and interrupted-root checks also cover the selected CR02/CR12 recovery/accounting follow-ups. The broader prose, lifecycle and browser acceptance below remains open.
+
+The selected CR12 stale-food caller now rejects the action before creating a plan, preserving other valid components. The real director also selects exact transfers and a later inspected learned page after feasibility refresh; current clone/checkpoint evidence covers its recorded command. Those are branch plumbing checks, with actual model behavior and PW06 integration still separate.
+
 - [ ] Add/run regression coverage for owner versus observer wording, named Mike identity, heard testimony, exact quoted dialogue, object/possessive references, repeated same-version restore, promise attribution, retained source tags and consolidation/reflection outputs. Run static/full checks when requested.
 - [ ] Reconcile architecture, domain/extension guidance and implementation status with actor-perspective storage and named character identity; review related memory documents and links. Validate varied retained free prose and model-authored summaries/reflections before claiming universal first-person compliance.
 - [ ] Verify a current-format local save after server restart: Mike's displayed name, Ada's source-attributed memories, persistence and scoped embedding/workspace refresh. Do not claim running-save or paid-model acceptance from isolated native execution; no incompatible-save conversion is requested.

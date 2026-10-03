@@ -12,6 +12,8 @@ Behavior belongs to [Agent agency](../agent-agency.md); the operational contract
 
 The native agency slice builds on module concerns and the existing single-action executor. See [Architecture](../architecture.md#actor-agency-foundation) for delivered behavior and [Verification](../verification/actor-agency-and-inventions.md#actor-agency-runtime) for actual evidence. Partial items below are not a claim of complete AG acceptance.
 
+PW01's [branch caller evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026) repairs first-action admission under AG03/AG04, exact selected-transfer dispatch and inspected learned-page refresh under AG06. It preserves independent speech, typed future outputs, actual outcomes and replay protection; learned execution also snapshots its recorded command for clone/checkpoint integrity. These repairs do not close the broader result-reference, context, live behavioral or integrated acceptance below.
+
 ## Ownership and delivery order
 
 AG owns the new decision envelope, operational goal/plan state, native continuation and actor-side integration. INV owns invention request policy, actor-method clarification/translation, definition admission, activation and mechanical family growth. EPR owns stimulus scope, perception-change identity and reaction intake; NC owns conversations, narration integration and expressive-impact behavior. CR owns the existing memory/attention/reflection substrate; CH owns an optional tool-using planning harness. A useful native plan does not depend on building CH01.

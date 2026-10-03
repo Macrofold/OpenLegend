@@ -441,6 +441,12 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
           rate: (description) => noul(description.startsWith('Continue the follow') ? 0.9 : 0.1),
         }),
     });
+    // This fixture measures Ada's repeated opportunity, with other residents outside its scope.
+    await editWorld(h.service, (world) => {
+      for (const entity of Object.values(world.entities))
+        if (entity.actor?.controller === 'npc' && entity.id !== NPC_ID)
+          entity.actor.controller = 'native';
+    });
     expect(
       (await h.service.command('fixture-follow', { type: 'follow', targetId: PLAYER_ID }, NPC_ID))
         .ok,
@@ -908,23 +914,14 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const [job] = jobs;
     expect(request.requestId).toBe(`${job!.id}${ROUTE}`);
     expect(job?.result).toMatchObject({ level1: { kind: 'act', rating: 0.9 } });
-    // Admission only queues the stale command; native execution revalidates and rejects it.
+    // The current native prerequisites reject the stale choice before it joins a plan.
     expect(h.service.world.responseReceipts?.[job!.id]?.components['action']).toMatchObject({
-      ok: true,
-      code: 'queued',
+      ok: false,
+      code: 'not-edible',
     });
     await h.service.tick(0.1);
     await h.director.idle();
-    expect(h.ada().agency.plan).toMatchObject({
-      status: 'blocked',
-      steps: [
-        {
-          command: expect.objectContaining({ type: 'eat', itemId: 'fixture-berries' }),
-          status: 'blocked',
-          outcome: { ok: false, code: 'not-edible' },
-        },
-      ],
-    });
+    expect(h.ada().agency.plan).toBeNull();
     expect(h.ada().fullness).toBeLessThanOrEqual(fullness);
     expect(h.berries()).toBe(0);
     const dropped = itemFor(h.service.world, 'fixture-berries');

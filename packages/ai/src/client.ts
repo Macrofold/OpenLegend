@@ -9,7 +9,7 @@ import {
   validateQuestions,
   validateJudgmentSize,
 } from './validation.js';
-import { estimateCostUsd } from './usage.js';
+import { estimateCostUsd, modelTokenPrices } from './usage.js';
 import type {
   AiClient,
   AiClientConfig,
@@ -118,13 +118,30 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
   const maxOutputTokens = limit(config.maxOutputTokens, 2048, 16_384);
   const fetcher = config.fetch ?? ((url: string, init: RequestInit) => fetch(url, init));
   // Capture server configuration; later caller mutation must not change an admitted request.
+  const capture = <T extends ProviderConfig>(provider: 'jev' | 'openai', options: T | undefined) =>
+    options
+      ? Object.freeze({
+          ...options,
+          prices: options.prices ? Object.freeze({ ...options.prices }) : undefined,
+          modelPrices: Object.freeze(
+            (
+              options.modelPrices ??
+              (options.prices
+                ? [{ model: options.model ?? DEFAULTS[provider].model, prices: options.prices }]
+                : [])
+            ).map((entry) =>
+              Object.freeze({
+                model: entry.model,
+                prices: Object.freeze({ ...entry.prices }),
+                reportedAliases: Object.freeze([...(entry.reportedAliases ?? [])]),
+              }),
+            ),
+          ),
+        })
+      : undefined;
   const providerConfigs = {
-    jev: config.jev
-      ? { ...config.jev, prices: config.jev.prices ? { ...config.jev.prices } : undefined }
-      : undefined,
-    openai: config.openai
-      ? { ...config.openai, prices: config.openai.prices ? { ...config.openai.prices } : undefined }
-      : undefined,
+    jev: capture('jev', config.jev),
+    openai: capture('openai', config.openai),
   };
 
   async function run<T>(
@@ -261,7 +278,11 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
             receipt.usage = usage;
             const cost = estimateCostUsd(
               usage,
-              model === (options.model ?? DEFAULTS[provider].model) ? options.prices : undefined,
+              modelTokenPrices(
+                options.modelPrices ?? [],
+                model,
+                data.model === undefined ? model : typeof data.model === 'string' ? data.model : '',
+              ),
             );
             if (cost !== undefined) receipt.estimatedCostUsd = cost;
           }
