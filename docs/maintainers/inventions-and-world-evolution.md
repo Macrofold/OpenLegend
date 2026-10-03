@@ -168,6 +168,8 @@ Coordinate module/save integration with [EWF07](extensible-world-foundation.md#e
 
 ### INV-6 — Composable materials, assemblies and passive world processes
 
+**Proposed product detail for 6.4:** [Editable shelters, rain and home use](../projects/editable-shelters-feature-spec.md) develops ND07/narrow ND08 with persistent parts, supported local failure, coverage, staged moisture/drying, home use and SH-J acceptance. [SH limits](../limits/editable-shelters.md) record scope. These proposals preserve object/spatial/state owners and do not complete technical design, implementation or broader combustion.
+
 Proposed [NP03](next-priority-batch.md#np03--craft-with-an-invented-material) selects one positive generated-material producer/consumer proof: invented cordage into the woven-container binding role. The [scoped technical design](../projects/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) also serves the remaining INV-3.5/EWF09 composition child. Existing family registration is delivered; arbitrary recursive inputs and broader INV-6 behavior remain open.
 
 **Depends on:** INV-3 and INV-5. **Unlocks:** reusable physical interactions rather than more isolated item recipes.

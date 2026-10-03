@@ -103,6 +103,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select the first part/layout representation and define supports, coverage, usable interior space, household occupancy and staged work. Detail adding/replacing/removing parts, continuing a dwelling's identity, consumed materials, damage and changes to navigation and protection. Resolve which structural behavior is modeled versus deliberately unsupported, then create a small construction project beneath INV/SW/PO rather than adopting every architectural example.
 
+**October 3 product proposal:** [Editable shelters, rain and home use](../projects/editable-shelters-feature-spec.md) develops a light modular family, part reuse, support failure, coverage, renovation, reachable use and continuing home identity with cited research and SH-J cases. [SH limits](../limits/editable-shelters.md) retain its proposed scope. Technical design and INV-6.4 delivery remain open.
+
 ### ND08 — Material, weather, heat and fire interactions beyond campfires
 
 **Needs scoped design under INV-6.** Sources: [evolvable material properties](../../archive/03-design-proposals/evolving-materials-and-construction.md#properties-state-and-behavior), [heat and fire](../../archive/03-design-proposals/heat-and-fire.md), and [state systems and future influences](../../archive/03-design-proposals/state-systems-and-future-influences.md).
@@ -110,6 +112,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [BW19 campfire care](base-world.md#bw19--camp-fire-care) and [state contributions](state-contributions.md) are delivered foundations; INV-6 retains broader materials, thermal behavior and inactive anticipated influences. The detailed thermal exploration is explicitly not a first-release checklist.
 
 **Needed before an implementation project:** choose a coarse useful model for moisture, exposure, heating, ignition, fuel, local spread and damage. Preserve the source's comparison: the same brief ignition source can ignite a selected dry twig without igniting a substantial wooden wall section; wet/dry conditions are an additional variation. Specify extinguishing, geometry changes, shared material/state ownership, bounded neighborhoods, time integration and dormant dependencies without recursively generating every possible weather system. Coordinate the first shelter consumer with ND07 and applicable background-resolution rules.
+
+**Narrow October 3 proposal:** the [shelter specification](../projects/editable-shelters-feature-spec.md) selects vertical rain, persistent moisture and a separately staged ambient-drying/dry-tinder loop. It does not complete broader heat, ignition, spread, wind, runoff or damage design, and it does not change current campfire behavior before that consumer is qualified.
 
 ### ND09 — Negotiated barter, currency and durable commercial promises inside a world
 

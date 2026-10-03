@@ -4,6 +4,8 @@
 
 Implementation was approved in chat on September 26, 2026; the [foundation plan](../projects/foundations-1-5.md#approved-implementation-plan) records scope, refreshed base and DF02 branch seams. Retain current receipts and semantic owners. Each new state owner must join SL00 in its introducing slice.
 
+**Proposed construction consumer:** [Editable shelters](../projects/editable-shelters-feature-spec.md) uses these identity, custody, finite-resource and lineage foundations for reusable coverings, staged work and salvage. Delivery remains under INV-6.4 with SW/SC; the product proposal does not reopen completed PO foundation tasks or claim modular construction is delivered.
+
 ## Execution notes — September 26, 2026
 
 The approved finite object implementation and native/database/browser qualification are complete.

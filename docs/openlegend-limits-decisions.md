@@ -30,6 +30,8 @@ Product-scalability targets: [PS-L01–PS-L22](limits/product-scalability.md) re
 
 Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC-L05](limits/world-creation.md) inventory the local starting scope, unqualified reference population, supported families and preparation boundaries. ND01, INV-4.10 and EWF12 retain delivery routing; shared invention and participation limits remain controlling.
 
+Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L06](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, work growth and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).
