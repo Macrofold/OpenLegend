@@ -1,7 +1,7 @@
 # Continuing NPC lives — product and behavior specification
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | Product proposals now link the integrated character design and full-flow requirements; technical design and runtime delivery remain open. | 2026-10-03   |
 
 **Status: proposed detailed behavior, October 3, 2026.** This specification expands the accepted continuing-world direction into a reviewable product proposal. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. Technical design is deferred at Mike's request.

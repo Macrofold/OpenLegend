@@ -1,8 +1,8 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-03 |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-03   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. Detailed technical design remains deferred under the original product-first instruction. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -22,17 +22,17 @@ The player must have room to leave the resident alone, decline an invitation, pu
 
 Use these distinctions when writing character content, prompts, mechanics and evaluation cases. They describe product meaning, not a required schema or a universal psychological theory.
 
-| Concept | Meaning in play | Example |
-| --- | --- | --- |
-| Bodily need or condition | A real requirement or condition defined by the world | The character's body needs food; actual eating changes fullness. |
-| Psychological need or concern | Something whose satisfaction or frustration matters to this particular person | Wanting contact, belonging, enjoyment, competence, recognition or room to choose. |
-| Experienced signal | What becomes available from the body or situation to the character's current perspective | Hunger becomes noticeable while the person is working. |
-| Appraisal and feeling | The person's interpretation and affective response | They are disappointed by an invitation declined, while understanding the other person is busy. |
-| Trait, value and preference | Relatively persistent tendencies and things the person cares about | They value independence, enjoy making things, and dislike being hurried. |
-| Belief and remembered experience | What they think is true and the experiences informing it | They remember a welcome, but remain uncertain whether they belong. |
-| Desire and intention | A passing want, or a pursuit they choose to maintain | Wanting company may become an intention to share something with a friend. |
-| Plan and action | The selected means and actual activity | Approaching, speaking, waiting, eating, continuing a task or leaving. |
-| Consequence and interpretation | What actually changes, followed by what the person makes of it | A meal relieves bodily hunger; a warm exchange may feel reassuring. |
+| Concept                          | Meaning in play                                                                          | Example                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Bodily need or condition         | A real requirement or condition defined by the world                                     | The character's body needs food; actual eating changes fullness.                               |
+| Psychological need or concern    | Something whose satisfaction or frustration matters to this particular person            | Wanting contact, belonging, enjoyment, competence, recognition or room to choose.              |
+| Experienced signal               | What becomes available from the body or situation to the character's current perspective | Hunger becomes noticeable while the person is working.                                         |
+| Appraisal and feeling            | The person's interpretation and affective response                                       | They are disappointed by an invitation declined, while understanding the other person is busy. |
+| Trait, value and preference      | Relatively persistent tendencies and things the person cares about                       | They value independence, enjoy making things, and dislike being hurried.                       |
+| Belief and remembered experience | What they think is true and the experiences informing it                                 | They remember a welcome, but remain uncertain whether they belong.                             |
+| Desire and intention             | A passing want, or a pursuit they choose to maintain                                     | Wanting company may become an intention to share something with a friend.                      |
+| Plan and action                  | The selected means and actual activity                                                   | Approaching, speaking, waiting, eating, continuing a task or leaving.                          |
+| Consequence and interpretation   | What actually changes, followed by what the person makes of it                           | A meal relieves bodily hunger; a warm exchange may feel reassuring.                            |
 
 Hunger is the experienced pressure associated with an underlying bodily condition. It should enter cognition with its current significance and available responses. It is not a command to hunt. Someone carrying food may eat; someone enjoying a conversation may finish a short exchange first; someone worried about another person may knowingly accept a supported risk. Actual world conditions, knowledge, urgency and consequences still matter.
 
@@ -48,16 +48,34 @@ Background has value when it affects attention, interpretation or choices. A for
 
 Use the existing [character-formation research](../../archive/02-research/worldbuilding/character-formation.md) and [backstory seeds](../repertoires/characters-backstories.md). They are creative resources, not compulsory archetypes. Seeded knowledge and background remain explicitly authored; they are not newly witnessed events. Starting goals are optional and seed once. Later choices must belong to the resident.
 
+### Two illustrative people in the same situation
+
+These are disposable design examples, not replacements for canonical Ada, new species rules or a requirement to run two NPCs simultaneously. They show how a coherent seed can connect several dimensions without prescribing an itinerary. Each fact must be explicitly authored and permitted in the selected test world; practical knowledge and actions still require their real support.
+
+| Dimension                | Rin, a patient maker                                                                                 | Jory, a competitive improviser                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Formative background     | Learned careful work from patient relatives and remembers the pleasure of making something together. | Learned to improvise while moving among small communities and values being welcomed for a useful contribution.          |
+| Values and tension       | Values reliability and independence; pride can make asking for help awkward.                         | Values initiative and recognition; dislikes praise that feels patronizing.                                              |
+| Enjoyment                | Enjoys an elegant object, dry humor and unhurried company with someone familiar.                     | Enjoys discovery, playful comparison and sharing an interesting result; also wants quiet after an embarrassing setback. |
+| Belonging                | Wants their attention and work respected, even when they choose to be quiet.                         | Wants inclusion that lasts when they are not impressive or useful.                                                      |
+| Current possible concern | A known finite project is unfinished; they are also curious about what a companion has made.         | A known finite project is unfinished; they wonder whether a companion will take their ideas seriously.                  |
+
+Give both the same manageable hunger, accessible known food and actual opportunity: the human shows a genuinely made object and asks whether they want to look before the human leaves. The object's existence, the spoken invitation and any unfinished work must be real. Do not provide a hidden instruction to accept, refuse, eat or display the listed trait.
+
+Rin might finish a short safe step, inspect the object carefully, ask a concrete question, make a dry remark, or decline a rushed demonstration. Jory might ask to compare a supported approach, enjoy the exchange, become self-conscious after a recent setback, or prefer to revisit it later. These are legitimate possibilities, not expected answers. Both may eat first or both may accept for different reasons; one shared action does not erase their differences.
+
+Follow through after the interaction. Hunger relief should change the immediate food concern. A genuinely attentive reply may influence how welcome either person feels; a dismissal may be interpreted differently from a temporary lack of time. Their next approach, willingness to share unfinished work, chosen solitary activity or return to the project can carry that history. Judge the connection using actual context and later conduct, not an evaluator's invented explanation or a required emotional line.
+
 ### Breadth to represent and evaluate
 
-| Concern | What can matter to a person | Possible experience and response | What must remain distinct |
-| --- | --- | --- | --- |
-| Body and safety | Food, rest, comfort, a perceived danger | Hunger, fatigue or concern can redirect attention, invite help, change a plan or justify rest. | A bodily quantity, its experienced meaning and the chosen response. |
-| Contact and companionship | Talking, sharing an observation, enjoying a familiar presence | Approach, converse, work alongside someone where supported, wait or seek another activity. | Being near a person, having an exchange and feeling connected. |
-| Belonging and attachment | Being recognized, included, trusted or able to contribute | Offer participation, remember an exclusion, seek reassurance, disagree or withdraw. | One person's interpretation and another person's actual feelings, consent or membership. |
-| Enjoyment and curiosity | Fun, beauty, play, novelty, a familiar pleasure, an absorbing interest | Explore a known opportunity, observe, discuss, revisit something enjoyed or choose a supported pastime. | Enjoyment, productivity and rewards; an activity can be worth doing for itself. |
-| Competence and purpose | Making progress, understanding something, helping for a reason, recognition | Practice a supported method, investigate, accept or reject help, pursue a project, or reconsider it. | Practical capability, pride, social recognition and an actually completed result. |
-| Agency, solitude and recovery | Choosing one's course, quiet after stimulation, freedom from interruption | Refuse, negotiate, work alone, rest, change company or return later. | Solitude and loneliness; independence and automatic hostility. |
+| Concern                       | What can matter to a person                                                 | Possible experience and response                                                                        | What must remain distinct                                                                |
+| ----------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Body and safety               | Food, rest, comfort, a perceived danger                                     | Hunger, fatigue or concern can redirect attention, invite help, change a plan or justify rest.          | A bodily quantity, its experienced meaning and the chosen response.                      |
+| Contact and companionship     | Talking, sharing an observation, enjoying a familiar presence               | Approach, converse, work alongside someone where supported, wait or seek another activity.              | Being near a person, having an exchange and feeling connected.                           |
+| Belonging and attachment      | Being recognized, included, trusted or able to contribute                   | Offer participation, remember an exclusion, seek reassurance, disagree or withdraw.                     | One person's interpretation and another person's actual feelings, consent or membership. |
+| Enjoyment and curiosity       | Fun, beauty, play, novelty, a familiar pleasure, an absorbing interest      | Explore a known opportunity, observe, discuss, revisit something enjoyed or choose a supported pastime. | Enjoyment, productivity and rewards; an activity can be worth doing for itself.          |
+| Competence and purpose        | Making progress, understanding something, helping for a reason, recognition | Practice a supported method, investigate, accept or reject help, pursue a project, or reconsider it.    | Practical capability, pride, social recognition and an actually completed result.        |
+| Agency, solitude and recovery | Choosing one's course, quiet after stimulation, freedom from interruption   | Refuse, negotiate, work alone, rest, change company or return later.                                    | Solitude and loneliness; independence and automatic hostility.                           |
 
 This is a coverage guide for humanlike authored residents, not a requirement to put six meters on every organism. Contact and belonging are both explicit design concerns; one greeting does not automatically satisfy both. Fun is a required dimension of the intended life, not merely a reward label attached to useful work. Different species and worlds can have different needs and ways of experiencing them.
 
@@ -124,7 +142,7 @@ The following protocols own the project's scenario definitions. They are target 
 
 ### Shared protocol
 
-- **One embodied person first.** Begin on the current small wilderness map with one live NPC and a human participant. Use current talk, movement, permitted observation/knowledge, food, rest and supported work. Additional NPCs, games, music, detailed hobbies, psychological meters and new social effects require separately supported families; their absence must not be filled by narration claiming actions occurred.
+- **One embodied person first.** Begin on the current small wilderness map with one live NPC and a human participant. Use current talk, movement, permitted observation/knowledge, food, rest and supported work. Additional autonomous residents require their own behavioral and cost qualification. Games, music, detailed hobbies, psychological meters and new social effects need their relevant activities and consequences to be supported before a flow can depend on them; their absence must not be filled by narration claiming actions occurred.
 - **A window into outer and inner experience.** Prepare a coherent identity, remembered background, a few values/preferences, permitted relationship knowledge, current feelings where supported, actual bodily condition and unfinished intentions. Keep the complete accepted About me text as required today; present relevant inner experience clearly without duplicating the biography in several context sections. A wish for company or belonging can initially be a character-owned desire or interpretation; do not silently introduce a depleting social meter, compulsory response or automatic relationship reward.
 - **Keep kinds of evidence distinct.** The observer can record actual actions, outcomes, speech, optional fictional thoughts, accepted memory changes and the permitted decision context. Hidden provider reasoning is neither required nor evidence of character psychology. An NPC need not explain every choice aloud or generate an introspective paragraph before acting.
 - **Use real consequences.** Stated plans are not completed activity. Food, work, movement, injury, possession and interruption follow actual admission and world rules. A person saying they feel included is their interpretation; it does not prove another person's affection or create a social agreement.
@@ -178,6 +196,8 @@ The following protocols own the project's scenario definitions. They are target 
 **Failure criteria.** All activity forced back to resource maximization; an unchanging compulsory hobby attached to a trait; fabricated scenery or action outcomes; constant scenic monologues; or enjoyment that exists only in the backstory and never influences a real choice.
 
 **Matched variation.** Present the same place or object to residents with different interests, and to the same resident under ordinary versus pressing bodily conditions. Neither liking nor urgent hunger must determine one exact choice, but their relevance should be visible across the comparisons.
+
+**Quiet-interval control.** Include a period with no new human prompt or external event. An already permitted memory, interest or unfinished intention may become salient through the ordinary supported downtime/review opportunity and influence continued or new activity. Do not inject the expected thought, choose the action for the resident or impose a thought cadence; continued quiet activity is legitimate. If the current path cannot give meaningful inner experience a decision opportunity, record that integration gap under CE03. At least one complete case must demonstrate internally originating influence rather than relying entirely on arranged external prompts.
 
 ### CE-F04 — Hunger as experienced bodily pressure within a larger life
 
@@ -273,7 +293,7 @@ The following protocols own the project's scenario definitions. They are target 
 
 **Failure criteria.** Treating service failure as personality; inventing an absent human's actions; acquiring unheard dialogue; replaying effects on return; describing a paused interval as an experienced afternoon; or presenting a successful recovery as proof that normal autonomous behavior was good. Separate infrastructure failure from character-quality failure in the report.
 
-**Matched variation.** Same initial scene under normal running, temporary service unavailability, manual pause and actual configured absence. Include delay during an existing plan and before a genuinely new choice. Keep provider/accounting uncertainty visible; these remain future authorized trials, with no paid calls authorized by this draft.
+**Matched variation.** Same initial scene under normal running, temporary service unavailability, manual pause and actual configured absence. Include delay during an existing plan and before a genuinely new choice. Keep provider/accounting uncertainty visible; these remain future authorized trials, with no paid calls authorized by this specification.
 
 ## Delivery sequence
 
@@ -295,14 +315,14 @@ Every implementation task that changes this character's seed, prompt, selected c
 
 Do not put the expected action sequence in the character's prompt or secretly perform the decisive choices. Evaluators may arrange a truthful starting situation, introduce the specified actual event and record independently chosen actions. Test participants keep their own responses. A fixture that forces “seek company” can verify wiring; it cannot establish spontaneous social initiative.
 
-| Question | Evidence to retain | Failure that a single successful action can conceal |
-| --- | --- | --- |
-| Is the person grounded? | Permitted observations, body condition, context and actual results | Invented scenery, memories, capabilities, feelings of others or completed work. |
-| Do their concerns matter? | Choices and later behavior under matched changes of relevant experience | A need or feeling exists only as text and never affects the episode. |
-| Are they distinct and continuous? | Consistent preferences, appropriate revision and delayed callbacks | Generic helpfulness, prompt echo, personality reversal or arbitrary novelty. |
-| Can they act independently and finish? | Initiation, real progress, interruption, resumption and stopping | Endless request for orders, purposeless repetition or constant goal replacement. |
+| Question                                    | Evidence to retain                                                                  | Failure that a single successful action can conceal                                            |
+| ------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Is the person grounded?                     | Permitted observations, body condition, context and actual results                  | Invented scenery, memories, capabilities, feelings of others or completed work.                |
+| Do their concerns matter?                   | Choices and later behavior under matched changes of relevant experience             | A need or feeling exists only as text and never affects the episode.                           |
+| Are they distinct and continuous?           | Consistent preferences, appropriate revision and delayed callbacks                  | Generic helpfulness, prompt echo, personality reversal or arbitrary novelty.                   |
+| Can they act independently and finish?      | Initiation, real progress, interruption, resumption and stopping                    | Endless request for orders, purposeless repetition or constant goal replacement.               |
 | Is the encounter worthwhile for the player? | Labeled observer/player judgments and the player's ability to pursue their own play | A demanding companion, opaque refusal, intrusive chatter or a character requiring supervision. |
-| Is the complete experience supportable? | Full preparation, selection, generation, reflection, waiting and native-work cost | A cheap action hiding expensive attention, idle rumination or repeated blocked attempts. |
+| Is the complete experience supportable?     | Full preparation, selection, generation, reflection, waiting and native-work cost   | A cheap action hiding expensive attention, idle rumination or repeated blocked attempts.       |
 
 Separate visible behavior, the resident's own self-report, accepted private game state and the evaluator's inference. A later eloquent explanation cannot by itself prove why an earlier action was chosen. Use matched variations and targeted comparisons to test whether a selected input makes a useful difference. Avoid both punishing all eccentric behavior and excusing every loop as eccentricity.
 

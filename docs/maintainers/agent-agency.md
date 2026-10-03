@@ -217,8 +217,6 @@ The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--conta
 
 For the integrated resident, run the applicable [complete character flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) through [CE05](character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification). The ordinary-afternoon and delayed-continuity cases connect body experience, company/belonging, enjoyment, independent pursuits and meaningful stopping. Retain the same evidence and full-cost accounting here; a separate test program or a successful survival chain alone cannot close that target.
 
-- [ ] Compare matched initial scenarios and opportunities across:
-
 - [ ] Compare matched initial scenarios and opportunities across: current menu/single-step baseline; freeform proposal without persistent plans; persistent intentions/native continuation; and optional bounded investigation where relevant. Keep model/configuration and total spending allowances explicit.
 - [ ] Evaluate held-out variations and multiple independent runs: different names/material descriptions, alternative food sources, changed timing, unavailable targets, invention locks, no-response opportunities, and conflicting priorities. A single successful scripted bow demonstration is insufficient.
 - [ ] Separate contract validity from behavior. Measure objective task progress where native evidence exists, false success claims, useful adaptation, private disclosure, avoidable interruption, repeated blocked attempts, goal churn and appropriate abstention. For subjective goals use labeled scenario judgments, not invented ground truth.
