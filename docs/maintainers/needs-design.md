@@ -41,6 +41,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 3 product proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) now develops the first activity families, interruptions, quiet initiative, return experience and funded-service behavior with cited research and scenario acceptance. Its recommendations remain proposed; affected technical design, PS-D choices and PS02–PS03 runtime delivery remain open. The [five-specification package](../projects/five-product-feature-specs.md) records the requested product-only scope.
 
+[Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) likewise develops PS04/PS-D02 with initial crowd/focus behavior, independent scene participation, exact/gist evidence and a distinct later timed-speech stage. These are researched product proposals; current hearing semantics, technical design and runtime checkboxes remain unchanged.
+
 ## Worlds, rules and long-lived communities
 
 ### ND01 — Assemble a new world from a creator's premise

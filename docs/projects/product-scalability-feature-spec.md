@@ -9,6 +9,7 @@
 - Single focused work tracker: [product scalability](../maintainers/product-scalability.md).
 - Constraints and unresolved tuning: [limits register](../limits/product-scalability.md).
 - Proposed product detail: [continuing NPC lives](continuing-lives-feature-spec.md) develops PS02–PS03 with researched behavior, economics, scenarios and acceptance. Its new recommendations remain proposals; technical design and runtime delivery are not completed by that document.
+- Proposed attention detail: [attention, crowds and scenes](attention-and-scenes-feature-spec.md) develops PS04/PS-D02 with stable focus, character-led scenes, exact-language exceptions and a separately staged timed-speech proposal. Existing hearing and time policy remain authoritative until approved changes are delivered.
 
 ## 1. Purpose and audience
 

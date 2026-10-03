@@ -52,6 +52,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Owners:** memory, perception, hearing, conversations, model routing. **Depends on:** scoped history/commitment foundations; PS03 supplies first background consumer.
 
+**Product design proposal:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md), including stable focus, character-led task/promise scenes, exact-language exceptions, all AS-J journeys and the separately staged timed-speech target. Current instantaneous speech and caption clocks remain authoritative; technical design, PS-D02 and runtime acceptance remain open.
+
 - [ ] Add aggregate sensory evidence, distinguishable sources, stable focus, and justified interruptions through the existing owners.
 - [ ] Define actual overlapping speech or an explicit alternate rule; never use caption lifetime as physical sound duration.
 - [ ] Prevent expensive per-object cognition before grouping; retain physical effects and privacy-correct individual exceptions.
