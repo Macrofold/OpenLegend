@@ -1,6 +1,6 @@
 # Five product and behavior specifications
 
-**Status: all five researched product proposals complete; game-first critique and revisions in progress, October 3, 2026. Technical design and runtime implementation remain open.**
+**Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Technical design and runtime implementation remain open.**
 
 ## Purpose and scope
 
@@ -127,7 +127,9 @@ At the initial completion on commit `4f1ef70`, the five feature files contained 
 
 Each feature received focused review, followed by a complete cross-feature consistency review. Corrections made during that work include bounded funded work rather than indefinite compute promises; current speech versus future timed phrases; supported creator/host entry; a real drying and tinder recovery loop; and retained check-attempt conditions through cancellation. That pass established coverage and consistency, not the quality of play. The subsequent game-first review identified the priority and minimum-scope corrections above, including revising the initial wet-tinder requirement and whole-job modifier-history proposal.
 
-For that initial completion, the complete affected documentation diff was reviewed against the pinned source. All existing implementation checkbox states are preserved, and prior substantive source content remains apart from the intentionally expanded limits-index summary. Added pointers do not change current implementation claims. All 161 new or changed internal link targets/anchors resolve. Changed Markdown passes the repository's pinned Prettier 3.6.2 configuration. Check helpers and raw research notes are outside the repository changes.
+For that initial completion, the complete affected documentation diff was reviewed against the pinned source. Existing implementation checkbox states were preserved, and prior substantive source content remained apart from the intentionally expanded limits-index summary. Added pointers did not change current implementation claims. All 161 new or changed internal link targets/anchors resolved, and changed Markdown passed the repository's pinned Prettier 3.6.2 configuration.
+
+The completed game-first review covers all five specifications and their shared sequence, affected limits and owner trackers: 16 changed Markdown files against `4f1ef70`. The full affected changes received focused and cross-feature review. All 193 prior checkbox states, 72 prior journey IDs, 70 maintainer task-heading IDs and 80 feature research-register entries remain; the probability table is unchanged. One additional stats journey examines whether the optional roof method helps a chosen camp/hunt plan, and six primary references inform the package critique. All 23 added or changed internal link occurrences, including 15 anchor links, resolve. All 1,083 internal link target-path occurrences in the changed files exist in the repository inventory; this broader path check is not a fresh audit of every unchanged anchor or external URL. Changed Markdown passes pinned Prettier 3.6.2. Check helpers and raw research notes remain outside the repository changes.
 
 The finite check distributions, retry examples and expected completion times were calculated and independently reviewed; illustrative service arithmetic is labeled as hypothetical. No game, browser, live-provider, balance or capacity test was run for this documentation task. No production logic, configuration or agent instructions changed. Required implementation/CI qualification remains with the existing owners before any later release.
 
