@@ -1,0 +1,53 @@
+name: Documentation review source snapshot
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/review-source-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4a4632a88521475b87209eb7a7e1cc317c11c8df
+          persist-credentials: false
+      - name: Package tracked text and revision inventory without archived content
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          root = pathlib.Path.cwd()
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'documentation-review-source.zip'
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          entries = subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', 'HEAD']).split(b'\0')
+          allowed = {'.md', '.mdc', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          inventory = []
+          with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as output:
+              for entry in entries:
+                  if not entry:
+                      continue
+                  metadata, raw_name = entry.split(b'\t', 1)
+                  mode, kind, sha, size = metadata.decode().split()
+                  name = raw_name.decode()
+                  path = root / name
+                  row = {'path': name, 'git_sha': sha, 'size': int(size) if size != '-' else None, 'included': False}
+                  if kind == 'blob' and mode != '120000' and 'archive' not in pathlib.PurePosixPath(name).parts and (path.suffix in allowed or name in ('LICENSE', 'CLAUDE.md', '.prettierignore', '.gitignore')):
+                      data = path.read_bytes()
+                      data.decode('utf-8')
+                      output.writestr(name, data)
+                      row['included'] = True
+                      row['sha256'] = hashlib.sha256(data).hexdigest()
+                  inventory.append(row)
+              output.writestr('_review_source_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
+          print(f'Pinned revision: {revision}; included {sum(x["included"] for x in inventory)} tracked text files; archive content excluded.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation-review-source-4a4632a
+          path: ${{ runner.temp }}/documentation-review-source.zip
+          retention-days: 1
+          if-no-files-found: error
