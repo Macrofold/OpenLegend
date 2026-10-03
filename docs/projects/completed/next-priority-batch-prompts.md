@@ -1,17 +1,17 @@
 # Five standalone implementation prompts
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP01–NP04 are delivered; NP05 delivers private early NPC speech with the library parser, with qualification still open. | 2026-10-03   |
+| Status    | Current progress                                                                                                          | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
 
-These assignments accompany the [feature specification](next-priority-batch-feature-spec.md), [technical design](next-priority-batch-tech-design.md) and [tracker](../maintainers/next-priority-batch.md). The first four can start implementation independently from a checkout containing this planning package and its existing prerequisites; the fifth starts with its explicit feasibility gate. They do not require communication between workers. This document does not execute the assignments or create chats.
+These assignments accompany the [feature specification](next-priority-batch-feature-spec.md), [technical design](next-priority-batch-tech-design.md) and [tracker](../../maintainers/next-priority-batch.md). These original assignments are retained as history: all five implementations are merged, NP01–NP05 are completed for their agreed scope, and both combined scenarios have passed; broader parent verification remains separately tracked. Do not restart completed implementation from these prompts. They do not require communication between workers. This document does not execute the assignments or create chats.
 
 ## 1. Reliable AI outcomes and spending
 
 ```text
 Implement NP01: make AI execution failures, reported prices and spending reservations agree, and report oversized required character context accurately. Follow AGENTS.md and applicable repository guidance. Work independently; do not contact the other implementation chats.
 
-Read the NP01 sections of docs/projects/next-priority-batch-feature-spec.md and docs/projects/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. They define the complete scope and acceptance. Then use docs/ai-providers.md and the design's exact accounting/limits references.
+Read the NP01 sections of docs/projects/completed/next-priority-batch-feature-spec.md and docs/projects/completed/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. They define the complete scope and acceptance. Then use docs/ai-providers.md and the design's exact accounting/limits references.
 
 Repair the existing Macrofold outcome and dispatch classification; validate reported cost before settlement; honor the already accepted configured monthly allowance without the hidden $50 clamp; and route required-context overflow through the existing context-exceeded outcome. Keep explicit zero cost distinct from missing/invalid cost. Unknown execution or billing cannot silently release exposure; no automatic retry is part of the fix. Preserve the existing public final-result/receipt shape and the actual director/ledger path. Do not broaden this into prompt rewriting, provider/model migration or a new wallet.
 
@@ -27,7 +27,7 @@ Reconcile NP01, MW05, the selected Level-1 follow-up TODOs, CR12/CG09, LA182 and
 ```text
 Implement NP02: when only a few objects change, prepare perception for those changes instead of repeatedly capturing and comparing every distant object. Follow AGENTS.md and applicable repository guidance. Work independently; do not contact the other implementation chats.
 
-Read the NP02 sections of docs/projects/next-priority-batch-feature-spec.md and docs/projects/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read stage 2 of docs/projects/proportional-step-work.md as its broader parent; this assignment is only the precise NP02 child.
+Read the NP02 sections of docs/projects/completed/next-priority-batch-feature-spec.md and docs/projects/completed/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read stage 2 of docs/projects/proportional-step-work.md as its broader parent; this assignment is only the precise NP02 child.
 
 Extend the existing dependency, sensory-cache and native-step owners with phase-specific complete change notices, incremental source membership/dimensions/spatial preparation and old/new-neighborhood observer selection. Existing semantic changes alone do not prove complete coverage inside one unpublished advance. Preserve conservative rebuilds for unknown changes, overflow, restore, forks and failed speculative continuation. Derived indexes remain unsaved candidate selectors, never visibility or disclosure authority.
 
@@ -43,7 +43,7 @@ Update NP02 and its EPR02/PF12.3/PF13.11 child requirements, proportional-work s
 ```text
 Implement NP03: an invented cordage material can be manufactured and then used in a later woven-container invention. Follow AGENTS.md and applicable repository guidance. Work independently; do not contact the other implementation chats.
 
-Read the NP03 sections of docs/projects/next-priority-batch-feature-spec.md and docs/projects/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read docs/invention-composition.md section 3 and the family/container owners linked by the NP03 design.
+Read the NP03 sections of docs/projects/completed/next-priority-batch-feature-spec.md and docs/projects/completed/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read docs/invention-composition.md section 3 and the family/container owners linked by the NP03 design.
 
 Use the existing installed recipe-family, admission, dependency, craft and custody mechanisms. Add the authored intermediate and permit it only in the explicitly supported binding role after positive trusted-family/interface, exact-pin, structure, resource and quantity checks. Matching names or inherited tags are not certification. Preserve native-only requirements in other roles and do not transfer weapon, food or container behavior into a material or final output. World rules, wording and tuning belong under worlds/base.
 
@@ -59,7 +59,7 @@ Reconcile NP03, the precise INV-3.5/INV-6.1–6.2/EWF09 children, RF01 and relat
 ```text
 Implement NP04: make existing camp work reachable through complete permitted object discovery, shared storage selection and explicit character inspection. Follow AGENTS.md and applicable repository guidance. Work independently; do not contact the other implementation chats.
 
-Read the NP04 sections of docs/projects/next-priority-batch-feature-spec.md and docs/projects/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read docs/projects/next-playable-week/camp-activities.md under Observation, memory and ordinary UI, docs/worlds/base/camp-routines.md and the relevant UI handbook chapters listed in NP04.
+Read the NP04 sections of docs/projects/completed/next-priority-batch-feature-spec.md and docs/projects/completed/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read docs/projects/next-playable-week/camp-activities.md under Observation, memory and ordinary UI, docs/worlds/base/camp-routines.md and the relevant UI handbook chapters listed in NP04.
 
 Replace the camp form's first-32-object dependence with role-specific bounded pages and honest continuation. Reuse inventory-destinations.tsx for source-free storage selection. Preserve exact chosen identities outside the loaded page. Searching/selecting is read-only; Approach and Inspect contents are separate explicit native actions. Only admitted inspection supplies character knowledge of cache contents. Review and Start must recheck current evidence, access and resources.
 
@@ -75,7 +75,7 @@ Update NP04, the precise PW03/PW04/PW10, AC07/AC11, PO07, BW19 and UIUX02–04 r
 ```text
 Implement NP05: show a permitted unfinished NPC reply in a direct player conversation before the complete structured response finishes, then reconcile it with actual admitted speech. Follow AGENTS.md and applicable repository guidance. Work independently; do not contact the other implementation chats.
 
-Read the NP05 sections of docs/projects/next-priority-batch-feature-spec.md and docs/projects/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read NC19 in docs/maintainers/narration-and-conversations.md and the canonical conversation, hearing, provider and UI owners linked by NP05.
+Read the NP05 sections of docs/projects/completed/next-priority-batch-feature-spec.md and docs/projects/completed/next-priority-batch-tech-design.md, the technical design's Parallel boundaries, and docs/maintainers/next-priority-batch.md. Read NC19 in docs/maintainers/narration-and-conversations.md and the canonical conversation, hearing, provider and UI owners linked by NP05.
 
 First perform the NP05 actual-route feasibility/latency gate before substantial decoder/UI work. Demonstrate a safe earlier-display opportunity in representative ordinary replies; a constructed multi-operation fixture alone is insufficient. If the route cannot provide it, retain final-only behavior, document the concrete blocker and owner options, and leave NP05/NC19 implementation incomplete. Do not alter the response contract or force extra operations to manufacture a gain. If the gate passes, use one original provider request, bounded structured decoding and an attempt/viewer/conversation/timeline-scoped preview channel. Establish disclosure eligibility before releasing text; property order and a triggering chat alone do not prove whom generated talk addresses. Follow the design's conservative complete-operation gate where recipient metadata cannot be trusted earlier. Private reasoning, raw JSON and unrelated operations never become a preview. Preserve all final schema validation, current-state admission, gameplay effects and accounting.
 

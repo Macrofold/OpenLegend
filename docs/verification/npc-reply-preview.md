@@ -40,7 +40,7 @@ Each decision admission returned HTTP 200, but the director's player conversatio
 
 The game sends Jev decisions as native `{state, questions}` and expects an `answers` map (`MacrofoldBackend.judge`). Its configured decision model is instead Muse Spark. Local Macrofold's `decisionProtocol` selects OpenRouter Decisions only for `typesafe/jev-1.13`; the configured Muse identity selects OpenRouter chat. That is a source-confirmed protocol mismatch and the explanation supported by inspection for the observed preparation failures. It is not a measured failure of the mini/complex models' streaming capability.
 
-Changing the decision binding or substituting a direct generator would violate NP05's unchanged-model/route condition. The probe therefore did not repair the shared `.env`, bypass Jev, fabricate answers, force extra operations or replay failed requests. The latency prerequisite remains unresolved. Preview/UI implementation stops at this boundary, as required by [NP05's gate](../projects/next-priority-batch-feature-spec.md#feasibility-gate-before-implementation).
+Changing the decision binding or substituting a direct generator would violate NP05's unchanged-model/route condition. The probe therefore did not repair the shared `.env`, bypass Jev, fabricate answers, force extra operations or replay failed requests. The latency prerequisite remains unresolved. Preview/UI implementation stops at this boundary, as required by [NP05's gate](../projects/completed/next-priority-batch-feature-spec.md#feasibility-gate-before-implementation).
 
 Owner options are to retain final-only replies; separately authorize correcting the decision-model configuration and then rerun representative direct-conversation feasibility; or, if a functioning route later shows no useful closed-operation opportunity, separately design a server-bound public reply channel. The latter changes the response contract and is not authorized or implemented by this investigation. Correcting configuration alone does not pass the gate.
 
@@ -56,7 +56,7 @@ The full documentation diff was reviewed against the source and observed probe r
 
 - Implementation/blocker/remaining acceptance: [NP05](../maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes), [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), scoped NC02/NC10 and [CR02/CR12](../maintainers/cognition-redesign.md).
 - Delivery constraint: [NPV01](../limits/interface.md#npv01--private-npc-reply-preview); all preview restrictions remain targets, not shipped protections.
-- Conditional plan and source inventory: [NP05 technical design](../projects/next-priority-batch-tech-design.md#np05--read-npc-replies-before-generation-finishes).
+- Conditional plan and source inventory: [NP05 technical design](../projects/completed/next-priority-batch-tech-design.md#np05--read-npc-replies-before-generation-finishes).
 
 ## Corrected configured-route gate — October 3, 2026
 
@@ -124,7 +124,7 @@ Live hosts with retained ownership records and their disposable databases/files 
 
 Focused existing checks passed **41 tests in three files** (AI client, director and conversation view). Typecheck and production build passed, with existing PlayCanvas browser-externalization and large-bundle warnings. Pinned changed-file formatting, a focused check of 49 changed/new local documentation links and anchors, `git diff --check` and the full affected-diff review passed. Required CI remains separate from these focused local checks.
 
-**NP05 acceptance remains incomplete:** native OS IME composition could not be exercised through the available browser-control surface; Unicode/multiline input and the unchanged `isComposing` send guard are not a native IME pass. Assistive devices, other adapters/callers, broader CR/NC/UIUX and PW05/PW11 remain unqualified. No ordinary autonomous-behavior quality, population scale or production deployment claim follows from these local checks.
+**Historical acceptance gap, subsequently deferred by Mike on October 3, 2026:** native OS IME composition could not be exercised through the available browser-control surface; Unicode/multiline input and the unchanged `isComposing` send guard are not a native IME pass. Assistive devices, other adapters/callers, broader CR/NC/UIUX and PW05/PW11 remain unqualified. No ordinary autonomous-behavior quality, population scale or production deployment claim follows from these local checks.
 
 ## Library parser replacement — October 3, 2026
 
@@ -138,6 +138,18 @@ The real preview owner/native-history checks passed: private-first, dependent an
 
 Thirty decoder runs over the same **22,614-byte, 16-operation** body in seven-character fragments took **81.96504200000004 ms** in the final isolated run. The earlier custom-parser observation was 30.222042 ms; these separate local runs are bounded handling evidence, not proof of a speed improvement or deployed capacity. The dependency replaces handwritten grammar ownership, while the application retains only its integrity/disclosure checks.
 
-`pnpm typecheck`, `pnpm build` and the **26 existing AI client tests** passed. Formatting, changed documentation links and the complete affected diff were checked after documentation reconciliation. The build retained the existing PlayCanvas worker externalization and large-chunk warnings. No new game/browser behavior or live-provider latency was claimed: the earlier browser evidence remains relevant to unchanged delivery/UI, and the native IME acceptance gap and earlier unidentifiable fixture-cleanup limitation remain open.
+`pnpm typecheck`, `pnpm build` and the **26 existing AI client tests** passed. Formatting, changed documentation links and the complete affected diff were checked after documentation reconciliation. The build retained the existing PlayCanvas worker externalization and large-chunk warnings. No new game/browser behavior or live-provider latency was claimed: the earlier browser evidence remains relevant to unchanged delivery/UI, and native IME behavior remains unverified (subsequently deferred by Mike, not a current NP05 completion gate), and the earlier unidentifiable fixture-cleanup limitation remains open.
 
 Additional Jev/provider cost for replacement qualification was **$0**. Cumulative Jev estimates remain **$0.005802888**, all reported provider estimates remain **$0.034112888**, and **$0.020** remains unpriced reserved exposure, totaling **$0.054112888** estimated/reserved task exposure. No additional paid request was made; these totals are estimates/reservations, not invoices.
+
+### Multilingual verification deferral — October 3, 2026
+
+Mike deferred other-language support. The unrun real OS IME composition/confirmation check therefore no longer blocks NP05 scoped completion; preserve existing input safeguards and revisit verification when multilingual support is prioritized. No new runtime check was performed and no multilingual pass is claimed. [Current task status](../maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes) distinguishes this scope change from the remaining batch-level combined scenarios.
+
+## Combined streaming and accounting — October 3, 2026
+
+At merged local `main` `b4930e15`, a focused scenario joined the real conversation director, Macrofold adapter/stream transport, private preview owner and PostgreSQL reservation/settlement. Injected HTTP responses supplied one complete eligible speech operation before releasing the final result. This was native/fixture verification, not another live-provider or browser latency measurement.
+
+Three cases passed. A valid final reply committed exactly one NPC speech event and settled its synthetic price of 7 micro-USD ($0.000007). Malformed final output with malformed price retained the synthetic 250,000 micro-USD ($0.25) reservation as uncertain spending. A stream closed after the preview, followed by lost status access, likewise retained that reservation and reported uncertain execution. Both failure cases withdrew the preview and committed no NPC speech. Each case dispatched exactly one generation request, with no paid retry. Before final release, displaying the preview had not committed speech.
+
+The owned disposable PostgreSQL database was closed/dropped by the fixture helper. Raw scenario code and output remain outside Git. These synthetic accounting values are not charges: actual additional and cumulative Jev/provider cost for this combined-verification task are **$0**. This closes the NP01/NP05 combined scenario; the separate multilingual deferral remains unchanged.

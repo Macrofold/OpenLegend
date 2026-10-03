@@ -230,7 +230,7 @@ type ImmerState = {
  * entity drafts are inspected, never the distant static entity table. Cumulative assigned
  * fields conservatively revisit a touched sensory branch until this draft finishes.
  * Unknown replacements/builders cannot supply this proof and rebuild instead.
- * docs/projects/next-priority-batch-tech-design.md#phase-specific-contract */
+ * docs/projects/completed/next-priority-batch-tech-design.md#phase-specific-contract */
 export function sensoryDraftWrites(world: WorldState) {
   const sources = new Set<string>(),
     observers = new Set<string>();

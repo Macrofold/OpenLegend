@@ -173,7 +173,7 @@ The 18-report/9-pair growth matrix and narrowly scoped ANN recommendation are re
 
 ## PW10 — Chosen camp activities and reusable finite methods
 
-Implemented [NP04](next-priority-batch.md#np04--find-and-choose-camp-supplies) continues the ordinary camp discovery/inspection connection shared with PW03/PW04, AC07/AC11, PO07, BW19 and UIUX02–04. It does not rebuild these native activities or close voluntary learning/reuse acceptance. See its [feature acceptance](../projects/next-priority-batch-feature-spec.md#np04--find-and-choose-camp-supplies) for the exact selected child.
+Implemented [NP04](next-priority-batch.md#np04--find-and-choose-camp-supplies) continues the ordinary camp discovery/inspection connection shared with PW03/PW04, AC07/AC11, PO07, BW19 and UIUX02–04. It does not rebuild these native activities or close voluntary learning/reuse acceptance. See its [feature acceptance](../projects/completed/next-priority-batch-feature-spec.md#np04--find-and-choose-camp-supplies) for the exact selected child.
 
 Authorized by the same chat, including this package's ordinary activity request/review card. The [implementation plan](../projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026) records ownership, dependencies, exact overlapping requirements, verification and the $6 sub-cap. Native execution, voluntary choice, retention and later selection are separate gates.
 

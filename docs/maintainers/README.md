@@ -10,7 +10,7 @@
 
 ## Next priority batch
 
-[NP01–NP05](next-priority-batch.md) indexes the [feature specification](../projects/next-priority-batch-feature-spec.md), [technical design](../projects/next-priority-batch-tech-design.md) and [assignment prompts](../projects/next-priority-batch-prompts.md). Its five assignments cover AI outcomes/spending, sensory preparation proportional to change, safe invented-material composition, camp-supply selection and permitted NPC reply previews. NP01–NP04 are delivered with scoped evidence; NP05 and broader qualification retain their status in that tracker. Existing parent release and qualification requirements remain controlling. No time horizon or inherited staffing-hour target is assumed.
+[NP01–NP05](next-priority-batch.md) indexes the [feature specification](../projects/completed/next-priority-batch-feature-spec.md), [technical design](../projects/completed/next-priority-batch-tech-design.md) and [assignment prompts](../projects/completed/next-priority-batch-prompts.md). Its five assignments cover AI outcomes/spending, sensory preparation proportional to change, safe invented-material composition, camp-supply selection and permitted NPC reply previews. All five scoped assignments and both combined scenarios are completed; multilingual input verification is owner-deferred and broader parent qualification remains separately tracked. Existing parent release and qualification requirements remain controlling. No time horizon or inherited staffing-hour target is assumed.
 
 ## Earlier playable-week delivery
 

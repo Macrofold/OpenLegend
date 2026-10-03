@@ -167,7 +167,7 @@ Coordinate module/save integration with [EWF07](extensible-world-foundation.md#e
 
 ### INV-6 — Composable materials, assemblies and passive world processes
 
-Delivered [NP03](next-priority-batch.md#np03--craft-with-an-invented-material) supplies one positive generated-material producer/consumer proof: invented cordage into the woven-container binding role. The [scoped technical design](../projects/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) and [evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) reconcile the INV-3.5/EWF09 child. Existing family registration and this finite edge are delivered; arbitrary recursive inputs, live model choice and broader INV-6 behavior remain open.
+Delivered [NP03](next-priority-batch.md#np03--craft-with-an-invented-material) supplies one positive generated-material producer/consumer proof: invented cordage into the woven-container binding role. The [scoped technical design](../projects/completed/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) and [evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) reconcile the INV-3.5/EWF09 child. Existing family registration and this finite edge are delivered; arbitrary recursive inputs, live model choice and broader INV-6 behavior remain open.
 
 **Depends on:** INV-3 and INV-5. **Unlocks:** reusable physical interactions rather than more isolated item recipes.
 

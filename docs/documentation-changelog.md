@@ -1,10 +1,18 @@
 # Documentation changelog
 
+## 2026-10-03 — Complete the next priority batch
+
+Both remaining combined scenarios passed on merged local `main`: streamed conversation failure/accounting, and manufactured-container observation, browser selection/inspection and native camp execution. All five assignments are completed for their agreed scope, with multilingual verification deferred by Mike. The shared feature specification, technical design and original prompts moved together to `docs/projects/completed/`; incoming documentation and source-comment references were repaired. [Completion accounting](maintainers/next-priority-batch.md#combined-acceptance-and-closure--october-3-2026) retains broader parent work separately. No runtime implementation change or paid provider call was needed.
+
+## 2026-10-03 — Defer multilingual input verification
+
+Mike deferred other-language support. The unrun native OS IME composition/confirmation check no longer blocks [NP05 scoped completion](maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes). Existing composition safeguards stay unchanged; revisit the check when multilingual input becomes a product priority. This is an explicit acceptance-scope change, not new verification evidence. The two combined batch scenarios remain open.
+
 ## 2026-10-03 — NP01 review fixes
 
 Review found that late pricing could clear explicit execution uncertainty, and a journaled cancellation rejection could permanently block stopping the original Run. Original execution and recovery now share final-completion validation; later price alone retains the hold, while unpaid idempotent cancellation can be requested again. Paid admission replay remains fenced, and contradictory late settlement cannot retract recorded dispatch evidence to manufacture a zero charge. Fractional timeout configuration and per-request monetary rounding now preserve the configured deadline and advertised request count. Strict text, JSON, outcome and usage validation rejects malformed evidence, with cache-write tokens retained through the existing usage decoder. No spending policy, provider route, public schema or accepted context quota changed.
 
-[Provider behavior](ai-providers.md#receipts-outcomes-and-accounting), [per-level limits](limits/cognition.md#cg08) and the [NP01 plan](projects/next-priority-batch-tech-design.md#requested-implementation-review--october-3-2026) match delivery. [Review evidence](verification/level1-decisions.md#thorough-review--october-3-2026) records the bounded checks and preserves the existing unrelated assertion failure, request-body automation and broader qualification gates. Actual additional and cumulative task provider cost: **$0**.
+[Provider behavior](ai-providers.md#receipts-outcomes-and-accounting), [per-level limits](limits/cognition.md#cg08) and the [NP01 plan](projects/completed/next-priority-batch-tech-design.md#requested-implementation-review--october-3-2026) match delivery. [Review evidence](verification/level1-decisions.md#thorough-review--october-3-2026) records the bounded checks and preserves the existing unrelated assertion failure, request-body automation and broader qualification gates. Actual additional and cumulative task provider cost: **$0**.
 
 ## 2026-10-02 — NP01 reliable AI outcomes and spending
 
@@ -46,7 +54,7 @@ Actual browser checks found and corrected retained floating-panel offsets and in
 
 ## 2026-10-02 — Fresh five-assignment priority batch
 
-The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/next-priority-batch-feature-spec.md) and [technical design](projects/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.
+The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/completed/next-priority-batch-feature-spec.md) and [technical design](projects/completed/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/completed/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.
 
 These are proposed tasks, not delivered runtime behavior or approval to execute them. The preview proposal deliberately waits for a complete eligible first speech operation and first checks whether that offers real earlier display; arbitrary generated recipient fields make raw token forwarding unsafe. The material proposal retains native-only policy everywhere except a certified binding input, rather than letting inherited tags grant capabilities. Broader parents and prior unverified acceptance remain open.
 

@@ -145,7 +145,7 @@ Reviewed runtime is published in **`1586d4ef906876fd76cec3256951e6f4ba39dc9b`**.
 
 ## NP01 reliable AI outcomes and spending — October 2, 2026
 
-Mike authorized the complete [NP01 assignment](../projects/next-priority-batch-prompts.md#1-reliable-ai-outcomes-and-spending), [feature acceptance](../projects/next-priority-batch-feature-spec.md#np01--reliable-ai-outcomes-and-spending) and [technical contract](../projects/next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending). Source baseline: detached `c2e670b0`, containing refreshed `origin/main` `1253415b`; the planning package was supplied from the primary checkout at that source revision (later committed there as `b528af6d`). Results below exercise this working patch, not an asserted committed release. No branch switch, provider/model migration, credentials change, paid request or browser redesign occurred.
+Mike authorized the complete [NP01 assignment](../projects/completed/next-priority-batch-prompts.md#1-reliable-ai-outcomes-and-spending), [feature acceptance](../projects/completed/next-priority-batch-feature-spec.md#np01--reliable-ai-outcomes-and-spending) and [technical contract](../projects/completed/next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending). Source baseline: detached `c2e670b0`, containing refreshed `origin/main` `1253415b`; the planning package was supplied from the primary checkout at that source revision (later committed there as `b528af6d`). Results below exercise this working patch, not an asserted committed release. No branch switch, provider/model migration, credentials change, paid request or browser redesign occurred.
 
 ### Setup and observed results
 

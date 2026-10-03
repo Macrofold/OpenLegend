@@ -1,10 +1,12 @@
 # Next priority batch — feature specification
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP01–NP04 are delivered; NP05 delivers private early NPC speech with the library parser, with qualification still open. | 2026-10-03   |
+| Status    | Current progress                                                                                                          | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
 
-The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
+The [merged review](../../maintainers/next-priority-batch.md#merged-review--october-3-2026) records completion boundaries and remaining checks. The whole agreed batch, including its combined scenarios, is complete; these shared documents are archived together.
+
+The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
 ## Purpose and priority
 
@@ -42,20 +44,20 @@ All implementation prompts refer to these documents and current repository guida
 
 - **Save, checkpoint, family editor and observer-name repairs:** the `codex/save-editor-family` checkout has overlapping uncommitted changes. Its committed tip is already an ancestor of main; branch ancestry alone would miss the work. This batch does not duplicate it. Recheck activity before implementation because the audit is a snapshot.
 - **Worlds without health:** accepted EWF03 work remains important and is the next large body-system candidate. It crosses lifecycle, combat, editor, cognition and persistence; the estimated 1,000–1,800 logic lines deserve a focused body-model design. This batch chooses a smaller concrete composition seam and measured sensory bottleneck first, without treating mandatory health as solved.
-- **Exact approach timing and broader proportional simulation:** preserve the existing stages in [proportional step work](proportional-step-work.md). NP02 changes preparation of perception, not movement timing, numeric publication or the scheduler.
+- **Exact approach timing and broader proportional simulation:** preserve the existing stages in [proportional step work](../proportional-step-work.md). NP02 changes preparation of perception, not movement timing, numeric publication or the scheduler.
 - **Approximate memory search and 100k-memory restore:** C17 remains high priority, but restore repairs overlap active storage work and current exact-search findings do not establish approximate-search recall quality. This is not closed by existing PW09 cache work or by reducing history size.
 - **World Agent workspace qualification:** PW05/PW11 integration and broader UI acceptance remain open. NP05 concerns character replies, not a claim to complete owner-chat streaming or the saved-invention workspace.
 - **New medical/weather/building behavior:** useful repertoire proposals, but existing camp work should first be reachable. Self-treatment also needs an accepted treatment/effect rule; a new label cannot substitute for that decision.
 
 ## Maintained records
 
-- Implementation and dependencies: [NP01–NP05](../maintainers/next-priority-batch.md), indexing narrower children of the existing MW/CR, EPR/PF, INV/EWF, PW/AC/PO/BW/UIUX and NC owners. Planning closes none of their runtime criteria.
-- Limits and constraints: [AI execution](../limits/ai-execution.md), [cognition](../limits/cognition.md), [native work](../limits/native-work.md), [inventions](../limits/inventions.md), [base-world choices](../limits/base-world.md), [inventory interface](../limits/interface.md), [object queries](../limits/objects.md) and [conversation delivery](../limits/narration.md). Each task links its particular entries; there is no competing batch-wide limits catalogue.
+- Implementation and dependencies: [NP01–NP05](../../maintainers/next-priority-batch.md), indexing narrower children of the existing MW/CR, EPR/PF, INV/EWF, PW/AC/PO/BW/UIUX and NC owners. Planning closes none of their runtime criteria.
+- Limits and constraints: [AI execution](../../limits/ai-execution.md), [cognition](../../limits/cognition.md), [native work](../../limits/native-work.md), [inventions](../../limits/inventions.md), [base-world choices](../../limits/base-world.md), [inventory interface](../../limits/interface.md), [object queries](../../limits/objects.md) and [conversation delivery](../../limits/narration.md). Each task links its particular entries; there is no competing batch-wide limits catalogue.
 - Mechanism and source map: [technical design](next-priority-batch-tech-design.md). Existing cross-project specifications remain canonical; new choices here are proposed targets until authorized.
 
 ## NP01 — Reliable AI outcomes and spending
 
-**Status:** Mike authorized implementation in chat. NP01 is implemented with [adapter/director/PostgreSQL acceptance](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026); broader parent qualification remains open. The source audit used local `main` `c2e670b0`. Estimated scope: **300–550 changed logic lines**, approximately **18–32 engineer-hours**, including integration, relevant evidence, documentation and review but excluding waiting on external dependencies. These are estimates, not completion deadlines. Risk is medium–high because mistakes can hide a failed character decision or incorrectly release reserved funds.
+**Status:** Mike authorized implementation in chat. NP01 is completed for its agreed scope with [adapter/director/PostgreSQL acceptance](../../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026); broader parent qualification remains open. The source audit used local `main` `c2e670b0`. Estimated scope: **300–550 changed logic lines**, approximately **18–32 engineer-hours**, including integration, relevant evidence, documentation and review but excluding waiting on external dependencies. These are estimates, not completion deadlines. Risk is medium–high because mistakes can hide a failed character decision or incorrectly release reserved funds.
 
 ### Purpose and priority
 
@@ -102,14 +104,14 @@ First settle the shared failure/cost classification, then apply it to each exist
 
 ### Maintained records
 
-- Implementation: [NP01](../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending); existing [MW05](../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures) owns provider outcome repairs. Preserve its request-body requirement rather than declaring the entire item done from an outcome-only change.
-- Related task records: [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence), the [level-1 follow-ups](../maintainers/TODO.md#level-1-decisions-follow-up), [WAF02](../maintainers/TODO.md#workshop-transport-and-funding-regression-coverage), [IER04](../maintainers/TODO.md#invention-extensibility-review-regression-todos), and the scoped accounting/recovery parts of [WW07/WW11](../maintainers/world-agent-writes.md#remaining-implementation-and-qualification). Mark only demonstrated requirements complete; retain any specifically tracked automation or broader qualification not delivered.
-- Limits: [AI execution](../limits/ai-execution.md), especially [LA182](../limits/ai-execution.md#la182), and [CG08/CG09](../limits/cognition.md#cg08). No new discretionary workload cap is proposed. Exact finite/safe-integer cost checks protect arithmetic integrity, not a new spending allowance.
-- Current contract: [AI receipts, outcomes and accounting](../ai-providers.md#receipts-outcomes-and-accounting); [technical design](next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending).
+- Implementation: [NP01](../../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending); existing [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures) owns provider outcome repairs. Preserve its request-body requirement rather than declaring the entire item done from an outcome-only change.
+- Related task records: [CR12](../../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence), the [level-1 follow-ups](../../maintainers/TODO.md#level-1-decisions-follow-up), [WAF02](../../maintainers/TODO.md#workshop-transport-and-funding-regression-coverage), [IER04](../../maintainers/TODO.md#invention-extensibility-review-regression-todos), and the scoped accounting/recovery parts of [WW07/WW11](../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification). Mark only demonstrated requirements complete; retain any specifically tracked automation or broader qualification not delivered.
+- Limits: [AI execution](../../limits/ai-execution.md), especially [LA182](../../limits/ai-execution.md#la182), and [CG08/CG09](../../limits/cognition.md#cg08). No new discretionary workload cap is proposed. Exact finite/safe-integer cost checks protect arithmetic integrity, not a new spending allowance.
+- Current contract: [AI receipts, outcomes and accounting](../../ai-providers.md#receipts-outcomes-and-accounting); [technical design](next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending).
 
 ## NP02 — Sensory work follows changed objects
 
-**Status: delivered in this branch.** [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) records exact observation parity, constant warm source preparation and remaining native/server limits. This is a bounded continuation of EPR02, PF12.3 and PF13.11, not a replacement for their broader acceptance or a repeat of PW08.
+**Status: Completed October 3, 2026 (scoped acceptance).** [October 3 evidence](../../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) records exact observation parity, constant warm source preparation and remaining native/server limits. This is a bounded continuation of EPR02, PF12.3 and PF13.11, not a replacement for their broader acceptance or a repeat of PW08.
 
 ### Player outcome and priority
 
@@ -141,17 +143,17 @@ The engine owns derived work selection; installed worlds retain sight/body rules
 
 Estimate: roughly 450–850 logic lines and 20–36 engineering hours including verification and reconciliation. Main risk is incomplete change coverage, especially changes within one unpublished advance; this is more important than a favorable throughput number.
 
-Update the precise child requirements under [EPR](../maintainers/events-perception-and-reactions.md), [performance](../maintainers/performance.md), [simulation time](../maintainers/simulation-time.md), [proportional work stage 2](proportional-step-work.md#stage-2--sight-work-follows-change), [native-work limits](../limits/native-work.md) and [C18](../maintainers/limits-audit.md#c18). Keep their broader unresolved work open. Record concise measured evidence in the existing perception verification owner.
+Update the precise child requirements under [EPR](../../maintainers/events-perception-and-reactions.md), [performance](../../maintainers/performance.md), [simulation time](../../maintainers/simulation-time.md), [proportional work stage 2](../proportional-step-work.md#stage-2--sight-work-follows-change), [native-work limits](../../limits/native-work.md) and [C18](../../maintainers/limits-audit.md#c18). Keep their broader unresolved work open. Record concise measured evidence in the existing perception verification owner.
 
 ## NP03 — Craft with an invented material
 
-**Status: implemented October 3, 2026; native/supplied, browser and PostgreSQL evidence recorded.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work. [Current world behavior](../worlds/base/items.md#cordage-manufacture-and-reuse) and [evidence/limits](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) distinguish delivery from unqualified live model invention/choice.
+**Status: Completed October 3, 2026; native/supplied, browser and PostgreSQL acceptance recorded.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work. [Current world behavior](../../worlds/base/items.md#cordage-manufacture-and-reuse) and [evidence/limits](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) distinguish delivery from unqualified live model invention/choice.
 
 ### Player outcome and priority
 
 A character can learn an invented cord-making technique, craft its actual cord, then invent and craft a woven container that uses that cord as binding. The container has the existing real capacity and custody behavior. This establishes a useful path from one invention to another without accepting invented properties merely because an item has a promising name or inherited tags.
 
-At inspected main `c2e670b0`, all bundled invention families require native ingredients. That restriction is correctly world-owned but blocks even safe invented intermediates. Existing outputs also inherit source property tags, so removing the restriction alone would wrongly allow a finished weapon to masquerade as raw binding material. [Composition](../invention-composition.md#3-composition-contract) explicitly requires positive consumer checks first.
+At inspected main `c2e670b0`, all bundled invention families require native ingredients. That restriction is correctly world-owned but blocks even safe invented intermediates. Existing outputs also inherit source property tags, so removing the restriction alone would wrongly allow a finished weapon to masquerade as raw binding material. [Composition](../../invention-composition.md#3-composition-contract) explicitly requires positive consumer checks first.
 
 ### Authored capability and exact first consumer
 
@@ -177,15 +179,15 @@ Exclude arbitrary recursive inputs, batch-output redesign, attachments, material
 
 Estimate: roughly 500–950 changed logic lines and 18–32 engineering hours including evidence and documentation. Main risks are forged capability claims, accidentally duplicating units or widening ingredient/private-definition scope.
 
-Reconcile the exact composition child under [INV-3/INV-6](../maintainers/inventions-and-world-evolution.md), [EWF09](../maintainers/extensible-world-foundation.md), base-world container/material documentation, [recipe-family limits](../limits/inventions.md#rf01--world-owned-recipe-families), [object limits](../limits/objects.md) and the existing invention/camp verification owners. Broader recursive composition, live-law and full family-registry acceptance remain open.
+Reconcile the exact composition child under [INV-3/INV-6](../../maintainers/inventions-and-world-evolution.md), [EWF09](../../maintainers/extensible-world-foundation.md), base-world container/material documentation, [recipe-family limits](../../limits/inventions.md#rf01--world-owned-recipe-families), [object limits](../../limits/objects.md) and the existing invention/camp verification owners. Broader recursive composition, live-law and full family-registry acceptance remain open.
 
 ## NP04 — Find and choose camp supplies
 
 ### Purpose and current gap
 
-Make the already implemented camp activities usable when a scene or inventory contains many objects. **Implemented October 3, 2026; scoped acceptance is recorded in [camp-life evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).** At the planning baseline, the camp form examined the first 32 visible objects before checking whether they can serve its requested role, examined a possession prefix, and presented a static select. An eligible fire or fuel source could disappear behind unrelated objects. A ground cache was offered only after the character had explicitly inspected it; opening the browser inventory alone does not perform that character action. The warning to inspect or narrow the search had no complete route in that form.
+Make the already implemented camp activities usable when a scene or inventory contains many objects. **Implemented October 3, 2026; scoped acceptance is recorded in [camp-life evidence](../../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).** At the planning baseline, the camp form examined the first 32 visible objects before checking whether they can serve its requested role, examined a possession prefix, and presented a static select. An eligible fire or fuel source could disappear behind unrelated objects. A ground cache was offered only after the character had explicitly inspected it; opening the browser inventory alone does not perform that character action. The warning to inspect or narrow the search had no complete route in that form.
 
-This is a completion of the existing gather/pack/fuel and finite fire-watch journeys, not a new survival activity. See [camp activities](next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [camp rules](../worlds/base/camp-routines.md) and [inventory UX](../ui-ux/inventory.md).
+This is a completion of the existing gather/pack/fuel and finite fire-watch journeys, not a new survival activity. See [camp activities](../next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [camp rules](../../worlds/base/camp-routines.md) and [inventory UX](../../ui-ux/inventory.md).
 
 ### Intended player journey
 
@@ -211,7 +213,7 @@ Include role-filtered discovery and continuation, the existing storage picker co
 
 ## NP05 — Read NPC replies before generation finishes
 
-**Authorized October 3, 2026; configured-route feasibility passed; implementation delivered with qualification tracked in NP05.** This defines the first direct-conversation slice of [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), separate from World Agent plain-text delivery. [Evidence](../verification/npc-reply-preview.md) preserves the initial configuration failure, authorized Jev correction, ordinary-route gate, actual browser timing and remaining verification limits. Only the measured Macrofold direct-inference route receives a preview grant; unsupported callers keep completed-value delivery.
+**Authorized October 3, 2026; configured-route feasibility passed; implementation delivered with qualification tracked in NP05.** This defines the first direct-conversation slice of [NC19](../../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), separate from World Agent plain-text delivery. [Evidence](../../verification/npc-reply-preview.md) preserves the initial configuration failure, authorized Jev correction, ordinary-route gate, actual browser timing and remaining verification limits. Only the measured Macrofold direct-inference route receives a preview grant; unsupported callers keep completed-value delivery.
 
 ### Feasibility gate before implementation
 
@@ -237,7 +239,7 @@ This makes a long model wait useful without allowing an unfinished JSON decision
 
 The temporary reply sits with the originating player message and retains the same visual position until final admission. Its text appears only as a complete validated speech operation; incomplete sentence fragments are not shown. It uses the NPC name already permitted to that player; no canonical hidden name or internal operation identifier is displayed. Keep the existing modest waiting presentation before text arrives. Do not insert provider stages, token counts or diagnostic messages between character utterances.
 
-Following the latest messages follows the new provisional reply. Reading older messages preserves the visible position and offers the existing new-message affordance. Opening another person, hiding Talk, resizing or reconnecting preserves the appropriate player draft and reading position; a late fragment never appears in the wrong conversation. Long text wraps within the panel, and the composer remains reachable on short and narrow screens. Keyboard/IME behavior and world-input isolation follow the existing handbook.
+Following the latest messages follows the new provisional reply. Reading older messages preserves the visible position and offers the existing new-message affordance. Opening another person, hiding Talk, resizing or reconnecting preserves the appropriate player draft and reading position; a late fragment never appears in the wrong conversation. Long text wraps within the panel, and the composer remains reachable on short and narrow screens. Keyboard behavior and world-input isolation follow the existing handbook. Preserve existing composition handling; Mike deferred multilingual input verification on October 3, 2026, so a real OS IME check is not a current NP05 completion gate. Revisit it when other-language support is prioritized.
 
 Final admitted speech replaces the preview using the existing response/utterance relationship, not matching text. Display the player's actual heard projection, even when it differs from the temporary text. A response that contains multiple speech operations still produces its real final messages; the preview never makes an extra one.
 
@@ -264,6 +266,6 @@ The task uses current main contracts. NP01 separately repairs provider result/re
 
 ### Maintained records and effort
 
-Update [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), affected NC02/NC10 and [UIUX03/UIUX05](../maintainers/ui-ux.md), [narration behavior](../narration-and-conversations.md), the relevant [AI architecture](../memory-architecture.md) explanation, [chat/invention guidance](../ui-ux/chat-and-invention.md), and concise verification evidence under the existing documentation policy. Add a proposed-to-current preview limit entry in [interface limits](../limits/interface.md) and link relevant [AI limits](../limits/ai-execution.md) and [narration limits](../limits/narration.md); these owners retain their broader unqualified work.
+Update [NC19](../../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), affected NC02/NC10 and [UIUX03/UIUX05](../../maintainers/ui-ux.md), [narration behavior](../../narration-and-conversations.md), the relevant [AI architecture](../../memory-architecture.md) explanation, [chat/invention guidance](../../ui-ux/chat-and-invention.md), and concise verification evidence under the existing documentation policy. Add a proposed-to-current preview limit entry in [interface limits](../../limits/interface.md) and link relevant [AI limits](../../limits/ai-execution.md) and [narration limits](../../limits/narration.md); these owners retain their broader unqualified work.
 
 Estimate **700–1,200 changed logic lines**, approximately **34–56 engineer-hours** including capability qualification, implementation, relevant evidence, documentation and review, with high privacy/recovery risk and an external live-provider acceptance dependency. This is a reasoned task estimate, not a fixed AI multiplier or a newly granted spending/time allowance.

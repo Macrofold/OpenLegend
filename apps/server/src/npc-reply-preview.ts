@@ -27,7 +27,7 @@ type Attempt = {
 };
 
 /** One replaceable private attempt. Display has no world effects or durable storage.
- * docs/projects/next-priority-batch-tech-design.md#4-separate-private-preview-projection-and-bounded-transport
+ * docs/projects/completed/next-priority-batch-tech-design.md#4-separate-private-preview-projection-and-bounded-transport
  */
 export class NpcReplyPreviews {
   private active?: Attempt;
