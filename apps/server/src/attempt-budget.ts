@@ -1,3 +1,4 @@
+import { microUsdToUsd } from '@open-legend/ai';
 import type { SqlDatabase } from './store.js';
 
 export interface AttemptBudgetSnapshot {
@@ -22,9 +23,10 @@ export async function readAttemptBudget(
       FROM attempts a JOIN attempt_budgets b ON b.attempt_id=a.id WHERE b.budget_id=?`,
     )
     .get(budgetId);
-  return {
-    spentUsd: Number(row?.['spent'] ?? 0) / 1e6,
-    reservedUsd: Number(row?.['reserved'] ?? 0) / 1e6,
-    uncertainUsd: Number(row?.['uncertain'] ?? 0) / 1e6,
-  };
+  const spentUsd = microUsdToUsd(String(row?.['spent'] ?? 0));
+  const reservedUsd = microUsdToUsd(String(row?.['reserved'] ?? 0));
+  const uncertainUsd = microUsdToUsd(String(row?.['uncertain'] ?? 0));
+  if (spentUsd === undefined || reservedUsd === undefined || uncertainUsd === undefined)
+    throw new Error('Episode spending exceeds safe arithmetic.');
+  return { spentUsd, reservedUsd, uncertainUsd };
 }

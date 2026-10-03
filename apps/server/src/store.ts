@@ -1,4 +1,10 @@
 import {
+  usdToMicroUsd,
+  microUsdToUsd,
+  normalizeReceiptCost,
+  sumSafeIntegers,
+} from '@open-legend/ai';
+import {
   AuthorityRepository,
   type AuthorityFence,
   type AccountBinding,
@@ -158,7 +164,16 @@ export interface JobRecord extends AiJobView {
   totalLatencyMs?: number;
 }
 
-const micro = (usd: number): number => Math.ceil(usd * 1_000_000);
+function micro(usd: number): number {
+  const amount = usdToMicroUsd(usd);
+  if (amount === undefined) throw new Error('Invalid spending amount.');
+  return amount;
+}
+function exposureTotal(value: unknown): bigint {
+  const text = String(value);
+  if (!/^\d+$/.test(text)) throw new Error('Invalid spending exposure.');
+  return BigInt(text);
+}
 
 function samePrimitive(left: unknown, right: unknown): boolean {
   return left === right || (Number.isNaN(left) && Number.isNaN(right));
@@ -1320,6 +1335,8 @@ export class SqlGameRepository implements GameRepository {
     budget?: AttemptBudget,
   ): Promise<boolean> {
     await this.ready;
+    const amount = micro(amountUsd);
+    const ceiling = micro(ceilingUsd);
 
     if (
       !Number.isFinite(amountUsd) ||
@@ -1354,7 +1371,6 @@ export class SqlGameRepository implements GameRepository {
           "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",
         )
         .get(start, actorId);
-      const amount = micro(amountUsd);
       // This is an additional cap over the same attempt ledger, not another wallet.
       // docs/architecture.md#invention-workshop-tools
       if (budget) {
@@ -1370,9 +1386,13 @@ export class SqlGameRepository implements GameRepository {
             "SELECT COALESCE(SUM(a.spent + CASE WHEN a.status = 'reserved' THEN a.reserved ELSE 0 END), 0) AS total FROM attempt_budgets b JOIN attempts a ON a.id=b.attempt_id WHERE b.budget_id=?",
           )
           .get(budget.id);
-        if (Number(exposure?.['total'] ?? 0) + amount > micro(budget.limitUsd)) return false;
+        if (
+          exposureTotal(exposure?.['total'] ?? 0) + BigInt(amount) >
+          BigInt(micro(budget.limitUsd))
+        )
+          return false;
       }
-      if (Number(row?.['total'] ?? 0) + amount > micro(Math.min(50, ceilingUsd))) {
+      if (exposureTotal(row?.['total'] ?? 0) + BigInt(amount) > BigInt(ceiling)) {
         return false;
       }
       await this.db
@@ -1397,18 +1417,24 @@ export class SqlGameRepository implements GameRepository {
 
   async settle(id: string, receipt: AiReceipt): Promise<void> {
     await this.ready;
+    if (receipt.requestId !== id) throw new Error('Spending receipt identity mismatch.');
+    receipt = normalizeReceiptCost(receipt);
     await this.db.transaction(async () => {
       const row = await this.db
         .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
         .get(id);
       if (!row) return;
+      const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
+      // Late pricing can settle the original work, but cannot retract evidence
+      // that it may have started and manufacture a zero-charge non-dispatch.
+      if (prior?.dispatched && !receipt.dispatched)
+        throw new Error('Spending receipt cannot retract dispatch evidence.');
+      if (prior?.providerRequestId && prior.providerRequestId !== receipt.providerRequestId)
+        throw new Error('Spending receipt changed its external request identity.');
       if (row['status'] === 'settled') {
-        // Older saves marked unpriced successful calls settled. Their conservative
-        // reserve may still be replaced by a definitive late billing receipt.
-        const prior = row['receipt']
-          ? (JSON.parse(String(row['receipt'])) as AiReceipt)
-          : undefined;
-        if (!prior?.dispatched || prior.estimatedCostUsd !== undefined) return;
+        // A final priced receipt is immutable; an unpriced attempt may receive
+        // definitive billing later without authorizing another dispatch.
+        if (!prior?.dispatched || usdToMicroUsd(prior.estimatedCostUsd) !== undefined) return;
       }
       if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
       const reserve = Number(row['reserved']);
@@ -1549,7 +1575,7 @@ export class SqlGameRepository implements GameRepository {
         Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
         ...(actorId ? [actorId] : []),
       );
-    const accounts: Record<string, { spentUsd: number; reservedUsd: number }> = {};
+    const accountAmounts: Record<string, { spent: number; reserved: number }> = {};
     let spent = 0,
       reserved = 0,
       jevCalls = 0,
@@ -1558,11 +1584,18 @@ export class SqlGameRepository implements GameRepository {
       outputTokens = 0,
       lastLatencyMs = 0;
     for (const row of rows) {
-      const account = (accounts[String(row['actor_id'])] ??= { spentUsd: 0, reservedUsd: 0 });
-      account.spentUsd += Number(row['spent']) / 1e6;
-      if (row['status'] === 'reserved') account.reservedUsd += Number(row['reserved']) / 1e6;
-      spent += Number(row['spent']);
-      if (row['status'] === 'reserved') reserved += Number(row['reserved']);
+      const account = (accountAmounts[String(row['actor_id'])] ??= { spent: 0, reserved: 0 });
+      account.spent += Number(row['spent']);
+      if (row['status'] === 'reserved') account.reserved += Number(row['reserved']);
+      const nextSpent = sumSafeIntegers([spent, Number(row['spent'])]);
+      const nextReserved = sumSafeIntegers([
+        reserved,
+        row['status'] === 'reserved' ? Number(row['reserved']) : 0,
+      ]);
+      if (nextSpent === undefined || nextReserved === undefined)
+        throw new Error('Spending summary exceeds safe arithmetic.');
+      spent = nextSpent;
+      reserved = nextReserved;
       if (row['receipt']) {
         const receipt = JSON.parse(String(row['receipt'])) as AiReceipt;
         if (receipt.dispatched) {
@@ -1574,14 +1607,28 @@ export class SqlGameRepository implements GameRepository {
         lastLatencyMs = receipt.latencyMs;
       }
     }
+    const reportUsd = (amount: number): number => {
+      const usd = microUsdToUsd(String(amount));
+      if (usd === undefined) throw new Error('Spending summary exceeds safe arithmetic.');
+      return usd;
+    };
+    const accounts = Object.fromEntries(
+      Object.entries(accountAmounts).map(([id, amount]) => [
+        id,
+        {
+          spentUsd: reportUsd(amount.spent),
+          reservedUsd: reportUsd(amount.reserved),
+        },
+      ]),
+    );
     return {
       budget: {
         limitUsd: ceilingUsd,
         period: new Date().toISOString().slice(0, 7),
         perAgent: true,
         accounts,
-        spentUsd: spent / 1e6,
-        reservedUsd: reserved / 1e6,
+        spentUsd: reportUsd(spent),
+        reservedUsd: reportUsd(reserved),
         estimated: true,
       },
       usage: { jevCalls, llmCalls, inputTokens, outputTokens, lastLatencyMs },

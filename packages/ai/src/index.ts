@@ -1,5 +1,12 @@
 export { createAiClient } from './client.js';
 export { estimateCostUsd, modelTokenPrices } from './usage.js';
+export {
+  usdToMicroUsd,
+  microUsdToUsd,
+  parseNonnegativeSafeInteger,
+  sumSafeIntegers,
+  normalizeReceiptCost,
+} from './cost.js';
 export type * from './types.js';
 export {
   MacrofoldTransport,
@@ -13,6 +20,7 @@ export * from './embedding.js';
 
 export {
   compileSchema,
+  serialize,
   InvalidData,
   validateQuestions,
   validateJudgmentSize,

@@ -1,6 +1,7 @@
+import { normalizeReceiptCost } from '@open-legend/ai';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { AiClient, FetchTransport } from '@open-legend/ai';
+import type { AiClient, FetchTransport, GenerateRequest } from '@open-legend/ai';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
 
@@ -278,13 +279,18 @@ export class IntelligenceLog {
   }
   wrap(client: AiClient): AiClient {
     return {
-      judge: (request) => this.run('Jev', request, async () => await client.judge(request)),
-      generate: (request) =>
-        this.run(
-          `LM · ${request.execution ?? 'default'} · ${request.task}`,
-          request,
-          async () => await client.generate(request),
-        ),
+      judge: (request) =>
+        this.run('Jev', request, async () => {
+          const result = await client.judge(request);
+          result.receipt = normalizeReceiptCost(result.receipt);
+          return result;
+        }),
+      generate: <T>(request: GenerateRequest) =>
+        this.run(`LM · ${request.execution ?? 'default'} · ${request.task}`, request, async () => {
+          const result = await client.generate<T>(request);
+          result.receipt = normalizeReceiptCost(result.receipt);
+          return result;
+        }),
     };
   }
   readonly fetch: FetchTransport = async (url, init) => {

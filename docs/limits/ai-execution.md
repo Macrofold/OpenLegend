@@ -212,11 +212,9 @@ Original recommendation: **Review**.
 
 ## LA182
 
-**Current mismatch confirmed by source on 2026-10-02; removal still required · Restrictiveness: Restrictive.** Configuration accepts a per-agent monthly allowance from $0–$100 and defaults to $50, but `Store.reserve` still applies a hidden $50 ceiling on inspected main `c2e670b0`. The earlier audit recorded this clamp as removed; that record was not reverified and disagrees with current implementation.
+**Removed by NP01 on October 2, 2026 · Restrictiveness: — (removed).** Configuration already accepted $0–$100 per agent per UTC month with a $50 default, but the reservation owner still clamped admission to $50 on `c2e670b0`. The earlier audit's removal claim was inaccurate; the planning audit identified that mismatch. NP01 now removes the actual remaining clamp, with [synthetic $75 admission after $50, exact exhaustion, lowered/episode/background ceilings and concurrent reservation evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026).
 
-**Accepted target / tradeoff:** Honor the configured allowance within its existing range; retain the $50 default, the $100 configuration maximum, per-call/episode admission, conservative reservations and real spending authorization. This does not grant permission to spend the configured amount.
-
-[NP01](../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending) selects the source repair and below/above-ceiling accounting evidence. [Configuration](../../apps/server/src/config.ts) and [reservation owner](../../apps/server/src/store.ts) remain authoritative implementation points. Historical recommendation was removal, not raising the configuration maximum. Planning has not removed the clamp.
+**Reason / tradeoff:** Honor the already accepted operator setting without changing the $50 default or $100 configuration maximum. Atomic admission, conservative uncertain exposure, separate episode/decision bounds and real account-owner spending authorization remain. This software allowance grants no engineering spending permission. [Reservation owner](../../apps/server/src/store.ts), [configuration](../../apps/server/src/config.ts), [NP01](../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending).
 
 ## LA183
 

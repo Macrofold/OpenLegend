@@ -1,3 +1,4 @@
+import { normalizeReceiptCost } from '@open-legend/ai';
 import {
   decisionAllowance,
   DecisionLedger,
@@ -1407,6 +1408,7 @@ export class AiDirector {
     );
     const result = await dispatch(id);
     const accountingStartedAt = new Date().toISOString();
+    result.receipt = normalizeReceiptCost(result.receipt);
     await this.service.store.settle(id, result.receipt);
     run.ledger?.settle(id, result.receipt, result.outcome);
     await this.log.record(

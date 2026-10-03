@@ -1,3 +1,4 @@
+import { normalizeReceiptCost } from '@open-legend/ai';
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
 import { bindReflectionAppraisals } from './appraisal-context.js';
@@ -590,6 +591,7 @@ export class CognitionMaintenance {
       throw error;
     }
     const result = await execute();
+    result.receipt = normalizeReceiptCost(result.receipt);
     await this.service.store.settle(id, result.receipt);
     if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
     if (this.service.paused || this.active?.signal.aborted)

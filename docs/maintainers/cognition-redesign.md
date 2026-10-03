@@ -76,7 +76,7 @@ Coordinate response translation with [AG01](agent-agency.md#ag01--optional-bound
 - [x] Directed speech admits level 2 by default. Jev always evaluates escalation for an admitted semantic opportunity; it may raise the immediate reasoning level and/or enqueue reflection. Ordinary speech must not request mind updates or wait for reflection.
 - [x] Keep ordinary response components minimal and reflection limited to short presentation thoughts as final output. The response envelope now supports optional repeated operations through AG01; no component is mandatory. Typed reflection goal changes share AG02 mutation instead of duplicating operational goals in prose. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
 - [x] Verify a greeting causes no harness run, relationship-writing requirement or default high-effort reasoning; an exceptional event can request reflection while conversation and simulation progress. Provider refusal, unavailable credentials, invalid data and uncertain completion remain distinct in director jobs, traces and the direct adapters. [evidence](../verification/level1-decisions.md)
-- [ ] Keep those outcomes distinct in the Macrofold backend: [MW05](macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures).
+- [x] Keep those outcomes distinct in the Macrofold backend: NP01 delivers [synthetic adapter/director evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026); broader live qualification and request-body automation remain open under [MW05](macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures).
 
 - [x] Apply routing to every admitted semantic trigger, including notable events, hazards, encounters, need/goal changes and speech. Reject unoffered routes; native urgency acts immediately, and unavailable semantic work is explicitly deferred.
 - [x] Start every NPC cognition job with fresh model history and current versioned instructions, including immediate decisions; warm compute must not carry prior private transcripts. Verify actual model/effort/parameter forwarding and missing-capability outcomes without silently substituting a harness/model. Fixture-verified through the real direct adapters; fresh harness sessions remain covered by `cognition.test.ts`. [evidence](../verification/level1-decisions.md)
@@ -234,6 +234,8 @@ Owner: server repository/protocol/client projection and documentation. Depends o
 CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios while retaining its memory/recall acceptance scope.
 
 ### CR12 — Acceptance and token/latency evidence
+
+NP01 completed its bounded provider outcome, checked-price, reservation and required-context reporting child. [NP01 evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) distinguishes zero from unpriced, cancellation from deadlines, late settlement from duplicate dispatch and all four preparation variants. The accepted identity-size/greeting tradeoff remains [CG09](../limits/cognition.md#cg09); this repair closes no broader live quality, payload optimization, deployment or lifecycle requirement below.
 
 Level-1 selection fixtures (zero external requests; `level1-decisions.test.ts`, [evidence](../verification/level1-decisions.md)):
 

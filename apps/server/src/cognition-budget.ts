@@ -1,6 +1,9 @@
 import {
   JUDGMENT_MAX_CHARACTERS,
   modelTokenPrices,
+  usdToMicroUsd,
+  microUsdToUsd,
+  sumSafeIntegers,
   type AiReceipt,
   type TokenPrices,
   type TokenUsage,
@@ -103,6 +106,18 @@ export interface LevelLimits {
 export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimits> {
   const jev = decisionAllowance(config, 'jev');
   const llm = decisionAllowance(config, 'openai', config.llmModel);
+  // Each SQL reservation rounds upward separately. Multiplying the raw USD first
+  // would refuse the final advertised request for fractional-microdollar bounds.
+  const requestAllowance = (requestsPerDecision: number, reserveUsd: number) => {
+    const reserve = usdToMicroUsd(reserveUsd);
+    const total =
+      reserve === undefined
+        ? undefined
+        : sumSafeIntegers(Array.from({ length: requestsPerDecision }, () => reserve));
+    const usd = total === undefined ? undefined : microUsdToUsd(String(total));
+    if (usd === undefined) throw new Error('Decision allowance exceeds safe arithmetic.');
+    return { requestsPerDecision, decisionUsd: usd };
+  };
   const generative = (level: 2 | 3 | 4): LevelLimits => ({
     level,
     executor: level === 2 ? 'mini-llm' : 'complex-llm',
@@ -116,10 +131,10 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
       allowanceTokens: level === 2 ? 512 : level === 3 ? 2_048 : 6_144,
     },
     toolRounds: 0,
-    requestsPerDecision: 10,
-    decisionUsd:
-      10 *
+    ...requestAllowance(
+      10,
       decisionAllowance(config, 'openai', level === 2 ? config.miniModel : config.complexModel),
+    ),
   });
   return {
     1: {
@@ -131,8 +146,7 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
       visibleOutputBytes: 1_000_000,
       reasoning: { effort: 'none', allowanceTokens: 0 },
       toolRounds: 0,
-      requestsPerDecision: 20,
-      decisionUsd: 20 * jev,
+      ...requestAllowance(20, jev),
     },
     2: generative(2),
     3: generative(3),
@@ -147,8 +161,7 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
       reasoning: { effort: 'xhigh', allowanceTokens: 16_384 },
       // Enforced by the reflection harness adapter, which rejects runs above eight tool rounds.
       toolRounds: 8,
-      requestsPerDecision: 1,
-      decisionUsd: config.macrofoldKey ? config.macrofoldRunUsd : llm,
+      ...requestAllowance(1, config.macrofoldKey ? config.macrofoldRunUsd : llm),
     },
   };
 }
@@ -195,8 +208,11 @@ export class DecisionLedger {
       };
     // Reservations, not settlements: a provider cost reported above its reservation must not
     // refuse work that the request count still allows.
-    const committed = prior.reduce((sum, e) => sum + e.reservedUsd, 0);
-    if (committed + reserveUsd > limits.decisionUsd + 1e-9)
+    const committed = sumSafeIntegers(prior.map((e) => usdToMicroUsd(e.reservedUsd) ?? NaN));
+    const additional = usdToMicroUsd(reserveUsd);
+    const ceiling = usdToMicroUsd(limits.decisionUsd);
+    const combined = sumSafeIntegers([committed ?? NaN, additional ?? NaN]);
+    if (combined === undefined || ceiling === undefined || combined > ceiling)
       return {
         ok: false,
         reason: `Level ${level} decision allowance of $${limits.decisionUsd.toFixed(6)} cannot cover another $${reserveUsd.toFixed(6)} reservation.`,
@@ -212,13 +228,15 @@ export class DecisionLedger {
     const entry = this.entries.find((e) => e.requestId === requestId);
     if (!entry) return;
     // Missing usage or uncertain completion is not free: the reservation stays charged.
-    const uncertain =
-      receipt.dispatched && (receipt.completionUncertain || receipt.estimatedCostUsd === undefined);
+    const charge = usdToMicroUsd(receipt.estimatedCostUsd);
+    const uncertain = receipt.dispatched && (receipt.completionUncertain || charge === undefined);
     entry.settledUsd = !receipt.dispatched
       ? 0
       : uncertain
         ? entry.reservedUsd
-        : receipt.estimatedCostUsd;
+        : charge === undefined
+          ? entry.reservedUsd
+          : charge / 1_000_000;
     entry.uncertain = uncertain;
     entry.outcome = outcome;
     if (receipt.usage) entry.usage = receipt.usage;
@@ -237,6 +255,17 @@ export class DecisionLedger {
       const key = entry.category === 'level' ? `level${entry.level}` : entry.category;
       groups.set(key, [...(groups.get(key) ?? []), entry]);
     }
+    const amountUsd = (entries: LedgerEntry[], settled: boolean): number => {
+      const amounts = entries.map(
+        (entry) =>
+          usdToMicroUsd(settled ? (entry.settledUsd ?? entry.reservedUsd) : entry.reservedUsd) ??
+          NaN,
+      );
+      const sum = sumSafeIntegers(amounts);
+      const usd = sum === undefined ? undefined : microUsdToUsd(String(sum));
+      if (usd === undefined) throw new Error('Decision spending exceeds safe arithmetic.');
+      return usd;
+    };
     const total = (entries: LedgerEntry[]) => ({
       requests: entries.length,
       inputBytes: entries.reduce((s, e) => s + e.size.instructions + e.size.context, 0),
@@ -245,8 +274,8 @@ export class DecisionLedger {
       outputTokens: entries.reduce((s, e) => s + (e.usage?.outputTokens ?? 0), 0),
       reasoningTokens: entries.reduce((s, e) => s + (e.usage?.reasoningOutputTokens ?? 0), 0),
       usageMissing: entries.some((e) => e.usage === undefined && e.settledUsd !== 0),
-      reservedUsd: entries.reduce((s, e) => s + e.reservedUsd, 0),
-      settledUsd: entries.reduce((s, e) => s + (e.settledUsd ?? e.reservedUsd), 0),
+      reservedUsd: amountUsd(entries, false),
+      settledUsd: amountUsd(entries, true),
       uncertain: entries.some((e) => e.uncertain || e.settledUsd === undefined),
     });
     return {

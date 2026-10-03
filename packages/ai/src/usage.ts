@@ -1,3 +1,4 @@
+import { usdToMicroUsd } from './cost.js';
 import type { ModelTokenPrices, TokenPrices, TokenUsage } from './types.js';
 
 /** Prices belong to the admitted model; a different reported identity needs its explicit alias. */
@@ -43,5 +44,5 @@ export function estimateCostUsd(
       written * (prices.cacheWriteInputUsdPerMillion ?? prices.inputUsdPerMillion) +
       usage.outputTokens * prices.outputUsdPerMillion) /
     1_000_000;
-  return Number.isFinite(total) ? total : undefined;
+  return usdToMicroUsd(total) !== undefined ? total : undefined;
 }

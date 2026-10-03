@@ -1,8 +1,8 @@
 # Next priority batch — feature specification
 
-| Status      | Current progress                                                                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP02 character sensing, NP03 material crafting and NP04 camp-supply discovery are implemented and locally verified; remaining assignments and broader qualification remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP01–NP04 are delivered with scoped local evidence; NP05 reply previews and broader qualification remain open. | 2026-10-03   |
 
 The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
@@ -55,7 +55,7 @@ All implementation prompts refer to these documents and current repository guida
 
 ## NP01 — Reliable AI outcomes and spending
 
-**Status:** proposed implementation assignment; this document does not authorize runtime changes. The source audit used local `main` `c2e670b0`. Estimated scope: **300–550 changed logic lines**, approximately **18–32 engineer-hours**, including integration, relevant evidence, documentation and review but excluding waiting on external dependencies. These are estimates, not completion deadlines. Risk is medium–high because mistakes can hide a failed character decision or incorrectly release reserved funds.
+**Status:** Mike authorized implementation in chat. NP01 is implemented with [adapter/director/PostgreSQL acceptance](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026); broader parent qualification remains open. The source audit used local `main` `c2e670b0`. Estimated scope: **300–550 changed logic lines**, approximately **18–32 engineer-hours**, including integration, relevant evidence, documentation and review but excluding waiting on external dependencies. These are estimates, not completion deadlines. Risk is medium–high because mistakes can hide a failed character decision or incorrectly release reserved funds.
 
 ### Purpose and priority
 

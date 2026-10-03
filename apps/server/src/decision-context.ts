@@ -35,7 +35,13 @@ import { activeAppraisals } from '@open-legend/domain';
 import { compileInterests } from './interests.js';
 import { type CognitionBinding, MIND_POLICY, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
-import { npcCandidates, planningCandidates, type CandidateAction } from './context.js';
+import {
+  ContextBudgetError,
+  CONTEXT_BYTE_LIMIT,
+  npcCandidates,
+  planningCandidates,
+  type CandidateAction,
+} from './context.js';
 import { domainCommand } from './cognition.js';
 import { candidateSet, gameTime, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
@@ -128,7 +134,7 @@ function fitActionCandidates(
   reservedBytes = 0,
 ): CandidateAction[] {
   let remaining =
-    100000 -
+    CONTEXT_BYTE_LIMIT -
     reservedBytes -
     Buffer.byteLength(readableDecisionContext(context, [], true)) -
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
@@ -506,12 +512,18 @@ export async function prepareDecision(
         8,
       0,
     );
+  // Required facts may already exhaust the allowance. Do not attempt paid
+  // conversation compaction with a negative budget or hide this as its failure.
+  if (requiredBytes + actionReserveBytes + mandatoryRecallBytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
   const conversation = await buildConversationContext({
     service,
     actorId,
     requiredIds: evidenceIds,
     includeConversation,
-    maxBytes: 100000 - requiredBytes - actionReserveBytes - mandatoryRecallBytes,
+    maxBytes: CONTEXT_BYTE_LIMIT - requiredBytes - actionReserveBytes - mandatoryRecallBytes,
     signal,
     attempt,
     ...(compact ? { generate: compact } : {}),
@@ -535,8 +547,10 @@ export async function prepareDecision(
       )
     )
       candidates.splice(index, 1);
-  if (requiredBytes + actionReserveBytes > 100000)
-    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  if (requiredBytes + actionReserveBytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
   // Plan vocabulary is optional: retain every option that fits, not an ID-count prefix.
   // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
   const planningAvailable = planOffers.length;
@@ -560,7 +574,7 @@ export async function prepareDecision(
       judge,
       signal,
       budgetCeiling,
-      100000 - requiredBytes - actionReserveBytes,
+      CONTEXT_BYTE_LIMIT - requiredBytes - actionReserveBytes,
       {
         identity: requiredContext['identity'],
         notepad: requiredContext['notepad'],
@@ -810,8 +824,10 @@ export async function prepareDecision(
   }
   const prompt = readableDecisionContext(context, offered, false);
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  if (bytes > 100000)
-    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  if (bytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
   const attempts = new Map<string, AttemptBinding>();
   for (const candidate of [...availableActions, ...planOffers]) {
     if (!candidate.command) continue;
@@ -964,8 +980,10 @@ export async function selectDecisionActions(
   const binding = { ...prepared.binding, actions, entityIds: Object.values(entityReferences) };
   const prompt = readableDecisionContext(prepared.context, offered, true);
   const inputBytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  if (inputBytes > 100000)
-    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  if (inputBytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
   return {
     ...prepared,
     knownPlans,
@@ -1042,8 +1060,10 @@ export function fallbackDecisionActions(
   }));
   const prompt = readableDecisionContext(prepared.context, offered, true);
   const inputBytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  if (inputBytes > 100000)
-    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  if (inputBytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
   return {
     ...prepared,
     binding: {

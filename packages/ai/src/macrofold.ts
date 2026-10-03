@@ -102,6 +102,8 @@ export class MacrofoldTransport {
     if (url.origin !== this.base.origin) throw new Error('Macrofold returned a foreign URL.');
     if (!this.key) throw new Error('MACROFOLD_API_KEY is not configured.');
     if (body !== undefined && !operationId) throw new Error('Mutation requires an operation ID.');
+    const control = signal ?? AbortSignal.timeout(30_000);
+    control.throwIfAborted();
     const response = await this.transport(url.href, {
       method: body === undefined ? 'GET' : 'POST',
       redirect: 'error',
@@ -111,25 +113,45 @@ export class MacrofoldTransport {
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
       },
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
-      signal: signal ?? AbortSignal.timeout(30_000),
+      signal: control,
     });
     const reader = response.body?.getReader();
-    if (!reader) throw new Error('Macrofold returned an empty response.');
+    if (!reader) {
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      throw new InvalidData('Macrofold returned an empty response.');
+    }
     const chunks: Uint8Array[] = [];
     let length = 0;
+    const cancel = () => {
+      void reader.cancel().catch(() => {});
+    };
+    control.addEventListener('abort', cancel, { once: true });
     try {
       for (;;) {
+        control.throwIfAborted();
         const chunk = await reader.read();
+        control.throwIfAborted();
         if (chunk.done) break;
         length += chunk.value.byteLength;
         if (length > maxResponseBytes)
           throw new InvalidData('Macrofold response exceeds the size limit.');
         chunks.push(chunk.value);
       }
+    } catch (error) {
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      throw error;
     } finally {
-      await reader.cancel();
+      control.removeEventListener('abort', cancel);
+      cancel();
+      reader.releaseLock();
     }
-    const raw = Buffer.concat(chunks).toString('utf8');
+    let raw: string;
+    try {
+      raw = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, length));
+    } catch {
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      throw new InvalidData('Invalid Macrofold response encoding.');
+    }
     if (!response.ok) {
       let code = '';
       try {
@@ -141,7 +163,9 @@ export class MacrofoldTransport {
       }
       throw new MacrofoldHttpError(response.status, code);
     }
-    return JSON.parse(raw) as unknown;
+    const value: unknown = JSON.parse(raw);
+    serialize(value, maxResponseBytes);
+    return value;
   }
 }
 
@@ -156,6 +180,6 @@ export function macrofoldString(value: unknown): string {
 }
 export function validateMacrofoldValue<T>(schema: unknown, value: unknown): T {
   if (!compileSchema(schema)(value))
-    throw new Error('Macrofold output did not match the requested schema.');
+    throw new InvalidData('Macrofold output did not match the requested schema.');
   return value as T;
 }

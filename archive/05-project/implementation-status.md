@@ -28,6 +28,8 @@ Next proposed exposure work is [BW16/BW17](../../docs/maintainers/base-world.md#
 
 ## Macrofold Worker API caller
 
+NP01 now repairs judgment, short/native generation and reflection failure classification, checked reported prices and conservative exact-attempt settlement. Monthly admission honors the existing $0–$100 configuration range; required-context overflow uses the explicit size failure before further dispatch. [Synthetic acceptance](../../docs/verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) includes the real decision caller and PostgreSQL recovery; no live provider/browser/deployment qualification is claimed. MW05 request-body automation and broader MW04/CR12/WW gates remain open.
+
 Native calls now target the application/world owner’s configured Worker, with distinct actor Worktrees and Sessions, demand-first submission, identity checks and Run-only conversation cancellation. Direct inference remains independent. Per-Sandbox allocation/recovery is removed without rewriting existing context or financial records. Worker compute limits and lifecycle are operator-managed, separate from OpenLegend’s per-agent Run budget. [Architecture](../../docs/architecture.md#macrofold-worker-ownership) and [setup/cutover](../../docs/ai-providers.md#shared-worker-setup-and-cutover) describe current behavior; [MW01–MW04](../../docs/maintainers/macrofold-worker-api.md) retains live deployment and automated-fixture gates. [Local evidence](../../docs/verification/macrofold-worker.md#macrofold-worker-api-cutover) is not production-provider qualification.
 
 ## Mixed spatial review
