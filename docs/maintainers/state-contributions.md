@@ -1,6 +1,6 @@
 # State contributions — EWF02–03 / INV-6.3 subtracker
 
-**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This is the detailed decomposition of shared contribution/claim work under [EWF02–03](extensible-world-foundation.md#ewf02--typed-state-providers-and-one-authoritative-value) and [INV-6.3](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), not another state or invention authority. Parent completion still requires its own remaining scope. [Feature specification](../projects/shared-state-contributions-feature-spec.md) and [technical design](../projects/shared-state-contributions-tech-design.md) own the approved project.
+**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. The current-contract reservation validation gap is tracked under SC06.1 below; earlier foundation evidence does not close that later source finding. This is the detailed decomposition of shared contribution/claim work under [EWF02–03](extensible-world-foundation.md#ewf02--typed-state-providers-and-one-authoritative-value) and [INV-6.3](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), not another state or invention authority. Parent completion still requires its own remaining scope. [Feature specification](../projects/shared-state-contributions-feature-spec.md) and [technical design](../projects/shared-state-contributions-tech-design.md) own the approved project.
 
 Implementation was authorized September 26, 2026 in the [five-project execution plan](../projects/foundations-1-5.md#approved-implementation-plan). The slice checkboxes below remain qualification gates, not a count of files written. Each slice joins SL00 when it introduces durable state.
 
@@ -35,8 +35,10 @@ index as admission, retaining canonical continuous summation and exact receipt o
 Warm/cold/fork/deadline checks and repeated whole-unit consumption stress qualify the repair.
 
 New holds bind a current action or admitted native process and claimant. (Reserving a portion for a named person, tracker BW21, was deferred for this reason: it needs a standing claimant process accepted at load plus R01's receipt pruning.) Derived
-reservation occupancy joins actor/module/world/host work admission; legacy holds without
-claimant evidence retain world/host accounting without invented ownership. Both SQL
+reservation occupancy joins actor/module/world/host work admission. The current codec still
+accepts older holds without claimant evidence and omits their actor ownership checks;
+SC06.1 removes that compatibility path under the current root policy. Never invent a
+claimant or silently release protected stock to make incompatible input load. Both SQL
 adapters preserve exact 17.125-unit holds and their accounting; cancellation releases live
 occupancy once, preserves stock and keeps terminal receipt memory accounted. The 2,024-hold
 burst reaches the 4 MB actor ceiling before publication of the refused hold. Source-bound
@@ -95,9 +97,10 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 
 ## SC06 — Canonical persistence, activation and save integration
 
-- [x] Extend consumed record codecs/indexes, in-place extraction, reference validation and short atomic commits; retain one writable owner.
+- [x] Extend consumed record codecs/indexes, reference validation and short atomic commits; retain one writable owner. The delivered in-place extraction is historical, not current compatibility support.
 - [x] Register contributions/holds/deadlines/carry/pins with SL00 capture and restore; rebuild indexes under fresh timeline/generation.
-- [x] Supply EWF07/INV-5 exact detach and migration dependencies. Reject unsupported retirement before publication; preserve current grants, forgetting and spending outside rewind.
+- [x] Supply EWF07/INV-5 exact detach and live-definition transition dependencies. Reject unsupported retirement before publication; preserve current grants, forgetting and spending outside rewind.
+- [ ] **SC06.1 — Require reservation ownership in the current format.** New `reserveResource` requests require an actor and a live action/native process, but `ResourceReservation.actorId` and `validateResourceReservations` still accept an absent actor at `b528af6`. The missing field skips the live-owner check and actor allocation accounting. Remove this old-hold compatibility across the type, codec, callers and focused current checks; reject incompatible input unchanged rather than infer an owner, delete a hold or grant standing-claim authority. Preserve valid held/consumed/released records, exact replay, stock, expiry and world/host accounting. Trace actual startup/manual restore as well as native validation, including a missing/retired/wrong owner. This is a source-confirmed validation mismatch; no new runtime reproduction or fix is claimed. DF owns broader converter removal; this row owns the resource semantics and qualification.
 
 **Dependencies:** each introducing slice above; coordinate SL00 and DF02. **Exit:** save/restart/load and failure around publication preserve stock, active effects and progress without paid replay. INV-5's broader law-change scope remains open.
 

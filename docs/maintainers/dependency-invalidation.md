@@ -1,6 +1,6 @@
 # Dependency invalidation — EWF08 subtracker
 
-**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This decomposes [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); EPR05 remains the actual reaction/ActorWork owner, SW owns geometry/query algorithms, INV owns definition admission and PF owns performance evidence. [Feature specification](../projects/dependency-invalidation-feature-spec.md) and [technical design](../projects/dependency-invalidation-tech-design.md) own this approved shared project.
+**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. DI07.1 records a later source-audited current-format recovery gap; the earlier foundation evidence does not close it. This decomposes [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); EPR05 remains the actual reaction/ActorWork owner, SW owns geometry/query algorithms, INV owns definition admission and PF owns performance evidence. [Feature specification](../projects/dependency-invalidation-feature-spec.md) and [technical design](../projects/dependency-invalidation-tech-design.md) own this approved shared project.
 
 Implementation is approved under the [foundation plan](../projects/foundations-1-5.md#approved-implementation-plan), including the recorded DF02/hearing/cadence seams. Do not introduce another event bus, scheduler or writable graph. Each slice preserves native phase order, RNG, disclosure, elapsed-work semantics and required evidence. New durable state joins SL00 immediately.
 
@@ -56,8 +56,10 @@ replacement scheduler is claimed. Final review verified native port coverage and
 - The synchronous command/advance owner shares one meter with nested work. Resource claims,
   contents/candidate queries, native condition/perception tests, effects and event output
   charge native ports. Exhaustion discards the candidate; WorldService preserves time/debt
-  and pauses required work with an explicit error. Startup/restore reconstruct missing
-  status allocations without resetting saved interval progress. HostWork reserves current
+  and pauses required work with an explicit error. Current native status activation admits its allocation and saved interval progress must
+  survive restore. The exported `initializeNativeWork` reconstruction helper has no
+  production caller at `b528af6`; it is not evidence that startup performs that repair.
+  DI07.1 owns missing-allocation refusal and removal of obsolete reconstruction paths. HostWork reserves current
   process capacity through SQL commit; multi-process distributed admission is unsupported.
   Physical eligibility catches propagate exhausted enclosing meters; they cannot convert a
   budget breach into an ordinary unavailable item and let a required phase publish a prefix.
@@ -70,8 +72,10 @@ replacement scheduler is claimed. Final review verified native port coverage and
   simultaneous pending worlds, replacement refusal and rollback without overselling the
   host ceiling. Its allocation-only fixture is not a complete-world capacity benchmark.
 - The versioned `native-work-v1` ceilings are operational containment bounds, **not** a
-  qualified hosted capacity claim. Native status work permits up to 1024 existing subsecond
-  samples per simulated second; normal server advancement remains one sample per second.
+  qualified hosted capacity claim. Native status work permits up to 1024 charged samples per simulated second. Current
+  server advancement uses [elapsed intervals](../simulation-time.md), not a mandatory
+  one-second sample. The older fixed-cadence comment in `native-work.ts` is stale;
+  this work allowance is containment, not the world’s integration frequency.
   No phase order, native rate, saved random draw or provider allowance was changed.
 
 Disposable native evidence, provider budget $0:
@@ -155,6 +159,7 @@ exhaustion refuses the complete native step without advancing time. The complete
 - [x] Complete common-contract integration through EPR05's existing ActorWork, current due-work/timer pattern and existing fairness/concurrency. Replace scans only after all creation/removal/capability/deadline hooks are covered.
 - [x] Bind activation/removal to exact dependency pins and owned allocations through INV-5/EWF07; terminate only the removed source's subscriptions/effects and retain required pending state.
 - [x] Register authoritative latches/cursors/root lineage/recurrence progress with SL00. Rebuild derived indexes without new encounters, preserve current authority and external accounting, and reconcile restored gameplay allocations rather than double-reserving host resources.
+- [ ] **DI07.1 — Validate active native-work ownership in both directions.** Source review at `b528af6` finds that `validateNativeWork` checks existing roots against their status owners, while `validateStatusEffects` does not require the corresponding allocation for every active admitted status. `chargeStatusWork` creates a missing root later; `initializeNativeWork` is exported but has no production caller. Trace the complete current decoder/startup/restore path and require matching status-episode/root/pin/interval progress, refusing a missing authoritative allocation rather than renewing its budget through compatibility repair. Keep normal first activation and existing valid recurrence unchanged, preserve independent appraisal ownership, and remove unused reconstruction helpers only after checking all current callers. Exercise a valid active save, missing/mismatched root, spent interval, terminal status and repeated same-version restore through existing focused or manual checks. This is a static validation finding, not a claimed save exploit or a reproduced runtime failure. Correct the stale one-sample-per-second comment while following the elapsed-time owner; no new scheduler is needed.
 
 **Dependencies:** DI03–DI06; EPR05, SL00, MP01 and INV/EWF lifecycle owners. **Exit:** restart/restore/removal preserve required work and current privacy; no second scheduler, replayed effect or newly created real spending allowance.
 
