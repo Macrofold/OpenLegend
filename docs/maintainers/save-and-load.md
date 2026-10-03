@@ -6,7 +6,7 @@
 
 This is the sole implementation tracker for gameplay save/load capabilities. The [save/load design](../save-and-load.md) owns behavior and acceptance principles. [Architecture](../architecture.md) owns implemented facts; [Verification](../verification.md) owns evidence. Phase exit gates remain open until their required evidence is recorded; the initial delivery below is not full qualification. Existing persistence and backup scripts are reusable foundations, not proof that these capabilities are complete.
 
-Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their own serialization, validation and migration details as they evolve. Completing the framework does not automatically establish coverage for subsequently added state.
+Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their current serialization, validation and supported live-definition-change details as they evolve; the root policy prohibits development-format compatibility work. Completing the framework does not automatically establish coverage for subsequently added state.
 
 Coordinate module dependency capture and load validation with [EWF07](extensible-world-foundation.md#ewf07--module-lifecycle-and-current-format-save-integration); module fixtures do not complete this tracker’s broader acceptance.
 
@@ -25,7 +25,7 @@ SL02/SL03/SL08 and the supported local SL09 slice are implemented and exercised.
 
 Rebased integration preserves manual save grants and server-owned whole-world autosaves. Ordinary players have no save controls and their list/create/delete/load requests are denied. [Integration evidence](../verification/checkpoints-and-recovery.md#checkpoint-integration-with-foundations) covers creator-absent autosaves, current binding preservation, exact authority backup/import, preceding-layout conversion and both-adapter stress on the integrated foundation.
 
-Acceptance is scoped to the current local mechanisms and named native workloads. The 256 MiB ceiling itself, every future process/plan family, naturally aged long sessions, hosted storage/power loss, live providers, CI suites and first-release population SLOs are not qualified. Existing SL00/SL01/SL04/SL05/SL07 checklists retain broader owner-integration/release evidence; this delivery does not silently close them. [Extension guidance](../extending.md#persistence-and-migrations) and DF02 define the branch migration path.
+Acceptance is scoped to the current local mechanisms and named native workloads. The 256 MiB ceiling itself, every future process/plan family, naturally aged long sessions, hosted storage/power loss, live providers, CI suites and first-release population SLOs are not qualified. Existing SL00/SL01/SL04/SL05/SL07 checklists retain broader owner-integration/release evidence; this delivery does not silently close them. [Extension guidance](../extending.md#persistence-and-migrations) and DF02 define current owner integration; historical branch and format conversions are not remaining merge or migration requirements.
 
 ## Delivery boundaries and sequence
 
@@ -47,7 +47,7 @@ Exit: an integration path demonstrated with the current persistence boundary and
 
 Dependencies: SL00.
 
-- [ ] Implement a versioned logical package boundary carrying save identity, captured revision, compatibility information and required dependency references; keep its physical encoding replaceable.
+- [ ] Qualify the implemented logical package boundary carrying save identity, captured revision, compatibility information and required dependency references; keep its physical encoding replaceable.
 - [ ] Validate completeness, integrity, resource limits and supported interpretation before exposing a candidate to restoration. Keep private state private and exclude credentials.
 - [ ] Resolve required content versions explicitly; report missing or incompatible dependencies without silently substituting current content.
 
@@ -77,8 +77,8 @@ Exit: process interruption, storage exhaustion and concurrent completion leave o
 
 Dependencies: SL01–SL03; SL05 and current-format validation are required before exposing load.
 
-- [ ] Prepare an isolated candidate, reconstruct references and validate invariants through subsystem-owned restore paths without replaying creation side effects.
-- [ ] Quiesce admission, preserve a recoverable pre-load point and install through one recoverable authority transition. Fail safely if preparation or installation cannot complete.
+- [ ] Qualify isolated candidate preparation, reference reconstruction and invariant validation through subsystem-owned restore paths without replaying creation side effects.
+- [ ] Qualify admission quiescence, preservation of the pre-load recovery point and installation through one recoverable authority transition. Fail safely if preparation or installation cannot complete.
 - [ ] Rebuild derived state, discard abandoned-future projections, issue fresh client baselines and reopen paused. Keep load operation identity outside the rewindable world so request retries cannot rewind twice.
 
 Exit: interrupted installation recovers a complete old or new world; invalid candidates leave active state intact; a lost-response retry returns the original outcome even after later progress.
@@ -105,11 +105,11 @@ Exit: future compatibility work is qualified only against a newly authorized sup
 
 Dependencies: SL03–SL05 and current-format validation; future migration support is not a prerequisite.
 
-- [ ] Expose authorized manual save, save listing and load operations through the application boundary, with React controls using the current design system.
+- [ ] Qualify the delivered authorized manual save, save listing and load operations through the application boundary, with React controls using the current design system.
 - [ ] Show real creation time, simulated time, compatibility and truthful pending/success/failure feedback. Make replacement of the active timeline clear before destructive load or save deletion.
 - [ ] Verify the complete player flow: save, advance the world, load, inspect the restored state and explicitly resume. Handle repeated submissions, disconnects and failure feedback.
 
-Exit: a player can retain and restore the currently supported personal world without shell scripts; success is reported only after durable completion. Usable-release acceptance also requires SL09.
+Exit: a currently authorized save-grant holder can retain and restore the supported personal world without shell scripts; success is reported only after durable completion. Usable-release acceptance also requires SL09.
 
 ## SL08 — Rolling autosaves and retention
 
@@ -144,12 +144,12 @@ These items were first identified by source inspection. Ticked entries now cite 
   - [x] 2026-09-28: the pre-load checkpoint is written before the restore transaction, pinned to the replaced revision. Unwritable storage and a >1 MiB record both refuse the load, keep the current world (paused by the load request) at its revision without a storage latch, and record a recovery failure; after storage recovers the same load succeeds. Operator guidance is in SB13. [Evidence](../verification/ordered-async-saves.md#save-recovery-stages-47).
   - [ ] Open decision for the owner: whether to provide an explicit load path after a _verified_ independent preservation (operational backup or database dump) for worlds that can no longer be captured. No bypass exists; the design is recorded in [SB13](../limits/persistence.md#sb13).
 - [x] **SL09-B — Retention correctness and honest guarantees.** Done 2026-09-28: durable per-world capture sequence orders catalog, cursors and rotation ([SB14](../limits/persistence.md#sb14)); clock rollback, timestamp ties, damaged/unlisted slots, cleanup failure, byte usage and a checksum-valid but semantically invalid package are exercised in the [evidence](../verification/ordered-async-saves.md#save-recovery-stages-47); protected recovery slots (the file the “Before last load” entry names kept beyond the two newest, rotation after refused loads, no entry, unreadable entry) are exercised in the [hardening drill](../verification/ordered-async-saves.md#paths-the-final-review-found-unexercised). The Game panel reports save-folder bytes and describes counts as retention targets, not quotas. Original scope: Exercise clock rollback/timestamp ties, cleanup failure, catalog-excluded damaged files and protected recovery slots. Select capture order independently of wall-clock display time. Distinguish file-integrity checks from actual decode/migrate/restore evidence; include a checksum-valid but semantically invalid package. Track real directory bytes as well as catalog counts; do not claim a hard three/two-file quota.
-- [ ] **SL09-C — Slow-output snapshot pressure.** Measure retained WAL/row versions and database/command latency during slow writes, sync and publication on both adapters, including failure/cleanup. Add bounded cancellation or decouple snapshot retention only if the observed pressure warrants it, preserving one consistent cut. [SB16](../limits/persistence.md#sb16).
+- [ ] **SL09-C — Slow-output snapshot pressure.** Measure retained WAL/row versions and database/command latency during slow writes, sync and publication on PostgreSQL, including failure/cleanup. Add bounded cancellation or decouple snapshot retention only if the observed pressure warrants it, preserving one consistent cut. [SB16](../limits/persistence.md#sb16).
   - [x] 2026-09-28 (PostgreSQL only; SQLite was removed): with capture output throttled to 8 and 25 ms per record, the capture held its snapshot until the existing two-minute deadline aborted it; the database's oldest-snapshot age reached 85–132 transactions (0–5 without a capture) and durable command latency did not rise materially (p95 192–350 ms against 363–368 ms without a capture on the loaded host; 160 against 147 ms on the quieter final-code run), the snapshot was released at the abort and no staging files remained. No new cancellation is warranted by this evidence. [Evidence](../verification/ordered-async-saves.md#slow-output-snapshot-pressure-sl09-c).
   - [ ] A stall inside a single filesystem write, sync or rename is not covered by the deadline, and a larger, write-heavy world on a quiet host was not measured.
 - [x] **SL08-A — Restart-visible failure status.** Preserve or durably report the latest checkpoint failure for operators, with explicit reset/acknowledgment; confirm restart does not falsely imply recent protection. Keep catalog health distinct from historical autosave errors. [SB12](../limits/persistence.md#sb12). Done 2026-09-28 with persisted autosave settings and manual-save priority (C05); [evidence](../verification/ordered-async-saves.md#save-recovery-stages-47).
 
-The existing current/preceding-layout reader ([SB15](../limits/persistence.md#sb15)) is recorded implementation, not an obligation to extend it. Future owner integration qualifies current-format SL01/DF02 behavior under the [development save policy](../../AGENTS.md#development-save-policy). [SV18](../limits/observability.md#sv18) records the stress tool’s envelope; it is not a capacity gate. Operational restore file cleanup belongs to [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence).
+Only the current layout is supported. The preceding-format reader was removed; [DF04](production-data.md#df04--retire-residual-compatibility-paths) separately tracks the residual snapshot/journal startup converter, which must not be mistaken for supported compatibility. [SB15](../limits/persistence.md#sb15) preserves its historical rationale without authorizing an older-format reader. Future owner integration qualifies current-format SL01/DF02 behavior under the [development save policy](../../AGENTS.md#development-save-policy). [SV18](../limits/observability.md#sv18) records the stress tool’s envelope; it is not a capacity gate. Operational restore file cleanup belongs to [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence).
 
 ## SL10 — Conditional portability and shared-world expansion
 
