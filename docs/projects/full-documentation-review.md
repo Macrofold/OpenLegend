@@ -28,4 +28,4 @@ Documentation-only work requires content, links, changed-file formatting and `pn
 
 ## Results
 
-Pending the full review. Pinned source snapshots are available for current main and the earlier review; downloading them is not document coverage or runtime verification.
+The complete general TODO, action-experience tracker, maintainer navigation and new-priority tracker have been read at this base; whole-repository coverage is still in progress. The first reconciliation removes duplicate movement and schema-specific policy work, replaces the obsolete lexical-recall bug with delivered PW09 evidence, and removes the contradictory open command-draft bug already repaired under AE04/PW01. The allowance documentation is reconciled while the real NP01 source repair remains open. Earlier reports are reused with their stated limits, not counted as new runtime checks. Pinned source snapshots and the detailed working coverage/disposition record remain outside Git.

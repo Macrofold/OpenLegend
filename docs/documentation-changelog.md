@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Documentation reconciliation against integrated delivery
+
+Resumed the full review from `b528af6` rather than restoring the earlier review branch over newer implementation. Removed the duplicate movement-under-memory-pressure and obsolete schema-specific invention-policy tasks while retaining current-format, privacy, cancellation and accounting checks. Reconciled character word recall with delivered PW09 evidence and action-history command snapshots with AE04/PW01 evidence; their old missing-implementation descriptions no longer override the completed work. The monthly $50 reservation clamp remains a real NP01 repair, but LA182 and Architecture already agree about it. No runtime behavior or approval status changed, and no new gameplay/provider verification is claimed. The [full review](projects/full-documentation-review.md) remains in progress.
+
 ## 2026-10-02 — Fresh five-assignment priority batch
 
 The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/next-priority-batch-feature-spec.md) and [technical design](projects/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.
