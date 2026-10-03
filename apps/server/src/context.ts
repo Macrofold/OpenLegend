@@ -156,7 +156,7 @@ export function buildContext(
     })
     .sort((a, b) => b.score - a.score || b.index - a.index)
     .slice(0, 24);
-  const materials = inventionMaterials(observed);
+  const materials = inventionMaterials(service.world, observed);
   const inspected = inspectedContainer(service.world, actorId);
   const context = {
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },

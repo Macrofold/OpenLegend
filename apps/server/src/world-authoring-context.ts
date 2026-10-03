@@ -2,7 +2,6 @@ import {
   installedRecipeFamilies,
   recipeFamily,
   selectedRecipeCandidateSchema,
-  familyMaterialEligible,
   observeActor,
   type WorldState,
 } from '@open-legend/domain';
@@ -145,26 +144,21 @@ export function buildAuthoringPacket(
   if (profile === 'recipe') {
     const observed = observeActor(world, session.actorId, { includeMemories: false });
     if (!observed) throw new Error('The inventor is unavailable.');
-    const materials = inventionMaterials(observed);
-    const families = installedRecipeFamilies(world);
+    const materials = inventionMaterials(world, observed);
     if (materials.length > CONTEXT_WORK.records)
       throw new Error('Required material context exceeds one preparation slice.');
-    facts.materials = materials
-      .filter((m) => {
-        const definition = world.itemDefinitions[m.id];
-        return definition && families.some((family) => familyMaterialEligible(family, definition));
-      })
-      .map((m) => {
-        const definition = readDefinition(world, 'item-definition', m.id);
-        if (definition) pins.push(definition.node.ref);
-        return {
-          id: m.id,
-          name: m.name,
-          properties: m.properties,
-        };
-      });
+    facts.materials = materials.map((m) => {
+      const definition = readDefinition(world, 'item-definition', m.id);
+      if (definition) pins.push(definition.node.ref);
+      return {
+        id: m.id,
+        name: m.name,
+        properties: m.properties,
+        ...(m.material ? { material: m.material, facts: m.facts } : {}),
+      };
+    });
     facts.materialEligibility =
-      'Only observed eligible recipe inputs are listed; native validation still applies.';
+      'Observed native definitions and verified owned manufactured materials are listed. Ingredient roles and parameter references are checked separately by native validation.';
     facts.guide = authoringGuide(world, 'recipe', true);
   } else if (profile !== 'discovery') {
     facts.guide = authoringGuide(world, profile);

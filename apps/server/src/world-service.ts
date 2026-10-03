@@ -15,6 +15,7 @@ import {
   type PreparedHistoryEdit,
 } from './history-edit.js';
 import { reconcileConditions, initializePerception } from '@open-legend/domain';
+import { scopedInventionErrors } from './invention-context.js';
 import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
 import { WorkLane, OverloadError } from './work-lane.js';
@@ -4127,6 +4128,13 @@ export class WorldService {
       // Recheck cancellation after waiting for the writer, before publishing the candidate.
       // docs/architecture.md#shared-invention-workflow
       checkCurrent?.();
+      const errors = scopedInventionErrors(this, provenance.actorId, draft, world);
+      if (errors.length)
+        return {
+          world,
+          events: [],
+          outcome: { ok: false, code: 'invalid-declaration', message: errors.join(' ') },
+        };
       return admitDeclaration(world, draft, provenance);
     });
   }

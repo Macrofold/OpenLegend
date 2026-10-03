@@ -3,7 +3,8 @@ import {
   installedRecipeFamilies,
   recipeFamily,
   compileRecipeCandidate,
-  recipeDependencyPins,
+  recipeDependencyReferences,
+  recipeVisibleDependencies,
   selectedRecipeCandidateSchema,
   familyMaterialEligible,
   observeActor,
@@ -24,7 +25,7 @@ export const INVENTION_TOOL_DESCRIPTIONS = {
   catalogue:
     'List installed recipe families. Supply familyId to inspect one exact native interface and its strict candidate schema. No new host capability is implied.',
   materials:
-    'Page materials available to this inventor. Ingredients are knowledge, not a promise of inventory quantity.',
+    'Page observed native definitions and verified owned manufactured materials. Native validation separately checks ingredient roles and parameter references; discovery is not a promise of inventory quantity.',
   recipes:
     'Page learned recipe summaries. This is exact scoped listing, not semantic search or access to hidden inventions.',
   inspect_recipe:
@@ -86,7 +87,7 @@ export function projectRecipeEditor(service: WorldService, actorId: string, raw:
   if (!family || family.definition.version !== candidate.family.version) return undefined;
   const observed = observeActor(service.world, actorId, { includeMemories: false });
   if (!observed) return undefined;
-  const materials = inventionMaterials(observed);
+  const materials = inventionMaterials(service.world, observed);
   const fields = family.definition.editor.fields
     .filter((field) => !field.readOnly)
     .flatMap<RecipeEditorProjectionField>((field) => {
@@ -105,7 +106,9 @@ export function projectRecipeEditor(service: WorldService, actorId: string, raw:
               choices: materials
                 .filter((material) => {
                   const definition = service.world.itemDefinitions[material.id];
-                  return definition && familyMaterialEligible(family, definition, role);
+                  return (
+                    definition && familyMaterialEligible(service.world, family, definition, role)
+                  );
                 })
                 .map((material) => ({ value: material.id, label: material.name })),
             },
@@ -180,7 +183,7 @@ export function inspectInvention(service: WorldService, actorId: string, id: str
     summary: describeInvention(recipe),
     interface: recipeFamily(service.world, family)!.definition,
     familyPin: recipe.familyPin,
-    dependencyPins: recipe.dependencyPins,
+    dependencyReferences: recipeVisibleDependencies(service.world, recipe),
     dependencies: recipe.inputs.map((input) => ({
       id: input.definitionId,
       version: service.world.itemDefinitions[input.definitionId]!.version,
@@ -201,14 +204,22 @@ export function validateInventionCandidate(
   const compiled = draft ? compileRecipeCandidate(service.world, draft) : undefined;
   const dependencies =
     draft && compiled
-      ? recipeDependencyPins(service.world, draft, compiled).map((pin) => ({
-          id: pin.id,
-          version: pin.version,
-          digest: pin.digest,
-          role:
-            draft.inputs.find((input) => input.definitionId === pin.id)?.role ??
-            'family-dependency',
-        }))
+      ? recipeDependencyReferences(service.world, draft, compiled)
+          // Producer proof is private authority data; preview reports the supplied inputs only.
+          .filter(
+            (reference) =>
+              reference.kind === 'item-definition' &&
+              (draft.inputs.some((input) => input.definitionId === reference.pin.id) ||
+                compiled.dependencyIds?.includes(reference.pin.id)),
+          )
+          .map(({ pin }) => ({
+            id: pin.id,
+            version: pin.version,
+            digest: pin.digest,
+            role:
+              draft.inputs.find((input) => input.definitionId === pin.id)?.role ??
+              'family-dependency',
+          }))
       : [];
   const descriptor = family ? recipeFamily(service.world, family) : undefined;
   return {
@@ -278,7 +289,7 @@ export function executeInventionTool(
     }
     case 'materials': {
       const observed = service.observe(actorId);
-      const all = observed ? inventionMaterials(observed) : [];
+      const all = observed ? inventionMaterials(service.world, observed) : [];
       return {
         ok: true,
         materials: all.slice(input.offset, input.offset + 24),

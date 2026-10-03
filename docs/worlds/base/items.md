@@ -8,6 +8,16 @@ This specification owns the base world's item creation, portability, pickup and 
 
 The base world's handling policy enables pickup/drop for the `person` body profile, with reach 1.6 world units and one simulation second to collect a pile after approaching. These are authored defaults, not rights inherent to all creatures or worlds. The policy is saved with the world. Properties, scope, current body capability and actual quantities are rechecked at authoritative execution. UI labels grant no authority.
 
+## Cordage manufacture and reuse
+
+The trusted `base:cordage` family makes a homogeneous, portable cord item from two actual native prepared-fiber items with `fiber` and `flexible` properties. It takes 60 game seconds and produces one item, with `binding`/`flexible` properties and packing load one. [The shared authored rule](../../../packages/domain/src/worlds/base/items.ts) also supplies existing native cord preparation; neither path inherits extra input effects. The proposer chooses an eligible definition and bounded names/descriptions, with no strength, yield or other mechanical parameter.
+
+Only the trusted compiler issues the `base:binding-material` interface, version 1, with one binding unit per physical item. The exact admitted producer, output, family and dependencies must still reproduce before a [woven container](camp-containers.md#first-family-rules) can consume it. Tags, names, copied metadata and finished weapons/containers are insufficient. The producer's fiber role stays native-only, so this is one supported manufacture-and-reuse edge rather than recursive crafting.
+
+Learning or installing a technique creates no supplies and teaches only its inventor. Possession of verified cord permits consumption as binding without revealing or teaching a private manufacturing technique. The ordinary material and inventory views show the cord's actual name and supported use. Crafting consumes real accessible unclaimed stock at work start; cancellation does not refund it. Exact technique checks fence work start, completion and current-format reopening; missing/changed meaning refuses output or activation rather than guessing a replacement.
+
+[NP03 evidence](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) covers actual gathered/prepared stock, two names and container sizes, conservation/cancellation, private ingredients, forged/stale/malformed inputs, native alternate fiber, browser Apply/Craft/storage and PostgreSQL active-work reopening. It establishes native and supplied-proposal behavior; live model invention or autonomous chain selection is unqualified. [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families) owns the finite interface scope and expansion trigger; [NP03](../../maintainers/next-priority-batch.md#np03--craft-with-an-invented-material) tracks delivery.
+
 ## Ground piles
 
 A pile is a spatial entity holding item entities. Each active lot has one tagged placement: a world root, contained custody or an equipment attachment. Actor inventories, piles and admitted bags hold direct children without a second inventory list. Custody does not mean account authorship or legal ownership. Pickup/drop transfers existing quantities without creation or consumption. A complete unmerged transfer retains its identity; splitting allocates a new lot with lineage. Merge requires exact definition/unit pins, homogeneous state, matching ownership/provenance and no incompatible holds or active identity references. Individual objects and bags do not merge.
@@ -81,3 +91,4 @@ The inventory panel refreshes when the player moves or its own inventory/context
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
+- Manufactured material composition: [NP03](../../maintainers/next-priority-batch.md#np03--craft-with-an-invented-material), [INV-3/INV-6](../../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes) and [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).

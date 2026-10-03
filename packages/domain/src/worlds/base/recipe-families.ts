@@ -8,6 +8,7 @@ import type { MaterialProperty, RecipeCandidate, WorldState } from '../../types.
 import { getOwn } from '../../records.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
+import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -25,6 +26,7 @@ const role = (id: string, label: string, properties: MaterialProperty[]) => ({
   label,
   properties,
   required: true,
+  accepts: { native: true, generatedMaterials: [] },
 });
 const roles = {
   binding: role('binding', 'Binding', ['binding']),
@@ -41,7 +43,6 @@ const materialPolicy = {
   minimumQuantity: 1,
   maximumQuantity: 8,
   maximumTotal: 20,
-  nativeOnly: true,
   rejectNutrition: true,
   excludedDefinitionIds: ['raw_meat'],
 };
@@ -370,4 +371,5 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   arrow,
   gathering,
   BASE_CAMP_CONTAINER_FAMILY,
+  BASE_CORDAGE_FAMILY,
 ];

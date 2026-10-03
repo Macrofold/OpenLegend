@@ -2,6 +2,12 @@
 
 **Status: accepted target design.** This document owns the end-to-end integration contract between kind-specific authoring, composition, subsystem behavior, cognition, and live revision. It specializes, rather than replaces, [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md), [declaration activation](../archive/07-technical-architecture/declarations-and-evolution.md), [agency](agent-agency.md), and [presentation](invention-art-pipeline.md). [Scenarios](invention-scenarios.md) provide target behavior; INV-17 and the existing INV/EWF owners track delivery.
 
+## Maintained records
+
+- Implementation: [INV](maintainers/inventions-and-world-evolution.md), [EWF](maintainers/extensible-world-foundation.md) and the delivered [NP03 child](maintainers/next-priority-batch.md#np03--craft-with-an-invented-material).
+- Limits and constraints: [Recipe-family scope](limits/inventions.md#rf01--world-owned-recipe-families) and [object/capacity limits](limits/objects.md).
+- Related contract: [World-module runtime](../archive/07-technical-architecture/world-module-runtime.md) and [authored materials](worlds/base/items.md#cordage-manufacture-and-reuse).
+
 ## 1. Define experiences using real supported components
 
 OpenLegend should support ordinary tools, evolving shelters, unusual organisms and senses, world-authored laws, and reusable mechanisms. The common infrastructure must not assume hunger, human limbs, combustion, magic, or a numeric health meter. It does require typed identities, explicit authority, coherent effects, supported computation, and durable outcomes.
@@ -38,6 +44,12 @@ Compilation resolves the graph, checks port compatibility, derives aggregate cap
 Each invocation owns its progress and effects. Sharing a definition does not share an inventory, cooldown, or random state. Shared resources must be explicit identities with one owner. Transfers stage debit and credit together, and competing claims resolve under a declared policy. World-permitted creation magic can be a source; an ordinary repair cannot disguise resource creation as a cosmetic adjustment.
 
 Previously invented inputs require positive consumer checks for structure, resource identity, roles, capacities, supported interfaces, rights and recursive bounds. Do not merely remove the current native-input restriction. Prove one reusable intermediate material/tool input before claiming arbitrary recursive crafting.
+
+The delivered [NP03 implementation](projects/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) proves one such edge: trusted cordage output into the woven-container binding role. The [authored world contracts](worlds/base/items.md#cordage-manufacture-and-reuse) own material rules and costs. Role-specific origin/interface policy replaces the former family-wide native restriction. Certification requires the exact admitted producer/output link, current trusted family/interface/unit, recompilable safe output and complete typed item/recipe/family/policy dependencies. A copied material component or inherited tag is not proof. A visiting set rejects circular inspection; the producer's native-only input role bounds this slice without recursive crafting.
+
+Crafting separately rechecks actual custody, availability and quantities, debits through the existing resource owner, and creates one output at completion. Active work pins the admitted recipe's mechanical identity, including exact compiled dependencies, while excluding attribution, knowledge and timestamps. Start, completion and current-format load share the installed-recipe integrity validator. Missing or changed meaning refuses admission/publication/activation; spent inputs retain existing interruption semantics. Referenced ancestors remain required; replacement, retirement and migration are not introduced.
+
+Permitted discovery filters actor knowledge/possession before privileged material proof. Observed native definitions remain available for parameter references even when they cannot fill an ingredient role; role eligibility is checked separately. Generated materials require positive consumer proof before listing. Ordinary recipe/material views expose direct ingredients and supported facts, with independent item identities and no private producer recipe ID, candidate or dependency graph. Owning material permits consumption without learning manufacture. Owner-granted world graph inspection retains the full typed closure. [Native, browser and PostgreSQL evidence](verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) is separate from untested live model invention/choice; broader composition remains [INV-3/INV-6](maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes) work.
 
 ## 4. Subsystem interactions and unknown properties
 

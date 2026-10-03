@@ -2,6 +2,9 @@ import {
   validateDeclaration,
   compileRecipeCandidate,
   recipeFamily,
+  installedRecipeFamilies,
+  resolveRecipeMaterial,
+  itemCharacteristics,
   observeActor,
   type WorldState,
   type ActorObservation,
@@ -12,26 +15,42 @@ import type { WorldService } from './world-service.js';
 /** Shared by cognition, authoring and tool previews; never broaden materials through a god view.
  * docs/architecture.md#invention-workshop-tools
  */
-export function inventionMaterials(observed: ActorObservation) {
+export function inventionMaterials(world: WorldState, observed: ActorObservation) {
   const owned = new Set(observed.inventory.map((item) => item.definitionId));
-  return observed.itemDefinitions
-    .filter((definition) => !definition.recipeId || owned.has(definition.id))
-    .map((definition) => ({
-      id: definition.id,
-      version: definition.version,
-      name:
-        [...definition.name].length <= 40
-          ? definition.name
-          : `${[...definition.name].slice(0, 39).join('')}…`,
-      properties: definition.properties,
-      native: !definition.recipeId,
-      ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
-      ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
-      ...(definition.launcher ? { launcher: definition.launcher } : {}),
-      ...(definition.melee ? { melee: definition.melee } : {}),
-      ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
-      ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
-    }));
+  const families = installedRecipeFamilies(world);
+  return observed.itemDefinitions.flatMap((visible) => {
+    const definition = world.itemDefinitions[visible.id];
+    if (!definition || (definition.recipeId && !owned.has(definition.id))) return [];
+    // Observed native definitions also serve as parameter references, independent of
+    // ingredient eligibility. Generated material must prove its supported consumer first.
+    // docs/invention-composition.md#3-composition-contract
+    if (
+      (definition.recipeId || definition.material) &&
+      !families.some((family) => resolveRecipeMaterial(world, family, definition).ok)
+    )
+      return [];
+    return [
+      {
+        id: definition.id,
+        version: definition.version,
+        name:
+          [...definition.name].length <= 40
+            ? definition.name
+            : `${[...definition.name].slice(0, 39).join('')}…`,
+        properties: definition.properties,
+        native: !definition.recipeId,
+        ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
+        ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
+        ...(definition.launcher ? { launcher: definition.launcher } : {}),
+        ...(definition.melee ? { melee: definition.melee } : {}),
+        ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
+        ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
+        ...(definition.material
+          ? { material: definition.material, facts: itemCharacteristics(world, definition) }
+          : {}),
+      },
+    ];
+  });
 }
 
 /** Validate the actor's references before privileged native validation can describe unknown inputs. */
@@ -43,7 +62,7 @@ export function scopedInventionErrors(
 ): string[] {
   const observed = observeActor(world, actorId, { includeMemories: false });
   if (!observed) return ['The inventor is unavailable.'];
-  const materials = new Set(inventionMaterials(observed).map((material) => material.id));
+  const materials = new Set(inventionMaterials(world, observed).map((material) => material.id));
   if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
     const value = candidate as Record<string, unknown>;
     if (

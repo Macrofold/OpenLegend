@@ -1,4 +1,22 @@
 import type { ItemDefinition } from '../../types.js';
+import type { MaterialInterface } from '../../invention-families.js';
+
+/** Native preparation and invented cord share these authored costs and output semantics.
+ * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
+export const BASE_CORDAGE_RULE = {
+  input: 'prepared_fiber',
+  inputQuantity: 2,
+  output: 'cord',
+  outputQuantity: 1,
+  workSeconds: 60,
+  properties: ['binding', 'flexible'] as const,
+  packingLoad: 1,
+};
+export const BASE_BINDING_MATERIAL: MaterialInterface = {
+  id: 'base:binding-material',
+  version: 1,
+  unitsPerItem: 1,
+};
 
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   knife: {
@@ -70,10 +88,10 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     id: 'cord',
     version: 1,
     portable: true,
-    packingLoad: 1,
+    packingLoad: BASE_CORDAGE_RULE.packingLoad,
     name: 'Fiber cord',
     description: 'Twisted fibers suitable for fastening and transmitting tension.',
-    properties: ['binding', 'flexible'],
+    properties: [...BASE_CORDAGE_RULE.properties],
   },
   wood: {
     id: 'wood',
@@ -161,11 +179,5 @@ export const NATIVE_PREPARATIONS = {
     outputQuantity: 2,
     workSeconds: 48,
   },
-  cord: {
-    input: 'prepared_fiber',
-    inputQuantity: 2,
-    output: 'cord',
-    outputQuantity: 1,
-    workSeconds: 60,
-  },
+  cord: BASE_CORDAGE_RULE,
 } as const;

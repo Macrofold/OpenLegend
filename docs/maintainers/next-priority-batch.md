@@ -1,6 +1,6 @@
 # Next priority batch — five assignments
 
-**Status: in progress; NP02 and NP04 are delivered, while the other assignments and combined acceptance remain open.** The original October 2 planning pass completed no runtime work. The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
+**Status: in progress; NP02, NP03 and NP04 are implemented and locally verified, while the remaining assignments and broader combined acceptance remain open.** The original October 2 planning pass completed no runtime work. The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
 
 These are scoped children of existing work, not replacements for their parent trackers. Current source was inspected at local `main` `c2e670b0` on October 2, 2026. The preceding PW work is substantially implemented, with open integration and qualification; do not treat its old proposal paragraph or an unchecked broad gate as proof that its implementation is missing.
 
@@ -26,10 +26,11 @@ Parents: [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-f
 
 ## NP03 — Craft with an invented material
 
-**Priority 3 · proposed · ready from the audited base.** Make one useful invented intermediate safely reusable by a second recipe, establishing the positive-consumer pattern instead of merely disabling a restriction.
+**Priority 3 · implemented; native, browser and PostgreSQL qualification recorded.** One invented cord material feeds the woven-container binding role through positive producer/consumer checks. The [October 3 implementation plan](../projects/next-priority-batch-tech-design.md#authorized-implementation-plan--october-3-2026) records owners and lifecycle/privacy decisions; [evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) records actual results and limits.
 
-- [ ] Deliver the world-authored cordage family and positively certified binding input for woven containers through existing invention admission, dependencies, craft and custody.
-- [ ] Demonstrate [NP03 acceptance](../projects/next-priority-batch-feature-spec.md#np03--craft-with-an-invented-material), including actual manufacture, rejected impostor/stale/private inputs, resource conservation, reuse and current-format reopen; reconcile [NP03 design](../projects/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material).
+- [x] Deliver the world-authored cordage family and positively certified binding input for woven containers through existing invention admission, dependencies, craft and custody.
+- [x] Demonstrate [NP03 acceptance](../projects/next-priority-batch-feature-spec.md#np03--craft-with-an-invented-material) with native/supplied proposals: actual manufacture, rejected impostor/stale/private inputs, resource conservation, cancellation/replay/competing commands, two names/sizes, storage/reuse and current-format reopen; reconcile [NP03 design](../projects/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material). Browser workshop review/Apply, separate manufacture, ordinary container admission/Craft and exact packing/retrieval passed. Creator field eligibility/preview passed through their native service projections.
+- [ ] Separately qualify live model generation/voluntary two-stage choice through the existing INV/AG provider gate. No provider calls were made here; supplied/native success does not establish model quality. This is an evidence gap, not an unfinished native implementation or automatic authoring-chain requirement.
 
 Parents: INV-3.5/INV-6.1–6.2, EWF09 and RF01. PW02/PW03 already supply the family/metadata/container mechanisms. Arbitrary recursive invention, assemblies, live-law replacement, generated code and automatic recipe knowledge remain outside this child.
 

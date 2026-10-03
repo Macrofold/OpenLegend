@@ -1,8 +1,8 @@
 # Next priority batch — feature specification
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP02 sensory preparation and NP04 camp-supply discovery are delivered; the other assignments and combined acceptance remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP02 character sensing, NP03 material crafting and NP04 camp-supply discovery are implemented and locally verified; remaining assignments and broader qualification remain open. | 2026-10-03   |
 
 The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
@@ -145,7 +145,7 @@ Update the precise child requirements under [EPR](../maintainers/events-percepti
 
 ## NP03 — Craft with an invented material
 
-**Status: proposed implementation.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work.
+**Status: implemented October 3, 2026; native/supplied, browser and PostgreSQL evidence recorded.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work. [Current world behavior](../worlds/base/items.md#cordage-manufacture-and-reuse) and [evidence/limits](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) distinguish delivery from unqualified live model invention/choice.
 
 ### Player outcome and priority
 

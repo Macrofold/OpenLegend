@@ -1,8 +1,8 @@
 # Next priority batch — technical design
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NP02 sensory preparation and NP04 camp-supply discovery are delivered; the other assignments and combined acceptance remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP02 character sensing, NP03 material crafting and NP04 camp-supply discovery are implemented and locally verified; remaining assignments and broader qualification remain open. | 2026-10-03   |
 
 Originally prepared as a documentation-only proposal. Read the [feature specification](next-priority-batch-feature-spec.md) for priorities, scenarios and exclusions. Source baseline is local `main` at `c2e670b0`; `origin/main` was refreshed to `1253415b` and was already an ancestor, 21 commits behind. No branch/history change was made. Revalidate changed owners against the worker's actual starting source rather than treating these line locations as immutable.
 
@@ -230,9 +230,11 @@ Expected improvement is less source-preparation work when only a few sources cha
 
 ### Current source and extension point
 
+**Implemented October 3, 2026.** The role policy, certificate proof, typed dependency closure, scoped discovery and craft/load checks below are delivered. [Composition](../invention-composition.md#3-composition-contract) owns the current engine contract; [authored materials](../worlds/base/items.md#cordage-manufacture-and-reuse) own world behavior. [Evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) covers native/supplied, service, browser and PostgreSQL checks; no live model choice is claimed.
+
 Read `packages/domain/src/invention-families.ts` (`familyMaterialEligible`, `compileRecipeCandidate`, dependency extraction, `validateInstalledRecipes`), `declarations.ts`, `types.ts`, `world-modules.ts`, `worlds/base/recipe-families.ts`, `worlds/base/camp-container-family.ts`, `worlds/base/items.ts`, and `kernel.ts`'s craft admission, material claims and output completion. Server discovery/read consumers are `invention-context.ts`, `invention-tools.ts` and `world-authoring-context.ts`; recipe editor controls consume the same family metadata.
 
-Current `nativeOnly` is global to a family, property checks are role-specific, output properties are often inherited, and every craft already makes one item. Keep the one-output mechanic. Replace the current input-origin policy with a single current role-level admission contract across all callers; do not keep two schemas or fallback to an old meaning. Populate current roles explicitly so unchanged families retain their present native-only behavior.
+The starting `nativeOnly` switch was global to a family, property checks were role-specific, and some output properties were inherited. Delivery replaces that switch with a single role-level origin/interface policy across all callers, with no old meaning or schema fallback. Other families' roles remain native-only; every craft still makes one item. Cordage emits fixed authored safe properties rather than inheriting them.
 
 ### Material contract and trusted certificate
 
@@ -286,6 +288,22 @@ Existing automatic compatible ordinary admission and explicit creator review/App
 - Exercise ordinary discovery/Craft and creator field selection/preview/Apply through their actual consumers. Distinguish a supplied native recipe, browser delivery and any actual model invention/choice evidence. Native-only success does not establish autonomous chain selection.
 
 The feature is one producer-to-consumer composition edge with exact resource identity and no hidden effects. It does not close general INV-6 composition, arbitrary nesting, information-bearing artifacts, material simulation or live-law evolution.
+
+### Authorized implementation plan — October 3, 2026
+
+Mike authorized the complete NP03 assignment in chat. Starting base: refreshed `origin/main` in `Macrofold/OpenLegend`, `b528af6d126a9ac500dbe5574642dea87c472c40`; development branch `codex/np03-invented-material`. Expected changed logic is 500–900 lines. This crosses trusted compilation, saved dependencies and ordinary disclosure, so it warrants this durable plan. No other implementation chat is a dependency.
+
+1. **World rules and current contracts:** share native cord preparation costs/properties from `worlds/base/items.ts`; install the cordage family; replace family-wide input origin with explicit role policies. Preserve other families' native-only roles and the container formulas.
+2. **Trusted composition:** use one world-aware material resolver and extract the existing installed-recipe integrity validator for admission, discovery, craft and load. Certify only an exact admitted producer output, supported interface/unit and safe compiled structure. Pin typed producer/family dependencies alongside item and handling dependencies; reject circular/malformed references with an explicit visiting set.
+3. **Craft lifecycle:** verify current compiled meaning before real material claims and before completion. Preserve one-output publication, spent materials on cancellation, receipts and existing custody ownership. Reject incompatible current-format worlds rather than migrate or reset them.
+4. **Permitted discovery:** use the same resolver for ordinary material options and creator fields. Preserve knowledge/possession scope before privileged proof; strip unknown producer identities/dependencies from ordinary projections. Owning cord permits consumption without teaching its manufacturing technique.
+5. **Qualification and reconciliation:** exercise supplied ordinary inventions, creator field/preview/Apply, actual gather/prepare/craft, two names and sizes, packing/retrieval, cancellation/shortage/competition, alternate native fiber, forged/extra-effect/stale/circular/private inputs and current-format reopen. Use focused existing checks plus one bounded ad-hoc journey where needed, with `AI_BUDGET_USD=0`; separate native/browser evidence from any provider evidence. Inspect the full resulting diff and run changed-file formatting, TypeScript, configuration and production build checks. Reconcile NP03, exact INV/EWF children, RF01/CC01, composition, world items/container docs, architecture and verification records.
+
+Completion requires all NP03 runtime behavior, integration, named documentation and review fixes, with each acceptance result and actual evidence limit recorded. No arbitrary recursive crafting, live-law replacement, automatic teaching/crafting or new material-strength semantics are authorized.
+
+**Completion:** all five implementation steps are delivered and the affected diff reviewed. [The evidence report](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) records real native manufacture/custody, supplied service admission, creator projection/preview and browser Apply/Craft/packing, PostgreSQL continuation, refusal/privacy coverage and focused/static results. Reconciliation covers the named NP03/INV/EWF children, RF01/CC01 and current save/material/container contracts. Live model generation/voluntary chain choice stays separately unqualified under the existing provider gate; no paid work occurred.
+
+**Requested follow-up review:** inspect the full change and its callers, preserving the same feature scope and exact authority. A reproduced discovery regression incorrectly excludes an observed native resource from gathering-tool parameter references because it is not an ingredient. Correct the shared discovery projection to retain observed native definitions, prove generated materials before listing them, and remove creator preparation's duplicate ingredient filter. Expected adjustment: about 20–35 logic lines across server discovery/tools/preparation. Verify the resource reference, role-specific ingredient refusal, unknown-reference refusal, creator choices/context and the original material privacy journey; run changed-file formatting, TypeScript/configuration/build and relevant existing checks. Reuse unchanged browser/PostgreSQL evidence. Current remote default `origin/main` remains `b528af6d126a9ac500dbe5574642dea87c472c40`; no branch change is needed. Review completed with the correction, reference/refusal/creator/native journey evidence, five selected existing checks and static checks passing; no further actionable in-scope findings remain.
 
 ## NP04 — Find and choose camp supplies
 

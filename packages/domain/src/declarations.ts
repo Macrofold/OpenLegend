@@ -14,7 +14,7 @@ import type { DeclarationDraft, DeclarationProvenance, Transition, WorldState } 
 
 import {
   compileRecipeCandidate,
-  recipeDependencyPins,
+  recipeDependencyReferences,
   validateRecipeCandidate,
 } from './invention-families.js';
 import { recipeFamily } from './world-modules.js';
@@ -92,7 +92,10 @@ export function admitDeclaration(
   if (matching) recipeId = matching.id;
   else {
     while (world.recipes[recipeId]) recipeId += '-v';
-    const outputDefinitionId = `${recipeId}-item`;
+    // Possession exposes the item identity without encoding its private manufacturing recipe.
+    // docs/invention-composition.md#3-composition-contract
+    let outputDefinitionId = `item-${contentLabel(`output:${digest}`)}`;
+    while (world.itemDefinitions[outputDefinitionId]) outputDefinitionId += '-v';
     const compiled = compileRecipeCandidate(original, draft);
     const family = recipeFamily(original, draft.family.id);
     if (!family)
@@ -113,7 +116,7 @@ export function admitDeclaration(
       workSeconds: compiled.workSeconds,
       sourceCandidate: cloneValue(draft),
       familyPin: definitionPin(family.definition),
-      dependencyPins: recipeDependencyPins(original, draft, compiled),
+      dependencyReferences: recipeDependencyReferences(original, draft, compiled),
       facts: cloneValue(compiled.facts),
       id: recipeId,
       version: 1,

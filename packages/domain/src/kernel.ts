@@ -7,6 +7,11 @@ import {
   type ActivityOutput,
 } from './action-experience.js';
 import { nativeActivityView } from './worlds/base/action-views.js';
+import {
+  validateInstalledRecipe,
+  recipeVisibleDependencies,
+  recipeMechanicalPin,
+} from './invention-families.js';
 import { rangedApproachRange } from './worlds/base/actions.js';
 import { executeHandover, offerRecipientProblem, reconcileItemOffers } from './handover.js';
 import {
@@ -930,8 +935,17 @@ function prepareNativeOperation(
       if (!recipe) return reject('unknown-recipe', 'That technique has not been admitted.');
       if (!world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'This actor has not learned that technique.');
+      try {
+        validateInstalledRecipe(world, recipe);
+      } catch {
+        return reject(
+          'stale-recipe',
+          'This technique has changed or missing material prerequisites.',
+        );
+      }
       action = temporary('craft', recipe.workSeconds);
       action.recipeId = recipe.id;
+      action.recipePin = recipeMechanicalPin(recipe);
       break;
     }
     case 'equip': {
@@ -2061,6 +2075,19 @@ function completeAction(
       const recipe = world.recipes[action.recipeId!];
       if (!recipe) {
         failAction(world, actor, events, 'the pinned recipe is missing.');
+        return;
+      }
+      try {
+        validateInstalledRecipe(world, recipe);
+        if (!action.recipePin || !sameDefinitionPin(action.recipePin, recipeMechanicalPin(recipe)))
+          throw new Error('The manufacturing technique changed during work.');
+      } catch {
+        failAction(
+          world,
+          actor,
+          events,
+          'the technique has changed or missing material prerequisites.',
+        );
         return;
       }
       const itemId = produce(recipe.outputDefinitionId, 1);
@@ -3646,7 +3673,12 @@ export function observeActor(
   const inventory = inventoryFor(world, actorId);
   const knownRecipes = (world.knowledge[actorId] ?? [])
     .map((record) => world.recipes[record.recipeId])
-    .filter((recipe) => !!recipe);
+    .filter((recipe) => !!recipe)
+    .map((recipe) => ({
+      ...recipe,
+      dependencyReferences: recipeVisibleDependencies(world, recipe),
+    }));
+  const knownRecipeIds = new Set(knownRecipes.map((recipe) => recipe.id));
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
   const sees = entityVisionQuery(world, actor);
   const visibleEntities = nearbyEntities(world, worldPosition(actor), visionRadius(world, actor))
@@ -3727,7 +3759,13 @@ export function observeActor(
     visibleEntities,
     groundItems,
     inventory,
-    itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
+    itemDefinitions: [...definitionIds].flatMap((id) => {
+      const definition = world.itemDefinitions[id];
+      if (!definition) return [];
+      if (!definition.recipeId || knownRecipeIds.has(definition.recipeId)) return [definition];
+      const { recipeId, ...visible } = definition;
+      return [visible];
+    }),
     knownRecipes,
     // SQL-backed cognition supplies recall separately; physical observation must
     // not prepare that entire history only for its caller to discard it.

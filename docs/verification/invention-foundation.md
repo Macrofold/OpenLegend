@@ -2,6 +2,8 @@
 
 These are recorded observations from the original verification log, not a new run. “Current” refers to each observation’s recorded revision. [Verification index](../verification.md) · [Current acceptance owners](../maintainers/README.md).
 
+October 3, 2026 [NP03 evidence](camp-life.md#np03--manufactured-material-reuse-october-3-2026) adds one certified manufactured-material input through the existing invention/crafting owners, with supplied/native, PostgreSQL and actual browser observations. Earlier provider evidence below does not qualify this new material chain.
+
 ## Foundation review verification
 
 The September 22 review corrected the native response envelope passed to action interpretation when NPC invention is enabled, lost withdrawal handles in relevance fallback, missing generated gathering-target knowledge checks, and premature removal of child dispatch from tracked work. These boundaries have deferred automated coverage in [TODO](../maintainers/TODO.md#invention-foundation--deferred-automated-coverage).

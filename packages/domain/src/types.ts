@@ -45,6 +45,8 @@ export interface ItemDefinition {
   launcher?: Launcher;
   ammunition?: Ammunition;
   recipeId?: string;
+  /** Trusted compiler output, never independent proof of reusable material eligibility. */
+  material?: import('./invention-families.js').MaterialInterface;
 }
 /** Read-only custody projection; ItemLot and Placement are the mutation owners. */
 export interface ItemInstance {
@@ -94,7 +96,7 @@ export interface RecipeDefinition {
   output: { name: string; description: string };
   sourceCandidate: RecipeCandidate;
   familyPin: import('./world-modules.js').DefinitionPin;
-  dependencyPins: import('./world-modules.js').DefinitionPin[];
+  dependencyReferences: import('./invention-families.js').RecipeDependencyReference[];
   facts: import('./invention-families.js').RecipeFact[];
   id: string;
   version: 1;
@@ -119,6 +121,8 @@ export type ActionType =
   | 'replenish'
   | 'tend-fire';
 export interface Action {
+  /** The manufacturing meaning chosen when work started, independent of later authoring. */
+  recipePin?: import('./world-modules.js').DefinitionPin;
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
   follow?: {

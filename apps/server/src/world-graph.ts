@@ -319,14 +319,13 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
         'A recipe output is missing; graph coverage is unavailable.',
       );
     link(ref, output.node.ref, 'produces');
-    for (const dependency of value.dependencyPins) {
-      if (value.inputs.some((input) => input.definitionId === dependency.id)) continue;
-      const target = resolve(
-        dependency.id === 'engine:item-handling-policy'
-          ? 'item-handling-policy'
-          : 'item-definition',
-        dependency.id,
-      );
+    for (const dependency of value.dependencyReferences) {
+      if (
+        dependency.kind === 'item-definition' &&
+        value.inputs.some((input) => input.definitionId === dependency.pin.id)
+      )
+        continue;
+      const target = resolve(dependency.kind, dependency.pin.id);
       if (!target)
         throw new GraphReadError('unavailable', 'A compiled recipe dependency is missing.');
       link(ref, target.node.ref, 'uses', 'family-dependency');

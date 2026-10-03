@@ -67,7 +67,7 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
               limitation: definition.limitation,
             })),
             candidateSchema: declarationSchema,
-            inventionMaterials: inventionMaterials(service.observe(actorId)!),
+            inventionMaterials: inventionMaterials(service.world, service.observe(actorId)!),
             continuation: 'Set parentId to an uncontinued result ID when revising; otherwise null.',
           }
         : {}),

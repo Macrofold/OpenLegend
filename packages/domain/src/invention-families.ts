@@ -28,6 +28,12 @@ export interface RecipeFact {
   value: number | string;
   unit?: string;
 }
+/** One physical item supplies one input unit; larger/fractional conversions are unsupported. */
+export interface MaterialInterface {
+  id: string;
+  version: number;
+  unitsPerItem: 1;
+}
 /** Serializable installed meaning. Callbacks belong to the trusted host, never the manifest. */
 export interface RecipeFamilyDefinition {
   id: string;
@@ -37,16 +43,22 @@ export interface RecipeFamilyDefinition {
   name: string;
   description: string;
   inputs: {
-    roles: Array<{ id: string; label: string; properties: MaterialProperty[]; required: boolean }>;
+    roles: Array<{
+      id: string;
+      label: string;
+      properties: MaterialProperty[];
+      required: boolean;
+      accepts: { native: boolean; generatedMaterials: MaterialInterface[] };
+    }>;
     minimumRoles: number;
     maximumRoles: number;
     minimumQuantity: number;
     maximumQuantity: number;
     maximumTotal: number;
-    nativeOnly: boolean;
     rejectNutrition: boolean;
     excludedDefinitionIds: string[];
   };
+  materialOutput?: MaterialInterface;
   parameterSchema: {
     type: 'object';
     additionalProperties: false;
@@ -74,7 +86,9 @@ export interface CompiledRecipe {
 }
 export type RecipeDependencyReference =
   | { kind: 'item-definition'; pin: DefinitionPin }
-  | { kind: 'item-handling-policy'; pin: DefinitionPin };
+  | { kind: 'item-handling-policy'; pin: DefinitionPin }
+  | { kind: 'recipe'; pin: DefinitionPin }
+  | { kind: 'family'; pin: DefinitionPin };
 export interface RecipeFamilyDescriptor {
   definition: RecipeFamilyDefinition;
   validate(
@@ -148,23 +162,88 @@ export const recipeCandidateEnvelopeSchema: Record<string, unknown> = objectSche
   parameters: { type: 'object' },
 });
 
-export function familyMaterialEligible(
+export type ResolvedRecipeMaterial =
+  | {
+      ok: true;
+      definition: ItemDefinition;
+      origin: 'native' | 'generated';
+      dependencies: RecipeDependencyReference[];
+    }
+  | { ok: false; reason: string };
+
+/** Internal proof is never a knowledge grant. Callers must filter actor scope before resolving.
+ * docs/invention-composition.md#3-composition-contract */
+export function resolveRecipeMaterial(
+  world: WorldState,
   family: RecipeFamilyDescriptor,
   definition: ItemDefinition,
   roleId?: string,
-): boolean {
+  visiting = new Set<string>(),
+): ResolvedRecipeMaterial {
+  const reject = (reason: string): ResolvedRecipeMaterial => ({ ok: false, reason });
   const policy = family.definition.inputs;
   if (
-    (policy.nativeOnly && definition.recipeId) ||
     (policy.rejectNutrition && definition.nutrition !== undefined) ||
     policy.excludedDefinitionIds.includes(definition.id)
   )
-    return false;
-  return policy.roles.some(
+    return reject('This material has unsupported properties or effects.');
+  const roles = policy.roles.filter(
     (role) =>
       (roleId === undefined || role.id === roleId) &&
       role.properties.every((property) => definition.properties.includes(property)),
   );
+  if (!roles.length) return reject('This material cannot fill the selected role.');
+  if (!definition.recipeId)
+    return !definition.material && roles.some((role) => role.accepts.native)
+      ? { ok: true, definition, origin: 'native', dependencies: [] }
+      : reject('This role needs a supported native material or a verified manufactured material.');
+  if (!roles.some((role) => role.accepts.generatedMaterials.length))
+    return reject('This role requires native material; finished invented items are unsupported.');
+  try {
+    const producer = getOwn(world.recipes, definition.recipeId);
+    if (
+      !producer ||
+      producer.outputDefinitionId !== definition.id ||
+      canonicalJson(definition) !== canonicalJson(getOwn(world.itemDefinitions, definition.id))
+    )
+      return reject('The manufactured material no longer has its required technique.');
+    const producerFamily = recipeFamily(world, producer.sourceCandidate.family.id);
+    const capability = producerFamily?.definition.materialOutput;
+    if (
+      !capability ||
+      capability.unitsPerItem !== 1 ||
+      canonicalJson(definition.material) !== canonicalJson(capability) ||
+      !roles.some((role) =>
+        role.accepts.generatedMaterials.some(
+          (accepted) => canonicalJson(accepted) === canonicalJson(capability),
+        ),
+      )
+    )
+      return reject('This item is not verified material for the selected role.');
+    validateInstalledRecipe(world, producer, visiting);
+    return {
+      ok: true,
+      definition,
+      origin: 'generated',
+      dependencies: [
+        { kind: 'recipe', pin: recipeMechanicalPin(producer) },
+        { kind: 'family', pin: producer.familyPin },
+        ...producer.dependencyReferences,
+      ],
+    };
+  } catch {
+    // Do not reveal the private producer's IDs, candidate or dependency failures.
+    return reject('The manufactured material has changed or unsupported prerequisites.');
+  }
+}
+
+export function familyMaterialEligible(
+  world: WorldState,
+  family: RecipeFamilyDescriptor,
+  definition: ItemDefinition,
+  roleId?: string,
+): boolean {
+  return resolveRecipeMaterial(world, family, definition, roleId).ok;
 }
 
 export function describeRecipeCandidate(world: WorldState, candidate: RecipeCandidate): string {
@@ -179,6 +258,7 @@ export function validateRecipeCandidate(
   world: WorldState,
   value: unknown,
   purpose: 'admission' | 'restore' = 'admission',
+  visiting = new Set<string>(),
 ): string[] {
   if (!record(value)) return ['Recipe candidate must be an object.'];
   const errors: string[] = [];
@@ -227,15 +307,11 @@ export function validateRecipeCandidate(
     else if (roles.has(role.id))
       errors.push(`Role ${role.id} must occur once; combine its quantity.`);
     else roles.add(role.id);
-    if (
-      !definition ||
-      (inputPolicy.nativeOnly && definition.recipeId) ||
-      (inputPolicy.rejectNutrition && definition.nutrition !== undefined) ||
-      inputPolicy.excludedDefinitionIds.includes(definition.id)
-    )
-      errors.push('Inputs must use an available material supported by this family.');
-    else if (role && !role.properties.every((property) => definition.properties.includes(property)))
-      errors.push(`Material ${definition.id} cannot fill role ${role.id}.`);
+    if (!definition) errors.push('Inputs must use an available material supported by this family.');
+    else if (role) {
+      const resolved = resolveRecipeMaterial(world, family, definition, role.id, visiting);
+      if (!resolved.ok) errors.push(resolved.reason);
+    }
     if (!integer(input.quantity, inputPolicy.minimumQuantity, inputPolicy.maximumQuantity))
       errors.push(
         `Material quantities must be integers from ${inputPolicy.minimumQuantity} to ${inputPolicy.maximumQuantity}.`,
@@ -304,12 +380,16 @@ export function compileRecipeCandidate(
   world: WorldState,
   candidate: RecipeCandidate,
   purpose: 'admission' | 'restore' = 'admission',
+  visiting = new Set<string>(),
 ): CompiledRecipe {
-  const errors = validateRecipeCandidate(world, candidate, purpose);
+  const errors = validateRecipeCandidate(world, candidate, purpose, visiting);
   if (errors.length) throw new Error(errors.join(' '));
   const family = recipeFamily(world, candidate.family.id);
   if (!family) throw new Error('The selected recipe family is not installed.');
   const compiled = family.compile(world, candidate);
+  // Only a trusted installed compiler can issue material metadata; candidate JSON cannot.
+  if (family.definition.materialOutput)
+    compiled.outputDefinition.material = { ...family.definition.materialOutput };
   for (const reference of family.definition.references ?? []) {
     const id = candidate.parameters[reference.parameter];
     if (
@@ -321,14 +401,6 @@ export function compileRecipeCandidate(
   }
   return compiled;
 }
-export function recipeDependencyPins(
-  world: WorldState,
-  candidate: RecipeCandidate,
-  compiled: CompiledRecipe,
-): DefinitionPin[] {
-  return recipeDependencyReferences(world, candidate, compiled).map((reference) => reference.pin);
-}
-
 /** This is an immutable read identity for existing policy, never another writable copy. */
 export function recipeItemHandlingPin(world: WorldState): DefinitionPin {
   return definitionPin({ id: 'engine:item-handling-policy', version: 1, ...world.itemHandling });
@@ -338,6 +410,7 @@ export function recipeDependencyReferences(
   world: WorldState,
   candidate: RecipeCandidate,
   compiled: CompiledRecipe,
+  visiting = new Set<string>(),
 ): RecipeDependencyReference[] {
   const materials: RecipeDependencyReference[] = [
     ...new Set(
@@ -350,9 +423,23 @@ export function recipeDependencyReferences(
       if (!definition) throw new Error('Missing recipe definition dependency.');
       return { kind: 'item-definition', pin: definitionPin(definition) };
     });
-  return materials
-    .concat({ kind: 'item-handling-policy', pin: recipeItemHandlingPin(world) })
-    .sort((left, right) => (left.pin.id < right.pin.id ? -1 : left.pin.id > right.pin.id ? 1 : 0));
+  const family = recipeFamily(world, candidate.family.id);
+  if (!family) throw new Error('Missing recipe family dependency.');
+  const references = materials.concat({
+    kind: 'item-handling-policy',
+    pin: recipeItemHandlingPin(world),
+  });
+  for (const input of candidate.inputs) {
+    const definition = getOwn(world.itemDefinitions, input.definitionId);
+    if (!definition) throw new Error('Missing recipe material.');
+    const resolved = resolveRecipeMaterial(world, family, definition, input.role, visiting);
+    if (!resolved.ok) throw new Error(resolved.reason);
+    references.push(...resolved.dependencies);
+  }
+  const unique = new Map(references.map((ref) => [`${ref.kind}:${ref.pin.id}`, ref]));
+  return [...unique.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([, ref]) => ref);
 }
 export function inventionFamily(value: RecipeCandidate | RecipeDefinition): string {
   return 'sourceCandidate' in value ? value.sourceCandidate.family.id : value.family.id;
@@ -363,13 +450,44 @@ export function describeInvention(value: RecipeDefinition): string {
     .join('; ');
 }
 
-/** Restore recomputes meaning under exact trusted pins; incompatible saves never get a fallback. */
-export function validateInstalledRecipes(world: WorldState): void {
-  for (const recipe of Object.values(world.recipes)) {
+/** Attribution, knowledge and time are not part of immutable mechanical identity. */
+export function recipeMechanicalPin(recipe: RecipeDefinition): DefinitionPin {
+  const { provenance, admittedAt, ...meaning } = recipe;
+  return definitionPin(meaning);
+}
+
+/** Ordinary recipe readers expose direct ingredient facts, not the internal producer graph.
+ * The complete producer closure remains required internally, without teaching its manufacture. */
+export function recipeVisibleDependencies(
+  world: WorldState,
+  recipe: RecipeDefinition,
+): RecipeDependencyReference[] {
+  const direct = new Set(recipe.inputs.map((input) => input.definitionId));
+  const family = recipeFamily(world, recipe.sourceCandidate.family.id);
+  for (const reference of family?.definition.references ?? []) {
+    const id = recipe.sourceCandidate.parameters[reference.parameter];
+    if (typeof id === 'string') direct.add(id);
+  }
+  return recipe.dependencyReferences.filter(
+    (reference) =>
+      reference.kind === 'item-handling-policy' ||
+      (reference.kind === 'item-definition' && direct.has(reference.pin.id)),
+  );
+}
+
+/** One integrity owner for consumption, discovery, publication and current-format restore. */
+export function validateInstalledRecipe(
+  world: WorldState,
+  recipe: RecipeDefinition,
+  visiting = new Set<string>(),
+): void {
+  if (visiting.has(recipe.id)) throw new Error('Circular recipe material dependencies.');
+  visiting.add(recipe.id);
+  try {
     if (
       !recipe.sourceCandidate ||
       !recipe.familyPin ||
-      !Array.isArray(recipe.dependencyPins) ||
+      !Array.isArray(recipe.dependencyReferences) ||
       !Array.isArray(recipe.facts)
     )
       throw new Error('Incompatible saved recipe format.');
@@ -379,11 +497,13 @@ export function validateInstalledRecipes(world: WorldState): void {
       canonicalJson(recipe.familyPin) !== canonicalJson(definitionPin(family.definition))
     )
       throw new Error('Missing exact saved recipe family dependency.');
-    const compiled = compileRecipeCandidate(world, recipe.sourceCandidate, 'restore');
+    const compiled = compileRecipeCandidate(world, recipe.sourceCandidate, 'restore', visiting);
     const { id, version, recipeId, name, description, ...output } =
       world.itemDefinitions[recipe.outputDefinitionId] ?? {};
     if (
       !id ||
+      getOwn(world.recipes, recipe.id) !== recipe ||
+      recipe.version !== 1 ||
       id !== recipe.outputDefinitionId ||
       recipeId !== recipe.id ||
       version !== 1 ||
@@ -397,9 +517,29 @@ export function validateInstalledRecipes(world: WorldState): void {
       recipe.workSeconds !== compiled.workSeconds ||
       canonicalJson(output) !== canonicalJson(compiled.outputDefinition) ||
       canonicalJson(recipe.facts) !== canonicalJson(compiled.facts) ||
-      canonicalJson(recipe.dependencyPins) !==
-        canonicalJson(recipeDependencyPins(world, recipe.sourceCandidate, compiled))
+      canonicalJson(recipe.dependencyReferences) !==
+        canonicalJson(recipeDependencyReferences(world, recipe.sourceCandidate, compiled, visiting))
     )
       throw new Error('Saved recipe does not reproduce its exact compiled meaning.');
+  } finally {
+    visiting.delete(recipe.id);
+  }
+}
+
+/** Incompatible saves refuse activation; orphan certificates are never accepted as native. */
+export function validateInstalledRecipes(world: WorldState): void {
+  for (const recipe of Object.values(world.recipes)) validateInstalledRecipe(world, recipe);
+  for (const definition of Object.values(world.itemDefinitions)) {
+    if (!definition.material) continue;
+    const producer = definition.recipeId && getOwn(world.recipes, definition.recipeId);
+    if (!producer || producer.outputDefinitionId !== definition.id)
+      throw new Error('Material metadata needs its exact admitted producer.');
+  }
+  for (const entity of Object.values(world.entities)) {
+    const action = entity.actor?.action;
+    if (action?.type !== 'craft') continue;
+    const recipe = getOwn(world.recipes, action.recipeId);
+    if (!recipe || canonicalJson(action.recipePin) !== canonicalJson(recipeMechanicalPin(recipe)))
+      throw new Error('Pending manufacturing work needs its exact admitted technique.');
   }
 }

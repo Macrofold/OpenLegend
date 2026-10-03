@@ -1,5 +1,6 @@
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate } from '../../types.js';
+import { BASE_BINDING_MATERIAL } from './items.js';
 
 /** Authored tradeoffs, included in the trusted family pin. Descriptions, validation
  * and output compilation share these rules; names never grant container effects.
@@ -37,8 +38,15 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
           label: 'Pouch',
           properties: ['fiber', 'flexible', 'pouch'],
           required: true,
+          accepts: { native: true, generatedMaterials: [] },
         },
-        { id: 'binding', label: 'Binding', properties: ['binding'], required: true },
+        {
+          id: 'binding',
+          label: 'Binding',
+          properties: ['binding'],
+          required: true,
+          accepts: { native: true, generatedMaterials: [BASE_BINDING_MATERIAL] },
+        },
       ],
       minimumRoles: 2,
       maximumRoles: 2,
@@ -46,7 +54,6 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
       maximumQuantity: rules.maximumPouchQuantity,
       maximumTotal:
         rules.maximumPouchQuantity + Math.ceil(rules.maximumPouchQuantity / rules.bindingDivisor),
-      nativeOnly: true,
       rejectNutrition: true,
       excludedDefinitionIds: [],
     },
@@ -93,9 +100,9 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
     effects: ['finite-crafted-item', 'native-container-storage'],
     reads: ['known-recipe', 'inventory', 'container-access', 'container-capacity', 'spatial-reach'],
     limitation:
-      'Organizes possessions under ordinary capacity, reach, access and nesting rules. No extra carrying strength, ownership lock, reservation, preservation, waterproofing, warmth or shelter; invented ingredients are unsupported.',
+      'Organizes possessions under ordinary capacity, reach, access and nesting rules. No extra carrying strength, ownership lock, reservation, preservation, waterproofing, warmth or shelter; only verified manufactured binding is supported as an invented input.',
     guidance: [
-      `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} actual native pouch units with fiber, flexible and pouch properties, plus exactly ceil(pouch quantity / ${rules.bindingDivisor}) native binding units.`,
+      `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} actual native pouch units with fiber, flexible and pouch properties, plus exactly ceil(pouch quantity / ${rules.bindingDivisor}) native or verified manufactured binding items. Each cord item supplies one binding item.`,
       `Capacity is ${rules.capacityPerPouchUnit} times pouch quantity; empty packing load is ceil(pouch quantity / ${rules.emptyPackingLoadDivisor}); work is ${rules.workSecondsPerMaterial} game seconds per total input unit. These are derived facts, not editable effects.`,
       'Choose your own fitting names and descriptions. Installation teaches the technique; ordinary crafting consumes inputs when work starts and makes one individual container on completion. Interruption does not refund materials.',
       'Raw unprepared fiber alone does not qualify. Nested contents count toward capacity, and ground access is not an ownership lock.',
