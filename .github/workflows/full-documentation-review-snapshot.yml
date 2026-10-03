@@ -12,12 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: adc46000a2db993d4fff5bc224e4d14140a7eb23
+          ref: 642bc98ddea88dd71c29faf665c8933898c9e6cb
           path: review
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: b528af6d126a9ac500dbe5574642dea87c472c40
+          ref: bdaecaace24ad251ef7dbc689949124ba614adc6
           path: upstream
           persist-credentials: false
       - name: Package tracked sources and exact revisions
