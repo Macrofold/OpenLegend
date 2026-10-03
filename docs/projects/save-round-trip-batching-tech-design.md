@@ -1,6 +1,6 @@
 # Save round-trip batching — technical design
 
-**Status: proposal, not approved for implementation.** Behavior, scenarios and acceptance are in the [feature spec](save-round-trip-batching-feature-spec.md); work items are [PF15](../maintainers/performance.md#pf15--save-round-trip-batching). Source references are to branch `codex/save-stall-recovery` at `f00a0468`.
+**Status: proposal, not approved for implementation.** Behavior, scenarios and acceptance are in the [feature spec](save-round-trip-batching-feature-spec.md); work items are [PF15](../maintainers/performance.md#pf15--save-round-trip-batching). Measurements retain their source revision `f00a0468` from `codex/save-stall-recovery`; implementation planning must use current main and the delivered [history-storage changes](history-storage-efficiency.md), not wait for that former branch to merge.
 
 ## Terms
 
@@ -74,17 +74,17 @@ For a typical background save or command save, everything before the commit exce
 
 ### Adapter API
 
-`PostgresDatabase` gains a transaction-scoped write buffer. Existing calls keep working unchanged.
+`PostgresDatabase` gains a transaction-scoped write buffer. Existing `run` and query calls keep their completion semantics. The new API distinguishes **queue admission**, **SQL execution** and **transaction commit**; none may be reported as the next stage prematurely.
 
-- `prepare(sql).defer(...params, check?)` queues a write in the current write transaction and returns a promise that settles when its group has run. `check` is optional: `'one-row'` (for example the revision advance) or `'row'` (the history total). A failed check fails the group with the same message the caller throws today (for example "Save conflict: another writer changed this world.").
-- `flushWrites()` sends everything queued so far. Writers call it where order matters, for example `records.write` before its deletes.
+- `prepare(sql).defer(...params, check?)` returns `Promise<void>` for bounded **admission**, not execution. A caller may await each admission while building the transaction. If the next write would exceed the pending bounds, admission first flushes earlier queued work; it never waits for a future flush of the write it is admitting. Requiring that would deadlock an ordinary sequence of awaited writes before its caller reaches `flushWrites()` or `COMMIT`. `check` is optional: `'one-row'` (revision advance) or `'row'` (history total). A caller that needs affected rows or a returned value uses the ordinary execution API instead.
+- `flushWrites()` executes all earlier admissions and validates every checked result before resolving. A failed check fails the transaction with the existing caller error (for example "Save conflict: another writer changed this world."). Writers await this barrier where order matters, for example `records.write` before its deletes.
 - Any non-deferred statement in the same transaction (a read, or a write whose result is used) flushes first, so it sees every earlier write.
-- `transaction()` flushes before `COMMIT`. If any group fails, the transaction rolls back and every pending deferred promise rejects with that error (each is handled, so no unhandled rejections).
-- Outside a write transaction, `defer` behaves like `run`.
+- `transaction()` flushes and validates all remaining writes before `COMMIT`. Any admission, execution or checked-result failure aborts the transaction; its promise rejects and no success is published. Already-resolved admission promises cannot be retroactively rejected and are not evidence of durable writes. Clear transaction-owned buffers on success or failure, stop further admission after failure, and observe any in-flight flush rejection.
+- Outside a write transaction, execute and validate immediately through `run`, returning no row value. With grouping disabled, the same immediate path preserves failure semantics; callers still acknowledge success only after their owning transaction commits.
 
 ### Group construction
 
-1. Queued statements are split into groups in queue order. A new group starts when the next statement would exceed the group bounds, targets a row set it cannot share a snapshot with (see below), or follows a `flushWrites()` barrier.
+1. Retain at most one pending group per transaction. Before accepting another statement, flush when it would exceed the group bounds, cannot safely share the existing group's snapshot/row sets, or follows an explicit barrier. Do not accumulate an unbounded transaction-sized list and only split it at commit. Callers must await admission; the API does not create a second unbounded waiting-write queue.
 2. Each statement becomes one CTE (`s1`, `s2`, …). Checked statements get `RETURNING 1`; the final `SELECT` returns their row counts.
 3. Parameters are concatenated in order; the combined text goes through the existing `?`→`$n` rewrite. Statement text comes only from code (table and column names from the static record schema); values are never written into SQL text.
 4. A statement that already contains a data-modifying CTE is sent on its own after a flush.
@@ -111,12 +111,14 @@ For a typical background save or command save, everything before the commit exce
 
 To be recorded in [LA174](../limits/persistence.md#la174) and [LA175](../limits/persistence.md#la175) when implemented:
 
-| Bound                                   |                   Proposed value | Reason                                                                                                                                |
-| --------------------------------------- | -------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Bound parameters per combined statement |                           60,000 | Below PostgreSQL's 65,535 protocol limit                                                                                              |
-| Encoded parameter bytes per group       |                            1 MiB | Bounds client memory and keeps one group's work well inside the 30 s limit; one oversized statement is still admitted alone, as today |
-| Statements per group                    |                               64 | Bounds parse/plan cost of one combined text                                                                                           |
-| Statement time limit                    | 30 s per group (unchanged value) | Now applies to a whole group; the bounds above keep a group comparable to today's largest single statement                            |
+| Bound                                   |                   Proposed value | Reason                                                                                                                                             |
+| --------------------------------------- | -------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bound parameters per combined statement |                           60,000 | Below PostgreSQL's 65,535 protocol limit                                                                                                           |
+| Encoded parameter bytes per group       |                            1 MiB | Bounds prepared memory; stage 0 must measure execution time. Flush before handling one oversized existing statement alone under its current bounds |
+| Statements per group                    |                               64 | Bounds parse/plan cost of one combined text                                                                                                        |
+| Statement time limit                    | 30 s per group (unchanged value) | Applies to a whole group, not the transaction or queue. Stage 0 must qualify the changed timeout exposure; size bounds do not prove execution time |
+
+These group limits also bound retained pending work before admission. Preserve existing per-statement parameter/byte checks; the single-statement exception does not grant a larger row or statement envelope. Dispose of encoded parameters after each flush. [LA174/LA175](../limits/persistence.md#la174) remain the current runtime limits until this proposal is implemented and qualified.
 
 ### Metrics and diagnostics
 
@@ -130,14 +132,14 @@ To be recorded in [LA174](../limits/persistence.md#la174) and [LA175](../limits/
 
 ## Semantic owners and callers
 
-| Owner                                                   | Change                                                                                                                                                       |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `postgres.ts` (transport)                               | Write buffer, group construction, flush rules, bounds, metrics, off switch; start+time limit in one message                                                  |
-| `world-records.ts` (`advance`, `write`)                 | Revision advance and record writes use `defer`; barrier before deletes. Also edited on `origin/codex/history-storage-efficiency`: coordinate before starting |
-| `history.ts`, `history-batch.ts`                        | History inserts and the total check use `defer`                                                                                                              |
-| `memory-repository.ts`                                  | Memory source index inserts use `defer`; index upkeep stays standalone after a flush (stage 3 may split its CTEs)                                            |
-| `store.ts` (`commit`)                                   | No reordering; reads that remain in the transaction become flush points automatically                                                                        |
-| Other write transactions (authority, jobs, diagnostics) | Unchanged in stages 1–2; optional in stage 3                                                                                                                 |
+| Owner                                                   | Change                                                                                                                                        |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postgres.ts` (transport)                               | Write buffer, group construction, flush rules, bounds, metrics, off switch; start+time limit in one message                                   |
+| `world-records.ts` (`advance`, `write`)                 | Revision advance and record writes use bounded admission; barrier before deletes. Preserve the delivered history-storage ordering and indexes |
+| `history.ts`, `history-batch.ts`                        | History inserts and the total check use `defer`                                                                                               |
+| `memory-repository.ts`                                  | Memory source index inserts use `defer`; index upkeep stays standalone after a flush (stage 3 may split its CTEs)                             |
+| `store.ts` (`commit`)                                   | No reordering; reads that remain in the transaction become flush points automatically                                                         |
+| Other write transactions (authority, jobs, diagnostics) | Unchanged in stages 1–2; optional in stage 3                                                                                                  |
 
 No schema, save-format or wire-protocol change. The [development save policy](../../AGENTS.md#development-save-policy) is unaffected.
 
@@ -156,6 +158,9 @@ No schema, save-format or wire-protocol change. The [development save policy](..
 ## Verification
 
 1. **Stage 0 trial** (disposable database, [verification report](../verification/ordered-async-saves.md) or a new focused report):
+   - sequential awaited admissions reach the flush/commit barrier without deadlock;
+   - queue backpressure bounds retained bytes/statements throughout a large transaction, not only at final flush;
+   - failed checked writes and failed flushes reject the transaction even after earlier admissions resolved; ordinary reads/results wait for preceding writes with grouping on and off;
    - parent and child inserted in one combined statement;
    - a child moved to a new parent in one group with the old parent deleted in the next;
    - new and changed rows of one table in one statement;
