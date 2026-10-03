@@ -1,0 +1,75 @@
+name: Apply reviewed documentation patch
+on:
+  push:
+    branches: [docs/full-documentation-review-bdaecaac]
+    paths: [.github/full-documentation-review-patch.json]
+permissions:
+  contents: write
+concurrency:
+  group: full-documentation-review-bdaecaac-patch
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --ignore-scripts --frozen-lockfile
+      - name: Apply exact reviewed text and verify resulting bytes
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          root = pathlib.Path.cwd()
+          bundle = json.loads(pathlib.Path('.github/full-documentation-review-patch.json').read_text())
+          paths = []
+          for item in bundle['files']:
+              name = item['path']
+              relative = pathlib.PurePosixPath(name)
+              assert not relative.is_absolute() and '..' not in relative.parts, name
+              path = root / name
+              allowed = (name.startswith(('docs/', '.agents/')) or name in ('README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'archive/05-project/open-decisions.md'))
+              assert allowed and path.suffix == '.md' and path.resolve().is_relative_to(root), name
+              assert not path.is_symlink() and name not in paths, name
+              before = path.read_bytes() if path.exists() else None
+              actual = hashlib.sha256(before).hexdigest() if before is not None else None
+              assert actual == item['before_sha256'], ('changed base', name, actual)
+              if before is None:
+                  text = item['new_content']
+              else:
+                  text = before.decode('utf-8')
+                  for change in item['replacements']:
+                      assert change['old'] and text.count(change['old']) == 1, ('ambiguous edit', name)
+                      text = text.replace(change['old'], change['new'], 1)
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(text)
+              paths.append(name)
+          subprocess.run(['pnpm', 'exec', 'prettier', '--write', *paths], check=True)
+          for item in bundle['files']:
+              actual = hashlib.sha256((root / item['path']).read_bytes()).hexdigest()
+              assert actual == item['after_sha256'], ('unexpected output', item['path'], actual)
+          subprocess.run(['pnpm', 'guidance:check'], check=True)
+          subprocess.run(['pnpm', 'exec', 'prettier', '--check', *paths], check=True)
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          subprocess.run(['git', 'add', '--', *paths], check=True)
+          staged = subprocess.check_output(['git', 'diff', '--cached', '--name-only', '-z']).decode().strip('\0').split('\0')
+          assert set(staged) == set(paths), ('unexpected staged files', staged)
+          subprocess.run(['git', 'rm', '--', '.github/full-documentation-review-patch.json'], check=True)
+          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'commit', '-m', bundle['message']], check=True)
+          PY
+      - name: Publish without overwriting concurrent work
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push origin HEAD:refs/heads/docs/full-documentation-review-bdaecaac
