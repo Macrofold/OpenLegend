@@ -125,8 +125,7 @@ No automated tests were written or run for this implementation, at the owner's r
 
 ## Deferred invention-policy validation
 
-- [ ] Update existing declaration/save fixtures for required origin stamps and schema 10, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Prefer small in-place updates; fixture changes and automated suites were deferred at the owner's request.
-- [ ] Update existing declaration/save fixtures for required origin stamps and schema 9, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy); fixture changes and automated suites were deferred at the user's request.
+- [ ] Qualify the current declaration/save fixtures with required origin stamps, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Preserve these deferred behavioral cases while removing the duplicate schema-9 task; use the [current development format](../architecture.md) and [root compatibility policy](../../AGENTS.md#development-save-policy), not an older save conversion.
 
 ## Deferred agency validation
 
@@ -545,7 +544,7 @@ Implementation lives in [HE](hearing-and-speech.md); [runtime evidence](../verif
 ## Physical contact correction
 
 - [x] Replace proximity-as-touch with physical body contact, preserving barrier checks and upgrading saved detector definitions/active episodes in place.
-- [ ] Add regression coverage for campfire edge/overlap/top contact, separated heights, numerical tolerance and spatial-cell boundaries; verify nearby non-contact objects produce no felt events, stable contacts do not repeat, and saved upgrades preserve identity and unrelated evidence. Add separate acceptance for future non-cylindrical body geometry and physical contact with map surfaces.
+- [ ] Add regression coverage for campfire edge/overlap/top contact, separated heights, numerical tolerance and spatial-cell boundaries; verify nearby non-contact objects produce no felt events, stable contacts do not repeat, and current-format save/load preserves identity and unrelated evidence while incompatible saves reject without mutation. Add separate acceptance for future non-cylindrical body geometry and physical contact with map surfaces.
 
 ## Limits inventory and audit follow-up
 
@@ -574,10 +573,6 @@ No automated tests were written or run for this pass; [manual runtime evidence](
 - [ ] **SR24 — Main/spatial integration:** exercise current-format initialization and manual restore with pending/completed Recast routes, asleep/stunned perception gates, horizontal status art and virtual picking/depth, item piles/pickup/strikes, follow camera, source-scoped identity and own-observer introductions. Configuration and native profiling entrypoints initialize their actual geometry dependency. A blocked native profile must report zero actual progress, not a requested-step capacity pass.
 - [ ] **SR25 — Thresholded acoustic equivalence:** compare the optimized query to complete ordered ray multiplication at minimum 0/0.65/1, ties/adjacent floating-point values, zero transmission, transparent and multiple moderately attenuating barriers, equal intersection fractions, inside-solid/zero-length/large stacked rays and revision changes. Rejection may short-circuit only with a proved bound; successful values must match exactly. Keep range and capability gating and full-transmission callers unchanged; invalid input must still fail.
 - [ ] **SR26 — Incremental 8x performance boundaries:** as PF12 slices land, differentially compare static/dynamic perception, listener-volume indexing, status deadlines, retained history and geometry certificates against complete reference work. Include missed enter/leave crossings, teleports, revoked/dropped IDs, geometry/sense/body changes, forks/load, batch partitions, cached failed queries and dense all-to-all delivery. Separate semantic equivalence from hardware-dependent latency; measure requested versus achieved 480 sim-seconds/s, cold waits, debt, commands, poses and actual GPU time.
-
-## Movement under memory pressure
-
-- [ ] Cover awareness and personal-memory thresholds, failed/unconfigured/zero-budget consolidation, and a dead actor retaining a large history. Verify native time and queued walking continue, sources remain intact, pressure clears after accepted maintenance, and real storage failures still pause admission and display a save error. Tests deferred at the owner’s request.
 
 ## Elapsed-time cross-cutting regression coverage
 

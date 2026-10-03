@@ -81,7 +81,7 @@ Approved by Mike on 2026-09-28 as starting-scene priorities 2 and 3; plan and de
 
 - [x] Light, fuel and put out a campfire through one `tend-fire` family owned by `worlds/base/fire.ts`, reusing the saved heat state. Real ignition requirement, conserved fuel consumed at completion, fuel cap, retained unburnt fuel, cooking guard and lit-at-slice-start burning.
 - [x] Player menu and fire quick actions, typed text, NPC candidates, planning vocabulary, persistent plan steps and learned-activity invocation; readable events, action-record facts and coarse visible fuel.
-- [ ] Ongoing tending (“keep the fire going until dawn”) waits for AC06 predicates, waits and bounded repetition; no automatic refuelling loop.
+- [ ] Ongoing tending (“keep the fire going until dawn”) needs the [PW10 chosen fire-watch integration](../projects/next-playable-week/camp-activities.md) of existing AC/AE predicates, waits and bounded repetition with fuel, observation, restart and termination rules. Those finite control mechanisms already exist; no automatic refuelling loop or learned conditional duty is delivered by their presence.
 - [ ] Flame transfer from another fire, flint/ember items, weather, failure chances, warmth and spreading need their own mechanics and owners.
 
 **Evidence:** native, PostgreSQL service and fixture-Jev scenarios in [Verification](../verification/camp-life.md). **Deferred automated coverage:** [TODO](TODO.md#camp-fire-care-and-sharing--deferred-automated-coverage).

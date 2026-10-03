@@ -2,7 +2,7 @@
 
 ## Spatial dependencies
 
-[SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap. Do not reset the operational goal/plan implementation or CR02 Jev-only work.
+[SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Agency qualification can use simple supported geometry in current-format fixtures independently of the full camera/flight roadmap; do not preserve an obsolete schema-9 fixture target. Do not reset the operational goal/plan implementation or CR02 Jev-only work.
 
 This is the focused tracker for optional multi-operation decisions, actor-owned operational goals, short native plans and their integration with existing cognition and invention. Checked items have local implementation/runtime evidence; unchecked items retain their full acceptance requirements. Automated and live-provider qualification remain separate gates.
 
@@ -38,7 +38,7 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** domain agency/mind mutation; server context and creation adapters. **Depends on:** AG01 and current actor/memory ownership. **Touchpoints:** `packages/domain/src/types.ts`, `kernel.ts`, `mind.ts`, `experience.ts`, `god-tools.ts`, actor creation/seeding and all readers of `actor.goal`/`actor.goals`.
 
-- [ ] Add the minimum serializable agency state and a centralized create/revise/pause/resume/complete/abandon mutation. Preserve author scope, stable identity, revisions, private provenance, bounded parent relationships and actor-declared versus engine-evidenced completion.
+- [ ] Qualify the delivered serializable agency state and centralized create/revise/pause/resume/complete/abandon mutation against the complete AG02 exit cases. The current `agency.ts` owner already retains author scope, identity, revisions, private provenance and bounded parent relationships, and labels completion as actor-declared. Preserve that implementation rather than adding a second intention store; broader adversarial and end-to-end acceptance remains open.
 - [x] Establish a single operational source of truth. Inventory current goal writers and replace their meaning at the development-format cutover; any needed native/UI current-goal string becomes a read-only projection. Do not maintain two independently writable goal systems.
 - [x] Seed creator-authored initial goals once. Actor revisions thereafter do not rewrite the original backstory, and another actor's speech cannot edit them directly. Player-owned goals use explicit player input unless controller policy authorizes otherwise.
 - [x] Allow reflection to submit the same typed mutations, with relevant revision checks. Prose mentioning a goal remains prose; it cannot silently authorize execution. A small immediate goal edit does not require CH01 or level-5 reflection.
@@ -80,7 +80,7 @@ Use the current single writer and existing stores first. No new platform depende
 ### AG05 — Resolve unlisted attempts to existing mechanics
 
 - [x] Offer body-admitted one-shot approaches to visible entities, including cognitive animals, through native movement. Preserve separate target descriptions when approach destinations coincide.
-- [ ] Extend locomotion with sustained target following when that behavior is taken on; keep it distinct from one-time destination movement and define target-loss/reacquisition behavior at the existing perception boundary.
+- [x] Deliver sustained native target following separately from one-time movement, with scoped target-loss and encounter handling. [Composed-activities evidence](../verification/composed-activities.md#navigation) covers disclosed last-seen pursuit, stopping and loss/reacquisition boundaries; AC/RPR retain broader automated and live-grounding acceptance. No scent, stealth or hidden-position tracking is implied.
 
 - [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
 - [x] Resolve up to four new proposals through the existing durable response job, using exact binding and Jev classification before bounded generative interpretation when needed. Native move/follow parameters and existing concrete sequences share admission. Preserve component identity, scoped references and stale-manifest rejection; uncertain revisions await the initiator. See [current runtime evidence](../verification/integration-summaries.md#action-capability-native-slice); live semantic quality remains unqualified.
@@ -88,7 +88,7 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** server action interpretation; domain command adapters. **Depends on:** AG01, AG03–AG04. **Touchpoints:** `apps/server/src/context.ts`, `decision-context.ts`, `cognition.ts`, response admission and existing action adapters. INV-7.1 owns the shared missing-capability classification contract.
 
-- [ ] Replace unconditional dead-end handling of freeform proposals with a durable resolution request. Use exact supported bindings first; use bounded interpretation only when the wording cannot be grounded adequately without it.
+- [x] Replace unconditional dead-end handling with durable unresolved intents and scoped resolution through the existing response job. Use exact supported bindings first and bounded interpretation only when needed, as delivered in the [native action integration](../verification/native-action-integration.md). The separate INV bridge, richer roles and semantic-quality qualification below remain open.
 - [x] Reuse existing commands or short native compositions before requesting a new definition. The freeform path must work when no useful action was shortlisted, without broadening the actor's evidence scope.
 - [ ] Preserve target, recipient, instrument and intended result distinctions. A model may identify an attempt, but it cannot provide authoritative health/resource effects or change the structured target through prose.
 - [ ] Connect unresolved capability cases to the INV-owned service; do not duplicate recipe generation, family classification or policy locks. Clearly distinguish physical impossibility, insufficient known information, currently blocked action, unsupported host capability and provider unavailability in internal outcomes.
@@ -171,7 +171,7 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 **Owner:** relevant domain/server tests plus maintainer verification. **Depends on:** each feature under test. All fixtures inject controlled model outputs and make **zero external requests**. Existing tests such as `packages/domain/src/boundaries.test.ts` supply reusable authority-boundary patterns, not evidence that these new scenarios already pass.
 
 - [ ] Implement the matrix below with reproducible starting states, explicit receipt assertions and resource/time checks. Include the failure paths, not only an ideal transcript.
-- [ ] Run focused checks during implementation; after runtime changes run the repository's formatting and `pnpm run check` workflow while preserving unrelated edits. Report existing unrelated failures separately.
+- [ ] Run the focused existing checks and static validation selected by the [verification policy](../../.agents/rules/verification.md); full `pnpm check` remains a CI/merge gate or an explicitly requested run, not a mandatory broad local suite after every runtime change. Preserve unrelated edits and report existing failures separately.
 - [x] Publish actual fixture evidence in `docs/verification.md`, current facts in `docs/architecture.md`/implementation status and checkbox changes only after each stated gate is met.
 
 | Scenario                              | Required observation                                                                                                                                          |
