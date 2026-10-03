@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Dated project status and completed-project filing
+
+Mike requested that every project document show its current progress directly, instead of relying only on a linked maintainer tracker. [Root guidance](../AGENTS.md#documentation-is-a-maintained-source-of-truth) now requires a status table with one summary sentence and the date of its last review, updated whenever project work finishes. [The documentation policy](../.agents/rules/documentation.md#project-status-and-completion) owns the format, evidence-based optional percentages, whole-project completion and reference repair; fully completed project documents move together into [completed projects](projects/completed/README.md). This makes finished work distinguishable from stale proposals while preserving detailed acceptance in its existing tracker. Existing project documents adopt the table as their projects are next worked on; no project was reclassified or moved by this instruction change.
+
 ## 2026-10-02 — Fresh five-assignment priority batch
 
 The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/next-priority-batch-feature-spec.md) and [technical design](projects/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.

@@ -2,6 +2,8 @@
 
 Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md) decides when to create paired feature-spec and technical-design files; this structure does not require retroactively splitting every established specification. Project history must link current contracts rather than duplicate them.
 
+Project documents follow [Project status and completion](../.agents/rules/documentation.md#project-status-and-completion): include the status table after the title, refresh it when project work finishes, and move fully completed project documents into `docs/projects/completed/` with repaired references. This rule applies to project documents, not persistent cross-project feature specifications.
+
 ## Required content
 
 A feature specification describes purpose, supported behavior, target scenarios and user/agent journeys, scope/non-goals, meaningful failure cases, acceptance criteria and staged capabilities. Distinguish implemented behavior from accepted targets and proposals.
