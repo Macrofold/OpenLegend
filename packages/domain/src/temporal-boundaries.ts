@@ -63,7 +63,8 @@ export function nativeInterval(
     bound = Math.min(bound, time - world.simTime);
   };
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
-  // Only replenishment transfers and health regeneration against damage remain here.
+  // Conserved replenishment against a reservoir drain retains this one-second fallback.
+  // Health rates below require immediate integration, but do not select this fallback.
   let serialClamps = false;
   const serialClampFallback = () => {
     bound = Math.min(bound, 1);
