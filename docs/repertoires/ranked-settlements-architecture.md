@@ -1,5 +1,62 @@
-# Ranked settlements and architecture
+# Ranked settlements and playable places
 
-[Library](README.md) · [Expanded inventory](inventory-settlements-architecture.md) · [Review index](expanded-inventories.md)
+[Library](README.md) · [All expanded inventories](expanded-inventories.md) · [Priority policy](gameplay-priorities.md) · [Full entry descriptions](inventory-settlements-architecture.md)
 
-**Status: Pending.** The expanded source is preserved, but its individual entries have not yet received the current-game review. The old inline Criticality and introductory examples are not current individual rankings.
+**Status: Reviewed · October 3, 2026.** All **252 ARC entries** are assigned below. Reviewed source blob: `81dcada6c28f484d1c5070b59acdc06eb91743a0`. Source descriptions, stable IDs, setting recommendations, research and provisional build estimates are preserved. The source snapshot’s old Criticality cells and F/U/C/D ordering are superseded, not combined with these judgments.
+
+Coverage: **ARC-001–ARC-252**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
+
+| Core | Complete | Depth | Detail | Specialist | Total |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 89 | 25 | 43 | 90 | 252 |
+
+## Selection decisions
+
+The Core representatives are a reachable covered workbench and storage (ARC-061), connected crossings and passing space (ARC-101/102), a discoverable alternate route (ARC-107), and a working palisade gate (ARC-141). They support making, exploring, escaping and defending. These are usable spatial capabilities, not a requirement to simulate an entire town, building trade or structural engineering system first.
+
+Complete includes worthwhile destinations and encounters: a contested crossing, hidden trading room, tower, keep, prison rescue setting, arena, occupied ruin, partly accessible basement and a useful survey lodge. Markets, workshops, gardens, performance spaces and expandable homes also offer substantial play. Select a coherent small set and supply actual inhabitants, opposition, activities and rewards from the other owners; an attractive plan alone does not make a playable destination.
+
+The dry sleeping platform (ARC-001) and hearth cottage (ARC-002) are Complete as their fuller exposure and domestic arrangements, not gates before enemies or exploration. Minimal shelter, rest and recoverable storage still belong in the playable foundation. Window-seat comfort (ARC-013), domestic sound buffering (ARC-014), latrines (ARC-083), laundry yards (ARC-084), multiple detailed storage conditions and staff circulation are Detail. Their geometry may be Small; their low priority does not imply a difficult implementation.
+
+A useful workshop extension (ARC-228), an annex that can be lost without deleting the home (ARC-231), practice arena (ARC-240) and routes through a living historic settlement (ARC-242) give returning players more to do. Detailed biographies of rooms, alternate support mechanisms and unusual living architecture follow as Depth. Specialist spaces require another industrial, alien, adult-venue or reality-law premise. This is current-game selection, not a ban on those worlds. Accessibility, actual passability, independent exits, custody and privacy remain requirements whenever relevant, even where a specialized accommodation proposal is lower-ranked.
+
+## 1 Core
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 4 | Connected traversal and discoverable alternate routes enable exploration and escape. | ARC-101, ARC-102, ARC-107 |
+| 6 | A usable work area with reachable materials supports actual crafting. | ARC-061 |
+| 7 | A functional gate and enclosure give defense and homebuilding a concrete use. | ARC-141 |
+
+## 2 Complete
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Compatible alternative access keeps selected bodies and carried loads able to participate. | ARC-103 |
+| 3 | Defensible layouts, rescue access and practice spaces supply actual tactical situations. | ARC-135, ARC-142, ARC-143, ARC-144, ARC-145, ARC-148, ARC-151, ARC-155, ARC-157, ARC-231, ARC-232, ARC-235, ARC-240 |
+| 4 | Distinct destinations, routes, hidden access and explorable older layers reward leaving home. | ARC-022, ARC-023, ARC-024, ARC-028, ARC-032, ARC-035, ARC-036, ARC-038, ARC-044, ARC-045, ARC-046, ARC-048, ARC-056, ARC-078, ARC-105, ARC-106, ARC-108, ARC-110, ARC-111, ARC-115, ARC-162, ARC-163, ARC-164, ARC-168, ARC-173, ARC-178, ARC-224, ARC-233, ARC-234, ARC-242 |
+| 6 | Selected work, food and storage spaces enable useful output instead of decorative facility names. | ARC-062, ARC-063, ARC-065, ARC-067, ARC-068, ARC-073, ARC-074, ARC-075, ARC-076, ARC-081, ARC-082, ARC-085, ARC-097 |
+| 7 | Expandable homes, recovery space and practical reuse make returning worthwhile. | ARC-001, ARC-002, ARC-004, ARC-005, ARC-006, ARC-007, ARC-008, ARC-025, ARC-095, ARC-161, ARC-201, ARC-221, ARC-228, ARC-237 |
+| 8 | Markets, company, teaching, performance and gardens add substantial peaceful activity. | ARC-021, ARC-041, ARC-042, ARC-043, ARC-064, ARC-077, ARC-121, ARC-123, ARC-124, ARC-125, ARC-127, ARC-130, ARC-133, ARC-134, ARC-154, ARC-167, ARC-175, ARC-238 |
+
+## 3 Depth
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 9 | Distinctive layouts and bounded architectural changes deepen established places. | ARC-017, ARC-019, ARC-029, ARC-033, ARC-034, ARC-037, ARC-039, ARC-051, ARC-058, ARC-059, ARC-066, ARC-079, ARC-099, ARC-119, ARC-139, ARC-146, ARC-150, ARC-158, ARC-159, ARC-179, ARC-204, ARC-214, ARC-241, ARC-246, ARC-248 |
+
+## 4 Detail
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | ARC-009, ARC-012, ARC-013, ARC-014, ARC-015, ARC-016, ARC-027, ARC-049, ARC-050, ARC-052, ARC-053, ARC-054, ARC-057, ARC-069, ARC-071, ARC-072, ARC-083, ARC-084, ARC-087, ARC-089, ARC-091, ARC-094, ARC-104, ARC-109, ARC-112, ARC-117, ARC-128, ARC-149, ARC-153, ARC-156, ARC-170, ARC-171, ARC-176, ARC-203, ARC-205, ARC-206, ARC-211, ARC-222, ARC-230, ARC-236, ARC-239, ARC-244, ARC-249 |
+
+## 5 Specialist
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | ARC-003, ARC-010, ARC-011, ARC-018, ARC-020, ARC-026, ARC-030, ARC-031, ARC-040, ARC-047, ARC-055, ARC-060, ARC-070, ARC-080, ARC-086, ARC-088, ARC-090, ARC-092, ARC-093, ARC-096, ARC-098, ARC-100, ARC-113, ARC-114, ARC-116, ARC-118, ARC-120, ARC-122, ARC-126, ARC-129, ARC-131, ARC-132, ARC-136, ARC-137, ARC-138, ARC-140, ARC-147, ARC-152, ARC-160, ARC-165, ARC-166, ARC-169, ARC-172, ARC-174, ARC-177, ARC-180, ARC-181, ARC-182, ARC-183, ARC-184, ARC-185, ARC-186, ARC-187, ARC-188, ARC-189, ARC-190, ARC-191, ARC-192, ARC-193, ARC-194, ARC-195, ARC-196, ARC-197, ARC-198, ARC-199, ARC-200, ARC-202, ARC-207, ARC-208, ARC-209, ARC-210, ARC-212, ARC-213, ARC-215, ARC-216, ARC-217, ARC-218, ARC-219, ARC-220, ARC-223, ARC-225, ARC-226, ARC-227, ARC-229, ARC-243, ARC-245, ARC-247, ARC-250, ARC-251, ARC-252 |
+
+## Verification and limits
+
+Checked the complete reviewed ID set for exactly one assignment per entry, valid priorities and the stated ordering. No descriptions, IDs, research or applicability were deleted. This is a document review, not a new implementation audit or playtest. A low priority never weakens the correctness, privacy, authority, participation or save-integrity requirements of a selected feature.
