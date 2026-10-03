@@ -26,7 +26,7 @@ This document owns **stimulus scope, perception-change identity, and reaction in
 
 [Agent agency](agent-agency.md) owns operational goals, plan execution and decision composition. Agency goal-review/action-result/invention-result causes use this document’s single reaction intake; they do not introduce a second event pipeline. Private invention feedback uses owner-private scope, while unprojected execution receipts remain system-only.
 
-Keep the current single-world authority, fixed native steps, actor model, conversation/Narrator implementation, durable records, and bounded AI executors. This is not an engine replacement.
+Keep the current single-world authority, bounded elapsed-time native integration, actor model, conversation/Narrator implementation, durable records, and bounded AI executors. This is not an engine replacement.
 
 ## 2. The six distinct concepts
 
@@ -153,7 +153,7 @@ An event emitted after a move needs event-time positions. An end-of-step index c
 
 Ultimately, movement, spawn/remove, footprint/sense changes, and relevant obstacles should invalidate spatial work; an unrelated fullness decrement should not rebuild all spatial membership.
 
-Start with phase-local reuse and counters. Maintain an incremental spatial index only when rebuilding remains a measured cost. Store stable IDs and valid spatial facts, not escaped Immer draft references. Cache invalidation must cover both old and new regions of a move or removal.
+Phase-local reuse and counters established the measured source-preparation cost. NP02 now maintains source indexes from complete warm phase changes, selecting observers near old/new positions while retaining conservative cold/unknown/overflow/policy rebuilds ([evidence](verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026)). Finer reverse dependencies and target-only recomputation remain separately measured work, not implied delivery. Store stable IDs and valid spatial facts, not escaped Immer draft references. Cache invalidation must cover both old and new regions of a move or removal.
 
 ### Required dirty causes
 
@@ -175,13 +175,13 @@ Treat meaningful internal changes as owner-private stimuli. Initial sources shou
 
 A registered threshold policy defines the owning quantity, applicable actor capabilities, comparison/bands, recovery rule, episode identity, native response eligibility, and optional cognition eligibility. Emit only a meaningful crossing/escalation/recovery, not every decrement.
 
-**Do not collapse all existing thresholds to one number.** Native eating, native food seeking, action interruption, semantic urgency, and sleep protection serve different purposes. The research audit identifies current values; implementation must inventory and preserve them before changing any policy. The user's “health below 20%” example illustrates the mechanism; it is not a mandate to replace current health/survival rules.
+**Do not collapse existing thresholds to one number.** Condition descriptions, cognitive reconsideration, background-thinking eligibility, sleep activation and recovery serve different purposes. Their current values and meanings come from the installed world policies. The earlier native eating/food-seeking controller was explicitly removed by the approved [embodied-survival design](projects/embodied-survival-tech-design.md); historical research values must not recreate it. The user's “health below 20%” example illustrates the mechanism; it is not a mandate to replace current health/survival rules.
 
 The proposed episode lifecycle is `inactive → active → escalated/continued → recovered`. Latch state prevents duplicate crossings. Separate recovery margins can provide hysteresis where approved. If a quantity crosses and recovers within a batch, meaningful intermediate events cannot disappear through final-value coalescing.
 
-Native protection remains immediate and deterministic. At first, keep the current native evaluator at its existing step boundary and call it only once; the new event records explain and schedule the response rather than creating a second survival action. Later skipping native evaluations requires proof that all relevant changes—food acquired, resource depletion, failed path, interrupted action, body change, or due rest—wake it correctly.
+Bodily consequences, configured sleep and admitted actions remain deterministic and independent of providers. In the bundled world, deciding to eat, gather or hunt is cognitive; unavailable or declining cognition can leave a person unfed even while carrying food. Installed reservoir response and native animal policies remain separate replaceable consumers. Their reuse/skipping requires coverage of their actual inputs and deadlines, not a universal hunger-to-action evaluator or a second survival controller.
 
-Threshold recording preserves existing native rules. The [agency survival policy](agent-agency.md#8-attention-and-initiation) separately permits bounded deliberation when a capable actor lacks an adequate native response; it does not alter thresholds, duplicate native protection or consume merely deferred evidence.
+Threshold recording supplies private bodily evidence under the current [agency survival policy](agent-agency.md#8-attention-and-initiation), including initial hunger without an existing goal. It does not select food, change a threshold, duplicate a native effect or treat merely deferred evidence as handled. [World-configured survival](worlds/base/survival.md) owns the current default rules; the mechanism does not require every world to have hunger or sleep.
 
 Owner-private routing does not imply conscious awareness during sleep: preserve current waking/sleep capability rules, and do not manufacture remembered experiences for an actor that could not perceive them. Routine animals retain native behavior without requiring a mind, a persisted human-style memory, or a model call. Sensory/memory capability determines evidence retention, not whether physical protection is allowed.
 
@@ -273,7 +273,7 @@ Private event existence, payload, queue length, and revision activity must not l
 
 ## 12. Decision gates and non-goals
 
-Proceed first with the behavior-preserving scan fixes and explicit scope contract. Add the proposed private internal/acquisition semantics with dedicated acceptance tests. Qualify the resulting small-world system before adding population infrastructure.
+The initial scope/private-evidence intake and subsequent NP02 source-index slice are delivered to the extent recorded by the [EPR tracker](maintainers/events-perception-and-reactions.md). Complete the remaining named generalization, durability and differential/scale gates rather than repeating those implementations. Select checks under the repository verification policy; no blanket new test suite or broader acceptance follows from this architecture document.
 
 Do not change the engine, adopt a new ECS, add per-object queues, persist every property write, or use a global topic to which every actor subscribes. Do not suppress native offscreen simulation or make perception depend on a renderer-only camera. Do not add arbitrary user-authored subscription code.
 
