@@ -43,7 +43,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Changed hot paths, perception queries, scaling or latency investigation: [Performance](.agents/skills/openlegend-performance/SKILL.md)
 - Character decisions, Jev/TypeSafe, LLMs, prompts, cognition context, embeddings or provider behavior: [AI](.agents/skills/openlegend-ai/SKILL.md)
 - PlayCanvas, camera, picking, scene assets or render lifecycle: [PlayCanvas](.agents/skills/openlegend-playcanvas/SKILL.md)
-- Development startup, base selection or any rebase/merge conflict: [Rebase](.agents/skills/openlegend-rebase/SKILL.md)
+- Development startup, base selection or any rebase/merge, with or without conflicts: [Rebase](.agents/skills/openlegend-rebase/SKILL.md)
 - Instructions, skills, adapters or their checker: [Guidance maintenance](.agents/skills/openlegend-guidance/SKILL.md)
 
 These routes select context, not additional authorization. Open matching files when native discovery is unavailable; follow conditional links only when relevant. Reuse loaded, current context. The optional [system guide](.agents/README.md) owns compatibility details.
@@ -105,7 +105,7 @@ During implementation, keep known remaining work relevant to the task accurately
 
 ## Work discipline
 
-For development tasks, after initial planning and before implementation, follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns target precedence, worktree/history protections and the mandatory all-work conflict stop; report the exact remote/ref used. When the developer says `main` without naming `origin` or another remote, they mean the local `main` branch, not `origin/main`.
+For every rebase or merge, load and follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) before operating, including standalone requests and operations expected to have no conflicts. For development tasks, follow it after initial planning and before implementation to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns efficient reconciliation, target precedence, worktree/history protections and the mandatory all-work conflict stop; [rebase verification](.agents/rules/verification.md#rebase-verification) owns its limited checks. Report the exact remote/ref used. When the developer says `main` without naming `origin` or another remote, they mean the local `main` branch, not `origin/main`.
 
 Whenever you change the branch you are working on, explicitly report each change as `previous branch → new branch` in your response, including the final handoff. This includes switching to a newly created branch, renaming the working branch, or moving to a checkout/worktree on a different branch; identify detached HEAD by its commit.
 

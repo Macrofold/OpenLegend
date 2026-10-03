@@ -11,6 +11,19 @@ Apply [root task authorization](../../../AGENTS.md#task-scope-and-authorization)
 
 A standalone rebase is a narrow reconciliation task, not fresh feature qualification. Plan from the expected overlap and risk; a routine rebase needs no new durable plan under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Before rewriting, record the old base and branch tip so the resulting patch series can be compared and prior review/verification evidence assessed.
 
+## Keep reconciliation short
+
+Apply these principles to rebases and merges, including synchronization within a larger task:
+
+1. **Define the affected work once.** Identify conflicting behavior, its owners and callers, prior evidence and the smallest checks needed in a concise conversation checklist. Routine reconciliation should take a few minutes. If competing implementations or substantial code adaptation make that unrealistic, explain the concrete reason early; speed never overrides history protection or the conflict stop.
+2. **Compare precisely, then resolve.** Start with Git's three-way conflict diff, targeted function/file comparisons and patch-series comparison. Separate mechanical conflicts from behavior changes; resolve known mechanical cases together. Read each affected owner/caller in a bounded pass and retain the decision. Revisit only for a changed resolution, unanswered question or failure. Narrow truncated output instead of repeatedly dumping large files. Build custom comparison tooling only when existing tools cannot answer a specific necessary question.
+3. **Reuse valid evidence.** Review the reconciliation's changes and overlapping upstream behavior, not the entire feature again. Integrate through the agreed semantic owner rather than creating parallel paths to make both versions coexist. Do not add unrelated improvements or redesign merely because both branches touched a subsystem.
+4. **Choose checks before running them.** Follow [rebase verification](../../rules/verification.md#rebase-verification); no browser tests belong in reconciliation. Prefer focused existing checks with a known compatible fixture. A missing check can justify one small scenario for a concrete unresolved risk, not a collection of temporary harnesses or a new lifecycle matrix. Repeat a check only after a relevant edit or to investigate its failure; correct all known setup/expectation issues before rerunning.
+5. **Reconcile documents without creating ceremony.** Resolve documentation conflicts and update newly inaccurate contracts or status. Accurate plans, reports and remaining-work entries stand. Do not create a merge diary, new evidence report or repeat unchanged deferrals merely to record the operation; material planning requirements still apply.
+6. **Finish at the agreed boundary.** After the requested history operation, affected-diff review and selected checks pass, report the refs, consequential resolutions and verification limits, then stop. Establish whether a failure is introduced or pre-existing; fix introduced failures, and report unrelated baseline failures without repairing them as part of reconciliation. Unchanged broader qualification remains tracked, not reopened as merge work.
+
+These limits govern reconciliation, not separately authorized feature implementation or required CI. Agent reading, analysis and harness setup are part of elapsed time; short test execution does not justify prolonged preparation.
+
 ## Select the target
 
 Inspect branch/worktree status, remotes, tracking upstream, PR metadata and uncommitted work. Select the base in this order:

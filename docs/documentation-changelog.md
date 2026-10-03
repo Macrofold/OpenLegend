@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-02 — Bounded rebase and merge work
+
+Mike requested clearer reconciliation principles after two local branch integrations took 42 minutes. The available command timings support excessive repeated analysis and verification-harness preparation as the dominant source of delay, rather than test execution; they do not provide an exact per-phase timing breakdown. [Rebase instructions](../.agents/skills/openlegend-rebase/SKILL.md#keep-reconciliation-short) now require bounded comparisons, retained decisions, checks selected before execution, evidence reuse and a clear stopping boundary. [AGENTS.md](../AGENTS.md#work-discipline) explicitly routes every rebase/merge, including conflict-free operations, to that workflow.
+
+The owner explicitly excludes browser tests/playtests and their environment setup from [reconciliation verification](../.agents/rules/verification.md#rebase-verification), superseding the previous allowance to repeat browser qualification when a rebase changed UI behavior. Static review and honest reporting of UI gaps remain; separately authorized feature qualification and required CI are preserved. [CG10](maintainers/agent-guidance.md) records instruction delivery, while observed compliance remains open under CG05. History protections, the mandatory conflict stop and development-save policy are unchanged.
+
 ## 2026-10-02 — Product scalability, persistent lives and local shared campaigns
 
 Added the [product-scalability suite](product-scalability/README.md), paired [feature specification](projects/product-scalability-feature-spec.md) and [technical design](projects/product-scalability-tech-design.md), [PS01–PS08 tracker](maintainers/product-scalability.md) and [policy inventory](limits/product-scalability.md). The accepted direction combines federated persistent communities and protected personal/guild spaces, interruptible continuing activities, lower optional background initiative, prospective aggregate attention, truthful scene memories and activity-dependent capacity. Distributed finite sources of villain power and forecast city-by-city conflicts let communities contribute near home without copied victories or forced invasions after player prevention.
