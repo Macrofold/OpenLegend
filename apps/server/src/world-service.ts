@@ -6,6 +6,8 @@ import {
   retainActivity,
   renderActivity,
   acquiredActivities,
+  bindActivityRequest,
+  reviewActivityRequest,
 } from '@open-legend/domain';
 import {
   prepareHistoryEdit,
@@ -138,6 +140,7 @@ export const commandInputSchema = z
   .object({
     type: z.enum([
       'activity',
+      'activity-request',
       'conversation',
       'say',
       'pickup',
@@ -170,6 +173,11 @@ export const commandInputSchema = z
       'teach',
     ]),
     purpose: z.string().trim().min(1).max(120).optional(),
+    activityFamilyId: id.optional(),
+    activityArguments: z
+      .record(id, z.union([z.string().min(1).max(120), z.number().finite(), z.boolean()]))
+      .refine((value) => Object.keys(value).length <= 16)
+      .optional(),
     methodId: id.optional(),
     bindings: z
       .record(
@@ -192,6 +200,8 @@ export const commandInputSchema = z
     historyAfter: z.number().int().min(-1).optional(),
     methodAfter: z.number().int().min(0).max(ACTIVITY_LIMITS.acquisitions).optional(),
     after: id.optional(),
+    containerId: id.optional(),
+    expectedScope: z.string().max(16000).optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
     generation: z.number().int().nonnegative().optional(),
@@ -2012,6 +2022,8 @@ export class WorldService {
         );
         restored.world.archivedEventCount = 0;
         const baseline = structuredClone(restored.world);
+        for (const entity of Object.values(restored.world.entities))
+          if (entity.actor) delete entity.actor.inventoryInspection;
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
           for (const sourceId of ids)
             restored.world = forgetExperience(restored.world, actorId, sourceId).world;
@@ -3535,7 +3547,15 @@ export class WorldService {
 
   /** Run the actual admission rules on a disposable transition; never commit preview effects. */
   previewCommand(input: CommandInput, actorId = this.controlledEntityId): ApiResult {
-    return this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
+    const result = this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
+    if (result.ok && input.type === 'activity-request') {
+      const notes = reviewActivityRequest(this.world, actorId, {
+        family: input.activityFamilyId!,
+        arguments: input.activityArguments!,
+      });
+      return { ...result, message: [result.message, ...notes].join(' ') };
+    }
+    return result;
   }
 
   /** Family binding is shared by UI commands and reviewed agent commands. */
@@ -3551,6 +3571,17 @@ export class WorldService {
     };
     let command: Command;
     switch (input.type) {
+      case 'activity-request':
+        if (!input.activityFamilyId || !input.activityArguments)
+          return {
+            ok: false,
+            code: 'activity-choices',
+            message: 'Choose the activity and every required parameter.',
+          };
+        return bindActivityRequest(this.world, actorId, commandId, {
+          family: input.activityFamilyId,
+          arguments: input.activityArguments,
+        });
       case 'activity':
         if (!input.methodId || !input.bindings)
           return {
@@ -3788,8 +3819,10 @@ export class WorldService {
         command = {
           ...envelope,
           type: 'inspect-inventory',
+          containerId: input.containerId,
           after: input.after,
           expectedRevision: input.expectedRevision,
+          expectedScope: input.expectedScope,
         };
         break;
       case 'strike':

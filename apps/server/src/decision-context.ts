@@ -3,6 +3,8 @@ import { MemoryReadCache, type CognitionPreparation } from './memory-repository.
 import { decisionObservation } from './decision-observation.js';
 import {
   acquiredActivities,
+  activityRequestChoices,
+  activityRequestDescriptors,
   portableItems,
   worldPosition,
   worldSupport,
@@ -49,6 +51,63 @@ import { attentionIncludes, JEV_ACTION_THRESHOLD } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { navigationInstructions } from './navigation-contracts.js';
 import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
+
+/** Reuse the same permitted perception used to select actions and budget the prompt. */
+function activityDecisionFacts(
+  world: import('@open-legend/domain').WorldState,
+  actorId: string,
+  observed: NonNullable<ReturnType<typeof decisionObservation>>,
+) {
+  const selected = observed.inspectedContainer;
+  const available = activityRequestChoices(world, actorId, observed);
+  return {
+    simTime: world.simTime,
+    activityRequests: {
+      requests: activityRequestDescriptors(world),
+      choices: available.choices.map(({ id, kind, ...choice }) => ({
+        ...choice,
+        kind,
+        ...(kind === 'entity' ? { entityId: id } : { definitionId: id }),
+      })),
+      warnings: available.warnings,
+    },
+    ...(selected
+      ? {
+          inspectedContainer: {
+            entityId: selected.id,
+            name: selected.name,
+            revision: selected.revision,
+            ...(selected.load !== undefined
+              ? { load: selected.load, capacity: selected.capacity }
+              : {}),
+            more: selected.inspection.more,
+            items: selected.items.map((item) => ({
+              entityId: item.id,
+              definitionId: item.definitionId,
+              name: world.itemDefinitions[item.definitionId]!.name,
+              quantity: item.quantity,
+              revision: item.revision,
+            })),
+          },
+        }
+      : {}),
+  };
+}
+function activityDecisionReferences(facts: ReturnType<typeof activityDecisionFacts>): string[] {
+  return [
+    ...new Set([
+      ...facts.activityRequests.choices.flatMap((choice) =>
+        'entityId' in choice ? [choice.entityId] : [],
+      ),
+      ...(facts.inspectedContainer
+        ? [
+            facts.inspectedContainer.entityId,
+            ...facts.inspectedContainer.items.map((item) => item.entityId),
+          ]
+        : []),
+    ]),
+  ];
+}
 
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
   return [
@@ -318,7 +377,9 @@ export async function prepareDecision(
     preparation,
   );
   const snapshotActor = observed.actor.actor!;
+  const requiredActivity = activityDecisionFacts(world, actorId, observed);
   const requiredContext: Record<string, unknown> = {
+    ...requiredActivity,
     capabilities: {
       speech: canSpeak(observed.actor),
       expressions: supportsManualWork(observed.actor),
@@ -348,6 +409,9 @@ export async function prepareDecision(
       requiredIds,
       socialEntityIds(world, actorId),
       evidence,
+      [],
+      [],
+      activityDecisionReferences(requiredActivity),
     ).references,
     identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
@@ -565,7 +629,9 @@ export async function prepareDecision(
     `interests:${currentWorld.id}:${actorId}`,
     compileInterests(currentWorld, actorId, currentSelection),
   );
+  const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
   const context: Record<string, unknown> = {
+    ...currentActivity,
     ...(inspected
       ? {
           inspectedActions: inspected.entries.map((entry) => entry.text),
@@ -679,6 +745,7 @@ export async function prepareDecision(
       .filter((entity) => entity.kind === 'item-pile')
       .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
       .slice(0, 16),
+    activityDecisionReferences(currentActivity),
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>
@@ -736,7 +803,7 @@ export async function prepareDecision(
         projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),
         (field, entry) =>
           typeof entry === 'string' &&
-          /^(actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
+          /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
             ? (entityHandles(currentWorld, actorId).get(entry) ?? entry)
             : entry,
       );
@@ -757,6 +824,9 @@ export async function prepareDecision(
   return {
     context,
     prompt,
+    // Entity handles were projected with the rest of the permitted context above;
+    // retain their known producer type for the typed activity chooser.
+    activityRequests: context['activityRequests'] as typeof currentActivity.activityRequests,
     binding,
     offered,
     actionCandidates: availableActions,

@@ -14,10 +14,19 @@ import {
   completeFireCare,
   fireCareProblem,
   fireCareStartText,
+  fireStockGuard,
+  bindFireFuel,
   isFireCareCommand,
 } from './worlds/base/fire.js';
 import { isRecordedActivityCommand, recordActivityEffect } from './action-experience.js';
-import { startLearnedActivity, startRequestedActivity } from './activity-execution.js';
+import {
+  startLearnedActivity,
+  startRequestedActivity,
+  reconcileActivityControl,
+  admitActivityAttempt,
+} from './activity-execution.js';
+import { transferStock, prepareStockTransfer } from './stock-transfer.js';
+import { activityCommandSupported } from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
@@ -107,7 +116,7 @@ import {
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
-import { inspectPossessions } from './inventory-inspection.js';
+import { inspectPossessions, inspectedContainer } from './inventory-inspection.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
@@ -572,6 +581,8 @@ function workMaterials(
       world.entities[action.targetId ?? ''],
       action.fireOperation!,
       action.itemId,
+      action.fireGuard,
+      action.id,
     );
     if (problem) return outcome(false, problem.code, problem.message);
   }
@@ -1023,6 +1034,13 @@ function prepareNativeOperation(
         return reject('unavailable', consumption.unavailableText);
       break;
     }
+    case 'transfer-stock': {
+      if (!activityCommandSupported(world, command.type))
+        return reject('unsupported-command', 'The chosen stock-transfer support is unavailable.');
+      const prepared = prepareStockTransfer(world, actor.id, command, command.id);
+      if (prepared.status !== 'ready') return reject(prepared.status, prepared.message);
+      break;
+    }
     case 'drop': {
       const reason = dropItemReason(world, actor, command.itemId, command.quantity);
       if (reason) return reject('cannot-drop', reason);
@@ -1035,18 +1053,40 @@ function prepareNativeOperation(
       break;
     }
     case 'tend-fire': {
+      if (!isFireCareCommand(command))
+        return reject('invalid-command', 'Choose to light, fuel or put out a campfire.');
       const fire = getOwn(world.entities, command.targetId);
-      const problem = fireCareProblem(world, actor, fire, command.operation, command.itemId);
+      const guard = fireStockGuard(command);
+      const fuel = guard ? bindFireFuel(world, actor.id, guard, command.itemId) : undefined;
+      const problem = fireCareProblem(
+        world,
+        actor,
+        fire,
+        command.operation,
+        fuel?.id ?? command.itemId,
+        guard,
+      );
+      if (problem?.code === 'no-longer-needed') {
+        return { ...outcome(true, problem.code, problem.message), spent: 0 };
+      }
       if (problem) return reject(problem.code, problem.message);
       action = temporary('tend-fire', BASE_FIRE_CARE[command.operation].workSeconds);
-      action.targetId = command.targetId;
+      action.targetId = fire!.id;
       action.fireOperation = command.operation;
-      action.itemId = command.itemId;
+      if (guard) action.fireGuard = guard;
+      if (fuel?.id ?? command.itemId) action.itemId = fuel?.id ?? command.itemId;
       break;
     }
     case 'inspect-inventory': {
       try {
-        inspectPossessions(world, actor.id, command.after, command.expectedRevision);
+        inspectPossessions(
+          world,
+          actor.id,
+          command.after,
+          command.expectedRevision,
+          command.containerId,
+          command.expectedScope,
+        );
       } catch (error) {
         return reject(
           'inspection-unavailable',
@@ -1353,6 +1393,36 @@ function executeCommandNative(
         result = outcome(true, 'unequipped', 'Equipment released.');
         break;
       }
+      case 'transfer-stock': {
+        if (!activityCommandSupported(world, command.type))
+          return reject('unsupported-command', 'The chosen stock-transfer support is unavailable.');
+        const moved = transferStock(world, actor.id, command, command.id);
+        if (moved.status !== 'moved') return reject(moved.status, moved.message);
+        const record = occurrenceFor(world, actor.id, command.id);
+        if (record) record.stockResolution = moved.admitted;
+        result = {
+          ...outcome(
+            true,
+            'transferred',
+            `Moved ${command.quantity} ${world.itemDefinitions[command.definitionId]!.name}; the chosen personal minimum was respected.`,
+          ),
+          outputs: moved.outputs.map(({ itemId, definitionId, quantity }) => ({
+            port: definitionId,
+            itemId,
+            definitionId,
+            quantity,
+          })),
+        };
+        emit(
+          world,
+          events,
+          'items-transferred',
+          `${actor.name} moved selected supplies.`,
+          actor,
+          command.destinationId,
+        );
+        break;
+      }
       case 'drop': {
         const reason = dropItems(world, actor, command.itemId, command.quantity, events);
         if (reason) return reject('cannot-drop', reason);
@@ -1403,19 +1473,26 @@ function executeCommandNative(
             actor.id,
             command.after,
             command.expectedRevision,
+            command.containerId,
+            command.expectedScope,
           );
           component.inventoryInspection = cursor;
+          const container = inspectedContainer(world, actor.id);
+          const packing =
+            container?.load !== undefined && container.capacity !== undefined
+              ? ` Packing space: ${container.load} of ${container.capacity} units used; ${container.capacity - container.load} units free.`
+              : '';
           emit(
             world,
             events,
             'inventory-inspected',
-            `I inspect my accessible possessions: ${page.join(' ')}${cursor.more ? ' More possessions remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+            `I inspect ${command.containerId ? `the accessible contents of ${observerDescription(world, actor.id, command.containerId)}` : 'my accessible possessions'}:${packing} ${page.join(' ')}${cursor.more ? ' More items remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
             actor,
             undefined,
             { semanticTrigger: true, importance: 6 },
             'private',
           );
-          result = outcome(true, 'inventory-inspected', 'Accessible possessions inspected.');
+          result = outcome(true, 'inventory-inspected', 'Accessible contents inspected.');
         } catch (error) {
           return reject(
             'inspection-unavailable',
@@ -1593,6 +1670,13 @@ function executeCommandNative(
         result = withdrawAttempt(component, command.attemptId);
         break;
       }
+      case 'tend-fire': {
+        // Only an admitted observation skip reaches here; timed work uses the prepared action.
+        if (!prepared || !('ok' in prepared) || prepared.code !== 'no-longer-needed')
+          return reject('unsupported', 'This command is not supported.');
+        result = { ...prepared, spent: 0 };
+        break;
+      }
       case 'cancel': {
         interruptStatusEffects(world, actor, events, 'voluntary');
         if (component.action?.type === 'status-effect')
@@ -1607,7 +1691,7 @@ function executeCommandNative(
           releaseInvocationResources(world, component.action.id);
         }
         cancelPlan(world, component);
-        discardSuspended(component);
+        discardSuspended(world, component, actor.id);
         component.action = null;
         component.planGeneration++;
         result = outcome(
@@ -1824,6 +1908,10 @@ function executeCommandNative(
 }
 
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
+  // Selected stock guards contain private supply/minimum facts. Witnesses can
+  // observe the stop, while only the actor receives its detailed reason.
+  // docs/worlds/base/camp-routines.md#plain-descriptions
+  const privateReason = !!actor.actor!.action?.fireGuard;
   if (actor.actor!.action)
     finishPlanAction(
       world,
@@ -1832,7 +1920,19 @@ function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reas
       outcome(false, 'action-failed', reason),
     );
   actor.actor!.action = null;
-  emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
+  if (privateReason) {
+    emit(world, events, 'action-stopped', `${actor.name} stopped the action.`, actor);
+    emit(
+      world,
+      events,
+      'action-stopped-detail',
+      `${actor.name} stopped: ${reason}`,
+      actor,
+      undefined,
+      undefined,
+      'private',
+    );
+  } else emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
 }
 function completeAction(
   world: WorldState,
@@ -2126,13 +2226,15 @@ function completeAction(
         action.id,
         events,
         action.itemId,
+        action.fireGuard,
       );
       if (!done.ok) {
         failAction(world, actor, events, done.message);
         return;
       }
-      completion = done.message;
-      break;
+      finishPlanAction(world, actor.id, action.id, done);
+      component.action = null;
+      return;
     }
   }
   finishPlanAction(world, actor.id, action.id, {
@@ -2364,6 +2466,13 @@ function advanceAction(
     }
     const error = startWork(world, actor, action);
     if (error) {
+      // This supported observation skip ends the admitted fuel attempt without
+      // spending. Other failures still stop the selected activity.
+      if (action.fireGuard?.onlyWhenLow && error.code === 'no-longer-needed') {
+        finishPlanAction(world, actor.id, action.id, { ...error, ok: true, spent: 0 });
+        actor.actor!.action = null;
+        return;
+      }
       failAction(world, actor, events, error.message);
       return;
     }
@@ -2860,11 +2969,12 @@ function* advanceWorldNative(
       let actor = world.entities[actorId];
       if (!actor?.actor) continue;
       let component = actor.actor;
+      reconcileActivityControl(world, actorId, component.agency.plan);
       if (!component.alive || component.incapacitated) continue;
       reconcileConditions(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
-      if (step) {
+      if (step && admitActivityAttempt(world, actorId, component.agency.plan!, step)) {
         yield* materialize();
         perceiving ??= perceivers();
         const stepId = step.id;
@@ -3197,6 +3307,8 @@ function* advanceWorldNative(
     if (!deferred) yield* materialize();
     else pendingSeconds += seconds;
     pendingMechanics = mechanics;
+    for (const id of participants.actors)
+      reconcileActivityControl(world, id, world.entities[id]?.actor?.agency.plan, seconds);
     yield* integrateEndpoint(world, participants, mechanics, deferred ? 0 : seconds, events, {
       seconds,
       working,
@@ -3245,6 +3357,7 @@ function* advanceWorldNative(
     // ends exactly at the deadline. Queue future work without granting it time.
     for (const id of participants.actors) {
       const plan = world.entities[id]?.actor?.agency.plan;
+      reconcileActivityControl(world, id, plan);
       if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
         const revision = plan.revision;
         readyPlanStep(world, id);

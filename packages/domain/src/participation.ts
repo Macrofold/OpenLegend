@@ -83,9 +83,9 @@ export function changeParticipation(
     state.exitAttemptId = operation.attemptId;
   } else if (operation.type === 'depart') {
     if (actor.action) releaseInvocationResources(world, actor.action.id);
-    cancelPlan(world, actor);
+    cancelPlan(world, actor, actorId);
     // Departure ends paused work too; nothing resumes unasked on return.
-    discardSuspended(actor);
+    discardSuspended(world, actor, actorId);
     actor.action = null;
     actor.planGeneration++;
     // Occupation cannot veto departure. Applied work/costs remain; nothing is inverted.

@@ -1,6 +1,6 @@
 # Inventable camp containers
 
-**Proposed base-world content, not implemented.** This is the authored gameplay portion of the [next playable week](../../projects/next-playable-week-feature-spec.md). It does not change the current [items and possession contract](items.md) until implemented and verified.
+**Native family implemented; full playable qualification remains open.** Mike authorized Engineer 3's PW03 implementation in chat on October 2, 2026. The trusted `base:woven-container` version 1 uses the existing recipe admission, learning, crafting and possession owners. Two sizes and ordinary gathering/preparation/crafting, malformed proposals, interruption, capacity, custody and current-format restoration have native evidence in [the camp-life report](../../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026). Live generated proposals and combined browser/director integration remain separate acceptance gates.
 
 ## Purpose and supported effect
 
@@ -8,11 +8,11 @@ A character can invent and craft a woven portable container, choose what to pack
 
 Packing load is the existing abstract integer measure. The actor still has no finite total carrying-load limit. Containers organize possessions and support voluntary sharing; they provide no extra carrying strength, ownership lock, reservation, food preservation, waterproofing, warmth or structural shelter.
 
-## Proposed first-family rules
+## First-family rules
 
-These are provisional world balance, not universal engine rules or a physically derived weaving simulation. Implement the accepted version in one base-world definition consumed by schemas, validation, compilation and descriptions. Do not repeat constants in server prompts or UI.
+These are initial world balance, not universal engine rules or a physically derived weaving simulation. [The authored family](../../../packages/domain/src/worlds/base/camp-container-family.ts) supplies one definition consumed by schemas, validation, compilation and descriptions. Server prompts and UI read this definition.
 
-| Choice or derived property   | Proposed rule                                                                                              | Reason                                                                                                |
+| Choice or derived property   | Authored rule                                                                                              | Reason                                                                                                |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Pouch material               | A native available material with `fiber`, `flexible` and `pouch` properties; quantity `p` from 2 through 8 | Prepared fibers are an existing qualifying material; raw unprepared fiber alone is not                |
 | Binding material             | A native available material with `binding`; quantity `ceil(p / 2)`                                         | Uses actual cord-like material and scales material cost with size                                     |

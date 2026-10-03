@@ -22,6 +22,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Define read-only decision-fact/summary contracts from existing AC descriptors, actor context and permission rules, including requirements, costs, consequences, uncertainty and source freshness. Extend the current candidate representation without duplicating family mechanics or creating a preference controller.
 - [x] Define storage/transport envelopes and overflow behavior under AEL01/AEL02 before enabling the new path; preserve current execution limits until explicitly revised.
 
+PW10 extends AE01's selected-meaning contract with exact material/source/destination roles, literal demonstrated quantities and closed installed requests. Native/provider-schema checks and the actual injected director path preserved explicit parameters through strict parsing and native response admission. Ordinary browser and live Jev preference remain separately qualified ([current stock contract](../action-experience.md#fresh-stock-binding-in-finite-methods), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 **Exit:** AXE01/AXE11 contract cases; schemas distinguish offers from actual experience, reject unsupported executable fields and preserve role/effect semantics. Use canonical invoke/sequence/branch/repeat/wait shapes and existing agency ownership; no parallel control vocabulary, generated evaluator or accidental new action capability.
 
 ## AE02 — Committed steps, effects and output completeness
@@ -32,6 +34,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Capture actual effect references, multi-output harvest/transform quantities and consumed/output bindings atomically; reuse ObjectLineage and committed body/status effects.
 - [x] Preserve partial effects/output ports from failed or interrupted work, misses/resistance, duplicate completion idempotency and ambiguity after stack mixing; do not derive receipts from prose/time. Bind committed outputs separately from terminal success; default sequences stop unless explicit supported recovery or a new choice authorizes later use.
 - [x] Capture bounded family-supplied state-contribution evidence for multi-hit injury/death and intervening healing. Preserve permitted contributors or mark earlier injury external/incomplete; never infer a complete kill method from the final hit alone. Coordinate provenance retention/query envelopes with AE04 under AEL03/AEL07.
+
+PW10's AE02 consumer records fresh per-attempt lots/revisions and actual moved outputs through the atomic custody owner. Native checks preserved active occurrence mappings and rejected failed multi-lot transfers without partial effects. The corrected watch counts actual spending receipts and reports terminal failure once, including interrupted attendance and retained transfers. The compact card uses the actual command receipt and distinguishes unconfirmed delivery from native refusal; a browser transport-loss fixture refreshed an already-admitted watch without sending another Start. Selected intent still cannot stand in for a committed result ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 **Exit:** AXE02/AXE04 and the state-contribution portion of AXE05 through actual downstream native scenarios, including missing prerequisites, clamp/mitigation, multi-target outcomes and no parent/child double counting.
 
@@ -80,6 +84,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Preserve minimal permitted acquisition support across routine memory compaction. Revalidate explicit corrections/revocations against independent support; suppress use/retrieval with no remaining lawful support, fence pending publication, and apply current privacy overlays after restore.
 - [x] Select AEL07 definition/acquisition/provisional-storage admission and retention bounds before enablement; verify concurrent retain, decline/uncertain, capacity exhaustion and atomic rollback leave no orphan publication or lost support.
 
+PW10 adds narrowly supported finite stock-method normalization: retain demonstrated roles, exact definition support and fixed amounts, then resolve current eligible stock later. Prior transaction revisions are evidence, never reusable authority. Native normalization/binding passed; actual voluntary retention and later reuse remain open. Only the selected watch's actual child occurrences carry its learning exclusion; later unrelated finite work remains eligible ([AEL09](../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 **Exit:** native AXE09 normalization/acquisition/privacy cases and acquisition-revocation/restore portions of AXE10, plus recorded AEL07 gates; paid independent reproduction is integrated under AE07/AE10. A matching cached definition grants neither knowledge nor execution until the actor-specific learning path admits it. No foreign private details or success counts enter context.
 
 ## AE07 — Idle typed learning under Jev-only policy
@@ -90,6 +96,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Batch independent retain/decline/uncertain judgments in shared scoped context; update known-method evidence without repetitive rejudgment.
 - [x] Coalesce/resume pending work; handle no downtime, cancellation, stale evidence, missing credentials, malformed response and uncertain spend without blocking immediate cognition or automatic paid retry.
 - [x] Select AEL05/AEL07 pending-work, queue-byte/count, concurrency, coalescing and retained-evidence admission bounds before enablement. Verify no-idle accumulation and capacity exhaustion preserve durable cursors/support while leaving immediate actions available.
+
+The current automatic learning route remains NPC-only for PW10. Execution supplies eligible finite evidence; the existing Jev-only judgment may retain, decline or remain uncertain, and no successful method is preloaded. The October 2 native fixtures do not demonstrate any live retention preference; separately capped retention/reuse qualification remains in [PW10](next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods).
 
 **Exit:** AXE08 native scheduling/accounting fixtures with recorded AEL05/AEL07 overflow evidence and separately capped live qualification. Record exact total costs and generation sentinels. Frequency policy is documented and never defines semantic sequence boundaries.
 
@@ -102,6 +110,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Extend AE03 individual-action preparation with the [cognitive information contract](../projects/action-experience-tech-design.md#cognitive-information-for-action-choice) through existing scoped context/capability owners. Share permitted body/goal/target facts across offers, preserve meaningful alternatives, and compose supported resource/time/requirement summaries only along supplied structures. Bound preparation before hydration and reuse queries/routes across tools.
 - [x] Expose authorized player/actor inspection and personal evidence status; no global known-method dump in every cognition request.
 
+PW10's AE08 consumer binds a ground cache only from current permitted inspection, then rechecks access, exact material support and personal minimum. Missing/incomplete inspection is not proof of empty stock. PostgreSQL page-two-only decision preparation and access-loss removal passed; the actual injected director refused access lost during parameter selection. Browser/live retention/reuse qualification remains open ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 **Exit:** retrieval/inspection portions of AXE10 plus AXE13 decision-information scenarios; integrated execution remains AE09/AE10. Include measured preparation on a large catalogue; distinguish unavailable, unknown and unprepared methods. A ready first step does not establish whole-sequence feasibility.
 
 ## AE09 — Execute chosen nested methods through existing agency
@@ -112,6 +122,8 @@ Foundation order was AE01–AE04 → AE06 normalization/admission → AE05/AE07 
 - [x] Support explicitly bounded repetition and failure exits, remaining-work continuation, alternatives, interruption and revalidation without automatic hunger/weapon/retry policy.
 - [x] Preserve already committed steps/effects and external-participant autonomy across pause/cancel/replace/restore; unsupported family suspension remains explicit.
 - [x] Refresh remaining-choice summaries after interruptions or relevant changes; retain actual outputs/consumption, recheck later prerequisites, and never turn a read-only estimate into a reservation or guaranteed result.
+
+PW10 uses AE09's existing execution owner for a finite gather/pack/fuel method and a separate explicit one-session watch. The watch persists its deadline/counters; committed cache transfers remain when later fuelling stops, and resumed attendance starts a new attempt. The 22-case functional matrix and spending-control review edges passed, with the final current-format PostgreSQL watch restart recheck passed and distinguished from native restore. This adds no learned conditional behavior, mandatory goal or automatic later selection ([agency contract](../agent-agency.md#explicitly-chosen-one-session-activities), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 **Exit:** AXE10 complete chosen method and interruption/restore; missing fire, lost prey, spent ammunition, changed definitions and refused cooperation cannot fabricate success or duplicate work. Broader undelivered AC operators remain tracked rather than implied.
 

@@ -164,6 +164,7 @@ export interface Action {
   ammoItemId?: string;
   heatId?: string;
   fireOperation?: import('./worlds/base/fire.js').FireOperation;
+  fireGuard?: import('./worlds/base/fire.js').FireStockGuard;
   /** Inputs leave inventory at work start, never refunded by cancel or restart. */
   consumed: { definitionId: string; quantity: number }[];
 }
@@ -177,7 +178,7 @@ export interface ActorComponent {
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
   /** Attack recovery survives cancelling an already committed swing. */
   attackReadyAt?: number;
-  inventoryInspection?: { revision: number; after: string; more: boolean; itemIds: string[] };
+  inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -307,6 +308,8 @@ export interface WorldEvent {
   data?: Record<string, string | number | boolean | null>;
 }
 export interface Outcome {
+  /** Actual committed homogeneous units; absent is not evidence of spending. */
+  spent?: number;
   outputs?: import('./action-experience.js').ActivityOutput[];
   ok: boolean;
   code: string;
@@ -413,6 +416,7 @@ export type Command = Envelope &
         root: import('./action-experience.js').ActivityNode;
         bindings: Record<string, import('./action-experience.js').ActivityBinding>;
         mode: 'enqueue' | 'replace' | 'interrupt';
+        control?: import('./activity-execution.js').ChosenActivityControl;
         /** Things the request is about that no step names (e.g. where a walk goes). Used
          * only for target matching and encounter pins; grants nothing. */
         subjects?: string[];
@@ -426,6 +430,16 @@ export type Command = Envelope &
     /** quantity picks up exactly that many from one divisible stack (itemId required). */
     | { type: 'pickup'; targetId: string; itemId?: string; quantity?: number }
     | { type: 'drop'; itemId: string; quantity: number }
+    | {
+        type: 'transfer-stock';
+        sourceId: string;
+        destinationId: string;
+        definitionId: string;
+        definitionVersion: number;
+        definitionDigest: string;
+        quantity: number;
+        minimumHeld: number;
+      }
     | {
         type: 'transfer-item' | 'split-item' | 'merge-item';
         itemId: string;
@@ -479,6 +493,11 @@ export type Command = Envelope &
         operation: import('./worlds/base/fire.js').FireOperation;
         targetId: string;
         itemId?: string;
+        definitionId?: string;
+        definitionVersion?: number;
+        definitionDigest?: string;
+        minimumHeld?: number;
+        onlyWhenLow?: boolean;
       }
     | {
         type: 'status-effect';
@@ -486,7 +505,13 @@ export type Command = Envelope &
         definitionId: string;
         operation: 'activate' | 'deactivate';
       }
-    | { type: 'inspect-inventory'; after?: string; expectedRevision?: number }
+    | {
+        type: 'inspect-inventory';
+        containerId?: string;
+        after?: string;
+        expectedRevision?: number;
+        expectedScope?: string;
+      }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
     | { type: 'cancel' | 'recover' }
     | {

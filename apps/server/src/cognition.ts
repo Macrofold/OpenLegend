@@ -93,6 +93,10 @@ export const thoughtOnlySchema = z
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = { actorId, id, ...(input.purpose ? { purpose: input.purpose } : {}) };
   switch (input.type) {
+    case 'activity-request':
+      throw new Error(
+        'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',
+      );
     case 'activity':
       return {
         ...base,
@@ -183,8 +187,10 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       return {
         ...base,
         type: 'inspect-inventory',
+        containerId: input.containerId,
         after: input.after,
         expectedRevision: input.expectedRevision,
+        expectedScope: input.expectedScope,
       };
     case 'inspect-activities':
       return {

@@ -39,7 +39,9 @@ export function Icon({
   size?: number;
   fallbackLabel?: string;
 }) {
-  const data = (icons as Record<string, { body: string; viewBox: string }>)[name];
+  const data = Object.hasOwn(icons, name)
+    ? (icons as Record<string, { body: string; viewBox: string }>)[name]
+    : undefined;
   const style = { '--ol-icon': `${size}px` } as CSSProperties;
   // Only repository-owned SVG bodies enter this sink. Generated names remain React text.
   const glyph = data ? (
@@ -368,6 +370,7 @@ export function Condition({
             <span
               className="ol-meter-track"
               role="meter"
+              aria-hidden={!!onTextChange || undefined}
               aria-label={name}
               aria-valuemin={min}
               aria-valuemax={max}

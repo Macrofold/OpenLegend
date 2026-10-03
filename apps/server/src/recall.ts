@@ -37,7 +37,7 @@ import {
   type JudgeValue,
   type JudgmentAnswer,
 } from '@open-legend/ai';
-import { digest } from './store.js';
+import { digest } from './content-digest.js';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { randomUUID } from 'node:crypto';

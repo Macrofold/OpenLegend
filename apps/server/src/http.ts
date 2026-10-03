@@ -70,6 +70,7 @@ import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
 import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
+import { activityRequests, activityStatus } from './activity-requests.js';
 
 const clientId = z
   .string()
@@ -1359,6 +1360,19 @@ async function initializeGameServer(
                 ok: true,
                 catalogue: actionCatalogue(service, context, scope),
               });
+            }
+            case '/api/activity-requests':
+              z.object({}).strict().parse(body);
+              return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-status':
+              z.object({}).strict().parse(body);
+              return send(response, 200, activityStatus(service, scope));
+            case '/api/activity-preview': {
+              const input = commandInputSchema.parse(body);
+              if (input.type !== 'activity-request')
+                return send(response, 400, { ok: false, message: 'Review a requested activity.' });
+              service.assertScope(scope, 'play', true);
+              return send(response, 200, service.previewCommand(input, scope.actorId));
             }
             case '/api/inventory/history': {
               const value = z

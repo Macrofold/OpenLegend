@@ -15,6 +15,7 @@ export type { SurfacePoint, SpatialLayout };
 export interface CommandInput {
   type:
     | 'activity'
+    | 'activity-request'
     | 'conversation'
     | 'say'
     | 'pickup'
@@ -46,12 +47,16 @@ export interface CommandInput {
     | 'recover'
     | 'teach';
   purpose?: string;
+  activityFamilyId?: string;
+  activityArguments?: Record<string, string | number | boolean>;
   methodId?: string;
   bindings?: Record<string, string | SurfacePoint>;
   resume?: boolean;
   historyAfter?: number;
   methodAfter?: number;
   after?: string;
+  containerId?: string;
+  expectedScope?: string;
   conversationId?: string;
   text?: string;
   generation?: number;
@@ -76,6 +81,54 @@ export interface CommandInput {
   expectedContentsRevision?: number;
   targetRevision?: number;
   preparation?: 'fiber' | 'cord';
+}
+
+export interface ActivityRequestsView {
+  ok: boolean;
+  scope: string;
+  simTime: number;
+  requests: {
+    id: string;
+    label: string;
+    description: string;
+    fields: Record<
+      string,
+      {
+        type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
+        label: string;
+        minimum?: number;
+        maximum?: number;
+        minimumDuration?: number;
+        maximumDuration?: number;
+        required: true;
+      }
+    >;
+  }[];
+  choices: {
+    id: string;
+    label: string;
+    kind: 'entity' | 'definition';
+    roles: string[];
+    requestIds?: string[];
+    distance?: number;
+    accessible: boolean;
+    reason?: string;
+  }[];
+  warnings: string[];
+  timeOptions?: {
+    minimumDuration: number;
+    maximumDuration: number;
+    namedDeadlines: { name: string; at: number }[];
+  };
+  status?: {
+    name: string;
+    status: string;
+    reason?: string;
+    spent?: number;
+    attempts?: number;
+    interrupted?: boolean;
+    deadline?: number;
+  };
 }
 
 export interface ActionOption {
@@ -406,6 +459,8 @@ export interface GameView {
     inventoryRevision: number;
     canUseInventory: boolean;
     actionAttempts: PlayerActionAttempt[];
+    /** The controlled actor's plain activity result; detailed steps remain God-only. */
+    activity?: ActivityRequestsView['status'];
     /** The controlled character's plan steps and states; projected only in God mode. */
     work?: WorkView | null;
     /** Example typed requests in this world's own words, for the action form. */

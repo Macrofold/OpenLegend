@@ -65,6 +65,8 @@ Use the current single writer and existing stores first. No new platform depende
 - [x] Advance known valid steps without another model call. On failure, block dependent work and create at most the eligible reconsideration opportunity; do not blindly attempt the remainder or regenerate the same plan.
 - [x] Implement interruption during long-running work using trusted action-family pause/cancel boundaries, retaining consumed materials, committed effects and actual elapsed work. Revalidate suspended plans before resuming; do not imply every family supports pause/resume. Plan edits cannot rewrite completed receipts, refund resources or control another actor's response. Delivered by [composed activities](../projects/composed-activities.md): `interrupt` mode pauses one plan unless an attack is under way, a working step has consumed materials or the running action is outside the plan; the paused step restarts from scratch after the interrupting work, once goal, target encounters and bindings revalidate, and replace/cancel discard it. [Evidence](../verification/composed-activities.md#interrupt-then-resume).
 
+PW10 is a concrete AG03 consumer: selected finite gather/pack/fuel work and a separate watch run without a goal or model call per native step. The watch refuses unrelated enqueue; explicit replace/interrupt retains existing rules. Native functional/review checks passed suspension with a new attempt, actual spending limits, interrupted attendance and retained transfers. Injected director choices reached the same owner without generation. Scripted ordinary card execution/recurrence/failure passed; actual voluntary choice and broader autonomy remain separate ([contract](../agent-agency.md#explicitly-chosen-one-session-activities), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 **Exit evidence:** gathering → preparing → crafting executes in sequence with correct durations and one-time consumption; ordinary speech/thought does not cancel it; explicit replacement follows native cancellation rules. A failed first step blocks dependents. Two actors competing for a final resource cannot both receive it. Several native completions can occur after one model decision with zero continuation inference calls.
 
 ### AG04 — Atomic component admission and durable child identities
@@ -76,6 +78,8 @@ Use the current single writer and existing stores first. No new platform depende
 - [x] Enforce independent component rejection and admission dependencies. A later rejected action does not unsay an accepted utterance; a component requiring a rejected goal creation cannot bind to a nonexistent goal.
 - [x] Replace broad staleness checks where necessary with relevant goal/plan/action revisions. Preserve current actor lifecycle, target scope, policy, cancellation and load-epoch checks. Unrelated world ticks must not invalidate a whole decision.
 - [x] Close replay protection beyond the 300-entry hot response-receipt window through existing durable admission, not an assumption that old callbacks never arrive.
+
+PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters compile to a normal composition, while fresh stock/receipts commit atomically through the object owner. The actual injected director path passed strict parsing, opaque-reference resolution, native admission and decline/refusal/stale-access handling with unique metered parameter-round identities. This does not repair PW01's separate selected-transfer dispatch or complete every child-identity case ([PW03](next-playable-week.md#pw03--craftable-containers-and-camp-supplies), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 **Exit evidence:** storage failure commits no partial envelope; duplicate completion, late completion, partial component rejection and mixed-body retry have deterministic outcomes. Crash/recovery at admission-versus-dispatch boundaries does not double-spend materials or start a second paid operation. All-optional empty decisions finish cleanly.
 
@@ -112,6 +116,8 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 - [ ] Retain contradictory evidence and a measured optional opportunity-discovery allowance. No interest subscription can search another actor's private inventions or unseen world state.
 - [ ] Extend existing context diagnostics to show why a goal/result changed retrieval. Do not create a second embedding store or a new general memory extractor.
 - [ ] Include supported item capabilities, accessibility and equipment state in task-relevant inventory context; reserve explicitly referenced tools and known prerequisites. Admit actor-proposed goal interests through the existing subscription owner, without native hunger-to-food/tool/animal mappings. Relevant inventory changes must survive the final opportunity fingerprint; unrelated changes must not force cognition. Measure cold/warm preselection work and disclose omissions under [CG04](../limits/cognition.md#cg04).
+
+PW03/PW10 add a narrow AG06 inspection consumer: one currently accessible selected ground container supplies permitted page evidence, pack/take choices and finite-method binding. Distant appearance does not disclose contents; incomplete/lost inspection grants no later authority. PostgreSQL decision preparation passed page-two-only opaque contents and access-loss removal, and injected director admission refused a cache locked during choice. Browser/live qualification remains separate. No camp goal, preferred target or hidden opportunity is installed ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 **Exit evidence:** a newly adopted need for a known material can attend to a currently visible resource that was absent from the preceding selected-object list. Goal changes expire the old cue; unchanged goals do not rebuild every context. Relevant contrary evidence and danger survive focused planning; mandatory context overflow fails before paid dispatch.
 
@@ -153,6 +159,8 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 - [ ] Fence provider and native-dispatch callbacks by the current world/load epoch. Retain non-rewindable billing, revocation and uncertainty records under existing policy.
 - [ ] Treat saved queued/running paid work as recovery/reconciliation state, not authorization to dispatch again. Preserve explicit versus autonomous pause/cancellation behavior and fresh checks on resumption.
 
+PW03/PW10 contribute current-format PostgreSQL inspection/restart, native family restore and watch restart evidence to AG09. Final watch and crafted-family service-restart checks passed exact pins, inspection/contents and deadline/counters without provider dispatch on load. Broader callback fencing and paid recovery remain open ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 **Exit evidence:** same-version restart resumes native readiness once; loading an earlier save rejects callbacks from the discarded timeline. External charges are not rewound. A canceled or revoked invention cannot activate because the lock later reopened. No provider call occurs merely from loading or rebuilding indexes.
 
 ### AG10 — Player, actor and god projections
@@ -166,6 +174,8 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 - [ ] Ensure ordinary clients/other actors do not receive private goals, unspoken inventions, drafts or mental notes. God inspection is an explicit capability, not a broader actor observation.
 - [ ] Keep embodiment/capability restrictions on speech and expressions. General non-speech audio is integrated with NC/perception event ownership, not implemented by creating fake speech messages.
 
+PW03/PW10's AG10 consumer keeps ordinary review/Stop/plain own-request results separate from God-only detail and private NPC learning evidence. No-provider review/director fixtures retained selected parameters and honest terminal counters, without substituting completed narration. Scripted ordinary projection and read-only review passed; actual voluntary choice/retention/reuse remain unqualified; installing a request schema does not establish those behaviors ([PW10](next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
+
 **Exit evidence:** player versus god projections differ correctly; a clap is not a conversation turn; accepted queue entries have no fake completion narration. Refresh/reconnect does not replay an invention. Private goal changes do not appear in nearby actors' prompts or public event feeds.
 
 ### AG11 — Integrated deterministic and adversarial acceptance
@@ -175,6 +185,8 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 - [ ] Implement the matrix below with reproducible starting states, explicit receipt assertions and resource/time checks. Include the failure paths, not only an ideal transcript.
 - [ ] Run focused checks during implementation; after runtime changes run the repository's formatting and `pnpm run check` workflow while preserving unrelated edits. Report existing unrelated failures separately.
 - [x] Publish actual fixture evidence in `docs/verification.md`, current facts in `docs/architecture.md`/implementation status and checkbox changes only after each stated gate is met.
+
+The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) contributes current family/watch native checks, final PostgreSQL restarts, scoped-page/access cases and six actual injected-director scenarios to AG11, alongside the historical baseline. Scripted ordinary card/craft/custody checks passed; uncoached player observation, shared TypeScript/picker blockers, actual Jev voluntary choices and combined PW06 remain separately tracked. AG12/AG13 and the full deterministic/adversarial matrix below are not closed; settled/reserved/outstanding/uncertain Engineer 3 Jev exposure remains $0.
 
 | Scenario                              | Required observation                                                                                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |

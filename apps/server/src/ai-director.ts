@@ -5,7 +5,8 @@ import {
   type CognitionLevel,
   type LedgerCategory,
 } from './cognition-budget.js';
-import { namedClockTimes } from '@open-legend/domain';
+import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
+import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
 import type { RequestScope } from './authority.js';
 import {
   observerDescription,
@@ -41,7 +42,12 @@ import { bodyReconsiderationInputs, bodyPolicy } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { decisionQuestions, JEV_QUESTIONS_VERSION, LEVEL1_POLICY } from './jev-questions.js';
+import {
+  decisionQuestions,
+  activityRouteCriterion,
+  JEV_QUESTIONS_VERSION,
+  LEVEL1_POLICY,
+} from './jev-questions.js';
 import {
   escalationLevel,
   level1Message,
@@ -1768,6 +1774,12 @@ export class AiDirector {
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
+    const requestFamilies = requestRoutes(
+      prepared.activityRequests.requests,
+      prepared.activityRequests.choices,
+    );
+    for (const [key, descriptor] of requestFamilies)
+      criteria[key] = activityRouteCriterion(descriptor);
     const offeredRoutes = Object.keys(criteria);
     const judge =
       (suffix: string) =>
@@ -1962,11 +1974,49 @@ export class AiDirector {
       );
       return;
     }
+    let requestedActivity: ActorResponse | undefined;
+    const chosenFamily = requestFamilies.get(route);
+    if (chosenFamily) {
+      await prepared.validateConversation();
+      const selectedWorld = this.service.world;
+      let parameterRound = 0;
+      requestedActivity = await chooseActivityRequest({
+        descriptor: chosenFamily,
+        choices: prepared.activityRequests.choices,
+        simTime: selectedWorld.simTime,
+        namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
+          name,
+          at: clockDeadline(selectedWorld, name)!,
+        })),
+        state: prepared.prompt,
+        judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
+      });
+      this.current(run);
+      if (!requestedActivity) {
+        run.responseWatch = undefined;
+        await this.update(
+          run,
+          'completed',
+          'The optional activity was declined or its parameters remained uncertain. No activity started.',
+          {
+            disposition: 'deferred',
+            trigger: semanticTrigger,
+          },
+        );
+        return;
+      }
+      await this.log.record(
+        `${run.job.id}:attempt:${attempt}:activity-parameters`,
+        'Chosen activity parameters',
+        { family: chosenFamily.id },
+        requestedActivity,
+      );
+    }
     let actionAnswers: Record<string, JudgmentAnswer> = {};
     let offeredForSelection: ReturnType<typeof offeredForRating> = [];
     // Candidates before the level-1 threshold filter, for offering rated actions to generation.
     let ratedBase: typeof prepared | undefined;
-    if (semanticTrigger.checkActionSelection) {
+    if (!requestedActivity && semanticTrigger.checkActionSelection) {
       const actionsStartedAt = combined?.startedAt ?? new Date().toISOString();
       let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
       let retrieval: Awaited<ReturnType<typeof retrieveActions>>;
@@ -2088,7 +2138,7 @@ export class AiDirector {
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
     const actorInvention =
-      executedRoute === 'level1'
+      executedRoute === 'level1' || requestedActivity
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
         : await prepareActorInvention(this.service, actorId);
     const baseSchema = boundResponseSchema(
@@ -2100,6 +2150,7 @@ export class AiDirector {
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
+      activityRequestDescriptors(this.service.world),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -2117,7 +2168,8 @@ export class AiDirector {
     const levelLimit = levelLimits(c)[level];
     const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
     let value: unknown;
-    if (executedRoute === 'level1') {
+    if (requestedActivity) value = requestedActivity;
+    else if (executedRoute === 'level1') {
       if (selectedHandle === undefined) throw new Error('Level 1 reached admission unselected.');
       value = this.selectKnownAction(prepared, selectedHandle);
     } else
@@ -2234,6 +2286,7 @@ export class AiDirector {
       { operations: reply.operations },
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
+      activityRequestDescriptors(this.service.world),
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply

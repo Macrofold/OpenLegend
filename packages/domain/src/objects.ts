@@ -278,6 +278,7 @@ function ancestorDeltas(
   source: Entity | undefined,
   destination: Entity | undefined,
   load: number | undefined,
+  precedingDeltas?: ReadonlyMap<string, number>,
 ): Map<string, number> {
   const deltas = new Map<string, number>();
   for (const [parent, sign] of [
@@ -300,7 +301,7 @@ function ancestorDeltas(
       container.loadRevision !== container.subtreeRevision
     )
       throw new Error('Container capacity is unavailable.');
-    const next = checked(container.load + delta, 'packing load');
+    const next = checked(container.load + (precedingDeltas?.get(id) ?? 0) + delta, 'packing load');
     if (next > definition.container.capacity)
       throw new Error('The bag does not have enough packing capacity.');
     bump(container.subtreeRevision);
@@ -720,7 +721,13 @@ export function itemPackingLoad(
 
 /** The same mechanical admission serves permitted previews and authoritative movement.
  * Access, active-work and expected-revision checks remain with the native command owner. */
-function itemMovePlan(world: WorldState, id: string, destinationId: string, quantity: number) {
+function itemMovePlan(
+  world: WorldState,
+  id: string,
+  destinationId: string,
+  quantity: number,
+  precedingDeltas?: ReadonlyMap<string, number>,
+) {
   const entity = world.entities[id],
     lot = entity?.item,
     sourceId = parentOf(entity),
@@ -758,7 +765,13 @@ function itemMovePlan(world: WorldState, id: string, destinationId: string, quan
   }
   const load =
     quantity === lot.quantity ? subtreeLoad(world, entity) : ownLoad(world, { ...lot, quantity });
-  const deltas = ancestorDeltas(world, world.entities[sourceId], destination, load);
+  const deltas = ancestorDeltas(
+    world,
+    world.entities[sourceId],
+    destination,
+    load,
+    precedingDeltas,
+  );
   return { entity, lot, sourceId, deltas };
 }
 
@@ -770,6 +783,32 @@ export function itemMoveReason(
 ): string | undefined {
   try {
     itemMovePlan(world, id, destinationId, quantity);
+    return undefined;
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Item movement is unavailable.';
+  }
+}
+
+/** Preview distinct divisible lots going to one destination without changing custody.
+ * Accumulated packing changes use the same admission as sequential atomic movement;
+ * checking each lot alone could incorrectly promise that their combined load fits. */
+export function itemStockMovesReason(
+  world: WorldState,
+  lots: readonly { itemId: string; quantity: number }[],
+  destinationId: string,
+): string | undefined {
+  try {
+    const deltas = new Map<string, number>(),
+      seen = new Set<string>();
+    for (const lot of lots) {
+      const item = itemFor(world, lot.itemId);
+      if (!item || item.container || item.individuality !== 'homogeneous' || seen.has(lot.itemId))
+        throw new Error('Choose distinct divisible stock lots.');
+      seen.add(lot.itemId);
+      const plan = itemMovePlan(world, lot.itemId, destinationId, lot.quantity, deltas);
+      for (const [id, delta] of plan.deltas) deltas.set(id, (deltas.get(id) ?? 0) + delta);
+    }
     return undefined;
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;

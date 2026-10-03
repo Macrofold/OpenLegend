@@ -28,6 +28,10 @@ import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
 import { validateActionExperience } from './action-experience.js';
+import { validateActivityHostPins } from './activity-hosts.js';
+import { activityHostForCommand } from './activity-hosts.js';
+import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
+import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
@@ -112,6 +116,7 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
+  activityHosts: DefinitionPin[];
   recipeFamilies: DefinitionPin[];
 }
 export interface AttributeView {
@@ -179,6 +184,7 @@ export function createModuleManifest(
   senses: SenseDefinition[],
   bodyPolicy: BodyPolicy | null,
   recipeFamilies: readonly DefinitionPin[],
+  activityHosts: readonly DefinitionPin[] = [],
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
@@ -194,6 +200,7 @@ export function createModuleManifest(
     acoustics: structuredClone(DEFAULT_ACOUSTICS),
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
     recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
+    activityHosts: activityHosts.map((pin) => ({ ...pin })),
   };
   validateModuleManifest(manifest);
   return manifest;
@@ -266,9 +273,11 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'appraisals',
     'acoustics',
     'acousticsPin',
+    'activityHosts',
     'recipeFamilies',
   ]);
   validateAppraisalPolicy(manifest.appraisals);
+  validateActivityHostPins(manifest.activityHosts);
   if (
     manifest.interface !== 'world-modules-v1' ||
     !Number.isSafeInteger(manifest.revision) ||
@@ -803,6 +812,12 @@ export function validateWorldModules(world: WorldState): void {
       inspection &&
       (!Number.isSafeInteger(inspection.revision) ||
         inspection.revision < 0 ||
+        typeof inspection.scope !== 'string' ||
+        inspection.scope.length > 16000 ||
+        (inspection.containerId !== undefined &&
+          (typeof inspection.containerId !== 'string' ||
+            !inspection.containerId ||
+            inspection.containerId.length > 120)) ||
         typeof inspection.after !== 'string' ||
         inspection.after.length > 120 ||
         typeof inspection.more !== 'boolean' ||
@@ -856,6 +871,31 @@ export function validateWorldModules(world: WorldState): void {
           (!Number.isSafeInteger(e.replenisher.revision) || e.replenisher.revision < 0))
       )
         throw new Error('Invalid replenishment source.');
+    }
+    const fireAction = e.actor?.action;
+    if (fireAction?.fireGuard !== undefined) {
+      const guard = fireAction.fireGuard;
+      if (
+        !guard ||
+        Object.keys(guard).sort().join(',') !== 'definition,minimumHeld,onlyWhenLow' ||
+        fireAction.type !== 'tend-fire' ||
+        fireAction.fireOperation !== 'fuel' ||
+        !isDefinitionPin(guard.definition) ||
+        !Number.isSafeInteger(guard.minimumHeld) ||
+        guard.minimumHeld < 0 ||
+        typeof guard.onlyWhenLow !== 'boolean' ||
+        !activityHostForCommand(world, 'tend-fire') ||
+        !world.itemDefinitions[guard.definition.id] ||
+        !isFuel(world.itemDefinitions[guard.definition.id]!) ||
+        !sameDefinitionPin(
+          guard.definition,
+          definitionPin(world.itemDefinitions[guard.definition.id]!),
+        ) ||
+        !fireAction.itemId ||
+        !world.entities[fireAction.itemId]?.item ||
+        !sameDefinitionPin(world.entities[fireAction.itemId]!.item!.definitionPin, guard.definition)
+      )
+        throw new Error('Invalid saved guarded fuel action.');
     }
     if (
       e.actor?.action?.type === 'strike' &&

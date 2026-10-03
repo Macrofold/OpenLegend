@@ -129,7 +129,17 @@ export function readableDecisionContext(
       : []),
     `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
     `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
-    `## Current time\n${context['now']}`,
+    `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
+    ...(context['activityRequests']
+      ? [
+          `## Optional installed activity requests\n${JSON.stringify(context['activityRequests'])}\nThese are optional selected compositions, not goals or learned behavior. Use exact authored parameters only. Later native checks can refuse changed prerequisites.`,
+        ]
+      : []),
+    ...(context['inspectedContainer']
+      ? [
+          `## Container I chose to inspect\n${JSON.stringify(context['inspectedContainer'])}\nOnly these exact contents are known from this page. Further pages and nested contents remain unknown. Access or movement can invalidate this inspection.`,
+        ]
+      : []),
     ...(context['inspectedActions']
       ? [`## Actions I chose to inspect\n${list(context['inspectedActions'])}`]
       : []),
@@ -149,7 +159,7 @@ export function readableDecisionContext(
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier localIds only), and exactly one non-null field among talk, act, think, goal, plan, note, name; all six unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
 Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null,"volume":"normal"}, max 1200 characters. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
-Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation; actionId, verb, description and top-level targetEntityId remain null. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
+Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace|interrupt"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
 Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
 Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
 ${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}
@@ -173,6 +183,8 @@ export function responseReferences(
   possessionIds: string[] = [],
   /** Portable stacks lying in visible piles; usable for pickup and slots. */
   pileItemIds: string[] = [],
+  /** Current prepared request choices and an explicitly inspected container page. */
+  inspectedIds: string[] = [],
 ) {
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
@@ -253,7 +265,22 @@ export function responseReferences(
         relation: 'lying in a visible pile',
       }),
     );
-  const all = [...ids, ...possessions, ...piled];
+  const inspected = [...new Set(inspectedIds)].filter(
+    (id) =>
+      !ids.includes(id) &&
+      !possessions.includes(id) &&
+      !piled.includes(id) &&
+      Object.hasOwn(world.entities, id),
+  );
+  for (const id of inspected)
+    references.push(
+      JSON.stringify({
+        entityId: entityHandles(world, actorId).get(id),
+        label: entityLabel(world, world.entities[id]!, actorId),
+        relation: 'current permitted activity choice or inspected container page',
+      }),
+    );
+  const all = [...ids, ...possessions, ...piled, ...inspected];
   return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId) };
 }
 

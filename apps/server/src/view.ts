@@ -1,6 +1,7 @@
 import { recipeFamily, basePlaytestMilestones } from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
+import { projectActivityStatus } from './activity-requests.js';
 import { canUseInventory, inventoryItemView } from './inventory-view.js';
 import {
   itemFor,
@@ -848,6 +849,7 @@ export async function projectView(
           ...(attempt.alternative ? { fulfillment: attempt.alternative.fulfillment } : {}),
         })),
       ),
+      activity: projectActivityStatus(world, player.id),
       // Step-by-step work states are a developer view (God mode); players use Stop current
       // work and the plain answers to their own requests. Owner decision, 2026-09-29.
       work:

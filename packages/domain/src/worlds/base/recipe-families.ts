@@ -7,6 +7,8 @@ import type {
 import type { MaterialProperty, RecipeCandidate, WorldState } from '../../types.js';
 import { getOwn } from '../../records.js';
 
+import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
+
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
   minimum,
@@ -367,4 +369,5 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   launcherFamily('flex'),
   arrow,
   gathering,
+  BASE_CAMP_CONTAINER_FAMILY,
 ];

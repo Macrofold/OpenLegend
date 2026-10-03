@@ -1,7 +1,9 @@
+import { activitySpendCeiling } from './activity-hosts.js';
 import { itemFor } from './objects.js';
 import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
 import {
   activityFrontier,
+  reconcileActivityControl,
   startRequestedActivity,
   type ActivityExecution,
 } from './activity-execution.js';
@@ -396,6 +398,12 @@ export function arrangePlan(
     return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
   if (commands.some((command) => !isPlannedCommand(command)))
     return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
+  if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
+    return outcome(
+      false,
+      'chosen-activity-active',
+      'Finish this chosen activity or explicitly replace or interrupt it before adding other work.',
+    );
   const prior =
     mode === 'enqueue' && current?.status === 'active'
       ? current.steps.map((step) => step.command)
@@ -458,10 +466,10 @@ export function arrangePlan(
   };
 }
 /** Move a finished or cancelled frontier's steps into bounded history. */
-function retirePlan(world: WorldState, actor: ActorComponent): void {
+function retirePlan(world: WorldState, actor: ActorComponent, actorId?: string): void {
   const current = actor.agency.plan;
   if (!current) return;
-  cancelPlan(world, actor);
+  cancelPlan(world, actor, actorId);
   actor.agency.history.push(...current.steps.map(cloneValue));
   actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
 }
@@ -469,8 +477,8 @@ function retirePlan(world: WorldState, actor: ActorComponent): void {
  * work that was paused for later resumption is discarded too. */
 export function stopCurrentWork(world: WorldState, actorId: string): void {
   const actor = world.entities[actorId]!.actor!;
-  retirePlan(world, actor);
-  discardSuspended(actor);
+  retirePlan(world, actor, actorId);
+  discardSuspended(world, actor, actorId);
   if (actor.action) {
     endActivity(
       world,
@@ -526,6 +534,7 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
     );
   const refusal = pauseRefusal(actor.action);
   if (refusal) return outcome(false, 'cannot-pause', refusal);
+  if (plan.activity?.control) plan.activity.interrupted = true;
   const restartId = step && `${step.id}:r${plan.revision}`;
   if (restartId && !isSafeRecordId(restartId))
     return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
@@ -588,7 +597,7 @@ function resumeSuspended(world: WorldState, actorId: string): void {
   // Plan revisions keep increasing across the interrupting plan, so a decision made while
   // that plan ran can never match the resumed one.
   const latest = Math.max(paused.revision, actor.agency.plan?.revision ?? 0);
-  if (actor.agency.plan) retirePlan(world, actor);
+  if (actor.agency.plan) retirePlan(world, actor, actorId);
   // A paused goal only defers dispatch (readyPlanStep); a finished or missing one blocks.
   const goal = paused.goalId
     ? actor.agency.goals.find((entry) => entry.id === paused.goalId)
@@ -642,10 +651,38 @@ function resumeSuspended(world: WorldState, actorId: string): void {
   });
 }
 
-/** An explicit stop ends paused work too; nothing of it resumes. */
-export function discardSuspended(actor: ActorComponent): void {
+/** Cancellation and suspended-work discard share one terminal report. The marker
+ * prevents retiring the same watch later from inventing a second result. */
+function summarizeStoppedActivity(
+  world: WorldState,
+  plan: ActorPlan,
+  actorId?: string,
+  reason?: string,
+): void {
+  const execution = plan.activity;
+  if (!execution?.control || execution.terminal) return;
+  execution.pending = [];
+  execution.terminal = true;
+  execution.reason =
+    reason ??
+    'The chosen activity was stopped. Completed transfers remain in their actual destination.';
+  const ownerId = actorId ?? plan.steps[0]?.command.actorId;
+  if (ownerId)
+    appendMemory(world, ownerId, {
+      kind: 'episode',
+      source: 'internal',
+      importance: 6,
+      entityIds: [ownerId],
+      summary: `${execution.request?.name ?? 'My chosen activity'}: ${execution.reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' I was not attending throughout.' : ''}`,
+    });
+}
+
+/** An explicit stop ends paused work too; nothing of it resumes. The paused
+ * watch's terminal report must survive discarding its future authority. */
+export function discardSuspended(world: WorldState, actor: ActorComponent, actorId?: string): void {
   const paused = actor.agency.suspended;
   if (!paused) return;
+  summarizeStoppedActivity(world, paused, actorId);
   actor.agency.suspended = null;
   actor.agency.history.push(
     ...paused.steps.map((step) =>
@@ -662,7 +699,12 @@ export function discardSuspended(actor: ActorComponent): void {
   actor.agency.revision++;
 }
 
-export function cancelPlan(world: WorldState, actor: ActorComponent): void {
+export function cancelPlan(
+  world: WorldState,
+  actor: ActorComponent,
+  actorId?: string,
+  summarizeControl = true,
+): void {
   const plan = actor.agency.plan;
   if (!plan || plan.status === 'completed' || plan.status === 'cancelled') return;
   for (const step of plan.steps)
@@ -683,6 +725,7 @@ export function cancelPlan(world: WorldState, actor: ActorComponent): void {
       step.outcome = outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.');
     }
   plan.status = 'cancelled';
+  if (summarizeControl) summarizeStoppedActivity(world, plan, actorId);
   plan.revision++;
   actor.agency.revision++;
   actor.planGeneration++;
@@ -701,6 +744,21 @@ export function finishPlanAction(
     (entry) => entry.status === 'running' && entry.actionId === actionId,
   );
   if (!step) return;
+  if (step.activityKey && plan!.activity?.control?.budget.command === step.command.type) {
+    const ceiling =
+      'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
+    if (
+      ceiling === undefined ||
+      (result.ok && result.spent === undefined) ||
+      (result.spent !== undefined &&
+        (!Number.isSafeInteger(result.spent) ||
+          result.spent < 0 ||
+          result.spent > ceiling ||
+          (plan!.activity.spent ?? 0) + result.spent > plan!.activity.control!.budget.maximumSpent))
+    )
+      throw new Error('Counted activity completion violated its trusted spending contract.');
+    if (result.ok) plan!.activity.spent = (plan!.activity.spent ?? 0) + result.spent!;
+  }
   step.outcome = result;
   // Key outputs by the producing node, never by whichever node ran last: a step queued
   // outside the activity must not overwrite an activity output binding.
@@ -708,6 +766,14 @@ export function finishPlanAction(
     plan!.activity.outputs[step.activityKey] = cloneValue(result.outputs ?? []);
   if (!result.ok && plan!.activity) plan!.activity.reason = result.message;
   step.status = result.ok ? 'completed' : 'blocked';
+  if (!result.ok && plan!.activity?.control) {
+    summarizeStoppedActivity(
+      world,
+      plan!,
+      actorId,
+      `${result.message} Completed transfers remain in their actual destination.`,
+    );
+  }
   plan!.status = !result.ok
     ? 'blocked'
     : (!plan!.activity || !plan!.activity.pending.length) &&
@@ -718,7 +784,7 @@ export function finishPlanAction(
   actor.agency.revision++;
   // Exhausting chosen steps is meaningful feedback; ordinary intermediate progress
   // remains native. This never completes the actor's broader goal.
-  if (!result.ok || plan!.status === 'completed') {
+  if ((!result.ok || plan!.status === 'completed') && !plan!.activity?.control) {
     // Name the actual finished work; a bare completion marker has no meaning
     // when recalled without the plan. A completed attempt can still be a miss.
     const children = plan!.steps
@@ -755,6 +821,8 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
     resumeSuspended(world, actorId);
   const plan = actor.agency.plan;
   if (!plan || plan.status !== 'active') return;
+  reconcileActivityControl(world, actorId, plan);
+  if (plan.status !== 'active') return;
   const running = plan.steps.find((step) => step.status === 'running');
   if (running && running.actionId !== actor.action?.id)
     finishPlanAction(
@@ -1108,6 +1176,21 @@ export function isPhysicalCommand(command: Command): boolean {
         Number.isSafeInteger(command.quantity) &&
         command.quantity > 0
       );
+    case 'transfer-stock':
+      return (
+        isSafeRecordId(command.sourceId) &&
+        isSafeRecordId(command.destinationId) &&
+        isSafeRecordId(command.definitionId) &&
+        Number.isSafeInteger(command.definitionVersion) &&
+        command.definitionVersion > 0 &&
+        typeof command.definitionDigest === 'string' &&
+        command.definitionDigest.length > 0 &&
+        command.definitionDigest.length <= 120 &&
+        Number.isSafeInteger(command.quantity) &&
+        command.quantity > 0 &&
+        Number.isSafeInteger(command.minimumHeld) &&
+        command.minimumHeld >= 0
+      );
     case 'move':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'follow':
@@ -1136,7 +1219,10 @@ export function isPhysicalCommand(command: Command): boolean {
       return isSafeRecordId(command.itemId);
     case 'inspect-inventory':
       return (
+        (command.containerId === undefined || isSafeRecordId(command.containerId)) &&
         (command.after === undefined || isSafeRecordId(command.after)) &&
+        (command.expectedScope === undefined ||
+          (typeof command.expectedScope === 'string' && command.expectedScope.length <= 16000)) &&
         (command.expectedRevision === undefined ||
           (Number.isSafeInteger(command.expectedRevision) && command.expectedRevision >= 0))
       );

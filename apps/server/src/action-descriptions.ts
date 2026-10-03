@@ -14,6 +14,8 @@ import type { CommandInput } from '@open-legend/protocol';
 /** Common explanations also cover families with no eligible target. Prose is
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
+  'activity-request':
+    'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
     'Read a bounded page of my own past actions and results, without repeating them.',
   activity:
@@ -59,7 +61,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
   'status-effect': 'Activate or end an applicable state on the selected target.',
   'inspect-inventory':
-    'Inspect a bounded page of your own accessible possessions; further pages require another explicit request.',
+    'Inspect a bounded page of your own possessions or one selected reachable container; further pages require another explicit request and current access.',
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
     'Use the installed recovery service. Your current action ends; world history is retained.',

@@ -1,11 +1,16 @@
 import {
   acquiredActivities,
+  activityRoleCompatible,
   bindActivityCommand,
   nativeActivityView,
   renderActivity,
   ACTIVITY_SYNTAX,
   itemFor,
   accessiblePossession,
+  canAccessContainer,
+  inspectedContainer,
+  installedActivityHost,
+  activityHostForCommand,
   availableItemQuantity,
   possessionItems,
   NATIVE_PREPARATIONS,
@@ -157,6 +162,11 @@ export function activityChoiceView(
     }
     const condition = node.kind === 'branch' ? node.when : node.until;
     const labels = {
+      registered:
+        condition.test === 'registered'
+          ? (installedActivityHost(world, condition.definition)?.definition.condition?.label ??
+            'the supported condition is met')
+          : '',
       alive: 'is alive',
       available: 'is available',
       equipped: 'is equipped',
@@ -352,6 +362,7 @@ export function learnedActivityCandidates(
   const world = service.world;
   if (!observed) return [];
   const results: CandidateAction[] = [];
+  const inspected = inspectedContainer(world, actorId);
   const plan = world.entities[actorId]?.actor?.agency.plan;
   if (
     plan?.status === 'blocked' &&
@@ -383,27 +394,17 @@ export function learnedActivityCandidates(
     if (results.length >= 4) break;
     const bindings: Record<string, ActivityBinding> = {};
     let available = true;
+    let rebound = false;
     for (const [role, requirement] of Object.entries(method.roles)) {
-      if (requirement.kind === 'text') {
-        const remembered =
-          world.actionExperience.acquisitions[actorId]?.[method.id]?.bindings[role];
-        if (typeof remembered === 'string') bindings[role] = remembered;
-        else available = false;
-      } else if (requirement.kind === 'place') {
-        const remembered =
-          world.actionExperience.acquisitions[actorId]?.[method.id]?.bindings[role];
-        if (remembered && typeof remembered === 'object') bindings[role] = remembered;
-        else available = false;
-      } else if (requirement.definitionId) {
-        const item = observed.inventory.find(
-          (item) =>
-            item.definitionId === requirement.definitionId &&
-            item.quantity > 0 &&
-            world.entities[item.id]?.item?.definitionPin.version ===
-              requirement.definitionVersion &&
-            world.entities[item.id]?.item?.definitionPin.digest === requirement.definitionDigest,
-        );
-        if (item) bindings[role] = item.id;
+      const remembered = world.actionExperience.acquisitions[actorId]?.[method.id]?.bindings[role];
+      if (requirement.kind === 'self') {
+        bindings[role] = actorId;
+      } else if (['text', 'place'].includes(requirement.kind)) {
+        if (
+          remembered !== undefined &&
+          activityRoleCompatible(world, actorId, requirement, remembered)
+        )
+          bindings[role] = remembered;
         else available = false;
       } else {
         const fields = requirement.commandFields;
@@ -428,23 +429,81 @@ export function learnedActivityCandidates(
           }
         };
         const use = firstUse(method.root);
-        const entity = observed.visibleEntities.find((entity) =>
-          fields.includes('heatId')
-            ? !!entity.heat
-            : entity.id !== actorId &&
-              (!requirement.entityKind || entity.kind === requirement.entityKind) &&
-              (requirement.maximumHealth === undefined ||
-                (!!entity.actor?.alive && entity.actor.health <= requirement.maximumHealth)) &&
-              (use !== 'harvest' || (!!entity.remains && !entity.remains.harvested)),
+        const stockContainer = fields.some((field) =>
+          ['sourceId', 'destinationId'].includes(field),
         );
-        if (entity) bindings[role] = entity.id;
-        else available = false;
+        const candidates = [
+          ...new Set([
+            ...(typeof remembered === 'string' ? [remembered] : []),
+            ...observed.inventory.map((item) => item.id),
+            ...(inspected ? [inspected.id] : []),
+            ...(!requirement.definitionId
+              ? observed.visibleEntities.map((entity) => entity.id)
+              : []),
+          ]),
+        ];
+        const id = candidates.find((id) => {
+          if (!activityRoleCompatible(world, actorId, requirement, id)) return false;
+          const entity = world.entities[id]!;
+          return (
+            (use !== 'harvest' || (!!entity.remains && !entity.remains.harvested)) &&
+            (!fields.includes('heatId') || !!entity.heat)
+          );
+        });
+        if (id) {
+          bindings[role] = id;
+          rebound ||= typeof remembered === 'string' && remembered !== id;
+        } else {
+          available = false;
+          // A known visible cache supplies an inspection opportunity, never its
+          // unseen contents or a guessed replacement binding. At most one selected
+          // cache is inspected and only one binding per method is prepared.
+          const inspect =
+            stockContainer &&
+            [
+              ...(typeof remembered === 'string' && world.entities[remembered]
+                ? [world.entities[remembered]!]
+                : []),
+              ...observed.visibleEntities,
+            ].find(
+              (entity) =>
+                (entity.container || entity.kind === 'item-pile') &&
+                canAccessContainer(world, actorId, entity.id) &&
+                (!requirement.definitionId ||
+                  (entity.item?.definitionPin.id === requirement.definitionId &&
+                    entity.item.definitionPin.version === requirement.definitionVersion &&
+                    entity.item.definitionPin.digest === requirement.definitionDigest)) &&
+                (!requirement.entityKind || entity.kind === requirement.entityKind),
+            );
+          if (
+            inspect &&
+            results.length < 4 &&
+            !results.some(
+              (result) =>
+                result.command?.type === 'inspect-inventory' &&
+                result.command.containerId === inspect.id,
+            )
+          ) {
+            const name =
+              nativeActivityView(world, {
+                type: 'follow',
+                id: 'view-only',
+                actorId,
+                targetId: inspect.id,
+              }).target ?? 'the selected container';
+            results.push({
+              id: `inspect-method-${method.id}-${role}`,
+              description: `Inspect ${name} before trying my learned method. Its current contents and available space are not yet inspected.`,
+              command: { type: 'inspect-inventory', containerId: inspect.id },
+            });
+          }
+        }
       }
     }
-    if (!available) continue;
+    if (!available || results.length >= 4) continue;
     results.push({
       id: `learned-${method.id}`,
-      description: `${renderActivity(activityChoiceView(world, actorId, method, bindings), 'Can do')}. Learned from my own attempts; future success is uncertain.`,
+      description: `${rebound ? 'Choose this attempt with the currently described compatible objects in place of an unavailable earlier binding. ' : ''}${renderActivity(activityChoiceView(world, actorId, method, bindings), 'Can do')}. Learned from my own attempts; future success is uncertain.`,
       command: { type: 'activity', methodId: method.id, bindings },
     });
   }
@@ -481,5 +540,18 @@ export function remainingActivityText(world: WorldState, actorId: string): strin
           ),
         ),
     );
-  return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts: execution?.reason ? [{ name: 'stopped because', value: execution.reason, critical: true }] : [], children }, 'Remaining')}${plan.status === 'blocked' ? ' Choosing a new action replaces this stopped plan. Completed effects and spent materials remain.' : ' Choosing a different action interrupts this activity; completed effects and spent materials remain.'}`;
+  const facts: ActivityView['facts'] = execution?.reason
+    ? [{ name: 'stopped because', value: execution.reason, critical: true }]
+    : [];
+  if (execution?.control) {
+    const budget = execution.control.budget;
+    const unit =
+      activityHostForCommand(world, budget.command)?.definition.spending?.unit ?? 'units';
+    facts.push({
+      name: 'chosen limits and actual progress',
+      value: `Stop at simulation time ${execution.control.deadline}. Used ${execution.spent ?? 0} of at most ${budget.maximumSpent} ${unit}; admitted ${execution.attempts ?? 0} of at most ${budget.maximumAttempts} attempts.${execution.interrupted ? ' Attendance was interrupted; continuous care cannot be claimed.' : ''} Completed transfers stay in their actual destination.`,
+      critical: true,
+    });
+  }
+  return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts, children }, 'Remaining')}${plan.status === 'blocked' ? ' Choosing a new action replaces this stopped plan. Completed effects and spent materials remain.' : ' Choosing a different action interrupts this activity; completed effects and spent materials remain.'}`;
 }

@@ -3,7 +3,14 @@ import { consumptionDescription } from './body-services.js';
 import { applicableConsumption } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
-import { itemFor, directChildIds } from '@open-legend/domain';
+import {
+  itemFor,
+  canAccessContainer,
+  currentInventoryInspection,
+  inspectedContainer,
+  availableItemQuantity,
+  effectivePosition,
+} from '@open-legend/domain';
 import { inventionMaterials } from './invention-context.js';
 import { observerDescription } from '@open-legend/domain';
 import { dropItemReason } from '@open-legend/domain';
@@ -77,17 +84,21 @@ function describeTargets(
   candidates: CandidateAction[],
 ): CandidateAction[] {
   const health = new Map<string, string>();
+  const positions = new Map<string, ReturnType<typeof effectivePosition>>();
   const origin = worldPosition(service.world.entities[actorId]!);
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
     const target = id ? service.world.entities[id] : undefined;
-    if (target && !health.has(target.id))
+    if (target && !health.has(target.id)) {
       health.set(target.id, observedAnimalHealth(service.world, actorId, target.id));
-    return target
+      positions.set(target.id, effectivePosition(service.world, target.id));
+    }
+    const position = target && positions.get(target.id);
+    return target && position
       ? {
           ...candidate,
-          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - worldPosition(target).x, origin.y - worldPosition(target).y, origin.z - worldPosition(target).z).toFixed(1)} m. Route length is not known.`,
+          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
         }
       : candidate;
   });
@@ -146,6 +157,7 @@ export function buildContext(
     .sort((a, b) => b.score - a.score || b.index - a.index)
     .slice(0, 24);
   const materials = inventionMaterials(observed);
+  const inspected = inspectedContainer(service.world, actorId);
   const context = {
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
     contacts: observed.contacts,
@@ -182,6 +194,29 @@ export function buildContext(
           : {}),
       }),
     ),
+    ...(inspected
+      ? {
+          inspectedContainer: {
+            id: inspected.id,
+            name: inspected.name,
+            revision: inspected.revision,
+            ...(inspected.load !== undefined && inspected.capacity !== undefined
+              ? { load: inspected.load, capacity: inspected.capacity }
+              : {}),
+            items: inspected.items.map(
+              ({ id, definitionId, quantity, revision, placementRevision }) => ({
+                id,
+                definitionId,
+                quantity,
+                revision,
+                placementRevision,
+                name: service.world.itemDefinitions[definitionId]!.name,
+              }),
+            ),
+            more: inspected.inspection.more,
+          },
+        }
+      : {}),
     materials,
     knownRecipes: rankedRecipes.map(({ recipe }) => ({
       id: recipe.id,
@@ -296,7 +331,7 @@ export function npcCandidates(
         ]
       : [];
   });
-  const cursor = actor.inventoryInspection;
+  const cursor = currentInventoryInspection(service.world, actorId);
   const actions: CandidateAction[] = [
     ...learnedActivityCandidates(service, actorId, observed),
     ...(service.world.actionExperience.learning[actorId]
@@ -315,7 +350,7 @@ export function npcCandidates(
         'Inspect the first page of my own accessible possessions if the selected context omits needed information. This reads at most 16 possessions; it does not change them.',
       command: { type: 'inspect-inventory' },
     },
-    ...(cursor?.more && cursor.revision === (observed.actor.inventoryRevision ?? 0)
+    ...(cursor?.more && !cursor.containerId
       ? [
           {
             id: 'inspect-inventory-next',
@@ -325,6 +360,7 @@ export function npcCandidates(
               type: 'inspect-inventory' as const,
               after: cursor.after,
               expectedRevision: cursor.revision,
+              expectedScope: cursor.scope,
             },
           },
         ]
@@ -363,32 +399,103 @@ export function npcCandidates(
       command: null,
     },
   ];
-  // Bound optional suggestions; complete contents remain available through the scoped
-  // inventory page/catalogue. Do not fabricate all descendant targets or an N² bag menu.
-  let containerSuggestions = 0;
-  for (const bag of inventory) {
-    if (!bag.container || containerSuggestions >= 24) continue;
-    for (const id of directChildIds(service.world, bag.id)) {
-      if (containerSuggestions >= 24) break;
-      containerSuggestions++;
-      const item = itemFor(service.world, id);
-      if (!item) continue;
-      const command: CommandInput = {
-        type: 'transfer-item',
-        itemId: item.id,
-        quantity: item.quantity,
-        targetId: actorId,
-        expectedRevision: item.revision,
-        placementRevision: item.placementRevision,
-        targetRevision: observed.actor.inventoryRevision ?? 0,
-      };
-      if (service.previewCommand(command, actorId).ok)
+  // Discover only known appearances, then let the actor select one exact container.
+  // Its inspected page supplies take/pack choices, never an item × all-bags product.
+  const knownContainers = new Map<string, string>();
+  for (const item of [...inventory, ...observed.groundItems])
+    if (service.world.itemDefinitions[item.definitionId]?.container)
+      knownContainers.set(item.id, service.world.itemDefinitions[item.definitionId]!.name);
+  for (const entity of observed.visibleEntities)
+    if (entity.kind === 'item-pile' || service.world.entities[entity.id]?.container)
+      knownContainers.set(entity.id, observerDescription(service.world, actorId, entity.id));
+  const accessibleContainers = [...knownContainers].filter(([id]) =>
+    canAccessContainer(service.world, actorId, id),
+  );
+  for (const [id, name] of accessibleContainers.slice(0, 16)) {
+    const location = effectivePosition(service.world, id);
+    const distance = Math.hypot(
+      location.x - worldPosition(observed.actor).x,
+      location.y - worldPosition(observed.actor).y,
+      location.z - worldPosition(observed.actor).z,
+    ).toFixed(1);
+    actions.push({
+      id: `inspect-container:${id}`,
+      description: `Inspect the first page of ${name}, currently accessible within reach, ${distance} m away. Read at most 16 direct contents; this does not move anything or reveal unopened nested bags.`,
+      command: { type: 'inspect-inventory', containerId: id },
+    });
+  }
+  if (accessibleContainers.length > 16)
+    actions.push({
+      id: 'inspect-container-coverage',
+      description: `${accessibleContainers.length - 16} other currently accessible containers are omitted from these suggestions; choose a known container explicitly to inspect it.`,
+      command: null,
+    });
+  const selected = observed.inspectedContainer;
+  if (selected) {
+    const free =
+      selected.load !== undefined && selected.capacity !== undefined
+        ? ` ${selected.capacity - selected.load} of ${selected.capacity} packing units are free.`
+        : ' Packing capacity is not known.';
+    if (selected.inspection.more)
+      actions.push({
+        id: `inspect-container-next:${selected.id}`,
+        description: `Inspect the next page of ${selected.name}; additional contents remain. This continues the currently accessible container inspection.`,
+        command: {
+          type: 'inspect-inventory',
+          containerId: selected.id,
+          after: selected.inspection.after,
+          expectedRevision: selected.revision,
+          expectedScope: selected.inspection.scope,
+        },
+      });
+    let suggestions = 0,
+      unexamined = 0;
+    for (const [direction, items, destination] of [
+      ['take', selected.items, actorId],
+      ['pack', inventory, selected.id],
+    ] as const) {
+      for (const [index, item] of items.entries()) {
+        if (suggestions === 24) {
+          unexamined += items.length - index;
+          break;
+        }
+        if (item.ownerId === destination || item.id === destination) continue;
+        const available = availableItemQuantity(service.world, item.id);
+        if (!available) continue;
+        const command: CommandInput = {
+          type: 'transfer-item',
+          itemId: item.id,
+          quantity: available,
+          targetId: destination,
+          expectedRevision: item.revision,
+          placementRevision: item.placementRevision,
+          targetRevision: service.world.entities[destination]!.inventoryRevision ?? 0,
+        };
+        // The same native owner checks unknown load, nesting, reservations and access.
+        // If the whole lot will not fit, offer one exact unit only when it is admitted.
+        if (!service.previewCommand(command, actorId).ok) {
+          if (available === 1) continue;
+          command.quantity = 1;
+          if (!service.previewCommand(command, actorId).ok) continue;
+        }
+        suggestions++;
+        const name = service.world.itemDefinitions[item.definitionId]!.name;
         actions.push({
-          id: `unpack-${item.id}`,
-          description: `Take ${item.quantity} ${service.world.itemDefinitions[item.definitionId]!.name} out of ${service.world.entities[bag.id]!.name}.`,
+          id: `${direction}:${item.id}:${selected.id}`,
+          description:
+            direction === 'take'
+              ? `Take ${command.quantity} ${name} from ${selected.name} into my possessions, currently accessible within reach.${free}`
+              : `Put ${command.quantity} ${name} from my accessible possessions into ${selected.name}, currently within reach.${free}`,
           command,
         });
+      }
     }
+    if (unexamined)
+      actions.push({
+        id: `container-transfer-coverage:${selected.id}`,
+        description: `${unexamined} known item rows were not checked for additional transfer suggestions in this decision. Exact accessible item transfers can still be selected explicitly; this is not an empty-container result.`,
+        command: null,
+      });
   }
   for (const target of observed.visibleEntities
     .filter((e) => e.actor?.alive && e.id !== actorId)

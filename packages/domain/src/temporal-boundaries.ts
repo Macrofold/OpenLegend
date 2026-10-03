@@ -1,4 +1,5 @@
 import { nextItemOfferDeadline } from './handover.js';
+import { nextActivityBoundary } from './activity-execution.js';
 import { isDraft, original } from 'immer';
 import { distance3D } from '@open-legend/spatial';
 import { capabilityBlocked } from './status-capabilities.js';
@@ -87,6 +88,8 @@ export function nativeInterval(
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
     const plan = actor.agency.plan;
+    if (plan?.status === 'active' && plan.activity)
+      at(nextActivityBoundary(world, id, plan.activity));
     const waiting = plan?.status === 'active' && !action && plan.activity?.pending.at(-1);
     // Bound only what its owner can progress: readyPlanStep ignores a wait while actions are
     // restricted or its goal is inactive, and reviews need memory (PF13.16).

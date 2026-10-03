@@ -24,6 +24,7 @@ import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { DEFAULT_COGNITION_POLICY } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
+import { activityHostPins } from '../../activity-hosts.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
@@ -117,6 +118,7 @@ export function createWorld(
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
+      activityHostPins(),
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),

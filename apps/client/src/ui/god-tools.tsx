@@ -84,7 +84,10 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
   };
 }
 
-function validateEditorPerson(person: GodPersonFields): string {
+function validateEditorPerson(
+  person: GodPersonFields,
+  meters: GodPersonEditorView['meters'],
+): string {
   const value = normalizedEditorPerson(person);
   if (!value.name) return 'Name is required.';
   if (value.name.length > 80) return 'Name must be 80 characters or fewer.';
@@ -95,8 +98,18 @@ function validateEditorPerson(person: GodPersonFields): string {
   if (value.goals.length > 8) return 'Add no more than eight goals.';
   if (value.goals.some((goal) => goal.length > 500))
     return 'Each goal must be 500 characters or fewer.';
-  if (Object.values(value.meters).some((meter) => !Number.isFinite(meter)))
-    return 'Enter a finite value for each edited meter.';
+  const definitions = new Map(meters.map((meter) => [meter.id, meter]));
+  for (const [id, amount] of Object.entries(value.meters)) {
+    const meter = definitions.get(id);
+    if (!meter || meter.display !== 'meter' || meter.status !== 'known')
+      return 'Refresh the current meter definitions before editing.';
+    if (
+      !Number.isFinite(amount) ||
+      amount < (meter.min ?? -Infinity) ||
+      amount > (meter.max ?? Infinity)
+    )
+      return `${meter.name} must stay within its declared range.`;
+  }
   if (value.inventory?.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 0))
     return 'Item quantities must be nonnegative whole numbers.';
   return '';
@@ -312,6 +325,7 @@ function PersonEditorFields({
                 return {
                   ...meter,
                   value,
+                  condition: value === meter.value ? meter.condition : undefined,
                   critical:
                     comparison && typeof compared === 'number' && Number.isFinite(compared)
                       ? comparison.operator === 'lessThan'
@@ -676,7 +690,7 @@ export function PersonEditor({
   };
   const save = async () => {
     if (!loaded || !person || loading || saving || needsReload) return false;
-    const invalid = Object.values(meterErrors)[0] ?? validateEditorPerson(person);
+    const invalid = Object.values(meterErrors)[0] ?? validateEditorPerson(person, loaded.meters);
     if (invalid) {
       setError(invalid);
       return false;

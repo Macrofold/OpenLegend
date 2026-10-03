@@ -632,7 +632,15 @@ export function commitActorResponse(
         input.entities[actorId]!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else
+      else if (bound.type === 'compose') {
+        if (bound.mode !== act.mode)
+          components[localId] = outcome(
+            false,
+            'activity-choices',
+            'The requested activity and action must choose the same handling of current work.',
+          );
+        else command('act', bound);
+      } else
         components[localId] = admitPlan(
           world,
           world.entities[actorId]!.actor!,
@@ -999,9 +1007,9 @@ export function commitActorResponse(
             'Cancellation requires the current plan revision and no new steps or goal.',
           );
         else {
-          cancelPlan(world, component);
+          cancelPlan(world, component, actorId);
           // Cancelling ends paused work too, as the player's Stop does.
-          discardSuspended(component);
+          discardSuspended(world, component, actorId);
           components[localId] = outcome(
             true,
             'cancelled',

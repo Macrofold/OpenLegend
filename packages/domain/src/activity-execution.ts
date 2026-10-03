@@ -1,9 +1,9 @@
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
-import { isActivityCommand, stopCurrentWork, suspendCurrentWork } from './agency.js';
+import { isActivityCommand, stopCurrentWork, suspendCurrentWork, cancelPlan } from './agency.js';
 import { captureActionTargets } from './action-targets.js';
-import { acquiredActivities } from './activity-learning.js';
+import { acquiredActivities, activityRoleCompatible } from './activity-learning.js';
 import {
   validateActivityNode,
   ACTIVITY_LIMITS,
@@ -17,6 +17,25 @@ import { isSafeRecordId } from './records.js';
 import { accessiblePossession, possessionItems } from './object-access.js';
 import { seesEntity } from './perception.js';
 import { appendMemory, outcome } from './events.js';
+import {
+  installedActivityHost,
+  activityHostForCommand,
+  activitySpendCeiling,
+} from './activity-hosts.js';
+import { canAccessContainer } from './object-access.js';
+import { canReachEntity } from './spatial.js';
+import { capabilityBlocked } from './status-capabilities.js';
+import type { DefinitionPin } from './world-modules.js';
+import { isDefinitionPin } from './state-owners.js';
+import { currentInventoryInspection } from './inventory-inspection.js';
+
+export interface ChosenActivityControl {
+  deadline: number;
+  observation: { definition: DefinitionPin; role: string };
+  accessRoles: string[];
+  reachRoles: string[];
+  budget: { command: Command['type']; maximumAttempts: number; maximumSpent: number };
+}
 
 export interface ActivityExecution {
   /** A personally learned method, or absent for a requested composition. */
@@ -31,6 +50,265 @@ export interface ActivityExecution {
   archivedSteps?: number;
   activeKey?: string;
   reason?: string;
+  control?: ChosenActivityControl;
+  attempts?: number;
+  lastAttemptId?: string;
+  spent?: number;
+  interrupted?: boolean;
+  terminal?: boolean;
+}
+function finishControl(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+  reason: string,
+  completed: boolean,
+): void {
+  const execution = plan.activity;
+  if (!execution?.control || execution.terminal) return;
+  cancelPlan(world, world.entities[actorId]!.actor!, actorId, false);
+  execution.pending = [];
+  execution.terminal = true;
+  execution.reason = reason;
+  plan.status = completed ? 'completed' : 'blocked';
+  plan.revision++;
+  world.entities[actorId]!.actor!.agency.revision++;
+  appendMemory(world, actorId, {
+    kind: 'episode',
+    source: 'internal',
+    importance: 6,
+    entityIds: [actorId],
+    summary: `${execution.request?.name ?? 'My chosen activity'}: ${reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts.${execution.interrupted ? ' This activity was interrupted; I was not attending throughout.' : ''} Completed transfers and other actions remain recorded; no remaining work was performed.`,
+  });
+}
+/** Each fresh native admission counts once, including a restarted unfinished step. */
+export function admitActivityAttempt(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+  step: PlanStep,
+): boolean {
+  const execution = plan.activity,
+    control = execution?.control;
+  if (
+    !execution ||
+    !control ||
+    !step.activityKey ||
+    step.command.type !== control.budget.command ||
+    execution.lastAttemptId === step.id
+  )
+    return true;
+  const maximumDebit =
+    'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
+  if (
+    maximumDebit === undefined ||
+    (execution.attempts ?? 0) >= control.budget.maximumAttempts ||
+    (execution.spent ?? 0) + maximumDebit > control.budget.maximumSpent
+  ) {
+    finishControl(
+      world,
+      actorId,
+      plan,
+      'Another needed attempt would exceed the chosen limit.',
+      false,
+    );
+    return false;
+  }
+  execution.attempts = (execution.attempts ?? 0) + 1;
+  execution.lastAttemptId = step.id;
+  return true;
+}
+/** Deadlines apply to an in-progress child too. Only a child already completing
+ * at this boundary may commit; other work is cancelled by the ordinary owner. */
+export function reconcileActivityControl(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan | null | undefined,
+  completingSeconds = -1,
+): void {
+  const execution = plan?.activity,
+    control = execution?.control;
+  if (!plan || !execution || !control || execution.terminal || plan.status !== 'active') return;
+  const entity = world.entities[actorId],
+    action = entity?.actor?.action;
+  if (world.simTime >= control.deadline) {
+    if (action?.stage === 'working' && action.remainingSeconds <= completingSeconds) return;
+    finishControl(world, actorId, plan, 'The chosen stopping time was reached.', true);
+    return;
+  }
+  const id = execution.bindings[control.observation.role];
+  const observed =
+    typeof id === 'string' &&
+    installedActivityHost(world, control.observation.definition)?.evaluateCondition?.(
+      world,
+      actorId,
+      id,
+    );
+  if (
+    !entity?.actor?.alive ||
+    entity.actor.incapacitated ||
+    capabilityBlocked(world, entity, 'actions') ||
+    !observed ||
+    observed.value === undefined
+  ) {
+    finishControl(
+      world,
+      actorId,
+      plan,
+      'The chosen observation or ability to attend became unavailable.',
+      false,
+    );
+    return;
+  }
+  for (const role of control.accessRoles) {
+    const target = execution.bindings[role];
+    if (typeof target !== 'string' || !canAccessContainer(world, actorId, target)) {
+      finishControl(
+        world,
+        actorId,
+        plan,
+        'The chosen supply is no longer reachable and accessible.',
+        false,
+      );
+      return;
+    }
+  }
+  for (const role of control.reachRoles) {
+    const target = execution.bindings[role];
+    if (
+      typeof target !== 'string' ||
+      !world.entities[target] ||
+      !canReachEntity(world, entity, world.entities[target]!, world.itemHandling.reach)
+    ) {
+      finishControl(world, actorId, plan, 'The chosen target is no longer within reach.', false);
+      return;
+    }
+  }
+}
+/** The trusted condition owner predicts only its chosen target's next transition. */
+export function nextActivityBoundary(
+  world: WorldState,
+  actorId: string,
+  execution: ActivityExecution,
+): number {
+  let boundary = execution.control?.deadline ?? Infinity;
+  const frame = execution.pending.at(-1);
+  if (frame?.node.kind === 'wait') {
+    const condition = frame.node.until;
+    if (condition.test === 'time') boundary = Math.min(boundary, condition.at);
+    if (condition.test === 'registered') {
+      const id = execution.bindings[condition.role];
+      if (typeof id === 'string')
+        boundary = Math.min(
+          boundary,
+          installedActivityHost(world, condition.definition)?.evaluateCondition?.(
+            world,
+            actorId,
+            id,
+          ).nextBoundary ?? Infinity,
+        );
+    }
+  }
+  return boundary;
+}
+export function validateChosenActivityControl(
+  world: WorldState,
+  root: ActivityNode,
+  bindings: Record<string, ActivityBinding>,
+  control: ChosenActivityControl,
+  admission = false,
+): void {
+  const exact = (value: object, fields: string[]) => {
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      Object.keys(value).sort().join(',') !== fields.sort().join(',')
+    )
+      throw new Error('Invalid chosen activity control.');
+  };
+  exact(control, ['deadline', 'observation', 'accessRoles', 'reachRoles', 'budget']);
+  exact(control.observation, ['definition', 'role']);
+  exact(control.budget, ['command', 'maximumAttempts', 'maximumSpent']);
+  const host = installedActivityHost(world, control.observation.definition);
+  if (
+    !isDefinitionPin(control.observation.definition) ||
+    !Number.isFinite(control.deadline) ||
+    control.deadline < 0 ||
+    (admission &&
+      (control.deadline <= world.simTime ||
+        control.deadline - world.simTime > ACTIVITY_LIMITS.waitSeconds)) ||
+    !host?.evaluateCondition ||
+    !isSafeRecordId(control.observation.role) ||
+    typeof bindings[control.observation.role] !== 'string' ||
+    !Number.isSafeInteger(control.budget.maximumAttempts) ||
+    control.budget.maximumAttempts < 1 ||
+    control.budget.maximumAttempts > ACTIVITY_LIMITS.iterations ||
+    !Number.isSafeInteger(control.budget.maximumSpent) ||
+    control.budget.maximumSpent < 1 ||
+    control.budget.maximumSpent > ACTIVITY_LIMITS.iterations
+  )
+    throw new Error('Unsupported chosen activity bounds.');
+  for (const roles of [control.accessRoles, control.reachRoles])
+    if (
+      !Array.isArray(roles) ||
+      roles.length > 8 ||
+      new Set(roles).size !== roles.length ||
+      roles.some((role) => !isSafeRecordId(role) || typeof bindings[role] !== 'string')
+    )
+      throw new Error('Invalid chosen observation scope.');
+  let counted = false,
+    observed = false;
+  const visit = (node: ActivityNode): void => {
+    if (node.kind === 'invoke') {
+      const support = activityHostForCommand(world, node.command);
+      if (!support?.definition.deadlineSafeCommands.includes(node.command))
+        throw new Error('This child cannot safely end at a whole-activity deadline.');
+      if (node.command === control.budget.command) {
+        const spending = support.definition.spending;
+        if (
+          !spending ||
+          spending.command !== node.command ||
+          !Number.isSafeInteger(spending.maximumPerAttempt) ||
+          spending.maximumPerAttempt < 1 ||
+          Object.entries(spending.requiredArguments).some(([key, expected]) => {
+            const argument = node.args[key];
+            return (
+              !argument ||
+              ('literal' in argument
+                ? argument.literal
+                : 'role' in argument
+                  ? bindings[argument.role]
+                  : undefined) !== expected
+            );
+          })
+        )
+          throw new Error('This counted action has no supported spending receipt contract.');
+        counted = true;
+      }
+    } else if (node.kind === 'sequence') node.children.forEach(visit);
+    else if (node.kind === 'branch') {
+      visit(node.yes);
+      if (node.no) visit(node.no);
+    } else if (node.kind === 'repeat') visit(node.body);
+    const condition =
+      node.kind === 'wait' || node.kind === 'repeat'
+        ? node.until
+        : node.kind === 'branch'
+          ? node.when
+          : undefined;
+    if (
+      condition?.test === 'registered' &&
+      condition.role === control.observation.role &&
+      condition.definition.id === control.observation.definition.id &&
+      condition.definition.version === control.observation.definition.version &&
+      condition.definition.digest === control.observation.definition.digest
+    )
+      observed = true;
+  };
+  visit(root);
+  if (!counted || !observed || !activityHostForCommand(world, control.budget.command))
+    throw new Error('Unsupported counted activity command or observation.');
 }
 function predicate(
   world: WorldState,
@@ -38,6 +316,13 @@ function predicate(
   execution: ActivityExecution,
   condition: ActivityPredicate,
 ): boolean | undefined {
+  if (condition.test === 'registered') {
+    const id = execution.bindings[condition.role];
+    return typeof id === 'string'
+      ? installedActivityHost(world, condition.definition)?.evaluateCondition?.(world, actorId, id)
+          .value
+      : undefined;
+  }
   if (condition.test === 'output')
     return (
       execution.outputs[condition.step]?.some(
@@ -109,6 +394,8 @@ export function activityFrontier(
 ): PlanStep | undefined {
   const execution = plan.activity;
   if (!execution || plan.status !== 'active') return;
+  reconcileActivityControl(world, actorId, plan);
+  if (plan.status !== 'active') return;
   const method = execution.request
     ? { name: execution.request.name }
     : acquiredActivities(world, actorId).find((method) => method.id === execution.methodId);
@@ -214,6 +501,22 @@ export function activityFrontier(
         return;
       }
       case 'invoke': {
+        if (execution.control) {
+          const budget = execution.control.budget;
+          if (
+            (execution.attempts ?? 0) >= budget.maximumAttempts ||
+            (execution.spent ?? 0) >= budget.maximumSpent
+          ) {
+            finishControl(
+              world,
+              actorId,
+              plan,
+              'Another needed attempt would exceed the chosen limit.',
+              false,
+            );
+            return;
+          }
+        }
         const id = `${plan.id}:step:${++execution.serial}`;
         const command = bindActivityCommand(node, execution, actorId, id);
         if (!command) {
@@ -271,36 +574,9 @@ export function startLearnedActivity(
     );
   if (
     Object.keys(bindings).length !== Object.keys(method.roles).length ||
-    Object.keys(method.roles).some((role) => {
-      const value = bindings[role];
-      const expected = method.roles[role]!;
-      if (expected.kind === 'text')
-        return typeof value !== 'string' || !value.trim() || value.length > 1500;
-      if (expected.kind === 'place')
-        return (
-          typeof value !== 'object' ||
-          !value ||
-          !Number.isFinite(value.x) ||
-          !Number.isFinite(value.y) ||
-          !Number.isFinite(value.z) ||
-          typeof value.surfaceId !== 'string'
-        );
-      const entity = typeof value === 'string' ? world.entities[value] : undefined;
-      return (
-        !entity ||
-        entity.retirement ||
-        (entity.id !== actorId &&
-          !accessiblePossession(world, actorId, entity.id) &&
-          !seesEntity(world, world.entities[actorId]!, entity)) ||
-        (expected.definitionId &&
-          (entity.item?.definitionPin.id !== expected.definitionId ||
-            entity.item.definitionPin.version !== expected.definitionVersion ||
-            entity.item.definitionPin.digest !== expected.definitionDigest)) ||
-        (expected.entityKind && entity.kind !== expected.entityKind) ||
-        (expected.maximumHealth !== undefined &&
-          (entity.actor?.health ?? Infinity) > expected.maximumHealth)
-      );
-    })
+    Object.entries(method.roles).some(
+      ([role, requirement]) => !activityRoleCompatible(world, actorId, requirement, bindings[role]),
+    )
   )
     return outcome(false, 'invalid-bindings', 'The method needs compatible current objects.');
   if (resume) {
@@ -393,6 +669,8 @@ export function startRequestedActivity(
   if (!actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
   try {
     validateActivityNode(command.root);
+    if (command.control)
+      validateChosenActivityControl(world, command.root, command.bindings, command.control, true);
   } catch {
     return outcome(
       false,
@@ -401,6 +679,7 @@ export function startRequestedActivity(
     );
   }
   const roles = structureRoles(command.root);
+  const inspectedContainerId = currentInventoryInspection(world, actorId)?.containerId;
   if (timeConditions(command.root).some((at) => at <= world.simTime))
     return outcome(false, 'stale-deadline', 'That stopping time has already passed; ask again.');
   if (
@@ -434,6 +713,9 @@ export function startRequestedActivity(
         entity.retirement ||
         (value !== actorId &&
           !accessiblePossession(world, actorId, value) &&
+          // A permitted inspection identifies this exact nested ground container;
+          // it grants no other unseen objects and access is checked again here.
+          !(value === inspectedContainerId && canAccessContainer(world, actorId, value)) &&
           !seesEntity(world, world.entities[actorId]!, entity) &&
           // A stack lying in a pile is reachable through the pile the actor perceives.
           !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)))
@@ -452,8 +734,29 @@ export function startRequestedActivity(
     outputs: {},
     serial: 0,
     processed: 0,
+    ...(command.control
+      ? {
+          control: cloneValue(command.control),
+          attempts: 0,
+          spent: 0,
+          interrupted: false,
+          terminal: false,
+        }
+      : {}),
   };
   const current = actor.agency.plan;
+  // A deadline cannot acquire cancellation authority over unrelated queued work.
+  // The first chosen watch starts here; finish existing work or explicitly replace/interrupt it.
+  if (
+    command.control &&
+    command.mode === 'enqueue' &&
+    (actor.action || current?.status === 'active' || current?.status === 'blocked')
+  )
+    return outcome(
+      false,
+      'watch-busy',
+      'Finish current work, or explicitly replace or interrupt it before starting this watch.',
+    );
   if (
     command.mode === 'enqueue' &&
     current &&

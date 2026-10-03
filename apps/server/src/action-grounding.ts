@@ -3,8 +3,13 @@ import {
   actionGroundingQuestions,
   actionFulfillmentQuestions,
 } from './jev-questions.js';
-import { namedTimeSchema, navigationInvocationSchema } from './navigation-contracts.js';
+import {
+  namedTimeSchema,
+  actionInvocationSchema,
+  navigationInstructions,
+} from './navigation-contracts.js';
 import { z } from 'zod';
+import { gameTime } from './recall.js';
 import { actionReferencePermitted, applySlotControl, typedAction } from './typed-actions.js';
 import {
   captureActionTargets,
@@ -24,6 +29,8 @@ import {
   possessionItems,
   portableItems,
   itemFor,
+  activityRequestChoices,
+  activityRequestDescriptors,
   type ResolutionCategory,
   observeActor,
   type ActionFulfillment,
@@ -279,6 +286,19 @@ export async function groundActionAttempts(
       }
       // Jev may only choose a complete handle that already keeps every requested detail.
       const honoring = scoped.filter((binding) => !unmetSlots(binding.commands, slots).length);
+      const activityRequests = {
+        requests: activityRequestDescriptors(world),
+        ...activityRequestChoices(world, actorId),
+        simTime: world.simTime,
+      };
+      const activityEntityIds = [
+        ...new Set([
+          ...entityIds,
+          ...activityRequests.choices
+            .filter((choice) => choice.kind === 'entity')
+            .map((choice) => choice.id),
+        ]),
+      ];
       const context = {
         request: text,
         targetEntityId: act.targetEntityId,
@@ -314,6 +334,7 @@ export async function groundActionAttempts(
             ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
             : [],
         capabilities: navigationCapabilities(world),
+        activityRequests,
         choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
       };
       const selectable = new Set(honoring.map((binding) => scoped.indexOf(binding)));
@@ -391,7 +412,7 @@ export async function groundActionAttempts(
               z
                 .object({
                   actionId: handle,
-                  invocation: navigationInvocationSchema
+                  invocation: actionInvocationSchema(activityRequestDescriptors(world))
                     .extend({ until: namedTimeSchema(world) })
                     .nullable(),
                 })
@@ -404,7 +425,8 @@ export async function groundActionAttempts(
         await ports.generate({
           instructions:
             ACTION_GROUNDING_POLICY +
-            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Only move/follow/pickup/drop invocations support generated parameters; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
+            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Use only navigation and installed request fields supplied here; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON. ' +
+            navigationInstructions(world),
           context,
           schema: z.toJSONSchema(schema, { target: 'draft-7' }),
         }),
@@ -433,11 +455,12 @@ export async function groundActionAttempts(
                 actorId,
                 `${op.localId}:${index}`,
                 step.invocation,
-                entityIds,
+                step.invocation?.parameters ? activityEntityIds : entityIds,
               );
         if (
           !selectedCommand ||
           'ok' in selectedCommand ||
+          (selectedCommand.type === 'compose' && selectedCommand.mode !== act.mode) ||
           (act.targetEntityId &&
             'targetId' in selectedCommand &&
             selectedCommand.targetId !== act.targetEntityId)
@@ -454,6 +477,18 @@ export async function groundActionAttempts(
           'needs_clarification',
           'The interpretation did not match a permitted action in view; nothing was started.',
           ['@visible'],
+        );
+        continue;
+      }
+      if (
+        boundCommands.some((command) => command.type === 'compose') &&
+        boundCommands.length !== 1
+      ) {
+        await unresolved(
+          'Action composition unavailable',
+          { reason: 'An installed activity request must be selected as one complete request.' },
+          'needs_clarification',
+          'Choose the complete activity request by itself; no additional steps were started.',
         );
         continue;
       }
@@ -488,7 +523,16 @@ export async function groundActionAttempts(
       };
       // Slot control either keeps the steps or appends one stopping rule: a repeat that
       // replaces the final gather, or a clock wait after the final move. Describe every step.
-      const wrapped = applySlotControl(world, actorId, boundCommands, slots, op.localId);
+      const requestedComposition =
+        boundCommands[0]?.type === 'compose' ? boundCommands[0] : undefined;
+      const selectedInvocation = result.steps[0]?.invocation;
+      const selectedParameters = selectedInvocation?.parameters;
+      const selectedRequest = selectedParameters
+        ? activityRequests.requests.find((request) => request.id === selectedInvocation.family)
+        : undefined;
+      const wrapped = requestedComposition
+        ? boundCommands
+        : applySlotControl(world, actorId, boundCommands, slots, op.localId);
       const composed =
         wrapped.length === 1 && wrapped[0]!.type === 'compose' ? wrapped[0] : undefined;
       const tail =
@@ -497,21 +541,47 @@ export async function groundActionAttempts(
             ? composed.root.children.at(-1)!
             : composed.root
           : undefined;
-      const nativeDescription = [
-        ...(composed
-          ? tail?.kind === 'repeat'
-            ? boundCommands.slice(0, -1)
-            : boundCommands
-          : wrapped
-        ).map(describe),
-        ...(tail?.kind === 'repeat'
+      // The authored closed request describes this trusted builder's complete behavior.
+      // Repeat nested mechanics are still supplied to the independent review as commands.
+      const nativeDescription =
+        requestedComposition && selectedRequest && selectedParameters
           ? [
-              `Repeat: ${tail.name} (at most ${tail.maximum} attempts; stops early if the source runs out).`,
-            ]
-          : tail?.kind === 'wait'
-            ? [`${tail.name}.`]
-            : []),
-      ].join(' Then: ');
+              `${selectedRequest.label}: ${selectedRequest.description}`,
+              ...Object.entries(selectedRequest.fields).map(([key, field]) => {
+                const value = selectedParameters[key];
+                const description =
+                  field.type === 'entity'
+                    ? observerDescription(world, actorId, String(value))
+                    : field.type === 'definition'
+                      ? (world.itemDefinitions[String(value)]?.name ?? String(value))
+                      : field.type === 'time' && typeof value === 'number'
+                        ? gameTime(value, world.statusEffectPolicy.clockOffsetHours)
+                        : String(value);
+                return `${field.label}: ${description}`;
+              }),
+              ...(requestedComposition.control
+                ? [
+                    'Stops if observation, reach or selected access is lost. Interruption preserves its stopping time and budgets.',
+                  ]
+                : []),
+            ].join('; ')
+          : requestedComposition
+            ? describe(requestedComposition)
+            : [
+                ...(composed
+                  ? tail?.kind === 'repeat'
+                    ? boundCommands.slice(0, -1)
+                    : boundCommands
+                  : wrapped
+                ).map(describe),
+                ...(tail?.kind === 'repeat'
+                  ? [
+                      `Repeat: ${tail.name} (at most ${tail.maximum} attempts; stops early if the source runs out).`,
+                    ]
+                  : tail?.kind === 'wait'
+                    ? [`${tail.name}.`]
+                    : []),
+              ].join(' Then: ');
       boundCommands = wrapped;
       if (nativeDescription.length > 1000) {
         await unresolved(

@@ -1,4 +1,10 @@
-import { inspectPossessions, observeActor, type WorldState } from '@open-legend/domain';
+import {
+  inspectPossessions,
+  currentInventoryInspection,
+  inspectedContainer,
+  observeActor,
+  type WorldState,
+} from '@open-legend/domain';
 import { RETRIEVAL_ROWS } from './memory-repository.js';
 
 /** Preserve an inspection route when optional inventory would exhaust preparation.
@@ -15,11 +21,9 @@ export function decisionObservation(world: WorldState, actorId: string) {
   const paged = available + otherRows > RETRIEVAL_ROWS;
   if (paged) {
     const actor = observed.actor.actor!;
-    const cursor = actor.inventoryInspection;
+    const cursor = currentInventoryInspection(world, actorId);
     const ids = new Set(
-      cursor?.revision === (observed.actor.inventoryRevision ?? 0)
-        ? cursor.itemIds
-        : inspectPossessions(world, actorId).itemIds,
+      cursor && !cursor.containerId ? cursor.itemIds : inspectPossessions(world, actorId).itemIds,
     );
     // Never drop tools already bound to admitted work when switching to a page.
     if (actor.equippedItemId) ids.add(actor.equippedItemId);
@@ -39,6 +43,7 @@ export function decisionObservation(world: WorldState, actorId: string) {
   }
   return {
     ...observed,
+    inspectedContainer: inspectedContainer(world, actorId),
     inventoryCoverage: { available, considered: observed.inventory.length, paged },
   };
 }
