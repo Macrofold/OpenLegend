@@ -371,21 +371,21 @@ Qualify long absence, burst arrivals, actual growth in memories and objects, rec
 
 ### Behavioral acceptance matrix
 
-| Acceptance question                                | Required evidence                                                                                                                         |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Does the task continue for the same person?        | Identity, location, intention and completed effects survive leaving, returning and current-format restoration                             |
-| Are interrupted outcomes causal?                   | Changes before completion affect remaining work at their occurrence; no work is credited beyond a stopping event                          |
-| Can people live at the offered activity rate?      | Supported self-care works with known accessible resources; shortages remain real and diagnosable                                          |
-| Does shared activity actually happen?              | Labor, consent and participation agree with bodies, time and resource records                                                             |
-| Does detail cycling change incentives?             | Repeated paired scenarios reveal no reliable yield, risk, resource or randomness advantage from entering/leaving                          |
-| Are residents informed only through valid sources? | Hidden thefts, unheard alarms and private conversations do not leak through summaries                                                     |
-| Does the whole community function?                 | Long runs identify stuck loops, permanent shortages, runaway output, missed commitments and weak return experience                        |
-| Can the player pursue their own goal?              | During the actual creative loop, routine NPC work/self-care proceeds without repeated instructions; waiting and maintenance leave room for meaningful choices |
-| Does the resident seem independently motivated?    | Players can identify a preference or decision from observed conduct, including a credible refusal or changed plan, without reading private diagnostics |
-| Is returning worth doing?                         | Players encounter discoverable continuity and voluntarily choose what to do next; company, curiosity, help, conflict and deliberate solitude are all valid outcomes |
-| Is quiet operation actually cheaper?               | Complete costs for the same supported scenario are measured across quiet/active conditions, including required work and memory            |
-| Does history growth remain usable?                 | Long-return cases recover relevant changes, correct outdated beliefs and abstain from unknown detail without whole-history reconstruction |
-| Is overload honest and fair?                       | Noise, mass return and funding exhaustion cause the declared admission/degradation behavior without selective fictional immunity          |
+| Acceptance question                                | Required evidence                                                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Does the task continue for the same person?        | Identity, location, intention and completed effects survive leaving, returning and current-format restoration                                                       |
+| Are interrupted outcomes causal?                   | Changes before completion affect remaining work at their occurrence; no work is credited beyond a stopping event                                                    |
+| Can people live at the offered activity rate?      | Supported self-care works with known accessible resources; shortages remain real and diagnosable                                                                    |
+| Does shared activity actually happen?              | Labor, consent and participation agree with bodies, time and resource records                                                                                       |
+| Does detail cycling change incentives?             | Repeated paired scenarios reveal no reliable yield, risk, resource or randomness advantage from entering/leaving                                                    |
+| Are residents informed only through valid sources? | Hidden thefts, unheard alarms and private conversations do not leak through summaries                                                                               |
+| Does the whole community function?                 | Long runs identify stuck loops, permanent shortages, runaway output, missed commitments and weak return experience                                                  |
+| Can the player pursue their own goal?              | During the actual creative loop, routine NPC work/self-care proceeds without repeated instructions; waiting and maintenance leave room for meaningful choices       |
+| Does the resident seem independently motivated?    | Players can identify a preference or decision from observed conduct, including a credible refusal or changed plan, without reading private diagnostics              |
+| Is returning worth doing?                          | Players encounter discoverable continuity and voluntarily choose what to do next; company, curiosity, help, conflict and deliberate solitude are all valid outcomes |
+| Is quiet operation actually cheaper?               | Complete costs for the same supported scenario are measured across quiet/active conditions, including required work and memory                                      |
+| Does history growth remain usable?                 | Long-return cases recover relevant changes, correct outdated beliefs and abstain from unknown detail without whole-history reconstruction                           |
+| Is overload honest and fair?                       | Noise, mass return and funding exhaustion cause the declared admission/degradation behavior without selective fictional immunity                                    |
 
 Also test a provider outage just before necessary self-care, a preparation delay for an already-engaged actor, and a standing obligation outliving its funded operating window. These must respectively preserve the published failure contract, avoid immunity and retain the obligation without unlimited implied spending.
 
