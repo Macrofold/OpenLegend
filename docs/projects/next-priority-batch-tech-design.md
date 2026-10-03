@@ -1,8 +1,8 @@
 # Next priority batch — technical design
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | NP04 camp-supply discovery is implemented and verified; the other assignments and combined acceptance remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP02 sensory preparation and NP04 camp-supply discovery are delivered; the other assignments and combined acceptance remain open. | 2026-10-03   |
 
 Originally prepared as a documentation-only proposal. Read the [feature specification](next-priority-batch-feature-spec.md) for priorities, scenarios and exclusions. Source baseline is local `main` at `c2e670b0`; `origin/main` was refreshed to `1253415b` and was already an ancestor, 21 commits behind. No branch/history change was made. Revalidate changed owners against the worker's actual starting source rather than treating these line locations as immutable.
 
@@ -136,9 +136,11 @@ Canonical behavior belongs in [AI providers](../ai-providers.md#receipts-outcome
 
 ## NP02 — Sensory work follows changed objects
 
+**Status: delivered in this branch.** The contract below is implemented; broader proportional-work stages remain proposed. [Measured evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) separates preparation, exact sensing, fallback and publication costs.
+
 ### Existing owners and required distinction
 
-Read `packages/domain/src/kernel.ts` (`updateEncounters`, currently around 3427), `encounter-cache.ts` (`captureExposure`, `exposureChanges`, `snapshotEncounters`), `perception-frame.ts`, `entity-index.ts`, `dependencies.ts`, `spatial-state.ts`, `perception.ts`, `draft.ts` and the diagnostic counters. Public events and receiver authorization remain in their existing owners.
+Read `packages/domain/src/kernel.ts` (`updateEncounters`), `encounter-cache.ts` (`captureExposure`, `prepareExposure`, `snapshotEncounters`), `perception-frame.ts`, `entity-index.ts`, `dependencies.ts`, `spatial-state.ts`, `perception.ts`, `draft.ts` and the diagnostic counters. Public events and receiver authorization remain in their existing owners.
 
 The existing `SemanticChange` stream is useful but is **not** a complete sensory certificate. `captureSemanticChanges` currently receives `result !== base`, conservatively marking changed publications; accumulated spatial changes retain earliest old/latest new locations. Neither behavior proves what changed between two sensory phases inside one unpublished advance. Do not remove that conservative bit globally or infer completeness from an empty change list.
 
@@ -177,6 +179,43 @@ Warm local updates and cold rebuilds use existing cooperative native yield point
 Randomness, action order, event order and receiver-private knowledge are unchanged. Optional work counters never influence branching. Permission changes invalidate results before publication; an index hit only supplies a candidate, never evidence that a viewer knows an identity or may inspect contents. End-of-call finalization still seals the whole accepted world under current contracts; this task improves its cache handoff, not the unrelated entity-map representation.
 
 ### Implementation order and acceptance
+
+#### NP02 implementation plan — October 2, 2026
+
+**Completed October 3.** Authorized in chat, starting at `b528af6d` on `codex/np02-changed-object-sensing`.
+Refreshed `origin/main` resolves to `1253415b`, already included in the starting
+history. Scope is approximately 500–850 logic lines, with material observation
+correctness risk. No movement, scheduling, saved model or disclosure-policy change
+is planned.
+
+Extend the dependency/draft boundary with independent sensory phases. Mutation
+notices identify ordinary changed roots; an audit of the draft's actual writes
+certifies coverage, including writes between unpublished phases. Classify sensory
+fields narrowly and rebuild on unsupported draft shape, unowned replacements,
+global policy changes or the existing 4,096-scope ceiling. This audit must follow
+modified draft records rather than enumerate distant unchanged entities.
+
+Transfer one privately owned source collection through successful finalization.
+Maintain source bins, exact counted body maxima and observer neighborhoods from
+changed entries. Store copied scalars and IDs, and resolve entities from the current
+world; no draft proxy survives a phase. Forks and abandoned speculation rebuild.
+Keep exact sight/contact checks, source/observer iteration order, contact movement
+continuity and the current saved outward-feature baseline.
+
+First collect a matched baseline using the existing native profiler. Then implement
+and compare phase results with full preparation in a disposable scenario covering
+the feature acceptance matrix. Run focused existing perception/motion checks,
+TypeScript and production build checks, and matched sparse-growth/dense native
+profiles plus the disposable PostgreSQL server workload. Review the complete diff
+and reconcile NP02, its precise parent children, current architecture, limits and
+perception evidence. Completion requires all assigned behavior and verification;
+broader publication, dense-capacity and simulation qualification stay open.
+
+Delivered coverage combines spatial/knowledge-owner notices with narrowly classified actual writes in the pinned Immer draft scope. The audit covers all outward fields above, nested placement and capability/sense edits, component installation/removal and participation. Observer scalar signatures recheck blocking and current body/sense bounds each phase, so elapsed needs/status values alone do not dirty distant sources. Unknown table/record replacement or unsupported draft internals rebuild from the authoritative table, bypassing any uncertain root selector. Cumulative draft fields may conservatively revisit already touched sources; the audit itself still traverses created draft records.
+
+The requested follow-up review covered the complete change and its current callers. It reproduced and repaired stale contact starting positions after unobserved whole-record/table replacement: rebuilding current source inputs alone does not certify the earlier positions. Incomplete or overflowed deferred coverage now reconstructs the starting baseline from authoritative roots; complete warm changes retain the existing overlay. The repair is under ten logic lines, confined to derived baseline ownership. Real sensing initialization and ordinary native advances match complete full-preparation traces for record/table replacement and overflow. The 40-checkpoint comparison, focused perception checks and static checks pass again; the 5,000-object warm workload retains identical work counts and world digests. No movement or sensing contract changes. [Evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) distinguishes the earlier timing profiles from this follow-up verification.
+
+Copied source scalars, counted dimension maxima and separate people/object/contact bins stay with one private owner token. Tokens do not retain abandoned draft proxies. Successful finalization transfers ownership without reconstructing all sources; deferred writes survive consecutive publications until an actual sensory phase consumes them. Old/new source neighborhoods select observers conservatively; an affected observer retains the existing full relevant sight query. The separate object cache and its 256-observer retention ceiling are superseded ([SP03](../limits/spatial.md#sp03)); the shared collection has no separate observer count cap. Contact bins use one-metre cells with exact body-derived query bounds. Preparation yields every 64 entries, without adding a publication boundary. [NW16](../limits/native-work.md#nw16) owns these performance choices and their growth limits. No earlier sense, movement, episode, random-order or disclosure decision changes.
 
 1. Record current source-capture and map-preparation counts in existing native/server profiling scenarios; distinguish warm, cold and dense phases.
 2. Implement phase notices and their writer coverage with conservative fallback first. Compare emitted batches against a temporary full-capture reference during focused verification; reference checking is not runtime policy.

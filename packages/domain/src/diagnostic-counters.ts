@@ -4,6 +4,21 @@
  * docs/maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership
  */
 export const DOMAIN_COUNTERS = [
+  /** Sensory input preparation, certified draft coverage, affected observers and recovery. */
+  'sensoryCaptures',
+  'sensoryComparisons',
+  'sensoryDraftsVisited',
+  'sensoryEntriesUpdated',
+  'sensoryRebuildEntries',
+  'sensoryPhases',
+  'sensoryScopesPeak',
+  'sensoryColdRebuilds',
+  'sensoryUnknownRebuilds',
+  'sensoryOverflowRebuilds',
+  'sensoryPolicyRebuilds',
+  'sensoryObserversSelected',
+  /** Entries installed in rebuilt or incrementally maintained spatial bins. */
+  'spatialEntriesPrepared',
   /** Root-entity enumerations and the roots they returned. */
   'rootScans',
   'rootsVisited',

@@ -30,13 +30,11 @@ import { activityCommandSupported } from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
-  captureExposure,
-  exposureChanges,
+  prepareExposure,
   perceptionEpisodeId,
   recentSightings,
   snapshotEncounters,
   type EncounterBaseline,
-  type ExposureCapture,
 } from './encounter-cache.js';
 import {
   copyCrossings,
@@ -77,7 +75,6 @@ import {
 } from './objects.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
-import { objectExposureQuery } from './object-exposure.js';
 import { actionTargetsCurrent } from './action-targets.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
@@ -3424,41 +3421,11 @@ function* updateEncounters(
     if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
       observer.actor.contacts = {};
   }
-  // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
-  // Unchanged roots are immutable records and changed roots live drafts: this phase writes only
-  // each observer's own contacts, after reading them. Event mutations use the authoritative draft.
-  const entities = worldRootEntities(world, true)
-    .map(captureExposure)
-    .filter((entity): entity is ExposureCapture => !!entity);
-  const nearby = spatialCandidates(entities.filter((e) => e.alive));
-  let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
-  const maximumBodyHeight = entities.reduce(
-    (largest, entity) => Math.max(largest, entity.height),
-    0,
-  );
-  const maximumBodyRadius = entities.reduce(
-    (largest, entity) => Math.max(largest, entity.radius),
-    0,
-  );
-  const featureState = world.perceptionFeatures;
-  const previousFeatures = isDraft(featureState) ? current(featureState) : featureState;
-  const changedFeatures = new Map(
-    entities
-      .filter(
-        (source) =>
-          previousFeatures[source.id] !== undefined &&
-          previousFeatures[source.id] !== source.feature,
-      )
-      .map((source) => [source.id, source.detail]),
-  );
-  const changedExposure = exposureChanges(world, original, spatialMap(world), entities);
-  const objectsFor = objectExposureQuery(
-    world,
-    entities.filter((e) => e.object),
-  );
+  const frame = yield* prepareExposure(world, original);
+  const { changedFeatures, maximumBodyHeight, maximumBodyRadius } = frame;
   // A blocked observer still reconciles the loss of its visual episodes. Skipping the
   // observer here would let waking reuse an episode from before perception was lost.
-  for (const actor of entities.filter((e) => e.alive && e.memory)) {
+  for (const actor of frame.observers) {
     yield;
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
@@ -3471,11 +3438,7 @@ function* updateEncounters(
     const contacts = Object.values(actor.entity.actor!.contacts ?? {});
     const movingContacts = contacts.some((contact) => contact.detail === 'moving');
     const blocked = capabilityBlocked(world, actor.entity, 'perception');
-    const signature = `${radius}:${bodyProfile(actor.entity).eyeHeight}:${touch?.id ?? ''}:${touchRadius}:${movingContacts}:${blocked}:${world.moduleManifest.revision}`;
-    if (
-      !changedExposure(actor, Math.max(radius + 2, touch ? touchRadius : 0), signature) &&
-      !movingContacts
-    ) {
+    if (!frame.affected.has(actor.id) && !movingContacts) {
       countDomainWork('observersSkipped');
       continue;
     }
@@ -3487,14 +3450,7 @@ function* updateEncounters(
         original.positions,
         world.entities[actor.id]!,
         events,
-        () => {
-          // Size the optional contact grid from physical extents, never visual range.
-          nearbyAll ??= spatialCandidates(
-            entities,
-            Math.max(maximumBodyRadius * 2, maximumBodyHeight) + SPATIAL_LIMITS.epsilon,
-          );
-          return nearbyAll(actor.position, touchRadius);
-        },
+        () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
     if (radius === 0 || blocked) {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
@@ -3503,10 +3459,17 @@ function* updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    let seen = nearby(actor.position, radius + 2)
+    let seen = frame
+      .nearby(actor.position, radius + 2, 'people')
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    let objectIds = objectsFor(actor.entity);
+    let objectIds =
+      !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
+        ? original.visibleObjects[actor.id]!
+        : frame
+            .nearby(actor.position, radius, 'objects')
+            .filter(sees)
+            .map((e) => e.id);
     const previousObjects = original.visibleObjects?.[actor.id];
     const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
     const sameObjects =
@@ -3629,13 +3592,6 @@ function* updateEncounters(
     encounter.flush();
   }
   encounter.flush();
-  if (
-    entities.length !== Object.keys(previousFeatures).length ||
-    entities.some((source) => previousFeatures[source.id] !== source.feature)
-  )
-    world.perceptionFeatures = Object.fromEntries(
-      entities.map((source) => [source.id, source.feature]),
-    );
 }
 
 /** Establish real encounter episodes before a fresh world's first decision. Otherwise

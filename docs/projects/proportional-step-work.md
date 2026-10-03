@@ -1,6 +1,10 @@
 # Work proportional to what a moment affects
 
-**Status:** proposed plan, not approved for implementation. The stages below are proposed work in order; nothing in them is implemented yet. It is meant to be picked up after the [regional work](regional-time-and-navigation.md) merges into main, and implementation starts only with Mike's go-ahead. The decisions at the end are engineering judgments with their reasons. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP02 delivers changed-object sensory preparation, while broader local simulation and publication work remain proposed. | 2026-10-03   |
+
+**Scope:** NP02 delivers the source-preparation portion of stage 2, and PW08 supplies the earlier bounded improvements identified below; the remaining stages are proposed work, not approved for implementation. Further implementation starts only with Mike's go-ahead. The decisions at the end are engineering judgments with their reasons. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.
 
 ## How time advances today
 
@@ -170,17 +174,17 @@ This stage keeps each call size's outcomes the same except for the listed shifts
 
 ### Stage 2 — sight work follows change
 
-Proposed [NP02](../maintainers/next-priority-batch.md#np02--sensory-work-follows-changed-objects) selects the remaining source-capture/preparation portion after PW08. Its [technical contract](next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects) distinguishes complete phase-local changes from the current conservative publication stream. It does not close this whole stage, change movement timing or qualify earlier percentages on current main.
+Delivered [NP02](../maintainers/next-priority-batch.md#np02--sensory-work-follows-changed-objects) completes the source-capture/preparation child after PW08, with [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026). Its [technical contract](next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects) distinguishes complete phase-local changes from the current conservative publication stream. It does not close this whole stage, change movement timing or qualify earlier percentages on current main.
 
-[PW08](next-playable-week/simulation-performance.md) implements only membership-difference updates, reverse incident-pair invalidation and dependency-certified certain-path reuse from stages 2–3. Its current matched evidence and remaining gates are recorded with that task. The change-list, target-only visibility, exact approach timing, horizon and other stages below remain proposed; the historical percentages are not current measurements.
+[PW08](next-playable-week/simulation-performance.md) implements only membership-difference updates, reverse incident-pair invalidation and dependency-certified certain-path reuse from stages 2–3. Its current matched evidence and remaining gates are recorded with that task. NP02 delivers the change list and incremental source preparation below. Target-only visibility, exact approach timing, horizon and other stages remain proposed; the historical percentages are not current measurements.
 
 This stage builds on the perception work merged into main on 2026-10-01, which reworked this code: the sight pass reads unchanged entities without copying them, records when a person leaves a character's view, and counts its own work. Stage 0 re-measures what remains before this stage claims further savings.
 
 - **Update "what I currently see" records in place.** Add the entries that appeared and drop the ones that disappeared, keeping the same sighting ID for each sighting still going on, so memories that refer to it stay linked.
   - This removes the largest single cost (18%) and does not depend on other stages.
   - It changes the order of entries in each saved record. The save format already treats that order as meaningless, so outcome comparisons ignore it (rule 3).
-- **A change list instead of whole-world comparisons.** Today no part of the step records what changed. After every step, the sight pass copies every entity's position, size, appearance and senses and compares each with the previous pass. The only other record of edited entities is made when a whole call finishes, after the sight pass, and it includes every creature whose hunger or energy was updated.
-  - This stage builds a new list of the bodies whose sight-relevant properties changed during the step:
+- **A change list instead of whole-world comparisons — delivered by NP02.** Each actual sensing phase consumes its own notices and certifies relevant writes in the draft. Changed source entries update privately owned positions, dimensions and spatial bins; unrelated needs/status progression does not invalidate distant static sources. Missing coverage, overflow, policy replacement, load, forks or abandoned continuation rebuild complete inputs. General publication changes remain conservative and independent.
+  - The delivered list covers bodies whose sight-relevant properties changed during the step:
     - moved, landed or took off;
     - spawned or removed;
     - died or was incapacitated;
@@ -188,9 +192,9 @@ This stage builds on the perception work merged into main on 2026-10-01, which r
     - changed senses (for example sleep blocking them).
   - Every code path that makes such changes must report them: movement and flight, actions, status effects, fuel and other changing values, spawning and removal, player commands and live world edits.
   - The sight pass then reads the list instead of comparing every entity, and keeps its map of where things are up to date from it.
-  - A forgotten report would leave a character seeing something out of date, so a debug mode also runs the full comparison and fails on any difference.
+  - A forgotten report would leave a character seeing something out of date. NP02 verified each prepared source collection against a temporary full-capture reference and compared complete native outcomes. The temporary oracle is absent from runtime; a reusable debug comparison for future extensions remains a broader-stage proposal.
 - **Re-check only what changed.** A character that did not move re-tests only the targets that changed ([PF12.3, finer re-checks](../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution)). The perception agent deferred this on its own crowd scene, where remembered answers covered 97% of checks. The flock and large-map scenarios decide whether it is worth doing.
-- **One definition of the sight rule.** The rule is how far a character sees, from eye height, to three points on the other body. The perception code owns it, and the brief-sighting check imports it. Today the check keeps its own copy, which must be kept in step by hand.
+- **One definition of the sight rule — already delivered before NP02.** The rule is how far a character sees, from eye height, to three points on the other body. The perception code and brief-sighting check use the shared body-sample owner. NP02 preserves both consumers and their existing timing.
 - **Optional, joint: reuse the brief-sighting check's results.** The check already knows, for each moving pair, until when their sight cannot change. The sight pass may skip a pair on that basis only when the stored result was computed with:
   - the watcher's current sight range and eye height;
   - the target's current height;

@@ -252,11 +252,11 @@ Recast uses 0.08 m horizontal / 0.05 m vertical cells, 64-cell tiles, contour er
 
 ## SP03
 
-**Current · Restrictiveness: Safe.**
+**Changed — NP02 supersedes the separate object cache · Restrictiveness: Safe shape bound; see NW16 for sensory growth.**
 
-Static-object exposure reuse caches at most 256 observers per immutable map/target set. Overflow computes the complete result, never truncates an audience. Pose, eye/range, target membership/height/position and geometry invalidate reuse; names and recognition remain live. Round-body shape reuse holds at most 32 body shapes, with solid shapes weakly keyed.
+The former static-object cache retained at most **256 observers** per immutable map/target set; overflow computed complete results and never truncated an audience. NP02 removes that separate implementation and its retention ceiling, sharing the privately owned sensory source/observer collection instead. [NW16](native-work.md#nw16) owns its current bookkeeping and uncapped population-dependent retention. Pose, eye/range, target membership/height/position and geometry still invalidate reuse; names and recognition remain live. Round-body shape reuse is unchanged at **32 body shapes**, with solid shapes weakly keyed.
 
-**Reason / tradeoff:** Bound derived cache retention while retaining main's unchanged-exposure invalidation. [Exposure cache](../../packages/domain/src/object-exposure.ts), [shape adapter](../../packages/spatial/src/rapier.ts).
+**Reason / tradeoff:** The old 256-observer ceiling bounded a second derived cache. Removing its repeated target comparison/grid construction avoids duplicate preparation and gives object visibility the same phase/fork invalidation owner as other sources. The shared collection still grows with participating roots/observers; this does not qualify dense retained memory. The shape ceiling continues to bound reusable collision shapes. [Sensory owner](../../packages/domain/src/encounter-cache.ts), [shape adapter](../../packages/spatial/src/rapier.ts), [NP02 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026).
 
 ## SP04
 

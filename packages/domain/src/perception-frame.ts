@@ -5,6 +5,7 @@ const features = new WeakMap<Entity, { feature: string; detail: string }>();
 
 /** Only current coarse outward facts, not physiology, private traits or intentions.
  * Add supported detail here when a real sensory consumer exists, not by hashing the whole entity.
+ * Keep sensoryDraftWrites coverage in draft.ts synchronized when adding outward fields.
  * docs/architecture.md#change-driven-exposure-and-reaction-intake
  */
 export function visibleFeature(entity: Entity): { feature: string; detail: string } {

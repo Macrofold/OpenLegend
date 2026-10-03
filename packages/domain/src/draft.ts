@@ -3,13 +3,19 @@ import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { captureAppraisalResidency } from './appraisal-residency.js';
 import { captureObjectIndex } from './objects.js';
-import { captureSemanticChanges } from './dependencies.js';
+import {
+  captureSemanticChanges,
+  captureSensoryChanges,
+  inheritSensoryChanges,
+  MAX_CHANGE_SCOPES,
+} from './dependencies.js';
 import { captureRootIndex } from './entity-index.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze } from 'immer';
 import type { WorldEvent, WorldState } from './types.js';
+import { countDomainWork } from './diagnostic-counters.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
 // retain identity for persistence and projection; legacy seed/migration data stays mutable.
@@ -214,11 +220,92 @@ const frozenPredecessor = new WeakMap<
   { entities: WorldState['entities']; changed: ReadonlySet<string>; copies: readonly object[] }
 >();
 type ImmerState = {
+  assigned_?: Record<string, boolean>;
   copy_?: unknown;
   parent_?: ImmerState;
   modified_?: unknown;
   scope_?: { drafts_?: unknown };
 };
+/** Certify sensory coverage from the same Immer scope used by finalization. Only modified
+ * entity drafts are inspected, never the distant static entity table. Cumulative assigned
+ * fields conservatively revisit a touched sensory branch until this draft finishes.
+ * Unknown replacements/builders cannot supply this proof and rebuild instead.
+ * docs/projects/next-priority-batch-tech-design.md#phase-specific-contract */
+export function sensoryDraftWrites(world: WorldState) {
+  const sources = new Set<string>(),
+    observers = new Set<string>();
+  const proof = { sources, observers, complete: true, overflow: false };
+  if (!isDraft(world)) return { ...proof, complete: false };
+  const entities = readOnlyDraftView(world).entities;
+  if (!isDraft(entities)) {
+    // An unchanged immutable table is safe; a directly installed table is unclassified.
+    return {
+      ...proof,
+      complete: entities === original(world)!.entities && Object.isFrozen(entities),
+    };
+  }
+  const state = (entities as unknown as Record<symbol, ImmerState>)[IMMER_STATE];
+  const scope = state?.scope_?.drafts_;
+  if (!state || !state.assigned_ || typeof state.assigned_ !== 'object' || !Array.isArray(scope))
+    return { ...proof, complete: false };
+  // Whole-record insertion/replacement may contain unproxied mutable descendants.
+  if (Object.keys(state.assigned_).length) proof.complete = false;
+  const changed = (value: object | undefined, keys: readonly string[]): boolean => {
+    if (!value || !isDraft(value)) return false;
+    const child = (value as Record<symbol, ImmerState>)[IMMER_STATE];
+    if (!child || !child.assigned_ || typeof child.assigned_ !== 'object') {
+      proof.complete = false;
+      return true;
+    }
+    const latest = readOnlyDraftView(value) as Record<string, unknown>;
+    return keys.some(
+      (key) =>
+        Object.hasOwn(child.assigned_!, key) ||
+        (isDraft(latest[key]) &&
+          (latest[key] as Record<symbol, ImmerState>)[IMMER_STATE]?.modified_ === true),
+    );
+  };
+  for (const value of scope) {
+    countDomainWork('sensoryDraftsVisited');
+    const child = (value as Record<symbol, ImmerState>)[IMMER_STATE];
+    if (child?.parent_ !== state || child.modified_ !== true) continue;
+    const entity = readOnlyDraftView(value) as WorldState['entities'][string];
+    const source =
+      changed(value, ['name', 'kind', 'appearance', 'placement', 'retirement']) ||
+      changed(entity.spatial, ['bodyProfileId']) ||
+      changed(entity.heat, ['lit']) ||
+      changed(entity.resource, ['quantity']) ||
+      changed(entity.remains, ['harvested']) ||
+      changed(entity.actor, [
+        'alive',
+        'incapacitated',
+        'capabilities',
+        'controller',
+        'participation',
+      ]) ||
+      // Component installation/removal also changes participation and outward facts.
+      (changed(value, ['actor', 'animal', 'spatial', 'heat', 'resource', 'remains']) &&
+        ['actor', 'animal', 'spatial', 'heat', 'resource', 'remains'].some(
+          (key) => !!child.assigned_ && Object.hasOwn(child.assigned_, key),
+        ));
+    const observer = source || changed(entity.actor, ['senses']);
+    // Capability restrictions are recomputed in each observer's scalar signature;
+    // elapsed status time and needs alone do not invalidate an unchanged view.
+    if (!proof.overflow) {
+      const extra =
+        Number(source && !sources.has(entity.id)) + Number(observer && !observers.has(entity.id));
+      if (sources.size + observers.size + extra > MAX_CHANGE_SCOPES) {
+        sources.clear();
+        observers.clear();
+        proof.overflow = true;
+      } else {
+        if (source) sources.add(entity.id);
+        if (observer) observers.add(entity.id);
+      }
+    }
+  }
+  return proof;
+}
 /** Entity copies this draft will publish, read from Immer 10's draft scope before finishing
  * revokes it. Undefined when that internal shape is absent, so callers keep the full walk. */
 function publishedEntityCopies(world: WorldState): object[] | undefined {
@@ -264,7 +351,9 @@ function freezeData(value: unknown): void {
 }
 export function draftWorld(world: WorldState): WorldState {
   sealAppends(world);
-  return drafts.createDraft(isDraft(world) ? current(world) : world);
+  const result = drafts.createDraft(isDraft(world) ? current(world) : world);
+  inheritSensoryChanges(result, world);
+  return result;
 }
 export function finishWorld(world: WorldState): WorldState {
   sealAppends(world);
@@ -295,6 +384,7 @@ export function finishWorld(world: WorldState): WorldState {
   const publishAllocations = captureWorkAllocations(world);
   const publishAppraisalResidency = captureAppraisalResidency(world);
   const publishChanges = captureSemanticChanges(world);
+  const publishSensory = captureSensoryChanges(world);
   const publishRoots = captureRootIndex(world);
   const publishReservations = captureReservationIndex(world);
   const publishContributionSources = captureContributionSources(world);
@@ -358,6 +448,7 @@ export function finishWorld(world: WorldState): WorldState {
   if (base.entities !== result.entities && Object.isFrozen(base.entities))
     entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
   publishChanges(result, result !== base);
+  publishSensory(result);
   publishRoots(result, entityIds);
   publishReservations(result);
   publishContributionSources(result, entityIds);

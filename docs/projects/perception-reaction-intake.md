@@ -1,5 +1,9 @@
 # Perception changes and one reaction intake
 
+| Status      | Current progress                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Scoped perception and reaction changes are delivered, while dense-scene performance qualification remains open. | 2026-10-03   |
+
 Approved in chat by Mike on 2026-09-28. The approval covers implementing the proposed [events, perception and reactions contract](../events-perception-and-reactions.md) within the scope below. It is not approval for the whole EPR program.
 
 - **Base:** refreshed `origin/main` at `be68b1e0` (Rebase skill precedence 1: the task named the latest `origin/main`).
@@ -45,7 +49,7 @@ For item 9, implement a change only if it keeps the existing entity-map API and 
 **Files this task owns:**
 
 - `packages/domain/src/{events,experience,perception,draft}.ts`
-- the perception parts of the spatial code: `encounter-cache.ts`, `object-exposure.ts`, `perception-frame.ts`, `event-audience.ts`, the perception snapshot in `entity-index.ts`
+- the perception parts of the spatial code: `encounter-cache.ts`, `object-exposure.ts`, `perception-frame.ts`, `event-audience.ts`, the perception snapshot in `entity-index.ts`. This is the original task inventory; NP02 later consolidates `object-exposure.ts` into the [encounter owner](../../packages/domain/src/encounter-cache.ts), preserving exact object sensing while removing duplicate preparation.
 - `apps/server/src/{actor-work,interests,cognition-maintenance}.ts`
 
 **Shared files, kept to minimal edits and listed in the handoff:**

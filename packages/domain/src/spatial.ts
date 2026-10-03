@@ -22,6 +22,67 @@ import {
 import { bodyProfile, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 
+/** Owned, unsaved point bins. Changes replace copied inputs; queries preserve the
+ * authoritative root order and still require exact geometry and disclosure checks. */
+export class SpatialCandidateIndex<T extends { id: string; position: Position; order: number }> {
+  private readonly cells = new Map<string, Map<string, T>>();
+  private readonly entries = new Map<string, T>();
+  constructor(private readonly cellSize = 28) {
+    countDomainWork('spatialBuilds');
+  }
+  private key(position: Position) {
+    return [position.x, position.y, position.z].map((v) => Math.floor(v / this.cellSize)).join(',');
+  }
+  delete(id: string): void {
+    const old = this.entries.get(id);
+    if (!old) return;
+    const key = this.key(old.position),
+      cell = this.cells.get(key)!;
+    cell.delete(id);
+    if (!cell.size) this.cells.delete(key);
+    this.entries.delete(id);
+  }
+  set(value: T): void {
+    if (this.entries.get(value.id) === value) return;
+    this.delete(value.id);
+    const key = this.key(value.position);
+    let cell = this.cells.get(key);
+    if (!cell) this.cells.set(key, (cell = new Map()));
+    cell.set(value.id, value);
+    this.entries.set(value.id, value);
+    countDomainWork('spatialEntriesPrepared');
+  }
+  query(position: Position, radius: number): T[] {
+    const found: T[] = [];
+    const min = [position.x - radius, position.y - radius, position.z - radius].map((v) =>
+      Math.floor(v / this.cellSize),
+    );
+    const max = [position.x + radius, position.y + radius, position.z + radius].map((v) =>
+      Math.floor(v / this.cellSize),
+    );
+    const include = (cell: Map<string, T> | undefined) => {
+      chargeWork({ tests: 1, candidates: cell?.size ?? 0 });
+      // A populated cell has no independent count cap; avoid JS argument limits.
+      if (cell) for (const entry of cell.values()) found.push(entry);
+    };
+    const volume = (max[0]! - min[0]! + 1) * (max[1]! - min[1]! + 1) * (max[2]! - min[2]! + 1);
+    if (volume > this.cells.size) {
+      for (const [key, cell] of this.cells) {
+        chargeWork({ tests: 1 });
+        const coordinates = key.split(',').map(Number);
+        if (coordinates.every((v, i) => v >= min[i]! && v <= max[i]!)) include(cell);
+      }
+    } else {
+      for (let x = min[0]!; x <= max[0]!; x++)
+        for (let y = min[1]!; y <= max[1]!; y++)
+          for (let z = min[2]!; z <= max[2]!; z++) include(this.cells.get(`${x},${y},${z}`));
+    }
+    countDomainWork('spatialQueries');
+    countDomainWork('spatialCandidates', found.length);
+    return found.sort((a, b) => a.order - b.order);
+  }
+}
+
 /** Existing callers now measure real 3D separation; new code should prefer the explicit name. */
 export const distance = distance3D;
 export { distance3D };
@@ -199,6 +260,7 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
   type Cell = { x: number; y: number; z: number; entries: Entry[] };
   const cells = new Map<string, Cell>();
   countDomainWork('spatialBuilds');
+  countDomainWork('spatialEntriesPrepared', entities.length);
   entities.forEach((entity, order) => {
     const p = entity.position,
       x = Math.floor(p.x / cellSize),

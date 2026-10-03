@@ -62,7 +62,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Recast integration](verification/recast-integration.md) and [finalization](verification/recast-finalization.md).
 - [Simulation cadence](verification/simulation-cadence.md), [spatial/cadence integration](verification/spatial-cadence-main-integration.md) and [regional time and navigation](verification/regional-time-and-navigation.md).
 - [Three-times scene performance](verification/three-times-scene-performance.md): measured improvements and unresolved capacity acceptance.
-- [Perception changes and reaction intake](verification/perception-reaction-intake.md): EPR00 counters, native CPU attribution, exposure changes and the fair intake.
+- [Perception changes and reaction intake](verification/perception-reaction-intake.md): EPR00 counters, native CPU attribution, exposure changes, fair intake and [NP02 sensory preparation](verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026).
 
 ## Fixed character pixels
 

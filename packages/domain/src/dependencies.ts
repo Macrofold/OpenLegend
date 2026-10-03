@@ -3,6 +3,7 @@ import { isSafeRecordId, hasRecordFields } from './records.js';
 import { sameDefinitionPin, isDefinitionPin } from './state-owners.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { Position, WorldState } from './types.js';
+import { maximumDomainWork } from './diagnostic-counters.js';
 
 /** Finite native query families. A dependency is evidence of freshness, never authority. */
 export type QueryFamily =
@@ -68,10 +69,87 @@ export function stateChangeRevision(world: WorldState, field: StateField): numbe
   return pending.get(world)?.states.get(field) ?? 0;
 }
 const published = new WeakMap<WorldState, ChangeSet>();
-const MAX_CHANGE_SCOPES = 4096;
+export const MAX_CHANGE_SCOPES = 4096;
+export interface SensoryChanges {
+  phase: number;
+  sources: ReadonlySet<string>;
+  observers: ReadonlySet<string>;
+  complete: boolean;
+  rebuildReason?: 'unknown' | 'overflow';
+}
+type SensoryPending = { sources: Set<string>; observers: Set<string>; overflow: boolean };
+const sensory = new WeakMap<WorldState, SensoryPending>();
+let sensoryPhase = 0;
+/** Independent of publication changes: each actual sensing phase acknowledges its own
+ * writes, including multiple phases inside one unpublished advance. */
+export function recordSensoryChange(world: WorldState, id: string, observer = false): void {
+  let batch = sensory.get(world);
+  if (!batch)
+    sensory.set(world, (batch = { sources: new Set(), observers: new Set(), overflow: false }));
+  if (batch.overflow) return;
+  const ids = observer ? batch.observers : batch.sources;
+  if (ids.has(id)) return;
+  if (batch.sources.size + batch.observers.size === MAX_CHANGE_SCOPES) {
+    batch.overflow = true;
+    batch.sources.clear();
+    batch.observers.clear();
+    return;
+  }
+  ids.add(id);
+  maximumDomainWork('sensoryScopesPeak', batch.sources.size + batch.observers.size);
+}
+/** The draft owner supplies complete write coverage, never an empty semantic list. */
+export function nextSensoryPhase(
+  world: WorldState,
+  audit: {
+    sources: ReadonlySet<string>;
+    observers: ReadonlySet<string>;
+    complete: boolean;
+    overflow?: boolean;
+  },
+): SensoryChanges {
+  maximumDomainWork(
+    'sensoryScopesPeak',
+    audit.overflow ? MAX_CHANGE_SCOPES : audit.sources.size + audit.observers.size,
+  );
+  for (const id of audit.sources) recordSensoryChange(world, id);
+  for (const id of audit.observers) recordSensoryChange(world, id, true);
+  const batch = sensory.get(world);
+  sensory.delete(world);
+  if (!Number.isSafeInteger(++sensoryPhase)) throw new Error('Sensory phase exhausted.');
+  const reason =
+    batch?.overflow || audit.overflow ? 'overflow' : !audit.complete ? 'unknown' : undefined;
+  return {
+    phase: sensoryPhase,
+    sources: batch?.sources ?? new Set(),
+    observers: batch?.observers ?? new Set(),
+    complete: reason === undefined,
+    ...(reason ? { rebuildReason: reason } : {}),
+  };
+}
+/** Carry unobserved notices through successful command/native publication. Reading a
+ * successor does not consume an ancestor's notices, so simultaneous forks stay independent. */
+export function inheritSensoryChanges(world: WorldState, base: WorldState): void {
+  const batch = sensory.get(base);
+  if (batch)
+    sensory.set(world, {
+      sources: new Set(batch.sources),
+      observers: new Set(batch.observers),
+      overflow: batch.overflow,
+    });
+}
+export function captureSensoryChanges(world: WorldState): (result: WorldState) => void {
+  const batch = sensory.get(world);
+  sensory.delete(world);
+  return (result) => {
+    if (batch) sensory.set(result, batch);
+  };
+}
 /** Called at semantic mutation owners before old scope is discarded. Bounded coalescing
  * keeps earliest old/latest new extents; required effects/evidence are never coalesced here. */
 export function recordSemanticChange(world: WorldState, change: SemanticChange): void {
+  if (change.kind === 'spatial') recordSensoryChange(world, change.entityId, true);
+  else if (change.kind === 'knowledge') recordSensoryChange(world, change.actorId, true);
   // Metadata outlives the draft; never retain a placement's revocable proxy.
   if (change.kind === 'spatial')
     change = {

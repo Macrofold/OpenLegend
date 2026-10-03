@@ -1,6 +1,6 @@
 # Next priority batch — five assignments
 
-**Status: in progress; NP04 is implemented and verified, while the other assignments and combined acceptance remain open.** The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
+**Status: in progress; NP02 and NP04 are delivered, while the other assignments and combined acceptance remain open.** The original October 2 planning pass completed no runtime work. The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
 
 These are scoped children of existing work, not replacements for their parent trackers. Current source was inspected at local `main` `c2e670b0` on October 2, 2026. The preceding PW work is substantially implemented, with open integration and qualification; do not treat its old proposal paragraph or an unchecked broad gate as proof that its implementation is missing.
 
@@ -15,10 +15,12 @@ Parents: [MW05](macrofold-worker-api.md#mw05--outcome-classification-and-request
 
 ## NP02 — Sensory work follows changed objects
 
-**Priority 2 · proposed · ready from the audited base.** Eliminate repeated all-source preparation for a small known change while preserving every existing observation and event-order contract. PW08's delivered cache optimizations are prerequisites already present, not tasks to reimplement.
+**Priority 2 · delivered in this branch.** Eliminate repeated all-source preparation for a small known change while preserving every existing observation and event-order contract. PW08's delivered cache optimizations are prerequisites already present, not tasks to reimplement.
 
-- [ ] Deliver phase-specific complete-change notices, incremental derived source/index maintenance, old/new-neighborhood observer selection, safe snapshot succession and conservative rebuild fallback.
-- [ ] Demonstrate [NP02 acceptance](../projects/next-priority-batch-feature-spec.md#np02--sensory-work-follows-changed-objects), including fleeting observations, intermediate phases, fork/cancellation/restore and sparse growth versus dense first exposure; reconcile the [source-preparation design](../projects/next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects).
+- [x] Deliver phase-specific complete-change notices, incremental derived source/index maintenance, old/new-neighborhood observer selection, safe snapshot succession and conservative rebuild fallback.
+- [x] Demonstrate [NP02 acceptance](../projects/next-priority-batch-feature-spec.md#np02--sensory-work-follows-changed-objects), including fleeting observations, intermediate phases, fork/cancellation/restore and sparse growth versus dense first exposure; reconcile the [source-preparation design](../projects/next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects).
+
+Delivery and measured limits: [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026). Warm source preparation stays constant across 100–5,000 distant objects; exact observation traces match the full-preparation reference. Follow-up review repairs stale contact starting positions after unknown/overflowed command edits and verifies initialization plus ordinary native advancement against full preparation. Small-scene timings are mixed, dense native CPU remains higher in the recorded profiles, and short PostgreSQL runs do not qualify capacity.
 
 Parents: [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans), PF12.3/PF13.11, [proportional stage 2](../projects/proportional-step-work.md#stage-2--sight-work-follows-change) and C18. No closure of whole-world publication cost, genuine first-exposure fan-out, all simulation stages or production capacity follows from this task.
 

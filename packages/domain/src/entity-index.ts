@@ -40,8 +40,16 @@ export function rootMembershipChanged(world: WorldState, id: string): void {
 }
 /** `readOnly` returns a phase view that must never be written through: unchanged roots are
  * their immutable records and roots already drafted in this transition are live drafts. */
-export function worldRootEntities(world: WorldState, readOnly = false): Entity[] {
+export function worldRootEntities(world: WorldState, readOnly = false, rebuild = false): Entity[] {
   countDomainWork('rootScans');
+  // Unknown editor/replacement writes cannot certify the draft membership hooks.
+  // Recovery enumerates the actual table, rather than trusting a derived selector.
+  if (rebuild) {
+    const entities = readOnly ? readOnlyDraftView(world.entities) : world.entities;
+    const result = Object.values(entities).filter(physicalRoot);
+    countDomainWork('rootsVisited', result.length);
+    return result;
+  }
   if (!isDraft(world)) {
     const ids = snapshotRoots(world.entities);
     countDomainWork('rootsVisited', ids.length);

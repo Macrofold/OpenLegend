@@ -10,7 +10,7 @@
 
 ## Next priority assignments
 
-[Next priority batch](next-priority-batch.md) proposes five independent assignments after auditing current main and overlapping work: reliable AI outcomes/spending, sensory preparation proportional to change, one safe invented-material crafting chain, complete camp-supply selection, and permitted NPC reply previews. Start with the [feature specification](../projects/next-priority-batch-feature-spec.md), [technical design](../projects/next-priority-batch-tech-design.md) and [five standalone prompts](../projects/next-priority-batch-prompts.md). This is planning, not runtime implementation or authorization to dispatch work. No time horizon or inherited staffing-hour target is assumed.
+[Next priority batch](next-priority-batch.md) proposes five independent assignments after auditing current main and overlapping work: reliable AI outcomes/spending, sensory preparation proportional to change, one safe invented-material crafting chain, complete camp-supply selection, and permitted NPC reply previews. Start with the [feature specification](../projects/next-priority-batch-feature-spec.md), [technical design](../projects/next-priority-batch-tech-design.md) and [five standalone prompts](../projects/next-priority-batch-prompts.md). NP02 and NP04 are delivered, with scoped evidence and broader limits retained in their tracker; the other assignments remain proposed. The original planning pass did not authorize dispatching implementation work. No time horizon or inherited staffing-hour target is assumed.
 
 ## Earlier playable-week delivery
 

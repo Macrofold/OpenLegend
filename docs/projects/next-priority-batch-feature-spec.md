@@ -1,10 +1,10 @@
 # Next priority batch — feature specification
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | NP04 camp-supply discovery is implemented and verified; the other assignments and combined acceptance remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NP02 sensory preparation and NP04 camp-supply discovery are delivered; the other assignments and combined acceptance remain open. | 2026-10-03   |
 
-Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
+The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
 ## Purpose and priority
 
@@ -109,11 +109,11 @@ First settle the shared failure/cost classification, then apply it to each exist
 
 ## NP02 — Sensory work follows changed objects
 
-**Status: proposed implementation.** This is a bounded continuation of EPR02, PF12.3 and PF13.11, not a replacement for their broader acceptance or a repeat of PW08.
+**Status: delivered in this branch.** [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) records exact observation parity, constant warm source preparation and remaining native/server limits. This is a bounded continuation of EPR02, PF12.3 and PF13.11, not a replacement for their broader acceptance or a repeat of PW08.
 
 ### Player outcome and priority
 
-When one animal moves, the server should reconsider what nearby characters can notice without preparing every distant rock, possession and character again. Characters must still notice arrivals, departures and meaningful outward changes at the same moments, and must not gain knowledge from hidden causes. This matters before enlarging the world: current caches avoid many exact sight tests but still prepare and compare the whole source population each sensory phase.
+When one animal moves, the server should reconsider what nearby characters can notice without preparing every distant rock, possession and character again. Characters must still notice arrivals, departures and meaningful outward changes at the same moments, and must not gain knowledge from hidden causes. This matters before enlarging the world: the starting implementation avoided many exact sight tests but still prepared and compared the whole source population each sensory phase. NP02 removes that repeated warm preparation; observer-wide exact queries, cold recovery and publication retain separate costs.
 
 At inspected main `c2e670b0`, `kernel.ts` constructs captures for all physical roots and computes body maxima before observer processing. `encounter-cache.ts` then constructs fresh source maps and compares all entries. The existing PW08 changes already reduce sighting-record edits, incident-pair invalidation and repeat crossing forecasts; retain those improvements. Existing recorded CPU percentages came from older/shared-host runs and are not a current baseline or promised saving.
 

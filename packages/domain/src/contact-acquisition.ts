@@ -16,7 +16,7 @@ interface ContactCandidate {
  */
 export function* updateContactEpisodes(
   world: WorldState,
-  previousPositions: ReadonlyMap<string, Position>,
+  previousPositions: Pick<ReadonlyMap<string, Position>, 'get'>,
   observer: Entity,
   events: WorldEvent[],
   candidates: () => readonly ContactCandidate[],
