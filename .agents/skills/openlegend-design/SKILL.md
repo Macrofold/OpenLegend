@@ -7,6 +7,8 @@ description: >-
 
 # Design from playable behavior
 
+For prioritized parallel assignments or standalone task prompts, use [create-parallel-tasks](../create-parallel-tasks/SKILL.md).
+
 Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
 ## Feature-spec or technical-design requests
