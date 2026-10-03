@@ -2,6 +2,8 @@
 
 **Status: accepted direction with proposed cognitive and sensory extensions.** [Memory](../memory-architecture.md), [agency](../agent-agency.md), [perception/reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), and [conversation](../narration-and-conversations.md) remain the semantic owners of their runtime behavior. This page defines the cross-cutting product contract; it does not claim existing evidence may already be discarded or regrouped arbitrarily.
 
+**October 3 product proposal:** the [detailed attention, crowds and scenes specification](../projects/attention-and-scenes-feature-spec.md) supplies initial scope, player/NPC journeys, research, economic boundaries and acceptance. It proposes stable focus and aggregate activity under current exact-speech rules before a distinct timed-speech stage. These detailed recommendations do not change current hearing or close PS04/PS-D02.
+
 ## 1. The cognitive work boundary
 
 Separate a world occurrence, evidence a character can acquire, what it distinguishes, what it attends to, and whether a new decision is needed. None is synonymous with a paid model call or a permanent autobiographical record.

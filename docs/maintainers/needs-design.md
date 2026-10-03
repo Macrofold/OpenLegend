@@ -39,6 +39,10 @@ The table makes the remaining design work easy to find without creating a second
 
 These refinements should be completed in the existing PS project and decision owners before their affected slices are implemented. Elapsed-time integration, encounter optimization, ordinary absence handling and regional data ownership also have existing designs; their remaining delivery is not a reason to restart them here.
 
+**October 3 product proposal, revised after game-first critique:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) first improves one resident's independent activity and the player's experience of returning during active play. Quiet communities, absence and funded service remain later qualified scope. PS-D choices and PS02–PS03 runtime delivery remain open. The [package sequence and playability gates](../projects/five-product-feature-specs.md#game-first-delivery-sequence) preserve the accepted live invention loop and current personal pause policy.
+
+[Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) first improves effortless directed conversation and useful interruptions at the current scale. Busy crowds, independent group scenes and timed speech are separately justified expansions through PS04/PS-D02. Existing hearing semantics, technical design and runtime checkboxes remain unchanged.
+
 ## Worlds, rules and long-lived communities
 
 ### ND01 — Assemble a new world from a creator's premise
@@ -48,6 +52,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [INV-4.10](inventions-and-world-evolution.md#inv-4--give-the-creator-useful-scoped-world-investigation-and-workshop-tools) and [EWF12](extensible-world-foundation.md#ewf12--runtime-to-world-agent-authoring-and-explanation-bridge) cover supported module authoring and explanation; invention admission and the constitution have their own owners. They do not yet provide the complete initial world-assembly journey.
 
 **Needed before an implementation project:** define premise/default selection, a few consequential questions, population/geography/starting knowledge, visible assumptions, compatible initial rules, and a clear readiness decision. Specify retained drafts, unsupported essential mechanics, conflicting defaults, failed/interrupted creation and the handoff to the current world host. Reuse existing authoring and validation instead of creating a second installer or admission system.
+
+**October 3 product proposal, revised after game-first critique:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) offers optional compact creation around a qualified small opening and judges the result by worthwhile play. The accepted personal MVP is sufficient initial scope; six residents are a later community hypothesis, not a release floor. Readiness, selective revision, permissions and actual costs remain required for the selected candidate. [WC limits](../limits/world-creation.md) retain boundaries. Technical design and INV-4.10/EWF12 delivery remain open.
 
 ### ND02 — Discover a community, settle there and enter as a character
 
@@ -64,6 +70,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [EWF02/EWF04](extensible-world-foundation.md) provide typed state and generic presentation; the [state-contribution project](state-contributions.md) already supplies shared numerical ownership. A configurable attribute is not a complete rule for resolving a contested action or changing its outcome.
 
 **Needed before an implementation project:** select one useful stat/check family and define authoring schemas, ranges/defaults, modifiers, opposed or threshold checks, randomness, interpretation and allowed effects. Separate a displayed trait from an enforceable world rule; explain how actions, AI context and player feedback consume the result. Hand the selected family to EWF/INV and the existing action/state owners with concrete scenarios and limits.
+
+**October 3 product proposal, revised after game-first critique:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) requires a demonstrated useful action before introducing generalized checks. Predictable competence effects are valid; the finite roof/2d6 example and arithmetic remain an optional worked candidate. Actual materials, time, help, attempts and known outcomes still govern any chosen method. [ST limits](../limits/authored-stats.md) retain candidate tuning and the simpler decisive-step scope. Adoption, technical design and consumer qualification remain open; no routine action becomes uncertain and ND04 progression stays separate.
 
 ### ND04 — Experience-shaped personality and practical skill growth
 
@@ -97,6 +105,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select the first part/layout representation and define supports, coverage, usable interior space, household occupancy and staged work. Detail adding/replacing/removing parts, continuing a dwelling's identity, consumed materials, damage and changes to navigation and protection. Resolve which structural behavior is modeled versus deliberately unsupported, then create a small construction project beneath INV/SW/PO rather than adopting every architectural example.
 
+**October 3 product proposal, revised after game-first critique:** [Editable shelters, rain and home use](../projects/editable-shelters-feature-spec.md) first establishes expressive useful cover, recoverable parts, local moisture/drying and chosen use of a changed place. Its detailed support, renovation and identity cases remain; new wet-tinder restrictions are a separately chosen challenge rather than the minimum feature's justification. [SH limits](../limits/editable-shelters.md) retain scope. Technical design and INV-6.4 delivery remain open.
+
 ### ND08 — Material, weather, heat and fire interactions beyond campfires
 
 **Needs scoped design under INV-6.** Sources: [evolvable material properties](../../archive/03-design-proposals/evolving-materials-and-construction.md#properties-state-and-behavior), [heat and fire](../../archive/03-design-proposals/heat-and-fire.md), and [state systems and future influences](../../archive/03-design-proposals/state-systems-and-future-influences.md).
@@ -104,6 +114,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [BW19 campfire care](base-world.md#bw19--camp-fire-care) and [state contributions](state-contributions.md) are delivered foundations; INV-6 retains broader materials, thermal behavior and inactive anticipated influences. The detailed thermal exploration is explicitly not a first-release checklist.
 
 **Needed before an implementation project:** choose a coarse useful model for moisture, exposure, heating, ignition, fuel, local spread and damage. Preserve the source's comparison: the same brief ignition source can ignite a selected dry twig without igniting a substantial wooden wall section; wet/dry conditions are an additional variation. Specify extinguishing, geometry changes, shared material/state ownership, bounded neighborhoods, time integration and dormant dependencies without recursively generating every possible weather system. Coordinate the first shelter consumer with ND07 and applicable background-resolution rules.
+
+**Narrow October 3 proposal, revised after game-first critique:** the [shelter specification](../projects/editable-shelters-feature-spec.md) develops vertical rain, persistent moisture and ambient drying. A later authored wet-tinder challenge requires dependable recovery and evidence that it improves play. It is not required for the first useful shelter or the accepted creative MVP. Broader heat, ignition, spread, wind, runoff and damage design remain open; current campfire behavior is unchanged.
 
 ### ND09 — Negotiated barter, currency and durable commercial promises inside a world
 

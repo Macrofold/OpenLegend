@@ -128,6 +128,8 @@ The original four recipe families—sling, bow, arrow and gathering tool—now h
 
 **Depends on:** INV-1/2 identities and permissions. Can proceed alongside INV-3.
 
+**Proposed ND01 consumer:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) develops the complete initial assembly journey on INV-4.10 and EWF12, with scoped readiness, retained intent, preview, funding and current-host handoff. [WC limits](../limits/world-creation.md) record proposed scope. Technical design and unchecked delivery remain open.
+
 - [ ] **4.1 Separate creator and embodied audiences.** Introduce server-granted creator query capabilities over the authorized world. Cover entities, definitions, installations, character context and events through bounded typed reads. Never send the whole world snapshot, credentials or other actors' private memories to ordinary player/NPC jobs. Creator-only findings stay out of character knowledge unless learned through a valid in-world event.
 - [ ] **4.2 Make history durable and navigable.** Persist the declared event coverage and technical invention artifacts beyond UI scrollback. Support exact lookup and paginated time/entity/version filters with evidence IDs, revisions and honest gaps. Add database indexes when needed; broad semantic search is not required for basic inspection.
 - [ ] **4.3 Expose tool-shaped read and draft operations.** Resolve a definition, inspect dependencies, retrieve permitted evidence, get/update a draft and request validation through the same application services used by UI. Macrofold gets bounded capabilities or an equivalent server-mediated loop, never direct database writes or policy-setting authority. Include supported module/construct discovery and candidate validation/diff operations.
@@ -166,6 +168,8 @@ Coordinate module/save integration with [EWF07](extensible-world-foundation.md#e
 **Completion gate:** a workshop revision changes actual behavior while preserving existing resources and progress; rejected or interrupted activation never leaves mixed definitions/state.
 
 ### INV-6 — Composable materials, assemblies and passive world processes
+
+**Proposed product detail for 6.4:** [Editable shelters, rain and home use](../projects/editable-shelters-feature-spec.md) develops ND07/narrow ND08 with persistent parts, supported local failure, coverage, staged moisture/drying, home use and SH-J acceptance. [SH limits](../limits/editable-shelters.md) record scope. These proposals preserve object/spatial/state owners and do not complete technical design, implementation or broader combustion.
 
 Delivered [NP03](next-priority-batch.md#np03--craft-with-an-invented-material) supplies one positive generated-material producer/consumer proof: invented cordage into the woven-container binding role. The [scoped technical design](../projects/completed/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) and [evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) reconcile the INV-3.5/EWF09 child. Existing family registration and this finite edge are delivered; arbitrary recursive inputs, live model choice and broader INV-6 behavior remain open.
 
