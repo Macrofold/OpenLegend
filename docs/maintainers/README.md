@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Future work needing design
+
+[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
+
 ## Product scalability and persistent participation
 
 [Product scalability](../product-scalability/README.md) captures the accepted strategic direction for federated communities, protected personal domains, lower-detail background lives, bounded attention and scenes, consequence-preserving logout, and forecast local campaigns against canonical adversaries. Start with the [feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md). [PS01–PS08](product-scalability.md) owns cross-feature delivery and [the policy inventory](../limits/product-scalability.md) owns unresolved tuning. This is documentation and future behavior, not a claim of shipped background simulation or million-player capacity; existing subsystem and operational scalability owners retain their responsibilities.
@@ -113,3 +117,4 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+
