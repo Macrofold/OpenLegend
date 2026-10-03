@@ -1,5 +1,9 @@
 # Precise action requests and multi-step activities
 
+| Status    | Current progress                                                                                                                                                                             | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The agreed precise-request, finite-composition and world-wording stages are delivered and locally qualified; broader AC acceptance and the later fire-watch integration gap remain separate. | 2026-10-03   |
+
 ## Scope and baseline
 
 Branch `codex/composed-activities` from `origin/main` at `be68b1e0` in `Macrofold/OpenLegend`
@@ -119,8 +123,11 @@ shown only in God mode; players keep "Stop current work" and plain answers to th
 - **Waits may last one game day** (86,400 s, previously 36,000 s) so "until dawn" works from
   any hour; repeats keep the 16-iteration bound and larger requests are refused up front.
 - **Interrupt is explicit**: direct picker commands keep replacing current work.
-- **Fire tending is unsupported**: there is no fuelling family, so "tend the fire until dawn"
-  becomes a disclosed revision (stay by the fire until dawn) awaiting the initiator's decision.
+- **Historical fire-care boundary:** this slice originally offered "tend the fire until dawn"
+  as a disclosed stay-nearby revision because the then-installed families lacked fuelling.
+  AC09.7 and PW10 subsequently delivered single fire care and an explicitly bounded watch.
+  The old typed revision still intercepts some requests; [AC03.6](../maintainers/action-capabilities.md#ac03--bounded-action-grounding)
+  tracks that newer integration defect without inventing missing supply, deadline or fuel-budget parameters.
 
 ## Stage 8: world-supplied wording and named times
 
@@ -143,7 +150,7 @@ Decisions:
 - **Typed-request vocabulary is world content** in `worlds/base/typed-requests.ts`, owned by
   `docs/worlds/base/typed-requests.md`: heat-source nouns, being nouns (from the bundled
   world's species), unsupported requests and their refusal text, faithful revisions
-  (tending a fire becomes staying by a heat source) and examples. The engine keeps generic
+  (the then-unsupported tending request became staying by a heat source) and examples. The engine keeps generic
   mechanisms and the English front end for its native families and reads the vocabulary
   through one accessor, the composition point an external world package would replace.
 - **Native-family facts are declared once** in `worlds/base/actions.ts`: families that produce

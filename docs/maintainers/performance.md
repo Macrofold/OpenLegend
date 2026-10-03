@@ -115,7 +115,7 @@ The [eight-fire 1080p follow-up](../verification/eight-fire-three-times.md) prof
 
 ## PF00 — Baseline and attribution
 
-Proposed [EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) consume this profiler and the PF acceptance budgets.
+[EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) consume this profiler and the PF acceptance budgets.
 
 - [x] Provide a reusable bounded native stress runner with saved-world/seed inputs, people/animal counts, crowded/scattered ground-object groups and native-speed headroom. See [usage and limits](performance-profiling.md).
 - [ ] Extend profiling only where needed to cover actual timer/debt, persistence and cognition scheduling workloads; native throughput alone is not whole-server capacity.
@@ -128,7 +128,7 @@ Proposed [EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-a
 - [ ] Measure the asynchronous PostgreSQL adapter before population growth. Preserve immediate command durability and one world writer. Do not describe the adapter as distributed/scalable persistence; specialized repositories remain gated production work.
 - [ ] Capture an initial short trace with at least 30 successful native commands and representative timer work to select the first bottleneck. Before final acceptance, run at least 1,000 native intentions per latency case after warm-up, a 30-minute mixed-load soak, and sampled database delay at 0/25/100 ms per operation. (2026-09-28: the scene profiler now injects per-statement delay and attributes each save to preparation, statement round trips and main-thread time, with a host probe; [shared-host attribution](../verification/ordered-async-saves.md#pf00-save-path-attribution-stage-1). Quiet-host percentiles, the 1,000-intention cases and the soak remain.) Include simulated provider delay, narration due/idle, diagnostics open/closed and periodic checkpoints. Use disposable databases and no paid calls. Keep cold-start/recovery measurements separate.
 
-Attribution exit: stage timings, query count and a short reproducible baseline identify the first intervention. Full exit: larger before/after samples and soak results are recorded in Verification. Fixture/native measurements do not establish live model latency. Broken legacy test assumptions are tracked in TODO; repair affected fixtures before using their assertions as evidence.
+Attribution exit: stage timings, query count and a short reproducible baseline identify the first intervention. Full exit: larger before/after samples and soak results are recorded in Verification. Fixture/native measurements do not establish live model latency. Stale test-contract expectations are tracked by their focused owners (including [CR12](cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence)); repair affected fixtures against current callers without restoring legacy compatibility or weakening their assertions.
 
 ## PF01 — Compact atomic history and world writes
 
@@ -146,7 +146,7 @@ Exit: ordinary walk meets the SQL budget; append cost depends on new rows; editi
 
 ## PF02 — Commit-triggered Narrator and deadline scheduling
 
-Proposed [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns the remaining common stimulus-to-ActorWork intake; scheduling qualification remains here.
+[EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns the remaining common stimulus-to-ActorWork intake; scheduling qualification remains here.
 
 Dependencies: PF00; coordinate signal metadata with PF01. Primary files: `history.ts`, `narrator.ts`, `http.ts`, `ai-director.ts`, `cognition-maintenance.ts`.
 
@@ -270,11 +270,11 @@ Pre-review real PostgreSQL samples fail capacity at **1×, 3× and 8×**, with l
 
 The [repertoire foundation run](../verification/invention-foundation.md#repertoire-foundation-runtime-observations) adds current-baseline cold gems/mixed samples. Both miss the requested 3× rate; source-backed graph reads do not resolve that native cost. Retain the existing phase/privacy work and qualify current-tree cold/warmed full-application behavior before new optimization claims.
 
-The [invention performance review](../verification/invention-foundation.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on its older spatial baseline. Subsequent [native scaling work](../verification/spatial-scaling-followup.md#spatial-scaling-review-third-pass) already improves audience/experience/participant and geometry paths; remeasure the same full-stack workloads before attributing current capacity. Private acquisition and broader qualification remain open. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
+The [invention performance review](../verification/invention-foundation.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on its older spatial baseline. Subsequent [native scaling work](../verification/spatial-scaling-followup.md#spatial-scaling-review-third-pass) already improves audience/experience/participant and geometry paths; remeasure the same full-stack workloads before attributing current capacity. Observer-private acquisition has since shipped under EPR03/PF09c; broader qualification remains open. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
 
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
-Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
+[EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
 
 Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest and D6 boundaries.
 
@@ -302,7 +302,7 @@ Exit: cost follows active changes and relevant neighbors in sparse worlds; dense
 
 Dependencies: PF03/PF05; measured residual event-loop CPU or unavoidable confirmation RTT.
 
-- [ ] If necessary, give a worker long-lived simulation ownership or offload a measured bounded path/serialization task. Send versioned compact messages, not full snapshots every frame. Revalidate results and define crash/recovery and ownership fencing.
+- [ ] Navigation preparation and bounded checkpoint serialization already use their existing workers. Qualify or extend those owners only for a measured residual; long-lived simulation ownership remains conditional on CPU/message-copy evidence. Send compact, current-contract messages, not full snapshots every frame. Revalidate results and define crash/recovery and ownership fencing; do not create another worker for already isolated work.
 - [ ] Implement local movement prediction/reconciliation only through the real-time design's existing version/permission/receipt contract. Never use prediction to authorize reach, inventory or damage. Benchmark browser frame work and correction frequency.
 
 Exit: lower event-loop/render latency after message-copy overhead, unchanged authoritative results, tested stale-result/worker-failure recovery. No worker merely wrapping already asynchronous database/provider I/O.
