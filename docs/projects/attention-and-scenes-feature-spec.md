@@ -47,7 +47,7 @@ Do not choose a universal maximum number of things a mind can notice. The produc
 
 Provide an understandable **Listen to** or equivalent action on a currently distinguishable speaker or conversation. Show the selected subject through the existing interaction language. Provide an equally discoverable way to stop or change focus by keyboard and pointer. A player should not need continuous precise aiming to remain in a conversation.
 
-Focus requests apply prospectively. They cannot reconstruct missed words, identify an unrecognized voice, defeat an opaque wall or disclose a private conversation. If the target becomes unavailable, retain a clear indication that it was lost and permit a sensible new choice. Do not silently switch to a nearby stranger with a similar name.
+Focus requests apply prospectively. They cannot reconstruct missed words, identify an unrecognized voice, bypass a supported sensory obstruction or cross an explicit disclosure boundary. Merely intending an otherwise perceptible conversation to be secret does not suppress its evidence: ordinary eavesdropping remains possible under the hearing rules. A wall's visual opacity does not automatically make it an acoustic barrier. If the target becomes unavailable, retain a clear indication that it was lost and permit a sensible new choice. Do not silently switch to a nearby stranger with a similar name.
 
 Attention is not a compulsory emotion or decision for the human player. A danger cue can draw attention and explain an interruption, but does not write the player's speech, choose whom they trust, move them or consent to a shared action. Immediate authored bodily reactions remain their separate supported rules.
 
@@ -166,3 +166,186 @@ NPCs may continue their own discussion while a human is silent if their knowledg
 Two groups can become one conversation only through actual interaction and permitted membership. Merging does not disclose earlier private conversation. A subgroup can leave with its own remembered experience, while remaining participants continue. Someone addressing a particular person need not pull the whole crowd into one scene.
 
 A physical emergency can suspend or end a scene. Preserve completed statements, heard fragments, actual obligations and unfinished choices. When the matter resumes, use the current participants and situation rather than replaying an obsolete script. New arrivals do not inherit private scene knowledge merely by entering the same place.
+
+## 9. Meaning, exact language and memory
+
+### 9.1 A scene can have an honest incomplete record
+
+For an ordinary background exchange, retain the meaning that was actually communicated, the participants who could learn it, the completed decision or consequence, and uncertainty where appropriate. A person may remember that Ada asked for help carrying wood and that they declined. The system need not manufacture the precise wording of that exchange.
+
+When asked later, the character can recount the meaning in their present voice while making clear that it is a retelling. A plausible new sentence must not be promoted to exact historical evidence. If only one participant understood a detail, the common scene account must not distribute it to everyone.
+
+### 9.2 Exact exceptions are identified before they matter
+
+Some mechanics depend on words: an oath with specific terms, a password, a recording, a disputed quotation, or a rule that grants perfect recall. The family must establish the exact relevant content when it occurs and retain the permitted evidence needed by its consumers. It cannot wait for a dispute and then generate whichever wording would make the current story convenient.
+
+In the timed-speech stage, a promise, instruction, oath or other speech-triggered effect must satisfy its complete supported wording and acceptance conditions using actually delivered content. Submitted or generated intentions cannot supply an unspoken ending. If “I agree, provided you return the tools first” is interrupted, the incomplete condition must not be simplified into unconditional assent. Preserve the delivered evidence and leave the unsupported commitment unresolved.
+
+| Available history | Permitted later answer |
+| --- | --- |
+| Exact words heard and still legitimately accessible | Quote those words with the actual source and uncertainty about anything not heard |
+| Partial phrase heard | Preserve the fragment; do not complete it as remembered fact |
+| Gist-only background exchange | Retell the meaning and identify it as an approximate account |
+| Testimony from another resident | Attribute the report; do not claim personal witnessing |
+| Unknown or unavailable source | Admit the gap; ask or investigate through ordinary permitted actions |
+| A later correction or changed interpretation | Preserve the original occurrence and the correction as distinct facts |
+
+Memory selection may combine repetitive circumstances without converting them into a detailed diary. Active commitments and actual resource effects remain owned facts even when a resident forgets the exact conversation. A character can misunderstand an agreement; that belief does not rewrite its accepted terms.
+
+### 9.3 Perspective-safe return and narration
+
+A returning player can learn the important permitted consequences through observation, testimony and current records. They do not inherit an omniscient summary of the community. A narrator can make a concise, engaging account of available evidence, but dramatic quality does not grant access to private thoughts or distant unperceived scenes.
+
+If a scene is interrupted by arrival, completed gist remains gist. Subsequent foreground words can be exact. The transition does not require reconstructing the earlier conversation, and does not make all participants agree about what it meant.
+
+## 10. Presentation and accessible control
+
+### 10.1 Show what supports the next decision
+
+Keep the world visible and the foreground conversation readable. Use the existing Talk, caption and World Events surfaces for their established purposes. A small focus indication should identify whom the character is following and whether they remain distinguishable. Aggregate surroundings can use concise descriptions or supported ambient cues; they should not occupy the same prominence as a direct request.
+
+If a scene offers a real consequential choice, show the actual subject, terms and next action. Ordinary dialogue need not become a series of cards. A proposed agreement may require structured confirmation of its actual terms through the existing agreement owner; a fluent sentence is not sufficient evidence of a completed transaction.
+
+When focus is lost, say so in ordinary terms. Do not display hidden relevance scores, exact enemy positions or an inferred private motive to explain it. Technical model unavailability follows the restrained existing message treatment and preserves drafts; it is not an NPC's fictional refusal.
+
+### 10.2 Accessibility must preserve information equivalence
+
+Essential permitted cues need a usable non-audio route. Captions should distinguish speech from meaningful nonspeech events and identify a speaker or direction only when the character is allowed to know it. A scream may be important even when its source is unknown. Color alone, precise spatial hearing or a fleeting animation must not be the only way to access that information.
+
+Let players adjust readable size, contrast, background, placement and relevant caption categories through the existing preferences. Preserve keyboard navigation, focus visibility, a non-hover route to explanations and an untimed history of already permitted evidence. Do not turn every ambient murmur into an assertive screen-reader announcement. Prioritize meaningful new information while allowing deliberate inspection.
+
+Changing presentation volume, caption pace, text size or pause must not change the character's sensory capabilities. Equally, a presentation preference cannot reveal a hidden speaker's name or omitted phrase. The source of truth is what the character perceived, not what the audio device happened to render.
+
+### 10.3 Backlogs, hidden tabs and reconnect
+
+Keep transient presentation bounded and provide a clear route to permitted history when captions could not be shown. Do not replay an avalanche of old background speech after a hidden tab returns. Preserve reading position and indicate new relevant messages without forcing the reader to the bottom.
+
+Reconnect restores the current conversation and actual history; it does not resend a committed line, replay a scene decision or grant words missed during absence. Timed speech, once supported, distinguishes a currently speaking source from a historical caption. A source can stop speaking while its permitted text remains available to read.
+
+### 10.4 Devices and future voice
+
+This feature should be usable with text alone. Future audible NPC speech or human proximity voice must consume the same listener permissions and interruption semantics through ND15. Audio mixing may omit or simplify rendering for device performance; that cannot rewrite the world's hearing evidence. Conversely, a voice service must not transmit a full private utterance merely because the recipient can hear an aggregate sound from its direction.
+
+## 11. Economics, performance and abuse
+
+### 11.1 Spend effort on distinctions that affect play
+
+The expensive path should begin after basic scope, grouping and distinguishability have reduced unnecessary candidates. It is wasteful to generate a full description or model judgment for every person and then choose a few to show. Group cheap shared sensory circumstances, retain permitted individual exceptions, and obtain fresh interpretation only when a meaningful choice or experience needs it.
+
+A speech can be generated once at its source, then yield different permitted fragments for its listeners. A group-level description can be reused where the actual observable facts coincide. Private recognition, interpretation, personal history and consent must remain individual. Shared computation does not justify shared secrets.
+
+The number of potential speaker/listener relationships grows with both speakers and listeners. For illustration, 100 sources and 100 listeners create 10,000 possible relationships before locality and relevance reduce them; this is arithmetic, not a performance measurement. Limiting a final caption count does not by itself bound source scanning, history preparation or model work.
+
+### 11.2 A shared scene is not automatically cheaper
+
+One bounded exchange can sometimes be resolved with less work than many independent full conversations. However, privacy, conflicting beliefs and consequential decisions can require separate participant deliberation. Count those decisions, effect validation, memory and delivery in the total cost. A single large omniscient prompt is not the economic target.
+
+The recommended default is common coordination plus individually owned consequential choices, with economical native continuation for already chosen participation. Apply higher evaluated model quality to actual difficult decisions and important character consistency, not every nearby body. A more expensive model is not evidence that its story is correct.
+
+If a supported scene cannot obtain a required decision, preserve the unresolved matter and any completed exchanges. Optional continuation can wait or the participants can use already supported choices. If service failure would otherwise determine an imminent consequential outcome, use the coherent failure boundary in the continuing-lives specification. Do not silently assign defeat or assent to the unavailable participant.
+
+### 11.3 Prevent attention monopolies
+
+Repeated shouting, following, emote spam or deliberately generated commotion should not trigger a fresh full reconsideration in every observer each time. Treat equivalent repetition as a continuing circumstance, with meaningful changes still eligible for attention. A character might ignore it, leave, confront it or seek help according to their knowledge and choices.
+
+The product must also preserve real new danger inside a noisy situation. A system that simply ignores all subsequent events from a source could miss an actual attack. Physical effects continue, and a newly relevant consequence can warrant an interruption even when optional interpretation of repeated noise is restricted.
+
+Admission limits should cover the activity a source can impose on others and the community's aggregate capacity, not only per-message text length. Explain a refused new action or unavailable optional response without exposing private thresholds. Existing reporting and participant-control policies remain ND37; this feature does not invent operator access to private conversations.
+
+### 11.4 Overload should not change the fictional rules secretly
+
+Reduce discretionary new ambience, repeated interpretation and optional scenes before compromising admitted effects. Use visible capacity admission where the offered interaction cannot be sustained. Do not silently make an opponent deaf, omit a damaging projectile, delete a known obligation or downgrade an already engaged character's judgment to fit the bill.
+
+A crowd's authored attention rule applies because of its actual situation. A server under pressure is a different condition. The user should not have to infer hidden load from suddenly inconsistent hearing. Scene, attention, caption and operating limits need separate descriptions and measurements.
+
+### 11.5 Bound retained work as well as visible output
+
+| Growth | Required product boundary |
+| --- | --- |
+| More physical sources | Local supported sensory groups and actual capacity admission; do not generate exhaustive ambient speech merely to rank or filter it. Independently admitted exact activities still establish their required source content within their funded limits |
+| More simultaneous exact speech | Explicit supported speech policy and hearing qualification; no caption-lifetime shortcut |
+| More scene participants | Split into actual subinteractions or decline unsupported scope; do not silently erase people or merge minds |
+| More unfinished scene decisions | Bound pending optional work and explain waiting; do not require infinite continuation |
+| More history | Retrieve relevant permitted evidence and preserve exact exceptions; avoid formatting every past scene for every turn |
+| More caption output | Existing bounded transient presentation and permitted history; no loss of already acquired evidence |
+| More repeated disturbances | Recognize continuing causes, preserve new physical danger and limit optional reaction cascades |
+
+Exact counts and thresholds remain qualified tuning rather than a universal attention law. The [PS limits inventory](../limits/product-scalability.md) owns attention/scene restrictions; the [hearing inventory](../limits/hearing-and-speech.md) retains current acoustic and caption settings. This proposal does not replace those numbers with unrelated research-study capacities.
+
+## 12. Concrete journeys and failure cases
+
+### AS-J01 — Follow a conversation in a busy room
+
+The human chooses a distinguishable speaker. Nearby chatter remains present but secondary. Small movements do not continually replace the focus. A question directed to the human is presented through their permitted evidence, with a usable way to reply. Changing caption size or audio volume changes presentation only.
+
+### AS-J02 — Notice a friend in a crowd
+
+A familiar person enters visible range within a moving group. The character can recognize them if current evidence supports it. The group remains approximate. The friend is not continuously tracked through an obstruction, and recognizing them does not identify everyone traveling nearby.
+
+### AS-J03 — A scream interrupts, an unseen intention does not
+
+An audible scream can draw attention according to the supported hearing rules. An enemy's private decision cannot. If an arrow hits while the character follows a speaker, the physical damage still occurs and becomes relevant bodily evidence. Focus is a limit on understanding, not armor.
+
+### AS-J04 — Nearly equal sources remain stable
+
+Two speakers move slightly relative to the listener. Focus remains stable while the selected source remains distinguishable. A materially changed obstruction or direct address can legitimately alter the situation. The player can explain why focus changed without needing a hidden numeric ranking.
+
+### AS-J05 — Read slowly during fast play
+
+The player uses longer caption reading time while the world runs faster. Actual hearing and NPC behavior use the world rule. Captions remain readable, obsolete transient output is handled through the established backlog policy, and permitted history stays available. Presentation pause does not suspend a danger.
+
+### AS-J06 — Arrive during a background agreement
+
+Two NPCs have discussed a task and one has asked a question. The human arrives before the answer. The completed exchange remains true; the answer and final commitment remain open. The human can participate through ordinary actions. Earlier gist is explained as meaning, not reconstructed verbatim speech.
+
+### AS-J07 — One participant has a secret
+
+A participant knows why a delivery is late; another does not. Common coordination sees disclosed facts and choices. The informed character may reveal, conceal or lie according to actual agency. The uninformed person does not act on the secret merely because a shared process could have read it.
+
+### AS-J08 — Silence does not sign an agreement
+
+A human is asked to contribute materials. They read the message, hide the panel and later disconnect. None of those actions supplies assent. The NPCs can react to what they actually observed, but the materials remain where the supported ownership rules put them. An existing separately accepted promise is not erased.
+
+### AS-J09 — Exact words matter later
+
+An oath is made in an otherwise coarse scene. Its exact required wording is established at the occurrence. One listener hears only part. A later dispute retrieves the actual allowed words and preserves the partial listener's uncertainty. The system does not invent an oath after the fact.
+
+### AS-J10 — Speech is interrupted or heard late
+
+In the future timed-speech stage, a listener arrives halfway through an utterance and the speaker is then interrupted. Only the delivered, perceptible phrases enter that listener's evidence. The speaker's sent text distinguishes intended content from the actually delivered portion. This case does not pass under the initial instantaneous-speech stage.
+
+### AS-J11 — A noisy player tries to consume everyone's attention
+
+Repeated equivalent disturbance is handled as a continuing situation, not unlimited model work. A new real attack remains effective and perceptible under the rules. Other ordinary conversations retain service within the supported envelope. Any refused new activity is communicated honestly.
+
+### AS-J12 — Two audiences hear different things
+
+One player stands beside the speaker, another behind a supported obstruction and a third is absent. Their captions, knowledge and later recollections differ. A common source or scene record never becomes a shared full transcript. Reconnect and opening history do not expand what was heard.
+
+### AS-J13 — A scene splits during an emergency
+
+Some people evacuate, a guard stays, and two others continue a permitted private discussion. Existing participants and completed consequences remain; new groups do not receive one another's earlier private exchanges. Returning later does not replay the emergency or duplicate a promise.
+
+### AS-J14 — An unusual world changes the sense
+
+A supported touch-based participant receives contact evidence rather than sound-based names and captions. The same distinction between occurrence, permitted observation, attention and choice remains useful. A new telepathic or shared-mind mechanic needs its separately supported disclosure policy; changing a label does not create access to private minds.
+
+## 13. Proposed delivery stages
+
+**Stage 1: stable focus and a truthful busy scene.** Keep current exact-speech semantics. Add the supported aggregate vocal/visual activity, individual exceptions, deliberate focus, interruption and accessible presentation. Qualify AS-J01–05, AS-J11–12 and physical effects outside focus. This must be useful in ordinary play before it is advertised as crowd scalability.
+
+**Stage 2: a bounded character-led social scene.** Add one task/promise discussion family with completed exchanges, independently owned decisions, gist and exact exceptions. Qualify midscene arrival, secrets, silence, actual participation and scene split/merge. Its first unattended consumer is the continuing-lives feature; neither feature grants unsupported barter or coercion.
+
+**Stage 3: actual timed speech.** Introduce phrase delivery, authored speaking intervals, meaningful overlap, interruption and late-listening rules as an explicit change through hearing/time owners. Qualify all AS-J10 cases, movement, fast speeds, draft cancellation and accessibility. Current committed histories remain valid under their original evidence contract.
+
+**Stage 4: measured crowded operation.** Expand supported scene and crowd families only after mixed human/NPC, long-history, mass-arrival, noise-abuse and funding tests. Assess legibility, continuity, meaningful participation and complete cost, not just the number of rendered bodies. Broader combat crowds, concerts, media voice and special senses retain their own consumer requirements.
+
+## 14. Acceptance and evaluation
+
+Observe whether players can follow a conversation, understand the basis for an interruption, discover missed permitted information, identify what remains unknown and make a meaningful next choice. Assess text-only, keyboard, enlarged text, varied reading pace and non-audio use. Do not equate a guideline checklist with actual accessibility qualification.
+
+For NPCs, review the source evidence, choices, effects and later accounts. Require no secret leakage, no invented human participation, coherent exact/gist distinctions, stable attention and preserved bodily effects. A pleasant generated conversation is insufficient if the participants were elsewhere or the promised goods do not exist.
+
+Measure complete work for dispersed listeners, a crowded room, one public speaker, many competing sources, a noisy adversary, midscene arrival and old histories. Separate source preparation, required hearing/effect processing, new model decisions, memory work, delivery and presentation. Published capacity must identify the actual permitted activities and hardware/service conditions. Do not report a voice-rendering limit or an idle-crowd demo as a social simulation capacity.
+
+Compare stable focus against a deliberately naive frequently switching baseline for player comprehension and missed important events. Compare individually generated ambient dialogue against supported gist/aggregate activity for complete cost and perceived continuity. These are proposed experiments; no saving or quality result is claimed before they run.
