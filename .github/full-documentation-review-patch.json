@@ -1,0 +1,103 @@
+{
+  "message": "docs: reconcile architecture and completed playable-week integration",
+  "files": [
+    {
+      "path": "docs/engine-and-world-boundaries.md",
+      "before_sha256": "26e0465ce92d29a412bb0f30111985bbba4aafabb6f9a25411202ea6fe84b4f7",
+      "replacements": [
+        {
+          "old": "Its current spatial substrate is an authoritative two-dimensional ground plane with a three-dimensional presentation.",
+          "new": "Its current spatial substrate is authoritative XYZ with body/support-aware sensing, reach and movement, plus bounded navigation over supported planar patches. Height is part of simulation, not presentation alone. [Spatial world](spatial-world.md) owns the supported geometry, frames and query limitations."
+        },
+        {
+          "old": "The [agency specification](agent-agency.md) already permits empty or repeated decision operations and persistent pursuit. Use it; do not preserve the current single `talk`/`act`/`think` response shape as a universal engine limit. Provider JSON constraints are adapter concerns, not the world's ontology.",
+          "new": "The [agency specification](agent-agency.md) and current native response contract support a bounded `operations` array, including an empty response and repeated supported operation kinds. Preserve that one admission/receipt owner; do not reintroduce a single `talk`/`act`/`think` slot or treat the current operation-count bound as a universal engine ontology. Provider JSON constraints remain adapter concerns; native capability, dependency and authority checks remain mandatory."
+        }
+      ],
+      "after_sha256": "5c895a6986d3ae21e73c81f14f9bcdde0f5e74ca14d1939e6fd3ba739f3f1834"
+    },
+    {
+      "path": ".agents/skills/full-documentation-review/SKILL.md",
+      "before_sha256": "fe4a28f1edc2e55424a03b2535a26e5597b2791c0caf31f0b1e7aa240514840d",
+      "replacements": [
+        {
+          "old": "Follow the sole [development save policy](../../../AGENTS.md#development-save-policy) without copying or weakening it. Obsolete development-save compatibility work is not a requirement; current-format integrity and live-definition changes retain their separate obligations.",
+          "new": "Follow the sole [development compatibility policy](../../../AGENTS.md#development-save-policy), including its code/protocol scope, without copying or weakening it. Obsolete compatibility work is not a requirement; current-format integrity and live-definition changes retain their separate obligations."
+        }
+      ],
+      "after_sha256": "6bc44d28cc29b8e46fc5cdded91bc1495481a8d0476c763a99ead70cb8a6bc69"
+    },
+    {
+      "path": "docs/maintainers/next-playable-week.md",
+      "before_sha256": "0b52f0cccfcfd4195bac1684761b40c3d02348f341a2978554f839dd6cd27425",
+      "replacements": [
+        {
+          "old": "Engineer 5’s [implementation plan]",
+          "new": "**Current integration:** the [local-main reconciliation](#local-branch-integration) below supersedes the independent engineering cutoffs. At reviewed main `b528af6`, Engineers 1–4 and the streaming/memory work are present together. Current-format validation uses the combined native-continuation contract, not Engineer 2's earlier marker-3 handoff. The later integration checks pass TypeScript/build and reject unsupported stock-spending budgets. Independent-branch failures and consumption tables below remain dated evidence, not present merge prerequisites. PW06 and each unmet player/provider/capacity criterion remain open. [Next-priority assignments](next-priority-batch.md) are separately proposed follow-ons; they do not repeat delivered PW work or inherit a new spending grant.\n\nEngineer 5’s [implementation plan]"
+        },
+        {
+          "old": "Extend the existing strict manifest with family references/pins and load resolution; do not imply recipe registration already exists.",
+          "new": "Extend the existing strict manifest with family references/pins and load resolution; this delivered recipe-family seam does not imply general module registration."
+        },
+        {
+          "old": "Engineer 2 early handoffs:",
+          "new": "**Historical Engineer 2 handoffs, before local-main reconciliation:**"
+        },
+        {
+          "old": "Current `pnpm typecheck` and `pnpm build` each stop on three shared inventory destination-contract errors;",
+          "new": "At that independent Engineer 3 cutoff, `pnpm typecheck` and `pnpm build` each stopped on three shared inventory destination-contract errors;"
+        },
+        {
+          "old": "Engineer 2's read-only integration probe of Engineer 3's unconsumed activity candidate found that an admitted watched activity can move ten stock units despite a selected one-unit spending bound, while recording zero units spent. The saved result still passes current validation. Fix admission to the supported spending commands or enforce the remaining unit budget atomically with the native transfer receipt, then rerun the positive and refusal cases before publishing the dependency. Engineer 3 owns this fix; its current conflict stop is preserved. This finding blocks consumption of those activity commits and does not describe current Engineer 2 runtime behavior.",
+          "new": "**Resolved integration finding:** Engineer 2's earlier read-only probe found an unconsumed activity candidate that moved ten stock units under a selected one-unit spending bound while recording zero spending. The [combined native checks](../verification/camp-life.md#local-main-reconciliation) now reject that unsupported budget consumer during structure admission, before transfer, and verify one-unit fire spending plus exact current-save continuation. This is no longer a merge-blocking task; preserve the historical failure and keep the broader PW10/PW06 qualification above open."
+        }
+      ],
+      "after_sha256": "dd83fbae2a5c5b3b3163e669c6674e284a62132dc911484defcd3755b7cf72b3"
+    },
+    {
+      "path": "docs/projects/next-playable-week/memory-retrieval.md",
+      "before_sha256": "43fddcec9b4fb24199ece77c99782745d66d1bebefeadda047b91209438deb3a",
+      "replacements": [
+        {
+          "old": "**Proposed implementation brief.**",
+          "new": "**Delivered implementation brief; broader scale qualification remains open.** [PW09](../../maintainers/next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) and the [actual PostgreSQL evidence](../../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval) record the completed Unicode/cache work and its measured limits. The sequence below preserves the original design and acceptance, not a new unimplemented proposal or instruction to redo it.\n\n**Original allocation:**"
+        },
+        {
+          "old": "## Outcome and current gaps",
+          "new": "## Outcome and original implementation gaps"
+        },
+        {
+          "old": "Current source at local main `6664144a` provides",
+          "new": "The original source audit at local main `6664144a` identified"
+        },
+        {
+          "old": "| Owner and current path",
+          "new": "| Owner and path at planning baseline"
+        }
+      ],
+      "after_sha256": "739fe4302503333558b618d07ef9606a8ba0f0266071a502825674e038437739"
+    },
+    {
+      "path": "docs/documentation-changelog.md",
+      "before_sha256": "101419d98bd1a38de6ea08e0b9999adb19f7fe343ba52e5f092925bd8be56aa2",
+      "replacements": [
+        {
+          "old": "The monthly $50 reservation clamp remains a real NP01 repair, but LA182 and Architecture already agree about it.",
+          "new": "The monthly $50 reservation clamp remains a real NP01 repair, but LA182 and Architecture already agree about it. Restored still-valid boundary corrections for current XYZ geometry and multi-operation replies without overwriting newer body-policy work. Foregrounded the combined playable-week integration, retired its repaired stock-spending blocker, and labeled the completed memory brief's original gap analysis as historical. The reusable review skill now follows the root compatibility rule's full code/protocol scope."
+        }
+      ],
+      "after_sha256": "2abf22cdd2590131d225b660b16b1e9949e787c9b5e43612d8197e3ceff883d4"
+    },
+    {
+      "path": "docs/projects/full-documentation-review.md",
+      "before_sha256": "23a34f730385f0c6263bd83c45bdbfd45a677196f8e9ce074f65d585f0e61637",
+      "replacements": [
+        {
+          "old": "The complete general TODO, action-experience tracker, maintainer navigation and new-priority tracker have been read at this base; whole-repository coverage is still in progress.",
+          "new": "The complete general TODO, action-experience and playable-week trackers, maintainer navigation, new-priority tracker/specification/design/prompts, engine/world boundary, memory implementation brief, local integration plan and associated data/camp evidence have been read at this base; whole-repository coverage is still in progress."
+        }
+      ],
+      "after_sha256": "255f8d3b0635efe7df8889813fca80a6cd13f0c591e8ef7b77681fbdd3d62b52"
+    }
+  ]
+}
