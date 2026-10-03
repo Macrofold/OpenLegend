@@ -1,5 +1,9 @@
 # Embodied survival: technical design
 
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The body, cognition, weapon and meal integrations are delivered; remaining scheduling, interface and population checks stay with their focused owners. | 2026-10-03   |
+
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
 
 ## Baseline, scope and risk
@@ -168,7 +172,7 @@ Attacking once satisfies the first demonstration only when it arose from Ada's u
 
 ## Decisions, limitations and remaining choices
 
-- **Requested behavior reversal:** native berry seeking/eating and the supplied survival/social goal are removed in the proposed target. This trades inexpensive automatic feeding when food is available for actor choice and dependence on available cognition. Physical consequences remain native.
+- **Requested behavior reversal:** native berry seeking/eating and the supplied survival/social goal were removed by the accepted implementation. This trades inexpensive automatic feeding when food is available for actor choice and dependence on available cognition. Physical consequences remain native.
 - **Confirmed policy:** preserve NPC continuity/ghosts and difficult revival; no assured return is the truthful survival framing. BW15 is not implemented by this task.
 - **Recommended approach:** no initial formal goal; rich authored identity and factual body knowledge instead. Explicit desires and knowledge are authored conditions, while chosen operational goals and methods emerge during play.
 - **Recommended starter/tuning:** lean camp, initially hungry Ada, proposed knife and band/rearm values. The owner accepted this design; empirical balance qualification remains, and exact values are not measured optima.
