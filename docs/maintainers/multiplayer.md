@@ -13,7 +13,7 @@ Later regional authority/transfer is D6, not another MP implementation here. Ope
 ## Execution notes — September 26, 2026
 
 Implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).
-MP01/MP04 and their ten foundation slices are **implemented and locally qualified**. Required CI, hostile-client/hosted qualification and broader MP02/MP03 remain open.
+MP01/MP04 and their ten foundation slices are **implemented and locally qualified**. Required CI, hostile-client/hosted qualification and MP02 remain open; MP03 was subsequently delivered in the September 28 entry/maintenance slice below.
 
 - `authority.ts` adds consumed account/session/grant/control/exit records outside gameplay
   capture, exact issuer/subject operator mapping, immutable scope and publication fences.
@@ -70,7 +70,7 @@ Completed October 3, 2026 after correcting mandatory Resume and passing the [upd
 
 Mike selected Auth0 as the world login service on October 1, 2026 ([D05](../../archive/05-project/open-decisions.md)). Account setup and dashboard configuration are operator work outside the repository; these tasks cover repository changes and the production configuration they depend on.
 
-- [ ] **IDP01 — Local sign-in with Auth0.** [Plan](../projects/auth0-sign-in.md). Code delivered October 2, 2026 ([AU09](../limits/multiplayer.md#au09)); all accepted/refused configuration cases checked directly. The welcome screen now presents sign-in as normal entry, with distinct access and connection recovery and Change account to reopen the provider login form; [focused client evidence](../verification/multiplayer-entry-maintenance.md#login-entry-screen--october-2-2026) uses simulated API outcomes. Remaining: the live two-account Auth0 run in the plan. Accept an HTTP loopback game address with an HTTPS login service, base `Secure` cookies on the actual public address, and normalize issuer spelling. Exit: the plan's completion criteria, including two real Auth0 accounts through invite enrollment at a loopback address.
+- [ ] **IDP01 — Local sign-in with Auth0.** [Plan](../projects/auth0-sign-in.md). Code delivered October 2, 2026 ([AU09](../limits/multiplayer.md#au09)); all accepted/refused configuration cases checked directly. The welcome screen now presents sign-in as normal entry, with distinct access and connection recovery and Change account to reopen the provider login form; [focused client evidence](../verification/multiplayer-entry-maintenance.md#login-entry-screen--october-2-2026) uses simulated API outcomes. A real single-account Auth0 sign-in/control and scoped local AI integration now pass in the [October 3 evidence](../verification/macrofold-worker.md#scoped-local-authoring-completion--october-3-2026). Remaining: the complete live two-account Auth0 invite/access-removal run in the plan. Accept an HTTP loopback game address with an HTTPS login service, base `Secure` cookies on the actual public address, and normalize issuer spelling. Exit: the plan's completion criteria, including two real Auth0 accounts through invite enrollment at a loopback address.
 - [ ] **IDP02 — Production login service.** Before real players: a separate production Auth0 tenant whose own login domain (Auth0 custom domain) is the permanent issuer, a production application with the hosted HTTPS callback, the chosen social connections (Google, GitHub; Discord through the Auth0 marketplace connection or Discord's standard OIDC configuration) and the owner binding for the production world. Depends on hosting (D05). Exit: hosted sign-in and invite enrollment work through the custom domain, and the issuer is never changed after real accounts exist.
 - [ ] **IDP03 — Sign out of the login service too.** Sign out currently ends only the game session; Auth0 keeps its own session, so signing in again on a shared computer silently returns to the same account. The refused-access screen’s Change account requests a fresh login form but does not end the provider session. End the provider session through its OIDC logout endpoint with an allowed post-logout address. Exit: after Sign out, the next sign-in asks for credentials. Before hosted release.
 
@@ -93,7 +93,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 - [x] Audit all single-principal assumptions, including `local-player`, `controlledEntityId`, preferences, milestones, tool scopes and projection caches. Record exact current bases and affected callers.
 - [x] Implement the external authentication adapter and server-owned session lifecycle with explicit local-only mode; bind trusted issuer/subject to account and current world/actor grants. Use maintained authentication code, not custom cryptography.
-- [x] Preserve existing world/profile identities through explicit operator linkage and in-place migration; reject first-login/email-name takeover and local-creator fallback.
+- [x] Bind current world/profile identities only through explicit operator linkage; reject first-login/email-name takeover and local-creator fallback. Historical migration wording is superseded by the [development compatibility policy](../../AGENTS.md#development-save-policy); it does not authorize preserving prior code or storage formats.
 
 **Dependencies:** current data/control repositories. **Exit:** two distinct verified accounts receive only their authorized world/actor choices; invalid/revoked sessions and malformed scope cannot enter shared routes.
 
@@ -123,7 +123,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 ### MP01.5 — Restart, restore and grant revocation
 
-- [x] Integrate consumed records with existing migrations and recovery; exclude current grants/session/control counters from gameplay rewind.
+- [x] Integrate current authority records with initialization and recovery; exclude current grants/session/control counters from gameplay rewind. Current-format identity and recovery integrity remain required without legacy migration support.
 - [x] Fence commands, provider proposals, cursors and views on restore/control change; reconcile membership/session revocation and rebuild only current scoped caches.
 - [x] Exercise failure before/after control and action commits, lost acknowledgements and restart with pending private work. Do not replay paid work or create new allowance per tab.
 

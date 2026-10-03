@@ -540,15 +540,13 @@ Original recommendation: **Review**.
 
 ## LA232
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — bounded urgent-context refresh · Restrictiveness: Safe.**
 
-A running character response is considered for interruption when new evidence reaches importance or urgency 8.
+A running character response is eligible for one context refresh only when newly perceived evidence reaches **both importance 8 and urgency 8**. These are current server constants, not installed configurable world fields. The original attempt watermark is retained so the refresh includes all qualifying intervening evidence; cancellation, shutdown and the one-refresh bound still apply.
 
-**Reason / tradeoff:** Review whether this threshold identifies events important enough to cancel the response without causing excessive repeated model work.
+**Reason / tradeoff:** Reconsider genuinely urgent new circumstances without restarting on every important memory or repeatedly cancelling paid work. This is an explicitly bounded new-evidence decision, not an automatic retry of a provider failure. Preserve distinct attempt identities, reservations and current disclosure. Revisit the values or their policy ownership only with an explicit decision and measured behavior/cost evidence.
 
-[Implementation starting point](../../apps/server/src/ai-director.ts).
-
-Original recommendation: **Review**.
+[Implementation](../../apps/server/src/ai-director.ts) · [Accepted intake contract](../maintainers/events-perception-and-reactions.md).
 
 ## LA236
 
