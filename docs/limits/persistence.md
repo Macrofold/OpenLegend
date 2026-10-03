@@ -80,7 +80,7 @@ PostgreSQL connection/read statements have a 5-second timeout; write transaction
 
 **Changed — current checkpoint path · Restrictiveness: Too liberal.**
 
-No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the former 64 MiB ceiling remains only on legacy JSON reading (SV14).
+No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the separate 64 MiB guard applies to non-streamed payload decoding, which must still pass current format/state validation (SV14).
 
 **Reason / tradeoff:** Keep complete user-selected saves; there is currently no overall disk quota. Backup separately refuses more than 10,000 retained packages (SV13).
 
@@ -202,11 +202,11 @@ Original recommendation: **Keep**.
 
 ## SV14
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected at `bdaecaac` · Restrictiveness: Safe.**
 
-**Older JSON backups:** 64 MiB for legacy backup restore/import. I extended this guard to the operational tools; the legacy gameplay-save guard already existed.
+**Non-streamed payload guard:** 64 MiB. `SaveFiles` bounds whole-JSON reads/integrity checks separately from streamed checkpoint allowances. This is not a supported legacy restore/import path: current format/state validation still applies, and the preceding-layout reader and SQLite importer were removed.
 
-**Reason / tradeoff:** Legacy formats parse a whole JSON document; avoid unbounded legacy allocations.
+**Reason / tradeoff:** Bound whole-document allocation without claiming backwards compatibility. The original older-backup recommendation is historical; [SB15](#sb15) and the [root policy](../../AGENTS.md#development-save-policy) control current support.
 
 ## SV15
 
@@ -306,11 +306,11 @@ The save worker starts with the server and is not automatically restarted after 
 
 ## BW04
 
-**Reported · Restrictiveness: Medium.**
+**Historical — unused conversion code remains; not a supported feature.**
 
-Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
+**Historical conversion envelope, not supported loading behavior.** The [feeling](../../packages/domain/src/appraisal-migration.ts) and [object](../../packages/domain/src/object-migration.ts) converters remain exported but have no repository callers at `bdaecaac`. They were limited to known fear/discomfort decay and understood equipment/packing bindings. Current-model validation remains required; a separate residual startup storage-conversion path is still present and is not an authorized compatibility feature. [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths) owns retirement of these residual helpers rather than extending or reconnecting them.
 
-**Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+**Historical reason / current tradeoff:** The old conversion refused unknown semantics instead of guessing. That does not override the present no-compatibility rule or authorize migration work.
 
 ## SV17
 
@@ -350,7 +350,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Only the current physical format is supported.** Database format 4, `records-jsonl-2` and save format `development-2026-10-02-native-continuation` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. It replaces the preceding format-3 gate without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
 
-**Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
+**Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That preceding-format reader was removed with the history layout change; it is not a promised support window. The separate snapshot/journal fallback still present in `store.ts` is a residual policy violation tracked in [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths), not evidence that older format-3 checkpoints are supported. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 
 [Implementation](../../apps/server/src/checkpoint.ts). Normal startup's maintained-count check and explicit full-audit boundary are documented in [save/load](../save-and-load.md#current-history-capture-boundary).
 
@@ -370,7 +370,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
 
-**Operational backup includes every retained save and requires current-format storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a current-format world head: backup opens read-only and refuses incompatible development storage without conversion or deletion.
+**Operational backup includes every retained save and requires current-format storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a current-format world head: backup opens read-only and refuses incompatible development storage without conversion or deletion. The current error still suggests starting a compatible older server, an obsolete instruction tracked by [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths).
 
 **Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots; partial/selective backup is not current behavior.
 
