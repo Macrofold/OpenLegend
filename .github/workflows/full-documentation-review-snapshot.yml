@@ -1,0 +1,36 @@
+name: Documentation review source snapshot
+on:
+  push:
+    branches: [docs/full-documentation-review-2026-10-02]
+    paths: [.github/workflows/full-documentation-review-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  tracked-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: adc46000a2db993d4fff5bc224e4d14140a7eb23
+          path: review
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: b528af6d126a9ac500dbe5574642dea87c472c40
+          path: upstream
+          persist-credentials: false
+      - name: Package tracked sources and exact revisions
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/documentation-review"
+          for scope in review upstream; do
+            git -C "$scope" archive --format=tar.gz HEAD > "$RUNNER_TEMP/documentation-review/$scope.tar.gz"
+            git -C "$scope" rev-parse HEAD > "$RUNNER_TEMP/documentation-review/$scope-revision.txt"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlegend-documentation-review-resume
+          path: ${{ runner.temp }}/documentation-review/
+          retention-days: 1
+          if-no-files-found: error
