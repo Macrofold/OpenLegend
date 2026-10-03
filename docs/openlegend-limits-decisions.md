@@ -26,7 +26,13 @@ Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D
 
 Current [action records and learned activities](action-experience.md): [AEL01–AEL08](limits/action-experience.md) record finite representation, projection, hydration, candidate, storage, learning and retrieval limits. [AE01–AE10](maintainers/action-experience.md) and [evidence](verification/action-experience.md) record delivery and qualification; no unlimited execution is implied.
 
-Product-scalability targets: [PS-L01–PS-L18](limits/product-scalability.md) record proposed operating constraints and unselected values; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
+Product-scalability targets: [PS-L01–PS-L22](limits/product-scalability.md) record proposed operating constraints and unselected values, including the researched continuing-life and attention/scene scopes; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
+
+Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC-L05](limits/world-creation.md) inventory the local starting scope, unqualified reference population, supported families and preparation boundaries. ND01, INV-4.10 and EWF12 retain delivery routing; shared invention and participation limits remain controlling.
+
+Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L06](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, work growth and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
+
+Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
 
 ## Original audit entries
 

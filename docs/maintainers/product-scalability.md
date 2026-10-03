@@ -24,16 +24,20 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## PS02 — One interruptible life
 
+**Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) first improves one resident's follow-through, independent motives and useful interaction in the accepted personal creative loop. Full unattended life is later scope. Apply the [game-first sequence and playability gates](../projects/five-product-feature-specs.md#game-first-delivery-sequence); no delivered agency work is reset.
+
 **Owners:** agency, native action/resource owners, perception/reaction intake, simulation time. **Depends on:** current admitted work and scoped event foundations; reconcile their actual implemented state rather than duplicate them.
 
 - [ ] Retain a chosen activity and supported continuation/interruption conditions through the existing goal/plan owner.
-- [ ] Demonstrate roof progress interrupted by a legitimately heard alarm; no omniscient reaction to an unseen arrival or speculative completion beyond the alarm.
+- [ ] Demonstrate a useful supported activity interrupted by a legitimately heard alarm, without omniscient reaction or speculative completion beyond it. Gathering or finite crafting can establish the first personal contribution; retain roof progress as a later construction case when that family is supported.
 - [ ] Exercise depletion, missing resource, geometry change, damage, cancellation, restart, and simultaneous boundaries.
 - [ ] Qualify no per-step generation without silently restoring a hardcoded alternative personality or invalidating current Jev-only choices.
 
-**Exit:** one believable continuing activity reacts correctly and economically to new evidence, with owned records and measured complete-path behavior.
+**Exit:** one believable continuing activity reacts correctly and economically to new evidence, with owned records and measured complete-path behavior. In the playable loop it reduces repeated supervision and exposes a resident's meaningful priorities; an accurate background log alone does not satisfy the experience.
 
 ## PS03 — A bounded unattended community
+
+**Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) retains quiet initiative, funding, long-return scenarios and later stages. Offer unattended service after a smaller active world is compelling and continued absence has a concrete player benefit. PS-D06 and PS05/PS06 retain funding and shared-operation authority.
 
 **Owners:** activity families, agency/cognition, work admission, world policy. **Depends on:** PS02.
 
@@ -46,7 +50,9 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## PS04 — Coherent scenes and limited attention
 
-**Owners:** memory, perception, hearing, conversations, model routing. **Depends on:** scoped history/commitment foundations; PS03 supplies first background consumer.
+**Owners:** memory, perception, hearing, conversations, model routing. **Depends on:** scoped history/commitment foundations. PS03 supplies an unattended consumer, but ordinary local conversation and small-group scenes do not depend on offering unattended service.
+
+**Product design proposal:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) first improves ordinary one-resident conversation and useful interruptions. Larger task/promise scenes, aggregate crowds and timed speech must earn their additional burden through the [playability gates](../projects/five-product-feature-specs.md#playability-gates). Current instantaneous speech and caption clocks remain authoritative; full PS04 scope and runtime acceptance remain open.
 
 - [ ] Add aggregate sensory evidence, distinguishable sources, stable focus, and justified interruptions through the existing owners.
 - [ ] Define actual overlapping speech or an explicit alternate rule; never use caption lifetime as physical sound duration.

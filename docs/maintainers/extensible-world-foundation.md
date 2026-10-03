@@ -4,6 +4,8 @@
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
+**Proposed ND03 consumer:** [authored stats and consequential checks](../projects/authored-stats-feature-spec.md) uses EWF02/EWF04 and existing action/state owners only when competence improves a real playable activity. Predictable effects are valid; the finite practical-work check remains an optional candidate. [ST limits](../limits/authored-stats.md) retain its scope and tuning. This revised product recommendation does not reopen delivered typed state or complete consumer qualification.
+
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
 
 ## Ownership and execution rules
@@ -251,6 +253,8 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 ## EWF12 — Runtime-to-world-agent authoring and explanation bridge
 
 **Dependencies:** a real first supported module/family and the relevant INV-1/2/4 authoring operations. It can begin with native descriptors before full template composition. **Contract:** runtime §13 authoring boundary; world-agent/workshop and UI owners define the user workflow.
+
+**Proposed product consumer:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) develops ND01's complete creation journey and WC-J acceptance cases. It reuses this bridge and INV-4.10; its researched product detail does not complete these interfaces, approve new host capabilities or add a second installer.
 
 - [ ] Supply the existing world-agent tools with bounded, permission-filtered support discovery: installed host interfaces, reusable constructs, supported ports, required bindings, effect/lifetime domains, defaults, examples, and known unsupported capabilities. Do not provide an omniscient private registry dump.
 - [ ] Expose validation/projection results that let the existing draft service relate a requested behavior to exact bindings, assumptions, affected state, required decisions, and current support. The technical artifact and validation result are authoritative; the chat is not a second schema store.

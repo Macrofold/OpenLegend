@@ -1,5 +1,21 @@
 # Documentation changelog
 
+## 2026-10-03 — Put playable experience before five-system expansion
+
+Mike requested a substantive critique of the [five product proposals](projects/five-product-feature-specs.md), prioritizing a fun, playable game over mechanical completeness. The revised package anchors delivery to the accepted one-map, one-live-NPC creative invention/hunting loop, preserves already delivered work, and adds explicit playability gates and source-backed reasoning. Initial autonomy and readable conversation support that loop; full unattended communities, crowd complexity and broader creation follow demonstrated player value.
+
+The review changes proposed minimums: six residents become a later creation hypothesis; useful expressive shelter and drying no longer require a new wet-tinder obstacle; generalized checks are conditional, with predictable competence effects valid and the roof/2d6 model retained as an optional worked candidate. The proposed check's whole-job favorable/adverse history is replaced by one meaningful decisive step and its actual conditions, preserving real work and one recorded outcome. These changes reduce setup, maintenance and bookkeeping while retaining the ambitious authored-world direction, consequential choices and later detailed designs.
+
+The five specs, their WC/SH/ST/PS limits and affected ND/PS/AC/EWF routing are reconciled. No runtime behavior, current permissions, accepted personal pause rules, development-save policy or implementation checkbox changes. Documentation and research cannot establish enjoyment; current-format, live-AI and complete playable acceptance remain with their existing owners.
+
+## 2026-10-03 — Five researched product and behavior proposals
+
+The [five-specification package](projects/five-product-feature-specs.md), based on `docs/design-needs-register` at `1627d51c79840ce8b5de24627bd2f552e42e97e9`, develops the requested priorities in order: continuing NPC lives, attention/crowds/scenes, world creation from a short premise, editable shelters/rain and world-authored stats/checks. Each includes concrete behavior, real player/NPC scenarios, uncertainty and failure, incentives and operating economics, a bounded first release and cited primary-source research with explicit limits.
+
+Recommendations include continuing chosen finite work without constant deliberation; truthful observer-specific attention and separately staged timed speech; a supported reviewable local world opening; reusable light shelter parts with staged moisture/recovery; and optional uncertain practical work with real outcomes and honest attempt continuity. These are proposed behavior and tuning, not newly accepted world laws or claims of implementation. Exact first-world population, geometry, drying, timing and capacity still require the documented qualification.
+
+Existing PS/ND/INV/EWF/action/state/object/spatial owners retain delivery and checkbox states. PS-L19–PS-L22 and the new WC/SH/ST inventories retain scope and economic choices, including explicit no-new-cap decisions. The package links current contracts and records its documentation-only review. Mike explicitly requested product design before technical design, so no paired technical plans, classes, implementation assignments or runtime changes are added. No game, browser or paid-provider qualification is claimed by this work.
+
 ## 2026-10-02 — Fresh five-assignment priority batch
 
 The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/next-priority-batch-feature-spec.md) and [technical design](projects/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.
