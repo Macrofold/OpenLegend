@@ -104,6 +104,8 @@ Both methods use the same appropriate patch materials and yield the same final s
 
 The staged result is a real unfinished work state, not a second copy of the cloth. Finishing does not require another uncertainty check under unchanged supported conditions. If the person leaves, preserve the staged material and release only the permissions/holds that the work policy says may end; no indefinite reservation of someone else's inventory is implied.
 
+Choosing the rushed attempt initially authorizes its first T, not an undisclosed extra T. Finishing requires a new chosen action or an already accepted contingency that includes it. A human's silence at the result screen is not consent to more work. The expected-time comparison below assumes the actor deliberately finishes partial results.
+
 A new event can invalidate any method: the target is removed, a needed support fails or a required tool becomes unavailable. Reconcile that event through the action owner. A successful check does not guarantee completion after prerequisites cease to hold, and a technical fault does not become a low dice result.
 
 ### 5.4 Why the careful alternative matters
@@ -162,6 +164,8 @@ A new attempt can be legitimate after a setback when the actor deliberately spen
 
 Some actions warrant retries only after new information, equipment or a changed situation. The authored family must say so, and the player should have a useful explanation. Do not impose one arbitrary global cooldown on every kind of uncertainty, or let a renamed target evade a family's actual attempt boundary.
 
+Where the existing activity family supports it, an actor can choose a bounded physical retry plan with a goal, time/material allowance and interruption conditions. Each attempt remains actual work and uses the same result rules; it need not require a fresh model call merely to repeat a previously chosen method. This is distinct from retrying an uncertain paid provider operation, which remains governed by the existing no-automatic-paid-retry policy.
+
 ### 7.3 Save, restoration and rule changes
 
 Same-version save/load and reconnect preserve resolved results and current attempt/work state. Loading a completed attempt does not roll it again. Explicitly rewinding to a point before an attempt follows the existing world's rewind policy; this specification does not promise that an authorized timeline rewind cannot change future history. It still cannot rewind external spending, permissions or private-data revocation.
@@ -209,6 +213,8 @@ The primary feedback is what changed: the patch is secure, the material is stage
 For a human who wants detail, provide the permitted competence, applicable influences, selected rule, roll and outcome band in an expandable readable explanation. Keep arithmetic optional, keyboard accessible and available after transient feedback ends. Color, animation speed, sound and hover cannot be the only ways to understand success or a remaining obligation.
 
 Do not force an extra modal for every roll or interrupt unrelated conversation with a full character sheet. A clearly chosen method can proceed and report its result through existing action/status surfaces. Longer-term comparisons and creator rule inspection can use the established Work/inspection surface.
+
+Dice animation, a hidden tab and reviewing the result do not create a private world pause or change the already resolved event. Make the result readable afterward through permitted history, with animation reduction/skip available as presentation choices. New actions and shared time continue under their existing rules.
 
 ### 9.2 Exact odds when the character is allowed to know them
 
@@ -291,3 +297,87 @@ Observe which choices players actually make and why. Excessively forgiving failu
 Fair independent dice can produce streaks. The reference rule does not secretly modify outcomes after success or failure, even to make the sequence feel fairer. If a future world offers an explicit assistance/luck policy, it needs a disclosed scope, interaction with every affected participant and a separate probability/economic review.
 
 A paid model tier, a subscription, a new device, repeated reloads or attention changes must not buy a better random outcome. Funding may support more legitimate optional activity, as described by the continuing-lives policy, but equal admitted tests use the same world rule. A service problem is never explained as a character's bad luck.
+
+## 12. Concrete scenarios and expected behavior
+
+### ST-J01 — An ordinary task remains ordinary
+
+A practiced resident eats available food or performs an established uncomplicated preparation. The new competence definition does not insert a roll. Actual prerequisites and resources still apply. The player encounters uncertainty when choosing a specifically uncertain method, not because every daily action has been reclassified as a skill challenge.
+
+### ST-J02 — A novice chooses a careful repair
+
+The player can see that the careful patch takes longer than a clean rushed result but avoids the reference method's setbacks when its prerequisites remain valid. They choose it, spend real time and materials and receive the ordinary patch. No hidden fumble is added to manufacture tension.
+
+### ST-J03 — An expert makes a rushed patch
+
+An expert with qualifying equipment and help reaches modifier +5. The declared curve allows clean or finishing-required outcomes, with no setback. The result stays within actual supported repair and material use. Even the best roll cannot extend the roof beyond the patch's physical area.
+
+### ST-J04 — Partial success offers a real continuation
+
+The first T produces staged material and a finishing requirement. The player can inspect it, deliberately finish, leave it for later or choose a supported dismantling/revision. The roof does not receive completed repair yet, and the same cloth is not also available as an intact loose item. Silence does not authorize the extra T.
+
+### ST-J05 — A setback can be retried honestly
+
+After T, the rushed attempt has not completed the patch. Unconsumed supplies remain and the existing roof reflects any real intervening rain or damage. The player can spend another real attempt, choose careful work or change circumstances. Rephrasing the original action and refreshing its result return the same recorded setback.
+
+### ST-J06 — A helper leaves
+
+The helper begins but departs before the fastening stage ends. The favorable help condition no longer qualifies for that stage. If the task remains possible it resolves under the authored temporal rule; otherwise it interrupts. The principal receives only the evidence they may know, and the game does not invent a replacement helper.
+
+### ST-J07 — Ten names describe one advantage
+
+The player calls a tool blessed, masterwork, precision-made and lucky without a corresponding admitted definition. None adds a bonus. Multiple valid descriptions of the same source still contribute once. A genuine different method or supported source can change the situation through the published category rules.
+
+### ST-J08 — A missing prerequisite is not bad luck
+
+The selected patch needs reachable material and a supported attachment. If either is absent, the action is unavailable or interrupted under its rule. A maximum roll cannot conjure cloth or anchor it to nothing. A failed provider request is similarly reported as service failure, never as a low result.
+
+### ST-J09 — The player cancels before the outcome
+
+The player stops halfway through the first T. No future dice result has been exposed or resolved for browsing. Actual effort and work state follow cancellation rules. If a valid check has already resolved, canceling its presentation does not erase it, refund elapsed time or offer a new sample.
+
+### ST-J10 — Reconnect while the result is being shown
+
+The completed patch result, work and material outcome are recovered once. A dice animation can replay visually only as a representation of that result. The action is not performed again, no extra material is consumed and no fresh random result is created.
+
+### ST-J11 — A hidden factor affects a challenge
+
+A future qualified task has a private relevant input. The actor's forecast names known factors and its uncertainty instead of disclosing an exact hidden-value probability. The actual rule remains consistent. Another observer can see the result without learning a private stat or the source of every modifier.
+
+### ST-J12 — A creator changes the scale
+
+The creator revises Practical craft's range or replaces the check profile. The proposal shows changed odds, affected actors and unfinished work. Out-of-range or missing values need explicit handling; they do not silently become the strongest value or zero. Old results retain their old meaning, and publication follows actual permissions and law-change rules.
+
+### ST-J13 — A later opposed contest ties
+
+Two eligible participants perform the supported control contest. Totals tie, so actual custody remains unchanged and effort remains spent. There is one shared outcome with scoped evidence. No automatic tie-break loop runs, and neither party sees the other's result before making a required consequential choice.
+
+### ST-J14 — A high social stat meets a refusal
+
+An ordinary human declines an offer. No charisma result signs the agreement, transfers their goods or supplies their speech. A future NPC social method can influence only its supported uncertainty and preserves the difference between willingness, an offer and a completed commitment. The practical-work release claims no social-check capability.
+
+### ST-J15 — Background work meets a rule boundary
+
+A quiet resident completes the admitted first T while no human watches. The same check and effects apply. Arrival does not reroll it or change competence. A later detailed interaction sees the actual patch/partial state through permitted observation, not a freshly generated outcome tailored to the visitor.
+
+### ST-J16 — A player tries to farm skill points
+
+Repeating harmless attempts produces the actual work and evidence those attempts warrant. It does not automatically increase rank, award currency or manufacture a permanent narrative achievement. If a future progression family is adopted, it must separately address what meaningful practice and repeated success can change.
+
+### ST-J17 — The world is under service pressure
+
+Optional new explanations or authoring stop under their real budget. Already admitted native checks follow the same rule and have the same consequences. Required-service failure uses the disclosed shared recovery boundary. Skill, outcome bands and opponents' resistance do not change to save a model call.
+
+## 13. Delivery and qualification
+
+**Stage 1: one complete practical-work rule.** Deliver one authored competence, the finite reference profile, two modifier categories, one optional helper and the actual rushed/careful patch outcomes after the shelter method exists. Include sparse/absent state, resource effects, accessible explanation, one-result recovery and explicit authoring preview. An isolated die demo or editable stat bar does not complete this stage.
+
+**Stage 2: world variation and bounded continuation.** Demonstrate a different authored competence/name/applicability through a real consumer without special cases in generic UI or cognition. Qualify retained partial work, chosen bounded retries, condition changes during work, current-format restoration, rule revision and complete operating cost. This proves useful authorship, not arbitrary check formulas.
+
+**Stage 3: one opposed physical family.** Only after its action/participation/custody behavior is supported, implement the declared shared contest, ties, different knowledge and interruption. Keep asymmetric tabletop conventions from silently deciding independent humans' or NPCs' actions. More participants and new conflict modes retain separate qualification.
+
+**Stage 4: additional profiles or social families by demand.** Add another curve, effect family or world-specific social uncertainty when a concrete experience needs it. Require actual stakes, authority, resource and knowledge behavior. Numerical progression, broad personality change and arbitrary mind control are not implied by adding more dice.
+
+Behavioral acceptance asks whether players can explain why a check was needed, distinguish likelihood from effect, use preparation meaningfully, understand a setback and choose a useful next action. Include experienced optimizers and new players, human/NPC symmetry, text-only presentation and changing conditions. Do not certify balance from a single cooperative model's choices or treat repeated play as proof of enjoyment.
+
+Mathematical acceptance exhaustively checks the finite distribution and every result band, with exact boundaries and no gaps. Behavioral acceptance follows actual resources, time, custody, permitted evidence and work continuation. Economic acceptance compares complete loops, including failed attempts, partial finishing, preparation and helper time. These are proposed qualification requirements; only the illustrative arithmetic was calculated during this documentation work.
