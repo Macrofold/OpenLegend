@@ -71,6 +71,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select one useful stat/check family and define authoring schemas, ranges/defaults, modifiers, opposed or threshold checks, randomness, interpretation and allowed effects. Separate a displayed trait from an enforceable world rule; explain how actions, AI context and player feedback consume the result. Hand the selected family to EWF/INV and the existing action/state owners with concrete scenarios and limits.
 
+**October 3 product proposal:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) selects a finite practical-work family, an explicit proposed curve, real material/time outcomes, preparation, assistance, retry behavior and staged opposition with cited research. [ST limits](../limits/authored-stats.md) record the proposed scope and tuning. Adoption, technical design and consumer qualification remain open; this does not make routine work uncertain or complete ND04 progression.
+
 ### ND04 — Experience-shaped personality and practical skill growth
 
 **Needs scoped design.** Sources: [personality and experience](../../archive/03-design-proposals/agents-and-social-simulation.md#personality-and-experience), [learning through ordinary interaction](../../archive/03-design-proposals/agents-and-social-simulation.md#learning-through-ordinary-interaction), and F07/F48 in the [product baseline](../../archive/01-requirements/product-baseline.md).

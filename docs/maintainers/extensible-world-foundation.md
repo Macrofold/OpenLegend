@@ -4,6 +4,8 @@
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
+**Proposed ND03 consumer:** [authored stats and consequential checks](../projects/authored-stats-feature-spec.md) develops a finite practical-work rule using EWF02/EWF04 and existing action/state owners. [ST limits](../limits/authored-stats.md) retain its proposed curve, modifiers and scope. This researched product design does not reopen delivered typed state or close a check consumer's implementation/acceptance.
+
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
 
 ## Ownership and execution rules

@@ -172,6 +172,8 @@ PW10 contributes only to AC08.1/8.2: the chosen camp activity uses the existing 
 
 **Owner:** each actual mechanical family under INV/EWF; AC owns consumer integration only. **Depends on:** AC02 plus the specific domain mechanics.
 
+**Proposed ND03 consumer:** the [authored-stat specification](../projects/authored-stats-feature-spec.md) adds a candidate rushed/careful patch family after [shelter qualification](../projects/editable-shelters-feature-spec.md). Its actual effects, participation, attempt continuity and scoped explanations remain AC08–AC10/domain-owner work. [ST limits](../limits/authored-stats.md) are proposed; current ordinary actions retain their semantics and no checkbox below is completed by the design.
+
 - [ ] AC09.1 Adapt existing narrow actions to the shared invocation projection without changing their material, duration, knowledge or outcome semantics.
 - [ ] AC09.2 Prove one new non-navigation parameterized ordinary-use family through all text/menu/NPC/plan surfaces. Prefer possession transfer or compatible device operation with actual resource/target semantics.
 - [ ] AC09.3 Use the repertoire's related-mechanic keys to identify gaps. Route fire, fluids, body care, construction, vehicles and special abilities to their actual owners rather than enlarging an action enum or creating placebo effect labels. Partial: fire care has its real owner (`worlds/base/fire.ts`) and real resource/heat effects, but still adds one concrete `tend-fire` command to the central lists. That is a [recorded local v1 exception](../projects/camp-fire-and-sharing.md#decisions) until AC02.1/AC09.1 provide the shared descriptor.

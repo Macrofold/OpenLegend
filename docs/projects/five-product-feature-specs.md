@@ -27,7 +27,7 @@ Mike explicitly requested product and behavior design before technical design. C
 | 2 | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02 | Product proposal and focused review complete; technical design and runtime work remain open |
 | 3 | [Creating a world from a premise](world-creation-feature-spec.md) | ND01, INV-4.10, EWF12 | Product proposal and focused review complete; technical design and runtime work remain open |
 | 4 | [Editable shelters and rain](editable-shelters-feature-spec.md) | ND07 / focused ND08, INV-6.4 | Product proposal and focused review complete; technical design and runtime work remain open |
-| 5 | [World-authored stats and checks](authored-stats-feature-spec.md) | ND03, EWF02/EWF04 and action/state owners | Next |
+| 5 | [World-authored stats and checks](authored-stats-feature-spec.md) | ND03, EWF02/EWF04 and action/state owners | Product proposal and focused review complete; technical design and runtime work remain open |
 
 ## Completion criteria
 
