@@ -74,7 +74,7 @@ jobs:
                   expected = original.replace('docs/projects/world-agent-context/', 'docs/projects/completed/world-agent-context/').replace('docs/projects/invention-questions-', 'docs/projects/completed/invention-questions-')
                   assert text == expected, ('non-reference source edit', name)
               if name == archive_link:
-                  assert text == original.replace('../../docs/projects/appraisal-social-continuity-feature-spec.md', '../../docs/projects/completed/appraisal-social-continuity-feature-spec.md'), 'non-reference archive edit'
+                  assert text == original.replace('../../docs/projects/appraisal-social-continuity-tech-design.md', '../../docs/projects/completed/appraisal-social-continuity-tech-design.md'), 'non-reference archive edit'
               planned.append((source, path, text))
           moved_sources = {str(source.relative_to(root)) for source, path, text in planned if source != path}
           assert not (moved_sources & outputs), 'overlapping move'
