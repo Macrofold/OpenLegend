@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-03 — Group the complete remaining design work by topic and sequence
+
+The [design-needs register](maintainers/needs-design.md#ordered-design-groups) now groups all 37 ND entries and remaining PS design refinements into ordered batches aligned with the product roadmap. It names parallel opportunities, the small shared decisions that need one owner, and later slices of broad entries such as text/calls, barter/currency, shelter/fire, skill/personality and human recovery/NPC ghosts. Conditional investigations and optional products retain explicit triggers rather than becoming launch prerequisites.
+
+The grouping reuses the earlier five product proposals from their separate branch and preserves every original need, implementation owner and existing acceptance status. The coverage table makes the full register accountable; the maintainer index links the sequence. This is a design-planning update, not new feature specifications, implementation, policy adoption or runtime evidence.
+
 ## 2026-10-03 — Prioritize worthwhile experiences when choosing work
 
 Added [selectively loaded prioritization guidance](../.agents/skills/openlegend-prioritize/SKILL.md) through `AGENTS.md` and parallel-task selection. It adopts the owner-supplied eight principles: begin with a valued experience, preserve the relevant promise while reducing breadth, deliver a complete payoff, justify complexity and pressure, respect agency/competence and varied enjoyment, count total burden, and revise hypotheses using proportionate evidence. The refinement protects urgent reliability/integrity work and avoids requiring every increment to realize every product promise. Catalogue coverage, technical adjacency and document order no longer stand in for priority justification. User-selected scope and accepted requirements still control; no runtime or current roadmap is changed. [CG14 and CG05](maintainers/agent-guidance.md) distinguish instruction delivery from installed-agent dispatch qualification.

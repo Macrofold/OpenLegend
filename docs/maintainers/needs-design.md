@@ -2,11 +2,11 @@
 
 **Reviewed October 3, 2026 against `main` at [`b528af6d`](https://github.com/Macrofold/OpenLegend/commit/b528af6d126a9ac500dbe5574642dea87c472c40).** This register preserves practical work suggested by the repository that still needs a scoped design, a consequential product decision, or an evidence-producing experiment before an implementation project can start.
 
-Some ideas have no implementation plan. Others already have a broad task or accepted architecture, but still lack the specific rules and delivery design for the proposed extension. Each entry identifies that distinction. Inclusion does not approve a feature, select a price or policy, establish priority, or authorize implementation.
+Some ideas have no implementation plan. Others already have a broad task or accepted architecture, but still lack the specific rules and delivery design for the proposed extension. Each entry identifies that distinction. Inclusion alone does not approve a feature, select a price or policy, establish priority, or authorize implementation. The ordered groups below propose a sequence for preparing the missing designs.
 
 The [maintainer index](README.md) remains the route to implementation work. [Open decisions](../../archive/05-project/open-decisions.md) owns unresolved choices; the [research backlog](../../archive/05-project/research-backlog.md) owns empirical questions; [policies to revisit](revisitable-policies.md) owns review triggers for accepted policy. This page tracks the missing preparation and links those owners rather than replacing their records.
 
-Jump to [scalability](#product-scalability-substantial-plans-already-exist), [worlds and communities](#worlds-rules-and-long-lived-communities), [creation and communication](#creation-controls-and-communication), [memory and authored behavior](#memory-shared-history-and-advanced-authored-behavior), [service and creator economy](#commercial-service-creator-ecosystem-and-launch-learning), [optional real-world value](#optional-well-being-and-real-world-value), or [existing plans and deferrals](#existing-designs-and-deliberate-deferrals-to-reuse).
+Start with [ordered design groups](#ordered-design-groups), [parallel opportunities](#order-and-parallel-opportunities), and [complete coverage](#coverage-of-every-design-need). The original topic index remains: [scalability](#product-scalability-substantial-plans-already-exist), [worlds and communities](#worlds-rules-and-long-lived-communities), [creation and communication](#creation-controls-and-communication), [memory and authored behavior](#memory-shared-history-and-advanced-authored-behavior), [service and creator economy](#commercial-service-creator-ecosystem-and-launch-learning), [optional real-world value](#optional-well-being-and-real-world-value), and [existing plans and deferrals](#existing-designs-and-deliberate-deferrals-to-reuse).
 
 ## How to use and maintain this register
 
@@ -19,6 +19,345 @@ Jump to [scalability](#product-scalability-substantial-plans-already-exist), [wo
 For each selected item, recheck its sources against the current implementation and owners. Define the smallest useful capability, its meaningful failure cases, and any remaining decisions. Follow the [design workflow](../../.agents/skills/openlegend-design/SKILL.md) and [feature-documentation structure](../feature-documentation.md) when creating a project: link the feature specification, technical design, focused work IDs, dependencies, completion criteria, and applicable limits inventory. World-specific rules belong with the authored world.
 
 An item leaves the active design queue when that preparation has an adequate owner and delivery breakdown, or when an explicit decision rejects or supersedes it. Keep its ND identifier and a short disposition with replacement links. Design completion does not mean implementation or verification is complete. Add newly discovered gaps here only when an existing detailed project or tracker does not already describe the needed work.
+
+## Ordered design groups
+
+**Proposed design sequence, October 3, 2026, checked against GitHub main at [e4d25a0](https://github.com/Macrofold/OpenLegend/commit/e4d25a06105fbc1321c9a0e7a7a12524e7644ce1).** This is a complete grouping of the register's 37 ND entries and remaining PS design refinements. The original subject categories below remain navigation; these groups combine related decisions that belong at a similar point in delivery. Broad entries are explicitly split when their parts belong far apart.
+
+The [product roadmap](../../archive/05-project/roadmap.md) owns P1–P7 outcomes. Read the bands below in that general order, taking groups with ready inputs in parallel. A band's label is a design-planning guide, not a requirement to finish every earlier feature before drafting a later one. Named decisions must be settled before dependent designs are signed off, and the existing runtime/evidence gates still apply before offering the behavior. Conditional groups start only for their stated need; leaving one unselected is not a gap to fill with an unwanted feature.
+
+Prioritize useful, complete player activities and the smallest scope faithful to the game. No crowd, creator workflow, building, generic dice or optional well-being feature blocks the accepted live creative first playable. The [next-priority batch](next-priority-batch.md) is complete for its recorded scope; the [playable-week tracker](next-playable-week.md) and existing parents retain any wider qualification. This grouping does not reopen that implementation or turn every existing deferred test into missing design.
+
+DG numbers identify **design batches**, not new implementation tasks or a required count of projects. The ND entries, PS tracker, decision owners and existing subsystem trackers retain their authority. For a broad group, decide its stated common boundary once, then produce separately scoped designs where its families can ship independently. Every selected design still needs its player outcome, meaningful failure, economic burden, explicit scope and delivery breakdown. No technical class/schema design is added by this index.
+
+### Reuse the five existing product proposals
+
+The earlier five-topic package did not cover all five register categories. Its proposals are reusable input, not completion of entire ND/PS parents. At this grouping's baseline they remain on the separate branch [docs/five-product-feature-specs](https://github.com/Macrofold/OpenLegend/tree/docs/five-product-feature-specs), pinned here at d2cca27; they are not merged into main. Reconcile their current product recommendations with the owning tracker before designing the remaining slice. Do not restart their research or silently treat their proposals as delivered behavior.
+
+| Existing proposal                                                                                                                                                        | Reuse in these groups                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Continuing NPC lives](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/continuing-lives-feature-spec.md)             | [DG02](#dg02--one-resident-who-follows-through), [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)                                                      |
+| [Attention, crowds and scenes](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/attention-and-scenes-feature-spec.md) | [DG02](#dg02--one-resident-who-follows-through), [DG18](#dg18--worthwhile-crowds-and-background-social-scenes), [DG26](#dg26--voice-calls-and-selected-hearing-extensions) |
+| [World creation](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/world-creation-feature-spec.md)                     | [DG12](#dg12--create-a-world-and-reuse-an-invention); broader community assumptions revisited in [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)      |
+| [Editable shelters and rain](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/editable-shelters-feature-spec.md)      | [DG13](#dg13--editable-shelter-and-useful-places); remaining material/fire design in [DG20](#dg20--heat-ignition-and-material-consequences)                                |
+| [Authored stats and checks](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/authored-stats-feature-spec.md)          | [DG14](#dg14--useful-competence-and-practice)                                                                                                                              |
+
+### Order and parallel opportunities
+
+| Band                                                  | Roadmap position                         | Groups                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | How to work through it                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Improve the current personal game                 | P1 refinement                            | [DG01](#dg01--actions-and-first-encounters), [DG02](#dg02--one-resident-who-follows-through), [DG03](#dg03--a-useful-demo-and-early-audience-learning), [DG04](#dg04--a-specific-recall-problem), [DG05](#dg05--ending-and-returning-to-a-session)                                                                                                                                                                                                                                                                                 | DG01–DG03 form the default first batch. DG04–DG05 are conditional work that can accompany an observed need. Existing first-playable, PW and parent qualification remain with their owners.                                                                                 |
+| 2 — Make shared play worth joining                    | P2                                       | [DG06](#dg06--reciprocal-exchange-and-small-cooperation), [DG07](#dg07--human-participation-and-recoverable-conflict), [DG08](#dg08--finding-a-community-and-participating-publicly), [DG09](#dg09--resident-conduct-for-a-selected-audience), [DG10](#dg10--a-chosen-human-social-experience), [DG11](#dg11--evidence-for-a-selected-well-being-objective)                                                                                                                                                                        | DG06, DG07 and the design of DG08 can proceed together. DG08 must consume the applicable DG07 choices before sign-off. DG09–DG11 run only for their selected audience, social experience or study; they do not impose the whole well-being vision.                         |
+| 3 — Broaden creation and expression                   | P3                                       | [DG12](#dg12--create-a-world-and-reuse-an-invention), [DG13](#dg13--editable-shelter-and-useful-places), [DG14](#dg14--useful-competence-and-practice), [DG15](#dg15--an-optional-story-perspective), [DG16](#dg16--a-useful-personal-journal-extension)                                                                                                                                                                                                                                                                           | DG12–DG14 have distinct authoring, material and competence responsibilities and can usually proceed together against current contracts. DG15–DG16 are optional consumers, not gates for those core groups.                                                                 |
+| 4 — Make communities last                             | P4                                       | [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding), [DG18](#dg18--worthwhile-crowds-and-background-social-scenes), [DG19](#dg19--supplies-that-change-over-time), [DG20](#dg20--heat-ignition-and-material-consequences), [DG21](#dg21--injury-illness-and-useful-care), [DG22](#dg22--durable-agreements-and-a-small-world-economy), [DG23](#dg23--characters-changed-by-their-experience), [DG24](#dg24--text-messages-inside-an-authored-world), [DG25](#dg25--deliberate-corrections-and-shared-restoration) | Settle any new clock and unattended-service decisions in DG17 before other groups depend on them. Most other groups can design a first personal/attended slice using today's contracts in parallel. DG18–DG25 are separate additions, not one required simulation package. |
+| 5 — Add useful spoken communication                   | P5                                       | [DG26](#dg26--voice-calls-and-selected-hearing-extensions)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | DG26 is the coordinated communication design. Its distinct media families can be split into delivery work after their shared meaning is settled; basic text communication remains earlier.                                                                                 |
+| 6 — Offer sustainable service and wider participation | P6, or earlier for a selected paid offer | [DG27](#dg27--customer-and-supporter-offers), [DG28](#dg28--published-packs-and-creator-revenue), [DG29](#dg29--more-participants-and-travel-between-worlds), [DG30](#dg30--a-creator-fund-and-contributor-governance)                                                                                                                                                                                                                                                                                                             | DG27 and DG29 can proceed independently once their actual operating inputs exist. DG28 consumes the relevant publication and offer decisions. DG30 is a conditional operating program, not an automatic consequence of either.                                             |
+| 7 — Choose deeper society and generativity            | P7                                       | [DG31](#dg31--generations-and-deeper-biology), [DG32](#dg32--larger-institutions-and-economic-obligations), [DG33](#dg33--extraordinary-minds-and-life-after-death), [DG34](#dg34--shared-campaigns-with-local-opportunities)                                                                                                                                                                                                                                                                                                      | DG31–DG34 are mostly parallel consumer choices after their named inputs. Their order does not make biology, institutions, unusual minds or campaigns prerequisites for one another.                                                                                        |
+| 8 — Insert other expansion only at its trigger        | Independent conditional tracks           | [DG35](#dg35--a-selected-platform-or-offline-capability), [DG36](#dg36--one-useful-application-beyond-the-game)                                                                                                                                                                                                                                                                                                                                                                                                                    | DG35–DG36 can be inserted into any suitable band when a real user or production need exists. Their position here is for navigation, not a requirement to finish the game before investigating them.                                                                        |
+
+### Band 1 — Improve the current personal game
+
+#### DG01 — Actions and first encounters
+
+ND13's ordinary action recommendations, stable menus, remapping and nearby interaction, together with ND18's first encounters with places and inventory items. Design understandable opportunities, consistent selection and useful feedback around actions already supported.
+
+**Start and parallel boundary:** Use current action, inventory and narration contracts. Platform-specific input/lifecycle expansion belongs to DG35. Can run alongside DG02–DG03; presentation consumes what a character may know and do rather than redefining it. **Existing owners:** AC/UIUX, NC/EPR and PO.
+
+#### DG02 — One resident who follows through
+
+PS02 and the personal-play portion of PS04: continued useful activity, interruptions, sensible attention and readable directed conversation. Reuse the existing continuing-lives and attention proposals; refine the first supported activity and handoff into existing agency work.
+
+**Start and parallel boundary:** Current actions, evidence and clock behavior are sufficient starting inputs. Neither roofs nor unattended communities are prerequisites. Leave dense gatherings, background social scenes and timed speech to DG18/DG26. **Existing owners:** AG/CR, action owners, EPR/HE/NC and PS.
+
+#### DG03 — A useful demo and early audience learning
+
+ND26's first audience, honest repeatable demonstration and bounded comprehension/value experiment. Identify the supported creative loop, actual questions, evidence and stop/expand criteria; distinguish preparation from permission to run outreach or spend.
+
+**Start and parallel boundary:** Design the brief against the current playable offering while DG01–DG02 improve it. The demonstrated scope must actually work before its evidence is claimed. Pack portability, a marketplace and a complete paid service are unnecessary; paid-offer validation follows DG27. **Existing owners:** ND26, business/launch decision owners and PD.
+
+#### DG04 — A specific recall problem
+
+Conditional ND20 comparison of current recall, a modest native improvement and optional richer retrieval. Define one consequential repeatable omission, matched histories and correction/forgetting, latency and cost evidence.
+
+**Start and parallel boundary:** Start only when the omission exists. This investigation can run beside any gameplay band using current memory contracts; it does not require DG23's new memory transformations or authorize replacing canonical memories. Stop if the current approach is sufficient. **Existing owners:** CR12/CR13, R11/R19 and memory owners.
+
+#### DG05 — Ending and returning to a session
+
+Conditional ND28: one skippable closing or return experience, personal preferences and any selected notifications. Judge whether it helps players leave and resume an activity they care about.
+
+**Start and parallel boundary:** An observed player need can trigger this during personal play. Use current narration and absence behavior. It neither pauses a shared world nor requires offline communities, a well-being study or journal exports. **Existing owners:** NC and MP; PS only for actual absence-rule changes.
+
+### Band 2 — Make shared play worth joining
+
+#### DG06 — Reciprocal exchange and small cooperation
+
+ND09's immediate barter and ND10's first small recurring arrangement: offers, acceptance, shared supplies/responsibilities and understandable withdrawal. Design the nearby social activity and its resource/consent boundaries together.
+
+**Start and parallel boundary:** Use existing custody, exact-agreement and commitment contracts. No currency, house system or government is required. Durable credit/economy rules and broader institutions belong to DG22/DG32. **Existing owners:** INV-20, PO, BW17 and relevant social owners.
+
+#### DG07 — Human participation and recoverable conflict
+
+ND11's human opt-in, indirect harm, incapacitation, rescue and return, with the matching PS05 protection and dangerous-logout decisions. One group owns the experience of entering danger and losing connection during it.
+
+**Start and parallel boundary:** Build on current protected departure and recoverable-human-death direction. Settle the relevant PS-D01 boundary before dependent shared risks are offered. This can proceed beside trade and creator design; NPC ghosts are DG33, and richer medical rules are DG21. **Existing owners:** BW14, MP, PS05/PS-D01 and lifecycle/time owners.
+
+#### DG08 — Finding a community and participating publicly
+
+ND02 and ND37: discovery, visits/settlement, newcomer character entry, reporting, participant controls, operator evidence and review of mistakes. Design the selected public journey and its actual operating boundaries together.
+
+**Start and parallel boundary:** Current invited multiplayer is the baseline. Adopted public entry consumes DG07's applicable protection decisions and a supported PS06 admission policy; later scale is not required for a small offering. Public operation needs these decisions, but not ND27's optional well-being program. **Existing owners:** MP, PD08/PD10, data/privacy owners, D68 and PS05–PS06.
+
+#### DG09 — Resident conduct for a selected audience
+
+ND27's decisions about official-service conduct versus authored fiction, audience, sensitive conversations, human/AI disclosure and any adopted relationship policy. Separately scope selected resident-memory controls or continuity across model/prompt changes.
+
+**Start and parallel boundary:** Do the relevant audience decision before offering that experience, including before a sensitive or family pilot. Optional archive policies are not blanket launch gates. This group consumes existing memory/privacy authority and does not define DG08's public enforcement powers. **Existing owners:** PD07/PD10, NC/CR, D16/D21 and privacy owners.
+
+#### DG10 — A chosen human social experience
+
+Conditional ND31: one mutually accepted introduction, recurring small group or family participation journey. Specify disclosure/contact consent, attribution, scheduling, opt-out and the appropriate response to problems.
+
+**Start and parallel boundary:** An invited adult pilot can use current multiplayer. New matching/public access needs the corresponding DG08 decisions; sensitive or minor-audience offerings need the relevant DG09 choice. Venues and partner programs require their own selected use case, not a compulsory extension of the first pilot. **Existing owners:** MP, NC, PD and D68.
+
+#### DG11 — Evidence for a selected well-being objective
+
+Conditional ND29: define the actual research question, comparison, opt-in data, retention and interpretation before collecting anything. It may accompany a selected session, journal or human-connection pilot.
+
+**Start and parallel boundary:** Place this beside the feature being studied, whenever that happens. It is independent of ordinary gameplay/cost evaluation and is not a prerequisite for DG05, DG10 or DG16 unless that particular study is selected. Engagement alone does not establish a health benefit. **Existing owners:** Research/measurement decision owners and PD/data/privacy.
+
+### Band 3 — Broaden creation and expression
+
+#### DG12 — Create a world and reuse an invention
+
+ND01's initial world-assembly journey and ND12's bounded local/account-library round trip. Reuse the world-creation proposal; connect a faithful supported opening to retained definitions, dependency inventories, provenance, rights and understandable destination compatibility.
+
+**Start and parallel boundary:** Use qualified current families and existing authoring/admission. World assembly and the library round trip can be designed independently against their shared definition/provenance contract. A ready small start remains valid. Do not require shelters, general stats, public matching or a marketplace. Free publication and reuse belong here; commercial catalogue/distribution and payout integration expand through DG28. **Existing owners:** INV-4/INV-8, EWF11/EWF12 and world-host owners.
+
+#### DG13 — Editable shelter and useful places
+
+ND07's useful light construction, interior/access and home-use decisions with the shelter-relevant exposure/moisture part of ND08. Reuse the shelter proposal for persistent parts, coverage, alteration and chosen use; state which larger structural families remain unsupported.
+
+**Start and parallel boundary:** Start from existing material, work and geometry contracts. Coordinate each later structural family within this same construction owner when selected. Heat/spread is DG20, medical effects DG21, institutions DG32, and additional hearing propagation DG26; none is a universal prerequisite for useful cover. **Existing owners:** INV-6, SW, PO, BW and shared-state owners.
+
+#### DG14 — Useful competence and practice
+
+ND03 and ND04's practical-skill slice: one worthwhile action affected by capability, with explicit evidence for practice/teaching and the resulting change. Reuse the stats proposal; predictable competence can suffice and its roof/dice example remains optional.
+
+**Start and parallel boundary:** A selected existing action is the real dependency, so this can move earlier if it improves current play. It does not wait for DG12 or DG13 as a whole. Personality development belongs to DG23; generic learning stays with its existing owner. **Existing owners:** EWF02/EWF04, INV, AC/AE and shared state.
+
+#### DG15 — An optional story perspective
+
+Conditional ND36: one desired cutaway, distant-event or private-thought presentation, with its audience, spoilers, preferences and the distinction between what the human sees and what the character knows.
+
+**Start and parallel boundary:** Start after ordinary narration is useful and a specific mode is wanted. Existing disclosure authority must support the proposed sources. This is independent of ordinary encounter narration in DG01, voice and deeper memory machinery. **Existing owners:** NC, narration/privacy owners and D57.
+
+#### DG16 — A useful personal journal extension
+
+Conditional ND30: begin with the selected private export or journal extension and its sources, edits, erasure and art rights. Real-life reflection, print products and shared/family editions are separate later slices within this consumer, only when wanted.
+
+**Start and parallel boundary:** Actual use of the current journal supplies the trigger. A narrow export can proceed without shared-world rewind or a print business. Before expanding to other people's material, resolve its consent and retention boundary; do not promise unrestricted world export. **Existing owners:** NC, data/privacy, art-rights and journal owners.
+
+### Band 4 — Make communities last
+
+#### DG17 — Continuing communities, clocks and quiet-world funding
+
+PS03 with PS05's clock/detail-transition choices and PS06's unattended operating envelope: supported ongoing lives, resource/self-care viability, return evidence and explicit exhausted-funding behavior. Reuse the continuing-lives proposal; revisit ND01's opening assumptions when a larger continuing community is offered.
+
+**Start and parallel boundary:** Consumes DG02's selected activity behavior and applicable DG07 protections. Resolve PS-D03/PS-D06 here before dependent aging, continued absence or customer promises rely on them. Initial personal-world pause rules remain current until this new mode is actually supported. **Existing owners:** PS03/PS05/PS06, activity/agency, simulation-time and work-accounting owners.
+
+#### DG18 — Worthwhile crowds and background social scenes
+
+PS04's larger focus/aggregation and completed social-scene families, with PS06's matching activity-cost and capacity questions. Reuse the attention proposal; define a gathering worth joining and truthful individual exceptions.
+
+**Start and parallel boundary:** Consumes DG02's ordinary attention/evidence boundary. Attended crowds can be designed without unattended service; unattended consumers use DG17's selected rules. Actual timed speech is a separate DG26 decision. Do not select a universal population ceiling from one workload. **Existing owners:** PS04/PS06, EPR/HE/NC, agency and performance owners.
+
+#### DG19 — Supplies that change over time
+
+ND33's selected freshness/preservation loop and the related resource-renewal/scarcity part of ND06. Design useful storage, actual preservation work, depletion/regrowth and how people recognize and respond to those changes.
+
+**Start and parallel boundary:** Use current lots, custody, consumption and the applicable clock. A personal pilot can use today's clock contract; a continuing-world version consumes DG17's assignments. Generations are DG31. Avoid adding spoilage or renewable abundance merely to justify a new system. **Existing owners:** BW, PO, INV, shared state and simulation-time.
+
+#### DG20 — Heat, ignition and material consequences
+
+The remainder of ND08: a selected coarse heating/ignition/fuel/spread/extinguishing family, actual damage and useful material transformations. Carry forward DG13's moisture/coverage decisions without making every wetness or thermal consumer mandatory.
+
+**Start and parallel boundary:** Choose a concrete playable interaction and its real materials first. Consume applicable clock, geometry and human-protection contracts; detailed biology and a full structural solver are unnecessary. This is separate from DG19 so food preservation need not wait for general fire propagation. **Existing owners:** INV-6, BW, PO/SW, shared-state and time owners.
+
+#### DG21 — Injury, illness and useful care
+
+ND05's first selected body/condition/treatment loop, observable symptoms, uncertainty, actual resources and consequences. Design a worthwhile activity around help or recovery without requiring deep anatomy.
+
+**Start and parallel boundary:** Use current actor/state owners and DG07's human recovery boundary for affected human outcomes. Care can proceed without general fire, a complete disease model or NPC ghosts. Deeper biological/life-stage extensions are reconsidered with DG31 when their consumer exists. **Existing owners:** ACT/BW, shared state, actions and lifecycle owners.
+
+#### DG22 — Durable agreements and a small world economy
+
+ND09's chosen currency and deferred-delivery/default rules, and ND10's sparse persistent group/property/obligation records. Extend DG06's actual exchanges and cooperation into a useful multi-session arrangement.
+
+**Start and parallel boundary:** Use existing agreement, custody and identity contracts. Decide money issuance/sinks only if currency is selected. This group is independent of real-money service billing. Broader governments, credit/escrow institutions and political powers are DG32 rather than prerequisites for a modest economy. **Existing owners:** INV-20, PO/BW, social/state owners and D11/D18.
+
+#### DG23 — Characters changed by their experience
+
+ND04's personality-change slice and ND19's older-memory transformation or selected dream reinterpretation. Design how experiences alter interpretation and dispositions while preserving factual provenance, obligations and independent decisions.
+
+**Start and parallel boundary:** Use current memory, appraisal and correction/forgetting contracts. No numerical skill system or external retrieval service is required. DG25 owns deliberate changes to shared history; this group changes recollection/interpretation, not what actually occurred. **Existing owners:** ACT07/ACT08, CR06/CR09 and memory/provenance owners.
+
+#### DG24 — Text messages inside an authored world
+
+ND14's contacts and asynchronous text journey: a real world affordance, addressing, delivery/read state, availability, retention and who learns the message.
+
+**Start and parallel boundary:** Use existing identity and conversation contracts. Keep remote messages distinct from local hearing and account metadata. Calls belong to DG26, so text need not wait for media. Contact and delivery meanings become the input to that later call design. **Existing owners:** NC/MP, world affordance and privacy owners.
+
+#### DG25 — Deliberate corrections and shared restoration
+
+Conditional ND17 and ND35. First settle the narrow common decision about attributed correction versus replacing history, affected people and private evidence. Then scope speech re-authoring and shared-world/private-history restoration as independently selectable designs.
+
+**Start and parallel boundary:** Only start the affected design when that administrative or shared/cloud experience is wanted. Ordinary new-event speech corrections, current save/load and operational backups already have owners. Neither special feature is a gate for normal multiplayer; history-changing consumers must agree before sign-off. **Existing owners:** HE, SL10, NC/CR, data/privacy and D60/D66.
+
+### Band 5 — Add useful spoken communication
+
+#### DG26 — Voice, calls and selected hearing extensions
+
+ND15, ND14's calls and the selected ND16 propagation/recognition families. Settle audio, committed words, transcripts, speed, interruptions and per-listener eligibility before dividing playback, speech input and human voice.
+
+**Start and parallel boundary:** Phone calls consume DG24's contact/delivery choices; local voice does not need phones. Room effects use actual geometry. A narrow earlier need for waking, language or rooms may pull only that ND16 slice forward. Text remains complete and no full acoustics catalogue is required. **Existing owners:** HE/NC/MP, spatial/world-family and spending owners; PS04 for timed speech.
+
+### Band 6 — Offer sustainable service and wider participation
+
+#### DG27 — Customer and supporter offers
+
+ND22, ND26's paid-offer/renewal experiment and a specifically selected ND24 supporter offer. Define service/allowance terms, exhausted funding, fulfillment, cancellation and, if offered, dedication redemption, transfer, attribution and retirement promises.
+
+**Start and parallel boundary:** Can move earlier for a real bounded paid test; use the actual demonstrated offering and existing payment gates. Continued-world promises consume DG17's funding decision. Patron benefits are optional and do not hold up an ordinary subscription; marketplace allocation is DG28 and grant governance DG30. **Existing owners:** PD10, billing/entitlement and INV-13, D17/D35/D37 and PS-D06.
+
+#### DG28 — Published packs and creator revenue
+
+ND23 with ND12's broader publication/distribution, rights and cross-service access/retention integration. Design a selected catalogue and creator-payment model against actual reusable packs, with refunds/fraud, attribution and reconciliation.
+
+**Start and parallel boundary:** Reuse DG12's dependency/provenance/permission vocabulary and DG27's applicable offer/payment decisions. Free libraries and noncommercial publication do not wait for payouts; self-hosted synchronization may be scoped independently when requested. A creator fund is a different program in DG30. **Existing owners:** INV-8/EWF11, PD10, rights/payment owners and D35/D36/D43/D44.
+
+#### DG29 — More participants and travel between worlds
+
+PS06's wider measured admission/economics and PS07's regions, protected domains, visits, imports, clocks and safe return; refine the applicable PS05 transition rules. Include PS08's comparison of concentrated demand, many small worlds, mass return and long histories.
+
+**Start and parallel boundary:** Consume the actual offered workloads: ordinary local behavior from DG02, with DG17/DG18 extensions only where relevant, plus applicable protection, admission and entry decisions and DG12's carried-definition/rights boundary. Shared gameplay restoration uses the DG25 decision if offered. A small visit need not wait for unattended communities, crowds, a marketplace or a campaign. **Existing owners:** PS05–PS08, MP/access, transfer/data, time and performance owners.
+
+#### DG30 — A creator fund and contributor governance
+
+Conditional ND25: a real fund budget, eligibility, milestones, rights, payout evidence, conflicts and advisory versus binding influence. Design the operating program before deciding whether software is needed.
+
+**Start and parallel boundary:** Start when a concrete program and sustainable funding are selected; it may run alongside marketplace or supporter design using their existing rights/payment meanings. Neither subscriptions nor dedications automatically creates a grant or voting program. **Existing owners:** D37, program/financial/rights and platform-authority owners.
+
+### Band 7 — Choose deeper society and generativity
+
+#### DG31 — Generations and deeper biology
+
+ND06's remaining life stages, reproduction/families, population change and caregiving, with any specifically selected deeper ND05 biology. Design one coherent lifecycle and its food, housing, social and operating consequences.
+
+**Start and parallel boundary:** Use current food, clock and lifecycle contracts for a bounded first design. Consume DG17's new clock/population-funding decisions and DG19's resource rules only where the selected lifecycle needs those extensions, and the actual DG13/DG21 housing/care capabilities used. Resolve audience/family-content choices before the affected feature. It does not require new spoilage, a full ecosystem, government or universal anatomy. **Existing owners:** ACT/BW, PS, housing/care consumers and D16/D23/D27.
+
+#### DG32 — Larger institutions and economic obligations
+
+ND10's broader authored institutions and any selected ND09 credit, escrow, interest or dispute structures. Start from one real organization or transaction need; define only the authority, property and obligations that it uses.
+
+**Start and parallel boundary:** Build on relevant DG06/DG22 agreement/group rules. This can proceed alongside generations without depending on biology or a compulsory currency. Fictional power never grants platform moderation, billing or private-data authority. **Existing owners:** INV-20, PO/social/world-policy owners and D11/D18.
+
+#### DG33 — Extraordinary minds and life after death
+
+ND11's NPC ghost/summoning/ordinary-revival slice and ND21's selected mental-effect, telepathy or shared-mind families. Their common design boundary is character identity, who controls a mind/body, retained experience and authorized disclosure.
+
+**Start and parallel boundary:** Treat these as separate selectable authored families with that shared boundary, not one mandatory magic system. Existing agency, lifecycle and provenance supply the starting contract. A requested world premise may bring a particular family forward; human recovery does not wait for ghosts, and a shared mind does not require revival. **Existing owners:** BW15, ACT/AG/CR, EWF10/INV and evidence/privacy owners.
+
+#### DG34 — Shared campaigns with local opportunities
+
+PS07's forecast canonical campaigns, timing/revision promises, local participation and contribution recognition, with the relevant PS08 mature-scale and recovery evidence.
+
+**Start and parallel boundary:** Use DG29's cross-world/travel contracts where the selected campaign spans worlds, plus the actual participation/capacity rules. Do not require governments, generations or special mental powers merely because a campaign has many people. Local opportunities can be designed against current supported worlds first. **Existing owners:** PS07/PS08, campaign/access/time, data and existing scale owners.
+
+### Band 8 — Insert other expansion only at its trigger
+
+#### DG35 — A selected platform or offline capability
+
+Conditional ND34 and the applicable later ND13 device/control extensions. Distinguish a desktop package, a replacement native/console client and offline simulation; select the actual audience problem before committing to one.
+
+**Start and parallel boundary:** Insert at the point where audience or production evidence warrants it, not automatically after P7. Reuse current rendering/input and account contracts. Offline operation separately needs a local host/provider policy; a desktop package does not require offline AI or a new engine. **Existing owners:** SW10, UIUX/AC, MP/PD and host/provider owners.
+
+#### DG36 — One useful application beyond the game
+
+Conditional ND32: select one learning, rehearsal, writing, agent-evaluation or external-developer use case, its actual user and evidence of useful transfer or repeated demand.
+
+**Start and parallel boundary:** Insert alongside the mature underlying capability when that need exists. Define rights, responsibility, feedback and delivery/support for that one offer. It does not require P7, a general SDK, a clinical product or all of the ideation library. **Existing owners:** D25/R16 and the selected capability/product/research owners.
+
+### Shared decisions that keep parallel work separate
+
+| Shared meaning                                  | One place to decide it; how other groups consume it                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What a character does, notices and knows        | DG02 refines activity and ordinary attention through AG/EPR/HE/NC. DG01 presents existing opportunities; DG18 groups actual evidence; DG26 extends selected speech/hearing behavior. None gains authority to invent another character's action or private knowledge.                                                                                  |
+| Human participation, time and continued funding | DG07 owns the selected human-risk/absence experience; DG17 owns new clock assignments and quiet-world operating behavior through PS. DG08/DG29 consume those decisions for entry/capacity, and DG27 translates the selected service into customer terms. They must not independently choose conflicting pause, protection or exhausted-funding rules. |
+| Material identity and consequences              | DG13 owns construction/coverage choices; DG19 food/resource change; DG20 thermal effects; DG21 bodily effects. Reuse the existing PO/state/time owners and distinguish each effect's inputs. A second writable moisture, ownership or work-progress value is not a parallel-work shortcut.                                                            |
+| Facts, memories and changed history             | DG23 designs subjective recollection/trait changes; DG25 owns the selected correction/rewind decision through HE/SL/data. DG04 evaluates recall using current canonical evidence. DG09/DG15/DG16 consume existing disclosure, correction and forgetting rules; they do not independently redefine the historical event.                               |
+| Reuse rights, money and attribution             | DG12 establishes reusable definition/dependency/provenance meanings. DG28 adds selected publication/marketplace terms, DG27 customer/supporter fulfillment, and DG30 the fund program. Resolve their actual shared rights/retention vocabulary once in INV/PD and the decision owner; fictional currency/groups in DG06/DG22/DG32 remain separate.    |
+| Public service versus authored social behavior  | DG08 defines the selected participation/enforcement journey with existing platform owners. DG09 defines only an adopted resident/audience policy. DG10 consumes the relevant entry/contact/audience choices for its pilot. No optional conduct charter, fictional government or research program silently changes operator powers.                    |
+
+These are division-of-responsibility rules for the requested design batches, not instructions for workers to negotiate competing contracts. A group can research its independent questions while an input is pending; it must identify that pending input and cannot present the dependent design as settled. Keep detailed shared decisions in the existing canonical owner and reference them from the feature designs. Reconcile overlapping ND/PS slices and owner documents before a combined design is considered complete.
+
+### Coverage of every design need
+
+Every original ND ID appears below. Multiple groups mean explicitly different slices, not duplicate ownership or permission to close the whole entry after the first slice. A single group may still select one useful first family and preserve its later expansion decision under the same owner.
+
+| Need                                                                                     | Design group or groups                                                                                                                                                             | Split or scope reminder                                                                    |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [ND01](#nd01--assemble-a-new-world-from-a-creators-premise)                              | [DG12](#dg12--create-a-world-and-reuse-an-invention)                                                                                                                               | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND02](#nd02--discover-a-community-settle-there-and-enter-as-a-character)                | [DG08](#dg08--finding-a-community-and-participating-publicly)                                                                                                                      | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND03](#nd03--world-authored-stats-checks-and-their-effects)                             | [DG14](#dg14--useful-competence-and-practice)                                                                                                                                      | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND04](#nd04--experience-shaped-personality-and-practical-skill-growth)                  | [DG14](#dg14--useful-competence-and-practice), [DG23](#dg23--characters-changed-by-their-experience)                                                                               | Practical skill → later personality change.                                                |
+| [ND05](#nd05--richer-bodies-illness-and-care)                                            | [DG21](#dg21--injury-illness-and-useful-care), [DG31](#dg31--generations-and-deeper-biology)                                                                                       | One useful care loop → selected deeper biology.                                            |
+| [ND06](#nd06--ecology-aging-and-generations)                                             | [DG19](#dg19--supplies-that-change-over-time), [DG31](#dg31--generations-and-deeper-biology)                                                                                       | Resource renewal/scarcity → generations and population.                                    |
+| [ND07](#nd07--editable-buildings-that-become-usable-homes)                               | [DG13](#dg13--editable-shelter-and-useful-places)                                                                                                                                  | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND08](#nd08--material-weather-heat-and-fire-interactions-beyond-campfires)              | [DG13](#dg13--editable-shelter-and-useful-places), [DG20](#dg20--heat-ignition-and-material-consequences)                                                                          | Shelter exposure/moisture → thermal/fire behavior.                                         |
+| [ND09](#nd09--negotiated-barter-currency-and-durable-commercial-promises-inside-a-world) | [DG06](#dg06--reciprocal-exchange-and-small-cooperation), [DG22](#dg22--durable-agreements-and-a-small-world-economy), [DG32](#dg32--larger-institutions-and-economic-obligations) | Immediate barter → modest currency/deferred agreements → selected complex obligations.     |
+| [ND10](#nd10--persistent-groups-shared-ownership-and-in-world-institutions)              | [DG06](#dg06--reciprocal-exchange-and-small-cooperation), [DG22](#dg22--durable-agreements-and-a-small-world-economy), [DG32](#dg32--larger-institutions-and-economic-obligations) | Small cooperation → persistent sparse groups → broader institutions.                       |
+| [ND11](#nd11--human-conflictrecovery-and-npc-ghost-continuity)                           | [DG07](#dg07--human-participation-and-recoverable-conflict), [DG33](#dg33--extraordinary-minds-and-life-after-death)                                                               | Human participation/recovery → separately selected NPC ghosts.                             |
+| [ND12](#nd12--cross-world-invention-libraries-and-usable-pack-publishing)                | [DG12](#dg12--create-a-world-and-reuse-an-invention), [DG28](#dg28--published-packs-and-creator-revenue)                                                                           | Initial library/free reuse → broader publication and commercial integration.               |
+| [ND13](#nd13--stable-action-recommendations-and-complete-control-customization)          | [DG01](#dg01--actions-and-first-encounters), [DG35](#dg35--a-selected-platform-or-offline-capability)                                                                              | Ordinary controls/discovery → device-specific expansion when selected.                     |
+| [ND14](#nd14--in-world-remote-messages-and-calls)                                        | [DG24](#dg24--text-messages-inside-an-authored-world), [DG26](#dg26--voice-calls-and-selected-hearing-extensions)                                                                  | Asynchronous text → calls.                                                                 |
+| [ND15](#nd15--audible-npc-dialogue-microphone-input-and-proximity-voice)                 | [DG26](#dg26--voice-calls-and-selected-hearing-extensions)                                                                                                                         | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND16](#nd16--hearing-and-communication-beyond-direct-path-speech)                       | [DG26](#dg26--voice-calls-and-selected-hearing-extensions)                                                                                                                         | Selected hearing extension; bring a concrete earlier need forward without requiring voice. |
+| [ND17](#nd17--correcting-speech-that-characters-have-already-perceived)                  | [DG25](#dg25--deliberate-corrections-and-shared-restoration)                                                                                                                       | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND18](#nd18--first-encounter-narration-for-places-and-inventory-items)                  | [DG01](#dg01--actions-and-first-encounters)                                                                                                                                        | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND19](#nd19--older-memory-transformation-and-dream-reinterpretation)                    | [DG23](#dg23--characters-changed-by-their-experience)                                                                                                                              | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND20](#nd20--a-bounded-richer-memory-retrieval-comparison)                              | [DG04](#dg04--a-specific-recall-problem)                                                                                                                                           | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND21](#nd21--mental-effects-shared-minds-and-selective-telepathy)                       | [DG33](#dg33--extraordinary-minds-and-life-after-death)                                                                                                                            | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND22](#nd22--commercial-offers-and-the-customer-entitlement-lifecycle)                  | [DG27](#dg27--customer-and-supporter-offers)                                                                                                                                       | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND23](#nd23--creator-revenue-allocation-and-marketplace-operation)                      | [DG28](#dg28--published-packs-and-creator-revenue)                                                                                                                                 | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND24](#nd24--patron-recognition-dedications-and-durable-attribution)                    | [DG27](#dg27--customer-and-supporter-offers)                                                                                                                                       | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND25](#nd25--creator-grants-and-contributorpatron-governance)                           | [DG30](#dg30--a-creator-fund-and-contributor-governance)                                                                                                                           | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND26](#nd26--a-bounded-commercial-test-and-repeatable-product-demonstration)            | [DG03](#dg03--a-useful-demo-and-early-audience-learning), [DG27](#dg27--customer-and-supporter-offers)                                                                             | Early demo/value evidence → paid-offer/renewal evidence.                                   |
+| [ND27](#nd27--resident-conduct-audience-and-sensitive-conversation-policy)               | [DG09](#dg09--resident-conduct-for-a-selected-audience)                                                                                                                            | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND28](#nd28--optional-session-endings-play-rhythms-and-returning-experience)            | [DG05](#dg05--ending-and-returning-to-a-session)                                                                                                                                   | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND29](#nd29--measure-whether-play-supports-well-being-and-human-connection)             | [DG11](#dg11--evidence-for-a-selected-well-being-objective)                                                                                                                        | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND30](#nd30--personal-journal-extensions-and-exported-or-printed-editions)              | [DG16](#dg16--a-useful-personal-journal-extension)                                                                                                                                 | Narrow useful extension/export first; print and shared editions only on demand.            |
+| [ND31](#nd31--human-introductions-small-groups-and-family-participation)                 | [DG10](#dg10--a-chosen-human-social-experience)                                                                                                                                    | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND32](#nd32--learning-creation-and-other-uses-beyond-the-game)                          | [DG36](#dg36--one-useful-application-beyond-the-game)                                                                                                                              | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND33](#nd33--food-freshness-spoilage-and-preservation)                                  | [DG19](#dg19--supplies-that-change-over-time)                                                                                                                                      | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND34](#nd34--additional-distribution-platforms-and-offline-play)                        | [DG35](#dg35--a-selected-platform-or-offline-capability)                                                                                                                           | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND35](#nd35--shared-world-restoration-and-private-history)                              | [DG25](#dg25--deliberate-corrections-and-shared-restoration)                                                                                                                       | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND36](#nd36--optional-narrative-perspectives-and-distant-event-cutaways)                | [DG15](#dg15--an-optional-story-perspective)                                                                                                                                       | Retain the entry's full scope and any conditional selection requirement.                   |
+| [ND37](#nd37--public-world-reporting-participation-controls-and-operator-authority)      | [DG08](#dg08--finding-a-community-and-participating-publicly)                                                                                                                      | Retain the entry's full scope and any conditional selection requirement.                   |
+
+The existing scalability project is also fully routed; its original tracker remains the delivery owner.
+
+| Existing scalability work | Design groups and retained boundary                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PS01                      | Documentation foundation already complete; no new design batch restarts it.                                                                                                                                                                                                                                                                                                                                                                   |
+| PS02                      | [DG02](#dg02--one-resident-who-follows-through); selected coarse-family extensions feed [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding).                                                                                                                                                                                                                                                                                 |
+| PS03                      | [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding).                                                                                                                                                                                                                                                                                                                                                                         |
+| PS04 / PS-D02             | [DG02](#dg02--one-resident-who-follows-through) for local attention; [DG18](#dg18--worthwhile-crowds-and-background-social-scenes) for crowds/scenes; [DG26](#dg26--voice-calls-and-selected-hearing-extensions) for any selected actual speech-timing/media extension.                                                                                                                                                                       |
+| PS05 / PS-D01 / PS-D03    | [DG07](#dg07--human-participation-and-recoverable-conflict) for human participation; [DG08](#dg08--finding-a-community-and-participating-publicly) for initial entry; [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding) for clocks/detail transitions; [DG29](#dg29--more-participants-and-travel-between-worlds) for wider travel.                                                                                        |
+| PS06 / PS-D06             | [DG08](#dg08--finding-a-community-and-participating-publicly) for initial admission; [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding) for quiet operation/funding; [DG18](#dg18--worthwhile-crowds-and-background-social-scenes) for a chosen crowd; [DG29](#dg29--more-participants-and-travel-between-worlds) for growth. [DG27](#dg27--customer-and-supporter-offers) consumes the service promise for customer terms. |
+| PS07 / PS-D04 / PS-D05    | [DG29](#dg29--more-participants-and-travel-between-worlds) for domains/visits; [DG34](#dg34--shared-campaigns-with-local-opportunities) for forecast campaigns.                                                                                                                                                                                                                                                                               |
+| PS08                      | Refine relevant evidence alongside each offered scope, with broader population/history comparisons in [DG29](#dg29--more-participants-and-travel-between-worlds) and campaign cases in [DG34](#dg34--shared-campaigns-with-local-opportunities). Qualification is not postponed until the final band.                                                                                                                                         |
+
+Existing art, hosting, data, agency, current survival, family inspection, promise controls and other already-designed work remains in [the reuse/deferral table](#existing-designs-and-deliberate-deferrals-to-reuse) below. These are dependencies or parallel delivery work when needed, not omitted ND entries or new design projects.
 
 ## Product scalability: substantial plans already exist
 

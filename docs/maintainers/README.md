@@ -2,7 +2,7 @@
 
 ## Future work needing design
 
-[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
+[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. Its [ordered design groups](needs-design.md#ordered-design-groups) cover all 37 ND entries and remaining scalability refinements, with roadmap bands, parallel-work boundaries, explicit later slices and conditional triggers. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
 
 ## Five researched product specifications
 
