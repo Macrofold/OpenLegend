@@ -11,37 +11,77 @@ concurrency:
 jobs:
   reconcile:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Replay the review commits without automatic conflict resolution
+      - name: Replay review commits onto the pinned current main
         shell: bash
         env:
           AI_BUDGET_USD: '0'
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/review-reconciliation"
+          export REVIEW_OUTPUT="$RUNNER_TEMP/review-reconciliation"
+          mkdir -p "$REVIEW_OUTPUT"
           git config user.name 'OpenLegend documentation review'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          old_base=bdaecaace24ad251ef7dbc689949124ba614adc6
-          new_base=e4d25a06105fbc1321c9a0e7a7a12524e7644ce1
+          old_base=e4d25a06105fbc1321c9a0e7a7a12524e7644ce1
+          new_base=b50ec6ce75f260d68c18ec99d767982c65b0fccb
           test "$(git merge-base "$GITHUB_SHA" "$new_base")" = "$old_base"
-          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/review-reconciliation/before.txt"
+          test -z "$(git status --porcelain)"
+          printf '%s\n' "$GITHUB_SHA" > "$REVIEW_OUTPUT/before.txt"
+          git diff "$old_base" "$new_base" > "$REVIEW_OUTPUT/upstream.patch"
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          output = pathlib.Path(os.environ['REVIEW_OUTPUT'])
+          rev = 'b50ec6ce75f260d68c18ec99d767982c65b0fccb'
+          names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', '-z', rev]).decode().strip('\0').split('\0')
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          names = [n for n in names if 'archive' not in pathlib.PurePosixPath(n).parts and (pathlib.Path(n).suffix in extensions or n in ('LICENSE', '.env.example', '.gitignore', '.prettierignore'))]
+          subprocess.run(['git', 'archive', '--format=zip', f'--output={output / "current-main-source.zip"}', rev, '--', *names], check=True)
+          (output / 'current-main-tree.json').write_bytes(subprocess.check_output(['git', 'ls-tree', '-r', '--long', rev]))
+          PY
           if ! git rebase --onto "$new_base" "$old_base"; then
-            git status --short > "$RUNNER_TEMP/review-reconciliation/conflicts.txt"
-            git diff --cc > "$RUNNER_TEMP/review-reconciliation/conflicts.diff"
-            git rev-parse REBASE_HEAD > "$RUNNER_TEMP/review-reconciliation/stopped-commit.txt"
+            git status --short > "$REVIEW_OUTPUT/conflicts.txt"
+            git diff --cc > "$REVIEW_OUTPUT/conflicts.diff"
+            git rev-parse REBASE_HEAD > "$REVIEW_OUTPUT/stopped-commit.txt"
+            git diff --name-only --diff-filter=U > "$REVIEW_OUTPUT/conflicted-paths.txt"
+            python3 - <<'PY'
+          import os, pathlib, subprocess, zipfile
+          out = pathlib.Path(os.environ['REVIEW_OUTPUT'])
+          names = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U', '-z']).decode().strip('\0').split('\0')
+          with zipfile.ZipFile(out / 'conflict-stages.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for name in names:
+                  if not name:
+                      continue
+                  if pathlib.Path(name).is_file():
+                      archive.write(name, 'worktree/' + name)
+                  for stage in (1, 2, 3):
+                      result = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
+                      if result.returncode == 0:
+                          archive.writestr(f'stage-{stage}/' + name, result.stdout)
+          PY
             exit 1
           fi
-          git diff --exit-code "$new_base" HEAD -- apps packages scripts package.json pnpm-lock.yaml
+          python3 - <<'PY'
+          import subprocess
+          base = 'b50ec6ce75f260d68c18ec99d767982c65b0fccb'
+          changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD', '--', 'apps', 'packages', 'scripts', 'package.json', 'pnpm-lock.yaml']).decode().splitlines()
+          allowed = {'apps/server/src/world-agent-questions.ts', 'apps/server/src/world-authoring-analysis.ts'}
+          assert set(changed) <= allowed, changed
+          for path in changed:
+              before = subprocess.check_output(['git', 'show', f'{base}:{path}']).decode()
+              after = subprocess.check_output(['git', 'show', f'HEAD:{path}']).decode()
+              expected = before.replace('docs/projects/world-agent-context/', 'docs/projects/completed/world-agent-context/').replace('docs/projects/invention-questions-', 'docs/projects/completed/invention-questions-')
+              assert after == expected, ('runtime edit', path)
+          PY
           git diff --check "$new_base" HEAD
-          git range-diff "$old_base..$GITHUB_SHA" "$new_base..HEAD" > "$RUNNER_TEMP/review-reconciliation/range-diff.txt"
-          git diff --binary --full-index "$new_base" HEAD > "$RUNNER_TEMP/review-reconciliation/review.patch"
-          git rev-parse HEAD > "$RUNNER_TEMP/review-reconciliation/after.txt"
+          git range-diff "$old_base..$GITHUB_SHA" "$new_base..HEAD" > "$REVIEW_OUTPUT/range-diff.txt"
+          git diff --binary --full-index "$new_base" HEAD > "$REVIEW_OUTPUT/review.patch"
+          git rev-parse HEAD > "$REVIEW_OUTPUT/after.txt"
       - name: Publish with an exact lease on this review branch only
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: full-documentation-review-reconciliation
+          name: full-documentation-review-reconciliation-b50ec6c
           path: ${{ runner.temp }}/review-reconciliation/
           retention-days: 1
           if-no-files-found: error
