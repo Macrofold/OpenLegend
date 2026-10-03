@@ -76,7 +76,7 @@ No blanket theme replacement, decorative grid mandate, bulk trading or unscoped 
 - [x] Redact protected context handles across fragment boundaries before storage/publication; verify replay, EOF/cancellation and absence from diagnostics. Distinguish discovery/reply Runs inside one turn, persist their handoff and finalize only at outer turn completion.
 - [x] Retain idempotent bounded progress under the existing turn owner and deliver owner-scoped snapshots/SSE with access revocation and backpressure.
 - [x] Client renders text before completion; preserves older reading position, draft and exact review; final validated text replaces the preview once.
-- [ ] Exercise mid-run restart, reconnect/rotation, duplicate/gap events, questions, cancellation after a tool effect, slow readers, private-scope replacement and unsupported harness. Confirm no duplicate run, world effect or charge.
+- [x] Exercise mid-run restart, reconnect/rotation, duplicate/gap events, questions, cancellation after a tool effect, slow readers, private-scope replacement and unsupported harness with synthetic transport and actual PostgreSQL/server callers. Confirm no duplicate run, world effect or charge; deployed qualification remains separate.
 - [ ] Complete browser/input/accessibility checks and measured delivery latency, update WW/runtime/WS01 evidence; keep unrelated WW07 deployed-release gaps open.
 
 No public-world broadcast of owner text, raw reasoning/tool traces or claim that a spinner completes incremental delivery. Earlier turns remain reachable under the unchanged session ceiling.

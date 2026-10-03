@@ -71,16 +71,6 @@ export function ConversationMessage({
   );
 }
 
-function latestTwoAreOffscreen(element: HTMLDivElement) {
-  const entries = [...element.querySelectorAll<HTMLElement>('[data-conversation-entry]')].slice(-2);
-  if (entries.length < 2) return false;
-  const viewport = element.getBoundingClientRect();
-  return entries.every((entry) => {
-    const bounds = entry.getBoundingClientRect();
-    return bounds.bottom <= viewport.top || bounds.top >= viewport.bottom;
-  });
-}
-
 export function ConversationThread({
   conversationKey,
   items,
@@ -175,11 +165,9 @@ export function ConversationThread({
       return;
     }
     if (addedMessage || contentChanged) {
-      if (
-        unread.current ||
-        !followingBottom.current ||
-        (log.current && latestTwoAreOffscreen(log.current))
-      ) {
+      // New entries may all land below the viewport in one batch. Their new
+      // geometry cannot tell us where the reader was before this update.
+      if (unread.current || !followingBottom.current) {
         unread.current = true;
         setShowNewMessage(true);
       } else {

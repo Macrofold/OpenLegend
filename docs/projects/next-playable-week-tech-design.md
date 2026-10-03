@@ -312,6 +312,8 @@ Coalesce replaceable progress snapshots within [WS01](../limits/inventions.md#ws
 
 A server restart reads existing operation identity and progress. It may reconcile the same remote run using the established recovery path; it never starts a replacement generation. A user-requested continuation is a separate deliberately admitted turn. Saving partial text is not permission to keep an idle paid worker alive.
 
+Recheck the initiating session/turn's current permission and control immediately before new provider dispatch, after provisioning and pending-journal waits. The existing turn owner supplies that check; a refusal or failed read before HTTP is known unsubmitted work and releases only its exact reservation after retaining the rejected journal. Accepted or ambiguous requests retain original-Run recovery. Recheck discovery-to-recipe handoff inside its writer before changing the handle or planned stage.
+
 ### Owner-scoped browser delivery
 
 Add a session/turn-scoped progress endpoint to the existing World Agent HTTP/service boundary. Its responses are application snapshots or validated updates with local revisions. Authenticate and authorize the principal, session, world, timeline and creator scope; recheck when access changes and before releasing delayed data. A cursor is not permission.
@@ -324,7 +326,7 @@ Slow/disconnected readers detach under the shared backpressure policy. Detaching
 
 `world-agent-session.tsx` holds stable turn identity and renders one live reply under that turn. Preserve the composer draft and immutable answered questions. Stream updates cannot rewrite a selected review revision or enable Apply before review admission. Prevent late callbacks from a previous session, access scope or save timeline.
 
-Track whether the reader follows the bottom. Preserve an older message anchor during append and earlier-page loading; show a focusable “New reply text” cue rather than force scrolling. Announce phase transitions/completion accessibly, not every text fragment. Keep partial Markdown safe as text; an unclosed code fence must not destabilize the panel or execute markup.
+Track whether the reader follows the bottom before the update; newly inserted entries' geometry cannot establish that earlier position. Preserve an older message anchor during append and earlier-page loading; show a focusable “New reply text” cue rather than force scrolling. Announce phase transitions/completion accessibly, not every text fragment. Keep partial Markdown safe as text; an unclosed code fence must not destabilize the panel or execute markup.
 
 The current 256-turn client trim matches the server's 256-turn session ceiling, so it is not presently a confirmed paging defect. This slice preserves the ceiling and earlier-history reachability. Raising it later requires a real navigable history-window design, not retaining the newest 256 while discarding requested older pages.
 

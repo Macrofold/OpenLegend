@@ -207,6 +207,7 @@ export class MacrofoldBackend implements AiClient {
     signal?: AbortSignal,
     admissionSignal?: AbortSignal,
     privateContent = false,
+    beforeDispatch?: () => Promise<void>,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
     const previous = await this.load<{
@@ -229,6 +230,19 @@ export class MacrofoldBackend implements AiClient {
     await this.save(`operation:${name}`, { fingerprint, attempt });
     // Check after the last journal await, immediately before HTTP dispatch. Once
     // sent, keep observing acceptance so closure can cancel the returned Run ID.
+    if (beforeDispatch) {
+      try {
+        await beforeDispatch();
+      } catch (error) {
+        // No HTTP admission occurred. Keep this refusal distinct from an accepted
+        // or ambiguous POST; recovery must not hold a known-unsubmitted charge.
+        await this.save(`operation:${name}`, { fingerprint, attempt, rejected: true });
+        throw new MacrofoldAdmissionCancelled(
+          'World Agent authorization could not be confirmed before dispatch.',
+          { cause: error },
+        );
+      }
+    }
     if (admissionSignal?.aborted) {
       await this.save(`operation:${name}`, { fingerprint, attempt, rejected: true });
       throw new MacrofoldAdmissionCancelled('Macrofold request cancelled before dispatch.');
@@ -685,7 +699,9 @@ export class MacrofoldBackend implements AiClient {
     }
     let question: boolean;
     try {
-      // Expired delivery authority must not prevent settling the retained Run.
+      // Recovery settles only the validated original Run before any owner
+      // progress write can refuse expired/revoked access. Refusal cannot leave
+      // known usage uncertain or keep this exact lane blocked.
       await beginRun?.({
         runId: original.runId,
         stage: original.stage,
@@ -704,7 +720,7 @@ export class MacrofoldBackend implements AiClient {
         )
       )
         throw error;
-      // A bad question must not prevent settlement of this known terminal Run.
+      // Refused delivery or a bad question must not undo this known settlement.
       // Transient transport/storage failures still retain recovery for another read.
       return {
         ok: false,
@@ -1015,6 +1031,7 @@ export class MacrofoldBackend implements AiClient {
         AbortSignal.timeout(config.macrofoldTimeoutSeconds * 1000),
         signal,
         !!worldAgent,
+        worldAgent?.beforeDispatch,
       );
       lane.run = string(accepted['run_id']);
       receipt.providerRequestId = lane.run;

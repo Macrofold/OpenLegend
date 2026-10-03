@@ -76,6 +76,9 @@ export interface WorldAgentTurn {
   applicationRequestId?: string;
   /** In-process cancellation only; never serialized into prompts or durable records. */
   signal?: AbortSignal;
+  /** Recheck through the turn owner after admission's journal waits.
+   * See docs/world-agent-runtime.md#incremental-owner-replies. */
+  beforeDispatch?: () => Promise<void>;
   onQuestion?: (event: NativeQuestionEvent) => Promise<void>;
   beginRun?: (run: WorldAgentRunProgress) => Promise<void>;
   onProgress?: (progress: WorldAgentOutputProgress) => Promise<void>;
@@ -253,6 +256,21 @@ export class WorldAuthoringService {
   }
   private progressCallbacks(id: string, turnId: string, handle: string, scope: RequestScope) {
     return {
+      beforeDispatch: () =>
+        this.serial(id, async () => {
+          const session = await this.requireSession(id, scope);
+          const turn = await this.records.get<AgentTurnRecord>(id, 'turn', turnId);
+          if (
+            !turn ||
+            turn.response ||
+            turn.cancelRequested ||
+            session.activeTurn !== turnId ||
+            session.contextHash !== contextHash(handle) ||
+            !this.permitted(session, scope)
+          )
+            throw new AuthoringRequestError('This request is no longer authorized to start.');
+          this.service.assertScope(scope, 'play', true);
+        }),
       beginRun: (run: WorldAgentRunProgress) => this.beginProgress(id, turnId, handle, scope, run),
       onProgress: (progress: WorldAgentOutputProgress) =>
         this.retainProgress(id, turnId, scope, progress),
@@ -281,6 +299,12 @@ export class WorldAuthoringService {
         )
           throw new AuthoringRequestError('Reply delivery belongs to an inactive turn.');
         await this.assertOperationalWritable(session);
+        // The session lane protects its records, not wall-clock expiry or a
+        // changed world grant while the turn read waits. Fence new progress now.
+        if (!this.permitted(session, scope))
+          throw new AuthoringRequestError(
+            'Reply delivery permission changed before saving progress.',
+          );
         const admittedNext =
           turn.nextRunRequestId !== undefined && turn.nextRunRequestId === run.applicationRequestId;
         if (admittedNext) delete turn.nextRunRequestId;
@@ -1164,8 +1188,22 @@ export class WorldAuthoringService {
     if (!response) return;
     await this.serial(id, () =>
       this.records.db.transaction(async () => {
-        const current = await this.ownedSession(id, scope);
-        if (current.recoveryTurn !== turnId || current.activeTurn) return;
+        // Like finishTurn, retaining an admitted outcome must survive revoked
+        // write/disclosure grants. Bind the original owner and live timeline;
+        // this records a receipt, never authority for new work or private disclosure.
+        const current = await this.records.session(id);
+        if (
+          !current ||
+          current.principal !== session.principal ||
+          current.actorId !== session.actorId ||
+          current.worldId !== session.worldId ||
+          current.timeline !== session.timeline ||
+          current.worldId !== this.service.world.id ||
+          current.timeline !== this.service.timelineId ||
+          current.recoveryTurn !== turnId ||
+          current.activeTurn
+        )
+          return;
         const turn = await this.records.get<AgentTurnRecord>(id, 'turn', turnId);
         if (!turn) throw new Error('Missing interrupted turn.');
         const missingNextRun =
@@ -1257,6 +1295,11 @@ export class WorldAuthoringService {
       );
       s.packetRef = packet.id;
       await this.records.db.transaction(async () => {
+        // Allowance/turn reads and entry into the writer can outlive permission.
+        // Refuse the whole handoff before replacing the old handle or stage intent.
+        if (!this.permitted(s, scope))
+          throw new AuthoringRequestError('Recipe continuation permission changed.');
+        this.service.assertScope(scope, 'play', true);
         await this.records.put(s.id, 'turn', requestId, {
           ...turn,
           nextRunRequestId: nextRequestId,
