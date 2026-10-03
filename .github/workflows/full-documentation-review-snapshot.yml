@@ -12,25 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 642bc98ddea88dd71c29faf665c8933898c9e6cb
+          ref: 8646ea4652639e25663ac2e4abde0bd2a5cbacd8
           path: review
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: bdaecaace24ad251ef7dbc689949124ba614adc6
+          ref: e4d25a06105fbc1321c9a0e7a7a12524e7644ce1
           path: upstream
           persist-credentials: false
       - name: Package tracked sources and exact revisions
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/documentation-review"
+          mkdir -p "$RUNNER_TEMP/documentation-review/patches"
           for scope in review upstream; do
             git -C "$scope" archive --format=tar.gz HEAD > "$RUNNER_TEMP/documentation-review/$scope.tar.gz"
             git -C "$scope" rev-parse HEAD > "$RUNNER_TEMP/documentation-review/$scope-revision.txt"
           done
+          git -C review format-patch --full-index --binary -o "$RUNNER_TEMP/documentation-review/patches" 8005f7c7245cfecec128652efe3ef07926604e0a..HEAD
+          git -C review log --format='%H %P %s' 8005f7c7245cfecec128652efe3ef07926604e0a..HEAD > "$RUNNER_TEMP/documentation-review/review-commits.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: openlegend-documentation-review-resume
+          name: openlegend-documentation-review-pinned
           path: ${{ runner.temp }}/documentation-review/
           retention-days: 1
           if-no-files-found: error
