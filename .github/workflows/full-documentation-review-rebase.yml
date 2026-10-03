@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Replay review commits onto the pinned current main
+      - name: Replay review commits with the exact reviewed tracker collision resolved
         shell: bash
         env:
           AI_BUDGET_USD: '0'
@@ -34,21 +34,38 @@ jobs:
           test -z "$(git status --porcelain)"
           printf '%s\n' "$GITHUB_SHA" > "$REVIEW_OUTPUT/before.txt"
           git diff "$old_base" "$new_base" > "$REVIEW_OUTPUT/upstream.patch"
-          python3 - <<'PY'
-          import json, os, pathlib, subprocess
-          output = pathlib.Path(os.environ['REVIEW_OUTPUT'])
-          rev = 'b50ec6ce75f260d68c18ec99d767982c65b0fccb'
-          names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', '-z', rev]).decode().strip('\0').split('\0')
-          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
-          names = [n for n in names if 'archive' not in pathlib.PurePosixPath(n).parts and (pathlib.Path(n).suffix in extensions or n in ('LICENSE', '.env.example', '.gitignore', '.prettierignore'))]
-          subprocess.run(['git', 'archive', '--format=zip', f'--output={output / "current-main-source.zip"}', rev, '--', *names], check=True)
-          (output / 'current-main-tree.json').write_bytes(subprocess.check_output(['git', 'ls-tree', '-r', '--long', rev]))
+          result=0
+          git rebase --onto "$new_base" "$old_base" || result=$?
+          if [ "$result" -ne 0 ] && [ "$(git rev-parse REBASE_HEAD)" = af4a8802c1d8c6d4011e1a36ce6087c3edff0b62 ]; then
+            python3 - <<'PY'
+          import hashlib, pathlib, re, subprocess
+          name = 'docs/maintainers/agent-guidance.md'
+          unresolved = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U']).decode().splitlines()
+          assert unresolved == [name], unresolved
+          hashes = ['8425d8823d74675e5198402118b38b69aab1ba21409cf05ec2c922ab287046ff', '5a25cb531a4002a51a8ccd89b594f43f578581d3c44abf244a250f44af5bbf02', '26731c3523234e8450c73e43e2dfe61eac33d84f007d2d5a60acd9f9123f465e']
+          for stage, expected in enumerate(hashes, 1):
+              data = subprocess.check_output(['git', 'show', f':{stage}:{name}'])
+              assert hashlib.sha256(data).hexdigest() == expected, ('unreviewed stage', stage)
+          path = pathlib.Path(name)
+          text = path.read_text()
+          assert hashlib.sha256(text.encode()).hexdigest() == '6fc233ad7db3bfbf9f41afad5080fc2701177c8f35d24c23f7720269c2c43c6f'
+          matches = list(re.finditer(r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> .*?\n', text, re.M | re.S))
+          assert len(matches) == 1
+          match = matches[0]
+          assert '**CG14 — Experience-led work selection.**' in match.group(1)
+          assert '**CG14 — Full Documentation Review.**' in match.group(2)
+          resolved = text[:match.start()] + match.group(1) + '\n' + match.group(2).replace('**CG14 — Full Documentation Review.**', '**CG15 — Full Documentation Review.**') + text[match.end():]
+          assert hashlib.sha256(resolved.encode()).hexdigest() == '6ae66f1c67ace9a4a0d3aee254d2ed44d111c8fe424a8bd4dd3cd0543570aa6c'
+          path.write_text(resolved)
+          subprocess.run(['git', 'add', '--', name], check=True)
           PY
-          if ! git rebase --onto "$new_base" "$old_base"; then
+            result=0
+            GIT_EDITOR=true git rebase --continue || result=$?
+          fi
+          if [ "$result" -ne 0 ]; then
             git status --short > "$REVIEW_OUTPUT/conflicts.txt"
             git diff --cc > "$REVIEW_OUTPUT/conflicts.diff"
             git rev-parse REBASE_HEAD > "$REVIEW_OUTPUT/stopped-commit.txt"
-            git diff --name-only --diff-filter=U > "$REVIEW_OUTPUT/conflicted-paths.txt"
             python3 - <<'PY'
           import os, pathlib, subprocess, zipfile
           out = pathlib.Path(os.environ['REVIEW_OUTPUT'])
@@ -60,14 +77,14 @@ jobs:
                   if pathlib.Path(name).is_file():
                       archive.write(name, 'worktree/' + name)
                   for stage in (1, 2, 3):
-                      result = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
-                      if result.returncode == 0:
-                          archive.writestr(f'stage-{stage}/' + name, result.stdout)
+                      data = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
+                      if data.returncode == 0:
+                          archive.writestr(f'stage-{stage}/' + name, data.stdout)
           PY
             exit 1
           fi
           python3 - <<'PY'
-          import subprocess
+          import json, os, pathlib, subprocess
           base = 'b50ec6ce75f260d68c18ec99d767982c65b0fccb'
           changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD', '--', 'apps', 'packages', 'scripts', 'package.json', 'pnpm-lock.yaml']).decode().splitlines()
           allowed = {'apps/server/src/world-agent-questions.ts', 'apps/server/src/world-authoring-analysis.ts'}
@@ -77,6 +94,13 @@ jobs:
               after = subprocess.check_output(['git', 'show', f'HEAD:{path}']).decode()
               expected = before.replace('docs/projects/world-agent-context/', 'docs/projects/completed/world-agent-context/').replace('docs/projects/invention-questions-', 'docs/projects/completed/invention-questions-')
               assert after == expected, ('runtime edit', path)
+          output = pathlib.Path(os.environ['REVIEW_OUTPUT'])
+          rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+          names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', '-z', rev]).decode().strip('\0').split('\0')
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          names = [n for n in names if 'archive' not in pathlib.PurePosixPath(n).parts and (pathlib.Path(n).suffix in extensions or n in ('LICENSE', '.env.example', '.gitignore', '.prettierignore'))]
+          subprocess.run(['git', 'archive', '--format=zip', f'--output={output / "reconciled-source.zip"}', rev, '--', *names], check=True)
+          (output / 'reconciled-tree.txt').write_bytes(subprocess.check_output(['git', 'ls-tree', '-r', '--long', rev]))
           PY
           git diff --check "$new_base" HEAD
           git range-diff "$old_base..$GITHUB_SHA" "$new_base..HEAD" > "$REVIEW_OUTPUT/range-diff.txt"
@@ -90,7 +114,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: full-documentation-review-reconciliation-b50ec6c
+          name: full-documentation-review-reconciliation-b50ec6c-resolved
           path: ${{ runner.temp }}/review-reconciliation/
           retention-days: 1
           if-no-files-found: error
