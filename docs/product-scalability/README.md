@@ -8,19 +8,19 @@ This is the strategic product-scalability owner: what belonging, absence, attent
 
 ## Read the suite
 
-| Document | Question it owns |
-| --- | --- |
-| [Worlds and belonging](worlds-and-belonging.md) | How do persistent communities, protected homes, unique characters, travel, and community decline fit together? |
-| [Background progression](background-progression.md) | What continues unattended, what changes detail, and how do activities remain interruptible without replaying every step? |
-| [Attention and scenes](attention-and-scenes.md) | How do bounded perception, continued agency, scene resolution, memory, and model-quality tiers work together? |
-| [Participation and protection](participation-and-protection.md) | What do absence, dangerous logout, protected characters, private domains, and independently configured clocks promise? |
-| [Capacity and economics](capacity-and-economics.md) | What activity can be promised at sustainable cost, and what happens when a crowd exceeds its supported envelope? |
-| [Shared campaigns](shared-campaigns.md) | How can many communities meaningfully oppose one canonical villain through local, forecast conflicts? |
-| [Alternatives and reconsideration](alternatives.md) | Which secondary models remain available, and what evidence would justify reconsidering them? |
-| [Feature specification](../projects/product-scalability-feature-spec.md) | What end-to-end player experiences and acceptance scenarios must the product deliver? |
-| [Technical design and delivery plan](../projects/product-scalability-tech-design.md) | How do existing owners integrate these semantics in feasible stages? |
-| [Delivery tracker](../maintainers/product-scalability.md) | Which work is still proposed or unqualified? |
-| [Limits and open policy choices](../limits/product-scalability.md) | Which constraints are deliberate, which numbers are unset, and when should they be revisited? |
+| Document                                                                             | Question it owns                                                                                                         |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| [Worlds and belonging](worlds-and-belonging.md)                                      | How do persistent communities, protected homes, unique characters, travel, and community decline fit together?           |
+| [Background progression](background-progression.md)                                  | What continues unattended, what changes detail, and how do activities remain interruptible without replaying every step? |
+| [Attention and scenes](attention-and-scenes.md)                                      | How do bounded perception, continued agency, scene resolution, memory, and model-quality tiers work together?            |
+| [Participation and protection](participation-and-protection.md)                      | What do absence, dangerous logout, protected characters, private domains, and independently configured clocks promise?   |
+| [Capacity and economics](capacity-and-economics.md)                                  | What activity can be promised at sustainable cost, and what happens when a crowd exceeds its supported envelope?         |
+| [Shared campaigns](shared-campaigns.md)                                              | How can many communities meaningfully oppose one canonical villain through local, forecast conflicts?                    |
+| [Alternatives and reconsideration](alternatives.md)                                  | Which secondary models remain available, and what evidence would justify reconsidering them?                             |
+| [Feature specification](../projects/product-scalability-feature-spec.md)             | What end-to-end player experiences and acceptance scenarios must the product deliver?                                    |
+| [Technical design and delivery plan](../projects/product-scalability-tech-design.md) | How do existing owners integrate these semantics in feasible stages?                                                     |
+| [Delivery tracker](../maintainers/product-scalability.md)                            | Which work is still proposed or unqualified?                                                                             |
+| [Limits and open policy choices](../limits/product-scalability.md)                   | Which constraints are deliberate, which numbers are unset, and when should they be revisited?                            |
 
 ## Principles to carry into every feature
 
@@ -103,3 +103,10 @@ An accepted product direction does not automatically repeal current exact-percep
 This suite composes [engine/world boundaries](../engine-and-world-boundaries.md), [agency](../agent-agency.md), [memory](../memory-architecture.md), [perception and reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), [conversations](../narration-and-conversations.md), [simulation time](../simulation-time.md), [encounter scaling](../encounter-scaling.md), [performance](../performance.md), and [save/load](../save-and-load.md). It does not introduce another writable mind, body, inventory, event log, spending authority, or scheduler per feature.
 
 Operational distribution remains in [delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md); account participation and access remain in the [multiplayer-authority design](../projects/multiplayer-authority-tech-design.md). This work neither promises literal consciousness nor requires a scientific definition of sentience: the product contract concerns autonomous fictional characters with durable, scoped memory and consistent behavior.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).

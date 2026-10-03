@@ -19,20 +19,20 @@ Completion requires substantive canonical pages, a paired feature/technical desi
 
 Retain the domain as deterministic authority over admitted fictional transitions; the server owns permitted context, bounded work, spending, and publication; model execution proposes rather than authorizes. Reuse current state, history, plans, reservations, evidence, and lifecycle owners. Logical separation below is not a request for microservices or an ECS replacement.
 
-| Responsibility | Existing owner and extension |
-| --- | --- |
-| Identity, body, inventory, work, resource effects | Existing domain authorities; retain one canonical state across detail modes |
-| Chosen goals and methods | Agency; extend continuing activities and cancellation without writing a parallel plan store |
-| Occurrences and observer evidence | Perception/reaction intake plus sensory policies; add explicit aggregate episodes only under an admitted policy |
-| Focus and recollection | Cognition/memory; bounded input selection, stable focus, precise versus gist evidence |
-| Scene speech and obligations | Conversation and native commitment owners; validate completed beats before derived narration |
-| Time | Simulation-time owner; an explicit future calendar/mechanical separation, not reinterpretation of existing speed settings |
-| Physical detail preparation | Spatial and simulation owners; reconstruct valid current work and poses, not replay history |
-| Account departure and reentry | Multiplayer authority; bounded current-encounter continuation and correct private actor control |
-| World policy and invention | Engine/world boundary and admitted definitions; capability inheritance with cost and lifecycle constraints |
-| Capacity and money | Existing host/work admission and accounting; differentiated workload envelopes, no fictional privilege bypass |
-| Durability and transfers | Current save/load and production-data owners; outcomes escaping a rollback scope require appropriate durable boundaries |
-| Shared campaigns | A future bounded canonical campaign owner composed with local outcomes, not a global combat loop |
+| Responsibility                                    | Existing owner and extension                                                                                              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Identity, body, inventory, work, resource effects | Existing domain authorities; retain one canonical state across detail modes                                               |
+| Chosen goals and methods                          | Agency; extend continuing activities and cancellation without writing a parallel plan store                               |
+| Occurrences and observer evidence                 | Perception/reaction intake plus sensory policies; add explicit aggregate episodes only under an admitted policy           |
+| Focus and recollection                            | Cognition/memory; bounded input selection, stable focus, precise versus gist evidence                                     |
+| Scene speech and obligations                      | Conversation and native commitment owners; validate completed beats before derived narration                              |
+| Time                                              | Simulation-time owner; an explicit future calendar/mechanical separation, not reinterpretation of existing speed settings |
+| Physical detail preparation                       | Spatial and simulation owners; reconstruct valid current work and poses, not replay history                               |
+| Account departure and reentry                     | Multiplayer authority; bounded current-encounter continuation and correct private actor control                           |
+| World policy and invention                        | Engine/world boundary and admitted definitions; capability inheritance with cost and lifecycle constraints                |
+| Capacity and money                                | Existing host/work admission and accounting; differentiated workload envelopes, no fictional privilege bypass             |
+| Durability and transfers                          | Current save/load and production-data owners; outcomes escaping a rollback scope require appropriate durable boundaries   |
+| Shared campaigns                                  | A future bounded canonical campaign owner composed with local outcomes, not a global combat loop                          |
 
 ## 3. Proposed representation contracts
 

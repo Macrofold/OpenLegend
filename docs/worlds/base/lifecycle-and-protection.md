@@ -2,6 +2,12 @@
 
 Accepted target for the OpenLegend main/bundled world, September 25, 2026. These policies are not universal engine laws and are not yet fully implemented. Current actor identity/revival remains in [Architecture](../../architecture.md#actor-means-any-living-being); delivery is BW13–BW15 and MP01/MP04.
 
+## Product-scalability integration target
+
+The accepted [product direction](../../product-scalability/participation-and-protection.md) extends the design of the bounded pre-exit interaction phase: a supported already-engaged conflict can continue coarsely, with permitted-evidence warnings and an honest return to its actual aftermath. It must not become either instant logout immunity or indefinite retention by repeated attackers. This is unimplemented integration work in [PS05](../../maintainers/product-scalability.md), coordinated with BW13 and MP04; [PS-D01](../../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns remaining episode and fairness decisions. The existing exit/protection contract below remains controlling until that work is delivered.
+
+Recoverable human death, default possession preservation, cooperative play and explicit PvP participation remain the bundled-world direction. Other authored worlds may choose different supported aftermaths. Specified background-harm protection must also cover the state inherited on detailed arrival; it does not automatically protect every NPC or building. The target for protected personal/guild domains needs explicit access and damage rules before it changes the current property policy below.
+
 ## Human logout and return
 
 After logout/disconnection, finish or safely interrupt current interactions during a short bounded exit period. Disconnecting must not instantly erase an admitted consequence or permit an indefinite action to prevent exit. Then the character visibly fades out for onlookers and leaves active world participation. Emit a committed departure action/event through normal scoped perception so witnessing agents can notice it; do not broadcast private connection/account details or grant awareness to non-witnesses. Preserve character identity, belongings, history and return state.

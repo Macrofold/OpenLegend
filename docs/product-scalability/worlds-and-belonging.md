@@ -16,12 +16,12 @@ A homeland is a persistent society and place with its own residents, institution
 
 Keep four concepts separate:
 
-| Concept | Meaning |
-| --- | --- |
-| Community identity | The people, institutions, relationships, and history players belong to |
-| Fictional place | The actual location where actions and travel occur |
+| Concept            | Meaning                                                                  |
+| ------------------ | ------------------------------------------------------------------------ |
+| Community identity | The people, institutions, relationships, and history players belong to   |
+| Fictional place    | The actual location where actions and travel occur                       |
 | Computational area | An implementation boundary for maintaining relevant work and interaction |
-| Machine/process | Replaceable execution capacity; not a permanent fictional identity |
+| Machine/process    | Replaceable execution capacity; not a permanent fictional identity       |
 
 A town need not fit permanently on one machine. A computational area need not be a player-visible world or a separate timeline. This document prescribes those semantic separations, not the infrastructure for implementing them.
 
@@ -92,3 +92,10 @@ Expansion can introduce new mechanics, places, pressures, and forms of collabora
 A player returns after others have visited: their home and particular relationships persist. A guest can enter but cannot build without permission. Two quiet communities gain a route without histories merging. A local companion declines a second simultaneous expedition because they are actually elsewhere. A private creative world visits a public event without exporting unauthorized resources. A newcomer finds an achievable role without replacing an established player's accomplishments.
 
 Failures include: forced transfer into an incompatible timeline, copied companions with contradictory memories, creator inspection of visiting humans' private state, unannounced destruction during inactivity, and a global campaign overriding private-domain consent. The [feature specification](../projects/product-scalability-feature-spec.md) turns these into delivery gates.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).

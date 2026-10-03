@@ -12,12 +12,12 @@ Do not accumulate missed optional initiatives as debt. A conversation never star
 
 ## 2. Four independent dimensions
 
-| Dimension | Detailed behavior | Possible background behavior | What remains authoritative |
-| --- | --- | --- | --- |
-| Mechanics | Fine movement, collision, tool use, local encounters | Route progress, finite work stages, supported elapsed integration or declared approximate resolution | Identity, resources, bodily state, admitted effects, progress and obligations |
-| Cognition | Prompt replies and relevant reconsideration | Continued plans, fewer optional initiatives, bounded significant decisions | Character perspective, values, chosen aims and actual evidence |
-| Social resolution | Individual utterances and decisions | Completed scene beats, structured agreements, gist with selected exact lines | Participants, communicated information and admitted consequences |
-| Representation | Nearby detail and frequent permitted updates | Sparse presentation or no active client representation | No invented poses that contradict physical support or committed actions |
+| Dimension         | Detailed behavior                                    | Possible background behavior                                                                         | What remains authoritative                                                    |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Mechanics         | Fine movement, collision, tool use, local encounters | Route progress, finite work stages, supported elapsed integration or declared approximate resolution | Identity, resources, bodily state, admitted effects, progress and obligations |
+| Cognition         | Prompt replies and relevant reconsideration          | Continued plans, fewer optional initiatives, bounded significant decisions                           | Character perspective, values, chosen aims and actual evidence                |
+| Social resolution | Individual utterances and decisions                  | Completed scene beats, structured agreements, gist with selected exact lines                         | Participants, communicated information and admitted consequences              |
+| Representation    | Nearby detail and frequent permitted updates         | Sparse presentation or no active client representation                                               | No invented poses that contradict physical support or committed actions       |
 
 A visible blacksmith may need detailed movement without fresh generation. An unseen queen may need high-quality deliberation while remaining physically inexpensive. Treating all four dimensions as one distance-based switch would waste work and damage consistency.
 
@@ -35,13 +35,13 @@ Ordinary survival must remain viable at the selected activity rate. If feeding r
 
 An expected completion is conditional, not uninterruptible.
 
-| Time in this illustrative scenario | Occurrence and required behavior |
-| --- | --- |
-| 10:00 | Ada chooses to repair a roof. Work is expected to finish at 10:30 if its assumptions remain true. |
-| 10:07 | An enemy reaches town. This is world state, not automatic awareness for Ada. |
-| 10:07:05 | A guard sounds an alarm that Ada can hear under the actual sensory policy. |
-| At the alarm | Bring relevant work and bodies through that occurrence time; preserve completed repair work and resources. Record Ada's permitted evidence. |
-| Following perception | Continue an applicable chosen contingency, interrupt through supported native policy, or offer a new scoped decision. Do not grant knowledge of an unseen enemy's precise identity or plan. |
+| Time in this illustrative scenario | Occurrence and required behavior                                                                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10:00                              | Ada chooses to repair a roof. Work is expected to finish at 10:30 if its assumptions remain true.                                                                                           |
+| 10:07                              | An enemy reaches town. This is world state, not automatic awareness for Ada.                                                                                                                |
+| 10:07:05                           | A guard sounds an alarm that Ada can hear under the actual sensory policy.                                                                                                                  |
+| At the alarm                       | Bring relevant work and bodies through that occurrence time; preserve completed repair work and resources. Record Ada's permitted evidence.                                                 |
+| Following perception               | Continue an applicable chosen contingency, interrupt through supported native policy, or offer a new scoped decision. Do not grant knowledge of an unseen enemy's precise identity or plan. |
 
 A coarse journey can schedule reaching the gate or an encounter boundary without simulating every footstep. The encounter can generate the alarm. Native or coarse detection still has to exist; a calendar reminder alone cannot discover an intruder.
 
@@ -116,3 +116,10 @@ Already-active conflict is different. Leaving an area cannot remove attackers or
 Start with a small community containing travel, work, resources, an interrupting alarm, a scene, and a protected home. Enter and leave midactivity; add a second player; teleport; restore; change a resource or geometry dependency. Deliberately cycle modes and attempt duplicate outcomes.
 
 Measure background cost without humans, cold preparation, interaction latency, unresolved obligations, required cognition, and perceived continuity. A cheap background system that becomes an unbounded catch-up burst is not scalable. A fast system that makes residents inconsistent or inert is not a successful game. Delivery is tracked in [product scalability](../maintainers/product-scalability.md), not inferred from this specification.
+
+## Maintained records
+
+- Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
+- Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
+- Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
+- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).
