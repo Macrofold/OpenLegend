@@ -79,6 +79,8 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 ## EPR02 — Eliminate redundant full-world sensory scans
 
+Proposed [NP02](next-priority-batch.md#np02--sensory-work-follows-changed-objects) selects the remaining per-phase source-capture/comparison cost after PW08. Its phase-specific completeness and fallback contract is in the [batch technical design](../projects/next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects). This is planning, not closure of EPR02 or dense-world/publication qualification.
+
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
 - [ ] Qualify the implemented scalar spatial candidate pass and unchanged visibility-array identity. Initial acquisition no longer calls an external audience resolver; external events now use receiver-volume candidates and validated scalar inputs, with explicit stable-flight-phase reuse. Dense qualification remains open. SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos) owns observer-private acquisition and introduction regression coverage rather than the removed phase-local audience-cache implementation.

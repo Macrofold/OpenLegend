@@ -118,7 +118,7 @@ Each stage lists what changes, the expected effect, the main risks, how it is ve
 - **Scenarios that can show locality:**
   - a map several times larger than the 28 m sight range, with separated groups and birds;
   - characters walking real multi-point routes produced by the route-finding worker.
-- **Baseline.** Record a baseline in a new report under `docs/verification/`, linked from the verification index and from this plan, with raw results beside it. Measure it on the current main when stage 0 starts (decision 4). Later stages report savings against that baseline, not against the figures above.
+- **Baseline.** Record a baseline in a new report under `docs/verification/`, linked from the verification index and from this plan, with concise setup, measured results and limitations in the report; keep generated raw results outside Git under the documentation policy. Measure it on the current main when stage 0 starts (decision 4). Later stages report savings against that baseline, not against the figures above.
 - **Owner:** time agent.
 
 ### Stage 1 — stops declare their reach
@@ -169,6 +169,8 @@ This stage keeps each call size's outcomes the same except for the listed shifts
 - **Owner:** time agent, with small edits to the main simulation loop. Tracker: [PF13.11 (elapsed-time regional work)](../maintainers/simulation-time.md#pf13--elapsed-time-simulation).
 
 ### Stage 2 — sight work follows change
+
+Proposed [NP02](../maintainers/next-priority-batch.md#np02--sensory-work-follows-changed-objects) selects the remaining source-capture/preparation portion after PW08. Its [technical contract](next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects) distinguishes complete phase-local changes from the current conservative publication stream. It does not close this whole stage, change movement timing or qualify earlier percentages on current main.
 
 [PW08](next-playable-week/simulation-performance.md) implements only membership-difference updates, reverse incident-pair invalidation and dependency-certified certain-path reuse from stages 2–3. Its current matched evidence and remaining gates are recorded with that task. The change-list, target-only visibility, exact approach timing, horizon and other stages below remain proposed; the historical percentages are not current measurements.
 

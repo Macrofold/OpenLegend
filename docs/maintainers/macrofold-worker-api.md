@@ -43,9 +43,10 @@ Accepted target: application/world compute ownership, separate actor Worktrees a
 
 ## MW05 — Outcome classification and request-body fixtures
 
-Found by the [level-1 decisions](../projects/level1-decisions.md) work. Not done on `codex/level1-decisions` because `codex/integrate-invention` changes about 170 lines of `apps/server/src/macrofold.ts`; editing it in parallel would guarantee merge conflicts. Do it after that branch merges.
+Found by the [level-1 decisions](../projects/level1-decisions.md) work and originally deferred until invention integration. That prerequisite is present on inspected main `c2e670b0`. Proposed [NP01](next-priority-batch.md#np01--reliable-ai-outcomes-and-spending) defines the outcome/settlement repair and completion evidence; this planning update closes none of MW05. Its related monthly-allowance and context-failure fixes retain their existing owners.
 
 - [ ] Map Macrofold results to the shared outcome kinds: `singleInference` reports an `uncertain` inference as `failed`; rejected credentials on generation become `uncertain` and on judgment `failed` instead of `unavailable`; timeouts become `cancelled`; malformed Jev answers become `failed`/`uncertain` instead of `invalid`. A refused connection is certain non-dispatch but is booked `uncertain` with its reservation charged, as the [September 29 live attempt](../verification/level1-decisions.md#live-check-attempt-september-29) showed. The director already reports any receipt marked completion-uncertain as `uncertain`.
+- [ ] Validate reported costs consistently before settlement and again at the authoritative ledger. At `c2e670b0`, a managed inference accepts any string as `cost_micro_usd`: an empty string becomes zero, while malformed/negative/nonfinite values can fail later settlement. Preserve explicit valid zero, missing/invalid billing, exact request identity, later authoritative pricing and repeated-settlement safety. [NP01 technical contract](../projects/next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending) scopes this child; existing database constraints do not make the decoder safe.
 - [ ] Add a transport fixture for `/v1/inferences` request bodies (model binding, `max_tokens`, reasoning effort, `require_parameters`). Forwarding is confirmed by code inspection and one live run, not by a fixture.
 
 ## Decisions and handoff

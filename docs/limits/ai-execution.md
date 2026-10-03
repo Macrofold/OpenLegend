@@ -212,15 +212,11 @@ Original recommendation: **Review**.
 
 ## LA182
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Current mismatch confirmed by source on 2026-10-02; removal still required · Restrictiveness: Restrictive.** Configuration accepts a per-agent monthly allowance from $0–$100 and defaults to $50, but `Store.reserve` still applies a hidden $50 ceiling on inspected main `c2e670b0`. The earlier audit recorded this clamp as removed; that record was not reverified and disagrees with current implementation.
 
-**Former limit, now removed:** The configured per-agent AI allowance defaults to $50 and is clamped to $50 even though configuration parsing accepts values up to $100.
+**Accepted target / tradeoff:** Honor the configured allowance within its existing range; retain the $50 default, the $100 configuration maximum, per-call/episode admission, conservative reservations and real spending authorization. This does not grant permission to spend the configured amount.
 
-**Reason / tradeoff:** Removed the hidden $50 spending-configuration clamp. Configuration now honors the existing $0–$100 range; the $50 default and actual spending authorization/reservation remain.
-
-[Implementation starting point](../../apps/server/src/config.ts).
-
-Original recommendation: **Completed removals**.
+[NP01](../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending) selects the source repair and below/above-ceiling accounting evidence. [Configuration](../../apps/server/src/config.ts) and [reservation owner](../../apps/server/src/store.ts) remain authoritative implementation points. Historical recommendation was removal, not raising the configuration maximum. Planning has not removed the clamp.
 
 ## LA183
 
