@@ -62,6 +62,7 @@ import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
 import { containerPage, objectHistoryPage } from './inventory-view.js';
+import { activityRequests, activityStatus } from './activity-requests.js';
 
 const clientId = z
   .string()
@@ -194,13 +195,7 @@ const godPersonEditor = z
     backstory: z.string().trim().max(4000),
     traitIds: z.array(requestIdSchema).max(8),
     goals: z.array(z.string().trim().min(1).max(500)).max(8),
-    stats: z
-      .object({
-        health: z.number().finite().min(0).max(100),
-        fullness: z.number().finite().min(0).max(100).optional(),
-        energy: z.number().finite().min(0).max(100).optional(),
-      })
-      .strict(),
+    meters: z.record(requestIdSchema, z.number().finite()),
   })
   .strict();
 const godAwareness = z
@@ -1314,6 +1309,19 @@ async function initializeGameServer(
                 catalogue: actionCatalogue(service, context, scope),
               });
             }
+            case '/api/activity-requests':
+              z.object({}).strict().parse(body);
+              return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-status':
+              z.object({}).strict().parse(body);
+              return send(response, 200, activityStatus(service, scope));
+            case '/api/activity-preview': {
+              const input = commandInputSchema.parse(body);
+              if (input.type !== 'activity-request')
+                return send(response, 400, { ok: false, message: 'Review a requested activity.' });
+              service.assertScope(scope, 'play', true);
+              return send(response, 200, service.previewCommand(input, scope.actorId));
+            }
             case '/api/inventory/history': {
               const value = z
                 .object({
@@ -1725,6 +1733,16 @@ async function initializeGameServer(
                   actorId: requestIdSchema,
                   basePerson: godPersonEditor,
                   person: godPersonEditor,
+                  manifestRevision: z.number().int().positive(),
+                  bodyPolicyPin: z
+                    .object({
+                      id: requestIdSchema,
+                      version: z.number().int().positive(),
+                      digest: requestIdSchema,
+                    })
+                    .strict()
+                    .nullable(),
+                  generation: requestIdSchema,
                   memoryChanges: z
                     .array(
                       z
@@ -1744,6 +1762,11 @@ async function initializeGameServer(
                 value.basePerson,
                 value.person,
                 value.memoryChanges,
+                {
+                  manifestRevision: value.manifestRevision,
+                  bodyPolicyPin: value.bodyPolicyPin,
+                  generation: value.generation,
+                },
                 scope,
               );
               return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);

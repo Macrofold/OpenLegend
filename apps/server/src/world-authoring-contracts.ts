@@ -154,7 +154,9 @@ export const WORLD_AUTHORING_TOOLS = {
   ol_authoring_guide: {
     description:
       'Read missing selected-kind field meanings and native mechanics. The context usually already includes this guide; do not read it again unless needed. Guidance never grants a capability or approval.',
-    schema: z.object({ kind: authoringKind }).strict(),
+    schema: z
+      .object({ kind: authoringKind, familyId: z.string().min(1).max(120).optional() })
+      .strict(),
   },
   ol_request_capability: {
     description:

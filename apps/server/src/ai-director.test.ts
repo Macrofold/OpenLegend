@@ -22,30 +22,19 @@ import { WorldService } from './world-service.js';
 // Explicit specimens for orchestration verification, never production seeds or evidence of model quality.
 function slingFixture() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    family: { id: 'base:swing', version: 1 },
     name: 'Fixture woven sling',
     description: 'A fixture proposal using a cord and woven pouch.',
     inputs: [
       { definitionId: 'cord', quantity: 1, role: 'binding' },
       { definitionId: 'prepared_fiber', quantity: 2, role: 'pouch' },
     ],
-    workSeconds: 60,
-    output: {
-      kind: 'launcher',
-      name: 'Fixture woven sling',
-      description: 'A flexible pouch swings a stone.',
-      properties: ['flexible'],
-      launcher: {
-        mechanism: 'swing',
-        ammunitionKind: 'stone',
-        damage: 18,
-        range: 7,
-        accuracy: 0.8,
-      },
-      ammunition: null,
-    },
+    output: { name: 'Fixture woven sling', description: 'A flexible pouch swings a stone.' },
+    parameters: { workSeconds: 60, damage: 18, range: 7, accuracy: 0.8 },
   };
 }
+
 function receipt(
   requestId: string,
   provider: 'jev' | 'openai',
@@ -155,7 +144,7 @@ async function harness(
   const client: AiClient = {
     async judge(request) {
       calls.judges.push(request);
-      return options.judge ? await options.judge(request) : judgment(request, 'swing');
+      return options.judge ? await options.judge(request) : judgment(request, 'base:swing');
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
@@ -210,7 +199,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
         const question = request.questions['route'];
         if (!question || question.type !== 'choice') throw new Error('Expected choice');
         const reuse = Object.keys(question.criteria).find((key) => key.startsWith('reuse:'));
-        return judgment(request, reuse ?? 'swing');
+        return judgment(request, reuse ?? 'base:swing');
       },
     });
     expect(h.service.world.recipes).toEqual({});
@@ -239,7 +228,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect((await h.submit('invention', 'same-id', 'A sling.')).ok).toBe(true);
     expect((await h.submit('invention', 'same-id', 'A bow.')).code).toBe('idempotency-conflict');
     await expect.poll(() => h.calls.judges.length).toBe(1);
-    wait.resolve(judgment(h.calls.judges[0]!, 'swing'));
+    wait.resolve(judgment(h.calls.judges[0]!, 'base:swing'));
     await h.director.idle();
     await h.submit('invention', 'same-id', 'A sling.');
     await h.director.idle();
@@ -276,7 +265,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     'rejects invalid declaration fixture: %s',
     async (fault) => {
       const draft = slingFixture();
-      if (fault === 'mechanics') draft.output.launcher.damage = 999;
+      if (fault === 'mechanics') draft.parameters.damage = 999;
       if (fault === 'quantity') draft.inputs[0]!.quantity = 0;
       if (fault === 'hidden-material')
         draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
@@ -383,7 +372,6 @@ describe('AI director with explicit fixtures, no live calls', () => {
     let oldestId = '';
     for (let index = 0; index < 64; index++) {
       const draft = slingFixture() as unknown as DeclarationDraft;
-      delete draft.output.ammunition;
       draft.name =
         index === 0 ? 'Ancient shellfish pearlweave sling' : `Fixture sling variant ${index}`;
       const admitted = await h.service.admit(draft, {
@@ -406,12 +394,10 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(h.calls.generations).toHaveLength(0);
   });
 
-  it('permits shaft as a declared material property while preserving the finite contract', () => {
-    const properties = declarationSchema['properties'] as Record<
-      string,
-      { properties: Record<string, { items: { enum: string[] } }> }
-    >;
-    expect(properties['output']!.properties['properties']!.items.enum).toContain('shaft');
-    expect(properties['output']!.properties['properties']!.items.enum).not.toContain('food');
+  it('accepts only candidate naming for output, leaving real components to native compilation', () => {
+    const output = (
+      declarationSchema['properties'] as Record<string, { properties: Record<string, unknown> }>
+    )['output']!;
+    expect(Object.keys(output.properties).sort()).toEqual(['description', 'name']);
   });
 });

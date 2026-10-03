@@ -25,6 +25,7 @@ import { availableResource, itemDefinitionPin, itemHasReservations } from './res
 import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
+import { validateItemCharacteristics } from './item-characteristics.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { groundedSpatial, spatialMap } from './spatial-state.js';
 import type { Entity, ItemInstance, Transition, WorldEvent, WorldState } from './types.js';
@@ -77,7 +78,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
 }
 /** Compound physical work is planned in an isolated draft before its changed fields are
  * installed. Existing actor/action references stay attached to the caller's draft. */
-function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) => T): T {
+export function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) => T): T {
   const candidate = draftWorld(world),
     result = operation(candidate),
     committed = finishWorld(candidate);
@@ -97,6 +98,9 @@ function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) 
   }
   world.objectState = committed.objectState;
   world.objectLineage = committed.objectLineage;
+  // Movement's split/merge carries action evidence with the real units. Keep the
+  // existing occurrence references attached while publishing the moved-item links.
+  world.actionExperience.items = committed.actionExperience.items;
   world.nextId = committed.nextId;
   return result;
 }
@@ -331,6 +335,7 @@ export function validateItemHandling(world: WorldState): void {
   )
     throw new Error('Invalid item-handling policy.');
   for (const definition of Object.values(world.itemDefinitions)) {
+    validateItemCharacteristics(definition);
     if (definition.portable !== undefined && typeof definition.portable !== 'boolean')
       throw new Error('Invalid portable item property.');
     if (

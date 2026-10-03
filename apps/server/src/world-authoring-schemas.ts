@@ -14,6 +14,7 @@ export const statusConditionSchema: z.ZodType<StatusCondition> = z.lazy(() =>
   z.union([
     z.object({ all: z.array(statusConditionSchema).min(1).max(128) }).strict(),
     z.object({ any: z.array(statusConditionSchema).min(1).max(128) }).strict(),
+    z.object({ hasAttribute: z.object({ target, attribute: text() }).strict() }).strict(),
     z
       .object({
         compare: z
@@ -79,6 +80,15 @@ export const statusPolicySchema = z
   .object({
     revision: z.number().int().positive(),
     clockOffsetHours: finite.min(0).lt(24),
+    namedTimes: z
+      .record(
+        z
+          .string()
+          .max(24)
+          .regex(/^[a-z]+(?: [a-z]+)?$/u),
+        finite.min(0).lt(24),
+      )
+      .refine((values) => Object.keys(values).length <= 8, 'At most eight named times.'),
     definitions: z
       .array(
         z
@@ -87,6 +97,7 @@ export const statusPolicySchema = z
             type: z.literal('statusEffect'),
             target: z.literal('$subject'),
             label: text(),
+            lifecycleCause: text(64).optional(),
             enabled: z.boolean(),
             requires: statusConditionSchema,
             activationCondition: statusConditionSchema.optional(),
@@ -180,7 +191,10 @@ export const cognitionPolicySchema = z
     maxImmediateLevel: z.union([z.literal(2), z.literal(3), z.literal(4)]),
     significantEventTypes: z.array(z.string().regex(/^[a-z-]{1,64}$/)).max(16),
     reflection: z.boolean(),
-    dream: z.object({ statusEffectId: text(), afterSeconds: finite.positive() }).strict(),
+    dream: z
+      .object({ statusEffectId: text(), afterSeconds: finite.positive() })
+      .strict()
+      .nullable(),
   })
   .strict();
 const conditionPolicy = z
@@ -196,15 +210,29 @@ const conditionPolicy = z
     reviewSeconds: finite.positive(),
   })
   .strict();
+const criticalPresentation = z.union([
+  z
+    .object({
+      compare: z
+        .object({
+          operator: z.enum(['lessThan', 'lessThanOrEqual']),
+          value: finite,
+          rounding: z.enum(['none', 'nearest-integer']),
+        })
+        .strict(),
+    })
+    .strict(),
+  z.object({ concernActive: z.literal(true) }).strict(),
+]);
 const attributeDefinition = z
   .object({
     id: text(120),
     version: z.number().int().positive(),
     name: text(64),
     meaning: z.string().max(1600).optional(),
-    implementation: z.enum(['reservoir-v1', 'category-v1']),
+    implementation: z.enum(['number-v1', 'reservoir-v1', 'category-v1']),
     disclosure: z.enum(['public', 'owner']),
-    presentation: z.enum(['health', 'food', 'energy', 'neutral']),
+    presentation: z.object({ icon: text(64), color: text(64) }).strict(),
     schema: z.union([
       z
         .object({
@@ -224,9 +252,30 @@ const attributeDefinition = z
         .strict(),
     ]),
     concern: z
-      .object({ below: finite, text: text(160) })
-      .strict()
+      .union([
+        z
+          .object({
+            below: finite,
+            text: text(160),
+            mode: z.literal('instant'),
+            notify: z.boolean(),
+            reconsider: z.boolean(),
+          })
+          .strict(),
+        z
+          .object({
+            below: finite,
+            text: text(160),
+            mode: z.literal('latched'),
+            notify: z.boolean(),
+            reconsider: z.boolean(),
+            recoveryMargin: finite.nonnegative(),
+          })
+          .strict(),
+      ])
       .optional(),
+    critical: criticalPresentation.optional(),
+    editorCritical: criticalPresentation.optional(),
     condition: conditionPolicy.optional(),
     reservoir: z
       .object({

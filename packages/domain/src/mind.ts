@@ -1,5 +1,5 @@
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
-import { nativeNeedBelow } from './worlds/base/needs.js';
+import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
@@ -97,6 +97,7 @@ export interface CognitionBinding {
   entityEpisodes?: Record<string, string>;
   actions: Record<string, Command | null>;
   restEpisode: string | null;
+  bodyEligibility: string;
 }
 export const wordCount = (text: string): number =>
   text.normalize('NFKC').trim().split(/\s+/u).filter(Boolean).length;
@@ -201,12 +202,11 @@ export function commitCognition(
     return reject('This thinking tier cannot change the lasting mind.');
   if (proposal.thought.length > 2000 || wordCount(proposal.thought) > 250)
     return reject('Thought exceeds its presentation limit.');
+  if (binding.bodyEligibility !== bodyEligibilityRevision(input, input.entities[binding.actorId]!))
+    return reject('Installed body or thinking policy changed.');
   if (
     binding.purpose !== 'thought' &&
-    (nativeNeedBelow(actor, 'fullness', 30) ||
-      (nativeNeedBelow(actor, 'energy', 15) &&
-        !dreamStatus(input, input.entities[binding.actorId])) ||
-      actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
+    (bodyThinkingBlocked(input, input.entities[binding.actorId]!, 'commit') ||
       (actor.action && actor.action.type !== 'status-effect'))
   )
     return reject('Urgency or active work superseded consolidation.');

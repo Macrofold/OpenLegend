@@ -1,5 +1,5 @@
 import { dreamStatus } from '@open-legend/domain';
-import { nativeNeedBelow } from '@open-legend/domain';
+import { bodyThinkingBlocked, bodyEligibilityRevision } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   get_memories,
@@ -93,6 +93,10 @@ export const thoughtOnlySchema = z
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = { actorId, id, ...(input.purpose ? { purpose: input.purpose } : {}) };
   switch (input.type) {
+    case 'activity-request':
+      throw new Error(
+        'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',
+      );
     case 'activity':
       return {
         ...base,
@@ -183,8 +187,10 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       return {
         ...base,
         type: 'inspect-inventory',
+        containerId: input.containerId,
         after: input.after,
         expectedRevision: input.expectedRevision,
+        expectedScope: input.expectedScope,
       };
     case 'inspect-activities':
       return {
@@ -291,6 +297,7 @@ export function cognitionContext(
     ),
   };
   const binding: CognitionBinding = {
+    bodyEligibility: bodyEligibilityRevision(service.world, service.world.entities[actorId]!),
     actorId,
     decisionId,
     policy: MIND_POLICY,
@@ -378,12 +385,12 @@ export function thoughtProposal(
 }
 
 export function cognitionOpportunity(service: WorldService, actorId: string) {
-  const actor = service.world.entities[actorId]?.actor;
+  const entity = service.world.entities[actorId];
+  const actor = entity?.actor;
   if (
     !actor?.alive ||
     actor.incapacitated ||
-    actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
-    nativeNeedBelow(actor, 'fullness', 30)
+    bodyThinkingBlocked(service.world, entity!, 'maintenance')
   )
     return null;
   const mind = mindFor(service.world, actorId);
@@ -394,7 +401,7 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
       mind.lastDreamEpisode && fresh
       ? ('dream' as const)
       : null;
-  if (actor.action || nativeNeedBelow(actor, 'energy', 30)) return null;
+  if (actor.action || bodyThinkingBlocked(service.world, entity!, 'reflection')) return null;
   return fresh && service.world.simTime - mind.lastReflectionAt >= 3600
     ? ('reflection' as const)
     : null;

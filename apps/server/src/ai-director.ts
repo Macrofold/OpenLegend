@@ -5,7 +5,8 @@ import {
   type CognitionLevel,
   type LedgerCategory,
 } from './cognition-budget.js';
-import { namedClockTimes } from '@open-legend/domain';
+import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
+import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
 import type { RequestScope } from './authority.js';
 import {
   observerDescription,
@@ -37,11 +38,16 @@ import { prepareActorInvention } from './actor-invention.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
 import { projectAttributes } from '@open-legend/domain';
-import { nativeNeedBelow } from '@open-legend/domain';
+import { bodyReconsiderationInputs, bodyPolicy } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { decisionQuestions, JEV_QUESTIONS_VERSION, LEVEL1_POLICY } from './jev-questions.js';
+import {
+  decisionQuestions,
+  activityRouteCriterion,
+  JEV_QUESTIONS_VERSION,
+  LEVEL1_POLICY,
+} from './jev-questions.js';
 import {
   escalationLevel,
   level1Message,
@@ -72,12 +78,7 @@ import {
   boundResponseSchema,
   COGNITION_VERSION,
 } from './cognition-contracts.js';
-import {
-  captureActionTargets,
-  unseenExperiences,
-  DEFAULT_COGNITION_POLICY,
-  commitActorResponse,
-} from '@open-legend/domain';
+import { captureActionTargets, unseenExperiences, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
 import { cognitionOutputTokens } from './macrofold-model.js';
 import { z } from 'zod';
@@ -909,7 +910,13 @@ export class AiDirector {
         !this.service.world.entities[inventorId]?.actor?.alive ||
         this.service.world.entities[inventorId]?.actor?.incapacitated
       )
-        return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
+        return {
+          ok: false,
+          code: 'actor',
+          message:
+            bodyPolicy(this.service.world)?.recovery?.refusalText ??
+            'This body cannot act in its current condition.',
+        };
       if (
         continuation?.action !== 'reuse' &&
         invention?.candidate === undefined &&
@@ -1751,7 +1758,7 @@ export class AiDirector {
       return true;
     };
     if (await retryForUrgentAwareness()) return;
-    const policy = this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+    const policy = this.service.world.cognitionPolicy;
     const generationAvailable =
       !this.service.config.jevOnly &&
       !!(this.service.config.macrofoldKey || this.service.config.llmKey);
@@ -1764,6 +1771,12 @@ export class AiDirector {
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
+    const requestFamilies = requestRoutes(
+      prepared.activityRequests.requests,
+      prepared.activityRequests.choices,
+    );
+    for (const [key, descriptor] of requestFamilies)
+      criteria[key] = activityRouteCriterion(descriptor);
     const offeredRoutes = Object.keys(criteria);
     const judge =
       (suffix: string) =>
@@ -1958,11 +1971,49 @@ export class AiDirector {
       );
       return;
     }
+    let requestedActivity: ActorResponse | undefined;
+    const chosenFamily = requestFamilies.get(route);
+    if (chosenFamily) {
+      await prepared.validateConversation();
+      const selectedWorld = this.service.world;
+      let parameterRound = 0;
+      requestedActivity = await chooseActivityRequest({
+        descriptor: chosenFamily,
+        choices: prepared.activityRequests.choices,
+        simTime: selectedWorld.simTime,
+        namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
+          name,
+          at: clockDeadline(selectedWorld, name)!,
+        })),
+        state: prepared.prompt,
+        judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
+      });
+      this.current(run);
+      if (!requestedActivity) {
+        run.responseWatch = undefined;
+        await this.update(
+          run,
+          'completed',
+          'The optional activity was declined or its parameters remained uncertain. No activity started.',
+          {
+            disposition: 'deferred',
+            trigger: semanticTrigger,
+          },
+        );
+        return;
+      }
+      await this.log.record(
+        `${run.job.id}:attempt:${attempt}:activity-parameters`,
+        'Chosen activity parameters',
+        { family: chosenFamily.id },
+        requestedActivity,
+      );
+    }
     let actionAnswers: Record<string, JudgmentAnswer> = {};
     let offeredForSelection: ReturnType<typeof offeredForRating> = [];
     // Candidates before the level-1 threshold filter, for offering rated actions to generation.
     let ratedBase: typeof prepared | undefined;
-    if (semanticTrigger.checkActionSelection) {
+    if (!requestedActivity && semanticTrigger.checkActionSelection) {
       const actionsStartedAt = combined?.startedAt ?? new Date().toISOString();
       let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
       let retrieval: Awaited<ReturnType<typeof retrieveActions>>;
@@ -2084,7 +2135,7 @@ export class AiDirector {
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
     const actorInvention =
-      executedRoute === 'level1'
+      executedRoute === 'level1' || requestedActivity
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
         : await prepareActorInvention(this.service, actorId);
     const baseSchema = boundResponseSchema(
@@ -2096,6 +2147,7 @@ export class AiDirector {
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
+      activityRequestDescriptors(this.service.world),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -2113,7 +2165,8 @@ export class AiDirector {
     const levelLimit = levelLimits(c)[level];
     const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
     let value: unknown;
-    if (executedRoute === 'level1') {
+    if (requestedActivity) value = requestedActivity;
+    else if (executedRoute === 'level1') {
       if (selectedHandle === undefined) throw new Error('Level 1 reached admission unselected.');
       value = this.selectKnownAction(prepared, selectedHandle);
     } else
@@ -2230,6 +2283,7 @@ export class AiDirector {
       { operations: reply.operations },
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
+      activityRequestDescriptors(this.service.world),
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
@@ -2469,7 +2523,7 @@ export class AiDirector {
         });
       if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
-      const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+      const policy = world.cognitionPolicy;
       // One change-fed intake: cheap per-character tokens; visibility reruns only for a
       // character whose own exposure or position changed (EPR05).
       this.thoughtInputs.reset(this.service.generation);
@@ -2599,9 +2653,14 @@ export class AiDirector {
           goal: currentGoal(actor),
           techniques: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
           possessions: relevantPossessions(world, entity.id, subscription),
-          need: nativeNeedBelow(actor, 'energy', 15) ? 'exhausted' : 'stable',
+          bodyInputs: bodyReconsiderationInputs(world, entity, 'director'),
+          bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
           concerns: projectAttributes(world, entity, 'owner')
-            .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+            .filter(
+              (v) =>
+                v.concern &&
+                world.moduleManifest.definitions.find((d) => d.id === v.id)?.concern?.reconsider,
+            )
             .map((v) => [v.id, v.concern]),
           mind: world.innerWorlds?.[entity.id]?.revision,
           knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
@@ -2625,13 +2684,12 @@ export class AiDirector {
               `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
-          ...projectAttributes(world, entity, 'owner')
-            .filter((v) => Object.hasOwn(actor.attributes ?? {}, v.id))
-            .flatMap((v) => (v.concern ? [v.concern] : [])),
+          ...projectAttributes(world, entity, 'owner').flatMap((v) =>
+            v.concern ? [v.concern] : [],
+          ),
           ...projectAttributes(world, entity, 'owner').flatMap((v) =>
             v.condition ? [`${v.name}: ${v.condition}.`] : [],
           ),
-          ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
         const urgentNeed = nativeProtection;
         const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;

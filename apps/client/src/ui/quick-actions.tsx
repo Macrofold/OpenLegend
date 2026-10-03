@@ -120,15 +120,7 @@ export function QuickActions({
     }));
   options.push(...people);
   const candidateSuggestions = [
-    options.find((a) => a.id === 'recover'),
-    ...options.filter((a) =>
-      view.player.actions.some(
-        (option) => option.id === a.id && option.command.type === 'status-effect',
-      ),
-    ),
-    ...(view.player.hunger !== undefined && view.player.hunger > 70
-      ? [options.find((a) => a.id.startsWith('eat-') && a.enabled)]
-      : []),
+    ...view.player.suggestedActionIds.map((id) => options.find((action) => action.id === id)),
     ...people,
   ]
     .filter((a) => !!a)

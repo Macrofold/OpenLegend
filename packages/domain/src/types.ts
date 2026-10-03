@@ -27,6 +27,8 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  /** Authored labels project existing components; they never duplicate component values. */
+  characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
@@ -55,28 +57,27 @@ export interface ItemInstance {
   quantity: number;
   ownerId: string;
 }
-export type InputRole = 'binding' | 'body' | 'pouch' | 'shaft' | 'point' | 'fletching';
+/** Roles belong to the selected installed recipe family, not to the engine. */
+export type InputRole = string;
 export interface RecipeInput {
   definitionId: string;
   quantity: number;
   role: InputRole;
 }
-export interface DeclarationDraft {
-  schemaVersion: 1;
+export interface RecipeCandidateV2 {
+  schemaVersion: 2;
+  family: { id: string; version: number };
   name: string;
   description: string;
   inputs: RecipeInput[];
-  workSeconds: number;
   output: {
-    kind: 'launcher' | 'ammunition' | 'gathering-tool';
-    gatheringTool?: { resourceId: string; quantity: number };
     name: string;
     description: string;
-    properties: MaterialProperty[];
-    launcher?: Launcher;
-    ammunition?: Ammunition;
   };
+  /** Untrusted until the selected installed family's native validator accepts it. */
+  parameters: Record<string, unknown>;
 }
+export type DeclarationDraft = RecipeCandidateV2;
 export interface DeclarationProvenance {
   derivedFrom?: { recipeId: string; version: number; digest: string };
   authority: import('./invention-policy.js').InventionAuthority;
@@ -86,7 +87,16 @@ export interface DeclarationProvenance {
   model?: string;
   evidence?: string[];
 }
-export interface RecipeDefinition extends DeclarationDraft {
+export interface RecipeDefinition {
+  name: string;
+  description: string;
+  inputs: RecipeInput[];
+  workSeconds: number;
+  output: { name: string; description: string };
+  sourceCandidate: RecipeCandidateV2;
+  familyPin: import('./world-modules.js').DefinitionPin;
+  dependencyPins: import('./world-modules.js').DefinitionPin[];
+  facts: import('./invention-families.js').RecipeFact[];
   id: string;
   version: 1;
   digest: string;
@@ -155,6 +165,7 @@ export interface Action {
   ammoItemId?: string;
   heatId?: string;
   fireOperation?: import('./worlds/base/fire.js').FireOperation;
+  fireGuard?: import('./worlds/base/fire.js').FireStockGuard;
   /** Inputs leave inventory at work start, never refunded by cancel or restart. */
   consumed: { definitionId: string; quantity: number }[];
 }
@@ -168,7 +179,7 @@ export interface ActorComponent {
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
   /** Attack recovery survives cancelling an already committed swing. */
   attackReadyAt?: number;
-  inventoryInspection?: { revision: number; after: string; more: boolean; itemIds: string[] };
+  inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -190,14 +201,8 @@ export interface ActorComponent {
     memory: boolean;
     innerWorld: boolean;
     speech: boolean;
-    needs: boolean;
   };
   health: number;
-  fullness?: number;
-  energy?: number;
-  /** Native need revisions belong to their values, independently of body damage. */
-  fullnessRevision?: number;
-  energyRevision?: number;
   alive: boolean;
   incapacitated: boolean;
   bornAt: number;
@@ -304,6 +309,8 @@ export interface WorldEvent {
   data?: Record<string, string | number | boolean | null>;
 }
 export interface Outcome {
+  /** Actual committed homogeneous units; absent is not evidence of spending. */
+  spent?: number;
   outputs?: import('./action-experience.js').ActivityOutput[];
   ok: boolean;
   code: string;
@@ -349,7 +356,7 @@ export interface WorldState {
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
-  cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
+  cognitionPolicy: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
   id: string;
@@ -408,6 +415,7 @@ export type Command = Envelope &
         root: import('./action-experience.js').ActivityNode;
         bindings: Record<string, import('./action-experience.js').ActivityBinding>;
         mode: 'enqueue' | 'replace' | 'interrupt';
+        control?: import('./activity-execution.js').ChosenActivityControl;
         /** Things the request is about that no step names (e.g. where a walk goes). Used
          * only for target matching and encounter pins; grants nothing. */
         subjects?: string[];
@@ -421,6 +429,16 @@ export type Command = Envelope &
     /** quantity picks up exactly that many from one divisible stack (itemId required). */
     | { type: 'pickup'; targetId: string; itemId?: string; quantity?: number }
     | { type: 'drop'; itemId: string; quantity: number }
+    | {
+        type: 'transfer-stock';
+        sourceId: string;
+        destinationId: string;
+        definitionId: string;
+        definitionVersion: number;
+        definitionDigest: string;
+        quantity: number;
+        minimumHeld: number;
+      }
     | {
         type: 'transfer-item' | 'split-item' | 'merge-item';
         itemId: string;
@@ -461,6 +479,11 @@ export type Command = Envelope &
         operation: import('./worlds/base/fire.js').FireOperation;
         targetId: string;
         itemId?: string;
+        definitionId?: string;
+        definitionVersion?: number;
+        definitionDigest?: string;
+        minimumHeld?: number;
+        onlyWhenLow?: boolean;
       }
     | {
         type: 'status-effect';
@@ -468,7 +491,13 @@ export type Command = Envelope &
         definitionId: string;
         operation: 'activate' | 'deactivate';
       }
-    | { type: 'inspect-inventory'; after?: string; expectedRevision?: number }
+    | {
+        type: 'inspect-inventory';
+        containerId?: string;
+        after?: string;
+        expectedRevision?: number;
+        expectedScope?: string;
+      }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
     | { type: 'cancel' | 'recover' }
     | {
@@ -518,11 +547,7 @@ export interface GodPersonEditorDraft {
   backstory: string;
   traitIds: string[];
   goals: string[];
-  stats: {
-    health: number;
-    fullness?: number;
-    energy?: number;
-  };
+  meters: Record<string, number>;
 }
 
 export interface GodSpawnDraft {

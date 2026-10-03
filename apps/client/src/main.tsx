@@ -63,6 +63,7 @@ import { WorldAgent } from './ui/world-agent';
 import { Composer } from './ui/composer';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
+import { CampActivity } from './ui/camp-activity';
 import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
 import { readDraft, type ComposerDraft } from './draft';
@@ -138,6 +139,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     [pausePending, setPausePending] = useState(false),
     [preferencePending, setPreferencePending] = useState(false),
     [width, setWidth] = useState(innerWidth),
+    [height, setHeight] = useState(innerHeight),
     [hiddenPreference, setHiddenPreference] = useState<boolean | null>(null);
   const [theme, setTheme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
     ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
@@ -340,19 +342,51 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       window.removeEventListener('pageshow', show);
     };
   }, [accept, notify]);
+  // A wide, short window can leave less room than one action button below the
+  // condition card. Reuse the existing sheet without shrinking text or drafts.
+  // docs/projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
+  const needsSheet = (nextWidth: number, nextHeight: number) =>
+    nextWidth / scale < 720 || nextHeight / scale <= 600;
+  const narrow = needsSheet(width, height);
   useEffect(() => {
-    const resize = () => setWidth(innerWidth);
+    const resize = () => {
+      if (!narrow && needsSheet(innerWidth, innerHeight)) {
+        const focused = document.activeElement;
+        const panel = focused?.closest('.ol-panel');
+        if (panel) {
+          // The single visible sheet must follow the panel being edited, rather
+          // than hide its focused input in favor of a more recently opened panel.
+          setOpen((panels) => {
+            const current = panels.find(
+              (id) => (id === 'nearby' ? 'nearbyPanel' : `${id}Panel`) === panel.id,
+            );
+            return current ? [...panels.filter((id) => id !== current), current] : panels;
+          });
+          requestAnimationFrame(() => {
+            if (
+              focused instanceof HTMLElement &&
+              focused.isConnected &&
+              !focused.closest('[hidden]') &&
+              document.activeElement === document.body
+            )
+              focused.focus({ preventScroll: true });
+          });
+        }
+      }
+      setWidth(innerWidth);
+      setHeight(innerHeight);
+    };
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
-  }, []);
+  }, [scale, narrow]);
   const hasView = view !== null;
   useEffect(() => {
     if (!hasView || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
-  }, [hasView, width, scale, open, timeSettings]);
+  }, [hasView, width, height, scale, open, timeSettings]);
   function fit(panels: PanelId[]) {
     const available = width / scale;
-    if (available < 720) return panels;
+    if (narrow) return panels;
     let result = [...panels];
     const size = (id: PanelId) => (panelInfo[id].wide ? 504 : 336);
     while (
@@ -381,7 +415,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     if (open.includes(id)) hide(id);
     else show(id);
   }
-  useEffect(() => setOpen((v) => fit(v)), [width, scale]);
+  useEffect(() => setOpen((v) => fit(v)), [width, height, scale]);
   // The event filter lasts while World Events is open, as it did when the panel owned it.
   useEffect(() => {
     if (!open.includes('events')) setEventsType('all');
@@ -403,6 +437,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
         command: action.command,
       });
       if (!r.ok || r.code !== 'accepted') notify(r.message);
+      return r;
     } catch (e) {
       notify(`${String(e)} Check the journal before repeating this action.`);
     }
@@ -697,7 +732,6 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     (selected === view.player.id
       ? playerEntity(view)
       : view.entities.find((e) => e.id === selected));
-  const narrow = width / scale < 720;
   const title = (id: PanelId) =>
     id === 'nearby' && entity
       ? entity.name
@@ -710,10 +744,18 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     switch (id) {
       case 'inventory':
         return (
-          <Inventory
-            {...props}
-            addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
-          />
+          <>
+            <Inventory
+              {...props}
+              addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
+            />
+            <CampActivity
+              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+              view={view}
+              connected={connected}
+              command={command}
+            />
+          </>
         );
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;

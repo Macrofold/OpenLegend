@@ -17,10 +17,17 @@ import {
 } from '../../invention-attribution.js';
 import { initialInventionPolicy } from '../../invention-policy.js';
 import { seedAgency } from '../../agency.js';
-import { createModuleManifest } from '../../world-modules.js';
+import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
+import { definitionPin } from '../../world-modules.js';
+import { DEFAULT_ATTRIBUTES } from './attributes.js';
+import { DEFAULT_SENSES } from '../../perception.js';
+import { BASE_BODY_POLICY } from './body-policy.js';
+import { DEFAULT_COGNITION_POLICY } from './cognition.js';
+import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
+import { activityHostPins } from '../../activity-hosts.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
-import { livingBody, nativeActor, migrateActors, hasMemory } from '../../living.js';
+import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
 import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../types.js';
@@ -42,7 +49,7 @@ export function createActor(
   } = {},
 ): ActorComponent {
   const initialGoals = identity.initialGoals?.map((goal) => goal.trim()).filter(Boolean);
-  return {
+  const actor: ActorComponent = {
     traits: identity.traits?.map((trait) => ({ ...trait })) ?? sampleTraits(world),
     ...(identity.personality ? { personality: identity.personality } : {}),
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
@@ -50,10 +57,8 @@ export function createActor(
     controller,
     species: 'human',
     body: livingBody('human'),
-    capabilities: { cognition: true, memory: true, innerWorld: true, speech: true, needs: true },
+    capabilities: { cognition: true, memory: true, innerWorld: true, speech: true },
     health: 100,
-    fullness,
-    energy: 85,
     alive: true,
     incapacitated: false,
     bornAt: -24 * 365 * 86400,
@@ -70,6 +75,21 @@ export function createActor(
     ),
     planGeneration: 0,
   };
+  const meters = world.moduleManifest.definitions.filter(
+    (definition) =>
+      definition.id === 'wilderness:fullness' || definition.id === 'wilderness:energy',
+  );
+  const food = meters.find((definition) => definition.id === 'wilderness:fullness');
+  // Starting food is authored as a fraction of this world's installed range.
+  const initial: Record<string, number> =
+    food?.schema.kind === 'number'
+      ? {
+          'wilderness:fullness':
+            food.schema.min + ((food.schema.max - food.schema.min) * fullness) / 100,
+        }
+      : {};
+  initializeAttributes(actor, meters, initial);
+  return actor;
 }
 
 /** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
@@ -93,7 +113,14 @@ export function createWorld(
       playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },
     },
     inventionPolicy: initialInventionPolicy(),
-    moduleManifest: createModuleManifest(),
+    moduleManifest: createModuleManifest(
+      DEFAULT_ATTRIBUTES,
+      DEFAULT_SENSES,
+      BASE_BODY_POLICY,
+      BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
+      activityHostPins(),
+    ),
+    cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
     visibleObjects: {},
     id: `wilderness-${normalizedSeed}`,
@@ -229,7 +256,13 @@ export function createWorld(
       id: 'hare-1',
       name: 'Hare',
       kind: 'animal',
-      actor: nativeActor('hare', world.simTime),
+      actor: nativeActor(
+        'hare',
+        world.simTime,
+        world.moduleManifest.definitions.filter(
+          (definition) => definition.id === 'wilderness:energy',
+        ),
+      ),
       placement: worldPlacement({ y: 0, x: 16, z: 13 }, 'terrain'),
       animal: {
         fleeFrom: null,
@@ -242,7 +275,13 @@ export function createWorld(
       id: 'hare-2',
       name: 'Hare',
       kind: 'animal',
-      actor: nativeActor('hare', world.simTime),
+      actor: nativeActor(
+        'hare',
+        world.simTime,
+        world.moduleManifest.definitions.filter(
+          (definition) => definition.id === 'wilderness:energy',
+        ),
+      ),
       placement: worldPlacement({ y: 0, x: 21, z: 11 }, 'terrain'),
       animal: {
         fleeFrom: null,
@@ -255,7 +294,13 @@ export function createWorld(
       id: 'deer-1',
       name: 'Deer',
       kind: 'animal',
-      actor: nativeActor('deer', world.simTime),
+      actor: nativeActor(
+        'deer',
+        world.simTime,
+        world.moduleManifest.definitions.filter(
+          (definition) => definition.id === 'wilderness:energy',
+        ),
+      ),
       placement: worldPlacement({ y: 0, x: 21, z: 19 }, 'terrain'),
       animal: {
         fleeFrom: null,
@@ -282,7 +327,13 @@ export function createWorld(
         heading: 0,
         flight: { routeId: 'clearing-bird-loop', next: 1, waitSeconds: 180 },
       },
-      actor: nativeActor('bird', world.simTime),
+      actor: nativeActor(
+        'bird',
+        world.simTime,
+        world.moduleManifest.definitions.filter(
+          (definition) => definition.id === 'wilderness:energy',
+        ),
+      ),
       animal: { fleeFrom: null, fleeSeconds: 0, wanderSeconds: 0 },
     },
   ];
@@ -306,7 +357,6 @@ export function createWorld(
     entityIds: ['campfire'],
     importance: 8,
   });
-  migrateActors(world);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

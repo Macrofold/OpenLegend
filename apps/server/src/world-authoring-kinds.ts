@@ -18,7 +18,11 @@ import {
   admitStatusEffectPolicy,
   inventionPermission,
   validateDeclaration,
-  DEFAULT_COGNITION_POLICY,
+  recipeFamily,
+  recipeItemHandlingPin,
+  definitionPin,
+  compileRecipeCandidate,
+  type DefinitionPin,
   type AttributeDefinition,
   type DeclarationDraft,
   type Transition,
@@ -48,6 +52,8 @@ export interface AuthoringDraft {
     attributeTarget?: ReturnType<typeof attributeBindingTarget>;
     policy?: string;
     materials?: Record<string, string>;
+    family?: DefinitionPin;
+    itemHandling?: DefinitionPin;
     recipe?: { recipeId: string; version: number; digest: string };
   };
 }
@@ -90,8 +96,11 @@ export function draftBase(
     const materialIds = new Set(
       inputs.map((i) => object(i).definitionId).filter((v): v is string => typeof v === 'string'),
     );
-    const resource = object(object(p.output).gatheringTool).resourceId;
-    if (typeof resource === 'string') materialIds.add(resource);
+    const family = recipeFamily(world, String(object(p.family).id ?? ''));
+    if (!validateDeclaration(world, payload).length) {
+      const compiled = compileRecipeCandidate(world, payload as DeclarationDraft);
+      for (const id of compiled.dependencyIds ?? []) materialIds.add(id);
+    }
     baseRecipeId = inherited?.recipe?.recipeId ?? baseRecipeId;
     const recipe = baseRecipeId ? world.recipes[baseRecipeId] : undefined;
     if (baseRecipeId && !recipe)
@@ -99,6 +108,15 @@ export function draftBase(
         'The base recipe is unavailable; no new draft or revision was saved. For a new recipe, omit baseRecipeId. To derive from an existing recipe, inspect and supply its exact recipe ID; do not guess one.',
       );
     return {
+      ...(family
+        ? {
+            family:
+              inherited?.family?.id === family.definition.id
+                ? inherited.family
+                : definitionPin(family.definition),
+          }
+        : {}),
+      itemHandling: inherited?.itemHandling ?? recipeItemHandlingPin(world),
       // Removed inputs no longer invalidate this revision; retained inputs keep their pins.
       // docs/invention-validation.md
       materials: Object.fromEntries(
@@ -132,9 +150,7 @@ export function draftBase(
     ...(kind === 'action' ? { actionRules: actionRules(world) } : {}),
     manifest: fingerprint(world.moduleManifest),
     ...(kind === 'status-effect-policy' ? { policy: fingerprint(world.statusEffectPolicy) } : {}),
-    ...(kind === 'cognition-policy'
-      ? { policy: fingerprint(world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY) }
-      : {}),
+    ...(kind === 'cognition-policy' ? { policy: fingerprint(world.cognitionPolicy) } : {}),
   };
 }
 // Conservative definition-only fence until each native command exposes finer dependency summaries.
@@ -157,14 +173,21 @@ export function currentDraftBase(world: WorldState, d: AuthoringDraft): boolean 
       )
   )
     return false;
+  if (
+    d.base.itemHandling &&
+    fingerprint(d.base.itemHandling) !== fingerprint(recipeItemHandlingPin(world))
+  )
+    return false;
+  if (d.base.family) {
+    const family = recipeFamily(world, d.base.family.id);
+    if (!family || fingerprint(definitionPin(family.definition)) !== fingerprint(d.base.family))
+      return false;
+  }
   if (d.base.actionRules && d.base.actionRules !== actionRules(world)) return false;
   if (d.base.manifest && d.base.manifest !== fingerprint(world.moduleManifest)) return false;
   if (d.kind === 'status-effect-policy' && d.base.policy !== fingerprint(world.statusEffectPolicy))
     return false;
-  if (
-    d.kind === 'cognition-policy' &&
-    d.base.policy !== fingerprint(world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY)
-  )
+  if (d.kind === 'cognition-policy' && d.base.policy !== fingerprint(world.cognitionPolicy))
     return false;
   if (
     d.base.materials &&
@@ -263,9 +286,9 @@ export function authoringTransition(
         const t = admitStatusEffectPolicy(world, d.payload, world.statusEffectPolicy.revision);
         if (
           t.outcome.ok &&
+          world.cognitionPolicy.dream &&
           !t.world.statusEffectPolicy.definitions.some(
-            (v) =>
-              v.id === (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).dream.statusEffectId,
+            (v) => v.id === world.cognitionPolicy.dream?.statusEffectId,
           )
         )
           return reject(
@@ -276,11 +299,7 @@ export function authoringTransition(
         return t;
       }
       case 'cognition-policy':
-        return admitCognitionPolicy(
-          world,
-          d.payload,
-          (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).revision,
-        );
+        return admitCognitionPolicy(world, d.payload, world.cognitionPolicy.revision);
     }
   } catch {
     return reject(

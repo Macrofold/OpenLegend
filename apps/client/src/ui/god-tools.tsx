@@ -78,12 +78,15 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
     backstory: person.backstory.trim(),
     traitIds: [...new Set(person.traitIds)],
     goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
-    stats: { ...person.stats },
+    meters: { ...person.meters },
     inventory: person.inventory?.map((item) => ({ ...item })),
   };
 }
 
-function validateEditorPerson(person: GodPersonFields): string {
+function validateEditorPerson(
+  person: GodPersonFields,
+  meters: GodPersonEditorView['meters'],
+): string {
   const value = normalizedEditorPerson(person);
   if (!value.name) return 'Name is required.';
   if (value.name.length > 80) return 'Name must be 80 characters or fewer.';
@@ -94,8 +97,18 @@ function validateEditorPerson(person: GodPersonFields): string {
   if (value.goals.length > 8) return 'Add no more than eight goals.';
   if (value.goals.some((goal) => goal.length > 500))
     return 'Each goal must be 500 characters or fewer.';
-  if (Object.values(value.stats).some((stat) => !Number.isFinite(stat) || stat < 0 || stat > 100))
-    return 'Health, fullness, and energy must each be between 0 and 100.';
+  const definitions = new Map(meters.map((meter) => [meter.id, meter]));
+  for (const [id, amount] of Object.entries(value.meters)) {
+    const meter = definitions.get(id);
+    if (!meter || meter.display !== 'meter' || meter.status !== 'known')
+      return 'Refresh the current meter definitions before editing.';
+    if (
+      !Number.isFinite(amount) ||
+      amount < (meter.min ?? -Infinity) ||
+      amount > (meter.max ?? Infinity)
+    )
+      return `${meter.name} must stay within its declared range.`;
+  }
   if (value.inventory?.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 0))
     return 'Item quantities must be nonnegative whole numbers.';
   return '';
@@ -219,15 +232,32 @@ function PersonEditorFields({
   section,
   person,
   traits,
+  meters,
   onChange,
 }: {
   section: 'character' | 'identity';
   person: GodPersonFields;
   traits: TraitOption[];
+  meters: GodPersonEditorView['meters'];
   onChange(person: GodPersonFields): void;
 }) {
   const update = <K extends keyof GodPersonFields>(key: K, value: GodPersonFields[K]) =>
     onChange({ ...person, [key]: value });
+  // Edited drafts have no native condition result until Save; the server owns
+  // world-authored thresholds rather than the editor reproducing their rules.
+  const editable = meters.flatMap((meter) => {
+    const value = person.meters[meter.id];
+    return meter.display === 'meter' && meter.status === 'known' && typeof value === 'number'
+      ? [
+          {
+            ...meter,
+            value,
+            critical: value === meter.value ? meter.editorCritical : undefined,
+            condition: value === meter.value ? meter.condition : undefined,
+          },
+        ]
+      : [];
+  });
   return (
     <div className="ol-person-form">
       {section === 'identity' && (
@@ -291,51 +321,28 @@ function PersonEditorFields({
       {section === 'character' && (
         <>
           <fieldset className="ol-person-stats">
-            <legend>Needs</legend>
+            <legend>Meters</legend>
             <Condition
-              attributes={(
-                [
-                  ['health', 'Health', 'health', 40],
-                  ['fullness', 'Food', 'food', 30],
-                  ['energy', 'Energy', 'energy', 25],
-                ] as const
-              ).flatMap(([id, name, presentation, threshold]) => {
-                const value = person.stats[id];
-                return value === undefined
-                  ? []
-                  : [
-                      {
-                        id,
-                        name,
-                        presentation,
-                        value,
-                        status: 'known' as const,
-                        display: 'meter' as const,
-                        min: 0,
-                        max: 100,
-                        unit: '%',
-                        critical: value < threshold,
-                      },
-                    ];
-              })}
-              onValueChange={(id, value) => update('stats', { ...person.stats, [id]: value })}
+              attributes={editable}
+              onValueChange={(id, value) => update('meters', { ...person.meters, [id]: value })}
             />
             <Button
               type="button"
               variant="secondary"
+              disabled={!editable.some((meter) => meter.max !== undefined)}
               onPress={() =>
-                update('stats', {
-                  health: 100,
-                  ...(person.stats.fullness === undefined ? {} : { fullness: 100 }),
-                  ...(person.stats.energy === undefined ? {} : { energy: 100 }),
+                update('meters', {
+                  ...person.meters,
+                  ...Object.fromEntries(
+                    editable.flatMap((meter) =>
+                      meter.max === undefined ? [] : [[meter.id, meter.max]],
+                    ),
+                  ),
                 })
               }
             >
-              Fill needs to 100
+              Fill meters to their maximums
             </Button>
-          </fieldset>
-          <fieldset className="ol-person-stats">
-            <legend>Stats</legend>
           </fieldset>
         </>
       )}
@@ -625,7 +632,7 @@ export function PersonEditor({
   };
   const save = async () => {
     if (!loaded || !person || loading || saving || needsReload) return false;
-    const invalid = validateEditorPerson(person);
+    const invalid = validateEditorPerson(person, loaded.meters);
     if (invalid) {
       setError(invalid);
       return false;
@@ -659,6 +666,9 @@ export function PersonEditor({
         actorId,
         basePerson: loaded.person,
         person: normalizedEditorPerson(person),
+        manifestRevision: loaded.manifestRevision,
+        bodyPolicyPin: loaded.bodyPolicyPin,
+        generation: loaded.generation,
         memoryChanges,
       });
       if (!result.ok) throw new Error(result.message);
@@ -746,6 +756,7 @@ export function PersonEditor({
                 section="character"
                 person={person}
                 traits={traits}
+                meters={loaded.meters}
                 onChange={setPerson}
               />
               <RefreshHead
@@ -849,6 +860,7 @@ export function PersonEditor({
               section="identity"
               person={person}
               traits={traits}
+              meters={loaded.meters}
               onChange={setPerson}
             />
           ),

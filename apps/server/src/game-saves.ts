@@ -1,6 +1,5 @@
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
-import { migrateCognition } from '@open-legend/domain';
-import { upgradeWorldState } from './upgrade-world.js';
+import { validateCurrentWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
@@ -56,7 +55,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string | unde
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return file.data;
 }
-export const SAVE_FORMAT = 'development-2026-09-28-action-experience';
+export const SAVE_FORMAT = 'development-2026-10-02-playable-week';
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
@@ -545,9 +544,7 @@ export class GameSaves {
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
-    upgradeWorldState(payload.state.world);
-    migrateCognition(payload.state.world);
-    validateWorldModules(payload.state.world);
+    validateCurrentWorldState(payload.state.world);
     return payload;
   }
   async delete(worldId: string, id: string) {

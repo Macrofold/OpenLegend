@@ -121,6 +121,8 @@ The first slice is bounded to numeric/category attributes and native physiology 
 - [x] Preserve asset fallback, keyboard accessibility, current server authority, and plaintext handling. No generated HTML/JavaScript, arbitrary CSS execution, or model calls on hover.
 - [ ] Remove redundant generic literal-name assumptions only after their callers use the new view; do not replace all specialized UI with an unbounded form generator.
 
+**October 2 consumer correction:** Engineer 3’s own branch repairs the previously consumed PW07 meter/editor contract without peer integration: installed numeric ranges/units, symbolic presentation fallback, configured suggestions and exact Save fences replace old fixed-stat consumers. A disclosed −10–250-charge meter passed real PostgreSQL/browser fill, negative/fractional keyboard edit, invalid-input refusal and stale-definition refusal. Edited drafts suppress old condition prose; actual native descriptions return after Save. This is consumer evidence, not full PW07/unlike-world closure. [Dated evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026).
+
 **Tests:** charge/mana-like range not forced into 0–100; categorical trait renders without a fake bar; private value omitted even if declaration is public; added need appears in allowed context/inspection/UI; label injection is inert; unknown display cannot become zero; editing uses native effects and preserves atomicity.
 
 **Exit:** the second-need fixture needs no new top-level protocol field, hard-coded prompt paragraph, or React meter branch.

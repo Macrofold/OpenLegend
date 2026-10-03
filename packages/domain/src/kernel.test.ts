@@ -23,41 +23,38 @@ import type { Command, DeclarationDraft, WorldState } from './types.js';
 
 /** Test-only specimens. Production seeds contain no finished recipe composition. */
 const sling = (): DeclarationDraft => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
+  family: { id: 'base:swing', version: 1 },
   name: 'Woven river sling',
   description: 'A fiber pouch held between two lengths of cord.',
   inputs: [
     { definitionId: 'cord', quantity: 1, role: 'binding' },
     { definitionId: 'prepared_fiber', quantity: 2, role: 'pouch' },
   ],
-  workSeconds: 60,
   output: {
-    kind: 'launcher',
     name: 'Woven river sling',
     description: 'Swings a small stone from a flexible pouch.',
-    properties: ['flexible'],
-    launcher: { mechanism: 'swing', ammunitionKind: 'stone', damage: 18, range: 7, accuracy: 0.9 },
   },
+  parameters: { workSeconds: 60, damage: 18, range: 7, accuracy: 0.9 },
 });
 const bow = (): DeclarationDraft => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
+  family: { id: 'base:flex', version: 1 },
   name: 'Branch bow',
   description: 'A springy branch and a tensioned cord.',
   inputs: [
     { definitionId: 'wood', quantity: 1, role: 'body' },
     { definitionId: 'cord', quantity: 1, role: 'binding' },
   ],
-  workSeconds: 100,
   output: {
-    kind: 'launcher',
     name: 'Branch bow',
     description: 'Stores flexion to launch a compatible arrow.',
-    properties: ['flexible', 'rigid'],
-    launcher: { mechanism: 'flex', ammunitionKind: 'arrow', damage: 22, range: 8, accuracy: 0.8 },
   },
+  parameters: { workSeconds: 100, damage: 22, range: 8, accuracy: 0.8 },
 });
 const arrow = (): DeclarationDraft => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
+  family: { id: 'base:arrow', version: 1 },
   name: 'Bone-pointed arrow',
   description: 'A straight shaft, bone point and fiber fletching.',
   inputs: [
@@ -65,14 +62,11 @@ const arrow = (): DeclarationDraft => ({
     { definitionId: 'bone', quantity: 1, role: 'point' },
     { definitionId: 'prepared_fiber', quantity: 1, role: 'fletching' },
   ],
-  workSeconds: 72,
   output: {
-    kind: 'ammunition',
     name: 'Bone-pointed arrow',
     description: 'A compatible physical projectile.',
-    properties: ['projectile', 'rigid'],
-    ammunition: { kind: 'arrow', damageBonus: 2 },
   },
+  parameters: { workSeconds: 72, damageBonus: 2 },
 });
 function command(
   world: WorldState,
@@ -207,7 +201,7 @@ describe('bounded invented mechanisms', () => {
     });
     expect(repeated.world).toBe(admitted.world);
     const changed = sling();
-    changed.workSeconds = 70;
+    changed.parameters.workSeconds = 70;
     expect(
       admitDeclaration(admitted.world, changed, {
         actorId: PLAYER_ID,
@@ -244,10 +238,10 @@ describe('bounded invented mechanisms', () => {
       },
       {
         ...sling(),
-        output: { ...sling().output, launcher: { ...sling().output.launcher, damage: 999 } },
+        parameters: { ...sling().parameters, damage: 999 },
       },
       { ...sling(), inputs: [] },
-      { ...sling(), workSeconds: 0 },
+      { ...sling(), parameters: { ...sling().parameters, workSeconds: 0 } },
       { ...sling(), output: { ...sling().output, nutrition: 100 } },
     ];
     for (const candidate of candidates) {
@@ -311,10 +305,12 @@ describe('bounded invented mechanisms', () => {
     world = advanceWorld(world, 200).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);
-    const fullness = world.entities[PLAYER_ID]!.actor!.fullness;
-    if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
+    const fullness = world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value;
+    if (typeof fullness !== 'number') throw new Error('Wilderness fixture lacks fullness.');
     world = command(world, { type: 'eat', itemId: itemId(world, 'cooked_meat') });
-    expect(world.entities[PLAYER_ID]!.actor!.fullness).toBeGreaterThan(fullness);
+    expect(
+      world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:fullness']!.value,
+    ).toBeGreaterThan(fullness);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(0);
   });
   it('uses the same ranged family for a bow with compatible crafted arrows', () => {
@@ -405,8 +401,8 @@ describe('bounded invented mechanisms', () => {
   });
   it('approaches close enough to fire a short-range tool at an already fleeing animal', () => {
     const draft = sling();
-    draft.output.launcher!.range = 3;
-    draft.output.launcher!.damage = 10;
+    draft.parameters.range = 3;
+    draft.parameters.damage = 10;
     const admitted = addRecipe(createWorld(), draft);
     let world = command(admitted.world, { type: 'craft', recipeId: admitted.recipeId });
     world = advanceWorld(world, 60).world;
@@ -476,12 +472,14 @@ describe('perception, survival and continuity', () => {
   });
   it('preserves physiology without automatically choosing food without a provider', () => {
     let world = createWorld();
-    world.entities[NPC_ID]!.actor!.fullness = 20;
+    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 20;
     for (const item of inventoryFor(world, NPC_ID))
       if (item.definitionId === 'berries') retireItem(world, item.id, 'fixture');
     world = advanceWorld(world, 300).world;
     expect(world.entities[NPC_ID]!.actor!.alive).toBe(true);
-    expect(world.entities[NPC_ID]!.actor!.fullness).toBeLessThan(20);
+    expect(world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value).toBeLessThan(
+      20,
+    );
     expect(
       world.events.some(
         (event) => event.actorId === NPC_ID && ['gathered', 'ate'].includes(event.type),
@@ -494,7 +492,7 @@ describe('perception, survival and continuity', () => {
     for (const entity of Object.values(world.entities))
       if (entity.resource) entity.resource.quantity = 0;
     for (const actor of [world.entities[PLAYER_ID]!, world.entities[NPC_ID]!]) {
-      actor.actor!.fullness = 0;
+      actor.actor!.attributes!['wilderness:fullness']!.value = 0;
       actor.actor!.health = 0.01;
     }
     world = advanceWorld(world, 3).world;

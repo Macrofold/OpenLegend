@@ -1,5 +1,10 @@
 import { observerDescription, recognizesSubject } from '@open-legend/domain';
-import type { ActorResponse, Entity, WorldState } from '@open-legend/domain';
+import type {
+  ActorResponse,
+  ActivityRequestDescriptor,
+  Entity,
+  WorldState,
+} from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 
 const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
@@ -90,6 +95,7 @@ export function resolveResponseEntities(
   response: ActorResponse,
   references: Record<string, string>,
   knowledgeReferences: Record<string, string> = {},
+  activityRequests: ActivityRequestDescriptor[] = [],
 ): ActorResponse {
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
@@ -125,6 +131,20 @@ export function resolveResponseEntities(
                       ? resolve(op.act.invocation.targetEntityId)
                       : null,
                     itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
+                    ...(op.act.invocation.parameters
+                      ? {
+                          parameters: Object.fromEntries(
+                            Object.entries(op.act.invocation.parameters).map(([key, value]) => [
+                              key,
+                              activityRequests.find(
+                                (request) => request.id === op.act!.invocation!.family,
+                              )?.fields[key]?.type === 'entity'
+                                ? resolve(String(value))
+                                : value,
+                            ]),
+                          ),
+                        }
+                      : {}),
                   },
                 }
               : {}),

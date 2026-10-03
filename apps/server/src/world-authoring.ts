@@ -1250,7 +1250,11 @@ export class WorldAuthoringService {
     const { name, arguments: a } = call;
     switch (name) {
       case 'ol_authoring_guide':
-        return result('ok', undefined, authoringGuide(this.service.world, a.kind));
+        return result(
+          'ok',
+          undefined,
+          authoringGuide(this.service.world, a.kind, false, a.familyId),
+        );
       case 'ol_request_capability': {
         if (!s.activeTurn || s.profile === a.kind)
           return result(

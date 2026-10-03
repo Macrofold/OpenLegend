@@ -39,7 +39,9 @@ export function Icon({
   size?: number;
   fallbackLabel?: string;
 }) {
-  const data = (icons as Record<string, { body: string; viewBox: string }>)[name];
+  const data = Object.hasOwn(icons, name)
+    ? (icons as Record<string, { body: string; viewBox: string }>)[name]
+    : undefined;
   const style = { '--ol-icon': `${size}px` } as CSSProperties;
   // Only repository-owned SVG bodies enter this sink. Generated names remain React text.
   const glyph = data ? (
@@ -297,7 +299,12 @@ export function Launcher({
     </div>
   );
 }
-/** Only symbolic styles and text cross this boundary; definitions cannot supply CSS. */
+const meterColors = new Map([
+  ['meter.health', 'health'],
+  ['meter.food', 'food'],
+  ['meter.energy', 'energy'],
+]);
+/** Only catalogue symbols and text cross this boundary; definitions cannot supply CSS. */
 export function Condition({
   attributes,
   onValueChange,
@@ -320,9 +327,12 @@ export function Condition({
               <span>{attribute.status === 'unknown' ? 'Unknown' : value}</span>
             </div>
           );
-        const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+        const finite = Number.isFinite(value);
+        const percentage = finite
+          ? Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
+          : 0;
         const critical = !!attribute.critical;
-        const icon = presentation === 'neutral' ? 'energy' : presentation;
+        const color = meterColors.get(presentation.color) ?? 'text-3';
         const display = `${unit === '%' ? Math.round(value) : Math.round(value * 10) / 10}${unit === '%' ? '%' : ` ${unit ?? ''}`}`;
         return (
           <div
@@ -330,18 +340,19 @@ export function Condition({
             key={id}
             data-critical={critical || undefined}
             style={
-              { '--c': `var(--${critical ? 'danger' : icon})`, '--v': percentage } as CSSProperties
+              { '--c': `var(--${critical ? 'danger' : color})`, '--v': percentage } as CSSProperties
             }
           >
-            <Icon name={`meter.${icon}`} />
+            <Icon name={presentation.icon} fallbackLabel={name} />
             <span className="ol-meter-label">{name}</span>
             <span
               className="ol-meter-track"
               role="meter"
+              aria-hidden={!!onValueChange || undefined}
               aria-label={name}
               aria-valuemin={min}
               aria-valuemax={max}
-              aria-valuenow={value}
+              aria-valuenow={finite ? value : undefined}
               aria-valuetext={[display, attribute.condition].filter(Boolean).join(', ')}
             >
               <span className="ol-meter-fill" />
@@ -354,10 +365,12 @@ export function Condition({
                   min={min}
                   max={max}
                   step="any"
-                  value={value}
+                  value={finite ? value : ''}
+                  aria-invalid={!finite || value < min || value > max || undefined}
                   onChange={(event) => {
-                    const next = event.currentTarget.valueAsNumber;
-                    if (Number.isFinite(next)) onValueChange(id, next);
+                    // NaN preserves an incomplete local number draft for Save's
+                    // validation, rather than restoring the old value or writing zero.
+                    onValueChange(id, event.currentTarget.valueAsNumber);
                   }}
                 />
                 {unit}

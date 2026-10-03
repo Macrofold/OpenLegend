@@ -8,6 +8,7 @@ import { availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
+import { bodyPolicy } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
 import type {
@@ -70,7 +71,7 @@ export function actionCatalogue(
         id: option.id,
         label: option.label,
         category: 'Possessions',
-        description: describeCommand(option.command, observation),
+        description: describeCommand(option.command, observation, service.world),
         facts: commandFacts(option.command, observation),
         keywords: [projected.name],
         enabled: option.enabled,
@@ -109,7 +110,7 @@ export function actionCatalogue(
       id,
       label,
       category,
-      description: provided?.description ?? describeCommand(command, observation),
+      description: provided?.description ?? describeCommand(command, observation, world),
       facts: commandFacts(command, observation),
       keywords,
       ...(targetId ? { targetId } : {}),
@@ -186,7 +187,8 @@ export function actionCatalogue(
   )
     add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
-  add('recover', 'Recover at camp', 'Survival', { type: 'recover' }, ['revive', 'recovery']);
+  const recovery = bodyPolicy(world)?.recovery;
+  if (recovery) add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
   for (const key of Object.keys(NATIVE_PREPARATIONS) as Array<keyof typeof NATIVE_PREPARATIONS>) {
     add(
       `prepare-${key}`,
@@ -303,13 +305,13 @@ export function actionCatalogue(
         { type: 'equip', itemId: item.id },
         ['weapon', 'launcher'],
       );
-    if (definition.nutrition)
+    if (definition.nutrition && bodyPolicy(world)?.consumption)
       add(
         `eat-${item.id}`,
-        `Eat ${definition.name}`,
-        'Survival',
+        `${bodyPolicy(world)!.consumption!.label} · ${definition.name}`,
+        'Body',
         { type: 'eat', itemId: item.id },
-        ['food', 'meal'],
+        [],
       );
     if (item.definitionId === 'raw_meat') {
       for (const fire of fires)
@@ -354,7 +356,7 @@ export function actionCatalogue(
       `Craft ${recipe.name}`,
       'Create',
       { type: 'craft', recipeId: recipe.id },
-      [recipe.description, recipe.output.kind, 'make'],
+      [recipe.description, recipe.sourceCandidate.family.id, 'make'],
     );
 
   if (selected?.heat && !observation.inventory.some((item) => item.definitionId === 'raw_meat'))
@@ -390,7 +392,8 @@ export function actionCatalogue(
   family('hunt', 'Hunt an animal', 'Hunt', 'Move within sight of a living animal.');
   family('harvest', 'Harvest remains', 'Gather', 'Find animal remains to harvest.');
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
-  family('eat', 'Eat food', 'Survival', 'Gather or cook edible food.');
+  const consumption = bodyPolicy(world)?.consumption;
+  if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
   family('cook', 'Cook meat', 'Create', 'Carry raw meat and find a lit campfire.');
   family(
     'tend-fire',

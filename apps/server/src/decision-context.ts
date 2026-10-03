@@ -1,7 +1,13 @@
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
-import { portableItems, worldPosition, worldSupport } from '@open-legend/domain';
+import {
+  activityRequestChoices,
+  activityRequestDescriptors,
+  portableItems,
+  worldPosition,
+  worldSupport,
+} from '@open-legend/domain';
 import { knowledgePolicyInstructions, namedClockTimes } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
@@ -14,7 +20,15 @@ import { digest } from './store.js';
 import { contextSections } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
-import { bodyContext, hasWildernessNeeds, supportsManualWork, canSpeak } from '@open-legend/domain';
+import {
+  bodyContext,
+  bodyPolicy,
+  bodyEligibilityRevision,
+  attributeDefinition,
+  readAttribute,
+  supportsManualWork,
+  canSpeak,
+} from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
 import { compileInterests } from './interests.js';
@@ -36,6 +50,63 @@ import { attentionIncludes, JEV_ACTION_THRESHOLD } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { navigationInstructions } from './navigation-contracts.js';
 import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
+
+/** Reuse the same permitted perception used to select actions and budget the prompt. */
+function activityDecisionFacts(
+  world: import('@open-legend/domain').WorldState,
+  actorId: string,
+  observed: NonNullable<ReturnType<typeof decisionObservation>>,
+) {
+  const selected = observed.inspectedContainer;
+  const available = activityRequestChoices(world, actorId, observed);
+  return {
+    simTime: world.simTime,
+    activityRequests: {
+      requests: activityRequestDescriptors(world),
+      choices: available.choices.map(({ id, kind, ...choice }) => ({
+        ...choice,
+        kind,
+        ...(kind === 'entity' ? { entityId: id } : { definitionId: id }),
+      })),
+      warnings: available.warnings,
+    },
+    ...(selected
+      ? {
+          inspectedContainer: {
+            entityId: selected.id,
+            name: selected.name,
+            revision: selected.revision,
+            ...(selected.load !== undefined
+              ? { load: selected.load, capacity: selected.capacity }
+              : {}),
+            more: selected.inspection.more,
+            items: selected.items.map((item) => ({
+              entityId: item.id,
+              definitionId: item.definitionId,
+              name: world.itemDefinitions[item.definitionId]!.name,
+              quantity: item.quantity,
+              revision: item.revision,
+            })),
+          },
+        }
+      : {}),
+  };
+}
+function activityDecisionReferences(facts: ReturnType<typeof activityDecisionFacts>): string[] {
+  return [
+    ...new Set([
+      ...facts.activityRequests.choices.flatMap((choice) =>
+        'entityId' in choice ? [choice.entityId] : [],
+      ),
+      ...(facts.inspectedContainer
+        ? [
+            facts.inspectedContainer.entityId,
+            ...facts.inspectedContainer.items.map((item) => item.entityId),
+          ]
+        : []),
+    ]),
+  ];
+}
 
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
   return [
@@ -237,7 +308,9 @@ export async function prepareDecision(
     preparation,
   );
   const snapshotActor = observed.actor.actor!;
+  const requiredActivity = activityDecisionFacts(world, actorId, observed);
   const requiredContext: Record<string, unknown> = {
+    ...requiredActivity,
     capabilities: {
       speech: canSpeak(observed.actor),
       expressions: supportsManualWork(observed.actor),
@@ -267,6 +340,9 @@ export async function prepareDecision(
       requiredIds,
       socialEntityIds(world, actorId),
       evidence,
+      [],
+      [],
+      activityDecisionReferences(requiredActivity),
     ).references,
     identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
@@ -323,14 +399,20 @@ export async function prepareDecision(
     possessions: [],
     ...(observed.inventoryCoverage.paged ? { inventoryCoverage: observed.inventoryCoverage } : {}),
   };
+  const carryingConcern = bodyPolicy(world)?.carryingConcern;
+  const carryingMeter = carryingConcern && attributeDefinition(world, carryingConcern.attributeId);
   if (
-    hasWildernessNeeds(snapshotActor) &&
+    carryingConcern &&
+    carryingMeter &&
+    readAttribute(snapshotActor, carryingMeter) !== undefined &&
     !observed.inventoryCoverage.paged &&
     !observed.inventory.some((item) =>
-      world.itemDefinitions[item.definitionId]?.properties.includes('food'),
+      world.itemDefinitions[item.definitionId]?.properties.some(
+        (property) => property === carryingConcern.itemProperty,
+      ),
     )
   )
-    requiredContext['food'] = 'I have no food.';
+    requiredContext['carryingConcern'] = carryingConcern.text;
   if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
     requiredContext['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
@@ -478,7 +560,9 @@ export async function prepareDecision(
     `interests:${currentWorld.id}:${actorId}`,
     compileInterests(currentWorld, actorId, currentSelection),
   );
+  const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
   const context: Record<string, unknown> = {
+    ...currentActivity,
     ...(inspected
       ? {
           inspectedActions: inspected.entries.map((entry) => entry.text),
@@ -549,14 +633,21 @@ export async function prepareDecision(
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
     context['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
+  const currentCarryingConcern = bodyPolicy(currentWorld)?.carryingConcern;
+  const currentCarryingMeter =
+    currentCarryingConcern && attributeDefinition(currentWorld, currentCarryingConcern.attributeId);
   if (
-    hasWildernessNeeds(actor) &&
+    currentCarryingConcern &&
+    currentCarryingMeter &&
+    readAttribute(actor, currentCarryingMeter) !== undefined &&
     !currentObserved.inventoryCoverage.paged &&
     !currentObserved.inventory.some((i) =>
-      currentWorld.itemDefinitions[i.definitionId]?.properties.includes('food'),
+      currentWorld.itemDefinitions[i.definitionId]?.properties.some(
+        (property) => property === currentCarryingConcern.itemProperty,
+      ),
     )
   )
-    context['food'] = 'I have no food.';
+    context['carryingConcern'] = currentCarryingConcern.text;
   const references = responseReferences(
     currentWorld,
     actorId,
@@ -585,6 +676,7 @@ export async function prepareDecision(
       .filter((entity) => entity.kind === 'item-pile')
       .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
       .slice(0, 16),
+    activityDecisionReferences(currentActivity),
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>
@@ -600,6 +692,7 @@ export async function prepareDecision(
     ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
+    bodyEligibility: bodyEligibilityRevision(currentWorld, currentWorld.entities[actorId]!),
     knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
     actorId,
     decisionId: jobId,
@@ -641,7 +734,7 @@ export async function prepareDecision(
         projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),
         (field, entry) =>
           typeof entry === 'string' &&
-          /^(actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
+          /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
             ? (entityHandles(currentWorld, actorId).get(entry) ?? entry)
             : entry,
       );
@@ -662,6 +755,9 @@ export async function prepareDecision(
   return {
     context,
     prompt,
+    // Entity handles were projected with the rest of the permitted context above;
+    // retain their known producer type for the typed activity chooser.
+    activityRequests: context['activityRequests'] as typeof currentActivity.activityRequests,
     binding,
     offered,
     actionCandidates: availableActions,

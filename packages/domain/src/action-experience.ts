@@ -2,6 +2,16 @@ import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { canonicalJson } from './events.js';
 import { isActivityCommand } from './agency.js';
+import {
+  installedActivityHost,
+  activityCommandSupported,
+  activitySpendCeiling,
+} from './activity-hosts.js';
+import { validateChosenActivityControl } from './activity-execution.js';
+import { hasRecordFields } from './records.js';
+import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
+import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
+import { cloneValue } from './draft.js';
 
 /** Admission bounds, not promises about how much an actor remembers. Historical
  * records can live in the repository after leaving the resident working set.
@@ -98,9 +108,14 @@ export interface ActivityOccurrence {
   /** Changed only by explicit evidence correction/revocation, not compaction. */
   revoked?: boolean;
   incomplete?: boolean;
+  /** Trusted native admission links reusable meaning to one actual lot attempt. */
+  stockResolution?: import('./stock-transfer.js').StockTransferAdmission;
+  /** Requested guarded controls are one-session evidence, not inferred methods. */
+  noLearningControl?: boolean;
 }
 
 export type ActivityPredicate =
+  | { test: 'registered'; definition: import('./world-modules.js').DefinitionPin; role: string }
   | { test: 'alive' | 'available' | 'equipped' | 'lit'; role: string }
   | { test: 'output'; step: string; port: string; quantity: number }
   /** The actor's own accessible possessions hold at least this many of a definition. */
@@ -136,12 +151,16 @@ export interface ActivityMethod {
     string,
     {
       commandFields: string[];
-      kind: 'object' | 'place' | 'text';
+      kind: 'object' | 'place' | 'text' | 'self';
       definitionId?: string;
       definitionVersion?: number;
       definitionDigest?: string;
       entityKind?: string;
       maximumHealth?: number;
+      /** A source must provide the material actually produced in the learner's trace. */
+      gatheredDefinition?: import('./world-modules.js').DefinitionPin;
+      /** The installed adapter, rather than an entity label, supplies target compatibility. */
+      targetHost?: import('./world-modules.js').DefinitionPin;
     }
   >;
 }
@@ -352,7 +371,15 @@ export function beginActivity(
   const objects: ActivityOccurrence['objects'] = {};
   for (const [field, value] of Object.entries(command)) {
     if (
-      !['targetId', 'itemId', 'weaponItemId', 'ammoItemId', 'heatId'].includes(field) ||
+      ![
+        'targetId',
+        'itemId',
+        'weaponItemId',
+        'ammoItemId',
+        'heatId',
+        'sourceId',
+        'destinationId',
+      ].includes(field) ||
       typeof value !== 'string'
     )
       continue;
@@ -376,7 +403,9 @@ export function beginActivity(
     actorId: command.actorId,
     ...(parentId ? { parentId } : {}),
     at: world.simTime,
-    command,
+    // A queued child can be an Immer draft. The evidence must own plain data;
+    // otherwise publishing the frozen occurrence leaves a proxy in saved history.
+    command: cloneValue(command),
     objects,
     view,
     status: 'running',
@@ -385,6 +414,13 @@ export function beginActivity(
     evidenceIds: [],
   };
   const plan = world.entities[command.actorId]?.actor?.agency.plan;
+  if (
+    parentId &&
+    plan?.id === parentId &&
+    plan.activity?.control &&
+    plan.steps.some((step) => step.id === command.id && step.activityKey)
+  )
+    record.noLearningControl = true;
   if (parentId && plan?.id === parentId) {
     const method = plan.activity?.methodId ? state.methods[plan.activity.methodId] : undefined;
     const name =
@@ -648,11 +684,35 @@ const invocationFields: Partial<
   replenish: { required: ['targetId', 'attributeId'] },
   equip: { required: ['itemId'] },
   eat: { required: ['itemId'] },
-  'inspect-inventory': { required: [], optional: ['after', 'expectedRevision'] },
+  'inspect-inventory': {
+    required: [],
+    optional: ['containerId', 'after', 'expectedRevision', 'expectedScope'],
+  },
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
   cook: { required: ['itemId', 'heatId'] },
-  'tend-fire': { required: ['targetId', 'operation'], optional: ['itemId'] },
+  'tend-fire': {
+    required: ['targetId', 'operation'],
+    optional: [
+      'itemId',
+      'definitionId',
+      'definitionVersion',
+      'definitionDigest',
+      'minimumHeld',
+      'onlyWhenLow',
+    ],
+  },
+  'transfer-stock': {
+    required: [
+      'sourceId',
+      'destinationId',
+      'definitionId',
+      'definitionVersion',
+      'definitionDigest',
+      'quantity',
+      'minimumHeld',
+    ],
+  },
   'status-effect': { required: ['targetId', 'definitionId', 'operation'] },
   say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
 };
@@ -684,7 +744,24 @@ export function validateActivityNode(root: ActivityNode): void {
     const predicate = (p: ActivityPredicate): void => {
       if (
         !p ||
-        !['alive', 'available', 'equipped', 'lit', 'output', 'holding', 'time'].includes(p.test) ||
+        ![
+          'alive',
+          'available',
+          'equipped',
+          'lit',
+          'output',
+          'holding',
+          'time',
+          'registered',
+        ].includes(p.test) ||
+        (p.test === 'registered' &&
+          (!p.definition ||
+            !isSafeRecordId(p.definition.id) ||
+            !Number.isSafeInteger(p.definition.version) ||
+            p.definition.version < 1 ||
+            typeof p.definition.digest !== 'string' ||
+            !p.definition.digest ||
+            Object.keys(p.definition).sort().join(',') !== 'digest,id,version')) ||
         (p.test === 'output'
           ? !keys.has(p.step) ||
             !ports.get(p.step)?.has(p.port) ||
@@ -702,13 +779,15 @@ export function validateActivityNode(root: ActivityNode): void {
         throw new Error('Invalid activity condition.');
       exactFields(
         p,
-        p.test === 'output'
-          ? ['test', 'step', 'port', 'quantity']
-          : p.test === 'holding'
-            ? ['test', 'definitionId', 'quantity']
-            : p.test === 'time'
-              ? ['test', 'at']
-              : ['test', 'role'],
+        p.test === 'registered'
+          ? ['test', 'definition', 'role']
+          : p.test === 'output'
+            ? ['test', 'step', 'port', 'quantity']
+            : p.test === 'holding'
+              ? ['test', 'definitionId', 'quantity']
+              : p.test === 'time'
+                ? ['test', 'at']
+                : ['test', 'role'],
       );
     };
     switch (node.kind) {
@@ -763,6 +842,8 @@ export function validateActivityNode(root: ActivityNode): void {
                 'weaponItemId',
                 'ammoItemId',
                 'heatId',
+                'sourceId',
+                'destinationId',
                 'destination',
                 'text',
               ].includes(field)
@@ -822,6 +903,120 @@ export function validateActivityNode(root: ActivityNode): void {
   walk(root, 0, 1);
 }
 
+/** A current executable root must resolve its exact installed observation support.
+ * Archived non-executable methods may retain historical definitions as evidence. */
+function validateInstalledActivityConditions(
+  world: WorldState,
+  root: ActivityNode,
+  bindings?: Record<string, ActivityBinding>,
+): void {
+  if (root.kind === 'invoke') {
+    if (
+      bindings &&
+      Object.values(root.args).some((arg) => 'role' in arg && !Object.hasOwn(bindings, arg.role))
+    )
+      throw new Error('Missing saved activity binding.');
+    if (root.command === 'transfer-stock' && !activityCommandSupported(world, root.command))
+      throw new Error('Missing installed stock-transfer support.');
+    return;
+  }
+  if (root.kind === 'sequence') {
+    root.children.forEach((child) => validateInstalledActivityConditions(world, child, bindings));
+    return;
+  }
+  const condition = root.kind === 'branch' ? root.when : root.until;
+  if (
+    condition.test === 'registered' &&
+    (!isDefinitionPin(condition.definition) ||
+      !installedActivityHost(world, condition.definition)?.evaluateCondition ||
+      (bindings && typeof bindings[condition.role] !== 'string'))
+  )
+    throw new Error('Missing installed activity observation support or binding.');
+  if (root.kind === 'branch') {
+    validateInstalledActivityConditions(world, root.yes, bindings);
+    if (root.no) validateInstalledActivityConditions(world, root.no, bindings);
+  }
+  if (root.kind === 'repeat') validateInstalledActivityConditions(world, root.body, bindings);
+}
+
+function validateStockResolution(entry: ActivityOccurrence): void {
+  const receipt = entry.stockResolution,
+    command = entry.command;
+  if (receipt === undefined) {
+    if (command.type === 'transfer-stock' && entry.status === 'completed' && entry.outcome?.ok)
+      throw new Error('Missing committed stock-transfer resolution.');
+    return;
+  }
+  if (
+    !hasRecordFields(receipt, [
+      'sourceId',
+      'destinationId',
+      'destinationRevision',
+      'definition',
+      'quantity',
+      'minimumHeld',
+      'lots',
+    ]) ||
+    command.type !== 'transfer-stock' ||
+    entry.status !== 'completed' ||
+    !entry.outcome?.ok ||
+    receipt.sourceId !== command.sourceId ||
+    receipt.destinationId !== command.destinationId ||
+    receipt.sourceId === receipt.destinationId ||
+    !isSafeRecordId(receipt.sourceId) ||
+    !isSafeRecordId(receipt.destinationId) ||
+    !isDefinitionPin(receipt.definition) ||
+    !sameDefinitionPin(receipt.definition, {
+      id: command.definitionId,
+      version: command.definitionVersion,
+      digest: command.definitionDigest,
+    }) ||
+    !Number.isSafeInteger(receipt.destinationRevision) ||
+    receipt.destinationRevision < 0 ||
+    receipt.quantity !== command.quantity ||
+    !Number.isSafeInteger(receipt.quantity) ||
+    receipt.quantity < 1 ||
+    receipt.minimumHeld !== command.minimumHeld ||
+    !Number.isSafeInteger(receipt.minimumHeld) ||
+    receipt.minimumHeld < 0 ||
+    !Array.isArray(receipt.lots) ||
+    !receipt.lots.length ||
+    receipt.lots.length > STOCK_TRANSFER_LIMITS.movedLots
+  )
+    throw new Error('Invalid committed stock-transfer resolution.');
+  let quantity = 0;
+  const lotIds = new Set<string>();
+  for (const lot of receipt.lots) {
+    if (
+      !hasRecordFields(lot, ['itemId', 'quantity', 'revision', 'placementRevision']) ||
+      !isSafeRecordId(lot.itemId) ||
+      lotIds.has(lot.itemId) ||
+      !Number.isSafeInteger(lot.quantity) ||
+      lot.quantity < 1 ||
+      !Number.isSafeInteger(lot.revision) ||
+      lot.revision < 0 ||
+      !Number.isSafeInteger(lot.placementRevision) ||
+      lot.placementRevision < 0 ||
+      !Number.isSafeInteger((quantity += lot.quantity))
+    )
+      throw new Error('Invalid committed stock-transfer lot.');
+    lotIds.add(lot.itemId);
+  }
+  if (
+    quantity !== receipt.quantity ||
+    entry.outputs.length !== receipt.lots.length ||
+    new Set(entry.outputs.map((output) => output.itemId)).size !== entry.outputs.length ||
+    entry.outputs.reduce((sum, output) => sum + output.quantity, 0) !== receipt.quantity ||
+    entry.outputs.some(
+      (output, index) =>
+        output.definitionId !== receipt.definition.id ||
+        output.port !== receipt.definition.id ||
+        output.quantity !== receipt.lots[index]!.quantity,
+    )
+  )
+    throw new Error('Stock-transfer resolution disagrees with its actual outputs.');
+}
+
 export function validateActionExperience(world: WorldState): void {
   const state = world.actionExperience;
   if (
@@ -848,6 +1043,8 @@ export function validateActionExperience(world: WorldState): void {
   for (const [id, method] of Object.entries(state.methods)) {
     exactFields(method, ['executable', 'id', 'signature', 'manifest', 'name', 'root', 'roles']);
     validateActivityNode(method.root);
+    if (method.executable && method.manifest === canonicalJson(world.moduleManifest))
+      validateInstalledActivityConditions(world, method.root);
     if (
       id !== method.id ||
       !isSafeRecordId(id) ||
@@ -877,10 +1074,12 @@ export function validateActionExperience(world: WorldState): void {
         'definitionDigest',
         'entityKind',
         'maximumHealth',
+        'gatheredDefinition',
+        'targetHost',
       ]);
       if (
         !isSafeRecordId(role) ||
-        !['object', 'place', 'text'].includes(rule.kind) ||
+        !['object', 'place', 'text', 'self'].includes(rule.kind) ||
         !Array.isArray(rule.commandFields) ||
         !rule.commandFields.length ||
         rule.commandFields.length > 8 ||
@@ -893,12 +1092,21 @@ export function validateActionExperience(world: WorldState): void {
               'weaponItemId',
               'ammoItemId',
               'heatId',
+              'sourceId',
+              'destinationId',
               'destination',
               'text',
             ].includes(field),
         ) ||
         (rule.kind === 'place' && rule.commandFields.some((field) => field !== 'destination')) ||
         (rule.kind === 'text' && rule.commandFields.some((field) => field !== 'text')) ||
+        (rule.kind === 'self' &&
+          (rule.commandFields.some((field) => !['sourceId', 'destinationId'].includes(field)) ||
+            rule.definitionId !== undefined ||
+            rule.entityKind !== undefined ||
+            rule.maximumHealth !== undefined ||
+            rule.gatheredDefinition !== undefined ||
+            rule.targetHost !== undefined)) ||
         (rule.kind === 'object' &&
           rule.commandFields.some((field) => ['text', 'destination'].includes(field))) ||
         (rule.definitionId !== undefined &&
@@ -907,7 +1115,18 @@ export function validateActionExperience(world: WorldState): void {
             rule.definitionVersion! < 1 ||
             typeof rule.definitionDigest !== 'string')) ||
         (rule.maximumHealth !== undefined &&
-          (!Number.isFinite(rule.maximumHealth) || rule.maximumHealth < 0))
+          (!Number.isFinite(rule.maximumHealth) || rule.maximumHealth < 0)) ||
+        [rule.gatheredDefinition, rule.targetHost].some(
+          (pin) =>
+            pin !== undefined &&
+            (rule.kind !== 'object' ||
+              Object.keys(pin).sort().join(',') !== 'digest,id,version' ||
+              !isSafeRecordId(pin.id) ||
+              !Number.isSafeInteger(pin.version) ||
+              pin.version < 1 ||
+              typeof pin.digest !== 'string' ||
+              !pin.digest),
+        )
       )
         throw new Error('Invalid activity role constraint.');
     }
@@ -973,6 +1192,7 @@ export function validateActionExperience(world: WorldState): void {
         !Array.isArray(entry.evidenceIds) ||
         entry.evidenceIds.length > ACTIVITY_LIMITS.links ||
         entry.evidenceIds.some((id) => !isSafeRecordId(id)) ||
+        (entry.noLearningControl !== undefined && typeof entry.noLearningControl !== 'boolean') ||
         new TextEncoder().encode(JSON.stringify(entry)).length > ACTIVITY_LIMITS.recordBytes ||
         (entry.status !== 'running' &&
           (!Number.isFinite(entry.endedAt) ||
@@ -982,6 +1202,7 @@ export function validateActionExperience(world: WorldState): void {
       )
         throw new Error('Invalid action experience.');
       ids.add(entry.id);
+      validateStockResolution(entry);
       for (const link of entry.connections) {
         const source = all.get(link.from);
         if (
@@ -1124,17 +1345,51 @@ export function validateActionExperience(world: WorldState): void {
     ),
   )) {
     const { entity, activity } = execution;
-    validateExecution(state, entity.id, activity, world.simTime);
+    const plan =
+      entity.actor!.agency.plan?.activity === activity
+        ? entity.actor!.agency.plan!
+        : entity.actor!.agency.suspended!;
+    validateExecution(world, entity.id, activity, plan);
   }
 }
 
 /** A requested activity carries its own validated root; a learned one names its method. */
 function validateExecution(
-  state: ActionExperienceState,
+  world: WorldState,
   actorId: string,
   execution: import('./activity-execution.js').ActivityExecution,
-  simTime: number,
+  plan: import('./agency.js').ActorPlan,
 ): void {
+  const state = world.actionExperience,
+    simTime = world.simTime;
+  exactFields(execution, [
+    'methodId',
+    'request',
+    'bindings',
+    'pending',
+    'outputs',
+    'serial',
+    'processed',
+    'archivedSteps',
+    'activeKey',
+    'reason',
+    'control',
+    'attempts',
+    'lastAttemptId',
+    'spent',
+    'interrupted',
+    'terminal',
+  ]);
+  if (
+    !execution.bindings ||
+    typeof execution.bindings !== 'object' ||
+    Array.isArray(execution.bindings) ||
+    !Array.isArray(execution.pending) ||
+    !execution.outputs ||
+    typeof execution.outputs !== 'object' ||
+    Array.isArray(execution.outputs)
+  )
+    throw new Error('Invalid saved activity execution shape.');
   {
     const method = execution.request
       ? undefined
@@ -1142,7 +1397,9 @@ function validateExecution(
         ? state.methods[execution.methodId]
         : undefined;
     const root = execution.request?.root ?? method?.root;
-    if (execution.request) {
+    if (execution.request !== undefined) {
+      if (!hasRecordFields(execution.request, ['name', 'root']))
+        throw new Error('Invalid saved requested activity shape.');
       if (
         execution.methodId !== undefined ||
         typeof execution.request.name !== 'string' ||
@@ -1184,6 +1441,86 @@ function validateExecution(
     )
       throw new Error('Invalid saved activity execution.');
     if (method) validateActivityBindings(method, execution.bindings);
+    validateInstalledActivityConditions(world, root, execution.bindings);
+    if (execution.control !== undefined) {
+      if (!execution.request || execution.methodId !== undefined)
+        throw new Error('A chosen watch cannot be a learned activity control.');
+      validateChosenActivityControl(world, root, execution.bindings, execution.control);
+      const attemptPrefix = `${plan.id}:step:`,
+        attemptParts =
+          typeof execution.lastAttemptId === 'string'
+            ? execution.lastAttemptId.slice(attemptPrefix.length).split(':r')
+            : [];
+      const validAttemptId =
+        isSafeRecordId(execution.lastAttemptId) &&
+        execution.lastAttemptId.startsWith(attemptPrefix) &&
+        attemptParts.every(
+          (part, index) =>
+            /^[1-9]\d*$/u.test(part) &&
+            Number.isSafeInteger(Number(part)) &&
+            Number(part) <= (index === 0 ? execution.serial : plan.revision),
+        );
+      let retainedAttempts = 0,
+        retainedSpent = 0;
+      const retainedIds = new Set<string>();
+      for (const step of [...plan.steps, ...world.entities[actorId]!.actor!.agency.history]) {
+        if (
+          !step.id.startsWith(attemptPrefix) ||
+          !step.activityKey ||
+          step.command.type !== execution.control.budget.command ||
+          retainedIds.has(step.id)
+        )
+          continue;
+        retainedIds.add(step.id);
+        if (step.actionId !== undefined) retainedAttempts++;
+        const spent = step.outcome?.spent;
+        const ceiling =
+          'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
+        if (spent === undefined) {
+          if (step.status === 'completed' && step.outcome?.ok)
+            throw new Error('A completed counted action needs its spending receipt.');
+          continue;
+        }
+        if (
+          !Number.isSafeInteger(spent) ||
+          spent < 0 ||
+          ceiling === undefined ||
+          spent > ceiling ||
+          (spent > 0 && (!step.outcome?.ok || step.actionId === undefined))
+        )
+          throw new Error('Invalid saved chosen activity spending receipt.');
+        retainedSpent += spent;
+      }
+      // Older steps can leave the frontier and bounded history; available evidence
+      // still prevents resetting counters below native attempts and committed costs.
+      if (
+        !Number.isSafeInteger(execution.attempts) ||
+        execution.attempts! < retainedAttempts ||
+        execution.attempts! > execution.control.budget.maximumAttempts ||
+        (execution.attempts === 0 ? execution.lastAttemptId !== undefined : !validAttemptId) ||
+        !Number.isSafeInteger(execution.spent) ||
+        execution.spent! < retainedSpent ||
+        execution.spent! > execution.control.budget.maximumSpent ||
+        typeof execution.interrupted !== 'boolean' ||
+        typeof execution.terminal !== 'boolean' ||
+        (world.entities[actorId]?.actor?.agency.suspended?.activity === execution &&
+          !execution.interrupted) ||
+        (execution.terminal &&
+          (plan.status === 'active' ||
+            execution.pending.length > 0 ||
+            plan.steps.some((step) => step.status === 'queued' || step.status === 'running')))
+      )
+        throw new Error('Invalid saved chosen activity counters or terminal work.');
+    } else if (
+      [
+        execution.attempts,
+        execution.lastAttemptId,
+        execution.spent,
+        execution.interrupted,
+        execution.terminal,
+      ].some((value) => value !== undefined)
+    )
+      throw new Error('Saved chosen activity counters need their admitted control.');
     const subtrees = new Set<string>(),
       keys = new Set<string>();
     const visit = (node: ActivityNode): void => {
@@ -1197,7 +1534,30 @@ function validateExecution(
       if (node.kind === 'repeat') visit(node.body);
     };
     visit(root);
-    for (const frame of execution.pending)
+    if (execution.control && execution.lastAttemptId !== undefined) {
+      const lastAttempt = [...plan.steps, ...world.entities[actorId]!.actor!.agency.history].find(
+        (step) => step.id === execution.lastAttemptId,
+      );
+      const runningAttempt = plan.steps.find(
+        (step) =>
+          step.status === 'running' &&
+          step.activityKey !== undefined &&
+          step.command.type === execution.control!.budget.command,
+      );
+      // Paused watches can outlive bounded history. Check retained evidence without
+      // making that history's residency a new promise about suspended work.
+      if (
+        (runningAttempt && runningAttempt.id !== execution.lastAttemptId) ||
+        (lastAttempt &&
+          (lastAttempt.command.type !== execution.control.budget.command ||
+            !lastAttempt.activityKey ||
+            !keys.has(lastAttempt.activityKey)))
+      )
+        throw new Error('Invalid saved chosen activity attempt identity.');
+    }
+    for (const frame of execution.pending) {
+      if (!hasRecordFields(frame, ['node', 'iteration'], ['startedAt']))
+        throw new Error('Invalid saved activity frontier shape.');
       if (
         !subtrees.has(canonicalJson(frame.node)) ||
         !Number.isSafeInteger(frame.iteration) ||
@@ -1207,6 +1567,7 @@ function validateExecution(
           (!Number.isFinite(frame.startedAt) || frame.startedAt < 0 || frame.startedAt > simTime))
       )
         throw new Error('Invalid saved activity frontier.');
+    }
     if (
       (execution.activeKey && !keys.has(execution.activeKey)) ||
       Object.keys(execution.outputs).some((key) => !keys.has(key))
@@ -1214,11 +1575,14 @@ function validateExecution(
       throw new Error('Invalid saved activity output key.');
     for (const outputs of Object.values(execution.outputs))
       if (
+        !Array.isArray(outputs) ||
         outputs.length > ACTIVITY_LIMITS.outputs ||
         outputs.some(
           (output) =>
+            !hasRecordFields(output, ['itemId', 'port', 'definitionId', 'quantity']) ||
             !isSafeRecordId(output.itemId) ||
             !isSafeRecordId(output.port) ||
+            !isSafeRecordId(output.definitionId) ||
             !Number.isSafeInteger(output.quantity) ||
             output.quantity < 1,
         )

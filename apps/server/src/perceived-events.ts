@@ -1,6 +1,7 @@
 import { projectEventEvidence, type ActorEvent, type WorldEvent } from '@open-legend/domain';
 import type { PerceivedEventsPage, PublicEvent } from '@open-legend/protocol';
-import { digest, type SqlDatabase } from './store.js';
+import { digest } from './content-digest.js';
+import type { SqlDatabase } from './store.js';
 import type { StorySource } from './history.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
 

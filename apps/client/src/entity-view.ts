@@ -18,7 +18,7 @@ export function playerEntity(view: GameView): EntityView {
       : view.player.statusEffects?.length
         ? view.player.statusEffects.map((d) => d.label).join(', ')
         : (view.player.action?.label ?? 'In the wild'),
-    health: view.player.health,
+    attributes: view.player.attributes,
     actionAnimation: view.player.actionAnimation,
     description: view.player.history,
     traits: view.player.traits,

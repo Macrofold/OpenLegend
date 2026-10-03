@@ -11,6 +11,7 @@ import { SIMULATION_RULES } from './kernel.js';
 import { outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import { seesEntity } from './perception.js';
+import { activityRequestDescriptors, bindActivityRequest } from './activity-hosts.js';
 import type { Command, Entity, Outcome, WorldState } from './types.js';
 
 /** Consequential request details carried as exact references, not re-derived from prose.
@@ -202,7 +203,9 @@ export function clockDeadline(world: WorldState, name: string): number | undefin
  * docs/action-capabilities.md#mechanical-workflow-reconciliation
  */
 export interface ActionInvocation {
-  family: 'move' | 'follow' | 'pickup' | 'drop';
+  family: string;
+  /** Installed request families use closed scalar arguments instead of navigation fields. */
+  parameters?: Record<string, string | number | boolean> | null;
   x: number | null;
   z: number | null;
   surfaceId: string | null;
@@ -289,10 +292,38 @@ export function validActionInvocation(world: WorldState, raw: unknown): raw is A
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
   const v = raw as ActionInvocation;
   if (
-    Object.keys(v).length !== INVOCATION_KEYS.length ||
+    Object.keys(v).length !== INVOCATION_KEYS.length + (Object.hasOwn(v, 'parameters') ? 1 : 0) ||
     !INVOCATION_KEYS.every((k) => Object.hasOwn(v, k))
   )
     return false;
+  const request = activityRequestDescriptors(world).find((entry) => entry.id === v.family);
+  const parameters = v.parameters;
+  if (request)
+    return (
+      INVOCATION_KEYS.every((key) => key === 'family' || v[key] === null) &&
+      !!parameters &&
+      typeof parameters === 'object' &&
+      !Array.isArray(parameters) &&
+      Object.keys(parameters).length === Object.keys(request.fields).length &&
+      Object.entries(request.fields).every(([key, field]) => {
+        if (!Object.hasOwn(parameters, key)) return false;
+        const value = parameters[key];
+        return field.type === 'integer'
+          ? typeof value === 'number' &&
+              Number.isSafeInteger(value) &&
+              (field.minimum === undefined || value >= field.minimum) &&
+              (field.maximum === undefined || value <= field.maximum)
+          : field.type === 'time'
+            ? typeof value === 'number' &&
+              Number.isFinite(value) &&
+              (field.minimum === undefined || value >= field.minimum) &&
+              (field.maximum === undefined || value <= field.maximum)
+            : field.type === 'mode'
+              ? value === 'enqueue' || value === 'replace' || value === 'interrupt'
+              : isSafeRecordId(value) && value.length <= 120;
+      })
+    );
+  if (v.parameters != null) return false;
   const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
   const amount =
     v.quantity === null ||
@@ -367,7 +398,11 @@ export function validActionInvocation(world: WorldState, raw: unknown): raw is A
 }
 
 /** A reachable stance near where a visible target is now; it does not track later motion. */
-function approachPoint(world: WorldState, actor: Entity, target: Entity): SurfacePoint | null {
+export function targetApproachPoint(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+): SurfacePoint | null {
   if (canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
     return supportedPosition(actor);
   const route = findApproachPath(world, actor, target, SIMULATION_RULES.interactionRadius);
@@ -387,7 +422,15 @@ export function bindActionInvocation(
     return outcome(
       false,
       'invalid-invocation',
-      'Navigation arguments do not match an available capability.',
+      'Action arguments do not match an available capability.',
+    );
+  if (raw.parameters)
+    return bindActivityRequest(
+      world,
+      actorId,
+      id,
+      { family: raw.family, arguments: raw.parameters },
+      permittedEntityIds,
     );
   const actor = Object.hasOwn(world.entities, actorId) ? world.entities[actorId] : undefined;
   if (!actor?.actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
@@ -453,7 +496,7 @@ export function bindActionInvocation(
     // uses the actor's own remembered sighting. Tying a new sighting to an older record by
     // hidden entity ID would re-identify it, so neither case consults the other.
     const destination = visibleTarget
-      ? approachPoint(world, actor, target!)
+      ? targetApproachPoint(world, actor, target!)
       : raw.place === 'last-seen'
         ? (rememberedPlace(actor.actor, targetId!)?.point ?? null)
         : null;

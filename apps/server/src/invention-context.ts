@@ -1,5 +1,7 @@
 import {
   validateDeclaration,
+  compileRecipeCandidate,
+  recipeFamily,
   observeActor,
   type WorldState,
   type ActorObservation,
@@ -53,14 +55,28 @@ export function scopedInventionErrors(
       })
     )
       return ['The proposal uses materials unavailable to this inventor.'];
-    const output = value.output as DeclarationDraft['output'] | undefined;
+    const selected =
+      value.family && typeof value.family === 'object' && !Array.isArray(value.family)
+        ? recipeFamily(world, String((value.family as Record<string, unknown>).id ?? ''))
+        : undefined;
+    const parameters =
+      value.parameters && typeof value.parameters === 'object' && !Array.isArray(value.parameters)
+        ? (value.parameters as Record<string, unknown>)
+        : undefined;
     if (
-      typeof output?.gatheringTool?.resourceId === 'string' &&
-      !materials.has(output.gatheringTool.resourceId)
+      selected?.definition.references?.some((reference) => {
+        const id = parameters?.[reference.parameter];
+        return typeof id === 'string' && !materials.has(id);
+      })
     )
-      return ['The proposal targets a resource unavailable to this inventor.'];
+      return ['The proposal references definitions unavailable to this inventor.'];
   }
-  return validateDeclaration(world, candidate);
+  const errors = validateDeclaration(world, candidate);
+  if (errors.length) return errors;
+  const compiled = compileRecipeCandidate(world, candidate as DeclarationDraft);
+  if (compiled.dependencyIds?.some((id) => !materials.has(id)))
+    return ['The proposal references definitions unavailable to this inventor.'];
+  return [];
 }
 
 /** Follow-ups retain their first workshop allocation; current config can tighten it. */

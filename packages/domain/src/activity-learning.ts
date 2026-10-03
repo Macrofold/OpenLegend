@@ -12,6 +12,17 @@ import {
   type ActivityBinding,
 } from './action-experience.js';
 import { definitionPin } from './world-modules.js';
+import {
+  activityHostForCommand,
+  activityHostPin,
+  installedActivityHost,
+} from './activity-hosts.js';
+import { accessiblePossession } from './object-access.js';
+import { inspectedContainer } from './inventory-inspection.js';
+import { seesEntity } from './perception.js';
+import { isSafeRecordId } from './records.js';
+import { isDefinitionPin } from './state-owners.js';
+import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { sharedNativeActivityName } from './worlds/base/action-views.js';
 import { finitePoint } from '@open-legend/spatial';
 import type { WorldState } from './types.js';
@@ -35,7 +46,118 @@ const roleFields = new Set([
   'weaponItemId',
   'ammoItemId',
   'heatId',
+  'sourceId',
+  'destinationId',
 ]);
+/** One current binding check shared by the native chooser and prepared offers.
+ * Seeing a basket does not disclose its contents or authorize fresh stock selection.
+ * docs/projects/next-playable-week/camp-activities.md#actual-outputs-and-learning */
+export function activityRoleCompatible(
+  world: WorldState,
+  actorId: string,
+  requirement: ActivityMethod['roles'][string],
+  value: ActivityBinding | undefined,
+): boolean {
+  if (requirement.kind === 'self') return value === actorId && !!world.entities[actorId]?.actor;
+  if (requirement.kind === 'text')
+    return typeof value === 'string' && !!value.trim() && value.length <= 1500;
+  if (requirement.kind === 'place')
+    return (
+      !!value && typeof value === 'object' && finitePoint(value) && isSafeRecordId(value.surfaceId)
+    );
+  const entity = typeof value === 'string' ? world.entities[value] : undefined;
+  const actor = world.entities[actorId];
+  if (!entity || entity.retirement || !actor?.actor) return false;
+  const carried = accessiblePossession(world, actorId, entity.id);
+  const stockContainer = requirement.commandFields.some((field) =>
+    ['sourceId', 'destinationId'].includes(field),
+  );
+  const inspected = stockContainer ? inspectedContainer(world, actorId) : undefined;
+  if (
+    entity.id !== actorId &&
+    !carried &&
+    inspected?.id !== entity.id &&
+    !seesEntity(world, actor, entity)
+  )
+    return false;
+  if (
+    (requirement.definitionId &&
+      (entity.item?.definitionPin.id !== requirement.definitionId ||
+        entity.item.definitionPin.version !== requirement.definitionVersion ||
+        entity.item.definitionPin.digest !== requirement.definitionDigest)) ||
+    (requirement.entityKind && entity.kind !== requirement.entityKind) ||
+    (requirement.maximumHealth !== undefined &&
+      (entity.actor?.health ?? Infinity) > requirement.maximumHealth)
+  )
+    return false;
+  if (stockContainer) {
+    if (!(entity.container || entity.kind === 'item-pile')) return false;
+    if (!carried && inspected?.id !== entity.id) return false;
+  }
+  const material = requirement.gatheredDefinition;
+  if (material) {
+    const definition = world.itemDefinitions[material.id];
+    if (
+      !definition ||
+      entity.resource?.definitionId !== material.id ||
+      canonicalJson(definitionPin(definition)) !== canonicalJson(material)
+    )
+      return false;
+  }
+  if (
+    requirement.targetHost &&
+    !installedActivityHost(world, requirement.targetHost)?.acceptsTarget?.(world, entity.id)
+  )
+    return false;
+  return true;
+}
+
+/** Only the committed custody owner supplies reusable meaning. Its exact lots and
+ * revisions prove this attempt; they must never become future transaction authority. */
+function supportedStockOccurrence(entry: ActivityOccurrence): boolean {
+  if (entry.command.type !== 'transfer-stock') return true;
+  const command = entry.command,
+    resolution = entry.stockResolution;
+  return (
+    !!resolution &&
+    isDefinitionPin(resolution.definition) &&
+    resolution.sourceId === command.sourceId &&
+    resolution.destinationId === command.destinationId &&
+    resolution.definition.id === command.definitionId &&
+    resolution.definition.version === command.definitionVersion &&
+    resolution.definition.digest === command.definitionDigest &&
+    resolution.quantity === command.quantity &&
+    resolution.minimumHeld === command.minimumHeld &&
+    Number.isSafeInteger(resolution.destinationRevision) &&
+    resolution.destinationRevision >= 0 &&
+    Array.isArray(resolution.lots) &&
+    resolution.lots.length > 0 &&
+    resolution.lots.length <= STOCK_TRANSFER_LIMITS.movedLots &&
+    resolution.lots.every(
+      (lot) =>
+        !!lot &&
+        isSafeRecordId(lot.itemId) &&
+        Number.isSafeInteger(lot.quantity) &&
+        lot.quantity > 0 &&
+        Number.isSafeInteger(lot.revision) &&
+        lot.revision >= 0 &&
+        Number.isSafeInteger(lot.placementRevision) &&
+        lot.placementRevision >= 0,
+    ) &&
+    new Set(resolution.lots.map((lot) => lot.itemId)).size === resolution.lots.length &&
+    resolution.lots.reduce((sum, lot) => sum + lot.quantity, 0) === command.quantity &&
+    entry.outputs.length > 0 &&
+    entry.outputs.every(
+      (output) =>
+        output.definitionId === command.definitionId &&
+        isSafeRecordId(output.itemId) &&
+        Number.isSafeInteger(output.quantity) &&
+        output.quantity > 0,
+    ) &&
+    new Set(entry.outputs.map((output) => output.itemId)).size === entry.outputs.length &&
+    entry.outputs.reduce((sum, output) => sum + output.quantity, 0) === command.quantity
+  );
+}
 /** Generalize only actual native object bindings. Definitions and demonstrated
  * quantities remain fixed; prose and adjacency never prove equivalence. */
 export function normalizeActivity(
@@ -51,6 +173,9 @@ export function normalizeActivity(
       (entry) =>
         entry.actorId !== actorId ||
         entry.revoked ||
+        entry.noLearningControl ||
+        !supportedStockOccurrence(entry) ||
+        (entry.command.type === 'tend-fire' && entry.command.onlyWhenLow === true) ||
         (entry.status !== 'completed' && !entry.outputs.length) ||
         !isActivityCommand(entry.command),
     )
@@ -73,22 +198,34 @@ export function normalizeActivity(
           args[field] = { output: produced.step, port: produced.port, quantity: 1 };
           continue;
         }
-        let role = identities.get(value);
+        const self = ['sourceId', 'destinationId'].includes(field) && value === actorId;
+        const identity = self ? `self:${value}` : value;
+        let role = identities.get(identity);
         if (!role) {
           role = `object${identities.size + 1}`;
-          identities.set(value, role);
+          identities.set(identity, role);
           const object = entry.objects[value];
           const definitionId = object?.definitionId;
+          if (
+            !self &&
+            (!object ||
+              (['sourceId', 'destinationId'].includes(field) &&
+                !definitionId &&
+                object.kind !== 'item-pile'))
+          )
+            return;
           roles[role] = {
             commandFields: [],
-            kind: 'object',
-            ...(definitionId
+            kind: self ? 'self' : 'object',
+            ...(!self && definitionId
               ? {
                   definitionId,
                   definitionVersion: object?.definitionVersion,
                   definitionDigest: object?.definitionDigest,
                 }
-              : { entityKind: object?.kind }),
+              : !self
+                ? { entityKind: object?.kind }
+                : {}),
           };
           const entryHealth = entry.view.facts.find(
             (fact) => fact.name === 'health before the attempt' || fact.name === 'health',
@@ -105,6 +242,29 @@ export function normalizeActivity(
           bindings[role] = value;
         }
         if (!roles[role]!.commandFields.includes(field)) roles[role]!.commandFields.push(field);
+        if (entry.command.type === 'gather' && field === 'targetId') {
+          const materials = new Set(entry.outputs.map((output) => output.definitionId));
+          if (materials.size !== 1) return;
+          const definition = world.itemDefinitions[entry.outputs[0]!.definitionId];
+          if (!definition) return;
+          const pin = definitionPin(definition);
+          if (
+            roles[role]!.gatheredDefinition &&
+            canonicalJson(roles[role]!.gatheredDefinition) !== canonicalJson(pin)
+          )
+            return;
+          roles[role]!.gatheredDefinition = pin;
+        }
+        const host = activityHostForCommand(world, entry.command.type);
+        if (host?.acceptsTarget && ['targetId', 'heatId'].includes(field)) {
+          const pin = activityHostPin(host);
+          if (
+            roles[role]!.targetHost &&
+            canonicalJson(roles[role]!.targetHost) !== canonicalJson(pin)
+          )
+            return;
+          roles[role]!.targetHost = pin;
+        }
         args[field] = { role };
       } else if (entry.command.type === 'say' && field === 'text' && typeof value === 'string') {
         // Personal words remain in personal acquisition bindings, never in the
@@ -489,11 +649,24 @@ export function acquiredActivities(world: WorldState, actorId: string): Activity
         method &&
         method.manifest === manifest &&
         Object.values(method.roles).every((role) => {
-          if (!role.definitionId) return true;
-          const definition = world.itemDefinitions[role.definitionId];
-          if (!definition) return false;
-          const pin = definitionPin(definition);
-          return pin.version === role.definitionVersion && pin.digest === role.definitionDigest;
+          if (role.targetHost && !installedActivityHost(world, role.targetHost)) return false;
+          return [
+            ...(role.definitionId
+              ? [
+                  {
+                    id: role.definitionId,
+                    version: role.definitionVersion,
+                    digest: role.definitionDigest,
+                  },
+                ]
+              : []),
+            ...(role.gatheredDefinition ? [role.gatheredDefinition] : []),
+          ].every((required) => {
+            const definition = world.itemDefinitions[required.id];
+            return (
+              !!definition && canonicalJson(definitionPin(definition)) === canonicalJson(required)
+            );
+          });
         }),
     );
 }

@@ -6,7 +6,7 @@ import {
   mergeTargetAvailable,
   worldRootEntities,
   dropItemReason,
-  hasWildernessNeeds,
+  applicableConsumption,
   observerDescription,
   itemFor,
   describePossession,
@@ -270,9 +270,20 @@ export function inventoryItemView(
   if (
     accessiblePossession(world, player.id, item.id) &&
     definition.nutrition &&
-    hasWildernessNeeds(actor)
-  )
-    actions.push(action(`eat-${item.id}`, 'Eat one', { type: 'eat', itemId: item.id }));
+    applicableConsumption(world, player)
+  ) {
+    const command = { type: 'eat' as const, itemId: item.id };
+    const preview = service.previewCommand(command, player.id);
+    actions.push(
+      action(
+        `eat-${item.id}`,
+        applicableConsumption(world, player)!.label,
+        command,
+        preview.ok,
+        preview.ok ? undefined : preview.message,
+      ),
+    );
+  }
   if (accessiblePossession(world, player.id, item.id) && item.definitionId === 'raw_meat')
     actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
   for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))

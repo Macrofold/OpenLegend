@@ -104,6 +104,8 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 
 ## PO05 — One useful nested finite-capacity container
 
+PW03/PW10 reuse the delivered PO03/PO04 identity and atomic custody boundaries. Native checks preserve split lineage, exact current pins and actual moved receipts, and reject capacity/minimum/selection failures without partial mutation. Two supplied woven designs passed ordinary crafting, nested packing, filled drop/return/take, access loss and current-format native restore. Real PostgreSQL teaching/crafting/packing/drop/inspection/reopen/take of the small design and single resumed craft completion also passed; scripted ordinary craft/custody passed, while live invention and shared-picker qualification remain separate ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+
 - [x] Add the portable bag/container capability through existing native definition admission, with explicit authored packing-load compatibility and finite capacity. Do not impose new global actor encumbrance.
 - [x] Implement bounded ancestor cycle/depth/slot checks, nested load accounting, net shared-ancestor updates and source-revisioned derived load summaries.
 - [x] Make whole-container movement change the root and affected ancestors rather than every descendant's persisted position. Keep contained contents out of independent spatial participation unless an actual exposed-attachment rule applies.
@@ -119,6 +121,8 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 **Dependencies:** PO03–PO05; P1; INV/EWF07. **Exit:** declared owner differs from current holder when authored, interrupted work preserves actual inputs/outputs, and container deletion cannot cascade away possessions.
 
 ## PO07 — Scoped UI, context and action discovery
+
+The PW03/PW10 consumer extends selected-container inspection with access/revision-bound pages and permitted pack/take discovery. Disposable PostgreSQL checks passed page-two-only decision context, opaque references, access-loss removal and inspection/restart. The actual director request refused a cache whose access changed during parameter choice. Ordinary ground-cache activity inspection through the shared picker and PW01-owned director-selected transfer qualification remain in [PW03](next-playable-week.md#pw03--craftable-containers-and-camp-supplies). The native woven-family consumer uses PW02's trusted recipe interface and existing PO05/PO06 containment.
 
 - [x] Extend existing item/detail/action surfaces with individual/container state, permitted location/ownership and useful capacity/compatibility failures.
 - [x] Add bounded direct-child pages, breadcrumbs and searchable complete access; keep renderer artwork limits separate from stored content. Fence pages/caches by container, timeline and current disclosure.
@@ -138,6 +142,8 @@ R04 follow-through (2026-09-28): merge choices are found by the server across th
 
 ## PO09 — Native, database, UI and performance qualification
 
+The checked foundation gate below retains its original scope. October 2's PW03/PW10 native family, actual crafted-family/watch PostgreSQL restart and scoped inspection cases contribute current consumer evidence to PO08/PO09. They do not repeat or close the complete PO09 workload. [Engineer 3 evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) keeps browser/live cases and broader hosted qualification distinct.
+
 - [x] Exercise every acceptance case in the paired docs using disposable worlds and zero provider budget, including opposing nested moves, shared ancestors, cold retired references, active-equipment migration and failed multi-item work.
 - [x] Compare row/quantity/reference/pin totals across commits and both database adapters; inspect browser/network behavior for large and private containers.
 - [x] Measure bounded child lookup, ancestor work, root movement, index rebuild, history residency, save/capture size and contention under PF's mixed workload. Record current behavior in Architecture, actual evidence in Verification and unresolved regression/hosted gates here; retain CI and default no-suite instructions.
@@ -145,6 +151,8 @@ R04 follow-through (2026-09-28): merge choices are found by the server across th
 **Dependencies:** PO01–PO08. **Exit:** the real tool/bag/stack loops and meaningful failures are evidenced; this does not close arbitrary construction, D6 cross-region transfer or first-release scale qualification.
 
 ## PO10 — Shared access and dependency-aware handling
+
+PW10's fresh selection obeys existing access and ancestor restrictions and excludes claimed/in-use lots. Personal minimum proof counts currently available own possessions; moving stock between accessible own bags does not spend that minimum. An inspected ground cache supports a later method only while current inspection/access permits it. Current functional/review scenarios passed exact own-work completion, minimum protection and access-loss refusal; fixture director admission does not prove live preference ([current contract](../action-experience.md#fresh-stock-binding-in-finite-methods), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 - [x] Reachable world containers/piles are shared by default; explicit durable actor grants restrict access, including ancestor restrictions. Carried contents remain private unless a carried bag grants access. Giving deposits into a reachable recipient without exposing possessions.
 - [x] Use accessible nested possessions for ingredients, eating and equipment. Allow unrelated transfers/splits/merges/drops during work; reject moves that affect reservations or the actor/custodian's active references, including descendants.

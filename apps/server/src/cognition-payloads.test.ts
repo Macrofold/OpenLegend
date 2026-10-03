@@ -558,7 +558,7 @@ async function harness(
   // Hungry, conscious Ada; the resource task also gives her owned edible food.
   await editWorld(service, (world) => {
     if (options.food) createItemLot(world, NPC_ID, 'berries', 2, 'fixture-berries');
-    world.entities[NPC_ID]!.actor!.fullness = 30;
+    world.entities[NPC_ID]!.actor!.attributes!['wilderness:fullness']!.value = 30;
   });
   const jobCalls = (jobId: string) => ({
     judges: calls.judges.filter((request) => request.requestId.startsWith(`${jobId}:`)),
@@ -916,7 +916,7 @@ describe(
       };
       const decisionContext = state.decisionContext;
       // Owned food is supplied; the no-food fact is correctly absent.
-      expect(decisionContext['food']).toBeUndefined();
+      expect(decisionContext['carryingConcern']).toBeUndefined();
       expect(JSON.stringify(decisionContext['possessions'])).toContain('Wild berries');
       // The selected handle is the rated eat option, and the next step actually eats.
       // Candidates are labelled "Option N" in question order, aligned with the a* handles.
@@ -956,7 +956,9 @@ describe(
       expect(section(parts, 'Actions').body).toContain('Eat one Wild berries');
       const route = dispatched.judges[0]!;
       expect(
-        (route.state as { decisionContext: Record<string, unknown> }).decisionContext['food'],
+        (route.state as { decisionContext: Record<string, unknown> }).decisionContext[
+          'carryingConcern'
+        ],
       ).toBeUndefined();
       // The listed eat option's handle is one the generation schema permits.
       const eat = /^- (a\d+): Eat one Wild berries/m.exec(section(parts, 'Actions').body)?.[1];
@@ -981,7 +983,7 @@ describe(
       const dispatched = h.jobCalls(job.id);
       const route = dispatched.judges.find((request) => request.requestId === `${job.id}${ROUTE}`)!;
       expect((route.state as { decisionContext: Record<string, unknown> }).decisionContext).toEqual(
-        expect.objectContaining({ food: 'I have no food.' }),
+        expect.objectContaining({ carryingConcern: 'I have no food.' }),
       );
       expect(dispatched.generations).toHaveLength(1);
       const [generation] = dispatched.generations;

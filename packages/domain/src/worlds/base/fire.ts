@@ -3,6 +3,16 @@ import { worldRootEntities } from '../../entity-index.js';
 import { emit, outcome } from '../../events.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
 import { itemFor } from '../../objects.js';
+import { STOCK_TRANSFER_LIMITS, proveAvailableStock } from '../../stock-transfer.js';
+import { sameDefinitionPin, isDefinitionPin } from '../../state-owners.js';
+import {
+  activityHostForCommand,
+  activityHostPin,
+  installedActivityHost,
+} from '../../activity-hosts.js';
+import type { DefinitionPin } from '../../world-modules.js';
+import { BASE_FIRE_CARE, BASE_LOW_FUEL_SECONDS } from './fire-rules.js';
+export { BASE_FIRE_CARE } from './fire-rules.js';
 import { isSafeRecordId } from '../../records.js';
 import {
   applyResourceGroup,
@@ -23,13 +33,27 @@ import type {
 /** Bundled-world fire care. The campfire's HeatComponent remains the only fuel record;
  * these values are authored balance, not universal combustion laws.
  * docs/worlds/base/survival.md#tending-the-campfire */
-export const BASE_FIRE_CARE = {
-  light: { workSeconds: 150 },
-  fuel: { workSeconds: 20, secondsPerUnit: 3600, maximumFuelSeconds: 172800 },
-  extinguish: { workSeconds: 30 },
-} as const;
 export const FIRE_OPERATIONS = ['light', 'fuel', 'extinguish'] as const;
 export type FireOperation = (typeof FIRE_OPERATIONS)[number];
+export interface FireStockGuard {
+  definition: DefinitionPin;
+  minimumHeld: number;
+  onlyWhenLow: boolean;
+}
+export function fireStockGuard(
+  command: Extract<Command, { type: 'tend-fire' }>,
+): FireStockGuard | undefined {
+  if (command.definitionId === undefined) return;
+  return {
+    definition: {
+      id: command.definitionId,
+      version: command.definitionVersion!,
+      digest: command.definitionDigest!,
+    },
+    minimumHeld: command.minimumHeld!,
+    onlyWhenLow: command.onlyWhenLow!,
+  };
+}
 
 // Only plain portable materials are burned; tools, containers, weapons and food are
 // never silently consumed as tinder or fuel. The drill is used, not consumed.
@@ -60,7 +84,19 @@ export function isFireCareCommand(command: Command): boolean {
     isSafeRecordId(command.targetId) &&
     (FIRE_OPERATIONS as readonly string[]).includes(command.operation) &&
     (command.itemId === undefined ||
-      (command.operation === 'fuel' && isSafeRecordId(command.itemId)))
+      (command.operation === 'fuel' && isSafeRecordId(command.itemId))) &&
+    (command.definitionId === undefined
+      ? [
+          command.definitionVersion,
+          command.definitionDigest,
+          command.minimumHeld,
+          command.onlyWhenLow,
+        ].every((value) => value === undefined)
+      : command.operation === 'fuel' &&
+        isDefinitionPin(fireStockGuard(command)!.definition) &&
+        Number.isSafeInteger(command.minimumHeld) &&
+        command.minimumHeld! >= 0 &&
+        typeof command.onlyWhenLow === 'boolean')
   );
 }
 
@@ -112,12 +148,85 @@ function fuelLot(world: WorldState, actorId: string, itemId?: string): ItemInsta
     ? item
     : undefined;
 }
+/** A selected definition is bound afresh only at admission. The running attempt
+ * keeps that exact lot; completion never substitutes another stack. */
+export function bindFireFuel(
+  world: WorldState,
+  actorId: string,
+  guard: FireStockGuard,
+  itemId?: string,
+): ItemInstance | undefined {
+  if (itemId) {
+    const item = fuelLot(world, actorId, itemId);
+    return item && sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, guard.definition)
+      ? item
+      : undefined;
+  }
+  let examined = 0;
+  for (const item of possessionItems(world, actorId)) {
+    if (++examined > STOCK_TRANSFER_LIMITS.examined) return;
+    const definition = world.itemDefinitions[item.definitionId];
+    if (
+      definition &&
+      isFuel(definition) &&
+      sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, guard.definition) &&
+      fuelLot(world, actorId, item.id)
+    )
+      return item;
+  }
+}
+export function guardedFireProblem(
+  world: WorldState,
+  actor: Entity,
+  fire: Entity | undefined,
+  guard: FireStockGuard,
+  itemId?: string,
+  actionId?: string,
+): { code: string; message: string } | null {
+  const host = activityHostForCommand(world, 'tend-fire');
+  if (!host || !host.acceptsTarget?.(world, fire?.id ?? ''))
+    return {
+      code: 'unsupported-fire-care',
+      message: 'The chosen fire-care support is unavailable.',
+    };
+  if (guard.onlyWhenLow) {
+    const observation = installedActivityHost(world, activityHostPin(host))?.evaluateCondition?.(
+      world,
+      actor.id,
+      fire!.id,
+    );
+    if (observation?.value === undefined)
+      return {
+        code: 'observation-lost',
+        message: 'The chosen burning fire can no longer be observed.',
+      };
+    if (!observation.value)
+      return {
+        code: 'no-longer-needed',
+        message: 'The fire no longer needs fuel. No fuel was used.',
+      };
+  }
+  if (!bindFireFuel(world, actor.id, guard, itemId))
+    return { code: 'missing-material', message: 'The selected fuel is no longer available.' };
+  const proof = proveAvailableStock(world, actor.id, guard.definition, guard.minimumHeld + 1, {
+    ignoreActionId: actionId,
+  });
+  if (proof.status !== 'proved')
+    return {
+      code: proof.status === 'incomplete' ? 'stock-inspection-needed' : 'personal-minimum',
+      message:
+        proof.status === 'incomplete'
+          ? 'Inspect or narrow the selected stock before spending fuel.'
+          : 'Adding fuel would leave less than the chosen personal minimum available.',
+    };
+  return null;
+}
 
 /** Coarse visible fuel: the wood in a fire pit is visible, its exact burn time is not. */
 export function fireFuelDescription(heat: HeatComponent): string {
   if (heat.fuelSeconds <= 0) return 'no fuel left';
   const hours = Math.round(heat.fuelSeconds / 3600);
-  return heat.fuelSeconds < 3600
+  return heat.fuelSeconds < BASE_LOW_FUEL_SECONDS
     ? 'less than an hour of fuel'
     : `about ${hours} hour${hours === 1 ? '' : 's'} of fuel`;
 }
@@ -129,6 +238,8 @@ export function fireCareProblem(
   fire: Entity | undefined,
   operation: FireOperation,
   itemId?: string,
+  guard?: FireStockGuard,
+  actionId?: string,
 ): { code: string; message: string } | null {
   const heat = fire?.heat;
   if (!fire || !heat || fire.retirement)
@@ -146,6 +257,10 @@ export function fireCareProblem(
     return null;
   }
   if (operation === 'fuel') {
+    if (guard) {
+      const problem = guardedFireProblem(world, actor, fire, guard, itemId, actionId);
+      if (problem) return problem;
+    }
     if (!fuelLot(world, actor.id, itemId)) {
       // Name an item only when it is the actor's own; other IDs never reveal what they are.
       const chosen =
@@ -205,7 +320,16 @@ export function completeFireCare(
   actionId: string,
   events: WorldEvent[],
   itemId?: string,
+  guard?: FireStockGuard,
 ): Outcome {
+  if (guard) {
+    const problem = guardedFireProblem(world, actor, fire, guard, itemId, actionId);
+    if (problem)
+      return {
+        ...outcome(problem.code === 'no-longer-needed', problem.code, problem.message),
+        ...(problem.code === 'no-longer-needed' ? { spent: 0 } : {}),
+      };
+  }
   const problem = fireCareProblem(world, actor, fire, operation, itemId);
   if (problem) return outcome(false, problem.code, problem.message);
   const heat = fire!.heat!;
@@ -262,11 +386,14 @@ export function completeFireCare(
       fire!.id,
       { actionId },
     );
-    return outcome(
-      true,
-      'completed',
-      `Added one ${definition.name}; ${fire!.name} has ${fireFuelDescription(heat)}.`,
-    );
+    return {
+      ...outcome(
+        true,
+        'completed',
+        `Added one ${definition.name}; ${fire!.name} has ${fireFuelDescription(heat)}.`,
+      ),
+      spent: 1,
+    };
   }
   heat.lit = true;
   emit(world, events, 'fire-lit', `${actor.name} lit ${fire!.name}.`, actor, fire!.id, {

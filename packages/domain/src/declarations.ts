@@ -10,199 +10,16 @@ import {
 import { draftWorld, cloneValue } from './draft.js';
 import { canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
-import type {
-  DeclarationDraft,
-  DeclarationProvenance,
-  InputRole,
-  MaterialProperty,
-  Transition,
-  WorldState,
-} from './types.js';
+import type { DeclarationDraft, DeclarationProvenance, Transition, WorldState } from './types.js';
 
-export { DECLARATION_CONTRACT } from './invention-families.js';
-import { DECLARATION_CONTRACT } from './invention-families.js';
-const roleProperties = DECLARATION_CONTRACT.roleProperties;
-const properties = new Set<MaterialProperty>([
-  'fiber',
-  'binding',
-  'flexible',
-  'rigid',
-  'shaft',
-  'pouch',
-  'point',
-  'projectile',
-  'food',
-  'fuel',
-]);
-const record = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value);
-const range = (value: unknown, min: number, max: number): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
-const boundedText = (value: unknown, max: number): value is string =>
-  typeof value === 'string' && value.trim().length > 0 && value.length <= max;
-const exactKeys = (value: Record<string, unknown>, allowed: string[]) =>
-  Object.keys(value).every((key) => allowed.includes(key));
+import {
+  compileRecipeCandidate,
+  recipeDependencyPins,
+  validateRecipeCandidate,
+} from './invention-families.js';
+import { recipeFamily } from './world-modules.js';
 
-export function validateDeclaration(world: WorldState, candidate: unknown): string[] {
-  if (!record(candidate)) return ['Declaration must be an object.'];
-  const errors: string[] = [];
-  if (
-    !exactKeys(candidate, [
-      'schemaVersion',
-      'name',
-      'description',
-      'inputs',
-      'workSeconds',
-      'output',
-    ])
-  )
-    errors.push('Unsupported declaration fields or operations.');
-  if (candidate.schemaVersion !== 1) errors.push('Unsupported declaration schema version.');
-  if (!boundedText(candidate.name, 80) || !boundedText(candidate.description, 700))
-    errors.push('A bounded name and description are required.');
-  if (!range(candidate.workSeconds, 48, 480) || !Number.isInteger(candidate.workSeconds))
-    errors.push('Work must be an integer from 48 to 480 simulation seconds.');
-  if (
-    !Array.isArray(candidate.inputs) ||
-    candidate.inputs.length < 2 ||
-    candidate.inputs.length > 6
-  )
-    return [...errors, 'Use two to six material roles.'];
-  let total = 0;
-  const validRoles = new Set<string>();
-  const inputProperties = new Set<MaterialProperty>();
-  for (const input of candidate.inputs) {
-    if (!record(input) || !exactKeys(input, ['definitionId', 'quantity', 'role'])) {
-      errors.push('Invalid material input.');
-      continue;
-    }
-    const definition = getOwn(world.itemDefinitions, input.definitionId);
-    if (
-      !definition ||
-      definition.recipeId ||
-      definition.nutrition !== undefined ||
-      definition.id === 'raw_meat'
-    ) {
-      errors.push(
-        'Inputs must use an available native material, not an invented source or finished tool.',
-      );
-      continue;
-    }
-    if (!range(input.quantity, 1, 8) || !Number.isInteger(input.quantity)) {
-      errors.push('Material quantities must be integers from 1 to 8.');
-      continue;
-    }
-    total += input.quantity;
-    const role = typeof input.role === 'string' ? (input.role as InputRole) : undefined;
-    if (
-      !role ||
-      !Object.hasOwn(roleProperties, role) ||
-      !definition.properties.includes(roleProperties[role])
-    )
-      errors.push(`Material ${definition.id} cannot fill role ${role ?? '<invalid role>'}.`);
-    else if (validRoles.has(role))
-      errors.push(`Role ${role} must occur once; combine its quantity.`);
-    else validRoles.add(role);
-    for (const property of definition.properties) inputProperties.add(property);
-  }
-  if (total > 20) errors.push('Recipe exceeds its material budget.');
-  const output = candidate.output;
-  if (
-    !record(output) ||
-    !exactKeys(output, [
-      'kind',
-      'name',
-      'description',
-      'properties',
-      'launcher',
-      'ammunition',
-      'gatheringTool',
-    ])
-  )
-    return [...errors, 'Unsupported output shape or effects.'];
-  if (!boundedText(output.name, 80) || !boundedText(output.description, 700))
-    errors.push('Output name and description are required.');
-  if (
-    !Array.isArray(output.properties) ||
-    !output.properties.every(
-      (property) =>
-        properties.has(property as MaterialProperty) &&
-        (property === 'projectile' || inputProperties.has(property as MaterialProperty)) &&
-        !['food', 'fuel'].includes(String(property)),
-    )
-  )
-    errors.push(
-      'Output properties must be supported by its materials and cannot create food or fuel.',
-    );
-  const requireRoles = (roles: string[]) => {
-    for (const role of roles)
-      if (!validRoles.has(role)) errors.push(`Missing mechanically required role: ${role}.`);
-  };
-  if (output.kind === 'launcher') {
-    const launcher = output.launcher;
-    if (
-      output.ammunition !== undefined ||
-      output.gatheringTool !== undefined ||
-      !record(launcher) ||
-      !exactKeys(launcher, ['mechanism', 'ammunitionKind', 'damage', 'range', 'accuracy'])
-    )
-      return [...errors, 'A launcher needs one supported launcher component.'];
-    if (launcher.mechanism !== 'swing' && launcher.mechanism !== 'flex')
-      return [...errors, 'Unsupported launch mechanism.'];
-    const envelope = DECLARATION_CONTRACT.mechanisms[launcher.mechanism];
-    requireRoles([...envelope.requiredRoles]);
-    if (launcher.ammunitionKind !== envelope.ammunitionKind)
-      errors.push('Launch mechanism and ammunition are incompatible.');
-    if (
-      !range(launcher.damage, envelope.damage[0], envelope.damage[1]) ||
-      !range(launcher.range, envelope.range[0], envelope.range[1]) ||
-      !range(launcher.accuracy, envelope.accuracy[0], envelope.accuracy[1])
-    )
-      errors.push('Launcher parameters exceed the supported mechanical envelope.');
-    if (launcher.mechanism === 'flex') {
-      const body = candidate.inputs.find((input) => record(input) && input.role === 'body');
-      if (
-        !record(body) ||
-        !getOwn(world.itemDefinitions, body.definitionId)?.properties.includes('rigid')
-      )
-        errors.push('A flexing body must also have structural rigidity.');
-    }
-  } else if (output.kind === 'ammunition') {
-    requireRoles(['shaft', 'point', 'fletching']);
-    const ammo = output.ammunition;
-    if (
-      output.launcher !== undefined ||
-      output.gatheringTool !== undefined ||
-      !record(ammo) ||
-      !exactKeys(ammo, ['kind', 'damageBonus']) ||
-      ammo.kind !== 'arrow' ||
-      !range(ammo.damageBonus, 0, 5)
-    )
-      errors.push('Only bounded physical arrow ammunition can be assembled.');
-  } else if (output.kind === 'gathering-tool') {
-    const envelope = DECLARATION_CONTRACT.gatheringTool;
-    requireRoles([...envelope.requiredRoles]);
-    const tool = output.gatheringTool;
-    const body = candidate.inputs.find((input) => record(input) && input.role === 'body');
-    if (
-      output.launcher !== undefined ||
-      output.ammunition !== undefined ||
-      !record(tool) ||
-      !exactKeys(tool, ['resourceId', 'quantity']) ||
-      !range(tool.quantity, envelope.quantity[0], envelope.quantity[1]) ||
-      !Number.isInteger(tool.quantity) ||
-      !Object.values(world.entities).some(
-        (entity) => entity.resource?.definitionId === tool.resourceId,
-      ) ||
-      !record(body) ||
-      !getOwn(world.itemDefinitions, body.definitionId)?.properties.includes('rigid')
-    )
-      errors.push(
-        'A gathering tool needs a rigid body, binding, an existing resource, and a yield of 2–4.',
-      );
-  } else errors.push('Unsupported output kind.');
-  return errors;
-}
+export const validateDeclaration = validateRecipeCandidate;
 
 export function admitDeclaration(
   original: WorldState,
@@ -276,24 +93,28 @@ export function admitDeclaration(
   else {
     while (world.recipes[recipeId]) recipeId += '-v';
     const outputDefinitionId = `${recipeId}-item`;
-    const definition = {
+    const compiled = compileRecipeCandidate(original, draft);
+    const family = recipeFamily(original, draft.family.id);
+    if (!family)
+      return reject('invalid-declaration', 'The selected recipe family is not installed.');
+    world.itemDefinitions[outputDefinitionId] = {
+      ...cloneValue(compiled.outputDefinition),
       id: outputDefinitionId,
-      portable: world.itemHandling.defaultPortable,
-      ...(world.itemHandling.generatedPackingLoad !== undefined
-        ? { packingLoad: world.itemHandling.generatedPackingLoad }
-        : {}),
       version: 1,
       name: draft.output.name,
       description: draft.output.description,
-      properties: [...draft.output.properties],
       recipeId,
-      ...(draft.output.launcher ? { launcher: { ...draft.output.launcher } } : {}),
-      ...(draft.output.ammunition ? { ammunition: { ...draft.output.ammunition } } : {}),
-      ...(draft.output.gatheringTool ? { gatheringTool: { ...draft.output.gatheringTool } } : {}),
     };
-    world.itemDefinitions[outputDefinitionId] = definition;
     world.recipes[recipeId] = {
-      ...cloneValue(draft),
+      name: draft.name,
+      description: draft.description,
+      inputs: cloneValue(draft.inputs),
+      output: cloneValue(draft.output),
+      workSeconds: compiled.workSeconds,
+      sourceCandidate: cloneValue(draft),
+      familyPin: definitionPin(family.definition),
+      dependencyPins: recipeDependencyPins(original, draft, compiled),
+      facts: cloneValue(compiled.facts),
       id: recipeId,
       version: 1,
       digest,
@@ -372,7 +193,7 @@ export function admitAttributeDeclaration(
   const id = request.definition?.id ?? request.removeId!;
   const previous = attributeDefinition(original, id);
   if (previous && HOST_IMPLEMENTATIONS[previous.implementation].storage !== 'attributes')
-    return reject('Native wilderness bindings cannot be edited.');
+    return reject('Body-backed bindings cannot be edited.');
   const users = Object.values(original.entities).filter(
     (e) =>
       e.actor?.attributes?.[id] ||

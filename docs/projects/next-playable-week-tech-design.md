@@ -32,6 +32,20 @@ Each brief identifies source owners, data contracts, implementation order, depen
 
 ## Ownership and data flow
 
+### Engineer 2 implementation execution
+
+Mike authorized PW02, PW07 domain/server and PW06 support on October 2, 2026 despite the proposal status above. The assigned clean worktree starts at inherited planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`; that explicit local commit takes precedence over the historical baseline. Engineer 2 creates `oct2-eng-2` from it, preserves unrelated changes and consumes only reviewed dependency commits agreed with the other engineers. Provider allowance: **$0**.
+
+The combined estimate remains 2,100–3,300 changed logic lines plus mechanical callers, with medium/high risk from shared contracts, health units, lifecycle ordering, pending cognition and current-format persistence. Implement in this order:
+
+1. Freeze the installed family/candidate/editor contract and passive meter/body-policy/projection contract. Map PW02 to INV-3.1/3.2 and EWF01/02/04/06/07; map PW07 to EWF03/04, BW06 and the approved survival stages. Keep broader composition, live-law evolution and world-package requirements open.
+2. Extend the existing installed manifest and admission owners. Extract all four existing recipe policies into the base world; use one selected-family validator/compiler throughout ordinary, NPC and creator paths. Coordinate Engineer 3's container descriptor and command/predicate pins, and Engineer 4's editor presentation.
+3. Deliver quiet health-rate integration and ended-effect correctness; then passive meters, authored body services, real lifecycle/cognition/editor consumers and the whole no-food/no-energy/no-dream contrasting world. Coordinate forecast/body dependencies with Engineer 1 and preserve all distinct accepted thresholds and unit conversions.
+4. Reconcile canonical specifications, world documentation, limit inventories and focused trackers with each delivered slice. Bump the manual-save format and live-database marker together; reject incompatible artifacts without migration or replacement.
+5. Run focused zero-provider checks, the committed interval comparison script, current-format refusal/reopen and disposable PostgreSQL scenarios. Review the entire affected diff and fix in-scope findings. Hand off runnable server commits before Engineer 4's final browser checks; support Engineer 1's integrated acceptance and fixes.
+
+Completion requires every PW02/PW07 domain/server consumer and agreed scenario, canonical reconciliation, reviewed focused commits and actual evidence. PW07 remains open until combined domain/server/UI acceptance passes; PW06 is closed only by the integrated project matrix. Historical prototype evidence and native fixtures do not establish current model quality or scale.
+
 | Responsibility                                      | Existing semantic owner                                               | Proposed change                                                  |
 | --------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Executable recipe admission and definition pins     | `packages/domain/src/declarations.ts`, world-module registration      | Dispatch through the installed trusted family descriptor         |
@@ -322,5 +336,5 @@ The week's outcome requires all eleven PW items, including combined qualificatio
 ## Maintained records
 
 - Implementation: [PW01–PW11](../maintainers/next-playable-week.md), linking their focused parent owners.
-- Limits and constraints: [RF01/WS01](../limits/inventions.md), [CC01](../limits/objects.md), [IW01/IW02](../limits/interface.md), [CR01](../limits/base-world.md#cr01--proposed-finite-camp-activities), [AEL09](../limits/action-experience.md#ael09--proposed-fresh-stock-binding-and-finite-reuse), [survival envelope](../limits/state-effects.md#st17--proposed-passive-meters-and-configured-body-services) and [memory](../limits/memory.md); existing [AI execution](../limits/ai-execution.md), [cognition](../limits/cognition.md) and [native work](../limits/native-work.md) inventories remain authoritative for shared work.
+- Limits and constraints: [RF01/WS01](../limits/inventions.md), [CC01](../limits/objects.md), [IW01/IW02](../limits/interface.md), [CR01](../limits/base-world.md#cr01--proposed-finite-camp-activities), [AEL09](../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse), [survival envelope](../limits/state-effects.md#st17--proposed-passive-meters-and-configured-body-services) and [memory](../limits/memory.md); existing [AI execution](../limits/ai-execution.md), [cognition](../limits/cognition.md) and [native work](../limits/native-work.md) inventories remain authoritative for shared work.
 - Related contract: [feature specification](next-playable-week-feature-spec.md), [base-world content](../worlds/base/camp-containers.md), [engine/world principles](../engine-and-world-boundaries.md), [current-format save/load](../save-and-load.md).

@@ -14,10 +14,16 @@ import {
   completeFireCare,
   fireCareProblem,
   fireCareStartText,
+  fireStockGuard,
+  bindFireFuel,
+  guardedFireProblem,
   isFireCareCommand,
 } from './worlds/base/fire.js';
 import { isRecordedActivityCommand, recordActivityEffect } from './action-experience.js';
 import { startLearnedActivity, startRequestedActivity } from './activity-execution.js';
+import { reconcileActivityControl, admitActivityAttempt } from './activity-execution.js';
+import { transferStock } from './stock-transfer.js';
+import { activityCommandSupported } from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
@@ -104,7 +110,7 @@ import {
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
-import { inspectPossessions } from './inventory-inspection.js';
+import { inspectPossessions, inspectedContainer } from './inventory-inspection.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
@@ -136,11 +142,12 @@ import {
   resolvePlanCommand,
 } from './agency.js';
 import {
-  hasWildernessNeeds,
-  nativeNeedBelow,
-  setWildernessNeed,
-  advanceWildernessNeeds,
-} from './worlds/base/needs.js';
+  bodyPolicy,
+  bodyNarration,
+  applicableConsumption,
+  canRecoverAtCamp,
+} from './body-policy.js';
+import { readState, stateAddress, writeState } from './state-owners.js';
 import {
   attributeDefinition,
   definitionPin,
@@ -163,6 +170,7 @@ import {
   reconcileStatusEffects,
   prepareStatusRates,
   integrateStatusRates,
+  applyBodyRate,
   crossStatusReferences,
   mayAdvanceStatusEffects,
   activateStatusEffect,
@@ -572,6 +580,10 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
       world.entities[action.targetId ?? ''],
       action.fireOperation!,
       action.itemId,
+      action.fireGuard,
+      // The same admitted action's pinned fuel remains available for its own
+      // minimum proof. Other claims and other actions stay excluded.
+      action.id,
     );
     if (problem) return outcome(false, problem.code, problem.message);
   }
@@ -845,6 +857,36 @@ function executeCommandNative(
       if (command.quantity !== undefined) action.quantity = command.quantity;
       break;
     }
+    case 'transfer-stock': {
+      if (!activityCommandSupported(world, command.type))
+        return reject('unsupported-command', 'The chosen stock-transfer support is unavailable.');
+      const moved = transferStock(world, actor.id, command, command.id);
+      if (moved.status !== 'moved') return reject(moved.status, moved.message);
+      const record = occurrenceFor(world, actor.id, command.id);
+      if (record) record.stockResolution = moved.admitted;
+      result = {
+        ...outcome(
+          true,
+          'transferred',
+          `Moved ${command.quantity} ${world.itemDefinitions[command.definitionId]!.name}; the chosen personal minimum was respected.`,
+        ),
+        outputs: moved.outputs.map(({ itemId, definitionId, quantity }) => ({
+          port: definitionId,
+          itemId,
+          definitionId,
+          quantity,
+        })),
+      };
+      emit(
+        world,
+        events,
+        'items-transferred',
+        `${actor.name} moved selected supplies.`,
+        actor,
+        command.destinationId,
+      );
+      break;
+    }
     case 'transfer-item':
     case 'split-item':
     case 'merge-item': {
@@ -1039,19 +1081,26 @@ function executeCommandNative(
           actor.id,
           command.after,
           command.expectedRevision,
+          command.containerId,
+          command.expectedScope,
         );
         component.inventoryInspection = cursor;
+        const container = inspectedContainer(world, actor.id);
+        const packing =
+          container?.load !== undefined && container.capacity !== undefined
+            ? ` Packing space: ${container.load} of ${container.capacity} units used; ${container.capacity - container.load} units free.`
+            : '';
         emit(
           world,
           events,
           'inventory-inspected',
-          `I inspect my accessible possessions: ${page.join(' ')}${cursor.more ? ' More possessions remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+          `I inspect ${command.containerId ? `the accessible contents of ${observerDescription(world, actor.id, command.containerId)}` : 'my accessible possessions'}:${packing} ${page.join(' ')}${cursor.more ? ' More items remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
           actor,
           undefined,
           { semanticTrigger: true, importance: 6 },
           'private',
         );
-        result = outcome(true, 'inventory-inspected', 'Accessible possessions inspected.');
+        result = outcome(true, 'inventory-inspected', 'Accessible contents inspected.');
       } catch (error) {
         return reject(
           'inspection-unavailable',
@@ -1241,47 +1290,80 @@ function executeCommandNative(
       if (!isFireCareCommand(command))
         return reject('invalid-command', 'Choose to light, fuel or put out a campfire.');
       const fire = getOwn(world.entities, command.targetId);
-      const problem = fireCareProblem(world, actor, fire, command.operation, command.itemId);
+      const guard = fireStockGuard(command);
+      const fuel = guard ? bindFireFuel(world, actor.id, guard, command.itemId) : undefined;
+      const problem = fireCareProblem(
+        world,
+        actor,
+        fire,
+        command.operation,
+        fuel?.id ?? command.itemId,
+        guard,
+      );
+      if (problem?.code === 'no-longer-needed') {
+        result = { ...outcome(true, problem.code, problem.message), spent: 0 };
+        break;
+      }
       if (problem) return reject(problem.code, problem.message);
       action = createAction(world, 'tend-fire', BASE_FIRE_CARE[command.operation].workSeconds);
       action.targetId = fire!.id;
       action.fireOperation = command.operation;
-      if (command.itemId) action.itemId = command.itemId;
+      if (guard) action.fireGuard = guard;
+      if (fuel?.id ?? command.itemId) action.itemId = fuel?.id ?? command.itemId;
       break;
     }
     case 'eat': {
-      if (!hasWildernessNeeds(component))
-        return reject('not-applicable', 'This body does not consume food.');
+      const consumption = applicableConsumption(world, actor);
+      if (!consumption)
+        return reject('not-applicable', 'This body has no applicable consumption service.');
       const item = itemFor(world, command.itemId);
-      const definition = item && world.itemDefinitions[item.definitionId];
-      if (!item || !accessiblePossession(world, actor.id, item.id) || !definition?.nutrition)
-        return reject(
-          'not-edible',
-          definition?.id === 'raw_meat'
-            ? 'Cook raw meat before eating.'
-            : 'Choose prepared edible food.',
-        );
+      if (!item || !accessiblePossession(world, actor.id, item.id))
+        return reject('not-edible', consumption.unavailableText);
+      const definition = world.itemDefinitions[item.definitionId];
+      const refusal = consumption.refusals.find((r) => r.itemType === item.definitionId);
+      if (refusal) return reject('not-edible', refusal.reason);
+      if (!definition || !Number.isFinite(definition.nutrition) || !(definition.nutrition! > 0))
+        return reject('not-edible', consumption.unavailableText);
+      const meter = attributeDefinition(world, consumption.attributeId)!;
+      const address = stateAddress(actor.id, meter),
+        before = readState(world, address, 'owner');
+      if (
+        before.status !== 'known' ||
+        typeof before.value !== 'number' ||
+        meter.schema.kind !== 'number'
+      )
+        return reject('not-applicable', consumption.unavailableText);
       if (!takeItem(world, actor.id, item.id, command.id))
-        return reject('unavailable', 'That food is no longer available.');
-      const beforeFullness = component.fullness!;
-      setWildernessNeed(component, 'fullness', component.fullness! + definition.nutrition);
+        return reject('unavailable', consumption.unavailableText);
+      const after = Math.min(meter.schema.max, before.value + definition.nutrition!);
+      const written = writeState(
+        world,
+        address,
+        before.revision,
+        { kind: 'replace', value: after },
+        events,
+        'consumption',
+        'transition',
+      );
+      if (written.status !== 'applied' && written.status !== 'unchanged')
+        return reject('not-applicable', consumption.unavailableText);
       recordActivityEffect(world, command.id, {
         subjectId: actor.id,
         label: 'Me',
-        property: 'fullness',
-        before: beforeFullness,
-        after: component.fullness!,
+        property: meter.id,
+        before: before.value,
+        after,
       });
       emit(
         world,
         events,
         'ate',
-        `${actor.name} ate ${definition.name.toLowerCase()}.`,
+        bodyNarration(consumption.narration, actor, definition.name.toLowerCase()),
         actor,
         undefined,
         { definitionId: definition.id },
       );
-      result = outcome(true, 'ate', 'Food restored fullness.');
+      result = outcome(true, 'ate', consumption.successText);
       break;
     }
     case 'status-effect': {
@@ -1378,8 +1460,8 @@ function executeCommandNative(
         );
         releaseInvocationResources(world, component.action.id);
       }
-      cancelPlan(world, component);
-      discardSuspended(component);
+      cancelPlan(world, component, actor.id);
+      discardSuspended(world, component, actor.id);
       component.action = null;
       component.planGeneration++;
       result = outcome(
@@ -1390,10 +1472,11 @@ function executeCommandNative(
       break;
     }
     case 'recover': {
-      if (!canRecoverAtCamp(actor))
+      if (!canRecoverAtCamp(world, actor))
         return reject(
           'cannot-recover',
-          'Camp recovery is available when health or food is critically low.',
+          bodyPolicy(world)?.recovery?.refusalText ??
+            'This body has no available recovery service.',
         );
       const recovery = world.participationPolicy?.safeReturnAnchor;
       if (!recovery || !isWalkable(world, recovery, recovery.surfaceId, bodyProfile(actor)))
@@ -1401,10 +1484,29 @@ function executeCommandNative(
       setSpatialPosition(world, actor, recovery, recovery.surfaceId);
       delete actor.spatial.flight;
       delete actor.spatial.fallVelocity;
-      setBodyHealth(component, Math.max(component.health, 65));
-      if (hasWildernessNeeds(component)) {
-        setWildernessNeed(component, 'fullness', Math.max(component.fullness, 45));
-        setWildernessNeed(component, 'energy', Math.max(component.energy, 65));
+      for (const floor of bodyPolicy(world)!.recovery!.floors) {
+        const definition = attributeDefinition(world, floor.attributeId)!;
+        const prior = readAttribute(component, definition);
+        if (typeof prior !== 'number' || definition.schema.kind !== 'number') continue;
+        const value = Math.max(prior, floor.value);
+        if (definition.implementation === 'native-health-v1')
+          setBodyHealth(
+            component,
+            (value - definition.schema.min) *
+              (component.body!.maxHealth / (definition.schema.max - definition.schema.min)),
+          );
+        else {
+          const read = readState(world, stateAddress(actor.id, definition), 'owner');
+          if (read.status === 'known')
+            writeState(
+              world,
+              stateAddress(actor.id, definition),
+              read.revision,
+              { kind: 'replace', value },
+              events,
+              'recovery',
+            );
+        }
       }
       component.incapacitated = false;
       component.alive = true;
@@ -1413,8 +1515,14 @@ function executeCommandNative(
       component.action = null;
       component.planGeneration++;
       reconcileBody(world, actor, events, 'camp-recovery');
-      emit(world, events, 'recovered', `${actor.name} recovered at camp.`, actor);
-      result = outcome(true, 'recovered', 'Recovered at camp.');
+      emit(
+        world,
+        events,
+        'recovered',
+        bodyNarration(bodyPolicy(world)!.recovery!.narration, actor),
+        actor,
+      );
+      result = outcome(true, 'recovered', bodyPolicy(world)!.recovery!.successText);
       break;
     }
     case 'say': {
@@ -1579,6 +1687,10 @@ function executeCommandNative(
 }
 
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
+  // Selected stock guards contain private supply/minimum facts. Witnesses can
+  // observe the stop, while only the actor receives its detailed reason.
+  // docs/worlds/base/camp-routines.md#plain-descriptions
+  const privateReason = !!actor.actor!.action?.fireGuard;
   if (actor.actor!.action)
     finishPlanAction(
       world,
@@ -1587,7 +1699,19 @@ function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reas
       outcome(false, 'action-failed', reason),
     );
   actor.actor!.action = null;
-  emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
+  if (privateReason) {
+    emit(world, events, 'action-stopped', `${actor.name} stopped the action.`, actor);
+    emit(
+      world,
+      events,
+      'action-stopped-detail',
+      `${actor.name} stopped: ${reason}`,
+      actor,
+      undefined,
+      undefined,
+      'private',
+    );
+  } else emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
 }
 function completeAction(
   world: WorldState,
@@ -1881,13 +2005,15 @@ function completeAction(
         action.id,
         events,
         action.itemId,
+        action.fireGuard,
       );
       if (!done.ok) {
         failAction(world, actor, events, done.message);
         return;
       }
-      completion = done.message;
-      break;
+      finishPlanAction(world, actor.id, action.id, done);
+      component.action = null;
+      return;
     }
   }
   finishPlanAction(world, actor.id, action.id, {
@@ -2119,6 +2245,13 @@ function advanceAction(
     }
     const error = startWork(world, actor, action);
     if (error) {
+      // This supported observation skip ends the admitted fuel attempt without
+      // spending. Other failures still stop the selected activity.
+      if (action.fireGuard?.onlyWhenLow && error.code === 'no-longer-needed') {
+        finishPlanAction(world, actor.id, action.id, { ...error, ok: true, spent: 0 });
+        actor.actor!.action = null;
+        return;
+      }
       failAction(world, actor, events, error.message);
       return;
     }
@@ -2403,26 +2536,20 @@ function* integrateEndpoint(
   },
 ): Generator<void> {
   const { interval } = mechanics;
-  if (rateSeconds)
-    integrateStatusRates(world, mechanics.status, rateSeconds, events, interval.drains);
+  const bodyRates = rateSeconds
+    ? integrateStatusRates(world, mechanics.status, rateSeconds, events, interval.drains, true)
+    : [];
+  const bodyRatesByTarget = new Map(bodyRates.map((rate) => [rate.targetId, rate]));
   // Drains folded into a status net flow were applied there (PF13.12).
-  const folded = (id: string, kind: 'fullness' | 'reservoir') =>
+  const folded = (id: string, kind: 'reservoir') =>
     interval.drains.some((drain) => drain.targetId === id && drain.kind === kind);
   for (const id of participants.actors) {
     const actor = world.entities[id],
       component = actor?.actor;
     if (!actor || !component?.alive || component.incapacitated) continue;
     if (rateSeconds) {
-      if (
-        hasWildernessNeeds(component) &&
-        advanceWildernessNeeds(
-          actor,
-          folded(id, 'fullness') ? 0 : rateSeconds,
-          interval.exhausted.has(id) ? rateSeconds : 0,
-          interval.starving.has(id) ? rateSeconds : 0,
-        )
-      )
-        reconcileBody(world, actor, events, 'needs');
+      const bodyRate = bodyRatesByTarget.get(id);
+      if (bodyRate) applyBodyRate(world, bodyRate, events);
       reconcileConditions(world, actor, events);
       if (!component.alive || component.incapacitated) continue;
       if (!folded(id, 'reservoir')) advanceReservoirs(world, actor, rateSeconds, events);
@@ -2536,7 +2663,9 @@ function* advanceWorldNative(
   const mechanicalRevision = (world: WorldState) =>
     stateChangeRevision(world, 'contribution') +
     stateChangeRevision(world, 'body') +
-    stateChangeRevision(world, 'participation');
+    stateChangeRevision(world, 'participation') +
+    stateChangeRevision(world, 'attribute') +
+    world.moduleManifest.revision;
   let world = draftWorld(original);
   let before = snapshotEncounters(original);
   const events: WorldEvent[] = [];
@@ -2614,11 +2743,12 @@ function* advanceWorldNative(
       let actor = world.entities[actorId];
       if (!actor?.actor) continue;
       let component = actor.actor;
+      reconcileActivityControl(world, actorId, component.agency.plan);
       if (!component.alive || component.incapacitated) continue;
       reconcileConditions(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
-      if (step) {
+      if (step && admitActivityAttempt(world, actorId, component.agency.plan!, step)) {
         yield* materialize();
         perceiving ??= perceivers();
         const stepId = step.id;
@@ -2808,8 +2938,7 @@ function* advanceWorldNative(
         reactiveActors,
         deferRates:
           !interval.serialClamps &&
-          !interval.exhausted.size &&
-          !interval.starving.size &&
+          !interval.requiresImmediateIntegration &&
           participants.actors.every(
             (id) => world.entities[id]?.actor?.action?.type !== 'replenish',
           ),
@@ -2947,6 +3076,8 @@ function* advanceWorldNative(
     if (!deferred) yield* materialize();
     else pendingSeconds += seconds;
     pendingMechanics = mechanics;
+    for (const id of participants.actors)
+      reconcileActivityControl(world, id, world.entities[id]?.actor?.agency.plan, seconds);
     yield* integrateEndpoint(world, participants, mechanics, deferred ? 0 : seconds, events, {
       seconds,
       working,
@@ -2995,6 +3126,7 @@ function* advanceWorldNative(
     // ends exactly at the deadline. Queue future work without granting it time.
     for (const id of participants.actors) {
       const plan = world.entities[id]?.actor?.agency.plan;
+      reconcileActivityControl(world, id, plan);
       if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
         const revision = plan.revision;
         readyPlanStep(world, id);
@@ -3478,12 +3610,4 @@ export function remember(
   return finish(world, [], outcome(true, 'remembered', 'Private memory recorded.'));
 }
 
-/** Personal playtest assistance, shared by admission and public affordances. */
-export function canRecoverAtCamp(entity: Entity): boolean {
-  const actor = entity.actor;
-  return (
-    !!actor &&
-    actor.controller === 'player' &&
-    (actor.incapacitated || actor.health < 30 || nativeNeedBelow(actor, 'fullness', 20))
-  );
-}
+export { canRecoverAtCamp } from './body-policy.js';
