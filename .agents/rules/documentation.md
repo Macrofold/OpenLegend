@@ -1,5 +1,7 @@
 # Documentation ownership and reconciliation
 
+For an explicitly requested exhaustive documentation, project and task reconciliation, use [Full Documentation Review](../skills/full-documentation-review/SKILL.md). Routine documentation maintenance does not activate that full-repository workflow.
+
 Give each substantive concept one canonical owner. Local reminders may summarize and link, not duplicate full contracts, schemas, decision tables, acceptance criteria or task bodies.
 
 - **Project-specific proposals, scope and context:** Paired feature spec/technical design in `docs/projects/`, for creation requests, follow [Design](../skills/openlegend-design/SKILL.md)
