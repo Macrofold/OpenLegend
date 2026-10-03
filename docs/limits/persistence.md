@@ -80,7 +80,7 @@ PostgreSQL connection/read statements have a 5-second timeout; write transaction
 
 **Changed — current checkpoint path · Restrictiveness: Too liberal.**
 
-No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the former 64 MiB ceiling remains only on legacy JSON reading (SV14).
+No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the separate 64 MiB guard applies to non-streamed payload decoding, which must still pass current format/state validation (SV14).
 
 **Reason / tradeoff:** Keep complete user-selected saves; there is currently no overall disk quota. Backup separately refuses more than 10,000 retained packages (SV13).
 
@@ -202,11 +202,11 @@ Original recommendation: **Keep**.
 
 ## SV14
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected at `b528af6` · Restrictiveness: Safe.**
 
-**Older JSON backups:** 64 MiB for legacy backup restore/import. I extended this guard to the operational tools; the legacy gameplay-save guard already existed.
+**Non-streamed payload guard:** 64 MiB. `SaveFiles` bounds whole-JSON reads/integrity checks separately from streamed checkpoint allowances. This is not a supported legacy restore/import path: current format/state validation still applies, and the preceding-layout reader and SQLite importer were removed.
 
-**Reason / tradeoff:** Legacy formats parse a whole JSON document; avoid unbounded legacy allocations.
+**Reason / tradeoff:** Bound whole-document allocation without claiming backwards compatibility. The original older-backup recommendation is historical; [SB15](#sb15) and the [root policy](../../AGENTS.md#development-save-policy) control current support.
 
 ## SV15
 
@@ -306,11 +306,11 @@ The save worker starts with the server and is not automatically restarted after 
 
 ## BW04
 
-**Reported · Restrictiveness: Medium.**
+**Historical — unused conversion code remains; not a supported feature.**
 
-Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
+**Historical conversion envelope, not supported loading behavior.** The [feeling](../../packages/domain/src/appraisal-migration.ts) and [object](../../packages/domain/src/object-migration.ts) converters remain exported but have no repository callers at `b528af6`. They were limited to known fear/discomfort decay and understood equipment/packing bindings. Current loading validates the current model instead; [DF04](../maintainers/production-data.md#df04--retire-orphaned-compatibility-helpers) owns retirement of these residual helpers rather than extending or reconnecting them.
 
-**Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+**Historical reason / current tradeoff:** The old conversion refused unknown semantics instead of guessing. That does not override the present no-compatibility rule or authorize migration work.
 
 ## SV17
 
@@ -370,9 +370,9 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
 
-**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. Preserve the original legacy data before running a supported migration separately.
+**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. Incompatible data must be preserved for an explicit owner decision; no legacy migration is supported. The current error still suggests starting a compatible older server, an obsolete instruction tracked by [DF04](../maintainers/production-data.md#df04--retire-orphaned-compatibility-helpers).
 
-**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots and requires a separate migration step; partial/selective backup is not current behavior.
+**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots; an incompatible source is refused, not migrated. Partial/selective backup is not current behavior.
 
 [Implementation](../../apps/server/src/operational-backup.ts).
 
