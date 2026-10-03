@@ -1,0 +1,99 @@
+{
+  "message": "docs: retire duplicate and legacy tasks while retaining current acceptance\n\nConsolidate duplicated invention-policy and memory-pressure coverage. Replace obsolete save upgrades with current-format integrity and rejection. Reconcile delivered native following and durable freeform resolution, preserve wider acceptance and conditional-learning gaps, and route local checks through the current verification policy. No runtime or provider changes.",
+  "files": [
+    {
+      "path": "docs/maintainers/TODO.md",
+      "before_sha256": "412434ec3b8b6335b57502857745ee713d3894c4d8c26b8795fd419902627ae3",
+      "after_sha256": "1ca437c0dc20330e9d50f6310daef29a4f19609f84d665028564c1f32894b8a0",
+      "replacements": [
+        {
+          "old": "- [ ] Update existing declaration/save fixtures for required origin stamps and schema 10, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Prefer small in-place updates; fixture changes and automated suites were deferred at the owner's request.\n- [ ] Update existing declaration/save fixtures for required origin stamps and schema 9, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy); fixture changes and automated suites were deferred at the user's request.",
+          "new": "- [ ] Qualify the current declaration/save fixtures with required origin stamps, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Preserve these deferred behavioral cases while removing the duplicate schema-9 task; use the [current development format](../architecture.md) and [root compatibility policy](../../AGENTS.md#development-save-policy), not an older save conversion."
+        },
+        {
+          "old": "## Movement under memory pressure\n\n- [ ] Cover awareness and personal-memory thresholds, failed/unconfigured/zero-budget consolidation, and a dead actor retaining a large history. Verify native time and queued walking continue, sources remain intact, pressure clears after accepted maintenance, and real storage failures still pause admission and display a save error. Tests deferred at the owner’s request.\n\n## Elapsed-time cross-cutting regression coverage",
+          "new": "## Elapsed-time cross-cutting regression coverage"
+        },
+        {
+          "old": "and saved upgrades preserve identity and unrelated evidence. Add separate acceptance",
+          "new": "and current-format save/load preserves identity and unrelated evidence while incompatible saves reject without mutation. Add separate acceptance"
+        }
+      ]
+    },
+    {
+      "path": "docs/maintainers/action-regressions.md",
+      "before_sha256": "e9d425186d0542d1868203a364a3c375243af75075eae3bc05e618b5e4a99b96",
+      "after_sha256": "79bb2a436fcf3268272f3ba97a91efb16a15d5fc8f382d2226c8572a200813c3",
+      "replacements": [
+        {
+          "old": "**RPR03:** Upgrade old pending intents missing target/mode without changing IDs, content, alternatives, identity or accounting. Repeat upgrades for idempotence; reject malformed present fields. Exercise actual PostgreSQL and local save/startup paths, not only JSON serialization.",
+          "new": "**RPR03:** Validate current-format pending intents and preserve their IDs, content, alternatives, target/mode bindings and accounting through repeated same-version save/load. Missing required or malformed fields and incompatible formats must reject without conversion, reset or partial mutation under the [root development-save policy](../../AGENTS.md#development-save-policy). Exercise actual PostgreSQL and local save/startup paths, not only JSON serialization."
+        }
+      ]
+    },
+    {
+      "path": "docs/maintainers/actor-model.md",
+      "before_sha256": "033738be8eb27d1fac48b0ece69f883b2583dcbb452addb5ce377096cc7cb632",
+      "after_sha256": "4a565d0ffd28c009fe69d2b11960e8199436a1a7ecdeac4d9355745ca31f1d2f",
+      "replacements": [
+        {
+          "old": "Apply current save/load in-place migration policy and the default verification guidance; completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; preserve the recorded DF02/current CR migration seams.",
+          "new": "Apply the [current-format save contract](../save-and-load.md) and [protected development-save policy](../../AGENTS.md#development-save-policy), together with current verification guidance. Completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; historical conversion work is not a new migration requirement. DF04 owns removal of remaining legacy paths; CR and SL retain current-state publication and recovery integrity."
+        }
+      ]
+    },
+    {
+      "path": "docs/maintainers/agent-agency.md",
+      "before_sha256": "fb07ed14ced7046cfd14091ed9f5fdcc6facc3d37695a1b05bc7ebd6a070a4ff",
+      "after_sha256": "75ba4337025e56e5cd812e2bd51c278f5100aa82b945812ad373ba642f5d82b7",
+      "replacements": [
+        {
+          "old": "Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap.",
+          "new": "Agency qualification can use simple supported geometry in current-format fixtures independently of the full camera/flight roadmap; do not preserve an obsolete schema-9 fixture target."
+        },
+        {
+          "old": "- [ ] Add the minimum serializable agency state and a centralized create/revise/pause/resume/complete/abandon mutation. Preserve author scope, stable identity, revisions, private provenance, bounded parent relationships and actor-declared versus engine-evidenced completion.",
+          "new": "- [ ] Qualify the delivered serializable agency state and centralized create/revise/pause/resume/complete/abandon mutation against the complete AG02 exit cases. The current `agency.ts` owner already retains author scope, identity, revisions, private provenance and bounded parent relationships, and labels completion as actor-declared. Preserve that implementation rather than adding a second intention store; broader adversarial and end-to-end acceptance remains open."
+        },
+        {
+          "old": "- [ ] Extend locomotion with sustained target following when that behavior is taken on; keep it distinct from one-time destination movement and define target-loss/reacquisition behavior at the existing perception boundary.",
+          "new": "- [x] Deliver sustained native target following separately from one-time movement, with scoped target-loss and encounter handling. [Composed-activities evidence](../verification/composed-activities.md#following) covers disclosed last-seen pursuit, stopping and loss/reacquisition boundaries; AC/RPR retain broader automated and live-grounding acceptance. No scent, stealth or hidden-position tracking is implied."
+        },
+        {
+          "old": "- [ ] Replace unconditional dead-end handling of freeform proposals with a durable resolution request. Use exact supported bindings first; use bounded interpretation only when the wording cannot be grounded adequately without it.",
+          "new": "- [x] Replace unconditional dead-end handling with durable unresolved intents and scoped resolution through the existing response job. Use exact supported bindings first and bounded interpretation only when needed, as delivered in the [native action integration](../verification/native-action-integration.md). The separate INV bridge, richer roles and semantic-quality qualification below remain open."
+        },
+        {
+          "old": "- [ ] Run focused checks during implementation; after runtime changes run the repository's formatting and `pnpm run check` workflow while preserving unrelated edits. Report existing unrelated failures separately.",
+          "new": "- [ ] Run the focused existing checks and static validation selected by the [verification policy](../../.agents/rules/verification.md); full `pnpm check` remains a CI/merge gate or an explicitly requested run, not a mandatory broad local suite after every runtime change. Preserve unrelated edits and report existing failures separately."
+        },
+        {
+          "old": "../verification/composed-activities.md#following",
+          "new": "../verification/composed-activities.md#navigation"
+        }
+      ]
+    },
+    {
+      "path": "docs/maintainers/base-world.md",
+      "before_sha256": "9c39c73adde46ad31b035570687c5888ca2dda0e6847173ea20aa06aee685e69",
+      "after_sha256": "8d1d0ba88ac5b6f5a951d533cd6085a3210d57a13cabb0f7910fba6dbbcff039",
+      "replacements": [
+        {
+          "old": "- [ ] Ongoing tending (“keep the fire going until dawn”) waits for AC06 predicates, waits and bounded repetition; no automatic refuelling loop.",
+          "new": "- [ ] Ongoing tending (“keep the fire going until dawn”) needs the [PW10 chosen fire-watch integration](../projects/next-playable-week/camp-activities.md) of existing AC/AE predicates, waits and bounded repetition with fuel, observation, restart and termination rules. Those finite control mechanisms already exist; no automatic refuelling loop or learned conditional duty is delivered by their presence."
+        }
+      ]
+    },
+    {
+      "path": "docs/maintainers/action-capabilities.md",
+      "before_sha256": "ae81c6b1dca4dd1bcc2f6b6fd756b955d385230b52294a3b7402953f3af39e02",
+      "after_sha256": "70df2d4406f69a04c9d4e31566b158d4736cddfc7b04c4286548a1f238d33df3",
+      "replacements": [
+        {
+          "old": "three-valued stale/unknown handling and open-ended activities beyond named times remain.",
+          "new": "the broader extensible predicate/failure contract and open-ended activities beyond named times remain; the fixed executor already blocks unknown conditions."
+        }
+      ]
+    }
+  ]
+}
