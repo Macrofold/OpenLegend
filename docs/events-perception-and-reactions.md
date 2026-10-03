@@ -4,7 +4,7 @@
 
 [Spatial world](spatial-world.md) supplies coordinates, physical geometry and queries; the sensory owner still assigns modality/detail/exposure. Position/support and geometry revisions feed the existing candidate/exposure intake. Event-time origin is immutable historical evidence; newer geometry cannot upgrade it. The 3D integration adds no parallel event bus and no paid call per altitude or camera frame. See [SW08](maintainers/spatial-world.md); private thoughts and technical readiness remain distinct from external occurrences.
 
-**Status: proposed architecture, accepted for implementation within a named scope.** On 2026-09-28 Mike approved implementing this contract for EPR00, EPR01, EPR03, the remaining EPR04 writer/sleep/initial-opportunity work, EPR05 (except the durable-evidence hold) and EPR06, as planned in [perception-reaction intake](projects/perception-reaction-intake.md). Approved parts that have not shipped remain targets. Installing this document does not accept the remaining proposals, authorize paid execution, or claim implementation. The [research and audit](../archive/02-research/engine-perception-and-event-architectures.md) explains the evidence. The [EPR tracker](maintainers/events-perception-and-reactions.md) defines the work.
+**Status: proposed architecture, accepted for implementation within a named scope.** On 2026-09-28 Mike approved implementing this contract for EPR00, EPR01, EPR03, the remaining EPR04 writer/sleep/initial-opportunity work, EPR05 (except the durable-evidence hold) and EPR06, as planned in [perception-reaction intake](projects/perception-reaction-intake.md). Approved parts that have not shipped remain targets. Installing this document does not accept the remaining proposals, authorize paid execution, or claim implementation. The [research and audit](../archive/02-research/engine-perception-and-event-architectures.md) explains the evidence. The [EPR tracker](maintainers/events-perception-and-reactions.md) distinguishes shipped private scope/acquisition, typed intake, threshold and ongoing-stimulus slices from remaining generalized interfaces and qualification. Descriptions of those remaining targets are not instructions to duplicate the delivered owners.
 
 ## 1. Purpose and ownership
 
@@ -26,7 +26,7 @@ This document owns **stimulus scope, perception-change identity, and reaction in
 
 [Agent agency](agent-agency.md) owns operational goals, plan execution and decision composition. Agency goal-review/action-result/invention-result causes use this document’s single reaction intake; they do not introduce a second event pipeline. Private invention feedback uses owner-private scope, while unprojected execution receipts remain system-only.
 
-Keep the current single-world authority, fixed native steps, actor model, conversation/Narrator implementation, durable records, and bounded AI executors. This is not an engine replacement.
+Keep the current single-world authority, elapsed-time native intervals and ordered boundaries, actor model, conversation/Narrator implementation, durable records, and bounded AI executors. This is not an engine replacement.
 
 ## 2. The six distinct concepts
 
@@ -175,13 +175,13 @@ Treat meaningful internal changes as owner-private stimuli. Initial sources shou
 
 A registered threshold policy defines the owning quantity, applicable actor capabilities, comparison/bands, recovery rule, episode identity, native response eligibility, and optional cognition eligibility. Emit only a meaningful crossing/escalation/recovery, not every decrement.
 
-**Do not collapse all existing thresholds to one number.** Native eating, native food seeking, action interruption, semantic urgency, and sleep protection serve different purposes. The research audit identifies current values; implementation must inventory and preserve them before changing any policy. The user's “health below 20%” example illustrates the mechanism; it is not a mandate to replace current health/survival rules.
+**Do not collapse distinct policies into one threshold.** Physical depletion/damage, condition descriptions, notification/rearm, action capability and sleep protection serve different purposes. The accepted [embodied-survival change](maintainers/events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection) deliberately removed automatic berry seeking/eating for bundled cognitive people. The old research inventory is historical, not an instruction to restore its deleted feeding thresholds. New descriptive bands do not force food actions or a universal health-20 rule.
 
 The proposed episode lifecycle is `inactive → active → escalated/continued → recovered`. Latch state prevents duplicate crossings. Separate recovery margins can provide hysteresis where approved. If a quantity crosses and recovers within a batch, meaningful intermediate events cannot disappear through final-value coalescing.
 
-Native protection remains immediate and deterministic. At first, keep the current native evaluator at its existing step boundary and call it only once; the new event records explain and schedule the response rather than creating a second survival action. Later skipping native evaluations requires proof that all relevant changes—food acquired, resource depletion, failed path, interrupted action, body change, or due rest—wake it correctly.
+Bodily effects, genuine incapacity and admitted native execution remain deterministic and independent of model access or spending. Current elapsed-time owners evaluate their relevant boundaries once; threshold records explain changes and create eligible opportunities, not a second survival-action path. Bundled cognitive people choose feeding through ordinary agency, so provider unavailability can leave them unfed despite nearby food. Separately configured native animal/reservoir behavior must remain an explicit world/controller policy, not a consequence inferred from a concern label.
 
-Threshold recording preserves existing native rules. The [agency survival policy](agent-agency.md#8-attention-and-initiation) separately permits bounded deliberation when a capable actor lacks an adequate native response; it does not alter thresholds, duplicate native protection or consume merely deferred evidence.
+Threshold recording follows the currently installed world rules. The [agency survival policy](agent-agency.md#8-attention-and-initiation) owns bounded deliberation and native-response adequacy; neither a private threshold notice nor merely deferred evidence grants an extra action or paid dispatch. Future skipping/reuse must account for every relevant writer, capability change and due boundary while preserving deterministic effects.
 
 Owner-private routing does not imply conscious awareness during sleep: preserve current waking/sleep capability rules, and do not manufacture remembered experiences for an actor that could not perceive them. Routine animals retain native behavior without requiring a mind, a persisted human-style memory, or a model call. Sensory/memory capability determines evidence retention, not whether physical protection is allowed.
 
@@ -273,7 +273,7 @@ Private event existence, payload, queue length, and revision activity must not l
 
 ## 12. Decision gates and non-goals
 
-Proceed first with the behavior-preserving scan fixes and explicit scope contract. Add the proposed private internal/acquisition semantics with dedicated acceptance tests. Qualify the resulting small-world system before adding population infrastructure.
+The private scope/acquisition and initial scan fixes have shipped under EPR’s named slices. Complete their outstanding integrated/failure qualification and the specifically approved remaining work before adding population infrastructure. Do not repeat the initial implementation or treat one native fixture as full acceptance.
 
 Do not change the engine, adopt a new ECS, add per-object queues, persist every property write, or use a global topic to which every actor subscribes. Do not suppress native offscreen simulation or make perception depend on a renderer-only camera. Do not add arbitrary user-authored subscription code.
 
