@@ -2,7 +2,9 @@ name: Apply reviewed documentation patch
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
-    paths: [.github/full-documentation-review-patch.json]
+    paths:
+      - .github/full-documentation-review-patch.json
+      - .github/workflows/full-documentation-review-patch.yml
 permissions:
   contents: write
 concurrency:
@@ -99,19 +101,49 @@ jobs:
           import assert from "node:assert/strict";
           import { readFileSync, readdirSync } from "node:fs";
           import { parse } from "yaml";
+          import { initializeCollisionRuntime } from "./packages/spatial/src/rapier.ts";
           import { createWorld } from "./packages/domain/src/worlds/base/world.ts";
           import { validateRecipeCandidate } from "./packages/domain/src/invention-families.ts";
-          const directory = "docs/projects/completed/world-agent-context/examples";
-          const files = readdirSync(directory).filter((name) => name.endsWith(".yaml"));
-          for (const name of files) parse(readFileSync(`${directory}/${name}`, "utf8"));
-          const example = parse(readFileSync(`${directory}/recipe-submit.yaml`, "utf8"));
-          const candidate = example.arguments.candidate;
-          const world = createWorld();
-          assert.deepEqual(validateRecipeCandidate(world, candidate), []);
-          assert.ok(validateRecipeCandidate(world, { ...candidate, formatVersion: 1 }).length > 0);
-          assert.ok(validateRecipeCandidate(world, { ...candidate, family: { ...candidate.family, id: "uninstalled:family" } }).length > 0);
-          console.log(`${files.length} YAML examples parsed; current candidate admitted; obsolete envelope and uninstalled family rejected. No provider, database or save operations.`);
+          async function verify() {
+            await initializeCollisionRuntime();
+            const directory = "docs/projects/completed/world-agent-context/examples";
+            const files = readdirSync(directory).filter((name) => name.endsWith(".yaml"));
+            for (const name of files) parse(readFileSync(`${directory}/${name}`, "utf8"));
+            const example = parse(readFileSync(`${directory}/recipe-submit.yaml`, "utf8"));
+            const candidate = example.arguments.candidate;
+            const world = createWorld();
+            assert.deepEqual(validateRecipeCandidate(world, candidate), []);
+            assert.ok(validateRecipeCandidate(world, { ...candidate, formatVersion: 1 }).length > 0);
+            assert.ok(validateRecipeCandidate(world, { ...candidate, family: { ...candidate.family, id: "uninstalled:family" } }).length > 0);
+            console.log(`${files.length} YAML examples parsed; current candidate admitted; obsolete envelope and uninstalled family rejected. No provider, database or save operations.`);
+          }
+          verify().catch((error) => { console.error(error); process.exitCode = 1; });
           '
+      - name: Preserve exact review files outside the repository
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess, zipfile
+          state_path = pathlib.Path('/tmp/review-patch-state.json')
+          if state_path.exists():
+              state = json.loads(state_path.read_text())
+              target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'recovered-documentation-patch.zip'
+              with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as out:
+                  out.write(state_path, '_applied_paths.json')
+                  out.write('.github/full-documentation-review-patch.json', '_pending_patch.json')
+                  out.write('.github/workflows/full-documentation-review-patch.yml', '_patch_workflow.yml')
+                  for name in state['paths']:
+                      if pathlib.Path(name).is_file():
+                          out.write(name, name)
+                  out.writestr('_recovered_changes.patch', subprocess.check_output(['git', 'diff', '--binary', '--no-ext-diff', 'HEAD']))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recovered-documentation-patch
+          path: ${{ runner.temp }}/recovered-documentation-patch.zip
+          retention-days: 1
+          if-no-files-found: warn
       - name: Commit only the validated patch
         run: |
           python3 - <<'PY'
