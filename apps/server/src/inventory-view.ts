@@ -1,11 +1,15 @@
 import {
   NATIVE_PREPARATIONS,
+  activityRequestHost,
+  currentInventoryInspection,
+  visionRadius,
   canAccessContainer,
   accessiblePossession,
   inventoryWorkReason,
   mergeTargetAvailable,
   interactionPageQuery,
   membershipDependency,
+  spatialCandidateMembershipKey,
   availableItemQuantity,
   itemMoveReason,
   itemPackingLoad,
@@ -39,7 +43,9 @@ import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
 import { z } from 'zod';
 import { HistoryCursorError } from './perceived-events.js';
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { countMetric } from './performance.js';
+import { createHash } from 'node:crypto';
+import { sealCursor, openCursor } from './scoped-cursor.js';
 
 /** A historical successor is descriptive only; no redirect to an actionable object. */
 export async function objectHistoryPage(
@@ -228,10 +234,10 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
 const destinationCursorSchema = z
   .object({
     binding: z.string(),
-    phase: z.enum(['owned', 'spatial', 'granted', 'done']),
+    phase: z.enum(['owned', 'spatial', 'granted', 'ground', 'done']),
     after: z.string(),
     spatialAfter: z.number().int().min(-1),
-    spatialRevision: z.number().int().nonnegative(),
+    spatialRevision: z.string(),
     grantActorId: z.string(),
     grantRevision: z.number().int().nonnegative(),
   })
@@ -240,26 +246,87 @@ type DestinationCursor = z.infer<typeof destinationCursorSchema>;
 // A continuation may contain an examined private child ID while discovering an explicit
 // carried-bag grant. Seal that internal position instead of publishing a hidden identity.
 // These are live pages: restart invalidates them and asks the player to refresh.
-const destinationCursorKey = randomBytes(32);
-function destinationCursor(value: DestinationCursor): string {
-  const iv = randomBytes(12),
-    cipher = createCipheriv('aes-256-gcm', destinationCursorKey, iv);
-  const body = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
-  return Buffer.concat([iv, cipher.getAuthTag(), body]).toString('base64url');
-}
+const destinationCursor = sealCursor;
 function readDestinationCursor(value: string): DestinationCursor {
   try {
-    const bytes = Buffer.from(value, 'base64url'),
-      decipher = createDecipheriv('aes-256-gcm', destinationCursorKey, bytes.subarray(0, 12));
-    decipher.setAuthTag(bytes.subarray(12, 28));
-    return destinationCursorSchema.parse(
-      JSON.parse(
-        Buffer.concat([decipher.update(bytes.subarray(28)), decipher.final()]).toString('utf8'),
-      ),
-    );
+    return destinationCursorSchema.parse(openCursor(value));
   } catch {
     throw new HistoryCursorError('Invalid or expired destination page. Refresh destinations.');
   }
+}
+
+/** Same disclosure owner for activity search, exact refresh and explicit approach. */
+export function activityStorageReader(
+  service: WorldService,
+  scope: RequestScope,
+  activity: { family: string; field: string },
+): (id: string) => InventoryDestination | undefined {
+  service.assertScope(scope);
+  const world = service.world,
+    actor = world.entities[scope.actorId]!;
+  const host = activityRequestHost(world, activity.family);
+  const field = host?.definition.requests?.find((entry) => entry.id === activity.family)?.fields[
+    activity.field
+  ];
+  if (field?.discovery?.source !== 'storage')
+    throw new HistoryCursorError('Choose an installed storage field.');
+  return (id) => {
+    const target = world.entities[id];
+    if (!target || !(target.container || id === scope.actorId)) return;
+    const own = custodian(world, id) === scope.actorId;
+    const reachable = canAccessContainer(world, scope.actorId, id);
+    const inspection = currentInventoryInspection(world, scope.actorId);
+    const observedChild =
+      inspection?.itemIds.includes(id) &&
+      target.placement?.mode === 'contained' &&
+      inspection.containerId === target.placement.parentEntityId;
+    const root = objectAncestors(world, id).at(-1)!;
+    const groundAppearance =
+      target.placement?.mode === 'contained' &&
+      target.placement.parentEntityId === root.id &&
+      root.kind === 'item-pile' &&
+      seesEntity(world, actor, root);
+    const visible =
+      (target.placement?.mode === 'world' && seesEntity(world, actor, target)) || groundAppearance;
+    const granted =
+      target.placement?.mode === 'contained' &&
+      world.entities[target.placement.parentEntityId]?.actor &&
+      target.container?.access?.actors.includes(scope.actorId) &&
+      reachable;
+    if (!(id === scope.actorId || (own && reachable) || visible || observedChild || granted))
+      return;
+    const choice = host?.requestChoice?.(world, scope.actorId, activity.family, activity.field, id);
+    if (!choice) return;
+    const evidenced = own || inspection?.containerId === id;
+    const allowed = reachable && evidenced;
+    return {
+      id,
+      name: choice.label,
+      location: containerLocation(service, scope, id),
+      revision: target.inventoryRevision ?? 0,
+      kind: 'container',
+      openable: reachable && evidenced,
+      accessible: allowed,
+      needsApproach: visible && !canReachEntity(world, actor, root, world.itemHandling.reach),
+      canInspect: reachable,
+      needsInspection: reachable && !evidenced,
+      ...(reachable && evidenced && target.container
+        ? {
+            load: target.container.load,
+            capacity: world.itemDefinitions[target.container.definitionPin.id]!.container!.capacity,
+          }
+        : {}),
+      ...(!allowed
+        ? {
+            reason: reachable
+              ? 'Inspect contents before reviewing this selection.'
+              : canReachEntity(world, actor, root, world.itemHandling.reach)
+                ? 'Contents are not accessible here. Refresh after access changes.'
+                : 'Approach, then recheck access and inspect contents. Private contents remain unavailable.',
+          }
+        : {}),
+    };
+  };
 }
 
 /** Lazy, permitted destination discovery. No ordinary contents page performs this read.
@@ -276,6 +343,9 @@ export function inventoryDestinationPage(
   const world = service.world,
     actor = world.entities[scope.actorId]!,
     source = request.source;
+  if (request.activity && source)
+    throw new HistoryCursorError('Activity storage selection has no transfer source.');
+  const storage = request.activity && activityStorageReader(service, scope, request.activity);
   const item = source && itemFor(world, source.itemId);
   if (
     source &&
@@ -296,23 +366,35 @@ export function inventoryDestinationPage(
     );
   const parentId = request.parentId ?? '',
     query = (request.query ?? '').trim().toLocaleLowerCase();
-  if (parentId && !canAccessContainer(world, scope.actorId, parentId))
+  if (
+    parentId &&
+    (!canAccessContainer(world, scope.actorId, parentId) ||
+      (request.activity && !storage?.(parentId)?.openable))
+  )
     throw new HistoryCursorError(
       'This destination is no longer reachable or accessible. Refresh destinations.',
     );
-  const binding = JSON.stringify([
-    scopeKey(scope),
-    actor.inventoryRevision ?? 0,
-    source,
-    parentId,
-    query,
-    effectivePosition(world, scope.actorId),
-    actor.spatial.bodyProfileId,
-    actor.actor!.alive,
-    membershipDependency(world, 'installed-capabilities').revision,
-    world.map.spatial.revision,
-    parentId ? (world.entities[parentId]!.inventoryRevision ?? 0) : 0,
-  ]);
+  const binding = createHash('sha256')
+    .update(
+      JSON.stringify([
+        scopeKey(scope),
+        actor.inventoryRevision ?? 0,
+        source,
+        request.activity,
+        request.activity ? currentInventoryInspection(world, scope.actorId) : null,
+        request.activity ? world.moduleManifest.activityHosts : null,
+        parentId,
+        query,
+        effectivePosition(world, scope.actorId),
+        actor.spatial.bodyProfileId,
+        visionRadius(world, actor),
+        actor.actor!.alive,
+        membershipDependency(world, 'installed-capabilities').revision,
+        world.map.spatial.revision,
+        parentId ? (world.entities[parentId]!.inventoryRevision ?? 0) : 0,
+      ]),
+    )
+    .digest('hex');
   const cursor: DestinationCursor = request.cursor
     ? readDestinationCursor(request.cursor)
     : {
@@ -320,21 +402,32 @@ export function inventoryDestinationPage(
         phase: 'owned',
         after: '',
         spatialAfter: -1,
-        spatialRevision: 0,
+        spatialRevision: '',
         grantActorId: '',
         grantRevision: 0,
       };
   if (
     cursor.binding !== binding ||
-    (cursor.phase === 'granted' &&
+    ((cursor.phase === 'granted' || cursor.phase === 'ground') &&
       (world.entities[cursor.grantActorId]?.inventoryRevision ?? 0) !== cursor.grantRevision)
   )
     throw new HistoryCursorError('Destinations, contents or access changed. Refresh destinations.');
-  const spatialRevision = membershipDependency(world, 'spatial-candidates').revision;
-  if (cursor.phase === 'spatial' && cursor.spatialRevision !== spatialRevision)
+  let spatialRevision: string | undefined;
+  const spatialMembership = () =>
+    (spatialRevision ??= createHash('sha256')
+      .update(
+        spatialCandidateMembershipKey(
+          world,
+          actor,
+          request.activity ? visionRadius(world, actor) : world.itemHandling.reach,
+        ),
+      )
+      .digest('hex'));
+  if (cursor.phase === 'spatial' && cursor.spatialRevision !== spatialMembership())
     throw new HistoryCursorError('Nearby destinations changed. Refresh destinations.');
   const entries: InventoryDestination[] = [];
   let scanned = 0,
+    materialized = 0,
     unavailable = false,
     restarted = false;
   const sourceProblem =
@@ -396,17 +489,31 @@ export function inventoryDestinationPage(
     };
   };
   const add = (id: string, recipient = false) => {
-    const entry = project(id, recipient);
+    const entry = request.activity ? storage?.(id) : project(id, recipient);
+    if (!entry) return;
     if (!query || `${entry.name} ${entry.location}`.toLocaleLowerCase().includes(query))
       entries.push(entry);
   };
   if (!parentId && !request.cursor) add(scope.actorId);
-  const parent = parentId ? project(parentId) : undefined;
+  const parent = parentId
+    ? request.activity
+      ? storage?.(parentId)
+      : project(parentId)
+    : undefined;
   let spatial: ReturnType<typeof interactionPageQuery> | undefined;
   let spatialIndex = 0;
   while (scanned < 200 && entries.length < 40 && cursor.phase !== 'done') {
-    if (parentId || cursor.phase === 'owned' || cursor.phase === 'granted') {
-      const owner = parentId || (cursor.phase === 'granted' ? cursor.grantActorId : scope.actorId);
+    if (
+      parentId ||
+      cursor.phase === 'owned' ||
+      cursor.phase === 'granted' ||
+      cursor.phase === 'ground'
+    ) {
+      const owner =
+        parentId ||
+        (cursor.phase === 'granted' || cursor.phase === 'ground'
+          ? cursor.grantActorId
+          : scope.actorId);
       const page = contentsQuery(
         world,
         owner,
@@ -418,13 +525,18 @@ export function inventoryDestinationPage(
         unavailable = true;
         break;
       }
+      materialized += page.values.length;
       let consumed = 0;
       for (const id of page.values) {
         if (scanned >= 200 || entries.length >= 40) break;
         scanned++;
         consumed++;
         cursor.after = id;
-        if (world.entities[id]?.container && canAccessContainer(world, scope.actorId, id)) add(id);
+        if (
+          world.entities[id]?.container &&
+          (cursor.phase === 'ground' || canAccessContainer(world, scope.actorId, id))
+        )
+          add(id);
       }
       if (consumed < page.values.length) break;
       if (parentId) cursor.phase = 'done';
@@ -432,22 +544,25 @@ export function inventoryDestinationPage(
         // Ordinary carried pages do not depend on unrelated moving animals. Once a
         // shared bag's bounded inspection finishes, restart changed nearby coverage
         // rather than reuse an ordinal from a different spatial snapshot.
-        if (cursor.spatialRevision !== spatialRevision) {
-          restarted = cursor.spatialRevision !== 0;
+        if (cursor.spatialRevision !== spatialMembership()) {
+          restarted = cursor.spatialRevision !== '';
           cursor.spatialAfter = -1;
-          cursor.spatialRevision = spatialRevision;
+          cursor.spatialRevision = spatialMembership();
         }
         cursor.phase = 'spatial';
         cursor.after = '';
       }
     } else {
-      spatial ??= interactionPageQuery(
-        world,
-        actor,
-        world.itemHandling.reach,
-        cursor.spatialAfter,
-        Math.min(201, 201 - scanned),
-      );
+      if (!spatial) {
+        spatial = interactionPageQuery(
+          world,
+          actor,
+          request.activity ? visionRadius(world, actor) : world.itemHandling.reach,
+          cursor.spatialAfter,
+          Math.min(201, 201 - scanned),
+        );
+        if (spatial.status === 'complete') materialized += spatial.values.length;
+      }
       if (spatial.status !== 'complete') {
         unavailable = true;
         break;
@@ -461,7 +576,16 @@ export function inventoryDestinationPage(
       scanned++;
       const target = candidate.value;
       if (target.id === scope.actorId) continue;
-      if (target.actor) {
+      if (request.activity && !target.actor) {
+        if (!seesEntity(world, actor, target)) continue;
+        if (target.container) add(target.id);
+        if (target.kind === 'item-pile') {
+          cursor.phase = 'ground';
+          cursor.grantActorId = target.id;
+          cursor.grantRevision = target.inventoryRevision ?? 0;
+          cursor.after = '';
+        }
+      } else if (target.actor) {
         if (
           !seesEntity(world, actor, target) ||
           !canReachEntity(world, actor, target, world.itemHandling.reach)
@@ -484,8 +608,12 @@ export function inventoryDestinationPage(
         add(target.id);
     }
   }
+  countMetric('discovery.storageExamined', scanned);
+  countMetric('discovery.storageMaterialized', materialized);
+  countMetric('discovery.storageReturned', entries.length);
   return {
     ok: true,
+    scope: scopeKey(scope),
     status: unavailable ? 'unavailable' : cursor.phase === 'done' ? 'complete' : 'partial',
     ...(unavailable
       ? { message: 'Destination discovery is temporarily unavailable. Refresh before continuing.' }

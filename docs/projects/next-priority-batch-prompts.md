@@ -1,5 +1,9 @@
 # Five standalone implementation prompts
 
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | NP04 camp-supply discovery is implemented and verified; the other assignments and combined acceptance remain open. | 2026-10-03   |
+
 These proposed assignments accompany the [feature specification](next-priority-batch-feature-spec.md), [technical design](next-priority-batch-tech-design.md) and [tracker](../maintainers/next-priority-batch.md). The first four can start implementation independently from a checkout containing this planning package and its existing prerequisites; the fifth starts with its explicit feasibility gate. They do not require communication between workers. This document does not execute the assignments or create chats.
 
 ## 1. Reliable AI outcomes and spending

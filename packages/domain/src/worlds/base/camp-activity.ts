@@ -8,9 +8,9 @@ import { activityHostForCommand, activityHostPin } from '../../activity-hosts.js
 import type { ActivityNode, ActivityArgument } from '../../action-experience.js';
 import { ACTIVITY_LIMITS } from '../../action-experience.js';
 import { targetApproachPoint } from '../../action-capabilities.js';
-import { inspectedContainer } from '../../inventory-inspection.js';
+import { inspectedContainer, currentInventoryInspection } from '../../inventory-inspection.js';
 import { accessiblePossession, canAccessContainer, possessionItems } from '../../object-access.js';
-import { custodian, objectAncestors } from '../../objects.js';
+import { custodian, objectAncestors, itemFor } from '../../objects.js';
 import { proveAvailableStock, STOCK_TRANSFER_LIMITS } from '../../stock-transfer.js';
 import { gatheringYield } from '../../gathering.js';
 import { seesEntity } from '../../perception.js';
@@ -24,7 +24,12 @@ import { observerDescription } from './knowledge.js';
 import type { Command, WorldState, Outcome } from '../../types.js';
 import { isSafeRecordId, getOwn } from '../../records.js';
 
-const entity = (label: string) => ({ type: 'entity' as const, label, required: true as const });
+const entity = (label: string, source: 'spatial' | 'storage') => ({
+  type: 'entity' as const,
+  label,
+  required: true as const,
+  discovery: { source },
+});
 /** Authored camp request tuning; native admission still applies its own bounds. */
 export const BASE_CAMP_ACTIVITY_RULES = {
   maximumFuelUnits: 16,
@@ -40,8 +45,13 @@ const integer = (label: string, minimum: number, maximum = 1000) => ({
   required: true as const,
 });
 const common = {
-  fireId: entity('Fire'),
-  definitionId: { type: 'definition' as const, label: 'Fuel material', required: true as const },
+  fireId: entity('Fire', 'spatial'),
+  definitionId: {
+    type: 'definition' as const,
+    label: 'Fuel material',
+    required: true as const,
+    discovery: { source: 'materials' as const, sourceField: 'sourceId' },
+  },
   minimumHeld: integer('Leave at least this many available to me', 0),
   mode: { type: 'mode' as const, label: 'Current work', required: true as const },
 };
@@ -52,8 +62,8 @@ const requests: ActivityRequestDescriptor[] = [
     description:
       'Gather once from your selected source, return to this container’s current position, pack an exact quantity and add one fuel unit. Later steps can fail when yield, access or stock changes.',
     fields: {
-      sourceId: entity('Gathering source'),
-      containerId: entity('Camp container'),
+      sourceId: entity('Gathering source', 'spatial'),
+      containerId: entity('Camp container', 'storage'),
       ...common,
       quantity: integer('Put this many into the container', 1),
     },
@@ -64,7 +74,7 @@ const requests: ActivityRequestDescriptor[] = [
     description:
       'Stay here and attend to this burning fire until your stopping time. Use only your chosen supply. It does not gather, follow a moved cache, relight a fire, or teach a conditional method.',
     fields: {
-      sourceId: entity('Fuel supply'),
+      sourceId: entity('Fuel supply', 'storage'),
       ...common,
       deadline: {
         type: 'time',
@@ -195,7 +205,9 @@ function compile(
       !known(sourceId) ||
       !container?.container ||
       !known(containerId) ||
-      !canAccessContainer(world, actorId, containerId)
+      !canAccessContainer(world, actorId, containerId) ||
+      (custodian(world, containerId) !== actorId &&
+        inspectedContainer(world, actorId)?.id !== containerId)
     )
       return refuse(
         'Choose a visible source of this material and an accessible camp container. Inspect a ground container first.',
@@ -264,11 +276,24 @@ function compile(
   let materialKnown =
     inspectedContainer(world, actorId)?.id === sourceId &&
     inspectedContainer(world, actorId)!.items.some((item) => item.definitionId === pin.id);
+  const ownInspection = currentInventoryInspection(world, actorId);
+  if (sourceId === actorId || accessiblePossession(world, actorId, sourceId))
+    materialKnown ||= !!ownInspection?.itemIds.some((id) => {
+      const item = itemFor(world, id);
+      return (
+        item?.definitionId === pin.id &&
+        accessiblePossession(world, actorId, id) &&
+        objectAncestors(world, id).some((entry) => entry.id === sourceId)
+      );
+    });
   let examined = 0;
   if (sourceId === actorId || accessiblePossession(world, actorId, sourceId))
     for (const item of possessionItems(world, actorId)) {
       if (++examined > 200) break;
-      if (item.definitionId === pin.id) {
+      if (
+        item.definitionId === pin.id &&
+        objectAncestors(world, item.id).some((entry) => entry.id === sourceId)
+      ) {
         materialKnown = true;
         break;
       }
@@ -432,6 +457,59 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         'The selected gathering happens once; its future yield is uncertain and later access, capacity or stock can change. A feasible first step does not promise completion.',
       );
     return notes;
+  },
+  requestChoice(world, actorId, requestId, fieldId, candidateId) {
+    const finite = requestId === requests[0]!.id;
+    const target = world.entities[candidateId];
+    const choice = (
+      id: string,
+      label: string,
+      kind: 'entity' | 'definition' = 'entity',
+      reason?: string,
+    ): ActivityRequestChoice => ({
+      id,
+      label,
+      kind,
+      roles: [fieldId],
+      requestIds: [requestId],
+      accessible: true,
+      ...(reason ? { reason } : {}),
+    });
+    if (
+      fieldId === 'fireId' &&
+      target?.heat &&
+      activityHostForCommand(world, 'tend-fire')?.acceptsTarget?.(world, candidateId)
+    )
+      return choice(
+        candidateId,
+        observerDescription(world, actorId, candidateId),
+        'entity',
+        `${fireFuelDescription(target.heat)}. A full fire can refuse additional fuel.`,
+      );
+    if (
+      fieldId === 'sourceId' &&
+      finite &&
+      target?.resource &&
+      isFuel(world.itemDefinitions[target.resource.definitionId]!)
+    )
+      return choice(candidateId, observerDescription(world, actorId, candidateId));
+    if (
+      (fieldId === 'containerId' || (fieldId === 'sourceId' && !finite)) &&
+      (target?.container || (!finite && candidateId === actorId))
+    )
+      return choice(
+        candidateId,
+        candidateId === actorId
+          ? 'My accessible possessions'
+          : observerDescription(world, actorId, candidateId),
+      );
+    if (fieldId === 'definitionId') {
+      const definitionId = target?.item?.definitionPin.id ?? target?.resource?.definitionId;
+      const definition = definitionId && world.itemDefinitions[definitionId];
+      if (definition && isFuel(definition))
+        return choice(definition.id, definition.name, 'definition');
+    }
+    return undefined;
   },
   requestChoices(world, actorId, prepared) {
     const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });

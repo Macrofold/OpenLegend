@@ -73,7 +73,7 @@ import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
 import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
-import { activityRequests, activityStatus } from './activity-requests.js';
+import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
 
 const clientId = z
   .string()
@@ -1419,6 +1419,22 @@ async function initializeGameServer(
             case '/api/activity-requests':
               z.object({}).strict().parse(body);
               return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-choices': {
+              const value = z
+                .object({
+                  family: requestIdSchema,
+                  field: requestIdSchema,
+                  query: z.string().max(160).optional(),
+                  cursor: z.string().max(3000).optional(),
+                  sourceId: requestIdSchema.optional(),
+                  selectedId: requestIdSchema.optional(),
+                  witnessId: requestIdSchema.optional(),
+                  approach: z.boolean().optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, activityChoicePage(service, scope, value));
+            }
             case '/api/activity-status':
               z.object({}).strict().parse(body);
               return send(response, 200, activityStatus(service, scope));
@@ -1464,6 +1480,10 @@ async function initializeGameServer(
                       containerRevision: sequence,
                       quantity: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
                     })
+                    .strict()
+                    .optional(),
+                  activity: z
+                    .object({ family: requestIdSchema, field: requestIdSchema })
                     .strict()
                     .optional(),
                   parentId: requestIdSchema.optional(),

@@ -101,20 +101,10 @@ export interface ActivityRequestsView {
         minimumDuration?: number;
         maximumDuration?: number;
         required: true;
+        discovery?: { source: 'spatial' | 'storage' | 'materials'; sourceField?: string };
       }
     >;
   }[];
-  choices: {
-    id: string;
-    label: string;
-    kind: 'entity' | 'definition';
-    roles: string[];
-    requestIds?: string[];
-    distance?: number;
-    accessible: boolean;
-    reason?: string;
-  }[];
-  warnings: string[];
   timeOptions?: {
     minimumDuration: number;
     maximumDuration: number;
@@ -128,6 +118,42 @@ export interface ActivityRequestsView {
     attempts?: number;
     interrupted?: boolean;
     deadline?: number;
+  };
+}
+
+/** Bounded role discovery and exact refresh; no entry grants execution permission. */
+export interface ActivityChoice {
+  id: string;
+  label: string;
+  kind: 'entity' | 'definition';
+  roles: string[];
+  requestIds?: string[];
+  distance?: number;
+  accessible: boolean;
+  reason?: string;
+  witnessId?: string;
+  location?: string;
+  needsInspection?: boolean;
+  canInspect?: boolean;
+  needsApproach?: boolean;
+}
+export interface ActivityChoicePage {
+  ok: boolean;
+  message?: string;
+  scope: string;
+  status: 'complete' | 'partial' | 'unavailable' | 'stale';
+  choices: ActivityChoice[];
+  selected?: ActivityChoice;
+  next?: string;
+  stance?: SurfacePoint;
+  evidence: string;
+  inspection?: {
+    containerId: string;
+    revision: number;
+    scope: string;
+    after: string;
+    more: boolean;
+    items: { id: string; name: string; quantity: number }[];
   };
 }
 

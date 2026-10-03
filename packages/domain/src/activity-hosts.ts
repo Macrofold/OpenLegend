@@ -59,6 +59,14 @@ export interface ActivityHostDescriptor {
     actorId: string,
     observed?: ActivityRequestObservation,
   ) => { choices: ActivityRequestChoice[]; warnings: string[] };
+  /** Trusted role predicate after the caller has proved permitted disclosure. */
+  requestChoice?: (
+    world: WorldState,
+    actorId: string,
+    requestId: string,
+    fieldId: string,
+    candidateId: string,
+  ) => ActivityRequestChoice | undefined;
 }
 /** Native prepared perception can be reused; this is never a client-supplied grant. */
 export interface ActivityRequestObservation {
@@ -96,6 +104,11 @@ export interface ActivityRequestDescriptor {
       minimumDuration?: number;
       maximumDuration?: number;
       required: true;
+      discovery?: {
+        source: 'spatial' | 'storage' | 'materials';
+        /** Materials from this selected source require current character evidence. */
+        sourceField?: string;
+      };
     }
   >;
 }
@@ -120,6 +133,12 @@ export function activityRequestDescriptors(world: WorldState): ActivityRequestDe
   return world.moduleManifest.activityHosts.flatMap(
     (pin) => installedActivityHost(world, pin)?.definition.requests ?? [],
   );
+}
+export function activityRequestHost(world: WorldState, requestId: string) {
+  for (const pin of world.moduleManifest.activityHosts) {
+    const host = installedActivityHost(world, pin);
+    if (host?.definition.requests?.some((request) => request.id === requestId)) return host;
+  }
 }
 export function activityRequestChoices(
   world: WorldState,

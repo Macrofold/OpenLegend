@@ -140,7 +140,7 @@ Direct-contents query: **201 entries maximum**, including lookahead.
 
 **Reported · Restrictiveness: Safe.**
 
-Inventory page: **40 results**, scanning at most **200 entries** before continuation. The same windows bound merge-target lookups ([QU05](#qu05)).
+Inventory page: **40 results**, scanning at most **200 entries** before continuation. The same windows bound merge-target lookups ([QU05](#qu05)) and NP04 camp-role/storage discovery. Material discovery traverses accessible own nested storage or only the selected ground supply’s current admitted inspection page; it is not an unscoped all-belongings contents search. A spatial page may materialize 201 candidates for lookahead while examining at most 200; multi-phase storage preparation is measured separately. Cold index construction, first-use queried-cell membership preparation and native selected-bag admission remain outside the page examination bound. Ordered roots and physical/inventory evidence in the queried conservative cells permit continuation across unrelated needs/fuel/time changes and movement outside those cells; local movement/content changes, changed ordinals, observer/geometry or scope require refresh. These limits do not cap stored objects. [IW01](interface.md#iw01--inventory-task-workspace) and [NP04 evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).
 
 **Reason / tradeoff:** Bound projected page and scan work while exposing continuation.
 

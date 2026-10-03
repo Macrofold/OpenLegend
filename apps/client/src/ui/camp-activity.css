@@ -1,0 +1,72 @@
+.ol-camp-form,
+.ol-camp-picker {
+  line-height: 1.5;
+}
+.ol-camp-form,
+.ol-camp-object {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-camp-form button.ol-btn,
+.ol-camp-picker button.ol-btn {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  block-size: auto;
+  min-block-size: 32px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding-block: 6px;
+  line-height: 1.5;
+  scroll-margin-block: var(--space-2);
+}
+.ol-camp-form .ol-caption,
+.ol-camp-picker .ol-caption {
+  line-height: 1.5;
+}
+.ol-camp-form .ol-btn > span,
+.ol-camp-picker .ol-btn > span {
+  min-inline-size: 0;
+}
+.ol-camp-picker {
+  padding: var(--space-3);
+  max-block-size: calc(100dvh - 48px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 12px;
+}
+.ol-camp-picker input {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  flex: 1;
+}
+.ol-camp-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ol-camp-results li {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.ol-camp-results p {
+  margin: 0;
+}
+.ol-panel .ol-panel-body:has(> .ol-camp-activities) {
+  /* Inventory and camp work share one panel. Let the whole task scroll instead
+   * of placing the long form beside the inventory's bounded inner panes. */
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--space-3);
+}
+.ol-panel-body:has(> .ol-camp-activities) > .ol-inventory-workspace {
+  flex: 1 0 12rem;
+}
+.ol-camp-activities {
+  flex: none;
+  min-inline-size: 0;
+}

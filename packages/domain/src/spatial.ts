@@ -312,6 +312,36 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
     countDomainWork('spatialCandidates', values.length);
     return values;
   };
+  // Reuse conservative cells, including original ordinals. Moving an earlier root
+  // into the queried cells must expire continuation rather than silently skip it.
+  candidates.membership = (position: Position, radius: number, key: (value: T) => unknown) => {
+    const minX = Math.floor((position.x - radius) / cellSize),
+      maxX = Math.floor((position.x + radius) / cellSize),
+      minY = Math.floor((position.y - radius) / cellSize),
+      maxY = Math.floor((position.y + radius) / cellSize),
+      minZ = Math.floor((position.z - radius) / cellSize),
+      maxZ = Math.floor((position.z + radius) / cellSize);
+    let keys = '[',
+      examined = 0;
+    for (const cell of cells.values()) {
+      if (
+        cell.x < minX ||
+        cell.x > maxX ||
+        cell.y < minY ||
+        cell.y > maxY ||
+        cell.z < minZ ||
+        cell.z > maxZ
+      )
+        continue;
+      for (const entry of cell.entries) {
+        keys += `${examined++ ? ',' : ''}${JSON.stringify([entry.order, key(entry.entity)])}`;
+      }
+    }
+    countDomainWork('spatialMembershipBuilds');
+    countDomainWork('spatialMembershipCells', cells.size);
+    countDomainWork('spatialMembershipCandidates', examined);
+    return `${keys}]`;
+  };
   return candidates;
 }
 
@@ -334,6 +364,38 @@ function entityIndex(world: WorldState) {
       entityIndexes.set(world.entities, index);
   }
   return index;
+}
+const entityMembershipKeys = new WeakMap<
+  ReturnType<typeof entityIndex>,
+  { bounds: string; key: string }
+>();
+/** Ordered roots and relevant physical evidence in the queried conservative cells
+ * fence live continuation. Clock/needs/fuel and distant movement do not invalidate it.
+ * One cached region per index bounds retained metadata; row disclosure stays live.
+ * Cold metadata is measured separately from page scanning.
+ * docs/projects/next-priority-batch-tech-design.md#discovery-contract */
+export function spatialCandidateMembershipKey(
+  world: WorldState,
+  actor: Entity,
+  reach: number,
+): string {
+  const index = entityIndex(world),
+    { position, radius } = interactionCandidateBounds(actor, reach),
+    bounds = JSON.stringify([position, radius]);
+  let cached = entityMembershipKeys.get(index);
+  if (cached?.bounds !== bounds) {
+    const key = index.membership(position, radius, ({ entity, position }) => [
+      entity.id,
+      position,
+      entity.placement?.revision,
+      entity.spatial.bodyProfileId,
+      entity.inventoryRevision,
+      entity.container?.access,
+    ]);
+    cached = { bounds, key };
+    entityMembershipKeys.set(index, cached);
+  }
+  return cached.key;
 }
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
   return entityIndex(world)(position, radius).map(({ entity }) => entity);

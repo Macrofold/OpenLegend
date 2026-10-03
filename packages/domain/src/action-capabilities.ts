@@ -402,10 +402,10 @@ export function targetApproachPoint(
   world: WorldState,
   actor: Entity,
   target: Entity,
+  reach: number = SIMULATION_RULES.interactionRadius,
 ): SurfacePoint | null {
-  if (canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
-    return supportedPosition(actor);
-  const route = findApproachPath(world, actor, target, SIMULATION_RULES.interactionRadius);
+  if (canReachEntity(world, actor, target, reach)) return supportedPosition(actor);
+  const route = findApproachPath(world, actor, target, reach);
   if (!route || (route.status !== 'reached' && route.status !== 'pending')) return null;
   return (route.status === 'pending' ? route.request.destinations[0] : route.path.at(-1)) ?? null;
 }

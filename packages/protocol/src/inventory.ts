@@ -21,6 +21,7 @@ export interface InventoryTransferSource {
 export interface InventoryDestinationRequest {
   /** Without a source this is read-only permitted container navigation, not a transfer. */
   source?: InventoryTransferSource;
+  activity?: { family: string; field: string };
   parentId?: string;
   query?: string;
   cursor?: string;
@@ -33,6 +34,10 @@ export interface InventoryDestination {
   revision: number;
   kind: 'container' | 'recipient';
   openable: boolean;
+  accessible?: boolean;
+  needsApproach?: boolean;
+  needsInspection?: boolean;
+  canInspect?: boolean;
   load?: number;
   capacity?: number;
   /** A preview of the exact source quantity, not execution permission. */
@@ -41,6 +46,7 @@ export interface InventoryDestination {
 }
 
 export interface InventoryDestinationPage {
+  scope: string;
   ok: boolean;
   message?: string;
   status: 'complete' | 'partial' | 'unavailable';

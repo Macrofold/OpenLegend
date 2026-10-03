@@ -13,6 +13,7 @@ import './inventory.css';
 type DestinationProps = {
   scope: string;
   source?: InventoryTransferSource;
+  activity?: { family: string; field: string };
   connected: boolean;
   visible?: boolean;
   onSelect(destination: InventoryDestination): void;
@@ -20,12 +21,16 @@ type DestinationProps = {
 };
 export function InventoryDestinations(props: DestinationProps) {
   return (
-    <DestinationWorkspace key={JSON.stringify([props.scope, props.source?.itemId])} {...props} />
+    <DestinationWorkspace
+      key={JSON.stringify([props.scope, props.source?.itemId, props.activity])}
+      {...props}
+    />
   );
 }
 function DestinationWorkspace({
   scope,
   source,
+  activity,
   connected,
   visible = true,
   onSelect,
@@ -35,9 +40,10 @@ function DestinationWorkspace({
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState<string>();
   const [refresh, setRefresh] = useState(0);
-  const [readVisibility, setReadVisibility] = useState({ visible, revision: 0 });
-  if (readVisibility.visible !== visible)
-    setReadVisibility({ visible, revision: readVisibility.revision + 1 });
+  const available = visible && connected;
+  const [readAvailability, setReadAvailability] = useState({ available, revision: 0 });
+  if (readAvailability.available !== available)
+    setReadAvailability({ available, revision: readAvailability.revision + 1 });
   const [result, setResult] = useState<{
     key: string;
     base: string;
@@ -47,29 +53,37 @@ function DestinationWorkspace({
   const search = useRef<HTMLInputElement>(null);
   const searchId = useId();
   const collection = useRef<HTMLDivElement>(null);
-  const base = JSON.stringify([scope, source, parentId, query, refresh, readVisibility.revision]);
+  const base = JSON.stringify([
+    scope,
+    source,
+    activity,
+    parentId,
+    query,
+    refresh,
+    readAvailability.revision,
+  ]);
   const key = JSON.stringify([base, cursor]);
   const current = result?.base === base ? result : undefined;
   const loading = current?.key !== key;
   const selectable = visible && connected && !loading && current?.page?.status !== 'unavailable';
   useEffect(() => {
-    if (!visible) return;
+    if (!available) return;
     search.current?.focus();
   }, []);
   useEffect(() => {
-    if (!visible) return;
+    if (!available) return;
     const controller = new AbortController();
     const timer = setTimeout(
       () => {
         void post<InventoryDestinationPage>(
           '/api/inventory/destinations',
-          { source, parentId, query, cursor },
+          { source, activity, parentId, query, cursor },
           controller.signal,
         )
           .then((page) => {
             if (!controller.signal.aborted)
               setResult((previous) => {
-                if (!page.ok)
+                if (!page.ok || (activity && page.scope !== scope))
                   return { key, base, error: page.message ?? 'Storage is unavailable.' };
                 const prior =
                   cursor && previous?.base === base ? (previous.page?.destinations ?? []) : [];
@@ -93,7 +107,7 @@ function DestinationWorkspace({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [key, visible]);
+  }, [key, available]);
   const open = (id?: string) => {
     setParentId(id);
     setCursor(undefined);
@@ -107,7 +121,10 @@ function DestinationWorkspace({
     <li key={entry.id} className="ol-inventory-destination">
       <div>
         <strong>{entry.name}</strong>
-        <p className="ol-caption">{entry.location}</p>
+        <p id={`${searchId}-${entry.id}`} className="ol-caption">
+          {entry.location}
+          {activity ? ` · Reference: ${entry.id}` : ''}
+        </p>
         {entry.capacity !== undefined && (
           <p className="ol-caption">
             Packing load: {entry.load ?? 'Unknown'} / {entry.capacity}
@@ -117,12 +134,19 @@ function DestinationWorkspace({
       </div>
       <div className="ol-actions">
         {entry.openable && !currentContainer && (
-          <Button size="sm" variant="quiet" disabled={loading} onPress={() => open(entry.id)}>
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-describedby={`${searchId}-${entry.id}`}
+            disabled={loading || !available}
+            onPress={() => open(entry.id)}
+          >
             Open {entry.name}
           </Button>
         )}
         <Button
           size="sm"
+          aria-describedby={`${searchId}-${entry.id}`}
           disabled={!selectable || entry.fit === 'blocked'}
           onPress={() => select(entry)}
         >
@@ -191,7 +215,8 @@ function DestinationWorkspace({
         </div>
       </div>
       <div ref={collection} className="ol-inventory-destination-list" aria-busy={loading}>
-        {loading && <p role="status">Finding permitted storage…</p>}
+        {!connected && <p role="status">Reconnect to search permitted storage.</p>}
+        {available && loading && <p role="status">Finding permitted storage…</p>}
         {current?.error && <p role="alert">{current.error}</p>}
         {current?.page?.status === 'unavailable' && (
           <p role="status">

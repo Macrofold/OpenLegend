@@ -8,6 +8,14 @@ A person may choose a short camp project: gather a material from a known source,
 
 A person may also explicitly watch an already burning fire for a chosen period, using either carried fuel or one specified nearby cache. The person spends actual fuel and their physical action time. They can stop, change their mind, fail, or choose something else. The watch is one requested occasion, not a learned “if hungry, maintain camp” policy or an automatic daily schedule.
 
+## Finding and inspecting supplies
+
+The ordinary camp form opens a search for the selected object's role. Searching and choosing retain a private draft; they do not walk, inspect or move stock. The shared storage picker can name a visible dropped bag outside reach using its permitted appearance and location, without its packing load or contents. **Approach** explicitly replaces current physical work through ordinary movement and keeps completed effects; arrival neither inspects nor starts camp work. **Inspect contents** uses the character's ordinary action, with separate later-page inspection.
+
+Only current admitted inspection supplies a ground cache's contents. Unopened nested bags reveal no descendants. Movement, changed contents/access or a restored timeline requires fresh inspection. Finite ground-cache requests now enforce that requirement at native admission as well as in the form, closing the earlier reachable-cache bypass. Own-bag material knowledge is checked within the chosen supply; an admitted own inspection can identify material beyond the initial bounded native search. These changes grant no larger stock-selection allowance.
+
+Exact object identities survive search pages, hiding and resizing within the same authorized scope. Labels are refreshed through permitted reads; a stale selection blocks review while retaining the unfinished parameters. Review and Start still check current native conditions. Discovery bounds and scope belong to [IW01](../../limits/interface.md#iw01--inventory-task-workspace); [NP04 evidence](../../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026) separates actual UI effects from broader voluntary learning qualification.
+
 ## Authored choices and bounds
 
 The authored source is `packages/domain/src/worlds/base/camp-activity.ts`, consumed through the installed request descriptor by schemas, validation and descriptions. These values are initial request tuning and finite-work boundaries, not claims about human labor or optimal play. [CR01](../../limits/base-world.md#cr01--proposed-finite-camp-activities) records their scope, rationale and restrictiveness. The implemented form admits up to 1,000 transferred units or available-minimum units, replacing the brief's proposed 16-unit form cap; 16 remains the stock operation's moved-lot bound and the watch's fuel/attempt bound. This permits a larger exact delivery when available stock and container capacity allow it, without raising native selection work.

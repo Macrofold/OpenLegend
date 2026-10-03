@@ -781,6 +781,7 @@ function App({
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
             />
             <CampActivity
+              visible={open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')}
               key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
               view={view}
               connected={connected}

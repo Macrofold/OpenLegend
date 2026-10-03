@@ -1,6 +1,6 @@
 # Next priority batch — five assignments
 
-**Status: proposed; no runtime work completed by this planning pass.** The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
+**Status: in progress; NP04 is implemented and verified, while the other assignments and combined acceptance remain open.** The [feature specification](../projects/next-priority-batch-feature-spec.md) owns intended behavior, selection rationale and acceptance. The [technical design](../projects/next-priority-batch-tech-design.md) owns mechanisms and shared contracts. [Copyable prompts](../projects/next-priority-batch-prompts.md) supply standalone entrypoints.
 
 These are scoped children of existing work, not replacements for their parent trackers. Current source was inspected at local `main` `c2e670b0` on October 2, 2026. The preceding PW work is substantially implemented, with open integration and qualification; do not treat its old proposal paragraph or an unchecked broad gate as proof that its implementation is missing.
 
@@ -33,10 +33,10 @@ Parents: INV-3.5/INV-6.1–6.2, EWF09 and RF01. PW02/PW03 already supply the fam
 
 ## NP04 — Find and choose camp supplies
 
-**Priority 4 · proposed · ready from the audited base.** Connect existing camp activities to complete permitted discovery and explicit character inspection rather than arbitrary prefixes and an unusable narrowing warning.
+**Priority 4 · implemented and scoped acceptance passed October 3, 2026.** Connect existing camp activities to complete permitted discovery and explicit character inspection rather than arbitrary prefixes and an unusable narrowing warning.
 
-- [ ] Deliver role-filtered paged discovery, shared storage selection, exact selected identity, explicit approach/inspection, stale recovery and an accessible camp form.
-- [ ] Demonstrate [NP04 acceptance](../projects/next-priority-batch-feature-spec.md#np04--find-and-choose-camp-supplies) through real game UI and actual native effects; reconcile [NP04 design](../projects/next-priority-batch-tech-design.md#np04--find-and-choose-camp-supplies).
+- [x] Deliver role-filtered paged discovery, shared storage selection, exact selected identity, explicit approach/inspection, stale recovery and an accessible camp form.
+- [x] Demonstrate [NP04 acceptance](../projects/next-priority-batch-feature-spec.md#np04--find-and-choose-camp-supplies) through real game UI and actual native effects; reconcile [NP04 design](../projects/next-priority-batch-tech-design.md#np04--find-and-choose-camp-supplies). [October 3 evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026) records native effects, privacy/reopen, keyboard/wheel/layout checks, cold/warm work and zero paid spending. The requested follow-up review additionally verifies moved-source continuation, retired selections and disconnected/late storage reads; wider qualification remains with the parents below.
 
 Parents: PW03/PW04/PW10, AC07/AC11, PO07, BW19 and UIUX02–UIUX04. Broader real model retention/reuse and uncoached/large-content qualification remain in PW10/PW04 until actually demonstrated. Current materials and containers are sufficient; NP03 is not a dependency. No new survival activity or learning algorithm is included.
 

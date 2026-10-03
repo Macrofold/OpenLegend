@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type {
   ActionOption,
+  ActivityChoicePage,
+  ActivityChoice,
   ActivityRequestsView,
   ApiResult,
   CommandInput,
@@ -8,6 +10,8 @@ import type {
 } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Section, SelectField, Tag } from '../design-system/components';
+import { ActivityObjectField } from './activity-object-field';
+import './camp-activity.css';
 import { clockParts, EventTime } from './event-time';
 
 type Draft = { family: string; arguments: Record<string, Record<string, string>> };
@@ -53,18 +57,22 @@ function readDraft(key: string): Draft {
 export function CampActivity({
   view,
   connected,
+  visible = true,
   command,
 }: {
   view: GameView;
   connected: boolean;
+  visible?: boolean;
   command(action: ActionOption): Promise<ApiResult | undefined>;
 }) {
-  const draftKey = `open-legend:action-draft:camp:${view.access?.accountId}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
+  const draftKey = `open-legend:action-draft:camp:${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
   const [draft, setDraft] = useState(() => readDraft(draftKey));
   const [open, setOpen] = useState(false);
   const [choices, setChoices] = useState<ActivityRequestsView>();
   const [status, setStatus] = useState<{ value: StatusView; revision: number }>();
-  const [operation, setOperation] = useState<'choices' | 'preview' | 'start' | 'stop' | null>(null);
+  const [operation, setOperation] = useState<
+    'choices' | 'preview' | 'start' | 'stop' | 'native' | null
+  >(null);
   const [error, setError] = useState('');
   const [review, setReview] = useState<{ key: string; result: ApiResult; input: CommandInput }>();
   const [message, setMessage] = useState('');
@@ -75,8 +83,37 @@ export function CampActivity({
   const pending = useRef(false);
   const readAbort = useRef<AbortController | null>(null);
   const statusAbort = useRef<AbortController | null>(null);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [selections, setSelections] = useState<
+    Record<string, { key: string; page: ActivityChoicePage }>
+  >({});
   const descriptor = choices?.requests.find((entry) => entry.id === draft.family);
   const values = draft.arguments[draft.family] ?? {};
+  function selectionKey(key: string) {
+    const field = descriptor?.fields[key];
+    const sourceId = field?.discovery?.sourceField
+      ? values[field.discovery.sourceField]
+      : undefined;
+    const selected = view.entities.find((entry) => entry.id === values[key]);
+    const source = view.entities.find((entry) => entry.id === sourceId);
+    return JSON.stringify([
+      view.access?.scope,
+      draft.family,
+      key,
+      values[key],
+      values[`${key}:witness`],
+      sourceId,
+      view.player.position,
+      view.player.inventoryRevision,
+      selected,
+      source,
+      refreshVersion,
+    ]);
+  }
+  function selectedPage(key: string) {
+    const entry = selections[key];
+    return entry?.key === selectionKey(key) ? entry.page : undefined;
+  }
   const input: CommandInput = {
     type: 'activity-request',
     activityFamilyId: draft.family,
@@ -140,20 +177,21 @@ export function CampActivity({
       if (!workModes.some((mode) => mode.id === value))
         issues[key] = `Choose ${field.label.toLowerCase()}.`;
       else input.activityArguments![key] = value;
-    } else if (
-      !choices?.choices.some(
-        (choice) =>
-          choice.id === value &&
-          choice.kind === field.type &&
-          choice.roles.includes(key) &&
-          choice.requestIds?.includes(descriptor!.id) !== false &&
-          choice.accessible,
-      )
-    )
-      issues[key] = `${field.label} is no longer available in these inspected choices.`;
+    } else if (!selectedPage(key)?.selected?.accessible)
+      issues[key] =
+        `${field.label} needs current permitted evidence. Recheck or inspect before reviewing.`;
     else input.activityArguments![key] = value;
   }
-  const reviewKey = JSON.stringify([choices?.scope, draft.family, values]);
+  const reviewKey = JSON.stringify([
+    choices?.scope,
+    draft.family,
+    values,
+    Object.keys(descriptor?.fields ?? {}).map((key) => [
+      key,
+      selectionKey(key),
+      selectedPage(key)?.evidence,
+    ]),
+  ]);
   const invalid = Object.values(issues);
   const currentReview = review?.key === reviewKey ? review : undefined;
   const reviewExpired =
@@ -200,10 +238,18 @@ export function CampActivity({
     }
   }
 
-  function change(key: string, value: string) {
+  function change(key: string, value: string, witnessId?: string) {
+    const next = { ...values, [key]: value };
+    if (witnessId) next[`${key}:witness`] = witnessId;
+    else delete next[`${key}:witness`];
+    for (const [dependent, field] of Object.entries(descriptor?.fields ?? {}))
+      if (field.discovery?.sourceField === key) {
+        delete next[dependent];
+        delete next[`${dependent}:witness`];
+      }
     edit({
       ...draft,
-      arguments: { ...draft.arguments, [draft.family]: { ...values, [key]: value } },
+      arguments: { ...draft.arguments, [draft.family]: next },
     });
   }
 
@@ -214,6 +260,7 @@ export function CampActivity({
     const abort = new AbortController();
     readAbort.current = abort;
     setOperation('choices');
+    setRefreshVersion((value) => value + 1);
     setReview(undefined);
     setError('');
     try {
@@ -271,6 +318,23 @@ export function CampActivity({
     }
   }
 
+  async function nativeAction(input: CommandInput, label: string) {
+    if (pending.current || unavailable || operation) return undefined;
+    pending.current = true;
+    setReview(undefined);
+    setOperation('native');
+    try {
+      return await command({ id: `selected-${input.type}`, label, command: input, enabled: true });
+    } finally {
+      pending.current = false;
+      if (alive.current) {
+        setOperation(null);
+        setRefreshVersion((value) => value + 1);
+        void refreshStatus();
+      }
+    }
+  }
+
   async function submit(stop = false) {
     if (
       pending.current ||
@@ -311,345 +375,333 @@ export function CampActivity({
   }
 
   return (
-    <Section title="Chosen activities">
-      <Button
-        variant="quiet"
-        onPress={() => {
-          if (!open) void refresh();
-          setOpen(!open);
-        }}
-      >
-        {open ? 'Hide activity choices' : 'Choose an activity'}
-      </Button>
-      {open && (
-        <div style={{ display: 'grid', gap: 'var(--space-3)', minWidth: 0 }}>
-          <div className="ol-actions">
-            <Button disabled={unavailable || !!operation} onPress={() => void refresh()}>
-              Refresh choices
-            </Button>
-            {stoppable && (
-              <Button disabled={unavailable || !!operation} onPress={() => void submit(true)}>
-                Stop current activity
+    <div className="ol-camp-activities">
+      <Section title="Chosen activities">
+        <Button
+          variant="quiet"
+          onPress={() => {
+            if (!open) void refresh();
+            setOpen(!open);
+          }}
+        >
+          {open ? 'Hide activity choices' : 'Choose an activity'}
+        </Button>
+        {open && (
+          <div
+            className="ol-camp-form"
+            onKeyDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <div className="ol-actions">
+              <Button disabled={unavailable || !!operation} onPress={() => void refresh()}>
+                Refresh choices
               </Button>
-            )}
-          </div>
-          {unavailable && (
-            <p role="status">
-              Reconnect and take control of a living character to choose an activity.
-            </p>
-          )}
-          {operation === 'choices' && <p role="status">Reading permitted activity choices…</p>}
-          {error && <p role="alert">{error}</p>}
-          {(status || activity) && (
-            <div aria-live="polite">
-              {activity ? (
-                <>
-                  <p>
-                    <Tag>{activity.status}</Tag> <strong>{activity.name}</strong>
-                  </p>
-                  {activity.reason && <p>{activity.reason}</p>}
-                  {activity.spent !== undefined && (
-                    <p>
-                      Used {activity.spent} selected units in {activity.attempts ?? 0} attempts.
-                    </p>
-                  )}
-                  {activity.deadline !== undefined && (
-                    <p className="ol-caption">
-                      Chosen stopping time: <EventTime time={activity.deadline} />.{' '}
-                      {activity.interrupted
-                        ? 'Interrupted; this was not continuous attendance.'
-                        : ''}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="ol-caption">No current chosen activity.</p>
+              {stoppable && (
+                <Button disabled={unavailable || !!operation} onPress={() => void submit(true)}>
+                  Stop current activity
+                </Button>
               )}
             </div>
-          )}
-          {choices && (
-            <>
-              {choices.warnings.map((warning, index) => (
-                <p key={index} className="ol-caption">
-                  {warning}
-                </p>
-              ))}
-              {!choices.requests.length ? (
-                <p>No supported activity requests are available in this world.</p>
-              ) : (
-                <SelectField
-                  label="Activity"
-                  placeholder="Choose an activity…"
-                  placement="bottom start"
-                  value={draft.family}
-                  options={choices.requests.map((entry) => ({
-                    id: entry.id,
-                    label: entry.label,
-                    description: entry.description,
-                  }))}
-                  onChange={(family) => edit({ ...draft, family })}
-                />
-              )}
-              {descriptor && (
-                <>
-                  <p>{descriptor.description}</p>
-                  {Object.entries(descriptor.fields).map(([key, field]) => {
-                    const selected = choices.choices.find(
-                      (choice) =>
-                        choice.id === values[key] &&
-                        choice.kind === field.type &&
-                        choice.roles.includes(key) &&
-                        choice.requestIds?.includes(descriptor.id) !== false,
-                    );
-                    const options =
-                      field.type === 'mode'
-                        ? workModes
-                        : choices.choices
-                            .filter(
-                              (choice) =>
-                                choice.kind === field.type &&
-                                choice.roles.includes(key) &&
-                                choice.requestIds?.includes(descriptor.id) !== false,
-                            )
-                            .map((choice) => ({
-                              id: choice.id,
-                              label: choice.label,
-                              description:
-                                choice.reason ??
-                                (choice.distance !== undefined
-                                  ? `${choice.distance.toFixed(1)} m away`
-                                  : undefined),
-                            }));
-                    const missing =
-                      !!values[key] &&
-                      (field.type === 'entity' || field.type === 'definition') &&
-                      !options.some((option) => option.id === values[key]);
-                    return (
-                      <div key={key}>
-                        {field.type === 'time' ? (
-                          <div style={{ display: 'grid', gap: 'var(--space-2)', minWidth: 0 }}>
+            {unavailable && (
+              <p role="status">
+                Reconnect and take control of a living character to choose an activity.
+              </p>
+            )}
+            {operation === 'choices' && <p role="status">Reading permitted activity choices…</p>}
+            {error && <p role="alert">{error}</p>}
+            {(status || activity) && (
+              <div aria-live="polite">
+                {activity ? (
+                  <>
+                    <p>
+                      <Tag>{activity.status}</Tag> <strong>{activity.name}</strong>
+                    </p>
+                    {activity.reason && <p>{activity.reason}</p>}
+                    {activity.spent !== undefined && (
+                      <p>
+                        Used {activity.spent} selected units in {activity.attempts ?? 0} attempts.
+                      </p>
+                    )}
+                    {activity.deadline !== undefined && (
+                      <p className="ol-caption">
+                        Chosen stopping time: <EventTime time={activity.deadline} />.{' '}
+                        {activity.interrupted
+                          ? 'Interrupted; this was not continuous attendance.'
+                          : ''}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="ol-caption">No current chosen activity.</p>
+                )}
+              </div>
+            )}
+            {choices && (
+              <>
+                {!choices.requests.length ? (
+                  <p>No supported activity requests are available in this world.</p>
+                ) : (
+                  <SelectField
+                    label="Activity"
+                    placeholder="Choose an activity…"
+                    placement="bottom start"
+                    value={draft.family}
+                    options={choices.requests.map((entry) => ({
+                      id: entry.id,
+                      label: entry.label,
+                      description: entry.description,
+                    }))}
+                    onChange={(family) => edit({ ...draft, family })}
+                  />
+                )}
+                {descriptor && (
+                  <>
+                    <p>{descriptor.description}</p>
+                    {Object.entries(descriptor.fields).map(([key, field]) => {
+                      return (
+                        <div key={key}>
+                          {field.discovery ? (
+                            <ActivityObjectField
+                              family={descriptor.id}
+                              fieldId={key}
+                              field={field}
+                              value={values[key] ?? ''}
+                              witnessId={
+                                field.type === 'definition' ? values[`${key}:witness`] : undefined
+                              }
+                              sourceId={
+                                field.discovery.sourceField
+                                  ? values[field.discovery.sourceField]
+                                  : undefined
+                              }
+                              scope={choices.scope}
+                              readKey={selectionKey(key)}
+                              page={selectedPage(key)}
+                              visible={open && visible}
+                              connected={!unavailable}
+                              busy={!!operation}
+                              working={!!view.player.action || stoppable}
+                              onRead={(readKey, page) =>
+                                setSelections((previous) => ({
+                                  ...previous,
+                                  [key]: { key: readKey, page },
+                                }))
+                              }
+                              onChange={(choice: ActivityChoice) =>
+                                change(
+                                  key,
+                                  choice.id,
+                                  field.type === 'definition' ? choice.witnessId : undefined,
+                                )
+                              }
+                              onAction={nativeAction}
+                            />
+                          ) : field.type === 'time' ? (
+                            <div style={{ display: 'grid', gap: 'var(--space-2)', minWidth: 0 }}>
+                              <SelectField
+                                label={field.label}
+                                placeholder="Choose how to stop…"
+                                placement="bottom start"
+                                value={values[`${key}:when`] ?? ''}
+                                options={timeModes}
+                                onChange={(value) => change(`${key}:when`, value)}
+                              />
+                              {values[`${key}:when`] === 'named' ? (
+                                <>
+                                  <SelectField
+                                    label="Named stopping time"
+                                    placeholder="Choose a named time…"
+                                    placement="bottom start"
+                                    value={values[`${key}:named`] ?? ''}
+                                    options={(choices.timeOptions?.namedDeadlines ?? [])
+                                      .filter((entry) => view.clock.namedTimes.includes(entry.name))
+                                      .map((entry) => {
+                                        const { day, hour, minute } = clockParts(
+                                          entry.at,
+                                          view.clock.offsetHours,
+                                        );
+                                        return {
+                                          id: entry.name,
+                                          label: `Next ${entry.name}`,
+                                          description: `Day ${day} · ${hour}:${minute}`,
+                                        };
+                                      })}
+                                    onChange={(value) => change(`${key}:named`, value)}
+                                  />
+                                  {!choices.timeOptions?.namedDeadlines.length && (
+                                    <p className="ol-caption">
+                                      No named stopping times are currently available. Choose a
+                                      duration or an exact simulation time.
+                                    </p>
+                                  )}
+                                </>
+                              ) : ['duration', 'absolute'].includes(values[`${key}:when`] ?? '') ? (
+                                <label style={{ display: 'grid', gap: 'var(--space-1)' }}>
+                                  {values[`${key}:when`] === 'duration'
+                                    ? 'Duration (game minutes)'
+                                    : 'Exact simulation time (seconds)'}
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={
+                                      values[
+                                        values[`${key}:when`] === 'duration'
+                                          ? `${key}:duration`
+                                          : key
+                                      ] ?? ''
+                                    }
+                                    aria-invalid={
+                                      (!!values[
+                                        values[`${key}:when`] === 'duration'
+                                          ? `${key}:duration`
+                                          : key
+                                      ]?.trim() &&
+                                        !!issues[key]) ||
+                                      undefined
+                                    }
+                                    aria-describedby={`${fieldId}-${key}-hint${issues[key] ? ` ${fieldId}-${key}-error` : ''}`}
+                                    onChange={(event) =>
+                                      change(
+                                        values[`${key}:when`] === 'duration'
+                                          ? `${key}:duration`
+                                          : key,
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                  <span className="ol-caption" id={`${fieldId}-${key}-hint`}>
+                                    {values[`${key}:when`] === 'duration'
+                                      ? choices.timeOptions
+                                        ? `Choose ${choices.timeOptions.minimumDuration / 60}–${choices.timeOptions.maximumDuration / 60} game minutes. The duration starts from the current clock when you review.`
+                                        : 'Refresh to read the supported duration.'
+                                      : `Current simulation time: ${view.clock.seconds.toFixed(1)} seconds.`}
+                                  </span>
+                                </label>
+                              ) : null}
+                              {values[`${key}:when`] && issues[key] && (
+                                <p className="ol-caption" id={`${fieldId}-${key}-error`}>
+                                  {issues[key]}
+                                </p>
+                              )}
+                            </div>
+                          ) : field.type === 'integer' ? (
+                            <label style={{ display: 'grid', gap: 'var(--space-1)' }}>
+                              {field.label}
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={values[key] ?? ''}
+                                aria-invalid={(!!values[key]?.trim() && !!issues[key]) || undefined}
+                                aria-describedby={`${fieldId}-${key}-hint${values[key]?.trim() && issues[key] ? ` ${fieldId}-${key}-error` : ''}`}
+                                onChange={(event) => change(key, event.target.value)}
+                              />
+                              <span className="ol-caption" id={`${fieldId}-${key}-hint`}>
+                                Whole units
+                                {field.minimum !== undefined ? `; minimum ${field.minimum}` : ''}
+                                {field.maximum !== undefined ? `; maximum ${field.maximum}` : ''}.
+                              </span>
+                              {values[key]?.trim() && issues[key] && (
+                                <span id={`${fieldId}-${key}-error`}>{issues[key]}</span>
+                              )}
+                            </label>
+                          ) : field.type === 'mode' ? (
                             <SelectField
                               label={field.label}
-                              placeholder="Choose how to stop…"
+                              placeholder={`Choose ${field.label.toLowerCase()}…`}
                               placement="bottom start"
-                              value={values[`${key}:when`] ?? ''}
-                              options={timeModes}
-                              onChange={(value) => change(`${key}:when`, value)}
-                            />
-                            {values[`${key}:when`] === 'named' ? (
-                              <>
-                                <SelectField
-                                  label="Named stopping time"
-                                  placeholder="Choose a named time…"
-                                  placement="bottom start"
-                                  value={values[`${key}:named`] ?? ''}
-                                  options={(choices.timeOptions?.namedDeadlines ?? [])
-                                    .filter((entry) => view.clock.namedTimes.includes(entry.name))
-                                    .map((entry) => {
-                                      const { day, hour, minute } = clockParts(
-                                        entry.at,
-                                        view.clock.offsetHours,
-                                      );
-                                      return {
-                                        id: entry.name,
-                                        label: `Next ${entry.name}`,
-                                        description: `Day ${day} · ${hour}:${minute}`,
-                                      };
-                                    })}
-                                  onChange={(value) => change(`${key}:named`, value)}
-                                />
-                                {!choices.timeOptions?.namedDeadlines.length && (
-                                  <p className="ol-caption">
-                                    No named stopping times are currently available. Choose a
-                                    duration or an exact simulation time.
-                                  </p>
-                                )}
-                              </>
-                            ) : ['duration', 'absolute'].includes(values[`${key}:when`] ?? '') ? (
-                              <label style={{ display: 'grid', gap: 'var(--space-1)' }}>
-                                {values[`${key}:when`] === 'duration'
-                                  ? 'Duration (game minutes)'
-                                  : 'Exact simulation time (seconds)'}
-                                <input
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={
-                                    values[
-                                      values[`${key}:when`] === 'duration' ? `${key}:duration` : key
-                                    ] ?? ''
-                                  }
-                                  aria-invalid={
-                                    (!!values[
-                                      values[`${key}:when`] === 'duration' ? `${key}:duration` : key
-                                    ]?.trim() &&
-                                      !!issues[key]) ||
-                                    undefined
-                                  }
-                                  aria-describedby={`${fieldId}-${key}-hint${issues[key] ? ` ${fieldId}-${key}-error` : ''}`}
-                                  onChange={(event) =>
-                                    change(
-                                      values[`${key}:when`] === 'duration'
-                                        ? `${key}:duration`
-                                        : key,
-                                      event.target.value,
-                                    )
-                                  }
-                                />
-                                <span className="ol-caption" id={`${fieldId}-${key}-hint`}>
-                                  {values[`${key}:when`] === 'duration'
-                                    ? choices.timeOptions
-                                      ? `Choose ${choices.timeOptions.minimumDuration / 60}–${choices.timeOptions.maximumDuration / 60} game minutes. The duration starts from the current clock when you review.`
-                                      : 'Refresh to read the supported duration.'
-                                    : `Current simulation time: ${view.clock.seconds.toFixed(1)} seconds.`}
-                                </span>
-                              </label>
-                            ) : null}
-                            {values[`${key}:when`] && issues[key] && (
-                              <p className="ol-caption" id={`${fieldId}-${key}-error`}>
-                                {issues[key]}
-                              </p>
-                            )}
-                          </div>
-                        ) : field.type === 'integer' ? (
-                          <label style={{ display: 'grid', gap: 'var(--space-1)' }}>
-                            {field.label}
-                            <input
-                              type="text"
-                              inputMode="numeric"
                               value={values[key] ?? ''}
-                              aria-invalid={(!!values[key]?.trim() && !!issues[key]) || undefined}
-                              aria-describedby={`${fieldId}-${key}-hint${values[key]?.trim() && issues[key] ? ` ${fieldId}-${key}-error` : ''}`}
-                              onChange={(event) => change(key, event.target.value)}
+                              options={workModes}
+                              onChange={(value) => change(key, value)}
                             />
-                            <span className="ol-caption" id={`${fieldId}-${key}-hint`}>
-                              Whole units
-                              {field.minimum !== undefined ? `; minimum ${field.minimum}` : ''}
-                              {field.maximum !== undefined ? `; maximum ${field.maximum}` : ''}.
-                            </span>
-                            {values[key]?.trim() && issues[key] && (
-                              <span id={`${fieldId}-${key}-error`}>{issues[key]}</span>
-                            )}
-                          </label>
-                        ) : (
-                          <SelectField
-                            label={field.label}
-                            placeholder={`Choose ${field.label.toLowerCase()}…`}
-                            placement="bottom start"
-                            value={values[key] ?? ''}
-                            options={options}
-                            disabledKeys={choices.choices
-                              .filter(
-                                (choice) =>
-                                  choice.kind === field.type &&
-                                  choice.roles.includes(key) &&
-                                  choice.requestIds?.includes(descriptor.id) !== false &&
-                                  !choice.accessible,
-                              )
-                              .map((choice) => choice.id)}
-                            onChange={(value) => change(key, value)}
-                          />
-                        )}
-                        {missing && (
-                          <p role="status">
-                            Your earlier {field.label.toLowerCase()} is not in the current permitted
-                            choices. Inspect or choose again.
-                          </p>
-                        )}
-                        {selected && (selected.distance !== undefined || selected.reason) && (
-                          <p className="ol-caption">
-                            {selected.distance !== undefined
-                              ? `${selected.distance.toFixed(1)} m away. `
-                              : ''}
-                            {selected.reason ?? ''}
-                          </p>
-                        )}
-                        {!options.length && ['entity', 'definition'].includes(field.type) && (
-                          <p className="ol-caption">
-                            No current choices. Inspect an accessible container in Inventory, then
-                            refresh these choices.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {currentReview && (
-                    <div
-                      className="ol-proposal"
-                      role={currentReview.result.ok ? 'region' : 'alert'}
-                      aria-label="Activity review"
-                    >
-                      <strong>{descriptor.label}</strong>
-                      <dl>
-                        {Object.entries(descriptor.fields).map(([key, field]) => (
-                          <div key={key}>
-                            <dt>{field.label}</dt>
-                            <dd style={{ marginInlineStart: 0 }}>
-                              {field.type === 'time' ? (
-                                <EventTime
-                                  time={Number(currentReview.input.activityArguments?.[key])}
-                                />
-                              ) : (
-                                (choices.choices.find(
-                                  (choice) =>
-                                    choice.id === values[key] &&
-                                    choice.kind === field.type &&
-                                    choice.roles.includes(key) &&
-                                    choice.requestIds?.includes(descriptor.id) !== false,
-                                )?.label ??
-                                workModes.find((mode) => mode.id === values[key])?.label ??
-                                values[key])
-                              )}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                      <p>{currentReview.result.message}</p>
-                      {Object.values(descriptor.fields).some((field) => field.type === 'time') && (
-                        <p className="ol-caption">
-                          This reviewed stopping time is fixed. Waiting, interruption and refresh
-                          never extend a started activity.
-                        </p>
-                      )}
-                      {reviewExpired && (
-                        <p role="status">
-                          This reviewed stopping time has passed. Review again before starting.
-                        </p>
-                      )}
-                      <p className="ol-caption">
-                        Review changes nothing. Starting rechecks current objects and conditions;
-                        later work can fail. Spent materials and completed transfers remain after
-                        stopping.
-                      </p>
-                    </div>
-                  )}
-                  <div className="ol-actions">
-                    <Button
-                      variant={currentReview?.result.ok ? 'secondary' : 'primary'}
-                      disabled={!canReview}
-                      busy={operation === 'preview'}
-                      onPress={() => void preview()}
-                    >
-                      Review activity
-                    </Button>
-                    {currentReview?.result.ok && (
-                      <Button
-                        variant="primary"
-                        disabled={!canReview || reviewExpired}
-                        busy={operation === 'start'}
-                        onPress={() => void submit()}
+                          ) : (
+                            <p role="status">
+                              Choices for {field.label.toLowerCase()} are unavailable in this world.
+                              Refresh choices or choose another activity.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {currentReview && (
+                      <div
+                        className="ol-proposal"
+                        role={currentReview.result.ok ? 'region' : 'alert'}
+                        aria-label="Activity review"
                       >
-                        Start activity
-                      </Button>
+                        <strong>{descriptor.label}</strong>
+                        <dl>
+                          {Object.entries(descriptor.fields).map(([key, field]) => (
+                            <div key={key}>
+                              <dt>{field.label}</dt>
+                              <dd style={{ marginInlineStart: 0 }}>
+                                {field.discovery ? (
+                                  <>
+                                    {selectedPage(key)?.selected?.label}
+                                    {field.type === 'entity' && ` · Reference: ${values[key]}`}
+                                  </>
+                                ) : field.type === 'time' ? (
+                                  <EventTime
+                                    time={Number(currentReview.input.activityArguments?.[key])}
+                                  />
+                                ) : (
+                                  (selectedPage(key)?.selected?.label ??
+                                  workModes.find((mode) => mode.id === values[key])?.label ??
+                                  values[key])
+                                )}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                        <p>{currentReview.result.message}</p>
+                        {Object.values(descriptor.fields).some(
+                          (field) => field.type === 'time',
+                        ) && (
+                          <p className="ol-caption">
+                            This reviewed stopping time is fixed. Waiting, interruption and refresh
+                            never extend a started activity.
+                          </p>
+                        )}
+                        {reviewExpired && (
+                          <p role="status">
+                            This reviewed stopping time has passed. Review again before starting.
+                          </p>
+                        )}
+                        <p className="ol-caption">
+                          Review changes nothing. Starting rechecks current objects and conditions;
+                          later work can fail. Spent materials and completed transfers remain after
+                          stopping.
+                        </p>
+                      </div>
                     )}
-                  </div>
-                  {invalid.length > 0 && <p className="ol-caption">{invalid[0]}</p>}
-                </>
-              )}
-            </>
-          )}
-          {message && <p role="status">{message}</p>}
-        </div>
-      )}
-    </Section>
+                    <div className="ol-actions">
+                      <Button
+                        variant={currentReview?.result.ok ? 'secondary' : 'primary'}
+                        disabled={!canReview}
+                        busy={operation === 'preview'}
+                        onPress={() => void preview()}
+                      >
+                        Review activity
+                      </Button>
+                      {currentReview?.result.ok && (
+                        <Button
+                          variant="primary"
+                          disabled={!canReview || reviewExpired}
+                          busy={operation === 'start'}
+                          onPress={() => void submit()}
+                        >
+                          Start activity
+                        </Button>
+                      )}
+                    </div>
+                    {invalid.length > 0 && <p className="ol-caption">{invalid[0]}</p>}
+                  </>
+                )}
+              </>
+            )}
+            {message && <p role="status">{message}</p>}
+          </div>
+        )}
+      </Section>
+    </div>
   );
 }

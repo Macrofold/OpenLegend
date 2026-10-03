@@ -1,6 +1,10 @@
 # Next priority batch — feature specification
 
-**Status: proposed assignments, not runtime implementation approval or delivered behavior.** Prepared on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | NP04 camp-supply discovery is implemented and verified; the other assignments and combined acceptance remain open. | 2026-10-03   |
+
+Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
 
 ## Purpose and priority
 
@@ -179,7 +183,7 @@ Reconcile the exact composition child under [INV-3/INV-6](../maintainers/inventi
 
 ### Purpose and current gap
 
-Make the already implemented camp activities usable when a scene or inventory contains many objects. Today the camp form examines the first 32 visible objects before checking whether they can serve its requested role, examines a possession prefix, and presents a static select. An eligible fire or fuel source can disappear behind unrelated objects. A ground cache is offered only after the character has explicitly inspected it; opening the browser inventory alone does not perform that character action. The warning to inspect or narrow the search has no complete route in this form.
+Make the already implemented camp activities usable when a scene or inventory contains many objects. **Implemented October 3, 2026; scoped acceptance is recorded in [camp-life evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).** At the planning baseline, the camp form examined the first 32 visible objects before checking whether they can serve its requested role, examined a possession prefix, and presented a static select. An eligible fire or fuel source could disappear behind unrelated objects. A ground cache was offered only after the character had explicitly inspected it; opening the browser inventory alone does not perform that character action. The warning to inspect or narrow the search had no complete route in that form.
 
 This is a completion of the existing gather/pack/fuel and finite fire-watch journeys, not a new survival activity. See [camp activities](next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [camp rules](../worlds/base/camp-routines.md) and [inventory UX](../ui-ux/inventory.md).
 

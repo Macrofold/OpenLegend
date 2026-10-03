@@ -11,6 +11,10 @@ export const DOMAIN_COUNTERS = [
   'spatialBuilds',
   'spatialQueries',
   'spatialCandidates',
+  /** Lazy queried-cell metadata built only for live discovery continuation. */
+  'spatialMembershipBuilds',
+  'spatialMembershipCells',
+  'spatialMembershipCandidates',
   /** Exact per-target sight tests (after cache misses) and sight-cache hits. */
   'senseTests',
   'senseCacheHits',

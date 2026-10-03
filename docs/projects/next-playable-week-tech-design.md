@@ -1,6 +1,10 @@
 # Next playable week — technical design
 
-**Status: implementation authorized in chat; delivery in progress.** Historical design baseline: local `main` and refreshed `origin/main`, `6664144a`, October 2, 2026. Assigned execution inherits the planning commit recorded below. These documents alone delivered no runtime change. [Feature specification](next-playable-week-feature-spec.md) owns the agreed player behavior; [PW01–PW11](../maintainers/next-playable-week.md) owns assignment, dependencies and completion state.
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Chosen camp activities and supply selection are implemented; broader integration and learning acceptance remain open. | 2026-10-03   |
+
+Implementation was authorized in chat. Historical design baseline: local `main` and refreshed `origin/main`, `6664144a`, October 2, 2026. Assigned execution inherits the planning commit recorded below. These documents alone delivered no runtime change. [Feature specification](next-playable-week-feature-spec.md) owns the agreed player behavior; [PW01–PW11](../maintainers/next-playable-week.md) owns assignment, dependencies and completion state.
 
 ## Scope, risk and capacity
 

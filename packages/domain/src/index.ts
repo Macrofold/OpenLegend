@@ -76,6 +76,7 @@ export {
   isWalkable,
   nearbyEntities,
   sameSurfacePoint,
+  spatialCandidateMembershipKey,
 } from './spatial.js';
 
 export * from './mind.js';
