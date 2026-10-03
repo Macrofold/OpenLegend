@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-10-03 — Five researched product and behavior proposals
+
+The [five-specification package](projects/five-product-feature-specs.md), based on `docs/design-needs-register` at `1627d51c79840ce8b5de24627bd2f552e42e97e9`, develops the requested priorities in order: continuing NPC lives, attention/crowds/scenes, world creation from a short premise, editable shelters/rain and world-authored stats/checks. Each includes concrete behavior, real player/NPC scenarios, uncertainty and failure, incentives and operating economics, a bounded first release and cited primary-source research with explicit limits.
+
+Recommendations include continuing chosen finite work without constant deliberation; truthful observer-specific attention and separately staged timed speech; a supported reviewable local world opening; reusable light shelter parts with staged moisture/recovery; and optional uncertain practical work with real outcomes and honest attempt continuity. These are proposed behavior and tuning, not newly accepted world laws or claims of implementation. Exact first-world population, geometry, drying, timing and capacity still require the documented qualification.
+
+Existing PS/ND/INV/EWF/action/state/object/spatial owners retain delivery and checkbox states. PS-L19–PS-L22 and the new WC/SH/ST inventories retain scope and economic choices, including explicit no-new-cap decisions. The package links current contracts and records its documentation-only review. Mike explicitly requested product design before technical design, so no paired technical plans, classes, implementation assignments or runtime changes are added. No game, browser or paid-provider qualification is claimed by this work.
+
 ## 2026-10-02 — Fresh five-assignment priority batch
 
 The requested `create-parallel-tasks` pass audited current main, recent PW delivery and overlapping uncommitted save/family/privacy work before proposing [NP01–NP05](maintainers/next-priority-batch.md). The [paired feature/specification](projects/next-priority-batch-feature-spec.md) and [technical design](projects/next-priority-batch-tech-design.md) define AI outcome/cost repair, incremental sensory preparation, one positively certified invented-material chain, usable camp discovery/inspection and a feasibility-gated NPC reply preview. [Five standalone prompts](projects/next-priority-batch-prompts.md) reference complete scope and existing workflow without worker-to-worker communication, test-authoring mandates or new operational powers. No prior staffing-hour or spending allocation is inherited.

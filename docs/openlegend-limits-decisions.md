@@ -32,6 +32,8 @@ Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC
 
 Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L06](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, work growth and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
 
+Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

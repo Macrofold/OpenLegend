@@ -4,6 +4,10 @@
 
 [Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
 
+## Five researched product specifications
+
+[Five product and behavior specifications](../projects/five-product-feature-specs.md) develops continuing NPC lives, attention/crowds/scenes, world creation from a premise, editable shelters/rain and authored stats/checks in that order. Each includes detailed behavior, player/NPC scenarios, economics, performance implications, cited primary research and proposed qualification stages. PS02–PS04, ND01, ND07/narrow ND08 and ND03 retain their existing delivery owners and proposed limits. Mike requested product design before technical design; these proposals do not close implementation tasks or claim new runtime capacity.
+
 ## Product scalability and persistent participation
 
 [Product scalability](../product-scalability/README.md) captures the accepted strategic direction for federated communities, protected personal domains, lower-detail background lives, bounded attention and scenes, consequence-preserving logout, and forecast local campaigns against canonical adversaries. Start with the [feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md). [PS01–PS08](product-scalability.md) owns cross-feature delivery and [the policy inventory](../limits/product-scalability.md) owns unresolved tuning. This is documentation and future behavior, not a claim of shipped background simulation or million-player capacity; existing subsystem and operational scalability owners retain their responsibilities.
