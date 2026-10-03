@@ -140,12 +140,7 @@ PW10 uses AE09's existing execution owner for a finite gather/pack/fuel method a
 
 ## Known bugs
 
-Ordered by impact. **High:** breaks play, saves or data. **Medium:** wrong in-memory state or a latent failure with no current player-visible effect. **Low:** cosmetic or diagnostic only.
-
-- [ ] **Medium — action history keeps an immer draft instead of plain data.** Found 2026-09-29 during the [level-1 live check](../verification/level1-decisions.md#live-check-september-29); reproduced on `origin/main` `0382be76` with fake model clients.
-  - **What happens:** when a queued plan step runs (for example a second eat queued behind another action), `beginActivity` in `packages/domain/src/action-experience.ts` stores the step's `command` object directly in the new history entry. That object is still the immer draft proxy, so the in-memory world keeps a proxy at `actionExperience.occurrences[actorId][n].command` after the change finishes.
-  - **Impact today:** none for players. The in-memory world uses immer with auto-freeze off, so the proxy still reads normally: saves to PostgreSQL write correct JSON, and reopening the world from the database gives clean plain data. Anything that `structuredClone`s the in-memory world fails with “could not be cloned” until the next reload. This happens today in the test helper `editWorld` (`tests/fixtures/service.ts`) after a queued meal, and would happen in any future runtime code that copies the world.
-  - **Fix:** store a plain copy (`current(command)` when `isDraft(command)`, or a structured copy) and check other places that store caller-supplied objects into `actionExperience`. Verify with a queued second meal followed by `structuredClone(world)`.
+The previously listed command-draft escape is repaired, not a second open task. [AE04](#ae04--connected-experience-and-same-version-durability) owns the delivered plain-command snapshot and its [actual caller, cloning and current-format checkpoint evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026). Source at `b528af6` uses `cloneValue(command)` in the history owner. The September 29 and earlier camp-fire reproductions remain historical evidence; this documentation review did not rerun them or establish that all action history is defect-free.
 
 ## Delivery evidence and boundaries
 
