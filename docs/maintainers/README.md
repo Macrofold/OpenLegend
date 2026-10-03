@@ -117,4 +117,3 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in the linked topic reports, open choices in open decisions, and history in the documentation changelog.
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
-
