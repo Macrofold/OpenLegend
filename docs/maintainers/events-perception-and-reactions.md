@@ -20,7 +20,7 @@ Inspect these current code areas before implementation:
 
 | Area                               | Files / symbols                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Native needs, movement, encounters | `packages/domain/src/kernel.ts`: `nativeSurvival`, `advanceWorld`, `observeActor`                                |
+| Native needs, movement, encounters | `packages/domain/src/kernel.ts`: `nativeReservoirResponse`, `advanceWorld`, `observeActor`                       |
 | Sensing and spatial candidates     | `packages/domain/src/spatial.ts`: `spatialCandidates`, `nearbyEntities`; `perception.ts`                         |
 | Event and experience authority     | `packages/domain/src/events.ts`: `emit`, `finish`; `experience.ts`: `mutateExperience`; `types.ts`               |
 | Actor capabilities                 | `packages/domain/src/living.ts` and current body/actor mutations                                                 |
