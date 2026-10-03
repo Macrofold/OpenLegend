@@ -4,6 +4,12 @@ A practical standard for deciding what the player sees, how controls behave and 
 
 **Research updated:** October 1, 2026. **Runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
 
+## Game interfaces and the inventory redesign
+
+The October 3 [game interface atlas](games/README.md) adds actual locally embedded screenshots, control/interaction walkthroughs, original player feedback and Open Legend applications. It includes a detailed BG3 study and RPG, survival, simulation and multiplayer comparisons. The [single research ledger](research.md#game-interface-screenshot-atlas) remains the source index; per-game dossiers hold detailed image evidence rather than a second handbook.
+
+Mike's requested correction is now explicit: open a world container, keep its grid beside the player's belongings and manipulate items directly; contextual activities must not expose a generic execution form. The [current-source audit](current-interface-audit.md) explains why the existing experience differs. The [feature specification](../projects/game-interaction-redesign-feature-spec.md) and [technical design](../projects/game-interaction-redesign-tech-design.md) are proposed implementation, not a shipped UI or a runtime test result. The relevant chapters incorporate the direction so it is not isolated in a research appendix.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.

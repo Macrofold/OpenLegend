@@ -4,7 +4,29 @@
 
 ## Scope and design objective
 
-The objective is not to reproduce the appearance of Baldur's Gate 3. It is to let a player answer **what do I have, where is it, what can I do with it, and what will change?** without repetitive bookkeeping or accidental loss.
+Let the player see and handle their belongings, open a physical chest and move objects between the two without repetitive bookkeeping or accidental loss. The primary questions are **what do I have, where is it, what can I do with it, and what will change?**
+
+**October 3, 2026 direction:** Mike explicitly supersedes the routine destination-selector and activity-form experience. The target is an object-opened pair of item grids with direct transfer. The [feature specification](../projects/game-interaction-redesign-feature-spec.md), [technical design](../projects/game-interaction-redesign-tech-design.md) and [screenshot atlas](games/README.md) make that direction concrete. This is a design target; the runtime described below has not been replaced by this documentation change.
+
+## Open the object and keep both inventories visible
+
+Opening a reachable, permitted container from the world or its selected-object details opens **Your belongings** and **the named container** together. Each side is an item collection. Chest examples describe the intended interaction; the first runnable slice uses a currently supported native bag/container, without implying that fixed chest mechanics already exist. The current collection/detail split is not that interaction, and neither collection should disappear while the player chooses where an item goes. [Pinned diagnosis](current-interface-audit.md)
+
+Use a recognizable item grid as the ordinary presentation, with readable names for unfamiliar objects, quantities, equipped state and deliberate item selection. An optional compact list or accessible collection view supports the same actions. Artwork, rarity color and hover cannot be the only way to identify an item. Cells organize presentation; native object identity, capacity and stack rules remain authoritative. Sorting is not merging.
+
+The open external object supplies the transfer destination. Drag across, use the visible **Move to Camp chest** / **Take into backpack** action, or use a discoverable quick-move shortcut. All routes submit the same native intention. Routine reversible movement commits from that gesture, without another destination picker or review form. Item details, comparison and a requested quantity choice are local supporting controls. A Split stack popover retains both endpoints; changing quantity refreshes eligibility without making the player select the same container again.
+
+Keep source and destination identities stable during drag, pending work, paging and viewport changes. An ordinary release over scenery cancels; intentional Drop has its own supported route. After actual admission, show the committed quantity or a truthful refusal. Unknown receipt status is not failure or permission to repeat the transfer. A full container, moved item or lost access never redirects the move automatically.
+
+Carried bags open within their side with breadcrumbs; opening another world container deliberately changes the external side. The initial workspace has one external object, not a dropdown representing every nearby container. A separately entered storage-finding tool may retain bounded search and permission-safe discovery, but it is navigation or advanced organization rather than the price of moving a normal item. Nearby quick-deposit automation requires separately defined native scope and batch semantics.
+
+On narrow screens, stack the named collections before resorting to source/destination views with a persistent counterpart strip. Keep the same selected item, amount and reading positions. Do not solve narrow fit by restoring the destination dropdown. An expanded inventory is a deliberate task workspace, with a clear return to the world; ordinary panel dimensions do not dictate its two-collection layout.
+
+The world owns reach, line of access and permission. When the object is too far away, explain that on the object and offer a deliberate approach action if supported; selection and inspection do not move the player or read hidden contents. See [object opening and contextual activity](world-interaction.md#object-opening-and-contextual-activity). The current bundled-world threshold and its nonidentical displayed-distance calculation are documented in the audit, not reimplemented by presentation.
+
+This target adopts the readable physical relationship seen in BG3, Minecraft and Factorio while avoiding their documented clutter, hidden shortcuts and platform inconsistencies. Terraria/Stardew's bulk conveniences are candidates after ordinary direct handling works. [Evidence and qualifications](research.md#game-interface-screenshot-atlas)
+
+## Current implementation and evidence
 
 Current Open Legend has item quantities, individual objects, nested containers, breadcrumbs, movement, split/merge actions, equipment labels and object history. [PW04](../maintainers/next-playable-week.md#pw04--inventory-for-exact-camp-tasks) adds a task workspace with scoped search, stable selected detail and exact quantity drafts, lazy destination discovery, and native equipment comparison. This chapter also describes **future patterns** for large collections, bulk actions, loadouts and trading. Those patterns are not delivered features or new authorization; [persistent objects](../maintainers/persistent-objects.md), [base-world work](../maintainers/base-world.md) and existing action/authority owners retain implementation scope. [Bounded native and actual layout/draft evidence](../verification/next-playable-week-engineer-4.md#pw04--native-inventory-and-partial-browser-checks) does not complete final current-server/large-content/input qualification in PW04 and UIUX02–UIUX04.
 
@@ -12,7 +34,7 @@ Current Open Legend has item quantities, individual objects, nested containers, 
 
 Use a clear hierarchy: inventory scope and capacity; search/filter/sort tools; collection; selected-item detail; contextual actions. Keep the current object or selection visible while choosing an action. Do not require opening an editor merely to see a name or available quantity.
 
-Use **lists** when scanning names, quantities, weights, states or comparable values matters; **grids** when recognizable appearance and spatial arrangement carry useful meaning; a compact grid plus persistent detail can support frequent equipment use. A grid is not automatically more game-like or more usable. Do not hide essential names behind hover, especially for newly invented items with fallback art. Support a readable nonvisual/keyboard route to the same collection.
+For this redesign, grids are the ordinary inventory and open-container presentation. Lists remain useful as an alternative for scanning long names and comparable facts; they are not the default transaction worksheet. Keep essential names accessible beyond hover, especially for newly invented items with fallback art, and provide the same operations through keyboard and nonvisual navigation.
 
 Keep task-critical row information concise: recognizable identity, quantity, equipped/locked state where supported, and the most useful comparison fact. Put long lore, provenance and modifier breakdowns in detail. Do not place a full action toolbar on every row in a thousand-item collection. A selected-item action area, context menu and explicit multi-select mode are more scalable.
 
@@ -20,7 +42,7 @@ Distinguish **focus**, **inspect item**, **select for a batch** and **execute an
 
 A wider workspace may show collection and detail together. When it narrows, retain the same object and draft; Back returns to the collection's previous filter and reading position. Resizing cannot clear a chosen transfer quantity or redirect it to a different item. [Adaptive layouts](foundations.md#adapt-the-task-not-just-the-boxes)
 
-The implemented inventory keeps its world/character/access/timeline identity independent of pane width and panel visibility. Quantity fields retain blank or intermediate text; All/Half only fill the draft. The selected object, source and intended destination stay visible through an exact transfer review. Changing a quantity clears the prior destination preview so the player must choose again for that amount. Source revisions, access and capacity are checked by the native action owner when the player submits.
+At the audited runtime baseline, inventory identity survives pane width and visibility changes, and quantity fields retain blank/intermediate text. All/Half fill a draft, while a separate exact-transfer review still requires submission. Quantity changes clear the destination choice. The [audit](current-interface-audit.md) records that both collection/detail panes are hidden during destination selection. These are current implementation facts, not the target experience: retain native revision/access/capacity checks, but replace routine review and reselection with the direct interaction above.
 
 ## Search, sorting and filtering at scale
 

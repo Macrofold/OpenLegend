@@ -14,6 +14,16 @@ The implemented [PW11 workspace](../maintainers/next-playable-week.md#pw11--insp
 
 Keep NPC Talk, World Agent authoring and creator diagnostics semantically distinct. A character's speech must not become a provider-job console. A world-editing assistant may need structured validation/installation status that does not belong between in-world utterances.
 
+## Learn from game conversations without importing their world rules
+
+The [screenshot atlas](games/README.md) studies FFXIV, Guild Wars 2, World of Warcraft, BG3 and Disco Elysium alongside inventory and crafting games. Learn from explicit speaker/audience cues, a persistent composer, readable dialogue history, local item references and selective channel filtering. Keep natural-language talk primary where the game supports it; short topic suggestions supplement speech rather than turning conversation into an activity questionnaire. MMO channel selection is a persistent audience choice, unlike a dropdown that replaces opening a physical container. The [game dossiers](research.md#game-interface-screenshot-atlas) distinguish player praise from complaints and historical/platform variants.
+
+Talk should open from a person or conversation with a visible destination. An item chip names permitted context; it does not disclose hidden facts or grant the character new knowledge. “Talking to Ada” does not promise privacy from other hearers. Readable literary narration is useful; displaying another person's unobserved inner thoughts is not authorized by a reference game's style.
+
+The [pinned current audit](current-interface-audit.md) finds one session draft record with text/mode, not independently retained drafts for every NPC. Existing hide/reopen and reading behavior are useful, but do not prove the full scoped-draft target below. The [redesign](../projects/game-interaction-redesign-feature-spec.md#conversation-and-other-menus) explicitly requires safe recipient/world/control transitions and verifies them before claiming that behavior. No cross-account leak was reproduced by this source review.
+
+Preserve the latest fixed header/history/composer arrangement, vertical speech volume and dots-only pending presentation. Improve specific target/referral/reading interactions through that owner; do not replace it with a generic chat dashboard or expose model workflow between character utterances.
+
 ## Make capability and correction discoverable
 
 A blank World Agent conversation should offer a small set of useful, currently supported examples and make its role clear. Distinguish discussing an idea from changing the world; do not advertise unsupported actions as available merely because the model can describe them. Keep scope/permissions understandable without displaying every schema field. Microsoft HAX recommends capability communication and efficient correction. [S16](research.md#s16)

@@ -24,13 +24,13 @@ This adapts Nielsen's progressive-disclosure guidance, not a rule that all detai
 
 Group inputs that answer one question or affect one decision. Put the label above its control by default, with a specific hint only when needed. Keep the label closer to its field than to the previous field. Place validation adjacent to the affected control. Use section headings for separate purposes, not a border around every row.
 
-Examples: Quantity and Destination can form a transfer section; item lore and account preferences cannot. Currency unit belongs with the amount. Character identity and a destructive owner action should not look like peers in one undifferentiated form.
+Examples: a requested split quantity belongs beside the selected stack and the already-open destination; item lore and account preferences do not belong in that decision. Ordinary transfer uses [two named collections](inventory.md#open-the-object-and-keep-both-inventories-visible), not a Quantity/Destination form. Currency unit belongs with the amount. Character identity and a destructive owner action should not look like peers in one undifferentiated form.
 
 Use DOM order matching reading and keyboard order. Do not visually reorder an illogical form using CSS. A row wrapping onto two lines must still read correctly. Repeated rows should align the same kinds of values; use tabular numerals for changing counts when the theme supports them. Align numeric table columns consistently and retain units in headers or cells.
 
 ### When inputs stack
 
-Default to a vertical form. Put fields side by side only when all are short, closely related, naturally read together and fit their labels, values and errors at the current text scale. Examples: quantity plus unit; two coordinates when coordinate editing is actually part of the task. Name plus long description should stack. Do not give a one-digit quantity the same width as an invention description just to make columns equal.
+When the task legitimately requires a form, default its fields to a vertical arrangement. This is form-layout guidance, not a direction to turn ordinary gameplay into forms. Put fields side by side only when all are short, closely related, naturally read together and fit their labels, values and errors at the current text scale. Examples: quantity plus unit; two coordinates when coordinate editing is actually part of the task. Name plus long description should stack. Do not give a one-digit quantity the same width as an invention description just to make columns equal.
 
 A content-based fit test is more robust than a device-name breakpoint:
 

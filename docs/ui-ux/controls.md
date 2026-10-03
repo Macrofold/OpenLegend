@@ -2,6 +2,12 @@
 
 [Handbook](README.md) · [React](react.md) · [Verification](verification.md)
 
+## Start with the player's interaction
+
+For ordinary play, first identify the world object and immediate intention. Opening a chest, moving a stack, using an item or choosing a known recipe should not become a form because the native command has parameters. Context supplies already-known values; the interface asks only for consequential unresolved choices. Grids, direct item actions, short object menus and a small requested quantity control are the preferred interaction for inventory. [Object-opened inventory](inventory.md#open-the-object-and-keep-both-inventories-visible) · [Activity design](world-interaction.md#object-opening-and-contextual-activity)
+
+The control guidance below applies after that interaction is chosen. A well-built combobox cannot make a routine nearby-container selector the right game flow. Forms remain appropriate for explicit settings, creator editing and genuinely complex decisions. They are not the default presentation of gameplay capability schemas. [Screenshot-backed research](research.md#game-interface-screenshot-atlas)
+
 ## Choose the semantic control first
 
 | Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |

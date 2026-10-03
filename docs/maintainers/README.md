@@ -22,7 +22,7 @@
 
 ## Presentation and navigation delivery
 
-[UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. Existing subsystem trackers retain runtime implementation ownership; the handbook does not authorize a redesign.
+[UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. Its [game-interface research and redesign work](ui-ux.md#uiux07) links the screenshot atlas, current-source diagnosis and paired inventory/activity/chat design requested October 3. Research/design authorization does not imply runtime implementation; existing subsystem owners retain their native contracts and release gates.
 
 [SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.
 
