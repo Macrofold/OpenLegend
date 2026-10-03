@@ -1,7 +1,7 @@
 # Full documentation review
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Earlier corrections and the reusable skill are preserved; every document and open task is being reconciled with current source. | 2026-10-03   |
 
 ## Scope and source
