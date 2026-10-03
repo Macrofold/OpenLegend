@@ -13,6 +13,7 @@ Follow [root task authorization](../AGENTS.md#task-scope-and-authorization) for 
 Use these canonical owners rather than restating their workflows:
 
 - [Root](../AGENTS.md): planning, general task policy, startup trigger, completion and handoff.
+- [Prioritization](skills/openlegend-prioritize/SKILL.md): choosing future work by the experience it enables or protects; loaded for selection/reprioritization, not ordinary execution.
 - [Rebase](skills/openlegend-rebase/SKILL.md): base selection, refresh/reconciliation, worktree/history protections and conflict stops.
 - [Review](skills/openlegend-review/SKILL.md): routine/full review behavior, fixes and finding reports.
 - [Documentation](rules/documentation.md): tracker maintenance, current contracts, acceptance state and decision history.

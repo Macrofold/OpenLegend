@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Prioritize worthwhile experiences when choosing work
+
+Added [selectively loaded prioritization guidance](../.agents/skills/openlegend-prioritize/SKILL.md) through `AGENTS.md` and parallel-task selection. It adopts the owner-supplied eight principles: begin with a valued experience, preserve the relevant promise while reducing breadth, deliver a complete payoff, justify complexity and pressure, respect agency/competence and varied enjoyment, count total burden, and revise hypotheses using proportionate evidence. The refinement protects urgent reliability/integrity work and avoids requiring every increment to realize every product promise. Catalogue coverage, technical adjacency and document order no longer stand in for priority justification. User-selected scope and accepted requirements still control; no runtime or current roadmap is changed. [CG14 and CG05](maintainers/agent-guidance.md) distinguish instruction delivery from installed-agent dispatch qualification.
+
 ## 2026-10-03 — Complete the next priority batch
 
 Both remaining combined scenarios passed on merged local `main`: streamed conversation failure/accounting, and manufactured-container observation, browser selection/inspection and native camp execution. All five assignments are completed for their agreed scope, with multilingual verification deferred by Mike. The shared feature specification, technical design and original prompts moved together to `docs/projects/completed/`; incoming documentation and source-comment references were repaired. [Completion accounting](maintainers/next-priority-batch.md#combined-acceptance-and-closure--october-3-2026) retains broader parent work separately. No runtime implementation change or paid provider call was needed.

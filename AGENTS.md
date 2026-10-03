@@ -34,6 +34,7 @@ Identify the requested outcome, affected behavior, semantic owner, callers and c
 
 Use [README](README.md) for onboarding, relevant [Architecture](docs/architecture.md) sections for implemented behavior, and the [maintainer index](docs/maintainers/README.md) for tracked work's design, dependencies and exit criteria. Read needed sections, not entire archives or every linked example.
 
+- Choosing, comparing or reprioritizing future work (for example “what’s next?” or “pick the next projects”): read [Prioritization](.agents/skills/openlegend-prioritize/SKILL.md). Route by the request's intent, not those words; ordinary implementation, continuation or explaining the next step of an already-chosen task does not load this workflow.
 - UI/UX design, implementation or review, and frontend code changes (including new components/files): read the short [UI/UX essentials](.agents/rules/ui-ux.md) every task, then only the matching handbook chapters. Do not preload the full guide or research ledger.
 - TypeScript/tooling implementation or review: [TypeScript](.agents/rules/typescript.md)
 - Code changes or verification commands: [Verification](.agents/rules/verification.md)

@@ -21,7 +21,7 @@ Follow [AGENTS.md](../../../AGENTS.md) and [documentation ownership](../../rules
 
 ## Select and define the work
 
-When selecting, expanding or specifying the assignments, read [planning and task definitions](references/planning.md). Inspect current TODOs, accepted plans, relevant code and active work before deciding what remains. The four areas to consider are established-system bugs, engine/world foundations, world-specific gameplay and presentation. **They are search lenses, not quotas:** any number of assignments, including all of them, may come from one area.
+When choosing or reprioritizing the assignments, first apply [experience-led prioritization](../openlegend-prioritize/SKILL.md). Do not restart selection for a prompts-only handoff of an unchanged agreed plan. When selecting, expanding or specifying the assignments, read [planning and task definitions](references/planning.md). Inspect current TODOs, accepted plans, relevant code and active work before deciding what remains. The four areas to consider are established-system bugs, engine/world foundations, world-specific gameplay and presentation. **They are search lenses, not quotas:** any number of assignments, including all of them, may come from one area.
 
 Rank by the project's priorities, impact, urgency, dependencies and risk of building on a weak foundation. Avoid low-value padding, obsolete fixes and duplicate ongoing work. Make a cohesive parallel allocation with concrete completion criteria and realistic shared dependencies. Use the existing [design workflow](../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) when feature/technical specifications need creating or strengthening; its canonical document and approval rules remain controlling.
 

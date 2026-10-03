@@ -44,7 +44,7 @@ Shortcuts can help development, but must not create false confidence. For exampl
 
 ### 3. World behavior that makes play richer
 
-Consult relevant [repertoire proposals](../../../../docs/repertoires/README.md), action plans and existing game research. Favor a useful player/character journey over another isolated command or canned scene. In a survival-focused request, consider how obtaining resources, making things, caring for a place and responding to consequences connect into actual play; do not require survival content when the requested focus lies elsewhere.
+Consult relevant [repertoire proposals](../../../../docs/repertoires/README.md), action plans and existing game research. Favor a useful player/character journey over another isolated command or canned scene. When choosing gameplay work, select the valued experience before its supporting mechanics using [Prioritization](../../openlegend-prioritize/SKILL.md). Survival can offer discovery, dangerous opponents, useful invention, relationships or making a home; do not default to maintenance and supply management merely because nearby code supports them. The user’s focus controls which experiences to compare.
 
 Specify what starts the situation, what the character knows, which choices are available, what native actions can actually accomplish, and what changes in the world when they succeed or fail. Identify missing supporting mechanics rather than describing an attractive outcome the engine cannot deliver. Do not confuse a scripted demonstration with autonomous choice or an implemented primitive with reliable model behavior.
 
@@ -62,7 +62,7 @@ Use suitable game and application patterns from maintained research. For convers
 
 ## Rank the candidates and size the batch
 
-Make the priority reasoning visible: severity/urgency, player value, foundational dependencies unlocked, reach, risk of expensive future rework, effort, uncertainty and existing coverage. Prefer qualitative reasoning and evidence over invented numerical scores. State why major attractive alternatives are deferred without producing a second exhaustive backlog.
+Apply the prioritization skill’s experience, smallest-complete-delivery and full-burden comparison when choosing work. Make the priority reasoning visible: severity/urgency, player value, foundational dependencies unlocked, reach, risk of expensive future rework, effort, uncertainty and existing coverage. Prefer qualitative reasoning and evidence over invented numerical scores. State why major attractive alternatives are deferred without producing a second exhaustive backlog.
 
 Honor a user's named task or restricted focus. Enabling work may be necessary, but explain it. A broad candidate audit does not authorize unrelated implementation. If the requested count exceeds the useful independent work, explain the shortfall instead of padding the batch with minor chores or disguising serial dependencies as parallel tasks.
 
