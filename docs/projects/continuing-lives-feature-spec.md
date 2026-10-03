@@ -77,6 +77,8 @@ Lowering optional thought frequency can accidentally make hunger urgent before a
 
 This does not install an omniscient survival controller when an AI service fails. A resident can continue an already chosen meal plan or a supported authored immediate behavior. Unknown food, unexplored routes and unaccepted assistance remain unknown. A character who cannot solve a genuinely new problem may need a new decision, assistance or suffer consequences allowed by the world's rules.
 
+Distinguish inability within the fiction from inability of a required service. If a required supported decision is unavailable and allowing time to continue would impose an otherwise avoidable imminent need or danger consequence solely because that service failed, apply the coherent operational-failure boundary in section 9.3. Do not freeze only that actor while competitors continue, or hide the outage as a deliberate refusal. Optional unanswered opportunities may simply lapse under the disclosed policy. This requirement applies to provider outage and unresolved execution as well as exhausted funding.
+
 Before unattended operation is offered, demonstrate ordinary survival with the selected initial knowledge, supplies and habits. Test shortages separately. Abundant test supplies are not evidence that residents cope with an actual supply interruption.
 
 ### 4.2 What deserves a new decision
@@ -130,7 +132,7 @@ When a player approaches, the game presents the resident at a valid point in the
 
 Only interaction-relevant detail needs to become ready. Seeing a distant building does not require every inhabitant to start thinking. Sound, ranged effects, a fast approach and unusual senses may require attention before visual proximity. The product promise is readiness for supported interaction, not a universal activation distance.
 
-Any preparation delay is technical waiting. It must not secretly consume the arriving player's hunger, expose them to an unseen attack or claim that they already took part. A second player joins the same actual situation. One player leaving does not simplify an encounter that another is still actively affecting.
+Any preparation delay is technical waiting. Before destination admission, retain a valid source-side situation and do not invent destination hunger, attack exposure or participation to explain the delay. An already-present actor still experiences the actual continuing world's consequences while an interaction is prepared; technical waiting is not temporary immunity. Do not add fictitious travel duration or charge a failed arrival as successful travel. A second player joins the same actual situation. One player leaving does not simplify an encounter that another is still actively affecting.
 
 ### 6.2 Leave without changing the odds by watching
 
@@ -196,7 +198,7 @@ The world cannot multiply exportable output by changing calendar labels or stepp
 
 ### 9.1 Sell a supportable continuing world
 
-The service should describe three distinct promises: preserving stored history, continuing supported mechanical life, and funding optional new intelligence and richer expression. Buying storage does not promise perpetual reasoning. Paying for optional activity does not purchase immunity or superior outcomes in a contested encounter.
+The service should describe three distinct promises: preserving stored history, continuing supported mechanical life, and funding optional new intelligence and richer expression. Buying storage does not promise perpetual reasoning. Paying for optional activity must not buy preferential adjudication, hidden direct bonuses, immunity or an opponent deprived of its promised service. More legitimate preparation or production can affect later outcomes; disclose that effect rather than promising that all funding differences are competitively neutral. The recommended shared-world model funds a common activity profile, with incompatible privately subsidized production subject to the existing import rules.
 
 The recommended creator view is a plain-language activity profile, a current funding allowance, observed usage, a forecast range and an explanation of the dominant cost sources. Before enabling unattended operation, show whether the selected community can sustain its ordinary needs and commitments within the qualified profile. A creator can lower optional initiative, choose a smaller supported starting population, remove an expensive optional mechanic or fund more activity.
 
@@ -218,13 +220,15 @@ Changing that assumed cost to $0.01 multiplies every result by ten. A cheaper mo
 
 Use the remaining funded envelope to admit new optional activity after accounting for mandatory supported work, existing commitments, uncertain charges and a measured burst reserve. Exact prices and reserve sizes belong to later measured operational and commercial work. A fixed dollar promise for arbitrary invented mechanics would be dishonest.
 
+A fictional promise is not a perpetual compute reservation. A resident may make an unrealistic promise and later fail; retain that social fact without guaranteeing funded fulfillment. Automatically continuing work must declare a bounded funded operating window or renewable service envelope and what happens if renewal fails. A standing obligation may remain meaningful for years, but cannot force unlimited future inference or authorize new spending by itself. At the boundary, use the already disclosed continuation, notification, deferral or coherent suspension rule; never erase the obligation to make the budget appear balanced.
+
 ### 9.3 Proposed degradation order
 
 1. Stop redundant interpretation of unchanged circumstances and avoid generating ambient detail nobody needs.
 2. Reduce new optional initiatives, rich retellings and speculative investigation under the disclosed quiet policy.
 3. Stop admitting new optional expensive commitments when their continuation cannot be supported.
 4. Preserve already admitted mechanical consequences, necessary evidence and supported urgent responses within the funded operating envelope.
-5. If even that envelope cannot be maintained, use an explicit operational pause at a coherent boundary under existing pause/participation authority; announce what stopped and require an authorized resumption.
+5. If even that envelope cannot be maintained, or a required unavailable service would otherwise impose an outcome solely through its failure, use an explicit operational pause at a coherent boundary under existing pause/participation authority; announce what stopped and require an authorized resumption.
 
 The fifth step is a service failure or exhausted service allowance, not an ordinary optimization. It cannot selectively freeze a losing participant while opponents continue, erase an already admitted attack or suspend a producer while silently honoring its dependent exports. Coupled activity needs a coherent common boundary. A creator cannot obtain a competitive escape by deliberately withholding funding. Public/shared deployment needs the corresponding PS05/PS06 admission and operational policy before offering this mode.
 
@@ -361,6 +365,8 @@ Qualify long absence, burst arrivals, actual growth in memories and objects, rec
 | Is quiet operation actually cheaper? | Complete costs for the same supported scenario are measured across quiet/active conditions, including required work and memory |
 | Does history growth remain usable? | Long-return cases recover relevant changes, correct outdated beliefs and abstain from unknown detail without whole-history reconstruction |
 | Is overload honest and fair? | Noise, mass return and funding exhaustion cause the declared admission/degradation behavior without selective fictional immunity |
+
+Also test a provider outage just before necessary self-care, a preparation delay for an already-engaged actor, and a standing obligation outliving its funded operating window. These must respectively preserve the published failure contract, avoid immunity and retain the obligation without unlimited implied spending.
 
 Quality comparisons must include real human play and review of actual causal records. Scripted fixtures establish specific behavior, not sustained enjoyment or model quality. Proposed study workloads may include a small camp, a larger town and multiple quiet communities; they are experiment conditions, not promised population limits. Success thresholds for cost and latency must be selected from the offered service and measured route before release, rather than copied from another game's benchmark.
 

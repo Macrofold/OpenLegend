@@ -24,6 +24,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## PS02 — One interruptible life
 
+**Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md), especially stages 1–2 and CL-J01–06. This researched product detail supplies the first activity-selection and failure contract; technical design and all runtime acceptance below remain open.
+
 **Owners:** agency, native action/resource owners, perception/reaction intake, simulation time. **Depends on:** current admitted work and scoped event foundations; reconcile their actual implemented state rather than duplicate them.
 
 - [ ] Retain a chosen activity and supported continuation/interruption conditions through the existing goal/plan owner.
@@ -34,6 +36,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 **Exit:** one believable continuing activity reacts correctly and economically to new evidence, with owned records and measured complete-path behavior.
 
 ## PS03 — A bounded unattended community
+
+**Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md), especially quiet initiative, funding, long-return scenarios and stages 2–4. Existing PS-D06 and PS05/PS06 decisions retain funding and shared-operation authority.
 
 **Owners:** activity families, agency/cognition, work admission, world policy. **Depends on:** PS02.
 

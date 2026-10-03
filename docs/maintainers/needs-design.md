@@ -39,6 +39,8 @@ The table makes the remaining design work easy to find without creating a second
 
 These refinements should be completed in the existing PS project and decision owners before their affected slices are implemented. Elapsed-time integration, encounter optimization, ordinary absence handling and regional data ownership also have existing designs; their remaining delivery is not a reason to restart them here.
 
+**October 3 product proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) now develops the first activity families, interruptions, quiet initiative, return experience and funded-service behavior with cited research and scenario acceptance. Its recommendations remain proposed; affected technical design, PS-D choices and PS02–PS03 runtime delivery remain open. The [five-specification package](../projects/five-product-feature-specs.md) records the requested product-only scope.
+
 ## Worlds, rules and long-lived communities
 
 ### ND01 — Assemble a new world from a creator's premise

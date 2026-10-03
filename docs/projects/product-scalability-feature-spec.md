@@ -8,6 +8,7 @@
 - Implementation interfaces and sequence: [technical design](product-scalability-tech-design.md).
 - Single focused work tracker: [product scalability](../maintainers/product-scalability.md).
 - Constraints and unresolved tuning: [limits register](../limits/product-scalability.md).
+- Proposed product detail: [continuing NPC lives](continuing-lives-feature-spec.md) develops PS02–PS03 with researched behavior, economics, scenarios and acceptance. Its new recommendations remain proposals; technical design and runtime delivery are not completed by that document.
 
 ## 1. Purpose and audience
 

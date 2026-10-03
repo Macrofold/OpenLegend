@@ -4,6 +4,8 @@
 
 ## 1. What low-power progression promises
 
+The [continuing-lives feature specification](../projects/continuing-lives-feature-spec.md) supplies a detailed October 3 product proposal for the initial activity families, ordinary and failed journeys, quiet initiative, funded operation and behavioral qualification. This page retains the accepted cross-feature contract; new choices in that proposal are not current runtime behavior or automatically accepted policy.
+
 An unattended community can continue lives, projects, journeys, commitments, and selected new developments without executing every footstep or continuously reconsidering every goal. Its coarse outcomes need not equal a hypothetical detailed simulation. They must be legal and coherent outcomes of the admitted world rules, consistent with already-established history and actual permissions.
 
 Low-power mode may intentionally reduce the density of new social encounters, inventions, optional excursions, reflection, and narrative developments per unit of time. This is a world-policy choice, not a claim of exact equivalence. The world may feel quieter while humans are absent. Explain that policy instead of promising uninterrupted maximum autonomous activity.
