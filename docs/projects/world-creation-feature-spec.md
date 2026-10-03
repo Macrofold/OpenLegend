@@ -20,6 +20,8 @@ This feature assembles through the existing World Agent, draft, review, activati
 
 The initial authoring audience is an authorized creator using a supported World Agent surface. Current characterless sessions do not automatically have creator editing or authoring tools; expanding that surface remains separate participation work. This proposal also does not claim the current World Agent already supplies the complete initial-world creation and hosting journey.
 
+The first release hands the reviewed candidate to an **operator-prepared new host target**. Current [data preparation](../maintainers/production-data.md#df03--postgresql-only-runtime) requires separate world resources, while [PD11](../maintainers/production-deployment.md) retains future many-world provisioning. If no prepared target is available, keep the candidate non-running and explain that dependency. Creating a world does not authorize replacing an existing hosted world. This is a product boundary, not a new provisioning design.
+
 ## 3. Recommended first experience
 
 ### 3.1 A small inhabited place
@@ -311,13 +313,15 @@ A library update improves a mechanic. Reopening the prepared candidate preserves
 
 Someone signs in through a characterless session and asks to create or enter a world. They receive only the operations that this session actually supports. If authoring tools are unavailable, explain the current access route instead of pretending the world can be prepared there. An already prepared result can be inspected only through an existing permitted read. The product identifies the supported character-linking or invitation route and any missing entry capability without creating control rights, promoting a spectator or claiming public registration.
 
+In particular, the current invitation policy does not turn an existing characterless grantee into a player simply by redeeming another invitation. That promotion remains a separate supported-entry decision. A prepared world and an owner label cannot bypass it.
+
 ### WC-J14 — A beautiful premise is financially unworkable
 
 A world asks every inhabitant to continually reconsider every other inhabitant's thoughts. The service identifies both the disclosure conflict and the unbounded interaction demand. It proposes a supported local, voluntarily disclosed version if consistent with the creator's intent. If not, it retains the idea as unsupported. Buying more allowance cannot bypass privacy or turn an unbounded promise into an admitted mechanic.
 
 ## 12. Delivery and evidence
 
-**Stage 1: one familiar premise to one usable start.** Assemble a new local bundled-family world through existing drafts and host entry. Deliver visible assumptions, the supported starting cohort, real resources/knowledge, concrete review and exact-result creation. Retain, explain and block unsupported essential premises from this first stage; a short input can request one immediately. Use faithful simple art. Qualification includes an ordinary first session, a conflicting dependency, an unsupported essential, a canceled creation and reconnect after success. An internal one-resident probe may reduce development risk, but does not qualify the proposed six-resident default.
+**Stage 1: one familiar premise to one usable start.** Assemble a new local bundled-family world through existing drafts and an operator-prepared new host target. Deliver visible assumptions, the supported starting cohort, real resources/knowledge, concrete review and exact-result creation. Retain, explain and block unsupported essential premises from this first stage; a short input can request one immediately. Use faithful simple art. Qualification includes an ordinary first session, a conflicting dependency, an unsupported essential, a canceled creation and reconnect after success. An internal one-resident probe may reduce development risk, but does not qualify the proposed six-resident default.
 
 **Stage 2: selective revision and meaningful alternatives.** Preserve chosen parts, expose dependent changes and support a second genuinely different qualified composition, such as the existing charge-based family where its complete opening is supported. Validate that the workflow can change meaningful laws without silently restoring survival defaults. Expand supported alternatives and bounded repair while retaining the first stage's unsupported-essential boundary.
 
