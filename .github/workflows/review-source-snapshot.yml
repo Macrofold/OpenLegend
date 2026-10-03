@@ -1,4 +1,4 @@
-name: Documentation review source snapshot
+name: Documentation review incoming references
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
@@ -6,56 +6,41 @@ on:
 permissions:
   contents: read
 jobs:
-  snapshot:
+  references:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      AI_BUDGET_USD: '0'
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
         with:
           ref: 4a4632a88521475b87209eb7a7e1cc317c11c8df
-          fetch-depth: 0
           persist-credentials: false
-      - name: Package tracked text and revision inventory without archived content
+      - name: Inspect only incoming archived references to completed project names
+        env:
+          AI_BUDGET_USD: '0'
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
-          root = pathlib.Path.cwd()
-          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'documentation-review-source.zip'
-          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          entries = subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', 'HEAD']).split(b'\0')
-          allowed = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
-          inventory = []
-          with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as output:
-              for entry in entries:
-                  if not entry:
+          names = ('world-agent-context', 'invention-questions-feature-spec', 'invention-questions-tech-design', 'appraisal-social-continuity-feature-spec', 'appraisal-social-continuity-tech-design')
+          paths = subprocess.check_output(['git', 'ls-files', '-z', '--', 'archive']).decode().split('\0')
+          matches = []
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-incoming-references.zip'
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as out:
+              for name in paths:
+                  if not name or pathlib.Path(name).suffix not in ('.md', '.mdc', '.txt'):
                       continue
-                  metadata, raw_name = entry.split(b'\t', 1)
-                  mode, kind, sha, size = metadata.decode().split()
-                  name = raw_name.decode()
-                  path = root / name
-                  row = {'path': name, 'git_sha': sha, 'size': int(size) if size != '-' else None, 'included': False}
-                  if kind == 'blob' and mode != '120000' and 'archive' not in pathlib.PurePosixPath(name).parts and (path.suffix in allowed or name in ('LICENSE', 'CLAUDE.md', '.env.example', '.prettierignore', '.gitignore')):
-                      data = path.read_bytes()
-                      data.decode('utf-8')
-                      output.writestr(name, data)
-                      row['included'] = True
-                      row['sha256'] = hashlib.sha256(data).hexdigest()
-                  inventory.append(row)
-              output.writestr('_review_source_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
-              output.writestr('_review_prior_changes.patch', subprocess.check_output(['git', 'diff', '--binary', 'e4d25a06105fbc1321c9a0e7a7a12524e7644ce1', 'HEAD']))
-          print(f'Pinned revision: {revision}; included {sum(x["included"] for x in inventory)} tracked text files; archive content excluded.')
+                  data = pathlib.Path(name).read_bytes()
+                  text = data.decode('utf-8')
+                  hits = [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if any(term in line for term in names)]
+                  if not hits:
+                      continue
+                  out.writestr(name, data)
+                  matches.append({'path': name, 'sha256': hashlib.sha256(data).hexdigest(), 'references': hits})
+              out.writestr('_incoming_references.json', json.dumps(matches, indent=2))
+          print(json.dumps(matches, indent=2))
           PY
-      - name: Download only the repository-pinned formatting and YAML packages
-        run: |
-          npm pack prettier@3.6.2 yaml@2.8.1 --ignore-scripts --pack-destination "$RUNNER_TEMP"
       - uses: actions/upload-artifact@v4
         with:
-          name: documentation-review-source-4a4632a-complete
-          path: |
-            ${{ runner.temp }}/documentation-review-source.zip
-            ${{ runner.temp }}/prettier-3.6.2.tgz
-            ${{ runner.temp }}/yaml-2.8.1.tgz
+          name: review-completed-project-incoming-references
+          path: ${{ runner.temp }}/review-incoming-references.zip
           retention-days: 1
           if-no-files-found: error
