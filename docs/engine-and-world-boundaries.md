@@ -64,7 +64,7 @@ The desired boundary is **stable interfaces around replaceable behavior**, not a
 
 Conservation of ordinary physical energy is a world premise, not a universal platform invariant. Correct attribution and authorization of a supported source operation are runtime invariants. Enabling fantasy is not permission for every proposed effect; the relevant native capability or admitted algorithm must exist.
 
-The runtime also has computational limits. Its current spatial substrate is an authoritative two-dimensional ground plane with a three-dimensional presentation. This design does not promise arbitrary spacetime topology, perfect physical simulation, unrestricted shared minds, or every imaginable organism immediately. A missing primitive remains an explicit host-capability gap.
+The runtime also has computational limits. Its current spatial substrate is authoritative XYZ with body/support-aware sensing, reach and movement, plus bounded navigation providers over supported planar patches. It is not a globally flat two-dimensional simulation with height supplied only by presentation. [Spatial world](spatial-world.md) owns the exact supported geometry, frames and query limitations. This design does not promise arbitrary spacetime topology, perfect physical simulation, unrestricted shared minds, or every imaginable organism immediately. A missing primitive remains an explicit host-capability gap.
 
 ## 5. A repeatable boundary decision
 
@@ -183,7 +183,7 @@ Keep these boundaries distinct:
 - social obligations;
 - proposed effects and actual outcomes.
 
-The [agency specification](agent-agency.md) already permits empty or repeated decision operations and persistent pursuit. Use it; do not preserve the current single `talk`/`act`/`think` response shape as a universal engine limit. Provider JSON constraints are adapter concerns, not the world's ontology.
+The [agency specification](agent-agency.md) and current native response contract already support a bounded `operations` array, including an empty response and repeated supported operation kinds. Preserve that one admission/receipt owner; do not reintroduce a single `talk`/`act`/`think` slot or treat the current operation-count bound as a universal engine ontology. Provider JSON constraints remain adapter concerns, while native capability, dependency and authority checks remain mandatory.
 
 A new need should supply a bounded meaningful concern to a compatible controller. A new sense should provide permitted evidence. A new action should expose discoverable, typed affordances. None should require its name to be added to every prompt or scheduler branch.
 
