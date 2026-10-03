@@ -30,7 +30,8 @@ export class OpenIdAuthentication implements AuthenticationAdapter {
         timeout: 10,
         execute: [
           oidc.enableNonRepudiationChecks,
-          ...(this.config.insecureLoopback ? [oidc.allowInsecureRequests] : []),
+          // Only a plain-HTTP provider (local Keycloak) relaxes HTTPS; never a hosted one.
+          ...(new URL(this.config.issuer).protocol === 'http:' ? [oidc.allowInsecureRequests] : []),
         ],
       },
     );

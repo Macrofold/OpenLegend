@@ -238,6 +238,14 @@ Presence-order entries: six times configured player capacity, default 600.
 
 **Reason / tradeoff:** Retain reconnect/late-heartbeat ordering for the supported connections without an unlimited map. [Configuration](../../apps/server/src/config.ts).
 
+## AU09
+
+**Current (October 2, 2026) · Restrictiveness: Safe.** Changed by [IDP01](../projects/auth0-sign-in.md); previously plain HTTP required both addresses on this machine, so a local game could not use a hosted provider.
+
+OIDC mode judges the game's public address and the login service separately. HTTPS is always accepted. Plain HTTP is accepted only on a loopback host (`localhost`, `127.0.0.1`, `::1`) with the explicit `OPEN_LEGEND_OIDC_LOOPBACK_HTTP=true` option, and an HTTP game address also requires a loopback bind address. Session, login and invite cookies are `Secure` whenever the public address is HTTPS. The HTTPS checks in the login library are relaxed only for a plain-HTTP provider. Configured and binding issuers are normalized, so a bare-host issuer matches with or without its trailing slash.
+
+**Reason / tradeoff:** Keep credentials and session cookies off plain HTTP outside the local machine while allowing local development against a hosted provider such as Auth0. [Configuration](../../apps/server/src/config.ts).
+
 ## PB13
 
 **Reported · Restrictiveness: Safe.**

@@ -51,6 +51,7 @@ import {
   GOD_SPAWN_OPTIONS,
   TRAIT_BANK,
   type WorldEvent,
+  type WorldState,
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
 import type { WorldService } from './world-service.js';

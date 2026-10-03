@@ -233,6 +233,8 @@ perception audience through the ordinary composer; it requires no provider setup
 work retains its existing provider admission. Current implementation and exact native/OIDC
 browser evidence are tracked in [MP01/MP04](maintainers/multiplayer.md#execution-notes--september-26-2026).
 Hosted security, regional/distributed ownership and full-load acceptance remain open.
+Auth0 is the selected login service. Local development may pair an HTTP loopback game address
+with an HTTPS provider; HTTP is never accepted off this machine ([IDP01](projects/auth0-sign-in.md)).
 
 ## World entry and maintenance
 

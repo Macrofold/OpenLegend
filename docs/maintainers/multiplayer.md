@@ -59,6 +59,14 @@ OIDC mechanism references: [official openid-client API](https://github.com/panva
 [Keycloak container/import guide](https://www.keycloak.org/server/containers). These do not
 qualify hosted operations, hostile-client security, live model quality or PF capacity.
 
+## Identity provider — Auth0
+
+Mike selected Auth0 as the world login service on October 1, 2026 ([D05](../../archive/05-project/open-decisions.md)). Account setup and dashboard configuration are operator work outside the repository; these tasks cover repository changes and the production configuration they depend on.
+
+- [ ] **IDP01 — Local sign-in with Auth0.** [Plan](../projects/auth0-sign-in.md). Code delivered October 2, 2026 ([AU09](../limits/multiplayer.md#au09)); all accepted/refused configuration cases checked directly. Remaining: the live two-account Auth0 run in the plan. Accept an HTTP loopback game address with an HTTPS login service, base `Secure` cookies on the actual public address, and normalize issuer spelling. Exit: the plan's completion criteria, including two real Auth0 accounts through invite enrollment at a loopback address.
+- [ ] **IDP02 — Production login service.** Before real players: a separate production Auth0 tenant whose own login domain (Auth0 custom domain) is the permanent issuer, a production application with the hosted HTTPS callback, the chosen social connections (Google, GitHub; Discord through the Auth0 marketplace connection or Discord's standard OIDC configuration) and the owner binding for the production world. Depends on hosting (D05). Exit: hosted sign-in and invite enrollment work through the custom domain, and the issuer is never changed after real accounts exist.
+- [ ] **IDP03 — Sign out of the login service too.** Sign out currently ends only the game session; Auth0 keeps its own session, so signing in again on a shared computer silently returns to the same account. End the provider session through its OIDC logout endpoint with an allowed post-logout address. Exit: after Sign out, the next sign-in asks for credentials. Before hosted release.
+
 ## Entry and maintenance execution notes — September 28, 2026
 
 Authorized by the [entry and maintenance plan](../projects/multiplayer-entry-maintenance.md); [verification](../verification/multiplayer-entry-maintenance.md) records the evidence.

@@ -414,7 +414,7 @@ async function initializeGameServer(
       ? new OpenIdAuthentication(config.authentication, now)
       : undefined;
   const cookie = (name: string, value: string, maxAge?: number) =>
-    `${name}=${value}; HttpOnly; SameSite=Lax; Path=/${config.authentication.mode === 'oidc' && !config.authentication.insecureLoopback ? '; Secure' : ''}${maxAge === undefined ? '' : `; Max-Age=${maxAge}`}`;
+    `${name}=${value}; HttpOnly; SameSite=Lax; Path=/${config.authentication.mode === 'oidc' && config.authentication.origin.startsWith('https:') ? '; Secure' : ''}${maxAge === undefined ? '' : `; Max-Age=${maxAge}`}`;
   const readCookie = (request: IncomingMessage, name: 'ol_session' | 'ol_login' | 'ol_invite') =>
     new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]{64})(?:;|$)`).exec(request.headers.cookie ?? '')?.[1];
   type StreamState = {

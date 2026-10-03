@@ -148,7 +148,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   if (mode === 'local' && !loopback(host))
     throw new Error('Local authentication requires a loopback bind address.');
   const origin = env['OPEN_LEGEND_PUBLIC_ORIGIN'] ?? '';
-  const issuer = env['OPEN_LEGEND_OIDC_ISSUER'] ?? '';
+  // Normalized so a bare-host issuer matches with or without its trailing slash (Auth0 signs
+  // tokens with `https://<tenant>/`). Issuers with a path, such as Keycloak realms, are unchanged.
+  const issuerUrl = (value: string) => (URL.canParse(value) ? new URL(value).href : value);
+  const issuer = issuerUrl(env['OPEN_LEGEND_OIDC_ISSUER'] ?? '');
   const clientId = env['OPEN_LEGEND_OIDC_CLIENT_ID'] ?? '';
   const insecureLoopback = env['OPEN_LEGEND_OIDC_LOOPBACK_HTTP'] === 'true';
   if (mode === 'oidc') {
@@ -165,21 +168,24 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       !clientId
     )
       throw new Error('OIDC requires an exact public origin, issuer and client ID.');
+    // Each address is judged separately: HTTPS always, plain HTTP only on this machine with the
+    // explicit development opt-in. A local game can therefore use a hosted HTTPS provider.
+    // docs/projects/auth0-sign-in.md#scope-idp01
+    const allowed = (url: URL) =>
+      url.protocol === 'https:' ||
+      (insecureLoopback && url.protocol === 'http:' && loopback(url.hostname));
     if (
-      insecureLoopback
-        ? !['http:', 'https:'].includes(publicUrl.protocol) ||
-          !['http:', 'https:'].includes(provider.protocol) ||
-          !loopback(publicUrl.hostname) ||
-          !loopback(provider.hostname) ||
-          !loopback(host)
-        : publicUrl.protocol !== 'https:' || provider.protocol !== 'https:'
+      !allowed(publicUrl) ||
+      !allowed(provider) ||
+      (publicUrl.protocol === 'http:' && !loopback(host))
     )
       throw new Error('OIDC requires HTTPS; explicit development HTTP is loopback-only.');
   }
   const bindings = z
     .array(accountBindingSchema)
     .max(256)
-    .parse(JSON.parse(env['OPEN_LEGEND_ACCOUNT_BINDINGS'] ?? '[]'));
+    .parse(JSON.parse(env['OPEN_LEGEND_ACCOUNT_BINDINGS'] ?? '[]'))
+    .map((binding) => ({ ...binding, issuer: issuerUrl(binding.issuer) }));
   if (mode === 'oidc' && bindings.some((binding) => binding.issuer !== issuer))
     throw new Error('Account bindings must use the configured issuer.');
   const players = z
