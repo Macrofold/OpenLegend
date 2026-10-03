@@ -82,7 +82,7 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
 /** Source-derived candidate overlay. Missing endpoints are findings, not invented exact nodes.
  * This graph is never submitted by a model or used as a second mutation authority.
- * docs/projects/world-agent-context/initial-foundation.md#4-small-shared-candidate-graph */
+ * docs/projects/completed/world-agent-context/initial-foundation.md#4-small-shared-candidate-graph */
 export function candidateGraph(
   world: WorldState,
   draft: AuthoringDraft,

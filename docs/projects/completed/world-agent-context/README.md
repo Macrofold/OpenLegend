@@ -1,8 +1,14 @@
 # World Agent context and invention loop
 
-**Status: finite foundation and approved custom-resource follow-up implemented and qualified; final-head CI remains the merge gate.** The owner’s “Okay implement all of it” approves WW18–WW23 and the initial graph/pipeline foundation. Design verification below remains historical evidence, not runtime completion.
+| Status    | Current progress                                                                                                                                       | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | The finite foundation and approved custom-resource follow-up are delivered and qualified; this packet retains their design and implementation history. | 2026-10-03   |
 
-## Implementation plan
+The finite foundation and approved custom-resource follow-up are complete under [WW17–WW23](../../../maintainers/world-agent-writes.md#context-and-invention-loop-design). The [qualification report](../../../verification/world-agent-context.md) distinguishes native, browser and live-provider evidence and the remaining broader deployment gates. The owner’s “Okay implement all of it” authorized this finite scope; it does not approve every later invention proposal.
+
+## Historical implementation plan
+
+The plan, branch names, estimates and spending below describe the original execution, not new work, a current checkout or renewed spending authorization. The linked tracker owns current task state.
 
 Implement the approved feature/technical design and initial foundation end to end. Initial estimate: 3,000–6,000 changed runtime logic lines across server context, graph/check projections, authoring records, shared tool descriptors, execution and review UI; refine this estimate as adapters are integrated. Risk is high across authority/privacy, immutable approval, transactional receipts, bounded preparation, restore and real spending. Preserve existing domain mutation owners, PostgreSQL and the no-legacy-support policy.
 
@@ -46,8 +52,8 @@ Completion requires a paired feature specification and technical design, a sourc
 - [Prompt construction template](examples/prompt-template.yaml)
 - [Sling context](examples/sling-context.yaml), [field guide](examples/recipe-fields.yaml), [submission/results](examples/recipe-submit.yaml) and [sleep interaction context](examples/sleep-context.yaml)
 - [Candidate graph](examples/candidate-graph.yaml) and [pipeline/readiness](examples/pipeline-state.yaml) illustrative projections
-- [Implementation and design progress](../../maintainers/world-agent-writes.md#context-and-invention-loop-design)
-- [Limits and constraints](../../limits/inventions.md#world-agent-context-proposal)
+- [Implementation and design progress](../../../maintainers/world-agent-writes.md#context-and-invention-loop-design)
+- [Limits and constraints](../../../limits/inventions.md#world-agent-context-proposal)
 
 Source baseline: original context design at `aec10457e564eaee92a67c4f33030ae21daa31a7`; graph/pipeline revision starts from `codex/integrate-invention` at `35990702f9d5bb7b01e54ee5a37b86f2dad4f920`; refreshed `origin/main` at `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` is already an ancestor. No branch transition or additional merge was needed for this design.
 
@@ -59,9 +65,9 @@ The graph/pipeline revision adds independent source/contract reviews against the
 
 ## Implementation progress (historical sequence)
 
-The dated/current qualification summary is in [verification](../../verification/world-agent-context.md#final-local-qualification). The following paragraphs preserve the findings and decisions that led to it; their former blockers are not current completion claims.
+The dated/current qualification summary is in [verification](../../../verification/world-agent-context.md#final-local-qualification). The following paragraphs preserve the findings and decisions that led to it; their former blockers are not current completion claims.
 
-The scoped context, typed submissions, derived graph/native checks, requirements and review UI are implemented. Native/transport scenarios, recovery, browser approval/Apply and local graph measurements are recorded in [implementation evidence](../../verification/world-agent-context.md). This supersedes the design-only statements above for runtime delivery; those sections retain the design-phase history. The recipe profile includes a fifth capability-request tool to keep broader supported work reachable. The open-ended discovery path can require two separately accounted Runs; this is not evidence of meeting the three-generation diagnostic target. Macrofold qualification, complete-request measurements and remaining findings must pass before overall completion.
+The scoped context, typed submissions, derived graph/native checks, requirements and review UI are implemented. Native/transport scenarios, recovery, browser approval/Apply and local graph measurements are recorded in [implementation evidence](../../../verification/world-agent-context.md). This supersedes the design-only statements above for runtime delivery; those sections retain the design-phase history. The recipe profile includes a fifth capability-request tool to keep broader supported work reachable. The open-ended discovery path can require two separately accounted Runs; this is not evidence of meeting the three-generation diagnostic target. Macrofold qualification, complete-request measurements and remaining findings must pass before overall completion.
 
 Review follow-up: live explanation-only testing exposed an unnecessary duplicate save. Current-request separation fixes that behavior in a subsequent real Run. Native review also corrected quota-blocked receipt reads, recursive-input admission depth and unsupported graph reference claims. The disk filled during a separate Macrofold checkout attempt; Git removed its incomplete copy and a 28 MB sparse checkout succeeded after space recovered. A policy test recorded PostgreSQL 53100 and conservative uncertainty. Docker and its existing PostgreSQL/mail services were recovered without deleting data; its stopped local scheduler was restarted. The successful discovery receipt subsequently reconciled through the accounting owner. The separate native-question permission contract remains an explicit decision; no existing connector-permission meaning is silently changed.
 
@@ -91,7 +97,7 @@ Remove duplicate recipe schema facts from its guide while retaining family-speci
 
 ## Current qualification result
 
-The explicit-invention sample at `fc7b2580` meets CTX01: 11,973 / 14,442 complete request bytes, two model generations, one successful save and no rejected calls. Policy submission, browser exact review/Apply, qualified native affordances and 25 native observations pass; the 15 current-PostgreSQL recovery observations remain applicable. [Final evidence](../../verification/world-agent-context.md#final-local-qualification) records exact scope, costs and the isolated Macrofold overlay. All three required OpenLegend CI gates pass at `fc7b2580`; no PR is merged. The separate paused staging deployment is not a code failure.
+The explicit-invention sample at `fc7b2580` meets CTX01: 11,973 / 14,442 complete request bytes, two model generations, one successful save and no rejected calls. Policy submission, browser exact review/Apply, qualified native affordances and 25 native observations pass; the 15 current-PostgreSQL recovery observations remain applicable. [Final evidence](../../../verification/world-agent-context.md#final-local-qualification) records exact scope, costs and the isolated Macrofold overlay. All three required OpenLegend CI gates pass at `fc7b2580`; no PR is merged. The separate paused staging deployment is not a code failure.
 
 ## Next approved slice: custom-resource dependency evidence
 
@@ -101,7 +107,7 @@ Estimated 60–100 runtime logic lines. Owners: `world-authoring-analysis.ts`, e
 
 Verify a disposable PostgreSQL definition → attachment → value-review sequence through selected tools, exact graph identities/roles, rate-driven stale-value refusal, binding evidence surviving unrelated value changes, private-body refusal and replay/restore. Reuse unchanged recipe/status/live-model evidence; this slice changes native graph evidence, not model prompts or execution. Inspect the full affected diff, update canonical graph/tracker/evidence, typecheck/build and required CI. Complete means accurate review dependencies and no changed native mutation semantics, with all selected checks passing. The selected base remains refreshed `origin/main` at `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`; branch remains `codex/integrate-invention`.
 
-The custom-resource slice is implemented and its six focused PostgreSQL checks, typecheck, production build and affected-diff review pass. Exact private read denial, native draining/stale-value rejection, independent attachment approval and restart preservation are recorded in [evidence](../../verification/world-agent-context.md#custom-resource-follow-up). No additional provider work was needed. General composition, physical sources, new family ports and emergent interactions remain the separately designed INV/EWF stages, not implied by these finite references.
+The custom-resource slice is implemented and its six focused PostgreSQL checks, typecheck, production build and affected-diff review pass. Exact private read denial, native draining/stale-value rejection, independent attachment approval and restart preservation are recorded in [evidence](../../../verification/world-agent-context.md#custom-resource-follow-up). No additional provider work was needed. General composition, physical sources, new family ports and emergent interactions remain the separately designed INV/EWF stages, not implied by these finite references.
 
 ## Resource qualification finding: replenishment timing
 
@@ -113,4 +119,4 @@ The live definition → attachment transition selected the right next profile bu
 
 The resource correction and actual definition/attachment browser Apply are verified. The attachment saved before the local turn deadline and later completed remotely; one internally retried provider timeout lacks complete usage, so the full reservation remains held. This limitation and the next native-retry qualification requirement remain under WW07; no further paid run was dispatched. The finite body/value graph slice is complete, without extending into undesigned physical-source composition.
 
-OpenCode retry handling is an external native-harness limitation, not permission to impose a new platform-wide policy. The pinned adapter exposes no reliable caller control for that outer retry loop; the old SDK chat retry option is not proof of controlling the current native loop. A reviewed caller/runtime contract and network-disabled failure fixture are required before resuming paid qualification. This task leaves that undesigned extension tracked under WW07 and preserves all uncertain spending.
+The missing caller control recorded during that historical run was subsequently supplied and qualified by the [structured-question implementation](../../../verification/invention-questions.md#current-review-and-local-checks). OpenLegend requests `limits.stop_on_model_error` for World Agent execution; the supported external adapter must honor it. This is not a platform-wide retry-policy change or proof that every deployed Macrofold runtime includes the contract. [WW07](../../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) retains the deployable-runtime gate and all unresolved charges from the original runs.

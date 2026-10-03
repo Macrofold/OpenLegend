@@ -45,7 +45,7 @@ export const questionAnswersSchema = z
   .max(3);
 
 /** Native question text is untrusted data, not an instruction or an approval. IDs and
- * exact displayed meaning are bound once by the server. docs/projects/invention-questions-tech-design.md
+ * exact displayed meaning are bound once by the server. docs/projects/completed/invention-questions-tech-design.md
  */
 export function normalizeQuestion(value: unknown): WorldAgentQuestion['questions'] {
   if (Buffer.byteLength(JSON.stringify(value) ?? '') > 64 * 1024)

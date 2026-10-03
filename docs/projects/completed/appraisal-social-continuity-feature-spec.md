@@ -1,6 +1,10 @@
 # Persistent appraisal and character-owned social continuity — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](foundations-1-5.md) applies.
+| Status    | Current progress                                                                                                                                                                        | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | ACT07/ACT08 native appraisal and directional-note continuity are delivered and qualified for the agreed foundation; broader actor/provider gates and conditional ACT09 remain separate. | 2026-10-03   |
+
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](../foundations-1-5.md) applies.
 
 The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
@@ -10,13 +14,13 @@ A character can carry grief, unease, affection or another supported appraisal be
 
 Separately, each character can maintain a freely written, directional understanding of another person. “I trust Bo, although I am upset about yesterday” is not a numeric friendship tier and need not match Bo's view. Editing it changes neither objective kinship nor an accepted promise. These are fictional character systems, not diagnoses or inferred psychological attributes of the human player.
 
-## 2. What is already present
+## 2. Historical source baseline
 
-Main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` has a native appraisal owner in [social.ts](../../packages/domain/src/social.ts). It currently produces fear/discomfort from personally received damage, applies fixed decay and retains at most 16 entries. That is a narrow starting mechanic, not the persistent multi-cause contract. Its records lack the stable `id` expected by the current `mind_appraisals` record-list key; the implementation must establish true stable identity during conversion.
+At the design baseline, main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` kept damage-derived fear/discomfort in [social.ts](../../../packages/domain/src/social.ts), with fixed decay and strongest-16 retention. Those records lacked the stable `id` expected by the record-list key. The delivered [appraisal owner](../../../packages/domain/src/appraisals.ts) supplies stable identity and the accepted multi-cause lifecycle; that earlier conversion is not remaining migration work.
 
-Actor-owned subject knowledge already has revision-checked full-text replacement in [knowledge.ts](../../packages/domain/src/knowledge.ts). Current reflection already proposes `knowledgeChanges` alongside accepted self-understanding through [CognitionMaintenance](../../apps/server/src/cognition-maintenance.ts). The project extends those owners instead of creating a new relationship score store or emotional text database.
+Actor-owned subject knowledge already had revision-checked full-text replacement in [knowledge.ts](../../../packages/domain/src/knowledge.ts). Reflection already proposed `knowledgeChanges` alongside accepted self-understanding through [CognitionMaintenance](../../../apps/server/src/cognition-maintenance.ts). The delivered project extended those owners instead of creating a new relationship score store or emotional text database.
 
-[Accepted appraisal continuity](../../archive/03-design-proposals/agents-and-social-simulation.md#accepted-appraisal-continuity), [memory architecture](../memory-architecture.md), [knowledge](../knowledge.md), [engine/world boundaries](../engine-and-world-boundaries.md), [events and perception](../events-perception-and-reactions.md) and [save/load](../save-and-load.md) govern the design. Newer actor-owned subject knowledge is the relationship-text authority where older prose still mentions inner-world relationship files.
+[Accepted appraisal continuity](../../../archive/03-design-proposals/agents-and-social-simulation.md#accepted-appraisal-continuity), [memory architecture](../../memory-architecture.md), [knowledge](../../knowledge.md), [engine/world boundaries](../../engine-and-world-boundaries.md), [events and perception](../../events-perception-and-reactions.md) and [save/load](../../save-and-load.md) govern the design. Newer actor-owned subject knowledge is the relationship-text authority where older prose still mentions inner-world relationship files.
 
 ## 3. Concrete journeys
 
@@ -110,11 +114,11 @@ Measure actual record cardinality, changed-owner work, context size, wake count,
 
 ## 8. Decisions and open questions
 
-Proposed defaults are no implicit decay for newly authored persistent appraisals; exact policy-defined decay for existing native fear/discomfort; one stable cause-aware appraisal owner; typed optional reflection changes; directional free-text subject notes; and conservative privacy invalidation until selective retention is proven safe.
+The accepted foundation defaults are no implicit decay for newly authored persistent appraisals; exact policy-defined decay for existing native fear/discomfort; one stable cause-aware appraisal owner; typed optional reflection changes; directional free-text subject notes; and conservative privacy invalidation until selective retention is proven safe.
 
 **Blocking product questions: none for the foundation.** World-specific vocabulary, balance and additional mental-effect mechanics remain authoring/feature choices. This design does not require selecting one universal emotion taxonomy before useful continuity can ship.
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/agent-agency.md).
-- Limits and constraints: [Feelings and social continuity inventory](../limits/feelings.md).
+- Implementation: [ACT07/ACT08 delivery and remaining actor work](../../maintainers/actor-model.md#priority-5-implementation-slices).
+- Limits and constraints: [Feelings and social continuity inventory](../../limits/feelings.md).

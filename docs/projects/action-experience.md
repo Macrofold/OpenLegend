@@ -1,6 +1,10 @@
 # Action records and learned activities — project
 
-**Status: implementation and accepted initial qualification complete September 28, 2026.** Mike requested a durable design for nested action descriptions, observed effects, connected experience, reflection-time learning and shared method reuse. This package supersedes the informal proposals in the embodied-survival discussion; the [current behavior owner](../action-experience.md) describes the delivered contracts, and the [evidence report](../verification/action-experience.md) records their qualification.
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-03   |
+
+**Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** Mike requested a durable design for nested action descriptions, observed effects, connected experience, reflection-time learning and shared method reuse. This package supersedes the informal proposals in the embodied-survival discussion; the [current behavior owner](../action-experience.md) describes the delivered contracts, and the [evidence report](../verification/action-experience.md) records their qualification.
 
 ## Maintained records
 
@@ -22,7 +26,7 @@ The owner first requested this design and subsequently authorized its complete i
 
 ## Baseline and scope assessment
 
-Source: local `main` at `adb52c73f797690edaea41bf9723e13ea433fa3a`, containing freshly fetched `origin/main` at `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` from `https://github.com/Macrofold/OpenLegend.git`. The remote default is `main`; local main is two commits ahead. No branch switch, rebase or history rewrite is needed. Unrelated art-direction changes remain outside this task.
+Historical September 28 implementation baseline, not the current review checkout: local `main` at `adb52c73f797690edaea41bf9723e13ea433fa3a`, containing freshly fetched `origin/main` at `c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2` from `https://github.com/Macrofold/OpenLegend.git`. The remote default is `main`; local main is two commits ahead. No branch switch, rebase or history rewrite is needed. Unrelated art-direction changes remain outside this task.
 
 The original design-only pass changed zero runtime logic lines. At implementation entry the estimate was revised to 3,000–5,000 changed non-test logic lines across domain, server, storage, protocol and presentation owners. The delivered scope remains in that cross-layer range; formatting expansion is not extra behavioral scope. Material risks are omniscient context, duplicated effects, invented causality, save/restore divergence, incorrect method matching, exponential candidate growth and paid reflection backlog. A renderer-only fix cannot deliver this scope.
 
