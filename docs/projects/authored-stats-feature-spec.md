@@ -6,11 +6,19 @@
 
 A creator should be able to define a meaningful competence or trait, explain what it affects, and see it change a supported action's real outcome. A player should understand why a check occurs, what preparation can change, what is at stake and what actually happened. An NPC should face the same authored rules while retaining its own goals, knowledge and choices.
 
-The recommendation is **a small authored check family for consequential uncertainty in finite practical work**, with explicit prerequisites, a known result distribution, bounded modifiers and actual outcome behavior. Keep ordinary reliable work reliable. Add opposed contests only after the first family is useful and coherent. A dice interface without a real effect is not the feature; a fluent claim of success cannot substitute for one.
+The recommendation is **to add an authored competence when it improves an activity players already want to do**. Start with one meaningful effect on an existing supported action. A predictable improvement in work, an applicable learned technique or a change to an action's existing uncertainty can be enough; a new dice system is optional. Preserve ordinary competence and let expertise feel rewarding. A displayed number or an elaborate rule editor alone does not deliver this experience.
 
-The first proposed consumer is a new **rushed roof-patch method**, following the shelter family's qualification. It offers a choice between careful predictable work and faster uncertain work. The check can save time, require finishing or produce a setback, while preserving actual materials and the same final patch behavior. It does not silently randomize all current crafting, fire lighting, recovery, movement or combat.
+The [accepted first playable](../../archive/05-project/first-playable-mvp.md) remains a live resident, conversation and memory, genuinely invented equipment, hunting and food, another supported invention, and pause/speed controls. This feature is not a prerequisite. Follow the package's [game-first delivery sequence](five-product-feature-specs.md#game-first-delivery-sequence) and [playability gates](five-product-feature-specs.md#playability-gates); do not delay the creative loop for generalized stats, roof checks, modifier accounting or progression.
 
-This choice makes the system's value testable. Skill changes the attractiveness of a method; preparation matters; failure has a concrete cost; and no outcome needs a model to invent a reward or rewrite physics. Later worlds can author different competences, dice profiles and consequences through supported families. The initial scale and curve are one world design, not the definition of all possible minds or realities.
+A **rushed roof-patch method** remains an optional worked candidate for a later qualified shelter activity. Its careful and uncertain alternatives expose real time, material and opportunity costs. The reference 0–3 competence, 2d6 curve and outcomes below preserve useful research and arithmetic, but are not an adopted bundle or the minimum release. A different useful consumer, including one with deterministic effects, may be a better first choice. Do not add a second independent roll to an action that already resolves the same uncertainty.
+
+**Product review revision:** the earlier proposal selected the roof and dice family as the first consumer. That proved a possible coherent rule, but did not establish that players wanted the extra decision, waiting or retries. This revision makes inclusion conditional on its contribution to play, and simplifies the proposed timing of modifiers. No current runtime behavior or accepted first-playable scope changes.
+
+### 1.1 The player payoff must earn the rule
+
+Choose the activity because it matters to a player's goal: getting food, making a useful invention, helping a companion, building a chosen camp or attempting a more ambitious plan. Explain what the competence adds to that activity and what the player can perceive or do differently. Greater reliability can itself be a satisfying payoff; every routine action need not remain a difficult choice.
+
+For a checked method, identify the valued alternative that spending time or taking risk gives up. A correct probability table does not make repeated failed chores enjoyable. Compare the same situation with a simpler predictable rule. If the check mainly adds prompts, delay or a repeated instruction to try again, simplify or omit it. If uncertainty already produces a useful consequence such as a fleeing animal, reuse that action's rule instead of adding generic dice for their own sake. These are design hypotheses to evaluate in human play, not claims that this proposal has demonstrated fun.
 
 ## 2. Existing boundaries
 
@@ -59,9 +67,11 @@ When an outcome could consume unusual resources, cause a new irreversible transf
 
 ## 5. Proposed reference rule: practical work
 
+This section is an **optional worked proposal** for evaluating one possible checked method after shelters are useful. Its numbers and associated modifier/helper rules are not required for the initial game or for every future competence. Retain the arithmetic as a comparison tool; adoption depends on the player payoff in §1.1 and the qualification in §13.
+
 ### 5.1 Authored competence and modifier
 
-The reference world uses an integer **Practical craft** competence from **0 to 3**: untrained, practiced, skilled and expert within the selected family. These descriptions explain a domain-specific scale, not a person's worth or overall intelligence. Applicable new actors receive an explicitly authored initial value; current characters are not silently reclassified or awarded ranks by their dialogue style.
+The optional reference world would use an integer **Practical craft** competence from **0 to 3**: untrained, practiced, skilled and expert within the selected family. These descriptions explain a domain-specific scale, not a person's worth or overall intelligence. Applicable new actors receive an explicitly authored initial value; current characters are not silently reclassified or awarded ranks by their dialogue style.
 
 For the reference check, add that rank to two independent fair six-sided dice and a net situational modifier from **−2 to +2**. The total modifier therefore ranges from **−2 to +5**. These are proposed tuning choices to qualify. Other stat names and supported scales can be authored, but a display range alone does not change the selected check profile.
 
@@ -90,7 +100,7 @@ For fair independent dice, the exact distribution is finite and can be inspected
 
 The curve makes skill and preparation consequential, especially near its middle. A one-point change does not have the same effect everywhere, and the middle-outcome probability can rise and then fall. Creator tools should show the resulting distribution rather than describing every +1 as the same percentage improvement.
 
-### 5.3 The first actual consumer: a rushed patch
+### 5.3 An optional worked consumer: a rushed patch
 
 Let **T** be the authored positive work duration for the rushed patch under otherwise stable admitted conditions. It is a real world duration chosen by the method, not provider latency. The reference alternative, **careful patch**, takes **2T** and completes reliably when its actual prerequisites remain satisfied.
 
@@ -112,15 +122,17 @@ A new event can invalidate any method: the target is removed, a needed support f
 
 The quick method should offer a choice, not compulsory gambling for basic shelter. A novice with no situational modifier has an expected **17T/7, approximately 2.43T**, to finish by repeating setbacks and completing each partial result, assuming unchanged conditions and immediate renewed attempts. At modifier +2 the same simplified calculation is **1.7T**. Careful work takes 2T under those assumptions.
 
-These calculated examples explain the intended tradeoff: the novice can value certainty, while a skilled worker can often benefit from the faster method. They ignore changing rain, travel, contention, fatigue and opportunity costs, which can matter in actual play. No real money, throughput or measured player behavior is inferred from this arithmetic.
+These calculated examples explain the intended tradeoff: the novice can value certainty, while a skilled worker can often benefit from the faster method. They ignore changing rain, travel, contention, fatigue and opportunity costs, which can matter in actual play. No real money, throughput or measured player behavior is inferred from this arithmetic. The calculation also assumes each new setback attempt requires another T of actual work. If reusable preparation makes a legitimate repeat shorter, recalculate the complete activity; do not discard useful progress to preserve this illustrative formula.
 
-Both T and the 2T relationship remain proposed world balance. Qualification should ask whether time pressure is meaningful, whether partial work is understandable and whether preparation overwhelms competence. If the fast option dominates every real situation or is never useful, revise the openly authored tuning rather than secretly manipulating outcomes.
+Both T and the 2T relationship remain proposed world balance. Qualification must include the existing pause/speed controls and the player's actual competing goals. Saving simulated time may matter to a hunt or a promise; if it merely changes how long the player watches a timer, the proposed check has little value. A partial repair that gives no cover must still offer a worthwhile continuation rather than delaying a compulsory chore.
+
+A skilled worker routinely preferring the fast method can be a legitimate reward for competence. Do not force equal method usage or add a failure floor to manufacture tension. Examine whether players value the methods in their situations, whether preparation creates useful choices, and whether failure leaves them wanting to act. If it does not, simplify the method or retain predictable work rather than secretly manipulating outcomes.
 
 ## 6. Preparation, assistance and modifiers
 
 ### 6.1 Bounded reasons, not bonus shopping
 
-The initial practical-work family has two situational categories: **equipment suitability** and **working conditions/support**, each contributing −1, 0 or +1. Their sum supplies the −2 to +2 situation range. Each category recognizes at most one applicable favorable influence and one applicable adverse influence; the two cancel when both are present. Equivalent causes do not stack merely because they have several names or descriptions.
+The optional practical-work candidate has two situational categories: **equipment suitability** and **working conditions/support**, each contributing −1, 0 or +1. Their sum supplies the −2 to +2 situation range. Each category recognizes at most one applicable favorable influence and one applicable adverse influence; the two cancel when both are present. Equivalent causes do not stack merely because they have several names or descriptions.
 
 Ordinary appropriate tools satisfy prerequisites and contribute zero. An admitted improvement can supply the favorable equipment influence; an applicable impairment can supply the adverse one while the method remains possible. A required missing tool blocks that method instead of becoming a small penalty that luck can overcome.
 
@@ -130,23 +142,23 @@ Every influence needs an actual source, applicable activity and lifetime. Destro
 
 ### 6.2 Assistance is actual participation
 
-The initial rushed-patch method has one principal worker and at most one helper in its supported role. The helper must choose/accept the activity, be able to perform the role, reach the actual work and spend its required time. Being nearby or belonging to the same household is insufficient.
+The optional rushed-patch candidate has one principal worker and at most one helper in its supported role. The helper must choose/accept the activity, be able to perform the role, reach the actual work and spend its required time. Being nearby or belonging to the same household is insufficient.
 
 The helper's participation contributes through the working category, not by adding their entire competence again. Helping has an opportunity cost: they are unavailable for incompatible tasks. A human receives the actual request and makes their own choice. An NPC considers the request from its knowledge and goals; the scene cannot invent agreement to improve the principal worker's odds.
 
 Show when help has become unavailable and what that means. A helper leaving does not cancel an already completed result or require a reroll. Before resolution, the method can continue without the benefit if still valid, or stop when the helper was a true prerequisite. Do not replace the missing helper with an invented anonymous resident.
 
-### 6.3 Conditions over the work stage
+### 6.3 Conditions at the consequential step
 
-For the reference method, the competence used is the applicable value at the start of the declared fastening stage. A later authorized competence change affects later stages/attempts, not a completed or already bound test. Rule revisions follow the existing live-change policy; they cannot rewrite old outcomes.
+The optional patch candidate separates ordinary preparation from one clear **fastening step** that resolves the uncertainty at the end of the first T. Preparing material and positioning it remain reliable work with actual retained progress. At the fastening step, use the principal worker's applicable competence and the equipment, support and conditions that actually matter to performing that step. Bind those facts with its one result; later changes cannot revise it.
 
-The initial family treats competence as the authored enduring rank. Temporary advantages use the two situational categories; temporary effects that rewrite the competence itself are not included. A later family adding them must define their lifetime across work explicitly, rather than preserving an expired bonus through an incidental snapshot.
+A helper earns the proposed benefit by actually performing the supported role for that step, such as holding the material while it is fastened. They need not remain present throughout unrelated gathering or waiting. Merely arriving for the result display grants nothing. If the required contribution or another prerequisite becomes unavailable before the step can resolve, continue without an optional benefit where valid, or interrupt the step and explain what is missing. Actual changes to the material or structure remain real.
 
-For both equipment suitability and working conditions/support, a favorable influence must qualify throughout the credited work of that stage. An admitted adverse influence counts if it qualifies at any point during that credited work. Apply the category's cancellation rule to those retained facts. This is a deliberately conservative authored approximation for both categories. A momentary display flicker is not a world condition, and only the family's admitted causes/thresholds count. It prevents a last-instant tool swap or brief help from earning a whole-stage benefit, and prevents a tool impairment from disappearing from the calculation merely because it ended before resolution.
+Before the unresolved step, a player can improve equipment, wait for suitable conditions or arrange genuine help, and those improvements may legitimately change the prospects. Earlier difficulty does not leave a permanent numerical penalty after its cause and effects are gone. If that difficulty caused actual damage or consumed work, those consequences remain; changing a displayed modifier cannot repair them.
 
-Paused time earns no T-progress and need not keep a helper working, but does not erase earlier qualifying facts. Actual weather and material changes while paused still follow their own rules. Continuing retained progress resumes the same unfinished attempt, including its bound principal, competence, rule and accumulated condition history. An explicitly abandoned attempt cannot both contribute its old T-credit to a new attempt and discard that history. Reassignment to a different principal needs a supported work transition; it does not automatically combine the first worker's effort with a new worker's better check.
+This replaces the earlier proposal that a favorable influence had to persist for all credited work while any adverse influence could count against the whole stage. That asymmetry added a condition-history rule and could make almost-complete help worthless without adding a useful player decision. The narrower step is an authored approximation, not a universal model of skilled work. A future method needing sustained collaboration must justify and explain that behavior in its own useful activity.
 
-The creator can inspect that temporal rule and later author a different supported one for another method. It is not a universal rule for every check. If the conditions invalidate the action itself, use interruption rather than squeezing physical impossibility into the modifier range. A changed situation is not permission to discard an already resolved result and ask for a luckier one.
+Pausing the activity earns no work time. The world itself advances or pauses under its existing time policy. Resuming retains actual preparation, materials, work and the unresolved attempt; it does not reveal a future result or create another draw. Reassigning the principal requires the action's supported work transition. Current competence and conditions are evaluated for the still-unperformed consequential step, rather than locking a worker's entire earlier situation to the project. Once that step resolves, its recorded outcome and rule remain fixed. Temporary effects that rewrite the enduring reference competence are outside this candidate; supported situational influences still need real causes and lifetimes.
 
 ## 7. One attempt, one result, actual consequences
 
@@ -154,7 +166,7 @@ The creator can inspect that temporal rule and later author a different supporte
 
 The human or NPC chooses a supported method from the actual situation. Before work, the interface presents permitted stakes and prospects, never a preview of future dice. Starting binds the intended task, target, applicable rule and actual work. The actor performs the required stage. The check resolves once when that stage reaches its declared outcome point and the relevant action is still admissible.
 
-In the reference patch method, randomness is resolved at the end of the first T work stage. No dice result is revealed before that stage is earned. Canceling earlier preserves actual partial effort/state under the action rule and yields no sample to inspect. Resuming retained work preserves the same attempt and the temporal facts in §6.3; reconnect and background transitions do likewise. It is not an economical way to search future outcomes or discard adverse history. After resolution, reconnecting or reopening the result shows that same outcome.
+In the optional patch candidate, randomness resolves once at the fastening step at the end of the first T. No dice result is revealed before the required work is earned. Canceling earlier preserves actual partial effort/state under the action rule and yields no sample to inspect. Resuming retained work preserves the same unresolved attempt; the conditions for its still-unperformed step follow §6.3. Reconnect and background transitions cannot create another result. Real preparation may improve an unresolved attempt's prospects, while canceling or relabeling a resolved attempt cannot change its outcome.
 
 Commit only the actual supported outcome and its coupled material/state changes. If a required write or action is not valid, the product cannot display completed repair while failing to use its material, or consume material while creating no declared result. Technical failure preserves the last valid work/result state and follows recovery; it is not a fictional setback.
 
@@ -194,7 +206,7 @@ A later opposed family must resolve one shared contest with individually scoped 
 
 Each participant's relevant choice must be established before they learn the other's result. A defender may rely on an already admitted resistance/stance where that family supports it; the system need not invent a new decision merely to fill a form. A human's required new participation still comes from that human. One participant's refusal or missing permission does not count as a numerical defeat.
 
-The first candidate is a bounded control contest over a movable held object, **only after the physical action, participation and custody effects are supported**. Both must be eligible to exert the relevant action; the shared outcome can change actual custody once, preserve it, or end without transfer. Title remains governed separately. The check cannot put the same object in both inventories, cause remote theft or bypass the world's protected participation rules.
+One optional later candidate is a bounded control contest over a movable held object, **only after the physical action, participation and custody effects are supported**. Both must be eligible to exert the relevant action; the shared outcome can change actual custody once, preserve it, or end without transfer. Title remains governed separately. The check cannot put the same object in both inventories, cause remote theft or bypass the world's protected participation rules.
 
 On a tie, custody remains as it actually was and elapsed effort remains spent. Participants may make a new real choice, release the object or deliberately begin another supported attempt. Interruption by a third actor or changing geometry is a real event, not a reason to finalize a prewritten winner. Contests with more participants require a separately designed family, not an all-pairs tournament invented by the resolver.
 
@@ -202,7 +214,7 @@ On a tie, custody remains as it actually was and elapsed effort remains spent. P
 
 A persuasive request can affect an NPC's supported appraisal or willingness to consider an offer; it does not create an accepted purchase, promise, affection or human answer by itself. Some requests are willingly accepted without a roll; some are refused because they conflict with actual priorities or possibilities. A check is useful only in the remaining supported uncertainty.
 
-The initial practical-work family does not implement persuasion, seduction, coercion, fear or relationship scoring. A future social family must define what is uncertain, whose independent decision remains, which evidence matters and what actual outcome is permitted. It must preserve existing memory-based relationship descriptions and human control. A new charisma field cannot supply these behaviors by naming them.
+The optional practical-work candidate does not include persuasion, seduction, coercion, fear or relationship scoring. A future social family must define what is uncertain, whose independent decision remains, which evidence matters and what actual outcome is permitted. It must preserve existing memory-based relationship descriptions and human control. A new charisma field cannot supply these behaviors by naming them.
 
 Even in an explicitly authored supernatural world, mind-affecting capabilities require their own admitted scope and participation/privacy rules. This feature grants no general permission to access private thoughts or force humans to speak, consent or act. Statistical competence is not control authority.
 
@@ -232,7 +244,9 @@ NPCs receive useful permitted action consequences and prospects through the same
 
 The service model used to choose an action is separate from the fictional stat. Spending more on optional reasoning does not raise the roll modifier, and budget pressure does not silently lower a character's skill. A finished check needs no new generative explanation unless one is useful and admitted.
 
-Observed success/failure can become actual experience and evidence. This specification grants **no automatic numerical skill gain, experience-point award or personality rewrite**. ND04 and [action experience](../maintainers/action-experience.md) retain their respective progression and learning responsibilities. Repeating cheap checks cannot farm progression that this feature never promised.
+The player can make meaningful progress by learning a method, inventing and keeping useful equipment, understanding an animal's behavior, becoming better prepared, building a chosen place or following through on a shared plan. NPCs can retain permitted experience and respond to the actual relationship. Those payoffs matter even without a level-up screen; each still requires its supported action, knowledge or relationship behavior.
+
+Observed success/failure can become actual experience and evidence. This specification grants **no automatic numerical skill gain, experience-point award or personality rewrite**. ND04 and [action experience](../maintainers/action-experience.md) retain their respective progression and learning responsibilities. Numerical advancement should later reward worthwhile play through its own design, rather than being needed to make repeated low-value checks attractive.
 
 ## 10. Authoring the rule without programming
 
@@ -246,11 +260,13 @@ An ordinary player can propose an idea or ask about a rule without acquiring cre
 
 ### 10.2 Bind one meaningful action
 
-For the first family, choose one competence and one finite work method, its actual prerequisites, duration, result profile and outcomes. The tool should explain whether it is defining a new uncertain method or changing an existing one. Default to adding the explicit optional fast method; do not replace the careful/native route incidentally.
+For an initial useful competence, choose one existing supported action and show the actual difference it makes. A predictable effect is sufficient when that serves the activity. The tool should explain whether it is changing a duration, a supported method's applicability or an existing uncertainty, rather than making every stat a new roll.
+
+If the optional practical-work candidate is selected, bind one competence to its finite method, actual prerequisites, duration, result profile and outcomes. Explain whether this adds an uncertain method or changes an existing one. Preserve the careful/native route; the worked fast method is an option for evaluation, not a default imposed on every world.
 
 Show how each possible outcome affects time, resources, work progress and the target. Outcomes must cover the complete supported result range without gaps or contradictory simultaneous effects. A proposed low roll that destroys a material needs a real destruction outcome and appropriate stakes; the author cannot merely write “something bad happens” and delegate unlimited harm to narration.
 
-The initial supported curve is the finite two-die practical-work profile. Arbitrary weighted multi-stat formulas, exploding dice, open-ended reroll chains and unbounded pools remain outside this first scope. A creator can request another supported profile or keep a broader design as a draft. Arbitrary creativity is an authoring goal, not a promise of an already implemented general rule language.
+The only curve developed in detail in this proposal is the finite two-die practical-work candidate; it is not current supported runtime behavior. Arbitrary weighted multi-stat formulas, exploding dice, open-ended reroll chains and unbounded pools remain outside this worked candidate. A creator can request another supported profile or keep a broader design as a draft. Arbitrary creativity is an authoring goal, not a promise of an already implemented general rule language.
 
 ### 10.3 Preview behavior and incentives
 
@@ -276,7 +292,7 @@ At modifier zero, the reference chance of at least useful partial progress on on
 
 Real attempts consume actual time and sometimes authored resources. Partial progress supplies its own finishing route. Fixed hidden world facts do not rerandomize. Those distinctions let repetition be meaningful without requiring a punitive universal retry ban. A player who prepares a better method can legitimately improve outcomes; cosmetic wording cannot provide the preparation.
 
-The first family creates no bonus loot, currency, skill points or extra materials for a high roll. More efficient work can still have real economic value: a skilled resident can free time for other tasks. That benefit must arise from actual work, knowledge and available inputs, not a background summary granting production beyond its resource supply.
+The optional practical-work candidate creates no bonus loot, currency, skill points or extra materials for a high roll. More efficient work can still have real economic value: a skilled resident can free time for other tasks. That benefit must arise from actual work, knowledge and available inputs, not a background summary granting production beyond its resource supply.
 
 ### 11.2 Avoid per-step randomness and reaction storms
 
@@ -288,7 +304,7 @@ Dice resolution and basic result explanation can be ordinary admitted computatio
 
 ### 11.3 Bound the surrounding work
 
-Cost can grow through available actions, modifier sources, eligible participants, outcome effects, retries, histories and repeated probability previews. Select relevant supported sources before expensive interpretation. The first two-category/one-helper family gives a concrete qualification scope without claiming a universal limit on all future group work.
+Cost can grow through available actions, modifier sources, eligible participants, outcome effects, retries, histories and repeated probability previews. Select relevant supported sources before expensive interpretation. The optional two-category/one-helper candidate gives a concrete evaluation scope without making that entire scope a release requirement or a universal limit on group work.
 
 Use actual world/action capacity admission before accepting unsupported new work. Repeated authoring variants share the existing objective and funding scope; repeated world actions retain their actual costs and consequences. Do not silently lower competence, alter dice or omit a loser's effect under load. Required-service failure uses the existing coherent operational boundary.
 
@@ -324,7 +340,7 @@ After T, the rushed attempt has not completed the patch. Unconsumed supplies rem
 
 ### ST-J06 — A helper leaves
 
-The helper begins but departs before the fastening stage ends. The favorable help condition no longer qualifies for that stage. If the task remains possible it resolves under the authored temporal rule; otherwise it interrupts. The principal receives only the evidence they may know, and the game does not invent a replacement helper.
+The helper carries material to the site, then leaves before the fastening step. That real preparation remains useful, but does not supply the different fastening contribution. The worker can perform the still-valid step alone, ask for real help or postpone it. Conversely, a helper who actually performs the fastening role need not have attended all earlier preparation. The game does not invent participation or erase useful work because the helper's availability changed.
 
 ### ST-J07 — Ten names describe one advantage
 
@@ -336,7 +352,7 @@ The selected patch needs reachable material and a supported attachment. If eithe
 
 ### ST-J09 — The player cancels before the outcome
 
-The player stops halfway through the first T. No future dice result has been exposed or resolved for browsing. Resuming that retained progress preserves its bound competence and qualifying condition history, including an earlier admitted tool impairment. An abandoned new attempt cannot inherit the work credit while washing away those facts. If a valid check has already resolved, canceling its presentation does not erase it, refund elapsed time or offer a new sample.
+The player stops during ordinary preparation. No future dice result has been exposed or resolved for browsing. Actual prepared material and spent work remain. They can replace an impaired tool or arrange a helper before performing the unresolved fastening step, legitimately improving its prospects. Damage already done stays real. If a check has already resolved, canceling its presentation does not erase it, refund elapsed time or offer a new sample.
 
 ### ST-J10 — Reconnect while the result is being shown
 
@@ -370,19 +386,25 @@ Repeating harmless attempts produces the actual work and evidence those attempts
 
 Optional new explanations or authoring stop under their real budget. Already admitted native checks follow the same rule and have the same consequences. Required-service failure uses the disclosed shared recovery boundary. Skill, outcome bands and opponents' resistance do not change to save a model call.
 
+### ST-J18 — The repair competes with a plan the player cares about
+
+After the relevant hunting and shelter activities are qualified, a player wants to join a companion hunting an animal they have spotted. They also want to protect supplies at their chosen camp. They can move important stock under existing cover and depart, finish a dependable repair first, request help that occupies the companion's time, or leave the current arrangement alone. If the optional rushed method has earned inclusion, it provides another choice with known prospects and costs.
+
+The companion considers an actual request; help is not assumed. A setback can make the player reconsider the hunt, do the reliable finishing work where available, or pursue another goal. It must not force repeated rolls before ordinary play can continue. The player may prefer improving the camp, talking or exploring to this hunt at all. A designer-supplied timer or required repair objective is unnecessary. The proposed enjoyment comes from a chosen plan, useful alternatives and adapting together; whether the check improves that experience remains a playtest question.
+
 ## 13. Delivery and qualification
 
-**Stage 1: one complete practical-work rule.** Deliver one authored competence, the finite reference profile, two modifier categories, one optional helper and the actual rushed/careful patch outcomes after the shelter method exists. Include sparse/absent state, resource effects, accessible explanation, one-result recovery and explicit authoring preview. An isolated die demo or editable stat bar does not complete this stage.
+**First preserve the accepted playable game.** Deliver and qualify the existing creative/survival loop under its current owners. Generalized stats, this curve and the roof candidate add no prerequisites. Already delivered typed-state foundations remain useful and are not reset by this change in product priority.
 
-**Stage 2: world variation and bounded continuation.** Demonstrate a different authored competence/name/applicability through a real consumer without special cases in generic UI or cognition. Qualify retained partial work, chosen bounded retries, condition changes during work, current-format restoration, rule revision and complete operating cost. This proves useful authorship, not arbitrary check formulas.
+**Stage 1: one useful authored competence, when needed.** Select an existing activity where a visible difference in capability improves the experience. A predictable effect can be the complete initial result. Explain what the player gains, how the difference is discovered, and how it affects a valued goal or cooperation. Include actual resources, permitted feedback, interruption and current-format restoration through the existing owners. A stat bar, differently named duplicate competence or proof that formulas evaluate does not establish useful play.
 
-**Stage 3: one opposed physical family.** Only after its action/participation/custody behavior is supported, implement the declared shared contest, ties, different knowledge and interruption. Keep asymmetric tabletop conventions from silently deciding independent humans' or NPCs' actions. More participants and new conflict modes retain separate qualification.
+**Stage 2: one optional checked method, if it improves the activity.** Compare it with the simpler version in the same complete situation. The roof candidate is available only after shelter play itself is useful; another existing consumer may be preferable. Define the narrow consequential step, meaningful outcomes, preparation and one-result continuity. Add assistance only if that real collaborative role improves the chosen method. If failure mainly adds repeated instructions or waiting, revise or omit the check. Do not require the whole reference bundle before releasing a useful simpler competence.
 
-**Stage 4: additional profiles or social families by demand.** Add another curve, effect family or world-specific social uncertainty when a concrete experience needs it. Require actual stakes, authority, resource and knowledge behavior. Numerical progression, broad personality change and arbitrary mind control are not implied by adding more dice.
+**Later expansion follows an actual need.** Another competence, curve, world variation, opposed action or social family is not a mandatory next stage. Select it for an activity people or creators want and that the current design cannot serve well. A physical contest still needs actual participation and custody behavior before any roll can affect it. Numerical progression and personality change retain their own owners; they are not prerequisites for useful learning, invention or relationship progress.
 
-Behavioral acceptance asks whether players can explain why a check was needed, distinguish likelihood from effect, use preparation meaningfully, understand a setback and choose a useful next action. Include experienced optimizers and new players, human/NPC symmetry, text-only presentation and changing conditions. Do not certify balance from a single cooperative model's choices or treat repeated play as proof of enjoyment.
+Behavioral acceptance uses the package's [playability gates](five-product-feature-specs.md#playability-gates). Can players understand the activity, pursue a goal they care about, notice the competence's value and decide what to do after an unfavorable result? Do the new rules improve that experience compared with a simpler version? Include people new to the game and capable optimizers, actual pause/speed settings, changing conditions and a player who declines the risky method entirely. Competence may legitimately make one method preferable; equal choice rates and persistent failure chances are not requirements. Repeated attempts alone do not prove enjoyment.
 
-Mathematical acceptance exhaustively checks the finite distribution and every result band, with exact boundaries and no gaps. Behavioral acceptance follows actual resources, time, custody, permitted evidence and work continuation. Economic acceptance compares complete loops, including failed attempts, partial finishing, preparation and helper time. These are proposed qualification requirements; only the illustrative arithmetic was calculated during this documentation work.
+For any selected checked method, mathematical acceptance checks the finite distribution and every result band. Behavioral acceptance follows actual resources, time, custody, permitted evidence, useful continuation and accessible presentation. Economic acceptance compares the complete activity, including preparation, helper opportunity cost, failed attempts and work forgone. Explanations and arithmetic remain optional to read, and ordinary resolution does not need model calls. These are proposed qualification requirements; only the illustrative arithmetic was calculated during the original documentation work. This review adds no runtime, balance or human-playtest evidence.
 
 ## 14. Research and the resulting choices
 
@@ -412,19 +434,19 @@ The converging design lesson is to make uncertain action understandable and cons
 
 ## 15. Alternatives, recommended decisions and remaining choices
 
-**Use deterministic work everywhere initially.** This is a credible alternative if the first world does not need variable methods. It is economical and makes competence easy to trust. It offers less variation within the same risky technique, but authored methods can still differ in time, eligibility and quality. The proposed hybrid keeps those strengths while giving the selected rushed method a concrete reason to use a check.
+**Keep predictable work as the starting recommendation.** If the chosen activity does not benefit from a new uncertain method, retain its dependable behavior. Authored competence can still affect a supported duration or technique and reward specialization. Uncertainty can later serve a useful risk, but does not earn inclusion merely by making repeated work vary.
 
 **Use a d20 threshold or another curve.** A flat die makes equal additive increments easier to compare away from its boundaries and can suit worlds with different granularity. The reference 2d6 curve concentrates ordinary outcomes and makes preparation near the middle influential. Neither is inherently more realistic. Choose the experience and inspect the full distribution before adopting a profile; do not make creators learn several profiles to produce their first useful task.
 
-**Add broad weighted stats or arbitrary dice expressions immediately.** This would increase expressiveness but make descriptions, balance, modifier interactions and meaningful outcome coverage harder to review. One well-explained competence and bounded profile can already demonstrate authorship without creating a formula puzzle or unbounded random work. Expand only for a concrete method that the first family cannot express.
+**Add broad weighted stats or arbitrary dice expressions immediately.** This would increase expressiveness but make descriptions, balance, modifier interactions and meaningful outcome coverage harder to review. One useful competence effect can demonstrate authorship without a formula puzzle or unbounded random work. Expand only for a concrete activity that the simpler supported design cannot serve.
 
 **Always make failure advance the goal.** Retained progress can keep play moving, but a universal rule would erase meaningful setbacks or invent resources. The reference partial retains real work; its setback spends time without completing a patch. Both can lead to a useful next choice. A failed chance need not grant a hidden reward or force a disaster for the scene to remain interesting.
 
-The recommendation for adoption is one enduring authored competence, the stated finite 2d6 profile, two situation categories, one optional helper, declared temporal qualification, one recorded outcome per actual attempt, and the real rushed/careful patch alternatives. Keep exact disclosure conditional on knowledge, routine resolution free of model inference, and progression/social authority outside this scope.
+The recommendation for adoption is a useful competence effect on one already worthwhile activity, with the simplest supported behavior that delivers its payoff. Keep exact disclosure conditional on knowledge, ordinary resolution free of model inference, and human choices and actual resources intact. The roof, 2d6 curve, two categories and helper role remain an optional worked candidate, rather than one package that must be built before the feature counts.
 
-Before implementation, approve the reference world's initial applicable actors/values, exact patch materials and stages, positive T, eligibility for favorable/adverse sources, interruption costs and the complete finishing behavior. The proposed 2T relation is an explicit starting hypothesis to evaluate, not an intentionally missing product choice. Confirm whether the world wants the expertise ceiling with no setback at +5; this proposal recommends retaining it. Qualify the later opposed physical family separately before it can affect custody.
+Before implementing a checked method, select its player purpose and consumer, explain the opportunity cost and meaningful recovery, and compare it with predictable work. If the roof candidate is selected, qualify its applicable actors/values, materials, positive T, fastening step, real influences and complete finishing behavior. The 2T relationship is an explicit tuning hypothesis; the no-setback result at +5 can remain a legitimate benefit of expertise. Neither requires adopting the candidate. Opposed contests need a separately justified activity before implementation.
 
-The roof dependency is deliberate reuse, not a requirement that all world creation or all stats wait for shelters. The generic typed-state foundation remains useful on its own. A different finite practical-work consumer may replace the roof patch if it meets the same complete behavior contract and is explicitly selected; do not claim completion from a number that has no consumer.
+The roof dependency applies only to the optional roof example. The existing typed-state foundation, another useful competence effect and other world openings need not wait for shelters or generalized dice. The product review changes the earlier first-consumer recommendation because a consistent worked example is not sufficient evidence of a desirable game feature. Keep the research and arithmetic available for a future decision; do not convert their completeness into implementation priority.
 
 ## Maintained records
 

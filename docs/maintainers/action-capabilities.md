@@ -172,7 +172,7 @@ PW10 contributes only to AC08.1/8.2: the chosen camp activity uses the existing 
 
 **Owner:** each actual mechanical family under INV/EWF; AC owns consumer integration only. **Depends on:** AC02 plus the specific domain mechanics.
 
-**Proposed ND03 consumer:** the [authored-stat specification](../projects/authored-stats-feature-spec.md) adds a candidate rushed/careful patch family after [shelter qualification](../projects/editable-shelters-feature-spec.md). Its actual effects, participation, attempt continuity and scoped explanations remain AC08–AC10/domain-owner work. [ST limits](../limits/authored-stats.md) are proposed; current ordinary actions retain their semantics and no checkbox below is completed by the design.
+**Proposed ND03 consumer:** the [authored-stat specification](../projects/authored-stats-feature-spec.md) first requires useful competence in a real activity; a predictable effect can suffice. Its rushed/careful patch is an optional worked candidate, dependent on [shelter qualification](../projects/editable-shelters-feature-spec.md) only if selected. Actual effects, participation, attempt continuity and scoped explanations remain AC08–AC10/domain-owner work. [ST limits](../limits/authored-stats.md) retain candidate tuning. Neither generic dice nor a new roof method blocks current actions or closes a checkbox.
 
 - [ ] AC09.1 Adapt existing narrow actions to the shared invocation projection without changing their material, duration, knowledge or outcome semantics.
 - [ ] AC09.2 Prove one new non-navigation parameterized ordinary-use family through all text/menu/NPC/plan surfaces. Prefer possession transfer or compatible device operation with actual resource/target semantics.

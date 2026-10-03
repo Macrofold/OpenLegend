@@ -6,9 +6,13 @@
 
 A player stretches a cloak over supports, gains a real dry patch beneath it, extends the shelter, replaces a damaged section and eventually makes a place people use as home. The cloak remains that particular cloak. When taken down, it retains its wear and moisture and can be carried or worn again. A person sheltered by it is protected by the actual arrangement, not by the word house in its name.
 
-The recommendation is **a small ground-level assembly with independently editable parts, local rain coverage and persistent material condition**, followed by coarse drying and one useful material consumer. Support ordinary construction and renovation before broad architectural freedom. The long-term home grows through actual changes and use; it does not require a sequence of unrelated prefab upgrades that erase its history.
+The recommendation is **a small ground-level assembly that players can shape, use and change**, with independently editable parts, local rain coverage and persistent material condition followed by coarse drying. Its first value is making an intention real: a place to stop, keep something, work, meet or return to. Support ordinary construction and renovation before broad architectural freedom. The long-term home grows through actual changes and use; it does not require a sequence of unrelated prefab upgrades that erase its history.
 
 This gives Open Legend a concrete test of its larger promise: invented uses compose with persistent objects, characters recognize useful changes, and quiet-world effects continue without constant generative interpretation. It also creates everyday choices about shelter, supplies, cooperation and care. Those choices should be understandable and manageable without turning every absent hour into a repair bill.
+
+A complete first experience has a visible payoff. The player chooses a spot for a purpose, turns their own cloak into cover, sees what fits beneath it and brings an activity or belonging there. Later they extend it for company, move the covering to a better view, or reclaim the cloak and continue traveling. A resident may accept an invitation, compete for the dry space, dislike the arrangement or prefer somewhere else. Actual use and response make the place matter; neither a compulsory friendly household story nor a new comfort statistic is required.
+
+This is an expansion of the [accepted first playable](../../archive/05-project/first-playable-mvp.md), whose one-NPC live invention and hunting loop remains the initial proof. Building a home and managing damp tinder must not become prerequisites for that experience or replace it with a maintenance demonstration.
 
 ## 2. Existing commitments and initial scope
 
@@ -20,13 +24,17 @@ Begin with a single ground-level modular bay that can become a lean-to: light ti
 
 Use a simple layout grid for bays, roof areas and edge panels, with a few supported orientations and connections. The grid is a construction aid and a bounded geometric approximation, not a universal lattice for the whole world. A player selects a place, orientation and intended size through a visible preview or ordinary-language request; they need not place every twig.
 
+The grid and precise placement controls are optional aids. Propose a sensible arrangement from the player's purpose and known materials, and show its actual appearance and usable space. Leave room for meaningful choices of location, covering, openings and connected bays without asking the player to manage the underlying support relationships. A novel supported use can still go through invention; ordinary variations of a known design should not require another paid authoring session.
+
 The first building is single-story, ground-supported and non-walkable on top. Unsupported multistory buildings, arbitrary cantilevers, moving structures, underground excavation, full stress analysis and freely shaped load-bearing meshes remain explicit later families. Light walls and a usable doorway/door are the next extension of this same design, not a prerequisite for rain cover.
 
 ### 2.2 Rain first, recovery before punitive consumers
 
-The first mechanical proof supplies local vertical rainfall, actual roof transmission/coverage and persistent moisture on selected exposed materials. It introduces no automatic rot, body injury, item destruction or productivity penalty solely from wetness. This keeps the wetting-only proof from imposing damage that players have no supported way to reverse.
+The first mechanical proof supplies local vertical rainfall, actual roof transmission/coverage and persistent moisture on selected exposed materials. It introduces no automatic rot, body injury, item destruction or productivity penalty solely from wetness. This keeps the wetting-only proof from imposing damage that players have no supported way to reverse. It is an engineering proof within the feature, not sufficient evidence that the feature is worth playing.
 
-The recommended first complete player release then adds a **separately admitted coarse ambient-drying rule** and one useful consumer: keeping compatible tinder dry enough for the existing campfire-lighting family. This would be an explicit future revision of that family's currently unconditional success after its existing prerequisites; it is not current campfire behavior. Qualify wetting, protection, drying and use together before enabling the new requirement.
+The recommended first complete player release adds a **separately admitted coarse ambient-drying rule**, understandable ordinary building/editing, and chosen use of the resulting space through supported activities. The player can make something visibly their own, try a different arrangement and use it without managing every fastening. Wetting and drying give the material continuity; an added penalty is not required to justify that continuity. A resting, storage or conversation use claims only the behavior its existing family actually supplies.
+
+Keeping compatible tinder dry enough for the campfire-lighting method remains an **optional authored survival challenge after the positive shelter experience is qualified**. It would explicitly revise that family's currently unconditional success after its existing prerequisites; it is not current fire behavior or a requirement for the first useful shelter release. Select it when preparation, alternatives and consequences make that world's play more interesting, not merely to make players need a roof. Qualify wetting, protection, drying and use together before enabling it, and preserve the complete recovery contract below. A shared world's selected material law applies coherently; optional here means an authored-world choice, not immunity for a preferred player.
 
 Broader combustion, flame spread, body temperature, smoke, insulation, wind-driven rain, runoff, flooding and decay remain distinct extensions. A warm-looking hut or a burning campfire does not supply those effects. Existing world clocks and human protection remain controlling. No new universal damage or offline-property immunity is selected here.
 
@@ -63,6 +71,8 @@ The place can retain its identity as parts change, rooms split or the roof is re
 Use current knowledge, actual accessible resources and permissions. The plan cannot use a neighbor's cloak or hidden stock just because it would be convenient. Offer a scoped materials choice when it matters: use the player's own cloak now or prepare a dedicated covering at additional work/material cost. Preserve a chosen treasured item rather than automatically cutting it because a cheaper recipe uses cloth scraps.
 
 Ask when the ambiguity changes a meaningful consequence, such as which occupied wall to remove, whose resources to use or whether cutting a garment is acceptable. Routine orientation within the selected clear site need not produce a chain of confirmations. The player can inspect, adjust or cancel the plan using keyboard or pointer, with a readable description equivalent to the visual preview.
+
+Treat the preview as help with that choice, not another compulsory planning mode. When the intention, materials and consequences are already clear, one ordinary build/edit action can begin the work. Show the meaningful cost or blocker and infer routine details. Offer manual control for people who want it; do not repeatedly ask them to approve each support, fastening or unchanged step. Inspecting, rotating or comparing already supported arrangements should not itself trigger fresh paid invention.
 
 ### 4.2 What work does over time
 
@@ -134,7 +144,7 @@ Give a useful coarse indication when practical: drying, still getting wetter, or
 
 ### 6.3 Initial consumer: usable tinder
 
-After the drying path is qualified, the proposed bundled-world consumer distinguishes compatible tinder that is dry enough for the campfire-lighting method from material too wet for that method. It offers an actual reason to preserve dry stock and build cover. This is a scoped material requirement, not a full fire simulation or a new random roll.
+If the world deliberately enables this challenge after the drying path and positive shelter experience are qualified, the proposed bundled-world consumer distinguishes compatible tinder that is dry enough for the campfire-lighting method from material too wet for that method. It adds a reason to prepare protected stock and plan around weather. This is a scoped authored material requirement, not a full fire simulation, a new random roll or a prerequisite for enjoying construction. Preserve the current lighting behavior until this change is explicitly selected and delivered.
 
 The proposed light-fire action retains its existing tool, time, material and fuel requirements. The dry-enough test joins the current checks at admission, work start and completion. If the selected tinder becomes too wet before completion, the attempt does not light the fire, consume tinder or newly spend fire fuel; the tinder remains that wet item and elapsed effort is not reversed. Preserve any independently committed change to the fire, rather than resetting a fire someone else already lit. Recovery is drying this material or selecting actually authorized usable tinder, then beginning another attempt. The action cannot silently substitute someone else's dry stock.
 
@@ -188,6 +198,8 @@ Comfortable occupancy, physical occupancy, permitted access and household member
 
 The first home-use model records meaningful chosen uses: a person returns here to rest, stores permitted belongings here or associates this place with a household. NPCs still choose based on their needs, relationships and actual knowledge. They can prefer an open dry awning over a leaking enclosed room. A human is not assigned a household or moved home without their action.
 
+Simple chosen use need not wait for full room or household machinery. If existing rest, placement and conversation already work in this space, let the player use them and let a resident recognize the observed change. An invitation can be declined and a claimed favorite spot can be contested. Do not require a bed score, ownership certificate or automatic friendship reward before a small open shelter can become memorable.
+
 ### 8.2 Walls, doors and privacy
 
 Light walls and doors can create enclosure and separate usable spaces after their geometry/interaction paths are qualified. They do not change vertical-rain cover where the roof is unchanged. A doorway remains an access path when open; a closed door affects routes and supported sight as its actual geometry requires.
@@ -220,6 +232,8 @@ The reference world should favor reversible early experimentation: intact detach
 
 Maintenance should respond to real condition and use. The first release does not need background decay as a sink for surplus materials. A later economy can evaluate repair demand, resource renewal and land availability together; adding decay alone can punish absence without solving spatial or service growth. Resource abundance or efficient legitimate construction is not automatically an exploit. Duplication through detach/repair/reload is.
 
+Building should remain a choice among viable ways to live in the selected world. A mobile player might use an existing permitted shelter, protect a small stock, rely on a supported maintained heat source or use a food route that does not require new ignition. Supply only alternatives that actually exist and work; do not invent shelter from a decorative tree or replenish resources to rescue every choice. A deliberately harsh start may narrow the options explicitly. In the ordinary bundled opening, preserve the dependable food-preparation route and leave room for invention, exploration and conversation instead of making everyone maintain a home.
+
 ### 9.2 Keep routine physical work inexpensive
 
 Once a shelter/material rule is admitted, rain exposure, moisture progression, drying and coverage changes use that rule without authoring a new answer for every moment. Fresh model work is useful for an unusual plan, a character's new choice or a meaningful explanation. It is unnecessary for every unchanged roof, droplet, stored item or second of drying.
@@ -248,7 +262,7 @@ Save and restore preserve installed parts, connections, loose salvage, current m
 
 ### SH-J01 — A cloak becomes a roof and becomes clothing again
 
-The player selects their own cloak as a reusable covering. It stops being worn when installed, and protects only its actual bay. Rain wets the cloak. Taking it down ends that cover and returns the same wet, possibly worn item. Equipping it does not dry or repair it, and it cannot simultaneously shelter the former spot.
+The player chooses a place to stop and selects their own cloak as a reusable covering. A sensible preview makes the new space understandable, with optional adjustment of its location and orientation. It stops being worn when installed and protects only its actual bay. The player can bring an existing supported activity or belonging beneath it, then extend the arrangement or take it down when they want to travel. Rain wets the cloak. Taking it down ends that cover and returns the same wet, possibly worn item. Equipping it does not dry or repair it, and it cannot simultaneously shelter the former spot. The meaningful choice is how to use a valued object and place, not whether the player can pass a construction form.
 
 ### SH-J02 — Stop halfway through construction
 
@@ -276,11 +290,11 @@ A player places tinder in a container whose weather-transmission behavior is uns
 
 ### SH-J08 — Wet tinder can recover
 
-After the drying/tinder stage is enabled, rain makes selected tinder unsuitable for that lighting method. The character can use permitted evidence to find protected stock or place the same material where it dries. The material later becomes usable according to actual state. Reopening inventory and resubmitting the action do not reroll or reset wetness.
+In a world that has deliberately enabled the optional tinder challenge, rain makes selected tinder unsuitable for that lighting method. The character can use permitted evidence to find protected stock or place the same material where it dries, and may pursue another actually supported activity or food route meanwhile. The material later becomes usable according to actual state. Reopening inventory and resubmitting the action do not reroll or reset wetness. The ordinary first shelter release need not enable this challenge; when enabled, it must add interesting preparation rather than repeatedly interrupting more interesting play.
 
 ### SH-J09 — An awning is useful without becoming a private room
 
-People gather beneath an open roof during rain. The covered footprint is useful and may be crowded. Speech remains subject to actual hearing, and possession of the shelter does not confer access to everyone's belongings or private knowledge. Adding walls later changes the effects those walls actually support.
+People may choose to gather beneath an open roof during rain. The covered footprint is useful and may be crowded; someone can invite company, claim space, decline to join or prefer another place. Existing conversation and ordinary activities give the arrangement purpose without requiring a new comfort reward. Speech remains subject to actual hearing, and possession of the shelter does not confer access to everyone's belongings or private knowledge. Adding walls later changes the effects those walls actually support.
 
 ### SH-J10 — A home grows around its history
 
@@ -308,15 +322,19 @@ The same gaps, supports, wet fabric, salvage and work state return under current
 
 ## 11. Delivery stages and acceptance
 
-**Stage 1: one editable cover and passive rain proof.** Build, stop, resume, extend, detach and reuse one light flexible-roof family. Supply truthful local coverage, material moisture, support failure and observer-correct feedback. Keep wetness free of new punitive consumers. Qualify cloak identity, gaps/layers, conflicts, passive operation without a model and restoration.
+**Stage 1: one editable cover and passive rain proof.** Build, stop, resume, extend, detach and reuse one light flexible-roof family. Supply truthful local coverage, material moisture, support failure and observer-correct feedback. Keep wetness free of new punitive consumers. Qualify cloak identity, gaps/layers, conflicts, passive operation without a model and restoration. This establishes the physical example; it does not yet prove that players enjoy using it.
 
-**Stage 2: a complete useful weather loop.** Add the separate coarse drying family and qualify the proposed dry-tinder requirement with the existing lighting method. Provide an actual way to protect, recover and use supplies. Measure whether the loop produces meaningful preparation rather than excessive micromanagement. This is the recommended minimum complete player release.
+**Stage 2: expressive useful cover with material recovery.** Add the separate coarse drying family, straightforward intention-to-build interaction, optional placement control and actual chosen use through supported resting, storage, work or conversation. Qualify a complete scene in which a player makes, uses and then adapts the space for a purpose. Provide an actual way to protect and dry applicable belongings. Establish whether people choose to build or modify without a new punishment forcing the choice. This is the recommended minimum complete player release; dry-tinder failure is not required. It follows the accepted playable invention loop rather than replacing it.
 
 **Stage 3: room and home use.** Add qualified light walls, doorways/doors, reachable resting/storage spaces and chosen household use. Qualify dynamic navigation, occupancy, safe renovation, household boundaries and hearing distinctions. Expand geometry only when the first family remains legible and economical.
 
-**Stage 4: richer materials and consequences.** Introduce heavier support/failure families, more material transformations and selected weather/thermal consumers through their own designs and admission. Full combustion, wind, runoff, decay and legal property systems are not implicitly included. Each new family needs actual scenario, resource, background and workload qualification.
+**Stage 4: selected challenges and richer materials.** Consider the optional dry-tinder challenge when its preparation, alternatives and recovery improve the chosen world's play; qualify the full lighting interaction before changing it. Introduce heavier support/failure families, more material transformations and selected weather/thermal consumers through their own designs and admission. Full combustion, wind, runoff, decay and legal property systems are not implicitly included. Each new family needs actual scenario, resource, background and workload qualification. Greater realism is not sufficient reason to add recurring work that overwhelms the activity it was meant to enrich.
 
-Acceptance examines the complete result: can the player predict where cover exists, identify a leak, reuse a material without duplication, recover wet supplies, complete interrupted work, understand occupancy and preserve a home's continuity? Test keyboard, text descriptions, color-independent cues, enlarged UI and ordinary building-scale camera views. A geometry fixture is not sufficient evidence that construction is understandable.
+After Stage 2, these are independent expansion choices: a useful tinder challenge does not require a complete room/household system, and richer rooms do not require new weather penalties. Select the next addition for the experience it enables.
+
+Acceptance examines the complete result: does the player understand the space gained, use it for a chosen purpose and want to adapt or revisit it? Can they predict where cover exists, identify a leak, reuse a material without duplication, recover wet supplies, complete interrupted work, understand occupancy and preserve a home's continuity? Include someone who prefers to travel or use an existing place instead of building. Test keyboard, text descriptions, color-independent cues, enlarged UI and ordinary building-scale camera views. A geometry fixture is not sufficient evidence that construction is understandable or enjoyable.
+
+**Simplify or defer when the feature becomes a chore.** If routine construction needs repeated explanations or approvals, improve defaults and direct manipulation before adding parts. If players build only to escape repeated fire failures, defer the new tinder prerequisite and evaluate the expressive cover experience on its own. If drying and repair dominate sessions, revisit the authored exposure, supplies and work balance rather than reward compulsory upkeep. If a larger structural family adds little freedom people actually use, keep the smaller family and spend effort on a clearer useful result. Apply the package's [playability gates](five-product-feature-specs.md#playability-gates); these are reasons to revise a proposal, not permission to silently change a live world's laws.
 
 Compare total work and perceived usefulness for one shelter, a small settlement, concentrated renovations, overlapping roofs, rain transitions, nested-stock extensions and long absence. Measure parts/relationships considered as well as visible output, required physical work, new model decisions and retained history. No performance figures or unrun gameplay results are claimed here.
 
@@ -347,13 +365,13 @@ The physical evidence supports distinct processes and honest simplification. The
 
 ## 13. Recommended decisions and remaining choices
 
-Adopt the light ground-supported modular bay, editable persistent parts, local vertical-rain coverage and staged moisture/drying/tinder loop as the initial proposal. Keep the lightweight failure approximation explicit. Preserve part state and place history through modification, and let home use emerge from actual activities and choices.
+Adopt the light ground-supported modular bay, editable persistent parts, local vertical-rain coverage and coarse moisture/drying as the initial proposal, with a complete expressive use scene and easy ordinary editing. Keep the lightweight failure approximation explicit. Preserve part state and place history through modification, and let home use emerge from actual activities and choices. Retain dry-tinder failure as a separately selected authored challenge after the positive experience is qualified, revising the earlier proposal that made it part of the minimum player release.
 
 The key tradeoff is physical expressiveness against understandable scope. Full structural simulation would broaden valid shapes and hazards, but would add cost and obscure the first practical loop. A small family with clear spans and failure behavior can already support borrowing a cloak, patching a leak, extending a home and working together. It must decline unsupported heavy construction rather than imply that all geometry follows those simplified rules.
 
 Another tradeoff is repairability against resource demand. Recovering an intact part reduces punishment for experimentation; consuming actual bindings, spending work and preserving damage prevents free duplication. Maintenance should have a purpose beyond producing recurring engagement. A material-efficient player can be successful without the game inventing decay to defeat them.
 
-Before implementation, the owners should approve the exact initial part/material set, authored dimensions and span classes, readable exposure tolerance, drying/usable-tinder boundaries, declared light-roof failure state and initial home-use scope. Select and inventory numerical values from complete cases rather than copying another game's wiki. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
+Before implementation, settle the exact initial part/material set, authored dimensions and span classes, readable exposure tolerance, drying boundaries, declared light-roof failure state and the existing activities that make the first space useful. Choose usable-tinder boundaries only if that later challenge is selected. Select and inventory numerical values from complete cases rather than copying another game's wiki. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
 
 ## Maintained records
 

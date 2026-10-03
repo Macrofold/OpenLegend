@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-10-03 — Put playable experience before five-system expansion
+
+Mike requested a substantive critique of the [five product proposals](projects/five-product-feature-specs.md), prioritizing a fun, playable game over mechanical completeness. The revised package anchors delivery to the accepted one-map, one-live-NPC creative invention/hunting loop, preserves already delivered work, and adds explicit playability gates and source-backed reasoning. Initial autonomy and readable conversation support that loop; full unattended communities, crowd complexity and broader creation follow demonstrated player value.
+
+The review changes proposed minimums: six residents become a later creation hypothesis; useful expressive shelter and drying no longer require a new wet-tinder obstacle; generalized checks are conditional, with predictable competence effects valid and the roof/2d6 model retained as an optional worked candidate. The proposed check's whole-job favorable/adverse history is replaced by one meaningful decisive step and its actual conditions, preserving real work and one recorded outcome. These changes reduce setup, maintenance and bookkeeping while retaining the ambitious authored-world direction, consequential choices and later detailed designs.
+
+The five specs, their WC/SH/ST/PS limits and affected ND/PS/AC/EWF routing are reconciled. No runtime behavior, current permissions, accepted personal pause rules, development-save policy or implementation checkbox changes. Documentation and research cannot establish enjoyment; current-format, live-AI and complete playable acceptance remain with their existing owners.
+
 ## 2026-10-03 — Five researched product and behavior proposals
 
 The [five-specification package](projects/five-product-feature-specs.md), based on `docs/design-needs-register` at `1627d51c79840ce8b5de24627bd2f552e42e97e9`, develops the requested priorities in order: continuing NPC lives, attention/crowds/scenes, world creation from a short premise, editable shelters/rain and world-authored stats/checks. Each includes concrete behavior, real player/NPC scenarios, uncertainty and failure, incentives and operating economics, a bounded first release and cited primary-source research with explicit limits.

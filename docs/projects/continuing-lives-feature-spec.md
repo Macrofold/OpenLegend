@@ -4,13 +4,15 @@
 
 ## 1. The experience and the recommendation
 
-Open Legend should feel like a place where particular people have lives, rather than a set of characters that exist only while the camera points at them. If Ada chooses to make cord, a player should be able to leave, meet someone else, and later find cord, unfinished work, a genuine interruption, or a reason the plan failed. Ada's explanation should agree with the supplies, the elapsed work and what she actually knew.
+Open Legend should feel like a place where particular people have lives. A player should be able to leave someone pursuing a recognizable intention, pursue their own adventure, and return to a person worth talking to again. That might mean useful help, a surprising choice, a disagreement, unfinished work or simply the pleasure of familiar company. If Ada chooses to make cord, the result and her explanation should agree with the supplies, elapsed work and what she actually knew. Correct progress is the foundation; the payoff is a relationship and a world that develop without constant supervision.
 
 The recommended product rule is **continue commitments and supported activities; spend new reasoning on meaningful changes; deliberately reduce optional new activity in quiet places**. The world need not simulate every footstep or compose every unobserved conversation. It must preserve the people, resources, choices and consequences that a player can later encounter.
 
 This is both a creative and an economic choice. A community benefits from routines, unfinished intentions and occasional developments. It does not become more believable merely because every resident generates text at a fixed interval. Routine competence should be cheap; difficult choices should receive attention; unusual new behavior must explain its ongoing cost before it is admitted.
 
-The first release should support one small community using existing gathering, crafting, travel, eating and resting capabilities where their actual interruption and resource behavior can be qualified. Start by continuing a resident's already chosen task. Add limited autonomous initiative after that behavior is coherent. The illustrative roof-repair story in the parent design remains a later consumer of the shelter feature, not a claim that modular houses already exist.
+The first playable contribution belongs in the accepted [one-map, one-live-NPC creative loop](../../archive/05-project/first-playable-mvp.md): gather, invent and craft an actual new sling, hunt, harvest and eat, with another supported invention also exercised. The same resident should retain their own goal, continue supported work while the player explores and remember a relevant interaction. A cord timer, carrying bundle or shelter demonstration alone does not satisfy that loop. Preserve existing delivered work and qualify the remaining experience through its existing owners.
+
+Begin with continuation during the personal world's permitted running time and its existing pause/absence policy. A small community that continues without connected players is a later service milestone, with its own supported work, self-care and funding evidence. The illustrative roof-repair story remains a later consumer of the shelter feature. The [package delivery sequence](five-product-feature-specs.md#game-first-delivery-sequence) connects these contributions; completing every stage of this specification is not a prerequisite for useful invention, construction or social play.
 
 ### 1.1 What this adds to existing work
 
@@ -21,6 +23,14 @@ This proposal selects the first product scope, describes everyday and adverse be
 ### 1.2 Intended audiences
 
 The visitor wants to encounter a coherent place without managing all its inhabitants. The returning resident wants investments and relationships to remain intelligible. The creator wants to choose a kind of continuing world and understand its demands. NPCs need useful autonomy under their actual knowledge, capabilities and permissions. The operator needs a service promise whose mandatory work can be afforded even when nobody logs in.
+
+### 1.3 Why a player would care what happens next
+
+Continuing life should create room for player choice. A resident may need the same material the player wants, offer useful knowledge, decline a request, change a plan after a discovery or pursue a personal interest. The player can cooperate, negotiate, compete through supported actions, investigate or leave them to it. Ordinary conversation, curiosity, leisure and aesthetic interests are valid motives alongside survival and production. No one particular personality or peaceful village story is mandatory.
+
+For example, a resident preparing fibers for their own project may be interested in the player's newly invented sling but unwilling to give up all their supplies. The player can find another source, discuss a smaller contribution or proceed alone. On returning from a hunt, they encounter the resident's actual progress and can show what their invention did. This is an illustrative combination of existing capabilities, not a scripted quest or a requirement that an NPC unlock the player's invention route.
+
+An autonomous world can also produce disappointment, rivalry, deception, injury or death where supported. Those possibilities should arise from motives, evidence and world rules, not forced drama scheduled to prove that life continued. Quiet satisfaction is also a successful outcome. The [playability gates](five-product-feature-specs.md#playability-gates) require evidence that continuity enriches the player's own pursuits and reduces supervision before population or unattended activity expands.
 
 ## 2. Product commitments
 
@@ -93,6 +103,8 @@ A completed job may naturally lead to rest, another already planned step or an i
 
 Routines should express useful differences: one person prepares food early, another seeks company after work, another persists with a project despite inconvenience. These differences come from authored identity and actual chosen behavior. They are not a universal fixed schedule derived from a trait label.
 
+Independence must be visible before the community grows. The first live resident already needs meaningful choices under the accepted agency contract; do not postpone that requirement until a later autonomous-community stage. They can explain a preference, refuse or amend a request, continue a personal goal and reconsider when circumstances change. A perfectly reliable worker who only acts after player instruction does not demonstrate this experience. Nor does arbitrary refusal: a player should be able to discover enough permitted context to decide how to respond, without receiving the resident's private reasoning as a diagnostic readout.
+
 The system should remember successful methods and relevant disappointments through the existing memory owners. A single failed attempt need not permanently change a personality. Skill progression and personality evolution belong to ND04; this feature consumes current knowledge and choices without silently adding numerical growth.
 
 ## 5. Interruptions and competing activity
@@ -149,6 +161,10 @@ Distinguish personal experience, a named resident's report, public news, observe
 Changes should be discoverable through the world as well as a summary: supplies have moved, a task is incomplete, a resident mentions an interruption, or an accessible record explains a promise. An unavailable narrator should not hide the actual gameplay facts.
 
 ### 6.4 Time away should create context, not a compulsory chore bill
+
+The same principle applies while playing. After a resident chooses a viable routine, the player should not need to repeatedly tell them to eat, resume the same work or take each ordinary step. Material shortages and changed goals can invite intervention; routine supervision should not consume the session. While a task continues, the player can explore, pursue an invention, hunt, talk or inspect another supported opportunity. Waiting can express scarce time and a deliberate tradeoff, but an unexplained countdown with nothing useful to choose is not the desired activity.
+
+Tune the initial world's supplies, work durations and ordinary needs around completing the creative loop and having room for a voluntary next goal. If playtests mostly become repetitive provisioning or waiting, revise those authored conditions and the unnecessary interactions before adding more residents. Preserve meaningful survival choices and harder authored worlds; this is a recommendation for the initial experience, not a universal removal of need or labor.
 
 The product should avoid treating every real-world hour away as social neglect or enqueuing every missed optional encounter on return. Relationships can change through actual events and choices, but the service should not invent accusations that a protected departed character knowingly ignored a request.
 
@@ -252,7 +268,9 @@ No universal population, thought count or model tier is selected here. These are
 
 ### CL-J01 — Leave a useful task and return halfway
 
-Ada accepts a request for cord and chooses an available method. The player leaves while work is underway. Another player visits before it finishes. Both encounter the same unfinished work and supplies. The first player's later return does not restart it or take priority over the second visitor. The visible progress and Ada's account explain what happened at appropriate detail.
+Ada accepts a request for cord and chooses an available method. The player leaves to pursue their own supported goal while work is underway. On returning, they can recognize progress, understand a relevant interruption and decide whether to help, change their request or continue independently. They did not need to supervise each work step or repeat the original request. Ada may also have an unfinished interest of her own; the encounter need not become another compulsory chore.
+
+In the later shared-world case, another player visits before the task finishes. Both encounter the same unfinished work and supplies. The first player's later return does not restart it or take priority over the second visitor. The visible progress and Ada's account explain what happened at appropriate detail.
 
 ### CL-J02 — A real alarm interrupts
 
@@ -337,19 +355,19 @@ Three design conclusions deserve emphasis. First, selective reconsideration has 
 
 ### Stage 1 — One continuing activity
 
-Deliver one current supported task with real supplies, progress and interruptions. Qualify CL-J01–03, CL-J06 and CL-J09. Demonstrate ordinary completion, deprivation, cancellation, a heard and unheard alarm, save/reopen and two observers. The first stage is incomplete if it only shows a timer filling.
+Deliver one current supported task for the existing live resident, with real supplies, progress and interruptions. During the accepted invention-and-hunting loop, the player can leave the resident to it, pursue their own goal and return to intelligible progress and a useful conversation. Existing autonomous choice and recall remain required; this stage does not turn the resident into a passive work queue. Qualify CL-J01–03, CL-J06 and CL-J09, including ordinary completion, deprivation, cancellation, a heard and unheard alarm and save/reopen. The second-observer case qualifies later shared operation; it does not require another resident or player for the initial personal playtest. The first stage is incomplete if it only shows a timer filling.
 
 ### Stage 2 — A viable quiet day
 
-Combine the selected work, travel and self-care families with existing chosen routines. Demonstrate sustained provisioning where resources permit it, understandable failure where they do not, and no repeated failed travel or work loops. Lower optional cognition without causing a competent established routine to disappear. This is the initial PS03 consumer.
+Combine the selected work, travel and self-care families with existing chosen routines. Demonstrate sustained provisioning where resources permit it, understandable failure where they do not, and no repeated failed travel or work loops. The player can pursue a creative or exploratory goal without becoming the resident's constant caretaker, and can identify a choice that expressed the resident's own priorities. Lower optional cognition without making either competence or that independence disappear. This is the initial PS03 consumer. Expand to a small group when relationships and competing intentions add interesting choices, rather than using population as the success measure.
 
 ### Stage 3 — Meaningful new developments
 
-Add a bounded optional-initiative policy and only the supported social families from the scene feature. Demonstrate real participation, preserved promises, imperfect knowledge and return explanations. A month of test time should not require a month of invented dialogue on entry; historical length and present interaction cost must be measured separately.
+Add a bounded policy for new unobserved developments and only the supported social families from the scene feature. This expands existing agency; it is not the first point at which an NPC may make a meaningful choice. Demonstrate real participation, preserved promises, imperfect knowledge and return explanations through an encounter that gives the player a reason to respond: an opportunity, disagreement, discovery, changed relationship or welcome ordinary company. A month of test time should not require a month of invented dialogue on entry; historical length and present interaction cost must be measured separately.
 
 ### Stage 4 — Funded shared operation
 
-Qualify long absence, burst arrivals, actual growth in memories and objects, recurring hazards, quiet and busy communities, funding warnings and coherent operational suspension. Integrate applicable PS05/PS06 policies before relying on cross-boundary pauses or contested absentee consequences. Expand published capacity only to workloads actually qualified.
+Qualify long absence, burst arrivals, actual growth in memories and objects, recurring hazards, quiet and busy communities, funding warnings and coherent operational suspension. Integrate applicable PS05/PS06 policies before relying on cross-boundary pauses or contested absentee consequences. Offer unattended continuation when it produces a worthwhile return experience at an affordable complete cost; a successful personal world need not wait for this service. Expand published capacity only to workloads actually qualified.
 
 ### Behavioral acceptance matrix
 
@@ -362,6 +380,9 @@ Qualify long absence, burst arrivals, actual growth in memories and objects, rec
 | Does detail cycling change incentives?             | Repeated paired scenarios reveal no reliable yield, risk, resource or randomness advantage from entering/leaving                          |
 | Are residents informed only through valid sources? | Hidden thefts, unheard alarms and private conversations do not leak through summaries                                                     |
 | Does the whole community function?                 | Long runs identify stuck loops, permanent shortages, runaway output, missed commitments and weak return experience                        |
+| Can the player pursue their own goal?              | During the actual creative loop, routine NPC work/self-care proceeds without repeated instructions; waiting and maintenance leave room for meaningful choices |
+| Does the resident seem independently motivated?    | Players can identify a preference or decision from observed conduct, including a credible refusal or changed plan, without reading private diagnostics |
+| Is returning worth doing?                         | Players encounter discoverable continuity and voluntarily choose what to do next; company, curiosity, help, conflict and deliberate solitude are all valid outcomes |
 | Is quiet operation actually cheaper?               | Complete costs for the same supported scenario are measured across quiet/active conditions, including required work and memory            |
 | Does history growth remain usable?                 | Long-return cases recover relevant changes, correct outdated beliefs and abstain from unknown detail without whole-history reconstruction |
 | Is overload honest and fair?                       | Noise, mass return and funding exhaustion cause the declared admission/degradation behavior without selective fictional immunity          |
@@ -370,9 +391,11 @@ Also test a provider outage just before necessary self-care, a preparation delay
 
 Quality comparisons must include real human play and review of actual causal records. Scripted fixtures establish specific behavior, not sustained enjoyment or model quality. Proposed study workloads may include a small camp, a larger town and multiple quiet communities; they are experiment conditions, not promised population limits. Success thresholds for cost and latency must be selected from the offered service and measured route before release, rather than copied from another game's benchmark.
 
+Observe where a player spends effort: choosing and trying ideas, enjoying interaction, repeating instructions, servicing needs, waiting or decoding what happened. Ask what they remember about the resident and what they would choose to do next; a correct activity log does not answer those questions. These are proposed playtests, not measured enjoyment claims. If repeated supervision dominates, simplify routines and interaction. If returns produce little interest, improve the initial motives, opportunities and discoverable consequences before increasing optional thought frequency. If unattended life adds cost without a worthwhile experience, defer that service while retaining useful continuation during active play. Do not repair a weak result by fabricating surprise, guaranteed cooperation or an obligatory crisis.
+
 ## 14. Remaining adoption decisions and later technical questions
 
-The recommendation is a quiet-by-default unattended profile, initially using current clock meanings and supported work/self-care, with bounded optional initiative and explicit funding. Mike's acceptance of those product choices remains separate from commissioning this proposal. The existing central decision register retains clock, background-harm, dangerous-logout and commercial-funding decisions; this document does not silently close them.
+The recommendation is to first prove an independently motivated, continuing resident inside the accepted personal creative loop, using current time and absence rules. The later unattended service uses a quiet-by-default profile, supported work/self-care, bounded optional initiative and explicit funding, and is earned by the return-experience and cost evidence above. Mike's acceptance of those product choices remains separate from commissioning this proposal. The existing central decision register retains clock, background-harm, dangerous-logout and commercial-funding decisions; this document does not silently close them.
 
 Before enabling the full service, choose the initial community and activity profile, its publicly described optional-initiative behavior, the measured funding envelope, and any new protected harm categories through their existing owners. This is a bounded adoption list, not a reason to postpone the complete activity design above. Technical design will map these behaviors onto current owners and establish qualified implementation limits; no class or storage design is selected here.
 

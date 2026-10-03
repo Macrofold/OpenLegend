@@ -6,13 +6,17 @@
 
 A creator should be able to say what sort of world they want, answer a few questions that materially affect that intention, inspect a concrete starting situation and begin playing. Most creators should not need to define gravity, enumerate food chemistry, write character biographies for an entire town or know which internal mechanism produces an effect.
 
-The recommended product is **a short creative conversation that produces a reviewable, supported starting world**. It should be generous in supplying compatible defaults and precise about the difference between an authored intention and behavior the game can actually provide. Its success is a useful first session with a place, inhabitants, understandable possibilities and room to develop.
+The recommended product is **an optional short creative conversation that produces a reviewable, supported starting world**. Choosing an already prepared, curated start is equally valid; a player should not have to become a world designer before playing. Be generous in supplying compatible defaults and precise about the difference between an authored intention and behavior the game can actually provide. Success means entering a place where the player can pursue an interesting intention and discover that a chosen or invented action changes the world. In an inhabited opening, meeting someone who responds is part of that promise; solitary and empty premises keep their intended character.
 
 Creation does not finish the world's future. Ordinary play can discover compatible possibilities, and an authorized creator can later revise its laws. Neither should require generating a planet's entire history before a player can meet one person. The long-term ambition is expressive authored realities; the economical route is a concrete playable starting scope with a clear policy for what lies beyond it.
+
+Offer play when a faithful useful start is ready. Further polish, biographies, variations and rehearsal are choices, not a moving finish line that keeps a willing player in creation.
 
 ## 2. Boundaries inherited from the project
 
 The [accepted creation direction](../../archive/03-design-proposals/world-creation-and-discovery.md) already distinguishes causal premise from starting geography, population, knowledge, clocks, recovery and operating budget. It favors substantial familiar defaults and sparse consequential questions. The [constitution](../world-constitution.md) owns what the world permits and how rules change; [invention validation](../invention-validation.md) owns support and compatibility; [budgets](../invention-budgets.md) separates creation spending from installed operating work.
+
+The [accepted first playable](../../archive/05-project/first-playable-mvp.md) remains the initial product priority: one wilderness map, one live NPC, and the creative survival loop that includes a genuinely generated usable tool. Custom world creation and a larger starting population are not prerequisites for demonstrating that experience. This feature later makes qualified openings easier to choose, create and vary; it does not replace first play with an authoring demonstration.
 
 The bundled survival world is one authored reality. Hunger, gravity, magic, numerical skills and mortality are not all mandatory engine laws. Conversely, a world cannot remove actual accounting, permission boundaries, human-private protections or the requirement that committed effects have an admitted cause. Describing a law is not implementing it. A field called telepathy does not supply a new disclosure permission or a supported telepathic sense.
 
@@ -26,13 +30,17 @@ The first release hands the reviewed candidate to an **operator-prepared new hos
 
 ### 3.1 A small inhabited place
 
-The proposed reference start is one walkable camp and its nearby useful surroundings, **six autonomous residents and one initial human-controlled character**, subject to qualification of that actual workload. Six is a design hypothesis: enough for distinct relationships and practical overlap, small enough for a creator to inspect every starting inhabitant and for the first session to establish familiarity. It is not a measured capacity, mandatory world population or biological rule.
+Start from **one useful locality, one live autonomous resident and one initial human-controlled character** for the familiar first personal experience, following the accepted MVP. A prepared opening can supply the setting, resources and practical knowledge without requiring a new world-generation session. When the creator wants their own variation, preserve this manageable scope unless their actual premise calls for something else.
 
 Offer the existing bundled-world family as the initial familiar preset. Use supported movement, perception, conversation, possessions, finite resources, food/energy, ordinary work and recovery as actually available. A new creation can select improved starting supplies and knowledge; this does not reseed an existing world or claim that the current bundled start already has the proposed balance.
 
-The first session should permit meeting residents, learning the local situation, obtaining or preparing something useful and making one small consequential choice. That might be helping with supplies, declining a request, exploring a known path or attempting a supported construction. A shelter-building opening is available only after the shelter family is qualified; a picture of a roof cannot satisfy that dependency.
+For the bundled opening, the player can talk to the resident, pursue a practical intention, request and craft a genuinely generated sling, and use it in the supported hunting, harvesting and eating loop. The later bow-and-arrow candidate demonstrates reuse beyond that one invention; its detailed requirements remain with the MVP owner. A curated setting may supply trusted capabilities and initial opportunities, but it must not replace the live invention with a prewritten recipe. The resident can help, disagree, become occupied or make a mistake; usefulness does not require a compulsory companion or guaranteed success.
+
+Retain **six autonomous residents** as a later small-community hypothesis for distinct relationships and practical overlap. It requires whole-community resource, agency and operating qualification, and should earn its extra cost through interesting differences between people. It is not a release floor, measured capacity, mandatory population or biological rule. A shelter-building opening likewise waits for an actually useful qualified shelter family; neither more people nor more features are needed before the smaller opening can be worth playing.
 
 ### 3.2 A complete local loop, not compulsory survival
+
+The hunting example qualifies the bundled start, not every authored world. Another world can center on investigation, conversation, craft, exploration or a different form of survival, provided its opening offers real supported choices and consequences. Describe the particular pleasure or challenge the creator is choosing, rather than applying the same survival checklist to every premise.
 
 For a survival preset, the camp needs reachable means of obtaining food, required tools and preparation, places where existing rest behavior works, understandable resource access and a viable opening reserve. For a charge-based nonhuman world, use compatible bodies, finite replenishment and the appropriate abilities instead. Do not attach hunger to every new organism because the familiar preset has it.
 
@@ -46,6 +54,8 @@ Future exploration must respect established facts. Deferred detail is a cost and
 
 ## 4. Creator journey
 
+These are available parts of the experience, not mandatory screens or separate confirmation steps. A ready supported start can lead directly to its existing entry route. A familiar custom premise may need no follow-up question. Present the concrete opening, material assumptions, relevant costs and next action together where practical; let the creator inspect deeper detail when it helps them choose. Existing host, funding and character permissions still apply, but organizing that machinery is not the player's creative task.
+
 ### 4.1 Describe the world
 
 Start with an ordinary-language premise and optional examples. Offer a small number of understandable starting references, such as a familiar physical world or another genuinely supported world family. A preset should explain the experience it supplies, not display a catalogue of internal modules.
@@ -53,6 +63,8 @@ Start with an ordinary-language premise and optional examples. Offer a small num
 Preserve the creator's original words alongside later refinements. Identify the aspects that seem central: for example, ordinary physics, scarce magic that costs memories, a cooperative camp, or inhabitants that live on electrical charge. Treat those as requirements to resolve, not decoration to be overwritten by the nearest supported template.
 
 If the creator says “surprise me,” propose a concrete candidate within the selected scope and spending allowance. Once shown, that candidate stays stable through refresh, a late response or an approval attempt. A deliberate new variation can change it; a transport retry cannot secretly choose a different world.
+
+Offer further variations when requested, not as an automatic search for a perfect world. Preserve a candidate that already fits the premise and gives a useful opening. The creator should be able to choose it and play without comparing a catalogue, maximizing a quality score or filling every optional field.
 
 ### 4.2 Ask only consequential questions
 
@@ -81,7 +93,7 @@ Mark assumptions by meaning: chosen by you, supplied by the selected preset, pro
 
 Show the actual proposed start using available simple presentation: place layout, reachable paths, inhabitants, useful resources, ordinary actions and important visible hazards. Elaborate art is optional. A meaningful inspection should answer “What can I do when I enter?” without requiring the creator to imagine gameplay from a paragraph of lore.
 
-Offer a short isolated rehearsal of the opening loop when supported. For example: can this body reach a food source, perform its preparation, consume the result and rest? Can another resident participate without using the same last tool simultaneously? Show the meaningful findings, including uncertainty and blockers. Rehearsal events are not live-world history and do not teach the eventual characters what happened in a preview.
+Offer a short isolated rehearsal when supported and useful to resolving a material uncertainty or answering the creator's question. It is not compulsory when existing evidence already establishes the selected opening. For example: can this body reach a food source, perform its preparation, consume the result and rest? Can another resident participate without using the same last tool simultaneously? Show the meaningful findings, including uncertainty and blockers. Rehearsal events are not live-world history and do not teach the eventual characters what happened in a preview.
 
 Some findings can be established from existing qualified behavior and current resources; others require a new bounded evaluation. Do not purchase a simulated day for every minor name change. Equally, a beautiful preview is not evidence of mechanical readiness.
 
@@ -90,6 +102,8 @@ Keep the preview available until the creator leaves it; a short automatic timeou
 ### 4.5 Review the release and start
 
 The creator reviews the concrete world revision, its actual starting scope, material unresolved limitations and ongoing-service selection. Starting creates that reviewed world through the existing authority boundary. A materially changed candidate needs a renewed review of what changed; the previous approval must not apply to a different population, law, bill or location.
+
+Inspection and this review can share one clear surface. Do not ask the creator to reconfirm the same known choices at every preparation step. Required authorization remains explicit; routine completion of already chosen work should flow to the next useful action.
 
 Distinguish **world prepared**, **world admitted**, **host ready** and **character ready to enter** in ordinary language when the distinction matters. Do not claim play is ready merely because prose generation finished. If hosting or required setup is unavailable, retain the prepared world and explain the next action without creating a second copy.
 
@@ -224,7 +238,7 @@ Use targeted rehearsal of meaningful dependencies, not an unbounded search for a
 
 More residents create additional resource demand, encounters, relationships, history and potential contention. Six residents have 15 possible unordered pairs; 100 have 4,950. This arithmetic illustrates possible relationship growth, not a requirement to evaluate every pair or a forecast of actual cost. Local participation and relevant events should drive new work.
 
-The proposed six-resident default must be qualified as a complete community under the selected operating profile. If that profile cannot sustain it, the creator receives a concrete smaller or differently supported proposal before launch. Do not quietly retain six portraits while only two people can actually make necessary choices. Do not copy a financially unsustainable resident design across a population merely because each individual draft validated.
+The later six-resident community proposal must be qualified as a complete community under the selected operating profile. If that profile cannot sustain it, the creator receives a concrete smaller or differently supported proposal before launch. Do not quietly retain six portraits while only two people can actually make necessary choices. Do not copy a financially unsustainable resident design across a population merely because each individual draft validated. The qualified one-resident opening remains a legitimate offering, not a silently degraded version of six.
 
 Starting biographies should establish a manageable set of facts, not a mandatory lifelong diary to retrieve on every decision. Distant lore should remain cheap authored context until a supported live consumer needs it. Continued life uses the [continuing-lives proposal](continuing-lives-feature-spec.md); crowded interaction uses [attention and scenes](attention-and-scenes-feature-spec.md). Their proposed capabilities are dependencies to qualify, not automatically delivered by this spec.
 
@@ -263,7 +277,7 @@ The starting world remains non-running preparation until admitted and explicitly
 
 ### WC-J01 — One sentence supplies a familiar world
 
-The creator asks for a small cooperative settlement with ordinary physics. The system proposes a compatible local start, inhabitants, supplies and current supported recovery/time concessions. It does not ask the creator to explain gravity. They change the settlement's name, review the opening and start the exact selected world. The first human can meet someone and perform a useful supported action without understanding the authoring tools.
+The player can enter a ready familiar opening without describing a world at all. Alternatively, the creator asks for a small wilderness start with ordinary physics. The system proposes a compatible local place, one resident, supplies and current supported recovery/time concessions without asking them to explain gravity. They change the place's name, review the actual opening and start that world. In the bundled version they can meet the resident, ask for a useful new tool and pursue the live invention/hunting loop. Creation has succeeded because the premise leads into meaningful play, not merely because a map and biographies were produced.
 
 ### WC-J02 — An unfamiliar magic rule is essential
 
@@ -303,7 +317,7 @@ The creator presses Start and loses the connection. On return, the interface res
 
 ### WC-J11 — Population changes late
 
-The creator expands the six-resident proposal to a larger group. The system preserves selected residents while reviewing additional resource demand, spatial fit, operating load and new social assumptions. Existing approval covers neither the new population nor its larger operating commitment. If only a smaller scope is supported, present it explicitly before launch.
+The creator expands a qualified small start toward the six-resident community proposal or a larger group. The system preserves selected residents while reviewing additional resource demand, spatial fit, operating load and new social assumptions. Existing approval covers neither the new population nor its larger operating commitment. If only a smaller scope is supported, present it explicitly before launch. The already useful smaller opening remains available; asking about a larger population does not turn it into an inadequate demo.
 
 ### WC-J12 — The preset changes after the world is prepared
 
@@ -321,13 +335,15 @@ A world asks every inhabitant to continually reconsider every other inhabitant's
 
 ## 12. Delivery and evidence
 
-**Stage 1: one familiar premise to one usable start.** Assemble a new local bundled-family world through existing drafts and an operator-prepared new host target. Deliver visible assumptions, the supported starting cohort, real resources/knowledge, concrete review and exact-result creation. Retain, explain and block unsupported essential premises from this first stage; a short input can request one immediately. Use faithful simple art. Qualification includes an ordinary first session, a conflicting dependency, an unsupported essential, a canceled creation and reconnect after success. An internal one-resident probe may reduce development risk, but does not qualify the proposed six-resident default.
+**Stage 1: a qualified opening that is easy to enter or make your own.** Preserve direct entry to a ready curated start. For an authorized creator who chooses customization, assemble a new local bundled-family world through existing drafts and an operator-prepared new host target. Begin with the accepted one-NPC personal opening, visible material assumptions, real resources/knowledge, a compact review and exact-result creation. Retain, explain and block unsupported essential premises from this first stage; a short input can request one immediately. Use faithful simple art. Qualification includes meaningful first play through the creative loop, a conflicting dependency, an unsupported essential, a canceled creation and reconnect after success. This authoring feature does not gate delivery of the underlying playable MVP, and six residents are not required to qualify this stage.
 
 **Stage 2: selective revision and meaningful alternatives.** Preserve chosen parts, expose dependent changes and support a second genuinely different qualified composition, such as the existing charge-based family where its complete opening is supported. Validate that the workflow can change meaningful laws without silently restoring survival defaults. Expand supported alternatives and bounded repair while retaining the first stage's unsupported-essential boundary.
 
-**Stage 3: richer starting societies and wider setting.** Expand geography, initial social situations and live population only with actual community, access and complete-cost evidence. Add optional rehearsal depth and author-requested histories when they improve choices enough to justify their cost. Do not make these required setup for a familiar small world.
+**Stage 3: richer starting societies and wider setting.** Qualify the proposed six-resident community when distinct relationships and activities add enough interest to justify their resource and service cost. Expand geography, initial social situations and live population only with actual community, access and complete-cost evidence. Add optional rehearsal depth and author-requested histories when they improve choices enough to justify their cost. Do not make these required setup for a familiar small world.
 
-**Stage 4: creator-quality qualification.** Compare novices and experienced creators across familiar, unusual, intentionally harsh and unsupported premises. Evaluate whether they can identify the material assumptions, explain what is ready, preserve their intent through revision and enter useful play. Record accessibility, reading load, failures, abandonment reasons and costs within existing authorized evaluation; no new analytics collection is approved here.
+**Stage 4: creator-quality qualification.** Compare novices and experienced creators across familiar, unusual, intentionally harsh and unsupported premises. Evaluate whether they can identify the material assumptions, preserve their intent through revision and enter play they want to continue. Include someone who simply chooses the prepared start. Record accessibility, reading load, failures, abandonment reasons and costs within existing authorized evaluation; no new analytics collection is approved here.
+
+**Simplify or defer when creation displaces play.** If people repeatedly need help to understand the start, get stuck reviewing defaults, reroll because the first proposal lost their intent, or spend more effort preparing lore than using it, shorten the flow and narrow the offered opening before adding options. If extra residents mainly repeat one another or consume the operating allowance without adding interesting choices, defer the larger cohort. A successful launch and coherent rules are necessary; they do not establish a compelling first session. Use the package's [playability gates](five-product-feature-specs.md#playability-gates) before broadening scope.
 
 Measure time to a reviewed playable start, creator corrections required, essential choices silently changed, dependency failures after launch, first-session usefulness, operating cost and how much successful work a revision preserves. Separate model explanation quality from native readiness and from gameplay enjoyment. A pathfinder reaching a goal does not establish a functioning community; a creator liking the description does not establish supported laws.
 
@@ -361,13 +377,13 @@ Together, these sources support a useful distinction: automation can reduce auth
 
 ## 14. Recommended decisions and tradeoffs
 
-Adopt the one-locality, six-resident reference start as a **proposal to qualify**, while preserving supported solitary, empty and intentionally harsh alternatives. Use a short premise-led conversation, visible material assumptions, targeted rehearsal, selective revision and a concrete release review. Separate supported laws, initial facts, character knowledge and creator explanations throughout.
+Adopt a ready curated opening and the accepted one-locality, one-NPC personal experience as the starting point; make custom creation optional and easy to finish. Retain six residents as a later **small-community proposal to qualify**, while preserving supported solitary, empty, unusual and intentionally harsh alternatives. Use a short premise-led conversation when wanted, visible material assumptions, useful optional rehearsal, selective revision and one concrete release review. Separate supported laws, initial facts, character knowledge and creator explanations throughout.
 
 The principal tradeoff is breadth versus dependability. A larger catalogue of selectable themes looks expressive, but each advertised opening needs working behavior. Begin with a smaller set of complete compositions and retain unsupported ambitions as useful drafts. The creator should see a faithful path toward their world, not a superficial theme painted over the same unsupported mechanics.
 
 The economic tradeoff is initial preparation versus recurring obligation. More generated history may cost once and repeatedly burden cognition later; more residents consume fictional supplies and real service. Spend on the first useful loop, retain concise relevant initial context and expand when play needs it. Do not make the cheapest start secretly less autonomous than its description.
 
-Before implementation, approve the reference cohort and opening, the initial supported presets, creator/character entry scope and operating offers. Choose measured reserve sizes, creation/work allowances and quality targets with the existing owners. These remaining values are not unlimited promises. More detailed schemas, composition machinery, hosting work and test implementation belong in the later technical design.
+The accepted personal MVP already supplies the initial playable scope; do not reopen its population decision as a prerequisite for progress. Before implementing this optional creator feature, settle its initial supported presets, creator/character entry scope and operating offers. Choose measured reserve sizes, creation/work allowances and quality targets with the existing owners. These remaining values are not unlimited promises. More detailed schemas, composition machinery, hosting work and test implementation belong in the later technical design.
 
 ## Maintained records
 

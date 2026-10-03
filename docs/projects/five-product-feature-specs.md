@@ -1,10 +1,10 @@
 # Five product and behavior specifications
 
-**Status: all five researched product proposals, focused reviews and package checks complete, October 3, 2026. Product adoption, technical design and runtime implementation remain open.**
+**Status: all five researched product proposals complete; game-first critique and revisions in progress, October 3, 2026. Technical design and runtime implementation remain open.**
 
 ## Purpose and scope
 
-Develop five comprehensive, researched feature specifications in the agreed order: continuing NPC lives; attention, crowds and scenes; creating a world from a premise; editable shelters and rain; world-authored stats and checks. Each specification explains intended behavior, reasons, player and NPC journeys, meaningful failure, incentives, economic sustainability, performance implications, proposed stages and behavioral acceptance.
+The original writing assignment developed five comprehensive, researched feature specifications in this order: continuing NPC lives; attention, crowds and scenes; creating a world from a premise; editable shelters and rain; world-authored stats and checks. Each specification explains intended behavior, reasons, player and NPC journeys, meaningful failure, incentives, economic sustainability, performance implications, proposed stages and behavioral acceptance.
 
 Mike explicitly requested product and behavior design before technical design. Consequently this package deliberately does not create technical-design counterparts, classes, storage schemas or implementation assignments. The existing architecture and subsystem contracts remain the constraints and later technical-design owners. Proposed product decisions are distinguishable from accepted direction and current implementation.
 
@@ -13,8 +13,8 @@ Mike explicitly requested product and behavior design before technical design. C
 - Repository: `Macrofold/OpenLegend`.
 - Source: `docs/design-needs-register` at `1627d51c79840ce8b5de24627bd2f552e42e97e9`, refreshed through the GitHub connector.
 - Working branch: `docs/five-product-feature-specs`.
-- Production logic affected: zero lines. Main risk is contradictory or overconfident product promises, particularly around autonomy, privacy, absence, resources and cost.
-- Complete each feature in sequence. Research and independent critique of the current feature may proceed in parallel; later features do not start before it is completed.
+- Production logic affected: zero lines. The current review addresses product priorities, player burden and release dependencies; it preserves current runtime contracts and accepted first-playable scope.
+- The five documents were written sequentially. Mike's subsequent critique request authorizes coordinated revisions across them. Their numbering is reading order, not delivery priority.
 - Commit useful sections as work proceeds, with a checkpoint whenever changes have been uncommitted for five minutes.
 - Use primary game/developer documentation and research papers where available. Separate observed behavior, developer proposals, experimental evidence, limitations and our design inferences. Record access dates and source-specific lessons in each feature specification.
 - Preserve existing documents and task identifiers. Extend existing work owners; do not reset delivered work or mark runtime tasks complete because their product design improved.
@@ -35,9 +35,80 @@ Every specification must include concrete proposed behavior and its rationale; a
 
 Finish with a cross-feature review of clocks, attention, permitted knowledge, resource use, human control, continued funding, material identity and randomness. Check the full documentation diff, references and anchors, proposal/current-status accuracy and formatting. Documentation-only verification does not run the game or claim capacity. Required CI remains a later merge gate.
 
+## Game-first review
+
+Mike's October 3 review makes fun and playability the governing priority. The first package described coherent simulation much more thoroughly than it described a compelling session. That is a real design imbalance: consistency protects a good game, but does not supply the player's reason to act.
+
+The strongest foundation is already accepted. The [product baseline](../../archive/01-requirements/product-baseline.md#product-premise) promises a world that remembers people and gains useful possibilities through play. The [first-playable agreement](../../archive/05-project/first-playable-mvp.md#what-the-first-version-must-demonstrate) calls for one wilderness map, one live conversational resident, genuinely generated and usable invention, the sling → hunt → harvest/prepare/eat loop, and a further supported invention with bow and arrow as the candidate. The player should discover something, make something work, affect a person or place, and have a reason of their own to continue.
+
+That agreement is a demonstration of capabilities, not a compulsory quest for every player or the laws of every authored world. Companionship, exploration, danger, cleverness, mastery, conflict, expression and pleasure in being somewhere can all matter. A quiet conversation or watching a place one has made is valid play. Do not make every scene a resource dilemma, force residents to be agreeable, or script adversity whenever the world becomes peaceful.
+
+### What this review changes
+
+| Prior emphasis or risk | Revised recommendation |
+| --- | --- |
+| A sequence of five complete systems can be mistaken for the route to first play | Improve the accepted playable loop using the smallest relevant parts; expand features when their actual player benefit is visible. |
+| Continuing lives can read as a scheduling and population project | First make one resident interesting, understandable and less dependent on player supervision while the world is running. Unattended communities remain a later funded offer. |
+| Correct attention can become another thing the player manages | Ordinary directed conversation and nearby action must be readable with sensible defaults. Busy crowds and timed speech are later expansions, not prerequisites. |
+| World creation starts by qualifying a six-resident community | Offer a ready small opening and optional compact creation. Six residents remain a later community hypothesis. Judge generation by worthwhile play after entry. |
+| Shelter earns utility by introducing wet-tinder failure | First establish useful, expressive cover and real drying. New ignition restrictions are a separately selected challenge with a complete recovery path. |
+| The roof check becomes an elaborate required proof of stats | Keep its arithmetic as an optional candidate. First establish whether a supported competence improves a worthwhile action; a predictable effect can be sufficient. |
+| Whole-job favorable/adverse modifier history adds burden to the initial check | The revised candidate uses one visible decisive step with its actual conditions. Rich cumulative work accounting needs a separately justified use. |
+| Correct outcomes, source counts and detailed scenarios stand in for enjoyment | Add explicit experience observations and reasons to simplify or defer a feature. Research and documentation do not pass a playtest. |
+
+The changes remove proposed prerequisites, not existing protections or useful future design. Privacy, actual effects, finite resources where the world requires them, current permissions, meaningful NPC independence and truthful service failures remain essential. For ordinary play, this machinery should appear as understandable behavior and recoverable action, not repeated forms, approval screens or bookkeeping. A fictional conflict is not a platform permission request.
+
+## Game-first delivery sequence
+
+This is the recommended product sequence for the five proposals. It does not reset delivered work, overwrite the [next-priority assignments](../maintainers/next-priority-batch.md), or declare any existing acceptance complete. Relevant fixes to discovery, response latency, invention reliability and resource selection can precede a new feature because they make the current game usable. The owning trackers retain those assignments.
+
+| Priority | What the player should get | Minimum useful contribution and expansion trigger |
+| --- | --- | --- |
+| 1 — Make the existing personal game compelling | A person to engage with; a self-chosen practical or exploratory intention; an invented object that changes an activity; understandable consequences and a next possibility | Qualify and improve the existing live creative loop. Use narrow continuing activity, conversation, memory and readable attention at the current scale. Do not wait for offline lives, dense crowds, a world creator, buildings or generic dice. |
+| 2 — Deepen a place and its relationships | A resident follows through without constant orders; the player's changes remain useful; returning to an interaction has meaning | Improve the actual gaps observed in that small world. A compact editable shelter is a candidate next creative activity after the accepted invention loop, provided people enjoy making or using it. Do not require new maintenance merely to justify construction. |
+| 3 — Let a creator make another worthwhile opening | A faithful supported premise becomes somewhere worth entering, with a short path into play | Reuse a qualified small start and demonstrate a meaningfully different supported opening. Creation is optional for players. More biographies, residents and settings follow genuine creator demand and affordable results, not completion of a generation pipeline. |
+| 4 — Expand participation and time where demand warrants it | A small community creates relationships and shared situations one resident could not; later continued absence or denser scenes add value | Choose the particular experience first. Qualify each added population, continued-service offer and crowded activity with its relevant privacy, consequence and cost requirements. Full unattended progression is not a dependency for ordinary small-group conversation. |
+| Conditional — Add competence and checks where useful | Preparation, capability or chosen uncertainty changes a valued action in an understandable way | This can follow any proven consumer; it is not a mandatory final layer. Prefer a predictable effect when it already supplies the value. Add the optional check only if the comparison demonstrates better play, not merely correct probabilities. |
+
+Priorities 2 and 3 can trade places if actual play or creator feedback shows that a second world is more valuable than building in the first. The default recommendation is to deepen one enjoyable place before multiplying openings. This is an explicit product choice to reconsider using evidence, not a hidden dependency or a promise that every later stage will be built.
+
+The first personal game retains its accepted pause and absence behavior until a separately supported continuing-world mode is selected. Moving around a running world, briefly leaving a resident's view and returning can establish continuity without offline simulation. Later shared-world strategies remain intact; their costs and protection rules are prerequisites for offering those modes, not reasons to delay an unrelated local experience.
+
+## Playability gates
+
+Every proposed slice must name the experience it improves and the simplest complete way to deliver it. Existing correctness, accessibility and cost requirements still apply to the behavior actually offered. The following are formative play observations, not a new analytics system, a questionnaire that certifies fun, or permission to dispatch paid tests during this documentation task.
+
+| Question to observe | Evidence that matters | Response if the feature fails |
+| --- | --- | --- |
+| Can a new player find something they want to try? | A self-chosen intention, understandable opportunities, and where facilitator rescue was needed | Improve the opening, action discovery, context or presentation before adding more underlying systems. |
+| Can they turn that intention into a visible useful result? | Successful and failed attempts, unclear costs, repeated rewording, involuntary waiting, and whether an invention changes what they can actually do | Fix the whole action path. Combine routine setup, offer sensible defaults, simplify the family or remove an unnecessary dependency. |
+| Does a resident make the world more interesting? | The player can identify a particular motive, remembered interaction or independent action that made them curious, attached, amused, wary or challenged | Improve that resident's situated behavior and feedback before increasing population or memory complexity. Agreement and affection are not required outcomes. |
+| Is the added complication worth its burden? | What alternatives the player notices, how they adapt after a setback, and whether they would choose the activity without a newly imposed penalty | Compare against a simpler supported version. Simplify, keep the complication optional, or defer it; do not make the rest of the game worse to force its use. |
+| Does the experience leave a satisfying consequence or next possibility? | A usable item, learned method, changed place, understood discovery or meaningful relationship; what the player wants to try at a natural stopping point | Strengthen the consequence and its legibility. More counters, mandatory rewards or recurring obligations are not the default repair. |
+| Is the whole session affordable and responsive? | Actual complete workflow cost, response delays, admitted scope and service-failure behavior | Reduce unnecessary generation and proposed scope. Preserve already admitted effects and disclose required service limits. |
+
+Use uncoached players who do not know the intended demonstration, including different interests and at least a contrasting way of approaching the same situation. Observe the accepted live loop, a setback and recovery, a return to an earlier person or activity, and a legitimate decision to skip the optional feature. A paper or inexpensive isolated prototype can challenge a doubtful choice before implementation; it cannot replace the accepted live-AI, real-invention, native-effect and current-format requirements.
+
+Record actual observations and their scope with the existing verification owner when testing occurs. Look for facilitator intervention, repeated unsuccessful commands and waiting or maintenance that players perform only to get back to what they enjoy. Chosen deliberation, challenging recovery, quiet observation and deliberate craft are not automatically friction. A capable player consistently preferring a method can be satisfying specialization; do not force equal option usage or add hidden failures to manufacture tension.
+
+Progress does not require a new experience-point system. Capabilities learned, tools made, places understood, relationships changed and self-chosen plans accomplished can make a session matter. There is no selected universal session length, participant count, return-rate threshold or “fun score.” Small formative studies reveal particular problems; they do not establish long-term retention, broad appeal, balance or capacity. Feature inventories retain any concrete limits selected for their own pilots.
+
+### Research informing the critique
+
+Accessed October 3, 2026. These sources inform the review; the specific revised Open Legend recommendations above are design judgments requiring play evidence.
+
+| Source | Relevant evidence and its limit | Consequence for this package |
+| --- | --- | --- |
+| GP-R01 — [Hunicke, LeBlanc and Zubek, MDA](https://www.cs.northwestern.edu/~hunicke/MDA.pdf), 2004 | A design framework connecting mechanics, behavior and desired experience; it explicitly evaluates AI through its effect on gameplay. It is not experimental proof or a formula for fun. | Start from the experience, then justify its smallest useful system. Preserve discovery, expression, companionship, challenge and sensory pleasure. |
+| GP-R02 — [Ryan, Rigby and Przybylski, The Motivational Pull of Video Games](https://selfdeterminationtheory.org/SDT/documents/2006_RyanRigbyPrzybylski_MandE.pdf), 2006 | Four studies relate experienced autonomy and competence to enjoyment and play preference; relatedness matters in the MMO study. Limited genres, settings and measures constrain generalization. | Observe understandable control, meaningful capability and relationships. Do not infer enjoyment from time spent or the quantity of simulation. |
+| GP-R03 — [Wube, Friday Facts #414](https://www.factorio.com/blog/post/fff-414), June 7, 2024 | Developer account of reducing many shallow crops to two with richer relationships, while retaining consequential spoilage. This is a development account, not a controlled comparison. | Reduce breadth that adds repetitive handling; retain complexity when it creates worthwhile decisions and useful tools to manage it. |
+| GP-R04 — [Wube, Friday Facts #431](https://www.factorio.com/blog/post/fff-431), October 4, 2024 | Later testing exposed agriculture that became useful too late and was disconnected from ordinary factory work; the design was revised to yield earlier useful materials. | Judge the whole activity chain and intermediate payoff. A confident system design can still fail when played. |
+| GP-R05 — [Alex Beachum, Outer Wilds: A Thrilling Graphical Text Adventure](https://www.mobiusdigitalgames.com/outer-wilds-text-adventure.html), fifth-anniversary retrospective, 2024; page undated | Creator describes paper/text prototypes for testing whether the mystery could be understood before full engine implementation. This is a specific production example. | Test uncertain choices cheaply before expensive fidelity, while preserving the separate live-AI product acceptance. |
+| GP-R06 — [Mobius, A Very Narrative Update](https://www.mobiusdigitalgames.com/news/a-very-narrative-update), July 7, 2015 | Developer account of revising early hostility that made players feel excluded from their home. It concerns that particular intended relationship experience. | Give NPC behavior an experiential purpose. This does not remove selfishness, danger, refusal or conflict from Open Legend. |
+
 ## How the five designs fit together
 
-The agreed priority order is also the documentation sequence; it is not a requirement to finish every stage of one feature before delivering another. Continuing lives and attention establish how a real population can remain coherent without constant expensive reasoning. World creation should expose only the supported capabilities of its actual release. The proposed shelter check deliberately reuses the later physical shelter family, while unrelated typed stats and other supported world openings can exist earlier.
+The numbered specifications are a reference library. The game-first delivery sequence above governs this package's recommendation. Each slice must offer a complete useful experience, with detailed safeguards applied to its actual scope. The optional roof-check example reuses shelter behavior if selected; it does not make shelters a prerequisite for every competence, world or creative activity.
 
 | Shared concern       | Product decision across the package                                                                                                                                                                                                                                        |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -50,13 +121,13 @@ The agreed priority order is also the documentation sequence; it is not a requir
 
 The main remaining product choices are adoption of the recommended starting scopes and qualification of their tuning. Each feature identifies those choices locally. The specs provide concrete starting recommendations and expected behavior; implementation owners should preserve those commitments or explicitly revise the product decision rather than resolve ambiguity invisibly in code.
 
-## Completed documentation review
+## Documentation review history
 
-The five feature files contain approximately 39,400 words, 72 named player/NPC journeys and 80 research-register entries. Some sources are relevant to more than one feature, so the register-entry count is not a claim of 80 unique publications. Each register distinguishes source findings, historical/version limits and the proposed Open Legend consequence.
+At the initial completion on commit `4f1ef70`, the five feature files contained approximately 39,400 words, 72 named player/NPC journeys and 80 research-register entries. Some sources are relevant to more than one feature, so the register-entry count is not a claim of 80 unique publications. Each register distinguishes source findings, historical/version limits and the proposed Open Legend consequence.
 
-Each feature received focused review, followed by a complete cross-feature consistency review. Corrections made during that work include bounded funded work rather than indefinite compute promises; current speech versus future timed phrases; supported creator/host entry; a real drying and tinder recovery loop; and retained check-attempt conditions through cancellation. The final cross-feature pass found no further required product correction.
+Each feature received focused review, followed by a complete cross-feature consistency review. Corrections made during that work include bounded funded work rather than indefinite compute promises; current speech versus future timed phrases; supported creator/host entry; a real drying and tinder recovery loop; and retained check-attempt conditions through cancellation. That pass established coverage and consistency, not the quality of play. The subsequent game-first review identified the priority and minimum-scope corrections above, including revising the initial wet-tinder requirement and whole-job modifier-history proposal.
 
-The complete affected documentation diff was reviewed against the pinned source. All existing implementation checkbox states are preserved, and prior substantive source content remains apart from the intentionally expanded limits-index summary. Added pointers do not change current implementation claims. All 161 new or changed internal link targets/anchors resolve. Changed Markdown passes the repository's pinned Prettier 3.6.2 configuration. Check helpers and raw research notes are outside the repository changes.
+For that initial completion, the complete affected documentation diff was reviewed against the pinned source. All existing implementation checkbox states are preserved, and prior substantive source content remains apart from the intentionally expanded limits-index summary. Added pointers do not change current implementation claims. All 161 new or changed internal link targets/anchors resolve. Changed Markdown passes the repository's pinned Prettier 3.6.2 configuration. Check helpers and raw research notes are outside the repository changes.
 
 The finite check distributions, retry examples and expected completion times were calculated and independently reviewed; illustrative service arithmetic is labeled as hypothetical. No game, browser, live-provider, balance or capacity test was run for this documentation task. No production logic, configuration or agent instructions changed. Required implementation/CI qualification remains with the existing owners before any later release.
 

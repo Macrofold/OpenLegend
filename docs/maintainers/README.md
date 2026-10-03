@@ -6,7 +6,7 @@
 
 ## Five researched product specifications
 
-[Five product and behavior specifications](../projects/five-product-feature-specs.md) develops continuing NPC lives, attention/crowds/scenes, world creation from a premise, editable shelters/rain and authored stats/checks in that order. Each includes detailed behavior, player/NPC scenarios, economics, performance implications, cited primary research and proposed qualification stages. PS02–PS04, ND01, ND07/narrow ND08 and ND03 retain their existing delivery owners and proposed limits. Mike requested product design before technical design; these proposals do not close implementation tasks or claim new runtime capacity.
+[Five product and behavior specifications](../projects/five-product-feature-specs.md) contains continuing NPC lives, attention/crowds/scenes, world creation, editable shelters/rain and authored stats/checks. Its [game-first sequence](../projects/five-product-feature-specs.md#game-first-delivery-sequence) prioritizes the accepted live creative loop and useful small-world improvements; document numbering is not implementation priority. Each proposal includes behavior, scenarios, economics, primary research and experience gates. PS02–PS04, ND01, ND07/narrow ND08 and ND03 retain delivery and limits ownership. Product design remains distinct from technical design, implementation and measured enjoyment.
 
 ## Product scalability and persistent participation
 
