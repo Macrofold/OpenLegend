@@ -66,7 +66,13 @@ export function appendMemory(
     return;
   const record: MemoryRecord = {
     ...memory,
-    summary: memoryPerspective(world, actorId, memory.summary, memory.eventType === 'speech'),
+    summary: memoryPerspective(
+      world,
+      actorId,
+      memory.summary,
+      memory.eventType === 'speech',
+      memory.speakerId,
+    ),
     id: nextId(world, 'memory'),
     actorId,
     at: world.simTime,

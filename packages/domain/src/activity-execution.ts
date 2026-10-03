@@ -1,4 +1,4 @@
-import { executeCommand } from './kernel.js';
+import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
 import { isActivityCommand, stopCurrentWork, suspendCurrentWork } from './agency.js';
@@ -340,7 +340,7 @@ export function startLearnedActivity(
   actor.planGeneration++;
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = executeCommand(world, first.command, { preview: true }).outcome;
+    const preview = nativeOperationAvailable(world, first.command);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'The learned activity was selected; no result is promised.');
@@ -520,7 +520,7 @@ export function startRequestedActivity(
     );
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = executeCommand(world, first.command, { preview: true }).outcome;
+    const preview = nativeOperationAvailable(world, first.command);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'The requested activity was admitted; no result is promised.');

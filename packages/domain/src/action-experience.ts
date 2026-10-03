@@ -1,6 +1,7 @@
 import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { canonicalJson } from './events.js';
+import { cloneValue } from './draft.js';
 import { isActivityCommand } from './agency.js';
 
 /** Admission bounds, not promises about how much an actor remembers. Historical
@@ -376,7 +377,8 @@ export function beginActivity(
     actorId: command.actorId,
     ...(parentId ? { parentId } : {}),
     at: world.simTime,
-    command,
+    // A learned frontier can supply a draft plan step; history owns a plain snapshot.
+    command: cloneValue(command),
     objects,
     view,
     status: 'running',

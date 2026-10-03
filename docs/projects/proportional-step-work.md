@@ -170,6 +170,8 @@ This stage keeps each call size's outcomes the same except for the listed shifts
 
 ### Stage 2 — sight work follows change
 
+[PW08](next-playable-week/simulation-performance.md) implements only membership-difference updates, reverse incident-pair invalidation and dependency-certified certain-path reuse from stages 2–3. Its current matched evidence and remaining gates are recorded with that task. The change-list, target-only visibility, exact approach timing, horizon and other stages below remain proposed; the historical percentages are not current measurements.
+
 This stage builds on the perception work merged into main on 2026-10-01, which reworked this code: the sight pass reads unchanged entities without copying them, records when a person leaves a character's view, and counts its own work. Stage 0 re-measures what remains before this stage claims further savings.
 
 - **Update "what I currently see" records in place.** Add the entries that appeared and drop the ones that disappeared, keeping the same sighting ID for each sighting still going on, so memories that refer to it stay linked.

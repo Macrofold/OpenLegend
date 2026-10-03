@@ -53,7 +53,7 @@ Manual save count is unlimited, but reaching this refusal requires extreme susta
 
 Bound dense native phases and the active evidence working set while preserving every required outcome.
 
-Delivered: unchanged-exposure reuse, incremental expiry, a bounded resident awareness tail, and private native checkpoints between actors/exposures. Remaining: genuine first-exposure fan-out, indivisible finalization, growing personal-memory arrays and sustained release qualification. A six-hour personal-memory window is not a byte cap, and checkpoints cannot preempt an individual operation. Budget exhaustion must not silently lose witnesses or effects. [Inventory](../limits/native-work.md#nw10) · [Work: PF03/PF09 / EPR02/EPR05](performance.md) [Active evidence window](../limits/memory.md#mh05).
+Delivered: unchanged-exposure reuse, incremental expiry, a bounded resident awareness tail, and private native checkpoints between actors/exposures. PW08 also delivers membership-only sighting edits, reverse incident-pair invalidation and conservatively certified certain-path retention ([PW08 branch evidence](../verification/perception-reaction-intake.md#pw08-bounded-sight-work--october-2-2026)). Selected work counts fall; the matched shared-host runs do not establish total CPU/tail or server-capacity acceptance. Remaining: genuine first-exposure fan-out, indivisible finalization, growing personal-memory arrays and sustained release qualification. A six-hour personal-memory window is not a byte cap, and checkpoints cannot preempt an individual operation. Budget exhaustion must not silently lose witnesses or effects. [Inventory](../limits/native-work.md#nw10) · [Work: PF03/PF09 / EPR02/EPR05](performance.md) [Active evidence window](../limits/memory.md#mh05).
 
 ### C17
 

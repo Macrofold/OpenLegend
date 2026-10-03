@@ -3,6 +3,75 @@ import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
+import type { ModelTokenPrices, TokenPrices } from '@open-legend/ai';
+
+const modelIdentity = z.string().regex(/^[\w./:-]{1,128}$/);
+const tokenRate = z.number().finite().nonnegative();
+const modelPriceSchema = z
+  .object({
+    model: modelIdentity,
+    prices: z
+      .object({
+        inputUsdPerMillion: tokenRate,
+        outputUsdPerMillion: tokenRate,
+        cachedInputUsdPerMillion: tokenRate.optional(),
+        cacheWriteInputUsdPerMillion: tokenRate.optional(),
+      })
+      .strict(),
+    reportedAliases: z.array(modelIdentity).optional(),
+  })
+  .strict();
+
+function modelPricesSetting(
+  raw: string | undefined,
+  model: string,
+  prices: TokenPrices,
+): readonly ModelTokenPrices[] {
+  modelIdentity.parse(model);
+  const catalogue: ModelTokenPrices[] = [{ model, prices }];
+  const owners = new Set([model]);
+  const declared = new Set<string>();
+  let entries: z.infer<typeof modelPriceSchema>[];
+  try {
+    entries = raw === undefined ? [] : z.array(modelPriceSchema).parse(JSON.parse(raw));
+  } catch {
+    throw new Error('OPENAI_MODEL_PRICES_JSON must be an array of valid model price records.');
+  }
+  for (const entry of entries) {
+    if (declared.has(entry.model) || (entry.model !== model && owners.has(entry.model)))
+      throw new Error('OPENAI_MODEL_PRICES_JSON has duplicate model or alias ownership.');
+    declared.add(entry.model);
+    if (entry.model === model) {
+      const rateKeys = [
+        'inputUsdPerMillion',
+        'outputUsdPerMillion',
+        'cachedInputUsdPerMillion',
+        'cacheWriteInputUsdPerMillion',
+      ] as const;
+      if (rateKeys.some((key) => prices[key] !== entry.prices[key]))
+        throw new Error('The default model catalogue prices conflict with its LLM price settings.');
+      // Default fields remain the sole price owner; an identical entry can declare aliases.
+      catalogue[0] = { model, prices, reportedAliases: entry.reportedAliases };
+    } else {
+      owners.add(entry.model);
+      catalogue.push(entry);
+    }
+    for (const alias of entry.reportedAliases ?? []) {
+      if (owners.has(alias))
+        throw new Error('OPENAI_MODEL_PRICES_JSON has duplicate model or alias ownership.');
+      owners.add(alias);
+    }
+  }
+  return Object.freeze(
+    catalogue.map((entry) =>
+      Object.freeze({
+        model: entry.model,
+        prices: Object.freeze({ ...entry.prices }),
+        reportedAliases: Object.freeze([...(entry.reportedAliases ?? [])]),
+      }),
+    ),
+  );
+}
 
 function numberSetting(
   env: NodeJS.ProcessEnv,
@@ -56,6 +125,20 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     env['JEV_INPUT_USD_PER_MILLION'] === undefined
   )
     throw new Error('A custom JEV_MODEL requires an explicit JEV_INPUT_USD_PER_MILLION.');
+  const llmModel = env['OPENAI_MODEL'] ?? 'gpt-5.6-luna';
+  const llmPrices = Object.freeze({
+    inputUsdPerMillion: numberSetting(env, 'LLM_INPUT_USD_PER_MILLION', 0.2, 0, 1000),
+    outputUsdPerMillion: numberSetting(env, 'LLM_OUTPUT_USD_PER_MILLION', 1.2, 0, 1000),
+    cachedInputUsdPerMillion: numberSetting(env, 'LLM_CACHED_INPUT_USD_PER_MILLION', 0.02, 0, 1000),
+    cacheWriteInputUsdPerMillion: numberSetting(
+      env,
+      'LLM_CACHE_WRITE_USD_PER_MILLION',
+      0.25,
+      0,
+      1000,
+    ),
+  });
+  const llmModelPrices = modelPricesSetting(env['OPENAI_MODEL_PRICES_JSON'], llmModel, llmPrices);
   const worldPreset = env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness';
   if (!['wilderness', 'reservoir-demo', 'touch-demo'].includes(worldPreset))
     throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
@@ -188,30 +271,14 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     llmKey: env['OPENAI_API_KEY'] ?? '',
     jevModel: env['JEV_MODEL'] ?? 'jev-1.13.0',
-    llmModel: env['OPENAI_MODEL'] ?? 'gpt-5.6-luna',
+    llmModel,
     jevPrices: {
       inputUsdPerMillion: numberSetting(env, 'JEV_INPUT_USD_PER_MILLION', 0.042, 0, 1000),
       outputUsdPerMillion: 0,
     },
     // Explicit estimates; operators must set rates for a different model. No claim of invoice totals.
-    llmPrices: {
-      inputUsdPerMillion: numberSetting(env, 'LLM_INPUT_USD_PER_MILLION', 0.2, 0, 1000),
-      outputUsdPerMillion: numberSetting(env, 'LLM_OUTPUT_USD_PER_MILLION', 1.2, 0, 1000),
-      cachedInputUsdPerMillion: numberSetting(
-        env,
-        'LLM_CACHED_INPUT_USD_PER_MILLION',
-        0.02,
-        0,
-        1000,
-      ),
-      cacheWriteInputUsdPerMillion: numberSetting(
-        env,
-        'LLM_CACHE_WRITE_USD_PER_MILLION',
-        0.25,
-        0,
-        1000,
-      ),
-    },
+    llmPrices,
+    llmModelPrices,
   };
 }
 

@@ -1,24 +1,56 @@
-import { JUDGMENT_MAX_CHARACTERS, type AiReceipt, type TokenUsage } from '@open-legend/ai';
+import {
+  JUDGMENT_MAX_CHARACTERS,
+  modelTokenPrices,
+  type AiReceipt,
+  type TokenPrices,
+  type TokenUsage,
+} from '@open-legend/ai';
 import { MIND_LIMITS, RESPONSE_LIMITS } from '@open-legend/domain';
 import { LEVEL_LIMITS } from './cognition-contracts.js';
 import type { AppConfig } from './config.js';
 import { CONTEXT_BYTE_LIMIT } from './context.js';
 
-/** Same conservative allowance for cheap preflight and authoritative paid admission. */
-export function decisionAllowance(config: AppConfig, provider: 'jev' | 'openai'): number {
-  if (config.macrofoldKey)
-    return provider === 'jev' ? config.jevReserveUsd : config.macrofoldRunUsd;
-  const prices = provider === 'jev' ? config.jevPrices : config.llmPrices;
-  return Math.max(
-    provider === 'jev' ? config.jevReserveUsd : Math.max(0.25, config.llmReserveUsd),
-    (500000 *
-      Math.max(
-        prices.inputUsdPerMillion,
-        provider === 'openai' ? config.llmPrices.cacheWriteInputUsdPerMillion : 0,
-      ) +
-      8192 * prices.outputUsdPerMillion) /
-      1e6,
+/** Reserve from the same model catalogue used to settle supported usage. Missing prices
+ * retain the caller's conservative unknown-cost floor, never an invented zero rate. */
+export function generationAllowance(
+  config: AppConfig,
+  model?: string,
+  inputTokens = 500_000,
+  outputTokens = 8192,
+  minimumUsd = Math.max(0.25, config.llmReserveUsd),
+): number {
+  if (config.macrofoldKey) return config.macrofoldRunUsd;
+  const models = model
+    ? [model]
+    : [config.llmModel, config.miniModel, config.complexModel, config.summaryModel];
+  const prices: TokenPrices[] = models.flatMap(
+    (selected) => modelTokenPrices(config.llmModelPrices, selected) ?? [],
   );
+  return Math.max(
+    minimumUsd,
+    ...prices.map(
+      (rates) =>
+        (inputTokens *
+          Math.max(
+            rates.inputUsdPerMillion,
+            rates.cachedInputUsdPerMillion ?? 0,
+            rates.cacheWriteInputUsdPerMillion ?? 0,
+          ) +
+          outputTokens * rates.outputUsdPerMillion) /
+        1e6,
+    ),
+  );
+}
+/** Same conservative allowance for cheap preflight and authoritative paid admission. */
+export function decisionAllowance(
+  config: AppConfig,
+  provider: 'jev' | 'openai',
+  model?: string,
+): number {
+  if (provider === 'openai') return generationAllowance(config, model);
+  return config.macrofoldKey
+    ? config.jevReserveUsd
+    : Math.max(config.jevReserveUsd, (500_000 * config.jevPrices.inputUsdPerMillion) / 1e6);
 }
 /** Reserve one interactive response plus optional native interpretation, attention and embeddings. */
 export function interactiveAllowance(config: AppConfig): number {
@@ -27,15 +59,8 @@ export function interactiveAllowance(config: AppConfig): number {
   if (config.jevOnly) return 3 * decisionAllowance(config, 'jev');
   if (config.macrofoldKey)
     return 2 * config.macrofoldRunUsd + 3 * config.jevReserveUsd + config.embeddingReserveUsd;
-  const inputPrice = Math.max(
-    config.llmPrices.inputUsdPerMillion,
-    config.llmPrices.cacheWriteInputUsdPerMillion,
-  );
-  const generation = Math.max(
-    0.25,
-    config.llmReserveUsd,
-    (120000 * inputPrice + 8192 * config.llmPrices.outputUsdPerMillion) / 1e6,
-  );
+  // The eventual route is not selected yet: hold the most expensive configured model.
+  const generation = generationAllowance(config, undefined, 120_000);
   const judgment = Math.max(
     config.jevReserveUsd,
     (120000 * config.jevPrices.inputUsdPerMillion) / 1e6,
@@ -77,7 +102,7 @@ export interface LevelLimits {
 // Engineering starting points, not measured optima: docs/limits/cognition.md#cg08.
 export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimits> {
   const jev = decisionAllowance(config, 'jev');
-  const llm = decisionAllowance(config, 'openai');
+  const llm = decisionAllowance(config, 'openai', config.llmModel);
   const generative = (level: 2 | 3 | 4): LevelLimits => ({
     level,
     executor: level === 2 ? 'mini-llm' : 'complex-llm',
@@ -92,7 +117,9 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
     },
     toolRounds: 0,
     requestsPerDecision: 10,
-    decisionUsd: 10 * llm,
+    decisionUsd:
+      10 *
+      decisionAllowance(config, 'openai', level === 2 ? config.miniModel : config.complexModel),
   });
   return {
     1: {

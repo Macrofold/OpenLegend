@@ -27,6 +27,24 @@ export const DOMAIN_COUNTERS = [
   'exposureEntries',
   'exposureExits',
   'exposureDetails',
+  /** Sighting-identity assignments (including redundant baseline writes), additions/removals. */
+  'episodeBindingsAssigned',
+  'episodeBindingsInserted',
+  'episodeBindingsDeleted',
+  /** Brief sight/contact pair work and derived-cache lifecycle. */
+  'crossingPairEvaluations',
+  'crossingPairCacheHits',
+  'crossingInvalidationKeys',
+  'crossingPruneKeys',
+  'crossingPairsRetained',
+  'crossingRetentionExpired',
+  'crossingRetentionGeometry',
+  'crossingRetentionEligibility',
+  'crossingRetentionBody',
+  'crossingRetentionPath',
+  'crossingPairPeak',
+  'crossingTrackPeak',
+  'crossingOutcomePeak',
 ] as const;
 export type DomainCounter = (typeof DOMAIN_COUNTERS)[number];
 export type DomainCounters = Partial<Record<DomainCounter, number>>;
@@ -35,6 +53,11 @@ let sink: DomainCounters | undefined;
 
 export function countDomainWork(name: DomainCounter, amount = 1): void {
   if (sink) sink[name] = (sink[name] ?? 0) + amount;
+}
+
+/** Cardinality high-water marks, observed without making cache behavior depend on a sink. */
+export function maximumDomainWork(name: DomainCounter, amount: number): void {
+  if (sink) sink[name] = Math.max(sink[name] ?? 0, amount);
 }
 
 /** Install (or with no argument remove) the profiler's tally object. */

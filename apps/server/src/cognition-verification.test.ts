@@ -3,7 +3,7 @@ import {
   testRepository,
   readConfig,
 } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { applyBodyEffects, DEFAULT_COGNITION_POLICY, NPC_ID } from '@open-legend/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -297,6 +297,12 @@ async function harness(
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
+  // These fixtures measure Ada's decisions, with other residents outside their scope.
+  await editWorld(service, (world) => {
+    for (const entity of Object.values(world.entities))
+      if (entity.actor?.controller === 'npc' && entity.id !== NPC_ID)
+        entity.actor.controller = 'native';
+  });
   const calls = { judges: [] as JudgeRequest[], generations: [] as GenerateRequest[] };
   const state: {
     policy: JudgePolicy;

@@ -51,6 +51,10 @@ Implementation and remaining live-deployment gates: [MW01–MW04](maintainers/ma
 
 Construct the client in trusted server code. Read keys from the server environment or a server secret store; never pass them through game requests, browser configuration, saved world state, telemetry, or receipts. Omitting a provider or supplying an empty key returns `unavailable` without dispatching. Configured endpoints require HTTPS; redirects are rejected. Endpoint configuration is privileged, since it determines where credentials and context go.
 
+Direct generation uses an immutable operator-supplied model-price catalogue. The existing `LLM_*_USD_PER_MILLION` fields price only `OPENAI_MODEL`; `OPENAI_MODEL_PRICES_JSON` adds records shaped as `{ "model": "exact-requested-model", "prices": { "inputUsdPerMillion": 1, "outputUsdPerMillion": 2 }, "reportedAliases": ["explicitly-equivalent-reported-model"] }` (the numbers here are illustrative, not vendor rates). Cached-input and cache-write rates are optional fields in `prices`. An identical default-model record may attach aliases and collapses into the existing default entry; conflicting default rates, repeated models/aliases, malformed records and nonfinite/negative rates fail startup. The client copies and freezes the catalogue so later caller mutation cannot change an admitted request.
+
+Reservations select the same requested model as settlement. Before a route has chosen its model, the interactive allowance conservatively uses the most expensive configured default/mini/complex/summary model, including cached-input or cache-write premiums. A named decision or maintenance model never borrows the default model's rates. A different provider-reported identity is priced only when explicitly listed as that requested model's alias; otherwise its cost remains unknown and the existing conservative hold applies. No prices are downloaded automatically. [Catalogue and spending limits](limits/ai-execution.md#mp01--configured-model-prices) · [PW01 evidence](verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
+
 ```ts
 import { createAiClient } from '@open-legend/ai';
 

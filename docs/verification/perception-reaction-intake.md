@@ -413,3 +413,355 @@ These runs alternate `be68b1e0` and the branch head on `mixed.json`, three pairs
 - **Tail latency:** the head's p95 was lower in pairs 1 and 2 and higher in pair 3. Tail latency on this host remains unresolved.
 - **Outcomes:** every head run has final digest `4a0345f5…`, the stage-4 outcome with sighting `change` markers. Its per-step trace equals `be68b1e0`'s (`68be3cdd…`).
 - **Not accepted:** 3× is not reached on this shared host.
+
+## PW08 bounded sight work — October 2, 2026
+
+Engineer 1 implemented the three reductions in the [PW08 brief](../projects/next-playable-week/simulation-performance.md) after the owner's explicit implementation authorization. A character now changes only sighting bindings that actually arrive or leave; invalidating one body visits only its cached pairs; rebuilding a shared mechanical forecast retains certain pairs only after checking their remaining movement and current sensing dependencies. This evidence establishes reduced selected work and corresponding-baseline semantic equivalence. It does **not** establish faster end-to-end execution, regression-free tails, complete reload equivalence or server capacity. [PW08/PW06](../maintainers/next-playable-week.md) and their broader parents retain their unmet acceptance.
+
+### Revisions, host and reproduction
+
+The actual starting base was the inherited planning commit **`8005f7c7245cfecec128652efe3ef07926604e0a`**, not the historical `6664144a` inspection base or a branch without the planning documents. The baseline was a private `git archive` copy at `/private/tmp/openlegend-pw08-baseline-wdsf3tij`, with production behavior unchanged and observational hooks added for the selected counts. Its original-code/instrumentation diffs are retained privately. The first reviewed candidate was the `oct2-eng-1` working tree, captured at HEAD `d1fa27ab630773857e00ec7e1e2f8cc5375ab5f5` with the PW08 implementation still uncommitted, then preserved in **`b5667c0c0acbb19a6aec825f7e7f7ea810f7d698`**. The scenario support had already been published as `fe85785b`. The final copied-value follow-up is identified below. This is branch evidence before the whole-week integration matrix.
+
+All native measurements below used `/Users/mzw/.nvm/versions/node/v22.23.2/bin/node`, the locked TS/tsx dependencies, frozen snapshots and equivalent CPU profiling, tracing and counter instrumentation. Baseline and candidate used byte-identical scenario/native-runner files. Resolving `@open-legend/domain` and `@open-legend/spatial` from the baseline printed paths inside the archive, confirming that shared third-party dependency links did not execute candidate workspace modules. No paid provider call was made.
+
+Host: Apple M1 Pro, 10 CPU cores, arm64, macOS 15.7.3/Darwin 24.6.0. During the first reviewed sequence a host snapshot read load averages **158.51 / 149.98 / 137.56**. This was one snapshot, not per-run load sampling. Other engineering and PostgreSQL profiling continued; these results are shared-host attribution evidence, not a quiet-host qualification or a release soak.
+
+Raw manifests, initial fixture, reports, traces, CPU profiles, source hashes, comparison details and the operational semantic script remain outside Git at `/private/tmp/openlegend-pw08-evidence`. The first reviewed measurements use `reviewed-{baseline,candidate}-{dense,dense-static,near,separated}-{1,2,3}` outputs; final follow-up outputs use `read-reuse-*` as identified below. Earlier unpinned Node runs, pre-review timings and the earlier added-static digest disagreement caused by changing the hash implementation between launches are discarded. That disagreement is not treated as a passing reproduction.
+
+The first reviewed runtime/harness SHA-256 values are recorded here so a later branch commit cannot silently change which implementation was measured:
+
+```text
+kernel.ts             327538406631b803babd98c863342712953cdc9a2e0b08b70059adbbfa23eb12
+motion-boundaries.ts  0e178b2b3836dadeaf205e9509ac407be04b5e04816f826eafc2d1b415df1e15
+perception.ts         e9e30e7396a3b170efa38125e7cf2183af6afb7ae4e6446c9018eca1c0a35076
+diagnostic-counters.ts c6c9dd7ed14e46d16a2d51e1f1b0112c2170e146ab4f0ad9453e74d5fd31b035
+profile-native.ts     ffce89bc0ae53355837e14c509b4bfc4515cd675e74bf400570300d6be939ee9
+scenario.ts           b52d20f244972ed4f8121394be7eb3c3ad09ffa961baf2a0abddb22fdb445f9b
+stress-native.ts      0079a15f1ced5e5452487a47e1a9892b32a2e3dcb4418982f95294035ba53cf8
+```
+
+The archive's counter hooks observe the original full sighting-map reconstruction and full pair scan; they do not apply the candidate's reductions. Each final pair ran baseline then candidate before the next repetition. The private `run-reviewed.py` script executes the following command pattern with unique paths, three times for each of the four manifests:
+
+```sh
+git archive 8005f7c7245cfecec128652efe3ef07926604e0a | tar -x -C /private/tmp/NEW-pw08-baseline
+
+# From the selected baseline/candidate directory, with matched observational tooling:
+AI_BUDGET_USD=0 OPENLEGEND_PROFILE_TRACE=/private/tmp/NEW-trace.json \
+  /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  scripts/stress-native.ts /private/tmp/openlegend-pw08-evidence/dense.json \
+  /private/tmp/NEW.cpuprofile > /private/tmp/NEW.json
+
+# Run once from each source directory; output paths must be new:
+AI_BUDGET_USD=0 /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  /private/tmp/openlegend-pw08-evidence/semantic.mts "$PWD" /private/tmp/NEW-semantic.json
+
+AI_BUDGET_USD=0 pnpm exec vitest run packages/domain/src/perception.test.ts \
+  packages/domain/src/kernel.test.ts packages/domain/src/spatial-world.test.ts
+pnpm typecheck
+```
+
+The detailed static comparison used `OPENLEGEND_PROFILE_DETAIL=1` with the same native command to write `{trace,world}` after the timed loop. CPU attribution reads each private `.cpuprofile` and sums sample time whose call ancestry contains the listed owners; it makes no provider or database call.
+
+### Exact workload
+
+The dense input manifest was:
+
+```json
+{
+  "seed": 73,
+  "people": 60,
+  "animals": 100,
+  "birds": 48,
+  "mapSize": 96,
+  "layout": "crowded",
+  "steps": 100000,
+  "warmupSeconds": 60,
+  "durationSeconds": 300,
+  "intervalSeconds": 30,
+  "maxIntervals": 4096,
+  "timeoutSeconds": 600,
+  "objects": [{ "count": 500, "name": "Synthetic static root", "properties": ["rigid"] }]
+}
+```
+
+The default requested speed is 1×. The duration fields select actual game-time warmup/measurement rather than the legacy step-count limit: two 30-second warmup calls and ten 30-second measured offers all complete. Setup, collision initialization, initial freezing and first exposure are outside the measured span. All final runs advance the full **60 warmup + 300 measured game seconds**; no timeout or short progress is reported as throughput.
+
+People and deer use the existing native spawn owners. Static objects have quantity 1, work 1 and the fixture-only rigid definition, not one object containing a stack of 500. Crowded positions use the existing placement generator around the player. Added birds copy the native starter bird body and follow rectangular loops with 12-metre sides, speed 0.6 m/s, climb speed 0.3 m/s, altitude `5 + (index % 4) * 0.1`, starting X offset `(index % 6) * 0.5`, Z offset `floor(index / 6) * 0.5`, and initial waits `(index * 7) % 53` seconds. Route waypoints have no waits. The initial private fixture records all resolved definitions and exact positions/routes.
+
+| Manifest       | Changes from dense                                                                 | Stored entities / world roots | Living actors with memory capability / flight bodies | Map       |
+| -------------- | ---------------------------------------------------------------------------------- | ----------------------------: | ---------------------------------------------------: | --------- |
+| `dense`        | As above                                                                           |                     861 / 723 |                                              63 / 49 | 96 × 96   |
+| `dense-static` | Static count 1,000                                                                 |                 1,361 / 1,223 |                                              63 / 49 | 96 × 96   |
+| `near`         | 10 people, 20 deer, 8 birds, 100 static objects; map 192                           |                     191 / 153 |                                               13 / 9 | 192 × 192 |
+| `separated`    | `near` plus `groupDistance: 80`, duplicating added content 80 metres along X and Z |                     349 / 291 |                                              23 / 17 | 192 × 192 |
+
+The far group and its full flight envelope remain outside near sense ranges. Separated/scattered placement is rejected because shuffling the entire map would not guarantee separation. Bird fixtures require the native starter bird body and reject a route that cannot fit on the selected map. These fixture bounds change no gameplay population limit.
+
+### Three reviewed repetitions before copied-value reuse
+
+All durations are milliseconds. Each measured run contains ten calls, so the reported p95 equals the maximum call. These are longest synchronous native calls, not a server no-yield measurement.
+
+| Workload     | Pair | Baseline CPU / wall | Candidate CPU / wall |    Baseline p50 / p95 / max |   Candidate p50 / p95 / max |
+| ------------ | ---: | ------------------: | -------------------: | --------------------------: | --------------------------: |
+| dense        |    1 | 17,202.2 / 17,452.9 |  17,897.0 / 19,928.0 | 1,696.5 / 2,715.3 / 2,715.3 | 1,757.7 / 3,338.4 / 3,338.4 |
+| dense        |    2 | 17,311.8 / 17,977.5 |  18,500.6 / 21,385.8 | 1,660.0 / 2,769.0 / 2,769.0 | 1,922.8 / 3,855.8 / 3,855.8 |
+| dense        |    3 | 17,566.9 / 19,402.8 |  19,258.7 / 21,205.8 | 1,819.4 / 3,033.7 / 3,033.7 | 1,896.2 / 3,457.0 / 3,457.0 |
+| dense-static |    1 | 18,555.1 / 20,306.8 |  19,221.6 / 20,742.3 | 1,814.5 / 3,462.4 / 3,462.4 | 1,921.1 / 3,510.4 / 3,510.4 |
+| dense-static |    2 | 18,395.1 / 20,542.3 |  18,015.4 / 18,784.0 | 1,982.5 / 3,549.9 / 3,549.9 | 1,694.2 / 2,908.0 / 2,908.0 |
+| dense-static |    3 | 18,895.8 / 19,888.9 |  18,960.0 / 19,612.7 | 1,793.8 / 3,512.7 / 3,512.7 | 1,795.9 / 3,407.7 / 3,407.7 |
+| near         |    1 |   2,742.8 / 2,396.1 |    2,774.4 / 2,434.3 |       237.2 / 311.5 / 311.5 |       237.3 / 306.2 / 306.2 |
+| near         |    2 |   2,800.2 / 2,550.8 |    2,816.5 / 2,534.6 |       237.6 / 358.8 / 358.8 |       247.9 / 308.2 / 308.2 |
+| near         |    3 |   2,927.5 / 2,786.8 |    2,816.2 / 2,542.3 |       258.2 / 333.0 / 333.0 |       242.6 / 353.4 / 353.4 |
+| separated    |    1 |   5,055.1 / 4,877.3 |    5,344.9 / 5,317.6 |       492.5 / 563.9 / 563.9 |       471.4 / 856.0 / 856.0 |
+| separated    |    2 |   5,124.1 / 4,985.5 |    5,169.2 / 4,904.4 |       464.8 / 644.7 / 644.7 |       476.3 / 587.1 / 587.1 |
+| separated    |    3 |   5,107.9 / 4,851.5 |    5,175.3 / 5,416.8 |       460.3 / 640.0 / 640.0 |       496.9 / 738.4 / 738.4 |
+
+Median CPU changes are dense **+6.9%**, added-static **+2.2%**, near **+0.6%**, separated **+1.3%**. Dense candidate tails are higher in all three first-reviewed pairs. The selected operation counts below fall, but CPU/tail performance acceptance remains unestablished; no end-to-end speedup is claimed.
+
+### Attributable work, memory and remaining costs
+
+Counts are identical across all three repetitions of each side and remain identical in the final dense/static follow-up. Baseline invalidation counts every pair visited in its full scans; candidate invalidation counts deduplicated incident keys. Candidate pruning counts the separate global eligibility/expiry scan, so it is reported rather than hidden in the incident reduction.
+
+| Measured work                                         | Dense baseline → candidate | Added-static baseline → candidate | Near baseline → candidate | Separated baseline → candidate |
+| ----------------------------------------------------- | -------------------------: | --------------------------------: | ------------------------: | -----------------------------: |
+| Sighting bindings assigned                            |                37,430 → 47 |                       63,430 → 47 |                1,520 → 10 |                     1,520 → 10 |
+| Actual additions / deletions                          |            47 / 5 → 47 / 5 |                   47 / 5 → 47 / 5 |           10 / 0 → 10 / 0 |                10 / 0 → 10 / 0 |
+| Exact sight/contact pair evaluations                  |            21,483 → 15,624 |                   21,483 → 15,624 |                 793 → 585 |                    1,353 → 995 |
+| Pair cache hits                                       |          544,950 → 550,809 |                 544,950 → 550,809 |           19,773 → 19,981 |                33,933 → 34,291 |
+| Invalidation keys visited                             |           151,263 → 15,561 |                  151,263 → 15,561 |               1,170 → 546 |                    3,714 → 936 |
+| Candidate pruning visits / retained pair observations |            15,309 / 15,309 |                   15,309 / 15,309 |                 546 / 520 |                      946 / 900 |
+| Candidate expired pair misses                         |                          0 |                                 0 |                        26 |                             46 |
+| Peak pair records / tracks, both sides                |                3,087 / 112 |                       3,087 / 112 |                  117 / 22 |                       197 / 40 |
+| Root scans / roots visited, both sides                |              207 / 149,661 |                     207 / 253,161 |              206 / 31,518 |                   206 / 59,946 |
+| Spatial builds / queries / candidates, both sides     |   558 / 35,092 / 4,242,546 |          558 / 35,092 / 4,242,546 |     555 / 7,203 / 171,002 |         555 / 12,743 / 286,096 |
+| Observer passes / ordinary sight tests, both sides    |           11,718 / 578,340 |                  11,718 / 578,340 |            2,405 / 21,099 |                 4,255 / 36,136 |
+| New recorded events / awareness writes, both sides    |                     1 / 26 |                            1 / 26 |                     1 / 3 |                          1 / 3 |
+
+Dense exact pair work falls **27.3%** and incident invalidation visits fall **89.7%**, with separate pruning still required. Every live pair has exactly two reverse memberships. The dense workload has no uncertain-outcome records; source review confirms their conservative clearing at a shared rebuild, so dense timings do not qualify that branch. Retention miss counters record expiry/geometry/eligibility per pair, body/path proof failures per body, and a missing-track path failure per removed pair. The first pruning scan skips certificate reads for expired pairs, derives the remaining horizon for each body and rejects missing tracks; stationary-path comparisons avoid constructing clipped tracks and breakpoint arrays.
+
+The first-reviewed CPU profiles explain a real safety-check tradeoff, not a free optimization. Inclusive sampled wall-time medians for the exact pair solver are **891 → 836 ms**. New certificate/reconciliation/index owners account for **263 ms**; sight-bound calculation plus reconciliation rises **2,999 → 3,897 ms**. These categories overlap and are sampled wall time, not additive exclusive CPU measurements. They expose additional dependency validation and draft reads while unchanged draft/flight/geometry work remains dominant. The measured total CPU and tails still need quiet-host qualification; shared load alone is not proof that their regression is harmless.
+
+Native heap values are unforced, unnormalized garbage-collector observations. The harness samples at measurement start and every 30 completed calls; these ten-call runs therefore contain only a **start sample plus the separately reported end value**, not a captured peak. Start/end ranges over the three runs, in decimal MB:
+
+| Case         | Baseline start / end range   | Candidate start / end range   |
+| ------------ | ---------------------------- | ----------------------------- |
+| dense        | 105.28–109.52 / 81.51–96.73  | 78.47–98.95 / 107.00–263.42   |
+| dense-static | 109.09–112.82 / 80.33–127.08 | 107.30–111.20 / 119.10–131.48 |
+| near         | 37.57–46.58 / 53.52–59.90    | 38.02–40.44 / 59.98–61.88     |
+| separated    | 49.72–51.27 / 38.70–46.07    | 56.82–58.96 / 38.51–49.95     |
+
+Whole-world root enumeration grows with added static objects; spatial candidate construction and total CPU grow with a far active group. The change does not establish constant-cost publication, full-world locality or completion of proportional-step stages 2–3.
+
+### Corresponding-baseline correctness and cache ownership
+
+Every listed stress pair has equal exact event/outcome traces, ordered audiences, awareness, saved randomness, next-ID/sequence values and simulation progress. Complete world structure compares with native numbers rounded to six decimal places and only sighting-map entry order normalized. Raw JSON hashes differ because continuing bindings keep their insertion order; they are not used alone as correctness evidence. A detailed static comparison before the final allocation simplifications recursively found zero differing values in `{trace,world}`; the final simplified source retains the same semantic and exact evidence digests.
+
+The private operational script exercises normal domain callers and JSON reload; no new automated regression suite was added. Final candidate output is `candidate-semantic-reviewed.json`, compared to `baseline-semantic-complete.json`. All nine authoritative edge rows and all nine crowd rows match their corresponding baseline. Each edge uses 30-second offers, 1-second offers and a whole-span offer; for a 30-second scene the first and whole-span schedules coincide. Outcomes from different offer schedules are not equated.
+
+| Case                         | Setup and demonstrated result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stable visible crowd         | One sensing player, 100/500/1,500 unchanged static roots, Ada leaves for 1 second, returns for 1 second, leaves for 31 seconds, returns for 1 second. For 30-second, 1-second and whole-span offers, baseline assignments 450/2,050/6,050 become 2 actual additions and 2 deletions. Continuing object identities stay unchanged; the short return keeps Ada's subject identity, the long return creates a new one. Corresponding authoritative state/evidence match. Linear membership comparison and changed-map finalization remain. |
+| Brief wall slit              | Observer at (12,0,12), fixed walker from (16,0,8) to (16,0,16), two walls at X 14–14.1 leaving a Z 11.9–12.1 slit; 30-second span. The fleeting sight interval is recorded with the same ordered evidence as the corresponding baseline.                                                                                                                                                                                                                                                                                                |
+| Physical contact             | Contact-only player walks from (12,0,12) to (16,0,12) past Ada at (14,0,12), native loaded speed 0.11 m/s; 20-second span. The route is admitted through ordinary vision before restoring contact-only sensing. All three candidate schedules detect the same interval and evidence as their baseline.                                                                                                                                                                                                                                  |
+| Hover, landing and wait      | Bird starts (14,3,12), travels to (16,3,12), waits 3 seconds, lands at (16,0,12), waits 3 seconds; speed/climb 1, 30-second span. Same movement, transition evidence and final values as each corresponding baseline.                                                                                                                                                                                                                                                                                                                   |
+| Certain-pair reuse           | Fixed player route (12,0,12) to (20,0,12) produces 14 certain pairs. An unchanged shared rebuild retains them; the next bound records 14 cache hits without reevaluation. The dense staggered flock independently records 15,309 retained observations.                                                                                                                                                                                                                                                                                 |
+| Incident ownership and forks | Disjoint near/far groups: 3 people, 2 deer, 2 birds, 20 static objects per group, map 192 and offset 80. Duplicate invalidation of one near bird visits its six incident keys once; far pair records retain identity. Two forks copy every map/set; removing both ends with one track already missing and repeating invalidation leaves no stale reverse entry. Expiry removes all expired pairs. Editing far-bird participation leaves every nonincident near pair record unchanged.                                                   |
+| Changed dependencies         | Same-position route replacement, body-height change, live sense-radius definition change without a revision bump, sensing-capability loss, inactive participation, new map barrier, death and removal each reject the affected pairs. Tests assert exact reverse memberships after each operation. No draft, cache or reverse index is saved.                                                                                                                                                                                           |
+
+**Reload acceptance is only partial.** Rebuilding the derived cache through midpoint JSON reload matches uninterrupted authoritative state for the 1-second contact schedule and all hover/landing/wait schedules. The stronger wall/contact probes reproduce these pre-existing baseline gaps on both sides:
+
+- Wall-slit midpoint reload: evidence, physical values, needs, identities, randomness and next-ID/sequence match, but 18 saved placement/need/work-invocation revision values differ from uninterrupted execution for all three schedules.
+- Contact midpoint reload after 10 seconds with 30-second or whole-span offers: the first contact evidence time changes from **18.181819181818184** to **19.090909090909093** seconds, plus saved revision differences. Both paths detect contact; uninterrupted-versus-restored evidence is not exact. Baseline and candidate reproduce the same respective results.
+
+The existing continuation retains a remaining mechanical sampling distance between calls; rebuilding after reload starts a fresh distance forecast. This is a broader time/restore gap, not repaired by the scoped pair retention. It remains an unmet acceptance requirement rather than a newly accepted policy. The passing reload rows prove actual cache reconstruction, not merely repeated calls to the same cached world.
+
+The focused existing `perception`, `kernel` and `spatial-world` checks pass **29 tests in three files**, and `pnpm typecheck` passes after the final source simplifications. Complete `pnpm run check` and combined-week acceptance belong to PW06; these native results alone do not close it. Real PostgreSQL evidence is maintained in the following subsection by the server measurement owner.
+
+### Final source follow-up: reuse copied values within one calculation
+
+Review attributed avoidable cost to rereading current participation, senses and body geometry after those exact values had already been copied for the same sight-bound calculation. The follow-up reuses those invocation-local scalars for moving/observer eligibility and observer/target geometry. It adds no cross-call cache, authority, changed movement horizon or skipped dependency check. Fresh movement derivation, remaining-interval proof and current retrieval guards remain intact. Approximately 35 logic lines change relative to `b5667c0c`; total scoped PW08 runtime/tooling work is approximately 440–480 affected logic lines excluding tests/documentation.
+
+The final source is `b5667c0c` plus `motion-boundaries.ts` SHA-256 **`0648a0a0050713b26f6c602e49f388d5a38416ceb59d6be0c5d3155041cc0794`**. Other runtime/harness hashes above are unchanged. Final private outputs are `read-reuse-{baseline,candidate}-{dense,dense-static}-{1,2,3}`. The same command pattern/manifests were used in three alternating pairs per case. An initially requested one-pair static validation showed +16.9% CPU; two additional focused repetitions investigated that concrete regression. All three remain visible here. The near/separated timing rows above measure the earlier reviewed source; their final-source incident-isolation correctness was rerun directly, without claiming those old timings measure the follow-up.
+
+| Workload     | Pair | Baseline CPU / wall ms | Final candidate CPU / wall ms | Baseline p50 / p95 / max ms | Final candidate p50 / p95 / max ms |
+| ------------ | ---: | ---------------------: | ----------------------------: | --------------------------: | ---------------------------------: |
+| dense        |    1 |    18,304.1 / 22,916.3 |           17,509.2 / 19,931.6 | 2,126.4 / 3,506.0 / 3,506.0 |        1,831.7 / 2,879.6 / 2,879.6 |
+| dense        |    2 |    17,644.1 / 19,203.3 |           19,339.5 / 20,728.7 | 1,716.2 / 3,001.6 / 3,001.6 |        1,785.7 / 3,012.6 / 3,012.6 |
+| dense        |    3 |    18,095.9 / 20,477.1 |           18,496.2 / 20,556.5 | 2,052.4 / 3,346.4 / 3,346.4 |        1,877.4 / 2,922.8 / 2,922.8 |
+| dense-static |    1 |    19,001.2 / 23,787.5 |           22,207.4 / 27,543.6 | 2,037.7 / 4,462.3 / 4,462.3 |        2,446.7 / 5,245.8 / 5,245.8 |
+| dense-static |    2 |    22,305.7 / 27,293.8 |           22,041.1 / 27,024.8 | 2,642.1 / 4,211.7 / 4,211.7 |        2,408.3 / 5,908.8 / 5,908.8 |
+| dense-static |    3 |    23,629.1 / 28,329.5 |           22,810.6 / 27,951.4 | 2,811.4 / 4,460.3 / 4,460.3 |        2,688.3 / 4,820.3 / 4,820.3 |
+
+Every final pair again advances all 300 measured game seconds, with exact trace/awareness and normalized full-state equality. Selected counts and cache high-water marks remain exactly those in the table above, including 47 actual dense/static binding assignments and 15,624 exact pair evaluations. This establishes the scoped reductions and conservative reuse on the final source, not a lower total game-time budget or an unfinished-run advantage.
+
+Dense median CPU is **18,095.857 → 18,496.245 ms (+2.2%)**; added-static median is **22,305.671 → 22,207.363 ms (−0.44%)**. Dense tails fall in two pairs and differ by +0.37% in the third. Added-static candidate tails remain higher in all three pairs, with median **4,460.279 → 5,245.792 ms (+17.6%)**. The repeated-read overhead has been addressed, but this does not establish harmless tails or an end-to-end speedup. The brief's regression-free performance acceptance remains unresolved.
+
+Final dense inclusive sampled wall-time medians: exact pair solver **987.197 → 776.429 ms**, new guards/reconciliation/index **225.504 ms**, sight-bound calculation plus reconciliation **3,472.842 → 2,863.711 ms**. This reverses the earlier measured +898 ms in that owner to −609 ms; the total CPU remains dominated by other existing work and host/run variation. In the first final static pair, the same owner decreases **3,902.587 → 3,820.551 ms**, despite +3,206 ms total CPU. Further static repeats yield total CPU changes +16.9%/−1.2%/−3.5%; these samples do not attribute the persistent worst-call increase completely. Profiler sample gaps are compatible with descheduling but do not prove that the latency difference is harmless. Full target construction, draft/finalization cost and quiet-host qualification remain parent work; no further proof-cache or scheduler expansion was made.
+
+The final independent review also attributes both remaining static pairs: sight-bound calculation plus reconciliation falls **4,455.407 → 3,852.089 ms** and **4,862.655 → 3,928.669 ms**; exact pair solving falls in all three pairs. Garbage-collection time and large sample gaps do not increase consistently. The retained profiles lack per-call timestamp boundaries, so those aggregate reductions cannot explain the individual longest calls. No concrete introduced cause is established and no latency pass is inferred; quiet-host measurements with per-call attribution remain meaningful qualification.
+
+Final native start/end heap observations (decimal MB, not peaks) are dense baseline **107.50–110.10 / 78.81–96.49**, candidate **79.74–101.83 / 104.04–265.18**; added-static baseline **104.43–111.12 / 67.90–89.31**, candidate **110.33–122.16 / 120.72–135.45**. During/after this follow-up host snapshots read **165.83 / 159.04 / 156.69** and **133.37 / 141.04 / 149.00**; they are not per-run sampling.
+
+The final private `semantic-read-reuse.mts` script passes the same nine authoritative edge rows and nine crowd rows against the planning-base report, plus **12** cache rows. Two added direct probes confirm that reconciliation removes pairs whose track was independently missing, and that an actual uncertain landing produces two outcome memo records which are cleared at shared rebuild and reevaluated on the next bound. All reverse memberships remain exact. The focused **29 tests**, typecheck and pinned formatting check pass again. The stronger reload gaps above remain unchanged and required, not waived by corresponding-baseline equivalence.
+
+### Real PostgreSQL server — final read-reuse candidate
+
+The same dense manifest above ran through the real server timer, durable HTTP move/cancel commands, state reads and SSE. Each run created and removed its own PostgreSQL 14.17/pgvector database and temporary data directory, using an ephemeral HTTP port. The server keys were cleared and its provider budget was zero: **additional provider/Jev cost $0; cumulative cost for this delegated pricing/profiling scope $0**. This is neither browser nor live-provider acceptance.
+
+The baseline remains the inherited planning commit `8005f7c7245cfecec128652efe3ef07926604e0a` archive. The measured candidate source was published as `b9b8124bf7aae26b8fb6e54e9ee0b93d2c09583b`, including the same-call scalar-read reuse in `motion-boundaries.ts`, SHA256 `0648a0a0050713b26f6c602e49f388d5a38416ceb59d6be0c5d3155041cc0794`. Runtime stayed frozen throughout each candidate sequence. These measurements precede the later body/response/memory integration; they do not qualify that combined runtime. The profiler and observational server timing were published as `460f4cae`; baseline and candidate used byte-identical profiler, scenario and server-timing files. Both used the absolute Node v22.23.2 executable shown in the native reproduction commands. The baseline used development database/save marker 2 and the candidate marker 3 after `d1fa27ab`; each bootstrapped and reopened only its own compatible fresh database. No legacy import or benchmark-input conversion occurred; this marker change does not change physical tables or the authored scene.
+
+The fixed warm interval is **60 real seconds**, followed by **15 real seconds of offered client load**, with response drain included in reported elapsed time. This differs from the native runner's 60/300 **game-second** spans. The client continuously offered commands every 500 ms, state reads every 250 ms and presence heartbeats every three seconds. Warmup and measurement shared one child process and timer; an ordinary pause between them failed busy admission in an earlier retained diagnostic. The restarted fixture took control through the normal embodiment endpoint before play. Requests are assigned by their start timestamp; two command/read requests cross the warm cutoff in every final run. Server duration samples belong to the phase in which the operation finishes, so a crossing operation can include earlier work. Final shutdown stops only the fixture's own timer and drains its work.
+
+The original baseline/candidate 1×, 3×, 8× sequence alternated six fresh fixtures. After the final scalar-read simplification, only the three candidate fixtures were repeated; the unchanged baseline records were reused with their actual host load disclosed. These are shared-host samples with concurrent native profiling, not quiet-host or steady-state qualification. Exact reports/provenance are private at `/private/tmp/openlegend-pw08-evidence/final-server-summary.json` and `final-read-reuse-server-provenance.json`; final inputs are `reviewed-warm60-baseline-server-dense-{1,3,8}x.json` and `final-read-reuse-candidate-server-dense-{1,3,8}x.json`.
+
+The actual command pattern, from the selected source directory with `OPEN_LEGEND_PROFILE_POSTGRES_URL` explicitly set to the loopback fixture administrator, was:
+
+```sh
+OPENLEGEND_PROFILE_SERVER_WARMUP_SECONDS=60 AI_BUDGET_USD=0 \
+  /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  scripts/performance/profile-server.mjs /private/tmp/openlegend-pw08-evidence/dense.json \
+  /private/tmp/NEW-server-report.json 15 1 500
+```
+
+The final argument sequence was also `15 3 500` and `15 8 500`, with unique report paths. Setup/collision initialization and scene construction are outside these intervals. Every final fixture contains 861 entities. The warm interval records startup and any earlier failures rather than erasing them:
+
+| Requested speed | Revision  | Warm elapsed, real s | Warm advanced, game s | Warm admitted, game s | Warm ending debt, game s | Warm failed requests |
+| --------------- | --------- | -------------------: | --------------------: | --------------------: | -----------------------: | -------------------: |
+| 1×              | Baseline  |               60.042 |                82.970 |               303.892 |                  217.885 |                    3 |
+| 1×              | Candidate |               60.032 |                85.636 |               256.372 |                  167.704 |                    4 |
+| 3×              | Baseline  |               60.023 |               129.697 |               914.827 |                  785.130 |                    1 |
+| 3×              | Candidate |               60.116 |                47.000 |               912.235 |                  856.072 |                    4 |
+| 8×              | Baseline  |               60.012 |               115.061 |             1,832.344 |                1,693.198 |                    2 |
+| 8×              | Candidate |               60.023 |                87.182 |             1,438.216 |                1,324.466 |                    4 |
+
+The normal bundled-world rate is 60 game seconds per real second. Nominal demand below is elapsed wall time × that rate × requested speed; it is not a claim that this time was admitted. Debt means game time already admitted but not yet advanced. In every measured phase the running clock operation continued consuming warm debt, with **zero newly admitted game time**. Warm ending debt minus measured advancement equals measured ending debt. Timer callbacks remained visible and recorded skipped-while-busy counts; further elapsed wall time had not yet entered the clock operation. Presence failures and the current suspension/pause policy remain visible limits, not continuous-presence acceptance.
+
+| Requested speed | Revision  | Measured elapsed, real s | Nominal game demand, s | Newly admitted, game s | Actually advanced, game s | Ending debt, game s |
+| --------------- | --------- | -----------------------: | ---------------------: | ---------------------: | ------------------------: | ------------------: |
+| 1×              | Baseline  |                   15.837 |                950.210 |                      0 |                    47.727 |             170.157 |
+| 1×              | Candidate |                   16.027 |                961.643 |                      0 |                    31.515 |             136.189 |
+| 3×              | Baseline  |                   15.870 |              2,856.686 |                      0 |                    46.061 |             739.070 |
+| 3×              | Candidate |                   15.883 |              2,858.854 |                      0 |                    37.970 |             818.103 |
+| 8×              | Baseline  |                   16.350 |              7,848.001 |                      0 |                    46.061 |           1,647.137 |
+| 8×              | Candidate |                   16.093 |              7,724.532 |                      0 |                    31.970 |           1,292.497 |
+
+CPU below is the whole server process. The longest indivisible native call is one iterator call; the no-yield span is contiguous synchronous native work between actual yields, including final freeze. It excludes mutation-queue waits, PostgreSQL/storage waits and cooperative waiting, but includes host descheduling. Native-step maxima additionally include cooperative waits and were baseline/candidate **427.953/1,043.267**, **807.918/658.917**, **574.429/580.757 ms** at 1×/3×/8×. Final-freeze maxima were **0.696/2.812**, **0.976/6.022**, **1.294/1.386 ms**. The existing roughly-eight-millisecond scheduling threshold is unchanged; indivisible operations can exceed it.
+
+| Speed | Revision  | Server CPU, ms | Longest native call, ms | Longest no-yield span, ms | Accepted commands |           Ack p50 / p95 / max, ms | Skipped client intervals |
+| ----- | --------- | -------------: | ----------------------: | ------------------------: | ----------------: | --------------------------------: | -----------------------: |
+| 1×    | Baseline  |     11,943.161 |                 302.227 |                   304.499 |                15 | 1,043.628 / 2,094.241 / 2,094.241 |                       22 |
+| 1×    | Candidate |      8,985.390 |                 720.898 |                   726.784 |                11 | 1,132.224 / 2,967.258 / 2,967.258 |                       31 |
+| 3×    | Baseline  |     11,313.943 |                 511.668 |                   511.744 |                14 |   942.444 / 2,273.567 / 2,273.567 |                       26 |
+| 3×    | Candidate |     10,984.493 |                 382.913 |                   385.005 |                13 | 1,010.555 / 2,259.888 / 2,259.888 |                       34 |
+| 8×    | Baseline  |     11,902.183 |                 440.852 |                   443.875 |                14 | 1,030.188 / 1,647.244 / 1,647.244 |                       24 |
+| 8×    | Candidate |      8,808.307 |                 383.928 |                   390.900 |                10 | 1,115.034 / 3,347.666 / 3,347.666 |                       33 |
+
+Successful command counts include accepted moves and cancels. All final measured phases have zero rejected commands and zero request errors; skipped intervals combine the three bounded client lanes and are not successful offers. Each run still exits unsuccessfully because its warm phase contains failed presence heartbeats; baseline 1× and all final candidates also contain a warm request timeout. No transport retry or busy-gate bypass occurred. Storage error and memory backlog stayed null; all owned cleanup succeeded. State-read p95 baseline/candidate was **653.938/731.408**, **597.948/792.328**, **630.239/729.627 ms**. Event-loop p95/max was **111.280/348.127 vs 102.302/748.683**, **114.557/512.229 vs 124.715/412.353**, **113.246/475.791 vs 101.384/424.149 ms**.
+
+The following are maximum stage durations, not additive CPU costs. Database statements, save transactions, queue waiting and permitted-view projection overlap. Their raw total durations/counts remain in the reports. Memory values are unforced phase-start/end samples in decimal MB, not peaks or leak certification. RSS covers resident memory across process threads; heap describes the main JavaScript isolate.
+
+| Speed | Revision  | SQL statement max, ms | Save transaction max, ms | Mutation wait max, ms | Projection max, ms | Heap start / end, MB | RSS start / end, MB | One-minute host load start / end |
+| ----- | --------- | --------------------: | -----------------------: | --------------------: | -----------------: | -------------------: | ------------------: | -------------------------------: |
+| 1×    | Baseline  |               764.035 |                1,431.760 |             1,551.722 |            134.014 |    261.027 / 286.039 |   384.827 / 469.697 |                171.322 / 161.025 |
+| 1×    | Candidate |             1,011.255 |                2,370.856 |             2,580.620 |            153.510 |    193.022 / 124.545 |   316.899 / 292.880 |                170.326 / 163.164 |
+| 3×    | Baseline  |               746.198 |                1,348.770 |             1,746.531 |            153.965 |    157.847 / 325.407 |   560.218 / 474.563 |                180.337 / 182.033 |
+| 3×    | Candidate |               977.988 |                1,153.338 |             1,640.824 |            320.161 |    180.794 / 128.493 |   375.538 / 452.100 |                126.630 / 129.855 |
+| 8×    | Baseline  |               458.713 |                  856.530 |             1,034.130 |            141.587 |    339.808 / 218.262 |   491.356 / 529.547 |                170.496 / 162.895 |
+| 8×    | Candidate |               758.789 |                1,962.088 |             2,495.394 |            153.653 |    111.104 / 327.459 |   302.547 / 324.026 |                136.445 / 136.328 |
+
+**Capacity remains failed at every requested speed.** The candidate advances less game time in all three final server samples; its 1× no-yield maximum and 1×/8× command tails are worse. Lower total CPU while advancing less game time is not a speedup. Different starting game times, evolving command/history work and host contention prevent these short wall-timed cases from isolating a native cause. The matched fixed-game-span native comparison above establishes the selected work reduction and examines its CPU tradeoff; neither comparison closes full-server throughput, responsiveness, steady-state, browser, multiple-player or long-soak gates. Existing performance budgets remain unchanged.
+
+Earlier evidence is retained separately: the missing-collision initialization run; busy pause between warmup and measurement; invalid command-control binding; mixed Node versions; five-second and thirty-second warmups with cold operations crossing measurement; the pre-simplification six-run set; and the reviewed pre-read-reuse six-run set. In particular, one reviewed 30-second baseline reports a cold save transaction lasting **32.059 seconds**, finishing during measurement. These records are neither erased nor used as the final warm comparison.
+
+### Independent review follow-through
+
+The owner then requested code review, justified improvements and completion of independent work, while stopping all task messaging and reserving peer integration for a separate pass. This pass starts from `ec995ae4a70ad385a709520992de640eae097f13` on unchanged `oct2-eng-1`; the inherited planning base remains `8005f7c7245cfecec128652efe3ef07926604e0a`. No peer branch was read, integrated or edited. Earlier temporary artifacts were no longer present at their recorded paths; their published measurements remain historical. This pass creates fresh private artifacts at `/private/tmp/openlegend-eng1-review.afva0h`.
+
+**Restoration repair.** Inspection confirmed that the time remaining until the next mechanical sampling boundary existed only in a private continuation. Losing it could move contact evidence from 18.181819181818184 to 19.090909090909093 game seconds, even though all rates and sight calculations were correctly rebuilt. The accepted narrow repair saves the remainder and optional exact deadline through existing world settings. Load rederives current bounds and uses the earlier end; semantic mutation discards inherited progress, native advance publishes a new remainder, and no-op validation/pause/resume preserve it. Derived participants, rates, motion tracks, reverse lookups and sight/contact runs remain unsaved. Closed validation rejects invalid shape, nonfinite/nonpositive/over-horizon remainder and inconsistent deadline. The existing world-owned 60-second horizon is unchanged.
+
+This changes the previous decision that all sampling progress was disposable, rather than changing sensing cadence or implementing the whole proportional-step proposal. Current database/save markers become 4 / `development-2026-10-02-native-continuation`. Earlier development formats are refused without conversion, reset or deletion. The later cross-engineer pass must reconcile that marker and the shared native/type/persistence owners with peers' format-3 deliveries.
+
+A bounded operational continuation scenario covers contact, the same wall slit and ordinary native flight, each saved after 10 game seconds and continued for 20 seconds. Every publication is frozen, exercising actual continuation reuse. **All nine comparisons** (1-second, 30-second and whole remaining-span offers for each scene) match uninterrupted authority **exactly**, including numerical values, revisions, ordered events, audiences, randomness and IDs. Independent forks match; no-op validation preserves the original identity/remainder; semantic name edit and a real cancel command discard it; pause advances no time and resume retains the same outcome. Invalid saved remainder examples are refused. A real admitted follow action ending at game time 10 retains its six-second remainder after time 4 and restores exactly; a newly rederived deadline at time 5 takes precedence over the old ending value. A further valid native route exercises a two-second hover, vertical landing and seven-second grounded wait. Saving at times 4, 11 and 18, then continuing 20 seconds with each offer, gives nine additional exact matches, including landing/takeoff evidence and audiences. Fixtures clone the authored world before isolated setup so pre-existing derived metadata cannot survive direct fixture edits; an earlier un-cloned flight setup was discarded as invalid evidence. These checks close the demonstrated contact/wall restoration defects and exercise these flight transitions; they do not establish universal restore or exact onset dating.
+
+The real PostgreSQL scenario commits the contact midpoint, writes and reads a manual checkpoint through `GameSaves`, closes/reopens the repository, then continues both restored worlds for the three offers. Full stored authority and all six continuations match exactly. Changing only this owned fixture's database marker to the preceding value produces explicit startup refusal; its marker and one stored world remain unchanged. Fixture cleanup drops only owned databases. No compatibility reader or permanent legacy fixture was added.
+
+**Smaller sight calculations.** Review found repeated temporary arrays in every movement proof and repeated displacement-range computation for the same body within one sensory query. The proof now compares the two path endpoints and each path's intermediate breakpoints directly; a difference of piecewise-linear paths reaches its largest discrepancy at those boundaries, so sorting and copied/clipped paths are unnecessary. Scalar body comparison avoids a keys array/callback, and a local map reuses each body's displacement range only within that unchanged query. There is no additional cross-call cache or invalidation policy. A direct operational probe retains an unchanged certain pair, rejects a route with the same current pose/final destination but changed middle section, removes incident pairs even with a missing track, leaves exact reverse memberships and preserves independent fork maps/sets.
+
+**Fresh matched native measurements.** Node v22.23.2, Apple M1 Pro/10 cores, the locked dependencies, frozen snapshots and the exact dense/added-static manifests above are retained. Planning source is a fresh private archive; its package resolution prints paths inside that archive. Both sides use byte-identical scenario/native tooling, with per-call CPU and monotonic windows. Three pairs per case alternate baseline-first, candidate-first, baseline-first. Host one-minute load at each launch ranges 22.44–33.31; this remains shared-host evidence. All runs complete 60 warmup + 300 measured game seconds in ten measured offers. There is no unfinished-throughput sample.
+
+| Case         | Pair | Baseline CPU / wall ms  | Reviewed CPU / wall ms  | Baseline p50 / p95=max ms | Reviewed p50 / p95=max ms |
+| ------------ | ---- | ----------------------- | ----------------------- | ------------------------- | ------------------------- |
+| Dense        | 1    | 17,306.782 / 17,233.910 | 16,949.345 / 16,862.487 | 1,692.812 / 2,684.672     | 1,550.901 / 2,744.325     |
+| Dense        | 2    | 17,980.303 / 17,907.515 | 16,784.114 / 16,445.152 | 1,721.779 / 2,844.970     | 1,531.658 / 2,636.610     |
+| Dense        | 3    | 17,213.407 / 16,873.533 | 17,943.403 / 18,347.051 | 1,595.162 / 2,684.836     | 1,684.328 / 3,236.861     |
+| Added static | 1    | 19,084.048 / 20,344.907 | 17,789.620 / 17,375.506 | 1,758.593 / 3,910.361     | 1,593.068 / 2,894.685     |
+| Added static | 2    | 17,906.387 / 17,476.935 | 17,252.886 / 16,787.406 | 1,549.018 / 3,153.347     | 1,560.330 / 2,856.774     |
+| Added static | 3    | 17,858.520 / 18,443.606 | 17,020.401 / 16,533.013 | 1,678.931 / 3,481.592     | 1,538.324 / 2,994.831     |
+
+Dense median CPU/wall change is **−2.065% / −2.155%**; maximum-call median changes **+2.216%**, with one 3,236.861 ms outlier. Added-static median CPU/wall/max change is **−3.650% / −8.980% / −16.857%**; its prior consistent +17.6% tail regression does not recur. These small CPU medians on a shared host are not a quiet-host speed guarantee. Every pair has identical exact event/outcome/ID/RNG trace and awareness digests. Detailed full-world comparison for each first pair matches at six decimal places after excluding only the newly specified saved progress; the only key-order differences are 40 sighting-identity mappings, whose entry order has no authority. Existing state revisions remain equal.
+
+Selected current counts are unchanged from the earlier proven reduction: 47 binding assignments/insertions, 5 removals, 15,624 exact pair evaluations, 15,561 incident invalidation visits and 15,309 separate pruning visits; peak 3,087 pairs/112 tracks. Global roots still cost 149,661 visits dense and 253,161 added-static. The fresh planning archive has its original general counters, without reconstructing old selective observational patches; historical exact selected-operation baseline counts above remain their evidence. Heap end samples span 82.8–128.7 MB baseline and 101.96–136.54 MB candidate across these cases; they are allocation/GC-dependent end samples, not retained-memory or leak qualification.
+
+The profiler now brackets `Profiler.start` because Inspector and `hrtime` can use different monotonic origins. Without calibration, apparent sample/call alignment was invalid. Four additional diagnostic runs use those explicit bounds: prior independent source CPU/max 18,823.070/3,029.295 ms versus reviewed 16,744.160/2,612.219 ms; planning 17,151.884/2,665.056 versus reviewed 17,606.722/2,778.014. The mixed direction reinforces the variance limit. In the calibrated reviewed fifth call, CPU is 2,722.672 ms and wall 2,612.276 ms. Excluding samples within the ±66.589 ms start-calibration uncertainty of its edges, inclusive sampled owners include existing landing-distance work 812 ms, encounter snapshot/current-value copying 774 ms, sight-bound work 254 ms and GC 85 ms. These overlapping sampled wall times cannot be added or treated as exclusive CPU. They identify remaining flight/draft/exposure cost; they do not fully attribute the earlier uncalibrated outlier or excuse a capacity failure. Broader constant-cost publication and world-wide sampling remain parent work.
+
+Reproduction for the new bounded operational scenarios and profiles (all raw files outside Git):
+
+```sh
+# Owned archives use their own tsconfig/module resolution and shared third-party dependencies.
+AI_BUDGET_USD=0 TSX_TSCONFIG_PATH=/private/tmp/NEW-planning/tsconfig.json \
+  /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  scripts/stress-native.ts /private/tmp/NEW/dense.json /private/tmp/NEW/profile.cpuprofile
+
+AI_BUDGET_USD=0 /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  /private/tmp/openlegend-eng1-review.afva0h/continuation-review.mjs
+AI_BUDGET_USD=0 /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  /private/tmp/openlegend-eng1-review.afva0h/path-review.mjs
+AI_BUDGET_USD=0 OPENLEGEND_TEST_DATABASE_URL=postgresql://mzw@127.0.0.1:56564/postgres \
+  /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  /private/tmp/openlegend-eng1-review.afva0h/checkpoint-review.mjs
+```
+
+No provider call was made; added Jev/provider cost and outstanding exposure are **$0**. Last previously reported shared task settled/reserved/uncertain total is $0; it has not been refreshed because the owner stopped inter-task communication. This creates no integration spending allowance.
+
+**Fresh actual PostgreSQL server evidence.** Each of the six launches uses a fresh generated dense fixture, an owned database on isolated PostgreSQL 14.17 port 56564, ephemeral HTTP port, continuous independent HTTP/SSE/presence load, 60 real seconds of warmup and 15 real seconds of measurement at one requested speed. Baseline and candidate use identical scenario/server instrumentation; the private planning archive has only observational timing added. Baseline format is 2 and candidate format is 4; each reopens only its own compatible fresh database. Unlike the earlier successive-speed report, each speed starts from the same fresh scene, rather than the preceding speed's evolved world. This is zero-provider native/server evidence, without browser or integrated-survival qualification. All six exit 0 with no load-generator/storage/cleanup error; every measured command is accepted, so no rejected-command latency sample exists. Phase-start one-minute host load ranges 18.34–24.94.
+
+| Speed / source | Warm game seconds / ending debt | Measured wall seconds / nominal demand | Newly admitted / advanced game seconds / ending debt | Achieved × | Longest iterator / no-yield ms | Accepted command p95 / max ms |
+| -------------- | ------------------------------- | -------------------------------------- | ---------------------------------------------------- | ---------- | ------------------------------ | ----------------------------- |
+| 1× / planning  | 219.394 / 117.349               | 15.971 / 958.259                       | 0.000 / 62.273 / 55.077                              | 0.06499    | 253.400 / 254.707              | 1132.568 / 1132.568           |
+| 1× / candidate | 219.394 / 176.528               | 15.761 / 945.663                       | 0.000 / 71.818 / 104.710                             | 0.07594    | 218.116 / 220.634              | 842.640 / 890.821             |
+| 3× / planning  | 213.291 / 2267.764              | 15.541 / 2797.420                      | 0.000 / 63.485 / 2204.280                            | 0.06808    | 333.931 / 339.085              | 908.708 / 985.121             |
+| 3× / candidate | 229.394 / 1648.089              | 15.903 / 2862.622                      | 0.000 / 69.697 / 1578.392                            | 0.07304    | 214.438 / 217.363              | 846.851 / 861.027             |
+| 8× / planning  | 210.727 / 5320.719              | 15.819 / 7592.958                      | 0.000 / 52.727 / 5267.991                            | 0.05555    | 563.213 / 570.675              | 1975.515 / 1975.515           |
+| 8× / candidate | 243.485 / 8325.664              | 15.551 / 7464.333                      | 0.000 / 73.030 / 8252.633                            | 0.07827    | 322.271 / 323.838              | 806.639 / 937.554             |
+
+Nominal demand is measured wall time × 60 game seconds × requested speed; it was not all admitted. Every measured phase drains warmup debt, with zero newly admitted time. Both source trees miss every requested capacity rate and current command-latency budgets. Candidate command p95 falls in all three pairs and actual progress rises, but these short wall-timed samples evolve differently and cannot establish a general throughput improvement. Presence is maintained without errors here, unlike the preceding contended run; this is not a sustained-presence soak. Existing eight-millisecond cooperative yield intent remains exceeded by indivisible calls; no debt is dropped and no budget is relaxed.
+
+Candidate measured maximum queue/projection/persistence times are recorded below; baseline values and full stage distributions remain in private reports. These maxima overlap other stages and cannot be added. End heap/RSS samples do not establish retained-memory limits.
+
+| Speed | Candidate queue / projection / persistence max ms | Candidate heap / RSS MB | Baseline heap / RSS MB |
+| ----- | ------------------------------------------------- | ----------------------- | ---------------------- |
+| 1×    | 407.368 / 113.442 / 105.443                       | 112.90 / 562.20         | 215.64 / 522.04        |
+| 3×    | 433.243 / 91.302 / 110.487                        | 225.40 / 594.54         | 193.70 / 552.60        |
+| 8×    | 408.323 / 106.591 / 92.529                        | 304.30 / 639.45         | 218.24 / 333.46        |
+
+Reproduction (one speed per independent launch; repeat for both source directories and 1, 3, 8):
+
+```sh
+AI_BUDGET_USD=0 OPEN_LEGEND_PROFILE_POSTGRES_URL=postgresql://mzw@127.0.0.1:56564/postgres \
+  OPENLEGEND_PROFILE_SERVER_WARMUP_SECONDS=60 \
+  /Users/mzw/.nvm/versions/node/v22.23.2/bin/node --import tsx \
+  scripts/performance/profile-server.mjs /private/tmp/NEW/dense.json \
+  /private/tmp/NEW/server-1.json 15 1 500
+```
+
+**Remaining acceptance.** The demonstrated restore defect is repaired, and all three scoped work reductions remain effective. Dense outlier attribution, sustained requested-rate/latency qualification, survival/body integration, browser/multiple-player/mature-history qualification and PW06 remain open with their existing owners. Fixing global sampling/draft/publication and landing-distance costs would expand beyond the three approved reductions; this pass introduces no scheduler rewrite, population cap, weaker fidelity or offscreen freezing.
+
+**Published source and cleanup.** The reviewed runtime and canonical contracts are committed as **`1586d4ef906876fd76cec3256951e6f4ba39dc9b`**, with required full CI passing as recorded in [Level-1 review verification](level1-decisions.md#independent-review-full-check). Performance and continuation probes used this runtime behavior; subsequent kernel comment changes only explain the saved-bound precedence. Final source hashes below pin the published files. Full affected branch diff and final review-fix diff were inspected; no additional concrete PW01 defect or justified unrelated refactor was identified. No test assertions/timeouts, dependencies or lockfile changed in this review. All owned server/load-generator processes ended; zero fixture databases remained, then only the owned PostgreSQL port 56564 was stopped and its cluster removed. Profiles/reports remain private outside Git.
+
+```text
+packages/domain/src/kernel.ts f376300423526a3262b51500fccb6842ba548f44fa4ec73144d6976f041d3027
+packages/domain/src/motion-boundaries.ts 4e338cab7040b9a46762ff71126647289c869919042128ca17a548163889beb5
+packages/domain/src/draft.ts dd23bc2f23769941c408c85e2306c38ca9cc4a67b620a20dba9d84994aab3600
+packages/domain/src/world-modules.ts 31f3bb8665b98ad991fe79ac9f17035da8f5de5b2363c18df6a16e091277769e
+scripts/profile-native.ts 49e680d0697f3ce56182db41dcd520553af970826474dfc1bcba2f02c2a66f77
+```

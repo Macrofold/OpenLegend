@@ -257,3 +257,11 @@ Recast uses 0.08 m horizontal / 0.05 m vertical cells, 64-cell tiles, contour er
 Static-object exposure reuse caches at most 256 observers per immutable map/target set. Overflow computes the complete result, never truncates an audience. Pose, eye/range, target membership/height/position and geometry invalidate reuse; names and recognition remain live. Round-body shape reuse holds at most 32 body shapes, with solid shapes weakly keyed.
 
 **Reason / tradeoff:** Bound derived cache retention while retaining main's unchanged-exposure invalidation. [Exposure cache](../../packages/domain/src/object-exposure.ts), [shape adapter](../../packages/spatial/src/rapier.ts).
+
+## SP04
+
+**Current — PW08 branch implementation · Restrictiveness: Safe correctness boundary.**
+
+Sight sampling and sight-crossing prediction consume the same body-height fractions from the perception owner. Reusing certain crossing results requires immutable map/definition identity and copied current sense/body/participation dependencies; mutable or unproved geometry clears the cache. Path equivalence uses the existing 10⁻⁹ motion tolerance at the union of remaining path breakpoints. [NW15](native-work.md#nw15) owns retained-pair growth and pruning; [native interval contract](../simulation-time.md#native-interval-contract) owns reuse semantics.
+
+**Reason / tradeoff:** A cache miss costs recomputation; stale reuse could lose a brief sighting or contact. No new sensory, time-horizon or population limit is introduced.

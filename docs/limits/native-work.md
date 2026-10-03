@@ -220,3 +220,11 @@ Cognition and maintenance intake select at most 64 ready eligible actors before 
 Refresh still traverses the mind roster, but compares identity tokens. It reruns a spatial visibility query only for a character whose own exposure lists, position or item definitions changed. This is a database fan-out bound, not a total CPU bound.
 
 **Reason / tradeoff:** Bound simultaneous preparation without losing wakeups or starving later eligible actors. The urgency threshold matches critical condition notices. Aging keeps a stream of urgent work from starving ordinary characters. Both are ordering hints only: they add no concurrency or spending. [ActorWork](../../apps/server/src/actor-work.ts), [director](../../apps/server/src/ai-director.ts); [PF03](../maintainers/performance.md) retains broader scheduling qualification.
+
+## NW15
+
+**Current — PW08 branch implementation · Restrictiveness: Too liberal for unqualified dense worlds.**
+
+Certain sight/contact pairs have no independent count cap. Spatial candidate selection and existing work admission constrain construction; each live pair has exactly two reverse memberships. Shared mechanical rebuilds separately prune expired, missing or ineligible pairs and retain only pairs whose remaining original interval passes the [complete dependency contract](../simulation-time.md#native-interval-contract). Invalidation visits deduplicated incident keys. The uncertain-outcome memo retains NW12's 16,384-entry clear-and-recompute bound and is cleared at every shared rebuild. Cache maps/sets are copied on frozen continuation forks and reconstructed after load; none is saved authority.
+
+**Reason / tradeoff:** Avoid repeated exact calculation without discarding sightings or imposing a population cap. Retained memory still grows with relevant live pairs, and reconciliation still scans live pairs; this is not complete local simulation or a capacity guarantee. Unknown geometry/definition identity takes a full clear. [Implementation](../../packages/domain/src/motion-boundaries.ts), [PW08 evidence owner](../verification/perception-reaction-intake.md), [remaining C18](../maintainers/limits-audit.md#c18).

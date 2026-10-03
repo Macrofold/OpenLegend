@@ -357,6 +357,8 @@ export interface WorldState {
   rngState: number;
   sequence: number;
   simTime: number;
+  /** Sampling progress affects evidence times; rates and perception caches are rebuilt. */
+  nativeInterval?: { remainingSeconds: number; endsAt?: number };
   paused: boolean;
   profile: { id: 'grounded-wilderness'; version: 1 };
   map: WorldMap;

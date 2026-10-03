@@ -3,6 +3,7 @@ import type { AiClient } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { StoryJob } from './history.js';
+import { generationAllowance } from './cognition-budget.js';
 
 const output = z
   .object({
@@ -175,18 +176,7 @@ export class Narrator {
       await repository.publish(world.id, job, null, 'Narration input exceeds the bounded context.');
       return;
     }
-    const amount = config.macrofoldKey
-      ? config.macrofoldRunUsd
-      : Math.max(
-          config.llmReserveUsd,
-          (26000 *
-            Math.max(
-              config.llmPrices.inputUsdPerMillion,
-              config.llmPrices.cacheWriteInputUsdPerMillion,
-            ) +
-            1800 * config.llmPrices.outputUsdPerMillion) /
-            1e6,
-        );
+    const amount = generationAllowance(config, config.llmModel, 26_000, 1800, config.llmReserveUsd);
     if (!(await repository.selectionCurrent(this.service.world, job))) {
       await repository.cancel(world.id, job);
       return;
@@ -208,8 +198,8 @@ export class Narrator {
       await store.settle(id, {
         requestId: id,
         provider: 'openai',
-        requestedModel: config.miniModel,
-        model: config.miniModel,
+        requestedModel: config.llmModel,
+        model: config.llmModel,
         modelVersionStatus: 'unavailable',
         contextDigest: '',
         startedAt: at,

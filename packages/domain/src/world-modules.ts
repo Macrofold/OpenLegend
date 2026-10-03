@@ -34,6 +34,9 @@ import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './p
 import { hasWildernessNeeds } from './worlds/base/needs.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
+import { hasRecordFields } from './records.js';
+import { TIME_EPSILON } from './simulation-time.js';
+import { BASE_TIME_POLICY } from './worlds/base/time.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -572,6 +575,18 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  const interval = world.nativeInterval;
+  if (
+    interval !== undefined &&
+    (!hasRecordFields(interval, ['remainingSeconds'], ['endsAt']) ||
+      !Number.isFinite(interval.remainingSeconds) ||
+      interval.remainingSeconds <= TIME_EPSILON ||
+      interval.remainingSeconds > BASE_TIME_POLICY.idleHorizonSeconds ||
+      (interval.endsAt !== undefined &&
+        (!Number.isFinite(interval.endsAt) ||
+          Math.abs(interval.endsAt - world.simTime - interval.remainingSeconds) > TIME_EPSILON)))
+  )
+    throw new Error('Invalid saved native interval progress.');
   validateWorkState(world);
   validateAppraisals(world);
   validateResourceReservations(world);

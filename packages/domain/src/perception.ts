@@ -304,6 +304,8 @@ interface ObserverSight {
 const SIGHT_CACHE_LIMITS = { observers: 128, targets: 512 } as const;
 const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
 const samePoint = (a: Position, b: Position) => a.x === b.x && a.y === b.y && a.z === b.z;
+/** One sample geometry for ordinary sight and predicted fleeting sight. */
+export const SIGHT_BODY_FRACTIONS = [0.85, 0.5, 0.15] as const;
 /** Bind one stable sensing boundary instead of rereading an observer's Immer proxies per target.
  * Copy scalar transforms, never retain mutable positions or draft entities. Geometry must be frozen.
  * Radius and both body anchors participate in reuse; future senses must add their own dependencies.
@@ -354,7 +356,7 @@ function unblockedVisionQuery(
     }
     countDomainWork('senseTests');
     // Extent samples provide coarse exposure, not recognition or private-state disclosure.
-    const seen = [0.85, 0.5, 0.15].some((fraction) =>
+    const seen = SIGHT_BODY_FRACTIONS.some((fraction) =>
       clearSegment(map, eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),
     );
     // Keep the admitted stable transforms when a dense scan exceeds capacity. Evicting

@@ -26,15 +26,23 @@ import {
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
-import { sensesFor, visionRadius } from './perception.js';
+import { sensesFor, SIGHT_BODY_FRACTIONS } from './perception.js';
 import { sameSurfacePoint, spatialCandidates } from './spatial.js';
-import { bodyProfile, spatialMap, worldPosition, worldSupport } from './spatial-state.js';
+import {
+  bodyProfile,
+  hasWorldPlacement,
+  spatialMap,
+  worldPosition,
+  worldSupport,
+} from './spatial-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { chargeWork } from './work-budget.js';
+import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldState } from './types.js';
+import { current, isDraft } from 'immer';
 
 /** An unavailable landing closer than this retries at the flyer's sensing cadence instead of
  * at its remaining gap, which an unrelated boundary can make arbitrarily small. */
@@ -184,9 +192,6 @@ export function nativeMotionInterval(
   return Math.min(requested, Math.max(TIME_EPSILON, bound));
 }
 
-/** Seam with perception.ts visionQuery: foot-to-foot range, eye height and these three body
- * sample fractions decide sight. Keep them equal; a sense change must update both owners. */
-const SIGHT_FRACTIONS = [0.85, 0.5, 0.15] as const;
 /** Runs shorter than this are floating-point tangency noise, not separable exposure. */
 const MINIMUM_RUN_SECONDS = 1e-9;
 
@@ -294,7 +299,7 @@ function visionRuns(
   const map = spatialMap(world);
   const pieces = mergedCuts(observer.track, target.track);
   const cuts = [...pieces];
-  const heights = SIGHT_FRACTIONS.map((f) => target.height * f);
+  const heights = SIGHT_BODY_FRACTIONS.map((f) => target.height * f);
   // Obstacles per sample ray; each ray's own hull rejects far more shapes than their union.
   const blockers = heights.map((): SightObstacle[] => []);
   for (let i = 0; i + 1 < pieces.length; i++) {
@@ -400,26 +405,158 @@ interface CertainTrack {
   at: number;
   until: number;
   track: MotionTrack;
+  body: BodyCertificate;
+}
+interface BodyCertificate {
+  alive: boolean;
+  incapacitated: boolean;
+  memory: boolean;
+  active: boolean;
+  perceiving: boolean;
+  locomotion: boolean;
+  actor: boolean;
+  ambient: boolean;
+  object: boolean;
+  radius: number;
+  touch: boolean;
+  height: number;
+  bodyRadius: number;
+  eye: number;
+  interaction: number;
+}
+interface CrossingPair {
+  ids: readonly [string, string];
+  kind: 'sight' | 'contact';
+  at: number;
+  until: number;
+  runs: Run[];
+  bodies: readonly [BodyCertificate, BodyCertificate];
 }
 /** Derived crossing runs reused across slices: never saved, and holding only copied scalars.
- * Tracks are checked against actual poses each slice; any deviation, local re-prediction or
- * global rebuild forgets them. */
+ * Tracks are checked against actual poses/dependencies each slice; shared rebuilds certify
+ * the remaining absolute paths before retaining their certain pairs. */
 export interface CrossingCache {
   tracks: Map<string, CertainTrack>;
-  pairs: Map<string, { ids: readonly [string, string]; at: number; until: number; runs: Run[] }>;
+  pairs: Map<string, CrossingPair>;
+  pairsByBody: Map<string, Set<string>>;
+  /** Only immutable identities are kept; changed or mutable geometry takes the full reset. */
+  map?: object;
+  manifest?: object;
   /** Runs of uncertain outcomes keyed by their exact track content, e.g. a held flyer's. */
   outcomes: Map<string, Run[]>;
 }
 export const crossingCache = (): CrossingCache => ({
   tracks: new Map(),
   pairs: new Map(),
+  pairsByBody: new Map(),
   outcomes: new Map(),
 });
 export function forgetCrossings(cache: CrossingCache, ids: Iterable<string>): void {
+  const keys = new Set<string>();
   for (const id of ids) {
-    if (!cache.tracks.delete(id)) continue;
-    for (const [key, pair] of cache.pairs) if (pair.ids.includes(id)) cache.pairs.delete(key);
+    cache.tracks.delete(id);
+    for (const key of cache.pairsByBody.get(id) ?? []) keys.add(key);
   }
+  for (const key of keys) {
+    countDomainWork('crossingInvalidationKeys');
+    removePair(cache, key);
+  }
+}
+function removePair(cache: CrossingCache, key: string): void {
+  const pair = cache.pairs.get(key);
+  if (!pair) return;
+  cache.pairs.delete(key);
+  for (const id of pair.ids) {
+    const keys = cache.pairsByBody.get(id);
+    keys?.delete(key);
+    if (!keys?.size) cache.pairsByBody.delete(id);
+  }
+}
+function rememberPair(cache: CrossingCache, key: string, pair: CrossingPair): void {
+  removePair(cache, key);
+  cache.pairs.set(key, pair);
+  for (const id of pair.ids) {
+    let keys = cache.pairsByBody.get(id);
+    if (!keys) cache.pairsByBody.set(id, (keys = new Set()));
+    keys.add(key);
+  }
+  maximumDomainWork('crossingPairPeak', cache.pairs.size);
+}
+function clearCrossings(cache: CrossingCache): void {
+  cache.tracks.clear();
+  cache.pairs.clear();
+  cache.pairsByBody.clear();
+  cache.outcomes.clear();
+}
+function crossingGeometryCurrent(world: WorldState, cache: CrossingCache): boolean {
+  const map = spatialMap(world);
+  const manifest = isDraft(world.moduleManifest)
+    ? current(world.moduleManifest)
+    : world.moduleManifest;
+  const reusable = Object.isFrozen(map) && Object.isFrozen(manifest);
+  const same = reusable && map === cache.map && manifest === cache.manifest;
+  if (!same) {
+    if (cache.pairs.size) countDomainWork('crossingRetentionGeometry', cache.pairs.size);
+    clearCrossings(cache);
+    cache.map = reusable ? map : undefined;
+    cache.manifest = reusable ? manifest : undefined;
+  }
+  return same;
+}
+/** Inputs read by visionRuns/contactRuns plus their eligibility and current participant
+ * owners: alive/memory/participation/capabilities, sight radius/contact presence, body height,
+ * radius/eye/interaction anchors. Map/manifest identity covers every obstacle, surface and
+ * resolved rule/definition; sample fractions come from the same perception owner. Movement
+ * certainty is separately rederived through flight/walker/flee owners, including route/wait,
+ * support, speed, body sweep and locomotion restrictions. No entity or draft escapes here.
+ * New dependencies in either exact predicate or movement owner must update this certificate.
+ * docs/projects/next-playable-week/simulation-performance.md#4-retain-only-dependency-certified-certain-pairs--10-hours
+ */
+function bodyCertificate(
+  world: WorldState,
+  entity: Entity,
+  actors: ReadonlySet<string>,
+  ambient: ReadonlySet<string>,
+): BodyCertificate {
+  const body = bodyProfile(entity);
+  const alive = !!entity.actor?.alive,
+    memory = hasMemory(entity);
+  const senses = alive && memory ? sensesFor(world, entity) : [];
+  return {
+    alive,
+    incapacitated: !!entity.actor?.incapacitated,
+    memory,
+    active: activelyParticipates(entity),
+    perceiving: alive && memory && !capabilityBlocked(world, entity, 'perception'),
+    locomotion: alive && !capabilityBlocked(world, entity, 'locomotion'),
+    actor: actors.has(entity.id),
+    ambient: ambient.has(entity.id),
+    object: !entity.actor && !entity.animal,
+    radius: senses.find((s) => s.implementation === 'vision-geometry-v1')?.radius ?? 0,
+    touch: senses.some((s) => s.implementation === 'body-contact-v1'),
+    height: body.height,
+    bodyRadius: body.radius,
+    eye: body.eyeHeight,
+    interaction: body.interactionHeight,
+  };
+}
+function sameBody(a: BodyCertificate, b: BodyCertificate): boolean {
+  if (a === b) return true;
+  // These are owned plain scalar records. Avoid a keys array and callback for each cached pair.
+  for (const key in a)
+    if (a[key as keyof BodyCertificate] !== b[key as keyof BodyCertificate]) return false;
+  return true;
+}
+function pairEligible(pair: CrossingPair, a: BodyCertificate, b: BodyCertificate): boolean {
+  return (
+    a.alive &&
+    a.memory &&
+    a.active &&
+    a.perceiving &&
+    a.actor &&
+    b.active &&
+    (pair.kind === 'contact' ? a.touch : a.radius > 0 && (b.alive || b.object))
+  );
 }
 /** The part of a certain track over [from, to], re-based to start at zero. */
 function window(certain: CertainTrack, from: number, to: number): MotionTrack {
@@ -472,11 +609,155 @@ function walkerCertainTrack(
   }
   return track;
 }
+/** Fresh derivation deliberately has no cached-track shortcut. A padded flight prediction
+ * certifies only its `until`; waits and random-wander deadlines bound stationary certainty. */
+function freshCertainTrack(
+  world: WorldState,
+  entity: Entity,
+  horizon: number,
+  body: BodyCertificate,
+): CertainTrack | undefined {
+  if (!body.active || entity.spatial.fallVelocity !== undefined) return;
+  const now = world.simTime;
+  if (
+    body.alive &&
+    !entity.actor?.incapacitated &&
+    body.locomotion &&
+    (body.actor || body.ambient)
+  ) {
+    if (entity.spatial.flight && entity.spatial.flight.waitSeconds <= 0) {
+      const ahead = flightTracks(world, entity, horizon);
+      if (ahead?.length !== 1 || !poseMoves(ahead[0]!) || !(ahead[0]!.until! > 0)) return;
+      return { at: now, until: now + ahead[0]!.until!, track: ahead[0]!, body };
+    }
+    if (entity.actor?.action?.stage === 'approaching') {
+      const track = walkerCertainTrack(world, entity, horizon);
+      return track ? { at: now, until: now + horizon, track, body } : undefined;
+    }
+    if ((entity.animal?.fleeSeconds ?? 0) > 0) return;
+  }
+  const wait = entity.spatial.flight?.waitSeconds;
+  const wander = !entity.spatial.flight ? entity.animal?.wanderSeconds : undefined;
+  const span =
+    wait === undefined
+      ? wander === undefined
+        ? horizon
+        : Math.min(horizon, wander)
+      : Math.min(horizon, wait);
+  if (!(span > 0)) return;
+  const position = { ...worldPosition(entity) };
+  return { at: now, until: now + span, track: { at: [0, span], pose: [position, position] }, body };
+}
+function sameCertainPath(
+  old: CertainTrack,
+  fresh: CertainTrack,
+  from: number,
+  to: number,
+): boolean {
+  if (old.until < to || fresh.until < to) return false;
+  const oldMoves = poseMoves(old.track),
+    freshMoves = poseMoves(fresh.track);
+  if (oldMoves !== freshMoves) return false;
+  // A wholly stationary path needs neither clipped tracks nor merged breakpoint arrays.
+  if (!oldMoves) {
+    const a = old.track.pose[0]!,
+      b = fresh.track.pose[0]!;
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z) <= 1e-9;
+  }
+  const sameAt = (at: number) => {
+    const first = poseAt(old.track, at - old.at),
+      second = poseAt(fresh.track, at - fresh.at);
+    return (
+      Math.abs(first.x - second.x) + Math.abs(first.y - second.y) + Math.abs(first.z - second.z) <=
+      1e-9
+    );
+  };
+  if (!sameAt(from) || !sameAt(to)) return false;
+  // The difference of two piecewise-linear paths is linear between either path's
+  // breakpoints. Their endpoints suffice; ordering and copied/clipped paths are unnecessary.
+  for (const path of [old, fresh])
+    for (const offset of path.track.at) {
+      const at = path.at + offset;
+      if (at > from && at < to && !sameAt(at)) return false;
+    }
+  return true;
+}
+/** Called after materializing current mechanics. Expiry pruning is distinct from incident
+ * invalidation; an old encounter cannot accumulate indefinitely after full resets disappear. */
+export function reconcileCrossings(
+  world: WorldState,
+  actorIds: readonly string[],
+  ambientIds: readonly string[],
+  cache: CrossingCache,
+): void {
+  cache.outcomes.clear();
+  if (!crossingGeometryCurrent(world, cache)) return;
+  const now = world.simTime,
+    actors = new Set(actorIds),
+    ambient = new Set(ambientIds);
+  const bodies = new Map<string, BodyCertificate>();
+  const untilByBody = new Map<string, number>();
+  const readBody = (id: string) => {
+    const entity = world.entities[id];
+    if (!entity || !hasWorldPlacement(entity)) return;
+    let body = bodies.get(id);
+    if (!body) bodies.set(id, (body = bodyCertificate(world, entity, actors, ambient)));
+    return body;
+  };
+  for (const [key, pair] of cache.pairs) {
+    countDomainWork('crossingPruneKeys');
+    if (pair.until <= now) {
+      countDomainWork('crossingRetentionExpired');
+      removePair(cache, key);
+      continue;
+    }
+    // A missing track cannot certify a pair. Count this path miss per removed pair;
+    // subsequent path-proof misses below are counted per invalidated body.
+    if (!cache.tracks.has(pair.ids[0]) || !cache.tracks.has(pair.ids[1])) {
+      countDomainWork('crossingRetentionPath');
+      removePair(cache, key);
+      continue;
+    }
+    const a = readBody(pair.ids[0]),
+      b = readBody(pair.ids[1]);
+    if (!a || !b || !pairEligible(pair, a, b)) {
+      countDomainWork('crossingRetentionEligibility');
+      removePair(cache, key);
+      continue;
+    }
+    for (const id of pair.ids)
+      untilByBody.set(id, Math.max(untilByBody.get(id) ?? now, pair.until));
+  }
+  const invalid = new Set<string>();
+  for (const [id, old] of cache.tracks) {
+    const until = untilByBody.get(id);
+    if (until === undefined) {
+      cache.tracks.delete(id);
+      continue;
+    }
+    const body = readBody(id);
+    if (!body || !sameBody(old.body, body)) {
+      countDomainWork('crossingRetentionBody');
+      invalid.add(id);
+      continue;
+    }
+    const fresh = freshCertainTrack(world, world.entities[id]!, until - now, body);
+    if (!fresh || !sameCertainPath(old, fresh, now, until)) {
+      countDomainWork('crossingRetentionPath');
+      invalid.add(id);
+    }
+  }
+  forgetCrossings(cache, invalid);
+  countDomainWork('crossingPairsRetained', cache.pairs.size);
+}
 /** Forks of one continuation must not share mutable derived state. */
 export function copyCrossings(cache: CrossingCache): CrossingCache {
   return {
     tracks: new Map(cache.tracks),
     pairs: new Map(cache.pairs),
+    pairsByBody: new Map([...cache.pairsByBody].map(([id, keys]) => [id, new Set(keys)])),
+    ...(cache.map ? { map: cache.map } : {}),
+    ...(cache.manifest ? { manifest: cache.manifest } : {}),
     outcomes: new Map(cache.outcomes),
   };
 }
@@ -505,16 +786,26 @@ export function sensoryCrossingBound(
   cache: CrossingCache,
 ): number {
   if (!(seconds > TIME_EPSILON)) return seconds;
+  crossingGeometryCurrent(world, cache);
   const now = world.simTime,
     horizon = Math.max(seconds, BASE_TIME_POLICY.idleHorizonSeconds);
+  const actors = new Set(actorIds),
+    ambient = new Set(ambientIds);
+  const bodies = new Map<string, BodyCertificate>();
+  const certificate = (entity: Entity): BodyCertificate => {
+    let body = bodies.get(entity.id);
+    if (!body) bodies.set(entity.id, (body = bodyCertificate(world, entity, actors, ambient)));
+    return body;
+  };
   // A body that left its predicted track invalidates everything derived from it.
   for (const [id, certain] of cache.tracks) {
     const entity = world.entities[id];
     const expected = poseAt(certain.track, now - certain.at);
-    const actual = entity && worldPosition(entity);
+    const actual = entity && hasWorldPlacement(entity) && worldPosition(entity);
     if (
       !actual ||
       now > certain.until ||
+      !sameBody(certain.body, certificate(entity!)) ||
       Math.abs(actual.x - expected.x) +
         Math.abs(actual.y - expected.y) +
         Math.abs(actual.z - expected.z) >
@@ -533,13 +824,11 @@ export function sensoryCrossingBound(
         entity.spatial.flight ||
         entity.actor?.action?.stage === 'approaching' ||
         (entity.animal?.fleeSeconds ?? 0) > 0
-      ) ||
-      !entity.actor?.alive ||
-      entity.actor.incapacitated ||
-      !activelyParticipates(entity) ||
-      capabilityBlocked(world, entity, 'locomotion')
+      )
     )
       continue;
+    const body = certificate(entity);
+    if (!body.alive || body.incapacitated || !body.active || !body.locomotion) continue;
     const cached = cache.tracks.get(id);
     if (cached && cached.until >= now + seconds && poseMoves(cached.track)) {
       certain.set(id, cached);
@@ -550,7 +839,7 @@ export function sensoryCrossingBound(
       if (ahead?.length === 1 && poseMoves(ahead[0]!) && ahead[0]!.until! >= seconds)
         remember(id, ahead[0]!, ahead[0]!.until!);
       else if (ahead) outcomes.set(id, ahead);
-    } else if (entity.actor.action) {
+    } else if (entity.actor?.action) {
       const route = walkerCertainTrack(world, entity, horizon);
       if (route) remember(id, route, horizon);
       else {
@@ -564,8 +853,9 @@ export function sensoryCrossingBound(
   }
   function remember(id: string, track: MotionTrack, until: number) {
     forgetCrossings(cache, [id]);
-    const entry = { at: now, until: now + until, track };
+    const entry = { at: now, until: now + until, track, body: certificate(world.entities[id]!) };
     cache.tracks.set(id, entry);
+    maximumDomainWork('crossingTrackPeak', cache.tracks.size);
     certain.set(id, entry);
   }
   if (!certain.size && !outcomes.size) return seconds;
@@ -582,23 +872,23 @@ export function sensoryCrossingBound(
       at: now,
       until: wait ? now + wait : Infinity,
       track: { at: [0, 0], pose: [p, p] },
+      body: certificate(entity),
     };
     cache.tracks.set(entity.id, entry);
+    maximumDomainWork('crossingTrackPeak', cache.tracks.size);
     return entry;
   };
   const moving = (id: string) => certain.has(id) || outcomes.has(id);
   const observers = actorIds.flatMap((id) => {
     const entity = world.entities[id];
-    if (
-      !entity?.actor?.alive ||
-      !hasMemory(entity) ||
-      !activelyParticipates(entity) ||
-      capabilityBlocked(world, entity, 'perception')
-    )
-      return [];
-    const radius = visionRadius(world, entity);
-    const touch = sensesFor(world, entity).some((s) => s.implementation === 'body-contact-v1');
-    return radius > 0 || touch ? [{ entity, radius, touch }] : [];
+    if (!entity) return [];
+    // No world mutation occurs during this query. Reuse this invocation's current copied
+    // dependencies for observer/target geometry instead of rereading them through drafts.
+    const body = certificate(entity);
+    if (!body.alive || !body.memory || !body.active || !body.perceiving) return [];
+    return body.radius > 0 || body.touch
+      ? [{ entity, radius: body.radius, touch: body.touch }]
+      : [];
   });
   if (!observers.length) return seconds;
   // Moving targets for every observer; static targets only matter to a moving observer.
@@ -606,11 +896,14 @@ export function sensoryCrossingBound(
     ? worldRootEntities(world).filter((e) => activelyParticipates(e))
     : [...certain.keys(), ...outcomes.keys()].map((id) => world.entities[id]!);
   // Outcomes span the horizon; only this slice's displacement widens the pair search.
+  const reaches = new Map<string, number>();
   const reach = (id: string) => {
+    const cached = reaches.get(id);
+    if (cached !== undefined) return cached;
     const tracks =
       outcomes.get(id) ?? (certain.has(id) ? [window(certain.get(id)!, now, now + seconds)] : []);
     const start = tracks[0]?.pose[0];
-    return start
+    const value = start
       ? Math.max(
           0,
           ...tracks.flatMap((t) =>
@@ -620,6 +913,8 @@ export function sensoryCrossingBound(
           ),
         )
       : 0;
+    reaches.set(id, value);
+    return value;
   };
   const index = spatialCandidates(
     targets.map((entity) => ({ entity, position: { ...worldPosition(entity) } })),
@@ -627,7 +922,10 @@ export function sensoryCrossingBound(
   const maximumReach = Math.max(0, ...targets.map((t) => reach(t.id)));
   const maximumBody = Math.max(
     0,
-    ...targets.map((t) => Math.max(bodyProfile(t).radius, bodyProfile(t).height)),
+    ...targets.map((t) => {
+      const body = certificate(t);
+      return Math.max(body.bodyRadius, body.height);
+    }),
   );
   let bound = seconds;
   const constrain = (
@@ -642,16 +940,28 @@ export function sensoryCrossingBound(
     if (own && other) {
       const key = `${kind}\0${observer.id}\0${target.id}`;
       let pair = cache.pairs.get(key);
+      if (
+        pair &&
+        (!pairEligible(pair, own.body, other.body) ||
+          !sameBody(pair.bodies[0], own.body) ||
+          !sameBody(pair.bodies[1], other.body))
+      ) {
+        removePair(cache, key);
+        pair = undefined;
+      }
       if (!pair || pair.until < now + bound) {
+        countDomainWork('crossingPairEvaluations');
         const until = Math.min(own.until, other.until, now + horizon);
         pair = {
           ids: [observer.id, target.id],
+          kind,
           at: now,
           until,
           runs: evaluate(window(own, now, until), window(other, now, until), until - now),
+          bodies: [own.body, other.body],
         };
-        cache.pairs.set(key, pair);
-      }
+        rememberPair(cache, key, pair);
+      } else countDomainWork('crossingPairCacheHits');
       bound = Math.min(
         bound,
         interiorOf(pair.runs, now - pair.at, now - pair.at + bound) + pair.at - now,
@@ -663,31 +973,31 @@ export function sensoryCrossingBound(
         const key = `${kind}\0${observer.id}\0${target.id}\0${signature(first)}\0${signature(second)}`;
         let runs = cache.outcomes.get(key);
         if (!runs) {
+          countDomainWork('crossingPairEvaluations');
           if (cache.outcomes.size >= 16384) cache.outcomes.clear();
           cache.outcomes.set(key, (runs = evaluate(first, second, horizon)));
-        }
+          maximumDomainWork('crossingOutcomePeak', cache.outcomes.size);
+        } else countDomainWork('crossingPairCacheHits');
         bound = Math.min(bound, interiorOf(runs, 0, bound));
       }
   };
   for (const observer of observers) {
-    const body = bodyProfile(observer.entity);
+    const body = certificate(observer.entity);
     const range =
-      Math.max(observer.radius, body.radius + body.height + maximumBody) +
+      Math.max(observer.radius, body.bodyRadius + body.height + maximumBody) +
       reach(observer.entity.id) +
       maximumReach +
       maximumBody;
     const movingObserver = moving(observer.entity.id);
     for (const { entity: target } of index({ ...worldPosition(observer.entity) }, range)) {
       if (target.id === observer.entity.id || (!movingObserver && !moving(target.id))) continue;
-      const alive = !!target.actor?.alive;
-      const object = !target.actor && !target.animal;
-      const height = bodyProfile(target).height;
-      if (observer.radius > 0 && (alive || (object && movingObserver)))
+      const targetBody = certificate(target);
+      if (observer.radius > 0 && (targetBody.alive || (targetBody.object && movingObserver)))
         constrain('sight', observer.entity, target, (first, second, span) =>
           visionRuns(
             world,
-            { track: first, radius: observer.radius, eye: body.eyeHeight },
-            { track: second, height },
+            { track: first, radius: observer.radius, eye: body.eye },
+            { track: second, height: targetBody.height },
             span,
           ),
         );

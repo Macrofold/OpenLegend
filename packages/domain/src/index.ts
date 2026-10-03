@@ -53,6 +53,7 @@ export {
 export {
   canRecoverAtCamp,
   executeCommand,
+  nativeOperationAvailable,
   advanceWorld,
   navigationBlocked,
   observeActor,

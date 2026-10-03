@@ -124,6 +124,7 @@ interface ResponseInterruption {
 interface Meter {
   category: LedgerCategory;
   level?: CognitionLevel;
+  model?: string;
   size: { instructions: number; context: number; schema: number };
 }
 const textBytes = (value: unknown) =>
@@ -223,6 +224,7 @@ export class AiDirector {
                 apiKey: config.llmKey,
                 model: config.llmModel,
                 prices: config.llmPrices,
+                modelPrices: config.llmModelPrices,
                 reasoningEffort: 'low',
               },
               fetch: log.fetch,
@@ -1348,7 +1350,7 @@ export class AiDirector {
     const config = this.service.config;
     // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
     // Exact provider invoices remain external; custom prices must match the selected model.
-    const reserve = decisionAllowance(config, provider);
+    const reserve = decisionAllowance(config, provider, meter?.model);
     // A decision's own level work stays within that level's per-decision limits.
     // docs/limits/cognition.md#cg08
     const category =
@@ -1521,6 +1523,7 @@ export class AiDirector {
         }),
       {
         ...meter,
+        model: request.model ?? this.service.config.llmModel,
         size: {
           instructions: textBytes(request.instructions),
           context: textBytes(request.context),
