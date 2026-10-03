@@ -111,3 +111,211 @@ Use clear local descriptions: covered from the current rain, exposed at this edg
 When a player previews a sleeping or work position, show its actual usable extent and the relevant cover. Do not require invisible pixel-perfect placement to gain a binary shelter flag. Use a stable readable footprint and honest partial exposure when a body or object crosses the edge. Exact placement tolerances remain a qualified spatial limit.
 
 Cover is not automatically warmth, sound isolation, privacy, protection from attacks or an ownership right. Each additional claim needs the corresponding supported behavior. A closed door can block sight/movement where the spatial family says so without becoming a universal acoustic seal.
+
+## 6. Moisture, drying and a practical reason to maintain cover
+
+### 6.1 Wetness is persistent state
+
+Selected materials accumulate moisture from actual exposure up to their authored capacity. A cover can stop new wetting without removing water already held. A soaked cloak taken under a roof remains soaked until a supported process changes it. A dry replacement roof can protect wet belongings while itself gradually becoming wet.
+
+Use understandable condition descriptions such as dry, damp, wet and saturated where the material supports them. These are presentations of one changing state, not separate inventories of water and independent condition flags that can contradict each other. Exact capacity/rates and meaningful boundaries belong to the authored material family and its limits, not universal engine constants.
+
+Initial applicability is deliberately narrow: the admitted covering materials, exposed compatible fibers/tinder, and their supported carried or worn forms. A stone, body, metal weapon or arbitrary container does not acquire an invented moisture behavior by proximity. Extending exposure into a bag requires its own permeability and contents-exposure contract; neither “all bags are waterproof” nor “every nested item receives full rain independently” is a valid implicit default.
+
+If an initial scenario relies on keeping tinder dry, it must use an admitted storage arrangement: a covered exposed stock location or a container whose water transmission is actually supported. A wicker-container graphic alone is not a dry-storage promise. Larger inventories require bounded exposure of relevant contents through the existing container owner before that scope is enabled.
+
+### 6.2 Coarse ambient drying
+
+The separate drying family removes moisture according to the admitted material, current exposure and selected ambient conditions. It can be deliberately simple: no full humidity field, airflow simulation or per-thread water movement is necessary. It must still preserve elapsed time, current moisture and the distinction between stopping rain and drying material.
+
+A material can dry after rain stops, or under cover while rain continues, according to the selected rates. Moving it into shelter does not instantly reset it. Folding, wearing or installing the same item does not create a new dry copy. Material/arrangement changes can alter the admitted rate only when that relationship is actually supported and disclosed.
+
+Give a useful coarse indication when practical: drying, still getting wetter, or no supported drying in the current conditions. Avoid false exact countdowns when weather or placement may change. Let players deliberately place materials in a suitable accessible spot and return later through continuing work; drying should not require repeated model calls or a player staring at the object.
+
+### 6.3 Initial consumer: usable tinder
+
+After the drying path is qualified, the proposed bundled-world consumer distinguishes compatible tinder that is dry enough for the campfire-lighting method from material too wet for that method. It offers an actual reason to preserve dry stock and build cover. This is a scoped material requirement, not a full fire simulation or a new random roll.
+
+The proposed light-fire action retains its existing tool, time, material and fuel requirements. Its new wetness requirement is checked at the relevant admitted work boundaries. If rain changes the selected material before completion, the outcome follows that rule and actual committed consumption; it cannot silently burn a replacement dry item from someone else's stock. The family must explain interruption/refusal and useful recovery before release.
+
+Perceived material condition informs the actor's available knowledge. A creator's exact moisture inspection must not leak into every NPC's decisions. A character can inspect, learn or be told about suitable tinder, and can maintain a supported supply through its own choices. If the wetness criterion cannot yet be evaluated or explained coherently, keep the current campfire behavior until the complete consumer is delivered.
+
+Do not add ongoing wetness damage, rot, illness, sleep penalties or automatic destruction as hidden consequences of this first consumer. Future consumers can add meaningful tradeoffs when they have explicit causes, recovery and qualification. The first shelter should solve a problem more effectively than it creates an endless new chore.
+
+## 7. Editing, damage and recovery
+
+### 7.1 Add and extend
+
+Extending a shelter creates actual new supports/cover where needed and connects them through the supported rules. The old covered space remains useful while work occurs unless the selected method truly affects it. A new bay does not reset the entire building's integrity or make existing wet parts dry.
+
+Show what extra use the extension enables: more covered area, another reachable resting place, better protection at an edge or a separate work area. More roof panels do not automatically grant a global comfort multiplier. A completely overlapping panel can legitimately improve rain transmission if admitted, but does not create extra floor area or sleeping capacity.
+
+### 7.2 Replace without unintended exposure
+
+Replacing a covering can mean remove-then-install, or install temporary support/overlap before removing the old part when that method is supported. Present the meaningful difference in materials, time and exposure. A request to repair the roof while keeping sleepers covered should preserve that constraint or stop for a revised plan; it must not silently expose them because the shortest method did so.
+
+At completion, the old part is either detached intact, transformed into declared salvage, or consumed by the chosen method. The new part has its own actual state. A cosmetic replacement cannot erase the old part's damage and also return it as pristine material. Replacing one wall with a heavier material requires a compatible support/span rule; the shelter's name cannot certify that the frame can carry it.
+
+### 7.3 Remove and dismantle
+
+Show local consequences before consequential removal: this section loses cover, this opening becomes passable, or these attached parts lose support. If the user clearly asked to dismantle the whole shelter, do not ask again for every predictable part. If a request is ambiguous about a dangerous or occupied dependency, make that consequence concrete before proceeding.
+
+Do not forbid every edit that changes support. The player may deliberately take a shelter down. Provide a supported staged dismantling method and distinguish it from damage. A safe edit can refuse an invalid intermediate arrangement while offering a valid sequence, such as lowering the flexible roof before removing its posts.
+
+Reusable intact parts return as those same objects where an actual authorized actor can receive or place them. Detachment may cost work without destroying the item. Destructive dismantling yields only the selected method's bounded salvage from actual remaining material; it can yield none for consumed bindings. No material is refunded merely because a plan was canceled or a structure lost its name.
+
+### 7.4 Simple, explicit support failure
+
+For the initial light flexible-roof family, losing a required support ends its overhead coverage and leaves the actual covering in a supported lowered/draped state. The first approximation treats that lightweight fabric failure as non-injurious and non-obstructing to standing bodies; it does not infer the same rule for timber beams, stone roofs or heavy stored loads. Preserve the covering's condition, placement history and recoverable material.
+
+Only enable configurations whose failed state is representable under those rules. A heavy roof, walkable upper floor or load that could crush occupants needs a separately qualified failure family before construction. This deliberate scope is preferable to pretending full collapse physics exists or granting every unsupported building permanent immunity.
+
+When actual damage removes support, the change takes effect from that occurrence, including without observers. It is not postponed until a player returns and cannot be repaired by reloading. Two simultaneous removals affecting the same roof must produce one coherent resulting arrangement, even if they targeted different posts. Individual edit validity does not imply joint structural validity.
+
+### 7.5 Damage and repair have real causes
+
+The first family supports explicit local part damage and visible failed connections through admitted actions/conditions. Rain changes moisture; it does not automatically rot the frame. More elaborate deterioration, hostile structure attacks or fire damage require their own actual families and participation policy. Current actor combat does not automatically imply complete building combat.
+
+A repair uses actual materials and work appropriate to the part. A patch can reduce a specific leak while retaining its material and the history of earlier damage. Repair cannot exceed the part's admitted intact state, create spare material, erase moisture by resetting the object or repair every connected building. Renaming, picking up, reconnecting and changing detail level are not repairs.
+
+## 8. From shelter to a place people use
+
+### 8.1 Usable area and occupancy
+
+Usable covered area depends on actual footprint, body dimensions, access, obstructions and exposure. A resting place needs sufficient reachable space for its user; a storage pile or support can occupy part of it. Display a practical estimate of what fits and the reasons for a shortfall. It is an estimate for the authored use, not a universal building-safety certificate.
+
+Comfortable occupancy, physical occupancy, permitted access and household membership remain separate. People can crowd under a roof in an emergency even if it is not a comfortable long-term home, within actual physical rules. Owning a bed does not make an unreachable spot usable. An empty room does not automatically reserve itself for the person who named it.
+
+The first home-use model records meaningful chosen uses: a person returns here to rest, stores permitted belongings here or associates this place with a household. NPCs still choose based on their needs, relationships and actual knowledge. They can prefer an open dry awning over a leaking enclosed room. A human is not assigned a household or moved home without their action.
+
+### 8.2 Walls, doors and privacy
+
+Light walls and doors can create enclosure and separate usable spaces after their geometry/interaction paths are qualified. They do not change vertical-rain cover where the roof is unchanged. A doorway remains an access path when open; a closed door affects routes and supported sight as its actual geometry requires.
+
+Hearing follows the [hearing owner](../hearing-and-speech.md). Visual opacity is not a guarantee of silence. A household's wish for privacy does not hide an otherwise audible conversation, while protected private channels remain protected independently. Avoid advertising a private room until the relevant sensory and access rules support that claim.
+
+Locks, legal property protection, tenancy and automatic punishment are separate institutional features. The initial building can consume existing authorized access/edit rules and record permitted claims. It does not create a universal deed system or turn an NPC's belief that a home is theirs into engine authority over every object inside.
+
+### 8.3 Continuing place identity
+
+Adding an extension, removing an internal wall or replacing selected panels preserves the named place and its history where that is still the intended place. Connected geometry alone does not merge two households' identities, inventories or private histories. Likewise, dividing one room does not automatically divorce a household or create a new owner.
+
+When the use genuinely changes, allow the relevant people to rename, relocate or abandon their association with the place through supported actions. Preserve past references as history rather than redirecting every old memory to a newly built object. The first scope need not infer sophisticated household law from topology.
+
+### 8.4 Absence and care
+
+Weather and admitted material processes continue according to actual world time and funded operation, including when nobody watches. Human body protection after exit does not protect the roof, tools or property automatically. Existing [lifecycle/property policy](../worlds/base/lifecycle-and-protection.md) retains that distinction; broader domain protection remains separate.
+
+No new recurring durability loss or automatic abandonment deletion is introduced simply because an owner is absent. A player should not have to log in to repair arbitrary wear added to make buildings a resource sink. If a later world chooses decay, show its actual causes, rates, protection and recovery before people rely on it, and qualify the unattended consequences.
+
+NPC care can be a chosen bounded task or accepted obligation using available materials and knowledge. Calling a resident the caretaker does not promise infinite labor or compute. An unattended roof should not receive free repairs from imaginary household activity, nor should reducing optional model work suppress a real rain event.
+
+## 9. Economics, performance and overload
+
+### 9.1 Meaningful cost without mandatory upkeep grind
+
+Construction costs scarce material, useful tool access, work time and the opportunity to do something else. Reusing a cloak trades its current clothing use for shelter and risks its actual material condition. A larger covered area requires actual additional coverage/support, not merely a new label. These costs can create decisions without a periodic fee that deletes the building.
+
+The reference world should favor reversible early experimentation: intact detachable parts remain reusable, the plan exposes likely work and irreversible cutting, and an ordinary mistake does not erase every supplied resource. Real consumed bindings and destructive salvage remain honest. Greater permanence can use more committed materials when a future family supports the tradeoff.
+
+Maintenance should respond to real condition and use. The first release does not need background decay as a sink for surplus materials. A later economy can evaluate repair demand, resource renewal and land availability together; adding decay alone can punish absence without solving spatial or service growth. Resource abundance or efficient legitimate construction is not automatically an exploit. Duplication through detach/repair/reload is.
+
+### 9.2 Keep routine physical work inexpensive
+
+Once a shelter/material rule is admitted, rain exposure, moisture progression, drying and coverage changes use that rule without authoring a new answer for every moment. Fresh model work is useful for an unusual plan, a character's new choice or a meaningful explanation. It is unnecessary for every unchanged roof, droplet, stored item or second of drying.
+
+Use local affected relationships to revise coverage, support and routes after an edit. Do not repeatedly describe or inspect every part in every house. Reuse common physical facts while preserving each observer's evidence. A storm can be a regional occurrence with local effects, not a mandatory private generated sentence for every resident and every wet object.
+
+Cost still grows with active exposed surfaces, material diversity, meaningful edits, overlapping cover, nested storage consumers and affected activities. A convenient bay representation does not make an arbitrarily large settlement free. Qualify the complete mixed workload: builders, weather changes, moving users, interrupted work, damage, old state and several observers.
+
+### 9.3 Bound new complexity before reliance
+
+Plans and additions must fit the supported part, overlap, connection, neighborhood and work envelopes. Show when a proposed span or structure exceeds that scope and offer a smaller supported arrangement. A creator cannot bypass the bound by calling a thousand parts one object, or by splitting one expensive project into many simultaneous requests.
+
+No universal building-size, total-world-home or household-member maximum is selected here. Those need actual capacity and product evidence. This absence of new numbers does not mean unlimited construction: current work, storage, spatial, action and world admission limits remain controlling, and new family bounds must be qualified before release.
+
+If required physical work cannot be sustained, use the coherent service boundary from [continuing lives](continuing-lives-feature-spec.md), not selective dry roofs or ignored collapse. Stop optional new proposals, repeated explanations and unsupported additions first. Retain current state and useful drafts; technical failure must not create fictional damage or free repairs.
+
+Repeatedly toggling a door, moving a covering or issuing equivalent plans must not trigger unlimited new authoring or NPC reaction cascades. Actual geometry, elapsed exposure and consequential events still occur. Suppressing redundant descriptions cannot make repeated real exposure disappear or erase a new important hazard.
+
+### 9.4 Continuity over absence and restoration
+
+Advance passive effects using actual supported simulation time and the weather/arrangement history required by those effects. A real host pause or outage does not invent an elapsed storm. Arriving after a long quiet interval should materialize the same current material state, not replay every rain observation into memory or reset every item to dry.
+
+Save and restore preserve installed parts, connections, loose salvage, current moisture, damage, committed work and remaining resources. If a newly introduced moisture rule lacks historical evidence, use an explicit authorized initialization approximation; do not fabricate exact past rainfall. Changes to a shared material law follow its version/migration owner and apply coherently to affected existing and unattended objects.
+
+## 10. Concrete journeys and failure cases
+
+### SH-J01 — A cloak becomes a roof and becomes clothing again
+
+The player selects their own cloak as a reusable covering. It stops being worn when installed, and protects only its actual bay. Rain wets the cloak. Taking it down ends that cover and returns the same wet, possibly worn item. Equipping it does not dry or repair it, and it cannot simultaneously shelter the former spot.
+
+### SH-J02 — Stop halfway through construction
+
+The builder installs supports, then leaves before fastening the roof. The supports and consumed work remain, loose materials follow their actual custody, and the bay gives no finished-roof protection. Resuming uses the current site and remaining resources. Canceling releases only unused holds and does not manufacture a refund for completed work.
+
+### SH-J03 — Rain finds a missing section
+
+Two roof sections protect adjacent areas and a third is missing. Rain affects the gap and any partly exposed body or object. Adding the third section changes that local area. The home name, bed assignment and other intact sections never supplied phantom coverage to the gap.
+
+### SH-J04 — Two layers and one source of rain
+
+A player adds a supported second cover over a leaking section. It reduces remaining transmission according to both actual layers and their damage. Each material receives its supported exposure. No layer subtracts the original rain twice, creates floor area or generates collectible water without a separately admitted collector.
+
+### SH-J05 — Replace a roof above a sleeper
+
+The requested method keeps a reclining resident covered. If a supported overlap or temporary support makes that possible, the plan uses actual extra material/work. If the available method requires exposure, it explains the conflict before continuing. The system does not move the sleeper, invent their consent or pretend the removed roof still works.
+
+### SH-J06 — Two people remove different supports
+
+Each begins from an arrangement that appears stable. Their completed effects are reconciled against the resulting shared roof. It either remains supported or enters its admitted failed state once. A stale second action cannot preserve phantom support or duplicate the covering's salvage.
+
+### SH-J07 — The dry store is in a wet bag
+
+A player places tinder in a container whose weather-transmission behavior is unsupported. The game does not promise dry storage from its appearance. A covered accessible stock location provides the first supported alternative. When a container family is admitted later, outer and inner exposure compose under one actual material account.
+
+### SH-J08 — Wet tinder can recover
+
+After the drying/tinder stage is enabled, rain makes selected tinder unsuitable for that lighting method. The character can use permitted evidence to find protected stock or place the same material where it dries. The material later becomes usable according to actual state. Reopening inventory and resubmitting the action do not reroll or reset wetness.
+
+### SH-J09 — An awning is useful without becoming a private room
+
+People gather beneath an open roof during rain. The covered footprint is useful and may be crowded. Speech remains subject to actual hearing, and possession of the shelter does not confer access to everyone's belongings or private knowledge. Adding walls later changes the effects those walls actually support.
+
+### SH-J10 — A home grows around its history
+
+A household adds another bay and later removes an interior wall. Covered usable area and routes change while the place's meaningful history persists. An adjacent household does not automatically merge inventories or membership merely because the structures become connected. A new comfortable place can affect NPC preferences without forcing a relationship.
+
+### SH-J11 — A heavier roof is proposed
+
+The player requests stone over the light frame. If that load/span family is unsupported, the plan says so before consuming stock. A richer appearance cannot grant support. A separately qualified plan can require new supports and explain the actual work; it cannot quietly substitute light cloth while calling the result stone.
+
+### SH-J12 — Return after rain during absence
+
+The player returns to the actual roof, moisture and supplies after admitted world time. Their inactive body's protection did not freeze property. No new decay was invented because they were away, no fictitious caretaker repaired the roof, and no return-triggered replay gives everyone detailed memories of an unobserved storm.
+
+### SH-J13 — A repair overlaps a resource conflict
+
+One worker reserves compatible patch material while another tries to use it. Existing claim rules choose what can proceed. If a different part breaks before the repair commits, the old repair cannot silently widen to it or take extra material. The result identifies the actual section repaired and useful work remaining.
+
+### SH-J14 — Service fails during a real storm
+
+Optional plan generation becomes unavailable. Already admitted rain and material behavior continue within the supported operation envelope; no model call is needed for each roof. If required service itself fails, use a disclosed coherent pause/recovery boundary. A timeout cannot be narrated as a gust destroying the shelter.
+
+### SH-J15 — Save a damaged shelter, then load it
+
+The same gaps, supports, wet fabric, salvage and work state return under current-format restoration. Loading does not cause extra structural damage while terrain is unavailable or make unsupported roof parts briefly act as cover. External charges and current permissions do not rewind with the fiction.
+
+## 11. Delivery stages and acceptance
+
+**Stage 1: one editable cover and passive rain proof.** Build, stop, resume, extend, detach and reuse one light flexible-roof family. Supply truthful local coverage, material moisture, support failure and observer-correct feedback. Keep wetness free of new punitive consumers. Qualify cloak identity, gaps/layers, conflicts, passive operation without a model and restoration.
+
+**Stage 2: a complete useful weather loop.** Add the separate coarse drying family and qualify the proposed dry-tinder requirement with the existing lighting method. Provide an actual way to protect, recover and use supplies. Measure whether the loop produces meaningful preparation rather than excessive micromanagement. This is the recommended minimum complete player release.
+
+**Stage 3: room and home use.** Add qualified light walls, doorways/doors, reachable resting/storage spaces and chosen household use. Qualify dynamic navigation, occupancy, safe renovation, household boundaries and hearing distinctions. Expand geometry only when the first family remains legible and economical.
+
+**Stage 4: richer materials and consequences.** Introduce heavier support/failure families, more material transformations and selected weather/thermal consumers through their own designs and admission. Full combustion, wind, runoff, decay and legal property systems are not implicitly included. Each new family needs actual scenario, resource, background and workload qualification.
+
+Acceptance examines the complete result: can the player predict where cover exists, identify a leak, reuse a material without duplication, recover wet supplies, complete interrupted work, understand occupancy and preserve a home's continuity? Test keyboard, text descriptions, color-independent cues, enlarged UI and ordinary building-scale camera views. A geometry fixture is not sufficient evidence that construction is understandable.
+
+Compare total work and perceived usefulness for one shelter, a small settlement, concentrated renovations, overlapping roofs, rain transitions, nested-stock extensions and long absence. Measure parts/relationships considered as well as visible output, required physical work, new model decisions and retained history. No performance figures or unrun gameplay results are claimed here.
