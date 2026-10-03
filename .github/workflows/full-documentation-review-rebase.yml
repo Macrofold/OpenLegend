@@ -1,0 +1,56 @@
+name: Refresh documentation review base
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/full-documentation-review-rebase.yml]
+permissions:
+  contents: write
+concurrency:
+  group: full-documentation-review-rebase
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Replay the review commits without automatic conflict resolution
+        shell: bash
+        env:
+          AI_BUDGET_USD: '0'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/review-reconciliation"
+          git config user.name 'OpenLegend documentation review'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          old_base=bdaecaace24ad251ef7dbc689949124ba614adc6
+          new_base=e4d25a06105fbc1321c9a0e7a7a12524e7644ce1
+          test "$(git merge-base "$GITHUB_SHA" "$new_base")" = "$old_base"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/review-reconciliation/before.txt"
+          if ! git rebase --onto "$new_base" "$old_base"; then
+            git status --short > "$RUNNER_TEMP/review-reconciliation/conflicts.txt"
+            git diff --cc > "$RUNNER_TEMP/review-reconciliation/conflicts.diff"
+            git rev-parse REBASE_HEAD > "$RUNNER_TEMP/review-reconciliation/stopped-commit.txt"
+            exit 1
+          fi
+          git diff --exit-code "$new_base" HEAD -- apps packages scripts package.json pnpm-lock.yaml
+          git diff --check "$new_base" HEAD
+          git range-diff "$old_base..$GITHUB_SHA" "$new_base..HEAD" > "$RUNNER_TEMP/review-reconciliation/range-diff.txt"
+          git diff --binary --full-index "$new_base" HEAD > "$RUNNER_TEMP/review-reconciliation/review.patch"
+          git rev-parse HEAD > "$RUNNER_TEMP/review-reconciliation/after.txt"
+      - name: Publish with an exact lease on this review branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push --force-with-lease=refs/heads/docs/full-documentation-review-reconciled-2026-10-03:${{ github.sha }} origin HEAD:refs/heads/docs/full-documentation-review-reconciled-2026-10-03
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-documentation-review-reconciliation
+          path: ${{ runner.temp }}/review-reconciliation/
+          retention-days: 1
+          if-no-files-found: error
