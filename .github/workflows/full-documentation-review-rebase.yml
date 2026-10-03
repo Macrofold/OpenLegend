@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Replay review commits with the exact reviewed tracker collision resolved
+      - name: Replay review commits with only the two exact reviewed conflicts resolved
         shell: bash
         env:
           AI_BUDGET_USD: '0'
@@ -36,32 +36,53 @@ jobs:
           git diff "$old_base" "$new_base" > "$REVIEW_OUTPUT/upstream.patch"
           result=0
           git rebase --onto "$new_base" "$old_base" || result=$?
-          if [ "$result" -ne 0 ] && [ "$(git rev-parse REBASE_HEAD)" = af4a8802c1d8c6d4011e1a36ce6087c3edff0b62 ]; then
-            python3 - <<'PY'
+          for attempt in 1 2; do
+            if [ "$result" -eq 0 ]; then break; fi
+            if python3 - <<'PY'
           import hashlib, pathlib, re, subprocess
-          name = 'docs/maintainers/agent-guidance.md'
+          resolutions = {
+              'af4a8802c1d8c6d4011e1a36ce6087c3edff0b62': (
+                  'docs/maintainers/agent-guidance.md',
+                  ['8425d8823d74675e5198402118b38b69aab1ba21409cf05ec2c922ab287046ff', '5a25cb531a4002a51a8ccd89b594f43f578581d3c44abf244a250f44af5bbf02', '26731c3523234e8450c73e43e2dfe61eac33d84f007d2d5a60acd9f9123f465e'],
+                  '6fc233ad7db3bfbf9f41afad5080fc2701177c8f35d24c23f7720269c2c43c6f',
+                  '6ae66f1c67ace9a4a0d3aee254d2ed44d111c8fe424a8bd4dd3cd0543570aa6c'),
+              'd3aecc394839fb4bd545ae71f90e80d293ea58ba': (
+                  'docs/documentation-changelog.md',
+                  ['1f1c489f1e6b608e3772813c58b71f3a7750f2c5ec0f3ae75dbe1cf1d57a1745', '56e7fde86aa18219d9d7392aa6b0aee59c3a72332e3e252b56ee43ebba197f5b', '71dbe60811854358aab709b19d438e6ee1fcaca7505f636ac5dfb445fcfd3ada'],
+                  '6e7781d7a74b9db247a704c25a85c5db752c29e43c289c6da396d5212d2c8792',
+                  '1f08d43b2536c5a62c8a4ca8068cd707a5ec77a2ad0af50dd6967c0403ea1b64'),
+          }
+          stopped = subprocess.check_output(['git', 'rev-parse', 'REBASE_HEAD']).decode().strip()
+          assert stopped in resolutions, ('unreviewed conflict', stopped)
+          name, hashes, worktree_hash, resolved_hash = resolutions[stopped]
           unresolved = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U']).decode().splitlines()
           assert unresolved == [name], unresolved
-          hashes = ['8425d8823d74675e5198402118b38b69aab1ba21409cf05ec2c922ab287046ff', '5a25cb531a4002a51a8ccd89b594f43f578581d3c44abf244a250f44af5bbf02', '26731c3523234e8450c73e43e2dfe61eac33d84f007d2d5a60acd9f9123f465e']
           for stage, expected in enumerate(hashes, 1):
               data = subprocess.check_output(['git', 'show', f':{stage}:{name}'])
-              assert hashlib.sha256(data).hexdigest() == expected, ('unreviewed stage', stage)
+              assert hashlib.sha256(data).hexdigest() == expected, ('unreviewed stage', name, stage)
           path = pathlib.Path(name)
           text = path.read_text()
-          assert hashlib.sha256(text.encode()).hexdigest() == '6fc233ad7db3bfbf9f41afad5080fc2701177c8f35d24c23f7720269c2c43c6f'
+          assert hashlib.sha256(text.encode()).hexdigest() == worktree_hash
           matches = list(re.finditer(r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> .*?\n', text, re.M | re.S))
           assert len(matches) == 1
           match = matches[0]
-          assert '**CG14 — Experience-led work selection.**' in match.group(1)
-          assert '**CG14 — Full Documentation Review.**' in match.group(2)
-          resolved = text[:match.start()] + match.group(1) + '\n' + match.group(2).replace('**CG14 — Full Documentation Review.**', '**CG15 — Full Documentation Review.**') + text[match.end():]
-          assert hashlib.sha256(resolved.encode()).hexdigest() == '6ae66f1c67ace9a4a0d3aee254d2ed44d111c8fe424a8bd4dd3cd0543570aa6c'
+          right = match.group(2)
+          if name.endswith('agent-guidance.md'):
+              assert '**CG14 — Experience-led work selection.**' in match.group(1)
+              assert '**CG14 — Full Documentation Review.**' in right
+              right = right.replace('**CG14 — Full Documentation Review.**', '**CG15 — Full Documentation Review.**')
+          resolved = text[:match.start()] + match.group(1) + '\n' + right + text[match.end():]
+          assert hashlib.sha256(resolved.encode()).hexdigest() == resolved_hash
           path.write_text(resolved)
           subprocess.run(['git', 'add', '--', name], check=True)
           PY
-            result=0
-            GIT_EDITOR=true git rebase --continue || result=$?
-          fi
+            then
+              result=0
+              GIT_EDITOR=true git rebase --continue || result=$?
+            else
+              break
+            fi
+          done
           if [ "$result" -ne 0 ]; then
             git status --short > "$REVIEW_OUTPUT/conflicts.txt"
             git diff --cc > "$REVIEW_OUTPUT/conflicts.diff"
@@ -84,7 +105,7 @@ jobs:
             exit 1
           fi
           python3 - <<'PY'
-          import json, os, pathlib, subprocess
+          import os, pathlib, subprocess
           base = 'b50ec6ce75f260d68c18ec99d767982c65b0fccb'
           changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD', '--', 'apps', 'packages', 'scripts', 'package.json', 'pnpm-lock.yaml']).decode().splitlines()
           allowed = {'apps/server/src/world-agent-questions.ts', 'apps/server/src/world-authoring-analysis.ts'}
@@ -114,7 +135,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: full-documentation-review-reconciliation-b50ec6c-resolved
+          name: full-documentation-review-reconciliation-b50ec6c-complete
           path: ${{ runner.temp }}/review-reconciliation/
           retention-days: 1
           if-no-files-found: error
