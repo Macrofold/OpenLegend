@@ -12,7 +12,7 @@ const SEARCH_CHUNK_ROWS = 250;
 /** Lowercase letter/number words. Matching runs here rather than in PostgreSQL because the
  * database parser depends on its locale: under C it glues non-ASCII punctuation to words
  * (“Wait—burst”) and does not lowercase non-ASCII letters. */
-function searchWords(text: string): string[] {
+export function searchWords(text: string): string[] {
   return (
     text
       .normalize('NFKC')

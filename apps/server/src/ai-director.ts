@@ -37,7 +37,7 @@ import { prepareActorInvention } from './actor-invention.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
 import { projectAttributes } from '@open-legend/domain';
-import { nativeNeedBelow } from '@open-legend/domain';
+import { bodyReconsiderationInputs, bodyPolicy } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
@@ -72,12 +72,7 @@ import {
   boundResponseSchema,
   COGNITION_VERSION,
 } from './cognition-contracts.js';
-import {
-  captureActionTargets,
-  unseenExperiences,
-  DEFAULT_COGNITION_POLICY,
-  commitActorResponse,
-} from '@open-legend/domain';
+import { captureActionTargets, unseenExperiences, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
 import { cognitionOutputTokens } from './macrofold-model.js';
 import { z } from 'zod';
@@ -124,6 +119,7 @@ interface ResponseInterruption {
 interface Meter {
   category: LedgerCategory;
   level?: CognitionLevel;
+  model?: string;
   size: { instructions: number; context: number; schema: number };
 }
 const textBytes = (value: unknown) =>
@@ -223,6 +219,7 @@ export class AiDirector {
                 apiKey: config.llmKey,
                 model: config.llmModel,
                 prices: config.llmPrices,
+                modelPrices: config.llmModelPrices,
                 reasoningEffort: 'low',
               },
               fetch: log.fetch,
@@ -909,7 +906,13 @@ export class AiDirector {
         !this.service.world.entities[inventorId]?.actor?.alive ||
         this.service.world.entities[inventorId]?.actor?.incapacitated
       )
-        return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
+        return {
+          ok: false,
+          code: 'actor',
+          message:
+            bodyPolicy(this.service.world)?.recovery?.refusalText ??
+            'This body cannot act in its current condition.',
+        };
       if (
         continuation?.action !== 'reuse' &&
         invention?.candidate === undefined &&
@@ -1348,7 +1351,7 @@ export class AiDirector {
     const config = this.service.config;
     // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
     // Exact provider invoices remain external; custom prices must match the selected model.
-    const reserve = decisionAllowance(config, provider);
+    const reserve = decisionAllowance(config, provider, meter?.model);
     // A decision's own level work stays within that level's per-decision limits.
     // docs/limits/cognition.md#cg08
     const category =
@@ -1521,6 +1524,7 @@ export class AiDirector {
         }),
       {
         ...meter,
+        model: request.model ?? this.service.config.llmModel,
         size: {
           instructions: textBytes(request.instructions),
           context: textBytes(request.context),
@@ -1751,7 +1755,7 @@ export class AiDirector {
       return true;
     };
     if (await retryForUrgentAwareness()) return;
-    const policy = this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+    const policy = this.service.world.cognitionPolicy;
     const generationAvailable =
       !this.service.config.jevOnly &&
       !!(this.service.config.macrofoldKey || this.service.config.llmKey);
@@ -2469,7 +2473,7 @@ export class AiDirector {
         });
       if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
-      const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+      const policy = world.cognitionPolicy;
       // One change-fed intake: cheap per-character tokens; visibility reruns only for a
       // character whose own exposure or position changed (EPR05).
       this.thoughtInputs.reset(this.service.generation);
@@ -2599,9 +2603,14 @@ export class AiDirector {
           goal: currentGoal(actor),
           techniques: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
           possessions: relevantPossessions(world, entity.id, subscription),
-          need: nativeNeedBelow(actor, 'energy', 15) ? 'exhausted' : 'stable',
+          bodyInputs: bodyReconsiderationInputs(world, entity, 'director'),
+          bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
           concerns: projectAttributes(world, entity, 'owner')
-            .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+            .filter(
+              (v) =>
+                v.concern &&
+                world.moduleManifest.definitions.find((d) => d.id === v.id)?.concern?.reconsider,
+            )
             .map((v) => [v.id, v.concern]),
           mind: world.innerWorlds?.[entity.id]?.revision,
           knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
@@ -2625,13 +2634,12 @@ export class AiDirector {
               `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
-          ...projectAttributes(world, entity, 'owner')
-            .filter((v) => Object.hasOwn(actor.attributes ?? {}, v.id))
-            .flatMap((v) => (v.concern ? [v.concern] : [])),
+          ...projectAttributes(world, entity, 'owner').flatMap((v) =>
+            v.concern ? [v.concern] : [],
+          ),
           ...projectAttributes(world, entity, 'owner').flatMap((v) =>
             v.condition ? [`${v.name}: ${v.condition}.`] : [],
           ),
-          ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
         const urgentNeed = nativeProtection;
         const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;

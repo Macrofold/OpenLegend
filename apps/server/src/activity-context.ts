@@ -17,6 +17,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
+import { consumptionDescription } from './body-services.js';
 import { gameTime } from './recall.js';
 import type { CandidateAction } from './context.js';
 import type { WorldService } from './world-service.js';
@@ -103,8 +104,8 @@ export function activityChoiceView(
         const definition = product && world.itemDefinitions[product.definitionId];
         if (definition?.nutrition)
           result.facts.push({
-            name: 'food',
-            value: `Eating one ${definition.name} restores up to ${definition.nutrition} fullness`,
+            name: 'consumption',
+            value: consumptionDescription(world, world.entities[actorId]!, definition),
             critical: true,
           });
       }

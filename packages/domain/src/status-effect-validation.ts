@@ -41,30 +41,37 @@ function text(value: unknown, max = 256): void {
 function reference(value: unknown): void {
   if (!refs.includes(value as EntityReference)) fail('unbound target reference.');
 }
-function attribute(world: WorldState, id: unknown, writable: boolean): void {
+function attribute(
+  world: { moduleManifest: Pick<WorldState['moduleManifest'], 'definitions'> },
+  id: unknown,
+  writable: boolean,
+): void {
   const d = typeof id === 'string' ? attributeDefinition(world, id) : undefined;
   if (
     !d ||
     d.schema.kind !== 'number' ||
-    (writable &&
-      !['native-energy-v1', 'native-fullness-v1', 'reservoir-v1'].includes(d.implementation))
+    (writable && !['native-health-v1', 'number-v1', 'reservoir-v1'].includes(d.implementation))
   )
     fail('attribute missing, nonnumeric or not writable by this operation.');
 }
-function condition(
-  world: WorldState,
+export function validateStatusCondition(
+  world: { moduleManifest: Pick<WorldState['moduleManifest'], 'definitions'> },
   value: unknown,
-  ids: Set<string>,
+  ids: Set<string> | undefined,
   depth = 0,
   budget = { remaining: 128 },
 ): asserts value is StatusCondition {
   if (depth > 12 || --budget.remaining < 0) fail('condition exceeds evaluation complexity limit.');
-  object(value, [], ['all', 'any', 'compare', 'field', 'dailyWindow', 'statusActive']);
+  object(
+    value,
+    [],
+    ['all', 'any', 'compare', 'hasAttribute', 'field', 'dailyWindow', 'statusActive'],
+  );
   if (Object.keys(value).length !== 1) fail('condition must contain one operator.');
   if ('all' in value || 'any' in value) {
     const children = value.all ?? value.any;
     if (!Array.isArray(children) || !children.length) fail('empty condition group.');
-    for (const child of children) condition(world, child, ids, depth + 1, budget);
+    for (const child of children) validateStatusCondition(world, child, ids, depth + 1, budget);
   } else if ('compare' in value) {
     const c = value.compare;
     object(c, ['target', 'attribute', 'operator', 'value']);
@@ -77,6 +84,12 @@ function condition(
       )
     )
       fail('unsupported comparison.');
+  } else if ('hasAttribute' in value) {
+    const c = value.hasAttribute;
+    object(c, ['target', 'attribute']);
+    reference(c.target);
+    if (typeof c.attribute !== 'string' || !attributeDefinition(world, c.attribute))
+      fail('unknown attribute reference.');
   } else if ('field' in value) {
     const c = value.field;
     object(c, ['target', 'name', 'operator', 'value']);
@@ -105,7 +118,12 @@ function condition(
     const c = value.statusActive;
     object(c, ['target', 'definitionId', 'value']);
     reference(c.target);
-    if (!ids.has(c.definitionId) || typeof c.value !== 'boolean') fail('unknown status reference.');
+    if (
+      (ids && !ids.has(c.definitionId)) ||
+      !isSafeRecordId(c.definitionId) ||
+      typeof c.value !== 'boolean'
+    )
+      fail('unknown status reference.');
   }
 }
 export function validateStatusEffectPolicy(
@@ -157,6 +175,7 @@ export function validateStatusEffectPolicy(
         'onDeactivate',
         'actions',
         'contribution',
+        'lifecycleCause',
       ],
     );
     if (
@@ -179,12 +198,13 @@ export function validateStatusEffectPolicy(
         fail('unsupported contribution family or lifetime.');
     }
     text(d.label);
+    if (d.lifecycleCause !== undefined) text(d.lifecycleCause, 64);
     number(d.reactivationDelaySeconds, 0, 86400);
     if (!Array.isArray(d.interruptOn) || d.interruptOn.length > 32) fail('interrupt reasons.');
     d.interruptOn.forEach((s: unknown) => text(s, 64));
-    condition(world, d.requires, ids);
+    validateStatusCondition(world, d.requires, ids);
     for (const key of ['activationCondition', 'automaticActivation', 'automaticDeactivation'])
-      if (d[key] !== undefined) condition(world, d[key], ids);
+      if (d[key] !== undefined) validateStatusCondition(world, d[key], ids);
     if (!Array.isArray(d.whileActive) || !d.whileActive.length || d.whileActive.length > 32)
       fail('operation budget.');
     for (const op of d.whileActive) {
@@ -196,7 +216,7 @@ export function validateStatusEffectPolicy(
         attribute(world, c.attribute, true);
         number(c.amount, -1000000, 1000000);
         if (c.per !== 'gameSecond') fail('rate unit.');
-        if (op.when !== undefined) condition(world, op.when, ids);
+        if (op.when !== undefined) validateStatusCondition(world, op.when, ids);
       } else if ('restrictCapabilities' in op && !('changeRate' in op) && !('when' in op)) {
         const c = op.restrictCapabilities;
         object(c, ['target', 'capabilities']);
@@ -251,7 +271,7 @@ export function validateStatusEffects(world: WorldState): void {
     if (entity.actor && entity.attributes) fail('duplicate attribute owner.');
     for (const [id, state] of Object.entries(entity.attributes ?? {})) {
       const d = attributeDefinition(world, id);
-      if (!d || !['reservoir-v1', 'category-v1'].includes(d.implementation))
+      if (!d || !['number-v1', 'reservoir-v1', 'category-v1'].includes(d.implementation))
         fail('object attribute binding.');
       validateAttributeValue(d, state.value);
       if (!Number.isSafeInteger(state.revision) || state.revision < 0) fail('attribute revision.');

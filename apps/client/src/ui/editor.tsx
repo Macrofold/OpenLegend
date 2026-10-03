@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { Button, Icon, IconButton, Tag } from '../design-system/components';
 
 let topLayer = 1200;
@@ -16,6 +16,7 @@ export function EditorPanel({
   dirty,
   saving,
   error,
+  saveReason,
   onSave,
   onDiscard,
   onClose,
@@ -25,6 +26,7 @@ export function EditorPanel({
   dirty: boolean;
   saving: boolean;
   error?: string;
+  saveReason?: string;
   onSave(): Promise<boolean>;
   onDiscard?(): void;
   onClose(): void;
@@ -36,7 +38,36 @@ export function EditorPanel({
   }));
   const [layer, setLayer] = useState(() => ++topLayer);
   const [confirmClose, setConfirmClose] = useState(false);
-  const drag = useRef<{ x: number; y: number; left: number; top: number } | undefined>(undefined);
+  const editor = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const element = editor.current;
+    if (!element) return;
+    const clamp = () => {
+      const bounds = element.getBoundingClientRect();
+      const scale = bounds.width / element.offsetWidth || 1;
+      const left = Math.max(8, Math.min(innerWidth - bounds.width - 8, bounds.left));
+      const top = Math.max(8, Math.min(innerHeight - bounds.height - 8, bounds.top));
+      if (Math.abs(left - bounds.left) < 0.5 && Math.abs(top - bounds.top) < 0.5) return;
+      // Resize and size observation may both run before React paints. Derive one
+      // absolute correction from the rendered position, rather than adding it twice.
+      setPosition({
+        x: Number.parseFloat(element.style.left) + (left - bounds.left) / scale,
+        y: Number.parseFloat(element.style.top) + (top - bounds.top) / scale,
+      });
+    };
+    clamp();
+    const observer = new ResizeObserver(clamp);
+    observer.observe(element);
+    window.addEventListener('resize', clamp);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', clamp);
+    };
+  }, []);
+  const drag = useRef<
+    | { x: number; y: number; left: number; top: number; boundsLeft: number; boundsTop: number }
+    | undefined
+  >(undefined);
   const selected = tabs.find((tab) => tab.id === active) ?? tabs[0];
   const bringForward = () => setLayer(++topLayer);
   const requestClose = () => {
@@ -44,27 +75,47 @@ export function EditorPanel({
   };
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
+    const bounds = editor.current?.getBoundingClientRect();
+    if (!bounds) return;
     bringForward();
     drag.current = {
       x: event.clientX,
       y: event.clientY,
       left: position.x,
       top: position.y,
+      boundsLeft: bounds.left,
+      boundsTop: bounds.top,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const moveDrag = (event: PointerEvent<HTMLElement>) => {
     if (!drag.current) return;
-    setPosition({
-      x: Math.max(
-        8,
-        Math.min(innerWidth - 180, drag.current.left + event.clientX - drag.current.x),
+    const element = editor.current;
+    if (!element) return;
+    const bounds = element.getBoundingClientRect();
+    const scale = bounds.width / element.offsetWidth || 1;
+    const left = Math.max(
+      8,
+      Math.min(
+        innerWidth - bounds.width - 8,
+        drag.current.boundsLeft + event.clientX - drag.current.x,
       ),
-      y: Math.max(8, Math.min(innerHeight - 72, drag.current.top + event.clientY - drag.current.y)),
+    );
+    const top = Math.max(
+      8,
+      Math.min(
+        innerHeight - bounds.height - 8,
+        drag.current.boundsTop + event.clientY - drag.current.y,
+      ),
+    );
+    setPosition({
+      x: drag.current.left + (left - drag.current.boundsLeft) / scale,
+      y: drag.current.top + (top - drag.current.boundsTop) / scale,
     });
   };
   return (
     <section
+      ref={editor}
       className="ol-root ol-editor"
       role="dialog"
       aria-label={title}
@@ -98,7 +149,7 @@ export function EditorPanel({
               onClick={() => setActive(tab.id)}
             >
               <Icon name={tab.icon} />
-              <span>{tab.label}</span>
+              <span className="ol-editor-tab-label">{tab.label}</span>
             </button>
           ))}
         </nav>
@@ -110,6 +161,8 @@ export function EditorPanel({
         <span className="ol-editor-state">
           {error ? (
             <span role="alert">{error}</span>
+          ) : saveReason ? (
+            <span role="status">{saveReason}</span>
           ) : dirty ? (
             'Unsaved changes'
           ) : (
@@ -122,7 +175,12 @@ export function EditorPanel({
               Discard changes
             </Button>
           )}
-          <Button variant="primary" busy={saving} disabled={!dirty} onPress={() => void onSave()}>
+          <Button
+            variant="primary"
+            busy={saving}
+            disabled={!dirty || saving || !!saveReason}
+            onPress={() => void onSave()}
+          >
             Save
           </Button>
         </div>
@@ -141,6 +199,7 @@ export function EditorPanel({
               <Button
                 variant="primary"
                 busy={saving}
+                disabled={saving || !!saveReason}
                 onPress={() => void onSave().then((saved) => saved && onClose())}
               >
                 Save and Close

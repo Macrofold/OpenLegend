@@ -90,6 +90,10 @@ export function ConversationThread({
   ariaLabel = 'Conversation',
   id,
   visible = true,
+  contentRevision = '',
+  liveAnnouncements = 'polite',
+  newMessageLabel = 'New Message',
+  preserveReading = false,
 }: {
   conversationKey: string;
   items: ConversationItem[];
@@ -99,6 +103,10 @@ export function ConversationThread({
   ariaLabel?: string;
   id?: string;
   visible?: boolean;
+  contentRevision?: string | number;
+  liveAnnouncements?: 'polite' | 'off';
+  newMessageLabel?: string;
+  preserveReading?: boolean;
 }) {
   const log = useRef<HTMLDivElement>(null);
   const previous = useRef<{ key: string; count: number; latestId: string } | null>(null);
@@ -110,6 +118,8 @@ export function ConversationThread({
   const previousHeight = useRef(0);
   const previousFirst = useRef<string | undefined>(undefined);
   const previousOpeningRevision = useRef(openingRevision);
+  const previousContentRevision = useRef(contentRevision);
+  const followingBottom = useRef(true);
 
   const scrollToBottom = () => {
     const element = log.current;
@@ -122,12 +132,21 @@ export function ConversationThread({
       scrollFrame.current = null;
     });
     unread.current = false;
+    followingBottom.current = true;
     setShowNewMessage(false);
   };
 
   useLayoutEffect(() => {
+    if (!visible) {
+      // Keep the last visible geometry and revision: hidden Work/Conversation views
+      // can continue receiving text without consuming the reader's anchor or cue.
+      wasVisible.current = false;
+      return;
+    }
     const prior = previous.current;
     const openingLoaded = previousOpeningRevision.current !== openingRevision;
+    const contentChanged = previousContentRevision.current !== contentRevision;
+    previousContentRevision.current = contentRevision;
     previousOpeningRevision.current = openingRevision;
     const prepended =
       prior?.key === conversationKey &&
@@ -138,7 +157,8 @@ export function ConversationThread({
     previousHeight.current = log.current?.scrollHeight ?? 0;
     previousFirst.current = items[0]?.id;
     const openedConversation =
-      visible && (!prior || prior.key !== conversationKey || !wasVisible.current);
+      visible &&
+      (!prior || prior.key !== conversationKey || (!preserveReading && !wasVisible.current));
     const addedMessage =
       visible &&
       !!prior &&
@@ -146,7 +166,6 @@ export function ConversationThread({
       (items.length > prior.count || (items.length === prior.count && latestId !== prior.latestId));
     previous.current = { key: conversationKey, count: items.length, latestId };
     wasVisible.current = visible;
-    if (!visible) return;
     if (openedConversation || openingLoaded || (prior?.count === 0 && items.length > 0)) {
       scrollToBottom();
       return;
@@ -155,15 +174,27 @@ export function ConversationThread({
       log.current.scrollTop += log.current.scrollHeight - oldHeight;
       return;
     }
-    if (addedMessage) {
-      if (unread.current || (log.current && latestTwoAreOffscreen(log.current))) {
+    if (addedMessage || contentChanged) {
+      if (
+        unread.current ||
+        !followingBottom.current ||
+        (log.current && latestTwoAreOffscreen(log.current))
+      ) {
         unread.current = true;
         setShowNewMessage(true);
       } else {
         scrollToBottom();
       }
     }
-  }, [conversationKey, items.length, latestId, visible, openingRevision]);
+  }, [
+    conversationKey,
+    items.length,
+    latestId,
+    visible,
+    openingRevision,
+    contentRevision,
+    preserveReading,
+  ]);
 
   useLayoutEffect(() => {
     return () => {
@@ -179,10 +210,11 @@ export function ConversationThread({
         className="ol-thread"
         role="log"
         aria-label={ariaLabel}
-        aria-live="polite"
+        aria-live={liveAnnouncements}
         onScroll={(event) => {
           const element = event.currentTarget;
           const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight <= 2;
+          followingBottom.current = atBottom;
           if (atBottom && unread.current) {
             unread.current = false;
             setShowNewMessage(false);
@@ -199,7 +231,7 @@ export function ConversationThread({
       </div>
       {showNewMessage && (
         <Button className="ol-new-message" size="sm" variant="solid" onPress={scrollToBottom}>
-          New Message <Icon name="ui.next" size={14} />
+          {newMessageLabel} <Icon name="ui.next" size={14} />
         </Button>
       )}
     </div>

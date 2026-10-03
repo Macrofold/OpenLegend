@@ -176,13 +176,13 @@ Original recommendation: **Review**.
 
 ## LA040
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — PW07 review verified, October 2 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** A world's cognition policy can name at most 16 kinds of events that should count as significant, such as death or being taught something.
 
-**Reason / tradeoff:** Removed the sixteen-event-type count ceiling. Cognition policy shape, event-name format, revision and permission checks remain.
+**Reason / tradeoff:** Removed the sixteen-event-type count ceiling. The creator submission schema and guide now match native validation: a 17-name typed submission and native admission pass, while an invalid name refuses. Cognition policy shape, event-name format, revision, permission and total request-byte checks remain. [Review evidence](../verification/next-playable-week-engineer-2.md#independent-implementation-review).
 
-[Implementation starting point](../../apps/server/src/decision-context.ts).
+[Native owner](../../packages/domain/src/cognition-policy.ts) · [Submission schema](../../apps/server/src/world-authoring-schemas.ts).
 
 Original recommendation: **Completed removals**.
 

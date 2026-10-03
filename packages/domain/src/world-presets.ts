@@ -6,11 +6,12 @@ import { createWorld } from './data.js';
 import { controlledEntityId, defaultResidentEntityId } from './identity.js';
 import {
   createModuleManifest,
-  DEFAULT_ATTRIBUTES,
   initializeAttributes,
   validateWorldModules,
   type AttributeDefinition,
 } from './world-modules.js';
+import { DEFAULT_SENSES as BASE_SENSES } from './perception.js';
+import type { BodyPolicy } from './body-policy.js';
 import { livingBody } from './living.js';
 import type { WorldState } from './types.js';
 
@@ -22,12 +23,18 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
     implementation: 'reservoir-v1',
     name: 'Charge',
     disclosure: 'owner',
-    presentation: 'neutral',
+    presentation: { icon: 'meter.neutral', color: 'meter.neutral' },
     schema: { kind: 'number', min: 0, max: 240, initial: 48, unit: 'units' },
     concern: {
       below: 60,
+      mode: 'latched',
+      notify: true,
+      reconsider: true,
+      recoveryMargin: 12,
       text: 'My charge is low. I can replenish from a perceived compatible supply.',
     },
+    critical: { concernActive: true },
+    editorCritical: { concernActive: true },
     reservoir: {
       drainPerSecond: 0.02,
       replenishPerSecond: 2,
@@ -41,29 +48,70 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
     implementation: 'category-v1',
     name: 'Disposition',
     disclosure: 'owner',
-    presentation: 'neutral',
+    presentation: { icon: 'meter.neutral', color: 'meter.neutral' },
     schema: { kind: 'category', choices: ['cautious', 'curious'], initial: 'cautious' },
   },
 ];
 export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
   const world = createWorld(seed, accounts);
   world.id = `reservoir-demo-${seed}`;
-  world.moduleManifest = createModuleManifest([
-    ...DEFAULT_ATTRIBUTES,
-    ...RESERVOIR_DEMO_ATTRIBUTES,
-  ]);
-  for (const id of [controlledEntityId(world), defaultResidentEntityId(world)]) {
-    if (!id) continue;
-    const entity = world.entities[id]!;
-    const actor = entity.actor!;
-    actor.species = 'construct';
-    actor.body = livingBody('construct');
-    actor.capabilities!.needs = false;
-    delete actor.fullness;
-    delete actor.energy;
+  const integrity: AttributeDefinition = {
+    id: 'clockwork:integrity',
+    version: 1,
+    implementation: 'native-health-v1',
+    name: 'Integrity',
+    disclosure: 'owner',
+    presentation: { icon: 'meter.health', color: 'meter.health' },
+    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
+    meaning: 'Integrity measures the condition of this constructed body.',
+  };
+  const policy: BodyPolicy = {
+    id: 'clockwork:body-policy',
+    version: 1,
+    zeroHealth: {
+      player: 'incapacitate',
+      npc: 'die',
+      native: 'die',
+      incapacitateNarration: '{subject.name} stopped moving.',
+      deathNarration: '{subject.name} broke down.',
+    },
+    recovery: null,
+    revival: { fillToMaximum: ['clockwork:charge'] },
+    consumption: null,
+    carryingConcern: null,
+    backgroundThinking: {
+      maintenanceBlockedWhen: null,
+      commitBlockedWhen: null,
+      reflectionBlockedWhen: null,
+      reconsiderationInputs: [],
+    },
+  };
+  world.moduleManifest = createModuleManifest(
+    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES],
+    BASE_SENSES,
+    policy,
+    world.moduleManifest.recipeFamilies,
+  );
+  world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
+  world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
+  for (const entity of Object.values(world.entities)) {
+    const actor = entity.actor;
+    if (!actor) continue;
+    // This is new-world composition, not conversion of an existing saved world.
+    actor.attributes = {};
+    delete actor.conditions;
     delete entity.statusEffects;
+    if (actor.action?.type === 'status-effect') actor.action = null;
     initializeAttributes(actor, RESERVOIR_DEMO_ATTRIBUTES);
-    actor.agency = seedAgency(['Stay charged and explore the clearing.']);
+    if (actor.controller !== 'native') {
+      actor.species = 'construct';
+      actor.body = livingBody('construct');
+      actor.agency = seedAgency(['Stay charged and explore the clearing.']);
+      const identity = world.minds?.[entity.id]?.documents.find(
+        (document) => document.id === 'identity',
+      );
+      if (identity) identity.text = `I am ${entity.name}, a clockwork inhabitant of this clearing.`;
+    }
   }
   world.entities['charge-bank'] = {
     spatial: { bodyProfileId: 'object', heading: 0 },
@@ -81,10 +129,13 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
 export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
   const world = createReservoirDemo(seed, accounts);
   world.id = `touch-demo-${seed}`;
-  world.moduleManifest = createModuleManifest(world.moduleManifest!.definitions, [
-    ...DEFAULT_SENSES,
-    COARSE_TOUCH,
-  ]);
+  const manifest = world.moduleManifest;
+  world.moduleManifest = createModuleManifest(
+    manifest.definitions,
+    [...DEFAULT_SENSES, COARSE_TOUCH],
+    manifest.bodyPolicy,
+    manifest.recipeFamilies,
+  );
   const resident = world.entities[defaultResidentEntityId(world)]!;
   resident.actor!.senses = [COARSE_TOUCH.id];
   resident.actor!.contacts = {};

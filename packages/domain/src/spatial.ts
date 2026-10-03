@@ -44,6 +44,15 @@ export function interactionAnchor(
 ): Position {
   return { x: position.x, y: position.y + bodyProfile(entity).interactionHeight, z: position.z };
 }
+/** Roots are indexed at their feet, while reach is measured between interaction anchors.
+ * Expand by the native profile bound before exact checks, including different body heights. */
+export function interactionCandidateBounds(entity: Entity, reach: number) {
+  return {
+    position: interactionAnchor(entity),
+    radius:
+      reach + Math.max(...Object.values(BODY_PROFILES).map((profile) => profile.interactionHeight)),
+  };
+}
 export function hasLineOfEffect(
   world: WorldState,
   actor: Entity,
@@ -200,7 +209,7 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
     if (!cell) cells.set(key, (cell = { x, y, z, entries: [] }));
     cell.entries.push({ entity, order });
   });
-  return (position: Position, radius: number): T[] => {
+  const candidates = (position: Position, radius: number): T[] => {
     const found: Entry[] = [];
     const minX = Math.floor((position.x - radius) / cellSize),
       maxX = Math.floor((position.x + radius) / cellSize),
@@ -239,13 +248,78 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
     countDomainWork('spatialCandidates', found.length);
     return found.sort((a, b) => a.order - b.order).map(({ entity }) => entity);
   };
+  /** Resume conservative candidates in the same original order without collecting the
+   * entire local crowd. Existing full queries retain their behavior. */
+  candidates.page = (position: Position, radius: number, after = -1, maximum = 201) => {
+    const minX = Math.floor((position.x - radius) / cellSize),
+      maxX = Math.floor((position.x + radius) / cellSize),
+      minY = Math.floor((position.y - radius) / cellSize),
+      maxY = Math.floor((position.y + radius) / cellSize),
+      minZ = Math.floor((position.z - radius) / cellSize),
+      maxZ = Math.floor((position.z + radius) / cellSize);
+    const selected: Array<{ entries: Entry[]; offset: number }> = [];
+    const include = (cell: Cell | undefined) => {
+      if (!cell) return;
+      let low = 0,
+        high = cell.entries.length;
+      while (low < high) {
+        chargeWork({ tests: 1 });
+        const middle = Math.floor((low + high) / 2);
+        if (cell.entries[middle]!.order <= after) low = middle + 1;
+        else high = middle;
+      }
+      if (low < cell.entries.length) selected.push({ entries: cell.entries, offset: low });
+    };
+    const volume = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+    if (volume > cells.size) {
+      for (const cell of cells.values()) {
+        chargeWork({ tests: 1 });
+        if (
+          cell.x >= minX &&
+          cell.x <= maxX &&
+          cell.y >= minY &&
+          cell.y <= maxY &&
+          cell.z >= minZ &&
+          cell.z <= maxZ
+        )
+          include(cell);
+      }
+    } else {
+      for (let x = minX; x <= maxX; x++)
+        for (let y = minY; y <= maxY; y++)
+          for (let z = minZ; z <= maxZ; z++) {
+            chargeWork({ tests: 1 });
+            include(cells.get(`${x},${y},${z}`));
+          }
+    }
+    const values: Array<{ value: T; after: number }> = [];
+    while (values.length < maximum) {
+      let first: (typeof selected)[number] | undefined;
+      for (const cell of selected) {
+        chargeWork({ tests: 1 });
+        if (
+          cell.offset < cell.entries.length &&
+          (!first || cell.entries[cell.offset]!.order < first.entries[first.offset]!.order)
+        )
+          first = cell;
+      }
+      if (!first) break;
+      chargeWork({ candidates: 1 });
+      const entry = first.entries[first.offset++]!;
+      values.push({ value: entry.entity, after: entry.order });
+    }
+    countDomainWork('spatialQueries');
+    countDomainWork('spatialCandidates', values.length);
+    return values;
+  };
+  return candidates;
 }
 
 const entityIndexes = new WeakMap<
   WorldState['entities'],
   ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
 >();
-export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
+function entityIndex(world: WorldState) {
   let index =
     !isDraft(world.entities) && Object.isFrozen(world.entities)
       ? entityIndexes.get(world.entities)
@@ -259,5 +333,19 @@ export function nearbyEntities(world: WorldState, position: Position, radius: nu
     if (!isDraft(world.entities) && Object.isFrozen(world.entities))
       entityIndexes.set(world.entities, index);
   }
-  return index(position, radius).map(({ entity }) => entity);
+  return index;
+}
+export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
+  return entityIndex(world)(position, radius).map(({ entity }) => entity);
+}
+export function nearbyEntityPage(
+  world: WorldState,
+  position: Position,
+  radius: number,
+  after = -1,
+  maximum = 201,
+) {
+  return entityIndex(world)
+    .page(position, radius, after, maximum)
+    .map(({ value, after }) => ({ value: value.entity, after }));
 }

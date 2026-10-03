@@ -12,11 +12,13 @@ import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   attributeDefinition,
+  readAttribute,
+  setAttribute,
   validateAttributeValue,
   initializeAttributes,
   HOST_IMPLEMENTATIONS,
 } from './world-modules.js';
-import { hasWildernessNeeds, setWildernessNeed } from './worlds/base/needs.js';
+import { bodyPolicy } from './body-policy.js';
 import { canSpeak, hasMemory, reconcileBody } from './living.js';
 import { draftWorld } from './draft.js';
 import { addItem, TRAIT_BANK } from './data.js';
@@ -171,15 +173,20 @@ export function reviveActor(
   actor.alive = true;
   actor.incapacitated = false;
   setBodyHealth(actor, actor.body!.maxHealth);
-  if (hasWildernessNeeds(actor)) {
-    setWildernessNeed(actor, 'fullness', 100);
-    setWildernessNeed(actor, 'energy', 100);
+  const events: WorldEvent[] = [];
+  for (const id of bodyPolicy(world)!.revival.fillToMaximum) {
+    const definition = attributeDefinition(world, id)!;
+    if (
+      definition.schema.kind === 'number' &&
+      typeof readAttribute(actor, definition) === 'number' &&
+      definition.implementation !== 'native-health-v1'
+    )
+      setAttribute(world, entity, definition, definition.schema.max, events);
   }
   actor.action = null;
   actor.planGeneration++;
   actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
   delete entity.remains;
-  const events: WorldEvent[] = [];
   interruptStatusEffects(world, entity, events, 'revived');
   reconcileBody(world, entity, events, 'revival');
   emit(world, events, 'god-revived', `${entity.name} returned to life.`, entity, undefined, {
@@ -238,12 +245,14 @@ function sameStructure(left: object, right: object, editable: string[]): boolean
 
 export function editPerson(original: WorldState, draft: GodPersonEdit): Transition {
   const current = original.entities[draft.actorId];
-  const traits = personTraits(draft.person);
+  const traits =
+    current?.actor &&
+    canonicalJson(draft.person.traitIds) ===
+      canonicalJson((current.actor.traits ?? []).map((trait) => trait.id))
+      ? (current.actor.traits?.map((trait) => ({ ...trait })) ?? [])
+      : personTraits(draft.person);
   if (!current?.actor || !hasMemory(current)) return reject(original, 'actor', 'Choose a person.');
   if (
-    (hasWildernessNeeds(current.actor)
-      ? draft.person.stats.fullness === undefined || draft.person.stats.energy === undefined
-      : draft.person.stats.fullness !== undefined || draft.person.stats.energy !== undefined) ||
     !draft.person.name.trim() ||
     draft.person.name.trim().length > 80 ||
     draft.person.description.trim().length > 2000 ||
@@ -251,9 +260,19 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     draft.person.backstory.trim().length > 4000 ||
     draft.person.goals.length > 8 ||
     draft.person.goals.some((goal) => !goal.trim() || goal.trim().length > 500) ||
-    Object.values(draft.person.stats).some(
-      (value) => !Number.isFinite(value) || value < 0 || value > 100,
-    ) ||
+    !draft.person.meters ||
+    Object.entries(draft.person.meters).some(([id, value]) => {
+      const definition = attributeDefinition(original, id);
+      if (
+        !definition ||
+        definition.schema.kind !== 'number' ||
+        typeof readAttribute(current.actor!, definition) !== 'number'
+      )
+        return true;
+      return (
+        !Number.isFinite(value) || value < definition.schema.min || value > definition.schema.max
+      );
+    }) ||
     !traits
   )
     return reject(original, 'invalid-person', 'The person details are not valid.');
@@ -367,6 +386,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
 
   const world = draftWorld(original);
   const entity = world.entities[draft.actorId]!;
+  const events: WorldEvent[] = [];
   const goals = draft.person.goals.map((goal) => goal.trim());
   const identityChanged =
     entity.name !== draft.person.name.trim() ||
@@ -375,10 +395,14 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     entity.actor!.backstory !== draft.person.backstory.trim() ||
     JSON.stringify(entity.actor!.traits ?? []) !== JSON.stringify(traits) ||
     JSON.stringify(goalTexts(entity.actor!)) !== JSON.stringify(goals);
-  const statsChanged =
-    entity.actor!.health !== draft.person.stats.health ||
-    entity.actor!.fullness !== draft.person.stats.fullness ||
-    entity.actor!.energy !== draft.person.stats.energy;
+  const statsChanged = Object.entries(draft.person.meters).some(
+    ([id, value]) => readAttribute(entity.actor!, attributeDefinition(world, id)!) !== value,
+  );
+  const healthChanged = Object.entries(draft.person.meters).some(
+    ([id, value]) =>
+      attributeDefinition(world, id)!.implementation === 'native-health-v1' &&
+      readAttribute(entity.actor!, attributeDefinition(world, id)!) !== value,
+  );
   if (identityChanged) {
     entity.name = draft.person.name.trim();
     entity.actor!.description = draft.person.description.trim();
@@ -391,10 +415,15 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     }
   }
   if (statsChanged) {
-    setBodyHealth(entity.actor!, draft.person.stats.health);
-    if (hasWildernessNeeds(entity.actor!)) {
-      setWildernessNeed(entity.actor!, 'fullness', draft.person.stats.fullness!);
-      setWildernessNeed(entity.actor!, 'energy', draft.person.stats.energy!);
+    for (const [id, value] of Object.entries(draft.person.meters)) {
+      const definition = attributeDefinition(world, id)!;
+      if (definition.implementation === 'native-health-v1' && definition.schema.kind === 'number')
+        setBodyHealth(
+          entity.actor!,
+          (value - definition.schema.min) *
+            (entity.actor!.body!.maxHealth / (definition.schema.max - definition.schema.min)),
+        );
+      else setAttribute(world, entity, definition, value, events);
     }
   }
   if (inventoryChanged && inventory) {
@@ -422,9 +451,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     for (const [definitionId, quantity] of quantities)
       if (quantity > 0) addItem(world, draft.actorId, definitionId, quantity);
   }
-  const events: WorldEvent[] = [];
   // Creator health edits share the native body owner: death, incapacity and revisions.
-  if (statsChanged) reconcileBody(world, entity, events, 'creator-edit');
+  if (healthChanged) reconcileBody(world, entity, events, 'creator-edit');
   reconcileConditions(world, entity, events);
   migrateCognition(world);
   const invalidated = new Set<string>();

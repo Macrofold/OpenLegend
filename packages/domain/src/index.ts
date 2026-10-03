@@ -63,7 +63,7 @@ export {
   quantityOf,
   SIMULATION_RULES,
 } from './kernel.js';
-export { admitDeclaration, validateDeclaration, DECLARATION_CONTRACT } from './declarations.js';
+export { admitDeclaration, validateDeclaration } from './declarations.js';
 export {
   distance,
   distance3D,
@@ -122,15 +122,10 @@ export * from './invention-policy.js';
 
 export * from './invention-attribution.js';
 
-export {
-  SUPPORTED_INVENTION_FAMILIES,
-  INVENTION_FAMILY_INTERFACES,
-  INVENTION_CONSUMER_GUIDE,
-  describeInvention,
-  inventionFamily,
-  type InventionFamily,
-} from './invention-families.js';
+export * from './invention-families.js';
+export { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 export { gatheringYield } from './gathering.js';
+export { gatheringDescription } from './worlds/base/actions.js';
 export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
@@ -180,6 +175,8 @@ export {
   effectivePosition,
   createItemLot,
   moveLot,
+  itemMoveReason,
+  itemPackingLoad,
   splitLot,
   equipLot,
   retireItem,
@@ -215,4 +212,10 @@ export { speechExposure, soundOrigin, hearingReferenceRadius } from './perceptio
 export * from './speech.js';
 export * from './conditions.js';
 export * from './inventory-inspection.js';
+export * from './item-characteristics.js';
 export { availableItemQuantity } from './resource-claims.js';
+
+export * from './body-policy.js';
+export { DEFAULT_COGNITION_POLICY } from './worlds/base/cognition.js';
+
+export { basePlaytestMilestones } from './worlds/base/playtest.js';

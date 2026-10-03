@@ -1,4 +1,6 @@
 import { learnedActivityCandidates } from './activity-context.js';
+import { consumptionDescription } from './body-services.js';
+import { applicableConsumption } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import { decisionObservation } from './decision-observation.js';
 import { itemFor, directChildIds } from '@open-legend/domain';
@@ -20,7 +22,7 @@ import {
   sameSurfacePoint,
   supportsManualWork,
   inventionFamily,
-  SUPPORTED_INVENTION_FAMILIES,
+  recipeFamily,
 } from '@open-legend/domain';
 import { attributeDefinition, readAttribute, offerRecipientProblem } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
@@ -33,16 +35,40 @@ import {
   queryMemories,
   mindFor,
   SIMULATION_RULES,
+  gatheringYield,
+  gatheringDescription,
   type Entity,
+  type ItemDefinition,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 
 // Describe the native batch, not an invented quantity choice. Interpretation may
 // compose these steps but cannot rewrite their arguments or effects.
-function gatherDescription(service: WorldService, entity: Entity): string {
+function gatherDescription(
+  service: WorldService,
+  entity: Entity,
+  tools: ItemDefinition[],
+  completeInventory: boolean,
+): string {
   const resource = entity.resource!;
-  return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${service.world.itemDefinitions[resource.definitionId]?.name ?? 'material'} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
+  return gatheringDescription(
+    entity.name,
+    service.world.itemDefinitions[resource.definitionId]?.name ?? 'material',
+    Math.min(resource.quantity, gatheringYield(tools, resource.definitionId)),
+    resource.quantity,
+    resource.workSeconds,
+    completeInventory,
+  );
+}
+
+/** Only actual observed possessions establish carried capability. Known recipes and
+ * ground items also have permitted definitions; they cannot count as carried tools. */
+function carriedGatheringTools(observed: NonNullable<ReturnType<typeof decisionObservation>>) {
+  const carried = new Set(observed.inventory.map((item) => item.definitionId));
+  return observed.itemDefinitions.filter(
+    (definition) => carried.has(definition.id) && definition.gatheringTool,
+  );
 }
 
 function describeTargets(
@@ -106,7 +132,9 @@ export function buildContext(
   const rankedRecipes = observed.knownRecipes
     .map((recipe, index) => {
       const family = inventionFamily(recipe);
-      const familyTerms = family ? SUPPORTED_INVENTION_FAMILIES[family].description : '';
+      const familyTerms = family
+        ? (recipeFamily(service.world, family)?.definition.description ?? '')
+        : '';
       const text =
         `${recipe.name} ${recipe.description} ${familyTerms} ${recipe.inputs.map((input) => `${input.definitionId} ${input.role}`).join(' ')}`.toLowerCase();
       return {
@@ -161,13 +189,8 @@ export function buildContext(
       description: excerpt(recipe.description, 120),
       inputs: recipe.inputs,
       workSeconds: recipe.workSeconds,
-      output: {
-        kind: recipe.output.kind,
-        properties: recipe.output.properties,
-        ...(recipe.output.launcher ? { launcher: recipe.output.launcher } : {}),
-        ...(recipe.output.ammunition ? { ammunition: recipe.output.ammunition } : {}),
-        ...(recipe.output.gatheringTool ? { gatheringTool: recipe.output.gatheringTool } : {}),
-      },
+      family: recipe.sourceCandidate.family,
+      facts: recipe.facts,
     })),
     memories: (retained ?? queryMemories(service.world, actorId, { text: query, limit: 12 })).map(
       (memory) => ({
@@ -249,6 +272,7 @@ export function npcCandidates(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
   const inventory = observed.inventory.filter((item) => item.quantity > 0);
+  const gatheringTools = carriedGatheringTools(observed);
   const quantity = (definitionId: string) =>
     inventory
       .filter((item) => item.definitionId === definitionId)
@@ -410,10 +434,10 @@ export function npcCandidates(
     });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
-    if (definition?.nutrition)
+    if (definition?.nutrition && applicableConsumption(service.world, observed.actor))
       actions.push({
         id: `eat:${item.id}`,
-        description: `Eat one ${definition.name} to restore fullness.`,
+        description: consumptionDescription(service.world, observed.actor, definition),
         command: { type: 'eat', itemId: item.id },
       });
   }
@@ -636,7 +660,12 @@ export function npcCandidates(
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
-        description: gatherDescription(service, entity),
+        description: gatherDescription(
+          service,
+          entity,
+          gatheringTools,
+          !observed.inventoryCoverage.paged,
+        ),
         command: { type: 'gather', targetId: entity.id },
       });
     if (
@@ -718,12 +747,18 @@ export function planningCandidates(
   observed = decisionObservation(service.world, actorId),
 ): CandidateAction[] {
   if (!observed || !supportsManualWork(observed.actor)) return [];
+  const gatheringTools = carriedGatheringTools(observed);
   return describeTargets(service, actorId, [
     ...observed.visibleEntities
       .filter((entity) => entity.resource && entity.resource.quantity > 0)
       .map((entity) => ({
         id: `plan-gather:${entity.id}`,
-        description: gatherDescription(service, entity),
+        description: gatherDescription(
+          service,
+          entity,
+          gatheringTools,
+          !observed.inventoryCoverage.paged,
+        ),
         command: { type: 'gather' as const, targetId: entity.id },
       })),
     ...Object.entries(NATIVE_PREPARATIONS).map(([preparation, recipe]) => ({

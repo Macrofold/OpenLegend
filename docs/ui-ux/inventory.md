@@ -6,7 +6,7 @@
 
 The objective is not to reproduce the appearance of Baldur's Gate 3. It is to let a player answer **what do I have, where is it, what can I do with it, and what will change?** without repetitive bookkeeping or accidental loss.
 
-Current Open Legend already has item quantities, individual objects, nested containers, breadcrumbs, movement, split/merge actions, equipment labels and object history. This chapter also describes **future patterns** for large collections, bulk actions, comparisons, loadouts and trading. Those patterns are not delivered features or new authorization; [persistent objects](../maintainers/persistent-objects.md), [base-world work](../maintainers/base-world.md) and existing action/authority owners retain implementation scope.
+Current Open Legend has item quantities, individual objects, nested containers, breadcrumbs, movement, split/merge actions, equipment labels and object history. [PW04](../maintainers/next-playable-week.md#pw04--inventory-for-exact-camp-tasks) adds a task workspace with scoped search, stable selected detail and exact quantity drafts, lazy destination discovery, and native equipment comparison. This chapter also describes **future patterns** for large collections, bulk actions, loadouts and trading. Those patterns are not delivered features or new authorization; [persistent objects](../maintainers/persistent-objects.md), [base-world work](../maintainers/base-world.md) and existing action/authority owners retain implementation scope. [Bounded native and actual layout/draft evidence](../verification/next-playable-week-engineer-4.md#pw04--native-inventory-and-partial-browser-checks) does not complete final current-server/large-content/input qualification in PW04 and UIUX02–UIUX04.
 
 ## Organize around player tasks, not container internals
 
@@ -20,11 +20,15 @@ Distinguish **focus**, **inspect item**, **select for a batch** and **execute an
 
 A wider workspace may show collection and detail together. When it narrows, retain the same object and draft; Back returns to the collection's previous filter and reading position. Resizing cannot clear a chosen transfer quantity or redirect it to a different item. [Adaptive layouts](foundations.md#adapt-the-task-not-just-the-boxes)
 
+The implemented inventory keeps its world/character/access/timeline identity independent of pane width and panel visibility. Quantity fields retain blank or intermediate text; All/Half only fill the draft. The selected object, source and intended destination stay visible through an exact transfer review. Changing a quantity clears the prior destination preview so the player must choose again for that amount. Source revisions, access and capacity are checked by the native action owner when the player submits.
+
 ## Search, sorting and filtering at scale
 
 Name the search scope: **This container**, **My accessible possessions**, **Nearby storage** or **Market listings**. The current inventory searches this container; a broader scope requires a permitted server query, not client-side inference or a hidden search of every world object. A result outside the current container needs its location and an intentional route to it.
 
 Search matches the full permitted collection within the declared contract, not just currently rendered rows. When the backend examines a bounded window, say that more contents remain searchable and preserve continuation. Do not show a definitive no-results state before the search is complete. Keep query, filter and sort context when returning from detail; reset only when scope changes deliberately.
+
+The shared storage picker reads permitted carried/nearby choices and then explicitly opened container children. It can select storage for a camp activity without a transfer source, or show move/offer suitability for an exact selected source. It is read-only until the owning task submits its own native action. Ordinary contents pages no longer discover every destination. [IW01](../limits/interface.md#iw01--inventory-task-workspace) records the current page/scan bounds and their cold-index/native-admission exclusions; partial and unavailable discovery have distinct explanations and continuation/refresh routes.
 
 Sort by a meaningful default with a stable tie-breaker; avoid moving rows while the player targets them. Changed price, quantity or condition should not unexpectedly teleport the focused row. Do not sort only a loaded page while labeling it globally sorted. Show active filters, a clear-all route and the distinction between zero items and zero matches. A selected-first presentation should use deliberate reordering points rather than move an option away mid-selection; Primer's picker implementation illustrates this concern. [S01](research.md#s01)
 
@@ -35,6 +39,8 @@ Filters that suppress loot require reversibility: show that filtering is active,
 Keep a stable fact order: identity and state; applicable use/equip action; requirements and costs; comparison-relevant values; deeper explanation and history. A selected item is not automatically equipped or consumed. Unknown properties are explicitly unknown, not silently absent from a comparison.
 
 For comparison, show the candidate and actual comparison target together with identical units/conditions. Say **Compared with equipped iron knife**, not simply a green arrow. Distinguish base value, modifiers, effective result and uncertainty. Do not invent a universal item score or assume higher is always better; weight, noise, durability, reach and resource cost trade off. The world's permitted attributes define relevant dimensions.
+
+The current comparison is deliberate and names the actual equipped object. Server-projected native characteristics supply meanings and units for both columns; the browser does not reproduce family formulas. Only matching characteristic identities and units enter the comparison; an unavailable value within a matching row is labeled unknown. No matching dimensions yields no comparison offer rather than a made-up score.
 
 Make comparison deliberate and stable: a named Compare action or visible mode can coexist with a modifier-key shortcut. Do not make the shortcut the sole route or cover ordinary item inspection with unsolicited extra panels. Blizzard's July 2026 Classic UI follow-up restored comparison on deliberate input after an always-on regression. That is a caution about default behavior, not proof that Shift is the right binding for Open Legend. [S20](research.md#s20)
 

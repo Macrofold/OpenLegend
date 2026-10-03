@@ -300,29 +300,59 @@ export function Launcher({
 /** Only symbolic styles and text cross this boundary; definitions cannot supply CSS. */
 export function Condition({
   attributes,
-  onValueChange,
+  valueText,
+  fieldErrors,
+  onTextChange,
 }: {
   attributes: Omit<import('@open-legend/protocol').AttributeView, 'version' | 'revision'>[];
-  onValueChange?(id: string, value: number): void;
+  valueText?: Record<string, string>;
+  fieldErrors?: Record<string, string>;
+  onTextChange?(id: string, value: string): void;
 }) {
+  const errorId = useId();
   return (
     <div className="ol-condition">
       {attributes.map((attribute) => {
-        const { id, name, value, min = 0, max = 100, unit, presentation } = attribute;
+        const { id, name, value, min, max, unit, presentation } = attribute;
         if (
           attribute.status !== 'known' ||
           typeof value !== 'number' ||
-          attribute.display !== 'meter'
+          attribute.display !== 'meter' ||
+          !Number.isFinite(value) ||
+          min === undefined ||
+          max === undefined ||
+          !Number.isFinite(min) ||
+          !Number.isFinite(max) ||
+          min >= max ||
+          typeof unit !== 'string'
         )
           return (
-            <div className="ol-meter" key={id}>
+            <div className="ol-meter ol-meter-text" key={id}>
               <span className="ol-meter-label">{name}</span>
-              <span>{attribute.status === 'unknown' ? 'Unknown' : value}</span>
+              <span>
+                {attribute.status === 'unknown'
+                  ? 'Unknown'
+                  : attribute.display === 'category'
+                    ? value
+                    : 'Unavailable'}
+              </span>
             </div>
           );
         const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
         const critical = !!attribute.critical;
-        const icon = presentation === 'neutral' ? 'energy' : presentation;
+        // Definitions select symbols, never arbitrary CSS or executable artwork.
+        const colors: Record<string, string> = {
+          'meter.health': 'health',
+          'meter.food': 'food',
+          'meter.energy': 'energy',
+          accent: 'accent',
+          'ink-muted': 'ink-muted',
+        };
+        const color = Object.hasOwn(colors, presentation.color)
+          ? colors[presentation.color]
+          : 'accent';
+        const fieldError = fieldErrors?.[id];
+        const fieldErrorId = `${errorId}-${id}`;
         const display = `${unit === '%' ? Math.round(value) : Math.round(value * 10) / 10}${unit === '%' ? '%' : ` ${unit ?? ''}`}`;
         return (
           <div
@@ -330,10 +360,10 @@ export function Condition({
             key={id}
             data-critical={critical || undefined}
             style={
-              { '--c': `var(--${critical ? 'danger' : icon})`, '--v': percentage } as CSSProperties
+              { '--c': `var(--${critical ? 'danger' : color})`, '--v': percentage } as CSSProperties
             }
           >
-            <Icon name={`meter.${icon}`} />
+            <Icon name={presentation.icon} fallbackLabel={name} />
             <span className="ol-meter-label">{name}</span>
             <span
               className="ol-meter-track"
@@ -346,7 +376,7 @@ export function Condition({
             >
               <span className="ol-meter-fill" />
             </span>
-            {onValueChange ? (
+            {onTextChange ? (
               <span className="ol-meter-value ol-meter-editable">
                 <input
                   aria-label={name}
@@ -354,16 +384,20 @@ export function Condition({
                   min={min}
                   max={max}
                   step="any"
-                  value={value}
-                  onChange={(event) => {
-                    const next = event.currentTarget.valueAsNumber;
-                    if (Number.isFinite(next)) onValueChange(id, next);
-                  }}
+                  value={valueText?.[id] ?? String(value)}
+                  aria-invalid={!!fieldError || undefined}
+                  aria-describedby={fieldError ? fieldErrorId : undefined}
+                  onChange={(event) => onTextChange(id, event.currentTarget.value)}
                 />
                 {unit}
               </span>
             ) : (
               <span className="ol-meter-value">{display}</span>
+            )}
+            {fieldError && (
+              <span className="ol-condition-description ol-error" id={fieldErrorId}>
+                {fieldError}
+              </span>
             )}
             {attribute.condition && (
               <span className="ol-condition-description" title={attribute.meaning}>
@@ -389,6 +423,7 @@ export function Panel({
   hidden,
   draggable = false,
   resizable = false,
+  workspace,
 }: {
   title: string;
   onClose(): void;
@@ -402,8 +437,10 @@ export function Panel({
   hidden?: boolean;
   draggable?: boolean;
   resizable?: boolean;
+  workspace?: { expanded: boolean; width: number; onToggle(): void };
 }) {
   const titleId = useId();
+  const panelElement = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null),
     listScroll = useRef(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -427,6 +464,34 @@ export function Panel({
       if (!detail) listScroll.current = element.scrollTop;
     };
   }, [detail]);
+  useLayoutEffect(() => {
+    if (!draggable || hidden) return;
+    const panel = panelElement.current;
+    if (!panel) return;
+    const keepHeaderReachable = () => {
+      if (panel.closest('[data-narrow="true"]')) {
+        setOffset((previous) => (previous.x || previous.y ? { x: 0, y: 0 } : previous));
+        return;
+      }
+      const bounds = panel.getBoundingClientRect();
+      const scale = bounds.width / panel.offsetWidth || 1;
+      const left = Math.max(8, Math.min(innerWidth - bounds.width - 8, bounds.left));
+      const top = Math.max(8, Math.min(innerHeight - 56, bounds.top));
+      const dx = left - bounds.left;
+      const dy = top - bounds.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      const [renderedX, renderedY] = panel.style.translate.split(' ').map(Number.parseFloat);
+      setOffset({ x: (renderedX || 0) + dx / scale, y: (renderedY || 0) + dy / scale });
+    };
+    keepHeaderReachable();
+    const observer = new ResizeObserver(keepHeaderReachable);
+    observer.observe(panel);
+    window.addEventListener('resize', keepHeaderReachable);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', keepHeaderReachable);
+    };
+  }, [draggable, hidden, workspace?.expanded, workspace?.width]);
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if (!draggable || (event.target as HTMLElement).closest('button, a, [role="button"]')) return;
     const panel = event.currentTarget.closest<HTMLElement>('.ol-panel');
@@ -445,18 +510,24 @@ export function Panel({
   const moveDrag = (event: PointerEvent<HTMLElement>) => {
     const active = drag.current;
     if (!active) return;
+    const element = panelElement.current;
+    const scale = element ? element.getBoundingClientRect().width / element.offsetWidth || 1 : 1;
     const dx = Math.max(
       8 - active.left,
-      Math.min(innerWidth - 120 - active.left, event.clientX - active.pointerX),
+      Math.min(
+        innerWidth - (panelElement.current?.getBoundingClientRect().width ?? 120) - 8 - active.left,
+        event.clientX - active.pointerX,
+      ),
     );
     const dy = Math.max(
       8 - active.top,
       Math.min(innerHeight - 56 - active.top, event.clientY - active.pointerY),
     );
-    setOffset({ x: active.offsetX + dx, y: active.offsetY + dy });
+    setOffset({ x: active.offsetX + dx / scale, y: active.offsetY + dy / scale });
   };
   return (
     <section
+      ref={panelElement}
       id={id}
       className="ol-panel"
       data-wide={wide || undefined}
@@ -465,7 +536,13 @@ export function Panel({
       hidden={hidden}
       data-draggable={draggable || undefined}
       data-resizable={resizable || undefined}
-      style={{ translate: `${offset.x}px ${offset.y}px` }}
+      data-workspace={workspace?.expanded || undefined}
+      style={
+        {
+          translate: `${offset.x}px ${offset.y}px`,
+          ...(workspace?.expanded ? { '--workspace-width': `${workspace.width}px` } : {}),
+        } as CSSProperties
+      }
     >
       <header
         className="ol-panel-head"
@@ -490,7 +567,14 @@ export function Panel({
             {title}
           </h2>
         </div>
-        <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
+        <div className="ol-panel-tools">
+          {workspace && (
+            <Button size="sm" variant="quiet" onPress={workspace.onToggle}>
+              {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
+            </Button>
+          )}
+          <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
+        </div>
       </header>
       {tabs}
       <div ref={body} className="ol-panel-body">

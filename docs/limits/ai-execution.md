@@ -236,9 +236,11 @@ Original recommendation: **Review**.
 
 ## LA184
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current PW01 branch evidence · Restrictiveness: Safe.**
 
 Direct-model accounting reserves at least $0.25 per generation and keeps room for two text-generation calls, three relevance or classification judgments and one call to prepare text for meaning-based search for an interactive response.
+
+The shared allowance now selects the actual configured model's prices; an undecided route takes the maximum across configured default/mini/complex/summary models, including cache-rate premiums. The existing floor and interactive headroom remain; no added provider allowance is implied. [Evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
 
 **Reason / tradeoff:** Reduce unnecessarily large reservations using the actual planned calls without allowing background work to consume the money needed to answer the player.
 
@@ -257,6 +259,12 @@ Some cost reservations assume up to 120,000 input tokens and 8,192 output tokens
 [Implementation starting point](../../apps/server/src/config.ts).
 
 Original recommendation: **Review**.
+
+## MP01 — Configured model prices
+
+**Current PW01 branch evidence · Restrictiveness: Safe.** Direct-provider estimates require an exact operator-configured requested model and prices. A differing reported identity requires an explicit alias belonging to that same entry. Unknown models, mismatches or reported cache writes without a write rate stay unpriced and retain the existing conservative reservation. Models and aliases have unique ownership; rates are finite/nonnegative. Identifiers use the adapter's 1–128-character model form. Default price fields remain the single default entry; an identical catalogue entry can attach aliases, while conflicting rates fail startup.
+
+**Reason / tradeoff:** Prevent a more expensive model from inheriting cheaper prices or being admitted below its defensible estimate. Operators must maintain price/alias configuration; this is estimated application spending, not invoice reconciliation. There is no independent catalogue/model-alias count cap in this trusted startup configuration; it is copied/frozen once and exact-model lookup grows linearly with catalogue entries. No new billing authority, automatic price download or paid retry is added. [Configuration](../ai-providers.md#configuration-and-interface) · [PW01 evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
 
 ## LA186
 

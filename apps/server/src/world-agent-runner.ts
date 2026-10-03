@@ -92,11 +92,13 @@ export class WorldAgentRunner {
         dispatched = true;
         reply = await this.execute(message, turn);
         if (reply.ok && reply.code !== 'waiting-for-answer' && !turn.signal?.aborted) {
+          const nextRequestId = `stage-${fingerprint([message.requestId, 'recipe']).slice(0, 48)}`;
           const next = await this.authoring.nextRecipeStage(
             message.sessionId,
             message.requestId,
             turn.contextHandle,
             turn.authority,
+            nextRequestId,
           );
           if (next && !turn.signal?.aborted) {
             // Typed, successful discovery progression is a new stage, never a retry of an
@@ -104,7 +106,7 @@ export class WorldAgentRunner {
             reply = await this.execute(
               {
                 ...message,
-                requestId: `stage-${fingerprint([message.requestId, 'recipe']).slice(0, 48)}`,
+                requestId: nextRequestId,
               },
               { ...next, signal: turn.signal },
             );

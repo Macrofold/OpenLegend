@@ -6,7 +6,7 @@ import {
   type QueryResult,
 } from './dependencies.js';
 import { directChildIds } from './objects.js';
-import { nearbyEntities } from './spatial.js';
+import { nearbyEntities, nearbyEntityPage, interactionCandidateBounds } from './spatial.js';
 import { WorkBudgetError, withWorkMeter, WORK_LIMITS, chargeWork } from './work-budget.js';
 import type { Entity, Position, WorldState } from './types.js';
 import type { AttributeDefinition } from './world-modules.js';
@@ -85,6 +85,51 @@ export function spatialQuery(
   )
     return { status: 'unavailable', dependencies };
   return query(dependencies, maximumCandidates, () => nearbyEntities(world, position, radius));
+}
+/** A live revision-bound continuation can page even a dense conservative cell. The
+ * lookahead counts against the same object-reader window; exact access follows this read. */
+export function spatialPageQuery(
+  world: WorldState,
+  position: Position,
+  radius: number,
+  after = -1,
+  pageSize = 201,
+): QueryResult<{ value: Entity; after: number }> {
+  const dependencies: Dependency[] = [
+    membershipDependency(world, 'spatial-candidates'),
+    membershipDependency(world, 'installed-capabilities'),
+    valueDependency(world, 'status-policy'),
+    { kind: 'geometry', revision: world.map.spatial.revision },
+  ];
+  if (
+    ![position.x, position.y, position.z, radius].every(Number.isFinite) ||
+    radius < 0 ||
+    radius > 10000 ||
+    !Number.isSafeInteger(after) ||
+    after < -1 ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 201
+  )
+    return { status: 'unavailable', dependencies };
+  return query(dependencies, pageSize, () =>
+    nearbyEntityPage(world, position, radius, after, pageSize),
+  );
+}
+/** Conservative foot-indexed candidates for exact interaction-anchor reach checks. */
+export function interactionPageQuery(
+  world: WorldState,
+  actor: Entity,
+  reach: number,
+  after = -1,
+  pageSize = 201,
+): QueryResult<{ value: Entity; after: number }> {
+  const bounds = interactionCandidateBounds(actor, reach);
+  const result = spatialPageQuery(world, bounds.position, bounds.radius, after, pageSize);
+  return {
+    ...result,
+    dependencies: [...result.dependencies, membershipDependency(world, 'actor-state', actor.id)],
+  };
 }
 /** Closed installed family, used by creator capability discovery. Actor-known
  * capability queries add that actor's knowledge dependency and filter at that owner. */

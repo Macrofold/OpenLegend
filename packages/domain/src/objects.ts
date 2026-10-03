@@ -651,13 +651,12 @@ export function setItemQuantity(
 export function splitLot(world: WorldState, id: string, quantity: number, cause: string): string {
   return splitHomogeneousLot(world, id, quantity, cause, 'live');
 }
-function splitHomogeneousLot(
+function splitAdmission(
   world: WorldState,
   id: string,
   quantity: number,
-  cause: string,
   mode: 'live' | 'migration',
-): string {
+) {
   const entity = world.entities[id],
     lot = entity?.item,
     parentId = parentOf(entity),
@@ -684,6 +683,16 @@ function splitHomogeneousLot(
   )
     throw new Error('Choose free units from a homogeneous stack.');
   checked(quantity);
+  return { entity: entity!, lot, parentId };
+}
+function splitHomogeneousLot(
+  world: WorldState,
+  id: string,
+  quantity: number,
+  cause: string,
+  mode: 'live' | 'migration',
+): string {
+  const { entity, lot, parentId } = splitAdmission(world, id, quantity, mode);
   const resultId = nextId(world, 'item');
   // Split preserves units; its one lineage row is published after the new identity exists.
   changeItemQuantities(world, [{ id, quantity: lot.quantity - quantity }], cause, 'split');
@@ -692,14 +701,26 @@ function splitHomogeneousLot(
   lineage(world, 'split', id, quantity, cause, resultId);
   return resultId;
 }
-export function moveLot(
+/** Read the admitted packing requirement; absent never means zero. Callers must authorize
+ * the item and, for a whole bag, its contents before disclosing this fact. */
+export function itemPackingLoad(
   world: WorldState,
   id: string,
-  destinationId: string,
-  quantity: number,
-  cause: string,
-  merge = true,
-): string {
+  quantity?: number,
+): number | undefined {
+  const entity = world.entities[id],
+    lot = entity?.item;
+  if (!entity || !lot || entity.retirement) return undefined;
+  const amount = quantity ?? lot.quantity;
+  if (amount <= 0 || checked(amount) > lot.quantity) return undefined;
+  return amount === lot.quantity
+    ? subtreeLoad(world, entity)
+    : ownLoad(world, { ...lot, quantity: amount });
+}
+
+/** The same mechanical admission serves permitted previews and authoritative movement.
+ * Access, active-work and expected-revision checks remain with the native command owner. */
+function itemMovePlan(world: WorldState, id: string, destinationId: string, quantity: number) {
   const entity = world.entities[id],
     lot = entity?.item,
     sourceId = parentOf(entity),
@@ -714,7 +735,8 @@ export function moveLot(
     throw new Error('Item or destination unavailable.');
   if (quantity <= 0 || checked(quantity) > availableItemQuantity(world, id))
     throw new Error('That quantity is unavailable or reserved.');
-  if (sourceId === destinationId) return id;
+  if (sourceId === destinationId)
+    return { entity, lot, sourceId, deltas: new Map<string, number>() };
   if (quantity === lot.quantity && identityBound(world, id))
     throw new Error('This object is bound to running work. Finish or cancel that work first.');
   const ancestors = objectAncestors(world, destinationId);
@@ -725,6 +747,7 @@ export function moveLot(
     throw new Error('A bag cannot contain itself or exceed the nesting limit.');
   if (quantity !== lot.quantity && (entity.container || lot.individuality === 'individual'))
     throw new Error('An individual object cannot be divided.');
+  if (quantity !== lot.quantity) splitAdmission(world, id, quantity, 'live');
   for (let i = 0; i < ancestors.length; i++) {
     const enclosing = ancestors[i]!,
       rule =
@@ -736,6 +759,34 @@ export function moveLot(
   const load =
     quantity === lot.quantity ? subtreeLoad(world, entity) : ownLoad(world, { ...lot, quantity });
   const deltas = ancestorDeltas(world, world.entities[sourceId], destination, load);
+  return { entity, lot, sourceId, deltas };
+}
+
+export function itemMoveReason(
+  world: WorldState,
+  id: string,
+  destinationId: string,
+  quantity: number,
+): string | undefined {
+  try {
+    itemMovePlan(world, id, destinationId, quantity);
+    return undefined;
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Item movement is unavailable.';
+  }
+}
+
+export function moveLot(
+  world: WorldState,
+  id: string,
+  destinationId: string,
+  quantity: number,
+  cause: string,
+  merge = true,
+): string {
+  const { entity, lot, sourceId, deltas } = itemMovePlan(world, id, destinationId, quantity);
+  if (sourceId === destinationId) return id;
   let target: string | undefined;
   if (merge && lot.individuality === 'homogeneous' && !entity.container)
     for (const otherId of directChildIds(world, destinationId))

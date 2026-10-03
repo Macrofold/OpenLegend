@@ -58,8 +58,8 @@ type Traced = {
 };
 const trace: Traced[] = [];
 let tracing = false;
-const step = () => {
-  const transition = advanceWorld(world, scenario?.intervalSeconds ?? 1, { maxIntervals: 1 });
+const step = (offered = scenario?.intervalSeconds ?? 1) => {
+  const transition = advanceWorld(world, offered, { maxIntervals: scenario?.maxIntervals ?? 1 });
   if (!transition.outcome.ok)
     throw new Error(
       `Native workload did not advance: ${transition.outcome.code}: ${transition.outcome.message}`,
@@ -78,10 +78,27 @@ const step = () => {
 };
 const setupMs = performance.now() - setupAt;
 const warmupSteps = scenario?.warmup ?? 30;
+const fixturePath = process.env['OPENLEGEND_PROFILE_FIXTURE'];
+if (fixturePath)
+  await writeFile(fixturePath, JSON.stringify({ world }), { mode: 0o600, flag: 'wx' });
 console.error('profile stage: warmup');
-for (let index = 0; index < warmupSteps; index++) {
+const warmupStarted = world.simTime;
+let warmupCalls = 0;
+while (
+  scenario?.warmupSeconds === undefined
+    ? warmupCalls < warmupSteps
+    : world.simTime - warmupStarted < scenario.warmupSeconds - 1e-9
+) {
   const before = world.simTime;
-  step();
+  step(
+    Math.min(
+      scenario?.intervalSeconds ?? 1,
+      scenario?.warmupSeconds === undefined
+        ? Infinity
+        : scenario.warmupSeconds - (world.simTime - warmupStarted),
+    ),
+  );
+  warmupCalls++;
   if (world.simTime === before) break;
 }
 console.error('profile stage: measured steps');
@@ -91,6 +108,7 @@ try {
   await session.post('Profiler.enable');
   await session.post('Profiler.start');
   const durations: number[] = [];
+  const heapSamples: number[] = [process.memoryUsage().heapUsed];
   const counters: Record<string, number> = {};
   observeCounters?.(counters);
   tracing = !!tracePath;
@@ -98,15 +116,27 @@ try {
   let completedSteps = 0;
   const cpuAt = process.cpuUsage();
   const started = performance.now();
-  for (let index = 0; index < steps; index++) {
+  while (
+    scenario?.durationSeconds === undefined
+      ? completedSteps < steps
+      : world.simTime - simulationStartedAt < scenario.durationSeconds - 1e-9
+  ) {
     const at = performance.now();
     const before = world.simTime;
-    step();
+    step(
+      Math.min(
+        scenario?.intervalSeconds ?? 1,
+        scenario?.durationSeconds === undefined
+          ? Infinity
+          : scenario.durationSeconds - (world.simTime - simulationStartedAt),
+      ),
+    );
     durations.push(performance.now() - at);
     // A pending Recast request advances no game time. Never report rejected/no-op
     // iterations as throughput: docs/maintainers/performance-profiling.md.
     if (world.simTime === before) break;
     completedSteps++;
+    if (completedSteps % 30 === 0) heapSamples.push(process.memoryUsage().heapUsed);
   }
   const simulatedSeconds = world.simTime - simulationStartedAt;
   const totalMs = performance.now() - started;
@@ -128,11 +158,24 @@ try {
   }
   durations.sort((a, b) => a - b);
   const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  const numericHash = (value: unknown) =>
+    createHash('sha256')
+      .update(
+        JSON.stringify(value, (_, item: unknown) =>
+          typeof item === 'number' ? Math.round(item * 1e6) / 1e6 : item,
+        ),
+      )
+      .digest('hex');
   let traceDigest: string | undefined;
   if (tracePath) {
     const steps = trace.map((entry) => hash(entry));
     traceDigest = hash(steps);
     await writeFile(tracePath, JSON.stringify(steps), { mode: 0o600, flag: 'wx' });
+    if (process.env['OPENLEGEND_PROFILE_DETAIL'] === '1')
+      await writeFile(tracePath + '.details.json', JSON.stringify({ trace, world }), {
+        mode: 0o600,
+        flag: 'wx',
+      });
   }
   const awareness = world.experience?.awareness ?? {};
   const awarenessDigest = hash(
@@ -144,7 +187,14 @@ try {
     JSON.stringify(
       {
         node: process.version,
-        status: completedSteps === steps ? 'completed' : 'blocked',
+        status:
+          scenario?.durationSeconds === undefined
+            ? completedSteps === steps
+              ? 'completed'
+              : 'blocked'
+            : simulatedSeconds >= scenario.durationSeconds - 1e-9
+              ? 'completed'
+              : 'blocked',
         simulatedSeconds,
         offeredGameSecondsPerCall: scenario?.intervalSeconds ?? 1,
         integration: 'boundary-limited-prefix',
@@ -154,10 +204,21 @@ try {
         frozenSnapshots: !mutable,
         initialFreezeMs,
         warmupSteps,
+        warmupCalls,
+        warmupSimulatedSeconds: world.simTime - simulatedSeconds - warmupStarted,
         scenario,
         setupMs,
         cpuMs: (cpu.user + cpu.system) / 1000,
         heapUsedBytes: process.memoryUsage().heapUsed,
+        heapSamples,
+        fixturePath,
+        workload: {
+          map: { width: world.map.width, height: world.map.height },
+          sensingActors: Object.values(world.entities).filter(
+            (e) => e.actor?.alive && e.actor.capabilities?.memory,
+          ).length,
+          flightBodies: Object.values(world.entities).filter((e) => e.spatial.flight).length,
+        },
         nativeHeadroomAtRequestedSpeed:
           (simulatedSeconds * 1000) / totalMs / (60 * (scenario?.speed ?? 1)),
         finalCounts: {
@@ -177,6 +238,15 @@ try {
         nativeSecondsPerWallSecond: (simulatedSeconds * 1000) / totalMs,
         finalWorldDigest: createHash('sha256').update(JSON.stringify(world)).digest('hex'),
         awarenessDigest,
+        semanticWorldDigest: numericHash({
+          ...world,
+          perceptionEpisodes: Object.fromEntries(
+            Object.entries(world.perceptionEpisodes ?? {}).map(([id, entries]) => [
+              id,
+              Object.fromEntries(Object.entries(entries).sort(([a], [b]) => a.localeCompare(b))),
+            ]),
+          ),
+        }),
         ...(traceDigest ? { traceDigest } : {}),
         counters,
         hottestSelfMs: [...self].sort((a, b) => b[1] - a[1]).slice(0, 12),

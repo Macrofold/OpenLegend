@@ -6,6 +6,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { livingBody, nativeActor } from './worlds/base/bodies.js';
+import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { finishPlanAction } from './agency.js';
@@ -39,52 +40,6 @@ export function canSpeak(entity: Entity | undefined): boolean {
 }
 // Stable composition exports; authored defaults have one base-world owner.
 export { livingBody, nativeActor } from './worlds/base/bodies.js';
-/** The sole legacy physical conversion. Run inside the startup/create transaction. */
-export function migrateActors(world: WorldState): void {
-  if (world.schemaVersion >= 3) return;
-  for (const entity of Object.values(world.entities)) {
-    const legacy = entity.animal;
-    if (!entity.actor && legacy) {
-      if (!legacy.species) throw new Error(`Missing legacy species for ${entity.id}`);
-      entity.actor = nativeActor(legacy.species, world.simTime);
-      entity.actor.birthTimeKnown = false;
-      entity.actor.health = legacy.health ?? entity.actor.health;
-      entity.actor.alive = legacy.alive ?? !entity.remains;
-      if (entity.kind === 'remains') entity.kind = 'animal';
-    }
-    if (entity.actor) {
-      const actor = entity.actor;
-      actor.species ??= legacy?.species ?? 'human';
-      actor.body ??= livingBody(actor.species);
-      actor.capabilities ??= {
-        cognition: true,
-        memory: true,
-        innerWorld: true,
-        speech: true,
-        needs: true,
-      };
-      if (legacy) {
-        delete legacy.health;
-        delete legacy.alive;
-        delete legacy.species;
-      }
-    }
-  }
-  world.schemaVersion = 3;
-  const result = outcome(true, 'actors-migrated', 'Living actors migrated to schema 3.');
-  world.commandReceipts['migration:actors:3'] = { digest: 'living-actors:3', outcome: result };
-  emit(
-    world,
-    [],
-    'schema-migrated',
-    result.message,
-    undefined,
-    undefined,
-    { significant: true, schemaVersion: 3 },
-    'system',
-  );
-  world.sequence++;
-}
 /** All health/condition/lifecycle changes reconcile through this native mutation. */
 export function reconcileBody(
   world: WorldState,
@@ -94,6 +49,9 @@ export function reconcileBody(
 ): void {
   const actor = entity.actor!;
   const body = actor.body!;
+  // Every body writer shares this revision. Refuse exhaustion before publishing
+  // a body that current-format validation could no longer accept.
+  if (!Number.isSafeInteger(body.revision + 1)) throw new Error('Body revision exhausted.');
   body.revision++;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'body' });
   setBodyHealth(actor, Math.max(0, Math.min(body.maxHealth, actor.health)));
@@ -111,7 +69,9 @@ export function reconcileBody(
       entity.spatial.fallVelocity = 0;
     }
     actor.planGeneration++;
-    if (actor.controller === 'player') actor.incapacitated = true;
+    const lifecycle = bodyPolicy(world)?.zeroHealth;
+    if (!lifecycle) throw new Error('Living body has no installed lifecycle policy.');
+    if (lifecycle[actor.controller] === 'incapacitate') actor.incapacitated = true;
     else {
       actor.alive = false;
       if (entity.animal) {
@@ -140,8 +100,8 @@ export function reconcileBody(
       events,
       actor.incapacitated ? 'incapacitated' : 'death',
       actor.incapacitated
-        ? `${entity.name} collapsed and can recover at camp.`
-        : `${entity.name} died.`,
+        ? bodyNarration(lifecycle.incapacitateNarration, entity)
+        : bodyNarration(lifecycle.deathNarration, entity),
       entity,
       undefined,
       { significant: true, cause },

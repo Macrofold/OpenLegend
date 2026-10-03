@@ -226,11 +226,11 @@ export function attributeBoundary(world: WorldState, rates: AttributeRates): num
       const rate = values.get(d.id) ?? 0;
       if (typeof value !== 'number' || !rate) continue;
       const thresholds = [d.schema.min, d.schema.max];
-      if (d.concern)
-        thresholds.push(
-          d.concern.below,
-          Math.min(d.schema.max, d.concern.below + (d.schema.max - d.schema.min) * 0.05),
-        );
+      if (d.concern) {
+        thresholds.push(d.concern.below);
+        if (d.concern.mode === 'latched')
+          thresholds.push(Math.min(d.schema.max, d.concern.below + d.concern.recoveryMargin!));
+      }
       for (const t of thresholds)
         if (
           !(value === t && ((t === d.schema.min && rate < 0) || (t === d.schema.max && rate > 0)))

@@ -118,9 +118,10 @@ Example comment pattern—not a required filename or an instruction to claim the
 
 ```ts
 // Default-world policy, not a universal actor requirement.
-// Current seam: the physiology adapter owns these thresholds.
+// Current seam: the installed body policy owns recovery/thinking thresholds;
+// installed attributes and status definitions own meters and ongoing rates.
 // Target: docs/engine-and-world-boundaries.md#intentional-v1-specificity.
-// Expand through EWF03 when another installed need family is consumed here.
+// General physiology and rule composition remain with EWF03/SC.
 ```
 
 Keep detailed work in the focused tracker. Do not create an independent permanent “architecture debt” checklist in every spec or mark every literal constant as a future extension. A clearly unsupported capability is better than a nominally generic interface with hidden special cases.
@@ -146,6 +147,10 @@ A bar is a projection of state. A useful new mechanic includes its state contrac
 Use sparse components and shared definitions. Do not add every possible attribute to every entity. Missing, unknown, not applicable, and unsupported remain distinct under the [declaration property contract](../archive/07-technical-architecture/declarations-and-evolution.md#definition-and-property-contracts).
 
 Default physiology must consume the same supported mechanisms available to eligible world definitions. It may use optimized storage and native code, but cannot rely on hidden writable copies of generic state. Other systems submit contributions through the owning mutation interface; they do not edit a second `health` or `energy` value.
+
+The current finite implementation uses sparse passive meters, installed status rates and an exactly pinned body policy for recovery, consumption, lifecycle outcomes and background-thinking eligibility. Raw bodily health has one owner; its optional meter converts between body points and the installed range. The [survival verification](verification/world-configured-survival.md) exercises the bundled rules and a whole installed world without food, energy or dreaming. This establishes those supported consumers, not a general body solver, arbitrary rule composition or a world-package loader.
+
+**Accepted remaining target:** Health itself must be an optional world-owned body model, not mandatory engine state. A world may use hunger directly as its survival condition or use a different condition entirely, without a hidden health scalar. The runtime supplies validated state changes and lifecycle transitions; the selected world model determines what sustains a body and when it becomes incapacitated or dies. [EWF03](maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers) owns the extraction and whole-world qualification.
 
 ### Authoring permission is a separate question
 

@@ -84,6 +84,13 @@ export interface TokenPrices {
   cacheWriteInputUsdPerMillion?: number;
 }
 
+/** One operator-priced requested model and its explicitly equivalent reported identities. */
+export interface ModelTokenPrices {
+  model: string;
+  prices: TokenPrices;
+  reportedAliases?: readonly string[];
+}
+
 export type AiProvider = 'jev' | 'openai' | 'macrofold';
 export type AiFailureOutcome =
   | 'unknown'
@@ -131,6 +138,7 @@ export interface ProviderConfig {
   /** Trusted server configuration only. Never accept an endpoint from a game request. */
   endpoint?: string;
   prices?: TokenPrices;
+  modelPrices?: readonly ModelTokenPrices[];
 }
 
 export interface OpenAiProviderConfig extends ProviderConfig {

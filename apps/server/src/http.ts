@@ -16,6 +16,7 @@ import { HistoryCursorError } from './perceived-events.js';
 import { readHttpJson } from './http-json.js';
 import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
+import { WorldAgentStream } from './world-agent-stream.js';
 import { WorldAuthoringService } from './world-authoring.js';
 import {
   sessionRequest,
@@ -28,6 +29,13 @@ import {
   sessionQuestionContinueRequest,
   sessionOpenRequest,
   sessionDecisionRequest,
+  sessionDraftReadRequest,
+  sessionDraftHistoryRequest,
+  sessionDraftCompareRequest,
+  sessionDraftSaveRequest,
+  sessionDraftPreviewRequest,
+  sessionDraftCheckRequest,
+  sessionDraftPrepareRequest,
   authoringToolRequest,
 } from './world-authoring-contracts.js';
 import { WorldToolService, WORLD_READ_TOOLS, worldReadRequest } from './world-tools.js';
@@ -61,7 +69,7 @@ import { WorldService, commandInputSchema, requestIdSchema } from './world-servi
 import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
-import { containerPage, objectHistoryPage } from './inventory-view.js';
+import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
 
 const clientId = z
   .string()
@@ -194,13 +202,7 @@ const godPersonEditor = z
     backstory: z.string().trim().max(4000),
     traitIds: z.array(requestIdSchema).max(8),
     goals: z.array(z.string().trim().min(1).max(500)).max(8),
-    stats: z
-      .object({
-        health: z.number().finite().min(0).max(100),
-        fullness: z.number().finite().min(0).max(100).optional(),
-        energy: z.number().finite().min(0).max(100).optional(),
-      })
-      .strict(),
+    meters: z.record(requestIdSchema, z.number().finite()),
   })
   .strict();
 const godAwareness = z
@@ -420,6 +422,7 @@ async function initializeGameServer(
   };
   const channels = new Map<string, Channel>();
   const streams = new Map<ServerResponse, StreamState>();
+  const ownerStreams = new Set<WorldAgentStream>();
   let pendingStreams = 0;
   const projectionLane = new WorkLane('projection', config.capacity.requests);
   const invalidateStream = (stream: ServerResponse) => {
@@ -497,6 +500,7 @@ async function initializeGameServer(
   let shuttingDown: Promise<ShutdownReport> | undefined;
   const publish = () => {
     if (disposed) return;
+    for (const stream of ownerStreams) stream.check();
     if (publishTimer) return;
     if (publishing) {
       publishQueued = true;
@@ -909,7 +913,7 @@ async function initializeGameServer(
           });
         }
         if (request.method === 'GET' && url.pathname === '/api/events') {
-          if (streams.size + pendingStreams >= config.capacity.connections)
+          if (streams.size + ownerStreams.size + pendingStreams >= config.capacity.connections)
             return send(response, 429, {
               ok: false,
               code: 'connections',
@@ -989,6 +993,48 @@ async function initializeGameServer(
           } catch (error) {
             await release();
             throw error;
+          } finally {
+            pendingStreams--;
+          }
+          return;
+        }
+        if (request.method === 'GET' && url.pathname === '/api/world-agent/session/progress') {
+          responseCapability = 'create';
+          service.assertScope(scope, 'create');
+          service.assertScope(scope, 'inspect');
+          const sessionId = requestIdSchema.parse(url.searchParams.get('sessionId'));
+          if (
+            url.searchParams.get('worldId') !== service.world.id ||
+            url.searchParams.get('scope') !== scopeKey(scope)
+          )
+            throw new AuthorityError('stale-scope');
+          if (streams.size + ownerStreams.size + pendingStreams >= config.capacity.connections)
+            return send(response, 429, { ok: false, message: 'Too many open connections.' });
+          pendingStreams++;
+          try {
+            await authoring.progressSnapshot(sessionId, scope);
+            service.assertScope(scope, 'create');
+            service.assertScope(scope, 'inspect');
+            if (response.destroyed) return;
+            response.writeHead(200, {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-store',
+              Connection: 'keep-alive',
+              'X-Accel-Buffering': 'no',
+            });
+            response.flushHeaders();
+            const stream = new WorldAgentStream(
+              response,
+              () => authoring.progressSnapshot(sessionId, scope),
+              () =>
+                config.godMode &&
+                !loadingSave &&
+                service.currentScope(scope, 'create') &&
+                service.currentScope(scope, 'inspect'),
+              (notify) => authoring.watchProgress(sessionId, notify),
+              () => ownerStreams.delete(stream),
+            );
+            ownerStreams.add(stream);
           } finally {
             pendingStreams--;
           }
@@ -1335,6 +1381,29 @@ async function initializeGameServer(
                 .strict()
                 .parse(body);
               return send(response, 200, containerPage(service, scope, value));
+            }
+            case '/api/inventory/destinations': {
+              const value = z
+                .object({
+                  source: z
+                    .object({
+                      itemId: requestIdSchema,
+                      revision: sequence,
+                      placementRevision: sequence,
+                      contentsRevision: sequence.optional(),
+                      containerId: requestIdSchema,
+                      containerRevision: sequence,
+                      quantity: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+                    })
+                    .strict()
+                    .optional(),
+                  parentId: requestIdSchema.optional(),
+                  query: z.string().max(160).optional(),
+                  cursor: z.string().max(3000).optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, inventoryDestinationPage(service, scope, value));
             }
             case '/api/profile/preferences':
               return send(response, 200, {
@@ -1725,6 +1794,16 @@ async function initializeGameServer(
                   actorId: requestIdSchema,
                   basePerson: godPersonEditor,
                   person: godPersonEditor,
+                  manifestRevision: z.number().int().positive(),
+                  bodyPolicyPin: z
+                    .object({
+                      id: requestIdSchema,
+                      version: z.number().int().positive(),
+                      digest: requestIdSchema,
+                    })
+                    .strict()
+                    .nullable(),
+                  generation: requestIdSchema,
                   memoryChanges: z
                     .array(
                       z
@@ -1744,6 +1823,11 @@ async function initializeGameServer(
                 value.basePerson,
                 value.person,
                 value.memoryChanges,
+                {
+                  manifestRevision: value.manifestRevision,
+                  bodyPolicyPin: value.bodyPolicyPin,
+                  generation: value.generation,
+                },
                 scope,
               );
               return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
@@ -2225,7 +2309,11 @@ async function initializeGameServer(
                 scope,
                 value.purpose,
               );
-              return send(response, 200, { ok: true, ...data });
+              return send(response, 200, {
+                ok: true,
+                sessionId: data.sessionId,
+                budgetUsd: data.budgetUsd,
+              });
             }
             case '/api/world-agent/session/list': {
               const value = sessionListRequest.parse(body);
@@ -2248,8 +2336,17 @@ async function initializeGameServer(
               const exists = await authoring.records.session(value.sessionId);
               if (exists?.recoveryTurn) {
                 try {
-                  await authoring.reconcileQuestion(value.sessionId, scope, (turnId, capture) =>
-                    director.macrofold.reconcileQuestion(value.sessionId, turnId, capture),
+                  await authoring.reconcileQuestion(
+                    value.sessionId,
+                    scope,
+                    (turnId, capture, progress, beginRun) =>
+                      director.macrofold.reconcileQuestion(
+                        value.sessionId,
+                        turnId,
+                        capture,
+                        progress,
+                        beginRun,
+                      ),
                   );
                 } catch {
                   // The unchanged uncertain outcome remains visible; status never redispatches.
@@ -2275,6 +2372,76 @@ async function initializeGameServer(
                 ok: true,
                 data: await authoring.turns(value.sessionId, value.before, scope),
               });
+            }
+            case '/api/world-agent/session/draft-read': {
+              const value = sessionDraftReadRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftRead(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-history': {
+              const value = sessionDraftHistoryRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftHistory(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-compare': {
+              const value = sessionDraftCompareRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftCompare(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-save': {
+              const value = sessionDraftSaveRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftSave(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-preview': {
+              const value = sessionDraftPreviewRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftPreview(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-check': {
+              const value = sessionDraftCheckRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftCheck(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/draft-prepare': {
+              const value = sessionDraftPrepareRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localDraftPrepare(value.sessionId, value, scope),
+              );
             }
             case '/api/world-agent/session/turn': {
               const value = sessionTurnRequest.parse(body);
@@ -2805,6 +2972,7 @@ async function initializeGameServer(
       stream.end();
     }
     streams.clear();
+    for (const stream of ownerStreams) stream.close();
     await stage(
       'HTTP server',
       () =>

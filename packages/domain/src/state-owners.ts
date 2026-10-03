@@ -16,7 +16,6 @@ import {
 } from './world-modules.js';
 import { setBodyHealth } from './body-state.js';
 import { reconcileBody } from './living.js';
-import { setWildernessNeed } from './worlds/base/needs.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 
 export interface StateAddress {
@@ -119,7 +118,7 @@ function revision(entity: Entity, definition: AttributeDefinition): number {
   if (storage === 'attributes')
     return (entity.actor?.attributes ?? entity.attributes)?.[definition.id]?.revision ?? 0;
   if (storage === 'health') return entity.actor?.body?.revision ?? 0;
-  return entity.actor?.[storage === 'fullness' ? 'fullnessRevision' : 'energyRevision'] ?? 0;
+  return 0;
 }
 
 /** A missing native need is inapplicable, never a known zero. Sparse installed
@@ -158,6 +157,7 @@ export function writeState(
   operation: StateOperation,
   events: WorldEvent[],
   cause: string,
+  conditionTiming: 'now' | 'transition' = 'now',
 ): StateWriteResult {
   if (!isStateAddress(address) || !isStateOperation(operation)) return { status: 'invalid' };
   const definition = resolve(world, address);
@@ -186,7 +186,7 @@ export function writeState(
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   if (storage === 'attributes') {
     try {
-      setAttribute(world, entity, definition, value, events);
+      setAttribute(world, entity, definition, value, events, conditionTiming);
     } catch (error) {
       if (error instanceof ResourceReservationError) return { status: 'reserved' };
       throw error;
@@ -194,15 +194,21 @@ export function writeState(
   } else {
     if (!entity.actor || typeof value !== 'number') return { status: 'not-applicable' };
     if (storage === 'health') {
-      setBodyHealth(entity.actor, (value / 100) * (entity.actor.body?.maxHealth ?? 100));
+      if (!entity.actor.body || definition.schema.kind !== 'number')
+        return { status: 'not-applicable' };
+      setBodyHealth(
+        entity.actor,
+        (value - definition.schema.min) *
+          (entity.actor.body.maxHealth / (definition.schema.max - definition.schema.min)),
+      );
       reconcileBody(world, entity, events, cause);
-    } else setWildernessNeed(entity.actor, storage, value);
+    }
   }
-  reconcileConditions(world, entity, events);
+  if (conditionTiming === 'now') reconcileConditions(world, entity, events);
   recordSemanticChange(world, {
     kind: 'state',
     entityId: entity.id,
-    field: storage === 'health' ? 'body' : storage === 'attributes' ? 'attribute' : 'needs',
+    field: storage === 'health' ? 'body' : 'attribute',
   });
   return { status: 'applied', value, revision: revision(entity, definition) };
 }

@@ -348,7 +348,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Changed · Restrictiveness: Safe.**
 
-**Only the current physical format is supported.** Database format 2, `records-jsonl-2` and save format `development-2026-09-27-history2` require the combined perspective/access table and maintained event totals. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
+**Only the current physical format is supported.** Database format 3, `records-jsonl-2` and save format `development-2026-10-02-playable-week` require the combined perspective/access table and maintained event totals. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
 
 **Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 

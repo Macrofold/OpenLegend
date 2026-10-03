@@ -1,3 +1,4 @@
+import { basePlaytestMilestones } from '@open-legend/domain';
 import { activityChoiceView } from './activity-context.js';
 import {
   ACTIVITY_LIMITS,
@@ -54,6 +55,7 @@ import {
   projectAttributes,
   type AttributeDeclarationRequest,
   type AttributeEditRequest,
+  type DefinitionPin,
 } from '@open-legend/domain';
 import { createReservoirDemo, createTouchDemo } from '@open-legend/domain';
 import { validateWorldModules } from '@open-legend/domain';
@@ -79,7 +81,7 @@ import { changeConversation, leaveConversation } from '@open-legend/domain';
 import { establishKinship, type Kinship } from '@open-legend/domain';
 import { applyBodyEffects, type BodyEffect } from '@open-legend/domain';
 import { enableActorCognition } from '@open-legend/domain';
-import { migrateActors, hasMemory } from '@open-legend/domain';
+import { hasMemory } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -114,6 +116,7 @@ import {
   type GodPersonEditorDraft,
   type WorldEvent,
   type WorldState,
+  type Entity,
 } from '@open-legend/domain';
 import type {
   ApiResult,
@@ -216,6 +219,12 @@ export const commandInputSchema = z
       .optional(),
     expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+    expectedContentsRevision: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(Number.MAX_SAFE_INTEGER)
+      .optional(),
     targetRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
@@ -229,41 +238,8 @@ function actorMilestones(
   actorId: string,
 ): Record<string, boolean> {
   const flags = { ...saved.actorMilestones?.[actorId] };
-  if (
-    !flags['talk'] &&
-    events.some(
-      (event) =>
-        event.type === 'speech' && event.actorId !== actorId && event.audience.includes(actorId),
-    )
-  )
-    flags['talk'] = true;
-  if (
-    !flags['hunt'] &&
-    events.some((event) => event.type === 'harvested' && event.actorId === actorId)
-  )
-    flags['hunt'] = true;
-  if (
-    !flags['eat'] &&
-    events.some(
-      (event) => event.type === 'ate' && event.actorId === actorId && /meat/i.test(event.text),
-    )
-  )
-    flags['eat'] = true;
-  if (!flags['invent'] || !flags['bow']) {
-    const known = (saved.world.knowledge[actorId] ?? []).map(
-      (record) => saved.world.recipes[record.recipeId],
-    );
-    if (!flags['invent'] && known.some((recipe) => recipe?.output.launcher?.mechanism === 'swing'))
-      flags['invent'] = true;
-    if (
-      !flags['bow'] &&
-      known.some((recipe) => recipe?.output.launcher?.mechanism === 'flex') &&
-      known.some((recipe) => recipe?.output.ammunition?.kind === 'arrow')
-    )
-      flags['bow'] = true;
-  }
-  if (!flags['craft'] && saved.world.entities[actorId]?.actor?.equippedItemId)
-    flags['craft'] = true;
+  for (const milestone of basePlaytestMilestones(saved.world, actorId, events, 'recording'))
+    if (milestone.done) flags[milestone.id] = true;
   return flags;
 }
 
@@ -630,7 +606,6 @@ export class WorldService {
       world: updateWorld(this.saved.world, (world) => {
         world.storyPolicy ??= defaultStoryPolicy();
         validateStoryPolicy(world.storyPolicy);
-        migrateActors(world);
         world.minds ??= {};
         for (const entity of Object.values(world.entities))
           if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
@@ -1798,9 +1773,11 @@ export class WorldService {
     batch: Awaited<ReturnType<WorldService['prepareActivityLearning']>>,
     judgments: ('retain' | 'decline' | 'uncertain')[],
     dispatched = false,
+    checkCurrent?: (world: WorldState) => void,
   ): Promise<boolean> {
     return this.mutate(async () => {
       await this.flush();
+      checkCurrent?.(this.world);
       if (
         batch.capacityBlocked ||
         this.paused ||
@@ -1816,6 +1793,9 @@ export class WorldService {
             batch.rows.map((row) => row.entry.id),
           )
         : batch.rows;
+      // Background eligibility can change while history is read. The maintenance
+      // caller owns that admission; this writer rechecks it before any publication.
+      checkCurrent?.(this.world);
       const deniedNow = new Set(this.world.experience?.forgotten[batch.actorId] ?? []);
       if (
         batch.candidates.some((candidate) =>
@@ -2014,7 +1994,8 @@ export class WorldService {
           throw new Error('World creator or host operator access required.');
         const restored = structuredClone(payload.state);
         await this.store.authority!.restoreBindings(restored.world);
-        // Candidate loading applies the current in-place migrations before timeline installation.
+        // Current-format validation precedes installation; the current privacy
+        // ledger below still removes experience forgotten after this save.
         const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
           | Record<string, string[]>
           | undefined;
@@ -3139,6 +3120,16 @@ export class WorldService {
     return this.currentScope(scope, 'save');
   }
 
+  private personMeters(entity: Entity): Record<string, number> {
+    return Object.fromEntries(
+      projectAttributes(this.world, entity, 'owner').flatMap((meter) =>
+        meter.display === 'meter' && meter.status === 'known' && typeof meter.value === 'number'
+          ? [[meter.id, meter.value] as const]
+          : [],
+      ),
+    );
+  }
+
   async personEditor(
     actorId: string,
     before?: string,
@@ -3153,8 +3144,8 @@ export class WorldService {
       };
     await this.flush();
     const generation = this.generation;
-    const entity = this.world.entities[actorId];
-    if (!entity?.actor || !hasMemory(entity))
+    const actor = this.world.entities[actorId];
+    if (!actor?.actor || !hasMemory(actor))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
     const head = await this.store.records?.head();
     const selected =
@@ -3170,6 +3161,11 @@ export class WorldService {
         code: 'stale',
         message: 'The character scope changed; refresh before reading.',
       };
+    // Database reads may yield while simulation replaces this person. Project all
+    // fields from the current actor together with the current meter definitions.
+    const entity = this.world.entities[actorId];
+    if (!entity?.actor || !hasMemory(entity))
+      return { ok: false, code: 'actor', message: 'Choose a person.' };
     const entries = selected?.entries.map(formatMemoryEntry);
     const page =
       this.store.memories && head
@@ -3185,6 +3181,10 @@ export class WorldService {
       ok: true,
       revision: this.viewRevision,
       actorId,
+      generation,
+      manifestRevision: this.world.moduleManifest.revision,
+      bodyPolicyPin: this.world.moduleManifest.bodyPolicyPin,
+      meters: projectAttributes(this.world, entity, 'owner'),
       statuses: [
         !entity.actor.alive ? 'Dead' : entity.actor.incapacitated ? 'Incapacitated' : 'Alive',
         ...projectStatusEffects(this.world, entity).map((effect) => effect.label),
@@ -3201,11 +3201,7 @@ export class WorldService {
         backstory: entity.actor.backstory ?? '',
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
         goals: goalTexts(entity.actor),
-        stats: {
-          health: entity.actor.health,
-          fullness: entity.actor.fullness,
-          energy: entity.actor.energy,
-        },
+        meters: this.personMeters(entity),
       },
     };
   }
@@ -3248,6 +3244,7 @@ export class WorldService {
       expectedHash: string;
       replacement: GodMemoryEdit | null;
     }>,
+    expected: { manifestRevision: number; bodyPolicyPin: DefinitionPin | null; generation: string },
     scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
     return this.withHistoryEdit(
@@ -3265,6 +3262,26 @@ export class WorldService {
             code: 'forbidden',
             message: 'Human-private character content is unavailable to this principal.',
           };
+        if (!this.config.godMode || !this.currentScope(scope, 'create'))
+          return {
+            ok: false,
+            code: 'forbidden',
+            message: 'Creator access is required to edit a person.',
+          };
+        if (
+          expected.generation !== this.generation ||
+          expected.manifestRevision !== this.world.moduleManifest.revision ||
+          expected.bodyPolicyPin?.id !== this.world.moduleManifest.bodyPolicyPin?.id ||
+          expected.bodyPolicyPin?.version !== this.world.moduleManifest.bodyPolicyPin?.version ||
+          expected.bodyPolicyPin?.digest !== this.world.moduleManifest.bodyPolicyPin?.digest
+        )
+          return {
+            ok: false,
+            code: 'stale',
+            message:
+              'The installed meter definitions or world timeline changed. Refresh and review the form before saving.',
+            revision: this.viewRevision,
+          };
         const entity = this.world.entities[actorId];
         if (!entity?.actor || !hasMemory(entity))
           return { ok: false, code: 'actor', message: 'Choose a person.' };
@@ -3277,20 +3294,16 @@ export class WorldService {
           backstory: entity.actor.backstory ?? '',
           traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
           goals: goalTexts(entity.actor),
-          stats: {
-            health: entity.actor.health,
-            fullness: entity.actor.fullness,
-            energy: entity.actor.energy,
-          },
+          meters: this.personMeters(entity),
         };
         const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
           (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
         );
         for (const key of changedFields) {
-          // Simulation-owned stats may drift after opening; an explicit god edit overrides
+          // Simulation-owned meters may drift after opening; an explicit god edit overrides
           // that snapshot. Other fields retain field-level optimistic concurrency.
           if (
-            key !== 'stats' &&
+            key !== 'meters' &&
             JSON.stringify(currentPerson[key]) !== JSON.stringify(basePerson[key])
           )
             return {
@@ -3324,7 +3337,7 @@ export class WorldService {
           !(await this.commit(
             { ...this.saved, world: result.world },
             result.invalidatedMemoryIds,
-            // Stat edits reconcile through the body/condition owners and may append events.
+            // Meter edits reconcile through the body/condition owners and may append events.
             'append',
           ))
         )
@@ -3615,6 +3628,9 @@ export class WorldService {
           targetId: input.targetId,
           expectedRevision: input.expectedRevision,
           placementRevision: input.placementRevision,
+          ...(input.expectedContentsRevision !== undefined
+            ? { expectedContentsRevision: input.expectedContentsRevision }
+            : {}),
           targetRevision: input.targetRevision,
         };
         break;
@@ -3725,6 +3741,16 @@ export class WorldService {
             targetId: input.targetId,
             itemId: input.itemId,
             quantity: input.quantity,
+            ...(input.expectedRevision !== undefined
+              ? { expectedRevision: input.expectedRevision }
+              : {}),
+            ...(input.placementRevision !== undefined
+              ? { placementRevision: input.placementRevision }
+              : {}),
+            ...(input.expectedContentsRevision !== undefined
+              ? { expectedContentsRevision: input.expectedContentsRevision }
+              : {}),
+            ...(input.targetRevision !== undefined ? { targetRevision: input.targetRevision } : {}),
           };
         } else {
           if (!input.offerId) return { ok: false, code: 'offer', message: 'Choose an offer.' };

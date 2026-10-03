@@ -6,7 +6,7 @@ import {
   type StimulusPolicy,
   capabilityBlocked,
   entityVisionQuery,
-  nativeNeedBelow,
+  bodyReconsiderationInputs,
   projectAttributes,
   spatialQuery,
   visionRadius,
@@ -27,8 +27,8 @@ const THOUGHT_INPUT_REASONS: readonly IntakeReason[] = [
   'state', // native protection (for example sleep)
   'condition', // body condition episodes
   'state', // possessions
-  'condition', // exhausted
-  'condition', // nearly collapsing
+  'condition', // named configured body restrictions
+  'state', // installed body/attribute policy
   'state', // action capability
   'condition', // reservoir concerns
   'exposure', // visible entities
@@ -164,11 +164,19 @@ export class ThoughtIntakeInputs {
         nativeProtectionReason(world, id),
         actor.conditions,
         entity.inventoryRevision,
-        nativeNeedBelow(actor, 'energy', 15),
-        nativeNeedBelow(actor, 'energy', 10),
+        JSON.stringify(bodyReconsiderationInputs(world, entity)),
+        JSON.stringify([
+          world.moduleManifest.revision,
+          world.moduleManifest.bodyPolicyPin,
+          world.moduleManifest.pins,
+        ]),
         capabilityBlocked(world, entity, 'actions'),
         projectAttributes(world, entity, 'owner')
-          .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+          .filter(
+            (v) =>
+              v.concern &&
+              world.moduleManifest.definitions.find((d) => d.id === v.id)?.concern?.reconsider,
+          )
           .map((v) => v.id)
           .join('|'),
         seen.ids.join('\0'),

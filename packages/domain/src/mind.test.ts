@@ -7,6 +7,7 @@ import {
   executeCommand,
   advanceWorld,
   commitCognition,
+  bodyEligibilityRevision,
   mindFor,
   get_memories,
   MIND_POLICY,
@@ -50,6 +51,7 @@ function setup() {
     expectedPlan: world.entities[NPC_ID]!.actor!.planGeneration,
     actions: { continue: null },
     restEpisode: null,
+    bodyEligibility: bodyEligibilityRevision(world, world.entities[NPC_ID]!),
   };
   const proposal: MindProposal = {
     decisionId: binding.decisionId,
@@ -198,7 +200,7 @@ describe('fixture: bounded authored minds', () => {
   });
   it('marks dreams imagined and does not insert them into observed episodes', () => {
     const { world, binding, proposal } = setup();
-    world.entities[NPC_ID]!.actor!.energy = 60;
+    world.entities[NPC_ID]!.actor!.attributes!['wilderness:energy']!.value = 60;
     const resting = executeCommand(world, {
       id: 'rest',
       actorId: NPC_ID,

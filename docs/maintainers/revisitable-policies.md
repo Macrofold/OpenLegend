@@ -16,7 +16,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Current policy:** [AGENTS.md — Development save policy](../../AGENTS.md#development-save-policy), the sole binding text.
 
-**Why revisit:** A future real-player release may need a declared save-compatibility window. This is a review candidate, not a commitment to implement compatibility now.
+**Why revisit:** A future real-player release may need declared compatibility windows for saves, APIs and other supported contracts. This is a review candidate, not a commitment to implement compatibility now.
 
 **Review trigger:** Before promising retained worlds across releases or supporting real players, present the proposed support window and cost to Mike. Until then the linked rule remains in force; reaching a trigger never changes it automatically.
 

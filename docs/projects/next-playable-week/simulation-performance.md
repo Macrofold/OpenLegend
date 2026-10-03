@@ -2,6 +2,8 @@
 
 **Proposed implementation brief.** Engineer 1: **36 hours**, following 20 hours of reliability repairs. The engineer's separate 24-hour integration allowance is shared with those repairs, not an additional implementation budget for this brief. The [feature specification](../next-playable-week-feature-spec.md) and [technical design](../next-playable-week-tech-design.md) own the expanded week's scope; [PW08](../../maintainers/next-playable-week.md#pw08--proportional-simulation-work) owns completion. Creating this document does not authorize runtime implementation.
 
+**Authorized implementation status, October 2, 2026:** the project owner explicitly authorized Engineer 1's scoped implementation on `oct2-eng-1`, starting from inherited planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`. All three runtime reductions are implemented on that branch, with focused checks and native operation-count/corresponding-baseline evidence recorded in [PW08 verification](../../verification/perception-reaction-intake.md#pw08-bounded-sight-work--october-2-2026). This is branch readiness, not integrated acceptance: native CPU/tail qualification, stronger uninterrupted-versus-restored outcomes and real-server capacity retain their explicit gaps. PW08 and its broader parents are not closed by the selected work-count reductions. The allocation below remains the original planning estimate, not a stopping deadline.
+
 ## Outcome and source evidence
 
 When one bird takes off or one object leaves a person's view, the game should retain the unchanged sighting records and reusable calculations for other bodies. Brief glimpses and physical contact must still be noticed, and each character must retain exactly the evidence they were entitled to receive. This package removes three specific sources of repeated work; it does not redesign how world time advances.
@@ -96,7 +98,7 @@ PW08 requires all three implementations, passing relevant semantic rows, attribu
 
 The allocation is **5 + 6 + 6 + 10 + 9 = 36 hours**. Expected runtime/profiler changes are approximately **350–600 logic lines**, excluding tests and documentation; reassess after the baseline. The largest risk is an incomplete certain-path certificate. Full recomputation remains the correctness fallback. If complete certification or required evidence exceeds the allocation, report the unfinished contract to the coordinating engineer; do not silently omit it or close PW08 from the two easier changes. Use the separate integration allowance for combined-branch review and checks, not a speculative scheduler expansion.
 
-Cannot be committed as outcomes now: a numerical speedup, dense 8× capacity, constant-cost publication, full large-world locality, exact approach timing, or completion of proportional-step stages 2–3. This planning task ran no simulation or server benchmark.
+The original planning task ran no simulation or server benchmark. Later authorized implementation evidence is recorded in [PW08 verification](../../verification/perception-reaction-intake.md#pw08-bounded-sight-work--october-2-2026): the selected sighting writes, incident invalidation visits and exact pair evaluations fall, while native CPU/tails do not establish an end-to-end win and stronger restore probes reproduce existing baseline gaps. A numerical speedup, dense 8× capacity, constant-cost publication, full large-world locality, exact approach timing and completion of proportional-step stages 2–3 remain unestablished outcomes; the accepted requirements above are preserved.
 
 ## Maintained records
 

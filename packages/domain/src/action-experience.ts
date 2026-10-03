@@ -216,7 +216,7 @@ export function isRecordedActivityCommand(command: Command): boolean {
       Number.isSafeInteger(command.quantity) &&
       command.quantity > 0 &&
       [command.expectedRevision, command.placementRevision, command.targetRevision].every(
-        (value) => Number.isSafeInteger(value) && value >= 0,
+        (value) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0,
       )
     );
   return false;

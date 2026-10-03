@@ -103,7 +103,7 @@
       },
       "reactivationDelaySeconds": 300,
       "occupiesAction": true,
-      "interruptOn": ["injury", "hunger", "recovery", "new-action", "voluntary", "revived"],
+      "interruptOn": ["injury", "recovery", "new-action", "voluntary", "revived"],
       "whileActive": [
         {
           "changeRate": {
@@ -223,6 +223,185 @@
               "operator": "equal",
               "value": false
             }
+          }
+        }
+      ]
+    },
+    {
+      "id": "wilderness:metabolism",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Metabolism",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "all": [
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "alive",
+                  "operator": "equal",
+                  "value": true
+                }
+              },
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "incapacitated",
+                  "operator": "equal",
+                  "value": false
+                }
+              }
+            ]
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } }
+        ]
+      },
+      "automaticActivation": {
+        "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:fullness",
+            "amount": -0.003,
+            "per": "gameSecond"
+          }
+        }
+      ]
+    },
+    {
+      "id": "wilderness:starvation",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Starvation",
+      "lifecycleCause": "needs",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "all": [
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "alive",
+                  "operator": "equal",
+                  "value": true
+                }
+              },
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "incapacitated",
+                  "operator": "equal",
+                  "value": false
+                }
+              }
+            ]
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } },
+          {
+            "compare": {
+              "target": "$subject",
+              "attribute": "wilderness:fullness",
+              "operator": "lessThanOrEqual",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "automaticActivation": {
+        "compare": {
+          "target": "$subject",
+          "attribute": "wilderness:fullness",
+          "operator": "lessThanOrEqual",
+          "value": 0
+        }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:health",
+            "amount": -0.009,
+            "per": "gameSecond"
+          }
+        }
+      ]
+    },
+    {
+      "id": "wilderness:exhaustion",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Exhaustion",
+      "lifecycleCause": "needs",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "all": [
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "alive",
+                  "operator": "equal",
+                  "value": true
+                }
+              },
+              {
+                "field": {
+                  "target": "$subject",
+                  "name": "incapacitated",
+                  "operator": "equal",
+                  "value": false
+                }
+              }
+            ]
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } },
+          {
+            "statusActive": {
+              "target": "$subject",
+              "definitionId": "wilderness:restorative-rest",
+              "value": false
+            }
+          },
+          {
+            "compare": {
+              "target": "$subject",
+              "attribute": "wilderness:energy",
+              "operator": "lessThanOrEqual",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "automaticActivation": {
+        "compare": {
+          "target": "$subject",
+          "attribute": "wilderness:energy",
+          "operator": "lessThanOrEqual",
+          "value": 0
+        }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:health",
+            "amount": -0.003,
+            "per": "gameSecond"
           }
         }
       ]

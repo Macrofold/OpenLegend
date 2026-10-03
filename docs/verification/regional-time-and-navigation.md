@@ -132,3 +132,7 @@ New spans split worker startup, map preparation, map builds, first-use profile b
 - A refused landing waits where its slice began. Retry times depend on call size on main and on where shared intervals end on both trees, so a held bird can land at a different time than on main (SW12 owns landing holding and fairness).
 - PF13.16 still lacks driven scenarios for contribution, reservation and appraisal expiry, enrolled appraisal-process deadlines, and start-boundary perception loss/return.
 - Cold navigation tail: worker startup and the first builds dominate queue wait. Starting the worker earlier or preparing all active profiles with the map are candidate SW06.2a steps. Neither was implemented or measured here.
+
+## PW08 bounded follow-through — October 2, 2026
+
+The [matched PW08 record](perception-reaction-intake.md#pw08-bounded-sight-work--october-2-2026) covers membership-only sightings, reverse incident-pair invalidation and complete certain-path retention. It preserves this report's sampled fall/approach/onset limitations and compares each offered-call schedule to the corresponding planning baseline. Midpoint current-format reload probes additionally identify baseline contact-onset and revision-counter differences; passing derived-cache reconstruction does not close those broader uninterrupted-versus-restored gaps. Dense 8× and shared-host CPU/tail acceptance remain open.

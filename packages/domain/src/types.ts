@@ -27,6 +27,8 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  /** Authored labels project existing components; they never duplicate component values. */
+  characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
@@ -55,28 +57,26 @@ export interface ItemInstance {
   quantity: number;
   ownerId: string;
 }
-export type InputRole = 'binding' | 'body' | 'pouch' | 'shaft' | 'point' | 'fletching';
+/** Roles belong to the selected installed recipe family, not to the engine. */
+export type InputRole = string;
 export interface RecipeInput {
   definitionId: string;
   quantity: number;
   role: InputRole;
 }
-export interface DeclarationDraft {
-  schemaVersion: 1;
+export interface RecipeCandidate {
+  family: { id: string; version: number };
   name: string;
   description: string;
   inputs: RecipeInput[];
-  workSeconds: number;
   output: {
-    kind: 'launcher' | 'ammunition' | 'gathering-tool';
-    gatheringTool?: { resourceId: string; quantity: number };
     name: string;
     description: string;
-    properties: MaterialProperty[];
-    launcher?: Launcher;
-    ammunition?: Ammunition;
   };
+  /** Untrusted until the selected installed family's native validator accepts it. */
+  parameters: Record<string, unknown>;
 }
+export type DeclarationDraft = RecipeCandidate;
 export interface DeclarationProvenance {
   derivedFrom?: { recipeId: string; version: number; digest: string };
   authority: import('./invention-policy.js').InventionAuthority;
@@ -86,7 +86,16 @@ export interface DeclarationProvenance {
   model?: string;
   evidence?: string[];
 }
-export interface RecipeDefinition extends DeclarationDraft {
+export interface RecipeDefinition {
+  name: string;
+  description: string;
+  inputs: RecipeInput[];
+  workSeconds: number;
+  output: { name: string; description: string };
+  sourceCandidate: RecipeCandidate;
+  familyPin: import('./world-modules.js').DefinitionPin;
+  dependencyPins: import('./world-modules.js').DefinitionPin[];
+  facts: import('./invention-families.js').RecipeFact[];
   id: string;
   version: 1;
   digest: string;
@@ -190,14 +199,8 @@ export interface ActorComponent {
     memory: boolean;
     innerWorld: boolean;
     speech: boolean;
-    needs: boolean;
   };
   health: number;
-  fullness?: number;
-  energy?: number;
-  /** Native need revisions belong to their values, independently of body damage. */
-  fullnessRevision?: number;
-  energyRevision?: number;
   alive: boolean;
   incapacitated: boolean;
   bornAt: number;
@@ -349,7 +352,7 @@ export interface WorldState {
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
-  cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
+  cognitionPolicy: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
   id: string;
@@ -428,6 +431,8 @@ export type Command = Envelope &
         targetId: string;
         expectedRevision: number;
         placementRevision: number;
+        /** A container's children can change without changing its item or placement. */
+        expectedContentsRevision?: number;
         targetRevision: number;
       }
     | { type: 'unequip'; itemId: string; expectedRevision: number; placementRevision: number }
@@ -449,7 +454,18 @@ export type Command = Envelope &
     | { type: 'strike'; definitionId: string; targetId: string; weaponItemId?: string }
     | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | { type: 'cook'; itemId: string; heatId: string }
-    | { type: 'handover'; operation: 'offer'; targetId: string; itemId: string; quantity: number }
+    | {
+        type: 'handover';
+        operation: 'offer';
+        targetId: string;
+        itemId: string;
+        quantity: number;
+        /** Human-held selections may pin current items and recipient possessions. */
+        expectedRevision?: number;
+        placementRevision?: number;
+        expectedContentsRevision?: number;
+        targetRevision?: number;
+      }
     | {
         type: 'handover';
         operation: 'accept' | 'decline' | 'withdraw';
@@ -518,11 +534,7 @@ export interface GodPersonEditorDraft {
   backstory: string;
   traitIds: string[];
   goals: string[];
-  stats: {
-    health: number;
-    fullness?: number;
-    energy?: number;
-  };
+  meters: Record<string, number>;
 }
 
 export interface GodSpawnDraft {

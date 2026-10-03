@@ -96,7 +96,13 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         ...base,
         name: draft.type === 'hare' ? 'Hare' : 'Deer',
         kind: 'animal',
-        actor: nativeActor(draft.type, world.simTime),
+        actor: nativeActor(
+          draft.type,
+          world.simTime,
+          world.moduleManifest.definitions.filter(
+            (definition) => definition.id === 'wilderness:energy',
+          ),
+        ),
         animal: {
           fleeFrom: null,
           fleeSeconds: 0,
