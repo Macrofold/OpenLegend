@@ -405,6 +405,8 @@ export class HistoryRepository {
                     event.text,
                     false,
                     retained.evidence.sourceId,
+                    event.targetId,
+                    event.data?.['targetReference'] === true,
                   ),
                   content:
                     typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,

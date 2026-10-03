@@ -22,6 +22,7 @@ import type {
 import { post } from '../api';
 import { Button, Condition, IconButton, SelectField, Tag } from '../design-system/components';
 import { EditorPanel } from './editor';
+import { memoryEditorChanges, worldEventEditorChanges } from './editor-changes';
 
 type TraitOption = { id: string; name: string; description: string };
 
@@ -616,6 +617,11 @@ export function PersonEditor({
           : current,
       );
   };
+  const editorTraits = [
+    ...traits,
+    ...(loaded?.traitOptions.filter((trait) => !traits.some((option) => option.id === trait.id)) ??
+      []),
+  ];
   async function older() {
     if (!loaded?.before || loading) return;
     const requestGeneration = generation.current;
@@ -657,7 +663,7 @@ export function PersonEditor({
       });
       if (!result.ok || !('person' in result))
         throw new Error(result.message ?? 'Person not found.');
-      if (requestGeneration !== generation.current) return;
+      if (requestGeneration !== generation.current) return false;
       setNeedsReload(false);
       setLoaded(result);
       setPerson(result.person);
@@ -672,8 +678,10 @@ export function PersonEditor({
       setDirtyMemoryIds(new Set());
       setRefreshedAt(new Date());
       setError('');
+      return true;
     } catch (reason) {
       if (requestGeneration === generation.current) setError(String(reason));
+      return false;
     } finally {
       if (requestGeneration === generation.current) setLoading(false);
     }
@@ -695,24 +703,14 @@ export function PersonEditor({
       setError(invalid);
       return false;
     }
-    const memoryChanges = [];
+    let memoryChanges;
     try {
-      const originalById = new Map(loaded.memories.map((memory) => [memory.id, memory]));
-      const currentById = new Map(memories.map((memory) => [memory.id, memory]));
-      for (const entryId of dirtyMemoryIds) {
-        const original = originalById.get(entryId);
-        if (!original) throw new Error('A changed memory is no longer in the loaded editor.');
-        const memory = currentById.get(entryId);
-        let replacement = null;
-        if (memory) {
-          if (memory.json === undefined) throw new Error('Open the memory JSON before editing it.');
-          const value: unknown = JSON.parse(drafts.current.get(entryId) ?? memory.json);
-          if (!value || typeof value !== 'object' || Array.isArray(value))
-            throw new Error(`${memory.label} memory must contain a JSON object.`);
-          replacement = { source: memory.source, value };
-        }
-        memoryChanges.push({ entryId, expectedHash: original.hash, replacement });
-      }
+      memoryChanges = memoryEditorChanges(
+        loaded.memories,
+        memories,
+        dirtyMemoryIds,
+        drafts.current,
+      );
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'A memory contains invalid JSON.');
       return false;
@@ -734,8 +732,7 @@ export function PersonEditor({
       if (!result.ok) throw new Error(result.message);
       setNeedsReload(true);
       setSaving(false);
-      await load();
-      return true;
+      return await load();
     } catch (reason) {
       if (requestGeneration === generation.current) setError(String(reason));
       return false;
@@ -777,7 +774,9 @@ export function PersonEditor({
         saved={needsReload}
         loading={loading}
         error={error}
-        reload={load}
+        reload={async () => {
+          await load();
+        }}
         close={close}
       />
     );
@@ -801,6 +800,7 @@ export function PersonEditor({
         setSelectedMemory(null);
         drafts.current.clear();
         setDirtyMemoryIds(new Set());
+        setLoading(false);
         setError('');
       }}
       onClose={close}
@@ -822,7 +822,7 @@ export function PersonEditor({
               <PersonEditorFields
                 section="character"
                 person={person}
-                traits={traits}
+                traits={editorTraits}
                 meters={loaded.meters}
                 meterText={meterText}
                 meterErrors={meterErrors}
@@ -929,7 +929,7 @@ export function PersonEditor({
             <PersonEditorFields
               section="identity"
               person={person}
-              traits={traits}
+              traits={editorTraits}
               meters={loaded.meters}
               meterText={meterText}
               meterErrors={meterErrors}
@@ -1104,11 +1104,13 @@ export function WorldEventsEditor({ close }: { close(): void }) {
   const dirty = dirtyEventIds.size > 0;
   async function older() {
     if (loaded?.before === undefined || loading) return;
+    const requestGeneration = generation.current;
     setLoading(true);
     try {
       const next = await post<GodWorldEventsEditorView>('/api/god/editor/world-events', {
         before: loaded.before,
       });
+      if (requestGeneration !== generation.current) return;
       setLoaded((current) =>
         current
           ? {
@@ -1126,9 +1128,9 @@ export function WorldEventsEditor({ close }: { close(): void }) {
         ...next.events.filter((e) => !current.some((c) => c.id === e.id)),
       ]);
     } catch (reason) {
-      setError(String(reason));
+      if (requestGeneration === generation.current) setError(String(reason));
     } finally {
-      setLoading(false);
+      if (requestGeneration === generation.current) setLoading(false);
     }
   }
   const load = useCallback(async () => {
@@ -1136,7 +1138,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
     setLoading(true);
     try {
       const result = await post<GodWorldEventsEditorView>('/api/god/editor/world-events', {});
-      if (requestGeneration !== generation.current) return;
+      if (requestGeneration !== generation.current) return false;
       setNeedsReload(false);
       setLoaded(result);
       setEvents(result.events);
@@ -1145,8 +1147,10 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       setDirtyEventIds(new Set());
       setRefreshedAt(new Date());
       setError('');
+      return true;
     } catch (reason) {
       if (requestGeneration === generation.current) setError(String(reason));
+      return false;
     } finally {
       if (requestGeneration === generation.current) setLoading(false);
     }
@@ -1159,25 +1163,9 @@ export function WorldEventsEditor({ close }: { close(): void }) {
   }, [load]);
   const save = async () => {
     if (!loaded || loading || saving || needsReload) return false;
-    const changes = [];
+    let changes;
     try {
-      const originalById = new Map(loaded.events.map((event) => [event.id, event]));
-      const currentById = new Map(events.map((event) => [event.id, event]));
-      for (const id of dirtyEventIds) {
-        const original = originalById.get(id);
-        if (!original) throw new Error('A changed world event is no longer in the loaded editor.');
-        const event = currentById.get(id);
-        let replacement = null;
-        if (event) {
-          if (event.json === undefined)
-            throw new Error('Open the world event JSON before editing it.');
-          const value: unknown = JSON.parse(drafts.current.get(id) ?? event.json);
-          if (!value || typeof value !== 'object' || Array.isArray(value))
-            throw new Error('Every world event must contain a JSON object.');
-          replacement = value;
-        }
-        changes.push({ id, expectedHash: original.hash, replacement });
-      }
+      changes = worldEventEditorChanges(loaded.events, events, dirtyEventIds, drafts.current);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'A world event contains invalid JSON.');
       return false;
@@ -1190,8 +1178,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       });
       if (!result.ok) throw new Error(result.message);
       setNeedsReload(true);
-      await load();
-      return true;
+      return await load();
     } catch (reason) {
       setError(String(reason));
       return false;
@@ -1229,7 +1216,9 @@ export function WorldEventsEditor({ close }: { close(): void }) {
         saved={needsReload}
         loading={loading}
         error={error}
-        reload={load}
+        reload={async () => {
+          await load();
+        }}
         close={close}
       />
     );
@@ -1246,6 +1235,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
         setSelected(null);
         drafts.current.clear();
         setDirtyEventIds(new Set());
+        setLoading(false);
         setError('');
       }}
       onClose={close}

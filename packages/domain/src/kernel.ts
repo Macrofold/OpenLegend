@@ -1853,10 +1853,10 @@ function executeCommandNative(
           world,
           events,
           'taught',
-          `${actor.name} taught ${target.name} how to make ${recipe.name.toLowerCase()}.`,
+          `${actor.name} taught the target how to make ${recipe.name.toLowerCase()}.`,
           actor,
           target.id,
-          { recipeId: recipe.id },
+          { recipeId: recipe.id, targetReference: true },
         );
         result = outcome(true, 'taught', 'The listener learned this specific technique.');
         break;
@@ -2141,10 +2141,10 @@ function completeAction(
         world,
         events,
         'struck',
-        `${actor.name} ${definition.pastTense} ${target.name} for ${damage} damage.`,
+        `${actor.name} ${definition.pastTense} the target for ${damage} damage.`,
         actor,
         target.id,
-        { definitionId: definition.id, damage, actionId: action.id },
+        { definitionId: definition.id, damage, actionId: action.id, targetReference: true },
       );
       break;
     }
@@ -2186,10 +2186,16 @@ function completeAction(
         world,
         events,
         'shot',
-        `${actor.name} ${hit ? `hit the ${target.actor!.species} for ${actualDamage} damage` : `missed the ${target.actor!.species}`}. One projectile was used.`,
+        `${actor.name} ${hit ? `hit the target for ${actualDamage} damage` : 'missed the target'}. One projectile was used.`,
         actor,
         target.id,
-        { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind, actionId: action.id },
+        {
+          hit,
+          damage: actualDamage,
+          ammunitionKind: launcher.ammunitionKind,
+          actionId: action.id,
+          targetReference: true,
+        },
       );
       if (actualDamage > 0)
         commitBodyEffects(
@@ -2620,7 +2626,7 @@ function advanceAction(
       world,
       events,
       'struck',
-      `${actor.name} ${hit ? 'hit' : 'missed'} ${target.name} with ${world.itemDefinitions[definition.id]!.name}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+      `${actor.name} ${hit ? 'hit' : 'missed'} the target with ${world.itemDefinitions[definition.id]!.name}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
       actor,
       target.id,
       {
@@ -2630,6 +2636,7 @@ function advanceAction(
         hit,
         damage,
         reason: hit ? 'hit' : inRange ? 'accuracy' : 'out-of-range',
+        targetReference: true,
         semanticTrigger: true,
       },
     );

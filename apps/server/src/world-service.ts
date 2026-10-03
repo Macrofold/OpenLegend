@@ -3323,6 +3323,7 @@ export class WorldService {
       itemOptions: Object.values(this.world.itemDefinitions)
         .map((item) => ({ id: item.id, name: item.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
+      traitOptions: entity.actor.traits?.map((trait) => ({ ...trait })) ?? [],
       person: {
         inventory: inventoryTotals(this.world, actorId),
         name: entity.name,

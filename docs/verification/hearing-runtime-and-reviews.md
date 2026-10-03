@@ -171,3 +171,20 @@ Node 22.16.0, seed 73, existing gems/mixed scenarios, 180 one-second native step
 These short native timings vary in both directions; the pure awareness projection extraction preserves outcomes and is not a claimed native optimization. Both scenarios remain below 1.0 native 3x headroom before database/browser/inference work. Dense first-exposure and required recipient fan-out remain EPR/PF limits, not solved by skipping optional background indexing.
 
 [HE05](../maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification) retains combined-main, graphical, PostgreSQL, live-provider, named-save, accessibility and sustained-load qualification. The [TODO](../maintainers/TODO.md#hearing-third-review--deferred-regression-coverage) records automated regression cases. This review adds no historical-event migration or re-authoring policy.
+
+## PostgreSQL history read fencing
+
+October 1, 2026, `codex/save-editor-family` based on local `main` `add92ccb` (including `origin/main` `0382be76`). A real local HTTP server and `WorldService` used a private disposable PostgreSQL cluster, a new database for each run, the bundled world, no configured provider and `AI_BUDGET_USD=0`. A temporary probe outside Git held specified repository/profile awaits after their result had been read, performed an authorized mutation, then released the HTTP request. This qualifies the read boundary with concurrent operations, not a graphical browser or a provider decision.
+
+| Held read and concurrent change                                    | Observed late HTTP result                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Journal profile lookup; forget the speech already read             | 400; the forgotten words were absent                            |
+| Active conversation transcript; leave that conversation            | 400; retry for the former active conversation also returned 400 |
+| Transcript; replace the controlling tab's lease                    | 403                                                             |
+| Transcript; append ordinary new speech                             | 200; a fresh page returned the appended speech                  |
+| Transcript; load a current-format save, replacing the timeline     | 403                                                             |
+| Optional speech-job lookup; forget the speech already read         | 400; the forgotten words were absent                            |
+| World Events page; replace the controlling tab's lease             | 403                                                             |
+| Transcript; rebind the account's actor through the authority owner | 403                                                             |
+
+The earlier same-PostgreSQL HTTP check also held a transcript query across actual forgetting, then observed a 400 late page without its text and a clean 200 fresh page. World Events uses the same final authority/epoch fence and rejected its held page. The Talk history hook and Journal component now discard retained pages immediately when the viewer's world, actor, access scope, timeline or history epoch changes; older active-conversation requests identify the conversation they began with. `pnpm typecheck` passed after the server changes. This is focused manual concurrency evidence; HE-T06/07's larger pagination, browser, accessibility and scale matrices remain open. There were no Jev calls or paid charges ($0).

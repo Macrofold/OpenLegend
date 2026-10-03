@@ -409,6 +409,22 @@ async function initializeGameServer(
   onFailure(() => maintenance.close());
   await maintenance.initialize();
   const operations = new OperationsRoutes(service, store, maintenance, config, now);
+  const assertHistoryRead = async (scope: RequestScope, epoch: string) => {
+    // The page and optional job/profile reads can outlive a permission or history
+    // change. Check durable authority, then make the final in-memory check with no
+    // further await before sending private text.
+    await store.authority.assertFence({
+      scope,
+      capability: 'play',
+      controlling: false,
+      requireGeneration: true,
+      now,
+    });
+    if (scopeKey(service.refreshScope(scope)) !== scopeKey(scope))
+      throw new HistoryCursorError('Your character control changed. Refresh this page.');
+    if (epoch !== `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`)
+      throw new HistoryCursorError('History changed while loading. Refresh this page.');
+  };
   const authentication =
     config.authentication.mode === 'oidc'
       ? new OpenIdAuthentication(config.authentication, now)
@@ -863,8 +879,7 @@ async function initializeGameServer(
             epoch,
             options,
           );
-          if (epoch !== `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`)
-            throw new HistoryCursorError('History changed while loading. Refresh the event log.');
+          await assertHistoryRead(scope, epoch);
           return send(response, 200, page);
         }
         if (request.method === 'GET' && url.pathname === '/api/history') {
@@ -887,6 +902,8 @@ async function initializeGameServer(
           const scopedId = options.active
             ? service.world.conversations?.active[scope.actorId]
             : options.conversationId;
+          if (options.active && options.conversationId && options.conversationId !== scopedId)
+            throw new HistoryCursorError('The active conversation changed. Refresh it.');
           const page = await store.history.transcript(
             service.world.id,
             scope.accountId,
@@ -906,13 +923,6 @@ async function initializeGameServer(
                   .map((item) => item.id),
               )
             : new Map();
-          if (
-            epoch !== `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}` ||
-            (options.active && scopedId !== service.world.conversations?.active[scope.actorId])
-          )
-            throw new HistoryCursorError(
-              'History changed while loading. Refresh the conversation.',
-            );
           const messages = options.speechOnly
             ? page.items.map((item) => {
                 const job = speechJobs.get(item.id);
@@ -941,12 +951,16 @@ async function initializeGameServer(
               })
             : undefined;
 
+          const profile = await service.profileFor(scope);
+          await assertHistoryRead(scope, epoch);
+          if (options.active && scopedId !== service.world.conversations?.active[scope.actorId])
+            throw new HistoryCursorError('The active conversation changed. Refresh it.');
           const activeId = service.world.conversations?.active[scope.actorId];
           const active = activeId ? service.world.conversations?.records[activeId] : undefined;
           return send(response, 200, {
             ...page,
             ...(messages ? { messages } : {}),
-            voice: (await service.profileFor(scope)).preferences.narratorVoice,
+            voice: profile.preferences.narratorVoice,
             scope: scopedId,
             active: active
               ? {

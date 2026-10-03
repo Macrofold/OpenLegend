@@ -5,16 +5,25 @@ import { nextId } from '../../data.js';
 import { createActor, TRAIT_BANK } from './world.js';
 import type {
   Entity,
+  CharacterTrait,
   GodPersonDraft,
   GodPersonEditorDraft,
   GodSpawnDraft,
   WorldState,
 } from '../../types.js';
 
-export function personTraits(draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>) {
+export function personTraits(
+  draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>,
+  existing: readonly CharacterTrait[] = [],
+) {
   const ids = [...new Set(draft.traitIds)];
   if (ids.length > 8) return null;
-  const traits = ids.map((id) => TRAIT_BANK.find((trait) => trait.id === id));
+  // Editing may retain a character's authored starting traits; creation can only select
+  // catalogue traits. The current actor, not request JSON, supplies that extra vocabulary.
+  const traits = ids.map(
+    (id) =>
+      TRAIT_BANK.find((trait) => trait.id === id) ?? existing.find((trait) => trait.id === id),
+  );
   return traits.every((trait) => !!trait) ? traits.map((trait) => ({ ...trait! })) : null;
 }
 

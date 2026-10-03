@@ -31,6 +31,8 @@ export function memoryPerspective(
   text: string,
   speech = false,
   sourceEntityId?: string,
+  targetEntityId?: string,
+  targetReference = false,
 ): string {
   const actor = world.entities[actorId];
   if (!actor?.actor) return text;
@@ -52,6 +54,17 @@ export function memoryPerspective(
     .map((part, index) => {
       if (index % 2) return part;
       let result = named(part);
+      // Native events that mark this reference keep the canonical text neutral. Resolve
+      // the target from the witness's knowledge, never from the target's global name.
+      if (targetReference && targetEntityId && result.includes('the target'))
+        result = result.replace(
+          'the target',
+          targetEntityId === actorId
+            ? sourceEntityId === actorId
+              ? 'myself'
+              : 'me'
+            : observerDescription(world, actorId, targetEntityId),
+        );
       // Attribution is evidence, not a name match; unknown legacy subjects stay in third person.
       if (sourceEntityId !== actorId) {
         const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
