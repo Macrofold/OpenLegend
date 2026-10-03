@@ -1,0 +1,31 @@
+# Full documentation review
+
+## Scope and source
+
+Mike requested exhaustive reconciliation of non-archived documentation, projects and maintainer work against implemented behavior, accepted intent and evidence, plus a reusable **Full Documentation Review** skill. This is documentation and planning work, not authorization to implement every proposed feature or declare the game bug-free.
+
+The initial review began at `8005f7c7245cfecec128652efe3ef07926604e0a`. This continuation uses freshly verified `Macrofold/OpenLegend` GitHub `refs/heads/main` at `b528af6d126a9ac500dbe5574642dea87c472c40`. No local checkout was supplied and no pull request specifies a different base.
+
+Working branch: `docs/full-documentation-review-2026-10-03`. Previous branch: `docs/full-documentation-review-2026-10-02`, with earlier review edits preserved at `adc46000a2db993d4fff5bc224e4d14140a7eb23`. The new branch starts from current main; the old branch is not rebased, merged or overwritten. Reapply only findings that still hold after subsequent implementation and decisions, not obsolete patch text.
+
+**Status: In progress. No exhaustive-coverage or completion claim yet.**
+
+## Execution
+
+Follow the [Full Documentation Review skill](../../.agents/skills/full-documentation-review/SKILL.md), [documentation ownership](../../.agents/rules/documentation.md) and [root instructions](../../AGENTS.md). Those owners supply the procedure and controlling policies rather than a second copy here.
+
+1. Inventory all documentation, including nested projects, limits, evidence, repertoires, world/package files, guidance and art-direction records outside `docs/`. Maintain path/revision/read-range and disposition records outside the repository. Inspect excluded archived material only for explicitly active dependencies needed to resolve a current contract.
+2. Read the entire inventory and every open task's complete body, dependencies and acceptance. Trace relevant current code owners and consumers; distinguish delivered, accepted remaining, proposed, obsolete, duplicated and unverified work. Check accepted requirements in the reverse direction for missing ownership.
+3. Reconcile current main's recently integrated gameplay work and newest parallel-assignment plan before reapplying earlier findings. Preserve newer world-owned survival and recipe-family boundaries, current action/recovery behavior, memory/perception performance work, UI changes, deployment decisions and the expanded root compatibility policy.
+4. Correct the actual canonical owners, trackers, limits and navigation together. Preserve stable IDs, valid criteria, useful explanations, approval status and historical evidence. Do not rewrite requirements to excuse defects or turn illustrative ideas into delivery commitments.
+5. Review the complete diff and earlier review dispositions, validate links/anchors and formatting, run the guidance checker, and recheck upstream. Record actual coverage, consequential changes and verification limits before completion.
+
+## Risk and verification
+
+Expected runtime logic changes: **0**. The principal risks are incorrect closure, lost requirements, accidental reversal of accepted intent, confusing proposals with implementation and documenting defects as intended behavior. The engine/world boundary, performance, modularity, authority, privacy, deterministic order, cancellation and current-format durability are reviewed together.
+
+Documentation-only work requires content, links, changed-file formatting and `pnpm guidance:check`, not new gameplay stress or provider calls. Existing runtime evidence retains its actual revision, workload, failures and limitations. Native-agent dispatch cannot be claimed from a static guidance graph. Existing CI remains a merge gate. Temporary transfer/patch workflows are task tooling, not permanent product infrastructure, and must be absent from the final branch.
+
+## Results
+
+Pending the full review. Pinned source snapshots are available for current main and the earlier review; downloading them is not document coverage or runtime verification.
