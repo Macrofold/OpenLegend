@@ -69,7 +69,7 @@ Protected platform integrity can change only through reviewed engine operation/r
 
 Emergency quarantine belongs to the host/operator or an explicitly granted runtime safety operation. It may stop frozen behavior to protect integrity, but cannot silently replace its meaning or erase history. Removing quarantine requires the declared recovery/repair checks and authority, not merely unfreezing the artifact.
 
-Existing player/NPC origin defaults remain unchanged. An NPC cannot grant itself a new lock exception. Player-delegated model/NPC work retains player origin. The current proposed owner exception for authoring while player invention is locked is not implicitly adopted here: follow existing governance until that separate permission is explicitly selected and implemented. Administrative control of a lock is distinct from permission to author while it is set.
+Existing player/NPC origin defaults remain unchanged. An NPC cannot grant itself a new lock exception. Player-delegated model/NPC work retains player origin. The [creator/scoped full-invention exception](../archive/03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission) is an accepted target, not an unresolved product choice. MP02/INV-1.7 still own its grant storage and admission implementation; this document does not enable it or bypass the currently enforced player-lock gate. Administrative control of a lock is distinct from permission to author while it is set.
 
 ### 4.2 Freeze scope and user commands
 

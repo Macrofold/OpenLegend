@@ -1,6 +1,6 @@
 # Unified World Agent runtime
 
-**Status: accepted target design with a finite unified owner conversation, durable write sessions and native Macrofold execution adapter implemented.** Actual live Macrofold interoperability/usefulness, general composition and generated-art funding remain separate acceptance gates. This document owns unified conversation, session funding, execution-adapter behavior, context continuity and approval orchestration. The [tool service](invention-workshop-tools.md), [MCP binding](world-agent-mcp.md), [graph](invention-graph.md) and [composition](invention-composition.md) own their respective contracts. Current implementation is summarized in [Implementation status](../archive/05-project/implementation-status.md#unified-owner-world-agent) and the concrete session sections below. Delivery is INV-16/18/21 with existing subsystem owners.
+**Status: accepted target design with a finite unified owner conversation, durable write sessions and native Macrofold execution adapter implemented.** The approved finite local Macrofold journeys, context foundation and structured-question bridge have recorded native/browser/live evidence; deployment-specific interoperability, general composition and generated-art funding remain separate acceptance gates. This document owns unified conversation, session funding, execution-adapter behavior, context continuity and approval orchestration. The [tool service](invention-workshop-tools.md), [MCP binding](world-agent-mcp.md), [graph](invention-graph.md) and [composition](invention-composition.md) own their respective contracts. Current implementation is summarized in [Implementation status](../archive/05-project/implementation-status.md#unified-owner-world-agent) and the concrete session sections below. Delivery is INV-16/18/21 with existing subsystem owners.
 
 ## 1. Product decisions
 
@@ -48,7 +48,7 @@ Do not hold an idle paid harness waiting for a person or a long art/validation j
 
 ## 6. Context and reasoning continuity
 
-The owner requested the [World Agent context project](projects/world-agent-context/README.md) to simplify inputs, tools and templates with medium effort. It is a proposed design tracked by WW17–WW23, not current runtime behavior; existing authority and continuity requirements below remain controlling.
+The owner approved the [World Agent context project](projects/world-agent-context/README.md). Its finite medium-effort context/tool foundation is implemented and qualified under WW18–WW23, as detailed [below](#scoped-context-and-native-save-for-review). General dependency proof and later optimization remain separate work; the existing authority and continuity requirements below remain controlling.
 
 Initial context contains the user's goal, current selected project/revision, pinned preferences, pending decisions, concise world constitution/capability summary, budget state and tool instructions. It does not contain every definition or private memory. `ol_inspect`, graph and evidence tools can reach all authorized information needed over successive calls.
 
@@ -92,7 +92,7 @@ Loading a save fences old contexts, tools, cursors, approvals and callbacks thro
 
 Before enabling the native harness, demonstrate actual tool discovery/invocation, structured results or their faithful text fallback, multi-turn draft revision, a meaningful player decision, exact approval/apply, cancellation/restart, state-safe late completion and complete cost attribution. Include an unsuccessful unsupported request and a private-data boundary. Protocol-level evidence, injected model fixtures, live harness usefulness and population capacity are distinct reports.
 
-The delivery slices are specified in the scenario ladder and INV-16/18/21. There is no promise that simply turning on a connector makes every future kind adapter or migration available. Enable what is implemented and explicitly report the rest. [Current write evidence](verification/workshop-continuation.md) and [remaining gates](maintainers/world-agent-writes.md) distinguish actual local execution from live-harness qualification.
+The delivery slices are specified in the scenario ladder and INV-16/18/21. There is no promise that simply turning on a connector makes every future kind adapter or migration available. Enable what is implemented and explicitly report the rest. [Current write evidence](verification/workshop-continuation.md), [context qualification](verification/world-agent-context.md#final-local-qualification), [question acceptance](verification/invention-questions.md#final-acceptance--september-29) and [remaining gates](maintainers/world-agent-writes.md) distinguish the qualified finite local native/browser/live journeys from deployment-specific release and broader capability qualification.
 
 ## Durable write sessions
 
