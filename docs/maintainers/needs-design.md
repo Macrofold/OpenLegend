@@ -22,7 +22,7 @@ An item leaves the active design queue when that preparation has an adequate own
 
 ## Ordered design groups
 
-**Proposed design sequence, October 3, 2026, checked against GitHub main at [e4d25a0](https://github.com/Macrofold/OpenLegend/commit/e4d25a06105fbc1321c9a0e7a7a12524e7644ce1).** This is a complete grouping of the register's 37 ND entries and remaining PS design refinements. The original subject categories below remain navigation; these groups combine related decisions that belong at a similar point in delivery. Broad entries are explicitly split when their parts belong far apart.
+**Proposed design sequence, October 3, 2026, checked against GitHub main at [b50ec6c](https://github.com/Macrofold/OpenLegend/commit/b50ec6ce75f260d68c18ec99d767982c65b0fccb).** This is a complete grouping of the register's 37 ND entries and remaining PS design refinements. The original subject categories below remain navigation; these groups combine related decisions that belong at a similar point in delivery. Broad entries are explicitly split when their parts belong far apart.
 
 The [product roadmap](../../archive/05-project/roadmap.md) owns P1–P7 outcomes. Read the bands below in that general order, taking groups with ready inputs in parallel. A band's label is a design-planning guide, not a requirement to finish every earlier feature before drafting a later one. Named decisions must be settled before dependent designs are signed off, and the existing runtime/evidence gates still apply before offering the behavior. Conditional groups start only for their stated need; leaving one unselected is not a gap to fill with an unwanted feature.
 
@@ -32,15 +32,15 @@ DG numbers identify **design batches**, not new implementation tasks or a requir
 
 ### Reuse the five existing product proposals
 
-The earlier five-topic package did not cover all five register categories. Its proposals are reusable input, not completion of entire ND/PS parents. At this grouping's baseline they remain on the separate branch [docs/five-product-feature-specs](https://github.com/Macrofold/OpenLegend/tree/docs/five-product-feature-specs), pinned here at d2cca27; they are not merged into main. Reconcile their current product recommendations with the owning tracker before designing the remaining slice. Do not restart their research or silently treat their proposals as delivered behavior.
+The earlier five-topic package did not cover all five register categories. Its proposals are reusable input, not completion of entire ND/PS parents. They are now included in the current main baseline; the links below use their maintained repository paths. The earlier branch at d2cca27 remains historical provenance. Reconcile their current product recommendations with the owning tracker before designing the remaining slice. Do not restart their research or silently treat their proposals as delivered behavior.
 
 | Existing proposal                                                                                                                                                        | Reuse in these groups                                                                                                                                                      |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Continuing NPC lives](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/continuing-lives-feature-spec.md)             | [DG02](#dg02--one-resident-who-follows-through), [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)                                                      |
-| [Attention, crowds and scenes](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/attention-and-scenes-feature-spec.md) | [DG02](#dg02--one-resident-who-follows-through), [DG18](#dg18--worthwhile-crowds-and-background-social-scenes), [DG26](#dg26--voice-calls-and-selected-hearing-extensions) |
-| [World creation](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/world-creation-feature-spec.md)                     | [DG12](#dg12--create-a-world-and-reuse-an-invention); broader community assumptions revisited in [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)      |
-| [Editable shelters and rain](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/editable-shelters-feature-spec.md)      | [DG13](#dg13--editable-shelter-and-useful-places); remaining material/fire design in [DG20](#dg20--heat-ignition-and-material-consequences)                                |
-| [Authored stats and checks](https://github.com/Macrofold/OpenLegend/blob/d2cca276a95cf3fd35ecf625bd0efed41e6e08f1/docs/projects/authored-stats-feature-spec.md)          | [DG14](#dg14--useful-competence-and-practice)                                                                                                                              |
+| [Continuing NPC lives](../projects/continuing-lives-feature-spec.md)             | [DG02](#dg02--one-resident-who-follows-through), [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)                                                      |
+| [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) | [DG02](#dg02--one-resident-who-follows-through), [DG18](#dg18--worthwhile-crowds-and-background-social-scenes), [DG26](#dg26--voice-calls-and-selected-hearing-extensions) |
+| [World creation](../projects/world-creation-feature-spec.md)                     | [DG12](#dg12--create-a-world-and-reuse-an-invention); broader community assumptions revisited in [DG17](#dg17--continuing-communities-clocks-and-quiet-world-funding)      |
+| [Editable shelters and rain](../projects/editable-shelters-feature-spec.md)      | [DG13](#dg13--editable-shelter-and-useful-places); remaining material/fire design in [DG20](#dg20--heat-ignition-and-material-consequences)                                |
+| [Authored stats and checks](../projects/authored-stats-feature-spec.md)          | [DG14](#dg14--useful-competence-and-practice)                                                                                                                              |
 
 ### Order and parallel opportunities
 
@@ -65,9 +65,11 @@ ND13's ordinary action recommendations, stable menus, remapping and nearby inter
 
 #### DG02 — One resident who follows through
 
-PS02 and the personal-play portion of PS04: continued useful activity, interruptions, sensible attention and readable directed conversation. Reuse the existing continuing-lives and attention proposals; refine the first supported activity and handoff into existing agency work.
+PS02 and the personal-play portion of PS04, with the early [compelling-character experience](../projects/compelling-characters-feature-spec.md): one resident whose bodily and psychological experience, identity, memories, relationships, attention and choices form a coherent life. Explicitly include contact, belonging, enjoyment, independent interests and chosen solitude alongside survival. Continued useful activity, interruptions and readable conversation must connect to actual consequences, satisfaction, changed priorities and stopping. Reuse the existing continuing-lives and attention proposals; [CE01–CE05](character-experience.md) owns this integration across the existing subsystem work.
 
-**Start and parallel boundary:** Current actions, evidence and clock behavior are sufficient starting inputs. Neither roofs nor unattended communities are prerequisites. Leave dense gatherings, background social scenes and timed speech to DG18/DG26. **Existing owners:** AG/CR, action owners, EPR/HE/NC and PS.
+Qualify [complete episodes](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows), including an ordinary afternoon, social approach/refusal, solitary enjoyment, hunger within a larger life, purposeful repetition and interruption/resumption. A plausible prompt, stored feeling, successful meal chain or random activity variety does not by itself establish a compelling character. AG12/CR12 retain the actual comparison and evidence program.
+
+**Start and parallel boundary:** Current actions, evidence and clock behavior are sufficient starting inputs. Neither roofs nor unattended communities are prerequisites. Leave dense gatherings, background social scenes and timed speech to DG18/DG26. **Existing owners:** [CE integration](character-experience.md), AG/CR, ACT/BW, action owners, EPR/HE/NC and PS. Initial character quality belongs here; longer-term personality transformation remains DG23.
 
 #### DG03 — A useful demo and early audience learning
 
@@ -197,7 +199,7 @@ ND09's chosen currency and deferred-delivery/default rules, and ND10's sparse pe
 
 #### DG23 — Characters changed by their experience
 
-ND04's personality-change slice and ND19's older-memory transformation or selected dream reinterpretation. Design how experiences alter interpretation and dispositions while preserving factual provenance, obligations and independent decisions.
+ND04's personality-change slice and ND19's older-memory transformation or selected dream reinterpretation. Design how experiences alter interpretation and dispositions while preserving factual provenance, obligations and independent decisions. [DG02 and CE](character-experience.md) already own a multidimensional, compelling initial character and ordinary experience-to-choice continuity; those requirements do not wait for this later transformation work.
 
 **Start and parallel boundary:** Use current memory, appraisal and correction/forgetting contracts. No numerical skill system or external retrieval service is required. DG25 owns deliberate changes to shared history; this group changes recollection/interpretation, not what actually occurred. **Existing owners:** ACT07/ACT08, CR06/CR09 and memory/provenance owners.
 

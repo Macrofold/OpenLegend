@@ -55,7 +55,7 @@ A character is allowed to be mistaken or dishonest. “I built a bow” can be a
 
 Use **goal** in player-facing language and **intention** when it helps distinguish maintained pursuit from passing desire. These refer to the same operational record, not two databases.
 
-A need is a native bodily condition. A desire is something the actor wants or imagines. A maintained goal is something the actor has chosen to keep pursuing across decisions. A plan is a proposed means of doing so. A running action is the authoritative work currently being performed. A social commitment is an obligation established by the relevant social rules. These distinctions allow each to change without pretending that the others changed too.
+A need can concern the body or a psychological dimension of the authored person, such as contact, belonging or enjoyment. Current native bodily conditions already have world-owned mechanics; broader psychological need behavior is an [accepted product target with open integration work](projects/compelling-characters-feature-spec.md#needs-experience-and-choice), not a claim that new meters are implemented. A desire is something the actor wants or imagines. A maintained goal is something the actor has chosen to keep pursuing across decisions. A plan is a proposed means of doing so. A running action is the authoritative work currently being performed. A social commitment is an obligation established by the relevant social rules. These distinctions allow each to change without pretending that the others changed too.
 
 Hunger does not require creating “Satisfy hunger” every time it changes. Eating an available berry can be a native or immediate response with no durable goal. “Keep enough food for tomorrow” is a good candidate for a persistent goal because it matters beyond the present stimulus. “Understand why the shelter leaks” is also a goal, although its next useful action may be investigation rather than construction.
 
@@ -78,6 +78,12 @@ Creator-authored initial goals seed the actor once. They are not reapplied at ea
 Changing a goal stops admitting further steps for an abandoned plan, but cancellation of work already in progress follows the native action's cancellation rules. It does not refund consumed resources by rewriting a sentence. Abandoning a private goal also cannot erase an outstanding promise to another actor.
 
 A long-running action must not block meaningful reconsideration. For example, hunger during a day of house-building can make food the immediate pursuit and suspend the house plan without abandoning the longer-term goal. The actor can revise its foreground goal/plan and explicitly interrupt work; native emergency protection may also interrupt under its own policy. After eating, reconsider the suspended work against current conditions before resuming. The [physical work contract](../archive/07-technical-architecture/agent-agency-runtime.md#43-do-not-loop-executecommand-over-multiple-timed-actions) governs interruption and retained progress.
+
+### Whole-character behavior
+
+[Compelling characters](projects/compelling-characters-feature-spec.md) makes the connection between inner experience and actual pursuit explicit. Bodily relief, meaningful contact, disappointment, enjoyment or a changed interpretation must be able to affect what the character chooses next. A completed purpose must not regenerate indefinitely from old prompt text. Useful repetition, quiet pleasure, independent interests and credible refusal are legitimate; random novelty and a perpetual hunt/cook cycle are not substitutes for a life.
+
+[CE04/CE05](maintainers/character-experience.md) coordinates the relevant AG/CR/ACT/world work and [complete episode evaluation](projects/compelling-characters-feature-spec.md#complete-behavioral-flows). This is an early product target with open qualification, not a new planner, mandatory thought loop or permission to control a human character. AG12 remains the behavioral/cost owner; its actual evidence must connect a permitted experience to chosen activity, real consequences and later continuation or stopping.
 
 ## 4. Plans preserve continuity without prescribing a life
 

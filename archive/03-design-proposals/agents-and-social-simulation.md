@@ -39,6 +39,10 @@ Healing is an ongoing process affected by rest, nutrition, treatment, and condit
 
 Needs use thresholds with hysteresis: begin seeking food below one value, stop after a higher value. This avoids switching every tick. Integrate drift by elapsed simulated time, and wake cognition when a meaningful band changes. Prioritize immediate native survival under the [agency adequacy boundary](../../docs/agent-agency.md#8-attention-and-initiation), while allowing bounded planning/help when a capable actor lacks a useful native solution. Minor discomfort must not continuously interrupt conversation.
 
+## Situated experience and a multidimensional life
+
+Mike's October 3 direction makes the integrated experience explicit: psychological concerns, contact, belonging and enjoyment should matter alongside the body, with context acting as a window into the world and relevant inner life. The [perspective and inner-life companion](character-experience-and-inner-life.md) develops that philosophical ambition and its research qualifications. The [compelling-character specification](../../docs/projects/compelling-characters-feature-spec.md) owns product behavior and full-flow scenarios; [CE01–CE05](../../docs/maintainers/character-experience.md) coordinates existing ACT/AG/CR/world owners. Initial character quality is early DG02 work; the later personality-development proposals below do not postpone it.
+
 ## Emotion as an evolving appraisal, not a fixed response table
 
 Start with a small set of dimensions: pleasant/unpleasant affect, arousal, perceived safety, social connection, and frustration. Store sparse named appraisals such as gratitude toward Ada, fear of fire, grief tied to a loss, or anger about a broken promise. Named emotions refer to causes, targets, intensity, persistence/update policy, and relevant memories. These dimensions are optional authored choices, not an engine-wide mandatory taxonomy.

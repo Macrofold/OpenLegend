@@ -172,3 +172,9 @@ Mike authorized [invite enrollment and characterless sessions](../../docs/projec
 - How much a spectator may see. The current overview is a generic top-down map with no names or identities ([MP17](../../docs/limits/multiplayer.md#mp17)); a 3D spectator camera or named bodies would change the privacy contract and needs renderer support.
 
 None of these blocks invited play or current operator work.
+
+## D69 — Multidimensional character experience
+
+**Accepted product direction; concrete authored-world choices remain open.** A compelling resident has bodily and psychological experience, meaningful contact/belonging and enjoyment, distinct interests and independent choices. Context combines permitted outer circumstances with relevant inner experience; complete episodes must show effects on action, real consequences and later priorities. [Product specification](../../docs/projects/compelling-characters-feature-spec.md) and [CE01–CE05](../../docs/maintainers/character-experience.md) own delivery. This does not select a universal psychology or require numerical need meters.
+
+Choose the first world's representation and supported satisfaction/recovery conditions for psychological concerns, how conflicting or persistent concerns become salient, and which actual enjoyable/social activities the first slice supports. Existing identity, appraisals and relationship knowledge are the starting point; a newly required mechanical pressure needs its own explicit policy. Exact rates, thresholds, optional opportunity pacing and any additional feeling vocabulary remain testable choices, not values borrowed from hunger or human research. D54 retains shared opportunity cadence; D55/CG09 retains any change to complete accepted identity inclusion. AG12/CR12 and R24 compare the resulting experience and total cost.

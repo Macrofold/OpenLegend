@@ -93,6 +93,8 @@ Owner: server director/cognition and AI adapters. Depends on: CR01. Exit evidenc
 
 [AG06](agent-agency.md#ag06--goalplan-aware-context-and-derived-interests) owns new operational context and goal-derived interests; CR03/CR04 retain attention algorithms, scoped retrieval and pending behavioral acceptance.
 
+**Integrated character scope:** [CE03/CE05](character-experience.md) coordinates the [compelling-character target](../projects/compelling-characters-feature-spec.md) through these existing tasks. Prompt/context work must represent the character's permitted outer situation and relevant bodily/psychological experience, preserve complete accepted identity and required evidence, and show meaningful consequences in the specified full episodes. This does not complete CR acceptance or create another memory/attention implementation.
+
 ### CR03 — Compact English context
 
 - [x] Encode single-kind operations in provider schemas, validate remaining envelope constraints before interpretation, and scope speech/gesture options to actor capabilities. Identify speaker/recipient/overheard roles in current speech recall, distinguish trigger source from subject, and suppress duplicate references, excessive floating-point display precision and empty planning/withdrawal instructions. Limited live human/animal and private-thought observations are in [Verification](../verification/simulation-and-cognition-audit.md#simulation-and-cognition-audit); broader CR12 acceptance remains open.
@@ -236,6 +238,8 @@ Owner: server repository/protocol/client projection and documentation. Depends o
 CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios while retaining its memory/recall acceptance scope.
 
 ### CR12 — Acceptance and token/latency evidence
+
+For the early resident's multidimensional life, use [CE05](character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification) and the [complete character flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) as the integrated scenario owner. Evaluate delayed behavior after social contact, belonging-related interpretation, enjoyment and bodily relief, alongside existing recall/privacy/cost cases. Scenario wiring or a fluent thought cannot close live character quality.
 
 NP01 completed its bounded provider outcome, checked-price, reservation and required-context reporting child. [NP01 evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) distinguishes zero from unpriced, cancellation from deadlines, late settlement from duplicate dispatch and all four preparation variants. The accepted identity-size/greeting tradeoff remains [CG09](../limits/cognition.md#cg09); this repair closes no broader live quality, payload optimization, deployment or lifecycle requirement below.
 

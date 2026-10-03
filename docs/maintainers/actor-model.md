@@ -192,6 +192,10 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 **Dependencies:** ACT08.1–ACT08.3. **Exit:** one accepted actor-owned revision drives every relationship surface, with no scores, reciprocity inference or competing text store.
 
+## Integrated character experience
+
+[CE02/CE05](character-experience.md) applies the delivered ACT07/ACT08 foundations to the [multidimensional resident target](../projects/compelling-characters-feature-spec.md). Psychological concerns, their experienced meaning and their actual effect on choices must be designed and qualified together, including satisfaction, competing motives and later reinterpretation. Existing persistent feelings and relationship text are foundations; their implementation does not establish live emotional expression or a compelling whole life. ACT09 remains a conditional authoring UI slice, not a prerequisite for every early character experiment.
+
 ## ACT09 — Internal feeling process authoring
 
 **Status: conditional proposed slice; unimplemented UI, not authorized by this documentation pass.** ACT07 already implements native process support. This task concerns a usable creator journey, not rebuilding the appraisal foundation or automatically enrolling actors. Consider it after [BW16/BW17](base-world.md#social-playable-slices) when a concrete world scenario needs it.
