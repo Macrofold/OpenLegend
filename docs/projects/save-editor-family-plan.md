@@ -1,10 +1,14 @@
 # Save recovery, editor regressions and family facts
 
-Implementation plan for SL09-C, the two God-mode editor regression items, and BW16. Base: local `main` `add92ccb`, containing refreshed `origin/main` `0382be76`. Working branch: `codex/save-editor-family`.
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Save recovery and the two focused editor fixes are delivered; family authoring still needs its learning design, runtime journey and verification. | 2026-10-03   |
+
+Implementation plan for SL09-C, the two God-mode editor regression items, and BW16. Current base: local `main` `b50ec6ce`. Original implementation base: local `main` `add92ccb`, containing refreshed `origin/main` `0382be76`. Working branch: `codex/save-editor-family`.
 
 ## Scope and owners
 
-- **Save recovery:** `apps/server/src/checkpoint*`, `game-saves.ts`, and `save-files.ts` own the capture lifetime and filesystem publication. Keep the PostgreSQL snapshot consistent and prior saves usable. Measure a larger write-heavy case with a matched command baseline and record host contention. Address a blocked individual write/sync/rename through one worker-lifetime rule; do not let a timed-out writer publish after the caller reports failure.
+- **Save recovery:** `apps/server/src/checkpoint*`, `game-saves.ts`, and `save-files.ts` own the capture lifetime and filesystem publication. Keep the PostgreSQL snapshot consistent and prior saves usable. The database writer and restore command must share the current-format marker so a valid new backup can be installed without accepting older formats. Measure a larger write-heavy case with a matched command baseline and record host contention. Address a blocked individual write/sync/rename through one worker-lifetime rule; do not let a timed-out writer publish after the caller reports failure.
 - **Editor correctness:** the React editor sends only changed memory/event entries; `WorldService` merges those against current authoritative history with per-entry hashes. Add focused regression coverage for mature lists, validation, discard/reset, concurrent simulation additions, same-entry conflicts, and refresh. Fix actual defects in those owners without duplicating save logic. Inspect the resulting UI at desktop and narrow sizes.
 - **Family facts:** `social.ts` owns authoritative parent/sibling transition; `WorldService` owns creator admission and scoped projection; protocol carries only permitted data; the client owns a creator journey with actor selection, direction preview, submission, deletion and readable bounded inspection. The paired feature and technical designs record Mike's choices: plain creator deletion and learned-only ordinary-player visibility. Define the permitted learning path before implementing ordinary disclosure. Keep subjective notes independent and world-specific topology localized.
 

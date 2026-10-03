@@ -185,6 +185,7 @@ Mike directed that the bundled world's survival rules leave the engine and becom
 ## 2026-09-30 — “main” means the local branch
 
 Mike directed that `main` in a request means the local `main` branch unless `origin` or another remote is named. [AGENTS.md](../AGENTS.md#work-discipline) now says so beside the rebase route, so base selection uses local `main` rather than `origin/main` by default.
+
 ## 2026-10-01 — Family disclosure and correction choices
 
 Mike chose learned-only visibility for ordinary players: a character's view must not reveal a creator-authored parent or sibling fact merely because it exists in the world. For an incorrect fact, the creator should simply delete the active relation. A separate “mistaken” state and family-only audit trail would add machinery without a stated need; ordinary request safeguards must prevent late retries from recreating deleted facts. [BW16's proposed journey](projects/family-authoring-feature-spec.md) and [D63](../archive/05-project/open-decisions.md#social-exposure-decisions) record those targets, distinct from current behavior. The permitted learning/evidence path remains to be designed; no family runtime or UI behavior changed in this update.

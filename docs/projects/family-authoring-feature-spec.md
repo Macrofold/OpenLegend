@@ -1,6 +1,10 @@
 # Creator-authored family facts — feature specification
 
-**Status:** authorized implementation scope. Mike chose learned-only ordinary-player disclosure and deletion of mistaken creator-authored facts. The learning path still needs design. This is the BW16 slice of the bundled world, not a universal family law.
+| Status            | Current progress                                                                                                                | Last updated |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Design incomplete | Deletion and learned-only disclosure are selected; the permitted learning journey and runtime implementation remain unfinished. | 2026-10-03   |
+
+Mike authorized this scope and chose learned-only ordinary-player disclosure and deletion of mistaken creator-authored facts. The learning path still needs design. This is the BW16 slice of the bundled world, not a universal family law.
 
 ## Purpose and journey
 

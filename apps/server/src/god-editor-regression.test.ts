@@ -94,7 +94,13 @@ describe('God editor three-way saves', () => {
       expectedHash: detail.hash,
       replacement: { source: 'memory' as const, value: replacement },
     };
-    const saved = await service.savePersonEditor(NPC_ID, opened.person, opened.person, [change]);
+    const saved = await service.savePersonEditor(
+      NPC_ID,
+      opened.person,
+      opened.person,
+      [change],
+      opened,
+    );
     if (!saved.ok) throw new Error(JSON.stringify(saved));
     expect(await memoryCount()).toBe(baselineCount + 1);
     const refreshed = await service.personEditor(NPC_ID);
@@ -104,7 +110,7 @@ describe('God editor three-way saves', () => {
     if (!later.ok) throw new Error(later.message);
     expect(JSON.parse(later.json)).toMatchObject({ summary: 'Later memory' });
     expect(
-      (await service.savePersonEditor(NPC_ID, opened.person, opened.person, [change])).code,
+      (await service.savePersonEditor(NPC_ID, opened.person, opened.person, [change], opened)).code,
     ).toBe('stale');
   });
 

@@ -25,7 +25,7 @@ import {
 import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { GameSaves } from '../apps/server/src/game-saves.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqlGameRepository } from '../apps/server/src/store.js';
+import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { forgetExperience } from '@open-legend/domain';
 import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
@@ -119,8 +119,9 @@ try {
           if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
             throw new Error('Invalid backup columns.');
           if (table === 'meta' && row['key'] === 'schema') {
-            // Current database format only (store.ts writes schema '3'); older backups are refused.
-            if (String(row['value']) !== '3') throw new Error('Unsupported backup schema.');
+            // The writer owns the current database format; older backups are refused.
+            if (String(row['value']) !== DATABASE_SCHEMA)
+              throw new Error('Unsupported backup schema.');
             continue;
           }
           // Filesystem ownership and interrupted-restore markers belong to the target,

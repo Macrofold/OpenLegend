@@ -1,6 +1,10 @@
 # Creator-authored family facts — technical design
 
-**Status:** BW16 implementation design; learned-only ordinary disclosure and creator deletion are selected. The permitted learning path still needs design. [Feature behavior](family-authoring-feature-spec.md).
+| Status            | Current progress                                                                                                                     | Last updated |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Design incomplete | Mutation and disclosure owners are outlined; the permitted learning path must be designed before ordinary disclosure is implemented. | 2026-10-03   |
+
+BW16 implementation design: learned-only ordinary disclosure and creator deletion are selected. The permitted learning path still needs design. [Feature behavior](family-authoring-feature-spec.md).
 
 ## Owners and data flow
 
