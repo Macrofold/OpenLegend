@@ -2,43 +2,43 @@
 
 [Library](README.md) · [Priority policy](gameplay-priorities.md) · [Actions](ranked-actions.md) · [Introductory patterns](ranked-patterns.md)
 
-**Scope correction · October 3, 2026.** The library includes **27 expanded, individually identified inventories**, not merely 270 introductory examples. The eight newer repertoire branches each expanded a different group of categories. Their source documents are now available together on the priorities branch as `inventory-*.md`; the original shorter category files retain their introductory examples and existing links. An expanded inventory is the source of its individual entries; a retained introductory example is not a substitute for that inventory.
+**Scope correction · October 3, 2026.** The library includes **27 expanded, individually identified inventories**, not merely 270 introductory examples. The eight newer repertoire branches each expanded a different group of categories. Their source documents are available together on the priorities branch as `inventory-*.md`; the original shorter category files retain introductory examples and existing links. An expanded inventory is the source of its individual entries; an introductory example is not a substitute for it.
 
-The inventory snapshots preserve their source text, IDs, research and provisional build estimates. **Their older Criticality cells and within-domain F/U/C/D sort directions are historical, not the current game's priorities.** Use the current ranking linked below when available. A pending row means the inventory has been located and preserved, not that its entries have been reranked. Do not infer coverage from the presence of a category heading in another register.
+The inventory snapshots preserve source text, IDs, research and provisional build estimates. **Their older Criticality cells and within-domain F/U/C/D sort directions are historical, not the current game's priorities.** Each linked ranking register below owns its current review status and, when reviewed, every individual assignment. A register marked **Pending** means the source has been located and preserved, not reranked. Do not infer coverage from the presence of a category heading elsewhere.
 
-The 270 introductory examples, 384 actions and expanded inventory rows are different counts. Some introductory ideas also appear inside expanded rows; do not add all those counts and call the result unique features. Exact expanded-row counts will be reported only after checking the individual IDs.
+The 270 introductory examples, 384 actions and expanded inventory rows are different counts. Some introductory ideas also appear inside expanded rows; do not add all those counts and call the result unique features. Exact expanded-row counts are recorded only after checking the individual IDs.
 
 ## Inventory and ranking coverage
 
-| Expanded inventory | Source group | Current-game reranking |
+| Expanded inventory | Source group | Current ranking and review status |
 | --- | --- | --- |
-| [Combat and rescue](inventory-combat-rescue.md) | 8 | Pending |
-| [Objects, weapons and equipment](inventory-objects.md) | 2 | Pending |
-| [Adventure and discovery](inventory-adventure-discovery.md) | 8 | Pending |
-| [Abilities and progression](inventory-abilities-progression.md) | 7 | Pending |
-| [Needs](inventory-needs.md) | 3 | Pending |
-| [Materials and resources](inventory-materials-resources.md) | 2 | Pending |
-| [Work and crafting](inventory-work-crafting.md) | 2 | Pending |
-| [Settlements and architecture](inventory-settlements-architecture.md) | 5 | Pending |
-| [Ecology and weather](inventory-ecology-weather.md) | 5 | Pending |
-| [Bodies and species](inventory-bodies-species.md) | 5 | Pending |
-| [Economy and logistics](inventory-economy-logistics.md) | 2 | Pending |
-| [Relationships](inventory-relationships.md) | 4 | Pending |
-| [Characters and backstories](inventory-characters-backstories.md) | 3 | Pending |
-| [Mechanics](inventory-mechanics.md) | 1 | Pending |
-| [Psychology and behavior](inventory-psychology-behavior.md) | 3 | Pending |
-| [Traits](inventory-traits.md) | 3 | Pending |
-| [Diplomacy and conflict](inventory-diplomacy-conflict.md) | 4 | Pending |
-| [Institutions and politics](inventory-institutions-politics.md) | 4 | Pending |
-| [History and myth](inventory-history-myth.md) | 6 | Pending |
-| [Languages and knowledge](inventory-languages-knowledge.md) | 6 | Pending |
-| [Arts and leisure](inventory-arts-leisure.md) | 6 | Pending |
-| [Faith and ritual](inventory-faith-ritual.md) | 6 | Pending |
-| [Magic](inventory-magic.md) | 7 | Pending |
-| [Technology](inventory-technology.md) | 7 | Pending |
-| [Automation and creators](inventory-automation-creators.md) | 1 | Pending |
-| [Unusual realities](inventory-unusual-realities.md) | 1 | Pending |
-| [Simulation experiments](inventory-simulation-experiments.md) | 1 | Pending |
+| [Combat and rescue](inventory-combat-rescue.md) | 8 | [Combat register](ranked-combat-rescue.md) |
+| [Objects, weapons and equipment](inventory-objects.md) | 2 | [Objects register](ranked-objects.md) |
+| [Adventure and discovery](inventory-adventure-discovery.md) | 8 | [Adventure register](ranked-adventure-discovery.md) |
+| [Abilities and progression](inventory-abilities-progression.md) | 7 | [Progression register](ranked-abilities-progression.md) |
+| [Needs](inventory-needs.md) | 3 | [Needs register](ranked-needs.md) |
+| [Materials and resources](inventory-materials-resources.md) | 2 | [Materials register](ranked-materials-resources.md) |
+| [Work and crafting](inventory-work-crafting.md) | 2 | [Crafting register](ranked-work-crafting.md) |
+| [Settlements and architecture](inventory-settlements-architecture.md) | 5 | [Settlements register](ranked-settlements-architecture.md) |
+| [Ecology and weather](inventory-ecology-weather.md) | 5 | [Ecology register](ranked-ecology-weather.md) |
+| [Bodies and species](inventory-bodies-species.md) | 5 | [Bodies register](ranked-bodies-species.md) |
+| [Economy and logistics](inventory-economy-logistics.md) | 2 | [Economy register](ranked-economy-logistics.md) |
+| [Relationships](inventory-relationships.md) | 4 | [Relationships register](ranked-relationships.md) |
+| [Characters and backstories](inventory-characters-backstories.md) | 3 | [Characters register](ranked-characters-backstories.md) |
+| [Mechanics](inventory-mechanics.md) | 1 | [Mechanics register](ranked-mechanics.md) |
+| [Psychology and behavior](inventory-psychology-behavior.md) | 3 | [Psychology register](ranked-psychology-behavior.md) |
+| [Traits](inventory-traits.md) | 3 | [Traits register](ranked-traits.md) |
+| [Diplomacy and conflict](inventory-diplomacy-conflict.md) | 4 | [Diplomacy register](ranked-diplomacy-conflict.md) |
+| [Institutions and politics](inventory-institutions-politics.md) | 4 | [Institutions register](ranked-institutions-politics.md) |
+| [History and myth](inventory-history-myth.md) | 6 | [History register](ranked-history-myth.md) |
+| [Languages and knowledge](inventory-languages-knowledge.md) | 6 | [Knowledge register](ranked-languages-knowledge.md) |
+| [Arts and leisure](inventory-arts-leisure.md) | 6 | [Arts register](ranked-arts-leisure.md) |
+| [Faith and ritual](inventory-faith-ritual.md) | 6 | [Faith register](ranked-faith-ritual.md) |
+| [Magic](inventory-magic.md) | 7 | [Magic register](ranked-magic.md) |
+| [Technology](inventory-technology.md) | 7 | [Technology register](ranked-technology.md) |
+| [Automation and creators](inventory-automation-creators.md) | 1 | [Automation register](ranked-automation-creators.md) |
+| [Unusual realities](inventory-unusual-realities.md) | 1 | [Unusual-realities register](ranked-unusual-realities.md) |
+| [Simulation experiments](inventory-simulation-experiments.md) | 1 | [Experiments register](ranked-simulation-experiments.md) |
 
 [Actions](actions.md) remain their separate 384-entry inventory, with current priorities in [ranked actions](ranked-actions.md). [Ranked coverage](ranked-coverage.md) covers whole-game capabilities and combined situations. [Ranked patterns](ranked-patterns.md) covers the older introductory examples only. Neither replaces the 27 individual-entry reviews above.
 
@@ -63,4 +63,4 @@ The older [group 2 working expansion](https://github.com/Macrofold/OpenLegend/tr
 
 Read each expanded inventory and assign every stable row ID exactly one current-game priority. Preserve descriptions, IDs, setting suitability and research. Judge the full described feature against the whole playable game, not its old score, convenient implementation route or importance inside an isolated category. Keep engineering effort separate. Rank necessary opponents, usable equipment, enjoyable destinations, rewards, progression and useful production before optional domestic or administrative detail. Representative alternatives do not all become mandatory.
 
-For each completed inventory, record its exact ID coverage, current score/order and the important selection reasons. Check for missing and duplicate IDs, invalid priorities, stale selection instructions and broken links. Current scores must have one owner. The final review must distinguish document coverage from actual gameplay implementation or playtest evidence. This work changes neither runtime behavior nor existing implementation acceptance states.
+For each completed inventory, record its exact ID coverage, current score/order and important selection reasons. Check for missing and duplicate IDs, invalid priorities, stale selection instructions and broken links. Current scores and the detailed review status have one owner: that inventory's linked ranking register. The final review must distinguish document coverage from actual gameplay implementation or playtest evidence. This work changes neither runtime behavior nor existing implementation acceptance states.
