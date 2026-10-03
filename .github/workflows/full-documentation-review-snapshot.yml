@@ -1,0 +1,42 @@
+name: Documentation review source snapshot
+on:
+  push:
+    branches: [docs/full-documentation-review-2026-10-02]
+    paths: [.github/workflows/full-documentation-review-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  tracked-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 19a775f88d59f107029e497354f0d055ba2e05b9
+          path: product-planning
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: df7e23fa3a476ce914773b919c18d1e6fea1296c
+          path: production-planning
+          persist-credentials: false
+      - name: Package tracked sources and exact revisions
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/documentation-review"
+          git -C source archive --format=tar.gz HEAD > "$RUNNER_TEMP/documentation-review/current-source.tar.gz"
+          git -C source rev-parse HEAD > "$RUNNER_TEMP/documentation-review/current-revision.txt"
+          for scope in product-planning production-planning; do
+            git -C "$scope" archive --format=tar.gz HEAD docs .agents AGENTS.md README.md > "$RUNNER_TEMP/documentation-review/$scope.tar.gz"
+            git -C "$scope" rev-parse HEAD > "$RUNNER_TEMP/documentation-review/$scope-revision.txt"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlegend-documentation-review-current
+          path: ${{ runner.temp }}/documentation-review/
+          retention-days: 1
+          if-no-files-found: error
