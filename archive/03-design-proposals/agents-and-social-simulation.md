@@ -118,7 +118,7 @@ The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md
 
 ## Accepted appraisal continuity
 
-The approved [P5 implementation](../../docs/projects/appraisal-social-continuity-tech-design.md)
+The approved [P5 implementation](../../docs/projects/completed/appraisal-social-continuity-tech-design.md)
 extends the existing native appraisal owner with stable identity, policy-defined lifetime
 and permitted multi-cause provenance. Directional relationship prose remains the actor's
 subject knowledge document; About me, objective kinship and obligations keep their own

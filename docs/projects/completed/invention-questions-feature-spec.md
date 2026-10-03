@@ -1,6 +1,10 @@
 # Invention questions: feature specification
 
-**Status: implemented; bounded acceptance complete.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The working branch implements the structured OpenCode bridge and passes real question/answer/review journeys. Actual browser interaction and matched complete-request measurements pass; other harnesses retain ordinary final-text clarification. The proposal adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../world-agent-runtime.md).
+| Status    | Current progress                                                                                                               | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Structured questions, durable answers and explicit continuation are implemented and qualified within the agreed bounded scope. | 2026-10-03   |
+
+**Status: implemented; bounded acceptance complete.** The owner explicitly requested complete implementation of this feature together with the World Agent context foundation. The working branch implements the structured OpenCode bridge and passes real question/answer/review journeys. Actual browser interaction and matched complete-request measurements pass; other harnesses retain ordinary final-text clarification. The feature adds structured questions to the existing conversation, preserving [runtime authority, funding and continuation](../../world-agent-runtime.md).
 
 ## Purpose and scope
 
@@ -92,6 +96,6 @@ No new effect engine, general questionnaire platform, NPC decision system, multi
 
 ## Maintained records
 
-- Implementation: [WW24–WW30](../maintainers/world-agent-writes.md#structured-invention-questions), under INV-2.3 and INV-21.
-- Limits and constraints: [QST01–QST04](../limits/inventions.md#structured-invention-question-proposal); existing session/context limits still apply.
-- Related design: [technical design](invention-questions-tech-design.md), [context foundation](world-agent-context-tech-design.md) and [current runtime](../world-agent-runtime.md).
+- Implementation: [WW24–WW30](../../maintainers/world-agent-writes.md#structured-invention-questions), under INV-2.3 and INV-21.
+- Limits and constraints: [QST01–QST04](../../limits/inventions.md#structured-invention-question-proposal); existing session/context limits still apply.
+- Related design: [technical design](invention-questions-tech-design.md), [context foundation](world-agent-context-tech-design.md) and [current runtime](../../world-agent-runtime.md).

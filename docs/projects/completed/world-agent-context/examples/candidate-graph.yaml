@@ -8,7 +8,7 @@ references:
   candidate: { kind: recipe-draft, id: example-draft-1, version: example-revision-1 }
   cord: { kind: item-definition, id: cord, version: example-cord-version }
   fiber: { kind: item-definition, id: prepared_fiber, version: example-fiber-version }
-  family: { kind: family, id: swing, version: example-family-version }
+  family: { kind: family, id: base:swing, version: example-family-version }
   output: { kind: proposed-item-definition, id: example-output-1, version: example-revision-1 }
 relationships:
   - id: example-edge-material-1

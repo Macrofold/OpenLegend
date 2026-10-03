@@ -1,0 +1,52 @@
+# Documentation example of guidance derived from one installed family, not a universal recipe schema.
+# This base-world snapshot is illustrative; a runtime must obtain the current selected-family schema.
+kind: recipe
+encoding: Typed JSON candidate inside ol_recipe_submit; no JSON string nested inside JSON.
+fields:
+  family:
+    meaning: Exact installed family identity and version; no implied fallback or schema migration.
+    example: { id: 'base:swing', version: 1 }
+    required: true
+  name:
+    meaning: Name of the crafting recipe shown to the player.
+    type: string
+    length: { minimum: 1, maximum: 80 }
+    required: true
+  description:
+    meaning: Explain what the recipe makes. Description text does not add mechanics.
+    type: string
+    length: { minimum: 1, maximum: 700 }
+    required: true
+  inputs:
+    meaning: Eligible materials consumed by one crafting job under the selected family's input rules.
+    type: array
+    required: true
+    example_swing_bounds: { minimum: 2, maximum: 6, maximum_total_quantity: 20 }
+    fields:
+      definitionId: Exact supplied eligible material ID, not a live item ID or a guessed label.
+      quantity: Integer units; this swing family allows 1–8 per role. Other families may differ.
+      role: The selected family's material role; each required role appears once.
+    generated_inputs: Only a family that explicitly accepts the producer's verified material contract can consume it.
+  output:
+    meaning: Names/descriptions of the crafted result; the trusted family compiler supplies native mechanics.
+    required: true
+    fields:
+      name: The produced item's display name, 1 to 80 characters.
+      description: The produced item's description, 1 to 700 characters; no executable effects.
+    derived_not_submitted: Properties, launcher/ammunition/container behavior and other native output fields.
+  parameters:
+    meaning: Exactly the selected family's parameter schema; no unrelated nullable output branches.
+    required: true
+    example_swing:
+      workSeconds: Integer simulation seconds, 48–480; not wall-clock execution time.
+      damage: Native health points, 10–20.
+      range: World metres, 3–7.
+      accuracy: Base hit probability, 0.6–0.9; work duration does not mechanically increase it.
+    other_families: May expose different parameters or an empty object with material-derived facts.
+submission_fields:
+  operationId: Stable request identity; repeat the same ID and body to reconcile a lost response.
+  packetRef: Non-secret reference to the retained context packet whose exact dependency pins must still match.
+  contextHandle: Application-issued scope binding; not a session ID or an invention parameter.
+  edit: Optional exact draftId and expectedRevision. Omit for a new draft.
+  deriveFrom: Optional exact inspected existing recipe reference; never a guessed base.
+  new_recipe_rule: No baseRecipeId field. A mechanism, material or actor is not a base recipe.
