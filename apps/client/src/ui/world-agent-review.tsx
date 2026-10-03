@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Tag } from '../design-system/components';
 import { post } from '../api';
+import { WorldAgentPreparationDetails } from './world-agent-work-details';
+import './world-agent-work.css';
 
-/** Only an exact server-returned plan can be approved. Prose is never approval authority.
+/** Approval and Apply remain bound to one exact plan, never displayed prose.
  * docs/invention-workshop-tools.md#5-explicit-apply-and-revision-continuity
  */
 export function WorldAgentReview({
@@ -12,6 +14,7 @@ export function WorldAgentReview({
   sessionId,
   planId,
   canApply,
+  mutationReason,
   onClose,
   onChanged,
 }: {
@@ -19,86 +22,126 @@ export function WorldAgentReview({
   sessionId: string;
   planId: string;
   canApply: boolean;
+  mutationReason?: string;
   onClose(): void;
   onChanged(): void;
 }) {
   const [review, setReview] = useState<WorldAgentReviewView>();
-  const [error, setError] = useState(''),
-    [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState('');
-  const working = useRef(false),
-    alive = useRef(true);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const working = useRef(false);
   const dialog = useRef<HTMLDivElement>(null);
-  // Approval removes its button. Keep keyboard focus inside the review for the next action.
+  const scope = `${worldId}:${sessionId}:${planId}`;
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
   useEffect(() => {
     dialog.current?.focus();
   }, [review?.plan.status]);
   const body = { worldId, sessionId, planId };
   useEffect(() => {
-    alive.current = true;
     const controller = new AbortController();
+    const requestScope = scope;
+    currentScope.current = requestScope;
+    setReview(undefined);
+    setError('');
     void post<{ ok: boolean; message?: string; data: WorldAgentReviewView }>(
       '/api/world-agent/session/review',
       body,
       controller.signal,
     )
-      .then((r) => {
-        if (!alive.current) return;
-        if (r.ok) setReview(r.data);
-        else setError(r.message ?? 'Review unavailable.');
+      .then((result) => {
+        if (controller.signal.aborted || currentScope.current !== requestScope) return;
+        if (result.ok) setReview(result.data);
+        else setError(result.message ?? 'This exact review is unavailable.');
       })
-      .catch((e) => {
-        if (alive.current) setError(e instanceof Error ? e.message : 'Review unavailable.');
+      .catch((failure) => {
+        if (!controller.signal.aborted && currentScope.current === requestScope)
+          setError(failure instanceof Error ? failure.message : 'Review unavailable.');
       });
     return () => {
-      alive.current = false;
       controller.abort();
+      currentScope.current = '';
     };
-  }, [worldId, sessionId, planId]);
+  }, [scope]);
   async function act(decision: 'approve' | 'reject' | 'apply') {
-    if (!review || working.current || !canApply) return;
+    if (!review || working.current || !canApply || mutationReason) return;
+    const requestScope = scope;
     working.current = true;
     setBusy(true);
     setError('');
     setNotice('');
     try {
       if (decision === 'apply') {
-        const r = await post<{ ok: boolean; message?: string }>(
+        const result = await post<{ ok: boolean; message?: string }>(
           '/api/world-agent/session/apply',
           body,
         );
-        if (!r.ok)
+        if (!result.ok)
           throw new Error(
-            r.message ?? 'Apply did not succeed; inspect current state before trying again.',
+            result.message ??
+              'Apply was not confirmed. Refresh this exact plan before trying again.',
           );
-        if (alive.current)
+        if (currentScope.current === requestScope)
           setNotice(
-            r.message ?? 'The change was committed. Crafting or other ongoing work is separate.',
+            result.message ??
+              'This exact change was committed. Crafting or other ongoing work remains a separate action.',
           );
       } else {
-        const r = await post<{ ok: boolean; message?: string; data: WorldAgentPlanView }>(
+        const result = await post<{ ok: boolean; message?: string; data: WorldAgentPlanView }>(
           '/api/world-agent/session/decision',
           { ...body, decision, digest: review.plan.digest },
         );
-        if (!r.ok) throw new Error(r.message ?? 'Decision not accepted.');
-        if (alive.current) setReview((v) => v && { ...v, plan: r.data });
+        if (!result.ok) throw new Error(result.message ?? 'Decision not accepted.');
+        if (currentScope.current === requestScope)
+          setReview((previous) => previous && { ...previous, plan: result.data });
       }
       const refreshed = await post<{ ok: boolean; message?: string; data: WorldAgentReviewView }>(
         '/api/world-agent/session/review',
         body,
       );
-      if (refreshed.ok && alive.current) setReview(refreshed.data);
-      onChanged();
-    } catch (e) {
-      if (alive.current)
+      if (currentScope.current !== requestScope) return;
+      if (refreshed.ok) setReview(refreshed.data);
+      else
         setError(
-          e instanceof Error
-            ? e.message
+          refreshed.message ??
+            'The action returned a result, but this exact review could not be refreshed.',
+        );
+      onChanged();
+    } catch (failure) {
+      if (currentScope.current === requestScope)
+        setError(
+          failure instanceof Error
+            ? failure.message
             : 'Outcome could not be confirmed. Refresh this exact plan.',
         );
     } finally {
       working.current = false;
-      if (alive.current) setBusy(false);
+      if (currentScope.current === requestScope) setBusy(false);
+    }
+  }
+  async function refreshReview() {
+    if (working.current) return;
+    const requestScope = scope;
+    working.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await post<{ ok: boolean; message?: string; data: WorldAgentReviewView }>(
+        '/api/world-agent/session/review',
+        body,
+      );
+      if (currentScope.current !== requestScope) return;
+      if (result.ok) setReview(result.data);
+      else setError(result.message ?? 'This exact review remains unavailable.');
+    } catch (failure) {
+      if (currentScope.current === requestScope)
+        setError(
+          failure instanceof Error ? failure.message : 'This exact review remains unavailable.',
+        );
+    } finally {
+      working.current = false;
+      if (currentScope.current === requestScope) setBusy(false);
     }
   }
   return (
@@ -111,138 +154,103 @@ export function WorldAgentReview({
       }}
     >
       <Modal className="ol-modal">
-        <Dialog ref={dialog} className="ol-person-dialog" aria-label="Review exact world change">
-          <h2>Review exact change</h2>
-          {review && (
-            <>
-              <Tag>
-                {review.draft.kind} · revision {review.draft.revision} · {review.plan.status}
-              </Tag>
-              <p>{review.draft.intent}</p>
-              <p>{review.plan.validation.semantics}</p>
-              <p>{review.plan.validation.message}</p>
-              <p className="ol-caption">
-                Coverage: {review.plan.validation.coverage.replace(/\.$/, '')}. Native validation is
-                not proof that every requested meaning or possible interaction was checked.
-              </p>
-              <p>Affected records in this adapter's scope: {review.plan.impact.affected}.</p>
-              {(review.plan.preparation ?? review.draft.preparation) &&
-                (() => {
-                  const preparation = review.plan.preparation ?? review.draft.preparation;
-                  if (!preparation) return null;
-                  const label = (ref: { kind: string; id: string; version: string }) =>
-                    preparation.graph.nodes.find(
-                      (node) =>
-                        node.ref.kind === ref.kind &&
-                        node.ref.id === ref.id &&
-                        node.ref.version === ref.version,
-                    )?.label ?? ref.id;
-                  return (
-                    <>
-                      <p>{preparation.presentation.description}</p>
-                      <p>
-                        {review.plan.status === 'applied'
-                          ? 'This change has been applied; see the native result below.'
-                          : 'Saved for review. No world change has been applied.'}
-                        {review.draft.kind === 'recipe' &&
-                          ' Saving or installing a recipe does not create an item; crafting is a separate action.'}
-                      </p>
-                      <details open>
-                        <summary>Requirements and checks</summary>
-                        <ul>
-                          {preparation.requirements.map((requirement) => (
-                            <li key={requirement.id}>
-                              <q>{requirement.source.text}</q> — {requirement.finding} (
-                              {requirement.status})
-                            </li>
-                          ))}
-                        </ul>
-                        <ul>
-                          {preparation.checks.map((check) => (
-                            <li key={check.id}>
-                              {check.status}: {check.finding}
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="ol-caption">
-                          These checks cover the supported native rules. Broader interactions have
-                          not been evaluated.
-                        </p>
-                      </details>
-                      <details>
-                        <summary>Materials and dependencies</summary>
-                        <ul>
-                          {preparation.graph.edges.map((edge) => (
-                            <li key={edge.id}>
-                              {label(edge.source)} → {edge.relation.replaceAll('_', ' ')} →{' '}
-                              {label(edge.target)}
-                              {edge.role && ` (${edge.role})`}
-                              {edge.quantity !== undefined && ` × ${edge.quantity}`}
-                            </li>
-                          ))}
-                        </ul>
-                        {preparation.graph.unresolved.map((finding, index) => (
-                          <p key={index}>
-                            {finding.field}: {finding.message}
-                          </p>
-                        ))}
-                        <p className="ol-caption">
-                          {preparation.graph.coverage.scope}:{' '}
-                          {preparation.graph.coverage.projection}. Proposed outputs are not
-                          installed definitions or possessed items.
-                        </p>
-                      </details>
-                    </>
-                  );
-                })()}
-              {review.plan.status !== 'applied' &&
-                review.plan.validation.activationRequiresResume && (
-                  <p>Applying this change requires a running world. Approval does not resume it.</p>
-                )}
-              {!!review.plan.validation.structuralErrors.length && (
-                <p>{review.plan.validation.structuralErrors.join('\n')}</p>
-              )}
-              <details>
-                <summary>Exact candidate</summary>
-                <pre className="ol-agent-json">{JSON.stringify(review.draft.payload, null, 2)}</pre>
-              </details>
-              <details>
-                <summary>Base pins and review identity</summary>
-                <pre className="ol-agent-json">
-                  {JSON.stringify(
-                    { base: review.draft.base, digest: review.plan.digest, planId },
-                    null,
-                    2,
+        <Dialog
+          ref={dialog}
+          className="ol-person-dialog ol-agent-work-review"
+          aria-label="Review exact world change"
+        >
+          <div className="ol-agent-work-review-heading">
+            <h2>Review exact change</h2>
+          </div>
+          <div className="ol-agent-work-review-body">
+            {!review && !error && <p role="status">Loading exact review…</p>}
+            {review && (
+              <>
+                <Tag>
+                  {review.draft.kind} · revision {review.draft.revision} · {review.plan.status}
+                </Tag>
+                <p>{review.draft.intent}</p>
+                <WorldAgentPreparationDetails
+                  preparation={review.plan.preparation ?? review.draft.preparation}
+                  validation={review.plan.validation}
+                />
+                <p>Affected records: {review.plan.impact.affected}.</p>
+                <p>
+                  {review.plan.status === 'applied'
+                    ? 'This exact change has been applied; its native receipt remains below.'
+                    : 'This is a saved review. The change has not been applied.'}
+                  {review.draft.kind === 'recipe' &&
+                    ' Installing a recipe does not create an item. Crafting is separate.'}
+                </p>
+                {review.plan.status !== 'applied' &&
+                  review.plan.validation.activationRequiresResume && (
+                    <p>
+                      Applying this change requires a running world. Approval does not resume it.
+                    </p>
                   )}
-                </pre>
-              </details>
-              {review.plan.result && <p role="status">{review.plan.result.message}</p>}
-              {canApply && review.plan.status === 'pending' && (
-                <div className="ol-agent-tools">
-                  <Button
-                    busy={busy}
-                    disabled={!review.plan.validation.ok}
-                    onPress={() => void act('approve')}
-                  >
-                    Approve this exact change
-                  </Button>
-                  <Button disabled={busy} variant="quiet" onPress={() => void act('reject')}>
-                    Reject
-                  </Button>
-                </div>
-              )}
-              {canApply && review.plan.status === 'approved' && (
-                <Button busy={busy} onPress={() => void act('apply')}>
-                  Apply approved change
+                <details>
+                  <summary>Exact candidate</summary>
+                  <pre className="ol-agent-json">
+                    {JSON.stringify(review.draft.payload, null, 2)}
+                  </pre>
+                </details>
+                <details>
+                  <summary>Base pins and review identity</summary>
+                  <pre className="ol-agent-json">
+                    {JSON.stringify(
+                      { base: review.draft.base, digest: review.plan.digest, planId },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                </details>
+                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
+              </>
+            )}
+          </div>
+          <div className="ol-agent-work-review-footer">
+            {mutationReason && <p role="status">{mutationReason}</p>}
+            {!canApply && !mutationReason && (
+              <p role="status">This session is currently read-only.</p>
+            )}
+            {notice && notice !== review?.plan.result?.message && <p role="status">{notice}</p>}
+            {error && <p role="alert">{error}</p>}
+            {review?.plan.status === 'pending' && (
+              <>
+                <Button
+                  variant="primary"
+                  busy={busy}
+                  disabled={!canApply || !!mutationReason || !review.plan.validation.ok}
+                  onPress={() => void act('approve')}
+                >
+                  Approve this exact change
                 </Button>
-              )}
-            </>
-          )}
-          {notice && notice !== review?.plan.result?.message && <p role="status">{notice}</p>}
-          {error && <p role="alert">{error}</p>}
-          <Button variant="quiet" disabled={busy} onPress={onClose}>
-            Close review
-          </Button>
+                <Button
+                  disabled={busy || !canApply || !!mutationReason}
+                  variant="quiet"
+                  onPress={() => void act('reject')}
+                >
+                  Reject
+                </Button>
+              </>
+            )}
+            {review?.plan.status === 'approved' && (
+              <Button
+                variant="primary"
+                busy={busy}
+                disabled={!canApply || !!mutationReason}
+                onPress={() => void act('apply')}
+              >
+                Apply approved change
+              </Button>
+            )}
+            <Button variant="quiet" disabled={busy} onPress={() => void refreshReview()}>
+              Refresh exact review
+            </Button>
+            <Button variant="quiet" disabled={busy} onPress={onClose}>
+              Close review
+            </Button>
+          </div>
         </Dialog>
       </Modal>
     </ModalOverlay>

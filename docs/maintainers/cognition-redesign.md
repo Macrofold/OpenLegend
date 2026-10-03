@@ -14,6 +14,8 @@ Delivered [AE05–AE08 activity learning](action-experience.md) uses CR preparat
 
 The [NC track](narration-and-conversations.md) retains speech/recall, conversation and Narrator integration acceptance for its delivered foundations; private immediate thoughts remain distinct from god-only reflection presentation, and notable unseen retention grants no awareness. [AG](agent-agency.md) extends universal decisions and operational pursuit. Existing CR/NC failure and behavioral acceptance tasks remain open; current implementation is recorded in Architecture.
 
+**Near-term conversation latency work:** [NC19](narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies) owns streamed extraction of user-facing text from structured JSON, starting with CR02 cognition-triggered NPC replies. This is unimplemented presentation work; complete decision validation, speech admission, private-thought boundaries and existing spending/recovery remain controlling.
+
 Keep CR identifiers stable for existing links. Execute in the following dependency order; a task's number does not imply that its integrations can precede their prerequisites:
 
 1. **CR01:** contracts, budgets, repository interfaces and failure boundaries.

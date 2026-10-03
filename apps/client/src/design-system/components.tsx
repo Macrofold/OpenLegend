@@ -389,6 +389,7 @@ export function Panel({
   hidden,
   draggable = false,
   resizable = false,
+  workspace,
 }: {
   title: string;
   onClose(): void;
@@ -402,6 +403,7 @@ export function Panel({
   hidden?: boolean;
   draggable?: boolean;
   resizable?: boolean;
+  workspace?: { expanded: boolean; width: number; onToggle(): void };
 }) {
   const titleId = useId();
   const body = useRef<HTMLDivElement>(null),
@@ -465,7 +467,13 @@ export function Panel({
       hidden={hidden}
       data-draggable={draggable || undefined}
       data-resizable={resizable || undefined}
-      style={{ translate: `${offset.x}px ${offset.y}px` }}
+      data-workspace={workspace?.expanded || undefined}
+      style={
+        {
+          translate: `${offset.x}px ${offset.y}px`,
+          ...(workspace?.expanded ? { '--workspace-width': `${workspace.width}px` } : {}),
+        } as CSSProperties
+      }
     >
       <header
         className="ol-panel-head"
@@ -490,7 +498,14 @@ export function Panel({
             {title}
           </h2>
         </div>
-        <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
+        <div className="ol-panel-tools">
+          {workspace && (
+            <Button size="sm" variant="quiet" onPress={workspace.onToggle}>
+              {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
+            </Button>
+          )}
+          <IconButton icon="ui.close" label={`Hide ${title} panel`} onPress={onClose} />
+        </div>
       </header>
       {tabs}
       <div ref={body} className="ol-panel-body">

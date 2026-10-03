@@ -1,0 +1,215 @@
+.ol-agent-work {
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+.ol-agent-work-panes {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  align-items: start;
+}
+.ol-agent-work[hidden] {
+  display: none;
+}
+.ol-agent-work-list,
+.ol-agent-work-detail {
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-block-size: clamp(180px, 48dvh, 540px);
+  overflow: auto;
+  padding: var(--space-1);
+}
+.ol-agent-work[data-detail='true'] > .ol-agent-work-panes > .ol-agent-work-list {
+  display: none;
+}
+.ol-agent-work[data-detail='false'] > .ol-agent-work-panes > .ol-agent-work-detail {
+  display: none;
+}
+.ol-agent-work h3,
+.ol-agent-work h4,
+.ol-agent-work p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ol-agent-work-row {
+  inline-size: 100%;
+  text-align: start;
+  white-space: normal;
+  justify-content: start;
+  padding: var(--space-3);
+}
+.ol-agent-work-row > span {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.ol-agent-work-row strong {
+  overflow-wrap: anywhere;
+  text-align: start;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ol-agent-work-row span span {
+  color: var(--ink-muted);
+  font-size: 0.9em;
+  display: block;
+  inline-size: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ol-agent-work-row[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+.ol-agent-work-header,
+.ol-agent-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-agent-history-row > span {
+  flex: 1 1 100%;
+  overflow-wrap: anywhere;
+}
+.ol-agent-work-detail > section,
+.ol-agent-work-list article {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-agent-comparison-scroll {
+  overflow: auto;
+  max-inline-size: 100%;
+}
+.ol-agent-comparison {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+.ol-agent-comparison td,
+.ol-agent-comparison th {
+  border-block-end: 1px solid var(--line);
+  padding: var(--space-2);
+  vertical-align: top;
+}
+.ol-agent-comparison pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.9em;
+  min-inline-size: 6ch;
+}
+.ol-agent-work-actions,
+.ol-agent-recipe-actions {
+  position: sticky;
+  bottom: 0;
+  padding-block: var(--space-3);
+  background: var(--surface);
+  border-block-start: 1px solid var(--line);
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-agent-recipe-editor {
+  display: grid;
+  gap: var(--space-3);
+  border-block: 1px solid var(--line);
+  padding-block: var(--space-3);
+}
+.ol-agent-recipe-editor label {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.ol-agent-recipe-editor input,
+.ol-agent-recipe-editor textarea,
+.ol-agent-recipe-editor select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+.ol-agent-recipe-editor textarea {
+  min-block-size: 5em;
+  resize: vertical;
+}
+.ol-agent-recipe-editor input:focus-visible,
+.ol-agent-recipe-editor textarea:focus-visible,
+.ol-agent-recipe-editor select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ol-agent-recipe-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+}
+.ol-agent-recipe-facts dt,
+.ol-agent-recipe-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ol-agent-work-review {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-block-size: calc(100dvh - var(--space-6));
+}
+.ol-agent-work-review-body {
+  overflow: auto;
+  min-block-size: 0;
+  padding: var(--space-4);
+}
+.ol-agent-work-review-heading,
+.ol-agent-work-review-footer {
+  padding: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.ol-agent-work-review-heading {
+  border-block-end: 1px solid var(--line);
+}
+.ol-agent-work-review-heading h2 {
+  margin: 0;
+}
+.ol-agent-work-review-footer {
+  border-block-start: 1px solid var(--line);
+}
+@container (min-width: 700px) {
+  .ol-agent-work-list {
+    display: flex !important;
+  }
+  .ol-agent-work-detail {
+    display: flex !important;
+  }
+  .ol-agent-work-panes {
+    grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr);
+  }
+}
+@media (forced-colors: active) {
+  .ol-agent-work-row[aria-pressed='true'] {
+    border-color: Highlight;
+  }
+  .ol-agent-recipe-editor input:focus-visible,
+  .ol-agent-recipe-editor textarea:focus-visible,
+  .ol-agent-recipe-editor select:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+/* The active editor owns the pinned actions; two footers cannot cover one another. */
+.ol-agent-work-actions[data-editing='true'] {
+  position: static;
+}

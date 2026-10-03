@@ -122,6 +122,8 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     [hover, setHover] = useState<{ entity: EntityView; point: { x: number; y: number } } | null>(
       null,
     );
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>([]);
+  const [inventoryOpened, setInventoryOpened] = useState(false);
   const [npcId, setNpcId] = useState<string | null>(null),
     [seed, setSeed] = useState<ComposerDraft | null>(null),
     [inventionSeed, setInventionSeed] = useState<{ id: string; text: string } | null>(null),
@@ -349,12 +351,14 @@ function App({ resetApplication }: { resetApplication: () => void }) {
   useEffect(() => {
     if (!hasView || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
-  }, [hasView, width, scale, open, timeSettings]);
+  }, [hasView, width, scale, open, timeSettings, expandedWorkspaces]);
+  const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function fit(panels: PanelId[]) {
     const available = width / scale;
     if (available < 720) return panels;
     let result = [...panels];
-    const size = (id: PanelId) => (panelInfo[id].wide ? 504 : 336);
+    const size = (id: PanelId) =>
+      expandedWorkspaces.includes(id) ? workspaceWidth : panelInfo[id].wide ? 504 : 336;
     while (
       result.length > 1 &&
       (result.reduce((n, id) => n + size(id) + 16, 0) > available - 220 ||
@@ -365,6 +369,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     return result;
   }
   function show(id: PanelId) {
+    if (id === 'inventory') setInventoryOpened(true);
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
     setOpen((v) => fit([...v.filter((p) => p !== id), id]));
@@ -381,7 +386,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
     if (open.includes(id)) hide(id);
     else show(id);
   }
-  useEffect(() => setOpen((v) => fit(v)), [width, scale]);
+  useEffect(() => setOpen((v) => fit(v)), [width, scale, expandedWorkspaces]);
   // The event filter lasts while World Events is open, as it did when the panel owned it.
   useEffect(() => {
     if (!open.includes('events')) setEventsType('all');
@@ -389,11 +394,15 @@ function App({ resetApplication }: { resetApplication: () => void }) {
   async function command(action: ActionOption) {
     if (!connected) {
       notify('Reconnect to the world.');
-      return;
+      return { ok: false, code: 'offline', message: 'Reconnect to the world.' };
     }
     if (!action.enabled) {
       notify(action.reason ?? 'This action is unavailable.');
-      return;
+      return {
+        ok: false,
+        code: 'unavailable',
+        message: action.reason ?? 'This action is unavailable.',
+      };
     }
     setPicker(null);
     try {
@@ -403,8 +412,14 @@ function App({ resetApplication }: { resetApplication: () => void }) {
         command: action.command,
       });
       if (!r.ok || r.code !== 'accepted') notify(r.message);
+      return r;
     } catch (e) {
       notify(`${String(e)} Check the journal before repeating this action.`);
+      return {
+        ok: false,
+        code: 'unconfirmed',
+        message: `${String(e)} Check the journal before repeating this action.`,
+      };
     }
   }
   function talk(id: string) {
@@ -712,6 +727,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
         return (
           <Inventory
             {...props}
+            command={command}
             addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
           />
         );
@@ -1212,6 +1228,25 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                         wide={panelInfo[id].wide}
                         draggable={!narrow && ['agent', 'composer', 'intelligence'].includes(id)}
                         resizable={!narrow && id === 'intelligence'}
+                        workspace={
+                          !narrow && (id === 'inventory' || id === 'agent')
+                            ? {
+                                expanded: expandedWorkspaces.includes(id),
+                                width: workspaceWidth,
+                                onToggle: () => {
+                                  setExpandedWorkspaces((current) =>
+                                    current.includes(id)
+                                      ? current.filter((value) => value !== id)
+                                      : [...current, id],
+                                  );
+                                  setOpen((current) => [
+                                    ...current.filter((value) => value !== id),
+                                    id,
+                                  ]);
+                                },
+                              }
+                            : undefined
+                        }
                         onClose={() => hide(id)}
                         onBack={
                           id === 'nearby' && entity
@@ -1222,7 +1257,10 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                         }
                         backLabel={id === 'intelligence' ? 'Intelligence' : 'In view'}
                       >
-                        {id === 'agent' || id === 'composer' || open.includes(id)
+                        {id === 'agent' ||
+                        id === 'composer' ||
+                        (id === 'inventory' && inventoryOpened) ||
+                        open.includes(id)
                           ? content(id)
                           : null}
                       </Panel>

@@ -68,6 +68,10 @@ export function acceptAccess(view: GameView): void {
 export function eventsUrl(view: GameView): string {
   return `/api/events?client=${tabClientId}&scope=${view.access?.scope ?? ''}&revision=${view.revision}`;
 }
+export function worldAgentProgressUrl(worldId: string, sessionId: string): string {
+  const query = new URLSearchParams({ worldId, sessionId, client: tabClientId, scope: viewScope });
+  return `/api/world-agent/session/progress?${query}`;
+}
 
 export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   return post('/api/control', {

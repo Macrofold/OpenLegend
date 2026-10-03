@@ -38,6 +38,10 @@ Choose a concrete task and measure before grid/list density, virtualization, pre
 
 File concrete reproduced defects with existing feature owners. Keep optional ideas distinct from fixes; reference-product features are not automatically delivery commitments. Classify any new retained navigation/draft state under [persistence guidance](../ui-ux/system-feedback.md#classify-navigation-drafts-and-persistence).
 
+PW05’s [bounded owner browser evidence](../verification/invention-foundation.md#pw05--incremental-owner-delivery) exercises live text identity, draft preservation, older reading/paging, final replacement, mounted Work/exact-review continuity and held-question ordering. Enter/Shift+Enter, simulated composition and composer reachability at four viewport/scale combinations pass. Shared enlarged-panel layout, actual OS IME, assistive devices and delivery-capacity qualification remain open in PW05/PW11; simulation does not qualify those devices.
+
+Independent review reproduces and fixes a large-batch scrolling defect in the actual shared conversation component: at-bottom reading now follows both new entries, while older and hidden-view anchors retain their position and new-text cue. The existing `conversation-ui.spec.ts` case still expects an owner conversation from the default-player invention form and intercepts a retired message route; it fails before composer interaction. Updating that fixture belongs to the remaining owner-browser qualification, not evidence against the focused scrolling check.
+
 ## UIUX06
 
 **Partially qualified — native instruction-dispatch verification remains open.** The original source/documentation review did not run the guidance checker, pinned formatter, native agent probes or browser/assistive checks. The later formatting-only fix `6664144a` passed `pnpm run format:check` and `pnpm guidance:check` on the merged handbook; it did not qualify native dispatch or browser behavior. The recorded October 1 research environment lacked `pnpm`, and fetching a pinned repository snapshot failed DNS resolution. Connector Git reads/writes remained available; this is not a claim that GitHub access was unavailable.

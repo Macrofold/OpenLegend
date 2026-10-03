@@ -614,7 +614,7 @@ export class SqlGameRepository implements GameRepository {
         .get();
       if (existing?.['relation']) {
         const version = await this.db.prepare('SELECT value FROM meta WHERE key=?').get('schema');
-        if (version?.['value'] !== '2')
+        if (version?.['value'] !== '3')
           throw new Error(
             'Unsupported database schema. Existing data was not converted or deleted.',
           );
@@ -680,7 +680,7 @@ export class SqlGameRepository implements GameRepository {
       await this.authority.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
-        .run('schema', '2');
+        .run('schema', '3');
     });
   }
 

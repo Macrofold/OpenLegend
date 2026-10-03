@@ -1,8 +1,8 @@
 # Next playable week — delivery tracker
 
-**Proposed; implementation has not started.** Five AI-assisted engineers, **80 hours each / 400 engineer-hours** over the requested week: **312 hours scoped delivery + 88 hours integration/review**. This replaces the initial 200-hour allocation; estimates include focused checks and are not measured throughput. [Feature specification](../projects/next-playable-week-feature-spec.md) · [Technical design](../projects/next-playable-week-tech-design.md). Baseline: `6664144a`, October 2, 2026.
+**Implementation authorized by Mike’s October 2 chat; combined acceptance remains open.** Five AI-assisted engineers, **80 hours each / 400 engineer-hours** over the requested week: **312 hours scoped delivery + 88 hours integration/review**. This replaces the initial 200-hour allocation; estimates include focused checks and are not measured throughput. [Feature specification](../projects/next-playable-week-feature-spec.md) · [Technical design](../projects/next-playable-week-tech-design.md). Baseline: `6664144a`, October 2, 2026.
 
-This tracker owns the bounded week assignment and its integration gate. Existing focused trackers retain broader system requirements and release status. A checked PW item will not close its parent feature. The present task delivered planning documents only; all runtime items below remain unchecked.
+This tracker owns the bounded week assignment and its integration gate. Existing focused trackers retain broader system requirements and release status. A checked PW item will not close its parent feature. Engineer 5’s [implementation plan](../projects/next-playable-week/engineer-5-plan.md) records the explicit starting commit and assigned scope. Checked child requirements identify demonstrated work, not combined release completion.
 
 ## PW01 — Reliable action choices and recovery
 
@@ -60,14 +60,18 @@ No blanket theme replacement, decorative grid mandate, bulk trading or unscoped 
 **Engineer 5 · 34 hours plus shared integration · 750–1,150 logic lines · high risk.** Child of INV-21 and [WW lifecycle/recovery](world-agent-writes.md); UIUX05 owns UX qualification. Design: [incremental delivery](../projects/next-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system).
 
 - [ ] Verify the configured service's native incremental-output capability and deployment prerequisites; preserve unsupported outcomes and configured model/funding.
-- [ ] One ordered run-event consumer handles reply text, confirmed phases and existing questions, with sequence validation, bounded replay and no new paid request on recovery.
-- [ ] Redact protected context handles across fragment boundaries before storage/publication; verify replay, EOF/cancellation and absence from diagnostics. Distinguish discovery/reply Runs inside one turn, persist their handoff and finalize only at outer turn completion.
-- [ ] Retain idempotent bounded progress under the existing turn owner and deliver owner-scoped snapshots/SSE with access revocation and backpressure.
-- [ ] Client renders text before completion; preserves older reading position, draft and exact review; final validated text replaces the preview once.
-- [ ] Exercise mid-run restart, reconnect/rotation, duplicate/gap events, questions, cancellation after a tool effect, slow readers, private-scope replacement and unsupported harness. Confirm no duplicate run, world effect or charge.
+- [x] One ordered run-event consumer handles reply text, confirmed phases and existing questions, with sequence validation, bounded replay and no new paid request on recovery.
+- [x] Redact protected context handles across fragment boundaries before storage/publication; verify replay, EOF/cancellation and absence from diagnostics. Distinguish discovery/reply Runs inside one turn, persist their handoff and finalize only at outer turn completion.
+- [x] Retain idempotent bounded progress under the existing turn owner and deliver owner-scoped snapshots/SSE with access revocation and backpressure.
+- [x] Client renders text before completion; preserves older reading position, draft and exact review; final validated text replaces the preview once.
+- [x] Exercise mid-run restart, reconnect/rotation, duplicate/gap events, questions, cancellation after a tool effect, slow readers, private-scope replacement and unsupported harness with synthetic transport and actual PostgreSQL/server callers. Confirm no duplicate run, world effect or charge; deployed qualification remains separate.
 - [ ] Complete browser/input/accessibility checks and measured delivery latency, update WW/runtime/WS01 evidence; keep unrelated WW07 deployed-release gaps open.
 
 No public-world broadcast of owner text, raw reasoning/tool traces or claim that a spinner completes incremental delivery. Earlier turns remain reachable under the unchanged session ceiling.
+
+The configured deployment again refused no-cost capability/health reads and lacks a Worker ID. [Native/browser evidence](../verification/invention-foundation.md#pw05--incremental-owner-delivery) is separate from that missing acceptance. Engineer 4’s reviewed saved-work component is mounted with Conversation; native revisions leave an older exact review unchanged and held snapshots cannot overwrite saved answers. Actual whole-server process-loss recovery preserves the exact cursor, saved work and original accounting without replacement admission. Late expiry/grant-loss checks refuse new progress while retaining the validated original terminal outcome privately. Shared expanded layout/native recipe metadata are reserved for the separate integration pass after the Engineer 5 pick was aborted; browser timing currently exceeds the proposed local p95 target. Deployment, delivery-capacity and broader browser/assistive qualification stay open.
+
+The requested independent review fixes permission loss during discovery-to-recipe handoff and immediately before provider dispatch, with ten matched PostgreSQL/synthetic-transport scenarios preserving accepted original-Run recovery. A real shared-component browser reproduction fixes large-batch automatic following while preserving older/hidden reading. TypeScript, production build and focused private-access HTTP checks pass. The existing conversation browser case fails before interaction because its default-player setup expects the owner conversation and intercepts the retired message route; that fixture gap remains part of the open browser qualification. No peer integration or paid work occurred during review.
 
 ## PW06 — Integrated release evidence
 
@@ -114,13 +118,15 @@ No full scheduler rewrite, changed-target-only visibility implementation, offscr
 
 **Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/next-playable-week/memory-retrieval.md).
 
-- [ ] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
-- [ ] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
-- [ ] Prove relevant edits/forgetting invalidate while another actor's unrelated work does not; exercise privacy, rollback, cancellation and restart through real PostgreSQL callers.
-- [ ] Measure exact current top-300 retrieval with 5k/25k/100k eligible sources plus unrelated histories; record full caller latency, SQL, query plans, examined/selected/hydrated work and hot/cold distinctions.
-- [ ] Reconcile MH03 and the narrower cache findings from actual evidence; leave large-history ANN/retention and broad appraisal invalidation decisions open.
+- [x] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
+- [x] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
+- [x] Prove relevant edits/forgetting invalidate while another actor's unrelated work does not; exercise privacy, rollback, cancellation and restart through real PostgreSQL callers.
+- [x] Measure exact current top-300 retrieval with 5k/25k/100k eligible sources plus unrelated histories; record full caller latency, SQL, query plans, examined/selected/hydrated work and hot/cold distinctions.
+- [x] Reconcile MH03 and the narrower cache findings from actual evidence; leave large-history ANN/retention and broad appraisal invalidation decisions open.
 
 PF14's earlier shared retrieval/body filtering is already delivered and is not repeated here. No old-memory truncation, actor-memory cap, reduced required context or production ANN index is introduced to improve the benchmark.
+
+The 18-report/9-pair growth matrix and narrowly scoped ANN recommendation are recorded with the implementation/correctness [evidence](../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval). All ordered warm full-caller comparisons and current-format reopen checks pass. Standalone cold exact reads are available in 17/18 reports; checkpoint restore succeeds in 12/18. Both versions hit the unchanged writer deadline at 100k in all six reports and preserve committed generation/evidence after rollback. These existing scale limits remain C17/PF08 work, not successful restore qualification or a general speedup claim. Engineer 2’s reviewed shared database/save-format gate `9854d591c2be9942820d18566cc57e7fe12aba08` is consumed as `e1547765` on Engineer 5’s branch. No conversion, deletion or separate marker owner was added.
 
 ## PW10 — Chosen camp activities and reusable finite methods
 
