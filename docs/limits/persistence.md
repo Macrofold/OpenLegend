@@ -10,7 +10,7 @@ Implementation starting points: [checkpoint-format.ts](../../apps/server/src/che
 
 **Changed — current checkpoint path (2026-09-28, C05) · Restrictiveness: Safe.**
 
-Only one checkpoint capture runs at once. The slot is reserved before the world mutation queue, so a waiting capture never holds that queue. One manual save may wait for the capture in progress and runs before the next automatic save; automatic saves never wait in admission: while a capture runs or a manual save waits, the due automatic save is held and starts on the first tick after the slot frees, with no failure recorded; if the world mutation queue refuses it as busy, it retries after 30 s of running time, and the third consecutive busy refusal is recorded as a checkpoint failure ([SB12](#sb12)). A second, different manual save while one waits receives busy; identical requests share completion. Restore fences concurrent mutation; simulation can continue while a pinned checkpoint is written.
+Only one checkpoint capture runs at once. The slot is reserved before the world mutation queue, so a waiting capture never holds that queue. One manual save may wait for a capture in progress and runs before the next automatic save; automatic saves never wait in admission: while a capture runs or a manual save waits, the due automatic save is held and starts on the first tick after the slot frees, with no failure recorded; if the world mutation queue refuses it as busy, it retries after 30 s of running time, and the third consecutive busy refusal is recorded as a checkpoint failure ([SB12](#sb12)). A second, different manual save while one waits receives busy; identical requests share completion. Restore fences concurrent mutation; simulation can continue while a pinned checkpoint is written.
 
 **Reason / tradeoff:** Bound capture work and preserve a coherent revision while not failing routine manual intent behind an autosave. Single-capture admission is tunable; atomic restore/authorization are correctness requirements. [Admission](../../apps/server/src/game-saves.ts) (`admit`).
 
@@ -66,6 +66,8 @@ Compatible new/updated record rows are grouped within their table before batchin
 
 [Shared parameter limit](../../apps/server/src/sql-rows.ts) · [HistoryBatch](../../apps/server/src/history-batch.ts) · [Measurement limits](../verification/three-times-scene-performance.md) · [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).
 
+**Proposed, not approved or implemented:** [PF15](../maintainers/performance.md#pf15--save-round-trip-batching) combines compatible existing statements within one transaction. Its initial envelope is 60,000 parameters, 1 MiB encoded parameters and 64 statements per group, with at most one retained pending group. Flush earlier work before another admission exceeds the envelope; do not collect an unbounded transaction-sized queue. Existing single-statement/oversized-row rules remain separate. These are trial bounds, not measured optima or saved-world quotas; they trade fewer round trips for parse cost and memory. The [adapter contract](../projects/save-round-trip-batching-tech-design.md#adapter-api) distinguishes admitted work from executed/committed work and retains read/check barriers.
+
 ## LA175
 
 **Current — source inspected at `af1eb02` · Restrictiveness: Safe.**
@@ -75,6 +77,8 @@ PostgreSQL connection/read statements have a 5-second timeout; write transaction
 **Reason / tradeoff:** Bound external storage stalls while permitting larger atomic extraction/restore writes; report genuine storage failure. The original audit’s blanket 5-second statement claim is superseded.
 
 [Implementation](../../apps/server/src/postgres.ts); [queue exposure](native-work.md#nw11).
+
+**Proposed PF15 change:** the same 30-second timeout would cover a combined group, not each constituent statement. Group size does not prove completion within that time; qualify timeout, rollback and transaction-level failure with grouping on and off before choosing a default. No end-to-end queue deadline or new retry permission is implied.
 
 ## LA176
 
@@ -204,9 +208,9 @@ Original recommendation: **Keep**.
 
 **Reported · Restrictiveness: Safe.**
 
-**Older JSON backups:** 64 MiB for legacy backup restore/import. I extended this guard to the operational tools; the legacy gameplay-save guard already existed.
+**Historical operational format, residual gameplay reader:** the former 64 MiB whole-JSON operational restore/import path was removed by [DF03](../maintainers/production-data.md#df03--postgresql-only-runtime). `SaveFiles` still has a 64 MiB non-streamed gameplay/recovery reader. Its presence and allocation guard do not authorize old-format support; [DF04](../maintainers/production-data.md#df04--remove-residual-development-compatibility-paths) owns removing incompatible readers while preserving exact current-format recovery.
 
-**Reason / tradeoff:** Legacy formats parse a whole JSON document; avoid unbounded legacy allocations.
+**Reason / tradeoff:** Whole-document parsing needs an allocation bound, but a safe allocation size is not evidence of valid current authority. Retain the historical rationale, not a migration commitment.
 
 ## SV15
 
@@ -306,11 +310,11 @@ The save worker starts with the server and is not automatically restarted after 
 
 ## BW04
 
-**Reported · Restrictiveness: Medium.**
+**Residual compatibility code, not an accepted support policy · Restrictiveness: Medium.**
 
-Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
+The retained [feeling migration](../../packages/domain/src/appraisal-migration.ts) recognizes a former fear/discomfort format and decay rate; [object migration](../../packages/domain/src/object-migration.ts) rebinds understood equipment references and excludes unsupported packing assumptions. These narrow converters do not establish supported reachability or permission to maintain older saves. [DF04](../maintainers/production-data.md#df04--remove-residual-development-compatibility-paths) owns their reachability review and removal under the [development save policy](../../AGENTS.md#development-save-policy).
 
-**Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+**Historical reason / tradeoff:** The converters previously limited guessed semantics and broken references. That rationale is retained as history; current-format validation and explicit incompatible-save rejection replace conversion as the delivery requirement.
 
 ## SV17
 
@@ -348,7 +352,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Changed · Restrictiveness: Safe.**
 
-**Only the current physical format is supported.** Database format 2, `records-jsonl-2` and save format `development-2026-09-27-history2` require the combined perspective/access table and maintained event totals. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
+**Only the current format is supported by policy.** Database format 2 retains combined perspective/access records and maintained event totals. `records-jsonl-2` is the stream encoding; the independent gameplay token is `development-2026-09-28-action-experience`, owned by `SAVE_FORMAT` in [game-saves.ts](../../apps/server/src/game-saves.ts). Exact current table coverage includes action occurrences/methods/acquisitions and is mandatory. Incompatible authority must fail without conversion, reset or deletion under the [development save policy](../../AGENTS.md#development-save-policy). Residual older-reader/domain-conversion paths remain an implementation gap under [DF04](../maintainers/production-data.md#df04--remove-residual-development-compatibility-paths); a database-layout guard alone does not prove that every reader complies.
 
 **Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 
@@ -370,9 +374,9 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
 
-**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. Preserve the original legacy data before running a supported migration separately.
+**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. An incompatible or noncanonical source must remain unchanged and fail explicitly; the [development save policy](../../AGENTS.md#development-save-policy) does not authorize a separate migration. DF04 includes stale operational error messages that still suggest one.
 
-**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots and requires a separate migration step; partial/selective backup is not current behavior.
+**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots and requires an already valid current source; partial/selective backup and older-format migration are not supported behavior.
 
 [Implementation](../../apps/server/src/operational-backup.ts).
 
