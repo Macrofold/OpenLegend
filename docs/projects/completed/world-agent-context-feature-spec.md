@@ -1,18 +1,22 @@
 # World Agent context and invention loop: feature specification
 
-**Status: approved implementation target; implementation in progress. No completed runtime delivery or live qualification is claimed.** Medium reasoning effort is an explicit owner requirement for the proposed World Agent execution profile. Other interface choices below are recommendations for implementation review.
+| Status    | Current progress                                                                                                                                     | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The finite context, graph and review foundation is implemented and qualified; broader deployment and invention capabilities retain their own owners. | 2026-10-03   |
+
+The finite implementation and its acceptance are complete under [WW17–WW23](../../maintainers/world-agent-writes.md#context-and-invention-loop-design) and the [qualification record](../../verification/world-agent-context.md#final-local-qualification). Medium reasoning effort is the accepted World Agent profile setting. The specification below retains the agreed scope; broader invention and deployed-runtime gates remain with their existing owners.
 
 ## Purpose
 
 Let a person describe an invention in ordinary language and receive a useful, accurately explained draft for review. Give the agent the necessary mechanics and a small set of meaningful operations. Keep administrative orchestration, permission checks, accounting and persistence in the application.
 
-This project improves context and authoring while adopting the existing [graph and invention-pipeline foundation](world-agent-context/initial-foundation.md). The first version includes real dependency, validation and readiness records through existing owners; it does not introduce a new invention engine. The current [World Agent](../world-agent-runtime.md) remains one conversation able to investigate, design and invoke authorized actions. The [technical design](world-agent-context-tech-design.md) proposes how to make simple requests small while keeping deeper investigation available. [Mechanics inventory](world-agent-context/mechanics.md) separates executable behavior from supported authoring.
+This project improves context and authoring while adopting the existing [graph and invention-pipeline foundation](world-agent-context/initial-foundation.md). The first version includes real dependency, validation and readiness records through existing owners; it does not introduce a new invention engine. The current [World Agent](../../world-agent-runtime.md) remains one conversation able to investigate, design and invoke authorized actions. The [technical design](world-agent-context-tech-design.md) proposes how to make simple requests small while keeping deeper investigation available. [Mechanics inventory](world-agent-context/mechanics.md) separates executable behavior from supported authoring.
 
 ## Problem demonstrated
 
 A captured real sling continuation contained 51 messages and 22 tool definitions. Compact JSON was 71,948 bytes: 36,555 bytes of tool messages, 18,248 bytes of tool definitions, 13,830 bytes of assistant messages, and 2,969 bytes of system/user messages, plus envelope/separator overhead. The initial request already contained 21,514 bytes. These are serialized byte measurements, not tokenizer measurements or provider-billed token counts.
 
-After nine tool calls the candidate passed finite recipe validation. Sixteen more calls followed without saving it, including five guessed optional base recipe IDs. The capture predates the current omission guidance fix. It also contained duplicate recipe schema/contract data, unrelated definition/entity lists, and Macrofold file-output instructions despite the application denying file access. See [live continuation evidence](../verification/invention-main-integration.md#explicit-continuation-after-the-persistence-fix). Payload size alone does not establish the cause of the eventual harness exception.
+After nine tool calls the candidate passed finite recipe validation. Sixteen more calls followed without saving it, including five guessed optional base recipe IDs. The capture predates the current omission guidance fix. It also contained duplicate recipe schema/contract data, unrelated definition/entity lists, and Macrofold file-output instructions despite the application denying file access. See [live continuation evidence](../../verification/invention-main-integration.md#explicit-continuation-after-the-persistence-fix). Payload size alone does not establish the cause of the eventual harness exception.
 
 The test asked for creation, a separate refinement, review and an unsupported-mechanics answer in one turn. Future measurements separate these journeys. Formatting changes alone cannot remove unnecessary decisions and round trips.
 
@@ -75,7 +79,7 @@ Existing INV/WW owners retain real harness reliability, generated art and richer
 4. Selected field documentation and examples match strict schemas, native admission and consumers. Adding a property to prose cannot invent an effect.
 5. Failed validation preserves recoverable work as specified; stale edits, duplicate submissions, timeouts, cancellation and restore neither duplicate effects nor misstate completion.
 6. Recipient grants filter all input before formatting; altered grants/world generation require safe fresh context. No administrative context leaks into NPC cognition or another conversation.
-7. Matched workload measurements meet the proposed [context targets](../limits/inventions.md#ctx01--context-size-and-measured-efficiency) without reducing semantic correctness. No byte savings are claimed as measured token or latency savings.
+7. Matched workload measurements meet the initial diagnostic [context targets](../../limits/inventions.md#ctx01--context-size-and-measured-efficiency) without reducing semantic correctness. No byte savings are claimed as measured token or latency savings.
 8. Macrofold's outgoing request confirms medium effort and a permission-appropriate tool/instruction surface. File tasks continue working under their own permissions.
 9. The [initial foundation proof](world-agent-context/initial-foundation.md#6-concrete-first-version-proof) demonstrates graph/context/review parity, scoped native check completeness, presentation adequacy and recovery across recipe, gathering and owner sleep-policy cases. Harder repertoire cases preserve their requirements or report missing support, without claiming new execution systems.
 
@@ -85,6 +89,6 @@ First deliver source-backed guidance, the candidate graph and bounded shared ana
 
 ## Maintained records
 
-- Implementation: [WW17–WW23](../maintainers/world-agent-writes.md#context-and-invention-loop-design); parent INV-21 and existing WW07/WW10/WW11 remain open.
-- Limits and constraints: [World Agent context proposal](../limits/inventions.md#world-agent-context-proposal).
-- Related design: [Technical design](world-agent-context-tech-design.md), [project packet](world-agent-context/README.md), [World Agent runtime](../world-agent-runtime.md), [composition](../invention-composition.md).
+- Implementation: [WW17–WW23](../../maintainers/world-agent-writes.md#context-and-invention-loop-design); parent INV-21 and existing WW07/WW10/WW11 remain open.
+- Limits and constraints: [World Agent context proposal](../../limits/inventions.md#world-agent-context-proposal).
+- Related design: [Technical design](world-agent-context-tech-design.md), [project packet](world-agent-context/README.md), [World Agent runtime](../../world-agent-runtime.md), [composition](../../invention-composition.md).

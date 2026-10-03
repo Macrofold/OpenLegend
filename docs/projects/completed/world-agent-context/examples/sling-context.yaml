@@ -8,7 +8,8 @@ current_work:
   review: null
   next_action: Submit a new candidate for review. No draft has been saved yet.
 capability:
-  id: swing
+  id: base:swing
+  version: 1
   name: Stone-throwing sling
   support: A new recipe can be designed within this native launcher family.
   acts_on: A perceived living animal within the launcher's reach.
@@ -52,5 +53,5 @@ output_rules:
   ammunition_kind: stone
   required_roles: [binding, pouch]
   field_bounds: The selected swing submission schema supplies the current numeric ranges.
-  properties: Use only supported input properties or the explicitly allowed projectile property. No food, fuel or new effects.
+  derived_properties: The native family compiler derives supported input properties; the candidate does not submit properties, ammunition or launcher output blocks. No food, fuel or new effects.
 completion: A ready_for_review receipt means preparation is complete. Briefly explain the tradeoff and finish.

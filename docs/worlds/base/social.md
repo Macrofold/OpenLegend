@@ -6,7 +6,7 @@ This page owns the bundled world's current social rules and their visible limits
 
 An actor's directional relationship description is its subject knowledge document. **My thoughts and relationships** displays that understanding and edits the same text through Knowledge notepads. One person's revision does not revise the other's view, establish kinship, cancel an obligation or grant possession access. Known/remembered subjects do not automatically become currently visible or targetable. Human-private content stays private even from an in-game creator.
 
-For example, Ada can write that she distrusts Bo while Bo still considers Ada a friend. These are independent interpretations, not friendship scores. The [appraisal/social project](../../projects/appraisal-social-continuity-feature-spec.md) defines the delivered continuity scope; it does not promise that arbitrary prose changes physical behavior.
+For example, Ada can write that she distrusts Bo while Bo still considers Ada a friend. These are independent interpretations, not friendship scores. The [appraisal/social project](../../projects/completed/appraisal-social-continuity-feature-spec.md) defines the delivered continuity scope; it does not promise that arbitrary prose changes physical behavior.
 
 ## Objective family facts
 
@@ -63,4 +63,4 @@ Current surfaces are summarized in [gameplay availability](../../../archive/05-p
 
 - Implementation: [BW16/BW17](../../maintainers/base-world.md#social-playable-slices), [BW20/BW21](../../maintainers/base-world.md#camp-fire-care-and-sharing), [ACT07/ACT08 and ACT09](../../maintainers/actor-model.md).
 - Limits and constraints: [base-world defaults](../../limits/base-world.md), [feelings](../../limits/feelings.md), [memory](../../limits/memory.md).
-- Related contract/design: [appraisal/social continuity](../../projects/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/appraisal-social-continuity-tech-design.md), [knowledge](knowledge.md).
+- Related contract/design: [appraisal/social continuity](../../projects/completed/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/completed/appraisal-social-continuity-tech-design.md), [knowledge](knowledge.md).
