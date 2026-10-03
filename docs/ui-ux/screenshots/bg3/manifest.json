@@ -1,0 +1,122 @@
+[
+  {
+    "id": "BG3-01",
+    "filename": "BG3-01-single-inventory.jpg",
+    "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
+    "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/Just-Astarion-2048x1152.jpg",
+    "dimensions": [
+      2048,
+      1152
+    ],
+    "bytes": 515034,
+    "sha256": "cc26589105bc517a2c73d256d813ea0d4263d2c497934effebef8803e17b0a80",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-02",
+    "filename": "BG3-02-party-inventory.jpg",
+    "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
+    "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/The-party-2048x1152.jpg",
+    "dimensions": [
+      2048,
+      1152
+    ],
+    "bytes": 344575,
+    "sha256": "35da7c9728806a21fcac08467b299d48cb53b9c42b7aadd74f4d1a39d8789bcf",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-03",
+    "filename": "BG3-03-controller-inventory.jpeg",
+    "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
+    "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/PS5-Inventory-screen.jpeg",
+    "dimensions": [
+      1280,
+      720
+    ],
+    "bytes": 199224,
+    "sha256": "72bf607b480494f94ff361e797ee17e85e75079e277e120e344b63e228bfbddf",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-04",
+    "filename": "BG3-04-context-menu.jpg",
+    "source_page_url": "https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/",
+    "direct_image_url": "https://gaymingmag.com/wp-content/uploads/2023/08/dye-menu.jpg",
+    "dimensions": [
+      1366,
+      779
+    ],
+    "bytes": 210851,
+    "sha256": "a202810f2fd18821984beb1b04cb6db682695f1c964526f223ed63be9750bd9f",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-05",
+    "filename": "BG3-05-open-chest.png",
+    "source_page_url": "https://scalacube.com/blog/baldurs-gate-3/travellers-chest-in-baldurs-gate-3",
+    "direct_image_url": "https://res.cloudinary.com/ddbybfkod/image/upload/v1754587925/blogs/Nemanja/travellers-chest-in-baldurs-gate-3/img2_iyo7qm.png",
+    "dimensions": [
+      976,
+      549
+    ],
+    "bytes": 457387,
+    "sha256": "9259c083275780e778e212730646f9470c6b8d7398bcf28abfc9f5581f10ba5f",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-06",
+    "filename": "BG3-06-radial-actions.jpeg",
+    "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
+    "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/Radial-display-2.jpeg",
+    "dimensions": [
+      1280,
+      720
+    ],
+    "bytes": 241676,
+    "sha256": "484feed69e65fc22c342fbe9d43bfb328dadda00fd75d58cb3bc7b488e658626",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-07",
+    "filename": "BG3-07-alchemy.png",
+    "source_page_url": "https://bg3.wiki/wiki/File:Alchemy_window.png",
+    "direct_image_url": "https://bg3.wiki/w/images/6/67/Alchemy_window.png",
+    "dimensions": [
+      1278,
+      876
+    ],
+    "bytes": 866002,
+    "sha256": "2de1fac55ee0652a73ebeea3c339f0c078dfd19dc7c1446ed198bfca4068a9d2",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  },
+  {
+    "id": "BG3-08",
+    "filename": "BG3-08-throw-target-selection.png",
+    "source_page_url": "https://bg3.wiki/wiki/File:Throw_UI_Inventory_Menu.png",
+    "direct_image_url": "https://bg3.wiki/w/images/8/85/Throw_UI_Inventory_Menu.png",
+    "dimensions": [
+      1066,
+      306
+    ],
+    "bytes": 557736,
+    "sha256": "061f8680f910b6bed3c3253966086c7a62d81ae887e9a9c432a6e40a4133f4d6",
+    "accessed_at": "2026-10-03",
+    "rights": "Third-party gameplay screenshot. Reference-only criticism/research; game artwork belongs to Larian Studios and relevant rights holders. Not an Open Legend game asset.",
+    "visually_inspected": false
+  }
+]
