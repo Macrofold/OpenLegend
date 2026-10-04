@@ -1,0 +1,49 @@
+name: Check documentation move references
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/review-reference-check.yml]
+permissions:
+  contents: read
+jobs:
+  references:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b727324a9f18666a516b67f2dd45b9f2ab9ef0ba
+          persist-credentials: false
+      - name: Record current archived headings and project references only
+        env:
+          AI_BUDGET_USD: '0'
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          rows = []
+          old_pilot = []
+          for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', 'HEAD', '--', 'archive']).split(b'\0'):
+              if not entry:
+                  continue
+              meta, raw_name = entry.split(b'\t', 1)
+              mode, kind, sha = meta.decode().split()
+              name = raw_name.decode()
+              if kind != 'blob' or mode == '120000' or pathlib.Path(name).suffix not in ('.md', '.mdc', '.txt'):
+                  continue
+              lines = pathlib.Path(name).read_text().splitlines()
+              hits = [{'line': i, 'text': line} for i, line in enumerate(lines, 1) if 'docs/projects/' in line]
+              rows.append({'path': name, 'git_sha': sha, 'headings': [line for line in lines if line.startswith('#')], 'incoming_project_references': hits})
+              old_pilot.extend({'path': name, **hit} for hit in hits if 'docs/projects/mercenary-scene-pilot.md' in hit['text'])
+          report = {'revision': 'b727324a9f18666a516b67f2dd45b9f2ab9ef0ba', 'files': rows, 'old_pilot_references': old_pilot}
+          path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'archive-reference-metadata.json'
+          path.write_text(json.dumps(report, indent=2))
+          print(f'{len(rows)} archived text files checked for incoming project references; old mercenary path references: {len(old_pilot)}')
+          assert not old_pilot, json.dumps(old_pilot)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-reference-metadata-b727324
+          path: ${{ runner.temp }}/archive-reference-metadata.json
+          retention-days: 7
+          if-no-files-found: error
