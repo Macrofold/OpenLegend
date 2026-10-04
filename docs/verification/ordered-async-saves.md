@@ -1,6 +1,6 @@
 # Background world saves and save recovery
 
-[Plan](../projects/ordered-async-saves.md) · Trackers: [PF00/PF02/PF06](../maintainers/performance.md), [SL08/SL09](../maintainers/save-and-load.md), [D1/D2](../maintainers/production-data.md#remaining-d1d2-implementation-and-evidence).
+[Plan](../projects/completed/ordered-async-saves.md) · Trackers: [PF00/PF02/PF06](../maintainers/performance.md), [SL08/SL09](../maintainers/save-and-load.md), [D1/D2](../maintainers/production-data.md#remaining-d1d2-implementation-and-evidence).
 
 All timings below are **shared-host** measurements: other agents were loading the same 10-CPU machine and its PostgreSQL 14.17 server (load averages about 100–360 in the reported runs). They show relative attribution and correctness, not acceptance or capacity. Runs used disposable PostgreSQL databases, `AI_BUDGET_USD=0`, zero-cost fixtures and no provider calls. Raw reports stay private under `/private/tmp/openlegend-save-stall-20260928/`.
 
@@ -25,7 +25,7 @@ Baseline revision: `origin/main` `be68b1e0` plus the instrumentation only. 30-se
 
 ## Background saves for simulation progress (stages 2–3)
 
-Implementation: [ordering and failure design](../projects/ordered-async-saves.md#ordered-persistence-design). Before code, a four-lens adversarial review (ordering, history release, publication/paid work, failure/crash) was run against the design and the code. Its confirmed findings changed the implementation before any drill: a background save refused before `BEGIN` re-submits the same prepared change set instead of letting a later snapshot diff against the unreleased baseline (which would have deleted released records); any `storageError` assignment rejects durability waiters; waiting commands defer new background saves; durable marks carry the snapshot sequence and event counter, publish once per load and are delivered from a root context; and `flushMemorySources` takes a queue turn so an earlier forget commits first.
+Implementation: [ordering and failure design](../projects/completed/ordered-async-saves.md#ordered-persistence-design). Before code, a four-lens adversarial review (ordering, history release, publication/paid work, failure/crash) was run against the design and the code. Its confirmed findings changed the implementation before any drill: a background save refused before `BEGIN` re-submits the same prepared change set instead of letting a later snapshot diff against the unreleased baseline (which would have deleted released records); any `storageError` assignment rejects durability waiters; waiting commands defer new background saves; durable marks carry the snapshot sequence and event counter, publish once per load and are delivered from a root context; and `flushMemorySources` takes a queue turn so an earlier forget commits first.
 
 Correctness drills (ad-hoc, not repository tests) drove `WorldService` directly on disposable PostgreSQL with a host-like 50 ms timer, 3×, seed 73, 20 people, 21 animals, 60 objects, 40 ms injected per statement after a 6-second undelayed warm-up. Final run: 30/30 checks passed.
 
