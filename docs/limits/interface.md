@@ -1,5 +1,23 @@
 # Authoring and presentation: limits and constraints
 
+## DG01-I01 — Proposed stable actions and controls
+
+**Proposed — product design only, 2026-10-04 · Restrictiveness: Safe.** [DG01](../projects/actions-and-first-encounters-feature-spec.md) retains the current three configured slots and up-to-three contextual suggestions as the initial presentation baseline, without a new total catalogue or binding limit. Pins never rerank; menu ordering/groups and suggestion identity remain fixed through active focus/press/chooser interaction, while facts and availability update in place. Refresh/reopen can regroup. This protects intention and motor memory at the cost of temporarily less-current ordering. Full permitted catalogue access and current query continuations remain; final output size must not disguise unbounded candidate preparation.
+
+## DG01-I02 — Proposed frequency and sharing
+
+**Proposed — tuning and disclosure choices unqualified · Restrictiveness: Medium.** Private ranking counts one family-declared authoritative use per execution, with no age expiry and an explicit reset/disable option; replay, fixtures and automatic child steps do not inflate the selected human-choice signal. NPC activity stays separate. No new raw use-history retention is authorized. Counters grow with distinct used definitions rather than execution count; no new total counter/definition cap is selected, so technical planning must bound preparation and indexing rather than scan a lifetime history on menu opening.
+
+Shared popularity gives each opted-in human account at most one contribution per compatible action in a rolling 30-real-day window, independent of repeated production or visits to several worlds. It has no arbitrary minimum cohort; display the actual participating sample and no anonymity/representativeness claim. No eligible data yields an explanation and personal/Name ordering. Sharing defaults off; withdrawal excludes the account from subsequent refreshed rankings without promising to erase already observed rankings or world actions. Public/shared identity and world-specific consent remain required. Product adoption of these disclosure choices precedes release. Review removed proposed 20-account/five-world gates and expiring weighted private counts because they obstructed small-world and occasional play. [Behavior and alternatives](../projects/actions-and-first-encounters-feature-spec.md#4-stable-suggestions-and-frequency).
+
+## DG01-I03 — Proposed object-led storage
+
+**Proposed — unimplemented UI extension · Restrictiveness: Safe.** The ordinary transfer workspace is the character's possessions and one deliberately opened container, with nested inspection inside either side. It introduces no total inventory, slot, bag-depth or physical reach cap; [object inventories](objects.md) retain those meanings. Out-of-reach approach grants no early contents, revoked access clears private detail, and stale/full destinations refuse an invalid transfer without silently selecting another destination or dropping a remainder. Simple clicks and keyboard access complement optional drag. The scope bounds ordinary reads and reduces setup; broader authorized search remains separately labeled and paged. [DG01 chest behavior](../projects/actions-and-first-encounters-feature-spec.md#2-opening-and-using-a-chest).
+
+## DG01-I04 — Proposed input expansion boundary
+
+**Proposed — desktop product scope · Restrictiveness: Safe.** Existing gestures remain the default. Remapping, category bindings and deliberate nearby selection precede an optional direct-movement preset. Removed/incompatible action bindings stay unavailable and repairable; they never substitute by name. A new preset resolves existing panel/camera conflicts before use. No controller, console, native-client or offline claim is added. This lets the current player benefit without making platform expansion a dependency. [Controls](../projects/actions-and-first-encounters-feature-spec.md#5-remapping-and-nearby-interaction).
+
 [Feature contract](../ui-design-brief.md) · [Implementation work](../maintainers/TODO.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.

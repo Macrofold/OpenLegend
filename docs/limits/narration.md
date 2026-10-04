@@ -1,5 +1,9 @@
 # Narration and conversations: limits and constraints
 
+## DG01-N01 — Proposed place and item encounters
+
+**Proposed — product design only, 2026-10-04 · Restrictiveness: Safe.** [DG01](../projects/actions-and-first-encounters-feature-spec.md#6-first-encounter-with-a-place) initially supports explicitly authored bounded places and legitimately exposed items with sufficient actor-permitted source evidence. Ordinary objects remain quiet; a narrowly designated durable exposure source must precede optional narration, without a new cognition loop. Reentry, cosmetic renaming, inventory sorting and equivalent stack splitting do not manufacture new introductions. Distinctive actual objects or perceived changes can matter. Existing selector admission, milestone, frequency, source and one-job boundaries remain controlling; no second backlog is added and cooldown/capacity-dropped candidates do not consume their milestone. Inspection remains available without generation. These choices protect pacing, privacy and cost without claiming a universal place topology or measured rate of useful prose.
+
 [Feature contract](../narration-and-conversations.md) · [Implementation work](../maintainers/narration-and-conversations.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.

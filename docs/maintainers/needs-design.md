@@ -59,6 +59,8 @@ The earlier five-topic package did not cover all five register categories. Its p
 
 #### DG01 — Actions and first encounters
 
+**Product preparation:** [Actions and first encounters feature specification](../projects/actions-and-first-encounters-feature-spec.md) now supplies the detailed DG01 proposal, source research, complete player journeys, staged scope and product acceptance. Technical design and implementation remain pending; ND13/ND18 and existing AC/UIUX/PO/NC acceptance are not closed.
+
 ND13's ordinary action recommendations, stable menus, remapping and nearby interaction, together with ND18's first encounters with places and inventory items. Design understandable opportunities, consistent selection and useful feedback around actions already supported.
 
 **Start and parallel boundary:** Use current action, inventory and narration contracts. Platform-specific input/lifecycle expansion belongs to DG35. Can run alongside DG02–DG03; presentation consumes what a character may know and do rather than redefining it. **Existing owners:** AC/UIUX, NC/EPR and PO.
