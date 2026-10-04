@@ -166,7 +166,7 @@ Distinct reductions have distinct owners:
 
 Use current draft JSON as the complete selected candidate. Store accepted constraints and unresolved questions without letting a lossy model summary become their authority. User wording stays attributable; an agent hypothesis never becomes an accepted requirement. Retain unresolved effects/costs and original operation IDs through reduction. If a summary cannot preserve required meaning, retrieve the source rather than fabricate a smaller equivalent.
 
-Macrofold currently owns its harness transcript. OpenLegend cannot arbitrarily delete or reorder tool exchanges inside it. First implement deterministic packet assembly and fresh-session continuity; optional native harness compaction is separate qualified work. The NPC [conversation compaction project](../conversation-compaction-tech-design.md) is related guidance, not a store or authority to reuse for this administrative conversation.
+Macrofold currently owns its harness transcript. OpenLegend cannot arbitrarily delete or reorder tool exchanges inside it. First implement deterministic packet assembly and fresh-session continuity; optional native harness compaction is separate qualified work. The NPC [conversation compaction project](conversation-compaction-tech-design.md) is related guidance, not a store or authority to reuse for this administrative conversation.
 
 ## 8. Plain English, YAML and field templates
 
