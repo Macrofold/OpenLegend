@@ -170,3 +170,104 @@ A server outage is different from an absent client. No combat progresses while t
 Deliberate logout can show a short, evidence-safe notice: **You are in an encounter. Your character will try to retreat, and attacks already underway can still take effect during departure.** It must not name a hidden attacker or reveal a private threat score. The general risk rule remains available even when no particular warning is justified. Closing a tab or losing power cannot require a successful warning acknowledgment.
 
 On return, show where the person is, their actual condition, whether they escaped, withdrew or recovered, and permitted actual changes to their possessions. Do not claim they won while absent, invent a rescue narrative or expose another actor's unseen actions. Sole-tab automatic return and the exact multi-tab Resume dialog remain owned by the [completed tab-resume contract](completed/tab-resume-feature-spec.md); this encounter does not introduce a second login or resume ceremony.
+
+## Research-informed choices
+
+Valve's Left 4 Dead presentation describes an avoidable threat whose warning changes how people move, and contrasts intense encounters with quiet intervals. That supports observation, a bypass and an aftermath here. Its deliberate dependence on a fixed team is not adopted: a solo Open Legend player must be able to continue without rescue. [R5]
+
+Grounded's 2022 update changed death-item retention, moved inaccessible backpacks and removed spike-strip friendly fire; its 2023 update separately exposed more risk settings and notified clients of host changes. These are documented revisions, not proof of universal player preferences. They motivate evaluating recovery as a whole journey and enforcing indirect-harm boundaries rather than assuming direct-attack protection is sufficient. The first encounter does not copy Grounded's complete difficulty menu or current death penalties. [R3], [R4]
+
+EVE explicitly distinguishes a finite NPC logoff timer from player aggression that can repeatedly renew offline exposure. Open Legend selects a nonrenewable bound because its human-protection promise rejects indefinite retention. Sea of Thieves demonstrates rejoining a continuing session with actual consequences; we preserve that continuity while choosing a more forgiving bodily aftermath. Neither game's duration or loss rules are imported. [R1], [R2]
+
+Guild Wars 2's official overview presents useful open-world cooperation without formal grouping while retaining solo play. The inference here is that a nearby person can offer bounded help without founding a party or gaining control over the recipient. Microsoft and PlayStation accessibility guidance show that readable information, input demands, awareness, difficulty and reaction assistance are separable choices. Positioning and preparation should remain meaningful when a player cannot rely on a tiny reflex window. [R6], [R7], [R10]
+
+Valheim exposes separate combat, death, resource and other world modifiers; Hades' official FAQ describes permanent progression and an optional more forgiving damage setting. These establish concrete alternatives to increasing every cost together. We therefore keep possession-preserving recovery while testing whether the encounter itself is interesting. Human-player studies associate perceived autonomy and competence with enjoyment, but do not prove that any particular defeat penalty is best. Observe actual choices and desire to continue rather than treat a completed attack sequence as evidence of fun. [R8], [R9], [R11]
+
+## Feedback and accessibility
+
+The scene remains visible. Keep the current target, equipped tool, health, committed action and a clear retreat action reachable without opening a deep menu. A concise readout can say **Boar preparing a charge**, then **Charge missed — opening to act**, then **Boar withdrawing** when those facts are actually perceived. It must not announce unseen preparation or expose a hidden target.
+
+Warning posture, direction and attack progress require visual equivalents to sound. Text labels supplement shape and motion; colour alone is insufficient. Important outcomes persist in the recent result view. Keyboard targeting, move/stop, attack and retreat use normal bindings and focus rules. Opening inventory or a text field cannot accidentally issue a strike, and Escape closes the current interface layer rather than also moving the character.
+
+No mandatory rapid tapping, sustained confirmation hold or precise cursor-on-moving-sprite gesture is required. Keep a supported target-selection path and an ordinary movement/retreat alternative. On compact screens, essential health, current action and retreat remain accessible alongside captions. The first fixed-speed offering should be deliberately generous in its warning; future adjustment must remain a disclosed shared-world setting, not a private clock that makes two participants experience incompatible combat.
+
+The boar's presentation needs a recognizable body, facing, warning, committed movement, impact/miss and recovery. A modest authored placeholder is acceptable if it communicates those states honestly. A stationary decorative animal, an invisible charge, or a human Punch animation on a quadruped does not qualify the threat. This assignment creates no art asset and authorizes no generation spending.
+
+## Economics and performance
+
+The basic encounter requires no model calls: threat warning/attack/retreat, player controls, harm eligibility, defeat, self-recovery, human assistance, item pickup and results use native world behavior. Optional resident conversation, a resident's decision to help, or invention uses its existing admitted funding path; unavailable cognition cannot prevent human escape or fabricate assistance.
+
+Use one local threat with bounded perception, pursuit and affected bodies. The design does not need world-wide danger scores, per-frame economic appraisal, a continuously planning animal mind or a search through every character's history. A quiet ended encounter produces no reminder loop or hidden backlog of optional decisions. Actual supported movement, collision and effect obligations still have to finish correctly; overload cannot improve the player's odds by omitting attacks.
+
+Measure complete episodes: native/server work, delivered updates, client responsiveness and any optional AI cost, alongside the time humans spend preparing, fighting, retreating and recovering. One cheap enemy tick does not demonstrate a responsive crowded fight. A source-reviewed implementation and a two-player local test do not establish public capacity. [TE05](../limits/base-world.md#te05--proposed-first-encounter-growth-boundary) records that wider threat counts and retained encounter histories remain unqualified.
+
+The world supplies one actual spear. It is neither a faucet tied to deaths nor a per-player reward entitlement. Spent ammunition, taken supplies and changed custody remain real through retreat and reload. There is no new repair sink, insurance market, XP farm or fee for returning. A useful invention that makes bypass easy is a valid reward for creativity if its supported costs and effects are honest; do not secretly strengthen the boar or invalidate geometry to preserve a scripted fight.
+
+## Proposed decisions for owner review
+
+| Owner choice | Recommendation and consequence | Alternative deliberately left open |
+| --- | --- | --- |
+| D07: entering human danger | Specific opt-in to this optional wildlife site, with PvP still off and a visible retreat route | Broader world-wide danger or mutual human combat requires its own complete participation rules. |
+| D07: intentional NPC lethality | Ordinary supported human attacks can incapacitate; an exact-target final action confirms killing | Confirming every potentially lethal normal strike adds combat interruption and must solve uncertain/queued lethality explicitly. |
+| D07/D15: human aftermath | Reuse possession-preserving recovery, with a nearby hazard-checked return and optional Help up | Corpse runs, permanent loss, mandatory rescuers and medical progression are unnecessary for the selected first loop. |
+| D07: indirect harm | Cover the admitted charge, strikes and launchers; prevent luring/bystander bypass; withhold unqualified hazard families | A general indirect-harm classifier is a separate capability, not something a warning can replace. |
+| PS-D01: exit | One original real-time deadline, bounded disclosed retreat, no new offense/commitments, same fallback as ordinary retreat | Indefinitely renewable exposure violates this offering; instant rollback or home extraction gives logout a special benefit. |
+| PS-D01: paused/stopped mechanics | Apply only actual progressed effects, then protected abandonment at the operational deadline | Secretly simulating off-screen attacks or manufacturing elapsed-time damage is not an accepted approximation. |
+| PS-D01: inherited protection | Current supported hazard check at the trail and existing fallback; remain inactive if neither is valid | Walkable geometry alone does not make return safe, and arbitrary nearby teleport search is not part of this first scope. |
+| World offering: pace and reward | Fixed disclosed 1× trial, one boar, one finite useful spear; no enemy/reward reset on departure | Broader speeds, respawning resource economies and more participants require a selected measured extension. |
+
+These are preferred proposals ready for the product owner's decision, not unilateral closure of D07, D15 or PS-D01. Broader property, PvP, ghost and calendar policies remain unchanged. The design task changes zero production logic lines. The future extension crosses several behavioral owners and has material risk around harm, control and recovery; a credible runtime size estimate and mechanism plan belong to the separate technical assignment.
+
+## Delivery and acceptance
+
+1. **Prove the site is worth visiting.** Author one visible approach, bypass, retreat area, boar placeholder and finite spear. Confirm a player can understand the reason to visit, decline it and still enjoy another activity. Verify the reward's actual reach/speed tradeoff in an available subsequent use.
+2. **Deliver one readable confrontation.** Add genuine animal perception and a body-compatible finite attack through existing action/body owners. Exercise warning, step-aside, cover, an interrupted charge, a real miss, lost sight, blocked pursuit and driving the animal away. Do not wait for ecology, generated dialogue or a new general combat framework.
+3. **Complete participation and aftermath before offering harm.** Adopt the applicable owner choices, then deliver opt-in, supported indirect-harm checks, human defeat, safe recovery, optional accepted help and the lethal boundary. Exercise all offered weapon routes, stronger admitted profiles, queued effects, simultaneous human/boar defeat and a changed target before a final action.
+4. **Qualify departure and return.** Compare connected Retreat, deliberate logout, lost connection, return during exit, repeated reengagement attempts, last-player pause, server restart and unsafe return points. Actual possessions and effects must agree across each path; there is no blind replay or special better disconnect outcome.
+5. **Judge the complete game episode.** Observe a new player alone and two willing participants using ordinary controls, including keyboard and compact layouts. Record understood warnings, meaningful choices, avoidable/unavoidable hits, waiting, useful rewards, desire to try another approach, operating cost and failures. These are future acceptance observations, not results claimed by this design pass.
+
+Reject release if a player can be returned into an unavoidable supported hit, can keep attacking while protected, can be retained indefinitely by another actor, or cannot finish recovery without model availability. Also reject a technically sound encounter that offers no satisfying choice or payoff. Improve the warning, route, attack, reward or scope before adding another layer of simulation.
+
+## Game-first critique and resulting cuts
+
+The review kept an immediately usable spear rather than a new prerequisite crafting chain; ordinary movement rather than a full dodge/parry system; optional help rather than a rescue dependency; a local return rather than distant loot extraction; and no new healing from a healthy retreat. It retained actual shared loot rather than a contribution scoreboard or personalized duplicates.
+
+The hardest remaining product tradeoff is the forgiving retreat. Position and spent resources matter, but this first world intentionally permits a bounded way out with possessions intact. Present that honestly. It is a suitable cooperative learning encounter, not a harsh competitive economy. The useful question is whether people want to face it again or apply what they learned elsewhere, not whether every conceivable escape strategy has been made costly.
+
+## Source register
+
+All sources were retrieved on **2026-10-04**. Release notes are evidence of changes at their stated dates, not an assertion that every setting is unchanged today. Recommendations are the project's design inferences; no source establishes the proposed numerical tuning or public capacity.
+
+| Ref | Primary source | Evidence used and its limits |
+| --- | --- | --- |
+| R1 | [CCP, Weapon and Logoff Timers](https://support.eveonline.com/hc/en-us/articles/203208932-Weapon-and-Logoff-Timers), updated 2024-08-29 | A finite NPC timer and renewable player-aggression timer illustrate different exposure rules. EVE's durations, delayed starts and adversarial asset-loss economy are not adopted. |
+| R2 | [Rare, Rejoining a Session](https://support.seaofthieves.com/articles/360035181454-rejoindre-une-session), updated 2021-02-16 | Unexpected interruption can return the player to an ongoing session, with world consequences retained. This is session continuity, not a universal body-protection or rollback policy. |
+| R3 | [Obsidian, A Holiday Treat](https://grounded.obsidian.net/news/grounded/a-holiday-treat), Grounded 1.1, 2022-12-08 | Changes to item retention, nearest-station return, inaccessible backpacks, attack windup and spike-strip friendly fire identify real failure classes. Patch notes do not measure enjoyment; later modes changed some penalties again. |
+| R4 | [Obsidian, Update 1.3](https://grounded.obsidian.net/news/grounded/update-1-3), 2023-11-13 | More independent risk options and client notice when the host changes them. Notice is not itself a consent model, and no full settings catalogue is copied. |
+| R5 | [Michael Booth/Valve, Replayable Cooperative Game Design: Left 4 Dead](https://cdn.akamai.steamstatic.com/apps/valve/2009/GDC2009_ReplayableCooperativeGameDesign_Left4Dead.pdf), GDC 2009 | Avoidable threat, warning cues and pacing between intensity and quiet inform the boar. Its fixed-team dependency and encounter director are not prerequisites here. |
+| R6 | [ArenaNet, Combat](https://www.guildwars2.com/en/the-game/combat/), maintained overview | Open-world cooperation without formal grouping, rescue and solo capability. The page does not establish precise downed-state timers or current recovery costs. |
+| R7 | [Microsoft, Xbox Accessibility Guideline 108](https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/108), updated 2026-03-04 | Different execution demands and descriptive difficulty choices support usable challenge. Shared-world pause and risk changes still need Open Legend's own authority rules. |
+| R8 | [Ryan, Rigby and Przybylski, The Motivational Pull of Video Games](https://selfdeterminationtheory.org/SDT/documents/2006_RyanRigbyPrzybylski_MandE.pdf), 2006; [DOI](https://doi.org/10.1007/s11031-006-9051-8) | Four studies associate perceived autonomy/competence with enjoyment and preferences. This does not select a death penalty or establish anything about NPC subjective experience. |
+| R9 | [Iron Gate, A Guide to Dedicated Servers](https://www.valheimgame.com/support/a-guide-to-dedicated-servers/), 2024-04-11 | Combat, death, resources, raids, portals and passive mobs have separate world controls. Available controls are not evidence of their popularity or optimal settings. |
+| R10 | [PlayStation/Naughty Dog, The Last of Us Part II accessibility](https://www.playstation.com/en-us/games/the-last-of-us-part-ii/accessibility/), maintained official guide | Visual awareness information, alternative inputs and combat adjustments demonstrate multiple ways to preserve participation. Its private single-player assistance is not a shared-world time policy. |
+| R11 | [Supergiant, Hades FAQ](https://www.supergiantgames.com/blog/hades-faq/), updated 2025-07-16 | The developer describes permanent progression, difficulty choices and optional increasing damage resilience. A single-player roguelike is a contrasting design, not proof of the right persistent-world economy. |
+
+[R1]: https://support.eveonline.com/hc/en-us/articles/203208932-Weapon-and-Logoff-Timers
+[R2]: https://support.seaofthieves.com/articles/360035181454-rejoindre-une-session
+[R3]: https://grounded.obsidian.net/news/grounded/a-holiday-treat
+[R4]: https://grounded.obsidian.net/news/grounded/update-1-3
+[R5]: https://cdn.akamai.steamstatic.com/apps/valve/2009/GDC2009_ReplayableCooperativeGameDesign_Left4Dead.pdf
+[R6]: https://www.guildwars2.com/en/the-game/combat/
+[R7]: https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/108
+[R8]: https://doi.org/10.1007/s11031-006-9051-8
+[R9]: https://www.valheimgame.com/support/a-guide-to-dedicated-servers/
+[R10]: https://www.playstation.com/en-us/games/the-last-of-us-part-ii/accessibility/
+[R11]: https://www.supergiantgames.com/blog/hades-faq/
+
+## Maintained records
+
+- Design and implementation: [PG05](../maintainers/personal-game-next-batch.md#pg05--first-threat-encounter-design), [BW14](../maintainers/base-world.md#accepted-lifecycle-and-protection-delivery), [MP04](../maintainers/multiplayer.md), and [PS05](../maintainers/product-scalability.md#ps05--transitions-protection-logout-and-clocks).
+- Limits and constraints: [TE01–TE05](../limits/base-world.md#te01--proposed-first-threat-offering), existing [BW07/BW08](../limits/base-world.md), [AU06/MP10/MP11](../limits/multiplayer.md), and [PS-L08/PS-L09](../limits/product-scalability.md).
+- Related behavior: [proposed world rules](../worlds/base/first-threat-encounter.md), [current combat](../worlds/base/combat.md), [lifecycle and protection](../worlds/base/lifecycle-and-protection.md), [targeted actions](../targeted-actions.md), and [current time](../worlds/base/time.md).
+- Preparation and unresolved choices: [DG07](../maintainers/needs-design.md#dg07--human-participation-and-recoverable-conflict), [ND11](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), and [D07/PS-D01](../../archive/05-project/open-decisions.md).
+- The source-backed inventory above identifies missing behavior; the separate technical design remains future PG05 work under this product-only assignment.
