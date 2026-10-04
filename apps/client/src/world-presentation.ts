@@ -3,6 +3,11 @@ import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
 import { shadowSettings } from './shadow-material';
+import {
+  characterReadThroughStencil,
+  readThroughStencil,
+  setVisibilityStencil,
+} from './visibility-stencil';
 
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
@@ -74,6 +79,9 @@ export interface RevealBinding {
   foot: Float32Array;
   spriteSize: Float32Array;
   lastStrength: number;
+  layer: pc.Layer;
+  foreground?: pc.MeshInstance[];
+  protection?: pc.MeshInstance[];
 }
 
 /** Only hidden fragments of currently authorized targets are drawn. This is the compositing
@@ -83,7 +91,12 @@ export interface RevealBinding {
  */
 export class WorldPresentation {
   readonly layer: pc.Layer;
+  readonly characterLayer: pc.Layer;
+  readonly foregroundLayer: pc.Layer;
+  readonly protectionLayer: pc.Layer;
   private revealMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
+  private foregroundMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
+  private protectionMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private spriteRevealMesh?: pc.Mesh;
   private readonly worldLayer: pc.Layer;
   private readonly lights: pc.Entity[] = [];
@@ -100,12 +113,22 @@ export class WorldPresentation {
   ) {
     this.worldLayer = app.scene.layers.getLayerById(pc.LAYERID_WORLD)!;
     this.layer = new pc.Layer({ name: 'Authorized read-through' });
+    this.characterLayer = new pc.Layer({ name: 'Character read-through' });
+    this.foregroundLayer = new pc.Layer({ name: 'Selected foreground' });
+    this.protectionLayer = new pc.Layer({ name: 'Protected character silhouettes' });
     // CameraFrame composites through Immediate, then renders later layers onto
     // the output target without world depth. Reveal needs the original depth.
     const immediate = app.scene.layers.getLayerById(pc.LAYERID_IMMEDIATE)!;
-    app.scene.layers.insert(this.layer, app.scene.layers.getOpaqueIndex(immediate));
-    camera.camera!.layers = [...camera.camera!.layers, this.layer.id];
-    sun.light!.layers = [...sun.light!.layers, this.layer.id];
+    for (const layer of [
+      this.protectionLayer,
+      this.layer,
+      this.characterLayer,
+      this.foregroundLayer,
+    ]) {
+      app.scene.layers.insert(layer, app.scene.layers.getOpaqueIndex(immediate));
+      camera.camera!.layers = [...camera.camera!.layers, layer.id];
+      sun.light!.layers = [...sun.light!.layers, layer.id];
+    }
     this.setShadowQuality('detailed');
     // Angular spread, not a world-space blur radius: large values make the
     // blocker search miss small bodies. Keep the sun close to a small disk.
@@ -113,6 +136,7 @@ export class WorldPresentation {
     sun.light!.shadowSamples = 16;
     sun.light!.shadowBlockerSamples = 16;
     this.frame = new pc.CameraFrame(app, camera.camera!);
+    this.frame.rendering.stencil = true;
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.bloom.intensity = 0.025;
     this.frame.bloom.blurLevel = 3;
@@ -139,6 +163,10 @@ export class WorldPresentation {
     m = source.clone();
     m.depthFunc = pc.FUNC_GREATER;
     m.depthWrite = false;
+    setVisibilityStencil(
+      m,
+      source.stencilFront?.ref === 2 ? characterReadThroughStencil : readThroughStencil,
+    );
     m.blendType = pc.BLEND_NORMAL;
     m.opacityDither = pc.DITHER_NONE;
     m.alphaTest = 0.01;
@@ -168,7 +196,42 @@ export class WorldPresentation {
     this.revealMaterials.set(source, m);
     return m;
   }
-  addReveal(sprite: pc.Entity, material: pc.StandardMaterial, billboard = false): RevealBinding {
+  private foregroundMaterial(source: pc.StandardMaterial): pc.StandardMaterial {
+    let material = this.foregroundMaterials.get(source);
+    if (!material) {
+      material = source.clone();
+      material.depthFunc = pc.FUNC_ALWAYS;
+      material.depthWrite = false;
+      material.stencilFront = material.stencilBack = null;
+      material.opacityDither = pc.DITHER_NONE;
+      material.blendType = pc.BLEND_NORMAL;
+      material.update();
+      this.foregroundMaterials.set(source, material);
+    }
+    return material;
+  }
+  private protectionMaterial(source: pc.StandardMaterial): pc.StandardMaterial {
+    let material = this.protectionMaterials.get(source);
+    if (!material) {
+      // Protect the whole alpha silhouette, including the reveal's faded fringe.
+      // Otherwise an object would still show through a partially faded person.
+      material = source.clone();
+      material.depthFunc = pc.FUNC_GREATER;
+      material.depthWrite = false;
+      material.opacityDither = pc.DITHER_NONE;
+      setVisibilityStencil(material, characterReadThroughStencil);
+      material.redWrite = material.greenWrite = material.blueWrite = material.alphaWrite = false;
+      material.update();
+      this.protectionMaterials.set(source, material);
+    }
+    return material;
+  }
+  addReveal(
+    sprite: pc.Entity,
+    material: pc.StandardMaterial,
+    billboard = false,
+    character = false,
+  ): RevealBinding {
     if (billboard && !this.spriteRevealMesh) {
       // Reveal only the front image. A relief's back faces are behind its visible
       // front and would otherwise pass the occluded-fragment depth comparison.
@@ -192,9 +255,21 @@ export class WorldPresentation {
       copy.morphInstance = mi.morphInstance;
       return copy;
     });
-    this.layer.addMeshInstances(meshes, true);
+    const layer = character ? this.characterLayer : this.layer;
+    layer.addMeshInstances(meshes, true);
+    const protection = character
+      ? meshes.map((mesh) => {
+          const copy = new pc.MeshInstance(mesh.mesh, this.protectionMaterial(material), mesh.node);
+          copy.visible = false;
+          copy.castShadow = copy.receiveShadow = false;
+          return copy;
+        })
+      : undefined;
+    if (protection) this.protectionLayer.addMeshInstances(protection, true);
     const binding: RevealBinding = {
       meshes,
+      layer,
+      protection,
       sourceMesh: sprite.render?.meshInstances[0],
       strength: 0,
       frame: material,
@@ -204,7 +279,7 @@ export class WorldPresentation {
       foot: new Float32Array(3),
       spriteSize: new Float32Array(2),
     };
-    for (const mi of meshes) {
+    for (const mi of [...meshes, ...(protection ?? [])]) {
       mi.setParameter('ol_revealCenter', binding.center);
       mi.setParameter('ol_revealSize', binding.size);
       mi.setParameter('ol_spriteFoot', binding.foot);
@@ -222,11 +297,28 @@ export class WorldPresentation {
     strength: number,
     dt: number,
     authorized: boolean,
+    selected: boolean,
   ): void {
     // Most targets are outside the local reveal. Skip both allocations and uniform writes
     // once hidden, but always process revocation of a previously visible target immediately.
-    const target = authorized ? strength : 0;
-    if (target === 0 && binding.strength === 0) return;
+    const target = authorized && !selected ? strength : 0;
+    if (selected && authorized && !binding.foreground) {
+      binding.foreground = binding.meshes.map((mesh) => {
+        const copy = new pc.MeshInstance(mesh.mesh, this.foregroundMaterial(source), mesh.node);
+        copy.castShadow = copy.receiveShadow = false;
+        copy.skinInstance = mesh.skinInstance;
+        copy.morphInstance = mesh.morphInstance;
+        for (const name of ['ol_spriteFoot', 'ol_spriteSize'])
+          copy.setParameter(name, name === 'ol_spriteFoot' ? binding.foot : binding.spriteSize);
+        return copy;
+      });
+      this.foregroundLayer.addMeshInstances(binding.foreground, true);
+    }
+    for (const mesh of binding.foreground ?? []) {
+      mesh.visible = authorized && selected;
+      if (source !== binding.frame) mesh.material = this.foregroundMaterial(source);
+    }
+    if (target === 0 && binding.strength === 0 && !selected) return;
     binding.strength = authorized
       ? binding.strength + (target - binding.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12))
       : 0;
@@ -245,17 +337,29 @@ export class WorldPresentation {
     binding.spriteSize[0] = width;
     binding.spriteSize[1] = height;
     for (const mi of binding.meshes) {
-      mi.visible = binding.strength > 0.01;
+      mi.visible = !selected && binding.strength > 0.01;
       if (source !== binding.frame) mi.material = this.revealMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mi.setParameter('ol_revealStrength', binding.strength);
+    }
+    for (const mesh of binding.protection ?? []) {
+      mesh.visible = !selected && binding.strength > 0.01;
+      if (source !== binding.frame) mesh.material = this.protectionMaterial(source);
+      if (binding.lastStrength !== binding.strength)
+        mesh.setParameter('ol_revealStrength', binding.strength);
     }
     binding.lastStrength = binding.strength;
     binding.frame = source;
   }
   removeReveal(binding: RevealBinding): void {
-    this.layer.removeMeshInstances(binding.meshes, true);
-    for (const mi of binding.meshes) {
+    binding.layer.removeMeshInstances(binding.meshes, true);
+    if (binding.foreground) this.foregroundLayer.removeMeshInstances(binding.foreground, true);
+    if (binding.protection) this.protectionLayer.removeMeshInstances(binding.protection, true);
+    for (const mi of [
+      ...binding.meshes,
+      ...(binding.foreground ?? []),
+      ...(binding.protection ?? []),
+    ]) {
       mi.skinInstance = null;
       mi.morphInstance = null;
       mi.destroy();
@@ -264,6 +368,10 @@ export class WorldPresentation {
   releaseMaterial(source: pc.StandardMaterial): void {
     this.revealMaterials.get(source)?.destroy();
     this.revealMaterials.delete(source);
+    this.foregroundMaterials.get(source)?.destroy();
+    this.foregroundMaterials.delete(source);
+    this.protectionMaterials.get(source)?.destroy();
+    this.protectionMaterials.delete(source);
   }
   /** A floor cutaway changes camera visibility, not shadow casting or physical geometry. */
   setCutaway(node: pc.Entity, hidden: boolean): void {
@@ -318,7 +426,12 @@ export class WorldPresentation {
           // through floors/walls. Quality bounds the selected count and shared atlas.
           castShadows: true,
           normalOffsetBias: 0.025,
-          layers: [pc.LAYERID_WORLD, this.layer.id],
+          layers: [
+            pc.LAYERID_WORLD,
+            this.layer.id,
+            this.characterLayer.id,
+            this.foregroundLayer.id,
+          ],
         });
         this.app.root.addChild(light);
         this.lights.push(light);
@@ -331,8 +444,15 @@ export class WorldPresentation {
   destroy(): void {
     this.frame.destroy();
     this.app.scene.layers.remove(this.layer);
+    this.app.scene.layers.remove(this.characterLayer);
+    this.app.scene.layers.remove(this.foregroundLayer);
+    this.app.scene.layers.remove(this.protectionLayer);
     for (const m of this.revealMaterials.values()) m.destroy();
+    for (const m of this.foregroundMaterials.values()) m.destroy();
+    for (const m of this.protectionMaterials.values()) m.destroy();
     this.revealMaterials.clear();
+    this.foregroundMaterials.clear();
+    this.protectionMaterials.clear();
     if (this.spriteRevealMesh) {
       this.spriteRevealMesh.decRefCount();
       if (this.spriteRevealMesh.refCount === 0) this.spriteRevealMesh.destroy();

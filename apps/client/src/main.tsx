@@ -545,10 +545,22 @@ function App({
     setPicker(null);
   }
   function inspect(entity: EntityView) {
+    const current = latest.current;
+    const permitted =
+      current &&
+      (entity.id === current.player.id || current.entities.some((e) => e.id === entity.id));
+    if (!permitted) {
+      notify(`${current?.player.name ?? 'Your character'} can't see this.`);
+      return;
+    }
+    if (scene.current && !scene.current.select(entity.id)) return;
     setSelected(entity.id);
-    scene.current?.select(entity.id);
     show(entity.id === view?.player.id ? 'character' : 'nearby');
     setPicker(null);
+  }
+  function clearSelection() {
+    setSelected(null);
+    scene.current?.select(null);
   }
   handlers.current = {
     select: (entity, point, ground) => {
@@ -564,8 +576,7 @@ function App({
         setHover(null);
       } else if (entity) inspect(entity);
       else {
-        setSelected(null);
-        scene.current?.select(null);
+        clearSelection();
       }
     },
     move: (position) =>
@@ -595,6 +606,7 @@ function App({
                   ? { entity, point }
                   : null,
             ),
+          selectionDenied: notify,
           cameraChanged: ({ projection, levelId, rotationLocked, following }) =>
             setCameraView((previous) =>
               previous.projection === projection &&
@@ -678,7 +690,7 @@ function App({
           setPicker(null);
           canvas.current?.focus();
         } else if (timeSettings) setTimeSettings(false);
-        else if (selected && open.includes('nearby')) setSelected(null);
+        else if (selected && open.includes('nearby')) clearSelection();
         else if (open.length) hide(open.at(-1)!);
         return;
       }
@@ -1383,7 +1395,7 @@ function App({
                         onClose={() => hide(id)}
                         onBack={
                           id === 'nearby' && entity
-                            ? () => setSelected(null)
+                            ? clearSelection
                             : id === 'intelligence' && intelligenceSelection
                               ? () => setIntelligenceSelection(null)
                               : undefined

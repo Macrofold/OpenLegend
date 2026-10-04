@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Protect characters and clarify selectable targets
+
+Mike superseded read-through over every camera obstruction: ordinary objects must stay behind people, while walls, structural surfaces and decorative trees may permit see-through presentation. The currently perceived selected target is the explicit foreground exception, independent of read-through preferences. Current perception still gates canvas/list inspection and contextual targeting; clicking a remembered image refuses with the controlled character's name and no movement command. A one-second hover delay and short fading silhouette glow clarify the pointer's target. This adds bounded outline/protection rendering work while preserving server sight and world rules. [Presentation contract](world-presentation.md#selection-and-hover), [SW18.17](maintainers/spatial-world.md#sw18--world-presentation-delivery) and [actual evidence](verification/character-visibility.md) separate scoped delivery from existing exact-model-picking and broader graphics qualification.
+
 ## October 3, 2026 — Connected perception areas
 
 At Mike's request, the range display now derives its outline from the same sampled surface mesh as a faint interior tint. This replaces deliberately missing contour joins and omitted map-edge lines with closed displayed patches, halves line widths, and shortens labels to sight/speech wording. Closed mapped-area edges are display bounds, not new sensory laws. Native clipping, public-geometry disclosure and camera-only caching remain; added filled-mesh cost is measured and tracked separately in SW09.4b. [Contract](spatial-world.md#perception-range-guides), [limits](limits/interface.md#rg01--perception-range-guide-display), [evidence](verification/perception-overlays.md#connected-outlines-and-faint-fills--october-3-2026).
