@@ -175,10 +175,10 @@ export class CharacterStatuses {
           ? view.player
           : view.entities.find((entity) => entity.id === event.actorId);
       if (!actor) continue;
-      const actorName = namePhrase(actor, 'definite', { capitalize: true });
-      let text = event.text.startsWith(`${actorName} `)
-        ? event.text.slice(actorName.length + 1)
-        : event.text;
+      const actorName = (['definite', 'indefinite'] as const)
+        .map((article) => namePhrase(actor, article, { capitalize: true }))
+        .find((name) => event.text.startsWith(`${name} `));
+      let text = actorName ? event.text.slice(actorName.length + 1) : event.text;
       if (event.type === 'crafted') text = text.replace(/^made /, 'Crafted ');
       this.enqueue(event.actorId, text.charAt(0).toUpperCase() + text.slice(1));
     }

@@ -98,6 +98,7 @@ export function admitDeclaration(
     let outputDefinitionId = `item-${contentLabel(`output:${digest}`)}`;
     while (world.itemDefinitions[outputDefinitionId]) outputDefinitionId += '-v';
     const compiled = compileRecipeCandidate(original, draft);
+    const outputName = canonicalName(draft.output.name, compiled.outputDefinition.nameForm);
     const family = recipeFamily(original, draft.family.id);
     if (!family)
       return reject('invalid-declaration', 'The selected recipe family is not installed.');
@@ -105,7 +106,7 @@ export function admitDeclaration(
       ...cloneValue(compiled.outputDefinition),
       id: outputDefinitionId,
       version: 1,
-      name: canonicalName(draft.output.name, compiled.outputDefinition.nameForm),
+      name: outputName,
       description: draft.output.description,
       recipeId,
     };
@@ -115,7 +116,7 @@ export function admitDeclaration(
       inputs: cloneValue(draft.inputs),
       output: {
         ...cloneValue(draft.output),
-        name: canonicalName(draft.output.name, compiled.outputDefinition.nameForm),
+        name: outputName,
       },
       workSeconds: compiled.workSeconds,
       sourceCandidate: cloneValue(draft),

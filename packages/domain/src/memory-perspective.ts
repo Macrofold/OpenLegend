@@ -40,51 +40,49 @@ export function memoryPerspective(
   const player = world.entities[controlledEntityId(world)];
   const named = (value: string) =>
     player ? value.replace(/\b(?:[Tt]he player|[Pp]layer|You)\b/g, () => player.name) : value;
+  const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
   if (speech) {
-    const separator = text.indexOf(':');
+    const prefix = source ? patterns(source).subject.exec(text)?.[0] : undefined;
+    const separator = text.indexOf(':', prefix?.length ?? 0);
     if (separator < 0) return text;
-    const speaker =
-      sourceEntityId && world.entities[sourceEntityId]
-        ? `${namePhrase(observerName(world, actorId, sourceEntityId), 'indefinite', { capitalize: true })} said`
-        : 'An unidentified speaker said';
+    const speaker = source
+      ? `${namePhrase(observerName(world, actorId, source.id), 'indefinite', { capitalize: true })} said`
+      : 'An unidentified speaker said';
     return `${sourceEntityId === actorId ? 'I said' : speaker}${text.slice(separator)}`;
   }
+  // Separate the attributed name before handling quotations/placeholders. A personal
+  // name can contain quotes, "You", "Player" or dollar signs; all are literal name text.
+  const self = sourceEntityId === actorId;
+  const names = source && patterns(source);
+  const possessive = self && names ? names.possessive.exec(text) : null;
+  const prefix = possessive ?? names?.subject.exec(text);
+  const subject =
+    source && prefix
+      ? self
+        ? possessive
+          ? 'My'
+          : 'I'
+        : namePhrase(observerName(world, actorId, source.id), 'indefinite', {
+            capitalize: true,
+          })
+      : '';
   // Quoted testimony keeps the speaker's exact words, including names/pronouns.
   return text
+    .slice(prefix?.[0].length ?? 0)
     .split(/("[^"\n]*"|“[^”\n]*”)/g)
     .map((part, index) => {
       if (index % 2) return part;
-      let result = named(part);
+      const result = (index === 0 ? subject : '') + named(part);
       // Without event attribution, keep third-person wording.
-      if (sourceEntityId !== actorId) {
-        const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
-        if (index === 0 && source)
-          result = result.replace(
-            new RegExp(
-              `^(?:${[...new Set([namePhrase(source, 'definite', { capitalize: true }), source.name])].map(escape).join('|')})(?=\\s|[.,:’']|$)`,
-            ),
-            namePhrase(observerName(world, actorId, source.id), 'indefinite', {
-              capitalize: true,
-            }),
-          );
-        return result;
-      }
-      const names = patterns(actor);
-      // Only the leading native subject is known to be the event source.
-      // Later occurrences may name a different entity with the same label.
-      if (index === 0) {
-        result = result.replace(names.possessive, 'my');
-        result = result.replace(names.subject, 'I');
-      }
+      if (!self || index !== 0) return result;
       return result
-        .replace(/\bI is\b/g, 'I am')
-        .replace(/\bI has\b/g, 'I have')
-        .replace(/\bI does\b/g, 'I do')
+        .replace(/^I is\b/, 'I am')
+        .replace(/^I has\b/, 'I have')
+        .replace(/^I does\b/, 'I do')
         .replace(
           /^I (nods|smiles|frowns|waves|shrugs|shakes|slaps)\b/,
           (_, verb: string) => `I ${verb.slice(0, -1)}`,
-        )
-        .replace(/^my\b/, 'My');
+        );
     })
     .join('');
 }

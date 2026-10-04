@@ -153,7 +153,7 @@ export function rememberSubject(
 /** Select permitted identity before applying presentation grammar. */
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
   const known = observerGivenName(world, observerId, subjectId);
-  if (known) return { name: known, nameForm: 'proper' };
+  if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
   const entity = world.entities[subjectId];
   if (!entity?.actor)
     return entity
@@ -162,10 +162,11 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
           nameForm: entity.nameForm,
           indefiniteArticle: entity.indefiniteArticle,
         }
-      : { name: 'unidentified object' };
+      : { name: 'unidentified object', nameForm: 'count', indefiniteArticle: undefined };
   const species = entity.actor.species;
   const noun = !species || species === 'human' ? 'person' : species;
-  return { name: noun, nameForm: 'count' };
+  // A permitted label replaces all grammar of the hidden authored name, including overrides.
+  return { name: noun, nameForm: 'count', indefiniteArticle: undefined };
 }
 
 export function observerDescription(

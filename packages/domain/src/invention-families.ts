@@ -1,4 +1,4 @@
-import { canonicalName } from '@open-legend/language';
+import { canonicalName, validName } from '@open-legend/language';
 import type {
   ItemDefinition,
   MaterialProperty,
@@ -255,7 +255,7 @@ export function describeRecipeCandidate(world: WorldState, candidate: RecipeCand
 }
 
 /** Structural constraints and material eligibility come from the installed authored data. */
-export function validateRecipeCandidate(
+function validateRecipeCandidateStructure(
   world: WorldState,
   value: unknown,
   purpose: 'admission' | 'restore' = 'admission',
@@ -377,17 +377,48 @@ export function validateRecipeCandidate(
   );
 }
 
+/** Preview and installation agree on names as well as the trusted compiled output. */
+export function validateRecipeCandidate(
+  world: WorldState,
+  value: unknown,
+  purpose: 'admission' | 'restore' = 'admission',
+  visiting = new Set<string>(),
+): string[] {
+  const errors = validateRecipeCandidateStructure(world, value, purpose, visiting);
+  if (errors.length) return errors;
+  try {
+    compileValidatedRecipeCandidate(world, value as RecipeCandidate);
+    return [];
+  } catch (error) {
+    return [error instanceof Error ? error.message : 'Invalid recipe output.'];
+  }
+}
+
 export function compileRecipeCandidate(
   world: WorldState,
   candidate: RecipeCandidate,
   purpose: 'admission' | 'restore' = 'admission',
   visiting = new Set<string>(),
 ): CompiledRecipe {
-  const errors = validateRecipeCandidate(world, candidate, purpose, visiting);
+  const errors = validateRecipeCandidateStructure(world, candidate, purpose, visiting);
   if (errors.length) throw new Error(errors.join(' '));
+  return compileValidatedRecipeCandidate(world, candidate);
+}
+
+function compileValidatedRecipeCandidate(
+  world: WorldState,
+  candidate: RecipeCandidate,
+): CompiledRecipe {
   const family = recipeFamily(world, candidate.family.id);
   if (!family) throw new Error('The selected recipe family is not installed.');
   const compiled = family.compile(world, candidate);
+  if (
+    !validName({
+      ...compiled.outputDefinition,
+      name: canonicalName(candidate.output.name, compiled.outputDefinition.nameForm),
+    })
+  )
+    throw new Error('Choose an output name without repeated articles.');
   // Only a trusted installed compiler can issue material metadata; candidate JSON cannot.
   if (family.definition.materialOutput)
     compiled.outputDefinition.material = { ...family.definition.materialOutput };
@@ -499,6 +530,10 @@ export function validateInstalledRecipe(
     )
       throw new Error('Missing exact saved recipe family dependency.');
     const compiled = compileRecipeCandidate(world, recipe.sourceCandidate, 'restore', visiting);
+    const outputName = canonicalName(
+      recipe.sourceCandidate.output.name,
+      compiled.outputDefinition.nameForm,
+    );
     const { id, version, recipeId, name, description, ...output } =
       world.itemDefinitions[recipe.outputDefinitionId] ?? {};
     if (
@@ -508,8 +543,7 @@ export function validateInstalledRecipe(
       id !== recipe.outputDefinitionId ||
       recipeId !== recipe.id ||
       version !== 1 ||
-      name !==
-        canonicalName(recipe.sourceCandidate.output.name, compiled.outputDefinition.nameForm) ||
+      name !== outputName ||
       description !== recipe.sourceCandidate.output.description ||
       recipe.digest !== canonicalJson(recipe.sourceCandidate) ||
       recipe.name !== recipe.sourceCandidate.name ||
@@ -517,10 +551,7 @@ export function validateInstalledRecipe(
       canonicalJson(recipe.output) !==
         canonicalJson({
           ...recipe.sourceCandidate.output,
-          name: canonicalName(
-            recipe.sourceCandidate.output.name,
-            compiled.outputDefinition.nameForm,
-          ),
+          name: outputName,
         }) ||
       canonicalJson(recipe.inputs) !== canonicalJson(recipe.sourceCandidate.inputs) ||
       recipe.workSeconds !== compiled.workSeconds ||

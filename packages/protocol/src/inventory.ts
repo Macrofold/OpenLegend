@@ -30,7 +30,6 @@ export interface InventoryDestinationRequest {
 
 export interface InventoryDestination extends Named {
   id: string;
-  name: string;
   location: string;
   revision: number;
   kind: 'container' | 'recipient';

@@ -38,7 +38,6 @@ export interface ItemDefinition extends Named {
   container?: { capacity: number; maximumDepth: number };
   id: string;
   version: number;
-  name: string;
   description: string;
   properties: MaterialProperty[];
   nutrition?: number;
@@ -246,7 +245,6 @@ export interface Entity extends Named {
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
-  name: string;
   kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile' | 'item';
   inventoryRevision?: number;
   placement?: import('./spatial-state.js').Placement;

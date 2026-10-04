@@ -240,7 +240,6 @@ export interface EntityView extends Named {
   attributes?: AttributeView[];
   id: string;
   kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile';
-  name: string;
   subtype: string;
   position: Position;
   supportSurfaceId: string | null;
@@ -269,7 +268,6 @@ export interface InventoryItemView extends Named {
   declaredOwner?: { name: string; revision: number };
   id: string;
   definitionId: string;
-  name: string;
   quantity: number;
   /** Available free units; omitted when availability has not been inspected. */
   availableQuantity?: number;
@@ -493,7 +491,6 @@ export interface GameView {
     participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
     id: string;
-    name: string;
     position: Position;
     supportSurfaceId: string | null;
     heading: number;
@@ -984,14 +981,13 @@ export interface ContainerPage {
   message?: string;
   container: Named & {
     id: string;
-    name: string;
     location?: string;
     revision: number;
     load?: number;
     capacity?: number;
     restricted?: boolean;
   };
-  breadcrumbs: Array<{ id: string; name: string; revision: number }>;
+  breadcrumbs: Array<Named & { id: string; revision: number }>;
   items: InventoryItemView[];
   next?: string;
 }

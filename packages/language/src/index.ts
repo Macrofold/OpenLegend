@@ -16,27 +16,33 @@ export function canonicalName(name: string, form: NameForm = 'count'): string {
 }
 
 /** Current-format validation; invalid grammar must not silently become a different label. */
-export function validName(value: Named): boolean {
+export function validName(value: unknown): value is Named {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const named = value as Record<string, unknown>;
   return (
-    typeof value.name === 'string' &&
-    !!value.name &&
-    (value.nameForm === undefined ||
-      ['count', 'proper', 'plural', 'mass'].includes(value.nameForm)) &&
-    (value.indefiniteArticle === undefined || ['a', 'an'].includes(value.indefiniteArticle)) &&
-    canonicalName(value.name, value.nameForm) === value.name
+    typeof named.name === 'string' &&
+    !!named.name &&
+    (named.nameForm === undefined ||
+      named.nameForm === 'count' ||
+      named.nameForm === 'proper' ||
+      named.nameForm === 'plural' ||
+      named.nameForm === 'mass') &&
+    (named.indefiniteArticle === undefined ||
+      named.indefiniteArticle === 'a' ||
+      named.indefiniteArticle === 'an') &&
+    canonicalName(named.name, named.nameForm) === named.name
   );
 }
 
 function indefiniteArticle(name: string): 'a' | 'an' {
   // Articles follow pronunciation, not spelling. World authors can override unfamiliar names.
-  if (/^(?:honest|honou?r|hour|heir|herb\b)/i.test(name)) return 'an';
+  if (/^(?:honest|honou?r|hour|heir|herb\b|x-ray\b)/i.test(name)) return 'an';
   if (
     /^(?:one\b|once\b|ewe|eu[lr]|uni(?:[^nmd]|$)|u[bcfhjkqrst][aeiou]|user|use\b|usual)/i.test(name)
   )
     return 'a';
   const initialism = name.match(/^([A-Z]+)(?:\b|[-\d])/);
-  if (initialism && initialism[1]!.length > 1)
-    return /^[AEFHILMNORSX]/.test(initialism[1]!) ? 'an' : 'a';
+  if (initialism) return /^[AEFHILMNORSX]/.test(initialism[1]!) ? 'an' : 'a';
   if (/^(?:8|11|18)(?:\b|[-])/i.test(name)) return 'an';
   return /^[aeiou]/i.test(name) ? 'an' : 'a';
 }
@@ -61,7 +67,7 @@ export function namePhrase(
           : '';
   // Common labels are often title-cased in menus; sentence references use ordinary casing.
   const noun =
-    article !== 'none' && form !== 'proper' && !/^[A-Z]{2}/.test(name)
+    article !== 'none' && form !== 'proper' && !/^[A-Z](?:[A-Z]|\b)/.test(name)
       ? name[0]!.toLowerCase() + name.slice(1)
       : name;
   const phrase = prefix ? `${prefix} ${noun}` : noun;
