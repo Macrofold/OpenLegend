@@ -93,10 +93,17 @@ export function MergeTargets(props: MergeTargetProps) {
 }
 
 function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: MergeTargetProps) {
-  const [cursor, setCursor] = useState<string>();
+  const [refresh, setRefresh] = useState(0);
+  const context = JSON.stringify([pageKey, containerId, item.id, item.revision, visible, refresh]);
+  const [continuation, setContinuation] = useState<{ context: string; cursor?: string }>({
+    context,
+  });
+  if (continuation.context !== context) setContinuation({ context });
+  const cursor = continuation.context === context ? continuation.cursor : undefined;
+  const setCursor = (value?: string) => setContinuation({ context, cursor: value });
   const [targetId, setTargetId] = useState('');
   const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();
-  const key = JSON.stringify([pageKey, containerId, item.id, item.revision, cursor]);
+  const key = JSON.stringify([context, cursor]);
   useEffect(() => {
     if (!visible) return;
     const controller = new AbortController();
@@ -123,7 +130,20 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
   const loading = result?.key !== key;
   const current = result?.key === key && visible ? result : undefined;
   if (!current) return <p role="status">Finding matching lots…</p>;
-  if (current.error && !loading) return <p role="alert">{current.error}</p>;
+  if (current.error && !loading)
+    return (
+      <>
+        <p role="alert">{current.error}</p>
+        <Button
+          size="sm"
+          variant="quiet"
+          disabled={!visible}
+          onPress={() => setRefresh((value) => value + 1)}
+        >
+          Refresh matching stacks
+        </Button>
+      </>
+    );
   const targets = current.page?.items ?? [];
   const target = targets.find((other) => other.id === targetId) ?? targets[0];
   if (!target && !current.page?.next && !cursor && !loading) return null;

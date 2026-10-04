@@ -21,7 +21,6 @@ export function InventoryOffer({
   onOffer(recipient: InventoryDestination): void;
 }) {
   const [query, setQuery] = useState('');
-  const [cursor, setCursor] = useState<string>();
   const [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<{
     key: string;
@@ -29,7 +28,14 @@ export function InventoryOffer({
     error?: string;
   }>();
   const searchId = useId();
-  const key = JSON.stringify([source, scope, query, cursor, refresh, active]);
+  const context = JSON.stringify([source, scope, query, refresh, active]);
+  const [continuation, setContinuation] = useState<{ context: string; cursor?: string }>({
+    context,
+  });
+  if (continuation.context !== context) setContinuation({ context });
+  const cursor = continuation.context === context ? continuation.cursor : undefined;
+  const setCursor = (value?: string) => setContinuation({ context, cursor: value });
+  const key = JSON.stringify([context, cursor]);
   useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
