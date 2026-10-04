@@ -163,7 +163,7 @@ PW08's selected work reductions are demonstrated; complete acceptance remains op
 
 ## PW09 — Correct and efficient memory retrieval
 
-**Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/parallel-batch-01-playable-week/memory-retrieval.md).
+**Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/completed/parallel-batch-01-playable-week/memory-retrieval.md).
 
 - [x] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
 - [x] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
