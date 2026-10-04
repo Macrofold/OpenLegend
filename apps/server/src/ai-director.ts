@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
   decisionAllowance,
@@ -12,6 +13,7 @@ import type { RequestScope } from './authority.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import {
   observerDescription,
+  observerName,
   canSpeak,
   supportsManualWork,
   validResponseEnvelope,
@@ -285,7 +287,7 @@ export class AiDirector {
             entity.actor.incapacitated ||
             !entity.actor.alive)
         ) {
-          run.cancelReason = `${entity.name} became unavailable; the pending reply was cancelled.`;
+          run.cancelReason = `${namePhrase(entity, 'definite', { capitalize: true })} became unavailable; the pending reply was cancelled.`;
           run.controller.abort();
           return;
         }
@@ -960,7 +962,7 @@ export class AiDirector {
           return {
             ok: false,
             code: 'actor-unavailable',
-            message: `${target.name} cannot respond right now. Retry when they are awake and able to respond.`,
+            message: `${namePhrase(observerName(this.service.world, inventorId, target.id), 'definite', { capitalize: true })} cannot respond right now. Retry when they are awake and able to respond.`,
           };
         if (!original) {
           const spoken = await this.service.say(`${id}:player`, inventorId, text, targetId, volume);
@@ -2750,7 +2752,7 @@ export class AiDirector {
           ...latest.map((m) => m.summary),
           ...matches.map(
             (id) =>
-              `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
+              `I notice ${observerDescription(world, entity.id, id, 'indefinite')}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner').flatMap((v) =>
@@ -2774,7 +2776,7 @@ export class AiDirector {
             : matches.length
               ? `A nearby interest became relevant: ${observerDescription(world, entity.id, matches[0]!)}.`
               : newReview
-                ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!)}.`
+                ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!, 'definite')}.`
                 : 'A goal, surrounding, or internal state changed.';
         const diagnosticTriggerType = urgentNeed
           ? `Cognition skipped · ${urgentNeed}`

@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { reconcileConditions } from './conditions.js';
 import { validateStatusInstallation } from './native-work.js';
 import { itemsForOwner, setItemQuantity } from './objects.js';
@@ -122,7 +123,7 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
     world,
     events,
     'god-spawned',
-    `${entity.name} appeared in the clearing.`,
+    `${namePhrase(entity, 'definite', { capitalize: true })} appeared in the clearing.`,
     entity,
     undefined,
     {
@@ -133,7 +134,11 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   // Admission owns initial conditions: a newly created hungry person gets one 'initial'
   // notice now, not a fabricated crossing at the next step (EPR04).
   reconcileConditions(world, entity, events);
-  return finish(world, events, outcome(true, 'spawned', `${entity.name} added.`));
+  return finish(
+    world,
+    events,
+    outcome(true, 'spawned', `${namePhrase(entity, 'definite', { capitalize: true })} added.`),
+  );
 }
 
 export function reviveActor(
@@ -153,7 +158,12 @@ export function reviveActor(
     return reject(original, 'actor', 'Choose an actor with a compatible body.');
   if (expectedRevision !== undefined && current.actor.body.revision !== expectedRevision)
     return reject(original, 'stale', 'The body changed.');
-  if (current.actor.alive) return reject(original, 'alive', `${current.name} is already alive.`);
+  if (current.actor.alive)
+    return reject(
+      original,
+      'alive',
+      `${namePhrase(current, 'definite', { capitalize: true })} is already alive.`,
+    );
   if (
     !worldSupport(current) ||
     !canStand(
@@ -189,11 +199,23 @@ export function reviveActor(
   delete entity.remains;
   interruptStatusEffects(world, entity, events, 'revived');
   reconcileBody(world, entity, events, 'revival');
-  emit(world, events, 'god-revived', `${entity.name} returned to life.`, entity, undefined, {
-    significant: true,
-    godMode: true,
-  });
-  const result = outcome(true, 'revived', `${entity.name} revived.`);
+  emit(
+    world,
+    events,
+    'god-revived',
+    `${namePhrase(entity, 'definite', { capitalize: true })} returned to life.`,
+    entity,
+    undefined,
+    {
+      significant: true,
+      godMode: true,
+    },
+  );
+  const result = outcome(
+    true,
+    'revived',
+    `${namePhrase(entity, 'definite', { capitalize: true })} revived.`,
+  );
   if (requestId) world.commandReceipts[requestId] = { digest, outcome: result };
   return finish(world, events, result);
 }
@@ -223,7 +245,7 @@ export function enableActorCognition(original: WorldState, actorId: string): Tra
     world,
     events,
     'god-cognition-enabled',
-    `${entity.name} gained cognition and speech.`,
+    `${namePhrase(entity, 'definite', { capitalize: true })} gained cognition and speech.`,
     entity,
     undefined,
     { significant: true, godMode: true },
@@ -250,7 +272,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     canonicalJson(draft.person.traitIds) ===
       canonicalJson((current.actor.traits ?? []).map((trait) => trait.id))
       ? (current.actor.traits?.map((trait) => ({ ...trait })) ?? [])
-      : personTraits(draft.person);
+      : personTraits(draft.person, current?.actor?.traits);
   if (!current?.actor || !hasMemory(current)) return reject(original, 'actor', 'Choose a person.');
   if (
     !draft.person.name.trim() ||
@@ -405,6 +427,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   );
   if (identityChanged) {
     entity.name = draft.person.name.trim();
+    entity.nameForm = 'proper';
     entity.actor!.description = draft.person.description.trim();
     entity.actor!.personality = draft.person.personality.trim();
     entity.actor!.backstory = draft.person.backstory.trim();
@@ -509,7 +532,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     const identity = mind.documents.find((document) => document.id === 'identity');
     if (identity) {
       identity.text = [
-        `I am ${entity.name}.`,
+        `I am ${namePhrase(entity, 'definite', { capitalize: true })}.`,
         entity.actor!.description,
         entity.actor!.personality,
         entity.actor!.backstory,
@@ -537,7 +560,15 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     }
   }
   return {
-    ...finish(world, events, outcome(true, 'person-saved', `${entity.name} saved.`)),
+    ...finish(
+      world,
+      events,
+      outcome(
+        true,
+        'person-saved',
+        `${namePhrase(entity, 'definite', { capitalize: true })} saved.`,
+      ),
+    ),
     invalidatedMemoryIds: invalidated.size ? { [draft.actorId]: [...invalidated] } : undefined,
   };
 }

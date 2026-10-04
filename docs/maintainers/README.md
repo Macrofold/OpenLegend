@@ -2,15 +2,23 @@
 
 ## Future work needing design
 
-[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
+[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. Its [ordered design groups](needs-design.md#ordered-design-groups) cover all 37 ND entries and remaining scalability refinements, with roadmap bands, parallel-work boundaries, explicit later slices and conditional triggers. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
 
 ## Five researched product specifications
 
 [Five product and behavior specifications](../projects/five-product-feature-specs.md) contains continuing NPC lives, attention/crowds/scenes, world creation, editable shelters/rain and authored stats/checks. Its [game-first sequence](../projects/five-product-feature-specs.md#game-first-delivery-sequence) prioritizes the accepted live creative loop and useful small-world improvements; document numbering is not implementation priority. Each proposal includes behavior, scenarios, economics, primary research and experience gates. PS02–PS04, ND01, ND07/narrow ND08 and ND03 retain delivery and limits ownership. Product design remains distinct from technical design, implementation and measured enjoyment.
 
+## Compelling characters and integrated life
+
+[Compelling character experience](character-experience.md) coordinates CE01–CE05 across existing character, world, cognition and agency work. The [product specification](../projects/compelling-characters-feature-spec.md) explicitly covers bodily and psychological experience, contact/belonging, enjoyment, situated context and meaningful autonomous choices. Its [complete flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) qualify entire episodes and delayed consequences through AG12/CR12. This is early DG02 work; personality transformation and unattended communities remain later scope. The [inner-life rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition and primary research.
+
 ## Product scalability and persistent participation
 
 [Product scalability](../product-scalability/README.md) captures the accepted strategic direction for federated communities, protected personal domains, lower-detail background lives, bounded attention and scenes, consequence-preserving logout, and forecast local campaigns against canonical adversaries. Start with the [feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md). [PS01–PS08](product-scalability.md) owns cross-feature delivery and [the policy inventory](../limits/product-scalability.md) owns unresolved tuning. This is documentation and future behavior, not a claim of shipped background simulation or million-player capacity; existing subsystem and operational scalability owners retain their responsibilities.
+
+## Proposed personal-game assignments
+
+[PG01–PG05](personal-game-next-batch.md) proposes the next five independent assignments: a complete live invention/use journey, coherent attended resident behavior, clearer action discovery, measured action-preview efficiency, and a first-threat encounter design. The [feature scope](../projects/personal-game-next-batch-feature-spec.md), [technical definitions](../projects/personal-game-next-batch-tech-design.md) and [copyable prompts](../projects/personal-game-next-batch-prompts.md) distinguish four delivery tasks from one design task. Active family-authoring work is excluded. This allocation is proposed; it neither reopens the completed NP batch nor closes parent acceptance.
 
 ## Next priority batch
 

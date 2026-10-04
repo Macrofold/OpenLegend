@@ -1,4 +1,4 @@
-import { HistoryCursorError } from './perceived-events.js';
+import { HistoryCursorError } from './history-cursor-error.js';
 
 /** Owner history search: every word must match the start of a word in the text the viewer
  * is shown (docs/limits/memory.md#mh08). */

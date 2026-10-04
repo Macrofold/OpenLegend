@@ -13,6 +13,13 @@ import { createSpriteRelief } from './sprite-relief';
 import * as pc from 'playcanvas';
 import { ShadowMaterial } from './shadow-material';
 import { SpriteShadowBatches } from './shadow-batches';
+import { HoverOutline } from './hover-outline';
+import {
+  ordinaryStencil,
+  personStencil,
+  sceneryStencil,
+  setVisibilityStencil,
+} from './visibility-stencil';
 import { StatusIndicators } from './status-indicators';
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
 import {
@@ -46,6 +53,7 @@ import { playerEntity } from './entity-view';
 import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { PerceptionOverlay } from './perception-overlay';
+import { FrameRateMeter } from './frame-rate';
 import { CharacterStatuses } from './character-status';
 import { SpeechCaptions, type CaptionPoint } from './speech-captions';
 import {
@@ -81,6 +89,7 @@ interface RenderedEntity {
   width: number;
   height: number;
 }
+const NO_OUTLINE_MESHES: readonly pc.MeshInstance[] = [];
 /** Presentation only. Entity positions, terrain and all interactions come from the public projection. */
 export class WildernessScene implements WorldRenderer {
   readonly app: pc.Application;
@@ -108,6 +117,9 @@ export class WildernessScene implements WorldRenderer {
     }
   >();
   private landscapeCards = new Set<pc.Entity>();
+  private outline!: HoverOutline;
+  private hoveredId: string | null = null;
+  private hoverStarted = 0;
   private landscapeBuffers: pc.VertexBuffer[] = [];
   private shadowBatches!: SpriteShadowBatches;
   private reliefMeshes = new Map<pc.Texture, ReturnType<typeof createSpriteRelief>>();
@@ -154,6 +166,8 @@ export class WildernessScene implements WorldRenderer {
   private pointerContextHandled = false;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
+  private suspended = false;
+  private readonly frameRateMeter = new FrameRateMeter();
   private readyRequested = false;
   private presentation!: WorldPresentation;
   private mercenary?: MercenaryModels;
@@ -215,6 +229,7 @@ export class WildernessScene implements WorldRenderer {
       });
       this.app.root.addChild(sun);
       this.presentation = new WorldPresentation(this.app, this.camera, sun);
+      this.outline = new HoverOutline(this.app, this.camera);
       this.mercenary = new MercenaryModels(
         this.app,
         this.presentation,
@@ -244,7 +259,9 @@ export class WildernessScene implements WorldRenderer {
       canvas.addEventListener('wheel', this.wheel, { passive: false });
       canvas.addEventListener('keydown', this.cameraKey);
       window.addEventListener('blur', this.blur);
+      document.addEventListener('visibilitychange', this.resetFrameRate);
       this.app.on('update', (dt: number) => this.update(dt));
+      this.app.on('postrender', this.recordFrame);
       this.resize();
       this.placeCamera();
       this.app.start();
@@ -254,6 +271,24 @@ export class WildernessScene implements WorldRenderer {
     }
   }
 
+  private resetFrameRate = (): void => this.frameRateMeter.reset();
+  private recordFrame = (): void => {
+    if (this.view && document.visibilityState === 'visible')
+      this.frameRateMeter.record(performance.now());
+  };
+  sampleFrameRate(): number | null {
+    return this.destroyed || this.suspended || document.visibilityState !== 'visible'
+      ? null
+      : this.frameRateMeter.sample(performance.now());
+  }
+  setSuspended(suspended: boolean): void {
+    if (this.suspended === suspended) return;
+    this.suspended = suspended;
+    this.frameRateMeter.reset();
+    this.app.autoRender = !suspended;
+    // A fresh snapshot may render once behind the pause dialog; retain GPU assets.
+    this.app.renderNextFrame = true;
+  }
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
       this.presentation.lighting(this.view);
@@ -390,8 +425,14 @@ export class WildernessScene implements WorldRenderer {
   resetTransientCaptions(): void {
     this.speech.resetBaseline();
   }
-  select(id: string | null): void {
+  select(id: string | null): boolean {
+    const entry = id ? this.actors.get(id) : undefined;
+    if (id && (!entry || !this.identifiable(entry))) {
+      this.denySelection();
+      return false;
+    }
     this.selected = id;
+    return true;
   }
   center(): void {
     if (this.view) this.cameraCommand({ type: 'focus', point: this.view.player.position });
@@ -635,6 +676,7 @@ export class WildernessScene implements WorldRenderer {
     }
     material.twoSidedLighting = true;
     material.cull = pc.CULLFACE_NONE;
+    setVisibilityStencil(material, ordinaryStencil);
     material.update();
     this.materials.push(material);
     return material;
@@ -795,6 +837,7 @@ export class WildernessScene implements WorldRenderer {
     this.materials = this.materials.filter((entry) => entry !== material);
   }
   private releaseEntity(entry: RenderedEntity): void {
+    if (this.hoveredId === entry.view.id) this.clearHover();
     entry.model?.destroy();
     this.cards.delete(entry.sprite);
     this.presentation.removeReveal(entry.reveal);
@@ -893,6 +936,8 @@ export class WildernessScene implements WorldRenderer {
             return m;
           });
       // Read alpha once while creating an asset, not a Canvas readback on each hover frame.
+      if (view.kind === 'actor' || view.kind === 'animal')
+        for (const material of materials) setVisibilityStencil(material, personStencil);
       const pixels = images.map((image) =>
         image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
       );
@@ -964,7 +1009,12 @@ export class WildernessScene implements WorldRenderer {
       meshCasters: (root.findComponents('render') as pc.RenderComponent[])
         .flatMap((render) => render.meshInstances)
         .filter((mesh) => mesh.castShadow),
-      reveal: this.presentation.addReveal(sprite, asset.materials[0]!, !crate),
+      reveal: this.presentation.addReveal(
+        sprite,
+        asset.materials[0]!,
+        !crate,
+        view.kind === 'actor' || view.kind === 'animal',
+      ),
       renderedSupport: view.supportSurfaceId,
       view,
       materials: asset.materials,
@@ -1067,6 +1117,8 @@ export class WildernessScene implements WorldRenderer {
     );
     const stone = this.material('#7b8178'),
       timber = this.material('#715438');
+    setVisibilityStencil(stone, sceneryStencil);
+    setVisibilityStencil(timber, sceneryStencil);
     for (const blocker of spatialBlockers(map)) {
       const a = blocker.bounds.min,
         b = blocker.bounds.max;
@@ -1086,6 +1138,8 @@ export class WildernessScene implements WorldRenderer {
     }
     const deckMaterial = this.material('#b48b57'),
       rampMaterial = this.material('#8b8e7a');
+    setVisibilityStencil(deckMaterial, sceneryStencil);
+    setVisibilityStencil(rampMaterial, sceneryStencil);
     for (const surface of map.spatial.surfaces) {
       if (surface.material === 'ground') continue;
       const mesh = surfaceMesh(this.app.graphicsDevice, surface);
@@ -1116,6 +1170,7 @@ export class WildernessScene implements WorldRenderer {
     const trees = [0, 1, 2, 3].map((i) =>
       this.material('#ffffff', treeArt(map.seed + i * 19), true),
     );
+    for (const material of trees) setVisibilityStencil(material, sceneryStencil);
     for (let i = 0; i < 34; i++) {
       const edge = i % 3;
       let x: number, z: number;
@@ -1222,6 +1277,7 @@ export class WildernessScene implements WorldRenderer {
     }
   }
   private update(dt: number): void {
+    if (this.suspended) return;
     this.elapsed += Math.min(dt, 0.1);
     for (const [id, entry] of this.actors) {
       if (entry.departedAt !== undefined) {
@@ -1243,6 +1299,7 @@ export class WildernessScene implements WorldRenderer {
           entry.height,
           0,
           dt,
+          false,
           false,
         );
         continue;
@@ -1279,6 +1336,7 @@ export class WildernessScene implements WorldRenderer {
         moving,
         !!this.view?.clock.paused || !!this.view?.clock.preparingNavigation,
         this.revealStrength(entry),
+        this.selected === entry.view.id && this.identifiable(entry),
       );
       if (entry.model) entry.sprite.enabled = !entry.model.visible;
       const punch = entry.view.actionAnimation;
@@ -1357,9 +1415,14 @@ export class WildernessScene implements WorldRenderer {
         this.revealStrength(entry),
         dt,
         entry.observed && entry.root.enabled && !entry.model?.visible,
+        this.selected === entry.view.id && this.identifiable(entry),
       );
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
+    if (this.selected && (!selected || !this.identifiable(selected))) {
+      this.selected = null;
+      this.callbacks.select(null);
+    }
     this.marker.enabled = !!selected && this.identifiable(selected);
     if (selected && this.identifiable(selected)) {
       const p = selected.root.getPosition();
@@ -1420,10 +1483,28 @@ export class WildernessScene implements WorldRenderer {
       this.nextHoverAt = this.elapsed + 0.05;
       const rect = this.canvas.getBoundingClientRect();
       this.publishHover(
-        this.pick(this.hoverPoint.x - rect.left, this.hoverPoint.y - rect.top),
+        this.hoverEntity(this.hoverPoint.x - rect.left, this.hoverPoint.y - rect.top),
         this.hoverPoint,
       );
     }
+    const hovered = this.hoveredId ? this.actors.get(this.hoveredId) : undefined;
+    const hoverValid = !!hovered && this.identifiable(hovered) && !this.drag && !!this.hoverPoint;
+    const age = (performance.now() - this.hoverStarted) / 1000;
+    const fade =
+      !hoverValid || age <= 1
+        ? 0
+        : document.documentElement.dataset.reduceMotion === 'true'
+          ? 1
+          : Math.min(1, (age - 1) / 0.25);
+    this.outline.update(
+      fade > 0 && hovered
+        ? hovered.model?.visible
+          ? hovered.model.outlineMeshes
+          : hovered.sprite.render!.meshInstances
+        : NO_OUTLINE_MESHES,
+      fade,
+      !!hovered && this.selected !== hovered.view.id,
+    );
     for (const wave of this.animations)
       if (!this.view?.clock.paused)
         wave.entity.setPosition(
@@ -1471,6 +1552,11 @@ export class WildernessScene implements WorldRenderer {
     );
   }
   private publishHover(entity: EntityView | null, point: { x: number; y: number }): void {
+    const id = entity?.id ?? null;
+    if (id !== this.hoveredId) {
+      this.hoveredId = id;
+      this.hoverStarted = performance.now();
+    }
     this.perception.hideHint();
     if (!entity && this.hoverPoint && !this.drag)
       this.perception.hover(
@@ -1512,6 +1598,7 @@ export class WildernessScene implements WorldRenderer {
   private clearHover = (): void => {
     this.hoverPoint = null;
     this.publishHover(null, { x: 0, y: 0 });
+    this.outline?.update([], 0, true);
   };
   private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
     const camera = this.camera.camera!;
@@ -1578,16 +1665,25 @@ export class WildernessScene implements WorldRenderer {
     }
     return obstruction;
   }
-  private pick(x: number, y: number): EntityView | null {
+  private hoverEntity(x: number, y: number): EntityView | null {
+    const entry = this.pick(x, y);
+    return entry && this.identifiable(entry) ? entry.view : null;
+  }
+  private denySelection(): void {
+    this.callbacks.selectionDenied(`${this.view?.player.name ?? 'Your character'} can't see this.`);
+  }
+  private pick(x: number, y: number): RenderedEntity | null {
     if (!this.view) return null;
     const ray = this.screenRay(x, y);
     const obstruction = this.cameraObstruction(ray);
-    let best: EntityView | null = null,
-      revealed: EntityView | null = null,
+    let best: RenderedEntity | null = null,
+      revealed: RenderedEntity | null = null,
+      revealedCharacter: RenderedEntity | null = null,
+      nearestCharacter = Infinity,
       nearest = obstruction + 1e-5,
       nearestReveal = Infinity;
     for (const entry of this.actors.values()) {
-      if (!this.identifiable(entry)) continue;
+      if (!entry.root.enabled) continue;
       let fraction: number | null = null,
         bodyPoint: pc.Vec3 | undefined;
       if (entry.model?.visible) {
@@ -1605,13 +1701,18 @@ export class WildernessScene implements WorldRenderer {
         bodyPoint = hit?.point;
       }
       if (fraction === null) continue;
+      if (entry.view.id === this.selected && this.identifiable(entry)) return entry;
       if (fraction <= obstruction + 1e-5 && fraction < nearest) {
         nearest = fraction;
-        best = entry.view;
+        best = entry;
       } else if (
+        fraction > obstruction + 1e-5 &&
+        this.identifiable(entry) &&
         (entry.model?.visible ? entry.model.revealStrength : entry.reveal.strength) > 0.05 &&
         this.revealStrength(entry) > 0.05 &&
-        fraction < nearestReveal
+        (fraction < nearestReveal ||
+          ((entry.view.kind === 'actor' || entry.view.kind === 'animal') &&
+            fraction < nearestCharacter))
       ) {
         const hit = bodyPoint ?? ray.from.clone().lerp(ray.from, ray.to, fraction),
           foot = entry.root.getPosition();
@@ -1625,12 +1726,21 @@ export class WildernessScene implements WorldRenderer {
         const t = Math.max(0, Math.min(1, (q - 0.65) / 0.7));
         const strength = entry.model?.visible ? entry.model.revealStrength : entry.reveal.strength;
         if ((1 - t * t * (3 - 2 * t)) * strength > 0.05) {
-          nearestReveal = fraction;
-          revealed = entry.view;
+          if (fraction < nearestReveal) {
+            nearestReveal = fraction;
+            revealed = entry;
+          }
+          if (
+            (entry.view.kind === 'actor' || entry.view.kind === 'animal') &&
+            fraction < nearestCharacter
+          ) {
+            nearestCharacter = fraction;
+            revealedCharacter = entry;
+          }
         }
       }
     }
-    return revealed ?? best;
+    return best ?? revealedCharacter ?? revealed;
   }
   private groundPoint(x: number, y: number): SurfacePoint | null {
     if (!this.view) return null;
@@ -1655,12 +1765,13 @@ export class WildernessScene implements WorldRenderer {
       x: event.clientX,
       y: event.clientY,
       button: event.button,
-      // Primary drag follows the design system; secondary/middle retain camera access.
-      pan: true,
-      orbit: event.button === 2 || event.shiftKey,
+      // Track primary drags to suppress release actions, without moving the camera.
+      pan: event.button !== 0,
+      orbit: event.button === 2 && !event.shiftKey,
       moved: false,
     };
     this.canvas.setPointerCapture(event.pointerId);
+    this.publishHover(null, { x: event.clientX, y: event.clientY });
   };
   private pointerMove = (event: PointerEvent): void => {
     this.hoverPoint = { x: event.clientX, y: event.clientY };
@@ -1702,8 +1813,12 @@ export class WildernessScene implements WorldRenderer {
     }
     if (drag.button !== 0 || event.ctrlKey) return;
     const local = this.local(event);
-    const entity = this.pick(local.x, local.y);
-    if (entity) this.callbacks.select(entity);
+    const entry = this.pick(local.x, local.y);
+    if (entry && !this.identifiable(entry)) {
+      this.denySelection();
+      return;
+    }
+    if (entry) this.callbacks.select(entry.view);
     else {
       const position = this.groundPoint(local.x, local.y);
       if (position) {
@@ -1720,6 +1835,14 @@ export class WildernessScene implements WorldRenderer {
     else this.setZoom(event.deltaY * 0.008);
   };
   private cameraKey = (event: KeyboardEvent): void => {
+    if (
+      event.defaultPrevented ||
+      event.isComposing ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    )
+      return;
     const delta = Math.PI / 8;
     if (event.key === 'Home') this.center();
     else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
@@ -1742,8 +1865,7 @@ export class WildernessScene implements WorldRenderer {
         id,
         y: levels.find((level) => level.id === id)?.focusY ?? this.view?.player.position.y ?? 0,
       });
-    } else if (event.key.toLowerCase() === 'p') this.cameraCommand({ type: 'projection' });
-    else return;
+    } else return;
     event.preventDefault();
     event.stopPropagation();
   };
@@ -1758,7 +1880,10 @@ export class WildernessScene implements WorldRenderer {
       this.canvas.releasePointerCapture(drag.pointerId);
   }
   private pointerCancel = (event: PointerEvent): void => {
-    if (event.pointerId === this.drag?.pointerId) this.cancelDrag();
+    if (event.pointerId === this.drag?.pointerId) {
+      this.clearHover();
+      this.cancelDrag();
+    }
   };
   private contextMenu = (event: MouseEvent): void => {
     event.preventDefault();
@@ -1780,7 +1905,14 @@ export class WildernessScene implements WorldRenderer {
         ? this.screenPosition(this.selected)
           ? this.actors.get(this.selected)!.view
           : null
-        : this.pick(local.x, local.y);
+        : (this.pick(local.x, local.y)?.view ?? null);
+    if (entity) {
+      const entry = this.actors.get(entity.id);
+      if (!entry || !this.identifiable(entry)) {
+        this.denySelection();
+        return;
+      }
+    }
     const anchor = keyboard && entity ? this.screenPosition(entity.id) : null;
     const rect = this.canvas.getBoundingClientRect();
     this.callbacks.select(
@@ -1810,8 +1942,13 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.removeEventListener('wheel', this.wheel);
     this.canvas.removeEventListener('keydown', this.cameraKey);
     window.removeEventListener('blur', this.blur);
+    document.removeEventListener('visibilitychange', this.resetFrameRate);
+    this.app.off('postrender', this.recordFrame);
     this.cancelDrag();
     this.shadowBatches?.destroy();
+    this.hoveredId = null;
+    this.hoverPoint = null;
+    this.outline?.destroy();
     for (const entry of this.actors.values()) {
       entry.model?.destroy();
       this.presentation?.removeReveal(entry.reveal);

@@ -119,6 +119,9 @@ export interface AuthorityFence {
   scope: RequestScope;
   capability: Capability;
   controlling: boolean;
+  /** Read pages may be owner-visible without control, but an old control generation
+   * must not publish after the tab or embodied actor changed. */
+  requireGeneration?: boolean;
   now: () => number;
 }
 export class AuthorityError extends Error {
@@ -129,7 +132,7 @@ export class AuthorityError extends Error {
       {
         session: 'Sign in to continue.',
         forbidden: 'This operation is unavailable to this account.',
-        'control-changed': 'Control changed. Choose Take control to continue.',
+        'control-changed': 'This tab is paused. Choose Resume here to continue.',
         'stale-scope': 'Your access or world changed. Refresh before continuing.',
         conflict: 'This request conflicts with an earlier request.',
       }[code],
@@ -139,12 +142,16 @@ export class AuthorityError extends Error {
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export const isCharacterless = (scope: RequestScope) => scope.audience === 'authorized-inspection';
 export const scopeKey = (scope: RequestScope) => hash(JSON.stringify(scope));
-/** Reconnect keeps device drafts; security, embodiment and timeline changes do not.
+/** Reconnect and Resume keep device drafts; security, character and timeline changes do not.
  * This namespace grants no request authority and never replaces scopeKey.
  * docs/invention-workshop-tools.md#implemented-human-saved-work-interface
  */
 export const privateDraftScopeKey = (scope: RequestScope) => {
-  const { connectionId: _connectionId, ...privateScope } = scope;
+  const {
+    connectionId: _connectionId,
+    controlGeneration: _controlGeneration,
+    ...privateScope
+  } = scope;
   return hash(JSON.stringify(privateScope));
 };
 /** Receipt recovery survives reconnect and control replacement, but retains every private
@@ -414,9 +421,23 @@ export class AuthorityRepository {
           control.connectionId === scope.connectionId))
     );
   }
+  /** Resolve the committed controller without exposing its identity in projections. */
+  currentController(scope: RequestScope, now: number): RequestScope | undefined {
+    const control = this.controls.get(key(scope.worldId, scope.actorId));
+    const session = control && this.sessions.get(control.sessionId);
+    if (!control || !session) return undefined;
+    const controller = {
+      ...scope,
+      sessionId: session.id,
+      sessionRevision: session.revision,
+      controlGeneration: control.generation,
+      connectionId: control.connectionId,
+    };
+    return this.current(controller, 'play', true, now) ? controller : undefined;
+  }
   /** Re-read in the world publication transaction, including session expiry after any await. */
   async assertFence(fence: AuthorityFence): Promise<void> {
-    const { scope, capability, controlling, now } = fence;
+    const { scope, capability, controlling, requireGeneration, now } = fence;
     // One publication snapshot validates all three fences. Separate round trips
     // amplified command latency; cache refresh belongs to the committed owners.
     const session = await this.db
@@ -447,6 +468,8 @@ export class AuthorityRepository {
         .includes(capability)
     )
       throw new AuthorityError('forbidden');
+    if (requireGeneration && Number(session['generation'] ?? 0) !== scope.controlGeneration)
+      throw new AuthorityError('stale-scope');
     if (
       controlling &&
       (session['generation'] === null ||
@@ -461,6 +484,7 @@ export class AuthorityRepository {
     scope: RequestScope,
     request: ControlRequest,
     now: () => number,
+    unattended = false,
   ): Promise<ControlLease> {
     return this.db.transaction(async () => {
       await this.assertFence({ scope, capability: 'play', controlling: false, now });
@@ -474,7 +498,12 @@ export class AuthorityRepository {
         throw new AuthorityError('control-changed');
       if (request.operation === 'release')
         await this.assertFence({ scope, capability: 'play', controlling: true, now });
-      if (request.operation === 'acquire' && old.sessionId) {
+      if (
+        request.operation === 'acquire' &&
+        old.sessionId &&
+        !unattended &&
+        (old.sessionId !== scope.sessionId || old.connectionId !== scope.connectionId)
+      ) {
         const live = await this.db
           .prepare('SELECT id FROM auth_sessions WHERE id=? AND expires_at>?')
           .get(old.sessionId, now());

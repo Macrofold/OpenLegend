@@ -1,4 +1,5 @@
 import type { ActorMind } from './mind.js';
+import type { Named } from '@open-legend/language';
 import type { SurfacePoint, SpatialMap, WorldPoint } from '@open-legend/spatial';
 /** All authoritative state is JSON data. The kernel owns no I/O or ambient clock. */
 export type Position = WorldPoint;
@@ -26,7 +27,7 @@ export interface Ammunition {
   kind: 'stone' | 'arrow';
   damageBonus: number;
 }
-export interface ItemDefinition {
+export interface ItemDefinition extends Named {
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -37,7 +38,6 @@ export interface ItemDefinition {
   container?: { capacity: number; maximumDepth: number };
   id: string;
   version: number;
-  name: string;
   description: string;
   properties: MaterialProperty[];
   nutrition?: number;
@@ -239,13 +239,12 @@ export interface HeatComponent {
   fuelSeconds: number;
   lit: boolean;
 }
-export interface Entity {
+export interface Entity extends Named {
   statusEffects?: Record<string, import('./status-effects.js').StatusEffectInstance>;
   /** Sparse attributes for non-actor entities; actors retain their existing owner. */
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
-  name: string;
   kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile' | 'item';
   inventoryRevision?: number;
   placement?: import('./spatial-state.js').Placement;

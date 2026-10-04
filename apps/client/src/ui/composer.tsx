@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useChatHistory } from './use-chat-history';
 import { useReplyPreview } from './use-reply-preview';
 import { useComposerDraft } from './use-composer-draft';
@@ -267,7 +268,7 @@ export function Composer({
         />
         {mode === 'chat' && (
           <p className="ol-meta ol-conversation-recipient">
-            {npc ? `With ${npc.name}` : 'Choose someone to talk to.'}
+            {npc ? `With ${namePhrase(npc, 'definite')}` : 'Choose someone to talk to.'}
           </p>
         )}
       </div>
@@ -310,7 +311,7 @@ export function Composer({
                             onPress={() => chooseRecipient(person.id)}
                             isDisabled={!scope}
                           >
-                            Talk to {person.name}
+                            Talk to {namePhrase(person, 'definite')}
                           </Button>
                         ))}
                       {!view.entities.some((person) => person.canTalk) && (
@@ -325,7 +326,9 @@ export function Composer({
                     </p>
                   )
                 }
-                ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
+                ariaLabel={
+                  npc ? `Conversation with ${namePhrase(npc, 'definite')}` : 'Conversation'
+                }
                 visible={visible}
               />
             </div>

@@ -210,6 +210,8 @@ PW03/PW10 contribute scoped evidence to AC10.1–10.5: current-format PostgreSQL
 
 ## AC11 — Usability and measured efficiency
 
+The proposed personal-game allocation splits [action discovery/detail presentation (PG03)](personal-game-next-batch.md#pg03--readable-action-discovery) from [shared preview efficiency (PG04)](personal-game-next-batch.md#pg04--cheaper-action-availability), preserving the existing command interface. These are scoped assignments under AC11, not completion of its broader qualification.
+
 **Owner:** existing UI/protocol, god diagnostics, PF and provider integration. **Depends on:** each implemented slice.
 
 - [x] AC11.1 Project understood/queued/running/waiting/blocked/completed/cancelled states and actor-safe reasons. Preserve original editable intent and support targeted clarification without mandatory confirmation for every ordinary action. Step states are shown only in God mode by owner decision (September 29, 2026); players see plain answers to their own requests and use "Stop current work".

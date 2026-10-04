@@ -5,7 +5,7 @@ import './operations.css';
 /** Outcome of an invite link, reported by the sign-in callback as `?entry=`. */
 const MESSAGES: Record<string, string> = {
   'invite-accepted':
-    'Invitation accepted. If it included a character, choose Control here to enter it.',
+    'Invitation accepted. If it included a character, choose Resume here to enter the world.',
   'invite-unavailable':
     'This invitation link is invalid, expired, revoked or already used. Ask the world operator for a new one.',
   'already-member':

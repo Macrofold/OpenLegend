@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import {
   applicableConsumption,
   attributeDefinition,
@@ -25,5 +26,5 @@ export function consumptionDescription(
   const refusal = item && consumption.refusals.find((entry) => entry.itemType === item.id);
   if (refusal) return refusal.reason;
   const amount = item?.[consumption.quantityProperty];
-  return `${consumption.label}${item ? ` ${item.name}` : ''}. ${typeof amount === 'number' && amount > 0 ? `Restores up to ${amount} ${definition.schema.unit} of ${definition.name}, capped at ${definition.schema.max}. ` : ''}Current ${definition.name}: ${Math.round(value)} ${definition.schema.unit}; range ${definition.schema.min}–${definition.schema.max}.`;
+  return `${consumption.label}.${item ? ` Selected item: ${namePhrase(item, 'definite')}.` : ''} ${typeof amount === 'number' && amount > 0 ? `Restores up to ${amount} ${definition.schema.unit} of ${definition.name}, capped at ${definition.schema.max}. ` : ''}Current ${definition.name}: ${Math.round(value)} ${definition.schema.unit}; range ${definition.schema.min}–${definition.schema.max}.`;
 }

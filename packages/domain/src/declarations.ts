@@ -1,3 +1,4 @@
+import { canonicalName, namePhrase } from '@open-legend/language';
 import { inventionAttribution } from './invention-attribution.js';
 import { inventionPermission } from './invention-policy.js';
 import {
@@ -97,6 +98,7 @@ export function admitDeclaration(
     let outputDefinitionId = `item-${contentLabel(`output:${digest}`)}`;
     while (world.itemDefinitions[outputDefinitionId]) outputDefinitionId += '-v';
     const compiled = compileRecipeCandidate(original, draft);
+    const outputName = canonicalName(draft.output.name, compiled.outputDefinition.nameForm);
     const family = recipeFamily(original, draft.family.id);
     if (!family)
       return reject('invalid-declaration', 'The selected recipe family is not installed.');
@@ -104,7 +106,7 @@ export function admitDeclaration(
       ...cloneValue(compiled.outputDefinition),
       id: outputDefinitionId,
       version: 1,
-      name: draft.output.name,
+      name: outputName,
       description: draft.output.description,
       recipeId,
     };
@@ -112,7 +114,10 @@ export function admitDeclaration(
       name: draft.name,
       description: draft.description,
       inputs: cloneValue(draft.inputs),
-      output: cloneValue(draft.output),
+      output: {
+        ...cloneValue(draft.output),
+        name: outputName,
+      },
       workSeconds: compiled.workSeconds,
       sourceCandidate: cloneValue(draft),
       familyPin: definitionPin(family.definition),
@@ -141,7 +146,7 @@ export function admitDeclaration(
     world,
     events,
     'declaration-admitted',
-    `${actor.name} worked out a technique: ${draft.name}.`,
+    `${namePhrase(actor, 'definite', { capitalize: true })} worked out a technique: ${draft.name}.`,
     actor,
     undefined,
     { recipeId, source: provenance.source },

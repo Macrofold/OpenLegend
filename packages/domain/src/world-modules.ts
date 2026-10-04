@@ -1,3 +1,4 @@
+import { validName } from '@open-legend/language';
 import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
 import { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -742,9 +743,11 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
-  for (const definition of Object.values(world.itemDefinitions))
+  for (const definition of Object.values(world.itemDefinitions)) {
+    if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
       throw new Error('Invalid melee definition.');
+  }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
     const authority = recipe.provenance?.authority;
@@ -768,6 +771,7 @@ export function validateWorldModules(world: WorldState): void {
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
   for (const e of Object.values(world.entities)) {
+    if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
     if (
       e.actor &&
       (['fullness', 'energy', 'fullnessRevision', 'energyRevision'].some((key) =>

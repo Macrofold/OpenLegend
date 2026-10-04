@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import {
   acquiredActivities,
   activityRoleCompatible,
@@ -12,6 +13,7 @@ import {
   installedActivityHost,
   activityHostForCommand,
   availableItemQuantity,
+  observerDescription,
   possessionItems,
   NATIVE_PREPARATIONS,
   type ActivityOutput,
@@ -126,7 +128,7 @@ export function activityChoiceView(
               }
             : {
                 name: 'expected result',
-                value: `A later step uses the ${world.itemDefinitions[output.definitionId]?.name ?? 'items'} this produces, if it actually produces any`,
+                value: `A later step uses ${namePhrase(world.itemDefinitions[output.definitionId] ?? { name: 'items', nameForm: 'plural' }, 'definite')} this produces, if it actually produces any`,
                 critical: true,
               },
         );
@@ -484,13 +486,7 @@ export function learnedActivityCandidates(
                 result.command.containerId === inspect.id,
             )
           ) {
-            const name =
-              nativeActivityView(world, {
-                type: 'follow',
-                id: 'view-only',
-                actorId,
-                targetId: inspect.id,
-              }).target ?? 'the selected container';
+            const name = observerDescription(world, actorId, inspect.id, 'definite');
             results.push({
               id: `inspect-method-${method.id}-${role}`,
               description: `Inspect ${name} before trying my learned method. Its current contents and available space are not yet inspected.`,

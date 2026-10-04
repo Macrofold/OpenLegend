@@ -44,7 +44,7 @@ export function perceivedEntityText(
   contents: readonly ItemInstance[] = [],
 ) {
   const facts = [
-    `I can see ${entityLabel(world, entity, observerId)}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
+    `I can see ${entityLabel(world, entity, observerId, 'indefinite')}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
   ];
   const health = observedAnimalHealth(world, observerId, entity.id);
   if (health) facts.push(health);

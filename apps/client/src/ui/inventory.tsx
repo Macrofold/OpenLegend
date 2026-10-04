@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { Dialog, Popover } from 'react-aria-components';
 import type {
@@ -392,7 +393,7 @@ function InventoryWorkspace({
       destination.id,
       destination.revision,
       current.availableQuantity,
-      `Move ${current.availableQuantity} ${current.name} to ${destination.name}`,
+      `Move ${current.availableQuantity} ${current.name} to ${namePhrase(destination, 'definite')}`,
     );
   }
   function send(action: ActionOption, side: InventorySide) {
@@ -489,7 +490,7 @@ function InventoryWorkspace({
           amountDraft.target.id,
           amountDraft.target.revision,
           amount,
-          `Move ${amount} ${amountDraft.item.name} to ${amountDraft.target.name}`,
+          `Move ${amount} ${amountDraft.item.name} to ${namePhrase(amountDraft.target, 'definite')}`,
         ),
         selection.side,
       );
@@ -686,7 +687,7 @@ function InventoryWorkspace({
                   <>
                     <h4>
                       {amountDraft.operation === 'move'
-                        ? `Move to ${amountDraft.target?.name ?? 'container'}`
+                        ? `Move to ${amountDraft.target ? namePhrase(amountDraft.target, 'definite') : 'container'}`
                         : amountDraft.operation === 'offer'
                           ? 'Offer to a person'
                           : amountDraft.operation === 'split'
@@ -744,7 +745,7 @@ function InventoryWorkspace({
                           send(
                             {
                               id: `offer-${amountDraft.item.id}-${recipient.id}`,
-                              label: `Offer ${amount} ${amountDraft.item.name} to ${recipient.name}`,
+                              label: `Offer ${amount} ${amountDraft.item.name} to ${namePhrase(recipient, 'definite')}`,
                               enabled: true,
                               command: {
                                 type: 'handover',
@@ -798,8 +799,8 @@ function InventoryWorkspace({
                             onPress={() => quickMove(selection.side, item)}
                           >
                             {item.availableQuantity !== item.quantity
-                              ? `Move ${item.availableQuantity ?? 'available'} available to ${target.name}`
-                              : `Move to ${target.name}`}
+                              ? `Move ${item.availableQuantity ?? 'available'} available to ${namePhrase(target, 'definite')}`
+                              : `Move to ${namePhrase(target, 'definite')}`}
                           </Button>
                           {!item.individual && item.quantity > 1 && (
                             <Button
@@ -819,7 +820,7 @@ function InventoryWorkspace({
                             disabled={busy}
                             onPress={() => navigate(selection.side, item.id)}
                           >
-                            Open {item.name}
+                            Open {namePhrase(item, 'definite')}
                           </Button>
                           {selection.side === 'belongings' && !right.location.id && (
                             <Button
@@ -856,7 +857,7 @@ function InventoryWorkspace({
                             closeDetail();
                           }}
                         >
-                          Talk about {item.name}
+                          Talk about {namePhrase(item, 'definite')}
                         </Button>
                       )}
                       {item.actions.map((action) => (
@@ -912,9 +913,13 @@ function InventoryWorkspace({
                     </details>
                     {item.comparison && (
                       <details>
-                        <summary>Compare with equipped {item.comparison.name}</summary>
+                        <summary>
+                          Compare with {namePhrase(item.comparison, 'definite')} (equipped)
+                        </summary>
                         <table className="ol-inventory-comparison">
-                          <caption>Compared with equipped {item.comparison.name}</caption>
+                          <caption>
+                            Compared with {namePhrase(item.comparison, 'definite')} (equipped)
+                          </caption>
                           <thead>
                             <tr>
                               <th>Characteristic</th>

@@ -6,7 +6,12 @@ import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { GameSaves, recoveryFile } from './game-saves.js';
-import { SaveFiles, syncDirectory } from './save-files.js';
+import {
+  RESTORE_OWNER_FILE,
+  SaveFiles,
+  syncDirectory,
+  type RestoreSlotOwner,
+} from './save-files.js';
 import { tableRows } from './record-pages.js';
 import { WorldRecords } from './world-records.js';
 import { COMMAND_TABLES } from './command-receipts.js';
@@ -68,7 +73,12 @@ function validateRecoveryReferences(
 
 /** Returns true only when this call published a new slot directory; an existing identical
  * slot is confirmed in place and belongs to whoever created it. */
-async function copySlot(source: string, target: string, id: string): Promise<boolean> {
+async function copySlot(
+  source: string,
+  target: string,
+  id: string,
+  restoreAttemptId?: string,
+): Promise<boolean> {
   const from = new SaveFiles(source),
     to = new SaveFiles(target);
   const metadata = await from.metadata(id);
@@ -92,6 +102,22 @@ async function copySlot(source: string, target: string, id: string): Promise<boo
         await file.sync();
       } finally {
         await file.close();
+      }
+    }
+    if (restoreAttemptId) {
+      const owner = await open(join(staging, RESTORE_OWNER_FILE), 'wx', 0o600);
+      try {
+        await owner.writeFile(
+          JSON.stringify({
+            attemptId: restoreAttemptId,
+            id,
+            worldId: metadata.worldId,
+            checksum: metadata.checksum,
+          } satisfies RestoreSlotOwner),
+        );
+        await owner.sync();
+      } finally {
+        await owner.close();
       }
     }
     await syncDirectory(staging);
@@ -241,16 +267,24 @@ export async function readOperationalBackup(
 export async function restoreBackupSlots(
   backup: OperationalBackup,
   directory: string,
+  attemptId: string,
   keep: ReadonlySet<string> = new Set(),
 ): Promise<string[]> {
   const published: string[] = [];
   if (!backup.sourceDirectory) return published;
   try {
     for (const id of backup.saves ?? [])
-      if (await copySlot(join(backup.sourceDirectory, 'saves'), join(directory, 'saves'), id))
+      if (
+        await copySlot(
+          join(backup.sourceDirectory, 'saves'),
+          join(directory, 'saves'),
+          id,
+          attemptId,
+        )
+      )
         published.push(id);
   } catch (error) {
-    const retained = await discardRestoredSlots(backup, directory, published, keep);
+    const retained = await discardRestoredSlots(backup, directory, published, attemptId, keep);
     if (retained.length)
       throw new Error(
         `${error instanceof Error ? error.message : 'Slot copy failed.'} Copied slots kept (referenced or changed): ${retained.join(', ')}.`,
@@ -270,6 +304,7 @@ export async function discardRestoredSlots(
   backup: OperationalBackup,
   directory: string,
   published: readonly string[],
+  attemptId: string,
   keep: ReadonlySet<string> = new Set(),
 ): Promise<string[]> {
   if (!backup.sourceDirectory) return [];
@@ -279,17 +314,25 @@ export async function discardRestoredSlots(
   const retained: string[] = [];
   for (const id of published) {
     try {
-      const [original, installed] = await Promise.all([source.metadata(id), target.metadata(id)]);
+      const [original, installed, owner] = await Promise.all([
+        source.metadata(id),
+        target.metadata(id),
+        target.restoreOwner(id),
+      ]);
       if (
         keep.has(id) ||
         !original ||
         !installed ||
+        owner?.attemptId !== attemptId ||
+        owner.worldId !== original.worldId ||
+        owner.checksum !== original.checksum ||
         installed.worldId !== original.worldId ||
         installed.checksum !== original.checksum
       ) {
         if (installed) retained.push(id);
         continue;
       }
+      await target.verify(installed);
       await target.delete(id);
     } catch {
       retained.push(id);

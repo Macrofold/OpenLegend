@@ -1,3 +1,4 @@
+import { canonicalName } from '@open-legend/language';
 import {
   accessiblePossession,
   clockDeadline,
@@ -106,7 +107,7 @@ const clean = (text: string) =>
     .replace(/[.!]+$/u, '')
     .trim();
 const bare = (name: string) =>
-  clean(name).replace(/^(?:a|an|the|my|this|that|these|those|some|your)\s+/u, '');
+  canonicalName(clean(name)).replace(/^(?:my|this|that|these|those|some|your)\s+/u, '');
 /** Tolerate simple English plurals; this is matching, not semantic interpretation. */
 const forms = (name: string) => {
   const word = bare(name);

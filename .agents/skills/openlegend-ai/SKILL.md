@@ -17,6 +17,8 @@ Context is actor-permitted evidence, not an omniscient world dump. Keep speech, 
 
 For Jev, inspect [shared question rubrics](../../../apps/server/src/jev-questions.ts). Question IDs are bookkeeping, not model-visible instructions: explicitly identify the candidate in the question. Batch independent questions sharing state within current byte/context limits; never flatten independent decisions into a Cartesian product. Preserve unknown/abstention and task-specific uncertainty. Confidence, answer probability and calibrated correctness are different.
 
+Apply [purpose-based validation](../../../AGENTS.md#validate-only-for-a-concrete-purpose) when decoding provider decisions; [provider behavior](../../../docs/ai-providers.md#provider-behavior-and-limits) owns selection and rating semantics.
+
 For generation, align prompt, runtime schema, decoder and consumers. Structured output and streamed partial parsing do not establish semantic truth or authorize effects; retain final validation and current-state admission. Do not invent a provider capability or conflate speech, thought and action merely because they share one response.
 
 Trace cancellation, timeout, invalid output, replay, stale context and partial/uncertain completion through accounting. Missing usage is not free execution. No automatic paid retry/fallback or fabricated response. Use the [verification/spending policy](../../rules/verification.md); fixtures cannot prove live quality, latency or calibration.

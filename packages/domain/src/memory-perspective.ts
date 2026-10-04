@@ -1,4 +1,5 @@
-import { observerDescription } from './worlds/base/knowledge.js';
+import { namePhrase, type Named } from '@open-legend/language';
+import { observerName } from './worlds/base/knowledge.js';
 import { controlledEntityId } from './identity.js';
 import type { WorldState } from './types.js';
 
@@ -8,16 +9,18 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // the compiled patterns. Weak ownership avoids a process-wide cache of historical names.
 const subjectPatterns = new WeakMap<
   object,
-  { name: string; possessive: RegExp; subject: RegExp }
+  { name: string; label: string; possessive: RegExp; subject: RegExp }
 >();
-function patterns(actor: { name: string }) {
+function patterns(actor: Named) {
+  const label = namePhrase(actor, 'definite', { capitalize: true });
   let cached = subjectPatterns.get(actor);
-  if (!cached || cached.name !== actor.name) {
-    const name = escape(actor.name);
+  if (!cached || cached.name !== actor.name || cached.label !== label) {
+    const name = `(?:${[...new Set([label, actor.name])].map(escape).join('|')})`;
     cached = {
       name: actor.name,
+      label,
       possessive: new RegExp(`^${name}['’]s\\b`),
-      subject: new RegExp(`^${name}\\b`),
+      subject: new RegExp(`^${name}(?=\\s|[.,:’']|$)`),
     };
     subjectPatterns.set(actor, cached);
   }
@@ -31,53 +34,68 @@ export function memoryPerspective(
   text: string,
   speech = false,
   sourceEntityId?: string,
+  targetEntityId?: string,
+  targetReference = false,
 ): string {
   const actor = world.entities[actorId];
   if (!actor?.actor) return text;
   const player = world.entities[controlledEntityId(world)];
   const named = (value: string) =>
     player ? value.replace(/\b(?:[Tt]he player|[Pp]layer|You)\b/g, () => player.name) : value;
+  const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
   if (speech) {
-    const separator = text.indexOf(':');
+    const prefix = source ? patterns(source).subject.exec(text)?.[0] : undefined;
+    const separator = text.indexOf(':', prefix?.length ?? 0);
     if (separator < 0) return text;
-    const speaker =
-      sourceEntityId && world.entities[sourceEntityId]
-        ? `${observerDescription(world, actorId, sourceEntityId)} said`
-        : 'An unidentified speaker said';
+    const speaker = source
+      ? `${namePhrase(observerName(world, actorId, source.id), 'indefinite', { capitalize: true })} said`
+      : 'An unidentified speaker said';
     return `${sourceEntityId === actorId ? 'I said' : speaker}${text.slice(separator)}`;
   }
+  // Separate the attributed name before handling quotations/placeholders. A personal
+  // name can contain quotes, "You", "Player" or dollar signs; all are literal name text.
+  const self = sourceEntityId === actorId;
+  const names = source && patterns(source);
+  const possessive = self && names ? names.possessive.exec(text) : null;
+  const prefix = possessive ?? names?.subject.exec(text);
+  const subject =
+    source && prefix
+      ? self
+        ? possessive
+          ? 'My'
+          : 'I'
+        : namePhrase(observerName(world, actorId, source.id), 'indefinite', {
+            capitalize: true,
+          })
+      : '';
   // Quoted testimony keeps the speaker's exact words, including names/pronouns.
   return text
+    .slice(prefix?.[0].length ?? 0)
     .split(/("[^"\n]*"|“[^”\n]*”)/g)
     .map((part, index) => {
       if (index % 2) return part;
-      let result = named(part);
-      // Attribution is evidence, not a name match; unknown legacy subjects stay in third person.
-      if (sourceEntityId !== actorId) {
-        const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
-        if (index === 0 && source)
-          result = result.replace(
-            new RegExp(`^${escape(source.name)}(?=\\s|[.,:’'])`),
-            observerDescription(world, actorId, source.id),
-          );
-        return result;
-      }
-      const names = patterns(actor);
-      // Only the leading native subject is known to be the event source.
-      // Later occurrences may name a different entity with the same label.
-      if (index === 0) {
-        result = result.replace(names.possessive, 'my');
-        result = result.replace(names.subject, 'I');
-      }
+      let result = (index === 0 ? subject : '') + named(part);
+      // Native events that mark this reference keep the canonical text neutral. Resolve
+      // the target from the witness's knowledge, never from the target's global name.
+      if (targetReference && targetEntityId && result.includes('the target'))
+        result = result.replace(
+          'the target',
+          targetEntityId === actorId
+            ? sourceEntityId === actorId
+              ? 'myself'
+              : 'me'
+            : namePhrase(observerName(world, actorId, targetEntityId), 'indefinite'),
+        );
+      // Without event attribution, keep third-person wording.
+      if (!self || index !== 0) return result;
       return result
-        .replace(/\bI is\b/g, 'I am')
-        .replace(/\bI has\b/g, 'I have')
-        .replace(/\bI does\b/g, 'I do')
+        .replace(/^I is\b/, 'I am')
+        .replace(/^I has\b/, 'I have')
+        .replace(/^I does\b/, 'I do')
         .replace(
           /^I (nods|smiles|frowns|waves|shrugs|shakes|slaps)\b/,
           (_, verb: string) => `I ${verb.slice(0, -1)}`,
-        )
-        .replace(/^my\b/, 'My');
+        );
     })
     .join('');
 }

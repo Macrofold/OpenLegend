@@ -1,5 +1,6 @@
+import { namePhrase, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
+import { observerName, recognizesSubject } from './worlds/base/knowledge.js';
 import { hasMemory } from './living.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
@@ -13,7 +14,7 @@ export interface PerceivedSpeech {
   perception: 'heard' | 'seen' | 'self';
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
-  speaker: { entityId: string; nameAtTime: string } | null;
+  speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
@@ -67,7 +68,11 @@ export function speechWords(speech: PerceivedSpeech): string {
     .join(' ');
 }
 export function speechDescription(speech: PerceivedSpeech): string {
-  const name = speech.speaker?.nameAtTime;
+  const name = speech.speaker
+    ? namePhrase({ ...speech.speaker, name: speech.speaker.nameAtTime }, 'indefinite', {
+        capitalize: speech.perception === 'seen' || speech.intelligibility === 'none',
+      })
+    : undefined;
   if (speech.perception === 'seen') return `${name ?? 'Someone'} appears to be speaking.`;
   const words = speechWords(speech);
   if (speech.perception === 'self') return `I said: “${words}”`;
@@ -102,6 +107,7 @@ export function perceiveSpeech(
   const dx = origin.x - listener.x,
     dz = origin.z - listener.z,
     dy = origin.y - listener.y;
+  const speaker = visible ? observerName(world, observer.id, source.id) : undefined;
   const speech: PerceivedSpeech = {
     perception,
     intelligibility: detail === 'clear' || detail === 'partial' ? detail : 'none',
@@ -112,7 +118,12 @@ export function perceiveSpeech(
           ? partialSpeech(raw, `${world.seed}:${event.id}:${observer.id}`, words)
           : [],
     speaker: visible
-      ? { entityId: source.id, nameAtTime: observerDescription(world, observer.id, source.id) }
+      ? {
+          entityId: source.id,
+          nameAtTime: speaker!.name,
+          nameForm: speaker!.nameForm,
+          indefiniteArticle: speaker!.indefiniteArticle,
+        }
       : null,
     delivery: visible && perception !== 'seen' ? volume : null,
     // A coarse direct-path bearing is not a source location or a future tracking handle.

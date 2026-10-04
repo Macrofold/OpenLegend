@@ -7,6 +7,7 @@ export default defineConfig({
   timeout: 60_000,
   use: {
     browserName: 'chromium',
+    ...(process.env['OPENLEGEND_PLAYWRIGHT_CHANNEL'] === 'chrome' ? { channel: 'chrome' } : {}),
     headless: true,
     viewport: { width: 1440, height: 960 },
     screenshot: 'only-on-failure',

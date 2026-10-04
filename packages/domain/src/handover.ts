@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { emit, outcome } from './events.js';
 import { canHandleItems } from './item-handling.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
@@ -201,7 +202,7 @@ export function executeHandover(
       world,
       events,
       'item-offered',
-      `${actor.name} offered ${described(world, offer)} to someone nearby.`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} offered ${described(world, offer)} to someone nearby.`,
       actor,
       other.id,
       { offerId: offer.id, semanticTrigger: true, urgency: 4 },
@@ -226,7 +227,7 @@ export function executeHandover(
       events,
       offer,
       'offer-withdrawn',
-      `${actor.name} withdrew an offer of ${described(world, offer)}.`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} withdrew an offer of ${described(world, offer)}.`,
       actor,
       offer.recipientId,
     );
@@ -238,7 +239,7 @@ export function executeHandover(
       events,
       offer,
       'offer-declined',
-      `${actor.name} declined an offer of ${described(world, offer)}.`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} declined an offer of ${described(world, offer)}.`,
       actor,
       offer.offererId,
     );
@@ -265,7 +266,7 @@ export function executeHandover(
     events,
     offer,
     'offer-accepted',
-    `${actor.name} accepted an offer of ${described(world, offer)}.`,
+    `${namePhrase(actor, 'definite', { capitalize: true })} accepted an offer of ${described(world, offer)}.`,
     actor,
     offer.offererId,
   );
@@ -287,7 +288,7 @@ export function reconcileItemOffers(world: WorldState, events: WorldEvent[]): vo
       events,
       offer,
       expired ? 'offer-expired' : 'offer-lapsed',
-      `${offerer ? `${offerer.name}'s offer` : 'An offer'} of ${described(world, offer)} ${expired ? 'expired' : 'lapsed'}.`,
+      `${offerer ? `${namePhrase(offerer, 'definite', { capitalize: true })}'s offer` : 'An offer'} of ${described(world, offer)} ${expired ? 'expired' : 'lapsed'}.`,
       offerer ?? recipient,
       offerer ? offer.recipientId : offer.offererId,
     );

@@ -8,7 +8,6 @@ export class PresentationClock {
     return this.elapsedMs;
   }
   sample(nowMs: number, paused: boolean): number {
-    if (!Number.isFinite(nowMs)) throw new Error('Invalid presentation clock sample.');
     if (this.lastMs !== null && !this.wasPaused && !paused)
       this.elapsedMs += Math.max(0, nowMs - this.lastMs);
     this.lastMs = nowMs;
@@ -21,11 +20,9 @@ export interface PresentationLifetime {
   startedAt: number | null;
 }
 export function createLifetime(durationMs: number): PresentationLifetime {
-  if (!Number.isFinite(durationMs) || durationMs < 0) throw new Error('Invalid UI duration.');
   return { durationMs, startedAt: null };
 }
 export function activateLifetime(lifetime: PresentationLifetime, nowMs: number): void {
-  if (!Number.isFinite(nowMs)) throw new Error('Invalid UI start time.');
   lifetime.startedAt ??= nowMs;
 }
 export function sampleLifetime(lifetime: PresentationLifetime, nowMs: number, paused = false) {

@@ -423,14 +423,14 @@ export async function prepareDecision(
     feelings: activeAppraisals(world, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${value.targetId && world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${value.targetId && world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId, 'definite') : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(world.kinships ?? {})
       .filter((value) => [value.firstId, value.secondId].includes(actorId))
       .map(
         (value) =>
-          `${world.entities[value.firstId] ? entityLabel(world, world.entities[value.firstId]!, actorId) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId] ? entityLabel(world, world.entities[value.secondId]!, actorId) : 'an unknown person'}.`,
+          `${world.entities[value.firstId] ? entityLabel(world, world.entities[value.firstId]!, actorId, 'definite') : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId] ? entityLabel(world, world.entities[value.secondId]!, actorId, 'definite') : 'an unknown person'}.`,
       )
       .join(' '),
     aboutMe:
@@ -675,14 +675,14 @@ export async function prepareDecision(
     feelings: activeAppraisals(currentWorld, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${value.targetId && currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${value.targetId && currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId, 'definite') : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(currentWorld.kinships ?? {})
       .filter((value) => [value.firstId, value.secondId].includes(actorId))
       .map(
         (value) =>
-          `${currentWorld.entities[value.firstId] ? entityLabel(currentWorld, currentWorld.entities[value.firstId]!, actorId) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${currentWorld.entities[value.secondId] ? entityLabel(currentWorld, currentWorld.entities[value.secondId]!, actorId) : 'an unknown person'}.`,
+          `${currentWorld.entities[value.firstId] ? entityLabel(currentWorld, currentWorld.entities[value.firstId]!, actorId, 'definite') : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${currentWorld.entities[value.secondId] ? entityLabel(currentWorld, currentWorld.entities[value.secondId]!, actorId, 'definite') : 'an unknown person'}.`,
       )
       .join(' '),
     aboutMe:

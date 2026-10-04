@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
 import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
 import { activelyParticipates } from './participation-state.js';
@@ -383,14 +384,21 @@ export function commitActorResponse(
     };
   if (!actor?.actor) return unavailable('The person is no longer available.');
   if (!activelyParticipates(actor)) return unavailable('The person is not participating.');
-  if (!actor.actor.alive) return unavailable(`${actor.name} is dead and cannot respond.`);
+  if (!actor.actor.alive)
+    return unavailable(
+      `${namePhrase(actor, 'definite', { capitalize: true })} is dead and cannot respond.`,
+    );
   if (actor.actor.incapacitated)
-    return unavailable(`${actor.name} is incapacitated and cannot respond.`);
+    return unavailable(
+      `${namePhrase(actor, 'definite', { capitalize: true })} is incapacitated and cannot respond.`,
+    );
   // A speech-only restriction must not suppress nonverbal decisions. Preserve the
   // existing fully restricted response gate; native speech/action owners check each call.
   // docs/architecture.md#reviewed-action-binding-and-approval-boundaries
   if (capabilityBlocked(input, actor, 'speech') && capabilityBlocked(input, actor, 'actions'))
-    return unavailable(`${actor.name} cannot respond in their current state.`);
+    return unavailable(
+      `${namePhrase(actor, 'definite', { capitalize: true })} cannot respond in their current state.`,
+    );
   const permitted = new Set(entityIds);
   const targetEpisodes =
     expectedEncounters &&
@@ -744,10 +752,15 @@ export function commitActorResponse(
           world,
           events,
           'expression',
-          `${source.name} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}${target.name}` : ''}.`,
+          `${namePhrase(source, 'definite', { capitalize: true })} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}the target` : ''}.`,
           source,
           target?.id,
-          { mechanical: false, responseId: id, semanticTrigger: true },
+          {
+            mechanical: false,
+            responseId: id,
+            semanticTrigger: true,
+            ...(target ? { targetReference: true } : {}),
+          },
         );
         components[localId] = outcome(
           true,

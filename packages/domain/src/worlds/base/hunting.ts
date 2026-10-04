@@ -1,3 +1,4 @@
+import { namePhrase, type Named } from '@open-legend/language';
 import { seesEntity } from '../../perception.js';
 import type { WorldState } from '../../types.js';
 
@@ -16,12 +17,12 @@ export const BASE_HUNTING = {
 export function huntingDescription(
   species: string | undefined,
   method: keyof typeof BASE_HUNTING.methods,
-  target: string,
-  tool?: string,
+  target: Named | string,
+  tool?: Named | string,
 ): string | undefined {
   if (!species || !BASE_HUNTING.knownPrey.includes(species) || !BASE_HUNTING.methods[method])
     return;
-  return `${BASE_HUNTING.label} ${target} with ${tool ?? BASE_HUNTING.unarmedTool} ${BASE_HUNTING.purpose}. ${BASE_HUNTING.scope}`;
+  return `${BASE_HUNTING.label} ${namePhrase(target)} with ${tool ? namePhrase(tool) : BASE_HUNTING.unarmedTool} ${BASE_HUNTING.purpose}. ${BASE_HUNTING.scope}`;
 }
 
 /** This world's visible animal condition is readable; private needs and unseen bodies are not.

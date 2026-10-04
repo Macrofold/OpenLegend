@@ -34,4 +34,6 @@ The renderer uses cached pixel-sprite frames that replace the character's hangin
 
 Player target menus/catalogue and the NPC action candidates read the trusted definitions. Availability and final effects remain subject to domain admission. Offering Punch does not require a character to choose violence or introduce a native aggression controller. The catalogue explains reach, damage, timing and one-strike behavior.
 
+Targeted menu labels put the target before the weapon, for example **Attack hare with Knife** or **Punch hare**. Compact menu labels use bare observer and weapon names under the shared [naming contract](entity-names.md). Weapon names are preserved, including names of invented weapons; the bundled world owns the weapon-action wording.
+
 Implementation facts are in [Architecture](architecture.md#targeted-strikes); observations are in [Verification](verification/physical-actions.md#targeted-punch-runtime). Deferred validation lives in [TODO](maintainers/TODO.md#targeted-strike-validation).

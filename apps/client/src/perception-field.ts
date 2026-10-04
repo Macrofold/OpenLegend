@@ -13,18 +13,19 @@ import type { PerceptionOptions } from './world-renderer';
 /** Bounded, conservative surface guide, not an observation/recognition query.
  * docs/spatial-world.md#perception-range-guides owns sampling and elevation limits. */
 export const GUIDE_SAMPLING = { rays: 128, steps: 32, refinements: 8, intervalMs: 250 } as const;
+type SurfaceSample = { center: WorldPoint; support: WorldPoint | null };
 export interface GuideContour {
   sense: 'vision' | 'hearing';
   band: number;
   label: string;
-  points: Array<WorldPoint | null>;
+  vertices: WorldPoint[];
+  triangles: number[];
   segments: Array<[WorldPoint, WorldPoint]>;
 }
 export const GUIDE_HINTS = {
-  vision:
-    'Vision · solid teal. Clear sight → Reduced detail → Outside sight range. The inner band is a visual guide at 60% of sight range; the outer limit uses actual sight range and physical barriers. Sampled on nearby mapped surfaces for a target your size.',
+  vision: 'Sight range. Nearby objects are clearer; obstacles block the view.',
   hearing:
-    'Hearing · dashed amber. Clear speech → Partial speech → Indistinct speech → Inaudible. Reference: normal-volume speech from someone your size. Uses your hearing, background sound, distance and barrier attenuation. Sampled on nearby mapped surfaces.',
+    'Hearing range for normal speech. Words become harder to hear with distance; walls can muffle them.',
 } as const;
 
 export function perceptionFieldKey(view: GameView, options: PerceptionOptions): string {
@@ -48,8 +49,7 @@ export function perceptionFieldKey(view: GameView, options: PerceptionOptions): 
 export function perceptionField(view: GameView, options: PerceptionOptions): GuideContour[] {
   // This provider explicitly discloses starter geometry. Never infer undiscovered topology.
   if (view.map.spatial.disclosure !== 'public') return [];
-  type Edge = { point: WorldPoint; direction: 'in' | 'out' };
-  const contours: Array<GuideContour & { radius: number; edges: Edge[][] }> = [];
+  const contours: Array<GuideContour & { radius: number }> = [];
   if (options.vision && view.vision.enabled && view.vision.radius > 0)
     for (const [band, radius] of [
       view.vision.radius * VISION_FOCUS.clearFraction,
@@ -59,13 +59,10 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
         sense: 'vision',
         band,
         radius,
-        label:
-          band === 0
-            ? 'Vision · Clear sight / Reduced detail (visual guide)'
-            : 'Vision · Reduced detail / Outside sight range',
-        points: [],
+        label: band === 0 ? 'Clear sight' : 'Within sight',
+        vertices: [],
+        triangles: [],
         segments: [],
-        edges: [],
       });
   if (options.hearing && view.hearing.enabled)
     for (const [band, radius] of [
@@ -78,15 +75,10 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
           sense: 'hearing',
           band,
           radius,
-          label:
-            [
-              'Hearing · Clear speech / Partial speech',
-              'Hearing · Partial speech / Indistinct speech',
-              'Hearing · Indistinct speech / Inaudible',
-            ][band] + ' · normal-volume speech',
-          points: [],
+          label: ['Clear speech', 'Some words', 'Faint sound'][band]!,
+          vertices: [],
+          triangles: [],
           segments: [],
-          edges: [],
         });
   if (!contours.length) return [];
   const map = view.map,
@@ -144,107 +136,175 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
     }
     return effectiveDistance <= contour.radius;
   };
-  for (let ray = 0; ray < GUIDE_SAMPLING.rays; ray++) {
-    const angle = (ray * Math.PI * 2) / GUIDE_SAMPLING.rays;
-    const dx = Math.cos(angle),
-      dz = Math.sin(angle);
-    const samples = new Map<number, WorldPoint | null>();
-    const at = (distance: number) => {
-      if (!samples.has(distance))
-        samples.set(distance, footAt(origin.x + dx * distance, origin.z + dz * distance));
-      return samples.get(distance)!;
+  // One shared grid retains bounded work and reuses sight/acoustic samples across bands.
+  const grid: WorldPoint[][] = [[origin]];
+  for (let ring = 1; ring <= GUIDE_SAMPLING.steps; ring++) {
+    const distance = (ring * maximum) / GUIDE_SAMPLING.steps;
+    grid.push(
+      Array.from({ length: GUIDE_SAMPLING.rays }, (_, ray) => {
+        const angle = (ray * Math.PI * 2) / GUIDE_SAMPLING.rays;
+        const x = origin.x + Math.cos(angle) * distance;
+        const z = origin.z + Math.sin(angle) * distance;
+        return footAt(x, z) ?? { x, y: origin.y, z };
+      }),
+    );
+  }
+  // Full triangle interiors are identical across bands; keep their support points
+  // shared so native sight/transmission classification runs once per build.
+  const interiors: SurfaceSample[] = [];
+  const midpoints = new Map<number, SurfaceSample>();
+  return contours.map((contour) => {
+    const { radius: _radius, ...display } = contour;
+    return {
+      ...display,
+      ...guideMesh(grid, interiors, midpoints, footAt, (point) => passes(contour, point)),
     };
-    for (const contour of contours) {
-      // A support edge can hide nearby ground while farther ground is visible.
-      // Retain every sampled transition, not a single star-shaped first-hit field.
-      const edges: Edge[] = [];
-      let previousDistance = 0,
-        inside = passes(contour, origin);
-      const step = maximum / GUIDE_SAMPLING.steps;
-      for (let index = 1; index <= GUIDE_SAMPLING.steps; index++) {
-        const distance = Math.min(index * step, contour.radius);
-        const foot = at(distance);
-        // A map edge is not a sensory threshold; never draw an invented boundary.
-        if (!foot) break;
-        const nextInside = passes(contour, foot);
-        if (inside !== nextInside) {
-          let low = previousDistance,
-            high = distance;
-          for (let refinement = 0; refinement < GUIDE_SAMPLING.refinements; refinement++) {
-            const mid = (low + high) / 2,
-              sample = at(mid);
-            if (sample && passes(contour, sample) === inside) low = mid;
-            else high = mid;
-          }
-          const point = at(inside ? low : high);
-          if (point) edges.push({ point, direction: inside ? 'out' : 'in' });
-        }
-        inside = nextInside;
-        previousDistance = distance;
-        if (distance === contour.radius) {
-          if (inside) edges.push({ point: foot, direction: 'out' });
-          break;
-        }
-      }
-      contour.edges.push(edges);
-      contour.points.push(edges.at(-1)?.point ?? null);
-    }
-  }
-  for (const contour of contours) {
-    contour.segments = guideSegments(contour.edges, (a, b) => {
-      // Validate the chord as well as radial endpoints. A sampled wall corner or
-      // support edge must leave a gap instead of a misleading bridge.
-      for (const t of [0.25, 0.5, 0.75]) {
-        const point = {
-          x: a.x + (b.x - a.x) * t,
-          y: a.y + (b.y - a.y) * t,
-          z: a.z + (b.z - a.z) * t,
-        };
-        const support = footAt(point.x, point.z);
-        if (!support || Math.abs(support.y - point.y) > 0.05 || !passes(contour, point))
-          return false;
-      }
-      return (
-        contour.sense !== 'vision' ||
-        clearSegment(
-          map,
-          { ...a, y: a.y + view.vision.eyeHeight },
-          { ...b, y: b.y + view.vision.eyeHeight },
-        )
-      );
-    });
-  }
-  return contours.map(({ radius: _radius, edges: _edges, ...contour }) => contour);
+  });
 }
 
-/** Match nearby boundaries of the same crossing direction; support and native
- * checks below leave gaps at ambiguous corners instead of joining unseen regions. */
-function guideSegments(
-  edges: Array<Array<{ point: WorldPoint; direction: 'in' | 'out' }>>,
-  valid: (a: WorldPoint, b: WorldPoint) => boolean,
-): Array<[WorldPoint, WorldPoint]> {
-  const segments: Array<[WorldPoint, WorldPoint]> = [];
-  for (let index = 0; index < edges.length; index++) {
-    const next = edges[(index + 1) % edges.length]!;
-    const used = new Set<number>();
-    for (const edge of edges[index]!) {
-      let nearest = 3,
-        match = -1;
-      for (const [candidate, other] of next.entries()) {
-        if (used.has(candidate) || edge.direction !== other.direction) continue;
-        const separation = distance3D(edge.point, other.point);
-        if (separation < nearest) {
-          nearest = separation;
-          match = candidate;
-        }
+/** Fill and outline share topology. Rejected interiors become closed holes rather
+ * than missing border fragments; no chord connects across an excluded patch.
+ * docs/spatial-world.md#display-approximation-and-updates */
+function guideMesh(
+  grid: WorldPoint[][],
+  interiors: SurfaceSample[],
+  midpoints: Map<number, SurfaceSample>,
+  footAt: (x: number, z: number) => WorldPoint | null,
+  passes: (point: WorldPoint) => boolean,
+): Pick<GuideContour, 'vertices' | 'triangles' | 'segments'> {
+  type Sample = { id: number; point: WorldPoint; inside: boolean };
+  const vertices: WorldPoint[] = [],
+    triangles: number[] = [];
+  const indices: number[] = [];
+  const crossings = new Map<number, Sample>();
+  const boundary = new Map<number, [number, number]>();
+  // Unordered integer pairs avoid allocating strings for every shared mesh edge.
+  const edgeKey = (a: number, b: number): number => ((a + b) * (a + b + 1)) / 2 + Math.min(a, b);
+  const originalPoints = grid.reduce((count, ring) => count + ring.length, 0);
+  const clippedMidpoints = new Map<number, SurfaceSample>();
+  let nextId = 0;
+  const sample = (point: WorldPoint): Sample => ({
+    id: nextId++,
+    point,
+    inside: footAt(point.x, point.z) !== null && passes(point),
+  });
+  const samples = grid.map((ring) => ring.map(sample));
+  const crossing = (a: Sample, b: Sample): Sample => {
+    const key = edgeKey(a.id, b.id);
+    const cached = crossings.get(key);
+    if (cached) return cached;
+    let inside = a.inside ? a.point : b.point;
+    let outside = a.inside ? b.point : a.point;
+    for (let i = 0; i < GUIDE_SAMPLING.refinements; i++) {
+      const x = (inside.x + outside.x) / 2;
+      const z = (inside.z + outside.z) / 2;
+      const point = footAt(x, z);
+      if (point && passes(point)) inside = point;
+      else outside = { x, y: (inside.y + outside.y) / 2, z };
+    }
+    const result = { id: nextId++, point: inside, inside: true };
+    crossings.set(key, result);
+    return result;
+  };
+  const edgePasses = (a: Sample, b: Sample): boolean => {
+    const cache = a.id < originalPoints && b.id < originalPoints ? midpoints : clippedMidpoints;
+    const key = edgeKey(a.id, b.id);
+    let middle = cache.get(key);
+    if (!middle) {
+      const center = {
+        x: (a.point.x + b.point.x) / 2,
+        y: (a.point.y + b.point.y) / 2,
+        z: (a.point.z + b.point.z) / 2,
+      };
+      middle = { center, support: footAt(center.x, center.z) };
+      cache.set(key, middle);
+    }
+    return (
+      middle.support !== null &&
+      Math.abs(middle.support.y - middle.center.y) <= 0.05 &&
+      passes(middle.support)
+    );
+  };
+  const index = (point: Sample): number => {
+    let id = indices[point.id];
+    if (id === undefined) {
+      id = vertices.length;
+      indices[point.id] = id;
+      vertices.push(point.point);
+    }
+    return id;
+  };
+  const edge = (a: number, b: number): void => {
+    const key = edgeKey(a, b);
+    if (boundary.has(key)) boundary.delete(key);
+    else boundary.set(key, [a, b]);
+  };
+  let triangleNumber = 0;
+  const triangle = (corners: Sample[]): void => {
+    const ordinal = triangleNumber++;
+    const polygon: Sample[] = [];
+    for (let i = 0; i < 3; i++) {
+      const a = corners[i]!,
+        b = corners[(i + 1) % 3]!;
+      if (a.inside) polygon.push(a);
+      if (a.inside !== b.inside) polygon.push(crossing(a, b));
+    }
+    if (polygon.length < 3) return;
+    const first = index(polygon[0]!);
+    for (let i = 1; i + 1 < polygon.length; i++) {
+      const a = index(polygon[i]!),
+        b = index(polygon[i + 1]!);
+      const from = vertices[first]!,
+        to = vertices[a]!,
+        last = vertices[b]!;
+      if (
+        Math.abs((to.x - from.x) * (last.z - from.z) - (to.z - from.z) * (last.x - from.x)) < 1e-9
+      )
+        continue;
+      // Check each rendered triangle, including both halves of a clipped quadrilateral.
+      // Native interior classification and support height exclude hidden/stacked ground.
+      const unchanged = corners.every((corner) => corner.inside);
+      let interior = unchanged ? interiors[ordinal] : undefined;
+      if (!interior) {
+        const center = {
+          x: (from.x + to.x + last.x) / 3,
+          y: (from.y + to.y + last.y) / 3,
+          z: (from.z + to.z + last.z) / 3,
+        };
+        interior = { center, support: footAt(center.x, center.z) };
+        if (unchanged) interiors[ordinal] = interior;
       }
-      if (match < 0) continue;
-      const a = edge.point,
-        b = next[match]!.point;
-      if (Math.abs(a.y - b.y) > Math.hypot(a.x - b.x, a.z - b.z) + 0.05 || !valid(a, b)) continue;
-      used.add(match);
-      segments.push([a, b]);
+      const { center, support } = interior;
+      if (!support || Math.abs(support.y - center.y) > 0.05 || !passes(support)) continue;
+      // A visible center alone can still bridge an unseen wall corner. Exclude
+      // that triangle instead of breaking its outline; the resulting hole closes.
+      if (
+        !edgePasses(polygon[0]!, polygon[i]!) ||
+        !edgePasses(polygon[i]!, polygon[i + 1]!) ||
+        !edgePasses(polygon[i + 1]!, polygon[0]!)
+      )
+        continue;
+      triangles.push(first, a, b);
+      edge(first, a);
+      edge(a, b);
+      edge(b, first);
+    }
+  };
+  for (let ring = 1; ring < samples.length; ring++) {
+    for (let ray = 0; ray < GUIDE_SAMPLING.rays; ray++) {
+      const next = (ray + 1) % GUIDE_SAMPLING.rays;
+      const outer = samples[ring]!;
+      const inner = samples[ring - 1]!;
+      if (ring === 1) triangle([inner[0]!, outer[ray]!, outer[next]!]);
+      else {
+        triangle([inner[ray]!, outer[ray]!, outer[next]!]);
+        triangle([inner[ray]!, outer[next]!, inner[next]!]);
+      }
     }
   }
-  return segments;
+  return {
+    vertices,
+    triangles,
+    segments: [...boundary.values()].map(([a, b]) => [vertices[a]!, vertices[b]!]),
+  };
 }

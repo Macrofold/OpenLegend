@@ -1,3 +1,4 @@
+import { renderNameTemplate } from '@open-legend/language';
 import { reconcileConditions } from './conditions.js';
 import { admitStatusWork, chargeStatusWork } from './native-work.js';
 import { releaseWork } from './work-budget.js';
@@ -306,10 +307,7 @@ export function statusTransitionEvent(
   if (!target) return;
   // Lifecycle invalidation has its own truthful event; don't announce successful recovery.
   if (!active && reason === 'body-unavailable') return;
-  const text = operation.emit.narration.replace(
-    /\{(subject|source|actionTarget)\.name\}/g,
-    (_, key: keyof EffectBindings) => bindings[key]?.name ?? 'Unknown',
-  );
+  const text = renderNameTemplate(operation.emit.narration, { ...bindings });
   emit(world, events, 'state-changed', text, target, undefined, {
     definitionId: definition.id,
     active,

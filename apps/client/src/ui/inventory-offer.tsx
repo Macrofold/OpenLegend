@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useEffect, useId, useState } from 'react';
 import type {
   InventoryDestination,
@@ -93,7 +94,7 @@ export function InventoryOffer({
               }
               onPress={() => onOffer(person)}
             >
-              Offer to {person.name}
+              Offer to {namePhrase(person, 'definite')}
             </Button>
             {person.reason && <p className="ol-caption">{person.reason}</p>}
           </li>

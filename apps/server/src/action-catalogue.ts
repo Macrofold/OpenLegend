@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { worldSupport, worldPosition } from '@open-legend/domain';
 import { itemFor, custodian } from '@open-legend/domain';
 import { inventoryItemView } from './inventory-view.js';
@@ -213,10 +214,10 @@ export function actionCatalogue(
         { availability: option.availability, description: option.description },
       );
     if (target.actor && target.id !== scope.actorId)
-      for (const definition of availableStrikes(service.world, scope.actorId))
+      for (const definition of availableStrikes(service.world, scope.actorId, target))
         add(
           `${definition.id}-${target.id}`,
-          `${definition.label} ${target.name}`,
+          definition.label,
           'Combat',
           {
             type: 'strike',
@@ -274,9 +275,9 @@ export function actionCatalogue(
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,
-        label: `Talk to ${target.name}`,
+        label: `Talk to ${namePhrase(target, 'definite')}`,
         category: 'Social',
-        description: `Open a conversation with ${target.name}. Ask about their experiences, discuss a plan, or offer a suggestion. You can edit your message before sending it.`,
+        description: `Open a conversation with ${namePhrase(target, 'definite')}. Ask about their experiences, discuss a plan, or offer a suggestion. You can edit your message before sending it.`,
         keywords: ['chat', 'speak', 'conversation'],
         targetId: target.id,
         enabled: true,

@@ -308,8 +308,9 @@ export class GameSaves {
     private readonly db: SqlDatabase,
     private readonly directory: string,
     source?: CheckpointSource,
+    restoreAttemptId?: string,
   ) {
-    this.files = new SaveFiles(directory);
+    this.files = new SaveFiles(directory, undefined, restoreAttemptId);
     if (source) this.worker = new CheckpointWorker(source);
   }
   async close() {

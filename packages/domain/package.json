@@ -8,6 +8,7 @@
   "license": "AGPL-3.0-only",
   "dependencies": {
     "immer": "10.1.1",
-    "@open-legend/spatial": "workspace:*"
+    "@open-legend/spatial": "workspace:*",
+    "@open-legend/language": "workspace:*"
   }
 }

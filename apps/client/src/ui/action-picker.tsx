@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { godCharacterAvailability } from './god-character-actions';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
@@ -177,7 +178,7 @@ export function ActionPicker({
       id="contextMenu"
       className="ol-picker"
       role="dialog"
-      aria-label={`Actions for ${picker.entity?.name ?? 'the clearing'}`}
+      aria-label={`Actions for ${picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
         // Portaled pullouts own their keyboard navigation; React events still bubble here.

@@ -1,3 +1,4 @@
+import type { Named } from '@open-legend/language';
 import type { SurfacePoint } from '@open-legend/spatial';
 
 /** Exterior access is separate from contents. A stance is a current intention, not a route guarantee. */
@@ -48,9 +49,8 @@ export interface InventoryDestinationRequest {
   cursor?: string;
 }
 
-export interface InventoryDestination {
+export interface InventoryDestination extends Named {
   id: string;
-  name: string;
   location: string;
   revision: number;
   kind: 'container' | 'recipient';

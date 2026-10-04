@@ -6,6 +6,7 @@
   "exports": "./src/index.ts",
   "license": "AGPL-3.0-only",
   "dependencies": {
-    "@open-legend/spatial": "workspace:*"
+    "@open-legend/spatial": "workspace:*",
+    "@open-legend/language": "workspace:*"
   }
 }

@@ -1,3 +1,4 @@
+import { renderNameTemplate, validNameTemplate, type Named } from '@open-legend/language';
 import { canonicalJson } from './events.js';
 import type { Entity, WorldState, MaterialProperty, ItemDefinition } from './types.js';
 import type { AttributeDefinition } from './world-modules.js';
@@ -64,7 +65,7 @@ function text(value: unknown, template = false): asserts value is string {
     typeof value !== 'string' ||
     !value.trim() ||
     value.length > 512 ||
-    (template && /\{(?!subject\.name\}|item\.name\})/.test(value))
+    (template && !validNameTemplate(value, ['subject', 'item']))
   )
     throw new Error('Invalid body policy text.');
 }
@@ -304,10 +305,8 @@ export function applicableConsumption(
     ? consumption
     : null;
 }
-export function bodyNarration(template: string, subject: Entity, itemName?: string): string {
-  return template.replace(/\{(subject\.name|item\.name)\}/g, (_, key: string) =>
-    key === 'subject.name' ? subject.name : (itemName ?? 'Unknown'),
-  );
+export function bodyNarration(template: string, subject: Entity, item?: Named): string {
+  return renderNameTemplate(template, { subject, item });
 }
 
 /** Exact eligibility inputs captured before background work; numeric meter drift is rechecked separately. */

@@ -202,6 +202,8 @@ Exit: optional load stays within its latency budget, with ownership/revocation t
 
 ## PF05 — Public view and browser responsiveness
 
+[PG04](personal-game-next-batch.md#pg04--cheaper-action-availability) proposes a focused next assignment for the measured repeated command-preview work below: confirm current attribution, share pure prerequisites with actual admission and measure the resulting player path. It does not reopen delivered geometry work or select general SQL/scheduler changes.
+
 Dependencies: PF00; PF02 supplies scoped background notifications.
 
 - [x] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced over 50 ms with cooperative slices between viewers (the measured 100-viewer burst justified this window). Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.

@@ -10,9 +10,11 @@ Recoverable human death, default possession preservation, cooperative play and e
 
 ## Human logout and return
 
+The application’s [explicit tab pause/Resume](../../projects/completed/tab-resume-feature-spec.md) releases control when the player leaves the tab and requests this same world departure/return path. Browser focus is not itself a world law or a login change. Sole-tab entry/refocus requests a return automatically; switching between open game tabs requires **Resume Here**. Other active players can keep world time running while this character is absent.
+
 After logout/disconnection, finish or safely interrupt current interactions during a short bounded exit period. Disconnecting must not instantly erase an admitted consequence or permit an indefinite action to prevent exit. Then the character visibly fades out for onlookers and leaves active world participation. Emit a committed departure action/event through normal scoped perception so witnessing agents can notice it; do not broadcast private connection/account details or grant awareness to non-witnesses. Preserve character identity, belongings, history and return state.
 
-After exit, the human character is inactive and protected from bodily harm and survival depletion until returning. This does not freeze the shared world or advance personal starvation off-screen. Reconnect reconciles any existing exit before restoring one controlled embodiment; duplicate sessions cannot duplicate a person or inventory. Exact exit timing and interrupted-action recovery are tuning work. A hidden but connected tab is distinct from logout and follows the [sensory policy](../../../archive/07-technical-architecture/perception-and-attention.md#embodied-visual-parity).
+After exit, the human character is inactive and protected from bodily harm and survival depletion until returning. This does not freeze the shared world or advance personal starvation off-screen. Reconnect reconciles any existing exit before restoring one controlled embodiment; duplicate sessions cannot duplicate a person or inventory. Exact exit timing and interrupted-action recovery are tuning work. The browser now releases control when hidden; a non-browser client that remains connected still follows the [sensory policy](../../../archive/07-technical-architecture/perception-and-attention.md#embodied-visual-parity).
 
 ## Human conflict and recovery
 

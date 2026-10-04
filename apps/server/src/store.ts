@@ -62,6 +62,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
+export const DATABASE_SCHEMA = '4';
 
 export interface AttemptBudget {
   id: string;
@@ -371,7 +372,12 @@ export interface WorldStore {
       authorityBindings?: readonly AccountBinding[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        unattended: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
       operationalChange?: () => Promise<void>;
@@ -635,7 +641,7 @@ export class SqlGameRepository implements GameRepository {
         .get();
       if (existing?.['relation']) {
         const version = await this.db.prepare('SELECT value FROM meta WHERE key=?').get('schema');
-        if (version?.['value'] !== '4')
+        if (version?.['value'] !== DATABASE_SCHEMA)
           throw new Error(
             'Unsupported database schema. Existing data was not converted or deleted.',
           );
@@ -703,7 +709,7 @@ export class SqlGameRepository implements GameRepository {
       await this.maintenance.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
-        .run('schema', '4');
+        .run('schema', DATABASE_SCHEMA);
     });
   }
 
@@ -893,7 +899,12 @@ export class SqlGameRepository implements GameRepository {
       authorityBindings?: readonly AccountBinding[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        unattended: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
       /** Operational records that must commit with this world change (invite enrollment). */
@@ -966,8 +977,8 @@ export class SqlGameRepository implements GameRepository {
           await this.authority.rebind(scope, request, now);
         }
         if (historyProjection?.controlChange) {
-          const { scope, request, now } = historyProjection.controlChange;
-          await this.authority.changeControl(scope, request, now);
+          const { scope, request, now, unattended } = historyProjection.controlChange;
+          await this.authority.changeControl(scope, request, now, unattended);
         }
         if (historyProjection?.participationChange) {
           const { actorId, attempt } = historyProjection.participationChange;

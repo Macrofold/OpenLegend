@@ -2,7 +2,7 @@
 
 ## World presentation ownership
 
-[World presentation](world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+[World presentation](world-presentation.md) owns the accepted continuous right-drag orbit/pitch, Shift + right-drag or middle-drag pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older camera-binding or unlit-art directions conflict; SW18 retains visual qualification and further art work.
 
 ## Spatial camera and floor UI
 

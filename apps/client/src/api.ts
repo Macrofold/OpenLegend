@@ -1,8 +1,7 @@
 import type { ApiResult, GamePatch, GameView, OperationsView } from '@open-legend/protocol';
 
-// One identity for this page's heartbeats and explicit Resume actions. A delayed
-// pagehide notification must not erase a newer return/resume notification.
-const tabClientId = crypto.randomUUID();
+import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
+
 let presenceSequence = 0;
 let worldGeneration = '';
 let viewScope = '';
@@ -93,28 +92,35 @@ export function acceptAccess(view: GameView): void {
   }
 }
 export function eventsUrl(view: GameView): string {
-  return `/api/events?client=${tabClientId}&scope=${view.access?.scope ?? ''}&revision=${view.revision}`;
+  return `/api/events?client=${tabClientId()}&scope=${view.access?.scope ?? ''}&revision=${view.revision}`;
 }
 export function worldAgentProgressUrl(worldId: string, sessionId: string): string {
-  const query = new URLSearchParams({ worldId, sessionId, client: tabClientId, scope: viewScope });
+  const query = new URLSearchParams({
+    worldId,
+    sessionId,
+    client: tabClientId(),
+    scope: viewScope,
+  });
   return `/api/world-agent/session/progress?${query}`;
 }
 export function npcReplyPreviewUrl(worldId: string, requestId: string): string {
-  return `/api/chat/preview?${new URLSearchParams({ worldId, requestId, client: tabClientId, scope: viewScope })}`;
+  return `/api/chat/preview?${new URLSearchParams({ worldId, requestId, client: tabClientId(), scope: viewScope })}`;
 }
 
 export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   return post('/api/control', {
     paused,
-    ...(!paused ? { clientId: tabClientId, presenceSequence: ++presenceSequence } : {}),
+    ...(!paused ? { clientId: tabClientId(), presenceSequence: ++presenceSequence } : {}),
   });
 }
 
-export async function getState(): Promise<GameView> {
+export async function getState(signal?: AbortSignal): Promise<GameView> {
+  await tabIdentityReady;
   const response = await fetch('/api/state', {
     credentials: 'same-origin',
     cache: 'no-store',
-    headers: { 'X-OL-Client': tabClientId },
+    signal,
+    headers: { 'X-OL-Client': tabClientId() },
   });
   if (response.status === 403) {
     const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
@@ -128,12 +134,41 @@ export async function getState(): Promise<GameView> {
   const view = (await response.json()) as GameView;
   return view;
 }
+/** Capture the authority of this page's intent. A late release must never use
+ * the newer authority accepted after a Resume in another tab. */
+export async function changeTabControl(
+  view: GameView,
+  operation: 'acquire' | 'replace' | 'release',
+): Promise<ApiResult> {
+  if (!view.access) throw new Error('Refresh your character before resuming.');
+  const response = await fetch('/api/embodiment', {
+    method: 'POST',
+    credentials: 'same-origin',
+    keepalive: operation === 'release',
+    signal: AbortSignal.timeout(15000),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-OL-Client': tabClientId(),
+      'X-OL-Scope': view.access.scope,
+      'X-OL-Generation': view.historyEpoch?.split(':')[0] ?? '',
+    },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      expectedGeneration: view.access.controlGeneration,
+      operation,
+    }),
+  });
+  const result = (await response.json()) as ApiResult;
+  if (!result.ok) throw new Error(result.message || 'Your character could not resume here.');
+  return result;
+}
 /** Operator/spectator console state. It opens no event stream and never counts as presence. */
 export async function getOperations(): Promise<OperationsView> {
+  await tabIdentityReady;
   const response = await fetch('/api/operations', {
     credentials: 'same-origin',
     cache: 'no-store',
-    headers: { 'X-OL-Client': tabClientId },
+    headers: { 'X-OL-Client': tabClientId() },
   });
   const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
     message?: string;
@@ -158,7 +193,7 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
     credentials: 'same-origin',
     cache: 'no-store',
     signal,
-    headers: { 'X-OL-Client': tabClientId, 'X-OL-Scope': scope },
+    headers: { 'X-OL-Client': tabClientId(), 'X-OL-Scope': scope },
   });
   if (!response.ok) throw new Error(`The requested history is unavailable (${response.status}).`);
   const result = (await response.json()) as T;
@@ -219,7 +254,7 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
     headers: {
       'Content-Type': 'application/json',
       'X-OL-Generation': worldGeneration,
-      'X-OL-Client': tabClientId,
+      'X-OL-Client': tabClientId(),
       'X-OL-Scope': viewScope,
     },
     body: JSON.stringify(body),
@@ -241,10 +276,10 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
 export function startPresence(): () => void {
   let focused = document.hasFocus();
   const send = (visible: boolean, beacon = false): void => {
-    const body = { clientId: tabClientId, visible, sequence: ++presenceSequence };
+    const body = { clientId: tabClientId(), visible, sequence: ++presenceSequence };
     if (beacon) {
       const queued = navigator.sendBeacon(
-        `/api/presence?client=${tabClientId}&scope=${viewScope}`,
+        `/api/presence?client=${tabClientId()}&scope=${viewScope}`,
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
       if (queued) return;
@@ -254,7 +289,7 @@ export function startPresence(): () => void {
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
-        'X-OL-Client': tabClientId,
+        'X-OL-Client': tabClientId(),
         'X-OL-Scope': viewScope,
       },
       body: JSON.stringify(body),
@@ -291,4 +326,21 @@ export function startPresence(): () => void {
     window.removeEventListener('blur', blur);
     send(false, true);
   };
+}
+
+/** Logout needs no controlling lease: it must also work from a displaced tab. */
+export async function logOut(): Promise<void> {
+  const response = await fetch('/api/session/logout', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+    signal: AbortSignal.timeout(15000),
+  });
+  const result = (await response.json()) as ApiResult;
+  if (response.status !== 401 && (!response.ok || !result.ok))
+    throw new Error(result.message || 'Could not log out. Try again.');
+  clearAccess();
+  announceLogout();
+  window.location.reload();
 }

@@ -14,6 +14,8 @@ The native agency slice builds on module concerns and the existing single-action
 
 PW01's [branch caller evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026) repairs first-action admission under AG03/AG04, exact selected-transfer dispatch and inspected learned-page refresh under AG06. It preserves independent speech, typed future outputs, actual outcomes and replay protection; learned execution also snapshots its recorded command for clone/checkpoint integrity. These repairs do not close the broader result-reference, context, live behavioral or integrated acceptance below.
 
+**Early whole-character integration:** [CE01–CE05](character-experience.md) links these AG foundations with character content, bodily/psychological experience, attention, memory and social expression. The [product specification](../projects/compelling-characters-feature-spec.md) requires coherent independent life beyond survival, with actual satisfaction, reprioritization and stopping. Existing AG12/CR12 own evaluation; no completed implementation is reopened merely by this cross-link.
+
 ## Ownership and delivery order
 
 AG owns the new decision envelope, operational goal/plan state, native continuation and actor-side integration. INV owns invention request policy, actor-method clarification/translation, definition admission, activation and mechanical family growth. EPR owns stimulus scope, perception-change identity and reaction intake; NC owns conversations, narration integration and expressive-impact behavior. CR owns the existing memory/attention/reflection substrate; CH owns an optional tool-using planning harness. A useful native plan does not depend on building CH01.
@@ -212,6 +214,8 @@ The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--conta
 ### AG12 — Behavioral value and cost, separately authorized
 
 **Owner:** cognition/INV research evaluation and verification. **Depends on:** AG11 for tested boundaries, relevant CR12/CH03/INV live gates. Fixture success is not evidence that the chosen model spontaneously produces useful behavior.
+
+For the integrated resident, run the applicable [complete character flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) through [CE05](character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification). The ordinary-afternoon and delayed-continuity cases connect body experience, company/belonging, enjoyment, independent pursuits and meaningful stopping. Retain the same evidence and full-cost accounting here; a separate test program or a successful survival chain alone cannot close that target.
 
 - [ ] Compare matched initial scenarios and opportunities across: current menu/single-step baseline; freeform proposal without persistent plans; persistent intentions/native continuation; and optional bounded investigation where relevant. Keep model/configuration and total spending allowances explicit.
 - [ ] Evaluate held-out variations and multiple independent runs: different names/material descriptions, alternative food sources, changed timing, unavailable targets, invention locks, no-response opportunities, and conflicting priorities. A single successful scripted bow demonstration is insufficient.

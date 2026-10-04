@@ -251,3 +251,9 @@ Saved internal feeling source version: **2,048 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../packages/protocol/src/index.ts).
+
+## FL19
+
+**Proposed — psychological-needs coverage and authored policy, October 3, 2026 · Restrictiveness: Medium.** The initial humanlike resident must have meaningful opportunities for bodily experience, contact/belonging and enjoyment, including chosen solitude and independent interests. This is product coverage, not a fixed emotion vocabulary, universal need count, numerical social meter or identical behavior in every episode. Existing sparse appraisals and accepted self/relationship understanding are the first supported representations; current automatic feeling enrollment is unchanged.
+
+**Reason / tradeoff:** Multidimensionality should affect the life the player encounters while avoiding compulsory meter maintenance. Every selected concern needs a cause, meaningful satisfaction/recovery or reprioritization, permitted context and a stopping condition. Missing mechanical effects remain unsupported until explicitly designed and installed; prose cannot silently supply them. Current record, cause, lifetime, privacy and capacity controls remain with FL01–FL18 and their owners. [CE01/CE02/CE05](../maintainers/character-experience.md) and [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) own selection and full-flow qualification; no optimal tuning or psychological validity is claimed.

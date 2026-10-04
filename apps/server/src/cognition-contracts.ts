@@ -97,9 +97,11 @@ export const operationSchema = z
 export const responseSchema = z.object({ operations: z.array(operationSchema).max(16) }).strict();
 
 /** Validate a closed first operation against this request before considering disclosure. */
-export function previewSpeechOperation(schema: z.ZodType, value: unknown) {
-  if (!schema.safeParse(value).success) return null;
-  const parsed = operationSchema.safeParse(value);
+export function previewSpeechOperation(
+  schema: z.ZodType<z.infer<typeof operationSchema>>,
+  value: unknown,
+) {
+  const parsed = schema.safeParse(value);
   if (!parsed.success) return null;
   const op = parsed.data;
   return op.talk &&

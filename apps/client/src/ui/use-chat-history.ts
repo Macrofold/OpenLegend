@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage, GameView } from '@open-legend/protocol';
 import { getScoped } from '../api';
+import { captionScope } from '../speech-captions';
 
 type ChatPage = { messages: ChatMessage[]; before?: number; watermark: number };
 
@@ -10,13 +11,7 @@ export function useChatHistory(
   participantId: string | undefined,
   visible: boolean,
 ) {
-  const key = JSON.stringify([
-    view.worldId,
-    view.historyEpoch ?? '',
-    view.access?.scope ?? '',
-    view.player.id,
-    participantId ?? '',
-  ]);
+  const key = `${captionScope(view)}:${participantId ?? ''}`;
   const [saved, setSaved] = useState<{ key: string; page: ChatPage } | null>(null);
   const [loading, setLoading] = useState(false);
   const [openingRevision, setOpeningRevision] = useState(0);

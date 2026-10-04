@@ -42,7 +42,7 @@ function promiseView(world: WorldState, actorId: string, memory: MemoryRecord): 
     id: memory.id,
     revision: obligation.revision,
     words: start >= 0 ? memory.summary.slice(start) : memory.summary,
-    recipient: recipientId ? observerDescription(world, actorId, recipientId) : null,
+    recipient: recipientId ? observerDescription(world, actorId, recipientId, 'definite') : null,
     madeAt: memory.at,
     status,
     terms:

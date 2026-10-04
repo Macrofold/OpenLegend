@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useEffect, useId, useRef, useState } from 'react';
 import type {
   InventoryDestination,
@@ -150,8 +151,8 @@ function DestinationWorkspace({
           onPress={() => select(entry)}
         >
           {entry.kind === 'recipient'
-            ? `Choose ${entry.name} for an offer`
-            : `Choose ${entry.name}`}
+            ? `Choose ${namePhrase(entry, 'definite')} for an offer`
+            : `Choose ${namePhrase(entry, 'definite')}`}
         </Button>
       </div>
     </li>

@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
@@ -68,6 +69,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
   const pile: Entity = {
     id,
     name: 'Items on the ground',
+    nameForm: 'plural',
     kind: 'item-pile',
     placement: worldPlacement({ x: position.x, y: position.y, z: position.z }, position.surfaceId),
     spatial: groundedSpatial('object'),
@@ -139,7 +141,14 @@ export function pickUpItems(
     if (error instanceof WorkBudgetError) throw error;
     return error instanceof Error ? error.message : 'Items are unavailable.';
   }
-  emit(world, events, 'items-picked-up', `${actor.name} picked up ${description}.`, actor, pile.id);
+  emit(
+    world,
+    events,
+    'items-picked-up',
+    `${namePhrase(actor, 'definite', { capitalize: true })} picked up ${description}.`,
+    actor,
+    pile.id,
+  );
   if (!itemsForOwner(world, pileId).length) {
     delete world.entities[pileId];
     rootMembershipChanged(world, pileId);
@@ -213,7 +222,7 @@ export function dropItems(
     world,
     events,
     'items-dropped',
-    `${actor.name} dropped ${quantity} ${world.itemDefinitions[item.definitionId]!.name}.`,
+    `${namePhrase(actor, 'definite', { capitalize: true })} dropped ${quantity} ${world.itemDefinitions[item.definitionId]!.name}.`,
     actor,
     pile.id,
   );
@@ -312,7 +321,7 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
     return reject(error instanceof Error ? error.message : 'Item creation unavailable.');
   }
   const events: WorldEvent[] = [];
-  const message = `God mode added ${request.quantity} ${world.itemDefinitions[request.definitionId]!.name} to ${owner.name}.`;
+  const message = `God mode added ${request.quantity} ${world.itemDefinitions[request.definitionId]!.name} to ${namePhrase(owner, 'definite')}.`;
   emit(world, events, 'god-item-created', message, owner);
   const result = { ...outcome(true, 'item-created', message), itemId };
   world.commandReceipts[request.id] = { digest, outcome: result };

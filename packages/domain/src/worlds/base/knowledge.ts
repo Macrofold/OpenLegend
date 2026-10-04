@@ -1,4 +1,5 @@
 import type { WorldState, WorldEvent, Outcome } from '../../types.js';
+import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
 import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '../../knowledge.js';
 import { isSafeRecordId } from '../../records.js';
@@ -149,18 +150,32 @@ export function rememberSubject(
   };
 }
 
+/** Select permitted identity before applying presentation grammar. */
+export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
+  const known = observerGivenName(world, observerId, subjectId);
+  if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
+  const entity = world.entities[subjectId];
+  if (!entity?.actor)
+    return entity
+      ? {
+          name: entity.name,
+          nameForm: entity.nameForm,
+          indefiniteArticle: entity.indefiniteArticle,
+        }
+      : { name: 'unidentified object', nameForm: 'count', indefiniteArticle: undefined };
+  const species = entity.actor.species;
+  const noun = !species || species === 'human' ? 'person' : species;
+  // A permitted label replaces all grammar of the hidden authored name, including overrides.
+  return { name: noun, nameForm: 'count', indefiniteArticle: undefined };
+}
+
 export function observerDescription(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  article: NameArticle = 'none',
 ): string {
-  const known = observerGivenName(world, observerId, subjectId);
-  if (known) return known;
-  const entity = world.entities[subjectId];
-  if (!entity?.actor) return entity?.name ?? 'an unidentified object';
-  const species = entity.actor.species;
-  const noun = !species || species === 'human' ? 'person' : species;
-  return `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
+  return namePhrase(observerName(world, observerId, subjectId), article);
 }
 
 const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });

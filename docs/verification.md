@@ -43,6 +43,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Agency documentation integration](verification/agency-documentation-integration.md): documentation checks and retained memory-perspective observations.
 - [Attributes, status effects and sleep](verification/attributes-and-actor-state.md): native, service and browser observations.
 - [Items, editable knowledge and learned names](verification/items-and-knowledge.md): item handling, private knowledge and introductions.
+- [Entity names and articles](verification/entity-names.md): shared grammar, permitted naming, native outcomes, current-format persistence and desktop/narrow browser wording.
 - [Cognition context, triggers and pacing](verification/cognition-context.md): request context, conversation snapshots, relevance and trace attribution.
 - [Level-1 decisions](verification/level1-decisions.md): act/continue/escalate/defer fixtures, CR02 verification, per-level accounting, payload inspection and Intelligence rows. [NP01](verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) adds synthetic outcome/cost/context/ledger acceptance, with live and stale-fixture limits kept explicit.
 - [Simulation and cognition audit](verification/simulation-and-cognition-audit.md): native, persistence and limited provider observations.
@@ -70,6 +71,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Fixed character pixels
 
+[Character visibility and target feedback](verification/character-visibility.md) records scenery-only read-through, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
+
 [Mercenary integration evidence](verification/mercenary-default.md) covers the default additional NPC, fixed character resolution, depth compositing, actual animation/cloth, scoped projection, persistence, failure and resource ownership. The larger generated-art pipeline and crowd/low-end qualification remain open.
 
 ## Shadow quality
@@ -85,7 +88,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Foundations and integration history
 
 - [Foundations 1–5](verification/foundations-1-5.md): implementation evidence and follow-up review.
-- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks.
+- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks. [Sole-tab entry and shared logout](verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026) records automatic entry, deliberate tab transfer, protected departure and all-tab game logout; the earlier mandatory-Resume evidence remains labeled historical.
 - [Native action integration](verification/native-action-integration.md) and [action reconciliation](verification/action-reconciliation.md).
 - [Historical integration summaries](verification/integration-summaries.md): earlier overview notes and links to action, perception and persistence artifacts.
 - [Historical baseline and acceptance snapshot](verification/historical-baseline.md): earlier automated/provider results, product limits and acceptance owners. This is not the current branch’s test status.

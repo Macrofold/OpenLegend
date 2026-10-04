@@ -22,22 +22,26 @@ The most useful initial observable behaviors are gathering accessible resources,
 
 Health may be a derived summary or a chosen body model. World/species definitions select applicable needs; categories and dispositions need not be numeric. Native body consequences still require supported mechanics.
 
-| System | First useful version | Expansion seam |
-|---|---|---|
-| Hunger/nutrition | One bounded fullness meter; food consumption; threshold consequences | Diet, nutrients, spoilage, preferences |
-| Fatigue | Rest debt, energy, sleep schedule, interruption | Sleep quality, circadian rhythms, illness interaction |
-| Comfort | Exposure, shelter, temperature bands | Clothing layers, wetness, weather, bedding |
-| Body | Small graph: head, torso, left/right arm and leg | Hands, joints, organs, species-specific anatomy |
-| Injury | Severity, location, cause, recovery progress, functional impairment | Bleeding, infection, scars, treatment, prosthetics |
-| Disease | One authored condition with exposure and staged recovery | Transmission, immunity, multiple conditions |
-| Aging | Stored birth time and life stage | Frailty curves, fertility, developmental stages |
-| Death | Explicit state transition and recorded cause | Species rules, resurrection variants, inheritance |
+| System           | First useful version                                                 | Expansion seam                                        |
+| ---------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Hunger/nutrition | One bounded fullness meter; food consumption; threshold consequences | Diet, nutrients, spoilage, preferences                |
+| Fatigue          | Rest debt, energy, sleep schedule, interruption                      | Sleep quality, circadian rhythms, illness interaction |
+| Comfort          | Exposure, shelter, temperature bands                                 | Clothing layers, wetness, weather, bedding            |
+| Body             | Small graph: head, torso, left/right arm and leg                     | Hands, joints, organs, species-specific anatomy       |
+| Injury           | Severity, location, cause, recovery progress, functional impairment  | Bleeding, infection, scars, treatment, prosthetics    |
+| Disease          | One authored condition with exposure and staged recovery             | Transmission, immunity, multiple conditions           |
+| Aging            | Stored birth time and life stage                                     | Frailty curves, fertility, developmental stages       |
+| Death            | Explicit state transition and recorded cause                         | Species rules, resurrection variants, inheritance     |
 
 Separate injury from health summary. A damaged leg affects locomotion; pain affects attention; a head injury has its own allowed consequences. A composite “health” bar is a UI projection, not the only stored state. Anatomy definitions specify adjacency, vital functions, capacity contributions, and species differences. Adding a liver later should not require changing every interaction signature.
 
 Healing is an ongoing process affected by rest, nutrition, treatment, and condition; it should not require repeated LLM calls. Work, needs, healing, environmental changes and aging reference the accelerated [world clock](time-and-simulation-speed.md). Medical detail remains stylized. For the initial wilderness group, serious organ simulation and epidemiology would add more balancing work than visible benefit.
 
-Needs use thresholds with hysteresis: begin seeking food below one value, stop after a higher value. This avoids switching every tick. Integrate drift by elapsed simulated time, and wake cognition when a meaningful band changes. Prioritize immediate native survival under the [agency adequacy boundary](../../docs/agent-agency.md#8-attention-and-initiation), while allowing bounded planning/help when a capable actor lacks a useful native solution. Minor discomfort must not continuously interrupt conversation.
+Needs use thresholds with hysteresis: begin seeking food below one value, stop after a higher value. This avoids switching every tick. Integrate drift by elapsed simulated time, and wake cognition when a meaningful band changes. Handle bodily urgency under the [agency adequacy boundary](../../docs/agent-agency.md#8-attention-and-initiation): a supported response must actually be available and admitted, while bounded deliberation or help may be useful when the actor lacks an adequate response. This is not a survival guarantee: the current person-controller path has no automatic feeding, and unavailable cognition can leave the NPC unfed. Minor discomfort must not continuously interrupt conversation.
+
+## Situated experience and a multidimensional life
+
+Mike's October 3 direction makes the integrated experience explicit: psychological concerns, contact, belonging and enjoyment should matter alongside the body, with context acting as a window into the world and relevant inner life. The [perspective and inner-life companion](character-experience-and-inner-life.md) develops that philosophical ambition and its research qualifications. The [compelling-character specification](../../docs/projects/compelling-characters-feature-spec.md) owns product behavior and full-flow scenarios; [CE01–CE05](../../docs/maintainers/character-experience.md) coordinates existing ACT/AG/CR/world owners. Initial character quality is early DG02 work; the later personality-development proposals below do not postpone it.
 
 ## Emotion as an evolving appraisal, not a fixed response table
 
@@ -106,7 +110,7 @@ Teaching and coordination can benefit when an agent needs to investigate a quest
 
 After the one-NPC first playable, proposed group cast: 6–12 people with distinct but modest differences, useful possessions, some survival knowledge, at least one social tie and practical skill, and unmet needs. Examples include a sociable forager, someone skilled at bindings, and someone who knows shelter or simple care. They are not blank minds, and no established village is supplied. Avoid elaborate lore that exists only in prompts and never affects actions.
 
-Evaluate through observable episodes: a resident finds food without instruction; two residents contend over a scarce item without duplication; a promised meal is remembered tomorrow; a false rumor remains attributed; a frightened resident chooses shelter; forgetting frees memory while preserving an active obligation; provider outage leaves basic survival intact. Compare deterministic-only, minimal-memory, and richer-memory variants in playtests so complexity earns its cost.
+Evaluate through observable episodes: a resident finds food without instruction; two residents contend over a scarce item without duplication; a promised meal is remembered tomorrow; a false rumor remains attributed; a frightened resident chooses shelter; forgetting frees memory while preserving an active obligation; a provider outage truthfully exposes available responses and unresolved needs. Current unavailable cognition can leave an NPC unfed. Any future operational pause or protective outage policy needs separate product approval and qualification; it must not invent a meal or a lived episode. Compare deterministic-only, minimal-memory, and richer-memory variants in playtests so complexity earns its cost.
 
 ## Later harness delivery tasks
 

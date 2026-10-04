@@ -8,7 +8,7 @@ The HUD should help the player notice, inspect and act, not cover the scene with
 
 Separate **camera focus**, **selected entity**, **controlled actor**, **action target** and **current floor/surface**. A camera move is not a character move. Selecting a level is not a movement command. Looking at an object is not permission to know its private state. Show the selected subject and active mode clearly enough that a player can predict where the next action goes.
 
-Current camera bindings belong to the existing owners, not this handbook. The accepted production guide documents primary/middle drag for pan, secondary or Shift-drag for orbit/tilt, a stationary secondary click for actions, and focused-canvas keyboard alternatives. Preserve those meanings; a reference game is not permission to swap them without an explicit design change.
+Current camera bindings belong to the existing owners, not this handbook. The accepted production guide documents Shift + right-drag or middle-drag for pan, right-drag for orbit/tilt, a stationary secondary click for actions, and focused-canvas keyboard alternatives. Preserve those meanings; a reference game is not permission to swap them without an explicit design change.
 
 ## Object opening and contextual activity
 
@@ -57,6 +57,8 @@ Use stable entity identity and readable, viewer-permitted labels. Where several 
 
 The current [world-hover limit](../limits/interface.md#hv01) has a bounded pile preview with an explicit remaining count and a complete inspection route. Keep that distinction. Do not expand the hover card into an unscrollable inventory because more data is available.
 
+Protect character readability: ordinary objects do not show through people. Only scenery permits ordinary read-through; the currently perceived selected thing has the explicit foreground exception. Refuse selection of a remembered/unseen image with the controlled character's name and “can't see this,” without moving them. The [presentation owner](../world-presentation.md#selection-and-hover) owns that rendering/permission boundary and the delayed, fading hover silhouette. Hover emphasis is a pointer aid, never the only inspection route or an additional source of knowledge.
+
 ## Actions explain the commitment
 
 A contextual action should make clear **who acts, on what, with which relevant tool, at what known cost and with what important consequence**. Express conditions in player language. Distinguish known duration from an estimate and a supported attempt from guaranteed success. Avoid presenting an unknown chance as 0% or promising a result the world has not committed.
@@ -90,3 +92,7 @@ Do not fake audible words or speaker identity when only faint/unattributed sound
 ## Acceptance scenes
 
 Exercise a world-edge popup, two open panels at enlarged UI scale, an active chat composer while pressing movement keys, a drag ending over a button, a dismissed picker over walkable ground, a rotated multi-floor scene and a dense caption burst. Add a child popup inside a dialog, a short viewport with a keyboard, and any known targeting footprint against the actual supported geometry. Check that selection, focus and action authority remain separate. Current full-scene, touch and assistive-device qualification remains with the existing spatial/hearing trackers; source inspection does not close it.
+
+## Paused game tabs
+
+A sole game tab enters automatically on opening, reload and refocus. Only switching between open game tabs presents a blocking dialog: heading **Game Paused**, subtext **OpenLegend is open in another tab.**, primary **Resume Here**, secondary **Log Out**. Preserve this exact copy and capitalization. Escape, outside clicks and game shortcuts cannot dismiss it or act behind it. Show pending actions and readable retry errors in place; distinguish logout from resuming. Logout clears the shared login and private game presentation in every tab. Do not describe connection failures as another tab. Manual world pause remains a separate clock control. See the [feature contract](../projects/completed/tab-resume-feature-spec.md).

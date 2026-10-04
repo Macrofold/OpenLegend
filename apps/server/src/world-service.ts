@@ -381,8 +381,11 @@ export class WorldService {
   private lastProgressSaveAt = 0;
   private unpersisted = false;
   private readonly listeners = new Set<() => void>();
-  private readonly presence = new Map<string, number>();
-  private readonly presenceOrders = new Map<string, { sequence: number; at: number }>();
+  private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
+  private readonly presenceOrders = new Map<
+    string,
+    { sequence: number; at: number; controlGeneration: number }
+  >();
   private readonly connections = new Map<string, RequestScope>();
   private readonly connectionPreferences = new Map<string, boolean>();
   private exits = new Map<string, ExitAttempt>();
@@ -407,6 +410,44 @@ export class WorldService {
       !!this.store.authority?.current(scope, capability, controlling, this.now())
     );
   }
+  controlsElsewhere(scope: RequestScope): boolean {
+    const controller = this.store.authority?.currentController(scope, this.now());
+    return (
+      !!controller &&
+      controller.connectionId !== scope.connectionId &&
+      this.controllerPresent(scope)
+    );
+  }
+  private controllerPresent(scope: RequestScope): boolean {
+    const controller = this.store.authority?.currentController(scope, this.now());
+    if (!controller) return false;
+    // The common foreground/handoff case is a direct lookup, not a per-view
+    // scan of all players. Only connected clients without a heartbeat need the
+    // existing bounded connection inventory.
+    const presence = this.presence.get(this.presenceKey(controller));
+    if (
+      presence &&
+      presence.at >= this.now() - 12_000 &&
+      this.currentScope(presence.scope, 'play', true)
+    )
+      return true;
+    const returning = this.presenceOrders.get(this.presenceKey(controller));
+    if (
+      returning?.controlGeneration === controller.controlGeneration &&
+      returning.at >= this.now() - 12_000
+    )
+      return true;
+    for (const connection of this.connections.values()) {
+      if (
+        connection.connectionId === controller.connectionId &&
+        connection.sessionId === controller.sessionId &&
+        this.currentScope(connection) &&
+        this.currentScope(this.refreshScope(connection), 'play', true)
+      )
+        return true;
+    }
+    return false;
+  }
   refreshScope(scope: RequestScope): RequestScope {
     this.assertScope(scope);
     return this.store.authority!.refresh(scope, this.now());
@@ -417,6 +458,21 @@ export class WorldService {
   }
   async authenticationMutation<T>(operation: () => Promise<T>): Promise<T> {
     return this.mutate(operation);
+  }
+  /** Explicit loopback sign-in renews a revoked local login; ordinary reads never do. */
+  async signInLocal(): Promise<string> {
+    if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
+    return this.authenticationMutation(async () => {
+      const login = await this.store.authority!.login(
+        { issuer: 'https://local.openlegend.invalid', subject: 'local-player' },
+        this.now(),
+        this.config.authentication.sessionMs,
+        this.config.capacity.sessions,
+      );
+      this.localSessionToken = login.token;
+      this.localRequestScope = await this.requestScope(login.session, 'local-internal');
+      return login.token;
+    });
   }
   async requestScope(session: LoginSession, connectionId: string): Promise<RequestScope> {
     if (!this.store.authority) throw new AuthorityError('session');
@@ -687,15 +743,7 @@ export class WorldService {
     await store.putIntegration(`world-timeline:${this.world.id}`, this.timelineId);
     if (!store.authority) throw new Error('Current authority repository is required.');
     if (config.authentication.mode === 'local') {
-      const identity = { issuer: 'https://local.openlegend.invalid', subject: 'local-player' };
-      const login = await store.authority.login(
-        identity,
-        this.now(),
-        config.authentication.sessionMs,
-        config.capacity.sessions,
-      );
-      this.localSessionToken = login.token;
-      this.localRequestScope = await this.requestScope(login.session, 'local-internal');
+      await this.signInLocal();
     }
     this.humanActorIds = Object.values(this.world.entities)
       .filter((entity) => entity.actor?.controller === 'player')
@@ -712,7 +760,7 @@ export class WorldService {
       ]),
     );
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
-    if (config.authentication.mode === 'oidc') await this.reconcileParticipation();
+    await this.reconcileParticipation();
   }
 
   get controlledEntityId(): string {
@@ -807,23 +855,18 @@ export class WorldService {
     });
   }
   private get absent(): boolean {
-    if (this.config.authentication.mode === 'oidc') {
-      this.present; // Expire operational heartbeat timestamps before testing foreground pause.
-      for (const scope of this.connections.values()) {
-        if (!this.currentScope(scope)) continue;
-        const fresh = this.refreshScope(scope);
-        if (
-          this.currentScope(fresh, 'play', true) &&
-          (!this.connectionPreferences.get(scope.accountId) ||
-            this.presence.has(this.presenceKey(scope)))
-        )
-          return false;
-      }
-      return true;
+    if (this.present) return false;
+    // Non-browser clients may opt into connected background play. Game tabs
+    // always release control on blur, so an old stream cannot keep them active.
+    for (const scope of this.connections.values()) {
+      if (
+        this.currentScope(scope) &&
+        this.currentScope(this.refreshScope(scope), 'play', true) &&
+        this.connectionPreferences.get(scope.accountId) === false
+      )
+        return false;
     }
-    // An open stream survives background heartbeat throttling. With the setting
-    // off, this is connected background play, not offline catch-up after closing.
-    return !this.present && (this.pauseWhenHidden || this.connections.size === 0);
+    return true;
   }
   async setConnection(
     connectionId: string,
@@ -858,7 +901,7 @@ export class WorldService {
         }
       }
       await this.reconcileDisconnectedConversation();
-      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
+      await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
     });
   }
@@ -879,8 +922,8 @@ export class WorldService {
   }
   get present(): boolean {
     const cutoff = this.now() - 12_000;
-    for (const [key, timestamp] of this.presence)
-      if (timestamp < cutoff) {
+    for (const [key, entry] of this.presence)
+      if (entry.at < cutoff || !this.currentScope(entry.scope, 'play', true)) {
         this.presence.delete(key);
         if (![...this.connections.values()].some((scope) => this.presenceKey(scope) === key))
           this.presenceOrders.delete(key);
@@ -1019,7 +1062,12 @@ export class WorldService {
     restore?: RestoreSave,
     authorityChanges?: {
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        unattended: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       operationalChange?: () => Promise<void>;
     },
@@ -2128,8 +2176,7 @@ export class WorldService {
         this.connections.clear();
         this.presence.clear();
         this.presenceOrders.clear();
-        if (this.config.authentication.mode === 'oidc')
-          await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        await this.authorityContext.run(undefined, () => this.reconcileParticipation());
         this.debtSeconds = 0;
         this.memoryBacklog = null;
         this.notify();
@@ -2150,6 +2197,14 @@ export class WorldService {
         };
       const actor = this.world.entities[scope.actorId]?.actor;
       if (!actor || actor.controller !== 'player') throw new AuthorityError('forbidden');
+      if (request.operation !== 'release') {
+        this.present; // Prune expired pending returns using the existing owner.
+        if (
+          !this.presenceOrders.has(this.presenceKey(scope)) &&
+          this.presenceOrders.size >= this.config.capacity.presence
+        )
+          throw new Error('Presence capacity reached. Reconnect before continuing.');
+      }
       const attempt =
         request.operation === 'release'
           ? (this.exits.get(scope.actorId) ?? {
@@ -2175,20 +2230,37 @@ export class WorldService {
           undefined,
           undefined,
           {
-            controlChange: { scope, request, now: this.now },
+            controlChange: {
+              scope,
+              request,
+              now: this.now,
+              unattended:
+                actor.participation?.phase === 'inactive' || !this.controllerPresent(scope),
+            },
             participationChange: { actorId: scope.actorId, attempt },
           },
         ))
       )
         return { ok: false, code: 'storage', message: this.storageError! };
       if (attempt) this.exits.set(scope.actorId, attempt);
-      else this.exits.delete(scope.actorId);
+      else {
+        this.exits.delete(scope.actorId);
+        // Reserve the first heartbeat's place before the stream opens. This
+        // closes the handoff gap without making control acquisition itself
+        // foreground presence or adding a second ownership record.
+        const returned = this.refreshScope(scope);
+        this.presenceOrders.set(this.presenceKey(returned), {
+          sequence: -1,
+          at: this.now(),
+          controlGeneration: returned.controlGeneration,
+        });
+      }
       return {
         ...result.outcome,
         message:
           request.operation === 'release'
-            ? 'Control released; departure is pending.'
-            : 'This window now controls your character.',
+            ? 'Your tab is paused; your character is leaving the world.'
+            : 'Resumed here.',
       };
     });
   }
@@ -2318,8 +2390,13 @@ export class WorldService {
     });
   }
   private async reconcileParticipation(): Promise<void> {
+    this.present; // Prune expired or replaced heartbeat authority first.
     const participating = new Set<string>();
-    for (const scope of this.connections.values()) {
+    const scopes = [
+      ...this.connections.values(),
+      ...[...this.presence.values()].map((entry) => entry.scope),
+    ];
+    for (const scope of scopes) {
       if (this.currentScope(scope) && this.currentScope(this.refreshScope(scope), 'play', true))
         participating.add(scope.actorId);
     }
@@ -2413,26 +2490,40 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
-      this.assertScope(scope);
+      this.assertScope(scope, 'play', true);
       if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
         throw new AuthorityError('forbidden');
       clientId = this.presenceKey(scope);
       if (sequence !== undefined) {
         const previous = this.presenceOrders.get(clientId);
-        if (previous !== undefined && sequence <= previous.sequence) return;
+        // Reload keeps the tab identity but acquires a new control generation.
+        // Order messages within that authority, never against a previous page's
+        // counter; the scope check above still refuses all old-generation input.
+        if (
+          previous?.controlGeneration === scope.controlGeneration &&
+          sequence <= previous.sequence
+        )
+          return;
         if (
           !this.presenceOrders.has(clientId) &&
           this.presenceOrders.size >= this.config.capacity.presence
         )
           throw new Error('Presence capacity reached. Reconnect before continuing.');
-        this.presenceOrders.set(clientId, { sequence, at: this.now() });
+        this.presenceOrders.set(clientId, {
+          sequence,
+          at: this.now(),
+          controlGeneration: scope.controlGeneration,
+        });
       }
       const wasPaused = this.paused;
       // Observe an expired heartbeat before renewing it. Otherwise a reconnect ahead
       // of the timer can hide the absence transition from pending inference.
       if (wasPaused && !this.world.paused) await this.syncPause();
-      if (visible) this.presence.set(clientId, this.now());
-      else this.presence.delete(clientId);
+      if (visible) {
+        if (!this.presence.has(clientId) && this.presence.size >= this.config.capacity.presence)
+          throw new Error('Presence capacity reached. Reconnect before continuing.');
+        this.presence.set(clientId, { at: this.now(), scope });
+      } else this.presence.delete(clientId);
       if (this.paused !== wasPaused || this.world.paused !== this.paused) await this.syncPause();
     });
   }
@@ -2559,7 +2650,7 @@ export class WorldService {
       await this.refreshCommandEpoch();
 
       await this.reconcileDisconnectedConversation();
-      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
+      await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
       if (this.paused || elapsedRealSeconds < 0) return;
       // The host distinguishes missing callbacks from callbacks during a busy batch.
@@ -3336,6 +3427,7 @@ export class WorldService {
       itemOptions: Object.values(this.world.itemDefinitions)
         .map((item) => ({ id: item.id, name: item.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
+      traitOptions: entity.actor.traits?.map((trait) => ({ ...trait })) ?? [],
       person: {
         inventory: inventoryTotals(this.world, actorId),
         name: entity.name,

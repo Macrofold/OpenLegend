@@ -13,6 +13,7 @@ export interface SceneCallbacks {
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
   hover(entity: EntityView | null, at: ScreenPoint): void;
+  selectionDenied(message: string): void;
   cameraChanged?(state: CameraState): void;
 }
 /** A deliberately small application boundary, not an abstraction over every graphics API.
@@ -34,12 +35,14 @@ export interface PerceptionOptions {
   hearing: boolean;
 }
 export interface WorldRenderer {
+  setSuspended(suspended: boolean): void;
+  sampleFrameRate(): number | null;
   setPerceptionOptions(options: PerceptionOptions): void;
   setShadowQuality(quality: ShadowQuality): void;
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;
   setView(view: GameView): void;
-  select(id: string | null): void;
+  select(id: string | null): boolean;
   center(): void;
   setZoom(delta: number): void;
   cameraCommand(command: CameraCommand): void;

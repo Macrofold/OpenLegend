@@ -5,16 +5,25 @@ import { nextId } from '../../data.js';
 import { createActor, TRAIT_BANK } from './world.js';
 import type {
   Entity,
+  CharacterTrait,
   GodPersonDraft,
   GodPersonEditorDraft,
   GodSpawnDraft,
   WorldState,
 } from '../../types.js';
 
-export function personTraits(draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>) {
+export function personTraits(
+  draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>,
+  existing: readonly CharacterTrait[] = [],
+) {
   const ids = [...new Set(draft.traitIds)];
   if (ids.length > 8) return null;
-  const traits = ids.map((id) => TRAIT_BANK.find((trait) => trait.id === id));
+  // Editing may retain a character's authored starting traits; creation can only select
+  // catalogue traits. The current actor, not request JSON, supplies that extra vocabulary.
+  const traits = ids.map(
+    (id) =>
+      TRAIT_BANK.find((trait) => trait.id === id) ?? existing.find((trait) => trait.id === id),
+  );
   return traits.every((trait) => !!trait) ? traits.map((trait) => ({ ...trait! })) : null;
 }
 
@@ -44,6 +53,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: draft.person.name.trim(),
+        nameForm: 'proper',
         kind: 'npc',
         actor: createActor(world, 'npc', 75, {
           ...(traits.length ? { traits } : {}),
@@ -73,6 +83,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: draft.type === 'river-reeds' ? 'River reeds' : 'Dry grass fibers',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'raw_fiber', quantity: 36, workSeconds: 36 },
       };
@@ -80,6 +91,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: 'Fallen branches',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
       };
@@ -87,6 +99,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: 'River stones',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
       };

@@ -10,10 +10,10 @@ import {
 } from './perception-field';
 
 const COLORS = { vision: [0.43, 0.84, 0.72], hearing: [0.91, 0.71, 0.35] } as const;
-const CORE_WIDTH = 0.075;
+const CORE_WIDTH = 0.0375;
 const LIFT = 0.035;
 
-/** Scene-owned depth-tested ribbons. No pick registration, authority or animation.
+/** Scene-owned depth-tested fills and ribbons. No pick registration, authority or animation.
  * Work happens on changed projections, outside the rendered-frame callback. */
 export class PerceptionOverlay {
   private root: pc.Entity;
@@ -96,6 +96,18 @@ export class PerceptionOverlay {
     for (const contour of this.contours) {
       const color = COLORS[contour.sense];
       const brightness = [0.92, 0.58, 0.34][contour.band] ?? 0.34;
+      // Tint the whole reachable area once, not once per overlapping inner band.
+      if (
+        !this.contours.some((other) => other.sense === contour.sense && other.band > contour.band)
+      )
+        this.addMesh(
+          contour.vertices.flatMap((point) => [point.x, point.y + LIFT, point.z]),
+          contour.triangles,
+          color,
+          1,
+          0.025,
+          `${contour.sense} area`,
+        );
       for (const [width, opacity] of [
         [CORE_WIDTH * 4.5, 0.045],
         [CORE_WIDTH * 2.5, 0.11],
@@ -109,7 +121,12 @@ export class PerceptionOverlay {
           const nx = (((b.z - a.z) / length) * width!) / 2,
             nz = ((-(b.x - a.x) / length) * width!) / 2;
           const i = positions.length / 3;
-          for (const point of [a, b])
+          const capX = (((b.x - a.x) / length) * width!) / 2;
+          const capZ = (((b.z - a.z) / length) * width!) / 2;
+          for (const point of [
+            { ...a, x: a.x - capX, z: a.z - capZ },
+            { ...b, x: b.x + capX, z: b.z + capZ },
+          ])
             positions.push(
               point.x - nx,
               point.y + LIFT,
@@ -121,32 +138,50 @@ export class PerceptionOverlay {
           indices.push(i, i + 1, i + 2, i + 2, i + 1, i + 3);
         }
         if (!indices.length) continue;
-        const mesh = new pc.Mesh(this.app.graphicsDevice);
-        mesh.setPositions(positions);
-        mesh.setIndices(indices);
-        mesh.update();
-        const material = new pc.StandardMaterial();
-        material.useLighting = false;
-        material.useFog = false;
-        material.diffuse.set(0, 0, 0);
-        material.emissive.set(color[0] * brightness, color[1] * brightness, color[2] * brightness);
-        material.opacity = opacity!;
-        material.blendType = pc.BLEND_NORMAL;
-        material.depthTest = true;
-        material.depthWrite = false;
-        material.cull = pc.CULLFACE_NONE;
-        material.update();
-        const node = new pc.Entity(`${contour.sense} ${contour.band}`, this.app);
-        node.addComponent('render', {
-          meshInstances: [new pc.MeshInstance(mesh, material)],
-          castShadows: false,
-          receiveShadows: false,
-        });
-        this.root.addChild(node);
-        this.meshes.push(mesh);
-        this.materials.push(material);
+        this.addMesh(
+          positions,
+          indices,
+          color,
+          brightness,
+          opacity!,
+          `${contour.sense} ${contour.band}`,
+        );
       }
     }
+  }
+  private addMesh(
+    positions: number[],
+    indices: number[],
+    color: readonly [number, number, number],
+    brightness: number,
+    opacity: number,
+    name: string,
+  ): void {
+    if (!indices.length) return;
+    const mesh = new pc.Mesh(this.app.graphicsDevice);
+    mesh.setPositions(positions);
+    mesh.setIndices(indices);
+    mesh.update();
+    const material = new pc.StandardMaterial();
+    material.useLighting = false;
+    material.useFog = false;
+    material.diffuse.set(0, 0, 0);
+    material.emissive.set(color[0] * brightness, color[1] * brightness, color[2] * brightness);
+    material.opacity = opacity;
+    material.blendType = pc.BLEND_NORMAL;
+    material.depthTest = true;
+    material.depthWrite = false;
+    material.cull = pc.CULLFACE_NONE;
+    material.update();
+    const node = new pc.Entity(name, this.app);
+    node.addComponent('render', {
+      meshInstances: [new pc.MeshInstance(mesh, material)],
+      castShadows: false,
+      receiveShadows: false,
+    });
+    this.root.addChild(node);
+    this.meshes.push(mesh);
+    this.materials.push(material);
   }
   hideHint(): void {
     this.hint.hidden = true;

@@ -2,6 +2,10 @@
 
 This is the canonical clock/integration contract. [Performance](performance.md) owns measurement and optimization; [PF13](maintainers/simulation-time.md#pf13--elapsed-time-simulation) owns delivery. The [boundary catalogue](maintainers/simulation-boundaries.md) is a running inventory of exact deadlines, conservative limits and still-unknown bounds, not a promise that every scenario is event-driven already.
 
+## Player time controls
+
+P toggles manual pause/resume. Shift + ] selects the next faster speed and Shift + [ the next slower speed from the current 0.5×, 1×, 3× and 8× control choices, stopping at either end. These shortcuts use the same server requests as the visible controls; speed changes do not resume a paused world. Typing, composition, active popups, held-key repeats and disconnected states do not trigger time changes. Pause/resume remains unavailable during maintenance; changing speed does not release that pause. Projection switching remains available on the camera toolbar; P no longer changes projection.
+
 ## Product-scalability time and detail targets
 
 **Accepted direction, not implemented by the current speed control.** [Participation and clocks](product-scalability/participation-and-protection.md) specifies a future option to advance an authored calendar independently of mechanical activity. A date can advance rapidly without making movement, fire-starting, or cognition proportionally faster. Aging, needs, seasons, work, appointments, memory maintenance, and campaign commitments must each declare their clock before this option is enabled. Current elapsed game-time behavior below remains unchanged until explicit integration; [PS05](maintainers/product-scalability.md) owns that cross-feature gate and [PS-L11](limits/product-scalability.md#ps-l11--clocks) records the pending policy.

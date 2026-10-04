@@ -36,6 +36,9 @@ importers:
 
   apps/client:
     dependencies:
+      '@open-legend/language':
+        specifier: workspace:*
+        version: link:../../packages/language
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -76,6 +79,9 @@ importers:
       '@open-legend/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@open-legend/language':
+        specifier: workspace:*
+        version: link:../../packages/language
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -110,6 +116,9 @@ importers:
 
   packages/domain:
     dependencies:
+      '@open-legend/language':
+        specifier: workspace:*
+        version: link:../language
       '@open-legend/spatial':
         specifier: workspace:*
         version: link:../spatial
@@ -117,8 +126,13 @@ importers:
         specifier: 10.1.1
         version: 10.1.1
 
+  packages/language: {}
+
   packages/protocol:
     dependencies:
+      '@open-legend/language':
+        specifier: workspace:*
+        version: link:../language
       '@open-legend/spatial':
         specifier: workspace:*
         version: link:../spatial

@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { activeActivity, connectActivityState } from './action-experience.js';
 import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
@@ -210,11 +211,19 @@ export function commitBodyEffects(
     observer ? observerDescription(world, observer.id, entity.id) : undefined,
   );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
-  emit(world, events, 'body-effect', `${entity.name}'s body changed.`, entity, entity.id, {
-    effectId: cause,
-    healthDelta: actor.health - before,
-    injuryDelta: body.conditions.injury - previous.injury,
-    wetnessDelta: body.conditions.wetness - previous.wetness,
-    burningDelta: body.conditions.burning - previous.burning,
-  });
+  emit(
+    world,
+    events,
+    'body-effect',
+    `${namePhrase(entity, 'definite', { capitalize: true })}'s body changed.`,
+    entity,
+    entity.id,
+    {
+      effectId: cause,
+      healthDelta: actor.health - before,
+      injuryDelta: body.conditions.injury - previous.injury,
+      wetnessDelta: body.conditions.wetness - previous.wetness,
+      burningDelta: body.conditions.burning - previous.burning,
+    },
+  );
 }
