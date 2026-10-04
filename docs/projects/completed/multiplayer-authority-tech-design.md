@@ -1,16 +1,20 @@
 # Multiplayer principal, control and private projections — technical design
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+| Status    | Current progress                                                                                                                           | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Two-account control, private views and absence are delivered and locally qualified; later Auth0 and hosted-release checks remain separate. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Baseline and implementation boundary
 
-Research base is main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`. [WorldService](../../apps/server/src/world-service.ts) initializes `getProfile('local-player')`, exposes one `controlledEntityId`, holds service-level connection/presence collections and serializes mutations. Its current command epoch and timeline records are useful fences. [view.ts](../../apps/server/src/view.ts) memoizes by service and adds that one controlled actor to dependencies; optional asynchronous sections are also service-scoped. These assumptions must be removed from shared request paths, not switched globally before each request.
+Research base is main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`. [WorldService](../../../apps/server/src/world-service.ts) initializes `getProfile('local-player')`, exposes one `controlledEntityId`, holds service-level connection/presence collections and serializes mutations. Its current command epoch and timeline records are useful fences. [view.ts](../../../apps/server/src/view.ts) memoizes by service and adds that one controlled actor to dependencies; optional asynchronous sections are also service-scoped. These assumptions must be removed from shared request paths, not switched globally before each request.
 
 Preserve the existing writer, domain draft boundary, command receipts, current canonical records and provider cancellation/accounting. The design adds scoped principals/control and projection ownership within one application/database. No second world service per human and no distributed lease protocol is needed for two users.
 
-The accepted [authority boundary](../../archive/07-technical-architecture/data-delivery-and-scale.md#first-shared-world-authority-boundary), [data identities](../../archive/07-technical-architecture/production-data-model.md#4-accounts-worlds-and-simulation-ownership), [knowledge privacy](../knowledge.md#privacy-and-correction) and [base lifecycle](../worlds/base/lifecycle-and-protection.md) take precedence over older single-player convenience APIs.
+The accepted [authority boundary](../../../archive/07-technical-architecture/data-delivery-and-scale.md#first-shared-world-authority-boundary), [data identities](../../../archive/07-technical-architecture/production-data-model.md#4-accounts-worlds-and-simulation-ownership), [knowledge privacy](../../knowledge.md#privacy-and-correction) and [base lifecycle](../../worlds/base/lifecycle-and-protection.md) take precedence over older single-player convenience APIs.
 
 ## 2. Identity and records
 
@@ -116,7 +120,7 @@ Nested belongings later introduced by P3 follow the inactive actor's containment
 
 Extend the existing control/profile repository and scoped canonical data queries. Include current grant/control revisions in database publication checks, not only an in-memory cache. The single world writer provides ordering, while transaction constraints guard stale processes and restart. Lock in stable scope/actor order and keep transactions short.
 
-The delivered local-profile conversion retained opaque IDs and creator attribution, required verified-account linkage, and moved preferences/milestones to their actor/account owner without fabricating progress or putting secrets into gameplay. Future gameplay compatibility follows the [development save policy](../../AGENTS.md#development-save-policy); current account/security authority remains independent of gameplay rewind.
+The delivered local-profile conversion retained opaque IDs and creator attribution, required verified-account linkage, and moved preferences/milestones to their actor/account owner without fabricating progress or putting secrets into gameplay. Future gameplay compatibility follows the [development save policy](../../../AGENTS.md#development-save-policy); current account/security authority remains independent of gameplay rewind.
 
 Restore keeps current sessions/grants/control counters and external accounting, rotates timeline/application context, reinstalls gameplay atomically and rebuilds scoped view/subscription caches. Reconcile saved active/exiting humans with current control before resuming; a save cannot resurrect a revoked account or repeat departure/return receipts. SL owns the restore transaction, not a new multiplayer save implementation.
 
@@ -124,7 +128,7 @@ Integrate INV requests, drafts, approvals and receipts from the actual continuat
 
 ## 9. Delivery, failures and evidence
 
-[MP01.1–MP01.6 and MP04.1–MP04.4](../maintainers/multiplayer.md#priority-2-implementation-slices) sequence authentication/bindings, control, scoped mutations, projections, recovery, two-human proof and absence. The first authority proof uses P1/current finite resources; full P3 containment is a later integration, not a circular prerequisite.
+[MP01.1–MP01.6 and MP04.1–MP04.4](../../maintainers/multiplayer.md#priority-2-implementation-slices) sequence authentication/bindings, control, scoped mutations, projections, recovery, two-human proof and absence. The first authority proof uses P1/current finite resources; full P3 containment is a later integration, not a circular prerequisite.
 
 Audit every entrypoint: command/control, catalogue/preview, notes/person editor, memory/history, conversation membership/transcripts, world-agent tools, invention, save/load, jobs/usage sections and SSE reconnect. A single unscoped legacy wrapper blocks the relevant release surface. Keep local-only wrappers at the composition root with an explicit guard; never a fallback inside a shared endpoint.
 
@@ -144,5 +148,5 @@ Primary mechanism references consulted September 26, 2026: [OpenID Connect Core]
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/multiplayer.md).
-- Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).
+- Implementation: [Feature tasks](../../maintainers/multiplayer.md).
+- Limits and constraints: [Accounts, participation and transport inventory](../../limits/multiplayer.md).

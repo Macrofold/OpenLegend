@@ -222,7 +222,7 @@ This is an extensible relational/JSON design with explicit ownership and query c
 
 ## First shared-world authority boundary
 
-The approved [multiplayer implementation](../../docs/projects/multiplayer-authority-tech-design.md)
+The approved [multiplayer implementation](../../docs/projects/completed/multiplayer-authority-tech-design.md)
 delivers this boundary through verified external identity, server sessions, explicit
 control replacement and audience-scoped publication. The initial application policy is
 one active embodiment per account/world and one controlling connection per embodiment.

@@ -6,7 +6,7 @@
 
 - Implementation: [V3D04–V3D06 and V3D09](../maintainers/3d-pixel-art.md).
 - Limits: [A3D asset inventory](../limits/3d-pixel-art.md), with existing [object](../limits/objects.md), [state-effect](../limits/state-effects.md), and [spatial](../limits/spatial.md) owners.
-- Contracts: [technical design](3d-pixel-art-tech-design.md); [persistent objects](persistent-objects-feature-spec.md); [engine/world boundaries](../engine-and-world-boundaries.md).
+- Contracts: [technical design](3d-pixel-art-tech-design.md); [persistent objects](completed/persistent-objects-feature-spec.md); [engine/world boundaries](../engine-and-world-boundaries.md).
 - Generation: [asset pipeline](3d-pixel-art-asset-pipeline.md). Appearance reference: [creative brief](../../art-direction/final-board/creative-brief.md).
 
 ## 1. Compose variation at the correct level

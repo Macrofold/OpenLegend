@@ -55,7 +55,7 @@ No UI or protocol change is needed. Invites, World operations and account bindin
 
 - Implementation: [IDP01–IDP03](../maintainers/multiplayer.md#identity-provider--auth0).
 - Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md#au09).
-- Related contract/design: [Multiplayer authority technical design](multiplayer-authority-tech-design.md#3-authentication-adapter-and-local-development).
+- Related contract/design: [Multiplayer authority technical design](completed/multiplayer-authority-tech-design.md#3-authentication-adapter-and-local-development).
 
 ## Authorized local integration continuation — October 3, 2026
 

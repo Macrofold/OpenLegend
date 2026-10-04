@@ -102,7 +102,7 @@ An accepted product direction does not automatically repeal current exact-percep
 
 This suite composes [engine/world boundaries](../engine-and-world-boundaries.md), [agency](../agent-agency.md), [memory](../memory-architecture.md), [perception and reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), [conversations](../narration-and-conversations.md), [simulation time](../simulation-time.md), [encounter scaling](../encounter-scaling.md), [performance](../performance.md), and [save/load](../save-and-load.md). It does not introduce another writable mind, body, inventory, event log, spending authority, or scheduler per feature.
 
-Operational distribution remains in [delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md); account participation and access remain in the [multiplayer-authority design](../projects/multiplayer-authority-tech-design.md). This work neither promises literal consciousness nor requires a scientific definition of sentience: the product contract concerns autonomous fictional characters with durable, scoped memory and consistent behavior.
+Operational distribution remains in [delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md); account participation and access remain in the [multiplayer-authority design](../projects/completed/multiplayer-authority-tech-design.md). This work neither promises literal consciousness nor requires a scientific definition of sentience: the product contract concerns autonomous fictional characters with durable, scoped memory and consistent behavior.
 
 ## Maintained records
 

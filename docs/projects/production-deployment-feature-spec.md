@@ -36,7 +36,7 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 **Later capabilities:** player/guild-owned domains, always-progressing unattended worlds, global discovery, cross-world travel/economy, voice, creator commerce and million-player deployments need their own consumed contracts and release gates. They are not prerequisites for an honest limited pilot.
 
-Current worlds pause after all controlling connections leave and do not catch up after downtime. Hosting a process continuously does not change that behavior. The intended living-world experience needs explicit time/lifecycle implementation before being advertised; do not introduce observer-dependent physics, cloned persistent NPCs, mandatory play windows or time dilation as hidden scaling shortcuts. The [simulation clock](../simulation-time.md), [multiplayer contract](multiplayer-authority-feature-spec.md) and existing world policies remain controlling.
+Current worlds pause after all controlling connections leave and do not catch up after downtime. Hosting a process continuously does not change that behavior. The intended living-world experience needs explicit time/lifecycle implementation before being advertised; do not introduce observer-dependent physics, cloned persistent NPCs, mandatory play windows or time dilation as hidden scaling shortcuts. The [simulation clock](../simulation-time.md), [multiplayer contract](completed/multiplayer-authority-feature-spec.md) and existing world policies remain controlling.
 
 ## Acceptance and decisions
 
