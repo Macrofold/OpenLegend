@@ -54,13 +54,13 @@ Focused checks/documentation are included in package allocations; shared qualifi
 
 The detailed PW01–PW05 contracts below remain controlling, with their missing shapes/admission cases resolved in this expansion. The added packages have full supporting definitions:
 
-| Package | Supporting brief                                                             | Main risks                                                                                  |
-| ------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| PW07    | [World-configured survival](next-playable-week/survival.md)                  | Health units, generic meters, death/restore, absent meters and UI/cognition consumers       |
-| PW08    | [Proportional simulation work](next-playable-week/simulation-performance.md) | Reuse certificates must preserve fleeting sight, identity, event order and randomness       |
-| PW09    | [Correct/scoped memory retrieval](next-playable-week/memory-retrieval.md)    | Locale-independent lexical indexing, transaction visibility, privacy and cache invalidation |
-| PW10    | [Chosen camp activities](next-playable-week/camp-activities.md)              | Fresh resource binding, personal minimums, interruption and honest learning evidence        |
-| PW11    | [Invention workspace](next-playable-week/invention-workspace.md)             | Exact revision/authority continuity, direct edits and stale asynchronous reads              |
+| Package | Supporting brief                                                                    | Main risks                                                                                  |
+| ------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| PW07    | [World-configured survival](next-playable-week/survival.md)                         | Health units, generic meters, death/restore, absent meters and UI/cognition consumers       |
+| PW08    | [Proportional simulation work](next-playable-week/simulation-performance.md)        | Reuse certificates must preserve fleeting sight, identity, event order and randomness       |
+| PW09    | [Correct/scoped memory retrieval](completed/next-playable-week/memory-retrieval.md) | Locale-independent lexical indexing, transaction visibility, privacy and cache invalidation |
+| PW10    | [Chosen camp activities](next-playable-week/camp-activities.md)                     | Fresh resource binding, personal minimums, interruption and honest learning evidence        |
+| PW11    | [Invention workspace](next-playable-week/invention-workspace.md)                    | Exact revision/authority continuity, direct edits and stale asynchronous reads              |
 
 Each brief identifies source owners, data contracts, implementation order, dependencies, exclusions and concrete scenario outcomes. Existing broader EWF/INV/PF/AE projects are not closed merely by completing these selected packages. The [tracker](../maintainers/next-playable-week.md) owns checkbox state and engineering assignments; the briefs own mechanism rather than another competing status list.
 
