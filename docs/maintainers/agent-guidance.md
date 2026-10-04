@@ -27,6 +27,8 @@ Game code is unchanged; game startup, paid calls and additional game stress expe
 
 - [x] **CG15 — Commit progress and completed work.** [Root guidance](../../AGENTS.md#commit-progress-and-completed-work) owns periodic local commits and the final committed handoff, including separate worktrees. It preserves task scoping, unrelated edits, conflict stops and permission limits; pushes, merges and history rewrites remain separately authorized. Changed-file formatting and guidance checks passed; scoped local commit evidence is recorded in the handoff. Installed-agent compliance remains CG05.
 
+- [x] **CG16 — Explicit branch and worktree notices.** [Root work discipline](../../AGENTS.md#work-discipline) requires notice at each branch/worktree creation or working-checkout switch and again at handoff, including branches not checked out and same-branch worktree changes. Notices identify exact paths, branches or detached commits and effects on the main checkout. Static guidance/formatting checks do not establish installed-agent compliance; CG05 remains open.
+
 ## CG05 — Read-only routing cases
 
 Use an isolated checkout, deny edits and paid calls, and start with the relevant agent's normal root entrypoint. Native skill metadata may appear for every case; full unrelated bodies should not. Already-injected context counts as loaded. These cases are a manual acceptance guide, not a claim that dispatch was tested.

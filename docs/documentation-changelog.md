@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Announce every branch and worktree operation
+
+Mike expanded the [root notification rule](../AGENTS.md#work-discipline) beyond changes to the active branch: creating a branch or worktree and switching working checkouts must also be announced when they happen and at handoff, even when a new branch is not checked out or the branch name stays the same. Notices give absolute checkout paths, exact branch/detached-commit identities and the effect on the main checkout. Separate working files must not be described as separate Git history or branch references. [CG16](maintainers/agent-guidance.md) records instruction delivery; installed-agent compliance remains CG05.
+
 ## 2026-10-03 — Commit progress and finished implementation
 
 Mike requires local progress commits at least every 15 minutes while task edits are pending, and a final commit after implementation, documentation, review fixes and required checks, before reporting completion. [Root guidance](../AGENTS.md#commit-progress-and-completed-work) owns the rule: implementation authorization includes task-scoped local commits, including work in a separate checkout. This replaces leaving completed work as uncommitted edits, trading additional checkpoint history for recoverable progress and a concrete handoff. Existing protections for unrelated edits, mandatory stops and permissions remain; the rule grants no push, merge or history-rewrite authority. [CG15](maintainers/agent-guidance.md) tracks instruction delivery; observed agent compliance remains CG05.
