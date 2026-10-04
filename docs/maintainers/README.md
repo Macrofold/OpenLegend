@@ -56,7 +56,7 @@ This page is the master navigation index for active implementation work.
 
 [PF13 delivery](simulation-time.md) follows the [clock/integration contract](../simulation-time.md). The [boundary catalogue](simulation-boundaries.md) collects natural deadlines and conservative future bounds; [speech integration](speech-time-integration.md) coordinates the parallel sound branch. Neither is another task tracker or a completed universal scheduler.
 
-- [Regional time and navigation](../projects/regional-time-and-navigation.md) — completed plan for cheaper elapsed time, status effects and route finding; remaining work stays in PF13.11, PF13.12, PF13.16, PF12.5, SW06.2a and SW17.7.
+- [Regional time and navigation](../projects/completed/regional-time-and-navigation.md) — completed plan for cheaper elapsed time, status effects and route finding; remaining work stays in PF13.11, PF13.12, PF13.16, PF12.5, SW06.2a and SW17.7.
 - [Work proportional to what a moment affects](../projects/proportional-step-work.md) — proposed follow-up, awaiting Mike's go-ahead: each moment the simulation stops at does work only for what it can change, not for the whole world. Its stages are tracked under PF13.11, EPR02/EPR03/EPR10, PF12.5, PF05, PF08 and PF12.7.
 - [Survival rules as world settings](../projects/world-configured-survival.md) — native policy and generic client UI are partially delivered; [PW07](parallel-batch-01-playable-week.md#pw07--world-configured-survival) retains paired browser and integration closure. Hunger, starvation, exhaustion and the other survival numbers belong to the bundled world's configuration. Tracked by EWF03.
 
