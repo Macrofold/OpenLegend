@@ -10,6 +10,8 @@ Accepted contracts: [first shared-world authority](../../archive/07-technical-ar
 
 Later regional authority/transfer is D6, not another MP implementation here. Operations, hostile-client and full-load evidence remain required before hosted release; research plans and local two-user success do not close those gates.
 
+The [DG07 first-threat proposal](../projects/first-threat-encounter-feature-spec.md#leaving-connection-loss-and-return) consumes current real-time absence and proposes encounter-specific retreat/return behavior under PS05/BW14. It preserves MP04/MP18 delivery and adds no runtime support in this design pass.
+
 ## Execution notes — September 26, 2026
 
 Implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).

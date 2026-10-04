@@ -12,4 +12,6 @@ The authored definition lives in `packages/domain/src/worlds/base/strikes.ts`. T
 
 ## Accepted lethal-action direction
 
+The [first-threat product proposal](../../projects/first-threat-encounter-feature-spec.md) and its [world rules](first-threat-encounter.md) select a future boar encounter, nonlethal defeat and exact-target final killing action. Existing single-strike/hunting support is not a delivered enemy, rescue or dangerous-exit system.
+
 The initial Punch implementation does not complete the [deliberate lethal-consequence policy](lifecycle-and-protection.md#deliberate-lethal-consequences). Human PvP consent, death confirmation and the final-blow/incapacitation choice remain delivery work in BW14; NPC ghost continuity is BW15. Do not make these main-world choices universal strike-runtime laws.

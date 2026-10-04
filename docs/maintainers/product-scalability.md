@@ -65,6 +65,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## PS05 — Transitions, protection, logout, and clocks
 
+**Selected encounter proposal:** [DG07/PG05](../projects/first-threat-encounter-feature-spec.md#leaving-connection-loss-and-return) supplies a finite first wildlife consumer for the protection/logout work, including paused mechanics, safe inherited placement and reconnect without a second departure. [TE03–TE04](../limits/base-world.md#te03--proposed-retreat-recovery-and-help) remain proposed; PS-D01 adoption and every runtime acceptance below remain open. No general coarse combat or clock separation is delivered.
+
 **Owners:** spatial/time, participation/access, world policy, save/load. **Depends on:** PS02–PS04 capabilities used by each behavior.
 
 - [ ] Materialize valid current activities with bounded preparation, shared overlap handling, and demotion hysteresis.

@@ -101,6 +101,8 @@ ND09's immediate barter and ND10's first small recurring arrangement: offers, ac
 
 #### DG07 — Human participation and recoverable conflict
 
+**Product proposal prepared 2026-10-04:** [The first threat encounter](../projects/first-threat-encounter-feature-spec.md) selects a territorial boar, optional cache approach, finite useful spear, readable avoidance/confrontation, safe local recovery, optional help and bounded departure. [World proposals](../worlds/base/first-threat-encounter.md) and [TE01–TE05](../limits/base-world.md#te01--proposed-first-threat-offering) make the D07/PS-D01 recommendations explicit. Product research and critique are complete; owner adoption, the separate PG05 technical design and runtime qualification remain open.
+
 [PG05](personal-game-next-batch.md#pg05--first-threat-encounter-design) selects a proposed small design assignment here: one optional wilderness threat, with avoidance, confrontation and recoverable aftermath. It produces explicit D07/PS-D01 proposals, not runtime combat or automatic resolution of those choices.
 
 ND11's human opt-in, indirect harm, incapacitation, rescue and return, with the matching PS05 protection and dangerous-logout decisions. One group owns the experience of entering danger and losing connection during it.
@@ -483,6 +485,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** select one useful group or recurring cooperative arrangement. Specify membership, shared property/goals, delegation, obligations, notices, disputes and dissolution only as that use case requires. Decide whether a formal organization record is needed and which facts each observer knows. Preserve the separation between fictional institutions and platform access/billing authority; do not prescribe a starting government or implement every repertoire institution.
 
 ### ND11 — Human conflict/recovery and NPC ghost continuity
+
+**Human first-threat product scope prepared:** [DG07/PG05](../projects/first-threat-encounter-feature-spec.md) now supplies the proposed human participation, recovery, assistance, indirect-harm and bounded-exit decisions for one wildlife encounter. It reuses current native human collapse/recovery and does not claim a complete enemy loop already exists; broad PvP, property and NPC ghost/revival choices remain separate.
 
 **Decision before design under existing lifecycle work.** Sources: [base-world lifecycle and protection](../worlds/base/lifecycle-and-protection.md), D07/D15 and [BW14/BW15](base-world.md).
 

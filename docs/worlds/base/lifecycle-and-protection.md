@@ -8,6 +8,10 @@ The accepted [product direction](../../product-scalability/participation-and-pro
 
 Recoverable human death, default possession preservation, cooperative play and explicit PvP participation remain the bundled-world direction. Other authored worlds may choose different supported aftermaths. Specified background-harm protection must also cover the state inherited on detailed arrival; it does not automatically protect every NPC or building. The target for protected personal/guild domains needs explicit access and damage rules before it changes the current property policy below.
 
+## Proposed first-threat consumer
+
+[DG07/PG05](../../projects/first-threat-encounter-feature-spec.md) now defines one optional wildlife encounter and [selected world proposals](first-threat-encounter.md), including human incapacity/recovery, deliberate animal killing and bounded local retreat. These are proposed D07/PS-D01 choices, not delivered changes to the current absence/body policies below; [TE01–TE05](../../limits/base-world.md#te01--proposed-first-threat-offering) owns their limits.
+
 ## Human logout and return
 
 The application’s [explicit tab pause/Resume](../../projects/completed/tab-resume-feature-spec.md) releases control when the player leaves the tab and requests this same world departure/return path. Browser focus is not itself a world law or a login change. Sole-tab entry/refocus requests a return automatically; switching between open game tabs requires **Resume Here**. Other active players can keep world time running while this character is absent.

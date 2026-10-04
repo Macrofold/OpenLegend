@@ -1,8 +1,8 @@
 # Personal-game next batch — five standalone prompts
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five copyable prompts reference the prepared task definitions; no workers have been dispatched. | 2026-10-03   |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG05 has a completed product proposal, while its technical design and the four delivery assignments remain open. | 2026-10-04   |
 
 [Prioritized scope](personal-game-next-batch-feature-spec.md) · [Technical definitions](personal-game-next-batch-tech-design.md) · [Status and parent mapping](../maintainers/personal-game-next-batch.md)
 
@@ -71,7 +71,7 @@ Complete PG05 as a design task only: specify one optional wilderness threat that
 
 Read docs/projects/personal-game-next-batch-feature-spec.md: "PG05 — Design the first dangerous encounter" and "Parallel boundaries and sequencing". Read docs/projects/personal-game-next-batch-tech-design.md: "Shared implementation boundary" and "PG05 — Encounter-design assignment definition". Follow its source and canonical-policy reading map, particularly docs/worlds/base/lifecycle-and-protection.md, BW14/MP04 and D07/PS-D01.
 
-Create paired docs/projects/first-threat-encounter-feature-spec.md and docs/projects/first-threat-encounter-tech-design.md. Recommend a concrete first encounter, comparing a territorial animal, hostile person and deferral. Define warning, escape/avoidance, attack and interruption, target loss/disengagement, defeat/recovery and persistent consequences. Distinguish current native support from missing mechanics. Keep policy/content with the authored world and reusable execution with existing engine owners.
+The product-only DG07 assignment has prepared docs/projects/first-threat-encounter-feature-spec.md. Reuse that proposal and complete docs/projects/first-threat-encounter-tech-design.md in this separate technical preparation assignment; revise product decisions only with a stated reason and current authorization. Recommend a concrete first encounter, comparing a territorial animal, hostile person and deferral. Define warning, escape/avoidance, attack and interruption, target loss/disengagement, defeat/recovery and persistent consequences. Distinguish current native support from missing mechanics. Keep policy/content with the authored world and reusable execution with existing engine owners.
 
 Present explicit recommended choices and tradeoffs for unresolved human recovery, NPC lethal consequences, indirect harm and logout; do not silently resolve D07, weaken inactive protection or change cooperative PvP defaults. Cover all PG05 edge scenarios, visible feedback, persistence, costs, implementation stages and acceptance. Avoid raids, factions, deep ecology or a new universal combat framework.
 

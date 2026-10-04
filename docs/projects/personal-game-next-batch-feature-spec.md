@@ -1,8 +1,8 @@
 # The next personal-game batch — five assignments
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five scoped assignments are defined; implementation, character qualification and the encounter design remain to be delivered. | 2026-10-03   |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG05 has a completed product proposal, while its technical design and the four delivery assignments remain open. | 2026-10-04   |
 
 [Technical definitions](personal-game-next-batch-tech-design.md) · [Assignment prompts](personal-game-next-batch-prompts.md) · [Tracking](../maintainers/personal-game-next-batch.md)
 
@@ -130,6 +130,8 @@ Exclude general SQL batching, scheduling redesign, renderer quality reduction an
 ## PG05 — Design the first dangerous encounter
 
 ### Deliverable and scope
+
+**Product portion prepared 2026-10-04:** [The first-threat feature proposal](first-threat-encounter-feature-spec.md) completes the requested product-only DG07 work, including source audit, research, recommended choices and critique. The separate technical design and full PG05 preparation remain open; use the existing proposal rather than create a duplicate.
 
 Produce a paired feature specification and technical design for one optional, discoverable wilderness threat. Recommend one concrete encounter, preferably a territorial animal using the existing animal/body/navigation/action foundation, and compare it briefly with a hostile person and with leaving danger out for now. Threat selection must earn tension, tactical choice or a useful reason to invent; it must not exist only to consume food or demand equipment maintenance.
 

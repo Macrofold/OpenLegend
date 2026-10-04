@@ -36,6 +36,8 @@ Owners: [PF05](performance.md#pf05--public-view-and-browser-responsiveness), [AC
 
 ## PG05 — First threat encounter design
 
+**Product portion complete 2026-10-04:** [Feature proposal](../projects/first-threat-encounter-feature-spec.md) includes the source-backed missing-behavior inventory, primary research, complete encounter/recovery/exit journeys, proposed owner choices and game-first critique. [World rules](../worlds/base/first-threat-encounter.md) and [TE01–TE05](../limits/base-world.md#te01--proposed-first-threat-offering) are reconciled as proposals. The current assignment expressly excludes technical design, so the paired-document and full PG05 preparation gates below remain unchecked; no runtime or owner-adoption claim follows.
+
 - [ ] Produce the paired first-threat encounter documents, source-backed missing-mechanism inventory, implementation stages and explicit owner choices in [PG05 acceptance](../projects/personal-game-next-batch-feature-spec.md#pg05--design-the-first-dangerous-encounter).
 - [ ] Reconcile the design's references and proposed decisions without implementing combat or marking unresolved policy/runtime tasks complete.
 

@@ -1,8 +1,8 @@
 # The next personal-game batch — technical task definitions
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Responsibilities, existing interfaces and completion boundaries are defined for four delivery tasks and one design task. | 2026-10-03   |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG05 has a completed product proposal, while its technical design and the four delivery assignments remain open. | 2026-10-04   |
 
 [Feature scope and acceptance](personal-game-next-batch-feature-spec.md) · [Tracker](../maintainers/personal-game-next-batch.md) · [Copyable prompts](personal-game-next-batch-prompts.md)
 
@@ -135,7 +135,7 @@ Update PF05, AC11, the existing command/frame plan and report, and only affected
 
 Use [lifecycle and protection](../worlds/base/lifecycle-and-protection.md), BW14/MP04, D07/PS-D01, DG07/ND11, relevant [combat/rescue repertoire](../repertoires/combat-rescue.md) and action examples. Read current animal movement/flee behavior in `packages/domain/src/kernel.ts`, authored bodies/species under `worlds/base/`, attack result/equipment families, native participation/protection and existing event/experience projection before claiming a mechanic exists.
 
-Create `docs/projects/first-threat-encounter-feature-spec.md` and `docs/projects/first-threat-encounter-tech-design.md`. The pair owns this bounded proposal; update the existing BW14/DG07/ND11 references rather than creating another combat backlog. Do not mark D07 resolved merely because the design recommends an answer.
+The [first-threat feature proposal](first-threat-encounter-feature-spec.md) now exists from the product-only DG07 assignment. Prepare the separate `docs/projects/first-threat-encounter-tech-design.md` in the subsequent technical assignment, reusing the product proposal and revising it only for explicitly identified decisions. The pair owns this bounded proposal; update the existing BW14/DG07/ND11 references rather than creating another combat backlog. Do not mark D07 resolved merely because the design recommends an answer.
 
 The feature document must name one encounter and explain why someone would willingly engage. Define discoverability, warning, a viable noncombat alternative, confrontation, interruption, disengagement and a satisfying consequence. Compare the recommended animal case with a hostile speaking character and with deferral. A territorial animal is a recommendation to evaluate, not a required enemy taxonomy or an excuse to hardcode engine behavior.
 

@@ -52,9 +52,13 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive
 
 ## PS-L08 — Protected background outcomes
 
+**Scoped proposal:** [DG07 first-threat return](../projects/first-threat-encounter-feature-spec.md#a-valid-return-point) selects supported checks for one authored site under [TE03](base-world.md#te03--proposed-retreat-recovery-and-help); broader harm categories and runtime qualification remain open.
+
 **Decision:** world-specific protection over specified harms must cover the state inherited at detailed entry. **Reason:** no wolf trap or death caused merely by the first observer arriving. **Restriction:** finite supported harm categories; no universal certification of all possible future harm. Already-engaged conflict is not erased. **Select/revisit:** choose policies with explicit tagging, episode ownership, uncertainty fallback, and multiple-player fairness in PS05.
 
 ## PS-L09 — Dangerous logout and absentee control
+
+**Scoped proposal:** [TE04](base-world.md#te04--proposed-bounded-encounter-exit) proposes the existing default real-time grace and a finite retreat/abandonment outcome for DG07, with equivalent connected pause behavior and distinct active-return versus absent outcomes. It is not adopted general combat or a new current timer; PS-D01 and wider qualification remain open.
 
 **Decision:** current contested interactions may continue coarsely after departure; warnings and return reflect actual aftermath. **Reason:** no logout-to-escape exploit. **Restriction:** no new human goals, private thoughts, purchases, or unlimited autonomous adventures without appropriate authority. Grace, allowed defenses, safe exit, retention bounds, and reconnect rules remain unset. **Select/revisit:** compare voluntary departure, network failure, grief reengagement, and world death policies before activation.
 
