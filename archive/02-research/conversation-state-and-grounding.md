@@ -4,7 +4,7 @@
 
 This note asks a narrow question: **what information from a conversation actually has to survive when older dialogue is compressed so that a fictional character can continue naturally and correctly?** It reviews dialogue-state tracking, common-ground/grounding research, Questions Under Discussion, discourse focus, clarification/repair, discourse obligations, and recent work on persistent referential grounding. It then translates the useful ideas into OpenLegend's existing actor-perspective evidence model.
 
-The companion [long-conversation memory and compaction review](long-conversation-memory-and-compaction.md) covers memory architectures, summarization systems, frameworks, and evaluation benchmarks. The active proposal lives in [conversation compaction feature spec](../../docs/projects/conversation-compaction-feature-spec.md) and [technical design](../../docs/projects/conversation-compaction-tech-design.md).
+The companion [long-conversation memory and compaction review](long-conversation-memory-and-compaction.md) covers memory architectures, summarization systems, frameworks, and evaluation benchmarks. The active proposal lives in [conversation compaction feature spec](../../docs/projects/completed/conversation-compaction-feature-spec.md) and [technical design](../../docs/projects/completed/conversation-compaction-tech-design.md).
 
 ## 1. Executive conclusion
 
