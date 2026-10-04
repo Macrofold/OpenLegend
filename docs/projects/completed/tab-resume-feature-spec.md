@@ -1,8 +1,8 @@
 # Explicit tab resume — feature specification
 
-| Status      | Current progress                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Correcting sole-tab entry and adding logout across tabs; implementation and acceptance remain. | 2026-10-03   |
+| Status    | Current progress                                                                                                  | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Automatic sole-tab entry, exact transfer dialog and shared-login logout passed focused native/browser acceptance. | 2026-10-03   |
 
 ## Purpose and approved behavior
 
@@ -27,11 +27,15 @@ Implement and review before the final browser acceptance session. Use focused ex
 
 ## Maintained records
 
-- Implementation: [MP18](../maintainers/multiplayer.md#mp18--explicit-tab-resume).
-- Limits: [MP09](../limits/multiplayer.md#mp09).
+- Implementation: [MP18](../../maintainers/multiplayer.md#mp18--explicit-tab-resume).
+- Limits: [MP09](../../limits/multiplayer.md#mp09).
 - Mechanism and execution plan: [technical design](tab-resume-tech-design.md).
-- Current world absence: [human logout and return](../worlds/base/lifecycle-and-protection.md#human-logout-and-return).
+- Current world absence: [human logout and return](../../worlds/base/lifecycle-and-protection.md#human-logout-and-return).
 
 ## Accepted correction — October 3, 2026
 
-The original implementation required explicit Resume on every entry and refocus. Mike rejected that requirement: explicit Resume is only for switching between open game tabs. Existing rendering suspension, protected world departure and stale-command fencing remain. The original acceptance is historical; the corrected behavior requires fresh focused acceptance.
+The original implementation required explicit Resume on every entry and refocus. Mike rejected that requirement: explicit Resume is only for switching between open game tabs. Existing rendering suspension, protected world departure and stale-command fencing remain. The original acceptance is historical; the corrected behavior passed fresh focused acceptance.
+
+## Completion evidence
+
+[Corrected October 3 acceptance](../../verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026) records native authority/logout checks, four focused browser journeys, the closing-tab regression/fix, copied-tab identity and held-logout blur/refocus, plus actual dialog/logout interaction. Broader Auth0/provider logout and multi-device qualification remain separately tracked.

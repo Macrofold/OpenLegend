@@ -46,7 +46,7 @@ The accepted [product-scalability direction](../product-scalability/README.md) a
 
 ## RP05 — Prototype account and native-work operating envelopes
 
-The [explicit tab Resume contract](../projects/tab-resume-feature-spec.md) now replaces follower tabs with blocking paused entry: leaving releases control, sole-tab entry/refocus are automatic, and only deliberate Resume Here transfers between open tabs. The single-character/current-controller envelope remains; the revised presentation is tracked by [MP18](multiplayer.md#mp18--explicit-tab-resume).
+The [explicit tab Resume contract](../projects/completed/tab-resume-feature-spec.md) now replaces follower tabs with a blocking dialog for another selected open tab: leaving releases control, sole-tab entry/refocus are automatic, and only deliberate Resume Here transfers between open tabs. The single-character/current-controller envelope remains; the revised presentation is tracked by [MP18](multiplayer.md#mp18--explicit-tab-resume).
 
 **Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second real-time exit grace, one active embodiment per account/world, and versioned finite process-wide native-work ceilings. Characterless operator/spectator sessions add no embodiment or control lease. These are operational v1 choices, not universal world laws or hosted capacity promises. [Measured release admission](../performance.md#bounded-admission) now coordinates 100-player defaults and admits 64 MB of native event output without trimming witnesses; PF11/D5 performance acceptance remains open.
 

@@ -11,7 +11,7 @@ function failureMessage(reason: unknown): string {
 }
 
 /** Browser attention controls presentation, never command authority or world law.
- * docs/projects/tab-resume-tech-design.md */
+ * docs/projects/completed/tab-resume-tech-design.md */
 export function useTabControl() {
   const [paused, setPaused] = useState(true);
   const [blocked, setBlocked] = useState(false);

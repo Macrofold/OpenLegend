@@ -61,10 +61,10 @@ qualify hosted operations, hostile-client security, live model quality or PF cap
 
 ## MP18 — Explicit tab resume
 
-- [ ] Correct the [tab entry experience](../projects/tab-resume-feature-spec.md) through its [technical design](../projects/tab-resume-tech-design.md): sole-tab entry/reload/refocus are automatic; only switching between open tabs shows Game Paused / OpenLegend is open in another tab. / Resume Here / Log Out. Preserve departure, current authority, manual pause and safe return. Logout revokes the shared game login and clears every browser tab; local explicit sign-in must recover.
-- [ ] Finish focused native/static review before final browser acceptance; qualify single-tab entry/return/reload, duplicate identity, two-tab transfers, stale command rejection, logout in the blocked tab, both signed-out screens, login recovery and narrow modal layout. Broader Auth0 two-account acceptance stays in IDP01.
+- [x] Correct the [tab entry experience](../projects/completed/tab-resume-feature-spec.md) through its [technical design](../projects/completed/tab-resume-tech-design.md): sole-tab entry/reload/refocus are automatic; only switching between open tabs shows Game Paused / OpenLegend is open in another tab. / Resume Here / Log Out. Preserve departure, current authority, manual pause and safe return. Logout revokes the shared game login and clears every browser tab; local explicit sign-in must recover.
+- [x] Finish focused native/static review before final browser acceptance; qualify single-tab entry/return/reload, duplicate identity, two-tab transfers, stale command rejection, logout in the blocked tab, both signed-out screens, login recovery and narrow modal layout. Broader Auth0 two-account acceptance stays in IDP01.
 
-Reopened October 3, 2026 after Mike corrected the mandatory-Resume behavior. [Original acceptance](../verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) remains historical.
+Completed October 3, 2026 after correcting mandatory Resume and passing the [updated native/browser acceptance](../verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026). [Original acceptance](../verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) remains historical.
 
 ## Identity provider — Auth0
 

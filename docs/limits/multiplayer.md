@@ -52,9 +52,9 @@ Original recommendation: **Keep**.
 
 ## LA233
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current (October 3, 2026) · Restrictiveness: Safe.**
 
-A verified foreground heartbeat expires after 12 seconds. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs always pause on blur; the saved background policy is available only to clients that deliberately retain a controlling connection.
+A verified foreground heartbeat expires after 12 seconds. A successful control return reserves the first heartbeat’s position for the same 12-second window through existing bounded message-order records; it prevents simultaneous acquisition before the stream opens without counting as foreground activity. Counters are ordered within each control generation, so a stable tab ID can reload with a fresh counter. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs always pause on blur; the saved background policy is available only to clients that deliberately retain a controlling connection.
 
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
@@ -108,7 +108,7 @@ A character’s historical human owner **cannot transfer to another account**. R
 
 Sole-tab opening, reload and refocus enter automatically. Only switching between open game tabs requires **Resume Here**. Leaving pauses browser work and releases command control; the selected page remains discoverable while open, so focus cannot silently transfer play. Tab IDs survive reload; a copied live identity is replaced before requests. Browser discovery waits at most 200 ms per probe and runs only on identity startup or foreground entry, with no background polling. The server permits non-replacing acquisition of the same page or a body without a live controller, while current scope and expected control revision reject stale commands, releases and heartbeats. Control, entry snapshot and logout requests retain the 15-second network deadline. Timeout does not undo a committed effect.
 
-**Reason / tradeoff:** Remove needless Resume clicks in one tab while protecting deliberate multi-tab control. Browser liveness is an advisory presentation mechanism; the server independently fences effects. A crashed page may remain protected by a verified heartbeat until its existing 12-second expiry; saved control alone never establishes another open tab. Logout ends the shared game login in all its tabs; it does not end the external provider session or separate device logins. Characterless operations and single-character assignment remain unchanged. [Design](../projects/tab-resume-feature-spec.md), [MP18](../maintainers/multiplayer.md#mp18--explicit-tab-resume).
+**Reason / tradeoff:** Remove needless Resume clicks in one tab while protecting deliberate multi-tab control. Browser liveness is an advisory presentation mechanism; the server independently fences effects. A crashed page may remain protected by a verified heartbeat until its existing 12-second expiry; saved control alone never establishes another open tab. Logout ends the shared game login in all its tabs; it does not end the external provider session or separate device logins. Characterless operations and single-character assignment remain unchanged. [Design](../projects/completed/tab-resume-feature-spec.md), [MP18](../maintainers/multiplayer.md#mp18--explicit-tab-resume).
 
 **Changed decision:** October 3 correction replaces mandatory explicit Resume on every entry/refocus and page-lifetime IDs. The earlier implementation required unnecessary clicks even in one tab; this correction reserves the dialog for switching open tabs.
 
