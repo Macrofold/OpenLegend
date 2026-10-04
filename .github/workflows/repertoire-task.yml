@@ -2,31 +2,23 @@ name: Repertoire task workspace
 on:
   push:
     branches: [docs/canonical-repertoires-2026-10-03]
-    paths: [.github/workflows/repertoire-task.yml, .repertoire-task/**]
+    paths: [.github/workflows/repertoire-task.yml]
 permissions:
   contents: read
 jobs:
-  snapshot:
+  formatter:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Export tracked source and credential-free Git objects
+      - name: Obtain repository-pinned formatter
         shell: bash
         run: |
           set -euo pipefail
-          out="$RUNNER_TEMP/repertoire-source"
-          mkdir -p "$out"
-          git archive --format=tar HEAD | gzip > "$out/source.tar.gz"
-          tar -czf "$out/git-objects.tar.gz" .git/objects .git/shallow
-          git rev-parse HEAD > "$out/HEAD.txt"
-          git rev-parse HEAD^{tree} > "$out/TREE.txt"
-          git ls-files '*AGENTS.md'
+          mkdir -p "$RUNNER_TEMP/repertoire-tools"
+          npm pack --pack-destination "$RUNNER_TEMP/repertoire-tools" prettier@3.6.2
       - uses: actions/upload-artifact@v4
         with:
-          name: repertoire-source
-          path: ${{ runner.temp }}/repertoire-source
+          name: repertoire-tools
+          path: ${{ runner.temp }}/repertoire-tools
           retention-days: 1
           if-no-files-found: error
