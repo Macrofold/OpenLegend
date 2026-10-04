@@ -1,13 +1,13 @@
 # Regional time and navigation performance
 
-Evidence for the [regional time and navigation plan](../projects/regional-time-and-navigation.md): PF13.11, PF13.12, PF13.16, PF12.5, PF12.6, SW06.2a and SW17.7. Task state stays in the [PF13](../maintainers/simulation-time.md#pf13--elapsed-time-simulation), [PF12](../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution) and [SW](../maintainers/spatial-world.md) trackers.
+Evidence for the [regional time and navigation plan](../projects/completed/regional-time-and-navigation.md): PF13.11, PF13.12, PF13.16, PF12.5, PF12.6, SW06.2a and SW17.7. Task state stays in the [PF13](../maintainers/simulation-time.md#pf13--elapsed-time-simulation), [PF12](../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution) and [SW](../maintainers/spatial-world.md) trackers.
 
 ## Environment and method
 
 - Baseline: a pinned copy of `origin/main` at `be68b1e0d75baac3c2c9f38948824aa4a98ed0d9` with the same lockfile. Change: branch `codex/time-nav-performance`; the timing table and longer runs below were measured on `c7f14c46`. The third review's fixes (below) change only degenerate routes, an early daily-window edge and a navigation retry; afterwards the outcome digests, equivalence scenarios and tests were re-checked on the final code.
 - macOS (Darwin 24.6.0), Node v22.23.2, no provider (`AI_BUDGET_USD=0`). The host was shared with several other agents (load averages 126–290 during the final runs and up to about 770 earlier). Timings are **shared-host observations**. Baseline and change always ran back to back on identical input, and none of the timings is an acceptance claim.
 - Disposable harnesses outside the repository drive the real `advanceWorldSlices` generator the way the server does: one accepted interval per call, a coherent-stop request after eight wall milliseconds, and at most 30 game seconds offered per call. Each repetition builds a fresh world, warms it to game time 60 and then measures a fixed game-time span. Outcome digests cover the following, rounded to 10⁻⁶: final positions, supports, flight/wander/flee timers, needs, attributes, status activity and saved RNG (mechanical); the emitted event sequence (events); event audiences (audience); and awareness counts.
-- Fixtures: the **staggered flight** fixture is the 854-entity scene of the [plan's stage 1](../projects/regional-time-and-navigation.md#stage-1--reproduction-and-attribution): the 806-entity seed-73 mixed scene plus 48 birds with perch waits `180 + i × 0.19` s. **100 sleepers** is 100 crowded exhausted deer that fall asleep through the authored automatic activation, plus the starter world.
+- Fixtures: the **staggered flight** fixture is the 854-entity scene of the [plan's stage 1](../projects/completed/regional-time-and-navigation.md#stage-1--reproduction-and-attribution): the 806-entity seed-73 mixed scene plus 48 birds with perch waits `180 + i × 0.19` s. **100 sleepers** is 100 crowded exhausted deer that fall asleep through the authored automatic activation, plus the starter world.
 
 ## Final matched comparison
 
