@@ -1,17 +1,21 @@
 # Save round-trip batching — feature spec
 
-**Status: proposal, not approved for implementation.** Written 2026-09-29 at Mike's request as a follow-up to [background world saves](ordered-async-saves.md). Implementation needs a separate chat go-ahead. Technical design: [save round-trip batching — technical design](save-round-trip-batching-tech-design.md). Work items: [PF15](../maintainers/performance.md#pf15--save-round-trip-batching).
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | This unapproved proposal requires a current-source feasibility trial before any batching implementation or default change. | 2026-10-03   |
+
+**Status: proposal, not approved for implementation.** Written 2026-09-29 at Mike's request as a follow-up to [background world saves](completed/ordered-async-saves.md). Implementation needs a separate chat go-ahead. Technical design: [save round-trip batching — technical design](save-round-trip-batching-tech-design.md). Work items: [PF15](../maintainers/performance.md#pf15--save-round-trip-batching).
 
 ## Purpose
 
-Every world save sends its SQL statements to PostgreSQL one after another, waiting for each reply before sending the next. Each of those waits is one **round trip**. When a round trip is slow — a database on another machine, or a busy one — a save takes roughly _number of statements × round-trip time_, no matter how little data it writes.
+Every world save sends its SQL statements to PostgreSQL one after another, waiting for each reply before sending the next. Each of those waits is one **round trip**. When a round trip is slow — a database on another machine, or a busy one — a save takes roughly _number of statements × round-trip time_, when serial communication dominates the work; database execution, serialization, locks and host scheduling add their own costs.
 
-This feature sends a save's statements in a few round trips instead of one per statement. It shortens both kinds of save ([definitions](../save-and-load.md#background-and-synchronous-world-saves)):
+The proposed feature would send eligible statements in fewer round trips. Its target is to shorten both kinds of save ([definitions](../save-and-load.md#background-and-synchronous-world-saves)):
 
 - **Synchronous saves** (player commands, AI characters' finished actions and replies, pause/resume, editors, loads) hold the world's update line until they are written, so a shorter save directly means less freezing.
 - **Background saves** (simulation progress) finish sooner, which reduces backpressure on game time and shrinks how much progress a crash can lose.
 
-It changes only how the statements travel to the database. What is saved, the order of its effects and the all-or-nothing guarantee stay exactly the same.
+What is saved, required ordering, conflict/error precedence and all-or-nothing publication must stay the same. Combining SQL changes its execution semantics, not merely its transport; the feasibility trial must prove equivalence before any writer opts in.
 
 ## What a save sends today
 
@@ -27,7 +31,7 @@ A save writes the changes since the previous save inside one database transactio
 | Memory index upkeep                                                            |                  0–2 |
 | Commit                                                                         |                    1 |
 
-Measured on this branch's scene runs ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)): **17–23 statements per save on average, 44 at most.** With no added delay on the loaded shared host, one round trip cost about 5–7 ms; with 25 ms added to every statement (the PF00 slow-database case) the median save took 720–830 ms, almost all of it waiting on round trips.
+Measured in the September 29 source checkpoint, not a new measurement of current main ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)): **17–23 statements per save on average, 44 at most.** With no added delay on the loaded shared host, one round trip cost about 5–7 ms; with 25 ms added to every statement (the PF00 slow-database case) the median save took 720–830 ms, with serial statement waits dominating the recorded attribution. Re-profile the current writers before adopting these counts or attributing all delay to the network.
 
 ## What was tried before
 
@@ -38,7 +42,7 @@ On 2026-09-27 the [three-times scene project](three-times-scene-performance.md) 
 
 ## When it is worth doing
 
-The time saved per save is about _statements removed × round-trip time_. With a typical save going from about 20 round trips to about 3:
+An illustrative communication-only saving is _round trips removed × round-trip time_. The following arithmetic assumes 20 round trips become 3; neither that reduction nor the environmental latency ranges are deployment measurements. The feasibility trial may require extra ordering barriers. Added query construction, planning, execution and lock costs must be measured separately:
 
 | Database                                                         | Round trip | Saved per save (approx.) |
 | ---------------------------------------------------------------- | ---------: | -----------------------: |
@@ -47,31 +51,31 @@ The time saved per save is about _statements removed × round-trip time_. With a
 | Managed database in the same region                              |     1–2 ms |                 17–34 ms |
 | Remote database, or the PF00 25 ms case (measured median 0.75 s) |   20–50 ms |              0.34–0.85 s |
 
-**Recommendation.** Not needed for the current single-machine setup on its own. Worth doing before any deployment whose database is on another machine, or if the quiet-host PF00 rerun still shows save-dominated stalls. The first stage (measuring the real round-trip time and trying the mechanism on a disposable database) is cheap and settles the question.
+**Recommendation.** Select this work only when current measurements show a material save-latency bottleneck. A database on another machine alone does not establish that benefit. The [production-deployment proposal](production-deployment-feature-spec.md) recommends managed PostgreSQL, but neither that recommendation nor this document establishes the actual deployment latency or authorizes implementation. Start with a bounded feasibility and cost trial; preserve correctness even if its required barriers miss the round-trip target.
 
 ## Supported behavior (target)
 
-1. A typical save — background or synchronous — reaches the database in about three round trips: start the transaction, send the writes, commit. A save that must read something from the database partway through (for example a job record) adds about one round trip per read.
+1. The target is a small number of round trips, subject to the acceptance threshold below. Reads, checked conflict fences, visibility dependencies, parent/child constraints and group bounds can require additional barriers. Three round trips is an optimistic case, not a promise for every current save.
 2. The database ends up with exactly the same rows as today for the same sequence of saves.
 3. The all-or-nothing guarantee is unchanged: a save either lands completely or not at all.
 4. Conflict detection is unchanged: a competing writer, or a record created twice, still makes the save fail and roll back.
 5. Failure handling is unchanged: a failed save still stops further saving and pauses the world with the storage message; a failure during the final commit is still treated as "may have saved" and resolved on restart.
-6. Very large saves (loads, imports, large history batches) are split into bounded groups and still succeed, possibly with more round trips.
+6. Supported large current-format saves and restores use bounded groups without buffering the entire operation or weakening existing input limits; they can require more round trips. No old-format import or compatibility path is introduced.
 7. An operator setting turns batching off (one statement per round trip, as today) until it is qualified.
 
 ## Scenarios
 
-- **A player walks somewhere, managed database with 2 ms round trips.** Today about 20 round trips (≈40 ms plus database work) hold the update line; with batching about 3 (≈6 ms plus database work).
+- **A player issues a movement command with a hypothetical 2 ms database round trip.** Reducing its synchronous command save from 20 to 3 round trips would reduce communication waits from about 40 to 6 ms, before other work. Subsequent simulation progress uses the separately defined background-save path. These are illustrative assumptions, not measured command counts or delivered results.
 - **An AI character's reply is applied.** Its synchronous save writes conversation and history tables. Same effect as above; the reply appears sooner and the world freezes for less time.
-- **Background save on a slow database (25 ms round trips).** A 0.75 s save becomes about 0.3 s; game time rarely has to wait for it, and the crash-loss window shrinks by the same amount.
-- **Loading a save or importing a world.** Large writes are split into several groups; the outcome is identical to today.
+- **Background save with 25 ms injected round-trip delay.** The goal is shorter writes and less storage backpressure. A 0.75 s baseline does not establish a 0.3 s result or a stall-free scene; current matched measurements must report the actual change in write duration, command latency and unsaved-progress window.
+- **Loading a supported current-format save.** Large writes use multiple bounded groups inside the existing atomic transaction; the result and refusal behavior must match the unbatched path.
 - **Diagnosing a failed save.** The error still reports the PostgreSQL error code; the profiler reports round trips and statements per save.
 
 ## Failure cases (must behave exactly as today)
 
 - A record created twice inside a batched group: the whole save rolls back; the same failure is reported and latched.
 - Another writer changed the world: the save is refused and rolled back.
-- A batched group exceeds the 30-second statement limit ([LA175](../limits/persistence.md#la175)): the save rolls back and is reported. Group size bounds keep this as rare as today's single-statement case.
+- A batched group exceeds the 30-second statement limit ([LA175](../limits/persistence.md#la175)): the save rolls back and is reported. A group has a larger timeout scope than one old statement; bounds alone do not prove equal failure frequency. Qualify representative and worst-case groups without relaxing the deadline.
 - Connection lost mid-group, or the commit itself fails: the outcome is uncertain, exactly as today; restart reconciles from the database.
 - Process killed mid-save: nothing partial is visible after restart.
 - The database writer queue is full or busy: refused before the transaction starts, as today ([SV20](../limits/persistence.md#sv20)).
@@ -84,16 +88,16 @@ The time saved per save is about _statements removed × round-trip time_. With a
 ## Acceptance criteria
 
 - **Equivalence:** with batching on and off, the same drills and scene produce identical database contents (per-table row hashes) and the same durable revisions.
-- **Round trips:** a typical background save and a typical command save use at most 4 round trips, as counted by the adapter; the maximum is bounded by the group limits.
-- **Latency:** in matched runs with 25 ms added per statement, the median synchronous save is at least 40% shorter than the same-host baseline; the 0 ms and 100 ms cases and a quiet-host run are reported.
+- **Round trips:** a specified representative background save and command save use at most 4 round trips, counted at the actual transport boundary. Large saves can use more groups; record their counts and work bounds rather than claiming a fixed maximum for arbitrary input. If mandatory correctness barriers prevent the representative target, report a failed decision gate and revisit the approach or target with the owner; do not remove barriers to pass.
+- **Latency:** in matched runs with 25 ms added per actual database round trip (not per logical statement inside a group), the median synchronous save is at least 40% shorter than the same-host baseline; the 0 ms and 100 ms cases and a quiet-host run are reported.
 - **Failures:** the existing failure and crash drills, plus a failure inside a batched group, a statement timeout inside a group and a commit failure, produce the same outcomes as today.
 - **Off switch:** the setting that disables batching works and is documented; the default is decided only after the criteria above pass.
 
 ## Stages
 
-0. **Decision gate and trial.** Measure the round-trip time of the database this game will actually use. Classify every statement in a save by whether its result is needed. Try the proposed mechanism on a disposable database and confirm PostgreSQL's rules for combined statements.
+0. **Decision gate and trial.** Measure the round-trip time of the database this game will actually use. Classify every statement in a save by whether its result is needed. Try the proposed mechanism on a disposable database, prove queue/flush progress and bounded memory, and verify ordering, failure precedence and PostgreSQL’s common-snapshot rules for combined statements.
 1. **Free round trip.** Send "start transaction" and "set time limit" together.
-2. **Write groups.** Batch the pure writes of a save (world tables, history, revision advance) into groups flushed before any read and before the commit.
+2. **Write groups.** Opt eligible save writers into an explicit bounded enqueue/flush contract. Group only proven independent writes; preserve checked revision admission, reads and all required dependency barriers before commit.
 3. **The rest of the save.** Include memory index upkeep and, if measurements justify it, other write transactions.
 4. **Qualification.** Equivalence, failure drills, matched scene runs, then choose the default.
 
