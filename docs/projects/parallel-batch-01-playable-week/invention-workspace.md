@@ -1,12 +1,16 @@
 # Parallel batch 01 — PW11 — Inspect, revise and apply an invention without losing the conversation
 
-**Proposed implementation brief.** Engineer 4: **30 hours**, plus the shared PW06 integration allowance. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) defines the expanded week; [PW11](../../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace) owns completion. This document is a concrete UI/server task, not authorization to implement it during the planning request.
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Saved-work inspection, recipe editing and exact receipts are delivered; the integrated streaming/editing and full browser matrix remain open. | 2026-10-04   |
+
+**Approved and implemented in part.** The original Engineer 4 allocation was **30 hours**, plus the shared PW06 integration allowance. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) defines the expanded week; [PW11](../../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace) owns completion. The original planning request did not authorize implementation; the subsequent week assignments did. [Current integration](../../maintainers/next-playable-week.md#local-branch-integration) includes the delivered workspace and native family metadata. The remaining acceptance below is not a requirement to repeat those stages.
 
 ## Outcome and present gap
 
 A world owner can keep a conversation open while inspecting its saved work, compare two exact revisions, change a supported recipe parameter without another model call, validate the result and deliberately approve/apply that exact revision. They can correct one part without retyping the entire request. A player can inspect a learned recipe and its actual crafting requirements without gaining owner controls.
 
-Current `world-agent-session.tsx` places drafts and review cards below the transcript. `world-agent-review.tsx` shows requirements, dependencies and JSON in a modal, with separate Approve and Apply. The underlying authoring service already stores immutable revisions and supports `ol_draft_read`, `ol_draft_update`, `ol_compare`, `ol_validate` and `ol_change_prepare`. The work is to make these real owners usable through a coherent browser task, not create another draft store or ask a model to rewrite every numeric edit.
+The original baseline placed drafts below the transcript and exposed exact review in a modal. The delivered `world-agent-session.tsx` now uses `WorldAgentWorkView` with Conversation/Work selection, and preserves separate Approve and Apply through the existing review owner. Native human reads, preview and revision operations share the immutable draft, validation and receipt owners; `ol_draft_read`, `ol_draft_update`, `ol_compare`, `ol_validate` and `ol_change_prepare` remain the corresponding agent operations. [PW11 evidence](../../verification/next-playable-week-engineer-4.md#pw11--exact-saved-work-and-native-receipt-authority) demonstrates seven-kind inspection, recipe editing, exact-revision comparison, stale/late-result handling and lost-acknowledgement recovery through native and temporary-component browser scenarios. It does not qualify the complete integrated Conversation/Work streaming journey, operating-system IME or assistive-device behavior.
 
 ## Scope and decisions
 
@@ -17,6 +21,8 @@ Current `world-agent-session.tsx` places drafts and review cards below the trans
 - No new generated art, graph-layout engine, batch Apply, universal JSON editor, autosaved server mutation, paid retry or new creator authority.
 
 ## Implementing files and shared ownership
+
+These assignments describe the delivered division of responsibility. Reuse the extracted workspace, native recipe descriptors and common mutation owner; they are not pending component negotiations or permission to edit another contributor’s checkout.
 
 | Area                                                            | Owner/change                                                                                                                                              |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +69,7 @@ Use existing POST session-read conventions and `sessionRequest` world/session au
 | Check                 | Exact draft/revision                                                                                                     | Existing native validation; no model call and no installation.                                                                                                        |
 | Prepare review        | Exact draft/revision and stable `operationId`                                                                            | Existing immutable review plan bound to the candidate digest and dependencies.                                                                                        |
 
-Add service entrypoints for authenticated human calls analogous to `applyLocal`; never expose the model's `contextHandle` in the browser or pass a browser-supplied claim as local authority. Extract a shared native operation if the existing tool wrapper's run-specific gates cannot be reused directly. Human requests must recheck principal/session/world/timeline and the kind-specific target rules, and use the same serialized record/receipt owner as tool calls. They must not consume a model-tool budget or require a paid run just to edit a draft; existing retained-record quotas still apply.
+The delivered service entrypoints for authenticated human calls follow `applyLocal`; never expose the model's `contextHandle` in the browser or pass a browser-supplied claim as local authority. Continue using the shared native operation when a tool wrapper’s run-specific gates are inappropriate for a human edit; do not duplicate its authority or mutation rules. Human requests must recheck principal/session/world/timeline and the kind-specific target rules, and use the same serialized record/receipt owner as tool calls. They must not consume a model-tool budget or require a paid run just to edit a draft; existing retained-record quotas still apply.
 
 A state-changing edit is disabled while that session has an active or recovering authoring turn or unanswered question, with a reachable explanation. Read-only inspection continues. Enforce the same active-turn, recovery-turn and unanswered-question gate on the server inside session serialization shared with turn admission and draft writes; UI disabling is not authority. Reconcile an existing operation receipt before rejecting a repeated request, without admitting a new mutation. This single-writer rule avoids racing a human revision against an agent's proposal; other sessions remain subject to normal dependency/revision checks. A draft created by a completed turn remains editable when the session is available and the native quota allows it. Closed/expired/old-timeline sessions are readable according to existing permission but never writable.
 
@@ -88,6 +94,8 @@ The ordinary invention path still admits compatible proposals through current ru
 Use the current permitted recipe/knowledge projection, not owner session records copied into player UI. Unknown ingredient availability is unknown. A recipe learned from another actor must reveal only the knowledge currently granted by the existing recipe-sharing rules.
 
 ## Implementation order and effort
+
+This is the original delivery breakdown, not an outstanding sequence of new implementations. Follow PW11’s remaining criteria and the evidence’s exact limitations for further work.
 
 1. Freeze family editor/read-only fact metadata with engineer 2 and draft/progress component boundaries with engineer 5: **3 h**.
 2. Add scoped exact read/history/compare, read-only recipe preview and human-edit/check/prepare adapters reusing the native owner and receipts: **8 h**.
@@ -114,7 +122,7 @@ Approximately **650–1,050 changed logic lines**, excluding tests. Medium/high 
 | Ordinary player opens learned container recipe               | Materials/work/output are clear; native Craft behaves normally; no creator controls or private owner data appear.                                                            |
 | Keyboard/IME, narrow/short/enlarged layout, long description | Named actions, focus restoration, scrolling and errors remain usable; child dismissal never moves the character.                                                             |
 
-Use the umbrella browser matrix and suitable existing authoring/native HTTP checks. Record actual task completion steps and failures before/after with the same saved fixture. No paid call is needed for structured edits, comparison or validation; streaming/provider quality remains PW05's separately authorized evidence. This document reports no new runtime checks or costs.
+Use the umbrella browser matrix and suitable existing authoring/native HTTP checks. Record actual task completion steps and failures before/after with the same saved fixture. No paid call is needed for structured edits, comparison or validation; streaming/provider quality remains PW05's separately authorized evidence. This documentation reconciliation reports no new runtime checks or provider costs; the linked evidence retains its actual completed scenarios and failures.
 
 ## Maintained records
 
