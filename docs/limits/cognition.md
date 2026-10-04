@@ -682,3 +682,9 @@ A person who returns within **30 game seconds** of a recorded departure keeps th
 
 - Which cue types may force context inclusion, and a production review cadence, are owner decisions (design §12, D54). Until accepted, the base world forces none and reviews none.
 - Salience keys on coarse outward states only, so authored hidden metadata cannot raise or reveal anything.
+
+## CG12
+
+**Proposed — integrated character qualification scope, October 3, 2026 · Restrictiveness: Medium.** The first [compelling-character slice](../projects/compelling-characters-feature-spec.md) uses one live resident and a human participant, existing supported activities and the current personal-world clock. This is evaluation scope, not an engine population cap. A second independent resident and unattended operation require their own later qualification. No mandatory thought frequency, action-diversity quota, minimum biography length or new inference allowance is selected.
+
+**Reason / tradeoff:** Prove that bodily and psychological experience, attention, choice, actual consequences and later behavior connect before increasing breadth. Complete accepted About me and required evidence remain governed by CG09 and the memory contract; this proposal does not permit silent truncation or unlimited history. Existing decision, preparation, memory, queue and spending bounds apply. On unavailable cognition or exceeded capacity, preserve and disclose the actual outcome under its owner rather than narrating a completed life. [CE03–CE05](../maintainers/character-experience.md) owns integration; AG12/CR12 measures the complete cost and experience. Revisit scope for a demonstrated missing opportunity, not to increase a character's activity count.

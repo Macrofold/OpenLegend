@@ -1,5 +1,19 @@
 # Documentation changelog
 
+## 2026-10-03 — Make the first resident a compelling integrated character
+
+Mike made multidimensional character experience an explicit early product requirement: bodily and psychological needs, contact, belonging, fun, independent interests, and context as a situated view of the world and salient inner life. The [new product specification](projects/compelling-characters-feature-spec.md) traces experience through choice, actual activity, consequences and later priorities, with complete ordinary-life protocols. It distinguishes purposeful repetition from stuck fire/hunt/cook cycles and meaningful variation from random novelty. The [research companion](../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition with six primary sources and separates functional characterization from claims about consciousness.
+
+[CE01–CE05](maintainers/character-experience.md) coordinates the existing ACT/AG/CR/BW owners; AG12/CR12 and R24 retain actual evaluation. DG02 now explicitly includes the whole-character target, while DG23 personality transformation and DG17 unattended communities remain later scope. Memory, agency, world behavior, continuing-lives scope and maintainer navigation are reconciled. [D69](../archive/05-project/open-decisions.md#d69--multidimensional-character-experience), [CG12](limits/cognition.md#cg12) and [FL19](limits/feelings.md#fl19) record remaining authored-policy choices and bounded initial scope. The five prior product proposals are now linked from their current main locations.
+
+This change documents accepted product intent and proposed delivery choices. It does not implement new need mechanics, alter complete accepted identity inclusion, change current outage/feeding or human-control policy, run character trials, or close existing qualification.
+
+## 2026-10-03 — Group the complete remaining design work by topic and sequence
+
+The [design-needs register](maintainers/needs-design.md#ordered-design-groups) now groups all 37 ND entries and remaining PS design refinements into ordered batches aligned with the product roadmap. It names parallel opportunities, the small shared decisions that need one owner, and later slices of broad entries such as text/calls, barter/currency, shelter/fire, skill/personality and human recovery/NPC ghosts. Conditional investigations and optional products retain explicit triggers rather than becoming launch prerequisites.
+
+The grouping reuses the earlier five product proposals from their separate branch and preserves every original need, implementation owner and existing acceptance status. The coverage table makes the full register accountable; the maintainer index links the sequence. This is a design-planning update, not new feature specifications, implementation, policy adoption or runtime evidence.
+
 ## 2026-10-03 — Validation must protect a real consumer
 
 Mike rejected assertions that Jev's scores must sum to one after a successful three-question response totaling 0.99 was discarded. Choice now selects the highest offered raw score, while ratings keep the provider's value; unrelated keys, repeated rubric labels and finite values outside conventional provider ranges cannot invalidate usable decisions. [LA051](limits/ai-execution.md#la051) records the superseded tolerance policy, and [the provider contract](ai-providers.md#provider-behavior-and-limits) retains required numeric data and caller-specific uncertainty thresholds. Raw values are not normalized; exact ties use the first offered choice.

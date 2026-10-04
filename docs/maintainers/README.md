@@ -2,11 +2,15 @@
 
 ## Future work needing design
 
-[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
+[Future work needing design](needs-design.md) tracks practical ideas and proposed extensions that still need a scoped design, a product decision or a bounded experiment before an implementation project. Its [ordered design groups](needs-design.md#ordered-design-groups) cover all 37 ND entries and remaining scalability refinements, with roadmap bands, parallel-work boundaries, explicit later slices and conditional triggers. It links source research and existing owners, including the already planned scalability and art pipelines, so unimplemented work is not mistaken for missing design.
 
 ## Five researched product specifications
 
 [Five product and behavior specifications](../projects/five-product-feature-specs.md) contains continuing NPC lives, attention/crowds/scenes, world creation, editable shelters/rain and authored stats/checks. Its [game-first sequence](../projects/five-product-feature-specs.md#game-first-delivery-sequence) prioritizes the accepted live creative loop and useful small-world improvements; document numbering is not implementation priority. Each proposal includes behavior, scenarios, economics, primary research and experience gates. PS02–PS04, ND01, ND07/narrow ND08 and ND03 retain delivery and limits ownership. Product design remains distinct from technical design, implementation and measured enjoyment.
+
+## Compelling characters and integrated life
+
+[Compelling character experience](character-experience.md) coordinates CE01–CE05 across existing character, world, cognition and agency work. The [product specification](../projects/compelling-characters-feature-spec.md) explicitly covers bodily and psychological experience, contact/belonging, enjoyment, situated context and meaningful autonomous choices. Its [complete flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) qualify entire episodes and delayed consequences through AG12/CR12. This is early DG02 work; personality transformation and unattended communities remain later scope. The [inner-life rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition and primary research.
 
 ## Product scalability and persistent participation
 

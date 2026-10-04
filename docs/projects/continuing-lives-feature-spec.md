@@ -1,8 +1,8 @@
 # Continuing NPC lives — product and behavior specification
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Product proposals now link the integrated character design and full-flow requirements; technical design and runtime delivery remain open. | 2026-10-03   |
 
 **Status: proposed detailed behavior, October 3, 2026.** This specification expands the accepted continuing-world direction into a reviewable product proposal. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. Technical design is deferred at Mike's request.
 
@@ -110,6 +110,12 @@ Routines should express useful differences: one person prepares food early, anot
 Independence must be visible before the community grows. The first live resident already needs meaningful choices under the accepted agency contract; do not postpone that requirement until a later autonomous-community stage. They can explain a preference, refuse or amend a request, continue a personal goal and reconsider when circumstances change. A perfectly reliable worker who only acts after player instruction does not demonstrate this experience. Nor does arbitrary refusal: a player should be able to discover enough permitted context to decide how to respond, without receiving the resident's private reasoning as a diagnostic readout.
 
 The system should remember successful methods and relevant disappointments through the existing memory owners. A single failed attempt need not permanently change a personality. Skill progression and personality evolution belong to ND04; this feature consumes current knowledge and choices without silently adding numerical growth.
+
+### 4.4 A multidimensional person, qualified as a whole
+
+The [compelling-character specification](compelling-characters-feature-spec.md) expands this early resident into an integrated product target: psychological concerns, contact/belonging, fun, independent interests and chosen solitude alongside bodily needs. It explains context as the character's situated outer and inner experience, and connects that experience to real activity, outcomes, satisfaction, memory and later choices. The [philosophical companion](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the consciousness-inspired ambition and the limits of the research.
+
+[CE01–CE05](../maintainers/character-experience.md) coordinates the existing ACT/AG/CR/world owners. Its [full episode protocols](compelling-characters-feature-spec.md#complete-behavioral-flows) must accompany relevant work on the early character: an ordinary afternoon, social approach/refusal, solitary enjoyment, hunger within a larger life, meaningful repetition, interruption/resumption and delayed continuity. A repeating fire/hunt/cook loop, random action variety or a well-written private monologue cannot close this experience. This extends the first resident's quality target; it does not postpone personality until unattended communities or require every later need mechanic before useful play.
 
 ## 5. Interruptions and competing activity
 
@@ -359,7 +365,7 @@ Three design conclusions deserve emphasis. First, selective reconsideration has 
 
 ### Stage 1 — One continuing activity
 
-Deliver one current supported task for the existing live resident, with real supplies, progress and interruptions. During the accepted invention-and-hunting loop, the player can leave the resident to it, pursue their own goal and return to intelligible progress and a useful conversation. Existing autonomous choice and recall remain required; this stage does not turn the resident into a passive work queue. Qualify CL-J01–03, CL-J06 and CL-J09, including ordinary completion, deprivation, cancellation, a heard and unheard alarm and save/reopen. The second-observer case qualifies later shared operation; it does not require another resident or player for the initial personal playtest. The first stage is incomplete if it only shows a timer filling.
+Deliver one current supported task for the existing live resident, with real supplies, progress and interruptions. During the accepted invention-and-hunting loop, the player can leave the resident to it, pursue their own goal and return to intelligible progress and a useful conversation. Existing autonomous choice and recall remain required; this stage does not turn the resident into a passive work queue. Qualify CL-J01–03, CL-J06 and CL-J09, including ordinary completion, deprivation, cancellation, a heard and unheard alarm and save/reopen. The second-observer case qualifies later shared operation; it does not require another resident or player for the initial personal playtest. The first stage is incomplete if it only shows a timer filling. The early multidimensional character work proceeds alongside it through [CE](../maintainers/character-experience.md); the applicable complete episodes must demonstrate independent social/recreational motives and meaningful stopping, not only correct production.
 
 ### Stage 2 — A viable quiet day
 

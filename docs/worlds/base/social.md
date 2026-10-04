@@ -24,6 +24,12 @@ Installed definitions are not automatic actor enrollment. Kinship and personalit
 
 The mind panel displays permitted current feelings. God authoring exposes qualitative NPC creation/resolution; numeric authoring, reframing and process configuration lack a general editor. [FL13–FL16](../../limits/feelings.md#fl13) distinguish native lifecycle limits from missing UI. [ACT09](../../maintainers/actor-model.md#act09--internal-feeling-process-authoring) records a conditional future authoring slice, without enabling any new default emotions.
 
+## Proposed psychological needs and lived motives
+
+The [compelling-character product target](../../projects/compelling-characters-feature-spec.md) requires contact, belonging, enjoyment and chosen solitude to matter alongside bodily needs. Their meaning, causes, satisfaction/recovery and competing priorities must be specified through [CE01–CE03](../../maintainers/character-experience.md), then demonstrated in complete episodes. Existing qualitative understanding and admitted appraisals can supply first consumers. A greeting does not automatically grant belonging, and proximity does not prove affection.
+
+This is accepted direction with open world-content/integration work. It adds no current social meter, automatic feeling enrollment, friendship score or new native effect. [FL19](../../limits/feelings.md#fl19) and [D69](../../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) retain the proposed scope and choices.
+
 ## Spoken promises
 
 The [current native parser](../../../packages/domain/src/commitments.ts) recognizes committed, self-attributed speech beginning with `I promise to` followed by content, case-insensitively. It records an obligation as protected memory. The exact gather form can bind completion when the remaining item name resolves uniquely; a later matching gather by that actor fulfills it. Other recognized promises have no automatically inferred completion predicate. Ordinary paraphrases are not a general promise-understanding feature.

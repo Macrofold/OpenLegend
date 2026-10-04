@@ -77,6 +77,8 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 **Depends on:** EPR04/AG06/AG07 integration and AC09.6 for the complete journey. **Exit:** a newly created world presents the agreed character and supplies accurately; only Mike/Ada receive knives, Ada begins without an operational goal, and reload preserves the current authored state. [AG13](agent-agency.md#ag13--embodied-survival-demonstration) owns the live autonomous demonstration and comparison evidence; no claim of full harvest/cook/eat autonomy follows from starter content.
 
+**Early character-quality extension:** [CE01/CE02](character-experience.md) owns the cross-project proposal for a resident with meaningful bodily experience, contact/belonging, enjoyment, independent interests and real supported opportunities. It consumes BW18's authored-character foundation without treating biography inspection as demonstrated personality. Exact new world policies remain proposed until selected; [CE04/CE05](character-experience.md) requires full episodes through AG12/CR12 before their quality is claimed.
+
 ## Camp fire care and sharing
 
 Approved by Mike on 2026-09-28 as starting-scene priorities 2 and 3; plan and decisions: [camp fire and sharing](../projects/camp-fire-and-sharing.md). Canonical rules: [survival](../worlds/base/survival.md#tending-the-campfire), [items](../worlds/base/items.md) and [social](../worlds/base/social.md). Limits: [BW10](../limits/base-world.md#bw10).
