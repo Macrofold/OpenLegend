@@ -1,5 +1,9 @@
 # Progressive 3D pixel art — feature specification
 
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Not started | The general pipeline remains proposed; the separate mercenary pilot does not qualify reusable families or generated art. | 2026-10-04   |
+
 **Status: proposed design, not implemented or approved for runtime delivery.** Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. This task changes documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
 
 ## Maintained records
@@ -19,6 +23,8 @@ The central feature is not a pixelation filter or an image-to-mesh endpoint. It 
 Prioritize a small in-application comparison before broad conversion. Characters and equipment merit an early experiment because they expose the hardest artistic and compositional problems. Rigid props provide the simpler first production path. Do not postpone the character experiment until an expensive environment conversion is complete.
 
 ## 2. What remains controlling
+
+The later [mercenary pilot](completed/mercenary-scene-pilot.md) is delivered: a separate default NPC uses idle/walk animation, cloth and fixed-resolution character color/depth rendering. Its [scoped evidence](../verification/mercenary-default.md) and [A3D15 limits](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot) supersede the original sprite-only baseline, not the broader proposed family, publication or generation work. Reuse the delivered camera, lighting and character-resource owners; do not implement the pilot again.
 
 OpenLegend already uses a 3D spatial scene, simple meshes, camera-facing artwork, continuous orbit/pitch, support-aware motion, dynamic projected shadows, and lit sprites. Arbitrary generated-model loading, generalized rigs, and safe complete representation replacement are not delivered capabilities merely because the renderer is 3D. See the [current presentation specification](../world-presentation.md) and [SW18](../maintainers/spatial-world.md#sw18--world-presentation-delivery).
 
@@ -136,7 +142,7 @@ Consequential identity or silhouette changes require deliberate review rather th
 | S4 — Progressive model publication  | A generated rigid model can replace the sprite; compatible rigs follow only after their own qualification              | Identity and mechanics-fit review, independent stage failure, safe mid-action swap, scoped reusable artifacts                    |
 | S5 — Broaden with evidence          | Additional assemblies, creatures, state effects, pack portability, and scalable quality presets                        | Family-specific coverage and whole-application performance; no claim of universal generated anatomy or mechanics                 |
 
-Delivery details, dependencies, and unchecked completion criteria belong to [V3D delivery](../maintainers/3d-pixel-art.md). These stages are an implementation proposal, not permission to begin coding under this documentation request.
+Delivery details, dependencies, and unchecked completion criteria belong to [V3D delivery](../maintainers/3d-pixel-art.md). These stages are an implementation proposal, not permission to begin coding under this documentation request. Their order describes dependencies within this possible pipeline, not a new game roadmap: [playable-game priorities](../repertoires/gameplay-priorities.md) control selection. Choose only the visual capability needed by the selected worthwhile player or creator experience, rather than making the complete art platform a prerequisite for playable content.
 
 ## 11. Non-goals
 
