@@ -77,6 +77,8 @@ Qualify [complete episodes](../projects/compelling-characters-feature-spec.md#co
 
 #### DG03 — A useful demo and early audience learning
 
+**Product preparation completed October 4, 2026:** [Demo and audience learning](../projects/demo-and-audience-learning-feature-spec.md) supplies the selected audience, truthful ordinary invention/refinement/reuse journey, bounded formative study, economics, research and critique. [DL01–DL06](product-learning.md) retains exact demo qualification and any later authorized execution. No outreach, spending, paid demand or PD readiness is claimed.
+
 ND26's first audience, honest repeatable demonstration and bounded comprehension/value experiment. Identify the supported creative loop, actual questions, evidence and stop/expand criteria; distinguish preparation from permission to run outreach or spend.
 
 **Start and parallel boundary:** Design the brief against the current playable offering while DG01–DG02 improve it. The demonstrated scope must actually work before its evidence is claimed. Pack portability, a marketplace and a complete paid service are unnecessary; paid-offer validation follows DG27. **Existing owners:** ND26, business/launch decision owners and PD.
@@ -639,6 +641,8 @@ If an offer includes additional character slots, define switching, unattended be
 **Needed before implementation:** choose a sustainable fund budget, applicant/contributor eligibility, deliverables, rights, milestones and payout evidence. Specify advisory versus binding decisions, patron/contributor influence, overlapping membership, conflicts and abuse handling. Decide whether any proposed creator standard is wanted. Start with an understandable operating process; build grant or voting software only when that process needs it. Mission locks and corporate structures remain optional decisions, not engine prerequisites.
 
 ### ND26 — A bounded commercial test and repeatable product demonstration
+
+**Early slice prepared:** the [DG03 feature specification](../projects/demo-and-audience-learning-feature-spec.md) and [DL tracker](product-learning.md) cover comprehension, use and optional return learning. Actual operator/budget/dates, live demonstration and execution remain open. Paid-offer and renewal design remains DG27; this preparation does not close ND26's broader commercial questions.
 
 **Needs an experiment brief.** Sources: [business launch and validation plan](../../archive/06-marketing/business-plan.md), [channels and experiments](../../archive/06-marketing/ideas-channels-and-experiments.md), and [positioning/demo concepts](../../archive/06-marketing/positioning-and-copy.md).
 

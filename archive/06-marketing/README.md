@@ -16,6 +16,8 @@ The concrete example supplied by the user is a magic tree spell: cast it while p
 
 ## Documents
 
+The [DG03 demo and audience-learning specification](../../docs/projects/demo-and-audience-learning-feature-spec.md) now owns the proposed first comprehension/use/return experiment, with [DL01–DL06](../../docs/maintainers/product-learning.md) tracking exact qualification and later authorized execution. The concepts below retain their broader scope and historical status; paid-offer/renewal validation remains DG27.
+
 | Document | Contents |
 |---|---|
 | [Business plan](business-plan.md) | Paid hosted-world launch, proposed pricing, bounded operating costs, early customers, and profitability milestones for a sustainable side project |

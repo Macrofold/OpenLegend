@@ -34,6 +34,8 @@ Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L0
 
 Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
 
+Proposed [demo and audience learning](projects/demo-and-audience-learning-feature-spec.md): [DL-L01–DL-L05](limits/product-learning.md) inventory the formative sample, real-time session/return window, study-data retention, unselected actual operating ceilings and offered access. [DL01–DL06](maintainers/product-learning.md) owns later execution. Deployment, invention and AI controls remain their existing owners; no outreach, paid offering or measured demand is implied.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

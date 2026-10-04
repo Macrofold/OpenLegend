@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | DG03 product and experiment design is in preparation; no demonstration, participant study, outreach or commercial validation has been executed. | 2026-10-04 |
+| Not started | DG03 product preparation, research and critique are complete; technical preparation, demo qualification and any authorized participant study remain open. | 2026-10-04 |
 
 **Proposed product design.** This is the first audience-learning slice of [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). It makes the experiment reviewable without selecting a paid offer, publishing copy, recruiting people or authorizing spending. Technical preparation and actual product qualification remain with their existing owners.
 
@@ -60,7 +60,7 @@ The marketing [magic-tree and mage-only storyboard](../../archive/06-marketing/p
 
 Use one identified build and a clean disposable world with documented initial resources, known methods, permissions, enabled services and supported family definitions. Provide viable basic survival and readable nearby opportunities. Do not begin with an avoidable emergency that turns the demo into inventory rescue.
 
-Record which initial facts and objects are authored. Verify that the intended live invention is absent from the participant's starting usable definitions. Resetting between separate rehearsals is legitimate setup; resetting away a miss, resource loss or failed attempt inside a supposedly continuous demonstration must be disclosed.
+Record which initial facts and objects are authored. Establish from the controlled fixture's provenance that the exact completed composition is absent from the demonstrated world's existing recipe/library candidates, not merely unknown to this character. Revealing or teaching a preexisting recipe is useful but does not qualify live invention. This needs no disclosure of unrelated private data. Resetting between separate rehearsals is legitimate setup; resetting away a miss, resource loss or failed attempt inside a supposedly continuous demonstration must be disclosed.
 
 Choose a reliable opportunity to use a supported tool without guaranteeing the physical outcome. A hunting scene can include a miss or fleeing prey; it should make the reason and remaining choices legible. Success is possible through the rules, not assured by forcing an animal's death.
 
@@ -81,7 +81,7 @@ Keep a full real-time witness recording of any demo footage selected for reuse, 
 
 A suitable first refinement is a lighter supported sling variant that uses fewer suitable ingredients, if the current family admits that tradeoff. Choose actual candidate values, inspect resulting work/materials and retain any real limitations. Do not promise unchanged range, damage or accuracy merely because the player requested them; the native result must support those facts.
 
-The [current ordinary invention path](../architecture.md#shared-invention-workflow) pins the learned base, generates a separate supported candidate and retains the old recipe/items. Its documented live modification and native use evidence are useful narrow foundations; the exact browser-originated live modification followed by new crafting/use still needs integrated qualification. Similar inventions → Use existing remains the no-generation reuse path.
+The [current ordinary invention path](../architecture.md#shared-invention-workflow) pins the learned base, generates a separate supported candidate and retains the old recipe/items. Its documented live modification and native use evidence are useful narrow foundations; the exact browser-originated live modification followed by new crafting/use still needs integrated qualification. Similar inventions → Use existing remains the no-generation reuse path. Similarity search/preparation can still have its existing attributed cost; no new invention generation is required to use the known recipe.
 
 Ordinary Invent and the owner World Agent are distinct entry points. The primary demo does not need owner editing. A later creator-focused segment may use the [saved-work interface](../invention-workshop-tools.md#implemented-human-saved-work-interface), for example changing a supported assembly-work field through exact review/Apply. Label that authority and separately demonstrate any needed knowledge acquisition and real consumer. A player's learned recipe does not automatically supply a creator session, and applying a definition does not teach everyone or conjure an item.
 
@@ -101,7 +101,11 @@ Explain that this is an unfinished game study, that candid disinterest is useful
 
 A proposed 35-minute session leaves approximately five minutes for introduction/comprehension, twenty minutes for play, and ten minutes for reflection and optional return arrangements. Actual timing is recorded; a player absorbed in meaningful activity need not be interrupted at each segment boundary. The facilitator watches the total agreed session and budget.
 
+Introduction and debrief use ordinary world pause. Record the selected play speed and starting bodily conditions; at the current 1× rate, real minutes span substantial game time. Provide accessible prepared food and ordinary self-care, and let service waits follow actual world progression. Do not selectively freeze needs, feed an actor secretly or repeatedly rescue them to compensate for the study procedure.
+
 First show the short demo or its selected opening message. Ask, in ordinary language: “What do you think you could do here?” Then ask what changed in the shown scene and what they would expect to find on returning. Do not put the correct answers—creation, refinement, reuse—inside the question.
+
+This study deliberately includes a demo before play. Subsequent performance is demo-supported, with or without moderator help; it is not evidence of completely unaided discovery. Keep exposure consistent within a round and let the participant choose a meaningful variation. A later question about discovery without a demo needs its own labeled comparison.
 
 An incorrect expectation is useful evidence. Record it before explaining the real scope. Give the clarification needed for informed play, then keep the earlier unaided response distinct from the taught understanding.
 
@@ -110,6 +114,8 @@ An incorrect expectation is useful evidence. Record it before explaining the rea
 Offer a small real situation with supported alternatives. The participant can pursue the ranged-tool opportunity, investigate another currently supported useful object, or decide the premise does not interest them. A bounded catalogue is legitimate; forcing the exact sling wording is not a test of freeform comprehension.
 
 Let the person choose the aim and words. Use ordinary product help first: visible actions, recipe facts, meaningful availability explanations and the current invention questions. Do not add an elaborate tutorial or a separate research-only interface that hides the real discovery problem.
+
+The prepared demonstration must establish its claimed full sequence. Every participant need not complete that whole storyboard within the play segment. Record the portions they chose and reached, including unfinished refinement/reuse. Forcing completion would hide what they actually wanted to do.
 
 When a draft, question or refusal arrives, observe whether the participant understands the next choice. Ask for explanation at natural pauses rather than demanding a continuous spoken monologue. Constantly narrating thoughts can change play and consume the attention the game is meant to earn.
 
@@ -128,6 +134,8 @@ Do not defend the design, explain why an annoyance is technically necessary or r
 ## 6. Returning to the same world
 
 Offer a later opportunity only within an actually supported access window. The participant may decline without pressure. Record separately a self-initiated return, an agreed research appointment and a return following explicitly permitted contact. Scheduled attendance is not voluntary retention.
+
+Before enrollment, name the actual access end date, responsible operator and treatment of the world afterward. Keep the original world and a supported build available through the offered return window. Pinning that short-lived study build does not introduce legacy-save support. If that availability cannot be offered, omit the return claim from the cycle before recruitment rather than routinely excluding lost worlds afterward.
 
 On return, use current entry and absence behavior. No offscreen life is invented, no special research recap supplies missing game memory, and no fixed Resume confirmation is added to ordinary entry. Current [tab-resume behavior](completed/tab-resume-feature-spec.md) and the actual multiplayer/time owner prevail over older marketing language.
 
@@ -168,7 +176,7 @@ Use one small record per session, not a new general analytics platform. Each obs
 | What support was necessary? | Product help, moderator guidance, technical repair and minutes in each. | A rescued final success does not erase support cost. |
 | Is the experience supportable? | Complete attributed costs, uncertain exposure, service waits and operator time. | One cheap happy path is not a sustainable offering. |
 
-Use simple outcome descriptions: completed without moderator help, completed using product help, completed with moderator help, blocked, declined, or not observed. A technical outage can make a value question unobserved while still demonstrating a real availability/support problem. Do not delete that session from every denominator.
+Use simple outcome descriptions: demo-supported completion without moderator help, completed using product help, completed with moderator help, blocked, declined, or not observed. A technical outage can make a value question unobserved while still demonstrating a real availability/support problem. Do not delete that session from every denominator.
 
 Report counts as “two of the three people who attempted this step,” with the attempts described. At this size, individual cases and observed ranges are more useful than conversion percentages, reliable percentile claims or a composite engagement score. Keep first-round and changed-build observations separate.
 
@@ -182,7 +190,7 @@ The proposed product owner is Mike. Before running a cycle, name the facilitator
 
 Use the six-person/two-round plan as the maximum initial recruitment scope. Budget the possible return sessions, preparation, interpretation and failed attempts as well as first play. Reserve time to fix and reassess one obstacle; do not spend the whole allowance acquiring more participants.
 
-Choose the cash ceiling from a measured complete rehearsal and the founder's selected limit. A useful planning calculation is planned session count multiplied by the observed complete session cost, plus separately visible setup/retained-service costs and an explicit failure reserve. The actual ceiling may be lower; if the plan does not fit, reduce its offered scope before recruitment. A model-token estimate alone is insufficient.
+The rehearsal itself needs separately authorized credentials, a spending ceiling and a time limit before any paid dispatch. Choose the cycle's cash ceiling from that measured complete rehearsal and the founder's selected limit. A useful planning calculation is planned session count multiplied by the observed complete session cost, plus separately visible setup/retained-service costs and an explicit failure reserve. The actual ceiling may be lower; if the plan does not fit, reduce its offered scope before recruitment. A model-token estimate alone is insufficient.
 
 The [business plan's](../../archive/06-marketing/business-plan.md) example prices and economics remain hypotheses for DG27. This experiment does not adopt a $39 price, a ten-renewal target or the old illustrative cost assumptions.
 
@@ -202,7 +210,7 @@ Default to short structured observations and optional voluntarily offered explan
 
 Keep scheduling contact separate from play observations. Use a study-local identifier, the relevant experience category and the minimum evidence needed for the question. Do not collect billing details, inspect private notes/messages, import external personal history or expose another participant's world. Current game/operator permissions remain controlling.
 
-The proposed study-specific retention is deletion of identifiable contact and raw session notes/recordings within 30 days after the cycle review, unless a separately agreed narrower purpose and date is recorded. Permit earlier withdrawal from future study contact and removal of identifiable study material. Keep only a concise de-identified decision report afterward; check quotations and unusual creative details for identifiability before retaining them.
+The proposed study-specific retention is deletion of identifiable contact and raw session notes/recordings within 30 days after the cycle review, unless a separately agreed narrower purpose and date is recorded. Give the participant the actual deletion date at enrollment; moving the review does not silently extend it. Separately retained demonstration footage needs its own agreed purpose, access and end date. Permit earlier withdrawal from future study contact and removal of identifiable study material. Keep only a concise de-identified decision report afterward; check quotations and unusual creative details for identifiability before retaining them.
 
 This is a proposed study-record policy, not a change to canonical game saves, provider records, financial evidence, existing account deletion or legally required retention. Explain those different scopes honestly before the study. Do not promise to erase somebody else's already viewed copy or reset the world's history as part of deleting a research note.
 
