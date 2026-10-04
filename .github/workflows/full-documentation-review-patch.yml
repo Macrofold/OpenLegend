@@ -45,6 +45,12 @@ jobs:
           moves = {item['before_path']: item['path'] for item in bundle['files'] if item.get('before_path', item['path']) != item['path']}
           for old, new in moves.items():
               assert old.startswith('docs/projects/') and new.startswith('docs/projects/completed/'), ('invalid move', old, new)
+          reference_moves = dict(moves)
+          for old, new in bundle.get('reference_moves', {}).items():
+              assert old.startswith('docs/projects/') and new.startswith('docs/projects/completed/'), ('invalid reference move', old, new)
+              assert not path_for(old).exists() and path_for(new).is_file(), ('uncommitted reference destination', old, new)
+              assert old not in reference_moves, ('duplicate reference move', old)
+              reference_moves[old] = new
           outputs, inputs, planned, formatting = set(), set(), [], []
           for item in bundle['files']:
               name = item['path']
@@ -71,7 +77,7 @@ jobs:
                   assert before is not None and old_name == name, ('invalid reference-only file', name)
                   expected = original
                   substitutions = {}
-                  for old, new in moves.items():
+                  for old, new in reference_moves.items():
                       substitutions[old] = new
                       substitutions[posixpath.relpath(old, posixpath.dirname(name))] = posixpath.relpath(new, posixpath.dirname(name))
                   for old in sorted(substitutions, key=len, reverse=True):
