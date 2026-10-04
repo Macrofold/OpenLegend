@@ -1,6 +1,10 @@
 .ol-panel-body:has(> .ol-inventory-workspace) {
   display: flex;
+  flex-direction: column;
   overflow: hidden;
+}
+.ol-panel-body > .ol-container-opening {
+  flex-shrink: 0;
 }
 .ol-inventory-workspace {
   container-type: inline-size;

@@ -43,6 +43,7 @@ type DragIntention = {
   targetId: string;
   targetRevision: number;
 };
+type WorldRoot = { id: string; placementRevision?: number; position?: string };
 const dragFormat = 'application/x-open-legend-possession';
 
 function sameItem(left: InventoryItemView, right: InventoryItemView) {
@@ -50,7 +51,8 @@ function sameItem(left: InventoryItemView, right: InventoryItemView) {
     left.id === right.id &&
     left.revision === right.revision &&
     left.placementRevision === right.placementRevision &&
-    left.container?.revision === right.container?.revision
+    left.container?.revision === right.container?.revision &&
+    left.availableQuantity === right.availableQuantity
   );
 }
 function arrange(
@@ -124,6 +126,29 @@ function InventoryWorkspace({
   const [requestSeen, setRequestSeen] = useState(
     openContainer === null ? null : openContainer?.requestId,
   );
+  function captureWorldRoot(id: string): WorldRoot {
+    const entity = view.entities.find((entry) => entry.id === id);
+    return {
+      id,
+      placementRevision: entity?.storage?.placementRevision,
+      position: entity ? JSON.stringify([entity.position, entity.supportSurfaceId]) : undefined,
+    };
+  }
+  const [worldRoot, setWorldRoot] = useState<WorldRoot | undefined>(() =>
+    openContainer?.containerId ? captureWorldRoot(openContainer.containerId) : undefined,
+  );
+  const [worldInvalid, setWorldInvalid] = useState(false);
+  const currentWorldRoot = worldRoot && view.entities.find((entry) => entry.id === worldRoot.id);
+  const worldRootValid =
+    !worldRoot ||
+    !!(
+      currentWorldRoot?.storage &&
+      currentWorldRoot.storage.containerId === worldRoot.id &&
+      currentWorldRoot.storage.revision !== undefined &&
+      currentWorldRoot.storage.placementRevision === worldRoot.placementRevision &&
+      JSON.stringify([currentWorldRoot.position, currentWorldRoot.supportSurfaceId]) ===
+        worldRoot.position
+    );
   const [drag, setDrag] = useState<DragIntention>();
   const dragRef = useRef<DragIntention | undefined>(undefined);
   const ignoreClick = useRef(false);
@@ -177,6 +202,7 @@ function InventoryWorkspace({
     revisionKey,
     visible,
     connected,
+    expectedRootId: view.player.id,
   });
   const right = useInventoryCollection({
     initialId: openContainer?.containerId ?? '',
@@ -184,6 +210,11 @@ function InventoryWorkspace({
     revisionKey,
     visible,
     connected,
+    expectedRootId: worldRoot?.id ?? view.player.id,
+    blockedReason:
+      worldInvalid || !worldRootValid
+        ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
+        : undefined,
   });
   const requestId = openContainer === null ? null : openContainer?.requestId;
   if (requestId !== requestSeen) {
@@ -191,23 +222,34 @@ function InventoryWorkspace({
     if (openContainer !== undefined) {
       right.navigate(openContainer?.containerId ?? '');
       setRightName(openContainer?.name ?? 'Container');
+      setWorldRoot(
+        openContainer?.containerId ? captureWorldRoot(openContainer.containerId) : undefined,
+      );
+      setWorldInvalid(false);
       setSelection(undefined);
       setAmountDraft(undefined);
       setDrag(undefined);
       dragRef.current = undefined;
     }
+  } else if (!worldRootValid && !worldInvalid) {
+    setWorldInvalid(true);
   }
   const operations = useInventoryCommand({
     worldId: view.worldId,
     actorId: view.player.id,
     timeline: view.saveTimeline,
     scope: view.access?.scope ?? '',
+    recoveryScope: view.access?.commandRecoveryScope,
     epoch: view.commandEpoch,
     connected,
     command,
     onResolved(result) {
       left.refresh();
       right.refresh();
+      if (result.ok) {
+        closeDetail(false);
+        if (actionFocus.current) focusCollection(actionFocus.current.side);
+      }
       if (actionFocus.current) setResolvedFocus({ ...actionFocus.current, itemId: result.itemId });
       actionFocus.current = undefined;
     },
@@ -220,8 +262,7 @@ function InventoryWorkspace({
   const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
   const target = selection && opposite(selection.side).page?.container;
   const selectedContainer = selectedCollection?.page?.container;
-  const amount =
-    amountDraft && exactQuantity(amountDraft.value, amountDraft.item.availableQuantity);
+  const amount = amountDraft && exactQuantity(amountDraft.value, item?.availableQuantity);
   const draftStale =
     !!amountDraft &&
     (!item ||
@@ -283,26 +324,31 @@ function InventoryWorkspace({
   useEffect(() => {
     const cancel = () => stopDrag();
     const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') cancel();
+      if (event.key === 'Escape' && dragRef.current) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        cancel();
+      }
     };
     window.addEventListener('blur', cancel);
-    window.addEventListener('keydown', escape);
+    window.addEventListener('keydown', escape, true);
     return () => {
       window.removeEventListener('blur', cancel);
-      window.removeEventListener('keydown', escape);
+      window.removeEventListener('keydown', escape, true);
     };
   }, []);
   useEffect(() => {
-    if (!visible || !connected) {
-      stopDrag();
-      closeDetail(false);
-    }
+    if (!visible || !connected) stopDrag();
   }, [visible, connected]);
 
   function navigate(side: InventorySide, id: string) {
     if (busy) return;
     closeDetail(false);
     stopDrag();
+    if (side === 'container' && !id) {
+      setWorldRoot(undefined);
+      setWorldInvalid(false);
+    }
     collection(side).navigate(id);
     focusCollection(side);
   }
@@ -360,9 +406,8 @@ function InventoryWorkspace({
         neighborId: source.items[index + 1]?.id ?? source.items[index - 1]?.id,
       };
     }
-    closeDetail(false);
     stopDrag();
-    focusCollection(side);
+    if (!selection) focusCollection(side);
     void operations.dispatch(action);
   }
   function quickMove(side: InventorySide, sourceItem: InventoryItemView) {
@@ -498,7 +543,8 @@ function InventoryWorkspace({
         </div>
         <p className="ol-caption">
           Select an item to inspect it. With two containers open, drag between them or Shift-click
-          to move a full stack. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to move.
+          to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
+          move.
         </p>
         {view.player.inventory.some((entry) => entry.equipped) && (
           <section className="ol-inventory-equipment" aria-label="Equipped items">
@@ -596,345 +642,396 @@ function InventoryWorkspace({
         placement="right top"
         shouldFlip
       >
-        <Dialog
-          className="ol-inventory-detail"
-          aria-label={item ? `${item.name} actions and details` : 'Item details'}
+        <div
+          onKeyDownCapture={(event) => {
+            if (event.key === 'Escape' && amountDraft && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              event.stopPropagation();
+              setAmountDraft(undefined);
+              setQuantityError('');
+            }
+          }}
         >
-          <div className="ol-inventory-toolbar">
-            <h3 className="ol-heading">{item?.name ?? 'Item details'}</h3>
-            <Button size="sm" variant="quiet" onPress={() => closeDetail()}>
-              Close
-            </Button>
-          </div>
-          {!item && (
-            <p role="status">
-              {selectedCollection?.loading
-                ? 'Refreshing this item…'
-                : 'This item is no longer in these visible contents. Close this panel and select an available item.'}
-            </p>
-          )}
-          {item && selectedContainer && selection && (
-            <>
+          <Dialog
+            className="ol-inventory-detail"
+            aria-label={item ? `${item.name} actions and details` : 'Item details'}
+          >
+            <div className="ol-inventory-toolbar">
+              <h3 className="ol-heading">{item?.name ?? 'Item details'}</h3>
+              <Button size="sm" variant="quiet" onPress={() => closeDetail()}>
+                Close
+              </Button>
+            </div>
+            {operations.pending && (
               <p className="ol-caption">
-                {selectedContainer.name} · {item.quantity} units {item.equipped && '· Equipped'}
+                {operations.pending.status === 'sending'
+                  ? 'Sending this action…'
+                  : 'The outcome is unresolved. Use Check result in the inventory.'}
               </p>
-              {amountDraft ? (
-                <>
-                  <h4>
-                    {amountDraft.operation === 'move'
-                      ? `Move to ${amountDraft.target?.name ?? 'container'}`
-                      : amountDraft.operation === 'offer'
-                        ? 'Offer to a person'
-                        : amountDraft.operation === 'split'
-                          ? 'Split this stack'
-                          : 'Drop items'}
-                  </h4>
-                  <InventoryQuantity
-                    value={amountDraft.value}
-                    onChange={(value) => {
-                      setAmountDraft({ ...amountDraft, value });
-                      setQuantityError('');
-                    }}
-                    maximum={amountDraft.item.availableQuantity}
-                    disabled={busy}
-                    error={quantityError}
-                  />
-                  {draftStale && (
-                    <p role="status">
-                      These contents changed. Return to the item to choose a fresh amount and
-                      destination.
-                    </p>
-                  )}
-                  {amountDraft.operation === 'offer' && amount !== undefined && (
-                    <InventoryOffer
-                      source={transferSource(amountDraft.item, amountDraft.source, amount)}
-                      scope={view.access?.scope ?? ''}
-                      active={canAct && !draftStale}
-                      onOffer={(recipient) =>
-                        send(
-                          {
-                            id: `offer-${amountDraft.item.id}-${recipient.id}`,
-                            label: `Offer ${amount} ${amountDraft.item.name} to ${recipient.name}`,
-                            enabled: true,
-                            command: {
-                              type: 'handover',
-                              handoverOperation: 'offer',
-                              targetId: recipient.id,
-                              itemId: amountDraft.item.id,
-                              quantity: amount,
-                              expectedRevision: amountDraft.item.revision,
-                              placementRevision: amountDraft.item.placementRevision,
-                              expectedContentsRevision: amountDraft.item.container?.revision,
-                              targetRevision: recipient.revision,
-                            },
-                          },
-                          selection.side,
-                        )
-                      }
-                    />
-                  )}
-                  <div className="ol-actions">
-                    {amountDraft.operation !== 'offer' && (
-                      <Button disabled={!canAct || draftStale} onPress={submitAmount}>
-                        {amountDraft.operation === 'move'
-                          ? 'Move amount'
+            )}
+            {operations.message && <p className="ol-caption">{operations.message}</p>}
+            {!item && (
+              <p role="status">
+                {selectedCollection?.loading
+                  ? 'Refreshing this item…'
+                  : 'This item is no longer in these visible contents. Close this panel and select an available item.'}
+              </p>
+            )}
+            {item && selectedContainer && selection && (
+              <>
+                <p className="ol-caption">
+                  {selectedContainer.name} · {item.quantity} units {item.equipped && '· Equipped'}
+                </p>
+                {amountDraft ? (
+                  <>
+                    <h4>
+                      {amountDraft.operation === 'move'
+                        ? `Move to ${amountDraft.target?.name ?? 'container'}`
+                        : amountDraft.operation === 'offer'
+                          ? 'Offer to a person'
                           : amountDraft.operation === 'split'
-                            ? 'Split stack'
-                            : 'Drop amount'}
-                      </Button>
-                    )}
-                    <Button
-                      variant="quiet"
-                      onPress={() => {
-                        setAmountDraft(undefined);
+                            ? 'Split this stack'
+                            : 'Drop items'}
+                    </h4>
+                    <InventoryQuantity
+                      value={amountDraft.value}
+                      onChange={(value) => {
+                        setAmountDraft({ ...amountDraft, value });
                         setQuantityError('');
                       }}
-                    >
-                      Back to item
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="ol-inventory-item-actions">
-                    {target && target.id !== selectedContainer.id && target.id !== item.id && (
-                      <>
-                        <Button
-                          disabled={
-                            !canAct ||
-                            item.availableQuantity === undefined ||
-                            item.availableQuantity < 1
-                          }
-                          onPress={() => quickMove(selection.side, item)}
-                        >
-                          {item.availableQuantity !== item.quantity
-                            ? `Move ${item.availableQuantity ?? 'available'} available to ${target.name}`
-                            : `Move to ${target.name}`}
-                        </Button>
-                        {!item.individual && item.quantity > 1 && (
-                          <Button
-                            variant="quiet"
-                            disabled={!canAct}
-                            onPress={() => chooseAmount('move')}
-                          >
-                            Move an amount…
-                          </Button>
-                        )}
-                      </>
+                      maximum={item.availableQuantity}
+                      disabled={busy}
+                      error={quantityError}
+                    />
+                    {draftStale && (
+                      <p role="status">
+                        These contents changed. Refresh the available amount before acting; the
+                        entered quantity stays in place.
+                      </p>
                     )}
-                    {item.container && (
-                      <>
-                        <Button
-                          variant="quiet"
-                          disabled={busy}
-                          onPress={() => navigate(selection.side, item.id)}
-                        >
-                          Open {item.name}
-                        </Button>
-                        {selection.side === 'belongings' && !right.location.id && (
-                          <Button
-                            variant="quiet"
-                            disabled={busy}
-                            onPress={() => {
-                              setRightName(item.name);
-                              navigate('container', item.id);
-                            }}
-                          >
-                            Open beside belongings
-                          </Button>
-                        )}
-                      </>
+                    {draftStale && (
+                      <Button
+                        variant="quiet"
+                        disabled={
+                          !canAct ||
+                          !item ||
+                          !selectedContainer ||
+                          (amountDraft.operation === 'move' &&
+                            target?.id !== amountDraft.target?.id)
+                        }
+                        onPress={() => {
+                          setAmountDraft({
+                            ...amountDraft,
+                            item,
+                            source: selectedContainer,
+                            target: amountDraft.operation === 'move' ? target : undefined,
+                            action: amountDraft.action
+                              ? item.actions.find((entry) => entry.id === amountDraft.action?.id)
+                              : undefined,
+                          });
+                          setQuantityError('');
+                        }}
+                      >
+                        Refresh available amount
+                      </Button>
                     )}
-                    <Button
-                      variant="quiet"
-                      disabled={
-                        !canAct ||
-                        item.availableQuantity === undefined ||
-                        item.availableQuantity < 1
-                      }
-                      onPress={() => chooseAmount('offer')}
-                    >
-                      Offer to a person…
-                    </Button>
-                    {onTalkAbout && (
+                    {amountDraft.operation === 'offer' && amount !== undefined && (
+                      <InventoryOffer
+                        source={transferSource(amountDraft.item, amountDraft.source, amount)}
+                        scope={view.access?.scope ?? ''}
+                        active={canAct && !draftStale}
+                        onOffer={(recipient) =>
+                          send(
+                            {
+                              id: `offer-${amountDraft.item.id}-${recipient.id}`,
+                              label: `Offer ${amount} ${amountDraft.item.name} to ${recipient.name}`,
+                              enabled: true,
+                              command: {
+                                type: 'handover',
+                                handoverOperation: 'offer',
+                                targetId: recipient.id,
+                                itemId: amountDraft.item.id,
+                                quantity: amount,
+                                expectedRevision: amountDraft.item.revision,
+                                placementRevision: amountDraft.item.placementRevision,
+                                expectedContentsRevision: amountDraft.item.container?.revision,
+                                targetRevision: recipient.revision,
+                              },
+                            },
+                            selection.side,
+                          )
+                        }
+                      />
+                    )}
+                    <div className="ol-actions">
+                      {amountDraft.operation !== 'offer' && (
+                        <Button disabled={!canAct || draftStale} onPress={submitAmount}>
+                          {amountDraft.operation === 'move'
+                            ? 'Move amount'
+                            : amountDraft.operation === 'split'
+                              ? 'Split stack'
+                              : 'Drop amount'}
+                        </Button>
+                      )}
                       <Button
                         variant="quiet"
                         onPress={() => {
-                          onTalkAbout({ itemId: item.id, name: item.name });
-                          closeDetail();
+                          setAmountDraft(undefined);
+                          setQuantityError('');
                         }}
                       >
-                        Talk about {item.name}
+                        Back to item
                       </Button>
-                    )}
-                    {item.actions.map((action) => (
-                      <div key={action.id}>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="ol-inventory-item-actions">
+                      {target && target.id !== selectedContainer.id && target.id !== item.id && (
+                        <>
+                          <Button
+                            disabled={
+                              !canAct ||
+                              item.availableQuantity === undefined ||
+                              item.availableQuantity < 1
+                            }
+                            onPress={() => quickMove(selection.side, item)}
+                          >
+                            {item.availableQuantity !== item.quantity
+                              ? `Move ${item.availableQuantity ?? 'available'} available to ${target.name}`
+                              : `Move to ${target.name}`}
+                          </Button>
+                          {!item.individual && item.quantity > 1 && (
+                            <Button
+                              variant="quiet"
+                              disabled={!canAct}
+                              onPress={() => chooseAmount('move')}
+                            >
+                              Move an amount…
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {item.container && (
+                        <>
+                          <Button
+                            variant="quiet"
+                            disabled={busy}
+                            onPress={() => navigate(selection.side, item.id)}
+                          >
+                            Open {item.name}
+                          </Button>
+                          {selection.side === 'belongings' && !right.location.id && (
+                            <Button
+                              variant="quiet"
+                              disabled={busy}
+                              onPress={() => {
+                                setRightName(item.name);
+                                setWorldRoot(undefined);
+                                setWorldInvalid(false);
+                                navigate('container', item.id);
+                              }}
+                            >
+                              Open beside belongings
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      <Button
+                        variant="quiet"
+                        disabled={
+                          !canAct ||
+                          item.availableQuantity === undefined ||
+                          item.availableQuantity < 1
+                        }
+                        onPress={() => chooseAmount('offer')}
+                      >
+                        Offer to a person…
+                      </Button>
+                      {onTalkAbout && (
                         <Button
                           variant="quiet"
-                          disabled={!canAct || !action.enabled}
-                          onPress={() =>
-                            action.command.type === 'split-item'
-                              ? chooseAmount('split', action)
-                              : action.command.type === 'drop' && item.quantity > 1
-                                ? chooseAmount('drop', action)
-                                : send(action, selection.side)
-                          }
-                        >
-                          {action.command.type === 'split-item'
-                            ? 'Split stack…'
-                            : action.command.type === 'drop' && item.quantity > 1
-                              ? 'Drop an amount…'
-                              : action.label}
-                        </Button>
-                        {!action.enabled && action.reason && (
-                          <p className="ol-caption">{action.reason}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <details open={!selection.actions}>
-                    <summary>Known details</summary>
-                    <p>{item.description}</p>
-                    <div className="ol-tags">
-                      {item.tags.map((tag) => (
-                        <Tag key={tag}>{tag}</Tag>
-                      ))}
-                      {item.individual && <Tag>Individual object</Tag>}
-                    </div>
-                    <p className="ol-caption">
-                      Available: {item.availableQuantity ?? 'Unknown'} · Packing load:{' '}
-                      {item.packingLoad ?? 'Unknown'}
-                      {item.container ? ' including its contents' : ' per unit'}
-                    </p>
-                    {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
-                    <dl className="ol-inventory-facts">
-                      {item.characteristics?.map((fact) => (
-                        <div key={fact.id}>
-                          <dt>{fact.label}</dt>
-                          <dd>
-                            {fact.value ?? 'Unknown'} {fact.unit}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </details>
-                  {item.comparison && (
-                    <details>
-                      <summary>Compare with equipped {item.comparison.name}</summary>
-                      <table className="ol-inventory-comparison">
-                        <caption>Compared with equipped {item.comparison.name}</caption>
-                        <thead>
-                          <tr>
-                            <th>Characteristic</th>
-                            <th>{item.name}</th>
-                            <th>{item.comparison.name}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.characteristics?.flatMap((fact) => {
-                            const other = item.comparison?.characteristics.find(
-                              (entry) => entry.id === fact.id && entry.unit === fact.unit,
-                            );
-                            return other
-                              ? [
-                                  <tr key={fact.id}>
-                                    <th>
-                                      {fact.label} {fact.unit}
-                                    </th>
-                                    <td>{fact.value ?? 'Unknown'}</td>
-                                    <td>{other.value ?? 'Unknown'}</td>
-                                  </tr>,
-                                ]
-                              : [];
-                          })}
-                        </tbody>
-                      </table>
-                      <p className="ol-caption">
-                        Only matching meanings and units are compared. Unknown facts stay unknown;
-                        there is no total equipment score.
-                      </p>
-                    </details>
-                  )}
-                  {!item.individual && !item.container && !item.equipped && (
-                    <MergeTargets
-                      key={item.id}
-                      item={item}
-                      containerId={selectedContainer.id}
-                      pageKey={selectedCollection?.key ?? ''}
-                      canAct={canAct && item.availableQuantity === item.quantity}
-                      visible={visible && connected}
-                      onMerge={(match) =>
-                        send(
-                          arrange(
-                            'merge-item',
-                            item,
-                            match.id,
-                            match.revision,
-                            item.quantity,
-                            'Merge stacks',
-                          ),
-                          selection.side,
-                        )
-                      }
-                    />
-                  )}
-                  {view.godMode && (
-                    <details>
-                      <summary>God mode · Declare ownership</summary>
-                      <p>
-                        A declaration records an owner; it does not move the object or grant access.
-                      </p>
-                      <label>
-                        Holder{' '}
-                        <select value={holder} onChange={(event) => setHolder(event.target.value)}>
-                          <option value="">No declared owner</option>
-                          <option value={view.player.id}>{view.player.name}</option>
-                          {view.entities
-                            .filter((entry) => entry.kind === 'actor')
-                            .map((entry) => (
-                              <option key={entry.id} value={entry.id}>
-                                {entry.name}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      <label>
-                        Disclosure{' '}
-                        <select
-                          value={disclosure}
-                          onChange={(event) => {
-                            if (
-                              event.target.value === 'custodian' ||
-                              event.target.value === 'public'
-                            )
-                              setDisclosure(event.target.value);
+                          onPress={() => {
+                            onTalkAbout({ itemId: item.id, name: item.name });
+                            closeDetail();
                           }}
                         >
-                          <option value="custodian">Current custodian</option>
-                          <option value="public">Public declaration</option>
-                        </select>
-                      </label>
-                      <Button
-                        disabled={!canAct}
-                        onPress={() =>
-                          void ownerWrite('/api/god/ownership', {
-                            id: crypto.randomUUID(),
-                            itemId: item.id,
-                            expectedRevision: item.declaredOwner?.revision ?? 0,
-                            holderId: holder || null,
-                            disclosure,
-                          })
-                        }
-                      >
-                        Save declaration
-                      </Button>
+                          Talk about {item.name}
+                        </Button>
+                      )}
+                      {item.actions.map((action) => (
+                        <div key={action.id}>
+                          <Button
+                            variant="quiet"
+                            disabled={!canAct || !action.enabled}
+                            onPress={() =>
+                              action.command.type === 'split-item'
+                                ? chooseAmount('split', action)
+                                : action.command.type === 'drop' && item.quantity > 1
+                                  ? chooseAmount('drop', action)
+                                  : send(action, selection.side)
+                            }
+                          >
+                            {action.command.type === 'split-item'
+                              ? 'Split stack…'
+                              : action.command.type === 'drop' && item.quantity > 1
+                                ? 'Drop an amount…'
+                                : action.label}
+                          </Button>
+                          {!action.enabled && action.reason && (
+                            <p className="ol-caption">{action.reason}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <details open={!selection.actions}>
+                      <summary>Known details</summary>
+                      <p>{item.description}</p>
+                      <div className="ol-tags">
+                        {item.tags.map((tag) => (
+                          <Tag key={tag}>{tag}</Tag>
+                        ))}
+                        {item.individual && <Tag>Individual object</Tag>}
+                      </div>
+                      <p className="ol-caption">
+                        Available: {item.availableQuantity ?? 'Unknown'} · Packing load:{' '}
+                        {item.packingLoad ?? 'Unknown'}
+                        {item.container ? ' including its contents' : ' per unit'}
+                      </p>
+                      {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
+                      <dl className="ol-inventory-facts">
+                        {item.characteristics?.map((fact) => (
+                          <div key={fact.id}>
+                            <dt>{fact.label}</dt>
+                            <dd>
+                              {fact.value ?? 'Unknown'} {fact.unit}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </details>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </Dialog>
+                    {item.comparison && (
+                      <details>
+                        <summary>Compare with equipped {item.comparison.name}</summary>
+                        <table className="ol-inventory-comparison">
+                          <caption>Compared with equipped {item.comparison.name}</caption>
+                          <thead>
+                            <tr>
+                              <th>Characteristic</th>
+                              <th>{item.name}</th>
+                              <th>{item.comparison.name}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {item.characteristics?.flatMap((fact) => {
+                              const other = item.comparison?.characteristics.find(
+                                (entry) => entry.id === fact.id && entry.unit === fact.unit,
+                              );
+                              return other
+                                ? [
+                                    <tr key={fact.id}>
+                                      <th>
+                                        {fact.label} {fact.unit}
+                                      </th>
+                                      <td>{fact.value ?? 'Unknown'}</td>
+                                      <td>{other.value ?? 'Unknown'}</td>
+                                    </tr>,
+                                  ]
+                                : [];
+                            })}
+                          </tbody>
+                        </table>
+                        <p className="ol-caption">
+                          Only matching meanings and units are compared. Unknown facts stay unknown;
+                          there is no total equipment score.
+                        </p>
+                      </details>
+                    )}
+                    {!item.individual && !item.container && !item.equipped && (
+                      <MergeTargets
+                        key={item.id}
+                        item={item}
+                        containerId={selectedContainer.id}
+                        pageKey={selectedCollection?.key ?? ''}
+                        canAct={canAct && item.availableQuantity === item.quantity}
+                        visible={visible && connected}
+                        onMerge={(match) =>
+                          send(
+                            arrange(
+                              'merge-item',
+                              item,
+                              match.id,
+                              match.revision,
+                              item.quantity,
+                              'Merge stacks',
+                            ),
+                            selection.side,
+                          )
+                        }
+                      />
+                    )}
+                    {view.godMode && (
+                      <details>
+                        <summary>God mode · Declare ownership</summary>
+                        <p>
+                          A declaration records an owner; it does not move the object or grant
+                          access.
+                        </p>
+                        <label>
+                          Holder{' '}
+                          <select
+                            value={holder}
+                            onChange={(event) => setHolder(event.target.value)}
+                          >
+                            <option value="">No declared owner</option>
+                            <option value={view.player.id}>{view.player.name}</option>
+                            {view.entities
+                              .filter((entry) => entry.kind === 'actor')
+                              .map((entry) => (
+                                <option key={entry.id} value={entry.id}>
+                                  {entry.name}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <label>
+                          Disclosure{' '}
+                          <select
+                            value={disclosure}
+                            onChange={(event) => {
+                              if (
+                                event.target.value === 'custodian' ||
+                                event.target.value === 'public'
+                              )
+                                setDisclosure(event.target.value);
+                            }}
+                          >
+                            <option value="custodian">Current custodian</option>
+                            <option value="public">Public declaration</option>
+                          </select>
+                        </label>
+                        <Button
+                          disabled={!canAct}
+                          onPress={() =>
+                            void ownerWrite('/api/god/ownership', {
+                              id: crypto.randomUUID(),
+                              itemId: item.id,
+                              expectedRevision: item.declaredOwner?.revision ?? 0,
+                              holderId: holder || null,
+                              disclosure,
+                            })
+                          }
+                        >
+                          Save declaration
+                        </Button>
+                      </details>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </Dialog>
+        </div>
       </Popover>
       <footer className="ol-inventory-feedback">
         {operations.pending && (

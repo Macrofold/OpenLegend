@@ -10,30 +10,37 @@ export function useInventoryCollection({
   revisionKey,
   visible,
   connected,
+  expectedRootId,
+  blockedReason,
 }: {
   initialId: string;
   scope: string;
   revisionKey: string;
   visible: boolean;
   connected: boolean;
+  expectedRootId: string;
+  blockedReason?: string;
 }) {
-  const [location, setLocation] = useState({
+  const [location, setLocation] = useState<{ id: string; cursor?: string; context?: string }>({
     id: initialId,
-    cursor: undefined as string | undefined,
   });
   const [query, setQueryValue] = useState('');
   const [refreshNumber, setRefreshNumber] = useState(0);
-  const available = visible && connected && !!location.id;
+  const available = visible && connected && !!location.id && !blockedReason;
   const [availability, setAvailability] = useState({ available, revision: 0 });
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
+  const paginationContext = JSON.stringify([scope, revisionKey, availability.revision]);
+  const cursor = location.context === paginationContext ? location.cursor : undefined;
   const key = JSON.stringify([
     scope,
-    location,
+    location.id,
+    cursor,
     query,
     revisionKey,
     refreshNumber,
     availability.revision,
+    expectedRootId,
   ]);
   const [result, setResult] = useState<{
     key: string;
@@ -47,11 +54,20 @@ export function useInventoryCollection({
       () => {
         void post<ContainerPage>(
           '/api/inventory',
-          { containerId: location.id, cursor: location.cursor, query },
+          { containerId: location.id, cursor, query },
           controller.signal,
         )
           .then((page) => {
             if (controller.signal.aborted) return;
+            // An opened bag belongs to this interaction only while it remains under its
+            // original carried/world root. A grant to a new custodian is not a reopen.
+            if (page.ok && !page.breadcrumbs.some((entry) => entry.id === expectedRootId)) {
+              setResult({
+                key,
+                error: 'This container moved. Open it again from its current location.',
+              });
+              return;
+            }
             setResult({
               key,
               ...(page.ok
@@ -76,12 +92,15 @@ export function useInventoryCollection({
   }, [key, available]);
   const current = available && result?.key === key ? result : undefined;
   return {
-    location,
+    location: { id: location.id, cursor },
     query,
     page: current?.page,
     error: current?.error,
     loading: available && !current,
     available,
+    blockedReason,
+    notice:
+      location.cursor && !cursor ? 'Contents changed. Showing the first page again.' : undefined,
     key,
     navigate(id: string) {
       setLocation({ id, cursor: undefined });
@@ -92,10 +111,16 @@ export function useInventoryCollection({
       setLocation((old) => ({ id: old.id, cursor: undefined }));
     },
     refresh() {
+      setLocation((old) => ({ id: old.id }));
       setRefreshNumber((value) => value + 1);
     },
     next() {
-      if (current?.page?.next) setLocation((old) => ({ id: old.id, cursor: current.page?.next }));
+      if (current?.page?.next)
+        setLocation((old) => ({
+          id: old.id,
+          cursor: current.page?.next,
+          context: paginationContext,
+        }));
     },
     first() {
       setLocation((old) => ({ id: old.id, cursor: undefined }));

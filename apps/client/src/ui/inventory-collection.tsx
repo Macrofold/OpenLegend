@@ -106,7 +106,10 @@ export function InventoryCollection({
         </div>
       </header>
       <div className="ol-inventory-grid-scroll">
-        {!state.available && <p role="status">Reconnect to read these belongings.</p>}
+        {!state.available && (
+          <p role="status">{state.blockedReason ?? 'Reconnect to read these belongings.'}</p>
+        )}
+        {state.notice && <p role="status">{state.notice}</p>}
         {loading && <p role="status">Reading contents…</p>}
         {error && <p role="alert">{error}</p>}
         <ul className="ol-inventory-grid" aria-label={`${title} items`}>

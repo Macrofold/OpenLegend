@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ActionOption, ApiResult, CommandReceiptResult } from '@open-legend/protocol';
-import { post, privateDraftScope } from '../api';
+import { post } from '../api';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 
 type PendingCommand = CommandRequestIdentity & { command: unknown; label: string };
@@ -50,6 +50,7 @@ export function useInventoryCommand({
   actorId,
   timeline,
   scope,
+  recoveryScope,
   epoch,
   connected,
   command,
@@ -59,18 +60,16 @@ export function useInventoryCommand({
   actorId: string;
   timeline?: string;
   scope: string;
+  recoveryScope?: string;
   epoch?: string;
   connected: boolean;
   command: CommandDispatcher;
   onResolved(result: ApiResult): void;
 }) {
-  const storageKey = `open-legend:inventory-command:${JSON.stringify([
-    privateDraftScope(),
-    worldId,
-    actorId,
-    timeline,
-  ])}`;
-  const [pending, setPending] = useState(() => restore(storageKey));
+  const storageKey = recoveryScope
+    ? `open-legend:inventory-command:${JSON.stringify([recoveryScope, worldId, actorId, timeline])}`
+    : undefined;
+  const [pending, setPending] = useState(() => (storageKey ? restore(storageKey) : undefined));
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
   const alive = useRef(true);
@@ -82,6 +81,7 @@ export function useInventoryCommand({
   }, []);
 
   function finish(result: ApiResult) {
+    if (!storageKey) return;
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
     sessionStorage.removeItem(storageKey);
@@ -95,6 +95,10 @@ export function useInventoryCommand({
 
   async function dispatch(action: ActionOption) {
     if (guard.current || !connected || !epoch || !action.enabled) return;
+    if (!storageKey) {
+      setMessage('Refresh character access before changing possessions.');
+      return;
+    }
     const request: PendingCommand = {
       commandId: crypto.randomUUID(),
       commandEpoch: epoch,
