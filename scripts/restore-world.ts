@@ -10,15 +10,26 @@ import { isDeepStrictEqual } from 'node:util';
 import {
   readOperationalBackup,
   restoreBackupSlots,
-  discardRestoredSlots,
   BACKUP_TABLES,
 } from '../apps/server/src/operational-backup.js';
+import {
+  beginRestoreAttempt,
+  markRestoreInstalled,
+  preexistingRestoreSlots,
+  preflightRestoreDirectoryOwner,
+  reconcileInterruptedRestores,
+  reconcileRestoreAttempt,
+  restoreDirectoryOwner,
+  type RestoreAttempt,
+} from '../apps/server/src/operational-restore-attempt.js';
 import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+import { GameSaves } from '../apps/server/src/game-saves.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqlGameRepository } from '../apps/server/src/store.js';
+import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { forgetExperience } from '@open-legend/domain';
 import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
+import { join } from 'node:path';
 // Initialize native geometry before constructing or validating recovered world state.
 await initializeCollisionRuntime();
 
@@ -32,19 +43,24 @@ if (!statSync(file).isDirectory())
     'Current-format backup directory required; legacy JSON is unsupported. Source retained.',
   );
 const config = readConfig();
-const store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
-// Slots this attempt copied, and whether its installation reached COMMIT (SB18).
-let published: string[] = [];
+const database = new PostgresDatabase(config.databaseUrl);
+try {
+  await preflightRestoreDirectoryOwner(database, config.dataDirectory);
+} catch (error) {
+  await database.close();
+  throw error;
+}
+const store = new SqlGameRepository(config.dataDirectory, database);
+// Whether this attempt's database installation reached COMMIT (SB18).
 // Mutated inside the transaction callback, so keep it in an object rather than a narrowed local.
 const install: { state: 'not-committed' | 'uncertain' | 'committed' } = { state: 'not-committed' };
 let keep = new Set<string>();
-let restoring: Awaited<ReturnType<typeof readOperationalBackup>> | undefined;
 // The pre-restore recovery checkpoint this attempt published (existing-world restore only).
 let recoveryId: string | undefined;
+let attempt: RestoreAttempt | undefined;
 try {
   await store.ready;
   const backup = await readOperationalBackup(file, store.db);
-  restoring = backup;
   let current = await store.load();
   const state = backup.state;
   validateCurrentWorldState(state.world);
@@ -67,6 +83,12 @@ try {
     throw new Error('Backup is missing archived history; full restore refused.');
   if (current && state.world.id !== current.state.world.id)
     throw new Error('World identity mismatch.');
+  const directoryOwner = await restoreDirectoryOwner(store, config.dataDirectory, state.world.id);
+  const priorAttempts = await reconcileInterruptedRestores(store, config.dataDirectory);
+  for (const prior of priorAttempts)
+    console.error(
+      `Prior restore ${prior.id}: ${prior.committed ? 'installation committed' : `${prior.removed.length} owned slot(s) removed`}${prior.retained.length ? `; kept ${prior.retained.join(', ')} for inspection` : ''}.`,
+    );
   if (!current) {
     const tables = BACKUP_TABLES.filter((table) => table !== 'meta');
     for (const table of tables)
@@ -74,9 +96,22 @@ try {
         Number((await store.db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count'])
       )
         throw new Error('Target is not empty; full restore refused.');
-    if (await store.db.prepare("SELECT key FROM meta WHERE key<>'schema' LIMIT 1").get())
+    if (
+      await store.db
+        .prepare(
+          "SELECT key FROM meta WHERE key NOT IN ('schema','integration:save-directory-owner') LIMIT 1",
+        )
+        .get()
+    )
       throw new Error('Target has existing operational metadata; full restore refused.');
-    published = await restoreBackupSlots(backup, config.dataDirectory);
+    attempt = await beginRestoreAttempt(config.dataDirectory, {
+      directoryOwner,
+      worldId: state.world.id,
+      startingRevision: null,
+      saves: backup.saves ?? [],
+      preexisting: await preexistingRestoreSlots(config.dataDirectory, backup.saves ?? []),
+    });
+    await restoreBackupSlots(backup, config.dataDirectory, attempt.id);
     await store.db.transaction(async () => {
       for (const table of [...tables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
@@ -84,10 +119,19 @@ try {
           if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
             throw new Error('Invalid backup columns.');
           if (table === 'meta' && row['key'] === 'schema') {
-            // Current database format only (store.ts writes schema '3'); older backups are refused.
-            if (String(row['value']) !== '3') throw new Error('Unsupported backup schema.');
+            // The writer owns the current database format; older backups are refused.
+            if (String(row['value']) !== DATABASE_SCHEMA)
+              throw new Error('Unsupported backup schema.');
             continue;
           }
+          // Filesystem ownership and interrupted-restore markers belong to the target,
+          // not to the source database included in the operational backup.
+          if (
+            table === 'meta' &&
+            (row['key'] === 'integration:save-directory-owner' ||
+              String(row['key']).startsWith('integration:restore-attempt:'))
+          )
+            continue;
           await store.db
             .prepare(
               `INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
@@ -102,6 +146,7 @@ try {
       state.world.paused = true;
       await fenceCommands();
       await store.commit(0, state);
+      await markRestoreInstalled(store, attempt!);
       install.state = 'uncertain';
     });
     install.state = 'committed';
@@ -127,7 +172,16 @@ try {
       console.error('The target recovery pointer is damaged; it will be replaced by this restore.');
     }
     if (referenced) keep = new Set([referenced]);
-    published = await restoreBackupSlots(backup, config.dataDirectory, keep);
+    recoveryId = randomUUID();
+    attempt = await beginRestoreAttempt(config.dataDirectory, {
+      directoryOwner,
+      worldId: state.world.id,
+      startingRevision: current.revision,
+      saves: backup.saves ?? [],
+      preexisting: await preexistingRestoreSlots(config.dataDirectory, backup.saves ?? []),
+      recoveryId,
+    });
+    await restoreBackupSlots(backup, config.dataDirectory, attempt.id, keep);
     validateCurrentWorldState(state.world);
     await store.authority.restoreBindings(state.world);
     const ledger = (await store.getIntegration(`forget-ledger:${state.world.id}`)) as
@@ -157,12 +211,16 @@ try {
     state.world = retainHotEvents(after);
     // Preserve the world being replaced before the installation transaction, as gameplay loads
     // do (SL09-A); a failed install can then remove exactly this file (SB18).
-    const recovery = randomUUID();
-    await store.saves!.create(current.state, 'Before last load', recovery, {
+    const recovery = new GameSaves(
+      store.db,
+      join(config.dataDirectory, 'saves'),
+      undefined,
+      attempt.id,
+    );
+    await recovery.create(current.state, 'Before last load', recoveryId, {
       kind: 'recovery',
       expectedRevision: current.revision,
     });
-    recoveryId = recovery;
     await store.db.transaction(async () => {
       for (const row of backup.tables['memory_vector_cache'] ?? []) {
         if (row['world_id'] !== state.world.id)
@@ -208,9 +266,10 @@ try {
           payload,
           epoch,
           timeline: randomUUID(),
-          recoveryId: recovery,
+          recoveryId: recoveryId!,
         },
       });
+      await markRestoreInstalled(store, attempt!);
       install.state = 'uncertain';
     });
     install.state = 'committed';
@@ -224,25 +283,22 @@ try {
       throw new Error('Restore recovery digest mismatch.');
     console.log('World restored paused; present-day spending and forgetting retained.');
   }
+  if (attempt && !(await reconcileRestoreAttempt(store, config.dataDirectory, attempt)).committed)
+    throw new Error('Restore installation marker is missing after commit.');
 } catch (error) {
-  // Reconcile files only when the database install definitely did not commit.
-  if (restoring && (published.length || recoveryId) && install.state === 'not-committed') {
-    const retained = published.length
-      ? await discardRestoredSlots(restoring, config.dataDirectory, published, keep)
-      : [];
-    // Nothing references the recovery file this attempt wrote: the pointer switch rolled back.
-    let recovery = '';
-    if (recoveryId)
-      recovery = await store
-        .saves!.delete(restoring.state.world.id, recoveryId)
-        .then(() => ' and its pre-restore recovery checkpoint')
-        .catch(() => `; its pre-restore recovery checkpoint ${recoveryId} could not be removed`);
+  // The journal also identifies slots published before restoreBackupSlots could return.
+  if (attempt && install.state === 'not-committed') {
+    try {
+      const result = await reconcileRestoreAttempt(store, config.dataDirectory, attempt);
+      console.error(
+        `Restore failed before its database commit; removed ${result.removed.length} attempt-owned slot(s)${result.retained.length ? `, kept ${result.retained.join(', ')} for inspection` : ''}. The source backup is unchanged.`,
+      );
+    } catch (cleanupError) {
+      console.error(`Restore files kept for inspection: ${String(cleanupError)}`);
+    }
+  } else if (attempt && install.state === 'uncertain')
     console.error(
-      `Restore failed before its database commit; removed ${published.length - retained.length} slot(s) this attempt copied${recovery}${retained.length ? `, kept ${retained.join(', ')} (referenced or changed)` : ''}. The source backup is unchanged.`,
-    );
-  } else if ((published.length || recoveryId) && install.state === 'uncertain')
-    console.error(
-      `Restore commit outcome is uncertain; files were kept for inspection: ${[...published, ...(recoveryId ? [`${recoveryId} (pre-restore recovery checkpoint)`] : [])].join(', ')}. Reload the target to check whether the restore committed before retrying.`,
+      `Restore commit outcome is uncertain; attempt ${attempt.id} and its files were kept. Retry the restore command to reconcile the database marker before installation.`,
     );
   throw error;
 } finally {

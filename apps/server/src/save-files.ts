@@ -30,6 +30,14 @@ const metadataSchema = z
     },
   );
 export type SaveFileMetadata = z.infer<typeof metadataSchema>;
+const restoreOwnerSchema = z.object({
+  attemptId: z.string().uuid(),
+  id: z.string().uuid(),
+  worldId: z.string().min(1),
+  checksum: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export type RestoreSlotOwner = z.infer<typeof restoreOwnerSchema>;
+export const RESTORE_OWNER_FILE = '.restore-owner.json';
 export interface SavePosition {
   id: string;
   createdAt: string;
@@ -54,7 +62,14 @@ export async function syncDirectory(path: string) {
 /** Immutable local slots: only complete packages are published into this namespace. */
 export class SaveFiles {
   issueCount = 0;
-  constructor(private readonly directory: string) {}
+  constructor(
+    private readonly directory: string,
+    private readonly stageId?: string,
+    private readonly restoreAttemptId?: string,
+  ) {
+    if (stageId) z.string().uuid().parse(stageId);
+    if (restoreAttemptId) z.string().uuid().parse(restoreAttemptId);
+  }
   private path(id: string) {
     if (!z.string().uuid().safeParse(id).success) throw new Error('Invalid save identifier.');
     return join(this.directory, id);
@@ -142,6 +157,18 @@ export class SaveFiles {
       throw error;
     }
   }
+  async restoreOwner(id: string): Promise<RestoreSlotOwner | null> {
+    const path = join(this.path(id), RESTORE_OWNER_FILE);
+    try {
+      if ((await stat(path)).size > 1024) throw new Error('Restore ownership marker is oversized.');
+      const owner = restoreOwnerSchema.parse(JSON.parse(await readFile(path, 'utf8')));
+      if (owner.id !== id) throw new Error('Restore ownership marker identity mismatch.');
+      return owner;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
   async write(metadata: SaveFileMetadata, payload: string): Promise<void> {
     await this.publish(
       metadata,
@@ -162,7 +189,7 @@ export class SaveFiles {
   private async publish(metadata: SaveFileMetadata, chunks: AsyncIterable<string>): Promise<void> {
     await mkdir(this.directory, { recursive: true, mode: 0o700 });
     const destination = this.path(metadata.id);
-    const staging = join(this.directory, `.pending-${process.pid}-${randomUUID()}`);
+    const staging = join(this.directory, `.pending-${process.pid}-${this.stageId ?? randomUUID()}`);
     await mkdir(staging, { mode: 0o700 });
     try {
       const file = await open(
@@ -210,6 +237,22 @@ export class SaveFiles {
         await manifest.sync();
       } finally {
         await manifest.close();
+      }
+      if (this.restoreAttemptId) {
+        const owner = await open(join(staging, RESTORE_OWNER_FILE), 'wx', 0o600);
+        try {
+          await owner.writeFile(
+            JSON.stringify({
+              attemptId: this.restoreAttemptId,
+              id: complete.id,
+              worldId: complete.worldId,
+              checksum: complete.checksum,
+            } satisfies RestoreSlotOwner),
+          );
+          await owner.sync();
+        } finally {
+          await owner.close();
+        }
       }
       await syncDirectory(staging);
       // A published destination is nonempty: rename cannot replace it. Staging

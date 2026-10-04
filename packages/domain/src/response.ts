@@ -752,10 +752,15 @@ export function commitActorResponse(
           world,
           events,
           'expression',
-          `${namePhrase(source, 'definite', { capitalize: true })} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}${namePhrase(target, 'definite')}` : ''}.`,
+          `${namePhrase(source, 'definite', { capitalize: true })} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}the target` : ''}.`,
           source,
           target?.id,
-          { mechanical: false, responseId: id, semanticTrigger: true },
+          {
+            mechanical: false,
+            responseId: id,
+            semanticTrigger: true,
+            ...(target ? { targetReference: true } : {}),
+          },
         );
         components[localId] = outcome(
           true,

@@ -1854,10 +1854,10 @@ function executeCommandNative(
           world,
           events,
           'taught',
-          `${namePhrase(actor, 'definite', { capitalize: true })} taught ${namePhrase(target, 'definite')} how to make ${recipe.name.toLowerCase()}.`,
+          `${namePhrase(actor, 'definite', { capitalize: true })} taught the target how to make ${recipe.name.toLowerCase()}.`,
           actor,
           target.id,
-          { recipeId: recipe.id },
+          { recipeId: recipe.id, targetReference: true },
         );
         result = outcome(true, 'taught', 'The listener learned this specific technique.');
         break;
@@ -2155,10 +2155,10 @@ function completeAction(
         world,
         events,
         'struck',
-        `${namePhrase(actor, 'definite', { capitalize: true })} ${definition.pastTense} ${namePhrase(target, 'definite')} for ${damage} damage.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} ${definition.pastTense} the target for ${damage} damage.`,
         actor,
         target.id,
-        { definitionId: definition.id, damage, actionId: action.id },
+        { definitionId: definition.id, damage, actionId: action.id, targetReference: true },
       );
       break;
     }
@@ -2200,10 +2200,16 @@ function completeAction(
         world,
         events,
         'shot',
-        `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? `hit ${namePhrase(target.actor!.species!, 'definite')} for ${actualDamage} damage` : `missed ${namePhrase(target.actor!.species!, 'definite')}`}. One projectile was used.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? `hit the target for ${actualDamage} damage` : 'missed the target'}. One projectile was used.`,
         actor,
         target.id,
-        { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind, actionId: action.id },
+        {
+          hit,
+          damage: actualDamage,
+          ammunitionKind: launcher.ammunitionKind,
+          actionId: action.id,
+          targetReference: true,
+        },
       );
       if (actualDamage > 0)
         commitBodyEffects(
@@ -2634,7 +2640,7 @@ function advanceAction(
       world,
       events,
       'struck',
-      `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? 'hit' : 'missed'} ${namePhrase(target, 'definite')} with ${namePhrase(world.itemDefinitions[definition.id]!, 'definite')}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? 'hit' : 'missed'} the target with ${namePhrase(world.itemDefinitions[definition.id]!, 'definite')}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
       actor,
       target.id,
       {
@@ -2644,6 +2650,7 @@ function advanceAction(
         hit,
         damage,
         reason: hit ? 'hit' : inRange ? 'accuracy' : 'out-of-range',
+        targetReference: true,
         semanticTrigger: true,
       },
     );

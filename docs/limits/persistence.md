@@ -164,9 +164,9 @@ Original recommendation: **Keep**.
 
 **Reported · Restrictiveness: Safe.**
 
-**Capture duration:** 2-minute scan budget. Checked between records; it is not a guaranteed timeout for stalled filesystem operations.
+**Capture duration:** 2-minute scan budget checked between records, plus a 125-second runtime checkpoint-worker watchdog covering the whole capture. If that watchdog fires, the server terminates the worker, waits for its exit and cleans its private staging directory before reporting failure. The failed worker is not reused. Worker termination is asynchronous, so the 125 seconds start cancellation rather than guarantee an exact wall-clock completion time. The command-line operational backup uses a separate combined snapshot and is outside this runtime-worker limit.
 
-**Reason / tradeoff:** Bound an active database snapshot/scan lifetime; it cannot preempt a stalled filesystem call.
+**Reason / tradeoff:** Bound normal database scans and cancel a worker stuck awaiting an individual write, sync or publication call without acknowledging failure before a late publication is ruled out. Operational backup consistency still requires its own snapshot policy.
 
 ## SV08
 
@@ -356,13 +356,13 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 ## SB16
 
-**Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
+**Current — measured 2026-10-01 · Restrictiveness: Liberal.**
 
-**Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; it does not guarantee a deadline for final filesystem writes/sync/rename or a stalled operation.
+**Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; the separate 125-second worker watchdog starts termination during a blocked write/sync/rename, then waits for worker exit before reporting failure. It does not promise an exact 125-second end-to-end deadline.
 
 **Reason / tradeoff:** Preserve one consistent cut without copying the world into RAM; database version retention trades against output speed. The gameplay barrier ending is not the read snapshot ending.
 
-**Measured 2026-09-28 (shared host, SL09-C):** throttled output kept the snapshot open until the two-minute deadline aborted the capture; the oldest-snapshot age reached 85–132 transactions, command latency did not rise materially (p95 160 against 147 ms on the quietest run), and the abort released the snapshot and removed staging. A stall inside one write, sync or rename is still unbounded. [Evidence](../verification/ordered-async-saves.md#slow-output-snapshot-pressure-sl09-c).
+**Measured 2026-09-28 and 2026-10-01 (shared hosts, SL09-C):** throttled output kept the snapshot open until the two-minute scan deadline aborted the capture; the oldest-snapshot age reached 85–132 transactions, and the abort released the snapshot and removed staging. A later 100,000-memory checkpoint with concurrent writes held five dead `world_head` tuples (465 bytes) until its snapshot ended; the whole-capture watchdog now covers an individual stalled file operation. These local samples do not quantify sustained or production-wide version/WAL retention. [Evidence](../verification/ordered-async-saves.md#slow-output-snapshot-pressure-sl09-c).
 
 [Implementation](../../apps/server/src/checkpoint.ts).
 
@@ -370,19 +370,19 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
 
-**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. Preserve the original legacy data before running a supported migration separately.
+**Operational backup includes every retained save and requires current-format storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a current-format world head: backup opens read-only and refuses incompatible development storage without conversion or deletion.
 
-**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots and requires a separate migration step; partial/selective backup is not current behavior.
+**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots; partial/selective backup is not current behavior.
 
 [Implementation](../../apps/server/src/operational-backup.ts).
 
 ## SB18
 
-**Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
+**Current — verified 2026-10-01 · Restrictiveness: Medium under the stopped-server, one-database-per-directory contract.**
 
-**Changed 2026-09-28 (D1/D2 reconciliation).** Operational restore still copies retained slots before its database installation, but records which slots the attempt newly published. An existing-world restore also writes its pre-restore recovery checkpoint before the installation transaction. If the installation definitely did not commit, it removes exactly those slots and that recovery checkpoint, keeping any slot the target's current recovery pointer references and any whose identity or checksum changed; the source backup is never touched. If the failure came from `COMMIT` itself (outcome uncertain), copied slots and the recovery checkpoint are kept and listed for inspection. A process kill between copying and installing still leaves copied slots and, once written, the unlisted recovery checkpoint (a later in-game load's recovery rotation trims it), and the reconciliation assumes the target data directory is used only by that restore.
+**Changed 2026-10-01 (D1/D2 reconciliation).** Before copying, operational restore durably records an attempt and binds the save directory to its target PostgreSQL database. Each newly published retained slot and pre-restore recovery checkpoint carries an attempt owner marker inside its atomic slot directory. The database installation writes a matching marker in the same transaction. After a process exit, the next restore checks that marker: committed files stay; if the install did not commit and the world head is unchanged, it removes only intact attempt-owned files that no current recovery pointer references. Pre-existing, changed, damaged, ambiguous or newly referenced files stay for inspection. A failed `COMMIT` initially keeps the files; a later process can resolve its outcome. The source backup is never touched. A different database using the same marked save directory is refused before repository startup; an unmarked mixed-world directory is refused before adoption.
 
-**Reason / tradeoff:** Immutable copied files avoid overwriting a different slot; filesystem publication stays outside the database transaction, so reconciliation is in-process and conservative. [Implementation](../../apps/server/src/operational-backup.ts) (`restoreBackupSlots`, `discardRestoredSlots`).
+**Reason / tradeoff:** The files cannot join the PostgreSQL transaction, so durable ownership evidence and an in-transaction commit marker distinguish an orphan from a committed slot after process death. The small marker files and one database meta record per successful restore cost space; refusing ambiguous/shared ownership is safer than deleting a usable recovery point. First use of an unmarked same-world directory relies on the operator's exclusive-directory choice; the marker cannot prove past ownership. Servers must be stopped for operational restore; the marker is an operational-restore guard, not a general cross-process file lock. [Implementation](../../apps/server/src/operational-restore-attempt.ts), [slot publication](../../apps/server/src/operational-backup.ts).
 
 [Implementation](../../scripts/restore-world.ts).
 

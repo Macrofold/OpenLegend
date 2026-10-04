@@ -18,7 +18,7 @@ port.on('message', async (request: CheckpointRequest) => {
   try {
     await writeCheckpoint(
       db,
-      new SaveFiles(request.directory),
+      new SaveFiles(request.directory, request.stageId),
       {
         id: request.id,
         worldId: request.worldId,

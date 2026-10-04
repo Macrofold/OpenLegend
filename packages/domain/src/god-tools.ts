@@ -272,7 +272,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     canonicalJson(draft.person.traitIds) ===
       canonicalJson((current.actor.traits ?? []).map((trait) => trait.id))
       ? (current.actor.traits?.map((trait) => ({ ...trait })) ?? [])
-      : personTraits(draft.person);
+      : personTraits(draft.person, current?.actor?.traits);
   if (!current?.actor || !hasMemory(current)) return reject(original, 'actor', 'Choose a person.');
   if (
     !draft.person.name.trim() ||

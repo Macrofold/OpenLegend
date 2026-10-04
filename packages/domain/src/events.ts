@@ -344,7 +344,15 @@ function recordEvent(
       const perceivedText =
         privatePerspective !== undefined && scope === 'private' && actorId === source?.id
           ? privatePerspective
-          : memoryPerspective(world, actorId, text, type === 'speech', source?.id);
+          : memoryPerspective(
+              world,
+              actorId,
+              text,
+              type === 'speech',
+              source?.id,
+              targetId,
+              data?.['targetReference'] === true,
+            );
       const awareness: Awareness = {
         eventId: event.id,
         actorId,

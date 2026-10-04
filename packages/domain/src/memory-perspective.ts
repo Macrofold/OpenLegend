@@ -34,6 +34,8 @@ export function memoryPerspective(
   text: string,
   speech = false,
   sourceEntityId?: string,
+  targetEntityId?: string,
+  targetReference = false,
 ): string {
   const actor = world.entities[actorId];
   if (!actor?.actor) return text;
@@ -72,7 +74,18 @@ export function memoryPerspective(
     .split(/("[^"\n]*"|“[^”\n]*”)/g)
     .map((part, index) => {
       if (index % 2) return part;
-      const result = (index === 0 ? subject : '') + named(part);
+      let result = (index === 0 ? subject : '') + named(part);
+      // Native events that mark this reference keep the canonical text neutral. Resolve
+      // the target from the witness's knowledge, never from the target's global name.
+      if (targetReference && targetEntityId && result.includes('the target'))
+        result = result.replace(
+          'the target',
+          targetEntityId === actorId
+            ? sourceEntityId === actorId
+              ? 'myself'
+              : 'me'
+            : namePhrase(observerName(world, actorId, targetEntityId), 'indefinite'),
+        );
       // Without event attribution, keep third-person wording.
       if (!self || index !== 0) return result;
       return result

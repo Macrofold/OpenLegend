@@ -1003,6 +1003,7 @@ function App({
             </Section>
             <Section title="Your story">
               <History
+                key={captionScope(view)}
                 epoch={view.historyEpoch}
                 revision={`${view.historyRevision}:${JSON.stringify(view.narrator)}`}
               />

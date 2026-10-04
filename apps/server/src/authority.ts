@@ -119,6 +119,9 @@ export interface AuthorityFence {
   scope: RequestScope;
   capability: Capability;
   controlling: boolean;
+  /** Read pages may be owner-visible without control, but an old control generation
+   * must not publish after the tab or embodied actor changed. */
+  requireGeneration?: boolean;
   now: () => number;
 }
 export class AuthorityError extends Error {
@@ -422,7 +425,7 @@ export class AuthorityRepository {
   }
   /** Re-read in the world publication transaction, including session expiry after any await. */
   async assertFence(fence: AuthorityFence): Promise<void> {
-    const { scope, capability, controlling, now } = fence;
+    const { scope, capability, controlling, requireGeneration, now } = fence;
     // One publication snapshot validates all three fences. Separate round trips
     // amplified command latency; cache refresh belongs to the committed owners.
     const session = await this.db
@@ -453,6 +456,8 @@ export class AuthorityRepository {
         .includes(capability)
     )
       throw new AuthorityError('forbidden');
+    if (requireGeneration && Number(session['generation'] ?? 0) !== scope.controlGeneration)
+      throw new AuthorityError('stale-scope');
     if (
       controlling &&
       (session['generation'] === null ||

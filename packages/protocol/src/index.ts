@@ -619,6 +619,7 @@ export interface GodPersonEditorView {
   generation: string;
   statuses: string[];
   itemOptions: Array<{ id: string; name: string }>;
+  traitOptions: Array<{ id: string; name: string; description: string }>;
   before?: string;
   ok: true;
   revision: number;

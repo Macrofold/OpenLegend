@@ -53,8 +53,8 @@ export function History({
       query.set('watermark', String(page.watermark));
     }
     if (conversation) {
+      query.set('active', 'true');
       if (older && page?.scope) query.set('conversationId', page.scope);
-      else query.set('active', 'true');
     }
     try {
       const next = await getScoped<HistoryPage>(`/api/history?${query}`);

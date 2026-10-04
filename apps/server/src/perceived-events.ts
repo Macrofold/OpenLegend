@@ -4,6 +4,8 @@ import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
 import type { StorySource } from './history.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
+import { HistoryCursorError } from './history-cursor-error.js';
+export { HistoryCursorError } from './history-cursor-error.js';
 
 /** Presentation never receives raw source text, origins or hidden subject IDs. */
 export function publicEvent(event: ActorEvent): PublicEvent {
@@ -18,7 +20,6 @@ export function publicEvent(event: ActorEvent): PublicEvent {
     ...(event.speech ? { speech: event.speech } : {}),
   };
 }
-export class HistoryCursorError extends Error {}
 type Position = { order: number; id: string };
 type Cursor = {
   version: 1;
