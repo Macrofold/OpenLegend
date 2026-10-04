@@ -42,7 +42,7 @@ For example, “I promise to gather berries” can bind the installed berries de
 
 `POST /api/commitment` can amend the current actor's existing obligation using its expected revision, including cancellation, a future/current deadline or a supported completion binding. Invalid/stale requests reject. Permitted God mind diagnostics publish commitment summaries. The player's Journal has a read-only **Promises** list of their own obligations: exact words, recipient as they know them, status, a plain statement of what this world checks automatically (only the gathering form) and fulfillment evidence. It offers no amendment or cancellation; that waits for [D64](../../../archive/05-project/open-decisions.md#social-exposure-decisions). Native fulfillment/overdue/cancellation state is distinct from an actor merely claiming success.
 
-The English parser and gathering interpretation currently live beside reusable obligation state in the general domain module. Their semantic home is this bundled-world contract. [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) calls for extracting policy when that slice needs it, reusing the existing mutation owner rather than adding another promise store. A world with ritual vows or negotiated contracts can differ without changing engine evidence and revision integrity.
+The English parser and gathering interpretation currently live beside reusable obligation state in the general domain module. Their semantic home is this bundled-world contract. The admission cap, server-rendered gathering terms and client recognition help also remain outside that owner. [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) tracks this current boundary defect: extract the existing policy and wording without waiting for new promise language or amendment controls, reusing the existing mutation owner rather than adding another promise store. A world with ritual vows or negotiated contracts can differ without changing engine evidence and revision integrity.
 
 ## Offering and accepting possessions
 
@@ -67,7 +67,7 @@ Characters may also offer carried items to people within reach; food is listed f
 
 ## Delivery and evidence
 
-Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). Family UI, promise management and process authoring are future tasks, not delivered by this documentation pass. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; no new live cognition, UI or persistence qualification is claimed here.
+Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; no new live cognition, UI or persistence qualification is claimed here.
 
 ## Maintained records
 
