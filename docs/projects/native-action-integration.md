@@ -1,5 +1,11 @@
 # Native action branch integration
 
+| Status      | Current progress                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The action integration is merged and later PostgreSQL/lifecycle checks are recorded; the remaining AR acceptance matrix is incomplete. | 2026-10-04   |
+
+The source pins and execution sequence below describe the September 26–27 integration, not an outstanding merge. [AR02/AR03/AR04.3/AR07.2](../maintainers/action-reconciliation.md#integration-tasks) retain the remaining qualification. Later [merged-build evidence](../verification/three-times-scene-performance.md#continued-merged-build-investigation) resolves the historical disk-blocked PostgreSQL attempt and demonstrates selected follow/sleep transitions without qualifying the whole matrix. Current checks use PostgreSQL; the root development policy supersedes historical conversion/isolation instructions.
+
 ## Scope and baseline
 
 Integrate `review/action-main-reconciled` at `580476bc` onto freshly fetched
