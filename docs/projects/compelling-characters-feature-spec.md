@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                               | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-03   |
+| Not started | DG02 product preparation includes a concrete first-world proposal, player behavior and research; technical design, integration and live qualification remain open. | 2026-10-04 |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. Detailed technical design remains deferred under the original product-first instruction. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -83,6 +83,24 @@ The early integrated slice must give bodily experience, social contact/belonging
 
 Mixed experiences are allowed. A character can enjoy working with someone and still resent an earlier slight, be fed but lonely, be tired and proud, or value a group while wanting an afternoon alone. Do not collapse these into one happiness score. Satisfaction can reduce the urgency of one pursuit while another concern persists.
 
+## The first concrete slice and its capability boundary
+
+The proposed first-world selection is [Rin's lived motives](../worlds/base/character-experience.md). That page owns the authored choices: a patient maker who enjoys careful work, made objects, unhurried company and solitude; qualitative contact/belonging/enjoyment concerns; actual satisfaction, disappointment and stopping conditions; and a small set of meaningful activities. It is a proposed disposable prototype, not an installed replacement for Ada. The general feature contract remains here.
+
+Begin with one human pursuing the accepted live creative loop beside one resident. The human has something they want to make or discover. Rin has genuinely supported alternatives and can become interested, disagree, stay occupied or decline. The encounter succeeds when this creates a worthwhile person to play alongside, not when the human efficiently services every concern.
+
+| Area | Current foundation that can be reused | Specific boundary to establish in the first slice |
+| --- | --- | --- |
+| Individuality | Accepted About me and private self/subject understanding | Author coherent starting content and legitimate relationship history; preserve the complete accepted identity. |
+| Bodily life | Real food, possessions, physiology, sleep and native work | Let bodily consequences affect subsequent choices; current feeding still needs cognition, while authored automatic sleep remains. |
+| Contact | Perceived people, committed speech and directional relationship understanding | A relevant opening must reach a supported decision opportunity; a routine sighting does not itself establish that integration. |
+| Belonging and enjoyment | Qualitative understanding and admitted appraisals | Show a cause affecting an actual later choice without inventing a numerical meter, automatic enrollment or the other person's feelings. |
+| Quiet pleasure | Real movement, permitted observations and known places | Supply a selectable finite inspection/visit if missing, with an end or reconsideration condition; biography and idle prose are insufficient. |
+| Work and interruption | Finite native actions and restricted plan continuation | Preserve real progress/material loss and distinguish a retained purpose from a resumable physical step. |
+| Personal continuity | Existing permitted memories, notes, goals and obligations | Demonstrate delayed use of an actual result; neither repeating a profile nor a generic promise creates a scheduled activity. |
+
+This inventory is a preparation checklist, not runtime qualification. Existing feelings-process definitions, appraisal infrastructure and one successful meal do not establish the complete episode. The current system may lack an internal opportunity, a useful destination or a selectable quiet activity. CE01–CE04 should repair the smallest missing connection, with the current owners, before adding more emotional machinery.
+
 ## Context as the character's current perspective
 
 ### A world window and a salient inner life
@@ -135,6 +153,34 @@ An activity needs a meaningful ending. Stop or reconsider when enough has been a
 Continued pressure can remain salient without growing on every read. Repeated greetings are not automatic social progress. Recalling one insult does not create repeated new insults. A declined invitation can be remembered without becoming proven permanent rejection. Emotion can persist after a practical problem ends, and a later genuine experience can reframe it through the existing accepted update path.
 
 Player requests are opportunities for independent response. NPCs may agree, suggest a change, refuse, help for their own reasons or compete within supported rules. A thought about cooperation cannot supply another person's agreement. Neither a social wish nor a personality trait grants authority over a human-controlled character's speech, movement, goals or private interpretation.
+
+## What the player sees and can do
+
+### Encounter, approach and interruption
+
+Ordinary play shows the resident's real location, visible activity, permitted appearance and committed speech. It may show the existing public activity status. It does not reveal a private goal list, relationship assessment, internal thought or a diagnosis of a hidden feeling to make behavior legible.
+
+Selecting or speaking to Rin is an ordinary interaction. Where speaking is compatible with current work, the resident may answer while continuing. Where a physical interruption is needed, they may finish an interruptible step, explicitly change activity, briefly acknowledge the request, decline or remain silent under the actual situation. The player does not receive a fake instantaneous reply to conceal a busy action or delayed service. A brief acknowledgment is itself committed speech and must come through its proper path.
+
+The human can continue their own activity, close the conversation panel, move away or decline. None automatically accepts Rin's request, writes the human's words or cancels the resident's purpose. Closing a panel is not a rebuff; ordinary hearing and visibility still determine what each person experiences. An explicit “I want to work alone” is meaningful evidence that should affect later invitations.
+
+Sleeping, bodily incapacity, departure and technical unavailability retain distinct meanings. Use the current public feedback appropriate to each; an operator failure is not fictional coldness. The human should not have to inspect God mode to discover that a request could not be delivered. New public operational feedback remains with the interface owner.
+
+### A conversation should change what can happen later
+
+One useful example is the human showing an actual invented object while Rin finishes a small chosen task. Rin might express interest, ask to look afterward, decline or say nothing. If they retain an intention to look, finishing the real task creates a reason to reconsider that intention. They can approach if the person/object remains available and permitted, or revise when it is gone. They must not describe an inspection that never occurred.
+
+If the human leaves before completion, retain only legitimate unfinished interest and heard words. No automatic quest marker, debt, follow-up notification or offscreen visit is created. A later actual encounter can bring the topic back. The current exact spoken-promise rules alone determine whether there is a formal obligation; “that looks interesting” and “maybe later” do not create one.
+
+The point of this example is the causal shape, not a prescribed script: something mattered, Rin chose, an actual result changed the situation, and a later choice used that result. A different independent response may be equally successful. The human may prefer Rin's honest disinterest to an endlessly agreeable companion.
+
+### Respect the player's attention and independence
+
+No compulsory greeting sequence, daily care loop, relationship streak or repeated reminder is introduced. Rin can make one meaningful bid and move on. Continued quiet work or familiar enjoyment can be successful; every interval need not produce new prose.
+
+Gifts use the real offer and independent acceptance flow. An offer transfers nothing, acceptance does not guarantee liking, and receiving food is separate from choosing to eat. A present cannot purchase access to private thoughts or compel a favor. Disagreement may remain unresolved without making the player responsible for repair.
+
+An encounter must leave room for play: making, exploring, managing real consequences and choosing one's company. If a resident consumes most of the human's attention through repeated instructions, rescue or reassurance, reduce that friction and improve the available activity before expanding the psychological model.
 
 ## Complete behavioral flows
 
@@ -338,15 +384,58 @@ Provider failure, exhausted funding, pause and absent participants remain operat
 
 The existing [cognition](../limits/cognition.md#cg12), [feelings](../limits/feelings.md#fl19), [memory](../limits/memory.md) and [AI execution](../limits/ai-execution.md) limits apply. This product design supplies no new inference allowance, mandatory thought rate or requirement for unlimited history. Inspect growing preparation and retained causes when implementing a new concern; limiting final prompt size alone does not bound all earlier work.
 
+### A concrete economic decision for the first resident
+
+Use the same starting Rin, world opportunities, model configuration, accepted identity and accounting boundary for the developmental baseline and each candidate. Record observed real play time as well as game time. Report total attributed cost per complete episode and normalize to an offered real play hour only with the duration visible; a brief unusually active scene is not evidence of steady unattended cost.
+
+The accounting includes preparation, attention, retrieval/embedding work, action selection, conversation, reflection, tool-related calls, retries admitted by existing policy and known or uncertain charges. Reconcile trace and actor accounting where a per-decision ledger omits a path. Measure time from an actual opportunity to useful speech or activity, idle waiting, blocked repetitions, player rescues and purposeful quiet alongside cost. Cheap behavior that leaves Rin hungry, unresponsive or compulsively repeating has not met the product requirement.
+
+For each proposed improvement, ask which complete episode becomes better and whether the existing allowance supports it. First improve the available opportunity or how relevant evidence reaches an existing choice; compare a larger context or more expensive model only as an explicit alternative. Additional calls must earn their cost through useful behavior. Native continuation should carry an already chosen interval without repeated model approval, while current decisions such as new feeding still receive the real cognition they require.
+
+AG12/CR12 sets a local qualification envelope after the developmental baseline and before held-out comparison. No universal dollars-per-resident target or release score is invented here. An increased allowance needs a stated player benefit and an affordable offered workload. If the offered budget cannot sustain chosen self-care alongside the richer episode, narrow the promised duration/workload or explicitly design a different operational policy. Do not claim economical continuous life by silently relying on free feeding, selectively frozen needs or operator rescue.
+
+The initial useful outcome is a supportable personal episode, including quiet time and delayed follow-through. Population scale and continuous unattended funding remain later groups. A candidate that costs more, talks more and gives the human less room to play should be rejected even if its internal state is richer.
+
 ## Research and open choices
 
 The [research companion](../../archive/03-design-proposals/character-experience-and-inner-life.md#research-as-inspiration-with-limits) cites six primary sources and separates their findings from design extrapolation. Three practical influences are psychological needs as lenses for motivation, believable-agent work on observable emotion, and generative-agent work on linking experience to later choices. Interoception and conscious-access research inform the perspective metaphor; they do not validate an NPC emotion formula or prove consciousness.
 
-The selected vocabulary, represented pressures, satisfaction/recovery rules, mixed-concern pacing and supported enjoyable activities need authored-world decisions under [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience). The accepted requirements are multidimensionality, situated perspective, meaningful variation, independent choice and full-flow evaluation. Exact numbers and richer mechanisms remain proposals until selected and tested.
+The [first-world proposal](../worlds/base/character-experience.md) now supplies concrete qualitative choices under [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience). Acceptance of the overall direction does not install that proposal or validate it. Exact psychological numbers and richer process families remain unselected.
+
+### Additional primary-source research for DG02
+
+Sources were reviewed October 4, 2026. These findings inform the proposed choices; none establishes that Open Legend's implementation is fun, affordable or reliable.
+
+**Park and colleagues, Generative Agents (2023).** The [original paper](https://arxiv.org/html/2304.03442v2) links recorded experience, retrieval, reflection and planning in a small simulated community. It also reports missed recall, invented embellishments and overly cooperative/formal behavior. Its short experimental setting supports testing continuity through actual later choices, with memory and behavior failures retained. It does not establish long-running game economics, believable disagreement or player enjoyment. The design inference is to evaluate the whole episode and keep factual consequences separate from fluent explanation.
+
+**Evans and Short, Versu (2014).** The [authors' paper](https://cs.uky.edu/~sgware/reading/papers/evans2014versu.pdf) describes social practices offering choices while individual agents choose actions. Its discussion includes repeated failed choices when expected benefit ignores blocking conditions, tuning difficulty, and similar behavior despite different preferences when opportunities are narrow. This favors real alternatives, explicit blocked-method stopping and individuality measured through behavior. Its shared-world approach is not a model for Open Legend's private perspectives; its demonstrations are not controlled evidence of our game's success.
+
+**Ryan, Rigby and Przybylski, player motivation (2006).** Across four studies, the [original research](https://selfdeterminationtheory.org/SDT/documents/2006_RyanRigbyPrzybylski_MandE.pdf) associates human players' autonomy and competence with enjoyment, with relatedness relevant in the multiplayer work. This informs the human experience: leave room for choice, worthwhile activity and optional connection. It does not validate an NPC needs taxonomy, a simulated loneliness rate or clinical benefits. Treating the player as a compulsory emotional caretaker would undermine the autonomy this proposal seeks.
+
+**Richard Evans, Modeling Individual Personalities in The Sims 3 (2010).** The [developer's GDC slides](https://media.gdcvault.com/gdc10/slides/Evans_Richard_ModelingIndividualPersonalitiesInTheSims3.pdf) emphasize personality inferable from an afternoon's activity and concerns tied to circumstances, including visits and departure. The product inference is to make disposition visible in complete choices and let satisfied or obsolete concerns stop competing. Historical developer design material does not prove a universal scoring formula or justify importing every Sims need into this world.
+
+**Tynan Sylvester, The Simulation Dream (2013).** This [designer essay](https://tynansylvester.com/2013/06/the-simulation-dream/) argues for events whose causes and consequences become meaningful to the player rather than complexity the player never experiences. It supports the critique that richer hidden psychology earns its place only through worthwhile encounters. This is design argument, not controlled research or a statement of every current RimWorld mechanic.
+
+**Bay 12, emotional interpretation development (September 26, 2014).** The [developer log](https://www.bay12games.com/dwarves/dev_2014.html) discusses circumstances and personality/values shaping differentiated emotional responses. It offers a useful example of going beyond a single undifferentiated happiness reading. It is a dated development account, including work then in progress, not proof that Open Legend should reproduce its emotion inventory. The first resident instead uses explicit causes and qualitative interpretations where sufficient.
+
+**Bay 12, Dwarf Fortress 53.16 fixes (August 5, 2026).** The [dated entry in the official update log](https://bay12games.com/dwarves/index.html) reports fixes involving excessive patron drinking, an unfulfillable family-contact need and residents becoming stuck at demonstrations while seeking social satisfaction. These are concrete cautionary examples: an unmet need needs an available response and an activity needs an exit. They motivate refusal, changed-condition and stopping cases; they do not imply that all simulation needs are bad or that these defects remain current.
+
+**Nguyen, Ryan and Deci, Solitude as an Approach to Affective Self-Regulation (2018).** The [publisher's abstract](https://journals.sagepub.com/doi/abs/10.1177/0146167217733073) describes four human studies, reduced high-arousal affect during solitude and benefits associated with choosing to be alone. Only the abstract was reviewed. It supports treating chosen solitude as a legitimate possibility rather than automatic loneliness. It supplies no NPC timer, medical claim, mandatory quiet interval or universal preference.
+
+### Product critique and resulting decisions
+
+The first draft's risk was an attractive psychology description with too little actual enjoyable activity. The refined world proposal therefore names a small inspection/visit contract with real perception, continued activity and a reason to finish. If that support is missing, it is a specific first-slice gap, not permission to substitute an enjoyment monologue.
+
+The second risk was turning every inner concern into a repeated paid wake. Relevant concerns instead enter legitimate opportunities, including a demonstrated internal opportunity, while unchanged stored wishes do not create continuous checks. Quiet intervals and social openings both need qualification.
+
+The third risk was making the player supply the resident's life. Explicit refusal, unanswered bids, independent pleasure, finite work and optional reengagement keep the human free. A player reading slowly is not rejecting Rin. No compulsory emotional economy or novel numerical need is required.
+
+These decisions preserve the ambition of a person with an inner life while making the first result assessable through an ordinary afternoon. CE-F01–CE-F09 and CE01–CE05 remain open until later implementation and actual qualification supply evidence.
 
 ## Maintained records
 
 - Integration and delivery: [Character experience — CE01–CE05](../maintainers/character-experience.md).
 - Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../../archive/05-project/research-backlog.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).
 - Limits and constraints: [CG12](../limits/cognition.md#cg12), [FL19](../limits/feelings.md#fl19), and their existing shared inventories.
+- Authored first-world proposal: [Rin's lived motives](../worlds/base/character-experience.md), with concern lifetime and quiet/contact boundaries in [FL20](../limits/feelings.md#fl20).
 - Related product scope: [Continuing lives](continuing-lives-feature-spec.md), [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through) and [perspective rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md).

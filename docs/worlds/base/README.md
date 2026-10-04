@@ -13,6 +13,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
 - [Relationships, feelings and promises](social.md)
+- [First resident's lived motives](character-experience.md) — proposed DG02 world content, meaningful activities and qualitative concern lifetimes; not installed rules.
 
 ## Code boundary
 

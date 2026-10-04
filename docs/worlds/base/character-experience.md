@@ -12,6 +12,8 @@ Rin values careful useful work and having a choice in how to spend time. They en
 
 The seed supplies an explicitly authored background and a present interest, not a scripted afternoon. It does not include remembered quotations or supposedly witnessed events that never happened. Practical knowledge must name actually installed, learned methods. A story about having been a maker does not grant an unsupported repair or construction capability.
 
+CE-F01's initial familiarity comes from an actual earlier exchange in the prototype, or explicitly labeled authored initial relationship history under the existing knowledge rules. Record which basis was used. An authored acquaintance is not evidence of a runtime conversation; it supplies no fabricated quotation.
+
 The starting scene supplies manageable bodily conditions, some accessible known food, the current means to rest, one real material or object worth examining, and an accessible place with actual visible detail. A human can pursue their own current creative activity nearby. Do not create a resource emergency to force Rin's first interesting choice.
 
 Rin may be curious about making one useful piece of cord or a supported carrying object, depending on the world's actual known techniques. The seed may state that interest; it must not automatically install a queue of gather/craft/eat/talk steps. If a comparison starts with a previously chosen unfinished activity, label that initial intention and real partial work explicitly.
@@ -36,6 +38,8 @@ A current concern needs a specific meaning: what matters, why now, which person/
 
 The resident's interpretation can be mistaken or mixed. It remains an interpretation. “I feel welcome here” does not install membership, access, another person's affection or a human player's obligation to respond. “I enjoyed that” does not award a hidden happiness point.
 
+Current automatic feeling enrollment remains damage-derived fear/discomfort. Installed grief, restlessness and calm definitions do not enroll from this profile. A welcome or enjoyable visit can inform an immediate choice and later accepted understanding without waiting for a note rewrite; it does not automatically create a feeling process. Richer condition/disposition enrollment, compound psychological conditions and general process editing remain separate ACT09 work.
+
 The design deliberately selects no generic duration after which someone becomes lonely, no fixed social quota and no compulsory rotation among needs. A remembered absence or unfinished wish can matter at an ordinary supported reconsideration opportunity; the mere passage of a browser minute does not order a social action.
 
 ## 3. Bodily pressure and ordinary competence
@@ -50,6 +54,8 @@ The design deliberately selects no generic duration after which someone becomes 
 
 **Important current limitation.** New person feeding choices currently use the actual cognition path; the old automatic native feeding fallback was removed. During unavailable cognition, native physiology and already chosen work continue only as current policy permits, and an NPC can remain unfed. This proposal neither secretly feeds nor selectively freezes that actor. Any new operational protection belongs to an explicitly adopted service/time policy.
 
+This limitation does not remove current [automatic sleep and waking rules](sleep.md). Sleep has real movement, work, speech and perception consequences. A sleeping resident's silence is not an authored refusal or provider failure; ordinary speech does not automatically wake them. Use the existing Wake Up interaction where permitted.
+
 ## 4. Wanting contact
 
 **What makes it relevant.** A familiar person becomes genuinely available, a new shared interest appears, a remembered exchange prompts a wish to talk, or Rin notices that they would enjoy company. A visible idle body is an opportunity, not proof that the human wants conversation. The resident cannot read whether a human is busy outside the game.
@@ -61,6 +67,8 @@ The design deliberately selects no generic duration after which someone becomes 
 **What changes the concern.** An engaging exchange can satisfy the immediate wish; an awkward answer can change the topic or make solitude preferable. The resident can enjoy brief contact without becoming a friend. No model must manufacture a positive feeling because the conversation had a certain length.
 
 **How it ends or returns.** A clear decline, a completed exchange, the person's departure, unanswered contact after a reasonable contextual opportunity, a changed motive or another activity can end the attempt. The first authored policy uses the actual encounter and response, not an extra fixed invitation timer. A new meaningful opening can justify another approach; unchanged silence cannot.
+
+An unanswered bid need not freeze Rin. They can continue compatible work or turn to another activity while a reply remains possible. Human reading delay, accelerated game time, a closed panel and technical latency are not evidence of personal rejection. A later reply uses current hearing/conversation rules and does not undo activity already completed. Ending a pending bid does not itself justify another invitation.
 
 A human's “I want to work alone” remains relevant across panel closing and reopening. Rin may be disappointed or irritated in character, but should not restart the same bid because another decision opportunity arrived. A later actual invitation, agreed later occasion or materially new circumstance can reopen it. This is contextual respect, not a permanent universal no-contact flag.
 
@@ -83,6 +91,10 @@ The resident should have other ways to spend a worthwhile afternoon while a rela
 **What makes it relevant.** A real object, view, pattern, remembered pleasure or unanswered practical question connects with Rin's interests. Enjoyment can be anticipated, occur during an activity and be recalled afterward. There is no productivity prerequisite.
 
 **What can happen now.** Inspect an actual made object, look at a known landscape or bird, talk about a disclosed discovery, quietly continue an interesting known method, or revisit a pleasant spot. The character must actually move, inspect or remain where the relevant experience can occur. Prose cannot supply unseen wildlife or an unsupported game/music performance.
+
+**The smallest quiet activity.** Rin selects a particular known object or place and a reason to spend time there, approaches if necessary, then remains available to relevant perception. Observation reveals only actual permitted detail and does not require generated prose. The choice includes an understandable completion or reconsideration condition: inspection has finished, the selected short visit ends, the view is lost, an interruption matters or Rin chooses to leave. Continuing the selected interval uses ordinary native activity; it does not request a model decision every moment. If choosing such an interval is unsupported, deliver that small CE01/CE03/CE04 capability before treating idle standing as successful enjoyment.
+
+A destination must actually be available to the resident. Current remembered-place support is limited to eight places recorded through following/acting on a subject; passive scenic sightings do not populate it. A biography saying Rin likes a lookout supplies neither a target nor a route. Use a genuinely known place in the first prototype, or record the missing destination support under CE03/AG06.
 
 **What changes the concern.** A new detail, an absorbing interval, a satisfying result, disappointment, boredom, physical discomfort or another concern can influence the next choice. Saying the activity was enjoyable is permitted as a character self-report, but the full episode must show at least one real choice affected by the interest.
 
@@ -134,7 +146,9 @@ Short-term adaptation is enough here: Rin can update an impression, stop an acti
 
 The first whole episode must show a bodily or psychological concern influencing a real choice, an actual result, and a later choice that reflects the result. Across the existing CE flows, contact, belonging and enjoyment all need meaningful coverage. They need not all become urgent in the same afternoon.
 
-A quiet interval must allow an existing interest or unfinished intention to matter without a fresh human prompt. If the current reconsideration path cannot do that, CE03 records and fixes that specific integration gap. No new mandatory thought frequency is selected.
+A quiet interval must allow an existing interest or unfinished intention to matter without a fresh human prompt. The same integration must permit an appropriate social opening to matter; merely seeing someone is not proof that current low-urgency encounter evidence triggers reasoning. If the current reconsideration path cannot do that, CE03 records and fixes that specific integration gap. No new mandatory thought frequency is selected.
+
+No paid check solely because a wish is stored does not mean the wish can never influence another choice. At the next legitimate opportunity—completion, an intentionally selected quiet interval ending, meaningful changed evidence or another supported internal opportunity—the existing concern can matter again. Current goal-only edits and routine sightings must not be turned into self-generated wake loops.
 
 The human should be able to pursue their own invention or exploration, decline contact, observe a purposeful resident and reengage later. The resident must not require rescue from repeated loops or constant instructions. One excellent transcript or a correctly executed meal is insufficient.
 
@@ -146,4 +160,3 @@ The first proposal deliberately leaves numerical psychological pressure, automat
 - Implementation: [CE01–CE05](../../maintainers/character-experience.md), [ACT/BW](../../maintainers/actor-model.md), [AG](../../maintainers/agent-agency.md) and [CR](../../maintainers/cognition-redesign.md).
 - Limits and constraints: [FL19/FL20](../../limits/feelings.md#fl19), [CG12](../../limits/cognition.md#cg12), existing [body policy](survival.md) and [social rules](social.md).
 - Decisions: [D69](../../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience). This proposed selection refines the decision; it does not authorize implementation or paid qualification.
-

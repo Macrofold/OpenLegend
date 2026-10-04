@@ -28,7 +28,7 @@ The mind panel displays permitted current feelings. God authoring exposes qualit
 
 The [compelling-character product target](../../projects/compelling-characters-feature-spec.md) requires contact, belonging, enjoyment and chosen solitude to matter alongside bodily needs. Their meaning, causes, satisfaction/recovery and competing priorities must be specified through [CE01–CE03](../../maintainers/character-experience.md), then demonstrated in complete episodes. Existing qualitative understanding and admitted appraisals can supply first consumers. A greeting does not automatically grant belonging, and proximity does not prove affection.
 
-This is accepted direction with open world-content/integration work. It adds no current social meter, automatic feeling enrollment, friendship score or new native effect. [FL19](../../limits/feelings.md#fl19) and [D69](../../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) retain the proposed scope and choices.
+The [first resident's lived motives](character-experience.md) proposes the concrete qualitative first-world choices, including contact, belonging, enjoyment, solitude, actual activities and concern lifetimes. This is accepted direction with proposed world content and open integration work. It adds no current social meter, automatic feeling enrollment, friendship score or new native effect. [FL19/FL20](../../limits/feelings.md#fl19) and [D69](../../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience) retain the proposed scope and choices.
 
 ## Spoken promises
 
