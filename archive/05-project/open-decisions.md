@@ -180,6 +180,10 @@ None of these blocks invited play or current operator work.
 
 **October 4 product recommendation, not adoption:** [DG08](../../docs/projects/community-entry-and-participation-feature-spec.md) proposes a curated public listing and managed recipient-bound approval that consumes existing eligible starter people and continuing grants. It does not select automatic open sign-up, characterless promotion, richer spectating or federation. The recipient check, preparation/arrival path and separate operational reporting authority are new MP19/PD08/PD10 work; public audience, evidence retention, staffing and continuity still need owner selection.
 
+## D16 / D21 — Selected resident-conduct proposal
+
+**October 4 recommendation, not adoption:** [DG09](../../docs/projects/resident-conduct-feature-spec.md) proposes an official English-language 18+ game-character offer, with friendship/rivalry and brief personal talk, while deferring player–resident romance, real-person replicas, professional care and managed emergency intervention. It preserves authored family background and independent fictional agency. NC20/PD07/PD10 must adopt and qualify actual audience/territory eligibility, truthful disclosure, personal-information outcomes and provider behavior. D48 still owns separately authorized private operational access; no complete wellbeing charter or dated legal conclusion is adopted.
+
 ## D69 — Multidimensional character experience
 
 **Accepted product direction; concrete authored-world choices remain open.** A compelling resident has bodily and psychological experience, meaningful contact/belonging and enjoyment, distinct interests and independent choices. Context combines permitted outer circumstances with relevant inner experience; complete episodes must show effects on action, real consequences and later priorities. [Product specification](../../docs/projects/compelling-characters-feature-spec.md) and [CE01–CE05](../../docs/maintainers/character-experience.md) own delivery. This does not select a universal psychology or require numerical need meters.

@@ -496,3 +496,7 @@ Deferred automated coverage is in [TODO](TODO.md#knowledge-documents--deferred-a
 ## Immediate retrieval preparation follow-through
 
 [MH02–MH04](../limits/memory.md#mh02) now record revision-scoped caches, indexed optional token-prefix selection and 8,192-source/4 MiB pre-hydration admission. Oversized required context refuses explicitly; retained sources and maintenance continuation survive. Exact vector recall remains unchanged. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) covers synthetic growth and source invalidation on both adapters; [C17](limits-audit.md#c17)/PF08 retain uncached corpus work and observation preparation, while existing CR quality gates retain live semantic recall/consolidation qualification.
+
+## Resident-conduct consumer
+
+[NC20 / DG09](narration-and-conversations.md#nc20--resident-conduct-for-the-selected-adult-offering) consumes CR perspective, identity, ordinary independent choice, correction/forgetting and qualified model changes. The [product proposal](../projects/resident-conduct-feature-spec.md) preserves CG09 and actual protected obligations; its explicit No personal follow-ups preference is a required service constraint, not optional recall, and its source-scoped privacy request is not blanket NPC-mind access. [RC limits](../limits/resident-conduct.md) remain proposed. Existing CR12/CR13 and memory qualification stay open; no cognition runtime changed in this design pass.

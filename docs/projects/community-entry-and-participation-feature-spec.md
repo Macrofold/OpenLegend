@@ -10,7 +10,7 @@ A person finds a place that sounds enjoyable, meets a human who is ready to welc
 
 This is the product proposal for **DG08, ND02 and ND37**. Start with **a curated directory and managed adult entry into one operated community**, using explicit account approval and the existing invitation/character authority. Select an actual supported activity for the listing. Do not advertise instant open enrollment, unrestricted spectating, cross-world character travel or unlimited space. The [gameplay priorities](../repertoires/gameplay-priorities.md) require that the invitation leads to a good game.
 
-Public discovery is a new offer; this specification does not publish it. [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites), the [production release gates](../maintainers/production-deployment.md), the selected audience policy and actual operating budget need owner adoption before that offer can run. The adult pilot recommendation does not adopt the archive's optional well-being program.
+Public discovery is a new offer; this specification does not publish it. [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites), the [production release gates](../maintainers/production-deployment.md), the selected audience policy and actual operating budget need owner adoption before that offer can run. The [DG09 resident-conduct proposal](resident-conduct-feature-spec.md) owns the selected adult audience and resident behavior; it does not adopt the archive's optional well-being program.
 
 ### The smallest enjoyable service
 

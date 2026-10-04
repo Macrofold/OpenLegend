@@ -119,6 +119,8 @@ ND02 and ND37: discovery, visits/settlement, newcomer character entry, reporting
 
 #### DG09 — Resident conduct for a selected audience
 
+**October 4 product proposal:** [Resident conduct](../projects/resident-conduct-feature-spec.md) selects an official English-language adult game-character offer, preserving independent character lives while defining AI disclosure, attachment/commerce boundaries, proportionate sensitive conversation, native human support, a durable personal-follow-up preference, scoped privacy requests and honest model continuity. [NC20](narration-and-conversations.md#nc20--resident-conduct-for-the-selected-adult-offering), PD07/PD10 and [RC limits](../limits/resident-conduct.md) retain adoption, technical and runtime gates.
+
 ND27's decisions about official-service conduct versus authored fiction, audience, sensitive conversations, human/AI disclosure and any adopted relationship policy. Separately scope selected resident-memory controls or continuity across model/prompt changes.
 
 **Start and parallel boundary:** Do the relevant audience decision before offering that experience, including before a sensitive or family pilot. Optional archive policies are not blanket launch gates. This group consumes existing memory/privacy authority and does not define DG08's public enforcement powers. **Existing owners:** PD07/PD10, NC/CR, D16/D21 and privacy owners.
@@ -673,6 +675,8 @@ If an offer includes additional character slots, define switching, unattended be
 The [well-being vision](../../archive/08-wellbeing-vision/README.md) explicitly remains open ideation. The entries below preserve promising clusters for selection; they do not adopt its proposed charter, release gates, age policy, intervention rules or numerical targets. Individual rituals, story examples and world concepts remain in that source library.
 
 ### ND27 — Resident conduct, audience and sensitive-conversation policy
+
+**Scoped product design:** The [DG09 proposal](../projects/resident-conduct-feature-spec.md) now supplies one adult official-service offer, with interactive romance/real-person replicas and the broader wellbeing program deferred. It distinguishes ordinary own-history/notes from a new authorized privacy request and retains current protected-source limits; it does not import blanket sensitive-data non-retention, all-channel monitoring or zero-failure claims.
 
 **Decision before design; open ideation.** Sources: [residents who point outward](../../archive/08-wellbeing-vision/04-ideas-residents-who-point-outward.md), [guardrails, risks and law](../../archive/08-wellbeing-vision/11-guardrails-risks-and-law.md), [first questions and experiments](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md); D16/D21.
 

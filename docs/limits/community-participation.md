@@ -8,7 +8,7 @@ All CP entries are **Proposed, unimplemented and unqualified**, reviewed 4 Octob
 
 **Reason and boundary:** Focus staff and engineering on a complete useful visit. At capacity, preserve current control and applicable reconnect claims, then admit existing-member waits before unscheduled new visits, in acknowledged order within each category. Do not overbook a scheduled welcome against active residents or evict one to honor it. Pause intake when no actual opportunity is available. Existing larger workload targets remain unchanged; expanding the offering requires measured capacity and staffing.
 
-**Qualification:** Actual entry, late host, full return, correlated reconnect, maintenance and safe-arrival cases; useful play after finite rewards were already consumed. Audience/age policy and continuity/retention require their respective owner selection before execution.
+**Qualification:** Actual entry, late host, full return, correlated reconnect, maintenance and safe-arrival cases; useful play after finite rewards were already consumed. The [RC01 audience proposal](resident-conduct.md#rc01--audience-and-relationship-offer) and continuity/retention require their respective owner selection before execution.
 
 ## CP02 — Requests and invitations
 
