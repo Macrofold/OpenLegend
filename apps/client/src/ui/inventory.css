@@ -30,6 +30,30 @@
   gap: 8px;
   flex: none;
 }
+.ol-inventory-context {
+  /* Stacked grids can be longer than the narrow sheet. Both endpoints remain
+   * named while the player scrolls either collection or the whole workspace. */
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 8px;
+  border-block: 1px solid var(--line);
+  background: var(--surface);
+}
+.ol-inventory-context > div {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-inventory-unavailable {
+  flex: none;
+}
 .ol-inventory-workspace > .ol-inventory-header > * {
   /* The header's grid gap owns spacing; general panel paragraph/action margins
    * otherwise consume the task pane in short and narrow windows. */

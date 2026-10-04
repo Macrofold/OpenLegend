@@ -115,7 +115,7 @@
   margin-block-start: var(--space-1);
   overflow-wrap: anywhere;
 }
-.ol-camp-activities p {
+.ol-root .ol-camp-activities p {
   margin-block: 0;
 }
 .ol-task-overview {
@@ -153,4 +153,12 @@
 }
 .ol-task-about {
   color: var(--ink-muted);
+}
+.ol-task-submit {
+  position: sticky;
+  bottom: var(--space-3);
+  z-index: 1;
+  padding-block: var(--space-2);
+  background: var(--surface);
+  border-block-start: 1px solid var(--line);
 }

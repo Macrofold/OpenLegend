@@ -584,6 +584,25 @@ function InventoryWorkspace({
           </section>
         )}
       </header>
+      {!!right.location.id && (
+        <div className="ol-inventory-context" role="group" aria-label="Open inventory containers">
+          <div>
+            <span className="ol-caption">Belongings</span>
+            <strong>{left.page?.container.name ?? view.player.name}</strong>
+          </div>
+          <span aria-hidden="true">↔</span>
+          <div>
+            <span className="ol-caption">Container</span>
+            <strong>{right.page?.container.name ?? rightName}</strong>
+          </div>
+        </div>
+      )}
+      {selectedCollection?.page && !item && (
+        <p className="ol-inventory-unavailable" role="status">
+          The selected item is not on this page of these contents. Change the search or page, or
+          select another item.{amountDraft && ' Your entered amount is retained.'}
+        </p>
+      )}
       <div className="ol-inventory-panes" data-paired={!!right.location.id || undefined}>
         {(['belongings', 'container'] as const).map((side) => {
           const state = collection(side);
@@ -684,13 +703,6 @@ function InventoryWorkspace({
               </p>
             )}
             {operations.message && <p className="ol-caption">{operations.message}</p>}
-            {!item && (
-              <p role="status">
-                {selectedCollection?.loading
-                  ? 'Refreshing this item…'
-                  : 'This item is no longer in these visible contents. Close this panel and select an available item.'}
-              </p>
-            )}
             {item && selectedContainer && selection && (
               <>
                 <p className="ol-caption">

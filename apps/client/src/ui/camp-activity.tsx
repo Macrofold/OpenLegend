@@ -593,6 +593,65 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   function choiceLabel(key: string) {
     return selectedPage(key)?.selected?.label ?? 'Choose';
   }
+  function amountSummary() {
+    if (!presentation) return null;
+    const quantity =
+      values[
+        presentation.kind === 'resource-care' ? presentation.budget : presentation.quantity
+      ]?.trim();
+    const reserve = values[presentation.reserve]?.trim();
+    return (
+      <>
+        {quantity ? (
+          <>
+            {presentation.kind === 'resource-care' ? 'Use at most' : 'Put'}{' '}
+            <strong>{quantity}</strong> {Number(quantity) === 1 ? 'unit' : 'units'}
+            {presentation.kind === 'gather-store-use' ? ' into the selected storage' : ''}.
+          </>
+        ) : (
+          'Choose an amount.'
+        )}{' '}
+        {reserve ? (
+          <>
+            Keep at least <strong>{reserve}</strong> available to you.
+          </>
+        ) : (
+          'Choose a reserve.'
+        )}
+      </>
+    );
+  }
+  const scheduling = working && entry && presentation && bound && (
+    <div className="ol-task-replacement">
+      <p>Preparing this task leaves current work unchanged.</p>
+      <div className="ol-actions">
+        <Button
+          size="sm"
+          variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
+          disabled={disabled}
+          onPress={() => setMode('enqueue')}
+        >
+          After current work
+        </Button>
+        <Button
+          size="sm"
+          variant={mode === 'replace' ? 'secondary' : 'quiet'}
+          disabled={disabled}
+          onPress={() => setMode('replace')}
+        >
+          Prepare replacement
+        </Button>
+        <Button
+          size="sm"
+          variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
+          disabled={disabled}
+          onPress={() => setMode('interrupt')}
+        >
+          Pause and resume current work
+        </Button>
+      </div>
+    </div>
+  );
   function editButton(kind: NonNullable<typeof editing>, label: string) {
     return (
       <Button
@@ -724,6 +783,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               Stop current task
             </Button>
           )}
+          {scheduling}
         </Section>
       )}
       {error && <p role="alert">{error}</p>}
@@ -776,25 +836,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               {editButton('supply', 'Change supply')}
             </div>
             <div className="ol-task-overview-row">
-              <p>
-                {
-                  descriptor.fields[
-                    presentation.kind === 'resource-care'
-                      ? presentation.budget
-                      : presentation.quantity
-                  ]!.label
-                }
-                :{' '}
-                <strong>
-                  {values[
-                    presentation.kind === 'resource-care'
-                      ? presentation.budget
-                      : presentation.quantity
-                  ] || 'Choose'}
-                </strong>
-                . {descriptor.fields[presentation.reserve]!.label}:{' '}
-                <strong>{values[presentation.reserve] || 'Choose'}</strong>.
-              </p>
+              <p>{amountSummary()}</p>
               {editButton('amount', 'Change amount')}
             </div>
             {presentation.kind === 'resource-care' && (
@@ -907,37 +949,6 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               </Button>
             </fieldset>
           )}
-          {working && (
-            <div className="ol-task-replacement">
-              <p>Preparing this task leaves current work unchanged.</p>
-              <div className="ol-actions">
-                <Button
-                  size="sm"
-                  variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
-                  disabled={disabled}
-                  onPress={() => setMode('enqueue')}
-                >
-                  After current work
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === 'replace' ? 'secondary' : 'quiet'}
-                  disabled={disabled}
-                  onPress={() => setMode('replace')}
-                >
-                  Prepare replacement
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
-                  disabled={disabled}
-                  onPress={() => setMode('interrupt')}
-                >
-                  Pause and resume current work
-                </Button>
-              </div>
-            </div>
-          )}
           {mode === 'replace' && (
             <p>
               Starting this replacement stops current work. Completed effects and spent materials
@@ -969,32 +980,6 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               <p role="status">The checked stopping time has passed. Refresh before starting.</p>
             )}
           </div>
-          <div className="ol-actions">
-            <Button
-              variant="primary"
-              disabled={disabled || !ready || !currentReview?.result.ok || expired}
-              busy={operation === 'start'}
-              onPress={() => void start()}
-            >
-              {mode === 'replace'
-                ? 'Replace current work and start'
-                : mode === 'interrupt'
-                  ? 'Pause current work and start'
-                  : working
-                    ? 'Start after current work'
-                    : 'Start task'}
-            </Button>
-            <Button
-              variant="quiet"
-              disabled={!!operation || unavailable}
-              onPress={() => {
-                setError('');
-                setRefresh((value) => value + 1);
-              }}
-            >
-              Refresh conditions
-            </Button>
-          </div>
           <details className="ol-task-about">
             <summary>About this task</summary>
             <p>{descriptor.description}</p>
@@ -1018,6 +1003,34 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
             onPress={() => void recover()}
           >
             Check request result
+          </Button>
+        </div>
+      )}
+      {!unavailable && entry && presentation && bound && (
+        <div className="ol-actions ol-task-submit">
+          <Button
+            variant="primary"
+            disabled={disabled || !ready || !currentReview?.result.ok || expired}
+            busy={operation === 'start'}
+            onPress={() => void start()}
+          >
+            {mode === 'replace'
+              ? 'Replace current work and start'
+              : mode === 'interrupt'
+                ? 'Pause current work and start'
+                : working
+                  ? 'Start after current work'
+                  : 'Start task'}
+          </Button>
+          <Button
+            variant="quiet"
+            disabled={!!operation || unavailable}
+            onPress={() => {
+              setError('');
+              setRefresh((value) => value + 1);
+            }}
+          >
+            Refresh conditions
           </Button>
         </div>
       )}
