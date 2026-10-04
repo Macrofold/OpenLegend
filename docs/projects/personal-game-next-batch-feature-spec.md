@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five scoped assignments are defined; implementation, character qualification and the encounter design remain to be delivered. | 2026-10-03   |
+| Not started | Five scoped assignments are defined; implementation, character qualification and the encounter design remain to be delivered. | 2026-10-04   |
 
 [Technical definitions](personal-game-next-batch-tech-design.md) · [Assignment prompts](personal-game-next-batch-prompts.md) · [Tracking](../maintainers/personal-game-next-batch.md)
 
@@ -28,7 +28,7 @@ These ranges include relevant verification, documentation and integration adjust
 
 ### Alternatives considered
 
-- **Family creation and learned relations:** active uncommitted work was found in `/Users/mzw/.codex/worktrees/e878/OpenLegend`. Excluded. Its changes to family knowledge and creator-edit propagation must be preserved when integrating these assignments.
+- **Family creation and learned relations:** this work was uncommitted in another worktree at the planning baseline, but the [family-authoring project](completed/family-authoring-tech-design.md) is now delivered under BW16/D63. Preserve its current disclosure, provenance and shared parentage owner; it is not a pending branch prerequisite or work to reimplement in this batch. General [creator-edit propagation](../maintainers/creator-edits.md) remains a separate proposal, not a missing automatic family-memory cascade.
 - **More fire maintenance, repair, packing and prescribed daily routines:** possible repertoire additions, but the current batch has stronger reasons to play. Do not manufacture scarcity to make those tasks necessary.
 - **Full continuing communities, crowds, generic stat checks and construction:** useful later proposals; not prerequisites for one interesting resident or one useful invention. PG02 does not implement unattended simulation.
 - **General save SQL batching or approximate vector search:** retain their measurement gates. Current evidence is stronger for action-preview cost than for adopting those techniques now. Do not lower history/population limits to make performance appear solved.
