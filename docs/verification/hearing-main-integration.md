@@ -4,7 +4,7 @@ The sections through “Remaining gates” record the earlier `a39311dc` integra
 
 ## Scope and provenance
 
-This record qualifies the combined implementation under [HE05](../maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification) and the [integration plan](../projects/hearing-main-integration.md). Source: hearing `c4379246b8db98974de319e1f5315439ac8176bd`, preserved at `codex/hearing-before-main-20260926`. Initial rebase base: `f551e3d8`; final refresh includes main's `a39311dc887797af267aba7b6ab9038a1a863af0` local sign-in recovery. The original published branch and main were not rewritten. The local integration branch consolidates the source tree, then records the integration review corrections.
+This record qualifies the combined implementation under [HE05](../maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification) and the [integration plan](../projects/completed/hearing-main-integration.md). Source: hearing `c4379246b8db98974de319e1f5315439ac8176bd`, preserved at `codex/hearing-before-main-20260926`. Initial rebase base: `f551e3d8`; final refresh includes main's `a39311dc887797af267aba7b6ab9038a1a863af0` local sign-in recovery. The original published branch and main were not rewritten. The local integration branch consolidates the source tree, then records the integration review corrections.
 
 Native runs used Node **22.23.2**, the pinned frozen lockfile, seed **73**, disposable SQLite worlds and **`AI_BUDGET_USD=0`** on the same local machine. No provider calls or charges were made. Raw saves, logs and CPU profiles remain outside the repository. These observations do not supersede the broader unresolved acceptance matrix in HE05, PF03/PF09 and SW08.
 

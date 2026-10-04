@@ -1,6 +1,6 @@
 # Hearing integration handoff
 
-Start with the [integration plan](../projects/hearing-main-integration.md), [current evidence](../verification/hearing-main-integration.md) and [HE01–HE05 tracker](hearing-and-speech.md). They replace the earlier transfer/recovery instructions and checkpoint claims. Read current repository instructions before further work.
+Start with the [integration plan](../projects/completed/hearing-main-integration.md), [current evidence](../verification/hearing-main-integration.md) and [HE01–HE05 tracker](hearing-and-speech.md). They replace the earlier transfer/recovery instructions and checkpoint claims. Read current repository instructions before further work.
 
 The feature source at `c4379246` is preserved locally and remotely. The working branch is `codex/hearing-ready-for-main`, rebased onto main `45210d41`, including native actions and the latest scene/cognition/persistence improvements; `codex/hearing-main-integration` preserves the earlier squash. No published history was force-pushed. Main supplies elapsed-time simulation, current authority/placement, relational history and memory, contribution state and rendering. Hearing supplies graded event-time evidence, volume, captions and perceived history. [Joint ownership](speech-time-integration.md) explains the consolidation.
 

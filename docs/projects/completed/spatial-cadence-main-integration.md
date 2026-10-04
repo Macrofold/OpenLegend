@@ -1,6 +1,12 @@
 # Spatial/cadence integration with current main
 
-Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly review its complete change against main, and rebase/reconcile both implementations for merge readiness. This authorizes local reconciliation, not merging main or force-publishing rewritten shared history.
+| Status    | Current progress                                                                                                                           | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | The spatial/cadence reconciliation and three approved work reductions are delivered; sustained scene and graphics targets remain separate. | 2026-10-04   |
+
+This is a completed historical integration record, not instructions to replay branches or restart its delivered work. Current task authorization, the [development compatibility policy](../../../AGENTS.md#development-save-policy) and the [verification policy](../../../.agents/rules/verification.md) control later work; old adapter/conversion evidence and recorded host limitations do not create current requirements. Broader acceptance remains with the linked focused trackers.
+
+Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly review its complete change against main, and rebase/reconcile both implementations for merge readiness. That request authorized the recorded local reconciliation, not a standing instruction to merge main or force-publish rewritten shared history.
 
 ## Baseline and risk
 
@@ -14,7 +20,7 @@ Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly r
 
 Retain the accepted elapsed-time start/rate/end contract, actual-progress debt accounting, swept continuous movement, semantic support IDs, Recast navigation, selective Rapier collision, independent device-cadence rendering, and observer-authorized presentation. Retain main's canonical production records, bounded history/checkpoints, multiplayer authority and fencing, persistent objects/claims, shared state contributions, dependency-aware native work, appraisals, shared Worker API, indexed memory retrieval and shared inventory access. Reuse each semantic owner instead of duplicating the old and new implementations.
 
-The sound/speech branch remains separate. Inspect its current ref to reconcile the handoff and dependencies; importing an unrelated feature branch is not implicit in this main rebase. Existing PF13/SW/EPR gaps remain open unless current evidence satisfies their criteria. In particular, recorded short 8x success does not qualify the failed staggered-flight workload.
+The sound/speech branch was separate during this operation and was subsequently integrated through the [hearing reconciliation](hearing-main-integration.md). Its former separation is not a current dependency; importing unrelated branches is not implicit in a rebase. Existing PF13/SW/EPR gaps remain open unless current evidence satisfies their criteria. In particular, recorded short 8x success does not qualify the failed staggered-flight workload.
 
 ## Sequence
 
@@ -42,7 +48,7 @@ Completion requires a completed rebase, reviewed semantic union, reconciled docu
 
 ## Reconciliation outcome
 
-The [integration record](../verification/spatial-cadence-main-integration.md) contains the full subsystem comparison and actual evidence. Production fixes preserve main's root placement, inactive participation, contribution lifetimes, indexed reservation/appraisal deadlines and native work charges. Movement restrictions now apply over the interval in which they existed; loss of perception retires visual episodes. Navigation publication tolerates queue admission overload without losing computed work, and obsolete worker retirement remains single-owner. Collision initialization covers the real service and operational load/creation scripts.
+The [integration record](../../verification/spatial-cadence-main-integration.md) contains the full subsystem comparison and actual evidence. Production fixes preserve main's root placement, inactive participation, contribution lifetimes, indexed reservation/appraisal deadlines and native work charges. Movement restrictions now apply over the interval in which they existed; loss of perception retires visual episodes. Navigation publication tolerates queue admission overload without losing computed work, and obsolete worker retirement remains single-owner. Collision initialization covers the real service and operational load/creation scripts.
 
 Main's record/checkpoint/authority owners and indexed memory/exposure work remain alongside the branch's Recast/Rapier, elapsed cadence and browser presentation. Documentation restores shared runtime/performance and action authority requirements, separates profile settings from world rewind, records new/removed limits, and preserves main's policy IDs. Sound integration, D51 viewport admission, exact fleeting exposure and sustained 8× remain their existing scoped work; this rebase does not complete those programs.
 
@@ -72,7 +78,7 @@ The native continuation can survive a coherent publication only under the exact 
 
 ### Follow-through outcome
 
-All three requested reductions are implemented and reviewed. Matched 300-game-second workloads reduced median wall time by 24.2% for the mixed scene and 17.9% for staggered flight; per-call latency remains overlapping and neither qualifies sustained 8×. The [existing integration record](../verification/spatial-cadence-main-integration.md#performance-follow-through) contains the method, correctness/service observations and passing full validation. PF12.3–PF12.5 and PF13.11 retain broader dense/history, regional-rate and latency work; those programs are not closed by this implementation.
+All three requested reductions are implemented and reviewed. Matched 300-game-second workloads reduced median wall time by 24.2% for the mixed scene and 17.9% for staggered flight; per-call latency remains overlapping and neither qualifies sustained 8×. The [existing integration record](../../verification/spatial-cadence-main-integration.md#performance-follow-through) contains the method, correctness/service observations and passing full validation. PF12.3–PF12.5 and PF13.11 retain broader dense/history, regional-rate and latency work; those programs are not closed by this implementation.
 
 ## Main refresh after performance follow-through
 

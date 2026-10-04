@@ -1,6 +1,6 @@
 # Sound/speech and elapsed-time integration
 
-This is an integration record, not a second specification. [Simulation time](../simulation-time.md), [hearing](../hearing-and-speech.md), [HE01–HE05](hearing-and-speech.md) and [the integration plan](../projects/hearing-main-integration.md) own current behavior, work and evidence.
+This is an integration record, not a second specification. [Simulation time](../simulation-time.md), [hearing](../hearing-and-speech.md), [HE01–HE05](hearing-and-speech.md) and [the integration plan](../projects/completed/hearing-main-integration.md) own current behavior, work and evidence.
 
 ## Reconciled ownership
 
