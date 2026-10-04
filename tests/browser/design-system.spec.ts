@@ -1,4 +1,4 @@
-import { resumeGame } from '../fixtures/browser.js';
+import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -17,7 +17,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
   if (!address || typeof address === 'string') throw Error('No listener');
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
-    await resumeGame(page);
+    await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await expect.poll(() => game.service.paused).toBe(false);
     await page.getByRole('button', { name: 'Settings and help', exact: true }).click();
@@ -54,7 +54,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
         .getByRole('button', { name, exact: true })
         .click({ trial: true });
     await page.reload();
-    await resumeGame(page);
+    await enterGame(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'scifi');
     await expect(page.locator('.ol-hud')).toHaveCSS('zoom', '1.3');
     expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);

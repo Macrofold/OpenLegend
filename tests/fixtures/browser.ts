@@ -1,8 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Exercise the same explicit entry as a player; opening or reloading never resumes. */
-export async function resumeGame(page: Page): Promise<void> {
-  const resume = page.getByRole('button', { name: 'Resume here', exact: true });
-  await resume.click();
-  await expect(page.getByRole('dialog', { name: 'Game paused', exact: true })).toBeHidden();
+/** Ordinary entry and reload automatically enter the sole game tab. */
+export async function enterGame(page: Page): Promise<void> {
+  await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
+  await expect(page.locator('.ol-entry')).toBeHidden();
+  await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
 }

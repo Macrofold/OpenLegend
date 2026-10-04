@@ -371,7 +371,12 @@ export interface WorldStore {
       authorityBindings?: readonly AccountBinding[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        inactive: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
       operationalChange?: () => Promise<void>;
@@ -893,7 +898,12 @@ export class SqlGameRepository implements GameRepository {
       authorityBindings?: readonly AccountBinding[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        inactive: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
       /** Operational records that must commit with this world change (invite enrollment). */
@@ -966,8 +976,8 @@ export class SqlGameRepository implements GameRepository {
           await this.authority.rebind(scope, request, now);
         }
         if (historyProjection?.controlChange) {
-          const { scope, request, now } = historyProjection.controlChange;
-          await this.authority.changeControl(scope, request, now);
+          const { scope, request, now, inactive } = historyProjection.controlChange;
+          await this.authority.changeControl(scope, request, now, inactive);
         }
         if (historyProjection?.participationChange) {
           const { actorId, attempt } = historyProjection.participationChange;

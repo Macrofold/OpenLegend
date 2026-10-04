@@ -475,6 +475,7 @@ export class AuthorityRepository {
     scope: RequestScope,
     request: ControlRequest,
     now: () => number,
+    inactive = false,
   ): Promise<ControlLease> {
     return this.db.transaction(async () => {
       await this.assertFence({ scope, capability: 'play', controlling: false, now });
@@ -488,7 +489,12 @@ export class AuthorityRepository {
         throw new AuthorityError('control-changed');
       if (request.operation === 'release')
         await this.assertFence({ scope, capability: 'play', controlling: true, now });
-      if (request.operation === 'acquire' && old.sessionId) {
+      if (
+        request.operation === 'acquire' &&
+        old.sessionId &&
+        !inactive &&
+        (old.sessionId !== scope.sessionId || old.connectionId !== scope.connectionId)
+      ) {
         const live = await this.db
           .prepare('SELECT id FROM auth_sessions WHERE id=? AND expires_at>?')
           .get(old.sessionId, now());

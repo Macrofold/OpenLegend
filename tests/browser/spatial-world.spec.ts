@@ -1,4 +1,4 @@
-import { resumeGame } from '../fixtures/browser.js';
+import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
@@ -35,7 +35,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
   });
   try {
     await page.goto(`http://127.0.0.1:${address.port}/auth/login`);
-    await resumeGame(page);
+    await enterGame(page);
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-floor', 'all');
@@ -101,7 +101,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       JSON.stringify(worldPosition(game.service.world.entities[game.service.controlledEntityId]!)),
     ).toBe(before);
     await page.reload();
-    await resumeGame(page);
+    await enterGame(page);
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-projection', 'perspective');
     expect(errors).toEqual([]);

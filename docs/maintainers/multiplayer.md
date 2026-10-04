@@ -61,10 +61,10 @@ qualify hosted operations, hostile-client security, live model quality or PF cap
 
 ## MP18 — Explicit tab resume
 
-- [x] Implement the owner-approved [Resume here experience](../projects/completed/tab-resume-feature-spec.md) through the [existing authority/transport owners](../projects/completed/tab-resume-tech-design.md). Replace Control here with a blocking pause/other-tab dialog; leaving pauses client work and uses normal departure, while only explicit Resume transfers control. Preserve stale-command/heartbeat rejection, character assignment, safe return, manual world pause and characterless operations.
-- [x] Finish static verification and full affected-diff review before the first browser test. Then qualify entry, blur/refocus, two-window transfer, stale commands, departure/return, failed Resume, keyboard/modal isolation and a narrow viewport in one final disposable, zero-budget browser session; fix its findings. This does not close IDP01's broader two-account checks.
+- [ ] Correct the [tab entry experience](../projects/tab-resume-feature-spec.md) through its [technical design](../projects/tab-resume-tech-design.md): sole-tab entry/reload/refocus are automatic; only switching between open tabs shows Game Paused / OpenLegend is open in another tab. / Resume Here / Log Out. Preserve departure, current authority, manual pause and safe return. Logout revokes the shared game login and clears every browser tab; local explicit sign-in must recover.
+- [ ] Finish focused native/static review before final browser acceptance; qualify single-tab entry/return/reload, duplicate identity, two-tab transfers, stale command rejection, logout in the blocked tab, both signed-out screens, login recovery and narrow modal layout. Broader Auth0 two-account acceptance stays in IDP01.
 
-Completed October 3, 2026. [Acceptance evidence](../verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) separates the four passing browser journeys and native authority checks from unrelated World Agent fixtures and broader Auth0 qualification.
+Reopened October 3, 2026 after Mike corrected the mandatory-Resume behavior. [Original acceptance](../verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) remains historical.
 
 ## Identity provider — Auth0
 

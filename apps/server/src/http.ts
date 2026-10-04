@@ -644,9 +644,8 @@ async function initializeGameServer(
           return;
         }
         if (config.authentication.mode === 'local' && url.pathname === '/auth/login') {
-          // A database reset invalidates saved browser sessions. Let the existing
-          // loopback-only /api/state bootstrap issue the current local session.
-          response.setHeader('Set-Cookie', cookie('ol_session', '', 0));
+          const token = await service.signInLocal();
+          response.setHeader('Set-Cookie', cookie('ol_session', token));
           response.writeHead(303, { Location: '/', 'Cache-Control': 'no-store' });
           response.end();
           return;

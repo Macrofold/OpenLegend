@@ -371,7 +371,10 @@ export class WorldService {
   private unpersisted = false;
   private readonly listeners = new Set<() => void>();
   private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
-  private readonly presenceOrders = new Map<string, { sequence: number; at: number }>();
+  private readonly presenceOrders = new Map<
+    string,
+    { sequence: number; at: number; controlGeneration: number }
+  >();
   private readonly connections = new Map<string, RequestScope>();
   private readonly connectionPreferences = new Map<string, boolean>();
   private exits = new Map<string, ExitAttempt>();
@@ -412,6 +415,21 @@ export class WorldService {
   }
   async authenticationMutation<T>(operation: () => Promise<T>): Promise<T> {
     return this.mutate(operation);
+  }
+  /** Explicit loopback sign-in renews a revoked local login; ordinary reads never do. */
+  async signInLocal(): Promise<string> {
+    if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
+    return this.authenticationMutation(async () => {
+      const login = await this.store.authority!.login(
+        { issuer: 'https://local.openlegend.invalid', subject: 'local-player' },
+        this.now(),
+        this.config.authentication.sessionMs,
+        this.config.capacity.sessions,
+      );
+      this.localSessionToken = login.token;
+      this.localRequestScope = await this.requestScope(login.session, 'local-internal');
+      return login.token;
+    });
   }
   async requestScope(session: LoginSession, connectionId: string): Promise<RequestScope> {
     if (!this.store.authority) throw new AuthorityError('session');
@@ -682,15 +700,7 @@ export class WorldService {
     await store.putIntegration(`world-timeline:${this.world.id}`, this.timelineId);
     if (!store.authority) throw new Error('Current authority repository is required.');
     if (config.authentication.mode === 'local') {
-      const identity = { issuer: 'https://local.openlegend.invalid', subject: 'local-player' };
-      const login = await store.authority.login(
-        identity,
-        this.now(),
-        config.authentication.sessionMs,
-        config.capacity.sessions,
-      );
-      this.localSessionToken = login.token;
-      this.localRequestScope = await this.requestScope(login.session, 'local-internal');
+      await this.signInLocal();
     }
     this.humanActorIds = Object.values(this.world.entities)
       .filter((entity) => entity.actor?.controller === 'player')
@@ -1009,7 +1019,12 @@ export class WorldService {
     restore?: RestoreSave,
     authorityChanges?: {
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
-      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      controlChange?: {
+        scope: RequestScope;
+        request: ControlRequest;
+        now: () => number;
+        inactive: boolean;
+      };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       operationalChange?: () => Promise<void>;
     },
@@ -2164,7 +2179,12 @@ export class WorldService {
           undefined,
           undefined,
           {
-            controlChange: { scope, request, now: this.now },
+            controlChange: {
+              scope,
+              request,
+              now: this.now,
+              inactive: actor.participation?.phase === 'inactive',
+            },
             participationChange: { actorId: scope.actorId, attempt },
           },
         ))
@@ -2413,13 +2433,24 @@ export class WorldService {
       clientId = this.presenceKey(scope);
       if (sequence !== undefined) {
         const previous = this.presenceOrders.get(clientId);
-        if (previous !== undefined && sequence <= previous.sequence) return;
+        // Reload keeps the tab identity but acquires a new control generation.
+        // Order messages within that authority, never against a previous page's
+        // counter; the scope check above still refuses all old-generation input.
+        if (
+          previous?.controlGeneration === scope.controlGeneration &&
+          sequence <= previous.sequence
+        )
+          return;
         if (
           !this.presenceOrders.has(clientId) &&
           this.presenceOrders.size >= this.config.capacity.presence
         )
           throw new Error('Presence capacity reached. Reconnect before continuing.');
-        this.presenceOrders.set(clientId, { sequence, at: this.now() });
+        this.presenceOrders.set(clientId, {
+          sequence,
+          at: this.now(),
+          controlGeneration: scope.controlGeneration,
+        });
       }
       const wasPaused = this.paused;
       // Observe an expired heartbeat before renewing it. Otherwise a reconnect ahead

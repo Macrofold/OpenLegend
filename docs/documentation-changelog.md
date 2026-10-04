@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 3, 2026 — Sole-tab entry and logout correction
+
+Mike corrected the earlier explicit-Resume decision: one game tab must enter/reload/return automatically. Only switching between open tabs shows the exact Game Paused / OpenLegend is open in another tab. / Resume Here / Log Out dialog. Stable reload identity and bounded open-tab discovery preserve deliberate transfers without exposing private game data or moving authorization into the browser. Shared game logout revokes server authority and clears all browser tabs, including paused ones; explicit loopback Sign in restores a fresh login. This does not resolve external provider logout (IDP03). [Contract](architecture.md#account-authority-and-participation), [MP09](limits/multiplayer.md#mp09), [MP18](maintainers/multiplayer.md#mp18--explicit-tab-resume). The earlier October 3 mandatory-Resume implementation and evidence below are superseded for normal entry, not erased.
+
 ## 2026-10-03 — Announce every branch and worktree operation
 
 Mike expanded the [root notification rule](../AGENTS.md#work-discipline) beyond changes to the active branch: creating a branch or worktree and switching working checkouts must also be announced when they happen and at handoff, even when a new branch is not checked out or the branch name stays the same. Notices give absolute checkout paths, exact branch/detached-commit identities and the effect on the main checkout. Separate working files must not be described as separate Git history or branch references. [CG16](maintainers/agent-guidance.md) records instruction delivery; installed-agent compliance remains CG05.
@@ -14,7 +18,7 @@ The owner requested canonical article-free entity names with explicit grammar at
 
 ## 2026-10-03 — Explicit Resume for paused game tabs
 
-Mike replaced the proposed automatic focus takeover with explicit **Resume here**. Opening or returning to a game tab shows a blocking pause dialog; leaving releases command authority and uses the existing world departure. Another active controller is described as **Open Legend is open in another tab.** Old tab messages cannot regain control, and local entry no longer acquires it merely by reading the world. The former background-play checkbox is removed from the browser, while manual world pause and maintenance stay separate. Paused tabs stop streaming, periodic readers, scene updates and automatic rendering; permitted character drafts survive a control transfer. This favors predictable deliberate return over automatic refocus. [Contract and acceptance](projects/completed/tab-resume-feature-spec.md), [MP18](maintainers/multiplayer.md#mp18--explicit-tab-resume).
+Mike replaced the proposed automatic focus takeover with explicit **Resume here**. Opening or returning to a game tab shows a blocking pause dialog; leaving releases command authority and uses the existing world departure. Another active controller is described as **Open Legend is open in another tab.** Old tab messages cannot regain control, and local entry no longer acquires it merely by reading the world. The former background-play checkbox is removed from the browser, while manual world pause and maintenance stay separate. Paused tabs stop streaming, periodic readers, scene updates and automatic rendering; permitted character drafts survive a control transfer. This favors predictable deliberate return over automatic refocus. [Contract and acceptance](projects/tab-resume-feature-spec.md), [MP18](maintainers/multiplayer.md#mp18--explicit-tab-resume).
 
 ## 2026-10-03 — Explicit camera gestures and time shortcuts
 

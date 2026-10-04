@@ -33,6 +33,7 @@ import {
   post,
   setWorldPaused,
   startPresence,
+  logOut,
 } from './api';
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
@@ -234,7 +235,7 @@ function App({
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
   }, [theme, reduce]);
-  const { paused: tabPaused, acceptView, pause: pauseTab, isPaused } = tab;
+  const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
   const accept = useCallback(
     (next: GameView, reset = false) => {
@@ -350,7 +351,11 @@ function App({
         accept(initial, true);
         setConnected(true);
         setEntryStatus({ kind: 'loading' });
-        if (!isPaused() && initial.access?.controlling) {
+        if (isPaused()) {
+          await enter((next) => accept(next, true));
+          return;
+        }
+        if (initial.access?.controlling) {
           stop ??= startPresence();
           connectEvents();
         }
@@ -412,7 +417,7 @@ function App({
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
-  }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, resetApplication]);
+  }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, enter, resetApplication]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
@@ -1021,20 +1026,9 @@ function App({
                 Open World operations
               </a>
             )}
-            {view.access?.mode === 'oidc' && (
-              <Button
-                onPress={() =>
-                  void post('/api/session/logout', {})
-                    .then((result) => {
-                      if (result.ok) window.location.reload();
-                      else notify(result.message ?? 'Sign out failed.');
-                    })
-                    .catch((error: unknown) => notify(String(error)))
-                }
-              >
-                Sign out
-              </Button>
-            )}
+            <Button onPress={() => void logOut().catch((error: unknown) => notify(String(error)))}>
+              Log Out
+            </Button>
             <InventionSettings view={view} />
             <WorldVisualSettings
               view={view}
@@ -1178,7 +1172,7 @@ function App({
         data-tight={width / scale < 360}
         style={{ '--ui-scale': scale } as CSSProperties}
       >
-        {!view ? (
+        {!view || (tabPaused && !tab.blocked) ? (
           <EntryScreen
             status={entryStatus}
             onRetry={() => {
@@ -1262,7 +1256,10 @@ function App({
               </div>
               {timeSettings && (
                 <div className="ol-card ol-time-settings" role="region" aria-label="Time settings">
-                  <p>Leaving this tab pauses your play. Choose Resume here when you return.</p>
+                  <p>
+                    Leaving this tab pauses your play. Returning resumes automatically unless you
+                    started playing in another tab.
+                  </p>
                   <p className="ol-caption">
                     1×: one real second is one game minute. Manual pause always wins. P pauses or
                     resumes; Shift + ] speeds up; Shift + [ slows down.
@@ -1548,13 +1545,13 @@ function App({
           contents={view?.entities.find((entity) => entity.id === hover.entity.id)?.contents}
         />
       )}
-      {view && tabPaused && (
+      {view && tabPaused && tab.blocked && (
         <TabResumeDialog
-          character={view.player.name}
-          elsewhere={view.access?.controlledElsewhere ?? false}
           busy={tab.resuming}
+          loggingOut={tab.loggingOut}
           error={tab.error}
-          resume={() => tab.resume((next) => accept(next, true))}
+          resume={() => void tab.enter((next) => accept(next, true), true)}
+          logout={() => void tab.logout()}
         />
       )}
     </ClockOffsetContext.Provider>

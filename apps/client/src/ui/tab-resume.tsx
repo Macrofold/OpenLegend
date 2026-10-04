@@ -3,19 +3,19 @@ import { Button } from '../design-system/components';
 import './tab-resume.css';
 
 export function TabResumeDialog({
-  character,
-  elsewhere,
   busy,
+  loggingOut,
   error,
   resume,
+  logout,
 }: {
-  character: string;
-  elsewhere: boolean;
   busy: boolean;
+  loggingOut: boolean;
   error: string;
   resume(): void;
+  logout(): void;
 }) {
-  const title = elsewhere ? 'Open Legend is open in another tab.' : 'Game paused';
+  const title = 'Game Paused';
   return (
     <ModalOverlay className="ol-root ol-modal-overlay" isOpen isKeyboardDismissDisabled>
       <Modal className="ol-modal ol-tab-resume">
@@ -24,16 +24,26 @@ export function TabResumeDialog({
             <h2 className="ol-heading">{title}</h2>
           </header>
           <div className="ol-person-form">
-            <p>
-              {elsewhere
-                ? `Resume as ${character} here to pause the other tab.`
-                : `Resume as ${character} here. Leaving this tab pauses your play.`}
-            </p>
+            <p>OpenLegend is open in another tab.</p>
             {error && <p role="alert">{error}</p>}
           </div>
           <footer className="ol-modal-actions">
-            <Button variant="primary" busy={busy} onPress={resume} autoFocus>
-              {busy ? 'Resuming…' : 'Resume here'}
+            <Button
+              variant="secondary"
+              busy={loggingOut}
+              isDisabled={busy && !loggingOut}
+              onPress={logout}
+            >
+              Log Out
+            </Button>
+            <Button
+              variant="primary"
+              busy={busy && !loggingOut}
+              isDisabled={loggingOut}
+              onPress={resume}
+              autoFocus
+            >
+              Resume Here
             </Button>
           </footer>
         </Dialog>

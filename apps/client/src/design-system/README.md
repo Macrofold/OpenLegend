@@ -69,7 +69,7 @@ Shared body text is 14px/20px, panel titles 22px/26px and item titles 16px. Exis
 
 ## Tab Resume dialog
 
-`ui/tab-resume.tsx` uses the existing React Aria modal boundary, shared button and spacing tokens. It is blocking, has no close action, and stays open on Escape/outside clicks. Its single primary action is **Resume here**, with pending and error text in the same dialog. Keep the assigned character’s name visible in the explanation. The compact dialog wraps and scrolls within narrow/short windows; underlying game shortcuts and intentions are unavailable. [Behavior](../../../../docs/projects/completed/tab-resume-feature-spec.md) owns when it appears.
+`ui/tab-resume.tsx` uses the existing React Aria modal boundary, shared buttons and spacing tokens. It is blocking, has no close action, and stays open on Escape/outside clicks. Exact copy: **Game Paused**, **OpenLegend is open in another tab.**, primary **Resume Here**, secondary **Log Out**. Keep pending and error text with the relevant action. The compact dialog wraps and scrolls within narrow/short windows; underlying game shortcuts and intentions are unavailable. Sole-tab entry/reload/refocus does not show this dialog. [Behavior](../../../../docs/projects/tab-resume-feature-spec.md) owns when it appears.
 
 ## Entity-name grammar
 

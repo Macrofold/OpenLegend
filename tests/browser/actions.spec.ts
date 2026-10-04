@@ -1,4 +1,4 @@
-import { resumeGame } from '../fixtures/browser.js';
+import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
@@ -24,7 +24,7 @@ test('scoped React action search, contextual facts and saved unavailable prefere
   });
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
-    await resumeGame(page);
+    await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     const menu = page.locator('#contextMenu'),
       search = page.getByRole('searchbox', { name: 'Find an action' }),
@@ -55,7 +55,7 @@ test('scoped React action search, contextual facts and saved unavailable prefere
     await page.screenshot({ path: info.outputPath('action-menu.png') });
     await page.keyboard.press('Escape');
     await page.reload();
-    await resumeGame(page);
+    await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await expect(

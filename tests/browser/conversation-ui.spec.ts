@@ -1,4 +1,4 @@
-import { resumeGame } from '../fixtures/browser.js';
+import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { expect, test } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -30,7 +30,7 @@ test('conversation UI grows from one line and uses message-local dots and failur
   });
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
-    await resumeGame(page);
+    await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await page.getByRole('button', { name: 'World agent', exact: true }).click();
     await page.getByRole('button', { name: 'New conversation', exact: true }).first().click();

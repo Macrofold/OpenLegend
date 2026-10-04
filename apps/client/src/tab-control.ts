@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GameView } from '@open-legend/protocol';
-import { changeTabControl, getState } from './api';
+import { changeTabControl, clearAccess, getState, logOut } from './api';
+import { forgetSelectedTab, onTabNotice, selectedTabElsewhere, selectThisTab } from './tab-session';
 
-/** Page attention is an application concern. World departure/return and command
- * authority remain server-owned. docs/projects/completed/tab-resume-tech-design.md */
+/** Browser attention controls presentation, never command authority or world law.
+ * docs/projects/tab-resume-tech-design.md */
 export function useTabControl() {
   const [paused, setPaused] = useState(true);
+  const [blocked, setBlocked] = useState(false);
   const [resuming, setResuming] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState('');
   const current = useRef<GameView | null>(null);
   const pausedRef = useRef(true);
   const resumingRef = useRef(false);
   const intent = useRef(0);
-  // Serialize our own pause/return, while the server fences competing tabs.
   const pending = useRef<Promise<void>>(Promise.resolve());
   const pause = useCallback(() => {
     if (pausedRef.current && !resumingRef.current) return;
@@ -21,29 +23,34 @@ export function useTabControl() {
     resumingRef.current = false;
     setPaused(true);
     setResuming(false);
+    // Capture now, not when the queue runs after a newer return.
+    const view = current.current;
     pending.current = pending.current.then(async () => {
-      const view = current.current;
       if (!view?.access?.controlling) return;
       try {
         await changeTabControl(view, 'release');
       } catch {
-        // Losing a race with another tab is normal. Connection loss still uses
-        // the server's existing departure deadline; Resume refreshes authority.
+        /* A competing tab or lost connection uses the normal exit grace. */
       }
     });
   }, []);
   const acceptView = useCallback(
     (view: GameView) => {
-      // A paused snapshot begun before the click cannot cancel a newer Resume.
       if (resumingRef.current) return;
       current.current = view;
-      if (!pausedRef.current && !view.access?.controlling) pause();
+      if (!pausedRef.current && !view.access?.controlling) {
+        pause();
+        if (view.access?.controlledElsewhere) {
+          forgetSelectedTab();
+          setBlocked(true);
+        }
+      }
     },
     [pause],
   );
-  const resume = useCallback((accept: (view: GameView) => void) => {
+  const enter = useCallback((accept: (view: GameView) => void, explicit = false) => {
     if (resumingRef.current || document.visibilityState !== 'visible' || !document.hasFocus())
-      return;
+      return pending.current;
     const attempt = ++intent.current;
     resumingRef.current = true;
     setResuming(true);
@@ -52,29 +59,43 @@ export function useTabControl() {
       try {
         const before = await getState(AbortSignal.timeout(15000));
         if (attempt !== intent.current) return;
-        // Also validate the body's return when an earlier acknowledgement was
-        // lost: owning control alone does not mean the body is participating.
-        await changeTabControl(before, 'replace');
-        const after = await getState(AbortSignal.timeout(15000));
-        current.current = after;
+        current.current = before;
+        if (!before.access) throw new Error('Refresh your character before entering.');
+        if (!explicit && (await selectedTabElsewhere(before.access.privateDraftScope))) {
+          if (attempt !== intent.current) return;
+          accept(before);
+          setBlocked(true);
+          return;
+        }
         if (attempt !== intent.current) return;
-        if (!after.access?.controlling)
-          throw new Error('Another tab resumed. Try Resume here again.');
-        // Publish the fresh permissions before panels reopen or commands resume.
+        try {
+          await changeTabControl(before, explicit ? 'replace' : 'acquire');
+        } catch (reason) {
+          // A simultaneous entrant may win. Refresh rather than replacing them.
+          const fresh = await getState(AbortSignal.timeout(15000));
+          if (attempt !== intent.current) return;
+          current.current = fresh;
+          if (!explicit && fresh.access?.controlledElsewhere) {
+            accept(fresh);
+            setBlocked(true);
+            return;
+          }
+          throw reason;
+        }
+        const after = await getState(AbortSignal.timeout(15000));
+        if (attempt !== intent.current) return;
+        current.current = after;
+        if (!after.access?.controlling) throw new Error('Another tab resumed. Try again.');
         accept(after);
+        selectThisTab(after.access.privateDraftScope);
         pausedRef.current = false;
+        setBlocked(false);
         setPaused(false);
       } catch (reason) {
-        if (attempt === intent.current)
-          setError(
-            reason instanceof DOMException && reason.name === 'TimeoutError'
-              ? 'The game server did not respond. Try Resume here again.'
-              : reason instanceof TypeError
-                ? 'Could not reach the game server. Try Resume here again.'
-                : reason instanceof Error
-                  ? reason.message
-                  : 'Could not resume. Try again.',
-          );
+        if (attempt !== intent.current) return;
+        if (explicit)
+          setError(reason instanceof Error ? reason.message : 'Could not resume. Try again.');
+        else throw reason; // EntryScreen owns connection/authentication failures.
       } finally {
         if (attempt === intent.current) {
           resumingRef.current = false;
@@ -82,22 +103,63 @@ export function useTabControl() {
         }
       }
     });
+    // Keep the serialization lane usable after a rejected automatic entry.
+    const result = pending.current;
+    pending.current = result.catch(() => {});
+    return result;
+  }, []);
+  const logout = useCallback(async () => {
+    if (resumingRef.current) return;
+    intent.current++;
+    resumingRef.current = true;
+    setResuming(true);
+    setLoggingOut(true);
+    setError('');
+    try {
+      await logOut();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not log out. Try again.');
+      resumingRef.current = false;
+      setResuming(false);
+      setLoggingOut(false);
+    }
   }, []);
   useEffect(() => {
     const hidden = () => {
       if (document.visibilityState !== 'visible') pause();
     };
+    const unsubscribe = onTabNotice((notice) => {
+      if (notice.type === 'logout') {
+        pause();
+        clearAccess();
+        window.location.reload();
+      } else if (notice.scope === current.current?.access?.privateDraftScope) {
+        pause();
+        setBlocked(true);
+      }
+    });
     window.addEventListener('blur', pause);
     window.addEventListener('pagehide', pause);
     document.addEventListener('visibilitychange', hidden);
     return () => {
+      unsubscribe();
       window.removeEventListener('blur', pause);
       window.removeEventListener('pagehide', pause);
       document.removeEventListener('visibilitychange', hidden);
     };
   }, [pause]);
   const isPaused = useCallback(() => pausedRef.current, []);
-  return { paused, resuming, error, pause, resume, acceptView, isPaused };
+  return {
+    paused,
+    blocked,
+    resuming,
+    loggingOut,
+    error,
+    pause,
+    enter,
+    logout,
+    acceptView,
+    isPaused,
+  };
 }
-
 export type TabControl = ReturnType<typeof useTabControl>;
