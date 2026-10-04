@@ -121,9 +121,6 @@ function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId:
       ...activeAppraisals(world, actorId).flatMap((entry) =>
         entry.targetId ? [entry.targetId] : [],
       ),
-      ...Object.values(world.kinships ?? {})
-        .filter((entry) => [entry.firstId, entry.secondId].includes(actorId))
-        .flatMap((entry) => [entry.firstId, entry.secondId]),
     ]),
   ].filter((id) => !!world.entities[id]);
 }
@@ -426,13 +423,6 @@ export async function prepareDecision(
           `I feel ${value.feeling} concerning ${value.targetId && world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId, 'definite') : 'an unknown cause'}.`,
       )
       .join(' '),
-    kinship: Object.values(world.kinships ?? {})
-      .filter((value) => [value.firstId, value.secondId].includes(actorId))
-      .map(
-        (value) =>
-          `${world.entities[value.firstId] ? entityLabel(world, world.entities[value.firstId]!, actorId, 'definite') : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId] ? entityLabel(world, world.entities[value.secondId]!, actorId, 'definite') : 'an unknown person'}.`,
-      )
-      .join(' '),
     aboutMe:
       world.innerWorlds?.[actorId]?.text ??
       mindFor(world, actorId)
@@ -676,13 +666,6 @@ export async function prepareDecision(
       .map(
         (value) =>
           `I feel ${value.feeling} concerning ${value.targetId && currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId, 'definite') : 'an unknown cause'}.`,
-      )
-      .join(' '),
-    kinship: Object.values(currentWorld.kinships ?? {})
-      .filter((value) => [value.firstId, value.secondId].includes(actorId))
-      .map(
-        (value) =>
-          `${currentWorld.entities[value.firstId] ? entityLabel(currentWorld, currentWorld.entities[value.firstId]!, actorId, 'definite') : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${currentWorld.entities[value.secondId] ? entityLabel(currentWorld, currentWorld.entities[value.secondId]!, actorId, 'definite') : 'an unknown person'}.`,
       )
       .join(' '),
     aboutMe:

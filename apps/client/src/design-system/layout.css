@@ -2783,3 +2783,51 @@ body,
     bottom: calc(var(--control-md) + 3 * var(--space-3));
   }
 }
+
+/* Family inspection is a modal creator task with its own bounded reading area. */
+.ol-family-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+}
+.ol-family-body {
+  overflow: auto;
+  min-height: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ol-family-body p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ol-family-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ol-family-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ol-family-list li > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ol-family-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ol-family-confirm p {
+  flex-basis: 100%;
+}

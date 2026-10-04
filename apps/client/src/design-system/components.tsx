@@ -1,5 +1,7 @@
 import {
   useId,
+  useContext,
+  type RefObject,
   useLayoutEffect,
   useRef,
   useState,
@@ -15,6 +17,7 @@ import {
   RadioGroup,
   Toolbar,
   ComboBox,
+  ComboBoxStateContext,
   Input,
   Label,
   Popover,
@@ -147,6 +150,33 @@ export type SelectOption = {
   description?: string;
 };
 
+function SelectInputGroup({
+  trigger,
+  children,
+}: {
+  trigger: RefObject<HTMLDivElement | null>;
+  children: ReactNode;
+}) {
+  const state = useContext(ComboBoxStateContext);
+  return (
+    <div
+      className="ol-select-trigger"
+      ref={trigger}
+      onKeyDownCapture={(event) => {
+        // Escape closes one picker without reverting its controlled query. Reverting
+        // starts another remote search and can reopen the popup over its parent dialog.
+        if (event.key === 'Escape' && state?.isOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          state.close();
+        }
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function SelectField({
   label,
   value,
@@ -161,6 +191,7 @@ export function SelectField({
   loading = false,
   toggleLabel,
   disabledKeys,
+  onOpenChange,
 }: {
   label: string;
   value?: string | null;
@@ -176,6 +207,7 @@ export function SelectField({
   loading?: boolean;
   toggleLabel?: string;
   disabledKeys?: string[];
+  onOpenChange?(open: boolean): void;
 }) {
   const trigger = useRef<HTMLDivElement>(null);
   const [popupWidth, setPopupWidth] = useState<number>();
@@ -207,6 +239,7 @@ export function SelectField({
       selectedKey={value}
       onSelectionChange={(key) => key !== null && onChange(String(key))}
       menuTrigger="focus"
+      onOpenChange={onOpenChange}
       disabledKeys={disabledKeys}
       {...(remote
         ? { items: options, inputValue, onInputChange, allowsEmptyCollection: true }
@@ -223,7 +256,7 @@ export function SelectField({
           })}
     >
       <Label className="ol-select-label">{label}</Label>
-      <div className="ol-select-trigger" ref={trigger}>
+      <SelectInputGroup trigger={trigger}>
         <Icon name="ui.search" size={16} />
         <Input className="ol-select-input" autoFocus={autoFocus} placeholder={placeholder} />
         <AriaButton
@@ -232,7 +265,7 @@ export function SelectField({
         >
           <span className="ol-select-chevron" aria-hidden="true" />
         </AriaButton>
-      </div>
+      </SelectInputGroup>
       <Popover
         className="ol-root ol-select-popover"
         triggerRef={trigger}

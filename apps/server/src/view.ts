@@ -1,5 +1,5 @@
 import { namePhrase } from '@open-legend/language';
-import { recipeFamily, basePlaytestMilestones } from '@open-legend/domain';
+import { recipeFamily, basePlaytestMilestones, BASE_FAMILY_POLICY } from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
@@ -747,6 +747,7 @@ export async function projectView(
     ...(service.config.godMode && service.currentScope(scope, 'create')
       ? {
           godTools: {
+            familyLabel: BASE_FAMILY_POLICY.title,
             traits: TRAIT_BANK.map((trait) => ({ ...trait })),
             spawnOptions: GOD_SPAWN_OPTIONS.map((option) => ({ ...option })),
             itemOptions: memo('god-items', [world.itemDefinitions], () =>

@@ -474,6 +474,7 @@ export interface GameView {
   narrator?: TranscriptItem | null;
   godMode?: boolean;
   godTools?: {
+    familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
     spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
     itemOptions: Array<{ id: string; label: string; description: string }>;
@@ -1158,4 +1159,49 @@ export interface OperationsView {
     candidates: Array<{ actorId: string; name: string }>;
   };
   maintenanceHistory?: MaintenanceWindowView[];
+}
+
+/** Creator-only projection. Wording comes from the installed world owner. */
+export interface FamilyPerson {
+  id: string;
+  label: string;
+  detail?: string;
+}
+export interface FamilyLink {
+  id: string;
+  parentId: string;
+  childId: string;
+}
+export interface FamilyEdit {
+  id: string;
+  generation: string;
+  revision: number;
+  change: { kind: 'add' | 'remove'; link: FamilyLink };
+}
+export interface FamilyPeoplePage {
+  ok: true;
+  people: FamilyPerson[];
+  next: string | null;
+}
+export interface FamilyView {
+  ok: true;
+  generation: string;
+  revision: number;
+  actor: FamilyPerson;
+  policy: {
+    title: string;
+    parentLabel: string;
+    childLabel: string;
+    recordLabel: string;
+    guidance: string;
+  };
+  relations: Array<{
+    actorId: string;
+    label: string;
+    description: string;
+    link?: FamilyLink;
+    deletion?: string;
+  }>;
+  next: string | null;
+  preview?: string;
 }

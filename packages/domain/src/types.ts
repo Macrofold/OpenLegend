@@ -355,7 +355,7 @@ export interface WorldState {
   socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
   appraisals?: Record<string, Record<string, import('./appraisals.js').Appraisal>>;
   appraisalProcesses?: Record<string, import('./appraisals.js').AppraisalProcess>;
-  kinships?: Record<string, import('./social.js').Kinship>;
+  familyTree?: import('./worlds/base/family.js').FamilyTree;
   conversations?: import('./conversations.js').ConversationState;
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;

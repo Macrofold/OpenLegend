@@ -83,7 +83,9 @@ import {
   type StoryPolicy,
 } from '@open-legend/domain';
 import { changeConversation, leaveConversation } from '@open-legend/domain';
-import { establishKinship, type Kinship } from '@open-legend/domain';
+import { changeFamilyTree } from '@open-legend/domain';
+import { familyPeople, projectFamily } from './family-view.js';
+import type { FamilyEdit } from '@open-legend/protocol';
 import { applyBodyEffects, type BodyEffect } from '@open-legend/domain';
 import { enableActorCognition } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
@@ -3167,8 +3169,44 @@ export class WorldService {
     });
   }
 
-  async godKinship(fact: Kinship): Promise<ApiResult> {
-    return this.godTransition((world) => establishKinship(world, fact));
+  async godFamily(actorId: string, scope: RequestScope, after?: string, parentId?: string) {
+    return this.authorized(scope, 'inspect', false, async () => {
+      await this.ready;
+      this.assertScope(scope, 'create');
+      if (!this.config.godMode) throw new Error('God access required.');
+      return projectFamily(this.world, this.timelineId, actorId, after, parentId);
+    });
+  }
+
+  async godFamilyPeople(query: string, scope: RequestScope, after?: string) {
+    return this.authorized(scope, 'inspect', false, async () => {
+      await this.ready;
+      this.assertScope(scope, 'create');
+      if (!this.config.godMode) throw new Error('God access required.');
+      return familyPeople(this.world, this.timelineId, query, after);
+    });
+  }
+
+  async godFamilyEdit(value: FamilyEdit, scope: RequestScope): Promise<ApiResult> {
+    await this.ready;
+    const fingerprint = JSON.stringify([
+      this.world.id,
+      scope.accountId,
+      value.id,
+      value.generation,
+      value.revision,
+      value.change.kind,
+      value.change.link.id,
+      value.change.link.parentId,
+      value.change.link.childId,
+    ]);
+    return this.reviewedTransition(
+      `family:${JSON.stringify([scope.accountId, value.id])}`,
+      fingerprint,
+      value.generation,
+      scope,
+      async (world) => changeFamilyTree(world, value.change, value.revision),
+    );
   }
 
   async godEffects(

@@ -88,6 +88,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 - [Action branch reconciliation and recovery](action-reconciliation.md) — AR01–AR08 integration tasks, source checkpoints and recovery order beneath the existing AC/PF owners.
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
+- [Creator edit propagation](creator-edits.md): earlier explicit-dependency previews and later optional memory tools.
 - [Camp fire care and sharing](../projects/camp-fire-and-sharing.md) — approved plan for fire care and consent-aware handover; tracked by BW19–BW21, AC08.3 and AC09.7.
 - [Embodied survival](../projects/embodied-survival-feature-spec.md) and [technical plan](../projects/embodied-survival-tech-design.md) — Ada's bodily observations, actor-chosen intentions, relevant inventory and equipped melee; implementation tracked by AG06/AG07/AG13, EPR04–EPR06, AC09.6 and BW18. Mechanics and concise equipment-derived hunt options implemented; Jev-only hunting/retry and complete meals demonstrated, with broader qualification still open.
 
@@ -109,7 +110,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 - [World and interaction repertoires](../repertoires/README.md) — idea catalogues, four optional world proposals and source coverage; [action examples](../repertoires/actions.md) retain stable IDs. These proposals do not change implementation status or close tracker criteria.
 
 - [Mechanics repertoire](../repertoires/mechanics.md) — related concepts, reusable mechanisms and authored-world choices; ideas, not another backlog.
-- [Social playable slices](base-world.md#social-playable-slices) — proposed family and promise UI; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Documentation only; runtime implementation is not authorized by these entries.
+- [Social playable slices](base-world.md#social-playable-slices) — delivered family-tree authoring and readable promises, with further promise controls pending; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Remaining proposals do not authorize runtime implementation.
 
 - [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
 - [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
