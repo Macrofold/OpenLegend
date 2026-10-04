@@ -86,20 +86,35 @@ jobs:
               else:
                   assert path.suffix == '.md' and not name.startswith('archive/'), ('non-documentation edit', name)
                   formatting.append(name)
-              planned.append((source, path, text))
+              planned.append((source, path, text, item))
           assert not (set(moves) & outputs), 'overlapping moves'
-          for source, path, text in planned:
+          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          commits = []
+          for source, path, text, item in planned:
+              name = item['path']
+              old_name = item.get('before_path', name)
               path.parent.mkdir(parents=True, exist_ok=True)
               path.write_text(text)
               if source != path:
                   source.unlink()
-          if formatting:
-              subprocess.run(['pnpm', 'exec', 'prettier', '--check', *formatting], check=True)
+              if name in formatting:
+                  subprocess.run(['pnpm', 'exec', 'prettier', '--check', name], check=True)
+              subprocess.run(['git', 'diff', '--check'], check=True)
+              paths = sorted({old_name, name})
+              subprocess.run(['git', 'add', '--all', '--', *paths], check=True)
+              staged = subprocess.check_output(['git', 'diff', '--cached', '--no-renames', '--name-only', '-z']).decode().strip('\0').split('\0')
+              assert set(staged) == set(paths), ('unexpected staged files', staged)
+              label = name if source == path else f'{old_name} -> {name}'
+              summary = item.get('summary', bundle.get('summary', 'reconcile documented behavior and remaining work'))
+              message = f'docs: {label} — {summary}'
+              subprocess.run(['git', 'commit', '-m', message], check=True)
+              sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              commits.append({'paths': paths, 'sha': sha, 'message': message})
+              pathlib.Path('/tmp/review-patch-state.json').write_text(json.dumps({'commits': commits}))
           subprocess.run(['pnpm', 'guidance:check'], check=True)
-          subprocess.run(['git', 'diff', '--check'], check=True)
-          state = {'paths': sorted(inputs | outputs), 'message': bundle['message']}
-          pathlib.Path('/tmp/review-patch-state.json').write_text(json.dumps(state))
-          print(f'Validated {len(outputs)} files, {len(moves)} moves; source/archive edits are exact project-reference replacements only.')
+          subprocess.run(['git', 'diff', '--exit-code'], check=True)
+          print(f'Validated and committed {len(outputs)} files separately; {len(moves)} moves; runtime/archive edits are reference-only.')
           PY
       - name: Preserve the reviewed patch outside the repository
         if: always()
@@ -109,7 +124,7 @@ jobs:
           target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-patch-evidence.zip'
           with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as out:
               out.write('.github/full-documentation-review-patch.json', '_pending_patch.json')
-              out.writestr('_changes.patch', subprocess.check_output(['git', 'diff', '--binary', '--no-ext-diff', 'HEAD']))
+              out.writestr('_changes.patch', subprocess.check_output(['git', 'diff', '--binary', '--no-ext-diff', os.environ['GITHUB_SHA']]))
               state = pathlib.Path('/tmp/review-patch-state.json')
               if state.exists():
                   out.write(state, '_validated_paths.json')
@@ -119,21 +134,13 @@ jobs:
         with:
           name: reviewed-documentation-patch
           path: ${{ runner.temp }}/review-patch-evidence.zip
-          retention-days: 1
+          retention-days: 7
           if-no-files-found: error
       - name: Commit and publish without overwriting concurrent work
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 - <<'PY'
-          import json, pathlib, subprocess
-          state = json.loads(pathlib.Path('/tmp/review-patch-state.json').read_text())
-          subprocess.run(['git', 'add', '--all', '--', *state['paths']], check=True)
-          staged = subprocess.check_output(['git', 'diff', '--cached', '--no-renames', '--name-only', '-z']).decode().strip('\0').split('\0')
-          assert set(staged) == set(state['paths']), ('unexpected staged files', staged)
-          subprocess.run(['git', 'rm', '--', '.github/full-documentation-review-patch.json'], check=True)
-          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
-          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
-          subprocess.run(['git', 'commit', '-m', state['message']], check=True)
-          PY
+          test -f /tmp/review-patch-state.json
+          git rm -- .github/full-documentation-review-patch.json
+          git commit -m 'chore: .github/full-documentation-review-patch.json — remove the applied per-file patch'
           git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push origin HEAD:refs/heads/docs/full-documentation-review-reconciled-2026-10-03
