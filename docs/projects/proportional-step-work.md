@@ -4,19 +4,19 @@
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | NP02 delivers changed-object sensory preparation, while broader local simulation and publication work remain proposed. | 2026-10-03   |
 
-**Scope:** NP02 delivers the source-preparation portion of stage 2, and PW08 supplies the earlier bounded improvements identified below; the remaining stages are proposed work, not approved for implementation. Further implementation starts only with Mike's go-ahead. The decisions at the end are engineering judgments with their reasons. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.
+**Scope:** NP02 delivers the source-preparation portion of stage 2, and PW08 supplies the earlier bounded improvements identified below; the remaining stages are proposed work, not approved for implementation. Further implementation starts only with Mike's go-ahead. The choices at the end are proposals with their reasons, not independent implementation approval. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.
 
-## How time advances today
+## Current timing contract and historical baseline
 
 - **Stop and step.** The simulation keeps one clock for the whole world. It calculates in advance the next moment anything needs attention, jumps the clock there and does bookkeeping. In this plan that moment is a **stop**, and the time between two stops is a **step**.
 - **Forecast.** At some stops the simulation also makes a **forecast**: every entity's current rate of change (how fast hunger, energy or fire fuel change) and the earliest moment any rule needs attention. Some stops only end the step and keep the forecast, for example a flying bird's mid-air turn or each metre it travels. Other stops throw the forecast away. Then every value is brought up to date, every status is re-checked and the forecast is rebuilt for the whole world. Stops of this second kind are called **shared** stops below.
 - **The 1 m sensing rule.** A moving body's step ends after it travels 1 m (less near creatures with very short senses), so that who-sees-whom is re-checked often enough. This is a bundled-world fidelity rule. Other rules reuse the same value: when a bird waiting for a blocked landing spot tries again, and when an animal's small wander hop ends a step.
-- **Postponement.** Since the regional work, a step in which bodies only moved does not apply hunger, energy or similar changes to anyone. It records the elapsed time, and the next stop that needs current values applies it.
+- **Postponement.** Since the regional work, an eligible body-only step can postpone rate application; active health-rate or conserved-transfer requirements still force immediate integration. It records the elapsed time, and the next stop that needs current values applies it.
 - **Calls, batches and publication.** The server does not run the clock continuously. Every 50 ms its timer works out how much game time is owed and asks the simulation to advance; each such request is a **call**.
   - The server asks every call to end at the first shared stop. A call also ends when the offered game time runs out, after 32 steps, or at the first step end after about 8 ms of real work.
-  - A single long step is never cut short. When one step takes longer than 8 ms, every step ends its own call.
+  - Native actor, ambient and observation preparation can yield private progress within a step. The server returns to the event loop after roughly 8 ms between yield points, but retains mutation ownership until a coherent result is published. Individual operations and finalization remain indivisible; an 8 ms budget is not a worst-case latency guarantee.
   - Each call ends with **publication**: postponed changes are applied, and the edited working copy becomes a new read-only ("frozen") world that the rest of the server may read.
-  - The server keeps making calls for about 8 ms (a **server batch**), then shows players the latest world, at most 20 times a second, and saves once per real second.
+  - The server keeps making calls for about 8 ms (a **server batch**), then shows players the latest world, at most 20 times a second, and normally schedules a progress save about once per real second, subject to the existing durability/backpressure owner.
   - **Call size** is how much game time each call is offered (for example 30 s or 1 s).
 
 ## Goal and principle
@@ -32,7 +32,7 @@ Three rules follow:
    - **Local:** only named entities whose rates or active statuses change, such as a bird taking off or landing, or an animal whose flee ended.
    - **Shared (everyone):** only as a fallback while the code cannot yet name who depends on the stop. Each such case is a gap to close, not a design; the goal is that no stop needs it. A new mechanic may use it only with a stated reason, recorded in the boundary catalogue.
 
-   Sight is a separate question with the same answer. When something moves or changes, only the characters who could perceive it need their sight re-checked (rule 2). Today the sight bookkeeping walks the whole world at every stop, even one that concerns a single bird; stage 2 fixes that.
+   Sight is a separate question with the same answer. When something moves or changes, only the characters who could perceive it need their sight re-checked (rule 2). NP02 now prepares source inputs from complete phase-local changes and selects affected observers conservatively. Remaining per-observer target work and other whole-world loops are distinct gaps; stage 2 must not repeat the delivered source-preparation work.
 
 2. **Bookkeeping visits only what changed or could be affected.** Sight checks, value updates and publication are driven by a list of what changed in the step, not by walking every entity.
 3. **Outcomes do not change.** Each stage is compared with the code before it on every benchmark scenario, once for each call size: 30 s calls like the server's, 1 s calls and one call for the whole run. "The same" means all of these match:
@@ -47,9 +47,9 @@ Three rules follow:
 
    A stage that moves where steps end must list its expected shifts in these, and any floating-point residue from applying values over different spans, in its evidence before implementation; decision 5 makes the most important of them exact. It must not make any other outcome depend on call size. Any other difference needs Mike's approval as a documented fidelity change.
 
-## Where the time goes today
+## Historical cost baseline
 
-These figures come from a disposable, timed copy of the regional branch at `563d0776`, before that branch was rebased onto main on 2026-10-01. The machine was a 10-core computer shared with other agents, running 6 to 17 times more work than it had cores (load averages 61–175). Absolute times are therefore inflated and noisy; compare the shares and counts, not the milliseconds.
+The operation descriptions and percentages in this section are historical, not assertions that every listed cost remains in current main. PW08 and NP02 subsequently removed specific repeated work; their matched evidence, not these percentages, controls current status. These figures come from a disposable, timed copy of the regional branch at `563d0776`, before that branch was rebased onto main on 2026-10-01. The machine was a 10-core computer shared with other agents, running 6 to 17 times more work than it had cores (load averages 61–175). Absolute times are therefore inflated and noisy; compare the shares and counts, not the milliseconds.
 
 The **bird flock** scenario is called "staggered flight" in the [regional evidence](../verification/regional-time-and-navigation.md#environment-and-method). It has 854 entities: about 60 people (62 characters that see and remember), 100 deer, 48 birds that take off at staggered times, about 500 inert objects and the starter world. Animals and birds are seen but keep no sight records. Over 300 game seconds it needed 73 steps of about 80 ms each, one step per call, and the table shows the range over 9 runs.
 
@@ -94,13 +94,15 @@ What stands out:
 
 ## Owners
 
-- The **time agent** did the regional work (`codex/time-nav-performance`, ready to merge into main on 2026-10-01). It owns stepping and forecasting, movement, flight, statuses and route finding.
+The agent assignments below record the original parallel work. Those implementations are now integrated; they are not outstanding branch-merge or staffing prerequisites. Focused trackers remain the delivery owners.
+
+- The **time agent** did the regional work (`codex/time-nav-performance`, subsequently integrated into main). It owns stepping and forecasting, movement, flight, statuses and route finding.
 - The **perception agent** owns sight, events, memories and the code that builds each published world. Its sight-and-reaction work merged into main on 2026-10-01 (`4c67ed33`), after the measurements below; the regional branch was rebased over it the same day.
 - The **saves agent** owns saving; its work is merged on main.
 - The main simulation loop (`kernel.ts`) is edited by the time, actions and perception agents.
 - The shared-campfire and composed-activities work changed the same forecasting code and main loop; both are on main, and the regional branch was rebased over them on 2026-10-01.
-- The [survival-settings plan](world-configured-survival.md) changes the same forecasting code. It removes the engine's named starving and exhausted conditions, which stage 4 builds on.
-- The server code that builds each player's view (`apps/server/src/view.ts`) has no named owner; four branches edit it.
+- The delivered [survival-settings work](world-configured-survival.md) uses installed rule properties instead of the old named starving/exhausted fallback. Stage 4 builds on that current contract; it does not perform the extraction again.
+- The server code that builds each player's permitted view (`apps/server/src/view.ts`) stays with [PF05/PF12.7](../maintainers/performance.md); world publication and resident-state work stay with PF08. A contributor may implement a stage without creating a second semantic owner.
 
 ## Stages
 
@@ -141,7 +143,7 @@ This stage keeps each call size's outcomes the same except for the listed shifts
   - a condition review, the periodic check that tells a character how its body feels;
   - a promise to another character becoming overdue.
 
-  They will instead re-forecast only the affected entity, using the shortcut birds already use when they take off or land. That shortcut applies only when no other entity's status refers to the entity and it is not starving, exhausted or sharing a supply; otherwise the whole forecast is rebuilt as today.
+  They will instead re-forecast only the affected entity, using the shortcut birds already use when they take off or land. That shortcut rejects cross-entity status dependencies, coupled reservoir flows, conserved-transfer fallback and active health-rate integration. These are current mechanical properties, not engine checks for named hunger or exhaustion conditions; unknown coupling retains the full rebuild.
 
   The shortcut alone is not enough for characters. While a forecast is kept, the start of each step looks only at characters already expected to react (urgent needs, an active plan, following someone). The end-of-step check of body conditions is also skipped whenever changes are postponed. So a local stop must bring the affected character's values up to date and run its own checks at that moment. The rules that discard the whole forecast whenever any event or new record appears must learn to ignore events that concern only that character, as they already do for a bird's takeoff.
 
@@ -180,8 +182,8 @@ Delivered [NP02](../maintainers/next-priority-batch.md#np02--sensory-work-follow
 
 This stage builds on the perception work merged into main on 2026-10-01, which reworked this code: the sight pass reads unchanged entities without copying them, records when a person leaves a character's view, and counts its own work. Stage 0 re-measures what remains before this stage claims further savings.
 
-- **Update "what I currently see" records in place.** Add the entries that appeared and drop the ones that disappeared, keeping the same sighting ID for each sighting still going on, so memories that refer to it stay linked.
-  - This removes the largest single cost (18%) and does not depend on other stages.
+- **Update "what I currently see" records in place — delivered by PW08.** The current kernel adds and removes only changed bindings, keeping continuing sighting IDs so memories stay linked.
+  - PW08 verifies reduced assignments; the old 18% cost is the historical opportunity, not a measured current end-to-end saving. Membership comparison and immutable finalization can still grow with visible membership.
   - It changes the order of entries in each saved record. The save format already treats that order as meaningless, so outcome comparisons ignore it (rule 3).
 - **A change list instead of whole-world comparisons — delivered by NP02.** Each actual sensing phase consumes its own notices and certifies relevant writes in the draft. Changed source entries update privately owned positions, dimensions and spatial bins; unrelated needs/status progression does not invalidate distant static sources. Missing coverage, overflow, policy replacement, load, forks or abandoned continuation rebuild complete inputs. General publication changes remain conservative and independent.
   - The delivered list covers bodies whose sight-relevant properties changed during the step:
@@ -218,21 +220,21 @@ This stage builds on the perception work merged into main on 2026-10-01, which r
 
 **Changes:**
 
-- Store each pair's time spans under both bodies, and recompute only pairs that involve a body whose predicted path changed.
-- Rule out pairs too far apart to come into sight or touch during the step with a cheap distance test, before comparing their paths.
-- Today every shared stop throws away all stored spans. Keep a pair's spans across a shared stop only when neither path changed and everything else they were computed from is unchanged:
+- **Delivered by PW08:** reverse membership records each cached pair under both bodies, so invalidating a body visits only its incident pairs. Shared-rebuild pruning still visits cached pairs; this is not constant-cost global reconciliation.
+- Current crossing work already uses conservative spatial candidates and movement envelopes before exact pair geometry. Improve that filtering only for a measured remaining gap; do not rebuild the existing broad phase.
+- **Delivered by PW08 for certain paths:** shared rebuilds retain a pair's spans only within their original covered interval after rederiving both paths and checking their remaining absolute trajectories. Uncertain-outcome memoization is cleared. Retention also certifies the actual current inputs, including:
   - the watcher's sight range and eye height;
   - both bodies' size and reach (a body lies lower once dead);
   - whether each side is alive and taking part;
   - whether the watcher's senses are blocked;
   - the map.
 
-  Store these with the spans, and discard the spans when any of them differs.
+  Copied certificates and immutable geometry/definition identities fence this reuse. Changed, missing, expired or unsupported inputs discard affected spans; mutable or replaced geometry takes the full clear. Further reuse is proposed only for a measured remaining gap.
 
 - Today, whenever any watcher is moving, the check builds a position lookup of every entity in the world. Build it only from bodies a moving watcher could reach, or keep it up to date from the change list.
-- Find out why about 125 pairs are recomputed on every step of the flock.
+- Re-measure any remaining repeated pair evaluations after PW08 before explaining them; the roughly 125-pair observation belongs to the historical flock source.
 
-**Expected effect:** most of the check's roughly 20% share in the flock.
+**Remaining target:** reduce the measured current exact-pair and candidate work without repeating PW08. The roughly 20% share belongs to the historical flock baseline; delivered work-count reductions do not imply that entire share became an end-to-end saving.
 
 **Risk:** over-pruning silently loses a brief sighting.
 
@@ -245,7 +247,7 @@ This stage builds on the perception work merged into main on 2026-10-01, which r
 
 ### Stage 4 — values updated only where needed
 
-- **Per-entity postponement.** A stop applies postponed changes only to the entities it touches, plus anything coupled to them, such as two characters drawing from one supply. Today one creature that is starving, exhausted or replenishing a supply turns postponement off for the whole world, because those cases' results depend on exactly when changes are applied. That switch becomes per entity. The engine also stops naming these bundled-world conditions itself: the world's rules tell the engine which of their conditions need immediate updates. The [survival-settings plan](world-configured-survival.md) does that last part first: postponement switches off only while a rule that changes health is active, a property of the rule rather than a named condition. This stage then makes the switch apply per entity.
+- **Per-entity postponement.** A stop applies postponed changes only to the entities it touches, plus anything coupled to them, such as two characters drawing from one supply. Current integration already detects active installed health-rate rules rather than named starving/exhausted conditions. An active health rate, conserved-transfer fallback or admitted replenishment action still disables deferred integration for the current interval. Making eligible updates local to each entity remains proposed; the delivered [survival-settings work](world-configured-survival.md) is a dependency already satisfied, not another extraction task. Health-rate immediacy does not itself impose the one-second replenishment fallback.
 - **Publishing without updating everyone (decision 1).**
   - Publish each changing value as "value at a given time plus its rate". Every reader then works out the current value from that: the game screen, AI context, saves and player commands.
   - This reverses the current rule that every value is brought up to date before a world is published.
@@ -268,20 +270,20 @@ This stage builds on the perception work merged into main on 2026-10-01, which r
   - rule 3, including the regional punch-and-hunger and work-on-arrival scenarios;
   - a debug mode that brings every value up to date at each stop and compares;
   - a constructed case that repeats tiny steps, such as main's refused-landing retry, still ending in an explicit work-limit error.
-- **Owners:** time agent, with the status-effect and work-limit code owners (none named yet).
+- **Owners:** [PF13.11/PF13.12](../maintainers/simulation-time.md), with the existing status-effect and native-work admission owners; assignment to a contributor does not add another authority.
 
 ### Stage 5 — publication follows change
 
 - **Freeze only what changed.** After each call, the server marks the new world read-only, so caches can trust that unchanged parts never change. Before the perception work it walked every entity to do that: 1.4–1.6 ms per call at about 4,000 entities in one measurement. Since 2026-10-01 main freezes only the entities changed since the previous published world; stage 0 checks that nothing remains here.
-- **Remove whole-world scans from each server batch.** Four checks walk the whole world:
+- **Remove remaining whole-world scans from each server batch.** The historical inventory covered four checks:
   - finding player-controlled characters;
   - counting entities;
   - checking whether anyone waits for a route;
   - checking for characters with too many unprocessed memories.
 
-  Each should use a list kept up to date as entities change.
+  Current server code already maintains the human-controlled actor list across relevant lifecycle changes. Preserve that implementation. Re-measure remaining entity-count, route-wait and memory-pressure scans at their actual callers before adding incremental lists; unknown changes and restore need conservative reconstruction.
 
-- **Players' views follow change.** Today each publication rebuilds the lookup of nearby entities from every entity, and every player's view is recomputed. The lookup should be updated from what changed, and a player's view recomputed only when something in their neighborhood changed. This code has no owner yet; the stage that changes it handles it (decision 4).
+- **Players' views follow relevant change.** Current views already use permission-scoped memoized sections and a spatial index shared by immutable entity-table identity. A changed table still invalidates the nearby-visible-entity selection and can require rebuilding that index. Extend the existing owner only where measured dependencies justify more local reuse; include private inventory, messages, control, timeline and policy changes, not just a neighborhood test. NP02's private sensing-phase index is not the publication index and cannot be borrowed without a valid ownership/snapshot contract.
 - **Split the world's single entity table into buckets (decision 3: not now).** Today every publication copies and visits the whole entity table even when one entity changed. The perception branch measured one change at 0.29 ms with 400 entities, 9.3 ms with 4,000 and 205 ms with 40,000.
   - With buckets, only changed buckets are copied and frozen. The cost then follows the size of the changed buckets; it still grows somewhat with the world (bigger or more buckets).
   - The work-accounting records need the same split.
@@ -302,7 +304,7 @@ This stage builds on the perception work merged into main on 2026-10-01, which r
   - a development check that every published world is fully frozen;
   - comparing views against full recomputation;
   - stage 0's calls-per-batch count before any change to call length.
-- **Owners:** perception agent (the code that builds each published world), saves agent (save format), time agent with the server-loop owner (call length). The player-view code has no owner yet. Trackers: [PF05, PF08 and PF12.7 (publication, resident state and pose updates)](../maintainers/performance.md).
+- **Owners:** perception agent (the code that builds each published world), saves agent (save format), time agent with the server-loop owner (call length). Existing player-view authorization and cache owners remain authoritative. Trackers: [PF05, PF08 and PF12.7 (publication, resident state and pose updates)](../maintainers/performance.md).
 
 ### Stage 6 — per-step loops touch only active things
 
@@ -322,7 +324,7 @@ Every stage also reports:
 - calls per server batch;
 - headroom at 3× and 8× game speed.
 
-The server keeps other world changes, including player commands, waiting until its current batch ends. A batch ends at the first step end after about 8 ms, so a command waits behind the slowest single step.
+The server keeps other world mutations, including player commands, waiting until its current coherent batch ends. Private iterator yields let unrelated I/O run without exposing the draft or releasing mutation ownership. Publication at a coherent boundary releases that ownership; a long atomic operation, finalization or unfinished coherent step can still delay a command. Measure mutation-queue wait separately from uninterrupted event-loop work.
 
 The regional work already made individual calls longer, because each step covers more: the longest call went from 309–715 ms to 320–1,462 ms (the top figure during a load spike). If a stage makes a step or call slower beyond run-to-run variation, it must say why, and Mike must approve. [RP06](../maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits) says changes to which stops are private must be judged by command latency and throughput together.
 
@@ -330,14 +332,14 @@ The standing targets are the [acceptance budgets](../maintainers/performance.md#
 
 ## Decisions
 
-These are engineering judgments, not questions for Mike: none changes what players see beyond the existing approximations described here, and each will be re-checked against stage 0's measurements.
+These are proposed engineering choices to be re-checked against current measurements when the remaining stages are authorized. They do not independently approve a change to sampling, published-value representation, save shape or command latency. Choice 5 intentionally replaces an approximate timing behavior with an exact target boundary; any such accepted change must update its canonical contract and evidence.
 
 1. **Bring values up to date only when someone reads them — later, if still needed.** Every creature has numbers that change continuously (food, energy, health while starving). Today, at the end of every round of simulation work, every such number is rewritten to its current value before the world is handed to the rest of the server: 215 creatures and about 1,800 changed fields per round in the bird test, roughly a fifth of the simulation's time. The alternative stores "energy was 84.2 at game time 10:03:15, falling 0.0005 per second" and works out the current value only when something reads it (the player's screen, a save, an AI prompt, a rule check). It saves that rewriting; the cost is that every piece of code that reads these numbers must go through one shared calculation, or it shows a stale value (an AI prompt could describe a starving character as fed), and the save format changes. Players would see nothing different. **Decision:** do the cheaper fixes in stages 1–3 first, then do this in stage 4 only if the rewriting is still one of the largest costs.
 2. **Animals and birds nobody can see stop pausing every metre.** The simulation cannot check sight continuously, so it pauses the clock each time any moving body has moved 1 m and re-checks who can see whom. For an animal or bird that no character could see during that time, the pause is wasted. **Decision:** skip it for such bodies. This is not done for a moving character, because a character notices things around it. Two unrelated rules currently borrow the same 1 m timing — how often a bird retries a landing spot that is occupied, and when an animal's small random wander hop may end a pause — so each gets its own timing setting first.
-3. **Do not split the world's entity table yet.** Everything in the world — every person, animal, bird, tree, rock, item and fire — is an entry in one table keyed by its ID (854 entries in the bird test). When a round of simulation ends, the game makes a new read-only copy of the world so the screen, saving and AI can read a stable version while the simulation continues. Unchanged entries are shared, not duplicated, but the table of IDs itself is copied and checked in full whenever anything changed. Measured cost of copying it with one changed entry: about 0.3 ms with 400 entries, 9 ms with 4,000 and 205 ms with 40,000. Splitting it into, say, 256 smaller tables would make that copy cost about the same however many entities exist, but it changes about 560 places in the code and the save format. **Decision:** not now; revisit if a world approaches about 5,000 entities or stage 0 shows this copy among the largest costs.
-4. **Other work in progress is reconciled when it lands.** Several other agents are changing the same files on their own git branches (inventions, survival settings; sight and memory, campfire sharing and composed activities have since merged). Whichever lands later must adapt to the others; nobody needs to decide the order in advance. Each stage starts from the current main and reconciles overlaps at that point. Code without an owner (the server code that builds each player's view) is handled by whichever stage changes it.
+3. **Do not split the world's entity table yet.** Everything in the world — every person, animal, bird, tree, rock, item and fire — is an entry in one table keyed by its ID (854 entries in the bird test). When a round of simulation ends, the game makes a new read-only copy of the world so the screen, saving and AI can read a stable version while the simulation continues. Unchanged entries are shared, not duplicated, but the table of IDs itself is copied and checked in full whenever anything changed. Measured cost of copying it with one changed entry: about 0.3 ms with 400 entries, 9 ms with 4,000 and 205 ms with 40,000. Splitting it into, say, 256 smaller tables would reduce copying to affected buckets, not make it constant as the world grows; a fixed number of buckets still grows with its membership. The original estimate identified about 560 source uses and a save-format change, which would need a fresh impact inventory before implementation. **Decision:** not now; revisit if a world approaches about 5,000 entities or stage 0 shows this copy among the largest costs.
+4. **Continue from integrated current main.** The original inventions, survival-settings, sight/memory, campfire-sharing and composed-activity overlaps are historical integration context, not remaining merge prerequisites. Each authorized stage refreshes its agreed base and adapts to current contracts under the repository reconciliation policy. Existing PF/EPR/SW and player-view owners retain responsibility; a new contributor does not create a parallel mutation or projection path.
 5. **Make "reached its target" exact instead of accepting timing shifts.** A few things are only checked when the simulation pauses the clock, so they happen at the first pause after the real moment: a character walking up to something to strike, gather or pick up notices it is within reach, and a bird whose landing spot is occupied tries again. Removing unnecessary pauses moves those moments by up to the time it takes to walk about 1 m (around 9 game seconds at walking pace); the same punch already lands at 129.3 s or 126.9 s of game time today, depending only on how the server split time. **Decision:** stage 1 calculates the moment a character comes within reach of its target, the way walk arrival and brief sightings are already calculated, so that moment no longer depends on pauses at all; landing retries get their own timing (decision 2). Remaining differences within the existing 1 m approximation are recorded in each stage's evidence.
-6. **Player commands must not wait longer.** The server runs the simulation in short rounds of about 8 ms of computer work, then handles player commands, screen updates and saving; a command arriving mid-round waits for the round to end. Each round ends by handing the new world to the rest of the server, which costs work. Several pauses can share one hand-over only while the round stays within its 8 ms of work, so commands wait no longer than today. **Decision:** combine hand-overs only inside that existing 8 ms limit. The real waiting problem is a single slow pause: in the dense bird test one pause took about 80 ms on a busy machine, and up to 1.4 s during a load spike, because one pause cannot be split. Stages 2–3 make those pauses cheaper; every stage reports the longest wait.
+6. **Player commands must not wait longer.** The server runs the simulation in short rounds of about 8 ms of computer work, then handles player commands, screen updates and saving; a command arriving mid-round waits for the round to end. Each round ends by handing the new world to the rest of the server, which costs work. Several pauses can share one hand-over only while the round stays within its 8 ms of work, so commands wait no longer than today. **Decision:** combine hand-overs only inside that existing 8 ms limit. The real waiting problem is a single slow pause: in the dense bird test one pause took about 80 ms on a busy machine, and up to 1.4 s during a load spike, in that historical source. Current cooperative yields can release the event loop inside a pause, but do not let another world mutation inspect its unfinished draft. Further stages must reduce the remaining coherent-work and indivisible-operation costs; every stage reports the longest wait.
 
 ## Order, verification and completion
 
@@ -366,6 +368,6 @@ The contracts in [simulation time](../simulation-time.md) stay:
 
 - one clock for the whole world;
 - what a character perceives is recorded when it happens;
-- every character near a moving body is checked at each stop;
+- every potentially affected observer remains covered at the required perception time; valid conservative filtering and dependency-certified reuse may avoid repeating an unchanged exact test;
 - random choices come from a saved sequence, so reloading repeats them;
 - engine code stays separate from the bundled world's rules.
