@@ -2,15 +2,37 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | Research and design are complete; runtime implementation has not begun. | 2026-10-04 |
+| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04 |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
 ## Scope, risk and planning
 
-This branch changes research, specifications, guidance and tracking, with **zero runtime logic lines changed**. It does not install packages, run paid character models or modify world data. The future implementation crosses world selection, inventory reads, native handling and activity presentation, so it requires this durable design and real integrated verification rather than a CSS-only task.
+Research was completed first. The subsequent chat continuation authorizes the runtime implementation on the same branch. The implementation crosses world selection, inventory reads, native handling, activity presentation and conversation drafts, so this durable plan and integrated verification remain necessary. No provider calls are needed for the selected native checks.
 
 The primary risks are hidden-content disclosure, moving the wrong item or destination, duplicate/uncertain effects, input falling through into the world, and recreating the form problem through an overly generic replacement. Reuse current semantic owners and their tests. Before implementation, size the concrete changed logic against the then-current source and update the staged plan; a line-count estimate based only on this documentation branch is not an implementation estimate.
+
+## Implementation plan — October 4, 2026 UTC
+
+The chat continuation on October 3 in America/New_York moves this discussed plan into implementation. The working branch remains `docs/game-ui-research-redesign`, initially at `e0bba60a36ab4a19905ed04a8d71ae77ed81e5cb`. GitHub's verified default `main` remains `b50ec6ce75f260d68c18ec99d767982c65b0fccb`; the branch is five documentation commits ahead with no upstream divergence. No history rewrite is needed.
+
+**Estimate and risk:** approximately 2,200–3,200 changed production TypeScript/TSX logic lines, excluding tests, documentation and roughly 300–450 CSS lines. Inventory accounts for 850–1,200, activities 650–950, conversation 230–330, and world entry/shared command/projection work the remainder. This is a substantial coordinated change with custody, privacy, uncertain command outcomes, input ownership and installed-world compatibility risks. The estimate will be refined if actual owners require more work.
+
+| Work | Owner and dependencies | Completion evidence |
+| --- | --- | --- |
+| Paired inventory | Existing inventory projections and transfer/equipment/handover owners; two independently scoped collection components | J01/J03–J09 and J15; real transfers, nested bags, equipment, refusal, narrow/keyboard handling and correct survivor identity after native stack merging. |
+| World opening | Main application, object action menu/details, minimal permitted storage projection and native approach goal | J01/J02/J08; explicit opening/approach, arrival recheck, movement cancellation and no distant/hidden contents. |
+| Activity interaction | Current camp compiler plus world-authored presentation roles; selected-target task panel | J10–J12; immediate native fuel action, visible supply/budget/reserve/stop choices, explicit replacement, existing recipe execution and a different installed-world example. |
+| Conversation | Existing composer/history, native private draft namespace and access cleanup | J13/J14; recipient-scoped drafts, send revision fence, preserved older reading, explicit named item mention and existing offer consent. |
+| Integrated review | Real native server/client and existing focused checks, followed by independent affected-diff review | J16 and meaningful changed-condition cases; record actual coverage and remaining device/model/human-study limits. |
+
+**Resolved implementation choices:** quick-move uses the exact inspected available quantity with current native revisions. There is one external collection; each side retains a finite page/window instead of accumulating every page. Equipment uses the installed world's projected actions and comparisons, without new universal slot or favorite rules. Bulk transfer, fixed-chest/workbench construction, new trade economics, multiwindow logistics and an item-art pipeline remain outside the required ordinary-play scope.
+
+The native command owner already persists epoch-scoped receipts and rejects reuse with changed input. Direct handling must retain its original command ID, epoch and exact intention while unresolved, and reuse this owner; transfer may merge a lot into a surviving destination identity. Full request scope participates in the fingerprint, so reconnect/control changes need authoritative receipt recovery rather than a new command ID or inference from counts. Implement only a minimal authorized receipt read if the existing owner cannot expose the needed outcome.
+
+Activity presentation metadata belongs in the installed world definition and uses semantic role mappings. It does not make bundled fire/resource field names universal client rules. Changed installed-host pins retain strict current-format validation; verification uses fresh disposable worlds, and no development save is migrated, reset or deleted. An item discussion chip contributes its visible name to the explicitly sent words; it does not add a hidden attachment, inspection or custody grant. Drafts remain private session data and clear on lost access; the old global draft is not imported into an arbitrary person.
+
+**Verification selection:** inspect the exact existing scripts/fixtures before execution; run changed-file pinned formatting, TypeScript checking and production build, focused native inventory/command/activity checks, and the existing relevant browser interactions where available. Add only a small ad-hoc scenario for missing transfer-receipt or integrated-context coverage; do not recreate a broad suite. All native runs use `AI_BUDGET_USD=0` and disposable PostgreSQL. UI acceptance needs actual interaction and visual inspection; missing dependencies, PostgreSQL, browser or assets are recorded as specific gaps rather than passes. Do not run paid provider work or claim model quality, native IME, assistive-device or uncoached human-usability results without that evidence.
 
 ## Maintained records
 

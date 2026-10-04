@@ -2,13 +2,13 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | Research and design are complete; runtime implementation has not begun. | 2026-10-04 |
+| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04 |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 
 ## Purpose and decision
 
-Make handling belongings, opening a chest, tending a fire and talking to a person feel like acting in the world. Mike's October 3 direction explicitly replaces the routine destination-selector and activity-form experience. The inventory should show recognizable objects in squares, and opening a chest should let the player move items between that chest and their own inventory. Research and this design are authorized; runtime implementation is a subsequent task.
+Make handling belongings, opening a chest, tending a fire and talking to a person feel like acting in the world. Mike's October 3 direction explicitly replaces the routine destination-selector and activity-form experience. The inventory should show recognizable objects in squares, and opening a chest should let the player move items between that chest and their own inventory. The subsequent chat continuation authorizes implementation of this discussed plan. Research is complete; runtime work and qualification are now in progress.
 
 The user-approved direction is **world object → relevant interaction → visible result**. The detailed controls and layouts below are recommended design choices. Their completion must be established in the actual game, not inferred from a handbook, screenshot or build. This document does not claim the proposed inventory is shipped.
 
@@ -134,4 +134,4 @@ These are future implementation gates, not claims of tests run for this document
 4. **Conversation and handover integration.** Preserve current chat gains while connecting person/item entry, scope cues and J13/J14. New trading economics are not required.
 5. **Chore reduction.** Consider bulk storage, organization, additional input modes and broader action families from measured play. These do not delay the ordinary chest interaction.
 
-No new gameplay implementation is included in this research branch. The design's binding directions are clear; exact pixel dimensions, bindings that conflict with existing shortcuts, and native batch semantics are implementation decisions with explicit owners and acceptance gates. They must not reopen the decision to make ordinary players choose containers and fill execution forms.
+The branch now carries the approved implementation as well as the original research; completion remains subject to the actual-game journeys above. The design's binding directions are clear; exact pixel dimensions, bindings that conflict with existing shortcuts, and native batch semantics are implementation decisions with explicit owners and acceptance gates. They must not reopen the decision to make ordinary players choose containers and fill execution forms.

@@ -12,6 +12,7 @@ import { ClockOffsetContext, clockParts } from './ui/event-time';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type {
   ActionOption,
+  ApiResult,
   CatalogueAction,
   EntityView,
   GamePatch,
@@ -31,6 +32,7 @@ import {
   setWorldPaused,
   startPresence,
 } from './api';
+import type { CommandRequestIdentity } from './command-request';
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
@@ -135,7 +137,7 @@ function App({
     [hover, setHover] = useState<{ entity: EntityView; point: { x: number; y: number } } | null>(
       null,
     );
-  const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>([]);
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>(['inventory']);
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [npcId, setNpcId] = useState<string | null>(null),
     [seed, setSeed] = useState<ComposerDraft | null>(null),
@@ -460,7 +462,10 @@ function App({
   useEffect(() => {
     if (!open.includes('events')) setEventsType('all');
   }, [open]);
-  async function command(action: ActionOption) {
+  async function command(
+    action: ActionOption,
+    request?: CommandRequestIdentity,
+  ): Promise<ApiResult> {
     if (!connected) {
       notify('Reconnect to the world.');
       return { ok: false, code: 'offline', message: 'Reconnect to the world.' };
@@ -476,8 +481,8 @@ function App({
     setPicker(null);
     try {
       const r = await post('/api/command', {
-        commandId: crypto.randomUUID(),
-        commandEpoch: view?.commandEpoch,
+        commandId: request?.commandId ?? crypto.randomUUID(),
+        commandEpoch: request?.commandEpoch ?? view?.commandEpoch,
         command: action.command,
       });
       if (!r.ok || r.code !== 'accepted') notify(r.message);
