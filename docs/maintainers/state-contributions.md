@@ -6,8 +6,8 @@ Implementation was authorized September 26, 2026 in the [five-project execution 
 
 ## Execution notes — September 26, 2026
 
-The implementation is on `codex/foundations-1-5`, based on `ce7ef555`.
-Current owner extraction and native integration cover these paths:
+The following owner map and measurements describe the September 26 implementation on `codex/foundations-1-5`, based on `ce7ef555`, now integrated. They are historical evidence, not a second current body-policy contract: [world-configured survival](../worlds/base/survival.md) and [status effects](../status-effects.md) own the subsequently delivered body and effect rules. Current verification uses PostgreSQL only.
+The original owner extraction and native integration covered these paths:
 
 | Value or behavior             | Single owner and current consumers                                                                                                                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -22,7 +22,7 @@ Current owner extraction and native integration cover these paths:
 
 Named resource phases evaluate proposal groups against one start state and a shared
 availability ledger; only accepted groups contribute writes. Native sequential phases
-retain their order. The compatibility charge family retains continuous numbers;
+retain their order. The native charge family retains continuous numbers;
 holds on a continuously draining recipient are explicitly unsupported until a family
 defines depletion arbitration. Supply holds and integer stock holds are supported.
 This restriction prevents native drain from silently spending promised stock.
@@ -35,8 +35,9 @@ index as admission, retaining canonical continuous summation and exact receipt o
 Warm/cold/fork/deadline checks and repeated whole-unit consumption stress qualify the repair.
 
 New holds bind a current action or admitted native process and claimant. (Reserving a portion for a named person, tracker BW21, was deferred for this reason: it needs a standing claimant process accepted at load plus R01's receipt pruning.) Derived
-reservation occupancy joins actor/module/world/host work admission; legacy holds without
-claimant evidence retain world/host accounting without invented ownership. Both SQL
+reservation occupancy joins actor/module/world/host work admission. The historical drill
+also retained actorless old-format holds in world/host accounting; the residual reader
+now contradicts the root development policy and its removal is tracked in [DF04](production-data.md#df04--retire-residual-compatibility-paths), not accepted as current compatibility support. Both SQL
 adapters preserve exact 17.125-unit holds and their accounting; cancellation releases live
 occupancy once, preserves stock and keeps terminal receipt memory accounted. The 2,024-hold
 burst reaches the 4 MB actor ceiling before publication of the refused hold. Source-bound
