@@ -1,5 +1,65 @@
-# Ranked psychology and behavior
+# Ranked psychology that supports play before simulation depth
 
-[Library](README.md) · [Expanded inventory](inventory-psychology-behavior.md) · [Review index](expanded-inventories.md)
+[Library](README.md) · [All expanded inventories](expanded-inventories.md) · [Priority policy](gameplay-priorities.md) · [Full entry descriptions](inventory-psychology-behavior.md)
 
-**Status: Pending.** The expanded source is preserved, but its individual entries have not yet received the current-game review. The old inline Criticality and introductory examples are not current individual rankings.
+**Status: Reviewed · October 3, 2026.** All **336 PB entries** are assigned below. Reviewed source blob: `0e87c2dff16071c54513324395a94193e08d7d20`. Source descriptions, stable IDs, setting recommendations, research and provisional build estimates are preserved. The source snapshot’s old Criticality cells and F/U/C/D ordering are superseded, not combined with these judgments.
+
+Coverage: **PB-001–PB-336**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
+
+| Core | Complete | Depth | Detail | Specialist | Total |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 48 | 205 | 36 | 37 | 336 |
+
+## Selection decisions
+
+Basic threat awareness, an available escape, useful clarification, retained work and actual goal completion are Core. A simple opponent can deliberately want something incompatible with the player, including victory or domination (PB-191/219). It does not need a comprehensive emotional model, hidden innocence or a redemption quest before it can provide opposition.
+
+Worthwhile challenges, rivals who welcome real competition, attainable mastery, discovery, useful companions and genuinely satisfying victories are Complete. PB-087 gives a dangerous route a concrete revenge objective; PB-216 permits the result to feel satisfying. PB-097/154 supply opponents worth testing oneself against. Guidance that preserves discovery (PB-283), a modest safe demonstration (PB-278) and informative failure (PB-277) help the player participate rather than demand psychological management first.
+
+Music, beauty, company, romance and playful amateur creation can also provide substantial enjoyable activities. Most nuanced affection, embarrassment, pride, mixed motives and memory reinterpretation are Depth. They enrich people already doing interesting things; they are not hundreds of required hidden meters or an instruction to run a separate AI for every inner voice.
+
+Empty-bowl interruption (PB-001), seam noticing (PB-006), preparation as procrastination (PB-066), returning borrowed gear first (PB-070), repair-favor recall (PB-101), a dragon's cushion preferences (PB-224) and an inherited knife considered too precious to use (PB-294) are Detail. Their bounded expression can remain Small. Do not implement polishing, repair history or a richer domestic routine to create a reason for these reactions.
+
+Copied minds, collective personhood, alternative affect laws and focused private adult scenarios are Specialist in this survival-adventure selection, not diagnoses or judgments about real people. Ordinary memory, current participation, privacy, truthful knowledge boundaries and independent agency remain required whenever relevant, irrespective of a particular optional row's priority. Existing source evidence limits and ownership boundaries remain unchanged.
+
+## 1 Core
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Respond to real danger and uncertainty, preserve progress and respect a settled answer. | PB-003, PB-041, PB-061, PB-062, PB-121 |
+| 2 | An actual adversary need not hide remorse or a compulsory redemption route. | PB-191, PB-219 |
+| 3 | Recognize an exit and retreat without abandoning the objective. | PB-181, PB-184 |
+| 4 | An attainable goal can actually finish. | PB-081 |
+
+## 2 Complete
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Usable attention and bounded information make people understandable and useful. | PB-002, PB-004, PB-042, PB-043, PB-063, PB-277, PB-278, PB-283 |
+| 2 | Readable opposition, deception and genuine rival ambitions support encounters. | PB-008, PB-053, PB-160, PB-325 |
+| 3 | Courage, assistance and alternate responses make dangerous play workable. | PB-182, PB-185, PB-190, PB-193 |
+| 4 | Curiosity, rescue and personal objectives motivate worthwhile journeys. | PB-083, PB-087, PB-099, PB-100, PB-296 |
+| 5 | Challenges, teachers, progress and satisfying victories reward continued play. | PB-026, PB-036, PB-084, PB-085, PB-092, PB-097, PB-103, PB-141, PB-144, PB-149, PB-154, PB-195, PB-216, PB-253, PB-293 |
+| 8 | Company, expression and peaceful making remain enjoyable activities in their own right. | PB-014, PB-095, PB-124, PB-152, PB-161, PB-163, PB-172, PB-176, PB-255, PB-267, PB-279, PB-287 |
+
+## 3 Depth
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 9 | Distinctive motives, relationships and situational depth after the baseline works. | PB-005, PB-007, PB-010, PB-011, PB-012, PB-015, PB-017, PB-018, PB-020, PB-021, PB-022, PB-023, PB-024, PB-025, PB-027, PB-028, PB-030, PB-032, PB-033, PB-034, PB-035, PB-037, PB-038, PB-039, PB-040, PB-044, PB-045, PB-046, PB-047, PB-048, PB-049, PB-050, PB-051, PB-052, PB-054, PB-055, PB-056, PB-057, PB-058, PB-059, PB-060, PB-067, PB-071, PB-072, PB-073, PB-074, PB-077, PB-078, PB-079, PB-082, PB-086, PB-088, PB-089, PB-090, PB-091, PB-093, PB-094, PB-096, PB-098, PB-102, PB-104, PB-105, PB-106, PB-107, PB-108, PB-109, PB-110, PB-112, PB-113, PB-115, PB-118, PB-119, PB-122, PB-125, PB-126, PB-127, PB-128, PB-129, PB-130, PB-131, PB-132, PB-133, PB-134, PB-135, PB-136, PB-137, PB-139, PB-142, PB-143, PB-145, PB-146, PB-147, PB-148, PB-150, PB-151, PB-153, PB-155, PB-156, PB-157, PB-158, PB-159, PB-162, PB-164, PB-165, PB-167, PB-168, PB-169, PB-171, PB-173, PB-174, PB-175, PB-177, PB-179, PB-180, PB-183, PB-186, PB-187, PB-188, PB-189, PB-192, PB-194, PB-196, PB-197, PB-198, PB-199, PB-200, PB-201, PB-202, PB-203, PB-204, PB-205, PB-206, PB-209, PB-210, PB-211, PB-212, PB-213, PB-214, PB-215, PB-217, PB-218, PB-220, PB-222, PB-223, PB-228, PB-232, PB-234, PB-237, PB-238, PB-241, PB-243, PB-244, PB-245, PB-246, PB-247, PB-248, PB-249, PB-251, PB-252, PB-254, PB-257, PB-259, PB-260, PB-261, PB-262, PB-264, PB-265, PB-268, PB-269, PB-271, PB-272, PB-273, PB-280, PB-281, PB-284, PB-285, PB-286, PB-288, PB-289, PB-291, PB-292, PB-295, PB-298, PB-299, PB-300, PB-303, PB-304, PB-305, PB-306, PB-307, PB-308, PB-309, PB-310, PB-311, PB-312, PB-313, PB-314, PB-315, PB-316, PB-317, PB-319, PB-320, PB-321, PB-323, PB-324 |
+
+## 4 Detail
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | PB-001, PB-006, PB-009, PB-013, PB-016, PB-019, PB-029, PB-031, PB-064, PB-065, PB-066, PB-068, PB-069, PB-070, PB-075, PB-076, PB-080, PB-101, PB-114, PB-116, PB-117, PB-120, PB-123, PB-140, PB-170, PB-207, PB-208, PB-224, PB-226, PB-242, PB-250, PB-258, PB-290, PB-294, PB-297, PB-326 |
+
+## 5 Specialist
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | PB-111, PB-138, PB-166, PB-178, PB-221, PB-225, PB-227, PB-229, PB-230, PB-231, PB-233, PB-235, PB-236, PB-239, PB-240, PB-256, PB-263, PB-266, PB-270, PB-274, PB-275, PB-276, PB-282, PB-301, PB-302, PB-318, PB-322, PB-327, PB-328, PB-329, PB-330, PB-331, PB-332, PB-333, PB-334, PB-335, PB-336 |
+
+## Verification and limits
+
+Checked the complete reviewed ID set for exactly one assignment per entry, valid priorities and the stated ordering. No descriptions, IDs, research or applicability were deleted. This is a document review, not a new implementation audit or playtest. A low priority never weakens the correctness, privacy, authority, participation or save-integrity requirements of a selected feature.
