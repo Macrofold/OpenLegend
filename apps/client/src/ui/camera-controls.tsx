@@ -120,7 +120,7 @@ export function CameraControls({
       <span className="ol-range-toggle" data-sense="vision">
         <CameraButton
           icon="ui.inview"
-          label="Vision"
+          label="Sight"
           hint={GUIDE_HINTS.vision}
           pressed={overlays.vision}
           onPress={() => toggleOverlay('vision')}
