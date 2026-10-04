@@ -29,7 +29,7 @@ D0's current consuming identity/time/privacy/revision contract is recorded in [A
 ### Remaining D1/D2 implementation and evidence
 
 - [x] **D1/D2 history query and storage efficiency.** Delivered the approved
-      [history storage plan](../projects/history-storage-efficiency.md): owner-driven
+      [history storage plan](../projects/completed/history-storage-efficiency.md): owner-driven
       startup selection/positions, specialized descriptive indexes, response and
       permitted-participant lookups, indexed actor deletion, combined event/observer
       perspectives, selective creator edits and measured event-count treatment.
@@ -62,7 +62,7 @@ No new retention policy drops routine movement or protects punches by a newly in
 
 ## DF03 — PostgreSQL-only runtime
 
-Implemented and locally qualified under the [PostgreSQL/preparation plan](../projects/postgresql-cognition-preparation.md). [Evidence](../verification/postgresql-cognition-preparation.md#postgresql-only-storage-and-shared-preparation) records focused PostgreSQL fixtures, current-format recovery, native failure checks and static/build verification. PostgreSQL with pgvector is required locally and in production. The SQLite adapter, worker, fallback, dialect branches and importer are removed. `SqlGameRepository` retains repository authority and current-format save/load guarantees. Checkpoint files remain under the configured data directory; a separate world needs a separate database as well as that directory. Fixtures/profilers create and drop only owned disposable PostgreSQL databases. Existing development saves are neither converted nor deleted. Historical both-adapter measurements below remain historical evidence.
+Implemented and locally qualified under the [PostgreSQL/preparation plan](../projects/completed/postgresql-cognition-preparation.md). [Evidence](../verification/postgresql-cognition-preparation.md#postgresql-only-storage-and-shared-preparation) records focused PostgreSQL fixtures, current-format recovery, native failure checks and static/build verification. PostgreSQL with pgvector is required locally and in production. The SQLite adapter, worker, fallback, dialect branches and importer are removed. `SqlGameRepository` retains repository authority and current-format save/load guarantees. Checkpoint files remain under the configured data directory; a separate world needs a separate database as well as that directory. Fixtures/profilers create and drop only owned disposable PostgreSQL databases. Existing development saves are neither converted nor deleted. Historical both-adapter measurements below remain historical evidence.
 
 Exit: missing configuration fails clearly, current PostgreSQL startup/reopen/checkpoint/recovery and relevant failure cases pass, migrated fixtures and static checks pass, and current docs/CI require PostgreSQL. Broader D5/SL/NC12 qualification remains separately tracked.
 
