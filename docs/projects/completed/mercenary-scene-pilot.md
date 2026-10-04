@@ -1,10 +1,14 @@
 # Mercenary in the playable scene
 
+| Status    | Current progress                                                                                                                                | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The additional NPC and fixed-resolution depth rendering are delivered and locally checked; broader art and crowd qualification remain separate. | 2026-10-04   |
+
 Authorized September 28, 2026: put the existing mercenary study character into the game scene. This is a narrow V3D01 / SW18.14 pilot, not authorization for the proposed generated-appearance infrastructure or a world-wide art conversion.
 
 ## Art sources and progress
 
-The active source is `/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/`. The [mercenary art record](../maintainers/art/mercenary.md) links the viewer, Blender projects, source assets, dated packages and remaining art-review work. [Technical evidence](../verification/mercenary-default.md) remains separate from style acceptance.
+The active source is `/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/`. The [mercenary art record](../../maintainers/art/mercenary.md) links the viewer, Blender projects, source assets, dated packages and remaining art-review work. [Technical evidence](../../verification/mercenary-default.md) remains separate from style acceptance.
 
 ## Scope and approach
 
@@ -16,9 +20,13 @@ Estimated affected logic: 800–1,100 lines, mostly the existing cloth/material 
 
 ## Base and existing work
 
-Remote `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`, refreshed before implementation. Current `codex/shadow-quality@cfa81e9d` already contains that commit; no rebase or branch change is needed. Preserve all pre-existing uncommitted shadow batching and qualification work. The initial affected-file snapshots are retained outside the checkout for review; never stage/commit unrelated work.
+This section records the September 28 implementation environment, not instructions to return to that branch or reuse another task’s edits. Later work follows the current [base-selection policy](../../../.agents/skills/openlegend-rebase/SKILL.md).
+
+Remote `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`, refreshed before implementation. At implementation, `codex/shadow-quality@cfa81e9d` already contained that commit; no rebase or branch change was needed. The task preserved pre-existing uncommitted shadow batching and qualification work and retained its initial affected-file snapshots outside the checkout. This historical record grants no permission to stage unrelated work.
 
 ## Implementation and verification
+
+The sequence and follow-up below describe delivered work. The completed pilot is not permission to implement the broader proposed appearance pipeline, and its local measurements do not establish production art acceptance.
 
 1. Produce one self-contained model with both existing clips, preserve source provenance/digests, and bound this pilot to the known bundled asset. Keep the source study intact.
 2. Add typed, scene-owned model/material/cloth resources. Drive heading and movement from projected state; freeze on pause and release or hide immediately on replacement/removal. Bind contacts to the reference skeleton and ground the cloth relative to current support height.
@@ -48,4 +56,4 @@ The first full-HD comparison measured about 12 ms GPU with the independent sampl
 
 ## Delivered scope
 
-The default additional NPC and fixed-resolution, actual-depth rendering are implemented and exercised through the real client. [Verification](../verification/mercenary-default.md) records native persistence/privacy checks, 1080p visual and failure/lifetime checks, build/static checks and the measured added cost. Removed duplicate directional-shadow rendering, retained the shared shader preparation path, bounded initial cape settling, corrected unused skin-reference retention and content-hashed the asset. The supplied source study remains intact. The broader art pipeline, equipment/pose expansion and crowd/low-end qualification remain with V3D01/V3D05/V3D11; no other task's performance result qualifies this model.
+The default additional NPC and fixed-resolution, actual-depth rendering are implemented and exercised through the real client. [Verification](../../verification/mercenary-default.md) records native persistence/privacy checks, 1080p visual and failure/lifetime checks, build/static checks and the measured added cost. Removed duplicate directional-shadow rendering, retained the shared shader preparation path, bounded initial cape settling, corrected unused skin-reference retention and content-hashed the asset. The supplied source study remains intact. The broader art pipeline, equipment/pose expansion and crowd/low-end qualification remain with V3D01/V3D05/V3D11; no other task's performance result qualifies this model.
