@@ -118,6 +118,12 @@ Paid work needs account-owner authorization and an explicit local cap; Mike-auth
 
 When delegating or handing off, carry scope, relevant owners, verification limits, shared budget, current diff and remaining work. Coordinate writes and re-read changed shared files before committing; delegation does not multiply permissions or spending.
 
+### Commit progress and completed work
+
+While working with uncommitted task changes, make a local commit at least every **15 minutes**, measured from the first task edit or the last commit. Label unfinished checkpoint commits accurately; they do not claim completed verification. Do not create empty commits. Implementation authorization includes these local commits; do not wait for a separate commit request.
+
+After implementation, documentation, review fixes and required checks are complete, commit all remaining task changes before the final handoff. Verify that no task-owned changes remain uncommitted; never report a finished implementation while leaving its changes only in edited files, including in a separate worktree. Scope commits to the task and preserve unrelated edits and staged work. Mandatory conflict stops and permission limits take precedence; if they prevent committing, report the task incomplete and explain the blocker. This rule does not authorize pushing, merging or rewriting shared history.
+
 ## Code Review Rules
 
 Before completion apply [required review](.agents/skills/openlegend-review/SKILL.md#required-review), which owns diff inspection, fixes and deferred findings. Use its full review workflow for substantial changes or an explicit review request; scale routine checks to the low-risk workflow above.

@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-03 — Commit progress and finished implementation
+
+Mike requires local progress commits at least every 15 minutes while task edits are pending, and a final commit after implementation, documentation, review fixes and required checks, before reporting completion. [Root guidance](../AGENTS.md#commit-progress-and-completed-work) owns the rule: implementation authorization includes task-scoped local commits, including work in a separate checkout. This replaces leaving completed work as uncommitted edits, trading additional checkpoint history for recoverable progress and a concrete handoff. Existing protections for unrelated edits, mandatory stops and permissions remain; the rule grants no push, merge or history-rewrite authority. [CG15](maintainers/agent-guidance.md) tracks instruction delivery; observed agent compliance remains CG05.
+
 ## 2026-10-03 — Prioritize worthwhile experiences when choosing work
 
 Added [selectively loaded prioritization guidance](../.agents/skills/openlegend-prioritize/SKILL.md) through `AGENTS.md` and parallel-task selection. It adopts the owner-supplied eight principles: begin with a valued experience, preserve the relevant promise while reducing breadth, deliver a complete payoff, justify complexity and pressure, respect agency/competence and varied enjoyment, count total burden, and revise hypotheses using proportionate evidence. The refinement protects urgent reliability/integrity work and avoids requiring every increment to realize every product promise. Catalogue coverage, technical adjacency and document order no longer stand in for priority justification. User-selected scope and accepted requirements still control; no runtime or current roadmap is changed. [CG14 and CG05](maintainers/agent-guidance.md) distinguish instruction delivery from installed-agent dispatch qualification.
