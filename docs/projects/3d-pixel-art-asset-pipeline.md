@@ -1,6 +1,10 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-**Status: proposed, no provider integration or live generation performed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It implements the direction of the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The runtime generation and publication pipeline remains proposed; importing the fixed mercenary asset did not implement it. | 2026-10-04   |
+
+**Status: proposed, no provider integration or live generation performed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It proposes an implementation of the direction in the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
 
 ## Maintained records
 
@@ -42,7 +46,7 @@ Use the appearance brief to constrain both outputs. A change in the accepted spr
 
 ### Reuse or native composition
 
-Select approved components, vary supported material/proportion parameters, and compile a representation locally or in bounded trusted server work. No generative call is needed. Persist the recipe and exact dependencies; retain approved bytes where exact reproduction matters. Known procedural rebuilding is separate from paid generation.
+Select approved components, vary supported material/proportion parameters, and compile a representation locally or in bounded trusted server work. No generative call is needed. Persist the visual assembly recipe and exact asset dependencies; this is not a second writable copy of a mechanical invention recipe. Retain approved bytes where exact reproduction matters. Known procedural rebuilding is separate from paid generation.
 
 ### 2D first, 3D later
 
@@ -162,6 +166,8 @@ Official documentation checked September 27, 2026 establishes possibilities, not
 Pin selected model/configuration/adapter versions and record the actual reported revision, rather than silently relying on a changing `latest` alias. Verify current limits, pricing, terms, and account capabilities before real dispatch. A hosted API's existence is not evidence that its price or output is appropriate for this game.
 
 ## 11. First live proof
+
+The [completed mercenary pilot](completed/mercenary-scene-pilot.md) processes one trusted authored asset and demonstrates its client resource lifecycle. It is not evidence that the quarantined intake, scoped artifact store, generated-family validation, funded stage accounting or durable publication proposed here exists. Reuse the matching renderer work while keeping those V3D07–V3D10 requirements open.
 
 After the native artifact/publication pipeline works, use one explicitly bounded approved trial: a supported rigid invention with a distinctive appearance and known physical constraints. Produce an approved 2D representation, then a matching model, display the transition in the real client, reload, and reuse it on a compatible second instance without generation. Include a rejected candidate or failed stage and a removed initiating object.
 
