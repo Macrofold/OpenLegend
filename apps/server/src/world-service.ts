@@ -820,7 +820,7 @@ export class WorldService {
     );
   }
   /** Operational MP03 hold and public notice, owned by MaintenanceSchedule and outside
-   * gameplay saves. docs/projects/multiplayer-entry-maintenance.md#decisions */
+   * gameplay saves. docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
   maintenanceNotice: MaintenanceWindowView | null = null;
   private maintenanceHeld = false;
   get maintenanceActive(): boolean {
@@ -2338,7 +2338,7 @@ export class WorldService {
   /** Invite enrollment: an unowned person becomes a human character in the same commit that
    * redeems the invite and records its grant. The caller validates inside this writer lane.
    * Like a rebinding, the body departs until its new controller explicitly takes control.
-   * docs/projects/multiplayer-entry-maintenance.md#decisions */
+   * docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
   async enrollCharacter(
     actorId: string,
     accountId: string,
@@ -2581,7 +2581,7 @@ export class WorldService {
 
   /** Host monotonic instant (`performance.now`) of the latest resume. The host clock never
    * charges real time from before it, so a tick left waiting across a pause (for example a
-   * maintenance window) adds no catch-up. docs/projects/multiplayer-entry-maintenance.md */
+   * maintenance window) adds no catch-up. docs/projects/completed/multiplayer-entry-maintenance.md */
   clockStartedAt = 0;
   private async syncPause(): Promise<void> {
     return this.mutate(async () => {
