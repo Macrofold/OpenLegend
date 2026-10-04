@@ -345,7 +345,7 @@ export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): Sav
 
 /** Record changes prepared for one exact baseline and expected revision. Preparation assigns
  * canonical list/map positions that history release then reuses, so it must precede release.
- * docs/projects/ordered-async-saves.md#ordering-rules */
+ * docs/projects/completed/ordered-async-saves.md#ordering-rules */
 export interface PreparedCommit {
   readonly baseline: SavedWorld | null;
   readonly revision: number;

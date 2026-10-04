@@ -1,5 +1,9 @@
 # History storage efficiency
 
+| Status    | Current progress                                                                                                                                       | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Indexed history startup, dialogue, deletion and selective edits are delivered with local evidence; broader capacity and hosted acceptance remain open. | 2026-10-03   |
+
 ## Authorized scope and outcome
 
 The owner approved implementation on 2026-09-27 after the production-data review.
@@ -69,11 +73,11 @@ changed-file formatting. Preserve broader existing CI and hosted/model-quality
 gates. Completion requires all accepted code/docs, focused behavior/failure
 verification, full affected-diff review and honest remaining qualification limits.
 
-Tracking: [D1/D2](../maintainers/production-data.md),
-[PF08](../maintainers/performance.md#pf08--long-lived-worlds-hot-state-and-checkpoints),
-[MH03/MH06/MH07](../limits/memory.md#mh03),
-[save/load](../save-and-load.md), and
-[guidance](../maintainers/agent-guidance.md).
+Tracking: [D1/D2](../../maintainers/production-data.md),
+[PF08](../../maintainers/performance.md#pf08--long-lived-worlds-hot-state-and-checkpoints),
+[MH03/MH06/MH07](../../limits/memory.md#mh03),
+[save/load](../../save-and-load.md), and
+[guidance](../../maintainers/agent-guidance.md).
 
 ## Progress
 
@@ -87,7 +91,7 @@ Tracking: [D1/D2](../maintainers/production-data.md),
   return rejected forgetting outcomes instead of reporting success. Load affected
   actors’ terminal appraisals for existing privacy invalidation. Initialize the
   physical schema atomically and refuse missing/incompatible schema markers.
-- Verification and measurements: [evidence](../verification/history-storage-efficiency.md#history-storage-efficiency).
+- Verification and measurements: [evidence](../../verification/history-storage-efficiency.md#history-storage-efficiency).
   Current native caller/failure scenarios, focused restart/writer checks and required
   static checks pass. The existing save/reopen test now creates its own food item,
   and its focused PostgreSQL rerun passes after correcting the starting-inventory assumption. Full CI, natural aging,

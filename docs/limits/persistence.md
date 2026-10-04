@@ -24,7 +24,7 @@ Original finding and recommendation superseded by the merged implementation; the
 
 **Changed 2026-09-28 (background saves).** Saves are now [background or synchronous](../save-and-load.md#background-and-synchronous-world-saves). Simulation progress is snapshotted about once per real second and written in a background save, without holding the world mutation queue; native time continues during the write. Commands, AI results and other effects still use synchronous saves and are saved before acknowledgment. After an abrupt crash, the simulation progress since the last completed background save is lost: about one second (up to 5 s with an [SV21](#sv21) deferral), plus the previous write's full duration (including any [SV20](#sv20) retry pauses and busy waits), plus up to about 4 s of the in-flight write ([SV19](#sv19)). Backpressure delays native time but does not discard it, and the next snapshot is due one second after a write finishes, so a slow previous write counts in full. A wall clock stepped backwards starts a save at once instead of suspending the cadence. Computed navigation results join simulation progress (saved in the background) instead of forcing a synchronous save before movement; after a crash, the durable request can prepare its route again.
 
-**Reason / tradeoff:** Keep the documented tradeoff between write cost and losing the latest unsaved simulation progress after an abrupt crash, while removing storage latency from native time. The loss window now grows with storage latency until backpressure applies. [Design](../projects/ordered-async-saves.md#ordered-persistence-design).
+**Reason / tradeoff:** Keep the documented tradeoff between write cost and losing the latest unsaved simulation progress after an abrupt crash, while removing storage latency from native time. The loss window now grows with storage latency until backpressure applies. [Design](../projects/completed/ordered-async-saves.md#ordered-persistence-design).
 
 [Implementation starting point](../../apps/server/src/world-service.ts).
 
@@ -390,7 +390,7 @@ The save worker starts with the server and is not automatically restarted after 
 
 **Removed — PostgreSQL-only storage, 2026-09-27.**
 
-The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/postgresql-cognition-preparation.md).
+The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/completed/postgresql-cognition-preparation.md).
 
 ## SV19
 
@@ -406,7 +406,7 @@ The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches w
 
 **Background save admission retries: 4 attempts.** If the PostgreSQL writer queue refuses a background save before `BEGIN` (busy for 5 s or full), the same prepared change set is re-submitted after pauses of 0.5, 1 and 2 s, four attempts in total, then storage latches. A full queue refuses instantly, so the pauses give it about 3.5 s to drain; a busy queue adds its own 5-s wait per attempt. Nothing ran on a refused attempt. Simulation progress that is saved synchronously instead ([SB20](#sb20)) makes one attempt, because it holds the mutation queue; a refusal leaves its progress for the next tick, as before. This is admission of an unsent write, not a retry of a statement that may have executed; no other query is retried.
 
-**Reason / tradeoff:** Once a released snapshot is live, only its own prepared change set may follow the durable baseline; latching after a bounded wait is safer than diffing a new snapshot against the old baseline, which would delete released records. [Design](../projects/ordered-async-saves.md#ordering-rules).
+**Reason / tradeoff:** Once a released snapshot is live, only its own prepared change set may follow the durable baseline; latching after a bounded wait is safer than diffing a new snapshot against the old baseline, which would delete released records. [Design](../projects/completed/ordered-async-saves.md#ordering-rules).
 
 ## SV21
 
