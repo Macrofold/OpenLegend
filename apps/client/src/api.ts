@@ -21,11 +21,26 @@ export function privateDraftScope(): string {
 }
 /** The signed-in account's grant has no character here; it uses World operations instead. */
 export class CharacterlessError extends AccessError {}
-export function clearAccess(): void {
+function clearSessionDrafts(preservePendingInventory = false): void {
+  try {
+    for (const key of Object.keys(sessionStorage))
+      if (
+        key.startsWith('open-legend:composer-draft:') ||
+        key.startsWith('open-legend:action-draft:') ||
+        (!preservePendingInventory && key.startsWith('open-legend:inventory-command:'))
+      )
+        sessionStorage.removeItem(key);
+  } catch {
+    /* Browser storage is optional. */
+  }
+}
+export function clearAccess(options?: { preservePendingInventory?: boolean }): void {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
   privateDraftNamespace = '';
+  // Each store can be unavailable independently; local storage must not prevent session cleanup.
+  clearSessionDrafts(options?.preservePendingInventory);
   try {
     for (const key of Object.keys(localStorage))
       if (
@@ -34,10 +49,9 @@ export function clearAccess(): void {
         key.startsWith('open-legend:invention-draft:')
       )
         localStorage.removeItem(key);
-    sessionStorage.removeItem('open-legend:composer-draft:v2');
-    for (const key of Object.keys(sessionStorage))
-      if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
-    localStorage.removeItem('open-legend:private-owner');
+    // The caller may retain unresolved receipts only after proving the same native private owner
+    // and save timeline. Keep that owner marker so the next view does not erase those receipts.
+    if (!options?.preservePendingInventory) localStorage.removeItem('open-legend:private-owner');
   } catch {
     /* Browser storage is optional. */
   }
@@ -54,6 +68,7 @@ export function acceptAccess(view: GameView): void {
     const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
     const priorOwner = localStorage.getItem('open-legend:private-owner');
     if (priorOwner !== owner) {
+      clearSessionDrafts();
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
@@ -61,19 +76,14 @@ export function acceptAccess(view: GameView): void {
           key.startsWith('open-legend:invention-draft:')
         )
           localStorage.removeItem(key);
-      sessionStorage.removeItem('open-legend:composer-draft:v2');
-      for (const key of Object.keys(sessionStorage))
-        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
       localStorage.setItem('open-legend:private-owner', owner);
     }
     const key = `open-legend:save-timeline:${view.worldId}`;
     const previous = sessionStorage.getItem(key);
     if (previous && previous !== view.saveTimeline) {
+      clearSessionDrafts();
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
       localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
-      sessionStorage.removeItem('open-legend:composer-draft:v2');
-      for (const key of Object.keys(sessionStorage))
-        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
     }
     if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);
   } catch {

@@ -112,9 +112,16 @@ export function inventoryStorageHint(
   id: string,
 ): EntityView['storage'] {
   const target = service.world.entities[id];
-  if (!target || target.retirement || !(target.container || target.kind === 'item-pile')) return;
+  if (
+    !target ||
+    target.retirement ||
+    target.placement?.mode !== 'world' ||
+    !(target.container || target.kind === 'item-pile')
+  )
+    return;
   return {
     containerId: id,
+    placementRevision: target.placement.revision,
     ...(canAccessContainer(service.world, scope.actorId, id)
       ? { revision: target.inventoryRevision ?? 0 }
       : {}),
@@ -145,7 +152,7 @@ export function inventoryAccess(
   )
     return unavailable;
   const root = objectAncestors(world, target.id).at(-1);
-  if (!root) return unavailable;
+  if (!root || root.placement?.mode !== 'world') return unavailable;
   const accessible = canAccessContainer(world, actor.id, target.id);
   const visibleExterior =
     (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
@@ -158,6 +165,9 @@ export function inventoryAccess(
     id: target.id,
     name: observerDescription(world, scope.actorId, target.id),
     location: containerLocation(service, scope, target.id),
+    rootId: root.id,
+    placementRevision: root.placement.revision,
+    geometryRevision: world.map.spatial.revision,
   };
   if (accessible)
     return {

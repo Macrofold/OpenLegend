@@ -96,7 +96,14 @@ export function activityRequests(
           selectedId: targetId,
         });
         return page.selected?.accessible
-          ? [{ familyId: request.id, targetId, label: request.label, description: request.description }]
+          ? [
+              {
+                familyId: request.id,
+                targetId,
+                label: request.label,
+                description: request.description,
+              },
+            ]
           : [];
       })
     : [];

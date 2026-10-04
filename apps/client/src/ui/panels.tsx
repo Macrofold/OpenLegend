@@ -4,6 +4,7 @@ import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
 import { useState } from 'react';
 import { MemoryHistory } from './memory-history';
+import { ActivityEntries, type ActivityEntry } from './camp-activity';
 import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
 import {
@@ -65,45 +66,61 @@ export function Crafting({
   connected: boolean;
   invent(): void;
 }) {
-  const [creatorFilter, setCreatorFilter] = useState('all');
-  const recipes = view.recipes.filter(
-    (recipe) => creatorFilter === 'all' || recipe.npcCreated === (creatorFilter === 'npc'),
+  const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const search = query.trim().toLocaleLowerCase();
+  const recipes = view.recipes.filter((recipe) =>
+    `${recipe.output.name} ${recipe.name}`.toLocaleLowerCase().includes(search),
   );
+  const selected = selectedId
+    ? view.recipes.find((recipe) => recipe.id === selectedId)
+    : recipes[0];
   return (
     <>
       <Section title="Known recipes" count={recipes.length}>
-        <label>
-          Created by{' '}
-          <select
-            aria-label="Recipe creator"
-            value={creatorFilter}
-            onChange={(event) => setCreatorFilter(event.target.value)}
-          >
-            <option value="all">Everyone</option>
-            <option value="player">Players</option>
-            <option value="npc">NPCs</option>
-          </select>
+        <label className="ol-task-search">
+          Find an output
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} />
         </label>
-        {recipes.length ? (
-          recipes.map((r) => (
-            <details className="ol-proposal" key={r.id}>
-              <summary>
-                <span className="ol-heading">{r.name}</span>{' '}
-                <Tag>{r.npcCreated ? 'NPC-created' : 'Player-created'}</Tag>
-              </summary>
-              <RecipeDetails recipe={r} />
-              <Actions actions={r.actions} command={command} connected={connected} />
-              <p className="ol-caption">{r.provenance}</p>
-            </details>
-          ))
-        ) : (
+        <div className="ol-recipe-choices" aria-label="Known recipe outputs">
+          {recipes.map((recipe) => (
+            <Button
+              key={recipe.id}
+              variant={selected?.id === recipe.id ? 'secondary' : 'quiet'}
+              aria-pressed={selected?.id === recipe.id}
+              onPress={() => setSelectedId(recipe.id)}
+            >
+              <span>
+                <strong>{recipe.output.name}</strong>
+                <span className="ol-caption">
+                  {recipe.name}
+                  {!recipe.actions.some((action) => action.enabled)
+                    ? ' · Missing requirements'
+                    : ''}
+                </span>
+              </span>
+            </Button>
+          ))}
+        </div>
+        {!recipes.length && (
           <EmptyState
             title={view.recipes.length ? 'No recipes match this filter.' : 'Nothing invented yet.'}
           >
             {view.recipes.length
-              ? 'Choose another creator filter.'
+              ? 'Change or clear the output search.'
               : 'Describe a useful tool and discover a way to make it.'}
           </EmptyState>
+        )}
+        {selected ? (
+          <section className="ol-selected-recipe" aria-label={`Make ${selected.output.name}`}>
+            <h3>{selected.output.name}</h3>
+            <RecipeDetails recipe={selected} />
+            <Actions actions={selected.actions} command={command} connected={connected} />
+          </section>
+        ) : (
+          selectedId && (
+            <p role="status">This recipe is no longer available. Choose a known output.</p>
+          )
         )}
       </Section>
       <Button variant="primary" icon="action.invent" onPress={invent}>
@@ -114,21 +131,27 @@ export function Crafting({
 }
 export function EntityDetail({
   entity,
+  view,
   connected,
   command,
   talk,
+  openContainer,
+  openActivity,
   godControls,
 }: {
   entity: EntityView;
+  view: GameView;
   connected: boolean;
   command(a: ActionOption): void;
   talk(id: string): void;
+  openContainer(entity: EntityView): void;
+  openActivity(entry: ActivityEntry): void;
   godControls?: GodCharacterControls;
 }) {
   return (
     <>
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
-      {entity.contents && (
+      {entity.contents && !entity.storage && (
         <ul>
           {entity.contents.map((item) => (
             <li key={item.id}>
@@ -151,6 +174,22 @@ export function EntityDetail({
           Talk to {entity.name}
         </Button>
       )}
+      {entity.storage && (
+        <Button
+          variant="primary"
+          icon="ui.inventory"
+          disabled={!connected}
+          onPress={() => openContainer(entity)}
+        >
+          Open {entity.name}
+        </Button>
+      )}
+      <ActivityEntries
+        view={view}
+        targetId={entity.id}
+        connected={connected}
+        onOpen={openActivity}
+      />
       <Actions actions={entity.actions} command={command} connected={connected} />
       {godControls && (
         <GodCharacterActions entity={entity} connected={connected} controls={godControls} />
@@ -161,6 +200,7 @@ export function EntityDetail({
 export function Character({
   godControls,
   openMind,
+  openActivity,
   view,
   command,
   connected,
@@ -170,6 +210,7 @@ export function Character({
   connected: boolean;
   godControls?: GodCharacterControls;
   openMind?: () => void;
+  openActivity?: () => void;
 }) {
   return (
     <>
@@ -181,6 +222,7 @@ export function Character({
         />
       )}
       {openMind && <Button onPress={openMind}>My thoughts and relationships</Button>}
+      {openActivity && view.player.activity && <Button onPress={openActivity}>Current task</Button>}
       <ActionAttempts
         key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
         view={view}

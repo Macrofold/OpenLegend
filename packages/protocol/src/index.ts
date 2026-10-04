@@ -251,8 +251,8 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView {
-  /** Native storage identity; its revision is disclosed only with current contents access. */
-  storage?: { containerId: string; revision?: number };
+  /** Native root placement is public; contents revision requires current contents access. */
+  storage?: { containerId: string; placementRevision: number; revision?: number };
   contents?: Array<{
     id: string;
     definitionId: string;

@@ -68,13 +68,13 @@ import {
 } from './ui/god-tools';
 import { QuickActions } from './ui/quick-actions';
 import { WorldAgent } from './ui/world-agent';
-import { Composer } from './ui/composer';
+import { Composer, type ComposerEntry } from './ui/composer';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
-import { CampActivity } from './ui/camp-activity';
+import { CampActivity, type ActivityEntry } from './ui/camp-activity';
+import { ContainerOpening, useContainerOpening } from './ui/container-opening';
 import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
-import { readDraft, type ComposerDraft } from './draft';
 import icons from './design-system/icons/icons.json';
 import './design-system/tokens/tokens.css';
 import './design-system/components.css';
@@ -83,6 +83,7 @@ import './design-system/layout.css';
 type PanelId =
   | 'inventory'
   | 'crafting'
+  | 'activity'
   | 'character'
   | 'agent'
   | 'game'
@@ -97,6 +98,7 @@ type PanelId =
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   inventory: { title: 'Inventory', side: 'left' },
   crafting: { title: 'Crafting', side: 'left' },
+  activity: { title: 'Current task', side: 'left', wide: true },
   character: { title: 'Character', side: 'left' },
   agent: { title: 'World agent', side: 'right', wide: true },
   game: { title: 'Game', side: 'right' },
@@ -139,8 +141,11 @@ function App({
     );
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>(['inventory']);
   const [inventoryOpened, setInventoryOpened] = useState(false);
+  const [activityOpened, setActivityOpened] = useState(false);
+  const [activityEntry, setActivityEntry] = useState<ActivityEntry>();
   const [npcId, setNpcId] = useState<string | null>(null),
-    [seed, setSeed] = useState<ComposerDraft | null>(null),
+    [composerEntry, setComposerEntry] = useState<ComposerEntry | null>(null),
+    [talkRevision, setTalkRevision] = useState(0),
     [inventionSeed, setInventionSeed] = useState<{ id: string; text: string } | null>(null),
     [mindId, setMindId] = useState<string | null>(null),
     [intelligenceSelection, setIntelligenceSelection] = useState<DiagnosticSelection | null>(null),
@@ -238,8 +243,16 @@ function App({
         (previous.access?.scope !== next.access?.scope ||
           previous.saveTimeline !== next.saveTimeline)
       ) {
-        // Remount all private panels and queued intentions; retain this tab's transport identity.
-        clearAccess();
+        // A connection/control remount may retain only an unresolved inventory receipt
+        // for this same private owner. It must never turn into a new command on remount.
+        const samePrivateOwner =
+          !!previous.access?.privateDraftScope &&
+          previous.access.privateDraftScope === next.access?.privateDraftScope &&
+          previous.worldId === next.worldId &&
+          previous.access.actorId === next.access?.actorId &&
+          previous.player.id === next.player.id &&
+          previous.saveTimeline === next.saveTimeline;
+        clearAccess({ preservePendingInventory: samePrivateOwner });
         resetApplication();
         return;
       }
@@ -441,11 +454,13 @@ function App({
   }
   function show(id: PanelId) {
     if (id === 'inventory') setInventoryOpened(true);
+    if (id === 'activity') setActivityOpened(true);
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
     setOpen((v) => fit([...v.filter((p) => p !== id), id]));
   }
   function hide(id: PanelId) {
+    if (id === 'inventory') containerOpening.cancel();
     setOpen((v) => v.filter((p) => p !== id));
     requestAnimationFrame(() =>
       document
@@ -462,7 +477,7 @@ function App({
   useEffect(() => {
     if (!open.includes('events')) setEventsType('all');
   }, [open]);
-  async function command(
+  async function sendCommand(
     action: ActionOption,
     request?: CommandRequestIdentity,
   ): Promise<ApiResult> {
@@ -496,13 +511,54 @@ function App({
       };
     }
   }
+  const containerOpening = useContainerOpening(view, connected, sendCommand);
+  function command(action: ActionOption, request?: CommandRequestIdentity): Promise<ApiResult> {
+    if (connected && action.enabled) containerOpening.stopFollowing();
+    return sendCommand(action, request);
+  }
+  function openContainer(entity: EntityView) {
+    setExpandedWorkspaces((current) =>
+      current.includes('inventory') ? current : [...current, 'inventory'],
+    );
+    show('inventory');
+    setPicker(null);
+    containerOpening.open(entity);
+  }
+  function openActivity(entry?: ActivityEntry) {
+    setActivityEntry(entry);
+    show('activity');
+    setPicker(null);
+  }
   function talk(id: string) {
     setNpcId(id);
-    setSeed({ text: readDraft().text, mode: 'chat' });
+    setComposerEntry(null);
+    setTalkRevision((value) => value + 1);
     show('composer');
     setPicker(null);
   }
-  function invent(text = readDraft().text) {
+  function chooseRecipient(id: string) {
+    if (!latest.current?.entities.some((entity) => entity.id === id && entity.canTalk)) return;
+    setNpcId(id);
+    setComposerEntry((entry) =>
+      entry ? { ...entry, id: crypto.randomUUID(), recipientId: id } : null,
+    );
+    setTalkRevision((value) => value + 1);
+  }
+  function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
+    const recipient = latest.current?.entities.find(
+      (entity) => entity.canTalk && entity.id === (item.recipientId ?? npcId),
+    );
+    setNpcId(recipient?.id ?? null);
+    setComposerEntry({
+      id: crypto.randomUUID(),
+      ...(recipient ? { recipientId: recipient.id } : {}),
+      item: { itemId: item.itemId, name: item.name },
+    });
+    setTalkRevision((value) => value + 1);
+    show('composer');
+    setPicker(null);
+  }
+  function invent(text = '') {
     setInventionSeed({ id: crypto.randomUUID(), text });
     show('agent');
     setPicker(null);
@@ -634,6 +690,7 @@ function App({
   }, [timeSettings]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing) return;
       if (e.key === 'Escape') {
         if (picker) {
           setPicker(null);
@@ -645,6 +702,7 @@ function App({
       }
       if (
         /INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName) ||
+        (e.target as HTMLElement).isContentEditable ||
         e.metaKey ||
         e.ctrlKey ||
         e.altKey
@@ -791,11 +849,13 @@ function App({
       ? playerEntity(view)
       : view.entities.find((e) => e.id === selected));
   const title = (id: PanelId) =>
-    id === 'nearby' && entity
-      ? entity.name
-      : id === 'intelligence' && intelligenceSelection
-        ? `${intelligenceSelection.actorName ?? 'World agent'} request`
-        : panelInfo[id].title;
+    id === 'activity' && activityEntry
+      ? activityEntry.label
+      : id === 'nearby' && entity
+        ? entity.name
+        : id === 'intelligence' && intelligenceSelection
+          ? `${intelligenceSelection.actorName ?? 'World agent'} request`
+          : panelInfo[id].title;
   function content(id: PanelId) {
     if (!view) return null;
     const props = { view, connected, command: (a: ActionOption) => void command(a) };
@@ -803,20 +863,26 @@ function App({
       case 'inventory':
         return (
           <>
+            <ContainerOpening state={containerOpening} paused={view.clock.paused} />
             <Inventory
               {...props}
               command={command}
+              openContainer={containerOpening.openContainer}
+              onTalkAbout={talkAbout}
               visible={open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')}
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
             />
-            <CampActivity
-              visible={open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')}
-              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
-              view={view}
-              connected={connected}
-              command={command}
-            />
           </>
+        );
+      case 'activity':
+        return (
+          <CampActivity
+            view={view}
+            connected={connected}
+            command={command}
+            entry={activityEntry}
+            visible={open.includes('activity') && (!narrow || open.at(-1) === 'activity')}
+          />
         );
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;
@@ -825,6 +891,7 @@ function App({
           <Character
             {...props}
             godControls={characterGodControls(playerEntity(view))}
+            openActivity={() => openActivity()}
             openMind={() => {
               setMindId(view.player.id);
               show('mind');
@@ -837,6 +904,8 @@ function App({
             entity={entity}
             {...props}
             talk={talk}
+            openContainer={openContainer}
+            openActivity={openActivity}
             godControls={characterGodControls(entity)}
           />
         ) : (
@@ -889,7 +958,10 @@ function App({
           <Composer
             {...props}
             npcId={npcId}
-            seed={seed}
+            entry={composerEntry}
+            talkRevision={talkRevision}
+            chooseRecipient={chooseRecipient}
+            clearEntry={() => setComposerEntry(null)}
             setup={() => show('ai')}
             notify={notify}
             visible={open.includes('composer') && (!narrow || open.at(-1) === 'composer')}
@@ -1365,6 +1437,7 @@ function App({
                         {id === 'agent' ||
                         id === 'composer' ||
                         (id === 'inventory' && inventoryOpened) ||
+                        (id === 'activity' && activityOpened) ||
                         open.includes(id)
                           ? content(id)
                           : null}
@@ -1408,6 +1481,8 @@ function App({
                 run={run}
                 invent={invent}
                 inspect={inspect}
+                openContainer={openContainer}
+                openActivity={openActivity}
                 preference={preference}
                 revive={(target) => void revive(target)}
                 enableCognition={(target) => void enableCognition(target)}

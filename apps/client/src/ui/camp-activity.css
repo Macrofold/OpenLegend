@@ -1,15 +1,12 @@
-.ol-camp-form,
 .ol-camp-picker {
   line-height: 1.5;
 }
-.ol-camp-form,
 .ol-camp-object {
   display: grid;
   gap: var(--space-2);
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
-.ol-camp-form button.ol-btn,
 .ol-camp-picker button.ol-btn {
   max-inline-size: 100%;
   min-inline-size: 0;
@@ -21,11 +18,9 @@
   line-height: 1.5;
   scroll-margin-block: var(--space-2);
 }
-.ol-camp-form .ol-caption,
 .ol-camp-picker .ol-caption {
   line-height: 1.5;
 }
-.ol-camp-form .ol-btn > span,
 .ol-camp-picker .ol-btn > span {
   min-inline-size: 0;
 }
@@ -55,18 +50,68 @@
 .ol-camp-results p {
   margin: 0;
 }
-.ol-panel .ol-panel-body:has(> .ol-camp-activities) {
-  /* Inventory and camp work share one panel. Let the whole task scroll instead
-   * of placing the long form beside the inventory's bounded inner panes. */
-  flex-direction: column;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scroll-padding-block: var(--space-3);
-}
-.ol-panel-body:has(> .ol-camp-activities) > .ol-inventory-workspace {
-  flex: 1 0 12rem;
+.ol-camp-activities,
+.ol-task-choices,
+.ol-task-entries,
+.ol-task-amount,
+.ol-task-search,
+.ol-selected-recipe {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 .ol-camp-activities {
   flex: none;
+  padding-block-end: var(--space-3);
+}
+.ol-task-choices {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.ol-task-context,
+.ol-task-summary,
+.ol-task-replacement,
+.ol-task-recovery,
+.ol-selected-recipe {
+  border-block-start: 1px solid var(--line);
+  padding-block: var(--space-3);
+}
+.ol-task-limits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-3);
+}
+.ol-task-amount input,
+.ol-task-search input {
+  inline-size: 100%;
   min-inline-size: 0;
+  box-sizing: border-box;
+}
+.ol-task-entries button.ol-btn,
+.ol-camp-activities button.ol-btn,
+.ol-recipe-choices button.ol-btn {
+  block-size: auto;
+  min-block-size: 32px;
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: start;
+  overflow-wrap: anywhere;
+  padding-block: var(--space-2);
+}
+.ol-recipe-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: var(--space-2);
+}
+.ol-recipe-choices .ol-caption {
+  display: block;
+}
+.ol-task-entry-description {
+  display: block;
+  font-weight: normal;
+  line-height: 1.4;
+  margin-block-start: var(--space-1);
+  overflow-wrap: anywhere;
 }

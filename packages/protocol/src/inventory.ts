@@ -5,7 +5,16 @@ export interface InventoryAccessView {
   ok: boolean;
   scope: string;
   status: 'ready' | 'out-of-reach' | 'unavailable';
-  container?: { id: string; name: string; location: string; revision?: number };
+  container?: {
+    id: string;
+    name: string;
+    location: string;
+    /** Root identity prevents coincident placement revisions after a custody change. */
+    rootId: string;
+    placementRevision: number;
+    geometryRevision: number;
+    revision?: number;
+  };
   stance?: SurfacePoint;
   message?: string;
 }

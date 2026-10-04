@@ -1,0 +1,24 @@
+.ol-composer-people {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ol-composer-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px 0;
+}
+
+.ol-composer-item > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ol-composer-item > p {
+  flex-basis: 100%;
+  margin: 0;
+}

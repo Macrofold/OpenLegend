@@ -14,6 +14,7 @@ import { post } from '../api';
 import { Explanation, Icon, IconButton, symbol } from '../design-system/components';
 import { spawnIcons } from './god-tools';
 import { PulloutPicker } from './pullout';
+import { ActivityEntries, type ActivityEntry } from './camp-activity';
 export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
@@ -27,6 +28,8 @@ export function ActionPicker({
   run,
   invent,
   inspect,
+  openContainer,
+  openActivity,
   preference,
   revive,
   enableCognition,
@@ -41,6 +44,8 @@ export function ActionPicker({
   run(action: CatalogueAction): void;
   invent(text: string): void;
   inspect(entity: EntityView): void;
+  openContainer(entity: EntityView): void;
+  openActivity(entry: ActivityEntry): void;
   preference(profile: PlayerProfile): void;
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
@@ -60,6 +65,7 @@ export function ActionPicker({
       view.profile.preferences.showUnavailableActions,
     );
   const [openPullout, setOpenPullout] = useState<string | null>(null);
+  const [taskMatches, setTaskMatches] = useState(0);
   const menu = useRef<HTMLDivElement>(null),
     input = useRef<HTMLInputElement>(null),
     refreshRequest = useRef(0);
@@ -109,9 +115,16 @@ export function ActionPicker({
     connected &&
     !error &&
     !!query.trim() &&
+    !taskMatches &&
     !matches.some((a) => a.enabled);
   const showInspect =
     !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
+  const showOpen =
+    !!picker.entity?.storage &&
+    (!query ||
+      `open storage inventory ${picker.entity.name}`
+        .toLocaleLowerCase()
+        .includes(query.toLocaleLowerCase()));
   const showRevive =
     view.godMode &&
     !!picker.entity &&
@@ -235,6 +248,30 @@ export function ActionPicker({
         )}
       </div>
       <div className="ol-menu-scroll">
+        {showOpen && picker.entity && (
+          <AriaButton
+            data-picker-row
+            className="ol-item"
+            isDisabled={!connected}
+            onPress={() => {
+              if (picker.entity) openContainer(picker.entity);
+            }}
+          >
+            <Icon name="ui.inventory" />
+            <span>Open {picker.entity.name}</span>
+          </AriaButton>
+        )}
+        {picker.entity && (
+          <ActivityEntries
+            view={view}
+            targetId={picker.entity.id}
+            connected={connected}
+            onOpen={openActivity}
+            query={query}
+            presentation="menu"
+            onMatchCount={setTaskMatches}
+          />
+        )}
         {view.godMode &&
           !!picker.entity &&
           godCharacterAvailability(picker.entity).enableCognition &&
@@ -368,17 +405,23 @@ export function ActionPicker({
             {error}
           </p>
         )}
-        {!error && !matches.length && !showInspect && !showRevive && !showAdd && (
-          <p className="ol-meta">
-            {query
-              ? view.inventionPolicy.playerLocked
-                ? 'No matching actions. Player invention is locked.'
-                : 'No matching actions. Press Enter to invent this idea.'
-              : actions.length
-                ? 'Available actions are hidden. Show unavailable actions to see why.'
-                : 'No actions here yet.'}
-          </p>
-        )}
+        {!error &&
+          !matches.length &&
+          !taskMatches &&
+          !showOpen &&
+          !showInspect &&
+          !showRevive &&
+          !showAdd && (
+            <p className="ol-meta">
+              {query
+                ? view.inventionPolicy.playerLocked
+                  ? 'No matching actions. Player invention is locked.'
+                  : 'No matching actions. Press Enter to invent this idea.'
+                : actions.length
+                  ? 'Available actions are hidden. Show unavailable actions to see why.'
+                  : 'No actions here yet.'}
+            </p>
+          )}
       </div>
       {actions.some((a) => !a.enabled) && (
         <AriaButton

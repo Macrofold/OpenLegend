@@ -123,7 +123,6 @@ function DestinationWorkspace({
         <strong>{entry.name}</strong>
         <p id={`${searchId}-${entry.id}`} className="ol-caption">
           {entry.location}
-          {activity ? ` · Reference: ${entry.id}` : ''}
         </p>
         {entry.capacity !== undefined && (
           <p className="ol-caption">

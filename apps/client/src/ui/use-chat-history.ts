@@ -10,7 +10,13 @@ export function useChatHistory(
   participantId: string | undefined,
   visible: boolean,
 ) {
-  const key = `${view.worldId}:${view.historyEpoch ?? ''}:${participantId ?? ''}`;
+  const key = JSON.stringify([
+    view.worldId,
+    view.historyEpoch ?? '',
+    view.access?.scope ?? '',
+    view.player.id,
+    participantId ?? '',
+  ]);
   const [saved, setSaved] = useState<{ key: string; page: ChatPage } | null>(null);
   const [loading, setLoading] = useState(false);
   const [openingRevision, setOpeningRevision] = useState(0);
@@ -77,7 +83,7 @@ export function useChatHistory(
     busy.current = false;
     setError('');
     setLoading(false);
-    openingPending.current = visible && !!participantId;
+    openingPending.current = visible && !!participantId && !latestPage.current;
     if (!visible || !participantId) return;
     historyRevision.current = view.historyRevision;
     void load();

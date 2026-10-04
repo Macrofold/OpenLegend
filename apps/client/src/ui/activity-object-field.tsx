@@ -27,6 +27,7 @@ export function ActivityObjectField({
   connected,
   working,
   busy,
+  readOnly = false,
   onRead,
   onChange,
   onAction,
@@ -44,6 +45,8 @@ export function ActivityObjectField({
   connected: boolean;
   working: boolean;
   busy: boolean;
+  /** The initiating world object supplies this role; reading it must not ask for it again. */
+  readOnly?: boolean;
   onRead(key: string, page: ActivityChoicePage): void;
   onChange(choice: ActivityChoice): void;
   onAction(input: CommandInput, label: string): Promise<ApiResult | undefined>;
@@ -163,13 +166,15 @@ export function ActivityObjectField({
     <div className="ol-camp-object">
       <span>{field.label}</span>
       <div ref={trigger}>
-        <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
-          {selected
-            ? `${field.label}: ${selected.label}`
-            : value
-              ? `${field.label}: recheck or choose again`
+        {readOnly ? (
+          <strong>{selected?.label ?? 'Selected object'}</strong>
+        ) : (
+          <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
+            {selected
+              ? `Change ${field.label.toLowerCase()}: ${selected.label}`
               : `Choose ${field.label.toLowerCase()}…`}
-        </Button>
+          </Button>
+        )}
       </div>
       {value && !page && (
         <p role="status" className="ol-caption">
@@ -184,10 +189,7 @@ export function ActivityObjectField({
       )}
       {selected && (
         <>
-          <p className="ol-caption">
-            {selected.location}
-            {selected.kind === 'entity' ? ` · Reference: ${selected.id}` : ''}
-          </p>
+          <p className="ol-caption">{selected.location}</p>
           {selected.reason && <p className="ol-caption">{selected.reason}</p>}
           <div className="ol-actions">
             {selected.needsApproach && (
@@ -217,7 +219,7 @@ export function ActivityObjectField({
               <ul>
                 {page.inspection.items.map((item) => (
                   <li key={item.id}>
-                    {item.quantity} × {item.name} · {item.id}
+                    {item.quantity} × {item.name}
                   </li>
                 ))}
               </ul>
@@ -243,7 +245,7 @@ export function ActivityObjectField({
       {error?.key === errorKey && <p role="alert">{error.message}</p>}
       <ModalOverlay
         className="ol-root ol-modal-overlay"
-        isOpen={open && visible}
+        isOpen={open && visible && connected && !readOnly}
         isDismissable
         onOpenChange={(next) => {
           if (!next) close();
@@ -453,7 +455,7 @@ function RoleSearch({
         </Button>
       </div>
       <p className="ol-caption">
-        Searching and choosing change only your draft. Review and Start recheck current conditions.
+        Searching and choosing change only your draft. Starting rechecks current conditions.
       </p>
     </section>
   );

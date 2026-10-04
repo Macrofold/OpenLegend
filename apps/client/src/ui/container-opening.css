@@ -1,0 +1,10 @@
+.ol-container-opening {
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  margin-bottom: var(--space-3);
+}
+.ol-container-opening p {
+  margin-block: var(--space-2);
+}

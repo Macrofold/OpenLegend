@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readDraft, saveDraft } from './draft';
+import { composerDraftKey, emptyDraft, readDraft, saveDraft } from './draft';
 
 function memoryStorage(initial: Array<[string, string]> = []) {
   const data = new Map(initial);
@@ -16,54 +16,76 @@ function memoryStorage(initial: Array<[string, string]> = []) {
 }
 
 describe('local composer draft', () => {
-  it('restores exact invention text and intent, then removes a cleared draft', () => {
+  it('restores exact text in its selected mode, then removes a cleared draft', () => {
     const { data, storage } = memoryStorage();
-    const draft = { text: '  Could we make a sling?\n', mode: 'invention' as const };
-    saveDraft(draft, storage);
-    expect(readDraft(storage)).toEqual(draft);
-    saveDraft({ text: '', mode: 'invention' }, storage);
-    expect(readDraft(storage)).toEqual({ text: '', mode: 'chat' });
+    const key = composerDraftKey('private-owner', 'invention', null);
+    const draft = { text: '  Could we make a sling?\n', revision: 'edit-1' };
+    saveDraft(key, draft, storage);
+    expect(readDraft(key, storage)).toEqual(draft);
+    saveDraft(key, { text: '', revision: 'edit-2' }, storage);
+    expect(readDraft(key, storage)).toEqual(emptyDraft());
     expect(data.size).toBe(0);
   });
 
-  it('keeps plain text from the previous client and migrates its explicitly selected mode', () => {
-    const { data, storage } = memoryStorage([['open-legend:composer-draft:v1', 'An older draft']]);
-    expect(readDraft(storage)).toEqual({ text: 'An older draft', mode: 'chat' });
-    saveDraft({ text: 'An older draft', mode: 'invention' }, storage);
-    expect(readDraft(storage)).toEqual({ text: 'An older draft', mode: 'invention' });
-    expect(data.has('open-legend:composer-draft:v1')).toBe(false);
-    saveDraft({ text: '', mode: 'invention' }, storage);
-    expect(readDraft(storage).text).toBe('');
+  it('keeps recipients, private owners and invention separate without choosing a person', () => {
+    const { data, storage } = memoryStorage();
+    const key = composerDraftKey('owner-a', 'chat', 'person-a');
+    const draft = {
+      text: 'What do you think?',
+      revision: 'edit-1',
+      item: { itemId: 'permitted-item', name: 'Copper cup' },
+    };
+    saveDraft(key, draft, storage);
+    expect(readDraft(key, storage)).toEqual(draft);
+    for (const other of [
+      composerDraftKey('owner-a', 'chat', 'person-b'),
+      composerDraftKey('owner-b', 'chat', 'person-a'),
+      composerDraftKey('owner-a', 'invention', 'person-a'),
+      composerDraftKey('owner-a', 'chat', null),
+      composerDraftKey(null, 'chat', 'person-a'),
+    ])
+      expect(readDraft(other, storage)).toEqual(emptyDraft());
+    saveDraft(null, draft, storage);
+    expect(data.size).toBe(1);
   });
 
-  it.each(['{broken', '{"text":"Wrong route","mode":"unknown"}'])(
-    'ignores malformed saved intent without losing a recoverable legacy draft: %s',
-    (saved) => {
-      const { storage } = memoryStorage([
-        ['open-legend:composer-draft:v2', saved],
-        ['open-legend:composer-draft:v1', 'Recoverable draft'],
-      ]);
-      expect(readDraft(storage)).toEqual({ text: 'Recoverable draft', mode: 'chat' });
-    },
-  );
+  it.each([
+    '{broken',
+    '{"text":"Missing revision"}',
+    '{"text":"Wrong item","revision":"edit-1","item":{}}',
+  ])('rejects a malformed current record without reading another draft: %s', (saved) => {
+    const key = composerDraftKey('owner-a', 'chat', 'person-a')!;
+    const otherKey = composerDraftKey('owner-a', 'chat', 'person-b')!;
+    const { storage } = memoryStorage([
+      [key, saved],
+      [otherKey, JSON.stringify({ text: 'Another person', revision: 'edit-1' })],
+    ]);
+    expect(readDraft(key, storage)).toEqual(emptyDraft());
+    expect(readDraft(otherKey, storage).text).toBe('Another person');
+  });
 
   it('does not block editing when browser privacy policy rejects storage access', () => {
     const unavailable = () => {
       throw new Error('Storage is unavailable');
     };
-    expect(readDraft(unavailable)).toEqual({ text: '', mode: 'chat' });
-    expect(() => saveDraft({ text: 'Keep writing', mode: 'chat' }, unavailable)).not.toThrow();
+    expect(readDraft('scoped-draft', unavailable)).toEqual(emptyDraft());
+    expect(() =>
+      saveDraft('scoped-draft', { text: 'Keep writing', revision: 'edit-1' }, unavailable),
+    ).not.toThrow();
   });
 
   it('does not block editing when storage quota is exhausted', () => {
+    const existing = { text: 'Existing draft', revision: 'edit-1' };
     const full = () => ({
-      getItem: () => 'Existing draft',
+      getItem: () => JSON.stringify(existing),
       setItem: () => {
         throw new Error('Quota exceeded');
       },
       removeItem: () => undefined,
     });
-    expect(() => saveDraft({ text: 'A new draft', mode: 'invention' }, full)).not.toThrow();
-    expect(readDraft(full)).toEqual({ text: 'Existing draft', mode: 'chat' });
+    expect(() =>
+      saveDraft('scoped-draft', { text: 'A new draft', revision: 'edit-2' }, full),
+    ).not.toThrow();
+    expect(readDraft('scoped-draft', full)).toEqual(existing);
   });
 });
