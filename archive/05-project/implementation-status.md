@@ -6,7 +6,7 @@ Current runtime performance follow-through: [3× scene implementation and eviden
 
 ## Gameplay availability
 
-Source-reviewed against `56b8c383` (2026-09-26). This is the current exposure summary, not a second task or limits inventory. **Native support**, **automatic NPC use**, **player controls**, **creator controls** and **verified acceptance** are independent. A registered definition, API or completed foundation does not establish all five. This documentation pass adds no runtime qualification.
+Source-reviewed against `56b8c383` (2026-09-26). This is the current exposure summary, not a second task or limits inventory. **Native support**, **automatic NPC use**, **player controls**, **creator controls** and **verified acceptance** are independent. A registered definition, API or completed foundation does not establish all five. This documentation pass adds no runtime qualification. The conversation, physical-item and chosen-task player-surface rows were updated on October 4, 2026 for the redesign branch; their [current report](../../docs/verification/game-interaction-redesign.md) distinguishes implemented controls from remaining integrated qualification. Other rows retain their separately recorded evidence.
 
 | Capability | Native support / automatic use | Player surface | Creator surface | Remaining work and evidence owner |
 | --- | --- | --- | --- | --- |

@@ -1,8 +1,8 @@
 # Inventory and everyday play: interaction redesign
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Runtime interactions are present; final inventory/activity UI corrections and full native gameplay qualification remain open. | 2026-10-04   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Runtime interactions and focused UI checks are recorded; full native gameplay qualification remains open. | 2026-10-04   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 
@@ -12,7 +12,7 @@ Make handling belongings, opening a chest, tending a fire and talking to a perso
 
 The user-approved direction is **world object → relevant interaction → visible result**. The behavior below is the accepted interaction contract. The implementation and recorded focused checks do not by themselves establish completion: the real-game journeys remain required, including the integrated camp session. [Runtime evidence and limits](../verification/game-interaction-redesign.md) distinguish observed results from remaining qualification.
 
-The [pinned pre-redesign audit](../ui-ux/current-interface-audit.md) preserves the diagnosis: one container collection and a detail pane led to a destination chooser and an additional exact-transfer submission; the inspected world object was not connected to a paired inventory view. Camp activities exposed internal parameter fields and a separate review. The runtime now connects objects to paired inventory and authored activity presentations while retaining native validation; the final care-task layout correction below is still required to satisfy the no-form direction. The audit describes its recorded revision, not the current replacement UI.
+The [pinned pre-redesign audit](../ui-ux/current-interface-audit.md) preserves the diagnosis: one container collection and a detail pane led to a destination chooser and an additional exact-transfer submission; the inspected world object was not connected to a paired inventory view. Camp activities exposed internal parameter fields and a separate review. The runtime now connects objects to paired inventory and authored activity presentations while retaining native validation. Visual review also corrected the first care-task implementation into the compact summary described below. The audit describes its recorded revision, not the current replacement UI.
 
 ## Maintained records
 
@@ -85,7 +85,7 @@ For **Add fuel**, show eligible carried fuel as item choices with exact native q
 
 The current immediate fuel action uses the existing native **one-unit** command and states that amount before commitment. It does not offer an arbitrary amount that the command cannot honor. Longer care uses the supported supply, budget, reserve and stopping choices. Contextual activity screens are now implemented from a closed set of trusted presentations with world-authored roles and wording; unsupported presentations receive an explanation rather than a generated parameter form. J10–J12 still require real native client/server qualification of these choices and effects.
 
-The default care-task view must be a compact summary naming the selected supply/material, budget, reserve and stopping condition. **Supply**, **Amount** and **Stopping** open one focused editor at a time; Start stays reachable and explicitly describes replacing current work when applicable. Visual inspection found the current all-fields-at-once view still violated this requirement, so correcting and rechecking that layout remains in scope. Moving choices into focused editors does not remove their values, change native defaults or hide consequential commitments.
+The default care-task view is a compact summary naming the selected supply/material, budget, reserve and stopping condition. **Supply**, **Amount** and **Stopping** open one focused editor at a time; Start stays reachable and explicitly describes replacing current work when applicable. Visual inspection found the first all-fields-at-once implementation still violated this requirement. That defect is corrected, with the final workflow checked inside the actual 504px Panel. Moving choices into focused editors preserves their values, native defaults and consequential commitments. The [verification report](../verification/game-interaction-redesign.md#chosen-tasks-and-crafting) records the checked layout and remaining native gameplay limits.
 
 Default only values the system can establish safely. If two sources have meaningfully different consequences, ask **Which fuel?** with the actual objects, not their internal identifiers. If the player has no suitable material, keep the fire as the context and explain **You need suitable fuel** with a permitted route to obtain it. Never silently borrow another person's possessions or choose a valuable item because it happens to be first in a query.
 
@@ -141,4 +141,4 @@ These remain required completion gates for the implemented interactions. The ful
 4. **Conversation and handover integration.** Preserve current chat gains while connecting person/item entry, scope cues and J13/J14. New trading economics are not required.
 5. **Chore reduction.** Consider bulk storage, organization, additional input modes and broader action families from measured play. These do not delay the ordinary chest interaction.
 
-The branch now carries the approved implementation as well as the original research; completion remains subject to the actual-game journeys above and remaining inventory/browser work in UIUX08–UIUX11. The design's binding directions are clear; exact pixel dimensions, bindings that conflict with existing shortcuts, and native batch semantics retain explicit owners and acceptance gates. They must not reopen the decision to make ordinary players choose containers and fill execution forms.
+The branch now carries the approved implementation as well as the original research; completion remains subject to the actual-game journeys above and remaining native, input and usability qualification in UIUX08–UIUX11. The design's binding directions are clear; exact pixel dimensions, bindings that conflict with existing shortcuts, and native batch semantics retain explicit owners and acceptance gates. They must not reopen the decision to make ordinary players choose containers and fill execution forms.
