@@ -31,7 +31,7 @@ export const capabilitySchema = z.enum([
 export type Capability = z.infer<typeof capabilitySchema>;
 /** Characterless grants share the one-grant-per-account row without a character. The marker
  * never leaves this repository; changing the existing NOT NULL column would convert saves.
- * docs/projects/multiplayer-entry-maintenance.md#decisions */
+ * docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
 const CHARACTERLESS = '#characterless:';
 const storedActor = (accountId: string, actorId: string | undefined) =>
   actorId ?? `${CHARACTERLESS}${accountId}`;
