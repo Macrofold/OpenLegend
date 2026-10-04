@@ -85,6 +85,8 @@ ND26's first audience, honest repeatable demonstration and bounded comprehension
 
 #### DG04 — A specific recall problem
 
+**Product preparation completed October 4, 2026:** [A specific recall problem](../projects/recall-quality-comparison-feature-spec.md) supplies the detailed conditional protocol and current research. The activation gate remains unmet: a recorded synthetic apology-summary loss is a lead, not demonstrated repeatable optional-retrieval failure. CR12/CR13 and R11/R19 retain execution; current recall may be the final choice.
+
 Conditional ND20 comparison of current recall, a modest native improvement and optional richer retrieval. Define one consequential repeatable omission, matched histories and correction/forgetting, latency and cost evidence.
 
 **Start and parallel boundary:** Start only when the omission exists. This investigation can run beside any gameplay band using current memory contracts; it does not require DG23's new memory transformations or authorize replacing canonical memories. Stop if the current approach is sufficient. **Existing owners:** CR12/CR13, R11/R19 and memory owners.
@@ -573,6 +575,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** decide which detail may change or disappear, what important incidents/obligations retain, and how current beliefs can color interpretation without creating false witnessing. Define imagined-versus-factual attribution, lineage, correction/forgetting propagation, cadence, cost and same-version restoration. Treat the proposed weekly/older-period schedule as a candidate, not an enabled default, and set behavioral quality criteria before selecting an algorithm.
 
 ### ND20 — A bounded richer-memory retrieval comparison
+
+**Prepared conditional design:** [DG04's product protocol](../projects/recall-quality-comparison-feature-spec.md) now defines diagnosis, matched alternatives, player behavior, lifecycle and complete-cost qualification. No dependency is selected and no pilot has run; only an established optional-candidate omission activates the richer-retrieval comparison.
 
 **Conditional experiment; no new dependency selected.** Source: [Hindsight evaluation](../../archive/02-research/hindsight-memory-evaluation.md), especially its recommendation, integration boundary, matched evaluation and resumption sections.
 

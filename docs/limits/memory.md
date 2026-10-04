@@ -6,6 +6,18 @@ Values describe the stated baseline, not approved future targets. **Reported** m
 
 Implementation starting points: [experience.ts](../../packages/domain/src/experience.ts), [memory-repository.ts](../../apps/server/src/memory-repository.ts), [cognition-maintenance.ts](../../apps/server/src/cognition-maintenance.ts).
 
+## MH09
+
+**Proposed — conditional DG04 comparison scope, October 4, 2026 · Restrictiveness: Medium.** The [product protocol](../projects/recall-quality-comparison-feature-spec.md) starts with one consequential repeatable omission for one resident and the corresponding permitted history. Current recall and a modest native repair precede optional richer retrieval. No service, new context allowance, universal sample count, latency target or paid execution is selected.
+
+**Reason / boundary:** Spend on a demonstrated later player benefit. A required-conversation, acquisition, attention or interpretation failure routes to its existing owner rather than automatically activating external search. A documented synthetic apology-summary loss is a reproduction lead only. Set actual runs, held-out judgments and complete time/cost limits after diagnosis and before evaluation; stop if the current approach or small repair is sufficient. Existing MH01–MH08/KG01 and CG09 remain controlling, including explicit required-input overflow and no silent identity truncation. CR12/CR13 and R11/R19 own evidence.
+
+## MH10
+
+**Proposed — initial richer-retrieval behavior, October 4, 2026 · Restrictiveness: Safe.** If activated, the first optional provider supplies source candidates only; automatic external observations, maintained opinion pages and extra reflection are outside that comparison. Canonical mind, knowledge, obligations, acquisition, correction and forgetting remain in their existing owners.
+
+**Reason / boundary:** Isolate useful retrieval from a second memory writer and its recurring cost. All contributing candidate sources must resolve to current permitted originals; missing or incomplete lineage is unusable. Data processing needs its actual approved scope before export. On lag/failure, preserve required native evidence and use only the existing safe, explicitly incomplete fallback; on unprovable forgetting, stop the affected optional collection until safely rebuilt. Ingestion, expansion, rebuild, retained bytes, scan work and uncertain charges count, not just returned text. No automatic paid retry, whole-history fallback or canonical replacement is introduced.
+
 ## LA007
 
 **Historical — needs recheck · Restrictiveness: Safe.**

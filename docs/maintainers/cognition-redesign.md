@@ -239,6 +239,12 @@ CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately
 
 ### CR12 — Acceptance and token/latency evidence
 
+**DG04 product preparation, October 4, 2026:** [A specific recall problem](../projects/recall-quality-comparison-feature-spec.md) supplies the conditional diagnosis, matched native/richer comparison, lifecycle cases, economics and current research. No qualifying current optional-retrieval omission was established by that design task. The recorded apology-summary loss remains a lead under NC12 if reproduced there, not an adopted dependency.
+
+- [ ] Activate only on a consequential repeatable current omission with acquired/retained/eligible sources and an identified failing stage; do not remove required conversation, About me or subject knowledge to manufacture it.
+- [ ] Compare current behavior and the smallest native repair; use an optional richer source only for a remaining candidate omission, with exact corpus/data-processing authorization and preselected full-cost limits.
+- [ ] Qualify real later behavior, source attribution, correction/forgetting/restore, incomplete coverage and removal/degradation. Retain current recall when sufficient; CR13/NC/PF keep defects in their respective boundaries.
+
 For the early resident's multidimensional life, use [CE05](character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification) and the [complete character flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) as the integrated scenario owner. Evaluate delayed behavior after social contact, belonging-related interpretation, enjoyment and bodily relief, alongside existing recall/privacy/cost cases. Scenario wiring or a fluent thought cannot close live character quality.
 
 NP01 completed its bounded provider outcome, checked-price, reservation and required-context reporting child. [NP01 evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) distinguishes zero from unpriced, cancellation from deadlines, late settlement from duplicate dispatch and all four preparation variants. The accepted identity-size/greeting tradeoff remains [CG09](../limits/cognition.md#cg09); this repair closes no broader live quality, payload optimization, deployment or lifecycle requirement below.

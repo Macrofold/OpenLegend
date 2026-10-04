@@ -308,6 +308,8 @@ Adopt the sidecar only if it materially improves useful recall or maintained und
 
 ## 9. Open questions and resumption
 
+**October 4 product preparation:** the [DG04 feature specification](../../docs/projects/recall-quality-comparison-feature-spec.md) now provides the concrete conditional diagnostic/comparison protocol and refreshed primary-source research. It preserves this document's historical evidence and recommendation. No repeatable consequential optional-retrieval omission or adoption is established; current source/permission/correction owners and CR12/CR13 remain controlling.
+
 | Question | Evidence needed before adopting |
 | --- | --- |
 | Is optional candidate omission a material gameplay problem? | Matched traces showing missed memories change consequential behavior |
