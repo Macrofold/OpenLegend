@@ -41,7 +41,7 @@ Browser game tabs always pause on leaving, so Time settings now explains Resume 
 
 The other-tab heading derives from the committed control record, including the interval before its new stream starts. It exposes no page identity and disappears after explicit release or inactive departure. The renderer retains resources across pause/Resume. A control revision change does not remount the whole application; only security, character or timeline changes require that reset. Older control snapshots are ignored before they can pause a resumed page, and gameplay controls wait for a current controlling projection.
 
-Resume publishes the freshly permitted view before reopening panels. Every explicit Resume validates the body’s return, including after a lost acknowledgement when this page still owns control. A server-unavailable error keeps the dialog open and offers the same explicit retry; no automatic retry or takeover occurs.
+Resume publishes the freshly permitted view before reopening panels. Every explicit Resume validates the body’s return, including after a lost acknowledgement when this page still owns control. A server-unavailable error keeps the dialog open and offers the same explicit retry; no automatic retry or takeover occurs. The 15-second control/snapshot deadline follows MP09 and limits client waiting, not server effect authority.
 
 ## Completion evidence
 

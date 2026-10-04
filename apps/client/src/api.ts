@@ -98,10 +98,11 @@ export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   });
 }
 
-export async function getState(): Promise<GameView> {
+export async function getState(signal?: AbortSignal): Promise<GameView> {
   const response = await fetch('/api/state', {
     credentials: 'same-origin',
     cache: 'no-store',
+    signal,
     headers: { 'X-OL-Client': tabClientId },
   });
   if (response.status === 403) {
@@ -127,6 +128,7 @@ export async function changeTabControl(
     method: 'POST',
     credentials: 'same-origin',
     keepalive: operation === 'release',
+    signal: AbortSignal.timeout(15000),
     headers: {
       'Content-Type': 'application/json',
       'X-OL-Client': tabClientId,

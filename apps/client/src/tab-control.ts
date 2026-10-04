@@ -50,12 +50,12 @@ export function useTabControl() {
     setError('');
     pending.current = pending.current.then(async () => {
       try {
-        const before = await getState();
+        const before = await getState(AbortSignal.timeout(15000));
         if (attempt !== intent.current) return;
         // Also validate the body's return when an earlier acknowledgement was
         // lost: owning control alone does not mean the body is participating.
         await changeTabControl(before, 'replace');
-        const after = await getState();
+        const after = await getState(AbortSignal.timeout(15000));
         current.current = after;
         if (attempt !== intent.current) return;
         if (!after.access?.controlling)
@@ -67,11 +67,13 @@ export function useTabControl() {
       } catch (reason) {
         if (attempt === intent.current)
           setError(
-            reason instanceof TypeError
-              ? 'Could not reach the game server. Try Resume here again.'
-              : reason instanceof Error
-                ? reason.message
-                : 'Could not resume. Try again.',
+            reason instanceof DOMException && reason.name === 'TimeoutError'
+              ? 'The game server did not respond. Try Resume here again.'
+              : reason instanceof TypeError
+                ? 'Could not reach the game server. Try Resume here again.'
+                : reason instanceof Error
+                  ? reason.message
+                  : 'Could not resume. Try again.',
           );
       } finally {
         if (attempt === intent.current) {
