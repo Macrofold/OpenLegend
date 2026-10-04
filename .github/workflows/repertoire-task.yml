@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 jobs:
-  priorities:
+  examples:
     if: github.ref == 'refs/heads/docs/canonical-repertoires-2026-10-03'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -14,10 +14,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-      - name: Apply scoped entry and scenario priority review
+      - name: Read original examples and merge current constraints
         run: |
-          python .repertoire-task/entry-priorities.py
-          python .repertoire-task/scene-priorities.py
+          git fetch --depth=1 origin c4e18d91848b5b6d367dda1d7214a9f8222cf070
+          python .repertoire-task/coalesce.py
       - name: Commit only to the unchanged task branch
         shell: bash
         env:
@@ -27,13 +27,13 @@ jobs:
           branch=docs/canonical-repertoires-2026-10-03
           actual=$(git ls-remote origin "refs/heads/$branch" | cut -f1)
           test "$actual" = "$EXPECTED_SHA"
-          git add -A -- docs README.md archive .agents
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: prioritize practical invention and character consequences without inflating simulation scope'
+          git add -A -- docs/repertoires
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: merge worked examples while preserving build scope and newer constraints'
           git push origin "HEAD:refs/heads/$branch"
           git rev-parse HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: repertoire-priority-checkpoint
-          path: /tmp/repertoire-*-priorities.json
+          name: repertoire-example-checkpoint
+          path: /tmp/repertoire-pattern-cleanup.json
           retention-days: 1
           if-no-files-found: error
