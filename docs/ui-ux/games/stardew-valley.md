@@ -128,7 +128,6 @@ Stardew demonstrates that simple collection grids, object context and a few depe
 
 A good Open Legend evaluation scene is to return from gathering, open the intended chest, store matching supplies, retain the needed tool, and cook at the adjacent station. The player should complete that sequence without repeatedly choosing their character or a container from a global form. Test the same scene with unfamiliar item names and with keyboard focus. These are candidate tasks; the handbook and its maintainers' trackers own current implementation and acceptance.
 
-
 ## Whole-interface expansion: character progress, navigation and readable controls
 
 Reviewed **2026-10-04**. The two new images address character/status and map layout. Existing captures also retain useful HUD evidence: date/time/currency near the upper-right and the current tool strip near the edge of the world. Those are observations of those versions, not a guarantee of identical placement on every platform.

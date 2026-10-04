@@ -22,6 +22,8 @@ This adapts Nielsen's progressive-disclosure guidance, not a rule that all detai
 
 ## Group by meaning and reading order
 
+Apply this hierarchy to the whole game, not only inventory. Stable HUD context answers who the player controls, what matters now and what work is underway. Player records have readable entry/return paths; creator, operations and diagnostics are explicit role-appropriate workspaces. Target selection keeps the world visible, with a readable candidate list as an alternative to precise pointing. It must not replace an execution form with an equally large mandatory action menu. The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#information-architecture-and-visual-hierarchy) gives all [58 current surface groups](interface-coverage.md) a design home; implementation is tracked separately. The proposed hierarchy does not invalidate native privacy, current camera meanings or meaningful authoring review.
+
 Group inputs that answer one question or affect one decision. Put the label above its control by default, with a specific hint only when needed. Keep the label closer to its field than to the previous field. Place validation adjacent to the affected control. Use section headings for separate purposes, not a border around every row.
 
 Examples: a requested split quantity belongs beside the selected stack and the already-open destination; item lore and account preferences do not belong in that decision. Ordinary transfer uses [two named collections](inventory.md#open-the-object-and-keep-both-inventories-visible), not a Quantity/Destination form. Currency unit belongs with the amount. Character identity and a destructive owner action should not look like peers in one undifferentiated form.

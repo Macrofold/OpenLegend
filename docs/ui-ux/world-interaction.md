@@ -65,6 +65,10 @@ Protect character readability: ordinary objects do not show through people. Only
 
 ## Actions explain the commitment
 
+This includes the remaining general Character → Take an action path, not only contextual camp activities. Known actor/object/item context should be retained; direct native actions use the selected thing, and open-ended intentions receive focused clarification for meaningful unresolved choices. The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#character-abilities-and-general-action) keeps target selection in the scene and distinguishes stable shortcuts from changing suggestions. It does not import BG3's turn economy or invent capabilities from labels.
+
+Current cancellation stops active and suspended work, so the proposed player control is **Stop all work**, with the effect on paused work explained. A narrower task-specific Stop is conditional on stable native task identity and scoped cancellation; a physical action ID alone does not protect waiting/queued plans. [Technical scope](../projects/game-interaction-redesign-tech-design.md#world-actions-and-authored-presentation) · [UIUX12](../maintainers/ui-ux.md#uiux12)
+
 A contextual action should make clear **who acts, on what, with which relevant tool, at what known cost and with what important consequence**. Express conditions in player language. Distinguish known duration from an estimate and a supported attempt from guaranteed success. Avoid presenting an unknown chance as 0% or promising a result the world has not committed.
 
 Selection and preview are read-only. Use the current action admission route for execution. Keep unavailable-action disclosure under its current owner; when the player asks for an explanation, name a remedy if one exists. Do not substitute a technical exception for an understandable action failure.

@@ -71,6 +71,8 @@ A timed notice cannot be the sole important failure/action route. Use live regio
 
 ## Settings, menus and preference persistence
 
+The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#settings-controls-help-and-accessibility) applies this to the existing entry, settings/help, graphics/profile, invention-policy, save/load and operations surfaces. Keep device preferences, player-profile writes, world policy and account/access actions visibly distinct. Preserve automatic sole-tab entry and the existing other-tab Resume contract; a loading/error screen must distinguish denied access, connection failure and broken rendering. The [coverage map](interface-coverage.md#entry-settings-and-world-administration) identifies actual owners and evidence instead of assuming a new generic settings flow replaces them.
+
 Group by goals: controls/camera, readability/accessibility, audio/captions, gameplay preferences and authorized creator/operator settings. Keep accessibility discoverable before the player is stuck. Settings search should take them to the real setting/group.
 
 Show current value and explain its effect. Reversible local appearance can preview immediately with reset; coordinated/consequential changes use staged Apply/Save. Do not silently mix models. **Reset this section** differs from **Reset all settings**; presentation reset is not a world reset.
@@ -80,6 +82,8 @@ Account/device presentation preferences stay separate from gameplay saves where 
 Advanced is for specialist options with summaries of hidden non-defaults. Do not bury text size, captions, camera recovery, help or the only load/recovery route behind unlabeled overflow. Essential configuration should not require console commands or pasted scripts; Blizzard's Classic UI follow-up illustrates replacing temporary script workarounds with discoverable settings. This is a design direction, not authorization to add every imagined setting. [F16](research.md#f16) [S20](research.md#s20)
 
 ## Save UI: show what is durable
+
+The current checkpoint and automatic-protection owners already supply catalogue/compatibility, named Load/Delete confirmation, Before last load protection, queued/writing state and persistent failure acknowledgement. The [redesign](../projects/game-interaction-redesign-feature-spec.md#saves-checkpoints-and-recovery) makes their scope and return route legible; it does not replace the save mechanism. Acknowledging a failure means it was read, not repaired. Operations overview remains public and read-only, while invitation/access and maintenance forms retain deliberate authorization, revision and timezone choices.
 
 Saving is a trust contract. Distinguish **queued**, **capturing/writing**, **durably saved**, **failed** and **outcome not confirmed** where the backend has those states. Dispatch or a disabled button is not a receipt. Retain the last confirmed save independently of a pending one.
 

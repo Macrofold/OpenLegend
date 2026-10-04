@@ -94,16 +94,16 @@ _Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.co
 
 **Observed navigation.** Continue, Save Game, Load Game, Options and Main Menu form a persistent left column. Options is selected; Load Game appears dimmer without a visible explanation. The selected Controls tab sits beside Settings with L2/R2 tab cues. A controller diagram and named bindings occupy the right panel, providing a readable reference while the game scene remains behind the pause surface.
 
-| Visible binding group | Stated meaning in the screenshot |
-| --- | --- |
-| L1; R1 | Highlight; Action / Interact |
-| L2; R2; both together | Zoom in / menu navigation; zoom out / menu navigation; reset camera zoom |
-| Options button | Pause menu |
-| Left stick; right stick | Movement / menu navigation; targeting interactables |
-| L3; R3 | Left-hand item; right-hand item |
-| Directional pad | Dialogue/menu navigation and dedicated morale/health healing bindings |
-| Triangle; Square | Context sensitive; Character Sheet / Open Menu |
-| Circle; Cross | Back; Action / Interact |
+| Visible binding group   | Stated meaning in the screenshot                                         |
+| ----------------------- | ------------------------------------------------------------------------ |
+| L1; R1                  | Highlight; Action / Interact                                             |
+| L2; R2; both together   | Zoom in / menu navigation; zoom out / menu navigation; reset camera zoom |
+| Options button          | Pause menu                                                               |
+| Left stick; right stick | Movement / menu navigation; targeting interactables                      |
+| L3; R3                  | Left-hand item; right-hand item                                          |
+| Directional pad         | Dialogue/menu navigation and dedicated morale/health healing bindings    |
+| Triangle; Square        | Context sensitive; Character Sheet / Open Menu                           |
+| Circle; Cross           | Back; Action / Interact                                                  |
 
 **Flow and limitation.** Pause → Options → Controls provides this reference. The screen documents meanings, but it does not show an editable remapping interface. Craven's contemporaneous review specifically reports missing remapping/control-scheme choices and trouble retaining right-stick selection. Those historical findings should not be presented as a claim about every current platform. A screenshot cannot establish hold duration, focus stability or the effort required to reach a small world target.
 

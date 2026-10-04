@@ -140,7 +140,6 @@ These findings support revising the interaction contract before changing layout 
 
 The screenshots are third-party reference material for research and criticism. Original rights remain with the game creators and relevant image authors; these are not Open Legend production assets and are not relicensed by the repository's code license.
 
-
 ## Whole-interface expansion: orientation, building and contextual input
 
 Reviewed **2026-10-04**. VH08–VH09 add actual player captures of map planning and construction context. They do not establish current-release parity. The build album is dated **2021-03-19**; the map is associated with an indexed player thread and includes Hildir-area names, so its exact release/test-branch state is unverified. Neither source proves the absence of mods. The analysis relies on visible controls and separately identified official patch notes.

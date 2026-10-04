@@ -153,7 +153,6 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 All ten saved assets retain their original downloaded bytes, including the publisher-provided crop in TR08. They are third-party reference screenshots for research and criticism. Original rights remain with their creators; they are not Open Legend production art and are not relicensed by the code license.
 
-
 ## Whole-interface expansion: entry, world controls, HUD and targeting
 
 Reviewed **2026-10-04**. TR09–TR10 are original developer-published interface captures from **May 2020 before Journey’s End released**. They are explicitly historical previews, not screenshots of the current release or a mod. TR09 prints **v1.4.0 r024**. The small TR10 is the developer's original crop, preserved without enlarging, recropping or reconstructing it.

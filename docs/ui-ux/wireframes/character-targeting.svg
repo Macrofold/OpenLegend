@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title desc">
+<title id="title">Choose a target in the world — Design proposal — not runtime evidence</title>
+<desc id="desc">02 · Keep the scene usable; hold the action and selected target in a compact strip. Original Open Legend proposal. All values and names are illustrative. This is a static diagram.</desc>
+<rect x="0" y="0" width="1400" height="1020" rx="0" fill="#0b1916" stroke="none" stroke-width="1"/>
+<text x="32" y="35" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">OPEN LEGEND  /  Design proposal — not runtime evidence</text>
+<text x="32" y="81" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="32" font-weight="700">Choose a target in the world</text>
+<text x="32" y="116" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">02 · Keep the scene usable; hold the action and selected target in a compact strip.</text>
+<rect x="28" y="146" width="1344" height="668" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<polygon points="63,424 244,281 607,263 944,321 1289,419 1328,615 1104,690 814,666 546,692 241,630 69,563" fill="#182f24" stroke="#24402f"/>
+<polygon points="240,443 491,352 696,337 988,449 858,596 601,635 355,558" fill="#243a2e" stroke="#355244"/>
+<circle cx="182" cy="417" r="29" fill="#263f2c" stroke="#36543a" stroke-width="2"/>
+<line x1="182" y1="444" x2="182" y2="477" stroke="#716549" stroke-width="8"/>
+<circle cx="809" cy="321" r="29" fill="#263f2c" stroke="#36543a" stroke-width="2"/>
+<line x1="809" y1="348" x2="809" y2="381" stroke="#716549" stroke-width="8"/>
+<circle cx="918" cy="612" r="29" fill="#263f2c" stroke="#36543a" stroke-width="2"/>
+<line x1="918" y1="639" x2="918" y2="672" stroke="#716549" stroke-width="8"/>
+<rect x="52" y="171" width="359" height="99" rx="8" fill="#142820" stroke="#385348" stroke-width="1"/>
+<text x="72" y="201" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="700">Aster</text>
+<text x="151" y="200" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Construct</text>
+<text x="72" y="226" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Integrity 100%  ·  Charge 148 / 240 units</text>
+<text x="72" y="250" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Open character</text>
+<text x="458" y="199" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Reservoir world</text>
+<text x="458" y="225" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">Select a visible item for Pick up.</text>
+<text x="458" y="249" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Point in the scene or use the optional list.</text>
+<rect x="1140" y="181" width="206" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1154" y="207.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Camera controls</text>
+<circle cx="507" cy="467" r="14" fill="#bbc9b4" stroke="#eee9d7" stroke-width="2"/>
+<line x1="507" y1="481" x2="507" y2="518" stroke="#eee9d7" stroke-width="5"/>
+<line x1="507" y1="490" x2="489" y2="509" stroke="#eee9d7" stroke-width="4"/>
+<line x1="507" y1="490" x2="525" y2="509" stroke="#eee9d7" stroke-width="4"/>
+<text x="466" y="546" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Aster · You</text>
+<circle cx="682" cy="440" r="45" fill="none" stroke="#d1b675" stroke-width="2"/>
+<rect x="663" y="423" width="34" height="30" rx="5" fill="#9b7047" stroke="#d1b675" stroke-width="1"/>
+<circle cx="702" cy="435" r="9" fill="none" stroke="#d1b675" stroke-width="2"/>
+<line x1="698" y1="433" x2="698" y2="449" stroke="#9b7047" stroke-width="4"/>
+<rect x="606" y="498" width="195" height="58" rx="5" fill="#142820" stroke="#d1b675" stroke-width="1"/>
+<text x="622" y="522" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Copper cup</text>
+<text x="622" y="544" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Selected target</text>
+<rect x="341" y="538" width="24" height="34" rx="4" fill="#526d62" stroke="#7ca68d" stroke-width="1"/>
+<line x1="348" y1="548" x2="358" y2="548" stroke="#d1b675" stroke-width="3"/>
+<line x1="353" y1="543" x2="353" y2="553" stroke="#d1b675" stroke-width="3"/>
+<text x="276" y="612" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Charged capacitor</text>
+<text x="250" y="634" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Cannot pick up · Charge supply</text>
+<rect x="1054" y="286" width="292" height="365" rx="8" fill="#142820" stroke="#385348" stroke-width="1"/>
+<text x="1074" y="317" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Objects in view</text>
+<text x="1074" y="342" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Alternate accessible selection</text>
+<rect x="1219" y="357" width="107" height="32" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1233" y="379.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Hide list</text>
+<rect x="1070" y="405" width="260" height="72" rx="5" fill="#2a3a2c" stroke="#d1b675" stroke-width="1"/>
+<text x="1087" y="434" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Copper cup</text>
+<text x="1087" y="459" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Selected · On the ground</text>
+<rect x="1070" y="489" width="260" height="89" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1087" y="515" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">Charged capacitor</text>
+<text x="1087" y="539" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Unavailable for Pick up</text>
+<text x="1087" y="559" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Charge supply, not a portable item.</text>
+<text x="1074" y="604" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Select here or in the scene.</text>
+<text x="1074" y="623" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Use Pick up to act.</text>
+<text x="72" y="676" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Scene selection stays active while choosing a target.</text>
+<rect x="52" y="710" width="1294" height="82" rx="8" fill="#142820" stroke="#d1b675" stroke-width="1"/>
+<text x="72" y="742" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Aster · Pick up</text>
+<text x="72" y="769" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Change action</text>
+<line x1="270" y1="729" x2="270" y2="775" stroke="#385348" stroke-width="1"/>
+<text x="292" y="743" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="700">Copper cup</text>
+<text x="292" y="769" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Selected target · Exact object</text>
+<text x="619" y="741" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Choose a target, then Pick up.</text>
+<text x="619" y="767" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Availability is checked when you act.</text>
+<rect x="941" y="731" width="127" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="955" y="757.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Cancel</text>
+<rect x="1080" y="731" width="244" height="40" rx="5" fill="#314035" stroke="#d1b675" stroke-width="1"/>
+<text x="1094" y="757.0" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Pick up Copper cup</text>
+<text x="32" y="848" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="700">DESIGN NOTES  /  Outside the proposed game interface</text>
+<text x="32" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">The world remains usable</text>
+<text x="32" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Targeting collapses the character sheet. The</text>
+<text x="32" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">scene stays visible and selectable; the short</text>
+<text x="32" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">action strip keeps Cancel and the exact commit</text>
+<text x="32" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">together.</text>
+<text x="482" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">An alternate selection route</text>
+<text x="482" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">The optional list is a readable equivalent to</text>
+<text x="482" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">pointing, not a required form. Hiding it</text>
+<text x="482" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">preserves the selected target; keyboard and</text>
+<text x="482" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">focus behavior still need qualification.</text>
+<text x="932" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Authored character context</text>
+<text x="932" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">The compact summary uses the construct’s native</text>
+<text x="932" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Integrity and Charge units. Opening more</text>
+<text x="932" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">character detail is separate; target selection</text>
+<text x="932" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">implies neither reach nor success.</text>
+<text x="32" y="998" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Static proposal • Illustrative content • Native permissions, world rules and saved results remain authoritative</text>
+</svg>

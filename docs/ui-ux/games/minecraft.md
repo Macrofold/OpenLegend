@@ -132,7 +132,6 @@ These are design recommendations from the comparison. Multiplayer authority, the
 
 All eight images preserve the downloaded source bytes. They are third-party game screenshots collected for internal reference and criticism, not reusable Open Legend production art. The repository's code license does not relicense these images.
 
-
 ## Whole-interface expansion: exploration, status, navigation and input ownership
 
 Reviewed **2026-10-04**. These two additional official captures extend the study beyond storage. They are historical 2023 evidence, not a claim to have played or tested the current release.

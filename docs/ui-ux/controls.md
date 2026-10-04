@@ -62,6 +62,12 @@ Announce results/loading without reading every keystroke. Distinguish no matches
 
 Use only permitted names/facts; do not broaden scope to obtain a nicer label. Preserve the eight-visible-row leaf-picker convention where applicable without turning it into a total-result cap. Results can scroll and the popup can flip/clamp, stay anchored and avoid scrolling the world. Follow APG and the installed React Aria implementation, not the latest upstream code blindly. [F07](research.md#f07) [F08](research.md#f08)
 
+## Text composition and game shortcuts
+
+**IME** means **input method editor**: a writing system that composes characters, for example by letting someone type a pronunciation and select Chinese or Japanese text. Enter may confirm that composition instead of sending a message. Composition keys belong to text entry, not movement, numbered actions or parent-form submission. [MDN describes composition sessions](https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionstart_event) and the [`isComposing` state](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/isComposing).
+
+Native IME qualification means using the actual operating-system input method through a complete chat/search/editor task, including candidate confirmation and cancellation. Simulated insertion and ordinary keyboard tests cannot certify it. Keep that unrun evidence separate from the existence of a composition guard. The same task must retain its draft, recipient/subject and focus while composing; [J47](../projects/game-interaction-redesign-feature-spec.md#whole-interface-journeys) includes this broader input work.
+
 ## Clear-X: explicit, quiet and singular
 
 Use the shared neutral utility treatment, a `currentColor` glyph, a specific accessible name such as **Clear item search**, and a usable hit area. Reserve trailing space so text does not run under it. Keep input focus when clearing supports further typing; appearing/disappearing utilities should not shift nearby controls. A clear control must never submit the form or delete the underlying object.

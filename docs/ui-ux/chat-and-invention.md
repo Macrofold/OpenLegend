@@ -50,6 +50,8 @@ The current item chip shows the words that will begin the message, such as **Abo
 
 ## Messages and reading position
 
+Conversation, Journal, promises, perceived events, personal memories and creator work are related reading tasks with different source and authority meanings. Use consistent return/new-content/paging behavior without merging them into an omniscient feed. Preserve whose words or knowledge are visible; distinguish a suggested beginning, a spoken promise and narration. The [whole-interface reading design](../projects/game-interaction-redesign-feature-spec.md#journal-memory-and-spatial-information) and [coverage map](interface-coverage.md#conversation-journal-and-remembered-events) account for the interfaces beyond the composer. Dated DOS2 transcripts, Disco's remembered opportunities and the MMO journal/map examples support navigation clarity, not universal quest or hidden-thought access.
+
 Make speaker and conversation identity clear without large repetitive badges. Group messages only when chronology/attribution remain understandable. Timestamps may be progressive detail, but failures and changed context cannot be buried there.
 
 Autoscroll while following the bottom, or after the player's own send where established. When reading older content, preserve position and offer **New messages**. Prepending history preserves the visible anchor. Late replies belong in authoritative chronology without disruptive reordering or duplicated turns.

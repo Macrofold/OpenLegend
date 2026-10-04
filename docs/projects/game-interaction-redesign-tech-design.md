@@ -1,8 +1,8 @@
 # Open Legend: whole-interface technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Whole-interface research/design correction in progress; additional runtime implementation is not part of this pass. | 2026-10-04   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Whole-interface research/design reviewed; additional runtime implementation is not part of this pass, and existing acceptance gates remain open. | 2026-10-04   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
@@ -29,6 +29,8 @@ Extract a small connected component from `main.tsx` only when a specific slice n
 Use the existing `ActionOption`/action-catalogue projections, `ui/action-picker.tsx`, `action-browser.ts`, `ui/quick-actions.tsx` and `EntityDetail` as the entry seams. The proposed hierarchy should arrange permitted verbs, inspection and meaningful choices around the selected object. Shared presentation can render native availability and reasons; it must not infer capability from names, icons, subtype spelling or distance drawn on screen. Keep existing native command admission and bounded contextual reads.
 
 `ui/action-attempts.tsx` remains a real uncovered player route: textual intention plus target and optional exact fields. Redesign it as its own task using the accepted product behavior, with contextual references supplied when already known and deliberate exact controls only where a choice is still meaningful. Retain native clarification/confirmation, ongoing/paused work, replacement and Stop. Natural-language interpretation may consume the configured allowance; moving controls must not introduce a provider request on opening or silently spend merely to enumerate actions.
+
+**Cancellation scope is a native design seam, not copy alone.** Current `packages/domain/src/kernel.ts` cancellation clears the active plan, suspended work and physical action. `expectedActionId` fences a physical action; `apps/server/src/activity-requests.ts` does not project a stable waiting/queued plan identity. The proposed current control therefore says **Stop all work** and explains the suspended-work consequence. A narrower per-task Stop would require a projected stable task identity, native admission that checks the intended task is still current, scoped cancellation semantics and a receipt consistent with that scope. J19/J22/J46 must include waiting/queued work and a task changing after selection before such a control can be claimed. No cancellation runtime is changed by this documentation pass.
 
 The source contains specific base-content leaks that should be localized during the affected slices. `apps/server/src/inventory-view.ts` explicitly recognizes `raw_meat` and imports base preparations for cooking/fiber actions; this projection needs to consume supported world-owned action descriptions. Its single equipped-item eligibility and packing model remain specific supported native capabilities, not a world-defined multi-slot equipment schema. `main.tsx` hard-codes “The first clearing” and “Time in the wilderness.” `quick-actions.tsx` manufactures “Gather …” labels from resource subtypes and uses `gather-type:` as its resource-specific shortcut scheme. `design-system/components.tsx` `symbol()` maps berries, hare, deer, campfire and other bundled identities inside a shared component; the action picker also has a reed fallback. These are source-confirmed assumptions, not new observed runtime failures.
 
