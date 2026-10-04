@@ -42,7 +42,7 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 ## Social playable slices
 
-**Status: BW16 family-tree authoring is delivered (2026-10-03); BW17's read-only first slice was delivered on 2026-09-28. Remaining promise controls and feeling processes need their own authorization.** Current [social rules](../worlds/base/social.md) and [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) distinguish existing support from these new surfaces. Family authoring is complete; continue BW17 when its remaining policy is selected; consider [ACT09](actor-model.md#act09--internal-feeling-process-authoring) only when an authored scenario needs it. No requirement to expose every native primitive as a UI.
+**Status: BW16 family-tree authoring is delivered (2026-10-03); BW17's read-only first slice was delivered on 2026-09-28. Remaining promise controls and feeling processes need their own authorization.** Current [social rules](../worlds/base/social.md) and [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) distinguish existing support from these new surfaces. Family authoring is complete. BW17’s existing boundary and read-preparation corrections do not wait for another product decision; amendment/cancellation controls still depend on the remaining policy choice. Consider [ACT09](actor-model.md#act09--internal-feeling-process-authoring) only when an authored scenario needs it. No requirement to expose every native primitive as a UI.
 
 ### BW16 — Family authoring and inspection
 
