@@ -281,7 +281,7 @@ export class ActorWork {
   }
 
   /** A completed read acknowledges only its captured inputs, never a newer wake.
-   * docs/projects/dependency-invalidation-tech-design.md#4-revision-safe-compute-install-and-acknowledgment
+   * docs/projects/completed/dependency-invalidation-tech-design.md#4-revision-safe-compute-install-and-acknowledgment
    */
   inspected(
     id: string,

@@ -1,8 +1,12 @@
 # Shared state, effect contributions and resource claims — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 1 in [remaining foundational work](../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
+| Status    | Current progress                                                                                                                                         | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Typed state owners, finite claims and independent capability contributions are delivered and locally qualified; broader effect families remain separate. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 1 in [remaining foundational work](../../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Outcome
 
@@ -12,7 +16,7 @@ This is a shared execution foundation, not a universal physics engine. The engin
 
 ## 2. Inherited decisions and actual starting point
 
-[Engine/world boundaries](../engine-and-world-boundaries.md), [world-module runtime](../../archive/07-technical-architecture/world-module-runtime.md#5-effects-ownership-and-deterministic-composition), [declarations](../../archive/07-technical-architecture/declarations-and-evolution.md) and [save/load](../save-and-load.md) remain authoritative. Existing native ordering and saved randomness must be preserved while adapters are extracted. Broader start-of-phase composition is introduced explicitly, not retroactively attributed to the current tick.
+[Engine/world boundaries](../../engine-and-world-boundaries.md), [world-module runtime](../../../archive/07-technical-architecture/world-module-runtime.md#5-effects-ownership-and-deterministic-composition), [declarations](../../../archive/07-technical-architecture/declarations-and-evolution.md) and [save/load](../../save-and-load.md) remain authoritative. Existing native ordering and saved randomness must be preserved while adapters are extracted. Broader start-of-phase composition is introduced explicitly, not retroactively attributed to the current tick.
 
 At main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, `world-modules.ts` already defines finite attribute implementations, pins and scoped views; `worlds/base/needs.ts` centralizes fullness/energy setters but still applies native starvation/exhaustion health changes directly. The charge demo already has a finite source and native replenishment. These are valuable consumers, not a complete shared arbitration protocol. The invention continuation inspected at `271ac5738a1afe5dca0f53b2dc1a89a5e7c11b93` supplies existing admission/draft/receipt work that must be reused through DF02 rather than recreated.
 
@@ -107,5 +111,5 @@ Proposed engineering defaults are explicit in the technical design: deterministi
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/state-contributions.md).
-- Limits and constraints: [Shared state, resources and effects inventory](../limits/state-effects.md).
+- Implementation: [Feature tasks](../../maintainers/state-contributions.md).
+- Limits and constraints: [Shared state, resources and effects inventory](../../limits/state-effects.md).

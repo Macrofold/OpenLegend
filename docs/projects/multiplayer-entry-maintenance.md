@@ -2,7 +2,7 @@
 
 Approved in chat on 2026-09-28 (Mike's go-ahead in the task message): deliver audit item E08 (characterless operator/spectator sessions and invite enrollment), then [MP03](../maintainers/multiplayer.md) scheduled creator maintenance. Base: `origin/main` `be68b1e0`. Estimated 1,700–2,300 changed logic lines across authority, HTTP, the world clock, protocol and client. Authority, privacy and clock/pause risk warrants this durable plan.
 
-Canonical contracts reused, not restated: [multiplayer authority design](multiplayer-authority-tech-design.md), [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [maintenance pause contract](../../archive/03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause), [development save policy](../../AGENTS.md#development-save-policy) and [RP05](../maintainers/revisitable-policies.md#rp05--prototype-account-and-native-work-operating-envelopes).
+Canonical contracts reused, not restated: [multiplayer authority design](completed/multiplayer-authority-tech-design.md), [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [maintenance pause contract](../../archive/03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause), [development save policy](../../AGENTS.md#development-save-policy) and [RP05](../maintainers/revisitable-policies.md#rp05--prototype-account-and-native-work-operating-envelopes).
 
 ## Scope and owners
 
@@ -57,4 +57,4 @@ Decisions added during review and verification: operations routes own their resp
 
 - Implementation: [MP03 and entry work](../maintainers/multiplayer.md#entry-and-maintenance-execution-notes--september-28-2026); E08 is removed from the [limits audit](../maintainers/limits-audit.md#ranking-method) as delivered.
 - Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).
-- Related contract/design: [Multiplayer authority technical design](multiplayer-authority-tech-design.md).
+- Related contract/design: [Multiplayer authority technical design](completed/multiplayer-authority-tech-design.md).

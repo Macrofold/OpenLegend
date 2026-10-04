@@ -12,7 +12,7 @@ Later regional authority/transfer is D6, not another MP implementation here. Ope
 
 ## Execution notes — September 26, 2026
 
-Implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).
+Implementation is authorized by the [foundation execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan).
 MP01/MP04 and their ten foundation slices are **implemented and locally qualified**. Required CI, hostile-client/hosted qualification and MP02 remain open; MP03 was subsequently delivered in the September 28 entry/maintenance slice below.
 
 - `authority.ts` adds consumed account/session/grant/control/exit records outside gameplay
@@ -87,7 +87,7 @@ Authorized by the [entry and maintenance plan](../projects/multiplayer-entry-mai
 
 ## Priority 2 implementation slices
 
-The approved [feature specification](../projects/multiplayer-authority-feature-spec.md) and [technical design](../projects/multiplayer-authority-tech-design.md) govern these MP01/MP04 child slices. The foundation plan is implemented; the evidence above satisfies MP01/MP04. Other MP gates retain their separate scope.
+The completed [feature specification](../projects/completed/multiplayer-authority-feature-spec.md) and [technical design](../projects/completed/multiplayer-authority-tech-design.md) retain these original MP01/MP04 child slices. The evidence above satisfies their foundation scope. Current sole-tab entry and shared logout follow MP18; Auth0 configuration and provider logout follow IDP01–IDP03. Other MP gates retain their separate scope.
 
 ### MP01.1 — Authenticated accounts and current scope
 

@@ -5,7 +5,7 @@ These are recorded observations from the original verification log, not a new ru
 ## Foundation priorities 1–5 — implementation evidence
 
 September 26, 2026, `codex/foundations-1-5`, refreshed baseline `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`.
-The [approved plan](../projects/foundations-1-5.md#approved-implementation-plan) and its 46 agreed
+The [approved plan](../projects/completed/foundations-1-5.md#approved-implementation-plan) and its 46 agreed
 SC/MP/PO/DI/ACT delivery slices are complete under the permitted native/manual workflow.
 Broader parent, hosted capacity and live model-quality gates remain separate.
 These checks used disposable worlds, Node 22.23.2, SQLite and a task-owned PostgreSQL 18

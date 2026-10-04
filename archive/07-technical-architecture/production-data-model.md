@@ -494,7 +494,7 @@ Current task state and D0–D6 exit gates live only in the [Production data impl
 
 ## Accepted foundation contract additions
 
-The [priorities 1–5 implementation plan](../../docs/projects/foundations-1-5.md#approved-implementation-plan)
+The [priorities 1–5 implementation plan](../../docs/projects/completed/foundations-1-5.md#approved-implementation-plan)
 was authorized September 26, 2026. Its entity-backed lots, single tagged placement,
 source-aware appraisals, contribution/claim records and non-rewindable account/control
 records now use the existing canonical record catalogue. Supported records convert
