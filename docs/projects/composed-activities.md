@@ -1,6 +1,12 @@
 # Precise action requests and multi-step activities
 
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Typed multi-step requests, exact item quantities and interrupt/resume are delivered; broader intent, condition and acceptance work remains. | 2026-10-04   |
+
 ## Scope and baseline
+
+The September 28–29 sequence below records the delivered implementation, not instructions to check out its old branch or replay its stages. [Current action behavior](../action-capabilities.md) and the [composed-activity tracker](../maintainers/action-capabilities.md#composed-activities-slice) own the latest contract and remaining work. AC01.2 still lacks some part/unit roles; AC06.3–AC06.4 retain three-valued stale/unknown semantics and broader iteration; passive last-seen recording, player quantity controls and unrun acceptance remain separately tracked. These gaps are not closed by the native and injected-response demonstrations.
 
 Branch `codex/composed-activities` from `origin/main` at `be68b1e0` in `Macrofold/OpenLegend`
 (the task's explicit base), rebased onto `origin/main` `0382be76` before handoff. Mike authorized implementation of this plan in chat on
@@ -119,8 +125,12 @@ shown only in God mode; players keep "Stop current work" and plain answers to th
 - **Waits may last one game day** (86,400 s, previously 36,000 s) so "until dawn" works from
   any hour; repeats keep the 16-iteration bound and larger requests are refused up front.
 - **Interrupt is explicit**: direct picker commands keep replacing current work.
-- **Fire tending is unsupported**: there is no fuelling family, so "tend the fire until dawn"
-  becomes a disclosed revision (stay by the fire until dawn) awaiting the initiator's decision.
+- **Fire tending changed after this baseline:** single fire-care actions and the separately chosen
+  [bounded watch](../worlds/base/camp-routines.md) are now delivered. The older typed rule still
+  revises "tend the fire until dawn" to passive staying and calls repeated fuelling unavailable.
+  [AC03.6](../maintainers/action-capabilities.md#ac03--bounded-action-grounding) owns that concrete
+  wording/routing defect. Reuse the existing watch compiler with explicit target, supplies,
+  deadline and fuel budget; do not silently replace care with waiting or add another executor.
 
 ## Stage 8: world-supplied wording and named times
 
@@ -143,7 +153,7 @@ Decisions:
 - **Typed-request vocabulary is world content** in `worlds/base/typed-requests.ts`, owned by
   `docs/worlds/base/typed-requests.md`: heat-source nouns, being nouns (from the bundled
   world's species), unsupported requests and their refusal text, faithful revisions
-  (tending a fire becomes staying by a heat source) and examples. The engine keeps generic
+  (at that baseline, tending a fire became staying by a heat source) and examples. The engine keeps generic
   mechanisms and the English front end for its native families and reads the vocabulary
   through one accessor, the composition point an external world package would replace.
 - **Native-family facts are declared once** in `worlds/base/actions.ts`: families that produce
