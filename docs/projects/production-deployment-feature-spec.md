@@ -1,5 +1,9 @@
 # Production deployment — feature specification
 
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Deployment research is complete and Auth0 is selected; hosted delivery and production qualification remain unimplemented. | 2026-10-04   |
+
 **Status: researched proposal, updated 2 October 2026. Auth0 is Mike's selected authentication provider; the other platform choices below are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
 
 ## Purpose
@@ -20,7 +24,7 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 **Art improves during play.** Only approved, permitted versions arrive asynchronously. An adequate fallback remains usable. Art does not alter mechanics, and late downloads cannot resurrect removed objects.
 
-**An operator deploys or restores.** A version-compatible, fenced handover or announced maintenance interval; coherent recovery of gameplay, required files and content pins; current permissions, privacy restrictions and external accounting are not rewound.
+**An operator deploys or restores.** A current-format, fenced handover or announced maintenance interval; coherent recovery of gameplay, required files and content pins; current permissions, privacy restrictions and external accounting are not rewound.
 
 **A deployment is interrupted.** Maintenance remains explicit, the operator can inspect the last durable release phase, and a retry reconciles actual state before acting. A healthy old server after rollback is not reported as a successful new release.
 
@@ -28,7 +32,7 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 ## Scope and stages
 
-**First hosted pilot:** one region, one active world authority, Auth0, managed PostgreSQL, durable save files, CDN-delivered approved assets, deployment/recovery procedures, basic abuse handling, observability and explicit spending controls. Paid AI is enabled only after its separate live qualification. Curated assets do not require runtime image generation. A short announced maintenance interval for this world is acceptable; zero-downtime stateful updates are not promised.
+**First hosted pilot:** one region, one active world authority, Auth0, managed PostgreSQL, durable save files, CDN-delivered approved assets, deployment/recovery procedures, basic abuse handling, observability and explicit spending controls. Paid AI is enabled only after its separate live qualification. Curated assets do not require runtime image generation. A short announced maintenance interval for this world is acceptable; zero-downtime stateful updates are not promised. Reuse the delivered [invitation and maintenance controls](completed/multiplayer-entry-maintenance.md), but do not mistake them for the missing cloud release coordinator, storage fencing or hosted acceptance.
 
 **Public launch:** qualify the existing release population and dense-scene profile, real authentication, aged history, hostile clients, outages and recovery; approve retention, support, moderation and uptime promises. Self-service onboarding is a separate admission capability from successful authentication. Database disaster recovery must reconcile current operational authority/privacy and financial records, not merely restore a historical gameplay image.
 
