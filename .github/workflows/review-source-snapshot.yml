@@ -1,4 +1,4 @@
-name: Documentation review continuation snapshot
+name: Documentation review incoming project references
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  snapshot:
+  references:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
@@ -14,44 +14,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3925c54498f1a3a4e35050c5dd1d0d7c3a583a1d
-          fetch-depth: 0
+          ref: aeab5fe6d11caed3b2b9b8fd45b826cdcb6b5a8f
           persist-credentials: false
-      - name: Package pinned text, prior diff and incoming archive references
+      - name: Package only archived sources with incoming project references
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
-          root = pathlib.Path.cwd()
-          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'documentation-review-continuation.zip'
-          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          allowed = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
-          inventory, archived = [], []
-          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
-              for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', 'HEAD']).split(b'\0'):
-                  if not entry:
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-project-references.zip'
+          matches = []
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as out:
+              for name in subprocess.check_output(['git', 'ls-files', '-z', '--', 'archive']).decode().split('\0'):
+                  if not name or pathlib.Path(name).suffix not in ('.md', '.mdc', '.txt'):
                       continue
-                  metadata, raw_name = entry.split(b'\t', 1)
-                  mode, kind, sha, size = metadata.decode().split()
-                  name = raw_name.decode()
-                  path = root / name
-                  row = {'path': name, 'git_sha': sha, 'size': int(size) if size != '-' else None, 'included': False}
-                  if kind == 'blob' and mode != '120000' and (path.suffix in allowed or name in ('LICENSE', '.env.example', '.prettierignore', '.gitignore')):
-                      data = path.read_bytes()
-                      text = data.decode('utf-8')
-                      if 'archive' not in pathlib.PurePosixPath(name).parts:
-                          output.writestr(name, data)
-                          row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
-                      elif path.suffix in ('.md', '.mdc', '.txt'):
-                          archived.append({'path': name, 'headings': [line for line in text.splitlines() if line.startswith('#')], 'incoming_project_references': [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/projects/' in line]})
-                  inventory.append(row)
-              output.writestr('_review_source_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
-              output.writestr('_review_archive_reference_metadata.json', json.dumps(archived, indent=2))
-              output.writestr('_review_prior_changes.patch', subprocess.check_output(['git', 'diff', '--binary', 'c4e18d91848b5b6d367dda1d7214a9f8222cf070', 'HEAD']))
-          print(f'Revision {revision}; {sum(x["included"] for x in inventory)} tracked text files. Archived content excluded; only heading/reference metadata retained for link repair.')
+                  data = pathlib.Path(name).read_bytes()
+                  text = data.decode('utf-8')
+                  hits = [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/projects/' in line]
+                  if not hits:
+                      continue
+                  out.writestr(name, data)
+                  matches.append({'path': name, 'sha256': hashlib.sha256(data).hexdigest(), 'references': hits})
+              out.writestr('_incoming_references.json', json.dumps({'revision': 'aeab5fe6d11caed3b2b9b8fd45b826cdcb6b5a8f', 'files': matches}, indent=2))
+          print(f'{len(matches)} archived files contain incoming project references; these copies support reference repair only, not an archive-review completion claim.')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: documentation-review-continuation-3925c54
-          path: ${{ runner.temp }}/documentation-review-continuation.zip
+          name: review-project-references-aeab5fe
+          path: ${{ runner.temp }}/review-project-references.zip
           retention-days: 1
           if-no-files-found: error
