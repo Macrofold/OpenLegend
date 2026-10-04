@@ -1,5 +1,64 @@
-# Ranked technology
+# Ranked technology that enables play before industrial detail
 
-[Library](README.md) · [Expanded inventory](inventory-technology.md) · [Review index](expanded-inventories.md)
+[Library](README.md) · [All expanded inventories](expanded-inventories.md) · [Priority policy](gameplay-priorities.md) · [Full entry descriptions](inventory-technology.md)
 
-**Status: Pending.** The expanded source is preserved, but its individual entries have not yet received the current-game review. The old inline Criticality and introductory examples are not current individual rankings.
+**Status: Reviewed · October 3, 2026.** All **300 TE entries** are assigned below. Reviewed source blob: `cffafe0eaafb9230c46c46c358352ab9d622c1da`. Source descriptions, stable IDs, setting recommendations, research and provisional build estimates are preserved. The source snapshot’s old Criticality cells and F/U/C/D ordering are superseded, not combined with these judgments.
+
+Coverage: **TE-001–TE-300**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
+
+| Core | Complete | Depth | Detail | Specialist | Total |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 43 | 31 | 31 | 190 | 300 |
+
+## Selection decisions
+
+The Core representatives support an actual weapon, protective equipment and making usable objects: elastic release (TE-005), controlled removal (TE-107), protective construction (TE-109), projectile coupling (TE-181) and impact protection (TE-182). Their minimum realization can be a bounded authored capability, not a universal engineering simulator. Do not demand simulated bearings, every thermal transfer or a complete production network before a bow can fire or armor can work.
+
+Lifting, usable routes, optical observation, a cart, simple power for useful production, irrigation and practical manufacturing are Complete. A prosthetic attachment (TE-124) can restore or expand participation when the selected body and world support it. Musical sequencing, printing, fountains, physical sound recordings and a theatrical rig are also substantial activities. The relevant input, access, stop and feedback must work for any body or machine actually selected; a later score for a specialized interface never waives those requirements.
+
+Fine bearing wear (TE-004), stable soup transport (TE-014), heat-storage comfort (TE-019), kiln-and-bakery schedules (TE-028), fermentation listening (TE-072), reserve thresholds (TE-095), detailed seed provenance (TE-144), service-joint access (TE-192), maintenance panels (TE-197), condensate recovery (TE-249) and rotating preparation benches (TE-277) are Detail. These can be Small or Moderate. Having technical consequences does not make them more important than enemies, useful equipment and rewards. TE-250 preserves a useful workpiece through a pause; it does not require every restoration service or maintenance profession.
+
+More elaborate mechanisms and bounded fictional materials follow as Depth. Much of this catalogue explicitly belongs to modern, industrial or planetary settings, so its full electrical networks, synthetic bodies, inhabited-ship stations and temporal engineering are Specialist for the current survival-adventure. This is a setting decision, not a penalty for complexity or a claim that those systems are unimportant to their own games. A future selected setting must rerank its own playable foundation rather than importing these scores unchanged.
+
+The SC proposal's no-piloting and abstract-journey boundaries remain intact. Blueprint descriptions do not supply matter, authority or trusted execution. Measurements remain limited to actual channels and evidence; correct controls, private access and finite resources stay mandatory when a device is selected. These are fictional game-design priorities, not real construction, medical or technical performance claims.
+
+## 1 Core
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 3 | Representative weapons, protection and supported bodies enable actual adventure. | TE-005, TE-109, TE-181, TE-182 |
+| 6 | Selected food and manufacturing systems produce worthwhile outputs. | TE-107 |
+
+## 2 Complete
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Working controls keep selected equipment usable and understandable. | TE-151, TE-154, TE-202, TE-262 |
+| 3 | Representative weapons, protection and supported bodies enable actual adventure. | TE-121, TE-124, TE-183 |
+| 4 | Lifting, routes and useful observations open exploration. | TE-001, TE-002, TE-007, TE-038, TE-062, TE-077, TE-087, TE-166, TE-167, TE-170, TE-252 |
+| 5 | Reusable methods and equipment improvements make rewards useful. | TE-110, TE-116 |
+| 6 | Selected food and manufacturing systems produce worthwhile outputs. | TE-016, TE-022, TE-032, TE-036, TE-041, TE-046, TE-047, TE-091, TE-106, TE-108, TE-136, TE-137, TE-250 |
+| 7 | Functional access and simple protection make a useful home. | TE-009, TE-017 |
+| 8 | Performance and creative use provide substantial enjoyable activities. | TE-013, TE-076, TE-117, TE-159, TE-272, TE-275, TE-278, TE-280 |
+
+## 3 Depth
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 9 | More elaborate mechanisms, material behavior and useful system combinations after the baseline works. | TE-003, TE-006, TE-008, TE-010, TE-012, TE-031, TE-042, TE-051, TE-053, TE-075, TE-083, TE-088, TE-094, TE-098, TE-111, TE-114, TE-118, TE-138, TE-139, TE-141, TE-146, TE-157, TE-168, TE-169, TE-173, TE-188, TE-243, TE-247, TE-258, TE-261, TE-264 |
+
+## 4 Detail
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | TE-004, TE-014, TE-019, TE-020, TE-023, TE-027, TE-028, TE-033, TE-034, TE-035, TE-037, TE-043, TE-061, TE-063, TE-064, TE-065, TE-072, TE-092, TE-093, TE-095, TE-096, TE-143, TE-144, TE-147, TE-152, TE-153, TE-192, TE-196, TE-197, TE-249, TE-277 |
+
+## 5 Specialist
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | TE-011, TE-015, TE-018, TE-021, TE-024, TE-025, TE-026, TE-029, TE-030, TE-039, TE-040, TE-044, TE-045, TE-048, TE-049, TE-050, TE-052, TE-054, TE-055, TE-056, TE-057, TE-058, TE-059, TE-060, TE-066, TE-067, TE-068, TE-069, TE-070, TE-071, TE-073, TE-074, TE-078, TE-079, TE-080, TE-081, TE-082, TE-084, TE-085, TE-086, TE-089, TE-090, TE-097, TE-099, TE-100, TE-101, TE-102, TE-103, TE-104, TE-105, TE-112, TE-113, TE-115, TE-119, TE-120, TE-122, TE-123, TE-125, TE-126, TE-127, TE-128, TE-129, TE-130, TE-131, TE-132, TE-133, TE-134, TE-135, TE-140, TE-142, TE-145, TE-148, TE-149, TE-150, TE-155, TE-156, TE-158, TE-160, TE-161, TE-162, TE-163, TE-164, TE-165, TE-171, TE-172, TE-174, TE-175, TE-176, TE-177, TE-178, TE-179, TE-180, TE-184, TE-185, TE-186, TE-187, TE-189, TE-190, TE-191, TE-193, TE-194, TE-195, TE-198, TE-199, TE-200, TE-201, TE-203, TE-204, TE-205, TE-206, TE-207, TE-208, TE-209, TE-210, TE-211, TE-212, TE-213, TE-214, TE-215, TE-216, TE-217, TE-218, TE-219, TE-220, TE-221, TE-222, TE-223, TE-224, TE-225, TE-226, TE-227, TE-228, TE-229, TE-230, TE-231, TE-232, TE-233, TE-234, TE-235, TE-236, TE-237, TE-238, TE-239, TE-240, TE-241, TE-242, TE-244, TE-245, TE-246, TE-248, TE-251, TE-253, TE-254, TE-255, TE-256, TE-257, TE-259, TE-260, TE-263, TE-265, TE-266, TE-267, TE-268, TE-269, TE-270, TE-271, TE-273, TE-274, TE-276, TE-279, TE-281, TE-282, TE-283, TE-284, TE-285, TE-286, TE-287, TE-288, TE-289, TE-290, TE-291, TE-292, TE-293, TE-294, TE-295, TE-296, TE-297, TE-298, TE-299, TE-300 |
+
+## Verification and limits
+
+Checked the complete reviewed ID set for exactly one assignment per entry, valid priorities and the stated ordering. No descriptions, IDs, research or applicability were deleted. This is a document review, not a new implementation audit or playtest. A low priority never weakens the correctness, privacy, authority, participation or save-integrity requirements of a selected feature.
