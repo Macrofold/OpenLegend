@@ -21,7 +21,7 @@ import type { WorldService } from './world-service.js';
 
 /** Routes a characterless operator/spectator session may reach. Every other route assumes an
  * embodied character and rejects such a session before dispatch; each listed route still
- * checks its own capability. docs/projects/multiplayer-entry-maintenance.md#decisions */
+ * checks its own capability. docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
 const CHARACTERLESS_ROUTES = new Set([
   'GET /api/operations',
   'GET /api/performance',
