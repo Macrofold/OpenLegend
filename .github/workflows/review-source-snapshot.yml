@@ -1,4 +1,4 @@
-name: Pinned documentation review source
+name: Documentation review checkpoint
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
@@ -6,23 +6,61 @@ on:
 permissions:
   contents: read
 jobs:
-  source:
+  checkpoint:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
+    env:
+      AI_BUDGET_USD: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01
+          ref: 366d7ca27524a9fbb979de721d7d1cd6b7aa73c5
+          fetch-depth: 0
           persist-credentials: false
-      - name: Package tracked text and archive reference metadata
-        env:
-          AI_BUDGET_USD: '0'
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --ignore-scripts --frozen-lockfile
+      - name: Verify changed documentation and exact per-file history
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          base = 'db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01'
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          changed = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=ACMR', base, head], text=True).splitlines()
+          docs = [p for p in changed if p.endswith('.md') and not p.startswith('archive/')]
+          subprocess.run(['pnpm', 'exec', 'prettier', '--check', *docs], check=True)
+          subprocess.run(['pnpm', 'guidance:check'], check=True)
+          subprocess.run(['git', 'diff', '--check', base, head], check=True)
+          assert not pathlib.Path('.github/full-documentation-review-patch.json').exists(), 'pending patch'
+          commits = []
+          for sha in subprocess.check_output(['git', 'rev-list', '--reverse', f'{base}..{head}'], text=True).splitlines():
+              message = subprocess.check_output(['git', 'show', '-s', '--format=%B', sha], text=True).strip()
+              paths = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-only', '--no-renames', '-r', sha], text=True).splitlines()
+              real = [p for p in paths if p != '.github/full-documentation-review-patch.json']
+              if not real:
+                  category = 'patch-transport'
+              elif all(p.startswith('.github/') for p in real):
+                  category = 'temporary-tooling'
+              else:
+                  category = 'file-correction'
+                  assert len(real) == 1 or (len(real) == 2 and set(real) == {'docs/projects/multiplayer-entry-maintenance.md', 'docs/projects/completed/multiplayer-entry-maintenance.md'}), (sha, real)
+                  assert all(p in message for p in real), ('missing exact path', sha, message)
+              commits.append({'sha': sha, 'message': message, 'paths': paths, 'category': category})
+          pathlib.Path('/tmp/review-validation.json').write_text(json.dumps({'base': base, 'head': head, 'changed_markdown_files': docs, 'checks': ['pinned changed-file formatting', 'guidance graph', 'diff whitespace', 'no pending patch', 'one corrected file per commit with exact paths'], 'commits': commits}, indent=2))
+          print(f'{len(docs)} changed Markdown files checked; {sum(c["category"] == "file-correction" for c in commits)} file-correction commits verified.')
+          PY
+      - name: Package pinned source and continuation evidence
+        if: always()
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
-          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-source.zip'
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-checkpoint.zip'
           inventory, references = [], []
           extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
               for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', 'HEAD']).split(b'\0'):
                   if not entry:
@@ -41,13 +79,18 @@ jobs:
                       elif path.suffix == '.md':
                           references.append({'path': name, 'headings': [line for line in text.splitlines() if line.startswith('#')], 'project_references': [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/projects/' in line]})
                   inventory.append(row)
-              output.writestr('_review_inventory.json', json.dumps({'revision': 'db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01', 'files': inventory}, indent=2))
+              output.writestr('_review_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
               output.writestr('_archive_reference_metadata.json', json.dumps(references, indent=2))
-          print('Pinned source only; no provider, database or save operations.')
+              output.writestr('_continuation_changes.patch', subprocess.check_output(['git', 'diff', '--binary', 'db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01', 'HEAD']))
+              evidence = pathlib.Path('/tmp/review-validation.json')
+              if evidence.exists():
+                  output.write(evidence, '_review_validation.json')
+          print('Pinned tracked source and actual checks only; no gameplay, database, save or provider operations.')
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: review-source-db6dc80
-          path: ${{ runner.temp }}/review-source.zip
+          name: review-checkpoint-366d7ca
+          path: ${{ runner.temp }}/review-checkpoint.zip
           retention-days: 7
           if-no-files-found: error
