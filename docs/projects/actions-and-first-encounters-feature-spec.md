@@ -1,8 +1,8 @@
 # Actions and first encounters — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The DG01 product design is complete; technical design, implementation and gameplay qualification remain pending. | 2026-10-04 |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The DG01 product design is complete; technical design, implementation and gameplay qualification remain pending. | 2026-10-04   |
 
 ## Purpose and status
 
@@ -155,16 +155,16 @@ A missing or disallowed aggregate does not become zero popularity or a fake comm
 
 The existing action owner declares the meaningful usage point. Count one authoritative execution, not menu interaction, a proposal, a duplicated network request or every step of a continued activity.
 
-| Example family | Proposed counted use | Does not count |
-| --- | --- | --- |
-| Gather or craft a finite result | The admitted completed operation | Every progress update, selecting ingredients, canceled work before execution |
-| Fire a supported weapon | One actual shot, including a miss | Previewing a trajectory or a rejected shot |
-| Use or consume an item | The actual admitted use | Inspection, selecting or pinning it |
-| Transfer a selected set | One committed transfer operation | Every unit in the stack or a receipt replay |
-| A continued activity | Its meaningful completed episode, as declared by that family | Every internal repeated step |
-| Ordinary travel | Excluded from default popularity; an explicitly useful travel technique can declare its own completed episode | Movement frames, path segments or held-key repeats |
-| Conversation entry | An enacted directed conversational opening, if this family is included in usage ranking | Opening Talk, typing or each reply token |
-| An unsupported request | Nothing | A plausible proposal or a failure notification |
+| Example family                  | Proposed counted use                                                                                          | Does not count                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Gather or craft a finite result | The admitted completed operation                                                                              | Every progress update, selecting ingredients, canceled work before execution |
+| Fire a supported weapon         | One actual shot, including a miss                                                                             | Previewing a trajectory or a rejected shot                                   |
+| Use or consume an item          | The actual admitted use                                                                                       | Inspection, selecting or pinning it                                          |
+| Transfer a selected set         | One committed transfer operation                                                                              | Every unit in the stack or a receipt replay                                  |
+| A continued activity            | Its meaningful completed episode, as declared by that family                                                  | Every internal repeated step                                                 |
+| Ordinary travel                 | Excluded from default popularity; an explicitly useful travel technique can declare its own completed episode | Movement frames, path segments or held-key repeats                           |
+| Conversation entry              | An enacted directed conversational opening, if this family is included in usage ranking                       | Opening Talk, typing or each reply token                                     |
+| An unsupported request          | Nothing                                                                                                       | A plausible proposal or a failure notification                               |
 
 Family grouping follows declared compatible meaning. A rename preserves a binding and may preserve frequency. A materially changed action does not inherit old popularity merely because its name or ancestry resembles the earlier action. Individually invented recipes remain distinct unless their authoring relationship explicitly supports a broader family grouping. For a composed activity, count the player's chosen parent episode; its automatically executed child steps do not inflate that same human-choice signal. A separately chosen direct craft still counts as its own action.
 
@@ -254,18 +254,18 @@ Account-level familiarity with the controls is separate from character knowledge
 
 ## 8. Failure and recovery
 
-| Situation | Required behavior |
-| --- | --- |
-| Another character takes the selected resource | Keep the target identity, stop the unavailable action and explain what changed when known. |
-| A chest becomes inaccessible mid-transfer | Commit nothing unauthorized; remove revoked detail and preserve only a safe repairable intent. |
-| A provider is unavailable | Native menus, inventory and stored descriptions work; optional new narration is unavailable without fictional explanation. |
-| An invented method is unsupported | Keep the request and explain the unsupported capability; do not show a completed item. |
-| A search page or category becomes stale | Refresh explicitly without silently changing the chosen subject or treating incomplete results as empty. |
-| A bound action is removed | Retain a visibly unavailable pin and offer repair; never substitute by name. |
-| The game pauses during work | Follow the existing work clock; a spinner or client animation cannot advance the result. |
-| A narration finishes after context changes | Apply the current source authorization, age and admission rules; do not relabel old prose as a fresh observation. |
-| A restore revisits an already introduced object | Follow restored world/discovery state and current external accounting; no automatic paid replay. |
-| A keyboard or pointer interaction is canceled | End transient input; no stuck movement, duplicate command or late click. |
+| Situation                                       | Required behavior                                                                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Another character takes the selected resource   | Keep the target identity, stop the unavailable action and explain what changed when known.                                 |
+| A chest becomes inaccessible mid-transfer       | Commit nothing unauthorized; remove revoked detail and preserve only a safe repairable intent.                             |
+| A provider is unavailable                       | Native menus, inventory and stored descriptions work; optional new narration is unavailable without fictional explanation. |
+| An invented method is unsupported               | Keep the request and explain the unsupported capability; do not show a completed item.                                     |
+| A search page or category becomes stale         | Refresh explicitly without silently changing the chosen subject or treating incomplete results as empty.                   |
+| A bound action is removed                       | Retain a visibly unavailable pin and offer repair; never substitute by name.                                               |
+| The game pauses during work                     | Follow the existing work clock; a spinner or client animation cannot advance the result.                                   |
+| A narration finishes after context changes      | Apply the current source authorization, age and admission rules; do not relabel old prose as a fresh observation.          |
+| A restore revisits an already introduced object | Follow restored world/discovery state and current external accounting; no automatic paid replay.                           |
+| A keyboard or pointer interaction is canceled   | End transient input; no stuck movement, duplicate command or late click.                                                   |
 
 ## 9. Economics and performance, expressed as product rules
 
@@ -283,13 +283,13 @@ Measure the complete player journey: time to find and perform the desired action
 
 Each stage ends with a playable benefit. The order is a dependency proposal, not implementation authorization. Existing stable selection, complete permitted discovery and truthful actions remain requirements from stage 1; later stages deepen them rather than permit an unstable interim interface.
 
-| Stage | Smallest complete delivery | Why this comes first | Exit observation |
-| --- | --- | --- | --- |
-| 1. Direct actions and chest use | One existing chest, two named collections, ordinary Take/Store, exact quantity, access/reach failures, keyboard and simple-click paths | Removes recurring friction from actions already supported | A player opens the intended chest, transfers supplies and explains where they ended up without a destination form |
-| 2. Complete stable discovery | Current contextual catalogue/search and saved pins with stable focus/target, useful blocked reasons and deliberate invention entry | Reliable choices are prerequisite to more recommendation sophistication | Rare actions remain findable; a changing scene cannot cause the wrong action |
-| 3. Controls and personal frequency | Remappable existing controls, category bindings, explicit nearby selection and private committed-use ranking | Gives players durable control without a global service dependency | Text editing is isolated, unavailable bindings are repairable and preferences survive return |
-| 4. Authored place/item exposure | One meaningful place and one unusual item through current narration selection and existing inspection | Tests whether a small amount of context actually improves discovery | First encounter is grounded; repeat entry and chest contents do not produce a narration flood |
-| 5. Broader optional convenience | Qualified shared popularity and an opt-in direct-movement preset, independently | These can be omitted or delayed without breaking the core activity | Each demonstrates benefit beyond its privacy, operational and input burden |
+| Stage                              | Smallest complete delivery                                                                                                             | Why this comes first                                                    | Exit observation                                                                                                  |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1. Direct actions and chest use    | One existing chest, two named collections, ordinary Take/Store, exact quantity, access/reach failures, keyboard and simple-click paths | Removes recurring friction from actions already supported               | A player opens the intended chest, transfers supplies and explains where they ended up without a destination form |
+| 2. Complete stable discovery       | Current contextual catalogue/search and saved pins with stable focus/target, useful blocked reasons and deliberate invention entry     | Reliable choices are prerequisite to more recommendation sophistication | Rare actions remain findable; a changing scene cannot cause the wrong action                                      |
+| 3. Controls and personal frequency | Remappable existing controls, category bindings, explicit nearby selection and private committed-use ranking                           | Gives players durable control without a global service dependency       | Text editing is isolated, unavailable bindings are repairable and preferences survive return                      |
+| 4. Authored place/item exposure    | One meaningful place and one unusual item through current narration selection and existing inspection                                  | Tests whether a small amount of context actually improves discovery     | First encounter is grounded; repeat entry and chest contents do not produce a narration flood                     |
+| 5. Broader optional convenience    | Qualified shared popularity and an opt-in direct-movement preset, independently                                                        | These can be omitted or delayed without breaking the core activity      | Each demonstrates benefit beyond its privacy, operational and input burden                                        |
 
 Stages 1–4 need neither DG02's broader resident quality nor crowds, new buildings, voice or public matchmaking. Existing AC/PO/NC/UIUX qualification still applies to the slices they own.
 

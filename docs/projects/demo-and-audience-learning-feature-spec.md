@@ -1,8 +1,8 @@
 # A useful demo and early audience learning — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | DG03 product preparation, research and critique are complete; technical preparation, demo qualification and any authorized participant study remain open. | 2026-10-04 |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | DG03 product preparation, research and critique are complete; technical preparation, demo qualification and any authorized participant study remain open. | 2026-10-04   |
 
 **Proposed product design.** This is the first audience-learning slice of [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). It makes the experiment reviewable without selecting a paid offer, publishing copy, recruiting people or authorizing spending. Technical preparation and actual product qualification remain with their existing owners.
 
@@ -43,14 +43,14 @@ The [first-playable agreement](../../archive/05-project/first-playable-mvp.md) s
 
 DG03 may demonstrate a narrower slice while those gates remain open, provided it says what was actually shown. A carrying-bundle fixture or prewritten recipe cannot stand in for the agreed live creative invention. A resident segment can be omitted from a focused creative-loop demonstration; that omission means it does not establish the complete MVP.
 
-| Claim or segment | What evidence must exist before showing it as current behavior | What remains a separate claim |
-| --- | --- | --- |
-| “I invented this tool during play” | The exact composition was absent at the start; a live request produced an admitted supported definition. | A prepared definition or injected response demonstrates use, not live invention. |
-| “It works in the world” | Real materials/work created the item, then an actual action caused the observed result. | An attractive image, definition card or generated explanation is insufficient. |
-| “I can use the idea again” | The permitted retained recipe is found and used without reinvention; resources still apply. | A new copy of the clip or an identical second paid generation is not reuse. |
-| “I can refine my invention” | Modify existing creates an admitted supported variant, followed by a real craft/use that checks the relevant difference. | A changed label alone proves nothing; creator-only definition editing remains separate. |
-| “Someone remembers what happened” | A qualified live resident later uses permitted evidence of the actual earlier event. | A scripted callback, authored biography or omniscient summary does not establish recall. |
-| “Return to your world” | The offered access period, persistence and return path work for this participant. | No promise of indefinite save compatibility, offline life or subscription service follows. |
+| Claim or segment                   | What evidence must exist before showing it as current behavior                                                           | What remains a separate claim                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| “I invented this tool during play” | The exact composition was absent at the start; a live request produced an admitted supported definition.                 | A prepared definition or injected response demonstrates use, not live invention.           |
+| “It works in the world”            | Real materials/work created the item, then an actual action caused the observed result.                                  | An attractive image, definition card or generated explanation is insufficient.             |
+| “I can use the idea again”         | The permitted retained recipe is found and used without reinvention; resources still apply.                              | A new copy of the clip or an identical second paid generation is not reuse.                |
+| “I can refine my invention”        | Modify existing creates an admitted supported variant, followed by a real craft/use that checks the relevant difference. | A changed label alone proves nothing; creator-only definition editing remains separate.    |
+| “Someone remembers what happened”  | A qualified live resident later uses permitted evidence of the actual earlier event.                                     | A scripted callback, authored biography or omniscient summary does not establish recall.   |
+| “Return to your world”             | The offered access period, persistence and return path work for this participant.                                        | No promise of indefinite save compatibility, offline life or subscription service follows. |
 
 The marketing [magic-tree and mage-only storyboard](../../archive/06-marketing/positioning-and-copy.md#the-magic-tree-creator-journey) remains a concept. It is not the first demo unless its actual effect, prerequisite and edit path have separately become supported. “Create a world by playing it” can be tested as a headline only alongside the concrete supported scope. Avoid claims of arbitrary physics, instant creation, perfect memory or unlimited operation.
 
@@ -68,16 +68,16 @@ Keep a full real-time witness recording of any demo footage selected for reuse, 
 
 ### Demonstration sequence
 
-| Moment | What happens | What the viewer should be able to understand |
-| --- | --- | --- |
-| A practical intention | Show available materials and a reason to want a ranged tool. The person expresses the supported intention in ordinary language. | They have a gameplay purpose; they are not filling a technical schema. |
-| A real new proposal | The live system prepares a supported recipe, asking only a consequential unresolved question. | What the tool will do, what it requires, and what remains uncertain or unsupported. |
-| An admitted recipe | The current path reports actual acceptance/activation and permitted learning separately from item creation. | Having a recipe is different from possessing a finished tool. |
-| Crafting and preparation | The controlled character spends actual materials and work, obtains the tool and uses compatible ammunition. | The invention participates in the world's resource constraints. |
-| Consequential use | A shot produces its actual hit/miss, animal response and material consequence. If successful, finite harvesting/preparation/eating can follow. | The result is a rule-governed event with lasting state, not narration alone. |
-| Reuse | Find the learned recipe by ordinary navigation or compatible wording and craft/use it again when resources permit. | The definition persists and using it is ordinary play. |
-| One deliberate refinement | Through Similar inventions, choose Modify existing and request a supported change to the learned recipe. | The new variant derives from a known invention; it does not rewrite every existing object. |
-| Check the refinement | Construct the appropriate new result or otherwise exercise the actual supported consumer. Compare the relevant behavior and retain the earlier outcome. | The change affects something real; already constructed objects and past events do not silently transform. |
+| Moment                    | What happens                                                                                                                                            | What the viewer should be able to understand                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| A practical intention     | Show available materials and a reason to want a ranged tool. The person expresses the supported intention in ordinary language.                         | They have a gameplay purpose; they are not filling a technical schema.                                    |
+| A real new proposal       | The live system prepares a supported recipe, asking only a consequential unresolved question.                                                           | What the tool will do, what it requires, and what remains uncertain or unsupported.                       |
+| An admitted recipe        | The current path reports actual acceptance/activation and permitted learning separately from item creation.                                             | Having a recipe is different from possessing a finished tool.                                             |
+| Crafting and preparation  | The controlled character spends actual materials and work, obtains the tool and uses compatible ammunition.                                             | The invention participates in the world's resource constraints.                                           |
+| Consequential use         | A shot produces its actual hit/miss, animal response and material consequence. If successful, finite harvesting/preparation/eating can follow.          | The result is a rule-governed event with lasting state, not narration alone.                              |
+| Reuse                     | Find the learned recipe by ordinary navigation or compatible wording and craft/use it again when resources permit.                                      | The definition persists and using it is ordinary play.                                                    |
+| One deliberate refinement | Through Similar inventions, choose Modify existing and request a supported change to the learned recipe.                                                | The new variant derives from a known invention; it does not rewrite every existing object.                |
+| Check the refinement      | Construct the appropriate new result or otherwise exercise the actual supported consumer. Compare the relevant behavior and retain the earlier outcome. | The change affects something real; already constructed objects and past events do not silently transform. |
 
 A suitable first refinement is a lighter supported sling variant that uses fewer suitable ingredients, if the current family admits that tradeoff. Choose actual candidate values, inspect resulting work/materials and retain any real limitations. Do not promise unchanged range, damage or accuracy merely because the player requested them; the native result must support those facts.
 
@@ -145,20 +145,20 @@ DG05 may later improve a demonstrated return difficulty, but its optional design
 
 ## 7. Failures, interruption and recovery
 
-| Situation | Required player/facilitator behavior | How it is recorded |
-| --- | --- | --- |
-| The request needs an unsupported operation | Explain the boundary and offer an actually supported alternative only if the person accepts the changed intent. | Original intent, boundary and whether the alternative remained interesting. |
-| Materials or ammunition are unsuitable/missing | Preserve the recipe and show the actual requirement; the person can obtain supplies, change their plan or stop. | Gameplay understanding, resource friction and eventual outcome. |
-| The person lacks creator permission | Keep ordinary permitted play available; an owner-only step stays labeled or is omitted. | Authority boundary, not a mysterious invention failure. |
-| A meaningful question is unanswered | Retain the question and draft under the current owner; no answer or paid continuation happens automatically. | Waiting and later explicit continuation separately. |
-| Provider failure before a usable result | State the technical failure, preserve useful draft/input and allow supported native play. | Failed live attempt and cost, even if a later retry succeeds. |
-| Completion is uncertain | Reconcile the original attempt/receipt before another paid or native attempt. | Uncertain exposure and blocked time remain visible. |
-| The allowance is exhausted | Stop new paid work under the existing budget owner; explain what remains usable. | Budget-related loss of experience; never hide it as personality. |
-| Crafting/hunting fails under the rules | Keep real resources, misses and consequences. Explain only through permitted product feedback. | A legitimate game outcome, distinct from technical malfunction. |
-| Refinement is rejected or stale | Keep the working version; preserve attempted input for comparison and deliberate reapplication where supported. | The rejected change and all help/review effort. |
-| A participant asks to stop | Stop study activity promptly; follow current cancellation/exit behavior and stated data choices. | Incomplete session with the participant's reason only if offered. |
-| A facilitator supplies an object or resets the scene | Clearly identify the intervention and the segment's new starting state. | Native-use exploration, not successful end-to-end creation. |
-| Privacy, control, accounting or world integrity fails | Stop the affected activity and protect the participant under existing owner procedures. | A blocking incident; no new recruitment around an unresolved defect. |
+| Situation                                             | Required player/facilitator behavior                                                                            | How it is recorded                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| The request needs an unsupported operation            | Explain the boundary and offer an actually supported alternative only if the person accepts the changed intent. | Original intent, boundary and whether the alternative remained interesting. |
+| Materials or ammunition are unsuitable/missing        | Preserve the recipe and show the actual requirement; the person can obtain supplies, change their plan or stop. | Gameplay understanding, resource friction and eventual outcome.             |
+| The person lacks creator permission                   | Keep ordinary permitted play available; an owner-only step stays labeled or is omitted.                         | Authority boundary, not a mysterious invention failure.                     |
+| A meaningful question is unanswered                   | Retain the question and draft under the current owner; no answer or paid continuation happens automatically.    | Waiting and later explicit continuation separately.                         |
+| Provider failure before a usable result               | State the technical failure, preserve useful draft/input and allow supported native play.                       | Failed live attempt and cost, even if a later retry succeeds.               |
+| Completion is uncertain                               | Reconcile the original attempt/receipt before another paid or native attempt.                                   | Uncertain exposure and blocked time remain visible.                         |
+| The allowance is exhausted                            | Stop new paid work under the existing budget owner; explain what remains usable.                                | Budget-related loss of experience; never hide it as personality.            |
+| Crafting/hunting fails under the rules                | Keep real resources, misses and consequences. Explain only through permitted product feedback.                  | A legitimate game outcome, distinct from technical malfunction.             |
+| Refinement is rejected or stale                       | Keep the working version; preserve attempted input for comparison and deliberate reapplication where supported. | The rejected change and all help/review effort.                             |
+| A participant asks to stop                            | Stop study activity promptly; follow current cancellation/exit behavior and stated data choices.                | Incomplete session with the participant's reason only if offered.           |
+| A facilitator supplies an object or resets the scene  | Clearly identify the intervention and the segment's new starting state.                                         | Native-use exploration, not successful end-to-end creation.                 |
+| Privacy, control, accounting or world integrity fails | Stop the affected activity and protect the participant under existing owner procedures.                         | A blocking incident; no new recruitment around an unresolved defect.        |
 
 A retry is deliberate and remains inside the same total allowance after the earlier attempt is resolved. No automatic paid retry, silent model substitution or fresh session identity should conceal a failure or reset spending. Further service qualification stays with PD/MW/INV.
 
@@ -166,15 +166,15 @@ A retry is deliberate and remains inside the same total allowance after the earl
 
 Use one small record per session, not a new general analytics platform. Each observation needs the relevant version, starting conditions and assistance level. Separate observable behavior, participant explanation and researcher inference.
 
-| Question | Record | Interpretation boundary |
-| --- | --- | --- |
-| Did they understand the offering? | Their first explanation; mistaken expectations; what required clarification. | Prompted repetition of the pitch is taught comprehension. |
-| Did they reach a useful result? | Chosen aim, accepted definition, real craft/use and actual consequence. | Clicking Invent or receiving a draft is not successful creation. |
-| Was the result their own intention? | Original request, consequential choices and whether any substitute was accepted. | A facilitator's exact recipe is an assisted example. |
-| Could they reuse/refine it? | How it was found, actual operation, authority and checked changed behavior. | Repeated generation and a changed label are insufficient. |
-| Did it earn their time? | Self-chosen next activity, reasons for continuing/stopping, optional later play. | Long time caused by confusion is not engagement. |
-| What support was necessary? | Product help, moderator guidance, technical repair and minutes in each. | A rescued final success does not erase support cost. |
-| Is the experience supportable? | Complete attributed costs, uncertain exposure, service waits and operator time. | One cheap happy path is not a sustainable offering. |
+| Question                            | Record                                                                           | Interpretation boundary                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Did they understand the offering?   | Their first explanation; mistaken expectations; what required clarification.     | Prompted repetition of the pitch is taught comprehension.        |
+| Did they reach a useful result?     | Chosen aim, accepted definition, real craft/use and actual consequence.          | Clicking Invent or receiving a draft is not successful creation. |
+| Was the result their own intention? | Original request, consequential choices and whether any substitute was accepted. | A facilitator's exact recipe is an assisted example.             |
+| Could they reuse/refine it?         | How it was found, actual operation, authority and checked changed behavior.      | Repeated generation and a changed label are insufficient.        |
+| Did it earn their time?             | Self-chosen next activity, reasons for continuing/stopping, optional later play. | Long time caused by confusion is not engagement.                 |
+| What support was necessary?         | Product help, moderator guidance, technical repair and minutes in each.          | A rescued final success does not erase support cost.             |
+| Is the experience supportable?      | Complete attributed costs, uncertain exposure, service waits and operator time.  | One cheap happy path is not a sustainable offering.              |
 
 Use simple outcome descriptions: demo-supported completion without moderator help, completed using product help, completed with moderator help, blocked, declined, or not observed. A technical outage can make a value question unobserved while still demonstrating a real availability/support problem. Do not delete that session from every denominator.
 
@@ -232,14 +232,14 @@ After round one, choose one concrete change if the evidence warrants it. For exa
 
 No automatic “pass if four of six like it” rule is selected. The small cycle is for causal diagnosis, with the following explicit product decisions:
 
-| Finding | Decision |
-| --- | --- |
-| Current privacy, control, state integrity or accounting cannot be maintained | Stop the affected mode until its existing owner resolves the failure. |
-| Several independent participants encounter the same blocking confusion | Repair that step or message before expanding recruitment; retain evidence of all attempts. |
-| People understand and operate the loop but have no personally worthwhile use or next activity | Reconsider the proposition, available purpose or audience; do not start a campaign around polite praise. |
-| The demonstration is enjoyable only with constant founder direction | Improve ordinary discovery/help or narrow the claim to a facilitated experience with its real support cost. |
-| Value appears, but cost, waiting or support exceeds the preselected envelope | Improve the expensive/frustrating path or narrow the offer before more access. |
-| Independent fresh people reach a meaningful result, understand its limits and choose useful continuation within the envelope | Propose the next bounded learning step and its remaining question; do not infer a paid market. |
+| Finding                                                                                                                      | Decision                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Current privacy, control, state integrity or accounting cannot be maintained                                                 | Stop the affected mode until its existing owner resolves the failure.                                       |
+| Several independent participants encounter the same blocking confusion                                                       | Repair that step or message before expanding recruitment; retain evidence of all attempts.                  |
+| People understand and operate the loop but have no personally worthwhile use or next activity                                | Reconsider the proposition, available purpose or audience; do not start a campaign around polite praise.    |
+| The demonstration is enjoyable only with constant founder direction                                                          | Improve ordinary discovery/help or narrow the claim to a facilitated experience with its real support cost. |
+| Value appears, but cost, waiting or support exceeds the preselected envelope                                                 | Improve the expensive/frustrating path or narrow the offer before more access.                              |
+| Independent fresh people reach a meaningful result, understand its limits and choose useful continuation within the envelope | Propose the next bounded learning step and its remaining question; do not infer a paid market.              |
 
 One safety/integrity failure can stop work. A single person's taste should not define the whole audience. Repeated frustration, however, should not be excused because a more enthusiastic participant eventually succeeded.
 

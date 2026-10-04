@@ -120,15 +120,15 @@ The actor evaluates relevant concerns together. There is no fixed universal orde
 
 Use these product distinctions when choosing an interruption:
 
-| Situation | Intended decision behavior |
-| --- | --- |
-| Minor new cue during useful work | Continue, note it or answer briefly; no compulsory replanning |
-| A direct question that can be answered while working | Speak if desired while preserving the actual activity |
-| A request requiring the same body, tool or destination | Choose whether to suspend, stop, decline or defer; do not pretend both incompatible acts run |
-| A material shortage or vanished target | Stop the invalid means and retain/reconsider the underlying purpose |
-| Immediate perceived danger | Apply actual world effects and native interruption rules; fresh reasoning must not delay those effects |
-| Relief or completion | Reconsider whether the old reason still exists before selecting more of the same |
-| A wish that remains unchanged | Keep it available without another paid check solely because it is stored |
+| Situation                                              | Intended decision behavior                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Minor new cue during useful work                       | Continue, note it or answer briefly; no compulsory replanning                                          |
+| A direct question that can be answered while working   | Speak if desired while preserving the actual activity                                                  |
+| A request requiring the same body, tool or destination | Choose whether to suspend, stop, decline or defer; do not pretend both incompatible acts run           |
+| A material shortage or vanished target                 | Stop the invalid means and retain/reconsider the underlying purpose                                    |
+| Immediate perceived danger                             | Apply actual world effects and native interruption rules; fresh reasoning must not delay those effects |
+| Relief or completion                                   | Reconsider whether the old reason still exists before selecting more of the same                       |
+| A wish that remains unchanged                          | Keep it available without another paid check solely because it is stored                               |
 
 When an interruption ends, the previous purpose remains recallable where the current owner supports it. Resumption checks actual materials, progress and present relevance. A thought saying “I will go back” does not recreate canceled work or guarantee that a partial step survived.
 

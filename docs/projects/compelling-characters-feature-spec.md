@@ -1,8 +1,8 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | DG02 product preparation includes a concrete first-world proposal, player behavior and research; technical design, integration and live qualification remain open. | 2026-10-04 |
+| Status      | Current progress                                                                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Not started | DG02 product preparation includes a concrete first-world proposal, player behavior and research; technical design, integration and live qualification remain open. | 2026-10-04   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. Detailed technical design remains deferred under the original product-first instruction. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -89,15 +89,15 @@ The proposed first-world selection is [Rin's lived motives](../worlds/base/chara
 
 Begin with one human pursuing the accepted live creative loop beside one resident. The human has something they want to make or discover. Rin has genuinely supported alternatives and can become interested, disagree, stay occupied or decline. The encounter succeeds when this creates a worthwhile person to play alongside, not when the human efficiently services every concern.
 
-| Area | Current foundation that can be reused | Specific boundary to establish in the first slice |
-| --- | --- | --- |
-| Individuality | Accepted About me and private self/subject understanding | Author coherent starting content and legitimate relationship history; preserve the complete accepted identity. |
-| Bodily life | Real food, possessions, physiology, sleep and native work | Let bodily consequences affect subsequent choices; current feeding still needs cognition, while authored automatic sleep remains. |
-| Contact | Perceived people, committed speech and directional relationship understanding | A relevant opening must reach a supported decision opportunity; a routine sighting does not itself establish that integration. |
-| Belonging and enjoyment | Qualitative understanding and admitted appraisals | Show a cause affecting an actual later choice without inventing a numerical meter, automatic enrollment or the other person's feelings. |
-| Quiet pleasure | Real movement, permitted observations and known places | Supply a selectable finite inspection/visit if missing, with an end or reconsideration condition; biography and idle prose are insufficient. |
-| Work and interruption | Finite native actions and restricted plan continuation | Preserve real progress/material loss and distinguish a retained purpose from a resumable physical step. |
-| Personal continuity | Existing permitted memories, notes, goals and obligations | Demonstrate delayed use of an actual result; neither repeating a profile nor a generic promise creates a scheduled activity. |
+| Area                    | Current foundation that can be reused                                         | Specific boundary to establish in the first slice                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Individuality           | Accepted About me and private self/subject understanding                      | Author coherent starting content and legitimate relationship history; preserve the complete accepted identity.                               |
+| Bodily life             | Real food, possessions, physiology, sleep and native work                     | Let bodily consequences affect subsequent choices; current feeding still needs cognition, while authored automatic sleep remains.            |
+| Contact                 | Perceived people, committed speech and directional relationship understanding | A relevant opening must reach a supported decision opportunity; a routine sighting does not itself establish that integration.               |
+| Belonging and enjoyment | Qualitative understanding and admitted appraisals                             | Show a cause affecting an actual later choice without inventing a numerical meter, automatic enrollment or the other person's feelings.      |
+| Quiet pleasure          | Real movement, permitted observations and known places                        | Supply a selectable finite inspection/visit if missing, with an end or reconsideration condition; biography and idle prose are insufficient. |
+| Work and interruption   | Finite native actions and restricted plan continuation                        | Preserve real progress/material loss and distinguish a retained purpose from a resumable physical step.                                      |
+| Personal continuity     | Existing permitted memories, notes, goals and obligations                     | Demonstrate delayed use of an actual result; neither repeating a profile nor a generic promise creates a scheduled activity.                 |
 
 This inventory is a preparation checklist, not runtime qualification. Existing feelings-process definitions, appraisal infrastructure and one successful meal do not establish the complete episode. The current system may lack an internal opportunity, a useful destination or a selectable quiet activity. CE01–CE04 should repair the smallest missing connection, with the current owners, before adding more emotional machinery.
 

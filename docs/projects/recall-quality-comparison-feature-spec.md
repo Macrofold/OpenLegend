@@ -1,8 +1,8 @@
 # A specific recall problem — product and comparison specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | DG04 product preparation, research and critique are complete; activation still requires a current consequential repeatable omission. No dependency or experiment is adopted or run. | 2026-10-04 |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | DG04 product preparation, research and critique are complete; an observed repeatable omission, selected comparison and runtime qualification remain open. | 2026-10-04   |
 
 **Conditional proposal.** [DG04 / ND20](../maintainers/needs-design.md#dg04--a-specific-recall-problem) asks whether one real memory failure warrants a small recall improvement. This design is complete only as a reviewable product protocol; it must not manufacture the failure that would activate it. Technical design, implementation, data transfer and paid qualification remain separate.
 
@@ -58,17 +58,17 @@ The candidate is illustrative until a current trace qualifies. A repeated resolv
 
 ## 5. Locate the failure before changing retrieval
 
-| What the evidence shows | Product meaning | Correct next owner or action |
-| --- | --- | --- |
-| Rin never heard/saw the source | They lack that experience. | Preserve ignorance; inspect perception only if actual acquisition was wrong. |
-| The relevant detail was never recorded or was deliberately retired | Search cannot find an eligible detail that does not exist. | Evaluate the specific acquisition/consolidation/retention decision if it harms play. |
-| The source is private, forgotten, corrected away or from a discarded future | Exclusion is required. | Do not repair by expanding access or reviving it. |
-| A source required for the current conversation, trigger or obligation is absent | A coverage guarantee failed. | Repair the native required-evidence or conversation owner. |
-| An eligible optional source never became a candidate | Retrieval may have omitted useful evidence. | Compare current selection with a modest native improvement. |
-| The candidate arrived but attention rejected it | The selection judgment may be wrong. | Inspect the attention rubric/context before adding another search service. |
-| Selected evidence was omitted, compressed incorrectly or misattributed before the decision | Preparation/presentation lost meaning. | Repair that boundary; preserve source modality and uncertainty. |
-| Complete correct evidence reached the model but the choice was incoherent | Recall succeeded; interpretation or decision quality may not have. | Use the character/agency evaluation owner. |
-| Correct evidence informed a disagreeable but coherent choice | The resident has their own judgment. | Evaluate the encounter as play, not an automatic retrieval failure. |
+| What the evidence shows                                                                    | Product meaning                                                    | Correct next owner or action                                                         |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Rin never heard/saw the source                                                             | They lack that experience.                                         | Preserve ignorance; inspect perception only if actual acquisition was wrong.         |
+| The relevant detail was never recorded or was deliberately retired                         | Search cannot find an eligible detail that does not exist.         | Evaluate the specific acquisition/consolidation/retention decision if it harms play. |
+| The source is private, forgotten, corrected away or from a discarded future                | Exclusion is required.                                             | Do not repair by expanding access or reviving it.                                    |
+| A source required for the current conversation, trigger or obligation is absent            | A coverage guarantee failed.                                       | Repair the native required-evidence or conversation owner.                           |
+| An eligible optional source never became a candidate                                       | Retrieval may have omitted useful evidence.                        | Compare current selection with a modest native improvement.                          |
+| The candidate arrived but attention rejected it                                            | The selection judgment may be wrong.                               | Inspect the attention rubric/context before adding another search service.           |
+| Selected evidence was omitted, compressed incorrectly or misattributed before the decision | Preparation/presentation lost meaning.                             | Repair that boundary; preserve source modality and uncertainty.                      |
+| Complete correct evidence reached the model but the choice was incoherent                  | Recall succeeded; interpretation or decision quality may not have. | Use the character/agency evaluation owner.                                           |
+| Correct evidence informed a disagreeable but coherent choice                               | The resident has their own judgment.                               | Evaluate the encounter as play, not an automatic retrieval failure.                  |
 
 For diagnosis, an explicitly labeled offline comparison may supply the already permitted omitted source through the existing projection to see whether it matters. That is a diagnostic condition, not a deployable strategy or proof that a future retriever will find it. Never insert the desired answer, another actor's knowledge or a fabricated source.
 
@@ -186,20 +186,20 @@ Adopt richer retrieval only when its additional behavioral value over both reaso
 
 ## 10. Future acceptance cases
 
-| Case | Required outcome |
-| --- | --- |
-| Eligible old boundary in a relevant later encounter | The source can reach the normal decision with correct attribution; the actual choice remains coherent without a prescribed sentence. |
-| Later explicit invitation | Both old and new evidence keep their scope; no permanent no-contact rule appears. |
-| Accepted apology or resolved misunderstanding | A relevant later response distinguishes the earlier allegation from the heard correction/apology, while permitting lingering feeling. |
-| No source or legitimately unavailable exact wording | Abstain, ask or use the faithful retained gist; do not fabricate a quote or recover retired detail. |
-| Current conversation, trigger or native promise | Required coverage succeeds independently of optional search; recalling a promise does not complete it. |
-| Third-party claim and repeated rumor | Preserve who said what and uncertainty; repetition is not proof. |
-| Same name, unrecognized return or different actor/world | No unauthorized identity merge or cross-scope recall. |
-| Correction/forgetting during work | Stale candidates and every contributing derivative fail current eligibility before cognition/publication. |
-| Restore and old delayed completion | No discarded-future evidence or repeated paid work enters the restored character. |
-| Index lag or provider outage | Required fresh evidence remains on its real path; safe fallback is labeled incomplete where appropriate, with no invented experience. |
-| Small adequate history | The candidate earns no credit merely for doing more work; retaining the current path is a successful decision. |
-| Growing/cold history | Show complete preparation/search/latency/resource costs and explicit overflow, with no new newest-record cutoff. |
+| Case                                                    | Required outcome                                                                                                                      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Eligible old boundary in a relevant later encounter     | The source can reach the normal decision with correct attribution; the actual choice remains coherent without a prescribed sentence.  |
+| Later explicit invitation                               | Both old and new evidence keep their scope; no permanent no-contact rule appears.                                                     |
+| Accepted apology or resolved misunderstanding           | A relevant later response distinguishes the earlier allegation from the heard correction/apology, while permitting lingering feeling. |
+| No source or legitimately unavailable exact wording     | Abstain, ask or use the faithful retained gist; do not fabricate a quote or recover retired detail.                                   |
+| Current conversation, trigger or native promise         | Required coverage succeeds independently of optional search; recalling a promise does not complete it.                                |
+| Third-party claim and repeated rumor                    | Preserve who said what and uncertainty; repetition is not proof.                                                                      |
+| Same name, unrecognized return or different actor/world | No unauthorized identity merge or cross-scope recall.                                                                                 |
+| Correction/forgetting during work                       | Stale candidates and every contributing derivative fail current eligibility before cognition/publication.                             |
+| Restore and old delayed completion                      | No discarded-future evidence or repeated paid work enters the restored character.                                                     |
+| Index lag or provider outage                            | Required fresh evidence remains on its real path; safe fallback is labeled incomplete where appropriate, with no invented experience. |
+| Small adequate history                                  | The candidate earns no credit merely for doing more work; retaining the current path is a successful decision.                        |
+| Growing/cold history                                    | Show complete preparation/search/latency/resource costs and explicit overflow, with no new newest-record cutoff.                      |
 
 These cases are proposed evaluations, not executed results. Use the ones relevant to the selected first omission, while all applicable privacy, correction and lifecycle obligations remain release requirements.
 
