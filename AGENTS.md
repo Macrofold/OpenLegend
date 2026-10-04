@@ -57,6 +57,10 @@ Prefer the smallest clear, complete change that preserves correctness, robustnes
 
 Keep exploratory scratch out of canonical docs; reconcile accepted designs and tracked work under the documentation policy.
 
+### Validate only for a concrete purpose
+
+Before adding or retaining a runtime check, identify what its consumer needs, a plausible path to an unusable or harmful value, and the consequence the check prevents. Without that purpose, omit the check. Validate at the owning boundary and reuse its result; do not repeat checks on trusted internal values unless mutation, elapsed work or a new trust boundary can invalidate them. Do not reject usable provider output merely to assert that the provider followed a mathematical convention or repeated supplied metadata: consume the values needed for the task, such as selecting the highest offered choice score, without requiring their total to be one. Keep validation that protects permissions, privacy, current-format storage integrity, spending, executable proposals and actual game preconditions; these have concrete failure consequences.
+
 Comment non-obvious requirements, tradeoffs and extension seams beside the code. State the essential reason locally and link the canonical heading; explain why, not syntax. Update reasoning and links with behavior.
 
 ## Task scope and authorization

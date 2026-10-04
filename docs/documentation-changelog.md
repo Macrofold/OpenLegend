@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-03 — Validation must protect a real consumer
+
+Mike rejected assertions that Jev's scores must sum to one after a successful three-question response totaling 0.99 was discarded. Choice now selects the highest offered raw score, while ratings keep the provider's value; unrelated keys, repeated rubric labels and finite values outside conventional provider ranges cannot invalidate usable decisions. [LA051](limits/ai-execution.md#la051) records the superseded tolerance policy, and [the provider contract](ai-providers.md#provider-behavior-and-limits) retains required numeric data and caller-specific uncertainty thresholds. Raw values are not normalized; exact ties use the first offered choice.
+
+[Root coding guidance](../AGENTS.md#validate-only-for-a-concrete-purpose) now requires a concrete consumer need, plausible invalid-input path and prevented consequence before adding or retaining validation. The [production audit](verification/validation-purpose.md) also removes duplicate speech-preview parsing and assertions over internally computed caption timing, reconciling [timed UI](timed-ui.md#1-two-small-reusable-pieces). Permissions, current-format save integrity, executable proposals, real action requirements and billing checks remain. Task provider cost is **$0**; existing broader acceptance is not closed by local fixtures or static guidance checks.
+
 ## 2026-10-03 — Announce every branch and worktree operation
 
 Mike expanded the [root notification rule](../AGENTS.md#work-discipline) beyond changes to the active branch: creating a branch or worktree and switching working checkouts must also be announced when they happen and at handoff, even when a new branch is not checked out or the branch name stays the same. Notices give absolute checkout paths, exact branch/detached-commit identities and the effect on the main checkout. Separate working files must not be described as separate Git history or branch references. [CG16](maintainers/agent-guidance.md) records instruction delivery; installed-agent compliance remains CG05.

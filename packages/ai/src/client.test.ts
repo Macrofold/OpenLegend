@@ -119,8 +119,8 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
             relevance: {
               type: 'score',
               score: 0.75,
-              legend: { '0': 'Irrelevant', '1': 'Relevant' },
-              probabilities: { '0': 0.25, '1': 0.75 },
+              legend: { '0': 'Not relevant', '1': 'Useful' },
+              probabilities: { '0': 0.2, '1': 0.7 },
               confidence: 0.3,
             },
             urgency: { type: 'noul', noul: 0.8 },
@@ -138,14 +138,22 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
       },
     });
     expect(result.outcome).toBe('value');
-    if (result.outcome === 'value')
+    if (result.outcome === 'value') {
       expect(result.value.answers.urgency).toEqual({ type: 'noul', noul: 0.8 });
+      expect(result.value.answers.relevance).toEqual({
+        type: 'score',
+        score: 0.75,
+        legend: { '0': 'Irrelevant', '1': 'Relevant' },
+        probabilities: { '0': 0.2, '1': 0.7 },
+        confidence: 0.3,
+      });
+    }
     expect(result.receipt.usage).toBeUndefined();
     expect(result.receipt.estimatedCostUsd).toBeUndefined();
   });
 
   it.each(['missing', 'unexpected', 'out-of-range', 'distribution', 'contradictory'] as const)(
-    'rejects malformed Jev answer: %s',
+    'consumes usable Jev values and rejects unusable data: %s',
     async (defect) => {
       const fixture: Record<string, unknown> = judgeResponse();
       if (defect === 'missing') fixture.answers = {};
@@ -189,7 +197,21 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
         jev: { apiKey: 'fixture' },
         fetch: async () => response(fixture),
       }).judge(question);
-      expect(result.outcome).toBe('invalid');
+      if (defect === 'missing') {
+        expect(result.outcome).toBe('invalid');
+      } else {
+        expect(result.outcome).toBe('value');
+        if (result.outcome === 'value') {
+          const answer = result.value.answers.route;
+          expect(answer).toMatchObject({
+            choice: defect === 'contradictory' ? 'unknown' : 'native',
+          });
+          if (defect === 'out-of-range') expect(answer).toMatchObject({ confidence: 3 });
+          expect(answer && 'probabilities' in answer ? answer.probabilities : null).toEqual(
+            (fixture.answers as ReturnType<typeof judgeResponse>['answers']).route.probabilities,
+          );
+        }
+      }
     },
   );
 

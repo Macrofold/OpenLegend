@@ -70,15 +70,11 @@ Original recommendation: **Keep**.
 
 ## LA051
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Removed on October 3, 2026 · Restrictiveness: — (removed).**
 
-Validation allows probability totals and winning-choice comparisons to differ by 0.005 due to rounding; score averages have a tolerance of 0.01 times the number of score levels.
-
-**Reason / tradeoff:** Keep small rounding allowances while rejecting model results whose numbers contradict their selected answers.
+The former decoder required probability totals and named-choice agreement within 0.005, and score averages within 0.01 times the number of score levels. Mike superseded the original **Keep** recommendation after a usable choice response totaling 0.99 was rejected. These assertions had no consumer benefit: [current decoding](../ai-providers.md#provider-behavior-and-limits) selects the highest offered raw score and preserves the provider's rating without a distribution-average or conventional-range assertion. Missing, nonnumeric or nonfinite required values remain invalid; scores are not normalized and application thresholds are unchanged.
 
 [Implementation starting point](../../packages/ai/src/validation.ts).
-
-Original recommendation: **Keep**.
 
 ## LA052
 

@@ -55,11 +55,8 @@ export function serialize(value: unknown, maxBytes: number): string {
   return result;
 }
 
-const unit = (v: unknown): v is number =>
-  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
+const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const nonempty = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
-const sameKeys = (a: Record<string, unknown>, keys: string[]) =>
-  Object.keys(a).length === keys.length && keys.every((k) => Object.hasOwn(a, k));
 
 export function validateQuestions(value: unknown): asserts value is TypedQuestionMap {
   if (!record(value) || Object.keys(value).length < 1) throw new InvalidData('invalid_questions');
@@ -111,18 +108,21 @@ export function validateJudgmentSize(state: unknown, questions: TypedQuestionMap
 }
 
 function probabilities(value: unknown, keys: string[]): Record<string, number> {
-  if (!record(value) || !sameKeys(value, keys) || !Object.values(value).every(unit))
-    throw new InvalidData('invalid_probabilities');
-  const result = value as Record<string, number>;
-  // Allow numerical rounding, not an unnormalised distribution.
-  if (Math.abs(Object.values(result).reduce((a, b) => a + b, 0) - 1) > 0.005)
-    throw new InvalidData('invalid_probabilities');
+  if (!record(value)) throw new InvalidData('invalid_probabilities');
+  const result: Record<string, number> = Object.create(null) as Record<string, number>;
+  for (const key of keys) {
+    const probability = value[key];
+    // Callers compare raw values with their own thresholds, without grading provider math.
+    // docs/ai-providers.md#provider-behavior-and-limits
+    if (!Object.hasOwn(value, key) || !finite(probability))
+      throw new InvalidData('invalid_probabilities');
+    result[key] = probability;
+  }
   return result;
 }
 
 export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeValue {
-  if (!record(data) || !record(data.answers) || !sameKeys(data.answers, Object.keys(questions)))
-    throw new InvalidData('invalid_answers');
+  if (!record(data) || !record(data.answers)) throw new InvalidData('invalid_answers');
   const answers: Record<string, JudgmentAnswer> = Object.create(null) as Record<
     string,
     JudgmentAnswer
@@ -131,54 +131,32 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
     const answer = data.answers[id];
     if (!record(answer) || answer.type !== q.type) throw new InvalidData('invalid_answer_type');
     if (q.type === 'choice') {
-      if (
-        typeof answer.choice !== 'string' ||
-        !Object.hasOwn(q.criteria, answer.choice) ||
-        !unit(answer.confidence)
-      )
-        throw new InvalidData('invalid_choice_answer');
+      if (!finite(answer.confidence)) throw new InvalidData('invalid_choice_answer');
       const distribution = probabilities(answer.probabilities, Object.keys(q.criteria));
-      if (Math.max(...Object.values(distribution)) - distribution[answer.choice]! > 0.005)
-        throw new InvalidData('inconsistent_choice_answer');
+      // Select from offered choices; preserve raw scores, with the first offered winning ties.
+      const choice = Object.keys(q.criteria).reduce((best, key) =>
+        distribution[key]! > distribution[best]! ? key : best,
+      );
       answers[id] = {
         type: 'choice',
-        choice: answer.choice,
+        choice,
         probabilities: distribution,
         confidence: answer.confidence,
       };
     } else if (q.type === 'score') {
       const keys = q.criteria.map((_, index) => String(index));
-      if (
-        typeof answer.score !== 'number' ||
-        !Number.isFinite(answer.score) ||
-        answer.score < 0 ||
-        answer.score > q.criteria.length - 1 ||
-        !unit(answer.confidence) ||
-        !record(answer.legend) ||
-        !sameKeys(answer.legend, keys) ||
-        keys.some(
-          (k) =>
-            answer.legend &&
-            (answer.legend as Record<string, unknown>)[k] !== q.criteria[Number(k)],
-        )
-      )
+      if (!finite(answer.score) || !finite(answer.confidence))
         throw new InvalidData('invalid_score_answer');
       const distribution = probabilities(answer.probabilities, keys);
-      const mean = Object.entries(distribution).reduce(
-        (sum, [level, probability]) => sum + Number(level) * probability,
-        0,
-      );
-      if (Math.abs(mean - answer.score) > 0.01 * q.criteria.length)
-        throw new InvalidData('inconsistent_score_answer');
       answers[id] = {
         type: 'score',
         score: answer.score,
-        legend: answer.legend as Record<string, string>,
+        legend: Object.fromEntries(q.criteria.map((label, index) => [String(index), label])),
         probabilities: distribution,
         confidence: answer.confidence,
       };
     } else {
-      if (!unit(answer.noul)) throw new InvalidData('invalid_noul_answer');
+      if (!finite(answer.noul)) throw new InvalidData('invalid_noul_answer');
       answers[id] = { type: 'noul', noul: answer.noul };
     }
   }

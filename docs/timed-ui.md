@@ -25,7 +25,7 @@ sampleLifetime(lifetime, nowMs): LifetimeSnapshot;
 
 The implementation may use deadline-plus-paused-offset or elapsed-time accumulation, not both independently writable. One overlay manager owns its clock and active entries. Resume preserves remaining time rather than restarting the ring. Rendering must not itself commit the expiry transition repeatedly.
 
-Unknown duration is not a fake countdown. Keep the existing indeterminate AI dots/spinner for unknown provider work. A zero duration is already expired; reject invalid negative/nonfinite durations at construction. An intentionally persistent caption has no countdown ring.
+Unknown duration is not a fake countdown. Keep the existing indeterminate AI dots/spinner for unknown provider work. A zero duration is already expired. The current speech-caption caller computes bounded reading durations locally, samples `performance.now()` and starts lifetimes from its own accumulated clock; the pure lifetime helpers consume those trusted values without repeating numeric assertions. If a future consumer accepts durations or clock values from untrusted input, validate them at that input's owner rather than adding checks to every local sample. An intentionally persistent caption has no countdown ring.
 
 ## 2. Explicit clock domains
 
