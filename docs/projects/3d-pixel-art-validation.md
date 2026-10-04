@@ -1,5 +1,9 @@
 # Progressive 3D pixel art — visual and operational qualification
 
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | General family, publication and device qualification remain proposed; existing mercenary evidence covers only its named pilot scenarios. | 2026-10-04   |
+
 **Status: required future evidence, not completed tests.** This document turns the [feature specification](3d-pixel-art-feature-spec.md) into reviewable experiments and acceptance scenarios. It does not authorize game changes, automated test authoring, live provider work, or spending.
 
 ## Maintained records
@@ -102,8 +106,8 @@ An attractive single object is not evidence for arbitrary constructions or creat
 
 ## 7. Evidence record and decision rule
 
-For each slice, retain commit/source baseline, exact feature/profile/asset versions, scenario, actor/audience scope, hardware/settings, expected/observed result, actual measurement method, recordings or bounded logs, provider receipts where applicable, failures, and remaining uncertainty. Use disposable worlds and the existing verification owners; do not store private world snapshots, credentials, or copyrighted reference art in public evidence.
+For each slice, record commit/source baseline, exact feature/profile/asset versions, scenario, actor/audience scope, hardware/settings, expected/observed result, actual measurement method, provider-cost/receipt summary where applicable, failures, and remaining uncertainty in the appropriate authored topic report. Keep generated recordings, screenshots, traces, logs and raw provider receipts outside Git unless Mike explicitly requests those artifacts, under [verification report ownership](../../.agents/rules/documentation.md#verification-reports). Use disposable worlds; do not expose private world snapshots, credentials, private provider payloads or unlicensed reference art in evidence.
 
 Advance the visual direction when the moving scene is compelling, identity/interaction depiction remains truthful, critical lifecycle/privacy/spending scenarios pass for that slice, and measured authoring/runtime costs support expansion. Otherwise narrow the family, improve the art/profile, or retain sprites. Bulk conversion is not the default response to an inconclusive experiment.
 
-At this documentation baseline, no Q scenario, graphics profile, provider route, target device, performance target, or art family is newly qualified. [V3D delivery](../maintainers/3d-pixel-art.md) retains all runtime gates as open.
+The original proposal did not qualify a Q scenario, profile, provider route, target device or art family. The later [mercenary pilot evidence](../verification/mercenary-default.md) records actual fixed-asset rendering, lifecycle/failure and local performance checks. Reuse those observations only for matching contracts and workloads; they are not a complete Q01–Q24 matrix or general family, generated-art, device or crowd qualification. [V3D delivery](../maintainers/3d-pixel-art.md) retains the corresponding broader gates. This documentation reconciliation ran no new visual, native or provider experiment.
