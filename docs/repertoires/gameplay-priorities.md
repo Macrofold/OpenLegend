@@ -1,6 +1,6 @@
 # Playable game first
 
-**Priority decision: October 3, 2026.** This document owns selection policy for the current survival-adventure game. It is not a claim that the listed features are implemented, an implementation specification, or adoption of one optional world's lore. The [ranked coverage](ranked-coverage.md), [ranked patterns](ranked-patterns.md) and [ranked actions](ranked-actions.md) apply this policy. Existing specifications still own correctness and existing maintainer trackers still own delivery.
+**Priority decision: October 3, 2026.** This document owns selection policy for the current survival-adventure game. It is not a claim that the listed features are implemented, an implementation specification, or adoption of one optional world's lore. The [27 expanded inventories and their individual ranking registers](expanded-inventories.md), [ranked coverage](ranked-coverage.md), [ranked introductory patterns](ranked-patterns.md) and [ranked actions](ranked-actions.md) apply this policy. Existing specifications still own correctness and existing maintainer trackers still own delivery.
 
 ## What changed, and why
 
@@ -8,7 +8,7 @@ Make a complete, playable, enjoyable game before elaborating its simulation or d
 
 That selection policy is superseded. **Engineering adjacency, small implementation cost, architectural elegance, realistic detail, autonomous behavior and philosophical distinctiveness are not substitutes for player value.** The engine/world boundary, privacy, cancellation, accounting, persistence and honest execution remain implementation constraints; they do not decide which optional feature deserves to exist next.
 
-The new ranking registers replace the source cards' High/Try/Niche selection labels and the source action tables' earlier Criticality scores for current-game planning. Source descriptions, IDs, examples, research links, realization classifications and historical build estimates remain reference material. Do not average the old and new assessments, use the old scores as a tie-breaker, or treat a catalogue's first paragraph as a build order. This moves priority ownership rather than creating two active roadmaps.
+The current ranking registers replace the introductory cards' High/Try/Niche labels and the earlier Criticality scores in both the action tables and all 27 expanded source inventories. The [expanded inventory index](expanded-inventories.md#inventory-and-ranking-coverage) records their complete individual-entry coverage; reviewing introductory examples alone does not cover those inventories. Source descriptions, IDs, examples, research links, realization classifications and historical build estimates remain reference material. Do not average the old and new assessments, use the old scores as a tie-breaker, or treat a catalogue's first paragraph as a build order. This moves priority ownership rather than creating two active roadmaps.
 
 ## The game we need to be able to play
 

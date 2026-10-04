@@ -40,7 +40,7 @@ Privacy, authority, independent participation, actual resource accounting and is
 | 1 | Usable control, truthful outcomes and reliable execution keep ordinary play working. | ACR-047, ACR-059, ACR-071, ACR-082, ACR-133, ACR-138, ACR-142, ACR-145, ACR-148, ACR-167, ACR-211, ACR-216, ACR-245, ACR-257, ACR-271, ACR-272 |
 | 2 | Actual rivals and finite harmful installations create real opposition. | ACR-108, ACR-156 |
 | 3 | Useful companions, defense and recovery support dangerous activities. | ACR-052, ACR-054, ACR-055, ACR-060, ACR-077, ACR-125, ACR-137, ACR-222, ACR-233, ACR-238, ACR-239, ACR-255, ACR-265 |
-| 4 | Complete scenarios, accessible routes and concrete objectives supply adventures worth playing. | ACR-024, ACR-049, ACR-112, ACR-116, ACR-120, ACR-158, ACR-166, ACR-192, ACR-200, ACR-202, ACR-203, ACR-204, ACR-210, ACR-242, ACR-244, ACR-246, ACR-252, ACR-256, ACR-264, ACR-266 |
+| 4 | Complete scenarios, accessible routes and concrete objectives supply adventures worth playing. | ACR-024, ACR-049, ACR-112, ACR-116, ACR-120, ACR-158, ACR-166, ACR-200, ACR-202, ACR-203, ACR-204, ACR-210, ACR-242, ACR-244, ACR-246, ACR-252, ACR-256, ACR-264, ACR-266 |
 | 5 | Learning, useful rewards and informed build choices sustain progress. | ACR-036, ACR-050, ACR-075, ACR-094, ACR-098, ACR-100, ACR-113, ACR-127, ACR-198, ACR-226, ACR-234, ACR-235, ACR-236, ACR-243, ACR-249 |
 | 6 | Useful delegated production removes repetition from worthwhile activities. | ACR-012, ACR-014, ACR-021, ACR-022, ACR-041, ACR-043, ACR-078, ACR-219, ACR-254, ACR-261 |
 | 7 | Functional construction and a finished place give returning a purpose. | ACR-048, ACR-081, ACR-124, ACR-175 |
