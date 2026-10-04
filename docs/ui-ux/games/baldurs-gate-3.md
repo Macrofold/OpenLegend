@@ -32,7 +32,17 @@ The grid is a visual organization device. Equal-sized icon cells in these images
 
 BG3-04 shows a context menu on dye. Its options include using the dye through Combine, splitting a stack, throwing, dropping, marking wares, and sending the item to a named companion. The item supplies context before the player chooses a verb. The recipient submenu is an optional shortcut on an already selected object; it is not a mandatory destination form for every action.
 
-The [default bindings reference](https://bg3.wiki/wiki/Options) documents `I` for an individual inventory, `Tab` for party view, right-click for a context menu, `T` for examination, and Escape for cancelling or closing. It also lists the stack-splitting modifier and Take All binding. These are BG3 reference controls, **not proposed Open Legend rebinding decisions**.
+The [default bindings reference](https://bg3.wiki/wiki/Options) documents `I` for an individual inventory, `Tab` for party view, right-click for a context menu, `T` for examination, and Escape for cancelling or closing. These are BG3 reference controls, **not proposed Open Legend rebinding decisions**.
+
+The relevant transfer controls need their context stated explicitly:
+
+| Control | Documented function | Context and limit |
+| --- | --- | --- |
+| `Space` with a container interface active | Take All Items from Container | A bulk collection command. The same key also has Skip and End Turn functions in other contexts; it is not a global transfer command. |
+| Hold `Shift` | Split-item-stack modifier | This is the documented split modifier, not evidence of a universal Shift-click transfer shortcut. The focused Split Item menu route is described below. |
+| Right-click an item | Open its context menu | Reveals applicable commands, including named recipients where available. Opening the menu does not itself move the item. |
+
+The sources inspected here do not establish a universal default quick-deposit modifier. Individual drag transfers are documented separately below. Open Legend's proposed non-drag transfer command should therefore be identified as our design decision, rather than attributed to an unverified BG3 shortcut.
 
 [Twinfinite's recorded split workflow](https://twinfinite.net/guides/how-to-split-items-in-inventory-in-baldurs-gate-3-bg3/) describes choosing Split Item from the selected stack, setting a quantity in the resulting slider, and receiving a separate stack. It also documents transfers by dragging to a companion portrait or inventory. Quantity is therefore a focused secondary decision when the player needs it. It does not need to be a compulsory field before moving one ordinary item.
 
@@ -75,7 +85,15 @@ All screenshots are third-party reference material for criticism and design rese
 
 **Visible.** Character information and equipment sit left of the bag grid. A query/filter area and sort control sit above items; carried weight sits below. The world, minimap, portraits, and hotbar remain visible around the panel.
 
-**Workflow and button meaning.** The three top tool icons lead to equipment, spellbook, and alchemy, as described in the [interface guide](https://www.gamepressure.com/baldurs-gate-iii/interface/zad9f7). The grid supplies items for inspection or context actions. The exact open dropdown contents are not visible here.
+**Workflow and button meaning.** The [interface guide](https://www.gamepressure.com/baldurs-gate-iii/interface/zad9f7) identifies the three top tools; the [default bindings reference](https://bg3.wiki/wiki/Options) supplies their keyboard shortcuts:
+
+| Top icon, left to right | Function | Default keyboard shortcut |
+| --- | --- | --- |
+| Helmet, selected in this screenshot | Inventory and equipment: carried items and worn gear | `I` |
+| Open book | Spellbook: inspect and manage the character's spells | `K` |
+| Flask | Alchemy: browse and craft alchemical recipes | `H` |
+
+The magnifying-glass field searches items; the nearby list-and-arrow control sorts them. The grid supplies items for inspection or context actions. The exact open dropdown choices are not visible here, so no unseen options are inferred.
 
 **Strength.** The spatial distinction between worn and carried items can make “What am I using?” easier to answer. The bag does not need to replace the whole world.
 
@@ -251,7 +269,18 @@ All screenshots are third-party reference material for criticism and design rese
 
 **Visible.** A named NPC and the scene dominate the screen. Current speech appears as a subtitle. Four utility icons occupy the lower left. There are no response choices in this particular frame.
 
-**Documented interaction.** Larian's update describes conversation history, the initiating character's role, and multiplayer participation with visibility exceptions. The [firsthand trade discovery report](https://www.pcgamer.com/psa-you-can-trade-with-lots-of-baldurs-gate-3-npcs-who-arent-traders/) identifies the hand-and-coins utility as a way to initiate trade during eligible conversations. An unlabeled icon's meaning should not be guessed solely from its shape.
+**Documented interaction and exact icon map.** Larian's update describes conversation history, the initiating character's role, and multiplayer participation with visibility exceptions. The visible utility row maps as follows:
+
+| Position, left to right | Visible symbol | Function and consequence |
+| --- | --- | --- |
+| 1 | Horizontal menu lines | Open the game menu. This is a system-menu control, not a dialogue response. |
+| 2 | Hand with coins | Open trade with the current NPC when available. It does not immediately buy or sell anything. |
+| 3 | Crossed weapons | Initiate an attack against the character being addressed; this is a gameplay action with consequences. |
+| 4 | Scroll/document | Open the current dialogue's history to reread the conversation. |
+
+**Verification.** Menu and History were visually matched to the [original interface illustration](https://eip.gg/wp-content/uploads/2023/08/Baldurs-Gate-3-Tips-Tricks-Dialogue-Buttons.jpg) and descriptions in [EIP's gameplay UI guide](https://eip.gg/bg3/guides/tips-tricks/). The [firsthand PC Gamer report](https://www.pcgamer.com/psa-you-can-trade-with-lots-of-baldurs-gate-3-npcs-who-arent-traders/) documents trading and attacking from this utility row. Its trade function depends on availability; the current frame alone cannot establish whether a click is enabled during this exact spoken line.
+
+Character Select is another documented dialogue utility, allowing control of a companion outside the conversation while the original speaker remains engaged. Its portrait-shaped button is visible in the EIP reference but **absent from BG3-12's four-icon row**. It must not be assigned to the menu-lines icon. The comparison illustration was inspected for verification and is not added to the screenshot count.
 
 **Strength.** The conversation clearly belongs to a particular person. Utilities are available without turning the conversation into a list of backend operations.
 

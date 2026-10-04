@@ -20,9 +20,11 @@
     "source_published_at": "2024-09-09",
     "inspection_method": "Opened and visually reviewed the saved original image with view_image.",
     "visible_controls": [
-      "Equipment / spellbook / alchemy icons",
-      "Showing All query/filter",
-      "Sort icon",
+      "Helmet: Inventory and Equipment (I)",
+      "Open book: Spellbook (K)",
+      "Flask: Alchemy (H)",
+      "Magnifying-glass field: item search/filter",
+      "List-and-arrow control: item sorting",
       "Weight meter",
       "Item grid"
     ],
@@ -35,7 +37,11 @@
     ],
     "open_legend_application": "Give the player one readable bag, explicit worn slots, and optional detail.",
     "analysis_document": "../../games/baldurs-gate-3.md",
-    "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
+    "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes.",
+    "control_verification_urls": [
+      "https://www.gamepressure.com/baldurs-gate-iii/interface/zad9f7",
+      "https://bg3.wiki/wiki/Options"
+    ]
   },
   {
     "id": "BG3-02",
@@ -448,7 +454,10 @@
     "inspection_method": "Opened and visually reviewed the saved original image with view_image.",
     "visible_controls": [
       "Speaker name and subtitle",
-      "Lower-left conversation utility icons",
+      "Leftmost menu-lines icon: game menu",
+      "Hand-and-coins icon: trade with current NPC when available",
+      "Crossed-weapons icon: attack current dialogue counterpart",
+      "Rightmost scroll/document icon: current dialogue history",
       "No response choices visible in this frame"
     ],
     "workflow": "Interact with an NPC to enter a conversation; current speech appears with the speaker identified.",
@@ -460,6 +469,12 @@
     ],
     "open_legend_application": "Anchor Open Legend conversation to the actual NPC, with readable history and a focused composer, without importing scripted response constraints.",
     "analysis_document": "../../games/baldurs-gate-3.md",
-    "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
+    "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes.",
+    "control_mapping_note": "Left-to-right visible row is Menu, Trade, Attack, Dialogue History. The portrait-shaped Character Select button seen in other dialogue states is absent here; do not assign it to the menu icon. Exact enabled state during this spoken line is not established by the frame.",
+    "control_verification_urls": [
+      "https://eip.gg/bg3/guides/tips-tricks/",
+      "https://eip.gg/wp-content/uploads/2023/08/Baldurs-Gate-3-Tips-Tricks-Dialogue-Buttons.jpg",
+      "https://www.pcgamer.com/psa-you-can-trade-with-lots-of-baldurs-gate-3-npcs-who-arent-traders/"
+    ]
   }
 ]

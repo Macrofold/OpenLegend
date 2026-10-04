@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-10-04 — Game-interface research and object-based inventory direction
+
+Mike's October 3 request explicitly replaces ordinary container destination picking, repeated transfer review and generic activity execution forms with interactions grounded in the selected world object. The existing UI/UX handbook now describes paired item grids for an opened container, direct native transfers, focused meaningful activity choices and clear person/audience context. This is an accepted target direction with proposed implementation detail, not a shipped redesign.
+
+The [game atlas](ui-ux/games/README.md) supplies 71 distinct digital UI screenshots across 12 games, individually inspected and annotated, plus one excluded display photograph; four Open Legend wireframes are separate. The [pinned audit](ui-ux/current-interface-audit.md) explains the current code and the missing world-object-to-inventory connection. The [feature specification](projects/game-interaction-redesign-feature-spec.md) and [technical design](projects/game-interaction-redesign-tech-design.md) retain native authority, reach, capacity, identity and consent while changing presentation. Historical picker evidence remains preserved; PW04's routine-flow target is explicitly superseded.
+
+[UIUX07–UIUX11](maintainers/ui-ux.md#uiux07) separates research delivery from unimplemented inventory, activity, chat and integrated experience gates. [UXL06–UXL10](limits/ui-ux.md#uxl06) records active-scope/layout choices and remaining batch/work-bound decisions. No runtime code, world data, paid model use, compatibility policy or production art changed. Source versions, optional modifications, prototypes, original player disagreements and unrun gameplay/assistive-device qualification remain explicit.
+
 ## 2026-10-03 — Prioritize worthwhile experiences when choosing work
 
 Added [selectively loaded prioritization guidance](../.agents/skills/openlegend-prioritize/SKILL.md) through `AGENTS.md` and parallel-task selection. It adopts the owner-supplied eight principles: begin with a valued experience, preserve the relevant promise while reducing breadth, deliver a complete payoff, justify complexity and pressure, respect agency/competence and varied enjoyment, count total burden, and revise hypotheses using proportionate evidence. The refinement protects urgent reliability/integrity work and avoids requiring every increment to realize every product promise. Catalogue coverage, technical adjacency and document order no longer stand in for priority justification. User-selected scope and accepted requirements still control; no runtime or current roadmap is changed. [CG14 and CG05](maintainers/agent-guidance.md) distinguish instruction delivery from installed-agent dispatch qualification.
@@ -1059,3 +1067,4 @@ Added native kind-backed operational draft/review sessions, a thin writable MCP 
 ## Unified conversation delivery
 
 Connected the native owner session/turn/review APIs to the World Agent panel, replacing tool-less Discuss as its privileged conversation path. Retained the finite native recipe shortcut and read-only earlier local transcripts. Updated implementation status and exact approval/recovery guidance; wider physical/social/art capabilities remain independently tracked. Added MW06/MW07 rather than claiming manual native observations replace automated or browser/live qualification.
+

@@ -2,7 +2,7 @@
 
 A practical standard for deciding what the player sees, how controls behave and how React implements them. This is not an aesthetic replacement, a gallery to copy, or a claim that the current game passes every rule.
 
-**Research updated:** October 1, 2026. **Runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
+**Research updated:** October 4, 2026. **Original runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
 
 ## Game interfaces and the inventory redesign
 
