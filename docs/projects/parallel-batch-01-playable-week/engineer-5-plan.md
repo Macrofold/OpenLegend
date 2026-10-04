@@ -8,7 +8,7 @@ Mike's October 2, 2026 chat authorized PW05, PW09 and PW06 support despite the p
 
 ## Scope and risk
 
-Implement the complete [PW05 contract](../parallel-batch-01-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system) and [PW09 brief](memory-retrieval.md). Estimated 1,000–1,600 logic lines excluding tests. High risk: durable event order, split protected-value disclosure, multiple Runs per turn, restore/revocation fencing, uncertainty/accounting and transaction-safe caches. Existing turn/recovery, question, publication and mutation owners remain authoritative. No paid retries, retained-memory caps, production ANN or PF14 reimplementation.
+Implement the complete [PW05 contract](../parallel-batch-01-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system) and [PW09 brief](../completed/next-playable-week/memory-retrieval.md). Estimated 1,000–1,600 logic lines excluding tests. High risk: durable event order, split protected-value disclosure, multiple Runs per turn, restore/revocation fencing, uncertainty/accounting and transaction-safe caches. Existing turn/recovery, question, publication and mutation owners remain authoritative. No paid retries, retained-memory caps, production ANN or PF14 reimplementation.
 
 ## Requirement reconciliation
 
