@@ -76,7 +76,7 @@ Original recommendation: **Review**.
 
 Six fixed permissions: play, spectate, create, inspect, save and manage access. A grant either binds **one character** (the only grant that may include play) or **no character**. A characterless operator/spectator session holds no control lease, never counts as a participating connection for exit or shared pause, and reaches only the explicit route allowlist in [operations-routes.ts](../../apps/server/src/operations-routes.ts); every character route rejects it with `characterless`. Characterless creator editing (god/editor routes) and promoting a characterless account to a character are not supported.
 
-**Reason / tradeoff:** Operators and spectators need entry without a playable embodiment; an allowlist keeps character-assuming routes from receiving a scope with no actor. Characterless god tools need their own UI and caller audit. [Design](../projects/multiplayer-entry-maintenance.md#decisions).
+**Reason / tradeoff:** Operators and spectators need entry without a playable embodiment; an allowlist keeps character-assuming routes from receiving a scope with no actor. Characterless god tools need their own UI and caller audit. [Design](../projects/completed/multiplayer-entry-maintenance.md#decisions).
 
 ## MP03
 
