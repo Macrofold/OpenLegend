@@ -93,6 +93,8 @@ Conditional ND28: one skippable closing or return experience, personal preferenc
 
 #### DG06 — Reciprocal exchange and small cooperation
 
+**Product proposal prepared 2026-10-04:** [Exchange and small cooperation](../projects/exchange-and-cooperation-feature-spec.md) selects immediate carried-item barter and an optional remembered two-person understanding, with [world rules](../worlds/base/exchange-and-cooperation.md) and [proposed limits](../limits/base-world.md#ex01--proposed-direct-barter-envelope). Research and game-first critique are complete for this product scope; technical planning, runtime delivery and qualification remain under INV-20.5/BW17. This does not close ND09's later currency/credit or ND10's broader institutions.
+
 ND09's immediate barter and ND10's first small recurring arrangement: offers, acceptance, shared supplies/responsibilities and understandable withdrawal. Design the nearby social activity and its resource/consent boundaries together.
 
 **Start and parallel boundary:** Use existing custody, exact-agreement and commitment contracts. No currency, house system or government is required. Durable credit/economy rules and broader institutions belong to DG22/DG32. **Existing owners:** INV-20, PO, BW17 and relevant social owners.
@@ -462,6 +464,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 ### ND09 — Negotiated barter, currency and durable commercial promises inside a world
 
+**Immediate-barter product scope prepared:** [DG06's proposal](../projects/exchange-and-cooperation-feature-spec.md) selects two nearby people, current carried possessions, exact reciprocal settlement and no first-slice currency or deferred delivery. Technical design and qualification remain; the broader commercial choices below are still open.
+
 **Decision before design.** Sources: [economy and negotiation](../../archive/03-design-proposals/world-and-player-experience.md#economy-and-negotiation), D11/R09 and [inventory/trading guidance](../ui-ux/inventory.md).
 
 **Existing coverage:** [PO](persistent-objects.md) and [camp sharing](../projects/camp-fire-and-sharing.md) cover custody and consent-aware one-way handover; [BW17](base-world.md#bw17--readable-promises-and-commitment-management) covers current commitments. The [repertoire foundation](../repertoire-foundation.md) and INV-20.5 already design exact agreement revisions, participant acceptance, amendment/withdrawal, evidence and atomic settlement, with delivery in [INV](inventions-and-world-evolution.md). That architecture does not select a barter family or currency economy. The [UI tracker](ui-ux.md#uiux04) also leaves trading to a separately scoped feature.
@@ -469,6 +473,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** select the first reciprocal barter family and player/NPC negotiation journey, mapping its actual items, quantities, offer presentation and fulfillment onto the existing agreement lifecycle. Select whether currency belongs in the first slice; if so, define issuance, sinks, theft/loss and ownership. Choose which deferred delivery, default and dispute consequences that world supports; escrow and interest remain optional. Reuse existing assent/amendment/settlement contracts. Fictional currency is separate from ND22–ND23 real-money accounts.
 
 ### ND10 — Persistent groups, shared ownership and in-world institutions
+
+**First cooperation product scope prepared:** [DG06's proposal](../projects/exchange-and-cooperation-feature-spec.md#a-reusable-small-understanding) selects a remembered two-person understanding with optional shared supplies and fresh choice each occasion, without a formal organization record or membership-derived property/access. Broader institutions and deferred obligations remain separate choices.
 
 **Conditional scoped design.** Source: [institutions without a mandatory government system](../../archive/03-design-proposals/world-and-player-experience.md#institutions-without-a-mandatory-government-system), with D18's unsettled starting social organization.
 

@@ -56,6 +56,8 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 ### BW17 — Readable promises and commitment management
 
+**Related product proposal, 2026-10-04:** [DG06](../projects/exchange-and-cooperation-feature-spec.md) distinguishes a reusable mutual understanding from current personal promises, with immediate future withdrawal and preserved separate obligations. Its first proof uses actual contributions and barter; general delivery fulfillment and negotiated promise amendment/release remain D64/INV-20.5 work. The read-only delivery and unchecked acceptance below are unchanged.
+
 **Read-only first slice delivered 2026-09-28:** [feature spec](../projects/readable-promises-feature-spec.md) and [technical design](../projects/readable-promises-tech-design.md), under the [player clarity plan](../projects/player-clarity-ui.md). The Journal's **Promises** section lists the player's own obligations (exact words, recipient as the player knows them, status, what the world checks and fulfillment evidence) through the owner-only `/api/commitments` read. Amendment/cancellation controls stay behind D64; the policy extraction below remains. [Evidence](../verification/player-clarity-ui.md#bw17--read-only-promises).
 
 - [ ] Before runtime work, prepare paired feature/technical documents for the existing-obligation UI (done for the read-only slice). Resolve [D64](../../archive/05-project/open-decisions.md#social-exposure-decisions) before broadening language or exposing negotiated amendment semantics; do not present current unilateral native cancellation as a mutually agreed release.

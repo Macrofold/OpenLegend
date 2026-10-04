@@ -46,6 +46,8 @@ The English parser and gathering interpretation currently live beside reusable o
 
 ## Offering and accepting possessions
 
+Reciprocal barter remains unimplemented. The separately labelled [exchange and small-cooperation proposal](exchange-and-cooperation.md) selects a future first family; it changes none of the current gift rules below.
+
 Handing carried items to another person is a consent exchange, owned by `packages/domain/src/handover.ts` with world values in `worlds/base/handover.ts`:
 
 - **Offering** holds out a quantity of one carried portable lot to a person the offerer can see within arm's reach (the saved item-handling reach). It moves nothing and reserves nothing.
