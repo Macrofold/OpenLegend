@@ -1,5 +1,9 @@
 # Progressive 3D pixel art — appearance families and composition
 
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Reusable appearance families, modular equipment and broad pose coverage remain proposed; the delivered mercenary is one fixed asset family. | 2026-10-04   |
+
 **Status: proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 
 ## Maintained records
@@ -52,7 +56,7 @@ These are recommendations, not hard-coded noun switches. A different world can i
 
 ## 4. Characters, identity, and body variation
 
-Start with one authored humanoid rig and a small set of deliberately distinct bodies. Keep world-scale silhouette readable; do not rely on subpixel face detail to distinguish everyone. Head shape, posture, hair, clothing blocks, and carried items should survive normal zoom, while profiles offer richer faces.
+The [completed mercenary pilot](completed/mercenary-scene-pilot.md) already supplies one trusted authored humanoid rig with idle/walk clips and explicit sprite fallbacks. Use its existing resource and character-pass owners as the starting seam, not a requirement to repeat that pilot. The proposed reusable family still needs a small set of deliberately distinct, qualified bodies and the actual fit, pose and equipment checks below; [A3D15](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot) states what the pilot does not deliver. Keep world-scale silhouette readable; do not rely on subpixel face detail to distinguish everyone. Head shape, posture, hair, clothing blocks, and carried items should survive normal zoom, while profiles offer richer faces.
 
 Use reviewed geometry variations or bounded morphs for proportion ranges that preserve topology, skin quality, attachments, and animation. Beyond that envelope, select another compatible body family or retain the fallback. A height slider is not proof that a rig works at every height, limb ratio, or body shape. The mechanical body's dimensions remain independent and must be matched where contact/reach cues matter.
 
