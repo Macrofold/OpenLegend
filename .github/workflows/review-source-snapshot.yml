@@ -1,0 +1,53 @@
+name: Pinned documentation review source
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/review-source-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01
+          persist-credentials: false
+      - name: Package tracked text and archive reference metadata
+        env:
+          AI_BUDGET_USD: '0'
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-source.zip'
+          inventory, references = [], []
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
+              for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', 'HEAD']).split(b'\0'):
+                  if not entry:
+                      continue
+                  metadata, raw_path = entry.split(b'\t', 1)
+                  mode, kind, sha, size = metadata.decode().split()
+                  name = raw_path.decode()
+                  path = pathlib.Path(name)
+                  row = {'path': name, 'git_sha': sha, 'size': size, 'included': False}
+                  if kind == 'blob' and mode != '120000' and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.prettierignore', '.gitignore')):
+                      data = path.read_bytes()
+                      text = data.decode('utf-8')
+                      if 'archive' not in path.parts:
+                          output.writestr(name, data)
+                          row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
+                      elif path.suffix == '.md':
+                          references.append({'path': name, 'headings': [line for line in text.splitlines() if line.startswith('#')], 'project_references': [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/projects/' in line]})
+                  inventory.append(row)
+              output.writestr('_review_inventory.json', json.dumps({'revision': 'db6dc8009dba530cfc6222ee8c0f6ebe3c18fa01', 'files': inventory}, indent=2))
+              output.writestr('_archive_reference_metadata.json', json.dumps(references, indent=2))
+          print('Pinned source only; no provider, database or save operations.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-source-db6dc80
+          path: ${{ runner.temp }}/review-source.zip
+          retention-days: 7
+          if-no-files-found: error
