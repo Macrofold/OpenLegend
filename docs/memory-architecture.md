@@ -71,7 +71,7 @@ When implementing changes to identity, prompts, attention, feelings or recall fo
 
 ### Character continuity and learning
 
-The accepted [character relationship design](../archive/03-design-proposals/agents-and-social-simulation.md#social-continuity) separates structured, unchanging facts such as blood relations from unstructured person-to-free-text assessments such as “friend,” “good friend,” or “lover.” Each person may freely revise their own assessment at any point based on memories and perception, without relationship points, thresholds or a fixed progression. Assessments are sparse and directional; they cannot rewrite another person's view or objective kinship. Exact editing/publication mechanics remain future work.
+The accepted [character relationship design](../archive/03-design-proposals/agents-and-social-simulation.md#social-continuity) separates structured objective facts such as blood relations from unstructured person-to-free-text assessments such as “friend,” “good friend,” or “lover.” Each person may freely revise their own assessment at any point based on memories and perception, without relationship points, thresholds or a fixed progression. Assessments are sparse and directional; they cannot rewrite another person's view or objective kinship. Exact editing/publication mechanics remain future work.
 
 Narrative assessments of others live in actor-owned subject [knowledge](knowledge.md); About me remains self-understanding. Any queryable relationship projection derives from its owning document revision, not another writable biography. Group membership, protected commitments and learned capabilities retain separate authority; revising an assessment does not erase an obligation.
 
@@ -80,6 +80,10 @@ Conversation preserves speaker, actual per-turn audience, interruption and topic
 Stable traits, values and habits are distinct from temporary feelings and practical skills. Supported appraisals carry cause, target, intensity, decay and stacking keys so repeated sightings do not multiply the same fear. Native thresholds use hysteresis; stable traits change only at admitted rates. Fictional characterization must not infer sensitive traits of the human player.
 
 Learning can follow observation, testimony, teaching and actual practice without a research minigame. Seeing part of a method cannot reveal hidden steps; proficiency changes require native evidence. Learned technique identity and compatible version mappings survive upgrades, while genuinely new steps must be learned.
+
+### Creator edits and memories
+
+Creator edits to family, names, objects or world rules do not automatically rewrite or delete character memories to match the edited world. Outdated beliefs may remain. Computed current descriptions refresh separately. Explicitly requested memory edits/forgetting and privacy revocation retain their existing source-dependency and invalidation obligations. [Creator edit propagation](projects/creator-edit-propagation-feature-spec.md) owns the accepted future distinction: earlier complete, approved explicit-dependency deletion previews; later optional semantic memory search with multiselect/manual or AI-assisted proposed edits. Similarity or mentioning an object never makes a memory a mandatory deletion dependency.
 
 ## 2. Semantic levels and triggers
 

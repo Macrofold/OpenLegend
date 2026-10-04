@@ -10,11 +10,15 @@ For example, Ada can write that she distrusts Bo while Bo still considers Ada a 
 
 ## Objective family facts
 
-The current native [kinship owner](../../../packages/domain/src/social.ts) supports creator-authored parent and sibling facts. Parent links are directed; sibling duplicate detection is symmetric. Self-links, invalid actors, parent cycles and conflicting reuse of a fact ID reject. Facts are immutable through this operation; no correction/deletion operation is provided.
+The [family owner](../../../packages/domain/src/worlds/base/family.ts) records biological parent links. A character has zero, one or two recorded parents; missing ancestry is unknown. Self-parentage, duplicates, missing endpoints, different/unknown species, construct ancestry and cycles at any depth are rejected both when editing and when loading current saves. Related parents and shared ancestors are permitted; chronology, reproduction, adoption, partnership and inheritance are not inferred.
 
-`POST /api/god/kinship` exists, but there is no client family authoring/viewing panel. Writing “sister” in a knowledge note creates no objective fact. Reproduction, adoption, inheritance, automatic bereavement and a general household simulation are not implied by stored kinship.
+**Family** in a character's God-mode controls searches existing characters, previews parent direction and records or deletes a link. The paged inspection computes parents, children, siblings and ancestors/descendants. Full siblings share two parents. Half-siblings share one and both have distinct second parents recorded; otherwise the description explicitly leaves other ancestry unknown. More distant generation counts use the shortest recorded ancestry path. Cousins and social-family roles are not described by this first vocabulary; their omission does not establish unrelatedness.
 
-The fixed relation vocabulary currently lives in the general domain module. Treat that as a localized v1 specialization: the engine protects identity, references, transaction integrity and disclosure; a world chooses relation meanings and allowed topology. [BW16](../../maintainers/base-world.md#bw16--family-authoring-and-inspection) tracks the first UI slice and its boundary review. A different world's chosen-family relation would need different rules, not an exception to a supposedly universal blood-family law.
+There are no saved sibling facts. Deleting a link updates computed descriptions but never rewrites memories or personal notes. Writes use current-tree revision checks and permanent command receipts; an old creation retry cannot restore a deleted link. No mistaken status or dedicated family audit is introduced. Death retains the actor and ancestry; future hard actor deletion must handle its explicit link dependencies.
+
+Objective inspection is creator-only. NPCs and ordinary players learn through their existing permitted observations, memories and personal knowledge. Hearing a claim does not certify current parentage. Neither NPC input nor public views automatically receive the objective tree. [General creator-edit policy](../../projects/creator-edit-propagation-feature-spec.md) distinguishes optional memory repair from explicit dependency integrity.
+
+The fixed parent meaning, two-parent rule and relationship wording belong to this compiled bundled-world owner, not generic engine law. [BW16](../../maintainers/base-world.md#bw16--family-authoring-and-inspection) tracks delivery and evidence; [BW05](../../limits/base-world.md#bw05) records limits and growing-query costs.
 
 ## Feelings
 

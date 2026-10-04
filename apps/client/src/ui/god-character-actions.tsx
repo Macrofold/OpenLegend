@@ -14,6 +14,8 @@ export interface GodCharacterControls {
   enableCognition(entity: EntityView): Promise<void>;
   editPerson?(): void;
   inspectMind?(): void;
+  editFamily?(): void;
+  familyLabel?: string;
 }
 export function GodCharacterActions({
   entity,
@@ -30,6 +32,7 @@ export function GodCharacterActions({
     !available.revive &&
     !available.enableCognition &&
     !controls.editPerson &&
+    !controls.editFamily &&
     !controls.inspectMind
   )
     return null;
@@ -70,6 +73,16 @@ export function GodCharacterActions({
             onPress={controls.editPerson}
           >
             Edit Person
+          </Button>
+        )}
+        {controls.editFamily && (
+          <Button
+            variant="quiet"
+            size="sm"
+            disabled={!connected || busy}
+            onPress={controls.editFamily}
+          >
+            {controls.familyLabel}
           </Button>
         )}
         {controls.inspectMind && (

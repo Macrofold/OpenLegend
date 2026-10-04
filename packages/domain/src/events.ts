@@ -15,7 +15,7 @@ import { perceiveSpeech, prepareSpeechWords } from './speech.js';
 import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import { soundOrigin, speechObservers } from './perception.js';
-import { appraiseEvent } from './social.js';
+import { appraiseEvent } from './worlds/base/appraisals.js';
 import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';

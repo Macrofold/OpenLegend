@@ -81,7 +81,7 @@ Actor decision composition and operational goals/plans belong to [Agent agency](
 
 ## Social continuity
 
-Accepted character design: relationships have two forms. Directional note editing is delivered through ACT08; objective family UI remains future work in [BW16](../../docs/maintainers/base-world.md#bw16--family-authoring-and-inspection). The [current world contract](../../docs/worlds/base/social.md) separates these surfaces.
+Accepted character design: relationships have two forms. Directional note editing is delivered through ACT08; objective family-tree authoring was delivered October 3 through [BW16](../../docs/maintainers/base-world.md#bw16--family-authoring-and-inspection). The [current world contract](../../docs/worlds/base/social.md) separates these surfaces.
 
 - **Structured relationships** record defined, unchanging facts such as blood relations. A change in someone's feelings does not change their kinship.
 - **Unstructured relationships** map another person to free text, such as “friend,” “good friend,” or “lover.” Each person owns their own description and may change it freely at any point according to how they perceive the other person. These assessments come from memories, with no relationship points, score thresholds or required progression. They are directional: Ada's description of Bo need not match Bo's description of Ada.

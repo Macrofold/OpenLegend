@@ -139,7 +139,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       visiblePeople: actorLists('mind_visible_people'),
       appraisals: actorMaps('mind_appraisals'),
       appraisalProcesses: map('mind_appraisal_processes'),
-      kinships: map('sim_kinships'),
+      familyTree: one('sim_family_tree', { links: map('sim_parent_links') }),
       conversations: one('conversation_state', {
         records: map('conversations', { intervals: list('conversation_membership', 'id') }),
         active: map('conversation_active'),

@@ -1,4 +1,5 @@
 import { namePhrase } from '@open-legend/language';
+import { FamilyEditor } from './ui/family-editor';
 import { WorldVisualSettings } from './ui/world-visual-settings';
 import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
@@ -115,7 +116,8 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
 };
 type GodEditorWindow =
   | { id: string; type: 'person'; actorId: string }
-  | { id: string; type: 'world-events' };
+  | { id: string; type: 'world-events' }
+  | { id: string; type: 'family'; actorId: string };
 function App({
   resetApplication,
   onCharacterless,
@@ -823,6 +825,16 @@ function App({
                 ...current,
                 { id: crypto.randomUUID(), type: 'person' as const, actorId: target.id },
               ]),
+            ...(view.godTools?.familyLabel
+              ? {
+                  familyLabel: view.godTools.familyLabel,
+                  editFamily: () =>
+                    setGodEditors((current) => [
+                      ...current,
+                      { id: crypto.randomUUID(), type: 'family', actorId: target.id },
+                    ]),
+                }
+              : {}),
             inspectMind: () => {
               setMindId(target.id);
               show('mind');
@@ -1480,7 +1492,16 @@ function App({
             {!tabPaused &&
               view.godMode &&
               godEditors.map((editor) =>
-                editor.type === 'person' ? (
+                editor.type === 'family' ? (
+                  <FamilyEditor
+                    title={view.godTools?.familyLabel ?? 'Relationships'}
+                    key={editor.id}
+                    actorId={editor.actorId}
+                    close={() =>
+                      setGodEditors((current) => current.filter((item) => item.id !== editor.id))
+                    }
+                  />
+                ) : editor.type === 'person' ? (
                   <PersonEditor
                     key={editor.id}
                     actorId={editor.actorId}

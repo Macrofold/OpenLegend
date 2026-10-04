@@ -1,4 +1,5 @@
 import { validName } from '@open-legend/language';
+import { validateFamilyTree } from './worlds/base/family.js';
 import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
 import { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -728,6 +729,7 @@ export function validateWorldModules(world: WorldState): void {
     throw new Error('Invalid saved native interval progress.');
   validateWorkState(world);
   validateAppraisals(world);
+  validateFamilyTree(world);
   validateResourceReservations(world);
   validateParticipation(world);
   validateKnowledge(world);

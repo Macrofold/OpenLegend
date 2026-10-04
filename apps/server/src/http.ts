@@ -1231,6 +1231,8 @@ async function initializeGameServer(
           '/api/god/triggers',
           '/api/god/intelligence-details',
           '/api/god/intelligence-calls',
+          '/api/god/family',
+          '/api/god/family/people',
           '/api/god/editor/attributes',
           '/api/god/invention-policy',
           '/api/god/definitions/attributes',
@@ -1623,19 +1625,54 @@ async function initializeGameServer(
                 ),
               );
             }
-            case '/api/god/kinship': {
-              if (!config.godMode)
-                return send(response, 403, { ok: false, message: 'God access required.' });
+            case '/api/god/family': {
               const value = z
                 .object({
-                  id: requestIdSchema,
-                  firstId: requestIdSchema,
-                  secondId: requestIdSchema,
-                  kind: z.enum(['parent', 'sibling']),
+                  actorId: requestIdSchema,
+                  after: z.string().max(100).optional(),
+                  parentId: requestIdSchema.optional(),
                 })
                 .strict()
                 .parse(body);
-              return send(response, 200, await service.godKinship(value));
+              return send(
+                response,
+                200,
+                await service.godFamily(value.actorId, scope, value.after, value.parentId),
+              );
+            }
+            case '/api/god/family/people': {
+              const value = z
+                .object({ query: z.string().max(120), after: z.string().max(100).optional() })
+                .strict()
+                .parse(body);
+              return send(
+                response,
+                200,
+                await service.godFamilyPeople(value.query, scope, value.after),
+              );
+            }
+            case '/api/god/family/edit': {
+              const value = z
+                .object({
+                  id: requestIdSchema,
+                  generation: requestIdSchema,
+                  revision: z.number().int().nonnegative(),
+                  change: z
+                    .object({
+                      kind: z.enum(['add', 'remove']),
+                      link: z
+                        .object({
+                          id: requestIdSchema,
+                          parentId: requestIdSchema,
+                          childId: requestIdSchema,
+                        })
+                        .strict(),
+                    })
+                    .strict(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.godFamilyEdit(value, scope));
             }
             case '/api/god/effects': {
               if (!config.godMode)
