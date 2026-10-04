@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 jobs:
-  refine:
+  priorities:
     if: github.ref == 'refs/heads/docs/canonical-repertoires-2026-10-03'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -14,8 +14,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-      - name: Unify navigation and playable OpenLegend priorities
-        run: python .repertoire-task/refine.py
+      - name: Apply scoped entry and scenario priority review
+        run: |
+          python .repertoire-task/entry-priorities.py
+          python .repertoire-task/scene-priorities.py
       - name: Commit only to the unchanged task branch
         shell: bash
         env:
@@ -26,12 +28,12 @@ jobs:
           actual=$(git ls-remote origin "refs/heads/$branch" | cut -f1)
           test "$actual" = "$EXPECTED_SHA"
           git add -A -- docs README.md archive .agents
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: unify repertoire navigation and prioritize a playable OpenLegend loop'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: prioritize practical invention and character consequences without inflating simulation scope'
           git push origin "HEAD:refs/heads/$branch"
           git rev-parse HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: repertoire-refinement-checkpoint
-          path: /tmp/repertoire-refined.json
+          name: repertoire-priority-checkpoint
+          path: /tmp/repertoire-*-priorities.json
           retention-days: 1
           if-no-files-found: error
