@@ -267,4 +267,3 @@ A returning party has won the objective. One person gained wealth, another lost 
 Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
 
 Selection: Establish the victory, reward and ability to continue before rich domestic aftermath.
-

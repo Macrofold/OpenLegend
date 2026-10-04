@@ -12,12 +12,12 @@
 
 Linden Reach began around a freight harbor and grew along two rail lines. Its old industrial quarter now contains repair shops, apartments, studios and a public college. The river is cleaner than it was a generation ago, but access to its banks remains uneven. Some streets are lively, others quiet; neither is the correct way to live.
 
-| District or institution | Proposed possibility and tension                                                                                            | Build path                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Morrow Quay**         | Small apartments above shops, a courtyard and a bus depot; rents rise as old warehouses become desirable studios            | Moderate/Extend: household schedules, local rents and shared-space rules      |
-| **Northglass**          | College, clinic and library around a large park; services attract people from districts with fewer resources                | Moderate/Extend: bounded service workflows and access                         |
-| **The Tileworks**       | Former industrial sheds house cooperatives, rehearsal rooms and independent makers; noise and shared power need negotiation | Moderate/Extend: work routines and permissions; Large/New for utility flows       |
-| **Willow Steps**        | A hillside neighborhood of gardens and family shops with poor transit access; residents differ about redevelopment          | Moderate/Extend: routes, named stakeholders and proposals                     |
+| District or institution | Proposed possibility and tension                                                                                            | Build path                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Morrow Quay**         | Small apartments above shops, a courtyard and a bus depot; rents rise as old warehouses become desirable studios            | Moderate/Extend: household schedules, local rents and shared-space rules       |
+| **Northglass**          | College, clinic and library around a large park; services attract people from districts with fewer resources                | Moderate/Extend: bounded service workflows and access                          |
+| **The Tileworks**       | Former industrial sheds house cooperatives, rehearsal rooms and independent makers; noise and shared power need negotiation | Moderate/Extend: work routines and permissions; Large/New for utility flows    |
+| **Willow Steps**        | A hillside neighborhood of gardens and family shops with poor transit access; residents differ about redevelopment          | Moderate/Extend: routes, named stakeholders and proposals                      |
 | **Reach Council**       | A municipal institution inside a larger fictional republic, with real but limited budgets and authority                     | Large/New: political procedures if modeled; Small/Compose for authored context |
 
 The wider country, **the Republic of Edrin**, is optional background. It can provide common law, currency and rail standards without requiring a simulated national government. Neighboring cities **Harbor Vale** and **Eastmere** are destinations for visits, trade and career changes, represented first as bounded locations.
@@ -36,13 +36,13 @@ Different migration waves can contribute food, names, faith and professional net
 
 ## Resources and technologies that matter locally
 
-| Resource or service                 | What it makes possible                                                  | Broad gap                                                                  |
-| ----------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Resource or service                 | What it makes possible                                                  | Broad gap                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Time, income and workable schedules | A job, care responsibilities, hobbies and sleep can coexist or conflict | Moderate/Extend: bounded work blocks and negotiation                              |
 | Rooms, quiet and accessible routes  | Privacy, rehearsal, study, household growth and social participation    | Moderate/Extend: access, activities and local exposure                            |
 | Shared tools and repairable parts   | Affordable making, new careers and less waste                           | Moderate/Extend: lending, compatibility and material accounting                   |
 | Transit and delivery                | Visits, work access, parcels and neighborhood commerce                  | Moderate/Extend: abstract service routes with meaningful local stops              |
-| Heat, electricity and cooling       | Reliable homes, studios and public refuge during severe weather         | Large/New: coarse service networks and failure domains                         |
+| Heat, electricity and cooling       | Reliable homes, studios and public refuge during severe weather         | Large/New: coarse service networks and failure domains                            |
 | Records and public trust            | Applications, library use, council decisions and fair service           | Moderate/Extend: scoped workflows and evidence; no omniscient private-data access |
 
 Phones, computers and social media can exist as fictional interfaces to admitted messages and services. They do not grant real-world network or account access. For the first slice, rent, wages and purchases can use a small understandable model; mortgages, derivatives, national macroeconomics and every tax form are unnecessary unless a creator specifically chooses that simulation question.

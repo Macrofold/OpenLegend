@@ -2,7 +2,7 @@
 
 [Library and labels](README.md) · [Research atlas](source-atlas.md) · [Selection and scale](selection-and-scale.md) · [Worked situations](combinations.md)
 
-**Proposal foundation, September 27, 2026.** This document owns the repertoire's coverage of human motives, playable systems and world dynamics. It guides the existing category patterns and four world proposals; individual inventory expansions and engine implementation remain separate work. The [README](README.md#reading-the-labels) owns classification and table conventions. The [research atlas](source-atlas.md#research-basis-for-the-foundation-revision) records the evidence and its limits.
+**Proposal foundation, September 27, 2026; selection reconciled October 4, 2026.** This document owns the repertoire’s coverage of human motives, playable systems and world dynamics. It guides the complete canonical catalogues and four world proposals; engine implementation remains separate. The [priority policy](gameplay-priorities.md) owns current selection, the [README](README.md#reading-the-labels) owns classification and table conventions, and the [research atlas](source-atlas.md#research-basis-for-the-foundation-revision) records evidence and its limits.
 
 A world becomes compelling through what people can experience and do in it: discover a beautiful place, master a fighting style, make a home, fall in love, build something useful, win recognition, uncover a secret or change who holds power. Particular people, material possibilities and understandable consequences give these pursuits substance. A player should have things to enjoy now, reasons to become more capable and possibilities worth returning for.
 
@@ -151,7 +151,7 @@ A complete base accounts for the major dimensions above and shows how they conne
 
 For a proposed slice, review what a player wants, what they can do, why an approach is interesting, what can resist it, what success changes and what failure means. Check pleasure, pace, readability, discovery, meaningful opposition and lasting consequences. Include a test of competence, a personal stake, a desirable reward and a reason to return where the premise calls for them. No universal template requires all of those in every quiet scene.
 
-Use the [selection guide](selection-and-scale.md) to choose bounded experiences and evidence of value. Criticality orders candidates by their role in an intended game. Benevolence, violence, explicitness or shock value alone does not raise or lower priority. Build scope is an engineering estimate, not a moral judgment or a ranking of artistic worth.
+Use the [selection guide](selection-and-scale.md) to choose bounded experiences and evidence of value. Priority orders candidates by their role in an intended game. Benevolence, violence, explicitness or shock value alone does not raise or lower priority. Build scope is an engineering estimate, not a moral judgment or a ranking of artistic worth.
 
 Fictional authority and actual platform authority remain separate under [engine/world boundaries](../engine-and-world-boundaries.md#4-what-must-remain-protected). Fictional powers and actions, including coercion and hostile effects, operate within admitted world capabilities. They grant no access to actual accounts, ungranted private information, billing, executable code or another user's control of the application.
 

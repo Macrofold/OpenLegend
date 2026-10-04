@@ -16,8 +16,8 @@ The material palette takes a loose regional inspiration from medieval societies 
 
 Three rivers meet around a low wooded ridge. The upper river is cold and fast, the middle river powers mills, and the lower river spreads through reed marshes before reaching the sea. Flooding brings both danger and fertile soil. Ice sings under bridges, cranes gather in wet fields and autumn smoke lies between the hills.
 
-| Place or polity                                           | Proposed life and tension                                                                                                       | Build path                                           |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Place or polity                                           | Proposed life and tension                                                                                                       | Build path                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **Bellwold**, a market village around a public oven       | A manageable starting home with a landing, forge, orchard and room for newcomers; the oven's fuel competes with winter reserves | Moderate/Extend: shared work and stock reservations         |
 | **Ternmere**, downstream reed settlements                 | Boat-builders and fishers govern landing rights through assemblies; they resent upstream sediment and admire upstream tools     | Moderate/Extend: local rights and bounded trade             |
 | **The Cairnward Holds**, upland hamlets                   | Sheep, stone and ironworking support scattered households; some favor toll-taking patrols, others guide travelers freely        | Moderate/Extend: distinct memberships and route commitments |
@@ -58,13 +58,13 @@ Power is local. A victory at the ford changes passage, income and reputation aro
 
 ## Resources, skills and advancement
 
-| Resource or technique                     | Several useful purposes                                                                                   | Broad gap                                       |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Resource or technique                     | Several useful purposes                                                                                   | Broad gap                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Iron, charcoal and replaceable fittings   | Tools, hinges, cart repairs and defensive equipment; fuel competes with heating and pottery               | Moderate/Extend: bounded production and substitution   |
 | Reeds, flax and willow                    | Rope, roofs, baskets, fishing gear and lightweight partitions; harvesting can shelter or disturb wildlife | Moderate/Extend: materials, growth and habitat effects |
 | Warmstone ceramics                        | Store hearth heat for beds, seedlings and expeditions; heavy enough to make transport matter              | Moderate/Extend: bounded heat storage and transfer     |
 | Local grain and orchard varieties         | Food, seed exchange, brewing and seasonal celebration; resilience can matter more than maximum yield      | Moderate/Extend: coarse seasonal crops and recipes     |
-| Waterwheel knowledge                      | Milling, pumps and workshop power; changing a channel affects other users                                 | Large/New: coarse water and power networks          |
+| Waterwheel knowledge                      | Milling, pumps and workshop power; changing a channel affects other users                                 | Large/New: coarse water and power networks             |
 | Surveying, teaching and practical records | Safer bridges, dependable measures and apprentices who can carry methods elsewhere                        | Moderate/Extend: measurement evidence and learning     |
 
 Technology advances through projects: a better mill bearing, a foot-operated loom, a dependable kiln, a shared repair standard. A breakthrough should spread through teaching and demonstration rather than instantly granting every resident a new technology tier. Future firearms could be a separately selected development with material and social consequences; they are outside this starting proposal.
