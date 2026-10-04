@@ -272,7 +272,7 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
  * load). `sequence` orders snapshots: a durability ticket is saved once `sequence >= ticket`.
  * Bounds for records created at or before the cut: awareness/memory `sequence <= nextId`,
  * event `sequence <= eventSequence`. Revisions of older records need a ticket.
- * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
+ * docs/projects/completed/ordered-async-saves.md#durable-notification-epr05-seam */
 export interface DurableMark {
   revision: number;
   generation: string;
@@ -534,7 +534,7 @@ export class WorldService {
     // queue's admission deadline, so a stalled write still yields a busy result, not a hang.
     // While this operation is pending no new background save starts; its own synchronous
     // save, if any, carries the simulation progress.
-    // docs/projects/ordered-async-saves.md#ordering-rules
+    // docs/projects/completed/ordered-async-saves.md#ordering-rules
     this.pendingOperations++;
     const arrived = performance.now();
     try {
@@ -1065,7 +1065,7 @@ export class WorldService {
   ): Promise<boolean> {
     // Synchronous save. One writer in snapshot order: an in-flight background save commits
     // first, and a failed one stops every later write
-    // (docs/projects/ordered-async-saves.md#ordering-rules).
+    // (docs/projects/completed/ordered-async-saves.md#ordering-rules).
     await this.backgroundSave?.done;
     if (this.storageError) return false;
     let allocation: ReturnType<HostWork['reserve']> | undefined;
@@ -1140,7 +1140,7 @@ export class WorldService {
   //   until written and are shown only afterwards (`commit`). Simulation progress is also
   //   saved synchronously when a background save would drop an unsaved record from memory
   //   (the synchronous branch of `saveProgress`, SB20).
-  // docs/projects/ordered-async-saves.md#ordered-persistence-design
+  // docs/projects/completed/ordered-async-saves.md#ordered-persistence-design
   private backgroundSave?: { startedAt: number; sequence: number; done: Promise<void> };
   private snapshotSequence = 0;
   private durableSequence = 0;
@@ -1231,7 +1231,7 @@ export class WorldService {
 
   /** Resolves once the live world as it is now has been durably committed. Outside the
    * mutation queue this waits without holding it; inside, it commits synchronously.
-   * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
+   * docs/projects/completed/ordered-async-saves.md#durable-notification-epr05-seam */
   async whenDurable(): Promise<DurableMark> {
     await this.ready;
     if (this.mutationContext.getStore()?.active) {
@@ -1271,7 +1271,7 @@ export class WorldService {
 
   /** Save one snapshot of simulation progress: a background save when every record it removes
    * from memory is already durable; otherwise a synchronous save, as before (SB20).
-   * docs/projects/ordered-async-saves.md#ordering-rules */
+   * docs/projects/completed/ordered-async-saves.md#ordering-rules */
   private async saveProgress(saved: SavedWorld): Promise<boolean> {
     const { store } = this;
     if (this.storageError) return false;
@@ -2746,7 +2746,7 @@ export class WorldService {
       const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
       // Simulation progress is saved about once per real second as a background save, which no
-      // longer holds this queue (docs/projects/ordered-async-saves.md#ordering-rules).
+      // longer holds this queue (docs/projects/completed/ordered-async-saves.md#ordering-rules).
       // A wall clock stepped backwards must not suspend these saves (LA171, SV19).
       const sinceSave = this.now() - this.lastProgressSaveAt;
       const unsavedMs = sinceSave < 0 ? Number.POSITIVE_INFINITY : sinceSave;

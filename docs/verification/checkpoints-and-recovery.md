@@ -88,7 +88,7 @@ Final representative reruns used the same native command as above with 10,000 co
 
 Timer gaps during output peaked at 14.51 ms and 37.76 ms respectively. Before reader warmup, the first PostgreSQL capture barrier was 127.06 ms (second 2.95 ms); the rerun's maximum was 5.54 ms. Host load was not isolated, so this is a regression observation, not a controlled improvement ratio or a new population claim. Two saves per adapter do not qualify tail latency. Reports: `/tmp/openlegend-review-stress-{sqlite,pg}-warm.json`; earlier observations remain in `/tmp/openlegend-review-stress-{sqlite,pg}.json`. The original 100,000-source / greater-than-64-MiB evidence and all broader qualification limits above remain applicable.
 
-Final typecheck and production build passed, with the existing PlayCanvas externalization/chunk-size warnings. Changed-file formatting, Markdown links and whitespace checks are recorded in the [implementation plan](../projects/history-save-recovery.md#follow-up-implementation-review). No unit, integration or browser suite was added or run.
+Final typecheck and production build passed, with the existing PlayCanvas externalization/chunk-size warnings. Changed-file formatting, Markdown links and whitespace checks are recorded in the [implementation plan](../projects/completed/history-save-recovery.md#follow-up-implementation-review). No unit, integration or browser suite was added or run.
 
 ### Checkpoint integration with foundations
 
