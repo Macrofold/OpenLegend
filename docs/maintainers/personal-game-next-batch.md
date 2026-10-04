@@ -1,10 +1,10 @@
 # Personal-game next batch — assignment tracker
 
-**Status: proposed October 3, 2026; five definitions and prompts are prepared, with no runtime work completed by this planning pass.**
+**Status: proposed October 3, 2026; reconciled October 4. Five definitions and prompts are prepared; this documentation review does not deliver or qualify their runtime work.**
 
 [Feature scope and acceptance](../projects/personal-game-next-batch-feature-spec.md) · [Technical definitions](../projects/personal-game-next-batch-tech-design.md) · [Standalone prompts](../projects/personal-game-next-batch-prompts.md)
 
-This is an allocation across existing owners, not a replacement backlog. Baseline: local main dd21d1c7. The prior NP batch stays completed; active family-authoring work is excluded. Four implementation/qualification tasks and one design task can start independently; the owner combines their results without task-to-task communication.
+This is an allocation across existing owners, not a replacement backlog. Historical planning baseline: local main `dd21d1c7`. The prior NP batch stays completed. [BW16/D63 family authoring](../projects/completed/family-authoring-tech-design.md) is now delivered and remains outside this batch; preserve its behavior instead of treating the former parallel worktree as a pending dependency. Four implementation/qualification tasks and one design task can start independently; the owner combines their results without task-to-task communication.
 
 ## PG01 — A useful live invention
 
