@@ -8,7 +8,7 @@ The HUD should help the player notice, inspect and act, not cover the scene with
 
 Separate **camera focus**, **selected entity**, **controlled actor**, **action target** and **current floor/surface**. A camera move is not a character move. Selecting a level is not a movement command. Looking at an object is not permission to know its private state. Show the selected subject and active mode clearly enough that a player can predict where the next action goes.
 
-Current camera bindings belong to the existing owners, not this handbook. The accepted production guide documents primary/middle drag for pan, secondary or Shift-drag for orbit/tilt, a stationary secondary click for actions, and focused-canvas keyboard alternatives. Preserve those meanings; a reference game is not permission to swap them without an explicit design change.
+Current camera bindings belong to the existing owners, not this handbook. The accepted production guide documents Shift + right-drag or middle-drag for pan, right-drag for orbit/tilt, a stationary secondary click for actions, and focused-canvas keyboard alternatives. Preserve those meanings; a reference game is not permission to swap them without an explicit design change.
 
 ## One owner for each gesture
 
@@ -80,3 +80,7 @@ Do not fake audible words or speaker identity when only faint/unattributed sound
 ## Acceptance scenes
 
 Exercise a world-edge popup, two open panels at enlarged UI scale, an active chat composer while pressing movement keys, a drag ending over a button, a dismissed picker over walkable ground, a rotated multi-floor scene and a dense caption burst. Add a child popup inside a dialog, a short viewport with a keyboard, and any known targeting footprint against the actual supported geometry. Check that selection, focus and action authority remain separate. Current full-scene, touch and assistive-device qualification remains with the existing spatial/hearing trackers; source inspection does not close it.
+
+## Paused game tabs
+
+Opening, reloading or returning to a paused game tab shows a blocking **Game paused** dialog with **Resume here**. When another page holds current control of the assigned character, the heading is **Open Legend is open in another tab.** and the explanation names the character and says that resuming here pauses the other tab. Escape, outside clicks and game shortcuts cannot dismiss the dialog or act behind it. Show busy and readable retry errors in place. Refocus refreshes the world snapshot without choosing Resume. Manual world pause remains a separate clock control. See the [feature contract](../projects/completed/tab-resume-feature-spec.md).

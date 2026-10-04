@@ -10,7 +10,8 @@
     "react": "19.3.0",
     "react-aria-components": "1.21.1",
     "react-dom": "19.3.0",
-    "@open-legend/spatial": "workspace:*"
+    "@open-legend/spatial": "workspace:*",
+    "@open-legend/language": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

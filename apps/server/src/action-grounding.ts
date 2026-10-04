@@ -272,7 +272,7 @@ export async function groundActionAttempts(
           !followTargets.has(e.id),
       )) {
         scoped.push({
-          description: `Follow ${observerDescription(world, actorId, target.id)} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
+          description: `Follow ${observerDescription(world, actorId, target.id, 'definite')} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
           commands: [
             {
               id: op.localId,
@@ -515,7 +515,7 @@ export async function groundActionAttempts(
         if (command.type === 'drop')
           return `Drop ${command.quantity} ${world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.name ?? 'items'} on the ground.`;
         if (command.type === 'follow')
-          return `Follow ${observerDescription(world, actorId, command.targetId)} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units${command.relation ? ` (${command.relation}, judged from their observed travel)` : ''} until ${command.until !== undefined ? 'the chosen clock time' : 'cancelled or interrupted'}; ${command.onLost ? 'on losing sight, walk to where they were last seen and stop there unless seen again' : 'stops on losing sight'}. No stealth.`;
+          return `Follow ${observerDescription(world, actorId, command.targetId, 'definite')} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units${command.relation ? ` (${command.relation}, judged from their observed travel)` : ''} until ${command.until !== undefined ? 'the chosen clock time' : 'cancelled or interrupted'}; ${command.onLost ? 'on losing sight, walk to where they were last seen and stop there unless seen again' : 'stops on losing sight'}. No stealth.`;
         return (
           scoped.find((choice) => choice.commands[0] === command)?.description ??
           `Perform ${command.type}.`

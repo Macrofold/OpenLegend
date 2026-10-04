@@ -1,3 +1,4 @@
+import type { Named } from '@open-legend/language';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
 import type { InventoryCharacteristic } from './inventory.js';
@@ -226,7 +227,7 @@ export interface StatusEffectView {
   pose?: 'horizontal';
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
-export interface EntityView {
+export interface EntityView extends Named {
   contents?: Array<{
     id: string;
     definitionId: string;
@@ -260,7 +261,7 @@ export interface EntityView {
   actions: ActionOption[];
 }
 
-export interface InventoryItemView {
+export interface InventoryItemView extends Named {
   revision: number;
   placementRevision: number;
   individual?: boolean;
@@ -275,7 +276,7 @@ export interface InventoryItemView {
   /** The admitted requirement for one unit, including contents for an indivisible bag. */
   packingLoad?: number;
   characteristics?: InventoryCharacteristic[];
-  comparison?: { id: string; name: string; characteristics: InventoryCharacteristic[] };
+  comparison?: Named & { id: string; characteristics: InventoryCharacteristic[] };
   category: 'material' | 'food' | 'equipment' | 'ammunition';
   description: string;
   equipped: boolean;
@@ -303,7 +304,7 @@ export interface PerceivedSpeech {
   perception: 'heard' | 'seen' | 'self';
   intelligibility: 'none' | 'partial' | 'clear';
   segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
-  speaker: { entityId: string; nameAtTime: string } | null;
+  speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
@@ -429,6 +430,8 @@ export interface GameView {
     actorId: string;
     controlGeneration: number;
     controlling: boolean;
+    /** Another page holds current control, including while its stream is starting. */
+    controlledElsewhere: boolean;
     canManageSaves: boolean;
     /** Creator or access manager: may open the separate World operations console. */
     canOperate?: boolean;
@@ -485,7 +488,7 @@ export interface GameView {
     /** The world's clock offset in hours: day 1 starts at this hour. */
     offsetHours: number;
   };
-  player: {
+  player: Named & {
     appearance?: EntityView['appearance'];
     participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
@@ -979,7 +982,7 @@ export interface ObjectHistoryPage {
 export interface ContainerPage {
   ok: boolean;
   message?: string;
-  container: {
+  container: Named & {
     id: string;
     name: string;
     location?: string;

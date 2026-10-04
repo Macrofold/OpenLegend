@@ -798,22 +798,6 @@ async function initializeGameServer(
           return send(response, 200, { ok: true, message: 'Signed out.' });
         }
         let scope = await service.requestScope(login, connectionId);
-        // Local compatibility has one explicit principal. Shared mode always requires explicit control acquisition.
-        if (config.authentication.mode === 'local') {
-          const lease = await store.authority.control(scope.worldId, scope.actorId);
-          if (!lease.sessionId) {
-            await store.authority.changeControl(
-              scope,
-              {
-                id: `local-${connectionId}-${lease.generation}`,
-                expectedGeneration: lease.generation,
-                operation: 'acquire',
-              },
-              now,
-            );
-            scope = await service.requestScope(login, connectionId);
-          }
-        }
         if (isCharacterless(scope) && !characterlessRoute(request.method, url.pathname))
           return send(response, 403, {
             ok: false,
@@ -1161,11 +1145,7 @@ async function initializeGameServer(
         const submittedScope =
           request.headers['x-ol-scope'] ??
           (url.pathname === '/api/presence' ? url.searchParams.get('scope') : undefined);
-        if (
-          config.authentication.mode === 'oidc' &&
-          url.pathname !== '/api/embodiment' &&
-          submittedScope !== scopeKey(scope)
-        )
+        if (url.pathname !== '/api/embodiment' && submittedScope !== scopeKey(scope))
           throw new AuthorityError('stale-scope');
         if (operations.owns(url.pathname)) {
           // Operations routes check their own capability; a validation error stays a 400.
@@ -1221,7 +1201,6 @@ async function initializeGameServer(
           // An acknowledgment can be lost after control advanced. Only the same current
           // login/grant/timeline may inspect its original generation-bound receipt.
           if (
-            config.authentication.mode === 'oidc' &&
             submittedScope !== scopeKey(scope) &&
             submittedScope !== scopeKey({ ...scope, controlGeneration: value.expectedGeneration })
           )

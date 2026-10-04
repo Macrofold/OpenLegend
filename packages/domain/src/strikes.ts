@@ -1,4 +1,5 @@
-import { NATIVE_STRIKES } from './worlds/base/strikes.js';
+import { namePhrase, type Named } from '@open-legend/language';
+import { NATIVE_STRIKES, weaponStrikeWording } from './worlds/base/strikes.js';
 import { itemFor } from './objects.js';
 import type { WorldState } from './types.js';
 export { NATIVE_STRIKES } from './worlds/base/strikes.js';
@@ -62,6 +63,7 @@ export function strikeDefinition(
   id: string | undefined,
   world?: WorldState,
   weaponItemId?: string,
+  target?: Named | string,
 ): StrikeDefinition | undefined {
   if (weaponItemId) {
     const item = world && itemFor(world, weaponItemId);
@@ -71,8 +73,7 @@ export function strikeDefinition(
     return {
       id: definition.id,
       version: definition.version,
-      label: `Strike with ${definition.name}`,
-      pastTense: `struck with ${definition.name}`,
+      ...weaponStrikeWording(definition, target),
       animation: 'melee',
       autoMoveToRange: true,
       damage: profile.damage,
@@ -84,11 +85,19 @@ export function strikeDefinition(
       weaponItemId,
     };
   }
-  return id && Object.hasOwn(NATIVE_STRIKES, id) ? NATIVE_STRIKES[id] : undefined;
+  const native = id && Object.hasOwn(NATIVE_STRIKES, id) ? NATIVE_STRIKES[id] : undefined;
+  return native && target ? { ...native, label: `${native.label} ${namePhrase(target)}` } : native;
 }
-export function availableStrikes(world: WorldState, actorId: string): StrikeDefinition[] {
+export function availableStrikes(
+  world: WorldState,
+  actorId: string,
+  target?: Named | string,
+): StrikeDefinition[] {
   const weaponItemId = world.entities[actorId]?.actor?.equippedItemId;
   const item = weaponItemId && itemFor(world, weaponItemId);
-  const melee = item && strikeDefinition(item.definitionId, world, item.id);
-  return [...Object.values(NATIVE_STRIKES), ...(melee ? [melee] : [])];
+  const melee = item && strikeDefinition(item.definitionId, world, item.id, target);
+  const native = Object.values(NATIVE_STRIKES).map((definition) =>
+    target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
+  );
+  return [...native, ...(melee ? [melee] : [])];
 }

@@ -34,6 +34,8 @@ export interface PerceptionOptions {
   hearing: boolean;
 }
 export interface WorldRenderer {
+  setSuspended(suspended: boolean): void;
+  sampleFrameRate(): number | null;
   setPerceptionOptions(options: PerceptionOptions): void;
   setShadowQuality(quality: ShadowQuality): void;
   setCaptionOptions(options: SpeechCaptionOptions): void;

@@ -1,10 +1,17 @@
 # Maintainer TODO — cross-cutting work
 
+## Entity-name presentation
+
+- [x] Complete the owner-requested article audit: canonical bare names, one English grammar helper, world-owned proper/count/plural/material forms, permitted public naming metadata, profile/menu/prose choices, native memory attribution, admitted-output integrity and actual browser verification. [Contract](../entity-names.md); [completed plan](../projects/completed/entity-name-articles-plan.md); [native/PostgreSQL/browser evidence](../verification/entity-names.md). This changes wording, not identity recognition or the separate targeted-event privacy TODO. Existing unrelated check failures remain below; 3D placement and broader CI are not qualified by these DOM checks.
+
 ## Existing automated suite compatibility
 
 - [x] Confirm hosted full CI after publishing the integrated branch. The owner-authorized [spatial/cadence cleanup](../verification/spatial-cadence-main-integration.md) restored a passing local `pnpm check` with 188 retained tests. The [invention integration](../verification/invention-main-integration.md#published-ci-reconciliation) additionally reconciled current hearing assertions and the hosted checkpoint cleanup deadline without changing gameplay. [Hosted Linux full CI passed](https://github.com/Macrofold/OpenLegend/actions/runs/36342324187) with normal discovery and gates. This closes the hosted full-check gap, separately from spatial browser CI and [MW04](macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates) live-provider qualification.
 
 NP01's initial focused run found stale route expectations in the existing `cognition-verification.test.ts` model-forwarding case: the available camp-activity `request_1` option was absent from its generative, Jev-only and trace expectations. Those exact expected sets are now corrected without changing runtime routing or relaxing model/limit/no-generation assertions. The [October 3 targeted repair](../verification/level1-decisions.md#existing-routing-assertion-repair--october-3-2026) passes that existing case (1 passed, 5 skipped); the earlier 45-pass/1-failure observation remains historical evidence. Full current CI remains a merge gate, not established by the targeted pass.
+
+- [ ] Reconcile the unchanged arrow-material assertion in `packages/domain/src/kernel.test.ts`: stone is refused by the shared material-role validator, whose current generic refusal omits the word `shaft` expected by that assertion. Preserve the mechanical rejection and choose a meaningful assertion or justified role-specific wording. The [entity-name run](../verification/entity-names.md) identified this mismatch; it did not change the validator or weaken the check.
+- [ ] Investigate the existing object-menu fixture's 15-second deadline on the current PostgreSQL service path. Its exact object-scope case passed only in a 60-second diagnostic rerun (about 15.8 seconds); initial context/speech timeouts recovered under serial execution, and the final four-file run passed 21/21 normally. Determine setup/service cost before changing any normal deadline; preserve fixture isolation and current CI requirements. [Recorded observations](../verification/entity-names.md).
 
 ## World Agent session continuation — deferred regression coverage
 

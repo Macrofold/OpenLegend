@@ -707,11 +707,13 @@ export function SegmentedControl({
   options,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   options: Array<{ value: string; label: string }>;
   value: string;
   onChange(value: string): void;
+  disabled?: boolean;
 }) {
   return (
     <RadioGroup
@@ -720,6 +722,7 @@ export function SegmentedControl({
       orientation="horizontal"
       value={value}
       onChange={onChange}
+      isDisabled={disabled}
     >
       {options.map((o) => (
         <Radio key={o.value} className="ol-radio" value={o.value}>

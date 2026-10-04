@@ -1,9 +1,10 @@
+import { resumeGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../fixtures/database.js';
 
-test('time settings persist and distinguish background play, manual pause and disconnect', async ({
+test('time settings persist with explicit tab resume, replacement and manual world pause', async ({
   page,
 }, info) => {
   // Native, zero-budget fixture with explicit server ticks, independent of browser speed.
@@ -32,13 +33,12 @@ test('time settings persist and distinguish background play, manual pause and di
   try {
     await page.goto('http://127.0.0.1:' + address.port);
     await focus(true);
-    await expect(page.locator('#loading')).toBeHidden();
+    await expect(page.getByRole('dialog', { name: 'Game paused', exact: true })).toBeVisible();
+    await resumeGame(page);
     const settings = page.getByRole('button', { name: 'Time settings', exact: true });
-    const checkbox = page.getByRole('checkbox', { name: 'Pause game when hidden', exact: true });
     await settings.click();
-    await expect(checkbox).toBeChecked();
     await expect(page.locator('.ol-time-settings .ol-caption')).toHaveText(
-      '1×: one real second is one game minute. Manual pause always wins.',
+      '1×: one real second is one game minute. Manual pause always wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.',
     );
     await expect.poll(() => game.service.paused).toBe(false);
     await game.service.tick(1);
@@ -51,15 +51,9 @@ test('time settings persist and distinguish background play, manual pause and di
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(90);
-    await checkbox.uncheck();
-    await expect(checkbox).toBeEnabled();
-    await expect.poll(() => game.service.profile.preferences.pauseWhenHidden).toBe(false);
     await page.reload();
-    await expect(page.locator('#loading')).toBeHidden();
-    await page.getByRole('button', { name: 'Control here', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Control here', exact: true })).toBeHidden();
+    await resumeGame(page);
     await settings.click();
-    await expect(checkbox).not.toBeChecked();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     await page.screenshot({ path: info.outputPath('time-settings.png') });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -67,39 +61,61 @@ test('time settings persist and distinguish background play, manual pause and di
     const panelBounds = await page.locator('.ol-time-settings').boundingBox();
     expect(panelBounds!.x).toBeGreaterThanOrEqual(0);
     expect(panelBounds!.x + panelBounds!.width).toBeLessThanOrEqual(390);
-    // The dropdown must sit above adjacent panels, not merely within the viewport.
-    await checkbox.check();
-    await expect(checkbox).toBeEnabled();
-    await checkbox.uncheck();
-    await expect(checkbox).toBeEnabled();
+    await expect(
+      page.getByText('Leaving this tab pauses your play.', { exact: false }),
+    ).toBeVisible();
     await page.screenshot({ path: info.outputPath('time-settings-narrow.png') });
     await page.setViewportSize({ width: 1440, height: 960 });
 
     await focus(false);
+    await expect(page.getByRole('dialog', { name: 'Game paused', exact: true })).toBeVisible();
     await expect.poll(() => game.service.present).toBe(false);
     clock.now += 60_000;
     await game.service.tick(1);
-    expect(game.service.world.simTime).toBe(120);
-    expect(game.service.paused).toBe(false);
+    expect(game.service.world.simTime).toBe(90);
+    expect(game.service.paused).toBe(true);
     await focus(true);
-    await expect.poll(() => game.service.present).toBe(true);
-    await checkbox.check();
-    await expect(checkbox).toBeEnabled();
-    await focus(false);
-    await expect.poll(() => game.service.pauseReason).toBe('away');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Game paused', exact: true })).toBeVisible();
+    expect(game.service.present).toBe(false);
+    await resumeGame(page);
+    await expect.poll(() => game.service.paused).toBe(false);
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(120);
-    await focus(true);
-    await expect.poll(() => game.service.paused).toBe(false);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await expect.poll(() => game.service.pauseReason).toBe('manual');
-    await checkbox.uncheck();
-    await expect(checkbox).toBeEnabled();
     await focus(false);
-    await expect.poll(() => game.service.pauseReason).toBe('manual');
     await focus(true);
+    await resumeGame(page);
+    await expect.poll(() => game.service.pauseReason).toBe('manual');
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect.poll(() => game.service.paused).toBe(false);
+
+    // Both headless pages report focus. Replacement must still fence the old page.
+    const other = await page.context().newPage();
+    try {
+      await other.goto('http://127.0.0.1:' + address.port);
+      await expect(
+        other.getByRole('dialog', { name: 'Open Legend is open in another tab.' }),
+      ).toBeVisible();
+      await other.getByRole('button', { name: 'Resume here', exact: true }).click();
+      await expect(other.getByRole('dialog')).toBeHidden();
+      await expect(
+        page.getByRole('dialog', { name: 'Open Legend is open in another tab.' }),
+      ).toBeVisible();
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png') });
+      const bounds = await page.getByRole('dialog').boundingBox();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+      await page.getByRole('button', { name: 'Resume here', exact: true }).click();
+      await expect(page.getByRole('dialog')).toBeHidden();
+      await expect(
+        other.getByRole('dialog', { name: 'Open Legend is open in another tab.' }),
+      ).toBeVisible();
+    } finally {
+      await other.close();
+    }
     expect(errors).toEqual([]);
     expect(await game.service.store.recentJobs()).toEqual([]);
     await page.close();

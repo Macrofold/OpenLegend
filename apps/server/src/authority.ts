@@ -129,7 +129,7 @@ export class AuthorityError extends Error {
       {
         session: 'Sign in to continue.',
         forbidden: 'This operation is unavailable to this account.',
-        'control-changed': 'Control changed. Choose Take control to continue.',
+        'control-changed': 'This tab is paused. Choose Resume here to continue.',
         'stale-scope': 'Your access or world changed. Refresh before continuing.',
         conflict: 'This request conflicts with an earlier request.',
       }[code],
@@ -139,12 +139,16 @@ export class AuthorityError extends Error {
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export const isCharacterless = (scope: RequestScope) => scope.audience === 'authorized-inspection';
 export const scopeKey = (scope: RequestScope) => hash(JSON.stringify(scope));
-/** Reconnect keeps device drafts; security, embodiment and timeline changes do not.
+/** Reconnect and Resume keep device drafts; security, character and timeline changes do not.
  * This namespace grants no request authority and never replaces scopeKey.
  * docs/invention-workshop-tools.md#implemented-human-saved-work-interface
  */
 export const privateDraftScopeKey = (scope: RequestScope) => {
-  const { connectionId: _connectionId, ...privateScope } = scope;
+  const {
+    connectionId: _connectionId,
+    controlGeneration: _controlGeneration,
+    ...privateScope
+  } = scope;
   return hash(JSON.stringify(privateScope));
 };
 const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
@@ -400,6 +404,28 @@ export class AuthorityRepository {
           control.accountId === scope.accountId &&
           control.sessionId === scope.sessionId &&
           control.connectionId === scope.connectionId))
+    );
+  }
+  /** Resume commits before the new stream opens. Derive the competing page from
+   * the committed lease, so the old page's dialog cannot miss that handoff. */
+  controlsElsewhere(scope: RequestScope, now: number): boolean {
+    const control = this.controls.get(key(scope.worldId, scope.actorId));
+    if (!control || control.connectionId === scope.connectionId) return false;
+    const session = this.sessions.get(control.sessionId);
+    return (
+      !!session &&
+      this.current(
+        {
+          ...scope,
+          sessionId: session.id,
+          sessionRevision: session.revision,
+          controlGeneration: control.generation,
+          connectionId: control.connectionId,
+        },
+        'play',
+        true,
+        now,
+      )
     );
   }
   /** Re-read in the world publication transaction, including session expiry after any await. */

@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import {
   ACTIVITY_LIMITS,
   beginActivity,
@@ -81,7 +82,7 @@ import {
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { actionTargetsCurrent } from './action-targets.js';
-import { observerDescription } from './worlds/base/knowledge.js';
+import { observerDescription, observerName } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
 import {
   ResourceReservationError,
@@ -1368,7 +1369,7 @@ function executeCommandNative(
             world,
             events,
             'items-arranged',
-            `${actor.name} arranged some belongings.`,
+            `${namePhrase(actor, 'definite', { capitalize: true })} arranged some belongings.`,
             actor,
             undefined,
             undefined,
@@ -1428,7 +1429,7 @@ function executeCommandNative(
           world,
           events,
           'items-transferred',
-          `${actor.name} moved selected supplies.`,
+          `${namePhrase(actor, 'definite', { capitalize: true })} moved selected supplies.`,
           actor,
           command.destinationId,
         );
@@ -1497,7 +1498,7 @@ function executeCommandNative(
             world,
             events,
             'inventory-inspected',
-            `I inspect ${command.containerId ? `the accessible contents of ${observerDescription(world, actor.id, command.containerId)}` : 'my accessible possessions'}:${packing} ${page.join(' ')}${cursor.more ? ' More items remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+            `I inspect ${command.containerId ? `the accessible contents of ${observerDescription(world, actor.id, command.containerId, 'definite')}` : 'my accessible possessions'}:${packing} ${page.join(' ')}${cursor.more ? ' More items remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
             actor,
             undefined,
             { semanticTrigger: true, importance: 6 },
@@ -1528,14 +1529,14 @@ function executeCommandNative(
         result = {
           ok: true,
           code: 'equipped',
-          message: `Equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
+          message: `Equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
           itemId: equippedId,
         };
         emit(
           world,
           events,
           'equipped',
-          `${actor.name} equipped ${world.itemDefinitions[item.definitionId]!.name}.`,
+          `${namePhrase(actor, 'definite', { capitalize: true })} equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
           actor,
         );
         break;
@@ -1592,7 +1593,7 @@ function executeCommandNative(
           world,
           events,
           'ate',
-          bodyNarration(consumption.narration, actor, definition.name.toLowerCase()),
+          bodyNarration(consumption.narration, actor, definition),
           actor,
           undefined,
           { definitionId: definition.id },
@@ -1799,7 +1800,7 @@ function executeCommandNative(
           world,
           events,
           'speech',
-          `${actor.name}: ${command.text.trim()}`,
+          `${namePhrase(actor, 'definite', { capitalize: true })}: ${command.text.trim()}`,
           actor,
           command.targetId,
           {
@@ -1853,7 +1854,7 @@ function executeCommandNative(
           world,
           events,
           'taught',
-          `${actor.name} taught ${target.name} how to make ${recipe.name.toLowerCase()}.`,
+          `${namePhrase(actor, 'definite', { capitalize: true })} taught ${namePhrase(target, 'definite')} how to make ${recipe.name.toLowerCase()}.`,
           actor,
           target.id,
           { recipeId: recipe.id },
@@ -1902,10 +1903,10 @@ function executeCommandNative(
       events,
       'action-started',
       action.type === 'move' && action.destination
-        ? `${actor.name} started moving to ${Number(action.destination.x.toFixed(1))}, ${Number(action.destination.z.toFixed(1))}.`
+        ? `${namePhrase(actor, 'definite', { capitalize: true })} started moving to ${Number(action.destination.x.toFixed(1))}, ${Number(action.destination.z.toFixed(1))}.`
         : action.type === 'tend-fire'
-          ? `${actor.name} ${fireCareStartText(action.fireOperation!, world.entities[action.targetId!]?.name ?? 'a fire')}.`
-          : `${actor.name} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+          ? `${namePhrase(actor, 'definite', { capitalize: true })} ${fireCareStartText(action.fireOperation!, world.entities[action.targetId!] ?? 'fire')}.`
+          : `${namePhrase(actor, 'definite', { capitalize: true })} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
       actor,
       action.targetId,
       { actionType: action.type },
@@ -1932,18 +1933,31 @@ function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reas
     );
   actor.actor!.action = null;
   if (privateReason) {
-    emit(world, events, 'action-stopped', `${actor.name} stopped the action.`, actor);
+    emit(
+      world,
+      events,
+      'action-stopped',
+      `${namePhrase(actor, 'definite', { capitalize: true })} stopped the action.`,
+      actor,
+    );
     emit(
       world,
       events,
       'action-stopped-detail',
-      `${actor.name} stopped: ${reason}`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} stopped: ${reason}`,
       actor,
       undefined,
       undefined,
       'private',
     );
-  } else emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
+  } else
+    emit(
+      world,
+      events,
+      'action-stopped',
+      `${namePhrase(actor, 'definite', { capitalize: true })} stopped: ${reason}`,
+      actor,
+    );
 }
 function completeAction(
   world: WorldState,
@@ -1989,7 +2003,7 @@ function completeAction(
         world,
         events,
         'moved',
-        `${actor.name} moved to ${Number(worldPosition(actor).x.toFixed(1))}, ${Number(worldPosition(actor).z.toFixed(1))}.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} moved to ${Number(worldPosition(actor).x.toFixed(1))}, ${Number(worldPosition(actor).z.toFixed(1))}.`,
         actor,
       );
       break;
@@ -1998,7 +2012,7 @@ function completeAction(
         world,
         events,
         'replenished',
-        `${actor.name} finished replenishing.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} finished replenishing.`,
         actor,
         action.targetId,
         {
@@ -2052,7 +2066,7 @@ function completeAction(
         world,
         events,
         'gathered',
-        `${actor.name} gathered ${quantity} ${world.itemDefinitions[target.resource.definitionId]!.name.toLowerCase()}.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} gathered ${quantity} ${world.itemDefinitions[target.resource.definitionId]!.name.toLowerCase()}.`,
         actor,
         target.id,
         { definitionId: target.resource.definitionId, quantity },
@@ -2066,7 +2080,7 @@ function completeAction(
         world,
         events,
         'prepared',
-        `${actor.name} prepared ${preparation.outputQuantity} ${world.itemDefinitions[preparation.output]!.name.toLowerCase()}.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} prepared ${preparation.outputQuantity} ${world.itemDefinitions[preparation.output]!.name.toLowerCase()}.`,
         actor,
       );
       break;
@@ -2096,7 +2110,7 @@ function completeAction(
         world,
         events,
         'crafted',
-        `${actor.name} made ${recipe.output.name.toLowerCase()}.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} made ${namePhrase(world.itemDefinitions[recipe.outputDefinitionId]!, 'indefinite')}.`,
         actor,
         undefined,
         { recipeId: recipe.id, itemId },
@@ -2141,7 +2155,7 @@ function completeAction(
         world,
         events,
         'struck',
-        `${actor.name} ${definition.pastTense} ${target.name} for ${damage} damage.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} ${definition.pastTense} ${namePhrase(target, 'definite')} for ${damage} damage.`,
         actor,
         target.id,
         { definitionId: definition.id, damage, actionId: action.id },
@@ -2186,7 +2200,7 @@ function completeAction(
         world,
         events,
         'shot',
-        `${actor.name} ${hit ? `hit the ${target.actor!.species} for ${actualDamage} damage` : `missed the ${target.actor!.species}`}. One projectile was used.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? `hit ${namePhrase(target.actor!.species!, 'definite')} for ${actualDamage} damage` : `missed ${namePhrase(target.actor!.species!, 'definite')}`}. One projectile was used.`,
         actor,
         target.id,
         { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind, actionId: action.id },
@@ -2219,7 +2233,7 @@ function completeAction(
         world,
         events,
         'harvested',
-        `${actor.name} harvested meat and bone from the remains.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} harvested meat and bone from the remains.`,
         actor,
         target.id,
       );
@@ -2235,7 +2249,7 @@ function completeAction(
         world,
         events,
         'cooked',
-        `${actor.name} cooked meat over the campfire.`,
+        `${namePhrase(actor, 'definite', { capitalize: true })} cooked meat over the campfire.`,
         actor,
         action.heatId,
       );
@@ -2620,7 +2634,7 @@ function advanceAction(
       world,
       events,
       'struck',
-      `${actor.name} ${hit ? 'hit' : 'missed'} ${target.name} with ${world.itemDefinitions[definition.id]!.name}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? 'hit' : 'missed'} ${namePhrase(target, 'definite')} with ${namePhrase(world.itemDefinitions[definition.id]!, 'definite')}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
       actor,
       target.id,
       {
@@ -3689,7 +3703,7 @@ export function observeActor(
       // docs/architecture.md#dependencies-and-authority
       const copy: Entity = {
         ...entity,
-        name: observerDescription(world, actorId, entity.id),
+        ...observerName(world, actorId, entity.id),
         spatial: { ...entity.spatial },
         ...(entity.actor
           ? {

@@ -1,3 +1,4 @@
+import { namePhrase, type Named } from '@open-legend/language';
 import { isDraft, original } from 'immer';
 import { worldRootEntities } from '../../entity-index.js';
 import { emit, outcome } from '../../events.js';
@@ -245,9 +246,16 @@ export function fireCareProblem(
   if (!fire || !heat || fire.retirement)
     return { code: 'not-a-fire', message: 'Choose a campfire.' };
   if (operation === 'light') {
-    if (heat.lit) return { code: 'already-lit', message: `${fire.name} is already burning.` };
+    if (heat.lit)
+      return {
+        code: 'already-lit',
+        message: `${namePhrase(fire, 'definite', { capitalize: true })} is already burning.`,
+      };
     if (heat.fuelSeconds <= 0)
-      return { code: 'no-fuel', message: `Add fuel to ${fire.name} before lighting it.` };
+      return {
+        code: 'no-fuel',
+        message: `Add fuel to ${namePhrase(fire, 'definite')} before lighting it.`,
+      };
     if (!lightingMaterials(world, actor.id))
       return {
         code: 'missing-material',
@@ -273,7 +281,7 @@ export function fireCareProblem(
         message: !itemId
           ? 'Carry fuel, such as a Supple branch.'
           : definition && !isFuel(definition)
-            ? `${definition.name} is not fuel.`
+            ? `${namePhrase(definition, 'indefinite', { capitalize: true })} is not fuel.`
             : 'Choose carried fuel that no other work needs.',
       };
     }
@@ -281,10 +289,17 @@ export function fireCareProblem(
       heat.fuelSeconds + BASE_FIRE_CARE.fuel.secondsPerUnit >
       BASE_FIRE_CARE.fuel.maximumFuelSeconds
     )
-      return { code: 'fire-full', message: `${fire.name} cannot hold more fuel yet.` };
+      return {
+        code: 'fire-full',
+        message: `${namePhrase(fire, 'definite', { capitalize: true })} cannot hold more fuel yet.`,
+      };
     return null;
   }
-  if (!heat.lit) return { code: 'not-lit', message: `${fire.name} is not burning.` };
+  if (!heat.lit)
+    return {
+      code: 'not-lit',
+      message: `${namePhrase(fire, 'definite', { capitalize: true })} is not burning.`,
+    };
   // A working cook's meat was spent when cooking began; putting the fire out under it would
   // destroy that food, so it waits. A cook still walking over has spent nothing yet.
   // The frozen base roster avoids proxying scenery; only actors are read from the live draft.
@@ -297,12 +312,13 @@ export function fireCareProblem(
       return action?.type === 'cook' && action.stage === 'working' && action.heatId === fire.id;
     })
   )
-    return { code: 'in-use', message: `Someone is cooking on ${fire.name}.` };
+    return { code: 'in-use', message: `Someone is cooking on ${namePhrase(fire, 'definite')}.` };
   return null;
 }
 
 /** Readable start of fire work for world events, instead of the internal command name. */
-export function fireCareStartText(operation: FireOperation, fireName: string): string {
+export function fireCareStartText(operation: FireOperation, fire: Named | string): string {
+  const fireName = namePhrase(fire, 'definite');
   return operation === 'light'
     ? `started lighting ${fireName}`
     : operation === 'fuel'
@@ -339,7 +355,7 @@ export function completeFireCare(
       world,
       events,
       'fire-extinguished',
-      `${actor.name} put out ${fire!.name}.`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} put out ${namePhrase(fire!, 'definite')}.`,
       actor,
       fire!.id,
       {
@@ -349,7 +365,7 @@ export function completeFireCare(
     return outcome(
       true,
       'completed',
-      `${fire!.name} is out; ${fireFuelDescription(heat)} remains for relighting.`,
+      `${namePhrase(fire!, 'definite', { capitalize: true })} is out; ${fireFuelDescription(heat)} remains for relighting.`,
     );
   }
   const lot =
@@ -374,14 +390,18 @@ export function completeFireCare(
       [],
     ).status !== 'applied'
   )
-    return outcome(false, 'missing-material', `The ${definition.name} is no longer available.`);
+    return outcome(
+      false,
+      'missing-material',
+      `${namePhrase(definition, 'definite', { capitalize: true })} is no longer available.`,
+    );
   if (operation === 'fuel') {
     heat.fuelSeconds += BASE_FIRE_CARE.fuel.secondsPerUnit;
     emit(
       world,
       events,
       'fire-fueled',
-      `${actor.name} added ${definition.name} to ${fire!.name}.`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} added ${namePhrase(definition, 'definite')} to ${namePhrase(fire!, 'definite')}.`,
       actor,
       fire!.id,
       { actionId },
@@ -390,19 +410,27 @@ export function completeFireCare(
       ...outcome(
         true,
         'completed',
-        `Added one ${definition.name}; ${fire!.name} has ${fireFuelDescription(heat)}.`,
+        `Added one unit of ${namePhrase(definition)}; ${namePhrase(fire!, 'definite')} has ${fireFuelDescription(heat)}.`,
       ),
       spent: 1,
     };
   }
   heat.lit = true;
-  emit(world, events, 'fire-lit', `${actor.name} lit ${fire!.name}.`, actor, fire!.id, {
-    actionId,
-  });
+  emit(
+    world,
+    events,
+    'fire-lit',
+    `${namePhrase(actor, 'definite', { capitalize: true })} lit ${namePhrase(fire!, 'definite')}.`,
+    actor,
+    fire!.id,
+    {
+      actionId,
+    },
+  );
   return outcome(
     true,
     'completed',
-    `${fire!.name} is burning, with ${fireFuelDescription(heat)}; one ${definition.name} was used as tinder.`,
+    `${namePhrase(fire!, 'definite', { capitalize: true })} is burning, with ${fireFuelDescription(heat)}; one unit of ${namePhrase(definition)} was used as tinder.`,
   );
 }
 

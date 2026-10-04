@@ -44,6 +44,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: draft.person.name.trim(),
+        nameForm: 'proper',
         kind: 'npc',
         actor: createActor(world, 'npc', 75, {
           ...(traits.length ? { traits } : {}),
@@ -73,6 +74,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: draft.type === 'river-reeds' ? 'River reeds' : 'Dry grass fibers',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'raw_fiber', quantity: 36, workSeconds: 36 },
       };
@@ -80,6 +82,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: 'Fallen branches',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
       };
@@ -87,6 +90,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       return {
         ...base,
         name: 'River stones',
+        nameForm: 'plural',
         kind: 'resource',
         resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
       };

@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
 import { ActionAttempts } from './action-attempts';
@@ -148,7 +149,7 @@ export function EntityDetail({
       )}
       {entity.canTalk && (
         <Button icon="action.talk" onPress={() => talk(entity.id)}>
-          Talk to {entity.name}
+          Talk to {namePhrase(entity, 'definite')}
         </Button>
       )}
       <Actions actions={entity.actions} command={command} connected={connected} />

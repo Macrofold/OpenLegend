@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import {
   BASE_HANDOVER,
   offersBetween,
@@ -41,7 +42,7 @@ export function handoverOptions(
         id: `offer-accept:${offer.id}`,
         label: `Accept ${what} from ${person.name}`,
         shortLabel: `Accept ${what}`,
-        description: `Accept ${what} that ${person.name} is offering me; it moves into my possession now.${about ? ` ${name(offer.definitionId)}: ${about}` : ''} Replying does not interrupt my current work.`,
+        description: `Accept ${what} that ${namePhrase(person, 'definite')} is offering me; it moves into my possession now.${about ? ` ${name(offer.definitionId)}: ${about}` : ''} Replying does not interrupt my current work.`,
         command: {
           type: 'handover',
           handoverOperation: 'accept',
@@ -53,7 +54,7 @@ export function handoverOptions(
         id: `offer-decline:${offer.id}`,
         label: `Decline ${what} from ${person.name}`,
         shortLabel: `Decline ${what}`,
-        description: `Decline ${person.name}'s offer of ${what}; nothing moves.`,
+        description: `Decline ${namePhrase(person, 'definite')}'s offer of ${what}; nothing moves.`,
         command: {
           type: 'handover',
           handoverOperation: 'decline',
@@ -69,7 +70,7 @@ export function handoverOptions(
       id: `offer-withdraw:${offer.id}`,
       label: `Withdraw offer of ${what} to ${person.name}`,
       shortLabel: `Withdraw offer of ${what}`,
-      description: `Withdraw my offer of ${what} to ${person.name}; nothing moves.`,
+      description: `Withdraw my offer of ${what} to ${namePhrase(person, 'definite')}; nothing moves.`,
       command: {
         type: 'handover',
         handoverOperation: 'withdraw',
@@ -100,7 +101,7 @@ export function handoverOptions(
         id: `offer:${item.id}:${quantity}:${person.id}`,
         label: `Offer ${what} to ${person.name}`,
         shortLabel: `Offer ${what}`,
-        description: `Offer ${what} to ${person.name}. Nothing moves unless they accept within ${minutes} game minutes; I keep it until then and can withdraw the offer.`,
+        description: `Offer ${what} to ${namePhrase(person, 'definite')}. Nothing moves unless they accept within ${minutes} game minutes; I keep it until then and can withdraw the offer.`,
         command: {
           type: 'handover',
           handoverOperation: 'offer',

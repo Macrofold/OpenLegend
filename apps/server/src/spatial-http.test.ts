@@ -1,3 +1,5 @@
+import { localHttpClient } from '../../../tests/fixtures/http.js';
+import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -23,15 +25,7 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
   if (!address || typeof address === 'string') throw new Error('Missing server address');
   const base = `http://127.0.0.1:${address.port}`;
   try {
-    const response = await fetch(base + '/api/state');
-    const cookie = response.headers.get('set-cookie')!.split(';')[0]!;
-    const view = (await response.json()) as GameView;
-    const post = (path: string, body: unknown, origin = base) =>
-      fetch(base + path, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', cookie, origin },
-        body: JSON.stringify(body),
-      });
+    const { post, view } = await localHttpClient(base);
     expect(view.schemaVersion).toBe(2);
     expect(view.player.position.y).toBe(0);
     expect(JSON.stringify(view)).not.toContain('clearing-bird-loop'); // Private future route is not smoothing data.
@@ -91,6 +85,7 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
   await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   try {
     const actorId = game.service.controlledEntityId;
+    await enterLocalWorld(game.service);
     await game.service.control({ paused: false, clientId: 'save-fixture' });
     await game.service.command('saved-ramp', {
       type: 'move',
@@ -117,7 +112,11 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
       tick: false,
     });
     await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
-    expect(game.service.world.entities[actorId]).toEqual(snapshot);
+    await enterLocalWorld(game.service);
+    expect(game.service.world.entities[actorId]).toEqual({
+      ...snapshot,
+      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
+    });
     await game.service.control({ paused: false, clientId: 'save-fixture' });
     await game.service.transition((world) => advanceWorld(world, 150));
     expect(worldPosition(game.service.world.entities[actorId]!).y).toBe(3);
@@ -127,7 +126,10 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
       randomUUID(),
       await game.service.store.saves!.read(game.service.world.id, id),
     );
-    expect(game.service.world.entities[actorId]).toEqual(snapshot);
+    expect(game.service.world.entities[actorId]).toEqual({
+      ...snapshot,
+      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'exiting' }) },
+    });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);
     expect(game.service.world.entities['bird-1']!.spatial).toEqual(

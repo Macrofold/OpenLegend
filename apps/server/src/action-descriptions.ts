@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { strikeDefinition } from '@open-legend/domain';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
@@ -107,7 +108,7 @@ export function describeCommand(
     }
     case 'gather':
       if (!target?.resource) return common;
-      return `${common} ${target.name} has ${target.resource.quantity} units of ${name(target.resource.definitionId).toLowerCase()} remaining.`;
+      return `${common} ${namePhrase(target, 'definite', { capitalize: true })} has ${target.resource.quantity} units of ${name(target.resource.definitionId).toLowerCase()} remaining.`;
     case 'prepare': {
       if (!command.preparation) return common;
       const preparation = NATIVE_PREPARATIONS[command.preparation];
@@ -115,10 +116,10 @@ export function describeCommand(
     }
     case 'craft':
       if (!recipe) return common;
-      return `${recipe.description}\n\nMakes ${recipe.output.name}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
+      return `${recipe.description}\n\nMakes ${namePhrase(definition(recipe.outputDefinitionId) ?? recipe.output, 'indefinite')}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
     case 'equip':
       return itemDefinition?.launcher
-        ? `${itemDefinition.description}\n\nReady ${itemDefinition.name} for hunting. It uses ${itemDefinition.launcher!.ammunitionKind} ammunition.`
+        ? `${itemDefinition.description}\n\nReady ${namePhrase(itemDefinition, 'definite')} for hunting. It uses ${itemDefinition.launcher!.ammunitionKind} ammunition.`
         : itemDefinition
           ? `${itemDefinition.description}\n\n${common}`
           : common;
@@ -127,43 +128,39 @@ export function describeCommand(
         (entry) => entry.id === observation.actor.actor?.equippedItemId,
       );
       const weapon = equipped && definition(equipped.definitionId);
-      const subject = target?.animal
-        ? target.name.trim().toLowerCase() === target.actor!.species!.trim().toLowerCase()
-          ? `the ${target.actor!.species!}`
-          : target.name
-        : 'a living animal';
-      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `Your equipped ${weapon.name} uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
+      const subject = target?.animal ? namePhrase(target, 'definite') : 'a living animal';
+      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is equipped and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
     }
     case 'harvest':
       if (!target?.remains) return common;
       return target.remains.harvested
-        ? `${target.name} has already been harvested. No materials remain.`
-        : `${common} ${target.name} yields: ${target.remains.yields.map((yielded) => `${yielded.quantity} ${name(yielded.definitionId).toLowerCase()}`).join(', ')}.`;
+        ? `${namePhrase(target, 'definite', { capitalize: true })} has already been harvested. No materials remain.`
+        : `${common} ${namePhrase(target, 'definite', { capitalize: true })} yields: ${target.remains.yields.map((yielded) => `${yielded.quantity} ${name(yielded.definitionId).toLowerCase()}`).join(', ')}.`;
     case 'cook':
-      return target ? `${common} Use ${target.name} for this portion.` : common;
+      return target ? `${common} Use ${namePhrase(target, 'definite')} for this portion.` : common;
     case 'handover': {
       const what =
         item && itemDefinition ? `${command.quantity ?? item.quantity} ${itemDefinition.name}` : '';
       return command.handoverOperation === 'offer'
-        ? `Offer ${what || 'these items'} to ${target?.name ?? 'this person'}. Nothing moves unless they accept; you keep the items meanwhile and can withdraw the offer.`
+        ? `Offer ${what || 'these items'} to ${target ? namePhrase(target, 'definite') : 'this person'}. Nothing moves unless they accept; you keep the items meanwhile and can withdraw the offer.`
         : command.handoverOperation === 'accept'
-          ? `Take the offered items from ${target?.name ?? 'this person'}. You must be within arm's reach of each other.`
+          ? `Take the offered items from ${target ? namePhrase(target, 'definite') : 'this person'}. You must be within arm's reach of each other.`
           : command.handoverOperation === 'decline'
-            ? `Decline ${target?.name ?? 'this person'}'s offer; nothing moves.`
+            ? `Decline ${target ? namePhrase(target, 'definite') : 'this person'}'s offer; nothing moves.`
             : command.handoverOperation === 'withdraw'
-              ? `Withdraw your offer to ${target?.name ?? 'this person'}; nothing moves.`
+              ? `Withdraw your offer to ${target ? namePhrase(target, 'definite') : 'this person'}; nothing moves.`
               : common;
     }
     case 'tend-fire': {
       const state = target?.heat
-        ? ` ${target.name} is ${target.heat.lit ? 'burning' : 'cold'}, with ${fireFuelDescription(target.heat)}.`
+        ? ` ${namePhrase(target, 'definite', { capitalize: true })} is ${target.heat.lit ? 'burning' : 'cold'}, with ${fireFuelDescription(target.heat)}.`
         : '';
       return command.fireOperation === 'light'
-        ? `Light ${target?.name ?? 'the campfire'} with a fire drill (a carried rigid shaft, kept) and one bundle of plain fibers as tinder (used up). The fire must already have fuel.${state}`
+        ? `Light ${target ? namePhrase(target, 'definite') : 'the campfire'} with a fire drill (a carried rigid shaft, kept) and one bundle of plain fibers as tinder (used up). The fire must already have fuel.${state}`
         : command.fireOperation === 'fuel'
-          ? `Add ${itemDefinition?.name ?? 'one piece of carried fuel'} to ${target?.name ?? 'the campfire'}. It burns for about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour; a fire holds at most ${BASE_FIRE_CARE.fuel.maximumFuelSeconds / 3600} hours of fuel.${state}`
+          ? `Add ${itemDefinition ? namePhrase(itemDefinition, 'definite') : 'one piece of carried fuel'} to ${target ? namePhrase(target, 'definite') : 'the campfire'}. It burns for about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour; a fire holds at most ${BASE_FIRE_CARE.fuel.maximumFuelSeconds / 3600} hours of fuel.${state}`
           : command.fireOperation === 'extinguish'
-            ? `Put out ${target?.name ?? 'the campfire'}. Unburnt fuel stays for relighting; cooking there stops working.${state}`
+            ? `Put out ${target ? namePhrase(target, 'definite') : 'the campfire'}. Unburnt fuel stays for relighting; cooking there stops working.${state}`
             : common;
     }
     case 'eat':
@@ -172,7 +169,7 @@ export function describeCommand(
       return bodyPolicy(world)?.recovery?.successText ?? common;
     case 'teach':
       return recipe && target
-        ? `Teach ${target.name} how to make ${recipe.name}. ${recipe.description}\n\nShares the technique, not its materials or a finished item. You must be close enough to teach them.`
+        ? `Teach ${namePhrase(target, 'definite')} how to make ${recipe.name}. ${recipe.description}\n\nShares the technique, not its materials or a finished item. You must be close enough to teach them.`
         : common;
     default:
       return common;

@@ -43,6 +43,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Agency documentation integration](verification/agency-documentation-integration.md): documentation checks and retained memory-perspective observations.
 - [Attributes, status effects and sleep](verification/attributes-and-actor-state.md): native, service and browser observations.
 - [Items, editable knowledge and learned names](verification/items-and-knowledge.md): item handling, private knowledge and introductions.
+- [Entity names and articles](verification/entity-names.md): shared grammar, permitted naming, native outcomes, current-format persistence and desktop/narrow browser wording.
 - [Cognition context, triggers and pacing](verification/cognition-context.md): request context, conversation snapshots, relevance and trace attribution.
 - [Level-1 decisions](verification/level1-decisions.md): act/continue/escalate/defer fixtures, CR02 verification, per-level accounting, payload inspection and Intelligence rows. [NP01](verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) adds synthetic outcome/cost/context/ledger acceptance, with live and stale-fixture limits kept explicit.
 - [Simulation and cognition audit](verification/simulation-and-cognition-audit.md): native, persistence and limited provider observations.
@@ -85,7 +86,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Foundations and integration history
 
 - [Foundations 1–5](verification/foundations-1-5.md): implementation evidence and follow-up review.
-- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks.
+- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks. [Explicit tab Resume](verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) adds scoped transfer, protected departure and final browser/native evidence.
 - [Native action integration](verification/native-action-integration.md) and [action reconciliation](verification/action-reconciliation.md).
 - [Historical integration summaries](verification/integration-summaries.md): earlier overview notes and links to action, perception and persistence artifacts.
 - [Historical baseline and acceptance snapshot](verification/historical-baseline.md): earlier automated/provider results, product limits and acceptance owners. This is not the current branch’s test status.

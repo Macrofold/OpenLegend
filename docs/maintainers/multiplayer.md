@@ -59,6 +59,13 @@ OIDC mechanism references: [official openid-client API](https://github.com/panva
 [Keycloak container/import guide](https://www.keycloak.org/server/containers). These do not
 qualify hosted operations, hostile-client security, live model quality or PF capacity.
 
+## MP18 — Explicit tab resume
+
+- [x] Implement the owner-approved [Resume here experience](../projects/completed/tab-resume-feature-spec.md) through the [existing authority/transport owners](../projects/completed/tab-resume-tech-design.md). Replace Control here with a blocking pause/other-tab dialog; leaving pauses client work and uses normal departure, while only explicit Resume transfers control. Preserve stale-command/heartbeat rejection, character assignment, safe return, manual world pause and characterless operations.
+- [x] Finish static verification and full affected-diff review before the first browser test. Then qualify entry, blur/refocus, two-window transfer, stale commands, departure/return, failed Resume, keyboard/modal isolation and a narrow viewport in one final disposable, zero-budget browser session; fix its findings. This does not close IDP01's broader two-account checks.
+
+Completed October 3, 2026. [Acceptance evidence](../verification/multiplayer-entry-maintenance.md#explicit-tab-resume--october-3-2026) separates the four passing browser journeys and native authority checks from unrelated World Agent fixtures and broader Auth0 qualification.
+
 ## Identity provider — Auth0
 
 Mike selected Auth0 as the world login service on October 1, 2026 ([D05](../../archive/05-project/open-decisions.md)). Account setup and dashboard configuration are operator work outside the repository; these tasks cover repository changes and the production configuration they depend on.

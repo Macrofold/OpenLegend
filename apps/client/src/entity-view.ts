@@ -5,6 +5,8 @@ export function playerEntity(view: GameView): EntityView {
   return {
     id: view.player.id,
     name: view.player.name,
+    nameForm: view.player.nameForm,
+    indefiniteArticle: view.player.indefiniteArticle,
     kind: 'actor',
     statusEffects: view.player.statusEffects,
     subtype: 'player',

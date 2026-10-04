@@ -1,3 +1,4 @@
+import { canonicalName } from '@open-legend/language';
 import type {
   ItemDefinition,
   MaterialProperty,
@@ -507,12 +508,20 @@ export function validateInstalledRecipe(
       id !== recipe.outputDefinitionId ||
       recipeId !== recipe.id ||
       version !== 1 ||
-      name !== recipe.sourceCandidate.output.name ||
+      name !==
+        canonicalName(recipe.sourceCandidate.output.name, compiled.outputDefinition.nameForm) ||
       description !== recipe.sourceCandidate.output.description ||
       recipe.digest !== canonicalJson(recipe.sourceCandidate) ||
       recipe.name !== recipe.sourceCandidate.name ||
       recipe.description !== recipe.sourceCandidate.description ||
-      canonicalJson(recipe.output) !== canonicalJson(recipe.sourceCandidate.output) ||
+      canonicalJson(recipe.output) !==
+        canonicalJson({
+          ...recipe.sourceCandidate.output,
+          name: canonicalName(
+            recipe.sourceCandidate.output.name,
+            compiled.outputDefinition.nameForm,
+          ),
+        }) ||
       canonicalJson(recipe.inputs) !== canonicalJson(recipe.sourceCandidate.inputs) ||
       recipe.workSeconds !== compiled.workSeconds ||
       canonicalJson(output) !== canonicalJson(compiled.outputDefinition) ||

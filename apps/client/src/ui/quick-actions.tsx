@@ -1,4 +1,5 @@
 import { distance3D } from '@open-legend/spatial';
+import { namePhrase } from '@open-legend/language';
 import { useEffect, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, GameView } from '@open-legend/protocol';
@@ -110,7 +111,7 @@ export function QuickActions({
     .filter((e) => e.canTalk)
     .map((e) => ({
       id: `talk-${e.id}`,
-      label: `Talk to ${e.name}`,
+      label: `Talk to ${namePhrase(e, 'definite')}`,
       description: undefined,
       enabled: connected,
       reason: undefined,

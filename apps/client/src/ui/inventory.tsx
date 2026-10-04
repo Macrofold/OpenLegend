@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useEffect, useRef, useState } from 'react';
 import type {
   ActionOption,
@@ -513,7 +514,7 @@ function InventoryWorkspace({
         quantity: amount,
       },
       item,
-      sourceName: page.container.name,
+      sourceName: namePhrase(page.container, 'definite'),
       quantity: selection.quantity,
       rootRevision: view.player.inventoryRevision,
     });
@@ -553,8 +554,8 @@ function InventoryWorkspace({
     void dispatch(
       action,
       target.kind === 'recipient'
-        ? `Offered ${transferAmount} ${transfer.item.name} to ${target.name}. They must accept before anything moves.`
-        : `Moved ${transferAmount} ${transfer.item.name} from ${transfer.sourceName} to ${target.name}.`,
+        ? `Offered ${transferAmount} ${transfer.item.name} to ${namePhrase(target, 'definite')}. They must accept before anything moves.`
+        : `Moved ${transferAmount} ${transfer.item.name} from ${transfer.sourceName} to ${namePhrase(target, 'definite')}.`,
     );
   };
   return (
@@ -853,10 +854,13 @@ function InventoryWorkspace({
                   )}
                   {item.comparison && !item.equipped && (
                     <details>
-                      <summary>Compare with equipped {item.comparison.name}</summary>
+                      <summary>
+                        Compare with {namePhrase(item.comparison, 'definite')} (equipped)
+                      </summary>
                       <table className="ol-inventory-comparison">
                         <caption>
-                          {item.name} compared with equipped {item.comparison.name}
+                          {item.name} compared with {namePhrase(item.comparison, 'definite')}{' '}
+                          (equipped)
                         </caption>
                         <thead>
                           <tr>

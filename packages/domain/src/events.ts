@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
 import { activeActivity } from './action-experience.js';
 import { chargeWork } from './work-budget.js';
@@ -150,7 +151,12 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       owner = source.id;
     }
     // Describe a departing subject before its episode ends, so recognition is event-time.
-    const subject = observerDescription(world, source.id, targetId);
+    const subject = observerDescription(
+      world,
+      source.id,
+      targetId,
+      departed || detail ? 'definite' : 'indefinite',
+    );
     const observed = departed
       ? `lost sight of ${subject}.`
       : detail
@@ -160,7 +166,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       world,
       events,
       'encounter',
-      `${source.name} ${observed}`,
+      `${namePhrase(source, 'definite', { capitalize: true })} ${observed}`,
       [source.id],
       source,
       targetId,

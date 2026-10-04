@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { useChatHistory } from './use-chat-history';
 import { useReplyPreview } from './use-reply-preview';
 import { useEffect, useRef, useState } from 'react';
@@ -220,7 +221,7 @@ export function Composer({
         />
         {draft.mode === 'chat' && (
           <p className="ol-meta ol-conversation-recipient">
-            {npc ? `With ${npc.name}` : 'Find someone to talk to.'}
+            {npc ? `With ${namePhrase(npc, 'definite')}` : 'Find someone to talk to.'}
           </p>
         )}
       </div>
@@ -254,7 +255,9 @@ export function Composer({
                       : 'No saved messages with this person yet.'}
                   </p>
                 }
-                ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
+                ariaLabel={
+                  npc ? `Conversation with ${namePhrase(npc, 'definite')}` : 'Conversation'
+                }
                 visible={visible}
               />
             </div>

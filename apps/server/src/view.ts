@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { recipeFamily, basePlaytestMilestones } from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
@@ -11,7 +12,7 @@ import {
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import { privateDraftScopeKey, scopeKey, type RequestScope } from './authority.js';
-import { observerDescription, fireFuelDescription } from '@open-legend/domain';
+import { observerDescription, observerName, fireFuelDescription } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
@@ -290,7 +291,10 @@ export async function projectView(
           world.statusEffectPolicy,
         ],
         () => {
-          const displayName = observerDescription(world, scope.actorId, entity.id);
+          const display = observerName(world, scope.actorId, entity.id);
+          const displayName = display.name;
+          const sentenceName = namePhrase(display, 'definite');
+          const subjectName = namePhrase(display, 'definite', { capitalize: true });
           const actions: ActionOption[] = [];
           for (const option of pickupActions(world, player, entity, (command) =>
             service.previewCommand(command, scope.actorId),
@@ -307,7 +311,7 @@ export async function projectView(
             );
           }
           if (entity.actor)
-            for (const definition of availableStrikes(service.world, scope.actorId)) {
+            for (const definition of availableStrikes(service.world, scope.actorId, display)) {
               const command = {
                 type: 'strike' as const,
                 definitionId: definition.id,
@@ -330,20 +334,20 @@ export async function projectView(
           const talkUnavailableReason = !entity.actor
             ? undefined
             : !speechCapable
-              ? `${displayName} cannot speak.`
+              ? `${subjectName} cannot speak.`
               : !entity.actor.alive
-                ? `${displayName} is dead and cannot respond.`
+                ? `${subjectName} is dead and cannot respond.`
                 : entity.actor.incapacitated
-                  ? `${displayName} is incapacitated and cannot respond.`
+                  ? `${subjectName} is incapacitated and cannot respond.`
                   : capabilityBlocked(world, entity, 'speech')
-                    ? `${displayName} cannot speak in their current state.`
+                    ? `${subjectName} cannot speak in their current state.`
                     : speechExposure(
                           world,
                           entity,
                           player,
                           loudestSpeechVolume(world.moduleManifest.acoustics),
                         ).detail === 'undetected'
-                      ? `Move within hearing range of ${displayName} to talk.`
+                      ? `Move within hearing range of ${sentenceName} to talk.`
                       : undefined;
           if (entity.replenisher) {
             const definition = attributeDefinition(world, entity.replenisher.attributeId);
@@ -440,9 +444,9 @@ export async function projectView(
                       : 'station';
           return {
             id: entity.id,
-            name: displayName,
+            ...display,
             ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
-            description: describeEntity({ ...entity, name: displayName }, world.itemDefinitions),
+            description: describeEntity({ ...entity, ...display }, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
@@ -701,6 +705,7 @@ export async function projectView(
       actorId: scope.actorId,
       controlGeneration: scope.controlGeneration,
       controlling: service.currentScope(scope, 'play', true),
+      controlledElsewhere: service.controlsElsewhere(scope),
       canOperate:
         service.currentScope(scope, 'create') || service.currentScope(scope, 'manage-access'),
       mode: service.config.authentication.mode,
@@ -776,6 +781,8 @@ export async function projectView(
       participation: actor.participation?.phase ?? 'active',
       id: player.id,
       name: player.name,
+      nameForm: player.nameForm,
+      indefiniteArticle: player.indefiniteArticle,
       position: worldPosition(player),
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
@@ -1036,6 +1043,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   if (
     previous.access?.scope !== next.access?.scope ||
     previous.access?.controlling !== next.access?.controlling ||
+    previous.access?.controlledElsewhere !== next.access?.controlledElsewhere ||
     previous.worldId !== next.worldId ||
     previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||

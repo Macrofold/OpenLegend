@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { worldRootEntities } from './entity-index.js';
 import { activelyParticipates } from './participation-state.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
@@ -340,7 +341,7 @@ export function advanceFlight(
         world,
         events,
         'landed',
-        `${entity.name} came to rest on the surface below.`,
+        `${namePhrase(entity, 'definite', { capitalize: true })} came to rest on the surface below.`,
         entity,
       );
     } else {
@@ -388,7 +389,13 @@ export function advanceFlight(
         )
       ) {
         setSpatialPosition(world, entity, from, null);
-        emitOccurrence(world, events, 'takeoff', `${entity.name} took flight.`, entity);
+        emitOccurrence(
+          world,
+          events,
+          'takeoff',
+          `${namePhrase(entity, 'definite', { capitalize: true })} took flight.`,
+          entity,
+        );
       }
       return;
     }
@@ -408,7 +415,13 @@ export function advanceFlight(
     const wasGrounded = worldSupport(entity) !== null;
     setSpatialPosition(world, entity, next, landing?.surfaceId ?? null);
     if (wasGrounded && !landing)
-      emitOccurrence(world, events, 'takeoff', `${entity.name} took flight.`, entity);
+      emitOccurrence(
+        world,
+        events,
+        'takeoff',
+        `${namePhrase(entity, 'definite', { capitalize: true })} took flight.`,
+        entity,
+      );
     if (fraction !== 1) return;
     progress.next = (progress.next + 1) % route.points.length;
     progress.waitSeconds = waypoint.waitSeconds;
@@ -417,7 +430,7 @@ export function advanceFlight(
         world,
         events,
         'landed',
-        `${entity.name} landed on ${surfaceById(map, landing.surfaceId)!.name.toLowerCase()}.`,
+        `${namePhrase(entity, 'definite', { capitalize: true })} landed on ${namePhrase(surfaceById(map, landing.surfaceId)!, 'definite')}.`,
         entity,
       );
     if (waypoint.landingSurfaceId || waypoint.waitSeconds > 0) return;

@@ -151,7 +151,14 @@ describe('world presence, time and durable commands', () => {
     const before = structuredClone(service.world);
     clock.now += 60_000;
     await service.tick(60);
-    expect(service.world).toEqual(before);
+    expect(service.world.simTime).toBe(before.simTime);
+    expect(service.world.rngState).toBe(before.rngState);
+    // Operational departure may change participation while physical time stays frozen.
+    const { participation: _beforeParticipation, ...bodyBefore } =
+      before.entities[PLAYER_ID]!.actor!;
+    const { participation: _afterParticipation, ...bodyAfter } =
+      service.world.entities[PLAYER_ID]!.actor!;
+    expect(bodyAfter).toEqual(bodyBefore);
     await activate(service);
     expect(service.world.simTime).toBe(before.simTime);
     await service.tick(0.25);

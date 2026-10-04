@@ -494,6 +494,8 @@ export function createItemLot(
     id,
     kind: 'item',
     name: definition.name,
+    nameForm: definition.nameForm,
+    indefiniteArticle: definition.indefiniteArticle,
     placement: { mode: 'contained', parentEntityId: parentId, revision: 0 },
     spatial: groundedSpatial('object'),
     item: lot,

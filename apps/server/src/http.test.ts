@@ -1,3 +1,4 @@
+import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -5,7 +6,6 @@ import { allItems, createItemLot, itemFor } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
-import type { GameView } from '@open-legend/protocol';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -26,15 +26,8 @@ async function start(godMode = false) {
   const address = game.server.address();
   if (!address || typeof address === 'string') throw new Error('Missing listener');
   const base = `http://127.0.0.1:${address.port}`;
-  const initial = await fetch(`${base}/api/state`);
-  const cookie = initial.headers.get('set-cookie')!.split(';')[0]!;
-  const post = (path: string, body: unknown, origin = base) =>
-    fetch(`${base}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: origin, Cookie: cookie },
-      body: JSON.stringify(body),
-    });
-  return { game, base, cookie, post, initial: (await initial.json()) as GameView };
+  const { cookie, post, view } = await localHttpClient(base);
+  return { game, base, cookie, post, initial: view };
 }
 
 describe('local HTTP boundary', () => {

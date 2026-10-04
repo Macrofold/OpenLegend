@@ -46,6 +46,7 @@ import { playerEntity } from './entity-view';
 import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { PerceptionOverlay } from './perception-overlay';
+import { FrameRateMeter } from './frame-rate';
 import { CharacterStatuses } from './character-status';
 import { SpeechCaptions, type CaptionPoint } from './speech-captions';
 import {
@@ -154,6 +155,8 @@ export class WildernessScene implements WorldRenderer {
   private pointerContextHandled = false;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
+  private suspended = false;
+  private readonly frameRateMeter = new FrameRateMeter();
   private readyRequested = false;
   private presentation!: WorldPresentation;
   private mercenary?: MercenaryModels;
@@ -244,7 +247,9 @@ export class WildernessScene implements WorldRenderer {
       canvas.addEventListener('wheel', this.wheel, { passive: false });
       canvas.addEventListener('keydown', this.cameraKey);
       window.addEventListener('blur', this.blur);
+      document.addEventListener('visibilitychange', this.resetFrameRate);
       this.app.on('update', (dt: number) => this.update(dt));
+      this.app.on('postrender', this.recordFrame);
       this.resize();
       this.placeCamera();
       this.app.start();
@@ -254,6 +259,24 @@ export class WildernessScene implements WorldRenderer {
     }
   }
 
+  private resetFrameRate = (): void => this.frameRateMeter.reset();
+  private recordFrame = (): void => {
+    if (this.view && document.visibilityState === 'visible')
+      this.frameRateMeter.record(performance.now());
+  };
+  sampleFrameRate(): number | null {
+    return this.destroyed || this.suspended || document.visibilityState !== 'visible'
+      ? null
+      : this.frameRateMeter.sample(performance.now());
+  }
+  setSuspended(suspended: boolean): void {
+    if (this.suspended === suspended) return;
+    this.suspended = suspended;
+    this.frameRateMeter.reset();
+    this.app.autoRender = !suspended;
+    // A fresh snapshot may render once behind the pause dialog; retain GPU assets.
+    this.app.renderNextFrame = true;
+  }
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
       this.presentation.lighting(this.view);
@@ -1222,6 +1245,7 @@ export class WildernessScene implements WorldRenderer {
     }
   }
   private update(dt: number): void {
+    if (this.suspended) return;
     this.elapsed += Math.min(dt, 0.1);
     for (const [id, entry] of this.actors) {
       if (entry.departedAt !== undefined) {
@@ -1655,9 +1679,9 @@ export class WildernessScene implements WorldRenderer {
       x: event.clientX,
       y: event.clientY,
       button: event.button,
-      // Primary drag follows the design system; secondary/middle retain camera access.
-      pan: true,
-      orbit: event.button === 2 || event.shiftKey,
+      // Track primary drags to suppress release actions, without moving the camera.
+      pan: event.button !== 0,
+      orbit: event.button === 2 && !event.shiftKey,
       moved: false,
     };
     this.canvas.setPointerCapture(event.pointerId);
@@ -1720,6 +1744,14 @@ export class WildernessScene implements WorldRenderer {
     else this.setZoom(event.deltaY * 0.008);
   };
   private cameraKey = (event: KeyboardEvent): void => {
+    if (
+      event.defaultPrevented ||
+      event.isComposing ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    )
+      return;
     const delta = Math.PI / 8;
     if (event.key === 'Home') this.center();
     else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
@@ -1742,8 +1774,7 @@ export class WildernessScene implements WorldRenderer {
         id,
         y: levels.find((level) => level.id === id)?.focusY ?? this.view?.player.position.y ?? 0,
       });
-    } else if (event.key.toLowerCase() === 'p') this.cameraCommand({ type: 'projection' });
-    else return;
+    } else return;
     event.preventDefault();
     event.stopPropagation();
   };
@@ -1810,6 +1841,8 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.removeEventListener('wheel', this.wheel);
     this.canvas.removeEventListener('keydown', this.cameraKey);
     window.removeEventListener('blur', this.blur);
+    document.removeEventListener('visibilitychange', this.resetFrameRate);
+    this.app.off('postrender', this.recordFrame);
     this.cancelDrag();
     this.shadowBatches?.destroy();
     for (const entry of this.actors.values()) {

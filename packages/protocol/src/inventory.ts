@@ -1,3 +1,4 @@
+import type { Named } from '@open-legend/language';
 /** Observer-safe facts for one inspected possession. Null is a known unknown, never zero. */
 export interface InventoryCharacteristic {
   id: string;
@@ -27,7 +28,7 @@ export interface InventoryDestinationRequest {
   cursor?: string;
 }
 
-export interface InventoryDestination {
+export interface InventoryDestination extends Named {
   id: string;
   name: string;
   location: string;

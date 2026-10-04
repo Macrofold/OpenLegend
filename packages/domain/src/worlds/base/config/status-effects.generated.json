@@ -134,14 +134,14 @@
         "emit": {
           "target": "$subject",
           "type": "stateChanged",
-          "narration": "{subject.name} fell asleep."
+          "narration": "{subject.name:definite} fell asleep."
         }
       },
       "onDeactivate": {
         "emit": {
           "target": "$subject",
           "type": "stateChanged",
-          "narration": "{subject.name} woke up."
+          "narration": "{subject.name:definite} woke up."
         }
       }
     },

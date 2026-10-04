@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { namePhrase } from '@open-legend/language';
 import {
   editActorAttributes,
   HOST_IMPLEMENTATIONS,
@@ -92,7 +93,7 @@ export function attributeBindingSummary(world: WorldState, payload: unknown): st
       ? `${d.name} = ${d.schema.initial}${d.schema.kind === 'number' ? ` ${d.schema.unit}` : ''}`
       : `${id} (unavailable)`;
   });
-  return `Attach to ${entity?.name ?? 'the selected body'}: ${additions.join('; ')}. Existing values, native physiology, senses, controller and work are unchanged. New reservoirs use their admitted drain and recharge rules.`;
+  return `Attach to ${entity ? namePhrase(entity, 'definite') : 'the selected body'}: ${additions.join('; ')}. Existing values, native physiology, senses, controller and work are unchanged. New reservoirs use their admitted drain and recharge rules.`;
 }
 export function attributeBindingImpact(world: WorldState, payload: unknown) {
   const parsed = attributeBindingSchema.safeParse(payload);

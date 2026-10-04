@@ -2,7 +2,7 @@ import { canAccessContainer, possessionItems } from './object-access.js';
 import { itemFor, objectAncestors } from './objects.js';
 import { contentsQuery } from './queries.js';
 import { worldPosition } from './spatial-state.js';
-import { observerDescription } from './worlds/base/knowledge.js';
+import { observerName } from './worlds/base/knowledge.js';
 import type { ItemDefinition, ItemInstance, WorldState } from './types.js';
 
 export interface InventoryInspection {
@@ -99,7 +99,7 @@ export function inspectedContainer(world: WorldState, actorId: string) {
     : undefined;
   return {
     id: container.id,
-    name: observerDescription(world, actorId, container.id),
+    ...observerName(world, actorId, container.id),
     revision: container.inventoryRevision ?? 0,
     placementRevision: container.placement?.revision ?? 0,
     ...(container.container

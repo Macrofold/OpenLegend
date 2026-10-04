@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { WorldVisualSettings } from './ui/world-visual-settings';
 import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
@@ -6,6 +7,8 @@ import { OperationsConsole } from './ui/operations-console';
 import { EntryScreen, type EntryStatus } from './ui/entry-screen';
 import { EntryNotice } from './ui/entry-notice';
 import { MaintenanceNotice } from './ui/maintenance-notice';
+import { TabResumeDialog } from './ui/tab-resume';
+import { useTabControl, type TabControl } from './tab-control';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
@@ -41,6 +44,7 @@ import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
 import { Promises } from './ui/promises';
 import { captionScope } from './speech-captions';
 import { CameraControls } from './ui/camera-controls';
+import { FpsCounter } from './ui/fps-counter';
 import type { CameraState } from './world-camera';
 import {
   Button,
@@ -92,6 +96,7 @@ type PanelId =
   | 'composer'
   | 'help'
   | 'mind';
+const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   inventory: { title: 'Inventory', side: 'left' },
   crafting: { title: 'Crafting', side: 'left' },
@@ -113,12 +118,14 @@ type GodEditorWindow =
 function App({
   resetApplication,
   onCharacterless,
+  tab,
 }: {
   resetApplication: () => void;
   onCharacterless: () => void;
+  tab: TabControl;
 }) {
   const [view, setView] = useState<GameView | null>(null),
-    [connected, setConnected] = useState(false),
+    [transportReady, setConnected] = useState(false),
     [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [notice, setNotice] = useState('');
@@ -151,10 +158,9 @@ function App({
     [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
     [timeSettings, setTimeSettings] = useState(false),
     [pausePending, setPausePending] = useState(false),
-    [preferencePending, setPreferencePending] = useState(false),
+    [speedPending, setSpeedPending] = useState(false),
     [width, setWidth] = useState(innerWidth),
-    [height, setHeight] = useState(innerHeight),
-    [hiddenPreference, setHiddenPreference] = useState<boolean | null>(null);
+    [height, setHeight] = useState(innerHeight);
   const [theme, setTheme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
     ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
   );
@@ -228,20 +234,40 @@ function App({
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
   }, [theme, reduce]);
+  const { paused: tabPaused, acceptView, pause: pauseTab, isPaused } = tab;
+  const connected = transportReady && !tabPaused && !!view?.access?.controlling;
   const accept = useCallback(
     (next: GameView, reset = false) => {
       const previous = latest.current;
+      if (
+        previous?.access &&
+        next.access &&
+        previous.access.privateDraftScope === next.access.privateDraftScope &&
+        next.access.controlGeneration < previous.access.controlGeneration
+      )
+        return;
+      if (!reset && previous?.worldId === next.worldId && next.revision < previous.revision) return;
+      acceptView(next);
       if (
         previous &&
         (previous.access?.scope !== next.access?.scope ||
           previous.saveTimeline !== next.saveTimeline)
       ) {
-        // Remount all private panels and queued intentions; retain this tab's transport identity.
-        clearAccess();
-        resetApplication();
-        return;
+        // Security/character/timeline changes remount private panels. A control
+        // transfer only invalidates in-flight requests and queued intentions;
+        // rebuilding GPU assets for each Resume would add needless latency.
+        if (
+          previous.access?.privateDraftScope !== next.access?.privateDraftScope ||
+          previous.saveTimeline !== next.saveTimeline
+        ) {
+          clearAccess();
+          resetApplication();
+          return;
+        }
+        setPicker(null);
+        setHover(null);
+        scene.current?.resetTransientCaptions();
       }
-      if (!reset && previous?.worldId === next.worldId && next.revision < previous.revision) return;
       acceptAccess(next);
       setView((current) => {
         if (!reset && current?.worldId === next.worldId && next.revision < current.revision)
@@ -249,7 +275,7 @@ function App({
         return next;
       });
     },
-    [resetApplication],
+    [resetApplication, acceptView],
   );
   useEffect(() => {
     let streamView: GameView | undefined;
@@ -259,7 +285,7 @@ function App({
       timer: ReturnType<typeof setTimeout> | undefined,
       stop: (() => void) | undefined;
     const schedule = (delay: number) => {
-      if (!active) return;
+      if (!active || isPaused()) return;
       source?.close();
       setConnected(false);
       clearTimeout(timer);
@@ -267,7 +293,7 @@ function App({
     };
     function connectEvents() {
       const current = streamView;
-      if (!active || !current) return;
+      if (!active || !current || isPaused()) return;
       clearTimeout(timer);
       source?.close();
       const connection = new EventSource(eventsUrl(current));
@@ -280,6 +306,7 @@ function App({
       };
       source.addEventListener('access-changed', () => {
         if (!active || source !== connection) return;
+        pauseTab();
         clearAccess();
         resetApplication();
       });
@@ -323,8 +350,10 @@ function App({
         accept(initial, true);
         setConnected(true);
         setEntryStatus({ kind: 'loading' });
-        stop ??= startPresence();
-        connectEvents();
+        if (!isPaused() && initial.access?.controlling) {
+          stop ??= startPresence();
+          connectEvents();
+        }
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
@@ -353,7 +382,7 @@ function App({
             message: e instanceof Error ? e.message : 'The world could not be loaded.',
           });
           // Existing play reconnects automatically; initial entry waits for an explicit retry.
-          if (latest.current) schedule(6000);
+          if (latest.current && !isPaused()) schedule(6000);
         }
       }
     }
@@ -368,6 +397,10 @@ function App({
       show = (e: PageTransitionEvent) => {
         if (e.persisted) void bootstrap();
       };
+    const focus = () => {
+      if (isPaused()) void bootstrap();
+    };
+    window.addEventListener('focus', focus);
     window.addEventListener('pagehide', hide);
     window.addEventListener('pageshow', show);
     return () => {
@@ -375,10 +408,11 @@ function App({
       source?.close();
       stop?.();
       clearTimeout(timer);
+      window.removeEventListener('focus', focus);
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
-  }, [accept, notify, onCharacterless]);
+  }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, resetApplication]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
@@ -461,6 +495,9 @@ function App({
     if (!open.includes('events')) setEventsType('all');
   }, [open]);
   async function command(action: ActionOption) {
+    if (isPaused() || !latest.current?.access?.controlling) {
+      return { ok: false, code: 'paused', message: 'Resume here to play.' };
+    }
     if (!connected) {
       notify('Reconnect to the world.');
       return { ok: false, code: 'offline', message: 'Reconnect to the world.' };
@@ -563,6 +600,7 @@ function App({
                 : { projection, levelId, rotationLocked, following },
             ),
         });
+      scene.current.setSuspended(tabPaused);
       scene.current.setShadowQuality(shadowQuality);
       scene.current.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
       scene.current.setView(view);
@@ -571,7 +609,7 @@ function App({
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError, shadowQuality]);
+  }, [view, sceneError, shadowQuality, tabPaused]);
   useEffect(() => {
     scene.current?.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
   }, [hasView, sceneError, visionGuide, hearingGuide]);
@@ -629,6 +667,7 @@ function App({
   }, [timeSettings]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (isPaused() || document.querySelector('[aria-modal="true"]')) return;
       if (e.key === 'Escape') {
         if (picker) {
           setPicker(null);
@@ -639,12 +678,34 @@ function App({
         return;
       }
       if (
-        /INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName) ||
+        e.defaultPrevented ||
+        e.isComposing ||
+        (e.target instanceof Element &&
+          e.target.closest(
+            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="dialog"], [role="listbox"], [role="menu"]',
+          )) ||
         e.metaKey ||
         e.ctrlKey ||
         e.altKey
       )
         return;
+      if (
+        e.key.toLowerCase() === 'p' ||
+        (e.shiftKey && (e.code === 'BracketRight' || e.code === 'BracketLeft'))
+      ) {
+        if (!view || picker) return;
+        e.preventDefault();
+        if (e.repeat) return;
+        if (e.key.toLowerCase() === 'p') void pause();
+        else {
+          const speed =
+            e.code === 'BracketRight'
+              ? timeSpeeds.find((value) => value > view.clock.speed)
+              : [...timeSpeeds].reverse().find((value) => value < view.clock.speed);
+          if (speed !== undefined) void changeSpeed(speed);
+        }
+        return;
+      }
       const ids: Record<string, PanelId> = {
         i: 'inventory',
         c: 'crafting',
@@ -666,7 +727,7 @@ function App({
     setView((v) => (v && profile.revision >= v.profile.revision ? { ...v, profile } : v));
   }
   async function pause() {
-    if (!view || pausePending) return;
+    if (!view || !connected || pausePending || view.clock.pauseReason === 'maintenance') return;
     setPausePending(true);
     try {
       const r = await setWorldPaused(!view.clock.paused);
@@ -678,21 +739,17 @@ function App({
       setPausePending(false);
     }
   }
-  async function pauseWhenHidden(value: boolean) {
-    setHiddenPreference(value);
-    setPreferencePending(true);
+  async function changeSpeed(speed: number) {
+    if (!view || !connected || speedPending) return;
+    setSpeedPending(true);
     try {
-      const r = await post<{ ok: boolean; message?: string; profile: PlayerProfile }>(
-        '/api/profile/preferences',
-        { pauseWhenHidden: value },
-      );
-      if (!r.ok) throw new Error(r.message);
-      preference(r.profile);
+      const r = await post('/api/control', { speed });
+      if (!r.ok) notify(r.message);
+      accept(await getState());
     } catch (e) {
       notify(String(e));
     } finally {
-      setPreferencePending(false);
-      setHiddenPreference(null);
+      setSpeedPending(false);
     }
   }
   function run(a: CatalogueAction) {
@@ -787,12 +844,18 @@ function App({
       : view.entities.find((e) => e.id === selected));
   const title = (id: PanelId) =>
     id === 'nearby' && entity
-      ? entity.name
+      ? namePhrase(entity, 'indefinite')
       : id === 'intelligence' && intelligenceSelection
         ? `${intelligenceSelection.actorName ?? 'World agent'} request`
         : panelInfo[id].title;
   function content(id: PanelId) {
     if (!view) return null;
+    // Keep editable drafts mounted, but close readers with their own polling.
+    if (
+      (tabPaused || !view.access?.controlling) &&
+      !['inventory', 'agent', 'composer'].includes(id)
+    )
+      return null;
     const props = { view, connected, command: (a: ActionOption) => void command(a) };
     switch (id) {
       case 'inventory':
@@ -801,11 +864,15 @@ function App({
             <Inventory
               {...props}
               command={command}
-              visible={open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')}
+              visible={
+                connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
+              }
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
             />
             <CampActivity
-              visible={open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')}
+              visible={
+                connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
+              }
               key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
               view={view}
               connected={connected}
@@ -865,7 +932,7 @@ function App({
         return (
           <WorldAgent
             actorId={view.player.id}
-            accessScope={view.access?.scope ?? view.player.id}
+            accessScope={view.access?.privateDraftScope ?? view.player.id}
             budget={view.ai.budget}
             godMode={view.godMode}
             saveTimeline={view.saveTimeline}
@@ -876,7 +943,7 @@ function App({
             connected={connected}
             inventionSeed={inventionSeed}
             invent={invent}
-            visible={open.includes('agent') && (!narrow || open.at(-1) === 'agent')}
+            visible={connected && open.includes('agent') && (!narrow || open.at(-1) === 'agent')}
           />
         );
       case 'composer':
@@ -887,7 +954,9 @@ function App({
             seed={seed}
             setup={() => show('ai')}
             notify={notify}
-            visible={open.includes('composer') && (!narrow || open.at(-1) === 'composer')}
+            visible={
+              connected && open.includes('composer') && (!narrow || open.at(-1) === 'composer')
+            }
           />
         );
       case 'ai':
@@ -1041,12 +1110,13 @@ function App({
             <Section title="Controls">
               <p>
                 Click ground to walk. Click an object to look closer. Right-click or Control-click
-                for actions. Drag with the primary or middle mouse button to pan. Right-drag
-                smoothly orbits and tilts. Scroll to zoom.
+                for actions. Right-drag to rotate and tilt. Hold Shift while right-dragging to pan,
+                or use middle-drag. Scroll to zoom. Left-drag does not pan or act on release.
               </p>
               <p>
                 I Inventory · C Crafting · K Character · W World agent · V In view · J Journal · 1–3
-                Shortcuts · Escape Back / Close
+                Shortcuts · P Pause / Resume · Shift + ] Faster · Shift + [ Slower · Escape Back /
+                Close
               </p>
             </Section>
             <Section title="Credits">
@@ -1128,28 +1198,6 @@ function App({
                 <span id="saveStatus" className="ol-caption" title={view.persistence.message}>
                   {view.persistence.status === 'saved' ? 'Saved' : 'Save error'}
                 </span>
-                {view.access && !view.access.controlling && (
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    className="ol-session-control"
-                    aria-description="This window is viewing your character. Take control to act here."
-                    onPress={() =>
-                      void post('/api/embodiment', {
-                        id: crypto.randomUUID(),
-                        expectedGeneration: view.access!.controlGeneration,
-                        operation: 'replace',
-                      })
-                        .then((result) => {
-                          if (!result.ok) notify(result.message ?? 'Control could not be changed.');
-                          else retry.current();
-                        })
-                        .catch((error: unknown) => notify(String(error)))
-                    }
-                  >
-                    Control here
-                  </Button>
-                )}
               </div>
               <div className="ol-survival-name">
                 <h3 className="ol-heading">{view.player.name}</h3>
@@ -1200,15 +1248,10 @@ function App({
                 />
                 <SegmentedControl
                   label="Time speed"
-                  options={[0.5, 1, 3, 8].map((n) => ({ value: String(n), label: `${n}×` }))}
+                  options={timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
                   value={String(view.clock.speed)}
-                  onChange={(v) =>
-                    void post('/api/control', { speed: Number(v) })
-                      .then((r) => {
-                        if (!r.ok) notify(r.message);
-                      })
-                      .catch((e) => notify(String(e)))
-                  }
+                  disabled={!connected || speedPending}
+                  onChange={(v) => void changeSpeed(Number(v))}
                 />
                 <IconButton
                   icon="ui.settings"
@@ -1219,17 +1262,10 @@ function App({
               </div>
               {timeSettings && (
                 <div className="ol-card ol-time-settings" role="region" aria-label="Time settings">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={hiddenPreference ?? view.profile.preferences.pauseWhenHidden}
-                      disabled={preferencePending}
-                      onChange={(e) => void pauseWhenHidden(e.target.checked)}
-                    />{' '}
-                    Pause game when hidden
-                  </label>
+                  <p>Leaving this tab pauses your play. Choose Resume here when you return.</p>
                   <p className="ol-caption">
-                    1×: one real second is one game minute. Manual pause always wins.
+                    1×: one real second is one game minute. Manual pause always wins. P pauses or
+                    resumes; Shift + ] speeds up; Shift + [ slows down.
                   </p>
                 </div>
               )}
@@ -1376,6 +1412,7 @@ function App({
               talk={talk}
             />
             <Narrator item={view.narrator} />
+            {!tabPaused && <FpsCounter renderer={scene} />}
             <CameraControls
               overlays={{ vision: visionGuide, hearing: hearingGuide }}
               toggleOverlay={(sense) =>
@@ -1386,7 +1423,7 @@ function App({
               send={(command) => scene.current?.cameraCommand(command)}
               center={() => scene.current?.center()}
             />
-            {picker && (
+            {!tabPaused && picker && (
               <ActionPicker
                 createItem={(definitionId, position) => {
                   setItemCreation({ definitionId, target: { position } });
@@ -1413,7 +1450,7 @@ function App({
                 }}
               />
             )}
-            {view.godMode && itemCreation && (
+            {!tabPaused && view.godMode && itemCreation && (
               <ItemCreationModal
                 options={view.godTools?.itemOptions ?? []}
                 target={itemCreation.target}
@@ -1422,7 +1459,7 @@ function App({
                 notify={notify}
               />
             )}
-            {personPosition && view.godMode && (
+            {!tabPaused && personPosition && view.godMode && (
               <PersonCreationModal
                 position={personPosition}
                 traits={view.godTools?.traits ?? []}
@@ -1430,7 +1467,8 @@ function App({
                 close={() => setPersonPosition(null)}
               />
             )}
-            {view.godMode &&
+            {!tabPaused &&
+              view.godMode &&
               godEditors.map((editor) =>
                 editor.type === 'person' ? (
                   <PersonEditor
@@ -1483,7 +1521,7 @@ function App({
             }}
           />
         )}
-        {!connected && view && (
+        {!connected && view && !tabPaused && (
           <div id="connection" role="status" className="ol-connection ol-card">
             Connection interrupted. Reconnecting to your saved world…
           </div>
@@ -1503,11 +1541,20 @@ function App({
           </div>
         )}
       </div>
-      {hover && !picker && (
+      {hover && !picker && !tabPaused && (
         <WorldHover
           name={hover.entity.name}
           point={hover.point}
           contents={view?.entities.find((entity) => entity.id === hover.entity.id)?.contents}
+        />
+      )}
+      {view && tabPaused && (
+        <TabResumeDialog
+          character={view.player.name}
+          elsewhere={view.access?.controlledElsewhere ?? false}
+          busy={tab.resuming}
+          error={tab.error}
+          resume={() => tab.resume((next) => accept(next, true))}
         />
       )}
     </ClockOffsetContext.Provider>
@@ -1520,10 +1567,16 @@ function ApplicationScope() {
   );
   const resetApplication = useCallback(() => setGeneration((value) => value + 1), []);
   const openOperations = useCallback(() => setOperations(true), []);
+  const tab = useTabControl();
   // Characterless operator/spectator accounts, or an explicit ?view=operations tab.
   if (operations) return <OperationsConsole />;
   return (
-    <App key={generation} resetApplication={resetApplication} onCharacterless={openOperations} />
+    <App
+      key={generation}
+      resetApplication={resetApplication}
+      onCharacterless={openOperations}
+      tab={tab}
+    />
   );
 }
 createRoot(document.getElementById('app')!).render(<ApplicationScope />);

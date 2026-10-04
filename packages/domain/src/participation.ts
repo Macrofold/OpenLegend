@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
 import { canStand, finitePoint } from '@open-legend/spatial';
@@ -101,9 +102,17 @@ export function changeParticipation(
     const support = supportedPosition(entity);
     if (support && canStand(spatialMap(world), support, bodyProfile(entity)))
       state.returnAnchor = support;
-    emit(world, events, 'departed', `${entity.name} left the clearing.`, entity, undefined, {
-      significant: true,
-    });
+    emit(
+      world,
+      events,
+      'departed',
+      `${namePhrase(entity, 'definite', { capitalize: true })} left the clearing.`,
+      entity,
+      undefined,
+      {
+        significant: true,
+      },
+    );
     state.phase = 'inactive';
   } else {
     if (anchor) {
@@ -118,7 +127,7 @@ export function changeParticipation(
         world,
         events,
         'returned',
-        `${entity.name} returned to the clearing.`,
+        `${namePhrase(entity, 'definite', { capitalize: true })} returned to the clearing.`,
         entity,
         undefined,
         { significant: true },

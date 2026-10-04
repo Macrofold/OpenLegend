@@ -82,8 +82,8 @@ export function CameraControls({
         label="Perspective view"
         hint={
           state.projection === 'orthographic'
-            ? 'Orthographic · switch to perspective (P)'
-            : 'Perspective · switch to orthographic (P)'
+            ? 'Orthographic · switch to perspective'
+            : 'Perspective · switch to orthographic'
         }
         pressed={state.projection === 'perspective'}
         onPress={() => send({ type: 'projection' })}
@@ -98,7 +98,7 @@ export function CameraControls({
       <CameraButton
         icon="ui.camera-help"
         label="Camera help"
-        hint="Left/middle-drag to pan; right-drag or Shift-drag to rotate and tilt; scroll to zoom. With the world focused: arrows rotate/tilt, Page Up/Down changes floor, P switches projection, Home centers on you. Follow keeps you centered; dragging or choosing a floor stops following."
+        hint="Right-drag to rotate and tilt; Shift + right-drag or middle-drag to pan; scroll to zoom. With the world focused: arrows rotate/tilt, Page Up/Down changes floor, Home centers on you. P pauses/resumes; Shift + ] speeds up; Shift + [ slows down. Panning or choosing a floor stops following."
       />
       {levels.length > 0 && (
         <select

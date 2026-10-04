@@ -104,7 +104,7 @@ export function memoryCandidate(
   if (awareness?.eventType === 'speech' && awareness.content !== undefined) {
     const participant = (id: string | undefined) =>
       id && world.entities[id] && awarenessBindsSubject(world, actorId, awareness, id)
-        ? entityLabel(world, world.entities[id]!, actorId)
+        ? entityLabel(world, world.entities[id]!, actorId, 'indefinite')
         : 'an unidentified individual';
     const recipient = awareness.intendedRecipientId;
     const relation =

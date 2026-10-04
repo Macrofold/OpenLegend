@@ -370,7 +370,7 @@ export class WorldService {
   private lastProgressSaveAt = 0;
   private unpersisted = false;
   private readonly listeners = new Set<() => void>();
-  private readonly presence = new Map<string, number>();
+  private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
   private readonly presenceOrders = new Map<string, { sequence: number; at: number }>();
   private readonly connections = new Map<string, RequestScope>();
   private readonly connectionPreferences = new Map<string, boolean>();
@@ -394,6 +394,12 @@ export class WorldService {
       scope.worldId === this.world.id &&
       scope.timelineId === this.timelineId &&
       !!this.store.authority?.current(scope, capability, controlling, this.now())
+    );
+  }
+  controlsElsewhere(scope: RequestScope): boolean {
+    return (
+      this.world.entities[scope.actorId]?.actor?.participation?.phase !== 'inactive' &&
+      !!this.store.authority?.controlsElsewhere(scope, this.now())
     );
   }
   refreshScope(scope: RequestScope): RequestScope {
@@ -701,7 +707,7 @@ export class WorldService {
       ]),
     );
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
-    if (config.authentication.mode === 'oidc') await this.reconcileParticipation();
+    await this.reconcileParticipation();
   }
 
   get controlledEntityId(): string {
@@ -796,23 +802,18 @@ export class WorldService {
     });
   }
   private get absent(): boolean {
-    if (this.config.authentication.mode === 'oidc') {
-      this.present; // Expire operational heartbeat timestamps before testing foreground pause.
-      for (const scope of this.connections.values()) {
-        if (!this.currentScope(scope)) continue;
-        const fresh = this.refreshScope(scope);
-        if (
-          this.currentScope(fresh, 'play', true) &&
-          (!this.connectionPreferences.get(scope.accountId) ||
-            this.presence.has(this.presenceKey(scope)))
-        )
-          return false;
-      }
-      return true;
+    if (this.present) return false;
+    // Non-browser clients may opt into connected background play. Game tabs
+    // always release control on blur, so an old stream cannot keep them active.
+    for (const scope of this.connections.values()) {
+      if (
+        this.currentScope(scope) &&
+        this.currentScope(this.refreshScope(scope), 'play', true) &&
+        this.connectionPreferences.get(scope.accountId) === false
+      )
+        return false;
     }
-    // An open stream survives background heartbeat throttling. With the setting
-    // off, this is connected background play, not offline catch-up after closing.
-    return !this.present && (this.pauseWhenHidden || this.connections.size === 0);
+    return true;
   }
   async setConnection(
     connectionId: string,
@@ -847,7 +848,7 @@ export class WorldService {
         }
       }
       await this.reconcileDisconnectedConversation();
-      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
+      await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
     });
   }
@@ -868,8 +869,8 @@ export class WorldService {
   }
   get present(): boolean {
     const cutoff = this.now() - 12_000;
-    for (const [key, timestamp] of this.presence)
-      if (timestamp < cutoff) {
+    for (const [key, entry] of this.presence)
+      if (entry.at < cutoff || !this.currentScope(entry.scope, 'play', true)) {
         this.presence.delete(key);
         if (![...this.connections.values()].some((scope) => this.presenceKey(scope) === key))
           this.presenceOrders.delete(key);
@@ -2117,8 +2118,7 @@ export class WorldService {
         this.connections.clear();
         this.presence.clear();
         this.presenceOrders.clear();
-        if (this.config.authentication.mode === 'oidc')
-          await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        await this.authorityContext.run(undefined, () => this.reconcileParticipation());
         this.debtSeconds = 0;
         this.memoryBacklog = null;
         this.notify();
@@ -2176,8 +2176,8 @@ export class WorldService {
         ...result.outcome,
         message:
           request.operation === 'release'
-            ? 'Control released; departure is pending.'
-            : 'This window now controls your character.',
+            ? 'Your tab is paused; your character is leaving the world.'
+            : 'Resumed here.',
       };
     });
   }
@@ -2307,8 +2307,13 @@ export class WorldService {
     });
   }
   private async reconcileParticipation(): Promise<void> {
+    this.present; // Prune expired or replaced heartbeat authority first.
     const participating = new Set<string>();
-    for (const scope of this.connections.values()) {
+    const scopes = [
+      ...this.connections.values(),
+      ...[...this.presence.values()].map((entry) => entry.scope),
+    ];
+    for (const scope of scopes) {
       if (this.currentScope(scope) && this.currentScope(this.refreshScope(scope), 'play', true))
         participating.add(scope.actorId);
     }
@@ -2402,7 +2407,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
-      this.assertScope(scope);
+      this.assertScope(scope, 'play', true);
       if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
         throw new AuthorityError('forbidden');
       clientId = this.presenceKey(scope);
@@ -2420,8 +2425,11 @@ export class WorldService {
       // Observe an expired heartbeat before renewing it. Otherwise a reconnect ahead
       // of the timer can hide the absence transition from pending inference.
       if (wasPaused && !this.world.paused) await this.syncPause();
-      if (visible) this.presence.set(clientId, this.now());
-      else this.presence.delete(clientId);
+      if (visible) {
+        if (!this.presence.has(clientId) && this.presence.size >= this.config.capacity.presence)
+          throw new Error('Presence capacity reached. Reconnect before continuing.');
+        this.presence.set(clientId, { at: this.now(), scope });
+      } else this.presence.delete(clientId);
       if (this.paused !== wasPaused || this.world.paused !== this.paused) await this.syncPause();
     });
   }
@@ -2548,7 +2556,7 @@ export class WorldService {
       await this.refreshCommandEpoch();
 
       await this.reconcileDisconnectedConversation();
-      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
+      await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
       if (this.paused || elapsedRealSeconds < 0) return;
       // The host distinguishes missing callbacks from callbacks during a busy batch.

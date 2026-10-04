@@ -116,6 +116,33 @@ export async function getState(): Promise<GameView> {
   const view = (await response.json()) as GameView;
   return view;
 }
+/** Capture the authority of this page's intent. A late release must never use
+ * the newer authority accepted after a Resume in another tab. */
+export async function changeTabControl(
+  view: GameView,
+  operation: 'replace' | 'release',
+): Promise<ApiResult> {
+  if (!view.access) throw new Error('Refresh your character before resuming.');
+  const response = await fetch('/api/embodiment', {
+    method: 'POST',
+    credentials: 'same-origin',
+    keepalive: operation === 'release',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-OL-Client': tabClientId,
+      'X-OL-Scope': view.access.scope,
+      'X-OL-Generation': view.historyEpoch?.split(':')[0] ?? '',
+    },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      expectedGeneration: view.access.controlGeneration,
+      operation,
+    }),
+  });
+  const result = (await response.json()) as ApiResult;
+  if (!result.ok) throw new Error(result.message || 'Your character could not resume here.');
+  return result;
+}
 /** Operator/spectator console state. It opens no event stream and never counts as presence. */
 export async function getOperations(): Promise<OperationsView> {
   const response = await fetch('/api/operations', {

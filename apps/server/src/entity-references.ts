@@ -1,3 +1,4 @@
+import type { NameArticle } from '@open-legend/language';
 import { observerDescription, recognizesSubject } from '@open-legend/domain';
 import type {
   ActorResponse,
@@ -50,8 +51,13 @@ export function entityHandles(
   return handles;
 }
 
-export function entityLabel(world: WorldState, entity: Entity, observerId: string): string {
-  const label = observerDescription(world, observerId, entity.id);
+export function entityLabel(
+  world: WorldState,
+  entity: Entity,
+  observerId: string,
+  article: NameArticle = 'none',
+): string {
+  const label = observerDescription(world, observerId, entity.id, article);
   return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
 }
 

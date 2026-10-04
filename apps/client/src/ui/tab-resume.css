@@ -1,0 +1,12 @@
+.ol-modal.ol-tab-resume {
+  width: min(460px, calc(100vw - var(--space-6)));
+}
+.ol-tab-resume .ol-modal-head h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+}
+.ol-tab-resume p {
+  margin: 0;
+  line-height: 1.5;
+}

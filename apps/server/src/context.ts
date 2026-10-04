@@ -1,3 +1,4 @@
+import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
 import { applicableConsumption } from '@open-legend/domain';
@@ -12,7 +13,7 @@ import {
   effectivePosition,
 } from '@open-legend/domain';
 import { inventionMaterials } from './invention-context.js';
-import { observerDescription } from '@open-legend/domain';
+import { observerDescription, observerName } from '@open-legend/domain';
 import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
@@ -95,10 +96,12 @@ function describeTargets(
       positions.set(target.id, effectivePosition(service.world, target.id));
     }
     const position = target && positions.get(target.id);
+    // Descriptions already use permitted names where they are constructed.
+    // Substring replacement here would corrupt personal names and their articles.
     return target && position
       ? {
           ...candidate,
-          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
+          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
         }
       : candidate;
   });
@@ -325,7 +328,7 @@ export function npcCandidates(
       ? [
           {
             id: `replenish-${target.id}`,
-            description: `${definition.reservoir.actionLabel} at ${target.name}.`,
+            description: `${definition.reservoir.actionLabel} at ${namePhrase(target, 'definite')}.`,
             command,
           },
         ]
@@ -373,7 +376,7 @@ export function npcCandidates(
         .filter((option) => option.availability.ok)
         .map((option) => ({
           id: option.id,
-          description: `${option.description} from ${target.name}.`,
+          description: `${option.description} from ${namePhrase(target, 'definite')}.`,
           command: option.command,
         })),
     ),
@@ -401,13 +404,13 @@ export function npcCandidates(
   ];
   // Discover only known appearances, then let the actor select one exact container.
   // Its inspected page supplies take/pack choices, never an item × all-bags product.
-  const knownContainers = new Map<string, string>();
+  const knownContainers = new Map<string, Named>();
   for (const item of [...inventory, ...observed.groundItems])
     if (service.world.itemDefinitions[item.definitionId]?.container)
-      knownContainers.set(item.id, service.world.itemDefinitions[item.definitionId]!.name);
+      knownContainers.set(item.id, service.world.itemDefinitions[item.definitionId]!);
   for (const entity of observed.visibleEntities)
     if (entity.kind === 'item-pile' || service.world.entities[entity.id]?.container)
-      knownContainers.set(entity.id, observerDescription(service.world, actorId, entity.id));
+      knownContainers.set(entity.id, observerName(service.world, actorId, entity.id));
   const accessibleContainers = [...knownContainers].filter(([id]) =>
     canAccessContainer(service.world, actorId, id),
   );
@@ -420,7 +423,7 @@ export function npcCandidates(
     ).toFixed(1);
     actions.push({
       id: `inspect-container:${id}`,
-      description: `Inspect the first page of ${name}, currently accessible within reach, ${distance} m away. Read at most 16 direct contents; this does not move anything or reveal unopened nested bags.`,
+      description: `Inspect the first page of ${namePhrase(name, 'definite')}, currently accessible within reach, ${distance} m away. Read at most 16 direct contents; this does not move anything or reveal unopened nested bags.`,
       command: { type: 'inspect-inventory', containerId: id },
     });
   }
@@ -439,7 +442,7 @@ export function npcCandidates(
     if (selected.inspection.more)
       actions.push({
         id: `inspect-container-next:${selected.id}`,
-        description: `Inspect the next page of ${selected.name}; additional contents remain. This continues the currently accessible container inspection.`,
+        description: `Inspect the next page of ${namePhrase(selected, 'definite')}; additional contents remain. This continues the currently accessible container inspection.`,
         command: {
           type: 'inspect-inventory',
           containerId: selected.id,
@@ -484,8 +487,8 @@ export function npcCandidates(
           id: `${direction}:${item.id}:${selected.id}`,
           description:
             direction === 'take'
-              ? `Take ${command.quantity} ${name} from ${selected.name} into my possessions, currently accessible within reach.${free}`
-              : `Put ${command.quantity} ${name} from my accessible possessions into ${selected.name}, currently within reach.${free}`,
+              ? `Take ${command.quantity} ${name} from ${namePhrase(selected, 'definite')} into my possessions, currently accessible within reach.${free}`
+              : `Put ${command.quantity} ${name} from my accessible possessions into ${namePhrase(selected, 'definite')}, currently within reach.${free}`,
           command,
         });
       }
@@ -504,7 +507,7 @@ export function npcCandidates(
     if (service.previewCommand(command, actorId).ok)
       actions.push({
         id: `follow:${target.id}`,
-        description: `Follow ${target.name} while visible; no stealth or automatic sunset stop.`,
+        description: `Follow ${namePhrase(target, 'definite')} while visible; no stealth or automatic sunset stop.`,
         command,
       });
   }
@@ -526,7 +529,7 @@ export function npcCandidates(
   for (const entity of observed.visibleEntities) {
     const id = service.world.conversations?.active[entity.id];
     if (id && id !== activeId && hearsEntity(service.world, observed.actor, entity))
-      nearbyConversations.set(id, entity.name);
+      nearbyConversations.set(id, namePhrase(entity, 'definite'));
   }
   for (const [id, name] of nearbyConversations)
     actions.push({
@@ -635,7 +638,7 @@ export function npcCandidates(
     if (service.previewCommand(command, actorId).ok)
       actions.push({
         id: `approach:${entity.id}`,
-        description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id)}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
+        description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });
   }
@@ -668,7 +671,7 @@ export function npcCandidates(
     )
       actions.push({
         id: `equip:${item.id}`,
-        description: `Equip ${definition.name}: ${definition.description}`,
+        description: `Equip ${namePhrase(definition)}: ${definition.description}`,
         command: { type: 'equip', itemId: item.id },
       });
   }
@@ -710,8 +713,8 @@ export function npcCandidates(
       const reachable = new Map<number, boolean>();
       for (const { item, definition, launcher, ammunition } of launchers) {
         const description =
-          huntingDescription(entity.actor.species, 'launcher', entity.name, definition.name) ??
-          `Shoot ${entity.name} with ${definition.name}. One shot.`;
+          huntingDescription(entity.actor.species, 'launcher', entity, definition) ??
+          `Shoot ${namePhrase(entity)} with ${namePhrase(definition)}. One shot.`;
         if (!reachable.has(launcher.range))
           reachable.set(
             launcher.range,
@@ -745,12 +748,12 @@ export function npcCandidates(
         const description = huntingDescription(
           entity.actor.species,
           definition.weaponItemId ? 'melee' : 'unarmed',
-          entity.name,
-          tool,
+          entity,
+          definition.weaponItemId ? definitions.get(definition.id) : undefined,
         );
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
+          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
           command: {
             type: 'strike',
             ...(description ? { purpose: 'Hunt once' } : {}),
@@ -789,7 +792,7 @@ export function npcCandidates(
             (item) =>
               `${item.quantity} × ${service.world.itemDefinitions[item.definitionId]!.name}`,
           )
-          .join(', ')} from ${entity.name} using a carried cutting tool.`,
+          .join(', ')} from ${namePhrase(entity, 'definite')} using a carried cutting tool.`,
         command: { type: 'harvest', targetId: entity.id },
       });
     // Fire care is offered per perceived fire from current state; native admission rechecks it.
@@ -879,7 +882,7 @@ export function planningCandidates(
       .flatMap((entity) => [
         {
           id: `plan-fire-fuel:${entity.id}`,
-          description: `Add one piece of carried fuel (such as a Supple branch) to ${entity.name}; about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour of burning each, ${BASE_FIRE_CARE.fuel.workSeconds} work seconds; the fuel must be carried when this step starts.`,
+          description: `Add one piece of carried fuel (such as a Supple branch) to ${namePhrase(entity, 'definite')}; about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} more hour of burning each, ${BASE_FIRE_CARE.fuel.workSeconds} work seconds; the fuel must be carried when this step starts.`,
           command: {
             type: 'tend-fire' as const,
             fireOperation: 'fuel' as const,
@@ -891,7 +894,7 @@ export function planningCandidates(
           : [
               {
                 id: `plan-fire-light:${entity.id}`,
-                description: `Light ${entity.name} once it has fuel, using one carried bundle of plain fibers as tinder and a rigid shaft as a drill; ${BASE_FIRE_CARE.light.workSeconds} work seconds.`,
+                description: `Light ${namePhrase(entity, 'definite')} once it has fuel, using one carried bundle of plain fibers as tinder and a rigid shaft as a drill; ${BASE_FIRE_CARE.light.workSeconds} work seconds.`,
                 command: {
                   type: 'tend-fire' as const,
                   fireOperation: 'light' as const,

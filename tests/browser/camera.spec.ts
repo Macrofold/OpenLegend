@@ -1,3 +1,4 @@
+import { resumeGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -43,6 +44,7 @@ test('camera gestures never issue commands and cancellation restores context men
     }, point);
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
+    await resumeGame(page);
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     if (await page.getByRole('button', { name: 'Pause world', exact: true }).isVisible())
       await page.getByRole('button', { name: 'Pause world', exact: true }).click();
@@ -93,6 +95,7 @@ test('camera gestures never issue commands and cancellation restores context men
       await page.mouse.up({ button: 'right' });
       await contextEvent({ x: draggedPoint.x + 80, y: draggedPoint.y });
       await expect(menu).toBeHidden();
+      if (reason === 'blur') await resumeGame(page);
       await expect(canvas).not.toHaveCSS('cursor', 'grabbing');
       await canvas.click({ button: 'right', position: draggedPoint });
       await expect(menu).toBeVisible();

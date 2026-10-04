@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { namePhrase } from '@open-legend/language';
 import {
   editActorAttributes,
   HOST_IMPLEMENTATIONS,
@@ -126,5 +127,5 @@ export function attributeValueSummary(world: WorldState, payload: unknown): stri
       : undefined;
     return `${definition?.name ?? c.attributeId}: ${JSON.stringify(current?.value ?? null)} -> ${JSON.stringify(c.value)}${definition?.schema.kind === 'number' ? ` ${definition.schema.unit}` : ''}`;
   });
-  return `Creator intervention on ${entity?.name ?? 'the selected body'}: ${changes.join('; ')}. This may create or remove fictional reservoir quantity without a source or work. It is not ordinary recharge, learning, or a change to the definition. Existing native state and unrelated attributes are preserved; normal concern and reservoir rules still apply. Changed values require a fresh revision and review.`;
+  return `Creator intervention on ${entity ? namePhrase(entity, 'definite') : 'the selected body'}: ${changes.join('; ')}. This may create or remove fictional reservoir quantity without a source or work. It is not ordinary recharge, learning, or a change to the definition. Existing native state and unrelated attributes are preserved; normal concern and reservoir rules still apply. Changed values require a fresh revision and review.`;
 }

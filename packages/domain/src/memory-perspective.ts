@@ -1,4 +1,5 @@
-import { observerDescription } from './worlds/base/knowledge.js';
+import { namePhrase, type Named } from '@open-legend/language';
+import { observerName } from './worlds/base/knowledge.js';
 import { controlledEntityId } from './identity.js';
 import type { WorldState } from './types.js';
 
@@ -8,16 +9,18 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // the compiled patterns. Weak ownership avoids a process-wide cache of historical names.
 const subjectPatterns = new WeakMap<
   object,
-  { name: string; possessive: RegExp; subject: RegExp }
+  { name: string; label: string; possessive: RegExp; subject: RegExp }
 >();
-function patterns(actor: { name: string }) {
+function patterns(actor: Named) {
+  const label = namePhrase(actor, 'definite', { capitalize: true });
   let cached = subjectPatterns.get(actor);
-  if (!cached || cached.name !== actor.name) {
-    const name = escape(actor.name);
+  if (!cached || cached.name !== actor.name || cached.label !== label) {
+    const name = `(?:${[...new Set([label, actor.name])].map(escape).join('|')})`;
     cached = {
       name: actor.name,
+      label,
       possessive: new RegExp(`^${name}['’]s\\b`),
-      subject: new RegExp(`^${name}\\b`),
+      subject: new RegExp(`^${name}(?=\\s|[.,:’']|$)`),
     };
     subjectPatterns.set(actor, cached);
   }
@@ -42,7 +45,7 @@ export function memoryPerspective(
     if (separator < 0) return text;
     const speaker =
       sourceEntityId && world.entities[sourceEntityId]
-        ? `${observerDescription(world, actorId, sourceEntityId)} said`
+        ? `${namePhrase(observerName(world, actorId, sourceEntityId), 'indefinite', { capitalize: true })} said`
         : 'An unidentified speaker said';
     return `${sourceEntityId === actorId ? 'I said' : speaker}${text.slice(separator)}`;
   }
@@ -52,13 +55,17 @@ export function memoryPerspective(
     .map((part, index) => {
       if (index % 2) return part;
       let result = named(part);
-      // Attribution is evidence, not a name match; unknown legacy subjects stay in third person.
+      // Without event attribution, keep third-person wording.
       if (sourceEntityId !== actorId) {
         const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
         if (index === 0 && source)
           result = result.replace(
-            new RegExp(`^${escape(source.name)}(?=\\s|[.,:’'])`),
-            observerDescription(world, actorId, source.id),
+            new RegExp(
+              `^(?:${[...new Set([namePhrase(source, 'definite', { capitalize: true }), source.name])].map(escape).join('|')})(?=\\s|[.,:’']|$)`,
+            ),
+            namePhrase(observerName(world, actorId, source.id), 'indefinite', {
+              capitalize: true,
+            }),
           );
         return result;
       }

@@ -128,6 +128,14 @@ The older creator inventory editor cannot change a type’s total when it repres
 
 **Reason / tradeoff:** A type-total editor cannot safely select which distinct identity/ownership records to destroy.
 
+## OB17 — English name presentation
+
+**Implemented, 2026-10-03 · Restrictiveness: Very safe.** [Entity naming](../entity-names.md) supports English count, proper, plural and mass nouns, with an authored `a/an` pronunciation override. Callers choose no article, an indefinite article or a definite article. English sound heuristics are not a pronunciation dictionary; ambiguous names require the override. Multilingual inflection and number-based pluralization are outside this delivery.
+
+**Reason / tradeoff:** One small shared formatter fixes readable naming without making world vocabulary an engine law or introducing a general localization framework. World content supplies names and grammatical forms. Other languages need an explicit product request.
+
+**Unchanged no-limit dimensions:** formatting adds no entity, item, memory, query or action cap and no provider work. Existing name-length, observer and context budgets still apply; [CG01](cognition.md#cg01) and [KG01](memory.md#kg01) retain their broader preparation-growth constraints. [Native, PostgreSQL and browser evidence](../verification/entity-names.md) establishes presentation/current-format integrity, not new capacity qualification.
+
 ## QU02
 
 **Reported · Restrictiveness: Safe.**

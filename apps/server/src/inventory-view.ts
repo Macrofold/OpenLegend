@@ -21,6 +21,7 @@ import {
   dropItemReason,
   applicableConsumption,
   observerDescription,
+  observerName,
   itemFor,
   describePossession,
   contentsQuery,
@@ -188,7 +189,7 @@ export function containerPage(
     ok: true,
     container: {
       id: containerId,
-      name: entity.name,
+      ...observerName(world, scope.actorId, entity.id),
       location: containerLocation(service, scope, containerId),
       revision,
       ...(entity.container ? { restricted: !!entity.container.access } : {}),
@@ -204,7 +205,7 @@ export function containerPage(
       .filter((parent) => canAccessContainer(world, scope.actorId, parent.id))
       .map((parent) => ({
         id: parent.id,
-        name: parent.name,
+        ...observerName(world, scope.actorId, parent.id),
         revision: parent.inventoryRevision ?? 0,
       })),
     items,
@@ -223,7 +224,8 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
     .map((entry) => observerDescription(world, scope.actorId, entry.id));
   const path = enclosing.length ? `In ${enclosing.join(' › ')} · ` : '';
   if (rootId === scope.actorId) return `${path}Carried by you`;
-  if (root.actor) return `${path}Carried by ${observerDescription(world, scope.actorId, rootId)}`;
+  if (root.actor)
+    return `${path}Carried by ${observerDescription(world, scope.actorId, rootId, 'definite')}`;
   const separation = distance(
     effectivePosition(world, scope.actorId),
     effectivePosition(world, id),
@@ -301,6 +303,7 @@ export function activityStorageReader(
     const allowed = reachable && evidenced;
     return {
       id,
+      ...observerName(world, scope.actorId, id),
       name: choice.label,
       location: containerLocation(service, scope, id),
       revision: target.inventoryRevision ?? 0,
@@ -466,7 +469,9 @@ export function inventoryDestinationPage(
         : undefined;
     return {
       id,
-      name: id === scope.actorId ? 'My possessions' : observerDescription(world, scope.actorId, id),
+      ...(id === scope.actorId
+        ? { name: 'My possessions', nameForm: 'proper' as const }
+        : observerName(world, scope.actorId, id)),
       location: recipient
         ? 'Nearby person · offer requires their acceptance'
         : containerLocation(service, scope, id),
@@ -813,6 +818,8 @@ export function inventoryItemView(
       : {}),
     definitionId: item.definitionId,
     name: definition.name,
+    nameForm: definition.nameForm,
+    indefiniteArticle: definition.indefiniteArticle,
     quantity: item.quantity,
     characteristics,
     ...(equipped && equippedDefinition && comparable
@@ -820,6 +827,8 @@ export function inventoryItemView(
           comparison: {
             id: equipped.id,
             name: equippedDefinition.name,
+            nameForm: equippedDefinition.nameForm,
+            indefiniteArticle: equippedDefinition.indefiniteArticle,
             characteristics: counterpart,
           },
         }

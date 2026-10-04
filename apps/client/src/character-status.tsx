@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/language';
 import { createRoot, type Root } from 'react-dom/client';
 import type { GameView } from '@open-legend/protocol';
 import { reactionNotice } from './reaction-notices';
@@ -174,8 +175,9 @@ export class CharacterStatuses {
           ? view.player
           : view.entities.find((entity) => entity.id === event.actorId);
       if (!actor) continue;
-      let text = event.text.startsWith(`${actor.name} `)
-        ? event.text.slice(actor.name.length + 1)
+      const actorName = namePhrase(actor, 'definite', { capitalize: true });
+      let text = event.text.startsWith(`${actorName} `)
+        ? event.text.slice(actorName.length + 1)
         : event.text;
       if (event.type === 'crafted') text = text.replace(/^made /, 'Crafted ');
       this.enqueue(event.actorId, text.charAt(0).toUpperCase() + text.slice(1));

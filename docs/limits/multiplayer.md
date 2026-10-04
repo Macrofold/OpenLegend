@@ -54,7 +54,7 @@ Original recommendation: **Keep**.
 
 **Historical — needs recheck · Restrictiveness: Safe.**
 
-A browser presence record expires after 12 seconds without its periodic connection-status message, with connected-background-play behavior also affecting whether the world pauses.
+A verified foreground heartbeat expires after 12 seconds. A paused browser closes its stream and heartbeat immediately; only a current controller’s verified presence or admitted connected-background policy can keep the world running. Browser tabs always pause on blur; the saved background policy is available only to clients that deliberately retain a controlling connection.
 
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
@@ -104,11 +104,11 @@ A character’s historical human owner **cannot transfer to another account**. R
 
 ## MP09
 
-**Reported · Restrictiveness: Medium.**
+**Current (October 3, 2026) · Restrictiveness: Medium.**
 
-Shared play requires explicit control acquisition/replacement. Viewing tabs do not keep a character participating without its controlling connection.
+One explicit **Resume here** admits the assigned character to a page. Leaving the tab pauses it and releases control; refocus refreshes information only. A blocking dialog replaces the former read-only follower/Control here presentation. Page IDs last for one page lifetime; reload also requires Resume. Another current controller is described without exposing its identity or tab ID. Expected control revision and current request scope reject old commands, releases and heartbeats in local and OIDC modes.
 
-**Reason / tradeoff:** Only the controlling connection drives presence, avoiding viewing tabs silently keeping a character active.
+**Reason / tradeoff:** Explicit Resume avoids surprise takeovers and presents one clear entry action. A player returning from another app must resume intentionally. Characterless operations remain separate; this does not introduce multiple character selection. [Design](../projects/completed/tab-resume-feature-spec.md), [MP18](../maintainers/multiplayer.md#mp18--explicit-tab-resume).
 
 ## MP10
 
