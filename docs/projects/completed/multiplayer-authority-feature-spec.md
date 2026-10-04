@@ -1,14 +1,18 @@
 # Multiplayer principal, control and private projections — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+| Status    | Current progress                                                                                                                           | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Two-account control, private views and absence are delivered and locally qualified; later Auth0 and hosted-release checks remain separate. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Outcome and inherited policy
 
 Two independently authenticated humans can inhabit one world, act concurrently, see different permitted information, leave and return without duplicating their character or possessions. An account, session, character, controller and creator grant are different identities. Logging in does not make someone a creator; knowing an actor ID does not let a client control it.
 
-The [first shared-world authority contract](../../archive/07-technical-architecture/data-delivery-and-scale.md#first-shared-world-authority-boundary), [production identities](../../archive/07-technical-architecture/production-data-model.md#4-accounts-worlds-and-simulation-ownership), [human-private data boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [base-world lifecycle](../worlds/base/lifecycle-and-protection.md) and [save/load](../save-and-load.md) govern behavior. Start with one writer and two people; neither regional distribution nor public account onboarding is a prerequisite for the proof.
+The [first shared-world authority contract](../../../archive/07-technical-architecture/data-delivery-and-scale.md#first-shared-world-authority-boundary), [production identities](../../../archive/07-technical-architecture/production-data-model.md#4-accounts-worlds-and-simulation-ownership), [human-private data boundary](../../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [base-world lifecycle](../../worlds/base/lifecycle-and-protection.md) and [save/load](../../save-and-load.md) govern behavior. Start with one writer and two people; neither regional distribution nor public account onboarding is a prerequisite for the proof.
 
 Main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` uses one `local-player` profile, a service-level controlled actor and service-scoped projection caches. It has useful command epochs, mutation serialization and private projection code, but those are not yet independent account/control sessions. The project must replace the single-principal assumptions across all callers, not place a login form in front of them.
 
@@ -99,5 +103,5 @@ Document command/projection latency, per-connection queue age, payload size and 
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/multiplayer.md).
-- Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).
+- Implementation: [Feature tasks](../../maintainers/multiplayer.md).
+- Limits and constraints: [Accounts, participation and transport inventory](../../limits/multiplayer.md).

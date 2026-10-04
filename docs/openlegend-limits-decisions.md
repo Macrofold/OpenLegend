@@ -10,11 +10,11 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 | [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)        | [Tracker](maintainers/cognition-redesign.md)             |
 | [AI execution and spending](ai-providers.md)                                                          | [Limits](limits/ai-execution.md)  | [Tracker](maintainers/macrofold-worker-api.md)           |
 | [Invention and generated content](../archive/07-technical-architecture/declarations-and-evolution.md) | [Limits](limits/inventions.md)    | [Tracker](maintainers/inventions-and-world-evolution.md) |
-| [Objects, inventory and equipment](projects/persistent-objects-feature-spec.md)                       | [Limits](limits/objects.md)       | [Tracker](maintainers/persistent-objects.md)             |
+| [Objects, inventory and equipment](projects/completed/persistent-objects-feature-spec.md)             | [Limits](limits/objects.md)       | [Tracker](maintainers/persistent-objects.md)             |
 | [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md) | [Tracker](maintainers/state-contributions.md)            |
-| [Native work and invalidation](projects/dependency-invalidation-feature-spec.md)                      | [Limits](limits/native-work.md)   | [Tracker](maintainers/dependency-invalidation.md)        |
+| [Native work and invalidation](projects/completed/dependency-invalidation-feature-spec.md)            | [Limits](limits/native-work.md)   | [Tracker](maintainers/dependency-invalidation.md)        |
 | [Feelings and social continuity](projects/completed/appraisal-social-continuity-feature-spec.md)      | [Limits](limits/feelings.md)      | [Tracker](maintainers/agent-agency.md)                   |
-| [Accounts, participation and transport](projects/multiplayer-authority-feature-spec.md)               | [Limits](limits/multiplayer.md)   | [Tracker](maintainers/multiplayer.md)                    |
+| [Accounts, participation and transport](projects/completed/multiplayer-authority-feature-spec.md)     | [Limits](limits/multiplayer.md)   | [Tracker](maintainers/multiplayer.md)                    |
 | [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)       | [Tracker](maintainers/spatial-world.md)                  |
 | [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)     | [Tracker](maintainers/narration-and-conversations.md)    |
 | [Persistence, checkpoints and recovery](save-and-load.md)                                             | [Limits](limits/persistence.md)   | [Tracker](maintainers/save-and-load.md)                  |

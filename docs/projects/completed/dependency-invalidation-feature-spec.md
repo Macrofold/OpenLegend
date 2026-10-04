@@ -1,8 +1,12 @@
 # Dependency invalidation and aggregate work containment — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 4. [Technical design](dependency-invalidation-tech-design.md) owns algorithms; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08 while EPR/PF/SW retain their actual scheduler/query work. See [foundation package](foundations-1-5.md).
+| Status    | Current progress                                                                                                                                      | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The finite dependency, membership and work-budget foundation is delivered and locally qualified; broader performance and hosted capacity remain open. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 4. [Technical design](dependency-invalidation-tech-design.md) owns algorithms; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08 while EPR/PF/SW retain their actual scheduler/query work. See [foundation package](foundations-1-5.md).
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Outcome
 
@@ -12,9 +16,9 @@ The guarantee is semantic correctness with bounded admitted work, not merely a f
 
 ## 2. Existing foundation and governing contracts
 
-Main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` already uses immutable-snapshot spatial/custody caches, broad collection dependencies in server views, and [ActorWork](../../apps/server/src/actor-work.ts) tickets with input arrays/dirty state/deadlines. These are existing owners to improve. Their conservative collection invalidation must not be narrowed until equivalent membership coverage is supplied.
+Main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` already uses immutable-snapshot spatial/custody caches, broad collection dependencies in server views, and [ActorWork](../../../apps/server/src/actor-work.ts) tickets with input arrays/dirty state/deadlines. These are existing owners to improve. Their conservative collection invalidation must not be narrowed until equivalent membership coverage is supplied.
 
-[EWF08](../maintainers/extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment), [world-module runtime](../../archive/07-technical-architecture/world-module-runtime.md), [events/perception](../events-perception-and-reactions.md), [performance](../performance.md) and [save/load](../save-and-load.md) govern the contract. EPR05 already owns generation-aware ActorWork acknowledgment and common reaction intake. The hearing branch at `c4379246b8db98974de319e1f5315439ac8176bd` was inspected for those task boundaries; this project must not introduce another reaction scheduler.
+[EWF08](../../maintainers/extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment), [world-module runtime](../../../archive/07-technical-architecture/world-module-runtime.md), [events/perception](../../events-perception-and-reactions.md), [performance](../../performance.md) and [save/load](../../save-and-load.md) govern the contract. EPR05 already owns generation-aware ActorWork acknowledgment and common reaction intake. The hearing branch at `c4379246b8db98974de319e1f5315439ac8176bd` was inspected for those task boundaries; this project must not introduce another reaction scheduler.
 
 ## 3. Required scenarios
 
@@ -84,7 +88,7 @@ DI01–DI08 must demonstrate: empty-query membership changes; stationary observe
 
 For optimized supported queries, compare outputs, ordering, disclosure and meaningful evidence with a native complete-reference evaluation on matched disposable snapshots. Measure candidates/edges/outputs, allocations, subscriptions, queued descendants, queue age and mutation/projection tail latency. Do not infer correctness from lower CPU alone or capacity from an isolated empty world.
 
-The [accepted workload](../../archive/07-technical-architecture/data-delivery-and-scale.md) remains the qualification target, not a delivered performance promise. Native, database, client and live-provider quality are separate evidence classes. Required CI remains; default delegated implementation does not authorize new automated suites or paid retries.
+The [accepted workload](../../../archive/07-technical-architecture/data-delivery-and-scale.md) remains the qualification target, not a delivered performance promise. Native, database, client and live-provider quality are separate evidence classes. Required CI remains; default delegated implementation does not authorize new automated suites or paid retries.
 
 ## 8. Decisions and questions
 
@@ -94,5 +98,5 @@ Proposed defaults are explicit dependency types; mandatory membership scopes; ve
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/dependency-invalidation.md).
-- Limits and constraints: [Native work and invalidation inventory](../limits/native-work.md).
+- Implementation: [Feature tasks](../../maintainers/dependency-invalidation.md).
+- Limits and constraints: [Native work and invalidation inventory](../../limits/native-work.md).

@@ -396,7 +396,7 @@ export function availableItemQuantity(world: WorldState, itemId: string): number
 
 /** Planning reads one start state; a coupled group cannot spend its own speculative
  * outputs. Holds are converted once, not deducted a second time from available stock.
- * docs/projects/shared-state-contributions-tech-design.md#5-execution-phases-and-deterministic-arbitration
+ * docs/projects/completed/shared-state-contributions-tech-design.md#5-execution-phases-and-deterministic-arbitration
  */
 function planGroup(
   world: WorldState,

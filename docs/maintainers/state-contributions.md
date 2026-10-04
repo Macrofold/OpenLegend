@@ -1,8 +1,8 @@
 # State contributions — EWF02–03 / INV-6.3 subtracker
 
-**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This is the detailed decomposition of shared contribution/claim work under [EWF02–03](extensible-world-foundation.md#ewf02--typed-state-providers-and-one-authoritative-value) and [INV-6.3](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), not another state or invention authority. Parent completion still requires its own remaining scope. [Feature specification](../projects/shared-state-contributions-feature-spec.md) and [technical design](../projects/shared-state-contributions-tech-design.md) own the approved project.
+**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This is the detailed decomposition of shared contribution/claim work under [EWF02–03](extensible-world-foundation.md#ewf02--typed-state-providers-and-one-authoritative-value) and [INV-6.3](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), not another state or invention authority. Parent completion still requires its own remaining scope. [Feature specification](../projects/completed/shared-state-contributions-feature-spec.md) and [technical design](../projects/completed/shared-state-contributions-tech-design.md) own the approved project.
 
-Implementation was authorized September 26, 2026 in the [five-project execution plan](../projects/foundations-1-5.md#approved-implementation-plan). The slice checkboxes below remain qualification gates, not a count of files written. Each slice joins SL00 when it introduces durable state.
+Implementation was authorized September 26, 2026 in the [five-project execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan). The slice checkboxes below remain qualification gates, not a count of files written. Each slice joins SL00 when it introduces durable state.
 
 ## Execution notes — September 26, 2026
 
@@ -81,7 +81,7 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 ## SC04 — Real stock consumers and precision continuity
 
 - [x] Adapt charge replenishment and one existing native finite-resource consumption path. Preserve current cancellation/work outcomes and resource definitions.
-- [x] Establish exact quanta for newly admitted conserved families; inspect existing values before conversion, preserve fractional carry and refuse silent rounding/reset.
+- [x] Preserve whole-unit item/gathering precision and native continuous charge, including fractional holds; refuse silent rounding or reset. The original precision audit did not introduce a generic quantized-rate/carry representation. A new precision family requires a real consumer and explicit owner semantics, not legacy-save conversion.
 - [x] Exercise depletion, full recipient, own/other reservations, pause, variable elapsed partitions, source loss and restart. Retain actual transferred amounts.
 
 **Dependencies:** SC03. **Exit:** ordinary actor/player actions execute through the protocol, including contested partial fulfillment. P2's two-human proof may use this interface before P3's object model ships.

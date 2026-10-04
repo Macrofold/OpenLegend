@@ -1,8 +1,8 @@
 # Dependency invalidation — EWF08 subtracker
 
-**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This decomposes [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); EPR05 remains the actual reaction/ActorWork owner, SW owns geometry/query algorithms, INV owns definition admission and PF owns performance evidence. [Feature specification](../projects/dependency-invalidation-feature-spec.md) and [technical design](../projects/dependency-invalidation-tech-design.md) own this approved shared project.
+**Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This decomposes [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); EPR05 remains the actual reaction/ActorWork owner, SW owns geometry/query algorithms, INV owns definition admission and PF owns performance evidence. [Feature specification](../projects/completed/dependency-invalidation-feature-spec.md) and [technical design](../projects/completed/dependency-invalidation-tech-design.md) own this approved shared project.
 
-Implementation is approved under the [foundation plan](../projects/foundations-1-5.md#approved-implementation-plan), including the recorded DF02/hearing/cadence seams. Do not introduce another event bus, scheduler or writable graph. Each slice preserves native phase order, RNG, disclosure, elapsed-work semantics and required evidence. New durable state joins SL00 immediately.
+Implementation is approved under the [foundation plan](../projects/completed/foundations-1-5.md#approved-implementation-plan), including the recorded DF02/hearing/cadence seams. Do not introduce another event bus, scheduler or writable graph. Each slice preserves native phase order, RNG, disclosure, elapsed-work semantics and required evidence. New durable state joins SL00 immediately.
 
 ## Execution notes and dependency coverage — September 26, 2026
 
