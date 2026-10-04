@@ -1,5 +1,13 @@
 # Open Legend
 
+## Gameplay priorities and repertoire library
+
+The current product priority is a **complete, playable, enjoyable survival-adventure first**: actual enemies, usable weapons, readable combat and recovery, worthwhile exploration, rewards, progression, useful crafting and functional building. Optional maintenance, domestic administration and deeper simulation follow that playable foundation; convenient implementation work is not a substitute for player value. See [Playable game first](docs/repertoires/gameplay-priorities.md) for the selection policy, not a claim that every target is implemented.
+
+The [repertoire library](docs/repertoires/README.md) now includes **27 expanded non-action catalogues with 7,871 individually ranked entries**, alongside the separate **384-action inventory**. The [expanded inventory index](docs/repertoires/expanded-inventories.md) links every full catalogue, its current ranking register, entry count and pinned source revision from the eight expansion branches. The **270 older introductory examples are not the full library** and overlap with some expanded entries; these are not additive counts of unique features or implementation commitments.
+
+Use the [whole-game coverage](docs/repertoires/ranked-coverage.md), [individual catalogue rankings](docs/repertoires/expanded-inventories.md#inventory-and-ranking-coverage) and [action rankings](docs/repertoires/ranked-actions.md) when selecting work. Preserved source snapshots retain historical scores for provenance; their old labels do not override the current registers. [Architecture](docs/architecture.md), [maintainer work](docs/maintainers/README.md) and [verification](docs/verification.md) remain the sources for implemented behavior, delivery status and actual evidence.
+
 ## Simulation cadence
 
 One real second equals one game minute at normal speed; that does not mean sixty simulation ticks. Native work now integrates elapsed time to mechanical/fidelity boundaries, independently of the 50 ms host wake and browser frame cadence. Rendering is not capped at 20 FPS. Existing worlds update in place; do not reset a save for this change. [Time contract](docs/simulation-time.md), [PF13 delivery](docs/maintainers/simulation-time.md), [future bounds](docs/maintainers/simulation-boundaries.md) and [runtime evidence](docs/verification/simulation-cadence.md) distinguish the implemented slice from exact fleeting-exposure, regional and full-stack scale qualification.
