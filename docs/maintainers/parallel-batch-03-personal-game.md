@@ -4,7 +4,7 @@
 
 [Feature scope and acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) · [Standalone prompts](../projects/parallel-batch-03-personal-game-prompts.md)
 
-This is an allocation across existing owners, not a replacement backlog. Baseline: local main dd21d1c7. The prior NP batch stays completed; family authoring, originally excluded as active work, has since merged at c4e18d91. Four implementation/qualification tasks and one design task can start independently; the owner combines their results without task-to-task communication.
+This is an allocation across existing owners, not a replacement backlog. Historical planning baseline: local main `dd21d1c7`. The prior NP batch stays completed. [BW16/D63 family authoring](../projects/completed/family-authoring-tech-design.md) is now delivered and remains outside this batch; preserve its behavior instead of treating the former parallel worktree as a pending dependency. Four implementation/qualification tasks and one design task can start independently; the owner combines their results without task-to-task communication.
 
 ## PG01 — A useful live invention
 
