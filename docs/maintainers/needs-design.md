@@ -93,6 +93,8 @@ Conditional ND20 comparison of current recall, a modest native improvement and o
 
 #### DG05 — Ending and returning to a session
 
+**Product preparation completed October 4, 2026:** [Ending and returning](../projects/session-continuation-feature-spec.md) selects a conditional private Continue later note in the existing Journal. It specifies full control, privacy, absence, economics, research and future acceptance; [NC20](narration-and-conversations.md#nc20--conditional-private-continuation-note) owns any later selected delivery. No observed activation need, automatic closing/entry prompt, bedtime policy, outbound reminder, health benefit or runtime result is claimed.
+
 Conditional ND28: one skippable closing or return experience, personal preferences and any selected notifications. Judge whether it helps players leave and resume an activity they care about.
 
 **Start and parallel boundary:** An observed player need can trigger this during personal play. Use current narration and absence behavior. It neither pauses a shared world nor requires offline communities, a well-being study or journal exports. **Existing owners:** NC and MP; PS only for actual absence-rule changes.
@@ -677,6 +679,8 @@ The [well-being vision](../../archive/08-wellbeing-vision/README.md) explicitly 
 If [player-facing resident-memory controls](../../archive/08-wellbeing-vision/04-ideas-residents-who-point-outward.md#4-the-memory-ledger) are selected, define what a player may inspect, correct or ask to have forgotten, including shared conversations and other people's private information; reuse existing memory authority and correction/forgetting. Decide what [resident continuity across model/prompt changes](../../archive/08-wellbeing-vision/04-ideas-residents-who-point-outward.md#6-identity-that-holds) should preserve and what evidence would qualify it.
 
 ### ND28 — Optional session endings, play rhythms and returning experience
+
+**Product preparation:** [DG05's feature specification](../projects/session-continuation-feature-spec.md) selects a manual private continuation note, with text-only delivery before an optional existing-subject link. Personal visibility and clear/edit behavior are specified; bedtime/session schedules and notifications/digests are explicitly unselected. Current MP absence and completed sole-tab automatic return remain controlling. The observed-need gate and [NC20](narration-and-conversations.md#nc20--conditional-private-continuation-note) implementation/qualification stay open.
 
 **Conditional product experiment.** Sources: [rhythm, rest and return](../../archive/08-wellbeing-vision/03-ideas-rhythm-rest-and-return.md), [top picks](../../archive/08-wellbeing-vision/00-top-picks.md), and E2/E3/E5 in [first experiments](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md).
 
