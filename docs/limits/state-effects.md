@@ -222,7 +222,7 @@ The generic resource API cannot credit item stacks or gathering supplies. Those 
 
 **Reported · Restrictiveness: Very safe.**
 
-Resources that **continuously drain cannot be reserved**. Reservations otherwise require a living actor’s action or admitted process.
+Resources that **continuously drain cannot be reserved**. New reservations otherwise require a living actor’s action or admitted process. The saved-state reader still permits older actorless holds and omits their actor-level allocation; this residual compatibility exception is tracked for removal in [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths), not part of the accepted current-format contract.
 
 **Reason / tradeoff:** A continuously changing balance needs future-rate accounting to support a reliable hold.
 
