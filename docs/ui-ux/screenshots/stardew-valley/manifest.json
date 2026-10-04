@@ -1,7 +1,7 @@
 {
   "game": "Stardew Valley",
-  "reviewed_date": "2026-10-03",
-  "count": 5,
+  "reviewed_date": "2026-10-04",
+  "count": 7,
   "screenshots": [
     {
       "id": "SDV-01",
@@ -117,9 +117,92 @@
       "rights": "Original third-party rights retained; reference-only; not an Open Legend licensed game asset",
       "credit": "ConcernedApe; capture published by Original forum author, post 1598",
       "annotation_path": "docs/ui-ux/games/stardew-valley.md"
+    },
+    {
+      "id": "SDV-06",
+      "game": "Stardew Valley",
+      "title": "Skills and character progress",
+      "source_page_url": "https://stardewvalleywiki.com/File:Skills_Tab.png",
+      "source_image_url": "https://stardewvalleywiki.com/mediawiki/images/4/4e/Skills_Tab.png",
+      "source_published_or_uploaded_date": "2024-08-14",
+      "captured_date": "Exact capture date unverified; source post/upload date recorded separately",
+      "accessed_date": "2026-10-04",
+      "version": "Exact patch unverified; uploaded August 2024, 1.6-era layout",
+      "platform": "Desktop-style UI; exact OS unspecified",
+      "local_path": "docs/ui-ux/screenshots/stardew-valley/skills-tab-2024.png",
+      "width": 848,
+      "height": 584,
+      "bytes": 6735,
+      "sha256": "8f6ac9cea7e452b498877d80b2b4f8849957f29f92edbf95c72803838924e2d7",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image and read original source context.",
+      "image_type": "Actual game UI screenshot; publisher crop retained",
+      "rights": "Original third-party rights retained; reference-only; not an Open Legend licensed game asset",
+      "credit": "ConcernedApe; wiki upload by Margotbean",
+      "annotation_path": "docs/ui-ux/games/stardew-valley.md",
+      "observed_controls": [
+        "Five named skill rows with icons and ten progress positions",
+        "Character portrait, name and title; lower locked progress area"
+      ],
+      "strengths": [
+        "Progress categories can be compared at a glance",
+        "Milestone cells have a distinctive shape"
+      ],
+      "weaknesses": [
+        "No XP numbers or next-unlock description visible",
+        "Lower silhouettes and locks conceal meaning"
+      ],
+      "application": [
+        "Use a compact character summary separate from moment-to-moment commands",
+        "Explain milestones on focus without making the entire character sheet a form"
+      ],
+      "alterations": "None; source image bytes preserved, including any publisher crop."
+    },
+    {
+      "id": "SDV-07",
+      "game": "Stardew Valley",
+      "title": "Android map with underused panel space",
+      "source_page_url": "https://forums.stardewvalley.net/threads/annoying-ui.36870/",
+      "source_image_url": "https://forums.stardewvalley.net/attachments/screenshot_20250207-000801-jpg.28544/",
+      "source_published_or_uploaded_date": "2025-02-06",
+      "captured_date": "Exact capture date unverified; source post/upload date recorded separately",
+      "accessed_date": "2026-10-04",
+      "version": "1.6 tag in source thread; exact patch unspecified",
+      "platform": "Android Samsung A51 as reported by original player",
+      "local_path": "docs/ui-ux/screenshots/stardew-valley/mobile-map-2025.jpg",
+      "width": 1000,
+      "height": 450,
+      "bytes": 113195,
+      "sha256": "561840d5bb4e14adcfaf4064dd5b3f7d6211afc91526e5b42fa4cf5cb4867cde",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image and read original source context.",
+      "image_type": "Actual game screenshot",
+      "rights": "Original third-party rights retained; reference-only; not an Open Legend licensed game asset",
+      "credit": "ConcernedApe; capture posted by ahmadino1234",
+      "annotation_path": "docs/ui-ux/games/stardew-valley.md",
+      "observed_controls": [
+        "Icon tab strip and large close X",
+        "Map tab highlighted; farmer portrait and farm label on map",
+        "Substantial empty panel to the right"
+      ],
+      "strengths": [
+        "Current tab and player position are apparent",
+        "Close control is spatially distinct from tab changes"
+      ],
+      "weaknesses": [
+        "Map occupies only part of the available frame",
+        "Many top-level tabs use icons without permanent names"
+      ],
+      "application": [
+        "Fit important content within the actual panel across aspect ratios",
+        "Keep map location inspection separate from movement and preserve selection"
+      ],
+      "alterations": "None; source image bytes preserved, including any publisher crop."
     }
   ],
   "review_completed_date": "2026-10-04",
-  "digital_screenshot_count": 4,
+  "digital_screenshot_count": 6,
   "reference_photograph_count": 1
 }

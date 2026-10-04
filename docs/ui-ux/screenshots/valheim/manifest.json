@@ -3,8 +3,8 @@
   "game": "Valheim",
   "research_date": "2026-10-03",
   "last_reviewed": "2026-10-04",
-  "image_count": 7,
-  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier.",
+  "image_count": 9,
+  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier. Expanded map/pins, building context, HUD/status, help/input ownership and world-entry study.",
   "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license.",
   "images": [
     {
@@ -154,7 +154,9 @@
         "Controller mapping diagram",
         "World Use prompt"
       ],
-      "strengths": ["A reachable map ties actions to physical controls."],
+      "strengths": [
+        "A reachable map ties actions to physical controls."
+      ],
       "weaknesses": [
         "Conflicting glyph families undermine instruction.",
         "Dense alternate bindings are hard to consult during play."
@@ -283,7 +285,9 @@
         "Minimap and status indicators",
         "Physical storage signs"
       ],
-      "strengths": ["Object location and naming support spatial memory before opening storage."],
+      "strengths": [
+        "Object location and naming support spatial memory before opening storage."
+      ],
       "weaknesses": [
         "Dense signs are hard to read and can become stale.",
         "This frame does not strongly distinguish one selected chest."
@@ -305,6 +309,86 @@
       "byte_count": 310396,
       "sha256": "cbadfd2e3228f4007ccfee4219483d1fa588663d8cae9d1e3c5aaa64647f59b5",
       "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "VH08",
+      "game": "Valheim",
+      "platform": "PC-style mouse and keyboard prompts; exact OS unspecified",
+      "version": "Exact build unknown; visible Hildir-area names may be preview-era; mods not verified",
+      "source_date": "Exact source-post and capture dates unverified; indexed source URL recorded",
+      "source_page": "https://www.reddit.com/r/valheim/comments/152klr0/plains_base_any_tips_for_choosing_the_location/",
+      "direct_image_url": "https://i.imgur.com/3vANJbb.png",
+      "caption": "Player map with explored coastlines and personal notes",
+      "observed_controls": [
+        "Pin-type strip on right; selected pin outlined",
+        "Add pin, Cross off pin, Remove pin and Ping mouse hints at bottom",
+        "Visible to other players toggle; player marker; handwritten location names"
+      ],
+      "strengths": [
+        "Explored area and unknown surroundings remain visually distinct",
+        "Navigation notes coexist with landmarks without requiring a destination form"
+      ],
+      "weaknesses": [
+        "Dense pins can obscure terrain",
+        "Personal guesses can look like authoritative location names"
+      ],
+      "application": [
+        "Distinguish observation, remembered geography and player-authored notes",
+        "Separate inspect/pin/ping from committed movement"
+      ],
+      "dimensions": {
+        "width": 2560,
+        "height": 1440
+      },
+      "local_path": "docs/ui-ux/screenshots/valheim/12-player-map-pins.png",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image. Map source association checked via indexed image result; full Reddit post unavailable. Build album metadata downloaded and read.",
+      "byte_count": 3185540,
+      "sha256": "df809ddfd4827130446b69433f412afd26d1ab79de25d54aac2c10d4651da974",
+      "alterations": "None; original downloaded image bytes preserved.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "VH09",
+      "game": "Valheim",
+      "platform": "PC-style mouse and keyboard prompts; exact OS unspecified",
+      "version": "Exact early-access build unknown; mods/debug state not verified",
+      "source_date": "2021-03-19 (original album metadata)",
+      "source_page": "https://imgur.com/gallery/valheim-base-on-elders-fire-I8bj5TC",
+      "direct_image_url": "https://i.imgur.com/snNuTPx.jpg",
+      "caption": "Building context with selected beam, unavailable workbench and local bindings",
+      "observed_controls": [
+        "Hammer selected in numbered upper-left tool strip",
+        "Log beam 2m card with Core wood 1 and Workbench None in red",
+        "Mouse-1 Place; Mouse-3 Remove; Mouse-2 Build menu; L-Shift Toggle snapping/options; wheel Rotate"
+      ],
+      "strengths": [
+        "Object, resource/station needs and immediate controls are visible over the scene",
+        "Palette selection can collapse while placement remains in context"
+      ],
+      "weaknesses": [
+        "Missing requirements rely heavily on red text",
+        "Overlap and perspective can conceal precise placement; no active ghost is asserted from this frame"
+      ],
+      "application": [
+        "Keep selected piece, footprint, orientation, cost and missing requirements together",
+        "Provide visible placement mode and cancellation before commit"
+      ],
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "local_path": "docs/ui-ux/screenshots/valheim/13-building-piece-context.jpg",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image. Map source association checked via indexed image result; full Reddit post unavailable. Build album metadata downloaded and read.",
+      "byte_count": 345844,
+      "sha256": "03fdc091a96c31758b721104a3e2057b7c001cafeb518a7aeaf9fbe99a942c14",
+      "alterations": "None; original downloaded image bytes preserved.",
       "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
     }
   ]

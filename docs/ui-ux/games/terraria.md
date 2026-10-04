@@ -4,7 +4,7 @@ Research date: **2026-10-03**. Status: comparative research, not an implementati
 
 ## Scope and principal finding
 
-Eight actual screenshots have been saved and individually visually inspected. Six are historical desktop game states from original player material or a guide. Two are developer-published console/mobile UI experiments from May 2024, explicitly labeled work in progress. They are not evidence that those experiments shipped unchanged. Exact game builds are unknown where the sources do not identify them. The [manifest](../screenshots/terraria/manifest.json) records complete provenance and file hashes.
+Ten actual screenshots have been saved and individually visually inspected. Six are historical desktop game states from original player material or a guide. Two are developer-published console/mobile UI experiments from May 2024, explicitly labeled work in progress. Two additional images are from the official May 2020 Journey Mode pre-release reveal. Neither reveal is evidence that its interface shipped unchanged. Exact game builds are unknown where the sources do not identify them. The [manifest](../screenshots/terraria/manifest.json) records complete provenance and file hashes.
 
 Terraria is especially useful because it contains both the straightforward chest interaction the user wants and the kind of “nearby storage” convenience that can become confusing. The distinction is in its role: opening a particular world chest directly exposes that chest, while nearby quick-stack is an optional bulk action for an established storage setup. It is not a required dropdown before transferring a normal item. Its shortcomings—small utility icons, unclear range, and dense text over the world—should remain visible in the comparison.
 
@@ -151,4 +151,49 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 - **[T8]** Reddit, [Simple QoL idea: locked encumbering stone in a chest](https://www.reddit.com/r/Terraria/comments/142fcnw/), 2023-06. Original player suggestion; indexed excerpt only.
 - **[T9]** Reddit, [original chest sorting / favorites discussion](https://www.reddit.com/r/Terraria/comments/grlohu/), 2020-05. Indexed original player comments; retrieval limitation noted above.
 
-All eight saved assets retain their original downloaded bytes, including the publisher-provided crop in TR08. They are third-party reference screenshots for research and criticism. Original rights remain with their creators; they are not Open Legend production art and are not relicensed by the code license.
+All ten saved assets retain their original downloaded bytes, including the publisher-provided crop in TR08. They are third-party reference screenshots for research and criticism. Original rights remain with their creators; they are not Open Legend production art and are not relicensed by the code license.
+
+
+## Whole-interface expansion: entry, world controls, HUD and targeting
+
+Reviewed **2026-10-04**. TR09–TR10 are original developer-published interface captures from **May 2020 before Journey’s End released**. They are explicitly historical previews, not screenshots of the current release or a mod. TR09 prints **v1.4.0 r024**. The small TR10 is the developer's original crop, preserved without enlarging, recropping or reconstructing it.
+
+### TR09 — Character entry explains a consequential choice
+
+![Terraria Journey character creation with explanation beside mode choices](../screenshots/terraria/09-journey-character-entry.jpg)
+
+**Observed layout / controls.** Character appearance tabs run horizontally below a character preview. A Name row and four named modes sit beneath them. Journey is selected, and the adjacent description explains extra equipment and restriction to Journey worlds. Back and Create are separate, large bottom buttons. The selected choice stays visible while its consequence is read.
+
+**Documented workflow.** The developer reveal describes creating a Journey character and a compatible Journey world before using its special powers. This is an entry-time rules choice. It is not an activity the player must configure repeatedly during play. [T12]
+
+**Good / weak.** The central choice–explanation pairing teaches at the moment of decision, while Back makes leaving the choice explicit. Appearance tabs still need recognition and the frame does not establish keyboard focus order or validation when a name is empty.
+
+**Open Legend application.** Entry should communicate which character/world is being joined and any meaningful consequences or limitations beside that choice. Keep optional advanced setup behind a deliberate action. During normal play, the already-selected character and world should supply context; never ask for those again as fields in an ordinary task.
+
+### TR10 — One optional power category opens a small set of related controls
+
+![Terraria Journey power menu with time category and speed multiplier](../screenshots/terraria/10-journey-time-controls.png)
+
+**Observed layout / controls.** A narrow vertical category strip opens a second strip of time icons. A speed slider sits beside it with x1, x10 and x20 marks. The world remains visible behind the controls. The selected section is small, although the unlabeled icons depend on learning or help.
+
+**Documented workflow.** The reveal explains time freezing, day-phase changes and acceleration through the clock category. It also distinguishes difficulty affecting everyone in multiplayer from spawn-rate control near the character. These are world powers, not cosmetic UI preferences. [T12]
+
+**Good / weak.** Only the selected category expands, avoiding an all-settings-at-once panel. The speed scale communicates magnitude, but this crop lacks an exact current-value label and says nothing about keyboard adjustment. Small icons and the distinction between personal and shared effects need explanation.
+
+**Open Legend application.** Keep optional world-authoring or session rules separate from routine character actions and local UI settings. Show the exact value, scope and consequence before changing a shared rule. A focused editor is appropriate for a deliberate configuration decision; it is a poor default for every world interaction.
+
+### Exploration HUD, map attention and building mode
+
+Re-reading **TR07** adds evidence beyond its inventory context: health/mana and a map occupy the upper-right, action/tool context the upper-left, and local control hints sit by their relevant regions rather than in one long footer. This is a **May 2024 console/mobile experiment**; it illustrates a grouping proposal, not verified shipped behavior. Stable positions are useful, but repeated hints must not cover the action or obscure the selected target.
+
+The official wiki documents three map presentations—corner minimap, transparent overlay and fullscreen—and desktop bindings for cycling/opening maps. They support different attention levels: immediate orientation, continued world movement, and deliberate planning. Settings distinguish UI scale from world zoom, and map controls have their own behavior. [T13][T14] Open Legend should similarly distinguish a light orientation aid from an expanded known-world map, retain the current selection, and make map inspection, pinning and movement separate intentions. Do not reveal unobserved entities simply because a map exists.
+
+Smart Cursor is a more cautionary comparison. A January 2022 original discussion contains both strong praise for faster mining/background placement and frustration when the yellow target chooses a place the player did not intend. Another player asks for distinct on/off commands because a toggle's current state is unclear. These are individual task-specific views, not consensus. [T15][T16] The lesson is to show the active targeting mode and its actual affected tile before the input commits. Open Legend's build preview should retain the selected object, valid footprint, orientation, cost and a clear cancel route; automatic target assistance needs a visible state and a precision alternative. A helpful mode should not silently change what a click means.
+
+### Additional sources and retrieval limits
+
+- **[T12]** Re-Logic / Loki, [With Great Power Comes Great Accessibility — Introducing Terraria's New Journey Mode](https://forums.terraria.org/index.php?threads/with-great-power-comes-great-accessibility-introducing-terrarias-new-journey-mode.88233/), 2020-05-06. Primary pre-release controls explanation and original images. The direct page was downloaded and read; the search renderer incorrectly redirected its query URL to the forum homepage. The homepage is not used as evidence.
+- **[T13]** [Minimap](https://terraria.wiki.gg/wiki/Minimap), Official Terraria Wiki. Search-indexed documentation of map modes; direct retrieval was blocked. Exact current platform parity was not tested.
+- **[T14]** [Game controls](https://terraria.wiki.gg/wiki/Game_controls) and [Settings](https://terraria.wiki.gg/wiki/Settings), Official Terraria Wiki. Indexed control/settings documentation; bindings are platform-specific and remappable.
+- **[T15]** Original player discussion, [How do I turn off this weird yellow box thing?](https://www.reddit.com/r/Terraria/comments/scz8i1/), 2022-01-26, with later replies. Indexed thread text contains positive and negative firsthand descriptions of Smart Cursor; no representative satisfaction claim.
+- **[T16]** Original player discussion, [PC — Smart Cursor question on toggling](https://www.reddit.com/r/Terraria/comments/gxp4v1/), 2020-06-06, including 2024-09-14 follow-up about uncertain mode state. Indexed thread text; not independently reproduced.

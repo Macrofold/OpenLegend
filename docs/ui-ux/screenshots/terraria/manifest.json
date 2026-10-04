@@ -3,8 +3,8 @@
   "game": "Terraria",
   "research_date": "2026-10-03",
   "last_reviewed": "2026-10-04",
-  "image_count": 8,
-  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier.",
+  "image_count": 10,
+  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier. Expanded entry, world controls, exploration HUD/map, smart cursor and help study.",
   "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license.",
   "images": [
     {
@@ -348,6 +348,85 @@
       "byte_count": 44266,
       "sha256": "43f780b5a823a2417bd5a7f36438b48222716fda75c1d3a4c6e2f5bae4d29dab",
       "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR09",
+      "game": "Terraria",
+      "platform": "Desktop developer reveal; keyboard/mouse-style UI, exact OS unspecified",
+      "version": "v1.4.0 r024 shown; May 2020 developer pre-release reveal",
+      "source_date": "2020-05-06",
+      "source_page": "https://forums.terraria.org/index.php?threads/with-great-power-comes-great-accessibility-introducing-terrarias-new-journey-mode.88233/",
+      "direct_image_url": "https://forums.terraria.org/index.php?attachments/20200505163302_1-jpg.269605/",
+      "caption": "Journey character creation with compatibility explanation",
+      "observed_controls": [
+        "Appearance category icons and character preview",
+        "Name field; Journey, Classic, Mediumcore, Hardcore choices",
+        "Explanation beside selected mode; large Back and Create buttons"
+      ],
+      "strengths": [
+        "Choice and consequence appear side by side",
+        "Creation has distinct Back and commit controls"
+      ],
+      "weaknesses": [
+        "Many appearance tabs are icon-only",
+        "Preview build does not establish current platform navigation"
+      ],
+      "application": [
+        "Explain meaningful world/character entry choices beside their selected option",
+        "Do not put creation-time world configuration into ordinary gameplay tasks"
+      ],
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "local_path": "docs/ui-ux/screenshots/terraria/09-journey-character-entry.jpg",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image; official developer post read from downloaded HTML because web renderer misroutes query-string URL.",
+      "byte_count": 346055,
+      "sha256": "162df7cb10fb967799d552b9637c83f9702bd49634df12d6ab49b9b08b79d992",
+      "alterations": "None; publisher crop retained where supplied.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR10",
+      "game": "Terraria",
+      "platform": "Desktop developer reveal; keyboard/mouse-style UI, exact OS unspecified",
+      "version": "May 2020 developer pre-release reveal; exact build not printed in this publisher crop",
+      "source_date": "2020-05-06",
+      "source_page": "https://forums.terraria.org/index.php?threads/with-great-power-comes-great-accessibility-introducing-terrarias-new-journey-mode.88233/",
+      "direct_image_url": "https://forums.terraria.org/index.php?attachments/time-speed-png.269461/",
+      "caption": "Optional Journey time controls beside the world",
+      "observed_controls": [
+        "Power categories form left vertical strip; clock category opens a second strip",
+        "Day-phase icons and stopwatch; speed scale marked x1, x10, x20"
+      ],
+      "strengths": [
+        "One selected category expands only its related controls",
+        "Multiplier gives a measurable range"
+      ],
+      "weaknesses": [
+        "Icon meanings need help; selected value is not printed as a precise numeric label",
+        "World-changing options could be mistaken for local display preferences"
+      ],
+      "application": [
+        "Keep optional world-authoring controls separate from ordinary player commands",
+        "Pair icons with names, exact values and affected-player scope"
+      ],
+      "dimensions": {
+        "width": 225,
+        "height": 315
+      },
+      "local_path": "docs/ui-ux/screenshots/terraria/10-journey-time-controls.png",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image; official developer post read from downloaded HTML because web renderer misroutes query-string URL.",
+      "byte_count": 117479,
+      "sha256": "998847ffa94f908e24e69191de5da0290ea3e91613f58d3a0126708317cbf615",
+      "alterations": "None; publisher crop retained where supplied.",
       "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
     }
   ]

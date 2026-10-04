@@ -1,12 +1,18 @@
 # Game interface screenshot gallery
 
-**71 distinct digital UI screenshots from 12 games**, plus one explicitly excluded display photograph. Every image has a detailed critique in its linked dossier. The [atlas index](../games/README.md) explains selection and evidence; [index.json](index.json) records the verified count.
+**98 distinct digital UI screenshots from 12 games**, plus one explicitly excluded display photograph. Every image has a detailed critique in its linked dossier. The [atlas index](../games/README.md) explains selection and evidence; [index.json](index.json) records the verified count.
 
-Original game imagery remains third-party reference material. Historical versions, developer previews, source crops and optional modifications are identified in the dossiers and per-game manifests. Open Legend proposal wireframes are separate and not counted.
+This expanded collection covers exploration and HUDs, object interaction, inventory, equipment and progression, actions and combat feedback, crafting and building, maps and journals, conversation, entry and help. Coverage varies by game; the dossiers identify gaps and distinguish documented behavior from visible layout and proposed lessons.
+
+Original game imagery remains third-party reference material. Historical versions, developer previews, source crops and optional modifications are identified in the dossiers and per-game manifests. The nine original Open Legend proposal wireframes are separate and not counted.
+
+[Baldur's Gate 3](#baldurs-gate-3) · [Divinity: Original Sin 2](#divinity-original-sin-2) · [Minecraft](#minecraft) · [Valheim](#valheim) · [Terraria](#terraria) · [Factorio](#factorio) · [Stardew Valley](#stardew-valley) · [Project Zomboid](#project-zomboid) · [Final Fantasy XIV](#final-fantasy-xiv) · [Guild Wars 2](#guild-wars-2) · [World of Warcraft](#world-of-warcraft) · [Disco Elysium](#disco-elysium)
+
+<a id="baldurs-gate-3"></a>
 
 ## Baldur's Gate 3
 
-[Detailed controls, workflows and critique](../games/baldurs-gate-3.md) · 12 digital screenshots
+[Detailed controls, workflows and critique](../games/baldurs-gate-3.md) · 16 digital screenshots
 
 ### BG3-01 — Single character inventory beside equipment
 
@@ -80,9 +86,35 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://baldursgate3.game/news/community-update-22-wield-the-power-of-a-mind-flayer_75) · [Detailed analysis](../games/baldurs-gate-3.md) · [Image provenance](bg3/manifest.json)
 
+### BG3-13 — PS5 active search keeps selected object tied to the scene
+
+![BG3-13: PS5 active search keeps selected object tied to the scene](bg3/BG3-13-active-search.webp)
+
+[Source page](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide1/) · [Detailed analysis](../games/baldurs-gate-3.md) · [Image provenance](bg3/manifest.json)
+
+### BG3-14 — Annotated PS5 combat HUD: actor, target, turn queue and resources
+
+![BG3-14: Annotated PS5 combat HUD: actor, target, turn queue and resources](bg3/BG3-14-combat-resources.webp)
+
+[Source page](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide2/) · [Detailed analysis](../games/baldurs-gate-3.md) · [Image provenance](bg3/manifest.json)
+
+### BG3-15 — Level-up summary with explicit unfinished choice and acceptance
+
+![BG3-15: Level-up summary with explicit unfinished choice and acceptance](bg3/BG3-15-level-up.jpg)
+
+[Source page](https://www.shacknews.com/article/136852/how-to-level-up-baldurs-gate-3) · [Detailed analysis](../games/baldurs-gate-3.md) · [Image provenance](bg3/manifest.json)
+
+### BG3-16 — Quest journal categories, subquests and objective history
+
+![BG3-16: Quest journal categories, subquests and objective history](bg3/BG3-16-quest-journal.png)
+
+[Source page](https://docs.baldursgate3.game/index.php?title=Journal_Structure_Overview) · [Detailed analysis](../games/baldurs-gate-3.md) · [Image provenance](bg3/manifest.json)
+
+<a id="divinity-original-sin-2"></a>
+
 ## Divinity: Original Sin 2
 
-[Detailed controls, workflows and critique](../games/divinity-original-sin-2.md) · 4 digital screenshots
+[Detailed controls, workflows and critique](../games/divinity-original-sin-2.md) · 10 digital screenshots
 
 ### DOS2-01 — Historical alpha barter offer staging
 
@@ -108,9 +140,47 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
 
+### DOS2-05 — Quest log with category hierarchy, selection and tracking
+
+![DOS2-05: Quest log with category hierarchy, selection and tracking](dos2/DOS2-05-quest-log.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+### DOS2-06 — Dialogue history grouped by time and conversation partner
+
+![DOS2-06: Dialogue history grouped by time and conversation partner](dos2/DOS2-06-dialogue-history.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+### DOS2-07 — Named waypoint destination selection over the world
+
+![DOS2-07: Named waypoint destination selection over the world](dos2/DOS2-07-waypoints.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+### DOS2-08 — Skills, prepared memory slots, innate skills and item-granted skills
+
+![DOS2-08: Skills, prepared memory slots, innate skills and item-granted skills](dos2/DOS2-08-skills.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+### DOS2-09 — Exploration HUD keeps party condition and actions at the edges
+
+![DOS2-09: Exploration HUD keeps party condition and actions at the edges](dos2/DOS2-09-exploration-hud.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+### DOS2-10 — Main menu with story, continue and local joining
+
+![DOS2-10: Main menu with story, continue and local joining](dos2/DOS2-10-entry-menu.jpg)
+
+[Source page](https://raphleroy18.wixsite.com/gamingux/post/divinity-original-sin-ii-on-ps4-menus-usability-and-information-visualization) · [Detailed analysis](../games/divinity-original-sin-2.md) · [Image provenance](dos2/manifest.json)
+
+<a id="minecraft"></a>
+
 ## Minecraft
 
-[Detailed controls, workflows and critique](../games/minecraft.md) · 6 digital screenshots
+[Detailed controls, workflows and critique](../games/minecraft.md) · 8 digital screenshots
 
 ### MC01 — Creative/category inventory with Nature catalog, equipment, personal crafting and carried cells.
 
@@ -148,9 +218,23 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://www.sportskeeda.com/minecraft/emerald-ore-minecraft-all-need-know) · [Detailed analysis](../games/minecraft.md) · [Image provenance](minecraft/manifest.json)
 
+### MC07 — Underwater survival HUD and an empty selected hotbar cell
+
+![MC07: Underwater survival HUD and an empty selected hotbar cell](minecraft/07-underwater-hud.jpg)
+
+[Source page](https://www.minecraft.net/en-us/article/health-minecraft) · [Detailed analysis](../games/minecraft.md) · [Image provenance](minecraft/manifest.json)
+
+### MC08 — A held map preserves the surrounding first-person world
+
+![MC08: A held map preserves the surrounding first-person world](minecraft/08-held-map.jpg)
+
+[Source page](https://www.minecraft.net/en-us/article/exploring-minecraft) · [Detailed analysis](../games/minecraft.md) · [Image provenance](minecraft/manifest.json)
+
+<a id="valheim"></a>
+
 ## Valheim
 
-[Detailed controls, workflows and critique](../games/valheim.md) · 7 digital screenshots
+[Detailed controls, workflows and critique](../games/valheim.md) · 9 digital screenshots
 
 ### VH01 — Workbench with Club selected, recipe requirements, Craft/Upgrade tabs and repair hover.
 
@@ -194,9 +278,23 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://steamcommunity.com/sharedfiles/filedetails/?id=2432979999) · [Detailed analysis](../games/valheim.md) · [Image provenance](valheim/manifest.json)
 
+### VH08 — Player map with explored coastlines and personal notes
+
+![VH08: Player map with explored coastlines and personal notes](valheim/12-player-map-pins.png)
+
+[Source page](https://www.reddit.com/r/valheim/comments/152klr0/plains_base_any_tips_for_choosing_the_location/) · [Detailed analysis](../games/valheim.md) · [Image provenance](valheim/manifest.json)
+
+### VH09 — Building context with selected beam, unavailable workbench and local bindings
+
+![VH09: Building context with selected beam, unavailable workbench and local bindings](valheim/13-building-piece-context.jpg)
+
+[Source page](https://imgur.com/gallery/valheim-base-on-elders-fire-I8bj5TC) · [Detailed analysis](../games/valheim.md) · [Image provenance](valheim/manifest.json)
+
+<a id="terraria"></a>
+
 ## Terraria
 
-[Detailed controls, workflows and critique](../games/terraria.md) · 8 digital screenshots
+[Detailed controls, workflows and critique](../games/terraria.md) · 10 digital screenshots
 
 ### TR01 — Metals chest below carried inventory with a full set of explicit bulk actions.
 
@@ -246,6 +344,20 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://store.steampowered.com/news/posts/?appids=105600&enddate=1717286400&feed=steam_community_announcements) · [Detailed analysis](../games/terraria.md) · [Image provenance](terraria/manifest.json)
 
+### TR09 — Journey character creation with compatibility explanation
+
+![TR09: Journey character creation with compatibility explanation](terraria/09-journey-character-entry.jpg)
+
+[Source page](https://forums.terraria.org/index.php?threads/with-great-power-comes-great-accessibility-introducing-terrarias-new-journey-mode.88233/) · [Detailed analysis](../games/terraria.md) · [Image provenance](terraria/manifest.json)
+
+### TR10 — Optional Journey time controls beside the world
+
+![TR10: Optional Journey time controls beside the world](terraria/10-journey-time-controls.png)
+
+[Source page](https://forums.terraria.org/index.php?threads/with-great-power-comes-great-accessibility-introducing-terrarias-new-journey-mode.88233/) · [Detailed analysis](../games/terraria.md) · [Image provenance](terraria/manifest.json)
+
+<a id="factorio"></a>
+
 ## Factorio
 
 [Detailed controls, workflows and critique](../games/factorio.md) · 6 digital screenshots
@@ -286,9 +398,11 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://www.factorio.com/blog/post/fff-363) · [Detailed analysis](../games/factorio.md) · [Image provenance](factorio/manifest.json)
 
+<a id="stardew-valley"></a>
+
 ## Stardew Valley
 
-[Detailed controls, workflows and critique](../games/stardew-valley.md) · 4 digital screenshots + 1 excluded display photograph
+[Detailed controls, workflows and critique](../games/stardew-valley.md) · 6 digital screenshots · 1 excluded display photograph
 
 ### SDV-01 — Standard chest and backpack
 
@@ -308,7 +422,7 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://forums.stardewvalley.net/threads/prismatic-shard-skull-cave.9440/) · [Detailed analysis](../games/stardew-valley.md) · [Image provenance](stardew-valley/manifest.json)
 
-### SDV-04 — Crafting panel accompanying missing learned-recipes report (photograph; not counted)
+### SDV-04 — Crafting panel accompanying missing learned-recipes report — display photograph, excluded from screenshot count
 
 ![SDV-04: Crafting panel accompanying missing learned-recipes report](stardew-valley/crafting-winter-1-6.jpg)
 
@@ -319,6 +433,20 @@ Original game imagery remains third-party reference material. Historical version
 ![SDV-05: Collections Cooking reference and overflowing Omelet tooltip](stardew-valley/collection-omelet-1-6.jpg)
 
 [Source page](https://forums.stardewvalley.net/threads/report-1-6-issues-here.27915/page-80) · [Detailed analysis](../games/stardew-valley.md) · [Image provenance](stardew-valley/manifest.json)
+
+### SDV-06 — Skills and character progress
+
+![SDV-06: Skills and character progress](stardew-valley/skills-tab-2024.png)
+
+[Source page](https://stardewvalleywiki.com/File:Skills_Tab.png) · [Detailed analysis](../games/stardew-valley.md) · [Image provenance](stardew-valley/manifest.json)
+
+### SDV-07 — Android map with underused panel space
+
+![SDV-07: Android map with underused panel space](stardew-valley/mobile-map-2025.jpg)
+
+[Source page](https://forums.stardewvalley.net/threads/annoying-ui.36870/) · [Detailed analysis](../games/stardew-valley.md) · [Image provenance](stardew-valley/manifest.json)
+
+<a id="project-zomboid"></a>
 
 ## Project Zomboid
 
@@ -360,9 +488,11 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://projectzomboid.com/blog/news/2022/07/liquid-zedball/) · [Detailed analysis](../games/project-zomboid.md) · [Image provenance](project-zomboid/manifest.json)
 
+<a id="final-fantasy-xiv"></a>
+
 ## Final Fantasy XIV
 
-[Detailed controls, workflows and critique](../games/final-fantasy-xiv.md) · 6 digital screenshots
+[Detailed controls, workflows and critique](../games/final-fantasy-xiv.md) · 8 digital screenshots
 
 ### FFXIV-01 — 01 hud gamepad
 
@@ -400,9 +530,23 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_owntab.html) · [Detailed analysis](../games/final-fantasy-xiv.md) · [Image provenance](ffxiv/manifest.json)
 
+### FFXIV-07 — A map is a reference surface with an explicit persistence control
+
+![FFXIV-07: A map is a reference surface with an explicit persistence control](ffxiv/07-map-lock.jpg)
+
+[Source page](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud_map_lock.html) · [Detailed analysis](../games/final-fantasy-xiv.md) · [Image provenance](ffxiv/manifest.json)
+
+### FFXIV-08 — Separate the selected subject, secondary attention and current action
+
+![FFXIV-08: Separate the selected subject, secondary attention and current action](ffxiv/08-combat-hud.jpg)
+
+[Source page](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html) · [Detailed analysis](../games/final-fantasy-xiv.md) · [Image provenance](ffxiv/manifest.json)
+
+<a id="guild-wars-2"></a>
+
 ## Guild Wars 2
 
-[Detailed controls, workflows and critique](../games/guild-wars-2.md) · 5 digital screenshots
+[Detailed controls, workflows and critique](../games/guild-wars-2.md) · 8 digital screenshots
 
 ### GW2-01 — 01 inventory guide
 
@@ -434,9 +578,29 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://projektdyad.com/guides-list/guild-wars-2-inventory-management) · [Detailed analysis](../games/guild-wars-2.md) · [Image provenance](gw2/manifest.json)
 
+### GW2-06 — Give the player an immediate, named next step
+
+![GW2-06: Give the player an immediate, named next step](gw2/06-tutorial-objective.jpg)
+
+[Source page](https://www.guildwars2.com/en/new-player-guide/) · [Detailed analysis](../games/guild-wars-2.md) · [Image provenance](gw2/manifest.json)
+
+### GW2-07 — A level notification can teach the next opportunity
+
+![GW2-07: A level notification can teach the next opportunity](gw2/07-level-notification.jpg)
+
+[Source page](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html) · [Detailed analysis](../games/guild-wars-2.md) · [Image provenance](gw2/manifest.json)
+
+### GW2-08 — The journal makes current story, archive and unavailability distinct
+
+![GW2-08: The journal makes current story, archive and unavailability distinct](gw2/08-story-journal.jpg)
+
+[Source page](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html) · [Detailed analysis](../games/guild-wars-2.md) · [Image provenance](gw2/manifest.json)
+
+<a id="world-of-warcraft"></a>
+
 ## World of Warcraft
 
-[Detailed controls, workflows and critique](../games/world-of-warcraft.md) · 3 digital screenshots
+[Detailed controls, workflows and critique](../games/world-of-warcraft.md) · 5 digital screenshots
 
 ### WOW-01 — 01 separated combined bags
 
@@ -456,9 +620,23 @@ Original game imagery remains third-party reference material. Historical version
 
 [Source page](https://worldofwarcraft.blizzard.com/en-us/news/23841481) · [Detailed analysis](../games/world-of-warcraft.md) · [Image provenance](wow/manifest.json)
 
+### WOW-04 — Explain the symbols where the player needs to read them
+
+![WOW-04: Explain the symbols where the player needs to read them](wow/04-map-legend.png)
+
+[Source page](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm) · [Detailed analysis](../games/world-of-warcraft.md) · [Image provenance](wow/manifest.json)
+
+### WOW-05 — A learned-action catalogue and a quick-action bar serve different goals
+
+![WOW-05: A learned-action catalogue and a quick-action bar serve different goals](wow/05-spellbook.png)
+
+[Source page](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm) · [Detailed analysis](../games/world-of-warcraft.md) · [Image provenance](wow/manifest.json)
+
+<a id="disco-elysium"></a>
+
 ## Disco Elysium
 
-[Detailed controls, workflows and critique](../games/disco-elysium.md) · 4 digital screenshots
+[Detailed controls, workflows and critique](../games/disco-elysium.md) · 6 digital screenshots
 
 ### DISCO-01 — 01 dialogue morale
 
@@ -483,3 +661,15 @@ Original game imagery remains third-party reference material. Historical version
 ![DISCO-04: 04 equipment inventory](disco/04-equipment-inventory.jpg)
 
 [Source page](https://planita13.github.io/Final-Project/disco.html) · [Detailed analysis](../games/disco-elysium.md) · [Image provenance](disco/manifest.json)
+
+### DISCO-05 — A map can remember opportunities without prescribing every move
+
+![DISCO-05: A map can remember opportunities without prescribing every move](disco/05-map-checks.jpg)
+
+[Source page](https://www.shacknews.com/article/114689/where-to-get-a-map-in-disco-elysium) · [Detailed analysis](../games/disco-elysium.md) · [Image provenance](disco/manifest.json)
+
+### DISCO-06 — Help must connect physical controls to player intentions
+
+![DISCO-06: Help must connect physical controls to player intentions](disco/06-controls-ps5.jpg)
+
+[Source page](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/) · [Detailed analysis](../games/disco-elysium.md) · [Image provenance](disco/manifest.json)

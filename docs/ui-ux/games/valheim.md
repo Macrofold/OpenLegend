@@ -4,7 +4,7 @@ Research date: **2026-10-03**. Status: comparative research, not an implementati
 
 ## Scope and principal finding
 
-Seven actual screenshots were downloaded without alteration and individually inspected. They show different historical PC builds, including controller use; exact builds are unknown unless a source establishes them. The set includes storage, crafting, construction, input help, unavailable crafting and labeled world storage. Three attractive world-only images were excluded because they did not provide meaningful UI evidence. The [manifest](../screenshots/valheim/manifest.json) records each retained image's source, dimensions and hash.
+Nine actual screenshots were downloaded without alteration and individually inspected. They show different historical PC builds, including controller use; exact builds are unknown unless a source establishes them. The set includes storage, crafting, construction, input help, unavailable crafting and labeled world storage. Attractive world-only images were excluded because they did not provide meaningful UI evidence. The [manifest](../screenshots/valheim/manifest.json) records each retained image's source, dimensions and hash.
 
 Valheim provides a useful distinction between **meaningful inventory constraints** and **unnecessary interaction work**. Slot/weight limits can be part of survival play; making players repeatedly choose a destination or rediscover a repair icon is a separate design decision. Its strongest pattern for Open Legend is that a targeted chest or workbench establishes context before the item interface appears. Its weaker patterns include terse icon-only actions, unexplained disabled crafting, and shortcuts whose meaning changes with the open window.
 
@@ -139,3 +139,51 @@ These findings support revising the interaction contract before changing layout 
 - **[V11]** YITT, [5 Best Mods That Will Improve Your Gameplay](https://steamcommunity.com/sharedfiles/filedetails/?id=2437731501), 2021-03-27, and original player comments. Modded convenience evidence only.
 
 The screenshots are third-party reference material for research and criticism. Original rights remain with the game creators and relevant image authors; these are not Open Legend production assets and are not relicensed by the repository's code license.
+
+
+## Whole-interface expansion: orientation, building and contextual input
+
+Reviewed **2026-10-04**. VH08–VH09 add actual player captures of map planning and construction context. They do not establish current-release parity. The build album is dated **2021-03-19**; the map is associated with an indexed player thread and includes Hildir-area names, so its exact release/test-branch state is unverified. Neither source proves the absence of mods. The analysis relies on visible controls and separately identified official patch notes.
+
+### VH08 — A map for remembering, marking and discussing places
+
+![Valheim explored coastline map with personal pins and map controls](../screenshots/valheim/12-player-map-pins.png)
+
+**Observed layout / controls.** The expanded map occupies most of the screen; unknown surroundings are dark. A vertical pin palette sits at the right, with a selected icon outlined. The footer labels **Add pin**, **Cross off pin**, **Remove pin**, **Ping**, and **Visible to other players**. Personal names include a dock, forge and speculative notes such as “More land maybe?”. Character status and hotbar remain visible around the map. No route-execution or travel button is visible.
+
+**Documented workflow.** Historical map guides explain selecting a pin type before placing it, plus marking locations and sharing visibility. Their controller bindings differ from this mouse-based capture; do not replace the visible mouse hints with console letters. The screenshot itself proves the presence and separation of these verbs, not all their detailed behavior. [V12][V13]
+
+**Good / weak.** A player can preserve a plan without turning that plan into a movement command. Explored coastlines and uncharted regions communicate incomplete knowledge. However, dense pins compete with geography, and a personal guess looks similar to a verified location. Sharing one's current position is also distinct from sharing discovered geography; a single vague “share map” switch would obscure that distinction.
+
+**Open Legend application.** Support named pins and focused place inspection, with visually explicit remembered, visible and player-authored information. Keep pinning, pinging, selection and movement separate. Show whose location is being shared and to whom. Preserve object/character selection when moving between world and map, and avoid converting all known entities into a permanent all-world list.
+
+### VH09 — Building happens around the selected piece
+
+![Valheim build mode with Log beam 2m, material and missing workbench, plus placement controls](../screenshots/valheim/13-building-piece-context.jpg)
+
+**Observed layout / controls.** A selected hammer sits in the numbered hotbar. The world structure dominates the view. A bottom card names **Log beam 2m**, shows **Core wood 1**, and marks **Workbench None** in red. The lower-right lists mouse Place, Remove and Build menu actions, Shift snapping/options, and wheel rotation. The minimap and health/power status remain in their corners. No active placement ghost is claimed from this particular frame: overlapping existing beams are not evidence of a prospective object.
+
+**Workflow across evidence.** VH03 supplies the piece palette; VH09 supplies the scene-focused state after a piece is chosen. Select a piece, position/orient it in the world, inspect requirements, and place or cancel. Official 2023 notes add manual snap-point selection using Q/E, name the active snap point, and prevent snap changes while other menus own input. These later improvements must not be attributed to the 2021 capture. [V1][V14]
+
+**Good / weak.** The chosen result, cost, missing station and controls are close to the world where the action matters. There is no form asking for a building family and a coordinate. But red missing requirements need a concise explanation; camera perspective and overlapping geometry can make the actual target hard to see. An explicit preview must show what will change, rather than relying on a cursor somewhere near the structure.
+
+**Open Legend application.** Use a compact piece/recipe choice followed by a visible placement preview, orientation control, valid/invalid footprint and reason, and a clear commit/cancel route. Bind the selected site rather than asking the player to enter it again. Keep actual resource bounds and access rules visible. Confirmation belongs at consequential commitment; continuous small placement should not force a full wizard for each piece.
+
+### Why players like the building—and still struggle with it
+
+A February 2021 original Steam thread provides both sides. Blackwolfe complains about near-pixel-perfect snapping. AllOutWar76 praises the building itself but describes alignment as a chore. GrandTickler calls it a favorite building experience and attributes that preference partly to recovery after mistakes; other replies dispute refund details. The disagreement is recorded, not resolved by assumption. [V15] This supports a narrow conclusion: creation can be enjoyable while target selection remains frustrating. It does not establish current snapping behavior or unanimous approval.
+
+Official fixes are equally instructive. The 2023 notes prevent hotbar navigation while the console is open, stop jump input while selecting a piece, and change removal to act on release so a player can move away before committing. They also fix chat/map focus conflicts. [V1] Open Legend should give the active surface exclusive ownership of its relevant keys and make cancellation possible before mutation. A palette, chat box or map must not accidentally issue a world action through the same input.
+
+### HUD, help and entry implications from existing images
+
+VH07 keeps health/food, equipped hotbar and minimap peripheral while the world labels identify the storage room. VH04 supplies a dedicated controller-help layer; its mixed glyph report demonstrates that help must match the active input mapping. VH05 keeps local crafting hints next to the focused panel. Together, these support stable status anchors, local object prompts and on-demand help, rather than a permanent dashboard of every game system.
+
+The official Hildir notes place world modifiers on the **start-game screen** and add explanatory hints about discovering traders. [V1] That is a useful boundary: world/session policy belongs at deliberate entry or administration; ordinary play should foreground current intent and real world affordances. Open Legend should explain a new mechanic when it first becomes relevant and let the player reopen help later without losing target, draft or camera context.
+
+### Additional sources
+
+- **[V12]** Original player image associated with [Plains base — any tips for choosing the location?](https://www.reddit.com/r/valheim/comments/152klr0/plains_base_any_tips_for_choosing_the_location/), source-post date unverified. Original full-size image downloaded from Imgur. Full Reddit text was unavailable; no unseen comments are used.
+- **[V13]** Dani Cross, [Valheim map, map size, biomes, markers](https://www.theloadout.com/valheim/map), 2023-03-15. Historical controller-oriented map guide; secondary workflow corroboration only, not a current-version manual.
+- **[V14]** apneax3n0n, [Valheim base on elder's fire](https://imgur.com/gallery/valheim-base-on-elders-fire-I8bj5TC), original album metadata 2021-03-19. Source of VH09; capture build and mod/debug state unknown.
+- **[V15]** Original Steam discussion, [Snapping](https://steamcommunity.com/app/892970/discussions/0/4939856028586511958/), 2021-02-15–16. Selected conflicting firsthand views, not a survey.

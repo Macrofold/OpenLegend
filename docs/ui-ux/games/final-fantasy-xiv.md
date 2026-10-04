@@ -1,12 +1,12 @@
-# Final Fantasy XIV: audience, item context and repeatable actions
+# Final Fantasy XIV: world attention, navigation, audience and item context
 
 [Research ledger](../research.md) · [Inventory guidance](../inventory.md) · [Conversation guidance](../chat-and-invention.md) · [Screenshot manifest](../screenshots/ffxiv/manifest.json)
 
-**Evidence reviewed:** 2026-10-03. Six distinct publisher images, downloaded and visually inspected. The inventory comparison is one publisher-composed image, counted once. These are official guide captures with unspecified capture builds; the full HUD uses gamepad controls. They establish visual patterns, not the exact state of every current platform. No live game session or accessibility test was performed.
+**Evidence reviewed:** 2026-10-04. Eight distinct publisher images, downloaded and visually inspected. The inventory comparison is one publisher-composed image, counted once. These are official guide captures with unspecified capture builds; FFXIV-01 uses gamepad controls and FFXIV-08 uses keyboard/mouse controls. They establish visual patterns, not the exact state of every current platform. No live game session or accessibility test was performed.
 
 ## Why this game belongs in the comparison
 
-FFXIV is useful for persistent social chat, equipment context and a large catalogue of learned actions. Its strongest transferable idea is that the player establishes the subject first: an item supplies its own commands, a recipe supplies its own ingredients, and a conversation composer retains a visible audience. The interface still contains configuration menus and dense specialist screens. Those are reasons to study its boundaries, not copy every menu.
+FFXIV is useful for persistent social chat, equipment context, spatial navigation, visible action progress and a large catalogue of learned actions. Its strongest transferable idea is that the player establishes the subject first: an item supplies its own commands, a recipe supplies its own ingredients, and a conversation composer retains a visible audience. The interface still contains configuration menus and dense specialist screens. Those are reasons to study its boundaries, not copy every menu.
 
 **Actual player evidence:** In a November 2021 [Square Enix forum discussion](https://forum.square-enix.com/ffxiv/threads/446902), Luneline specifically praised movable/resizable UI and the simplified job gauge, while reporting that party-frame clutter made healing difficult. Nayukhuut, in the same thread, preferred FFXIV's existing party frames to WoW-style frames. This is first-person feature-level praise and disagreement, not a representative survey or an endorsement of the whole inventory system. It supports flexible density and stable alternatives; it does not establish that customization repairs a poor default.
 
@@ -104,8 +104,40 @@ _Source: [Creating Your Own Custom Chat Log Tabs](https://na.finalfantasyxiv.com
 
 **Judgment and application.** Separate social speech from combat/system noise without losing the active draft. Open Legend should not make selecting a history filter silently change the conversation recipient. Use meaningful default views before adding personalization; Log #4 is a poor enduring name. More windows should preserve reading position and fit the player's display, rather than be the only remedy for an overloaded transcript.
 
+## FFXIV-07 — A map is a reference surface with an explicit persistence control
+
+![FFXIV Limsa Lominsa map with named exits, coordinates, zoom controls and publisher-highlighted padlock](../screenshots/ffxiv/07-map-lock.jpg)
+
+_Source: [How do I keep the map from closing?](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud_map_lock.html), © Square Enix. Original publisher crop with its own magnified lock callout; keyboard/mouse guide, capture build unspecified._
+
+**Player goal and observed layout.** The player wants to navigate while retaining a reference. The map dominates its own window. Region and floor/area names sit at upper left; named exits and red arrows connect the drawing to adjacent places. Quest and service symbols are distributed over the geography. Coordinates are below it. The left rail contains navigation and display symbols, the highlighted padlock, and plus/minus around a zoom slider. Close is at upper right and a resize grip at lower right. This guide identifies the lock; it does not identify every small rail symbol or establish every map icon's meaning. Several overlapping symbols visibly compete in the lower settlement.
+
+**Documented interaction.** Select the minimap, or Main Menu → Travel → Map → select the padlock. A locked map survives Escape/cancel; its own upper-right close still works. This lets the player keep orientation while moving. The lock changes dismissal behavior, not access to unseen places. [Official instructions](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud_map_lock.html).
+
+**What helps and what hurts.** A named place and exits make the map useful beyond a cloud of icons. An explicit persistence control supports different tasks, but a lock can be misread as fixing position or preventing edits. A player should not have to discover its meaning by failing to close the window. Layered cities also need clear floor context; one flattened image does not prove that floor transitions are easy.
+
+**Firsthand friction and recovery.** Returning player Valkaras reported difficulty finding routes to quest locations on January 22, 2022. Rongway explained that a tracked **objective** opens its map whereas a **quest title** opens its journal; Valkaras subsequently reported the guidance worked. [Original thread](https://forum.square-enix.com/ffxiv/printthread.php?page=1&pp=10&t=454748). This is a concrete discoverability problem and successful explanation, not a measured failure rate. The [official HUD guide](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html) independently documents that title/objective distinction.
+
+**Open Legend lesson.** When spatial reference or known-location navigation is present, retain the selected subject and show the current area/surface clearly. Distinguish inspect, focus camera and move through labels and feedback. A known place can supply its own navigation context; the player should not reconstruct it through fields. Do not import quest markers, teleportation or omniscient maps as new engine capabilities. Evaluate whether a persistence preference is needed before adding a lock.
+
+## FFXIV-08 — Separate the selected subject, secondary attention and current action
+
+![FFXIV combat HUD annotated by the publisher for target, target bar, focus target, enmity list and casting progress](../screenshots/ffxiv/08-combat-hud.jpg)
+
+_Source: [HUD Overview](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html), © Square Enix. Full keyboard/mouse capture, original publisher annotations; build unspecified._
+
+**Observed regions.** A named target and red ground ring identify the marmot in the world. The top bar repeats its name/health and shows another named bar beside it. A separate Focus Target Bar names a ladybug. An enmity list sits at left. A named Fire cast and time/progress occupy the area above the hotbar, close to the character. Numbered hotbar cells, a lock, HP/MP and experience form the bottom-center cluster. The lower-left transcript records both a completed hit and the next cast starting. Main-story guidance is upper left; minimap/time are upper right; inventory dots, system menu and money stay peripheral. The large pink labels are teaching annotations, not normal gameplay chrome. The circular job gauge at right is visible but its detailed resource semantics are outside this source.
+
+**Documented behavior.** Selecting a target supplies the top bar; the adjacent bar identifies its current counterpart. Right-click the target → Focus Target, or Shift+F, retains a secondary target while another is selected. The progress bar represents a noninstant action. Party rows, when present, can target party members directly; this solo capture has no party list. [Official HUD guide](https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html).
+
+**What helps and what hurts.** Selection is confirmed both where the object is and in readable text. The current action is visible without reopening its setup. A transcript supplies a durable complement to brief world feedback. Yet multiple attention targets, meters and symbols demand learning, and peripheral quest guidance can distract during urgent action. An annotated teaching screenshot does not establish how a first-time player reads the unannotated game.
+
+**Open Legend lesson.** Show who is controlled, what is selected and what action is underway as separate facts. Keep the current action's target and meaningful progress accessible beside the world, with the native result in history. A selection change must not silently redirect already-started work. Use the world's actual progress or uncertainty; a decorative countdown cannot establish completion. Secondary focus, MMO combat gauges and party targeting are references to evaluate, not requested Open Legend mechanics.
+
 ## Specific conclusions to carry into the design
 
+- Keep current action, selected subject and reference navigation distinguishable. A world marker, a readable subject name and a durable result can reinforce one another.
+- Label map/journal entry points by the result of clicking them; adjacent text that looks similar should not conceal unrelated navigation.
 - Begin actions from their subject: item, person, recipe or station. Avoid an activity form that asks the player to reconstruct context already visible in the world.
 - Separate reading filters from speaking destination. Make both understandable without knowing MMO command syntax.
 - Give carried storage a coherent view; keep a world container physically identifiable and open it through the world.
@@ -116,4 +148,4 @@ These are research recommendations. Accepted Open Legend interaction rules remai
 
 ## Reference-image rights
 
-All six images retain Square Enix's rights and their original source annotations. They are stored for attributed design research and criticism only, not as game art or reusable UI assets, and are not relicensed under the repository's AGPL license. Exact URLs, sizes, hashes and capture uncertainty are in the manifest.
+All eight images retain Square Enix's rights and their original source annotations. They are stored for attributed design research and criticism only, not as game art or reusable UI assets, and are not relicensed under the repository's AGPL license. Exact URLs, sizes, hashes and capture uncertainty are in the manifest.

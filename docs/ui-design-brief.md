@@ -1,5 +1,13 @@
 # Open Legend UI design brief
 
+## Whole-interface redesign scope
+
+Mike's October 3 request covers the entire interface; inventory was an example. The first redesign delivery concentrated on inventory, contextual camp tasks, Crafting and conversation. That implementation and its focused evidence do not establish a whole-interface redesign. The [58-group current source/evidence map](ui-ux/interface-coverage.md) accounts for ordinary play, Character/history, entry/settings/saves, invention/creator editors, operations and diagnostics. The existing [feature specification](projects/game-interaction-redesign-feature-spec.md) and [technical design](projects/game-interaction-redesign-tech-design.md) now own the full proposed experience; [UIUX07–UIUX18](maintainers/ui-ux.md#uiux07) retains implementation and qualification.
+
+The proposed hierarchy gives world/character/current-work context stable prominence, makes ordinary actions begin with their object or purpose, groups deeper player records through readable return paths, and provides explicit creator/operations/settings entries. Deliberate authoring, policy and checkpoint review retain meaningful fields and consequences. Familiar game layouts guide task behavior; their quests, turn budgets, body slots or omniscient maps do not become universal world rules. Existing camera meanings, private knowledge, time, save and approval owners remain controlling. Changes to current launcher placement are a design proposal, not an assertion that the existing shell already follows it.
+
+Shared inventory and character presentation must work with the installed world's supported capabilities. Base, touch-demo and reservoir-demo presets already exist; themes are a separate presentation choice. Current raw-meat/preparation actions, item icons and wilderness copy still expose base-content assumptions, while multi-slot equipment and an alternate longer-task host are not established. The [portability correction](verification/game-interaction-redesign.md#world-portability-correction) distinguishes those actual gaps from the incorrect claim that inventory must belong to one world.
+
 ## World presentation ownership
 
 [World presentation](world-presentation.md) owns the accepted continuous right-drag orbit/pitch, Shift + right-drag or middle-drag pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older camera-binding or unlit-art directions conflict; SW18 retains visual qualification and further art work.

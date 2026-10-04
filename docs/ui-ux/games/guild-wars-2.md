@@ -1,12 +1,12 @@
-# Guild Wars 2: visible storage, protected items and social context
+# Guild Wars 2: world goals, journals, progression and visible storage
 
 [Research ledger](../research.md) · [Inventory guidance](../inventory.md) · [Conversation guidance](../chat-and-invention.md) · [Screenshot manifest](../screenshots/gw2/manifest.json)
 
-**Evidence reviewed:** 2026-10-03. Five distinct downloaded images, each visually inspected, covering carried inventory, market navigation, currencies, crafting discovery and a populated bank. These are original publisher or guide crops; no crop was manufactured to increase the count. Asset and guide dates vary, and no current client session was tested. Where behavior comes from a player's firsthand guide or a community wiki rather than ArenaNet documentation, that distinction is explicit.
+**Evidence reviewed:** 2026-10-04. Eight distinct downloaded images, each visually inspected, covering carried inventory, market navigation, currencies, crafting discovery, a populated bank, an objective tracker, upcoming level rewards and a story journal. These are original publisher or guide crops; no crop was manufactured to increase the count. Asset and guide dates vary, and no current client session was tested. Where behavior comes from a player's firsthand guide or a community wiki rather than ArenaNet documentation, that distinction is explicit.
 
 ## Why this game belongs in the comparison
 
-Guild Wars 2 is a useful comparison for persistent characters, many item types, multiplayer conversation and banking. Its inventory conveniences are specific: keep carried items together, deposit ordinary crafting materials with one command, and show the carried collection beside an accessed bank. The bank is a service with its own access rules, not evidence that every physical chest should be remotely available.
+Guild Wars 2 is a useful comparison for persistent characters, many item types, multiplayer conversation, world guidance, progression notices and banking. Its inventory conveniences are specific: keep carried items together, deposit ordinary crafting materials with one command, and show the carried collection beside an accessed bank. The bank is a service with its own access rules, not evidence that every physical chest should be remotely available.
 
 **Actual player praise.** Rauderi.8706's January 21, 2016 post in the [archived key-ring discussion](https://forum-en.gw2archive.eu/forum/game/gw2/We-need-a-Key-Ring/5933265) explicitly praises pooled bank tabs, material deposit, the wallet and wardrobe while asking for further key management. Guide author Embry [personally recommends hiding bag dividers](https://projektdyad.com/guides-list/guild-wars-2-inventory-management). These support particular conveniences; they do not establish consensus or prove that the whole interface is easy.
 
@@ -80,6 +80,50 @@ _Source: [Embry / Projekt Dyad inventory guide](https://projektdyad.com/guides-l
 
 **Open Legend application.** Open the specific chest from the world. Keep that chest's name, state and ownership visible above one side and the active character's carried collection above the other. Support a fast transfer command alongside optional dragging; retain useful bag identity. Show why an item cannot move at its source, and show where it went after success. When reach changes, report that change on this chest surface rather than silently removing a destination from a list.
 
+## GW2-06 — Give the player an immediate, named next step
+
+![GW2 tutorial objective tracker with story title, suggested level, overall purpose and Talk to Corporal Beirne](../screenshots/gw2/06-tutorial-objective.jpg)
+
+_Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Actual 480 × 287 guide crop, asset path dated June 2020; PC, exact build unspecified._
+
+**Observed hierarchy.** Defending Shaemoor is the heading, Level 1 gives context, italic text states the overall purpose, and a green-star row names the immediate person to talk to. The text sits over a translucent patch of the world; the remainder of the source crop is still the scene. This is the objective region, not a full HUD. It has no visible execute button or complete list of activities.
+
+**Documented interaction.** The official guide puts this current-story guidance at upper right and corresponding green markers on the lower-right compass. The player follows the world/map cue to the relevant encounter. Elsewhere, the same guide puts target information at top and bound skills at bottom, with cooldown and tooltip information close to each skill. It assigns these areas different jobs. [Official guide](https://www.guildwars2.com/en/new-player-guide/).
+
+**Why it helps.** The immediate verb and named person are more useful than a generic category such as Activities. Overall intent remains visible above the next step. **What is weaker:** color does much of the grouping, and the cropped example cannot establish collision behavior with simultaneous events, achievements or notifications. A legible short example is not proof of a legible busy HUD.
+
+**Open Legend application.** When the player has started supported work, keep its current purpose, actual subject and relevant next step readable near the world. Let the person or object supply the context for interaction. Do not invent a mandatory quest stream for an open-ended world, expose unknown objectives, or turn the entire activity catalogue into a permanent to-do list. The character's current work, nearby opportunities and long-term reference information should have distinguishable roles.
+
+## GW2-07 — A level notification can teach the next opportunity
+
+![GW2 Upcoming Level Rewards panel over the world with reward names, level requirements and Close](../screenshots/gw2/07-level-notification.jpg)
+
+_Source: [Briseadh's firsthand new-player guide](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html), imagery © ArenaNet / NCSOFT. Original wide guide crop. The article describes play before the game's sixth birthday in August, placing the reported session in 2018; exact client build and capture date are unverified._
+
+**Observed controls.** Upcoming Level Rewards is a compact central panel. Reward and Level columns pair an icon and plain name with a requirement: New Profession Skill Unlocked, Fine Equipment, Personal Story Unlocked and +5 Hero Points. The only visible button is Close. The world remains visible around it. The screenshot shows an informational after-state, not a choice of reward, an equip action or an instant upgrade button. A small striped symbol beside the window is visible but unverified.
+
+**Reported flow.** Briseadh describes clicking the level notification above the minimap, accepting rewards, and then seeing this upcoming-rewards view. The author reports that reward notices persist while the player finishes a fight. This is historical firsthand observation, not a current timing guarantee. The [official exploration article](https://www.guildwars2.com/en/news/explore-the-world-of-guild-wars-2/) separately documents completion-reward chests appearing on screen.
+
+**Why it helps.** The panel answers what becomes available next, using words and requirements together. **What is weaker:** a central interruption can compete with the scene, and a future-unlock list can be mistaken for things the player can do now. The pictured Close label is clearer than an unexplained acknowledgment icon, but the screenshot cannot establish whether opening the panel pauses combat.
+
+**Open Legend application.** Explain a real newly available capability or completed result at the moment it matters; link to its relevant permitted detail. Separate an informational notice from a choice that commits a resource. Keep significant results recoverable after a brief notification disappears. Do not add level gates, reward chests or repeated popups just because an MMO uses them. Preserve the world's own progression rules and the player's ability to finish their current interaction.
+
+## GW2-08 — The journal makes current story, archive and unavailability distinct
+
+![GW2 Story Journal with current My Story, expandable story groups, locked episodes and an explicit active-instance restriction](../screenshots/gw2/08-story-journal.jpg)
+
+_Source: [Briseadh / Gaiscioch Magazine](https://www.gaisciochmagazine.com/guides/new_adventures_in_gw2.html), imagery © ArenaNet / NCSOFT. Actual PC guide capture from the reported 2018 play period; exact build unspecified. This is not ArenaNet's 2014 demo journal image, which was reviewed but excluded from this screenshot set._
+
+**Observed layout.** The title identifies Hero → Story Journal and the `H` shortcut. The star on the vertical icon rail is selected. The left pane names the current story, then presents expandable story/expansion groups with a scrollbar; locked episodes have padlocks. The current chapter is green and marked with a star. The right pane combines scene art, chapter name, fiction date and the next step. An orange sentence explains that the active story cannot change while in an instance. Close is at upper right. Several other icon-only Hero sections are visible; their identity is not established by this capture alone.
+
+**Documented and reported flow.** Briseadh reports `H` → star tab to reopen the journal. ArenaNet's [2014 journal introduction](https://www.guildwars2.com/en/news/introducing-the-story-journal/) documents selecting an eligible unlocked story episode in the Hero panel and keeping the current step in the upper-right HUD. That historical article describes its launch-era eligibility and purchase model; those commercial rules are not treated as current here. The pictured active-instance restriction is direct screenshot evidence.
+
+**Why it helps.** A chapter list and selected detail preserve orientation. A known blocker is written where switching would happen. The current objective can remain brief in the HUD because the journal supplies context. **What is weaker:** a long expansion list and multiple icon rails can become a navigation burden. Locked content competes with the current task, and art consumes space that may be needed for readable text.
+
+**Original player disagreement.** In the [August 2021 achievements discussion](https://www.reddit.com/r/Guildwars2/comments/p7k748/the_achievements_ui_section_needs_a_rework/), Deathmand specifically liked the achievement pane's navigation; kalamari__ also preferred it and pointed out its search. KrystalSkyz reported being intimidated enough to avoid it, while Jademalo identified inconsistent categories. These reports concern the wider achievement system, not the exact journal image above. They caution against putting story tasks, collections, rewards and accomplishments into one undifferentiated catalogue. They also show that adding more categories is not a universal solution.
+
+**Open Legend application.** A reference view should answer a player's actual question about known people, places, discoveries or ongoing work, with a clear selected entry and relevant detail. Keep the brief current-action display separate from the archive. Reopening a view should preserve a useful reading position. Show a known restriction next to the action it blocks. Any journal, objective tracking or progression feature remains a proposal to assess against native capabilities; this research does not assert those features already exist.
+
 ## Chat and world interaction: keep the subject attached
 
 The screenshot set above does not include a dedicated GW2 chat close-up; inaccessible source images were not substituted with invented or duplicated captures. Chat conclusions here are based on documented behavior, while the [FFXIV dossier](final-fantasy-xiv.md) provides inspected chat screenshots.
@@ -98,8 +142,8 @@ Briseadh's firsthand guide describes Enter focusing the composer, `/s` for local
 | Should crafting ask for ingredients?                 | Ask when the choice is an experiment or meaningful substitution.       | Known routine recipes already establish most requirements.                                                  |
 | How should the player address someone?               | Carry the selected speaker into conversation and show the destination. | Map, party and local speech are different audiences; none should change invisibly.                          |
 
-These are research recommendations. The linked Open Legend handbook chapters own accepted behavior and implementation status.
+The expanded study also supports separating current work from reference information, keeping notification consequences recoverable, and naming why a known action is unavailable. A large journal or achievement catalogue must preserve a useful selected entry and reading position. These are research recommendations. The linked Open Legend handbook chapters own accepted behavior and implementation status.
 
 ## Reference-image rights
 
-All five images remain third-party reference material for attributed research and criticism. They are not Open Legend art, are not relicensed under the repository's AGPL license and do not imply reuse permission. The manifest records exact sources, hashes, sizes and uncertainty. Guide crops count once each; no independent live-game or accessibility validation is claimed.
+All eight images remain third-party reference material for attributed research and criticism. They are not Open Legend art, are not relicensed under the repository's AGPL license and do not imply reuse permission. The manifest records exact sources, hashes, sizes and uncertainty. Guide crops count once each; no independent live-game or accessibility validation is claimed.

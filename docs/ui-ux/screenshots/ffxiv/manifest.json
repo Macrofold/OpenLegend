@@ -112,5 +112,43 @@
     "uncertainty": "Platform/build are not asserted beyond the source and visible controls. Promotional assets may precede release. No live game session was tested.",
     "attribution": "Square Enix; source credited separately where applicable",
     "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
+  },
+  {
+    "id": "FFXIV-07",
+    "game": "Final Fantasy XIV",
+    "platform_version": "Keyboard/mouse official UI guide; client platform and capture build unspecified",
+    "source_page": "https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud_map_lock.html",
+    "direct_image_url": "https://lds-img.finalfantasyxiv.com/uiguide/na/cb/4b06f8c2df2f90dc6a82b67301a22d8a75ce53.jpg",
+    "local_path": "docs/ui-ux/screenshots/ffxiv/07-map-lock.jpg",
+    "access_date": "2026-10-04",
+    "width": 896,
+    "height": 720,
+    "bytes": 619414,
+    "sha256": "425ef9d29368d0ded62773fafff05d7d6295e2c601aeb1c41c5fd79d88df1daa",
+    "source_kind": "Official cropped map screenshot with publisher lock callout",
+    "visually_inspected": true,
+    "counted_screenshots": 1,
+    "uncertainty": "Original publisher/author capture retained byte-for-byte, including source annotations or crop. No live client interaction tested. Historical and preview images are not claims about the current patched client. Only directly observed controls and separately attributed documented behavior are asserted.",
+    "attribution": "Square Enix",
+    "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
+  },
+  {
+    "id": "FFXIV-08",
+    "game": "Final Fantasy XIV",
+    "platform_version": "Keyboard/mouse HUD guide; client platform and capture build unspecified",
+    "source_page": "https://na.finalfantasyxiv.com/uiguide/know/know-hud/hud-name.html",
+    "direct_image_url": "https://lds-img.finalfantasyxiv.com/uiguide/na/69/b9d7389938411ebdd218f5fe4267430f85ef73.jpg",
+    "local_path": "docs/ui-ux/screenshots/ffxiv/08-combat-hud.jpg",
+    "access_date": "2026-10-04",
+    "width": 1856,
+    "height": 1040,
+    "bytes": 3368263,
+    "sha256": "46f9acbbe8cb72c1560f43d33baa230b2553c61f71cfbcc44ee8a41d75bcccc4",
+    "source_kind": "Official full screenshot with publisher HUD annotations",
+    "visually_inspected": true,
+    "counted_screenshots": 1,
+    "uncertainty": "Original publisher/author capture retained byte-for-byte, including source annotations or crop. No live client interaction tested. Historical and preview images are not claims about the current patched client. Only directly observed controls and separately attributed documented behavior are asserted.",
+    "attribution": "Square Enix",
+    "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
   }
 ]

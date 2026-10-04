@@ -72,7 +72,7 @@ Root/client entrypoints retain selective routing; no vendor skill or duplicate h
 
 **In progress — correcting the original whole-interface research/design scope, October 4, 2026.** The initial delivery contained 71 distinct digital UI screenshots across 12 games, one explicitly excluded display photograph, source/version provenance and critique, a pinned code diagnosis and four original proposals. It concentrated on inventory, activities and conversation; the earlier statement that it delivered the entire October 3 request was inaccurate. The [58-group whole-interface map](../ui-ux/interface-coverage.md) now covers existing player, creator and operator surfaces. The [game atlas](../ui-ux/games/README.md), [central ledger](../ui-ux/research.md#game-interface-screenshot-atlas) and [pinned audit](../ui-ux/current-interface-audit.md) retain their evidence. The existing [feature specification](../projects/game-interaction-redesign-feature-spec.md) and [technical design](../projects/game-interaction-redesign-tech-design.md) are being completed for the full original scope; this correction adds no runtime code.
 
-Every reference image was visually inspected and embedded, with documented controls and player feedback distinguished from inference and known edition/WIP/add-on limits stated. Image validation passed for unique hashes, bytes, dimensions, manifests and dossier coverage. Review covered all affected documentation; 499 newly introduced local-link occurrences and all 39 introduced local-anchor occurrences resolve, and all 148 image embeds resolve. The four PNG proposals were visually checked for fit and correspondence with the specifications; matching editable SVG versions are included. Existing guidance was reconciled, including removal of remaining destination-reselection wording. Two preexisting IW03 anchor defects in historical documentation remain outside this change. This closes research/design only. That phase ran no running-game, runtime, assistive-device or usability tests and did not close UIUX08–UIUX11; those implementation stages are now authorized by the later chat continuation.
+The initial 71-image delivery was visually inspected and checked for identity, embedding and links, with historical/platform limits retained. Those observations qualify that initial research subset, not completion of the original whole-interface request. The expanded atlas now has 98 digital screenshots plus one excluded photograph, and the original proposal set has nine layouts. The feature pair covers all 58 source-reviewed surface groups and J01–J48; UIUX12–UIUX18 below retain broader implementation and experience qualification. Final document/image review is in progress. This pass runs no game/runtime, assistive-device or usability tests and closes none of the existing native acceptance gates.
 
 ## UIUX08
 
@@ -105,3 +105,45 @@ Exit: J13–J14, including audience/hearing truth, offer consent, existing ordin
 Record actual revision, content, input, viewport/text scale, native outcomes and recovery results. Test important concurrent/invalidated states through the true client/server path. Wireframes, component fixtures, compiler success and documentation completion do not satisfy this experience gate. The research phase ran no gameplay tests; its evidence does not qualify the runtime implementation.
 
 Full native client/server J01–J16 qualification remains open because disposable PostgreSQL/platform access is incomplete and the integrated camp session has not been demonstrated. The final inventory/activity UI corrections and their focused component checks do not close this experience gate. The [verification report](../verification/game-interaction-redesign.md) owns actual evidence and limitations; this blocker does not remove or defer any agreed journey.
+
+## UIUX12
+
+**Designed; implementation pending — world HUD, contextual actions and Character.** Apply the [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#world-orientation-and-current-work) to HUD-01–HUD-09, PLAY-07–PLAY-08 and the relevant shared controls. Reorganize player/creator/session navigation, expose readable character/time/current-work state, preserve camera meanings, distinguish selected target and stable quick actions, and replace the remaining general `ActionAttempts` form for ordinary play. Reuse current world/action/character owners; this is not another generic form or shell framework. The current source map, rather than the pinned historical inventory audit, establishes what remains.
+
+Exit: J19–J23, with relevant J24 and J47 cases. Every ordinary action supplies known context, asks only meaningful missing choices and preserves native consequences. Published rules, privacy and time/camera meanings remain with their existing owners. Contextual camp work did not complete this wider action task.
+
+## UIUX13
+
+**Designed; implementation pending — coherent reading and conversation context.** Apply the [conversation/journal design](../projects/game-interaction-redesign-feature-spec.md#conversation-captions-and-narrative-interruptions) to READ-01–READ-06, including actual speaker/audience, promises versus beginnings/story, permitted events/memories, new-versus-selected state, finite search/reading and recoverable captions/narration. UIUX10 and NC/PW/knowledge/memory owners retain their actual implementation and evidence; no global omniscient timeline is introduced.
+
+Exit: J25–J27 plus J13/J47 where affected. Verify returning to an older entry/draft after new information and interrupted reads. References to maps do not authorize invented player-map knowledge, quests or fast travel.
+
+## UIUX14
+
+**Designed; implementation pending — entry, preferences, help and checkpoint experience.** Apply [entry through recovery](../projects/game-interaction-redesign-feature-spec.md#entering-resuming-and-leaving) to LIFE-01–LIFE-10 using the existing entry/tab-control, settings/profile/policy and save/load owners. Preserve automatic sole-tab entry and the actual other-tab Resume behavior. Group settings by purpose and persistence scope, retain exact named load/delete and Before last load protection, and distinguish saving, checkpoints and acknowledged failures.
+
+Exit: J17–J18 and J28–J31, with J47 where affected. Existing multiplayer/tab-resume/save evidence remains scoped and is not reopened wholesale; demonstrate the redesigned composed journey and changed-condition cases rather than replacing its underlying implementation.
+
+## UIUX15
+
+**Designed; implementation pending — invention, creator Work and direct editors.** Apply [invention/review](../projects/game-interaction-redesign-feature-spec.md#invention-and-reviewed-creator-work) and [direct editing](../projects/game-interaction-redesign-feature-spec.md#direct-world-and-character-editing) to CREATE-01–CREATE-11 and appropriate own-mind editing in CREATE-13. Preserve distinct actor workshop and owner-session authority, typed question/answer revision, all seven Work kinds, exact review/Apply, dirty Keep/Discard and original-result recovery. Existing PW11, BW16 family, person/global-event and world-agent implementations remain the starting point; their deliberate authoring forms are not the ordinary-play form problem.
+
+Exit: J36–J43, with broader PW11/WW/editor gates and J47 retained. Validate exact subject/revision/save scope, long history/dependencies and uncertainty through actual native owners. No paid request occurs merely from inspecting or returning to work.
+
+## UIUX16
+
+**Designed; implementation pending — operations, knowledge and deliberate diagnostics.** Apply [operations](../projects/game-interaction-redesign-feature-spec.md#operations-invitations-and-maintenance) and [inspection](../projects/game-interaction-redesign-feature-spec.md#knowledge-dependencies-and-diagnostics) to LIFE-11–LIFE-15, CREATE-12–CREATE-14 and HUD-10. Make public overview/role/return, invitation versus access removal, maintenance revision/readiness, personal versus creator knowledge and actual cost/performance evidence legible. Existing operations, MP, world inspection and Intelligence owners retain authorization, finite reads and write semantics.
+
+Exit: J32–J35 and J44–J45, plus J41/J47 where affected. Operations remains a public read-only view unless an explicitly permitted administrative action is selected; diagnostic inspection does not rerun work or expose provider machinery in ordinary conversation.
+
+## UIUX17
+
+**Open — world-portable shared presentation and bounded capability support.** The [corrected source findings](../verification/game-interaction-redesign.md#world-portability-correction) identify existing alternate presets and real base-content action/icon leaks. The broader technical review also finds wilderness/clearing copy and generated gathering labels in shared client code. Move setting vocabulary and supported action/visual metadata to their world/native owners; keep trusted readable fallbacks. Current single-item equipment support is not a world-defined multi-slot schema.
+
+Exit: J46 against the supported base/touch/reservoir capabilities and corresponding affected journeys. Separately demonstrate a genuinely different installed longer-task host before closing UIUX09's activity portability gate; those alternate manifests currently do not install it. A changed theme, renamed fire or capability-absence check is insufficient. Reuse engine/world boundary owners; do not create a new simulation just to produce a passing example.
+
+## UIUX18
+
+**Open — whole-interface input and uncoached usability.** Apply J47–J48 across the complete [58-group coverage map](../ui-ux/interface-coverage.md), using the composed journeys from UIUX08–UIUX17. Record actual role/world/build/input/viewport/text and outcomes. Native IME means real input-method-editor character composition; it is not simulated typing. Assistive devices, large text, short/narrow views and non-drag input need meaningful task evidence, not only markup or isolated panels.
+
+Observe players attempting relevant sessions without teaching the solution first. Record hesitation, wrong targets, unintended movement/actions, lost drafts, backtracking and recovery as well as completion. Existing component/native/browser evidence can support exactly the cases it exercised, but neither image count nor source review qualifies the full experience. UIUX11's integrated camp gate remains open independently; no required acceptance is removed by a platform limitation.

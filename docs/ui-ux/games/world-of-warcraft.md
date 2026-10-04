@@ -1,12 +1,12 @@
-# World of Warcraft: consolidate possessions and preview layout changes
+# World of Warcraft: map literacy, learned actions and configurable density
 
 [Research ledger](../research.md) · [Inventory guidance](../inventory.md) · [Screenshot manifest](../screenshots/wow/manifest.json)
 
-**Evidence reviewed:** 2026-10-03. Three distinct Blizzard images, downloaded and visually inspected. All are from the **2022 Dragonflight UI preview**, not a claim about the latest WoW client. The source marks the bag image as work in progress. One publisher comparison contains two captures and counts once. No live session, add-on installation or accessibility test was performed.
+**Evidence reviewed:** 2026-10-04. Five distinct Blizzard images, downloaded and visually inspected. The first three are from the **2022 Dragonflight UI preview**; the new map and spellbook examples are from the **July 2024 War Within UI announcement**. These are historical publisher captures, not claims about the latest client. The bag source marks work in progress. Publisher comparisons count once each, including the two-size spellbook image. No live session, add-on installation or accessibility test was performed.
 
 ## Why this example matters
 
-WoW makes a useful distinction between physical bag capacity and how possessions are presented. Multiple equipped bags need not force multiple windows. Its layout editor also demonstrates a valid place for forms: configuring an optional preference while seeing the result. That does not imply that ordinary gameplay should be executed through configuration forms.
+WoW supplies evidence for three different player goals: viewing possessions, interpreting the world map and finding learned abilities. It makes a useful distinction between physical bag capacity and how possessions are presented. Multiple equipped bags need not force multiple windows. Its layout editor also demonstrates a valid place for forms: configuring an optional preference while seeing the result. That does not imply that ordinary gameplay should be executed through configuration forms.
 
 **Actual player evidence.** In the October 26, 2022 [“consolidate bags” discussion](https://us.forums.blizzard.com/en/wow/t/thank-you-for-the-consolidate-bags-option/1380103), SellySel described relying on Bagnon to see possessions together, then welcomed a built-in equivalent. TidelWave also specifically liked consolidation. In the same thread, Bodach reported the combined bag being obstructed by a sidebar while moving items; other posters wanted the same behavior for banks. These are direct player reports about particular operations, not proof that every player preferred the new UI. The date matters: they establish a historical failure mode, not an unresolved 2026 bug.
 
@@ -56,6 +56,36 @@ _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us
 
 **Open Legend application.** Preview enlarged text and item density in the actual inventory or conversation region. Test narrow and short windows with real long names and replies. Keep the selected item and draft during layout adaptation. Use optional settings for preferences, not compulsory configuration of every action's actor, object and destination.
 
+## WOW-04 — Explain the symbols where the player needs to read them
+
+![WoW Map and Quest Log with area breadcrumbs, world markers and an expanded labeled map legend](../screenshots/wow/04-map-legend.png)
+
+_Source: [Blizzard's July 2024 UI announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm), © Blizzard Entertainment. Full publisher capture; War Within preview period, exact client build unspecified._
+
+**Player goal and observed controls.** The player wants to identify nearby content and understand its markers. The map occupies the left; a scrollable legend replaces the right-hand detail area. Location breadcrumbs progress from World through Azeroth and Khaz Algar to Hallowfall. The legend has a Back button and named groups: Quests, Limited Time Activities, Activities and partly visible Movement. Each symbol is paired with text; Campaign, Important, Repeatable, In Progress and Turn In are visibly different. Top-right window controls provide size/close affordances. Three circular controls above the map and a gear above the legend are visible, but this source does not establish every control's function; the hamburger must not be asserted to filter just from its shape.
+
+**Documented flow.** `M` opens the map and its legend. `L` opens the quest log, where checkboxes select tracked quests and hovering a quest explains its category/status. These are linked ways to understand content, rather than a requirement to memorize every symbol. [Official announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm).
+
+**Why it helps.** Help is adjacent to the thing being interpreted, and shape plus label avoids depending only on color. Breadcrumbs preserve geographic orientation. **What is weaker:** many categories and markers can still overwhelm the map; a key explains clutter without reducing it. The source does not show every filter or what happens when several markers overlap.
+
+**Original player response.** In the [July 22, 2024 announcement discussion](https://us.forums.blizzard.com/en/wow/t/user-interface-and-quest-updates-in-the-war-within%E2%84%A2/1897936), Leounity asked for icon filtering and FrodoBggns described the existing Dragonflight map as crowded. LordVader praised the new presentation's detail. Those are individual reactions to a preview; they do not establish a tested majority preference or prove a missing filter. DeadlyKitten's approval of hiding already-completed quests on alternate characters is an anticipated benefit, not evidence of that poster completing a hands-on test.
+
+**Open Legend application.** Make unfamiliar spatial symbols explain themselves in place, with a concise legend or accessible named detail when needed. Keep current selection and relevant nearby information prominent. If filters are introduced, show what is hidden and preserve the player's choice. Do not conceal the only way to find a person behind a tiny settings icon. These lessons concern permitted spatial information; they do not authorize adding quest taxonomies or revealing undiscovered locations.
+
+## WOW-05 — A learned-action catalogue and a quick-action bar serve different goals
+
+![WoW spellbook in full and minimized layouts with named abilities, class tabs, search, Hide Passives and page controls](../screenshots/wow/05-spellbook.png)
+
+_Source: [Blizzard's July 2024 UI announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm), © Blizzard Entertainment. One original publisher comparison, counted once. Preview build unspecified._
+
+**Observed arrangement.** The book offers icons **and names**, separated into Warrior and specialization sections. Passive is written beneath relevant abilities; unavailable-looking entries are dimmed. Warrior/General tabs sit above the pages. Search and Hide Passives stay at the top; numbered page arrows at the bottom. Specialization, Talents and Spellbook are persistent lower tabs, with Spellbook selected. A corner size control changes the presentation; close remains beside it. The minimized version shows fewer entries and more pages, preserving names instead of making every entry tiny. The exact blocker for each dim entry is not visible.
+
+**Documented flow.** `N` opens the consolidated Talents and Spellbook surface. The spellbook can be minimized, searched and filtered to hide passive abilities; search can identify abilities missing from the action bar. [Official announcement](https://news.blizzard.com/en-gb/article/24117139/user-interface-and-quest-updates-in-the-war-withintm). This image does not demonstrate dragging an ability, a tooltip or an actual cast, so those actions are not inferred from it.
+
+**Why it helps.** Discovery and inspection have space for meaningful labels; frequent execution can stay elsewhere. A passive effect is distinguished from a command the player can invoke. **What is weaker:** class, specialization and character-development navigation create several layers, and the full book occupies substantial scene space. Names/search help learned catalogues, but a small set of current actions should not require opening a catalogue every time.
+
+**Open Legend application.** Present the controlled character's actual available abilities or learned techniques in readable groups when browsing is the task. Keep the immediate verb attached to its selected person, object or station. Distinguish an ongoing effect from an actionable command and explain known blockers. A compact layout should retain the same subject and readable names; avoid shrinking a dense desktop catalogue into illegible cells. Do not copy WoW's class, talent or hotbar systems unless those mechanics are separately supported and approved.
+
 ## Workflows supported by the evidence
 
 | Player task                                    | Verified or observed sequence                                                                                                                                        | Design lesson                                                                                               |
@@ -66,6 +96,8 @@ _Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us
 | Move an item without an obstructed destination | Historical player reports describe sidebar overlap during movement.                                                                                                  | Qualify real pointer paths and stacking; a beautiful static screen is insufficient.                         |
 
 ## Conclusions for Open Legend
+
+The wider interface study supports in-place explanations for unfamiliar symbols and a separate reference catalogue for learned actions. Keep frequent actions attached to their current subject. Make compact presentation preserve readable names, and let players understand which information a filter hides. Neither a symbol legend nor optional customization excuses an overloaded default.
 
 The positive evidence supports **a unified view of possessions**, not a global menu of nearby storage objects. Adopt that distinction. A container's capacity and access can remain authoritative without making its identity a required dropdown field for every transfer. The player begins with the chest they opened; the UI shows its contents and the possessions they can move.
 

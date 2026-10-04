@@ -74,5 +74,43 @@
     "uncertainty": "This capture is from a third-party page, not an independently verified current build. Exact input mapping is not inferred from the image. No live game session was tested.",
     "attribution": "ZA/UM; screenshot reproduced by Riker Santivong",
     "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
+  },
+  {
+    "id": "DISCO-05",
+    "game": "Disco Elysium",
+    "platform_version": "PC release-period guide published 2019-10-29; exact capture build unspecified",
+    "source_page": "https://www.shacknews.com/article/114689/where-to-get-a-map-in-disco-elysium",
+    "direct_image_url": "https://shacknews-www.s3.amazonaws.com/assets/editorial/2019/10/disco-elysium-map.jpg",
+    "local_path": "docs/ui-ux/screenshots/disco/05-map-checks.jpg",
+    "access_date": "2026-10-04",
+    "width": 1920,
+    "height": 1080,
+    "bytes": 334123,
+    "sha256": "11630c28db14e3e9faa9b2df7df61822f7ce9ca8d75996726d0b54b45a3e11ee",
+    "source_kind": "Full firsthand guide screenshot of Journal Map and found checks",
+    "visually_inspected": true,
+    "counted_screenshots": 1,
+    "uncertainty": "Original publisher/author capture retained byte-for-byte, including source annotations or crop. No live client interaction tested. Historical and preview images are not claims about the current patched client. Only directly observed controls and separately attributed documented behavior are asserted.",
+    "attribution": "ZA/UM; screenshot published by Sam Chandler / Shacknews",
+    "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
+  },
+  {
+    "id": "DISCO-06",
+    "game": "Disco Elysium",
+    "platform_version": "PS5 Final Cut release-period accessibility review published 2021-03-31; exact patch unspecified",
+    "source_page": "https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/",
+    "direct_image_url": "https://caniplaythat.com/wp-content/uploads/2021/03/Disco-Elysium_20210330131649.jpg",
+    "local_path": "docs/ui-ux/screenshots/disco/06-controls-ps5.jpg",
+    "access_date": "2026-10-04",
+    "width": 3840,
+    "height": 2160,
+    "bytes": 414426,
+    "sha256": "018cd29c277933f691270be695834a0951b01d87f13779248f880ee2bf0c7165",
+    "source_kind": "Full firsthand review screenshot of Options Controls help",
+    "visually_inspected": true,
+    "counted_screenshots": 1,
+    "uncertainty": "Original publisher/author capture retained byte-for-byte, including source annotations or crop. No live client interaction tested. Historical and preview images are not claims about the current patched client. Only directly observed controls and separately attributed documented behavior are asserted.",
+    "attribution": "ZA/UM; screenshot published by Coty Craven / Can I Play That",
+    "rights": "Third-party reference screenshot for UI research and criticism only. Not an Open Legend asset; not relicensed under AGPL; no reuse permission asserted."
   }
 ]

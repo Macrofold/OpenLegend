@@ -4,7 +4,7 @@
 
 ## Scope, evidence and version baseline
 
-Research began **2026-10-03** and was finalized **2026-10-04**. The **five locally saved images were individually inspected** and traced to the original players' posts: **four digital screenshots and one photograph of the game display**. The photograph is supporting evidence and is excluded from digital-screenshot totals. They cover a 2021 inventory, a 2022 chest, and three April 2024 **1.6-era** screens. Exact patches and platforms are recorded where the authors supplied them; unspecified details remain unknown. Several captures accompany bug reports, which are identified explicitly. No current game executable or controller was tested.
+Research began **2026-10-03** and was finalized **2026-10-04**. The original five images were individually inspected and traced to players' posts. The whole-interface expansion adds a wiki skills capture and an original Android map capture: **seven saved images, six digital screenshots and one photograph of the game display**. The photograph is supporting evidence and is excluded from digital-screenshot totals. They cover a 2021 inventory, a 2022 chest, and three April 2024 **1.6-era** screens. Exact patches and platforms are recorded where the authors supplied them; unspecified details remain unknown. Several captures accompany bug reports, which are identified explicitly. No current game executable or controller was tested.
 
 **Observed** means visible in the saved image. **Documented** means supported by a linked game guide or the original player's account. **Assessment** and **Application** are our design analysis and proposed Open Legend use. Third-party game imagery retains its original rights and is stored for reference only; it is not licensed Open Legend game art.
 
@@ -127,3 +127,49 @@ These are primary, feature-specific player accounts. They support the selected l
 Stardew demonstrates that simple collection grids, object context and a few dependable accelerators can support many repeated household actions. The strongest lesson is to remove redundant decisions: opening a chest names the chest, opening a kitchen names the kitchen, and choosing a recipe names the output. Access rules, meaningful ingredient choice and consequences still need to be understandable.
 
 A good Open Legend evaluation scene is to return from gathering, open the intended chest, store matching supplies, retain the needed tool, and cook at the adjacent station. The player should complete that sequence without repeatedly choosing their character or a container from a global form. Test the same scene with unfamiliar item names and with keyboard focus. These are candidate tasks; the handbook and its maintainers' trackers own current implementation and acceptance.
+
+
+## Whole-interface expansion: character progress, navigation and readable controls
+
+Reviewed **2026-10-04**. The two new images address character/status and map layout. Existing captures also retain useful HUD evidence: date/time/currency near the upper-right and the current tool strip near the edge of the world. Those are observations of those versions, not a guarantee of identical placement on every platform.
+
+### SDV-06 — Character progress is a readable summary
+
+![Stardew Valley skills panel with character portrait and five skill tracks](../screenshots/stardew-valley/skills-tab-2024.png)
+
+**Observed.** The left side identifies the character by portrait, name and title. Farming, Mining, Foraging, Fishing and Combat each have a distinct icon, a written name and a ten-position row. The fifth and tenth positions are larger. The lower portion contains locks, silhouettes and a visible level indicator. This is the wiki's original panel crop, uploaded **2024-08-14**; no tab strip or focus tooltip is visible, so those are not inferred from this image.
+
+**Documented workflow.** The Player Menu guide describes opening the skills tab to inspect progress, with professions earned at levels five and ten and chosen at the later level-up screen. Hover information explains learned profession benefits. This separates reading current capability from making a progression choice. [Player Menu](https://stardewvalleywiki.com/Player_Menu)
+
+**Good / weak.** Alignment makes the five tracks comparable. Written names supplement the item-like icons, and larger milestone positions suggest special events. The absence of exact XP/next-unlock information in this crop and the unexplained lower silhouettes can obscure what to do next. Hidden content may be intentional discovery, but an interface should distinguish intentional mystery from an unavailable explanation.
+
+**Open Legend application.** Give the character a compact status/skills summary, with a focused explanation of a selected capability, current modifiers and meaningful next milestone. A character sheet need not be a permanent HUD or a configuration form. Keep earned facts, available choices and unresolved/unknown information visually distinct. Do not import Stardew's five-skill progression as an Open Legend policy.
+
+### SDV-07 — A map can be legible yet waste its container
+
+![Stardew Android map tab with current character marker and empty right-side area](../screenshots/stardew-valley/mobile-map-2025.jpg)
+
+**Observed.** The orange-highlighted map tab sits in a top strip of icons; a large X closes the menu at the far right. Geography fills the left portion, with a farmer portrait and farm name. A large right-side area remains empty. This is the full original attachment, not the forum's 150-pixel thumbnail. The original author identifies **Android A51**, and the thread is tagged **1.6**; the precise patch is unknown.
+
+**Firsthand context.** On **2025-02-06**, ahmadino1234 complains that the map leaves empty space and wants it to fill the screen. A respondent suggests padding/aspect ratio as a possible explanation. The screenshot establishes the visible imbalance; that reply does not establish its technical cause or prove a universal Android defect. [Original report](https://forums.stardewvalley.net/threads/annoying-ui.36870/)
+
+**Good / weak.** Map selection, player location and close affordance are recognizable. However, most top-level navigation still relies on icons, and usable map space is constrained despite the large frame. A screenshot cannot tell whether a region label opens more information or initiates travel.
+
+**Open Legend application.** Evaluate map, character and task panels at their actual usable width and height. Fit and scale the meaningful content, rather than merely increasing the outer dialog. Preserve a readable current-position marker and named locations; make inspect/pin/travel separate actions. A map should help a player orient themselves, not become a list of every hidden entity.
+
+### Navigation, help/options and world actions
+
+The official **1.6 changelog** documents several specific interface improvements: the map key closes a map it opened; Back from community-center notes returns to the previous menu; maps gain real-time character positions; food-buff tooltips show duration. These are useful contracts for Open Legend: matching open/close behavior, one layer of Back, truthful live versus remembered position, and effect duration at inspection. [Official changelog](https://www.stardewvalley.net/stardew-valley-1-6-update-full-changelog/)
+
+The options guide distinguishes UI scaling from world zoom and exposes tool-hit/placement display preferences. [Options](https://stardewvalleywiki.com/Options) For Open Legend, enlarging labels must not force the player to lose useful world context. Placement should show the actual target/footprint and allow cancellation before commit; help should explain the currently selected tool and effective binding. Character creation and world selection can ask consequential setup questions once; ordinary using, speaking, moving and building should start with the visible target and current tool.
+
+### What players specifically value—and where it fails
+
+These are original, selected accounts. They are not a representative review sample or evidence that every player likes Stardew's interface.
+
+- **Positive:** a May 2024 player specifically praises how large the UI can become and says that supports their limited vision. [Original post](https://www.reddit.com/r/StardewValley/comments/1cv40jo/), indexed text; direct retrieval unavailable.
+- **Positive and qualified:** a February 2023 accessibility discussion praises separate world zoom/UI scaling and holding an input for repeated work instead of repeated presses. It also asks for more flexible saving. These are that player's experiences, not a claim of full accessibility. [Original discussion](https://www.reddit.com/r/StardewValley/comments/11860di/), indexed thread text.
+- **Negative:** a March 2024 player reports unreadable counts and menu text even at maximum scale. Replies identify display resolution as a possible contributor; the author reports improvement after changing it. [Original discussion](https://www.reddit.com/r/StardewValley/comments/1bmstwx/), indexed thread text. The lesson is to verify readable outcomes at real resolution and scale, rather than considering a scale setting sufficient by itself.
+- **Negative:** SDV-07 supplies direct evidence of a mobile map that does not use its available panel well. Do not treat the suggested workaround as verified root cause.
+
+The practical target for Open Legend is a readable, resizable interface that preserves action context, predictable Back behavior, accessible alternatives to repeated clicking, and a clear boundary between character information, world navigation and deliberate settings changes.

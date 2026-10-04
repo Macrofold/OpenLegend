@@ -1,12 +1,12 @@
-# Disco Elysium: conversation as play, objects as meaningful possessions
+# Disco Elysium: contextual choices, task memory and understandable controls
 
 [Research ledger](../research.md) · [Inventory guidance](../inventory.md) · [Conversation guidance](../chat-and-invention.md) · [Screenshot manifest](../screenshots/disco/manifest.json)
 
-**Evidence reviewed:** 2026-10-03. Four distinct full screenshots were downloaded and visually inspected: two developer media images, one PS5 launch-review capture and one inventory image reproduced by a third-party reviewer. They are not a sequence from one playthrough. Promotional capture builds are unspecified; the PS5 image is historical evidence from the March 2021 release period. No live input, timing or accessibility test was performed.
+**Evidence reviewed:** 2026-10-04. Six distinct full screenshots were downloaded and visually inspected: two developer media images, two PS5 launch-review captures, an inventory image reproduced by a third-party reviewer, and a map captured for a 2019 guide. They are not a sequence from one playthrough. Promotional capture builds are unspecified; the PS5 images are historical March 2021 release-period evidence. No live input, timing or accessibility test was performed.
 
 ## Why this game belongs in the comparison
 
-Disco Elysium is especially relevant to Open Legend's conversation and object inspection because reading, choosing an intention and seeing the world's response are central to play. It has a comparatively small physical inventory and a separate thought system. It is not evidence for multiplayer chest permissions, shared storage or real-time chat behavior.
+Disco Elysium is especially relevant to Open Legend's conversation, object inspection and task memory because reading, choosing an intention and seeing the world's response are central to play. It has a comparatively small physical inventory and a separate thought system. It is not evidence for multiplayer chest permissions, shared storage or real-time chat behavior.
 
 The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/12/20/feld-playback-experiment) explains that the menus borrow their visual language from a fictional tape computer. Dialogue receives particular attention because it is used so often, and roll animation, lighting and sound belong to that same language. This establishes intentional visual coherence, not proof that every unfamiliar control is understandable.
 
@@ -70,6 +70,47 @@ _Source: [Riker Santivong's game review page](https://planita13.github.io/Final-
 
 **Open Legend application.** Keep the actor visible when equipment is the task. Selecting an item should provide its name, description, current location, relevant effect and likely action. Show how equipping it changes the existing slot; provide a simple route back. Preserve names for invented items. A detail panel should answer a question about the selected possession instead of becoming a compulsory form before every use.
 
+## DISCO-05 — A map can remember opportunities without prescribing every move
+
+![Disco Elysium Journal Map with a list of found checks, skill and difficulty labels, availability explanation and named landmarks](../screenshots/disco/05-map-checks.jpg)
+
+_Source: [Sam Chandler / Shacknews, October 29, 2019](https://www.shacknews.com/article/114689/where-to-get-a-map-in-disco-elysium), game imagery © ZA/UM. Full original capture from the PC release period; exact build unspecified. No Final Cut travel behavior is inferred from this older image._
+
+**Observed regions and controls.** Journal is the heading; Tasks and Map are explicit tabs with Map selected. The left list names encountered subjects such as Damaged Ledger, Mirror, Annette and Pile of Eternite and pairs them with a skill and verbal difficulty. A scrollbar allows a longer list. The footer explains that the list contains found White Checks and that entries on white are currently available. The large illustrated map names major landmarks. Bottom navigation retains the character/skills, inventory, journal and thoughts icons. The image does not show a current-position dot, route line or universal quest marker; their absence here must not become a claim that no version ever has such features.
+
+**Verified source flow.** Chandler's guide records buying the map in the bookshop, then opening Journal → Map. The map is itself a discovered possession. The [developer's check FAQ](https://steamcommunity.com/app/632470/discussions/0/3175526477766541689/) explains the distinction between repeatable and one-attempt checks; it does not make the map a promise that every encounter is currently solvable. The screenshot's footer supplies its own availability key.
+
+**Why it helps.** The player can remember an encountered opportunity by person/object, skill and difficulty. Map and task information share a recognizable home, and readable landmark names help orientation. **What is weaker:** a white background is doing double duty as a state cue; the explanation is distant from individual rows. A list of skill names without a known subject, also visible lower down, is less useful for deciding where to return. A player may expect a conventional objective map and misunderstand this more limited reference.
+
+**Firsthand praise for task organization.** In the [December 11, 2020 discussion](https://www.reddit.com/r/gamedesign/comments/kbc4ot/how_disco_elysium_did_journal_screens_better/), deshara128 specifically praised grouping active and completed tasks by the day they were received. The reported benefit was seeing an earlier day's workload shrink, even while new tasks arrived. This is one player's account of the **Tasks** view, which is not displayed in this screenshot; it is not evidence that every player benefits from daily grouping.
+
+**Open Legend application.** If the game exposes a reference to known opportunities, retain their person/object, location context and last known availability. Distinguish current facts from remembered observations. Give status a plain-language explanation rather than a mysterious color. Organize history in a way that makes meaningful completed work findable without turning ordinary life into a compulsory quest checklist. Do not reveal unencountered checks or copy this game's map ownership, skills or day structure as engine law.
+
+## DISCO-06 — Help must connect physical controls to player intentions
+
+![Disco Elysium PS5 pause menu Options and Controls page showing named controller bindings](../screenshots/disco/06-controls-ps5.jpg)
+
+_Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/), game imagery © ZA/UM. Full PS5 launch-period screenshot, exact patch unspecified._
+
+**Observed navigation.** Continue, Save Game, Load Game, Options and Main Menu form a persistent left column. Options is selected; Load Game appears dimmer without a visible explanation. The selected Controls tab sits beside Settings with L2/R2 tab cues. A controller diagram and named bindings occupy the right panel, providing a readable reference while the game scene remains behind the pause surface.
+
+| Visible binding group | Stated meaning in the screenshot |
+| --- | --- |
+| L1; R1 | Highlight; Action / Interact |
+| L2; R2; both together | Zoom in / menu navigation; zoom out / menu navigation; reset camera zoom |
+| Options button | Pause menu |
+| Left stick; right stick | Movement / menu navigation; targeting interactables |
+| L3; R3 | Left-hand item; right-hand item |
+| Directional pad | Dialogue/menu navigation and dedicated morale/health healing bindings |
+| Triangle; Square | Context sensitive; Character Sheet / Open Menu |
+| Circle; Cross | Back; Action / Interact |
+
+**Flow and limitation.** Pause → Options → Controls provides this reference. The screen documents meanings, but it does not show an editable remapping interface. Craven's contemporaneous review specifically reports missing remapping/control-scheme choices and trouble retaining right-stick selection. Those historical findings should not be presented as a claim about every current platform. A screenshot cannot establish hold duration, focus stability or the effort required to reach a small world target.
+
+**Why it helps.** Buttons are connected to actions with words, and Back is explicit. Consistent paper-and-device styling carries the game's identity through a utility screen. **What is weaker:** Context sensitive gives little help until the current action is named in the scene; shared trigger functions vary by mode. A reference page is insufficient when a player needs an alternative binding or reliable target selection. The picture's density also makes text-size behavior important.
+
+**Open Legend application.** Keep contextual help close to the selected object and provide an accessible controls reference. Show the current meaning of a key when the mode changes; distinguish camera movement, character movement and object interaction. Preserve an explicit route back, restore focus, and keep typing from triggering world actions. Use readable labels and available input alternatives without inventing unsupported controller support. Help should explain the current native interaction and its blockers, not ask the player to learn internal operation names.
+
 ## What to adopt, and where the analogy ends
 
 | Pattern                                | Open Legend adaptation                                                      | Specific risk to avoid                                                  |
@@ -81,8 +122,8 @@ _Source: [Riker Santivong's game review page](https://planita13.github.io/Final-
 | Distinct ongoing thought/project state | Expose duration, commitment and progress for activities where those matter. | Importing an elaborate specialty menu into routine actions.             |
 | Deliberate visual identity             | Let typography and surfaces belong to Open Legend's world.                  | Copying tape graphics, obscure abbreviations or uncertain focus states. |
 
-Disco Elysium's prose-first choices are a strong reference for authored conversation, inspection and meaningful decisions. Multiplayer free text still needs audience, delivery and interruption rules. Physical containers still need two visible collections, clear reach and ownership; this game does not supply that evidence. Accepted Open Legend behavior remains in the linked handbook chapters.
+The map and journal add a useful lesson about remembered opportunities and meaningful completed work, while the controls screen shows the difference between documenting a binding and making the interaction usable. Disco Elysium's prose-first choices are a strong reference for authored conversation, inspection and meaningful decisions. Multiplayer free text still needs audience, delivery and interruption rules. Physical containers still need two visible collections, clear reach and ownership; this game does not supply that evidence. Accepted Open Legend behavior remains in the linked handbook chapters.
 
 ## Reference-image rights
 
-All four screenshots are retained for attributed design research and criticism. They are not Open Legend assets, are not relicensed under the repository's AGPL license, and no permission to reuse their art is asserted. The manifest records provenance, dimensions, hashes and version uncertainty. Historical criticism is kept separate from current-build claims and from proposed Open Legend behavior.
+All six screenshots are retained for attributed design research and criticism. They are not Open Legend assets, are not relicensed under the repository's AGPL license, and no permission to reuse their art is asserted. The manifest records provenance, dimensions, hashes and version uncertainty. Historical criticism is kept separate from current-build claims and from proposed Open Legend behavior.

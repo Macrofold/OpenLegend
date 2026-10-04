@@ -4,7 +4,7 @@ Research date: **2026-10-03**. Status: comparative research, not an implementati
 
 ## Scope and evidence
 
-This dossier studies six saved, individually inspected screenshots. The first three are official 2023 Bedrock screenshots with Nintendo-style controller prompts; the other three show historical desktop interfaces. They must not be presented as one current platform build. A screenshot establishes visible layout and state; the linked control documentation establishes interactions that cannot be inferred from the image. Unknown capture versions remain unknown. The [asset manifest](../screenshots/minecraft/manifest.json) records provenance, dimensions, hashes, and image-specific observations.
+This dossier studies eight saved, individually inspected screenshots, including two added for the whole-interface expansion on **2026-10-04**. The first three are official 2023 Bedrock screenshots with Nintendo-style controller prompts; the other three show historical desktop interfaces. They must not be presented as one current platform build. A screenshot establishes visible layout and state; the linked control documentation establishes interactions that cannot be inferred from the image. Unknown capture versions remain unknown. The [asset manifest](../screenshots/minecraft/manifest.json) records provenance, dimensions, hashes, and image-specific observations.
 
 Minecraft is useful because its chest interaction closely matches the user's stated expectation: the player interacts with an object in the world, and the resulting interface exposes that object's contents alongside carried items. Its station and merchant interfaces also demonstrate that a game can have substantial menus without turning an ordinary action into an activity configuration form.
 
@@ -130,4 +130,52 @@ These are design recommendations from the comparison. Multiplayer authority, the
 - **[M9]** Minecraft Feedback, [More intuitive for beginners](https://feedback.minecraft.net/hc/en-us/community/posts/360074423911-More-intuitive-for-beginners), 2020. Original player request.
 - **[M10]** Reddit, [The updated inventory controls SUCK](https://www.reddit.com/r/Minecraft/comments/hipjrk/), 2020-06. Indexed original player post; retrieval limitation noted above.
 
-All six images preserve the downloaded source bytes. They are third-party game screenshots collected for internal reference and criticism, not reusable Open Legend production art. The repository's code license does not relicense these images.
+All eight images preserve the downloaded source bytes. They are third-party game screenshots collected for internal reference and criticism, not reusable Open Legend production art. The repository's code license does not relicense these images.
+
+
+## Whole-interface expansion: exploration, status, navigation and input ownership
+
+Reviewed **2026-10-04**. These two additional official captures extend the study beyond storage. They are historical 2023 evidence, not a claim to have played or tested the current release.
+
+### MC07 — Survival information at the edge of the world view
+
+![Minecraft underwater view with hotbar, health, hunger and oxygen](../screenshots/minecraft/07-underwater-hud.jpg)
+
+**Observed.** The crosshair is centered; the bottom nine-cell hotbar has an unmistakable selected outline, stack counts and tool durability marks. Hearts and hunger occupy stable rows directly above it. Blue oxygen bubbles add a row over hunger while the character is submerged. The selected empty cell also agrees with the empty hand on screen. The screenshot shows no activity dialog and leaves the swimming direction visible.
+
+**Sourced workflow.** Mojang's health guide explains that underwater bubbles deplete before drowning damages health. That is a changing, consequential condition, not merely decorative HUD chrome. The desktop control guide connects looking, movement, hotbar selection and use of the held object; the player continues acting in the world while reading the HUD. [M1][M11]
+
+**Good / weak.** Stable anchors reduce searching during movement; contextual oxygen adds relevant information without permanently reserving a dashboard for every possible resource. Small repeated icons can still be difficult to count, and this frame cannot prove animation, sound, warning timing, or accessible labels. Open Legend should provide exact meaning through focus/inspection and text where needed, rather than assuming a familiar icon is self-explanatory.
+
+**Open Legend application.** Keep selected character, current work, immediate condition and selected tool/action stable around the world view. Elevate a newly relevant hazard beside that status. Avoid opening a status-management form to explain an urgent change. Do not copy oxygen as a game mechanic unless the world actually supplies it; use this visibility rule for real conditions such as warmth, exposure or task interruption.
+
+### MC08 — A map is an object used for orientation
+
+![Minecraft held map with a player marker and surrounding village still visible](../screenshots/minecraft/08-held-map.jpg)
+
+**Observed.** A parchment map fills most of the center while the village remains visible around its edges. A white/black marker sits near the mapped paths. Two map items are visible in the hotbar, one selected. There are no travel, destination-dropdown or submit controls. The missing survival rows do not establish a mode by themselves; the exact capture mode is unverified.
+
+**Sourced workflow.** Mojang's exploration guide presents maps and a compass as navigation aids and separately explains coordinate displays. The general guide supplies hotbar selection and using held objects. A static map image does not prove teleportation, automatic routing, knowledge-sharing, or the completeness of world knowledge. [M1][M12]
+
+**Good / weak.** Information and the object providing it are connected. Looking at geography does not require leaving the scene for a universal navigation form. The tradeoff is substantial central occlusion and terrain colors that need interpretation. A diegetic map is not automatically better than a clear dedicated map for every game or screen size.
+
+**Open Legend application.** Opening the known-world map should preserve selected object/character context and distinguish a remembered location from a currently visible entity. Inspecting or pinning a place must not move the character. Give travel a separate explicit action and show unavailable/unknown information honestly. An optional expanded map can support planning without turning the normal HUD into a persistent atlas.
+
+### World prompts, construction, chat and help
+
+The desktop model is direct: aim at an object and use it; aim at a surface and place the held block; select the tool from the hotbar. This is a compact example of **selected tool + world target** supplying context. It does not justify copying every binding or using one ambiguous action for every Open Legend object. Construction previews in Open Legend should expose valid placement, orientation and resource cost before a consequential commit; Minecraft's ordinary block placement is evidence for immediacy, not evidence that a complex settlement build needs no preview. [M1]
+
+Mojang documents chat as a temporary input mode: opening it captures typing and stops ordinary looking/movement controls until the message is submitted. Escape opens the game menu and closes it again; controls can be changed and reset in settings. For Open Legend, typing must own its keys, help must show the player's effective bindings, and Back must close the active layer predictably. These are behavioral contracts, not a request to copy the full Minecraft pause screen. [M1]
+
+Additional firsthand feedback qualifies the visual simplicity:
+
+- A December 2023 player request distinguishes fading the HUD from hiding it entirely, asking for stronger opacity control. This supports independent visibility preferences, not a claim that the HUD should always disappear. [M13]
+- A March 2025 Bedrock player reports that taking damage closes chat/crafting and loses typed text; a reply describes the same frustration. Treat this as reported behavior in that context, not a verified current universal rule. Open Legend should retain an interrupted draft and explain why interaction stopped. [M14]
+- The positive direct-control evidence in M8 and the onboarding criticism in M9 still apply: quick gestures need a discoverable entry and visible help. None of these selected posts establishes a player consensus.
+
+### Additional sources
+
+- **[M11]** Linn Viberg / Mojang, [Everything you need to know about health in Minecraft](https://www.minecraft.net/en-us/article/health-minecraft), 2023-09-22. Primary explanation and original MC07 image.
+- **[M12]** Per Landin / Mojang, [Exploring Minecraft](https://www.minecraft.net/en-us/article/exploring-minecraft), 2023-09-22. Primary exploration guide and original MC08 image.
+- **[M13]** Minecraft Feedback, [Opacity at 0%](https://feedback.minecraft.net/hc/en-us/community/posts/21886765838733-Opacity-at-0), 2023-12-02. Original player request.
+- **[M14]** Minecraft Feedback, [Add option to disable close_on_hurt UI attribute](https://feedback.minecraft.net/hc/en-us/community/posts/34838558217229-Add-option-to-disable-close-on-hurt-ui-attribute), 2025-03-08, reply 2025-03-10. Original reports, not independently reproduced.
