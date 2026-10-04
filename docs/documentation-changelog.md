@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-04 — Resolve developer questions before dependent work
+
+At Mike's request, [root instructions](../AGENTS.md#resolve-developer-questions-before-dependent-work) now apply the same decision boundary to every task, including design and prioritization: finish authorized independent work, then ask the developer for the answers needed to complete the remainder. Dependent work waits for those answers. A design-only assignment, delegation or an open-question note cannot substitute for resolving the developer's choice. Routine reversible decisions and already supplied answers do not require new confirmation; mandatory conflict stops and scope limits still apply.
+
+The prioritization, parallel-task and design skills reference this shared rule. This replaces the narrower emphasis on resolving questions only before coding and directly addresses the earlier design-only workaround. It changes agent instructions, not existing project scope or game behavior. [Guidance tracking](maintainers/agent-guidance.md#developer-questions-before-dependent-work) distinguishes static instruction checks from observed agent compliance.
+
 ## 2026-10-04 — Expand the starting wilderness
 
 Delivered [BW24](maintainers/base-world.md#bw24--fuller-starting-wilderness): about five times the default map area, connected low rises, a bending outer river, more resources/wildlife and an uneven forest margin. New wolf/bear and varied tree assets use the existing original Canvas method. The previous conspicuous rectangular clearing plate is replaced by matching surrounding soil, while finite walking extents remain; existing saves are not reseeded. Wolves and bears reuse native animal behavior and existing quadruped clearance, adding no aggression or predation. [World content](worlds/base/landscape.md), [tuning](limits/base-world.md#bw13--starting-wilderness).

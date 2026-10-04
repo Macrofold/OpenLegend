@@ -11,6 +11,8 @@ For prioritized parallel assignments or standalone task prompts, use [create-par
 
 Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
+Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work) to design as well as code: complete the independent parts, then obtain the developer's answers before developing the dependent specification. An open-decisions section records remaining questions; it does not replace asking them or authorize designing around assumed answers.
+
 ## Feature-spec or technical-design requests
 
 A request to create either deliverable produces both, as distinct cross-linked files with the same project prefix: `docs/projects/<project>-feature-spec.md` and `docs/projects/<project>-tech-design.md`. Update an existing pair rather than create duplicates.

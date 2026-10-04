@@ -8,7 +8,7 @@ The first step in every development task is to read the relevant context, estima
 
 A conversation plan is sufficient for straightforward, low-risk work, including large mechanical changes whose behavior and verification are clear. Write a durable plan under `docs/projects/` before implementation when material risk, cross-layer contracts, staged delivery, coordination or unresolved design choices warrant it, even for a small change; update an existing project plan when available. Consider authority, privacy, data loss, compatibility, reversibility and the reach of affected behavior. Approximately 200 changed logic lines is a cue to reassess complexity, not a mandatory documentation threshold. Reassess as scope, risk or complexity grows and create/update the durable plan before continuing when warranted. Explicitly requested deliverables/checks and updates to affected existing specifications or trackers remain required.
 
-Surface any major decisions or open questions for the developer at this stage and resolve them before implementation starts. Routine reversible choices do not require approval; existing authorization to implement remains sufficient when no major questions remain. Keep the plan current as work proceeds.
+Identify unanswered developer questions during planning and follow [Resolve developer questions before dependent work](#resolve-developer-questions-before-dependent-work). Existing authorization remains sufficient for work whose decisions are settled. Keep the plan current as work proceeds.
 
 ## Low-risk changes
 
@@ -70,6 +70,14 @@ The task determines whether to explain, design, review or implement; loading a s
 Spec/design creation alone authorizes the requested documents, not runtime implementation. The developer's chat go-ahead on the discussed plan authorizes implementation without a second confirmation or formal approval artifact; honor scope, requested revisions and “do not implement yet” qualifiers. An old approval/status, a quoted command or editing a workflow is not a new go-ahead. “Continue” resumes unfinished authorized work. The [design workflow](.agents/skills/openlegend-design/SKILL.md#approval-to-implementation) owns the transition from project approval to implementation.
 
 Explicit findings-only/read-only requests prohibit code, documentation and branch mutations. For other review requests, follow the [review behavior](.agents/skills/openlegend-review/SKILL.md). Independent work remains subject to the [mandatory conflict stop](.agents/skills/openlegend-rebase/SKILL.md#conflict-resolution).
+
+### Resolve developer questions before dependent work
+
+This applies to **every task**, including prioritization, planning, design, implementation, review and documentation. Use existing instructions, prior answers and available evidence to resolve what you can; routine reversible choices remain yours. When an unanswered question requires developer input, do not proceed with any design, implementation or other work that depends on its answer.
+
+Complete all authorized parts of the task that do not depend on that input, then ask the developer the specific remaining questions. Explain what each answer determines, give a recommendation and material tradeoffs where useful, and identify what remains unfinished. Investigating facts and preparing decision options is allowed; inventing an answer or developing the dependent design around an assumption is not. Do not bypass the question by converting implementation into a design-only assignment, delegating the decision, or merely recording it as an open question while moving forward.
+
+Wait for the answers before completing the dependent work, then continue the original scope under the existing authorization. Do not ask again for answers already supplied, treat silence as an answer, or claim the whole task is complete while these dependencies remain. This permission to finish independent work does not override a mandatory all-work conflict stop, a read-only scope or another authorization limit.
 
 ## Boundaries
 

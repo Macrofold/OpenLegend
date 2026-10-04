@@ -17,7 +17,7 @@ Follow [AGENTS.md](../../../AGENTS.md) and [documentation ownership](../../rules
 - Honor a specified task, feature, category, priority, excluded area or existing branch. “Focus on” weights selection toward that subject; “only” restricts the scope. Explain any necessary enabling work outside the focus rather than quietly broadening it.
 - Use a supplied time horizon, engineering capacity and constraints. Otherwise give reasoned effort ranges and assumptions; do not invent a workweek, hours per engineer, AI productivity multiplier or spending allocation.
 - For an existing plan, audit and extend the relevant definitions rather than restart selection or duplicate documents. For a prompts-only request, reuse adequate designs; identify or fill missing task information within the authorized scope.
-- Clarify only missing information that materially prevents a sound assignment. Use current project evidence and reversible judgment for routine choices.
+- Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work): complete independent investigation and task definitions, then ask for the answers needed to finish the remaining allocation. Do not design dependent contracts, finalize blocked prompts or substitute a design-only assignment to avoid resolving those questions. Preserve an explicitly requested design-only scope; routine choices follow root guidance.
 
 ## Select and define the work
 
