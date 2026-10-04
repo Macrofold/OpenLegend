@@ -416,111 +416,125 @@ Unlike a human motive expressed by a strange-looking actor, several of these ent
 
 ## A dependable meal
 
-**Priority: 2 Complete.**
-
-
-ND-001 preserves food as a solvable foundation that releases attention. A reliable routine should reduce supervision, not reopen the same emergency at every meal. Inherited anchors: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Valheim](source-atlas.md#g31).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: food access, reliable delegation and optional dietary variation.
 
 Early play may involve finding supper; later the reward is knowing supper will happen. Players then choose company, recipe or celebration rather than repeating hunger maintenance. A broken supply should create one understandable project with substitutes. Choose pressure that serves the selected experience: a harsh expedition can demand rationing, while a settled household can free time for decorating, exploring or conversation.
+
+Related entries: [ND-001](#bodily-basics-and-immediate-relief).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Valheim](source-atlas.md#g31).
 
 Selection: Securing an ongoing food supply frees attention for adventure.
 
 ## Somewhere to return
 
-**Priority: 2 Complete.**
-
-
-ND-021 keeps rooms, workshops, camps and mobile homes as valid forms of continuity. Actual access, stored possessions and remembered use matter; a furniture treadmill is not required. Inherited anchors: [Animal Crossing](source-atlas.md#g03), [G22](source-atlas.md#g22), [Valheim](source-atlas.md#g31).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: recognized home, access and recurring welcome conditions.
 
 A workshop corner, rented room or shared camp can satisfy the desire for a dependable place. Improvement changes activities and social invitations, not just rest efficiency. Players may prefer mobility or several homes. Loss may be permanent; relocation, rebuilding and community help can create further play without restoring the lost home by fiat. An ever-rising comfort requirement would turn attachment into an endless furniture treadmill.
+
+Actual access, stored possessions and remembered use make this a home rather than a label.
+
+Related entries: [ND-021](#home-security-and-material-footing).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Hades I](source-atlas.md#g22), [Valheim](source-atlas.md#g31).
 
 Selection: Home improvements open activities and provide useful long-term goals.
 
 ## To be useful without being used
 
-**Priority: 4 Detail.**
-
-
-ND-121 retains meaningful work, rotation, training and refusal. Appreciation is valuable but does not replace compensation or create unlimited consent. Inherited anchors: [Palworld](source-atlas.md#g41), [G99](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: contribution recognition, workload choice and refusal.
 
 A resident wants meaningful work but dislikes being assigned every unpleasant job. Offering training, rotating chores or recognizing expertise can change participation. Care-minded players shape a community whose members retain priorities. Avoid a universal productivity happiness formula; some people want less work, and gratitude is neither payment nor consent to unlimited labor.
+
+Related entries: [ND-121](#competence-work-and-effective-action).
+
+Seeds and references: [Palworld](source-atlas.md#g41), [Assassin's Creed III](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
 
 Selection: Workload recognition and chore negotiation follow enjoyable work.
 
 ## Privacy with a door
 
-**Priority: 4 Detail.**
-
-
-ND-081 keeps curtains, schedules and locks as concrete possibilities for private letters, grief, rest or intimacy. A private space is not permission for narration to expose unseen events or thoughts. Inherited anchors: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [His Dark Materials](source-atlas.md#w20).
+**ALL · Blend · 4 Detail · Moderate/Extend.** Gap: spatial access, interruption preferences and scoped disclosure.
 
 A crowded home has enough beds but no place for private letters or grief. Curtains, schedules and a lock can each help while creating different accessibility tradeoffs. Builders gain reasons to design rooms beyond size bonuses. A privacy need grants no hidden-state access. Supported fictional eavesdropping, stolen letters or telepathy may reveal bounded evidence under the world's rules; none grants access to real users' private data.
+
+Related entries: [ND-081](#agency-privacy-and-a-voice).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Detailed household privacy needs are optional; data privacy is always required.
 
 ## Mastery with a stopping point
 
-**Priority: 2 Complete.**
-
-
-ND-122 retains a chosen difficult accomplishment followed by practice, teaching, contentment or another voluntary pursuit. Do not inflate the target merely because it was reached. Inherited anchors: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy IX](source-atlas.md#g86), [G114](source-atlas.md#g114).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: milestone-based practice and chosen ambition.
 
 A gardener wants to grow one difficult tree, not endlessly increase a gardening number. Once achieved, they may teach, experiment or simply enjoy it. Progress requires varied useful attempts and understandable feedback. A character can be content; do not automatically replace every fulfilled wish with a more expensive one to manufacture retention.
+
+Related entries: [ND-122](#competence-work-and-effective-action).
+
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Attainable mastery goals create progression without an endless treadmill.
 
 ## To be remembered accurately
 
-**Priority: 4 Detail.**
-
-
-ND-181 keeps the memorial that should name workers rather than only the commander. Distinguish facts, disputed interpretations and missing evidence; revising one record does not rewrite all minds. Inherited anchors: [Dwarf Fortress](source-atlas.md#g23), [G116](source-atlas.md#g116), [Macondo](source-atlas.md#w24).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: attributed records, disputable public accounts and voluntary correction.
 
 A veteran wants a memorial to name the dockworkers who saved a town, not only its commander. Research and conversation can alter the inscription, although some witnesses disagree. Meaning comes from whose story survives. Historical uncertainty should remain visible, and a corrected plaque must not rewrite every private memory or compel universal reconciliation.
+
+Related entries: [ND-181](#meaning-memory-and-an-account-of-ones-life).
+
+Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Middle-earth: Shadow of War](source-atlas.md#g116), [Macondo](source-atlas.md#w24).
 
 Selection: Memorial attribution is not a first-game requirement.
 
 ## Room for wonder
 
-**Priority: 2 Complete.**
-
-
-ND-164 preserves lights, instruments, routes and recordings as possible sources of delight. Familiar beauty can continue to satisfy; no compulsory novelty decay. Inherited anchors: [G17](source-atlas.md#g17), [Outer Wilds](source-atlas.md#g34), [Pokémon](source-atlas.md#w08).
+**ALL · Play · 2 Complete · Small/Compose.** Gap: authored novelty opportunities without compulsory consumption.
 
 A tired resident wants to see migrating lights from a hill or hear an unfamiliar instrument. Players can arrange a visit, bring a recording or leave the experience for another season. Anticipation matters as much as acquisition. Repetition need not always diminish value; do not reduce beauty to a consumable novelty meter that demands constant procedural content.
+
+Related entries: [ND-164](#play-stimulation-and-wonder).
+
+Seeds and references: [No Man's Sky](source-atlas.md#g17), [Outer Wilds](source-atlas.md#g34), [Pokémon](source-atlas.md#w08).
 
 Selection: Interesting sights and discoveries give exploration intrinsic appeal.
 
 ## Belonging across difference
 
-**Priority: 3 Depth.**
-
-
-ND-101 keeps the repair circle that includes someone whom another festival excludes. Translation, invitation and actual participation can help without requiring assimilation or gift-meter farming. Inherited anchors: [Dragon Age: Origins](source-atlas.md#g51), [G61](source-atlas.md#g61), [Avatar](source-atlas.md#w13).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: overlapping memberships and context-specific welcome.
 
 A newcomer feels at home in a repair circle but excluded from the river festival. An invitation, translated announcement or changed custom can matter more than gifts. Social builders gain concrete ways to make places welcoming. Avoid treating a culture as unanimous or assuming belonging requires assimilation; chosen distance and multiple affiliations are valid outcomes.
+
+Related entries: [ND-101](#connection-affection-and-chosen-intimacy).
+
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 Selection: Contextual welcome enriches established communities.
 
 ## Sensory refuge
 
-**Priority: 5 Specialist.**
-
-
-ND-061 retains the nocturnal resident's dim room as ordinary accommodation. Sensory needs differ from intelligence, moral worth and willingness to participate. Inherited anchors: [Caves of Qud](source-atlas.md#g33), [Rain World](source-atlas.md#g123), [The Expanse](source-atlas.md#w15).
+**ALL · Blend · 5 Specialist · Large/New.** Gap: body-specific exposure and adjustable environment responses.
 
 A nocturnal visitor needs a dim room while their host needs light to read. Curtains, different schedules or a shared low-glare lamp enable coexistence. Comfort becomes an architectural puzzle grounded in particular bodies. Keep fictional sensory models explicit and configurable; sensory difference must not imply lesser intelligence, moral temperament or an endless special-care penalty.
+
+Sensory needs also do not determine willingness to participate.
+
+Related entries: [ND-061](#sensory-refuge-and-physical-delight).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Rain World](source-atlas.md#g123), [The Expanse](source-atlas.md#w15).
 
 Selection: A body-specific accommodation simulation is separate from usable player UI.
 
 ## Continuity after change
 
-**Priority: 3 Depth.**
-
-
-ND-201 keeps adaptation after injury or departure, including changed roles and retained relationships. No mandatory cure, productive inspiration or total identity reset. Inherited anchors: [Wildermyth](source-atlas.md#g25), [Final Fantasy VI](source-atlas.md#g83), [XCOM 2](source-atlas.md#g125).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: goal renegotiation after role, body or household transitions.
 
 After an injury or a child's departure, a character wants some familiar purpose without pretending nothing changed. New tools, teaching or a different expedition role create alternatives. Players help reshape a life rather than restore a default state. Recovery is not a compulsory inspiration story, and adaptation should not require curing every difference.
+
+Related entries: [ND-201](#continuity-change-and-competing-obligations).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Final Fantasy VI](source-atlas.md#g83), [XCOM 2](source-atlas.md#g125).
 
 Selection: Long-term role adaptation follows basic recovery and continuation.
 

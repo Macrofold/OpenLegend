@@ -462,111 +462,129 @@ These deliberately unusual proposals define subjective rules rather than assert 
 
 ## The same event two appraisals
 
-**Priority: 3 Depth.**
-
-
-PB-024 preserves the unexpected visitor: welcome for one person, pressure on the cook's finite supplies for another. Work from evidence each person could possess. Do not attach one global mood to the arrival. Earlier anchors remain [RimWorld](source-atlas.md#g21), [Disco Elysium](source-atlas.md#g66) and [Crusader Kings III](source-atlas.md#g126).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: context-specific appraisals based on permitted evidence and prior commitments.
 
 An unexpected visitor delights a lonely host and worries a cook with scarce supplies. Both reactions make sense without one shared “event mood” value. Players can learn what matters to each person and find a response. Bound appraisals to meaningful events; do not compute every possible interpretation for every resident or expose private reasons without disclosure.
+
+Each interpretation must use only evidence that person could possess.
+
+Related entries: [PB-024](#appraisal-and-emotional-meaning).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
 
 Selection: Different reactions enrich existing meaningful situations.
 
 ## Anticipation can be pleasant
 
-**Priority: 4 Detail.**
-
-
-PB-082 keeps reunion preparation enjoyable in itself. Cooking, rehearsing or making space are possible responses, not required chores or guarantees about the returning friend. Retained anchors: [Animal Crossing](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: chosen future goals and occasional contextually relevant reminders.
 
 A character preparing for a reunion enjoys small steps, then feels uncertain about how a friend has changed. Players can help cook, rehearse a greeting or leave space. Desire is more than a deficit to eliminate. Avoid countdown spam and automatically making the awaited event disappointing; sometimes a hoped-for evening should simply go well.
+
+Preparation remains optional, not a new chore, and never guarantees a friend’s response.
+
+Related entries: [PB-082](#motivation-anticipation-and-enough).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124).
 
 Selection: Detailed anticipatory domestic feelings are optional texture.
 
 ## Trust in ability versus intent
 
-**Priority: 3 Depth.**
-
-
-PB-122 distinguishes goodwill from competence. A demonstration may justify entrusting a repair without changing affection or allegiance. Retained anchors: [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102), [Austen](source-atlas.md#w23).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: separate evidence-backed appraisals of competence and goodwill.
 
 A neighbor believes a friend means well but will not entrust them with a delicate repair. They may offer practice, supervision or a different task. This creates more nuanced cooperation than one trust number. A successful demonstration can revise competence without buying affection, and one technical mistake need not imply malice or permanently destroy the relationship.
+
+Related entries: [PB-122](#trust-understanding-and-social-feedback).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: Nuanced appraisals follow functional companion behavior.
 
 ## A crowded mind has priorities
 
-**Priority: 3 Depth.**
-
-
-PB-005 preserves the deadline, promised meal and missed greeting, with a genuinely urgent interruption and an eventual return to unfinished work. Avoid endless interruption or permanent ignoring. Retained anchors: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final Fantasy XII](source-atlas.md#g89).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: bounded attention, interruption policy and resumable activities.
 
 A resident balancing a deadline and a promised meal misses a minor greeting but notices smoke. Others may misread the omission until they talk. Attention creates plausible limits without making people incompetent. Persist interrupted work and provide clear critical signals; simulated distraction should not become an excuse for silently dropping commitments or ignoring obvious danger indefinitely.
+
+Related entries: [PB-005](#attention-and-what-gets-noticed).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final Fantasy XII](source-atlas.md#g89).
 
 Selection: Rich attention simulation follows reliable basic actions and interruption.
 
 ## Emotion changes the available method
 
-**Priority: 3 Depth.**
-
-
-PB-183 preserves the angry craftsperson who walks before negotiating or brings a colleague. Emotion can alter timing, company and method without declaring the person irrational or overriding their agency. Retained anchors: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: bounded state effects on planning with alternatives and recovery.
 
 An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling changes which approach seems worthwhile. Players can support regulation through space, time or company. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
+
+Related entries: [PB-183](#danger-courage-and-aggression).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
 
 Selection: Emotional planning alternatives deepen already useful choices.
 
 ## Habits that can be renegotiated
 
-**Priority: 4 Detail.**
-
-
-PB-064 retains the night worker and household breakfast. A negotiated change should persist; do not replay the same renegotiation every day. Retained anchors: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XII](source-atlas.md#g89), [Persona 5 Royal](source-atlas.md#g124).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: learned routine preferences and deliberate replacement plans.
 
 A night worker keeps waking early to help a household even after their schedule changes. A new breakfast arrangement can preserve care while allowing sleep. Habits make people recognizable but not fixed. Show the practical conflict and allow gradual adjustment; behavior should not revert every morning solely because an old personality summary still mentions the habit.
+
+Related entries: [PB-064](#habits-interruptions-and-follow-through).
+
+Seeds and references: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XII](source-atlas.md#g89), [Persona 5 Royal](source-atlas.md#g124).
 
 Selection: Domestic habit adjustment should not lead gameplay delivery.
 
 ## A belief with a receipt
 
-**Priority: 3 Depth.**
-
-
-PB-043 preserves the potentially misidentified bridge and courier report. Source, confidence and later correction remain attached to a belief; a correction reaches actual recipients, not every mind. Retained anchors: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [Morrowind](source-atlas.md#g113).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: belief provenance, confidence and scoped correction.
 
 A shopkeeper believes the bridge is unsafe because a trusted courier saw a crack. A recent inspection may change that belief, or reveal the report concerned another bridge. Players can trace and repair misunderstanding, exploit it or discover that accurate information still leaves incompatible goals. Keep testimony, inference and direct observation distinct; the model's confident phrasing must not manufacture evidence or instantly update people who never received it.
+
+Keep the source, confidence and later corrections with the claim.
+
+Related entries: [PB-043](#belief-evidence-and-mistakes).
+
+Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113).
 
 Selection: Evidence-linked belief revision deepens investigation and social play.
 
 ## Grief with ordinary afternoons
 
-**Priority: 4 Detail.**
-
-
-PB-202 keeps laughter, work, sorrow and optional remembrance in one continuing life. No linear stages, required memorial, cure quest or compulsory closure. Retained anchors: [Wildermyth](source-atlas.md#g25), [Red Dead Redemption 2](source-atlas.md#g70), [The Sopranos](source-atlas.md#w22).
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored variation and selected memory triggers; autonomous modeling needs Moderate/Extend.
 
 A person mourning a friend can laugh at a game, forget an errand, enjoy a meal and later want quiet. They may choose a memorial project or none. Companionship can matter without curing grief. Avoid a linear sadness bar or fixed sequence of stages; this is a particular fictional life, not a universal psychological account or a task the player must complete.
+
+Related entries: [PB-202](#loss-accountability-and-continuing-life).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Red Dead Redemption 2](source-atlas.md#g70), [The Sopranos](source-atlas.md#w22).
 
 Selection: Specific reflective scenes are optional character detail.
 
 ## Social feedback that compounds
 
-**Priority: 5 Specialist.**
-
-
-PB-138 preserves the exclusion–withdrawal–misinterpretation loop as an optional fictional Lab model, not an empirical law. An invitation, confrontation or departure can change it; reconciliation is not guaranteed. Retained anchors: [RimWorld](source-atlas.md#g21), [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21).
+**ALL · Lab · 5 Specialist · Large/New.** Gap: explicit bounded feedback model, interventions and reproducible observation.
 
 Small exclusion from a club reduces opportunities to contribute, which others then misread as disinterest. A host can change invitations or roles to interrupt the loop. The model exposes a possible mechanism, not a diagnosis of real communities. Record assumptions and alternatives; a compelling generated story cannot establish that the configured feedback is empirically valid.
+
+Confrontation or departure can also change this fictional model; reconciliation is not guaranteed.
+
+Related entries: [PB-138](#trust-understanding-and-social-feedback).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21).
 
 Selection: A reproducible social-feedback laboratory is a separate product mode.
 
 ## A self-story open to revision
 
-**Priority: 3 Depth.**
-
-
-PB-104 keeps the traveler who claims always to leave despite tending a garden for years. Revision changes interpretation, not authoritative history or learned abilities. Retained anchors: [Disco Elysium](source-atlas.md#g66), [Knights of the Old Republic II](source-atlas.md#g110), [The Sopranos](source-atlas.md#w22), [Macondo](source-atlas.md#w24).
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: event-grounded identity narratives separate from actual history and authority.
 
 A resident thinks of themselves as someone who always leaves, yet notices years of caring for the same garden and neighbors. They may reconsider, joke about the contradiction or decide to travel again. Change emerges from lived events. Do not let a rewritten self-description erase past actions, create skills or dictate a therapeutic breakthrough the character never chose.
+
+Related entries: [PB-104](#memory-and-self-understanding).
+
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [The Sopranos](source-atlas.md#w22), [Macondo](source-atlas.md#w24).
 
 Selection: Event-grounded identity changes are later character depth.
 

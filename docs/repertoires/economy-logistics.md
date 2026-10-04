@@ -16,131 +16,125 @@ Keep buying bread, paying for repairs, running a shop, giving presents, borrowin
 
 ## The useful circular route
 
-**Priority: 2 Complete.**
-
-
-ECON-061 retains grain downhill, repaired tools uphill, and letters both ways. Cargo and passenger space compete, but discovered routine journeys can summarize. Familiar people and actual needs make the route useful.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: route plans, cargo reservations and local demand.
 
 A courier carries grain downhill, repaired tools uphill and letters both ways. A route becomes a web of familiar people rather than repeated empty return trips. New cargo competes with favors and passenger space. Summarize routine travel after discovery, show capacity and deadlines, and avoid simulating every distant transaction to sustain a handful of meaningful stops.
 
-Seeds: [Factorio](source-atlas.md#g27), [Old School RuneScape](source-atlas.md#g49), [Starsector](source-atlas.md#g120).
+Related entries: [ECON-061](#routes-delivery-transport-and-last-mile-work).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Old School RuneScape](source-atlas.md#g49), [Starsector](source-atlas.md#g120).
 
 Selection: A trading route offers destinations, useful cargo and profit.
 
 ## Reserve enough for tomorrow
 
-**Priority: 4 Detail.**
-
-
-ECON-041 retains purpose-bound seed and meal reserves before selling surplus. Explain which reserve blocks a sale and who may change it; automation cannot reinterpret surplus as everything not immediately in use.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: purpose-bound stock reserves and understandable production caps.
 
 A village sells surplus flour only after reserving seed and agreed meals. A sudden visitor group tests the policy without requiring the player to count sacks manually. Makers can express sensible standing rules. Explain which reserve blocks a sale and who may change it; do not let automation reinterpret “surplus” as everything not currently in use.
 
-Seeds: [RimWorld](source-atlas.md#g21), [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45).
+Related entries: [ECON-041](#reserves-storage-stock-and-allocation).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45).
 
 Selection: Purpose-bound reserve administration must not lead the game roadmap.
 
 ## A market that learns slowly
 
-**Priority: 3 Depth.**
-
-
-ECON-039 retains local price response after a ferry improves supply. Information and goods move through real routes, with bounded response and delay; this is authored economic play, not a predictive model of real markets.
+**ALL · Blend · 3 Depth · Large/New.** Gap: bounded local demand, price response and information delay.
 
 A new ferry makes fresh vegetables cheaper near the landing, while an inland neighborhood still pays more. Traders can invest in storage, transport or local growing. Price changes should have visible causes and damping. This is a small authored economy, not a claim of economic prediction; unlimited instant arbitrage and omniscient price knowledge would erase its geography.
 
-Seeds: [Ultima Online](source-atlas.md#g19), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Starsector](source-atlas.md#g120).
+Related entries: [ECON-039](#money-prices-valuation-and-information).
+
+Seeds and references: [Ultima Online](source-atlas.md#g19), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Starsector](source-atlas.md#g120).
 
 Selection: Dynamic local pricing follows simple useful buying and selling.
 
 ## Community wealth in tools
 
-**Priority: 4 Detail.**
-
-
-ECON-121 retains a shared kiln with scheduling, teaching, and upkeep contributions. The arrangement should make useful equipment accessible, not impose a new daily paperwork chore on every participant.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: shared ownership, lending queues and maintenance contributions.
 
 A neighborhood buys a kiln that no household could justify alone. Access, teaching and repair obligations create relationships and occasional disputes. Players can contribute money, skill or materials. Offer clear scheduling and a fair default; shared infrastructure should reduce duplicated grind rather than create a new bureaucracy players must service every session.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99).
+Related entries: [ECON-121](#ownership-rental-shared-access-and-commons).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99).
 
 Selection: Shared lending queues and upkeep contributions are optional administration.
 
 ## The substitute supplier
 
-**Priority: 2 Complete.**
-
-
-ECON-015 retains alternatives after a mine closes: reclaimed material, a changed design, or a different specialist. Consequences should be inspectable before purchase; no universal rare ingredient needs to halt every project.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: requirement-based procurement with quality and deadline tradeoffs.
 
 When a mine closes, a builder can buy reclaimed metal, redesign a joint or hire a different craftsperson. The disruption invites invention instead of halting all progress. Show consequences before purchase and let reliable suppliers become valued contacts. Do not require every production chain to end at the same rare resource or mandatory combat zone.
 
-Seeds: [Against the Storm](source-atlas.md#g45), [Mass Effect: Andromeda](source-atlas.md#g104), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Related entries: [ECON-015](#everyday-buying-selling-barter-and-procurement).
+
+Seeds and references: [Against the Storm](source-atlas.md#g45), [Mass Effect: Andromeda](source-atlas.md#g104), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Alternative procurement keeps crafting and upgrades moving.
 
 ## Money with a local story
 
-**Priority: 4 Detail.**
-
-
-ECON-025 retains workshop-time vouchers with explicit redemption and limits. A promise token is not unlimited credit, ownership of a person, or guaranteed acceptance by strangers.
+**MD MO FA · Blend · 4 Detail · Moderate/Extend.** Gap: authored exchange media and explicit redemption rules.
 
 A repair cooperative issues vouchers redeemable for workshop time; travelers prefer grain or common coins. Players can negotiate, pool vouchers or help restore confidence after a missed obligation. Keep only a few media with distinct purposes. A dozen currencies with identical uses would add bookkeeping, and a promise token must not silently create real ownership or infinite credit.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Final Fantasy VIII](source-atlas.md#g85), [Discworld](source-atlas.md#w12).
+Currency does not confer ownership of a person or guarantee acceptance by strangers.
+
+Related entries: [ECON-025](#money-prices-valuation-and-information).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Final Fantasy VIII](source-atlas.md#g85), [Discworld](source-atlas.md#w12).
 
 Selection: Multiple exchange media add bookkeeping beyond ordinary trade.
 
 ## Insurance by neighbors
 
-**Priority: 5 Specialist.**
-
-
-ECON-081 retains a voluntary finite boat-replacement pool, with evidence, disputed claims, and understandable exit terms. The fund can run out; deliberate destruction need not be its dominant profitable use unless fraud is the selected subject.
+**ALL · Blend · 5 Specialist · Large/New.** Gap: voluntary risk pools, claims and auditable shared balances.
 
 Fishers reserve part of each catch to replace a lost boat. A disputed claim tests evidence, trust and the pool's limits. Players can design practical mutual aid without a universal market simulator. Keep fictional terms and exit costs understandable. A pool may run out or refuse a disputed claim; avoid making deliberate destruction the dominant profitable strategy unless fraud and its consequences are the chosen subject.
 
-Seeds: [Battle Brothers](source-atlas.md#g121), [XCOM 2](source-atlas.md#g125), [The Wire](source-atlas.md#w21).
+Related entries: [ECON-081](#credit-pooled-risk-guarantees-and-future-promises).
+
+Seeds and references: [Battle Brothers](source-atlas.md#g121), [XCOM 2](source-atlas.md#g125), [The Wire](source-atlas.md#w21).
 
 Selection: A claims and risk-pool simulation needs its own selected scope.
 
 ## A job with a life around it
 
-**Priority: 5 Specialist.**
-
-
-ECON-101 retains a technician whose shift choices leave room for music and relationships. Swap work, train a substitute, or decline overtime; learned routine hours can summarize rather than consume eight repetitive simulated hours.
+**MO SC · Play · 5 Specialist · Moderate/Extend.** Gap: work commitments, bounded tasks and schedule negotiation.
 
 A transit technician chooses an evening shift to rehearse with friends in the morning, then a festival requires coverage. Swap shifts, train a substitute or decline overtime. Jobs connect competence, income and social life. Once learned, routine hours can summarize; never require a player to endure eight simulated hours of repetitive tasks for rent.
 
-Seeds: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Persona 5 Royal](source-atlas.md#g124).
+Related entries: [ECON-101](#livelihoods-enterprises-wages-and-service-terms).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Persona 5 Royal](source-atlas.md#g124).
 
 Selection: Shift scheduling and urban employment are a different primary game promise.
 
 ## The expensive cheap choice
 
-**Priority: 4 Detail.**
-
-
-ECON-016 retains a bargain heater with visible fuel and fitting costs beside a more expensive compatible repaired model. The buyer's immediate means and intended use can make either choice understandable.
+**ALL · Blend · 4 Detail · Moderate/Extend.** Gap: visible lifecycle costs and repair compatibility.
 
 A bargain heater consumes scarce fuel and uses an unusual fitting; a costlier repaired model shares parts with the public kitchen. A buyer weighs immediate need against future reliability. Inspectable running costs support thoughtful play. Avoid hiding the crucial drawback until after purchase or making durability merely a recurring tax with no meaningful prevention or repair choice.
 
-Seeds: [Project Zomboid](source-atlas.md#g37), [Fallout 4](source-atlas.md#g74), [Starsector](source-atlas.md#g120).
+Immediate means and intended use can make either choice understandable.
+
+Related entries: [ECON-016](#everyday-buying-selling-barter-and-procurement).
+
+Seeds and references: [Project Zomboid](source-atlas.md#g37), [Fallout 4](source-atlas.md#g74), [Starsector](source-atlas.md#g120).
 
 Selection: Lifecycle maintenance costs are optional equipment detail.
 
 ## A fair that creates demand
 
-**Priority: 2 Complete.**
-
-
-ECON-141 retains a bounded fair whose cooks, makers, and musicians want particular useful things. Real buyers and future commissions matter more than an empty global marketplace or an opaque popularity score.
+**ALL · Play · 2 Complete · Small/Compose.** Gap: authored visitors and projects; dynamic demand can be added later.
 
 A regional fair brings cooks, builders and musicians who want specific useful things, allowing small makers to find an audience. Successful goods can inspire future commissions. Creators get a bounded economic event instead of an empty global marketplace. Supply a few real needs and varied buyers; popularity should not be determined solely by an opaque engagement score.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed Valhalla](source-atlas.md#g100).
+Related entries: [ECON-141](#fairs-patronage-gifts-luxury-and-celebration).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed Valhalla](source-atlas.md#g100).
 
 Selection: A bounded market event supplies customers, rewards and activity variety.
 

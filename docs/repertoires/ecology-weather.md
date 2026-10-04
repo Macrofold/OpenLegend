@@ -30,7 +30,7 @@ The following ten patterns and their original source pointers are preserved as p
 
 A neglected hedge shelters pollinators and mice; clearing it helps one crop while harming another. Farmers can try mixed planting, owl perches or protective stores. Players discover relationships through visible seasonal outcomes. Use a few meaningful species and refuges so experiments produce visible tradeoffs and the garden can recover from ordinary mistakes.
 
-Seeds: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](source-atlas.md#g30), [Rain World](source-atlas.md#g123).
+Seeds and references: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](source-atlas.md#g30), [Rain World](source-atlas.md#g123).
 
 Selection: Pollinators, pests and mixed habitats deepen basic farming.
 
@@ -40,7 +40,7 @@ Selection: Pollinators, pests and mixed habitats deepen basic farming.
 
 A storm shifts a market indoors, delays a survey and creates a good moment to collect roof water. Preparation has several payoffs without making weather only punishment. Forecasts should communicate likelihood and useful time windows. Stable shelter and known routines reduce repetitive response. The world's declared time and persistence rules determine whether hazards continue during absence; do not hide that choice from participants.
 
-Seeds: [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
+Seeds and references: [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
 Selection: Readable weather changes activities and routes without becoming only punishment.
 
@@ -50,7 +50,7 @@ Selection: Readable weather changes activities and routes without becoming only 
 
 A new mill helps one village and changes sediment at another's fishing bank. Players can inspect, negotiate operating hours or construct a bypass. The river links politics to material decisions. Use a small catchment graph with declared approximations; avoid pretending to simulate all fluid dynamics, and provide readable traces before downstream harm becomes irreversible.
 
-Seeds: [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129), [Fallout](source-atlas.md#w28).
+Seeds and references: [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129), [Fallout](source-atlas.md#w28).
 
 Selection: Catchment consequences deepen resource and settlement decisions.
 
@@ -60,7 +60,7 @@ Selection: Catchment consequences deepen resource and settlement decisions.
 
 Predators visit a village because a route to their usual prey is blocked. Hunting the threatening animals, reopening habitat, protecting livestock or relocating stores are different responses with different costs. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
 
-Seeds: [EverQuest Next](source-atlas.md#g18), [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123).
+Seeds and references: [EverQuest Next](source-atlas.md#g18), [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123).
 
 Selection: Population goals and refuges follow readable local predators.
 
@@ -70,7 +70,7 @@ Selection: Population goals and refuges follow readable local predators.
 
 A plant that crowds wheat also makes strong cord and feeds a useful insect. Players decide where to tolerate it, harvest it or trade it. The label “weed” belongs to a goal and a place. Limit growth cadence and provide settled garden policies; otherwise an appealing ecological tradeoff turns into endless clicking to remove unwanted plants.
 
-Seeds: [Minecraft](source-atlas.md#g20), [Stardew Valley](source-atlas.md#g30), [Core Keeper](source-atlas.md#g46).
+Seeds and references: [Minecraft](source-atlas.md#g20), [Stardew Valley](source-atlas.md#g30), [Core Keeper](source-atlas.md#g46).
 
 Selection: Ecological multiple-use tradeoffs follow useful gathering and crafting.
 
@@ -80,7 +80,7 @@ Selection: Ecological multiple-use tradeoffs follow useful gathering and craftin
 
 A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal can be skilled management, dangerous improvisation or deliberate destruction: a raider may use the same fire to deny cover or burn a settlement. Use finite regions, clear containment tools and world-selected severity. Bound propagation work and provide usable evidence of danger.
 
-Seeds: [Noita](source-atlas.md#g32), [Project Zomboid](source-atlas.md#g37), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73).
+Seeds and references: [Noita](source-atlas.md#g32), [Project Zomboid](source-atlas.md#g37), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73).
 
 Selection: Regional spread and recovery exceed a bounded camp or encounter fire.
 
@@ -90,7 +90,7 @@ Selection: Regional spread and recovery exceed a bounded camp or encounter fire.
 
 A migration brings food, visitors, songs and conservation disputes. Players can build observation hides, guide travelers or adjust harvesting rules. The spectacle matters even without collectible rewards. Predictable windows and repeat opportunities prevent missing one evening from locking content; most distant animals can remain population groups rather than individually thinking agents.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Rain World](source-atlas.md#g123), [Pokémon](source-atlas.md#w08).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Rain World](source-atlas.md#g123), [Pokémon](source-atlas.md#w08).
 
 Selection: A seasonal ecological event adds variety after everyday activities work.
 
@@ -100,7 +100,7 @@ Selection: A seasonal ecological event adds variety after everyday activities wo
 
 On a planet where suspended crystals fall as a harmless-to-locals abrasive haze, residents close cloth roofs while visitors learn to shield optics. The cycle changes routes, work and architecture. Start with one distinctive law and several consequences. Do not generate a new physics exception for every biome or make alien weather simply Earth weather with lethal colors.
 
-Seeds: [No Man's Sky](source-atlas.md#g17), [Mass Effect: Andromeda](source-atlas.md#g104), [The Expanse](source-atlas.md#w15).
+Seeds and references: [No Man's Sky](source-atlas.md#g17), [Mass Effect: Andromeda](source-atlas.md#g104), [The Expanse](source-atlas.md#w15).
 
 Selection: An alien environmental constitution is an alternate-world feature.
 
@@ -110,7 +110,7 @@ Selection: An alien environmental constitution is an alternate-world feature.
 
 Waste heat and treated organic matter support a neighborhood greenhouse, creating work and bargaining over responsibility. Players can compare central and household solutions. The output should have declared quality and maintenance needs; “recycled” is not automatically safe. A play model can remain coarse while a lab variant measures a specific balance without claiming real engineering validation.
 
-Seeds: [Factorio](source-atlas.md#g27), [Oxygen Not Included](source-atlas.md#g129), [The Wire](source-atlas.md#w21).
+Seeds and references: [Factorio](source-atlas.md#g27), [Oxygen Not Included](source-atlas.md#g129), [The Wire](source-atlas.md#w21).
 
 Selection: Urban industrial treatment networks are outside the survival baseline.
 
@@ -120,7 +120,7 @@ Selection: Urban industrial treatment networks are outside the survival baseline
 
 Cleaning a polluted pond brings back an edible plant but removes a workshop's convenient disposal site. A former critic may help when the practical benefit becomes visible. Restoration becomes a shared story rather than a progress bar. Track a few observable milestones, preserve disagreement about costs, and avoid rewarding only catastrophic damage followed by heroic cleanup.
 
-Seeds: [Core Keeper](source-atlas.md#g46), [Mass Effect: Andromeda](source-atlas.md#g104), [Spirited Away](source-atlas.md#w25).
+Seeds and references: [Core Keeper](source-atlas.md#g46), [Mass Effect: Andromeda](source-atlas.md#g104), [Spirited Away](source-atlas.md#w25).
 
 Selection: Ecological restoration adds a substantial later project and social response.
 

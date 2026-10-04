@@ -468,113 +468,121 @@ A town's people, working services, prestigious symbols and governing offices nee
 
 ## The council has a repair budget
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: finite shared resources, proposals and recorded decisions.
 
+A council can repair a floodgate, expand a clinic or improve the market, but not all at once. Residents bring evidence and competing needs; a looming raid may add fortifications to the choice. Players can propose combinations, secure patronage, negotiate a debt or use office to favor their own district. Show what a decision changes and who is affected; politics should not collapse into a charisma check or an abstract approval meter detached from services.
 
-A council can repair a floodgate, expand a clinic or improve the market, but not all at once. Residents bring evidence and competing needs; a looming raid may add fortifications to the choice. Players can propose combinations, secure patronage, negotiate a debt or use office to favor their own district. Show what a decision changes and who is affected; politics should not collapse into a charisma check or an abstract approval meter detached from services. See INS-001 in [Local councils](#local-councils-and-civic-offices).
+Related entries: [INS-001](#local-councils-and-civic-offices).
 
-Gap: finite shared resources, proposals and recorded decisions. Retained inspiration: [Pathfinder: Kingmaker](source-atlas.md#g58), [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21).
+Seeds and references: [Pathfinder: Kingmaker](source-atlas.md#g58), [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21), [Local councils](#local-councils-and-civic-offices).
 
 Selection: Civic budgeting follows player-facing projects and threats.
 
 ## Rank that grants responsibility
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: scoped roles, duties, access and succession.
 
+Becoming a guild steward grants workshop access and responsibility for apprentices, not instant mastery of every craft. The player can improve training, delegate inspections, award contracts to allies or resign. A military office may instead grant command over a company whose wages and loyalties must be sustained. Status becomes practical rather than a title ladder. Duties should be bounded and negotiable, with a useful ordinary-member experience so promotion is not mandatory for basic participation.
 
-Becoming a guild steward grants workshop access and responsibility for apprentices, not instant mastery of every craft. The player can improve training, delegate inspections, award contracts to allies or resign. A military office may instead grant command over a company whose wages and loyalties must be sustained. Status becomes practical rather than a title ladder. Duties should be bounded and negotiable, with a useful ordinary-member experience so promotion is not mandatory for basic participation. See INS-101 in [Guilds](#guilds-standards-and-professions).
+Related entries: [INS-101](#guilds-standards-and-professions).
 
-Gap: scoped roles, duties, access and succession. Retained inspiration: [Fire Emblem: Three Houses](source-atlas.md#g64), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Wizarding World](source-atlas.md#w02).
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Wizarding World](source-atlas.md#w02), [Guilds](#guilds-standards-and-professions).
 
 Selection: Institutional careers extend ordinary progression.
 
 ## A law with an actual complainant
 
-**Priority: 3 Depth.**
+**ALL · Blend · 3 Depth · Large/New.** Gap: witnessed incidents, claims, evidence and local adjudication.
 
+After a cart damages a garden, the owner wants repairs while an official wants a fine. Witnesses differ about whether the brake failed. Players investigate, mediate or contest the claim. Avoid omniscient crime detection and universal moral alignment; procedures can be fair, corrupt or openly unequal. Make available appeals and likely penalties discoverable; where ordinary justice fails, evidence, influence, evasion or resistance can become meaningful play.
 
-After a cart damages a garden, the owner wants repairs while an official wants a fine. Witnesses differ about whether the brake failed. Players investigate, mediate or contest the claim. Avoid omniscient crime detection and universal moral alignment; procedures can be fair, corrupt or openly unequal. Make available appeals and likely penalties discoverable; where ordinary justice fails, evidence, influence, evasion or resistance can become meaningful play. See INS-049 in [Courts](#courts-evidence-and-punishment).
+Related entries: [INS-049](#courts-evidence-and-punishment).
 
-Gap: witnessed incidents, claims, evidence and local adjudication. Retained inspiration: [Red Dead Redemption](source-atlas.md#g69), [Fallout: New Vegas](source-atlas.md#g112), [Ultima VII: The Black Gate](source-atlas.md#g128).
+Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Fallout: New Vegas](source-atlas.md#g112), [Ultima VII: The Black Gate](source-atlas.md#g128), [Courts](#courts-evidence-and-punishment).
 
 Selection: Evidence and adjudication add a separate social activity.
 
 ## The public archive under pressure
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: versioned public records with provenance and access rules.
 
+A new administration wants a flood record reworded to hide a neglected repair. An archivist can preserve evidence, add competing accounts or seek public witnesses. History becomes actionable civic work. Public records are not unrestricted access to private cognition, and correcting the archive must not overwrite past events or force every citizen to accept one interpretation.
 
-A new administration wants a flood record reworded to hide a neglected repair. An archivist can preserve evidence, add competing accounts or seek public witnesses. History becomes actionable civic work. Public records are not unrestricted access to private cognition, and correcting the archive must not overwrite past events or force every citizen to accept one interpretation. See INS-226 and INS-237 in [Knowledge authority](#schools-archives-and-knowledge-authority).
+Related entries: [INS-226](#schools-archives-and-knowledge-authority), [INS-237](#schools-archives-and-knowledge-authority).
 
-Gap: versioned public records with provenance and access rules. Retained inspiration: [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24), [Knowledge authority](#schools-archives-and-knowledge-authority).
 
 Selection: Political evidence creates a later investigation objective.
 
 ## Bureaucracy that can improve
 
-**Priority: 5 Specialist.**
+**MO SC · Play · 5 Specialist · Moderate/Extend.** Gap: bounded workflows, handoffs and service outcomes.
 
+A permit office repeatedly loses applications between two desks. A player can redesign the handoff, train staff or propose one shared register. The payoff is a service becoming easier for everyone. Institutions need not remain permanently broken to generate stories; successful reform should persist, and paperwork must not become a compulsory maze for every ordinary action.
 
-A permit office repeatedly loses applications between two desks. A player can redesign the handoff, train staff or propose one shared register. The payoff is a service becoming easier for everyone. Institutions need not remain permanently broken to generate stories; successful reform should persist, and paperwork must not become a compulsory maze for every ordinary action. See INS-135 in [Public services](#public-services-and-common-wealth).
+Related entries: [INS-135](#public-services-and-common-wealth).
 
-Gap: bounded workflows, handoffs and service outcomes. Retained inspiration: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [Discworld](source-atlas.md#w12), [The Wire](source-atlas.md#w21).
+Seeds and references: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [Discworld](source-atlas.md#w12), [The Wire](source-atlas.md#w21), [Public services](#public-services-and-common-wealth).
 
 Selection: Administrative workflow reform is outside the current survival promise.
 
 ## An election about something
 
-**Priority: 5 Specialist.**
-
-
-Candidates differ over a ferry, housing and quiet hours. Players can stand for office, organize meetings, bargain for endorsements, publish proposals or support someone else. A campaign may also conceal a conflict of interest or attack a rival's reputation, with consequences carried through reachable audiences. Voters have overlapping interests and incomplete information. Keep the electorate abstract beyond named participants and expose the chosen model; this is authored political play, not a predictor of real elections or a persuasion optimizer. See INS-033 in [Elections](#elections-parties-and-public-careers).
-
-Gap: bounded constituency preferences, campaigning and transparent procedure. Retained inspiration: [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21), [Austen's social worlds](source-atlas.md#w23).
+**MO SC FA · Blend · 5 Specialist · Large/New.** Gap: bounded constituency preferences, campaigning and transparent procedure.
 
 Candidates differ over a ferry, housing and quiet hours. Players can stand for office, organize meetings, bargain for endorsements, publish proposals or support someone else. A campaign may also conceal a conflict of interest or attack a rival’s reputation, with consequences carried through reachable audiences. Voters have overlapping interests and incomplete information. Keep the electorate abstract beyond named participants and expose the chosen model; this is authored political play, not a predictor of real elections or a persuasion optimizer.
+
+Related entries: [INS-033](#elections-parties-and-public-careers).
+
+Seeds and references: [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21), [Austen’s social worlds](source-atlas.md#w23), [Elections](#elections-parties-and-public-careers).
 
 Selection: An election simulation requires a deliberately selected political scope.
 
 ## Emergency powers that end
 
-**Priority: 3 Depth.**
+**ALL · Blend · 3 Depth · Large/New.** Gap: time-bounded roles, review and ongoing-action revocation.
 
+During a storm, a rescue coordinator can requisition empty carts but must account for use afterward. Prepared plans help the crisis; continuation of extraordinary authority becomes a political choice. Give residents means to question and attempt to replace the coordinator, who may comply, bargain or refuse. A refusal creates a struggle over real guards, supplies and legitimacy, rather than silently extending a timer. A world emergency must never expand platform privileges or justify invisible permanent control of every character.
 
-During a storm, a rescue coordinator can requisition empty carts but must account for use afterward. Prepared plans help the crisis; continuation of extraordinary authority becomes a political choice. Give residents means to question and attempt to replace the coordinator, who may comply, bargain or refuse. A refusal creates a struggle over real guards, supplies and legitimacy, rather than silently extending a timer. A world emergency must never expand platform privileges or justify invisible permanent control of every character. See INS-048 in [Public careers](#elections-parties-and-public-careers) and INS-016 in [Local councils](#local-councils-and-civic-offices).
+Related entries: [INS-048](#elections-parties-and-public-careers), [INS-016](#local-councils-and-civic-offices).
 
-Gap: time-bounded roles, review and ongoing-action revocation. Retained inspiration: [Pathfinder: Kingmaker](source-atlas.md#g58), [Mass Effect 3](source-atlas.md#g103), [Star Wars](source-atlas.md#w03).
+Seeds and references: [Pathfinder: Kingmaker](source-atlas.md#g58), [Mass Effect 3](source-atlas.md#g103), [Star Wars](source-atlas.md#w03), [Public careers](#elections-parties-and-public-careers), [Local councils](#local-councils-and-civic-offices).
 
 Selection: Authority struggles deepen existing threats and communities.
 
 ## A union of inconvenient experts
 
-**Priority: 5 Specialist.**
+**MO SC FA · Play · 5 Specialist · Moderate/Extend.** Gap: voluntary collective negotiation and work commitments.
 
+Maintenance workers refuse a deadline that would hide unsafe joints. Managers fear losing a vital shipment; residents need the service. Players can inspect, reschedule, hire support or negotiate a partial opening. Avoid treating workers as one mind or every dispute as villainy. Expertise should make alternatives visible, and agreement must change working conditions rather than only dialogue.
 
-Maintenance workers refuse a deadline that would hide unsafe joints. Managers fear losing a vital shipment; residents need the service. Players can inspect, reschedule, hire support or negotiate a partial opening. Avoid treating workers as one mind or every dispute as villainy. Expertise should make alternatives visible, and agreement must change working conditions rather than only dialogue. See INS-113–115 in [Labor](#labor-solidarity-and-bargaining).
+Related entries: [INS-113–115](#labor-solidarity-and-bargaining).
 
-Gap: voluntary collective negotiation and work commitments. Retained inspiration: [Assassin's Creed III](source-atlas.md#g99), [Oxygen Not Included](source-atlas.md#g129), [The Expanse](source-atlas.md#w15).
+Seeds and references: [Assassin's Creed III](source-atlas.md#g99), [Oxygen Not Included](source-atlas.md#g129), [The Expanse](source-atlas.md#w15), [Labor](#labor-solidarity-and-bargaining).
 
 Selection: Detailed collective labor negotiation is a specialist civic mode.
 
 ## The institution with two publics
 
-**Priority: 3 Depth.**
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: multiple constituencies and separate service/access policies.
 
+A library serves scholars and travelers, but its quiet rules and membership fees favor the former. A new reading room or sponsored access changes who benefits. Builders can reconcile some tensions without pretending every interest aligns. Keep real services central; inventing ranks, uniforms and lore without consequential access would produce decorative bureaucracy.
 
-A library serves scholars and travelers, but its quiet rules and membership fees favor the former. A new reading room or sponsored access changes who benefits. Builders can reconcile some tensions without pretending every interest aligns. Keep real services central; inventing ranks, uniforms and lore without consequential access would produce decorative bureaucracy. See INS-140 in [Public services](#public-services-and-common-wealth).
+Related entries: [INS-140](#public-services-and-common-wealth).
 
-Gap: multiple constituencies and separate service/access policies. Retained inspiration: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Fallout](source-atlas.md#w28).
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Fallout](source-atlas.md#w28), [Public services](#public-services-and-common-wealth).
 
 Selection: Multiple service constituencies deepen a functioning institution.
 
 ## Succession without a chosen one
 
-**Priority: 3 Depth.**
+**MD SC FA · Play · 3 Depth · Large/New.** Gap: role transfer, contested legitimacy and continuity of obligations.
 
+A respected leader retires, leaving a competent deputy, a popular newcomer and several unfinished promises. The player can support a process, seek the office, bargain for a coalition or attempt to seize it. Each path changes who cooperates, who resists and what the winner must uphold. Resources and obligations persist through the transition. Avoid automatically inheriting personal friendships, private memories or unrestricted ownership along with a public role; legitimacy can remain locally contested.
 
-A respected leader retires, leaving a competent deputy, a popular newcomer and several unfinished promises. The player can support a process, seek the office, bargain for a coalition or attempt to seize it. Each path changes who cooperates, who resists and what the winner must uphold. Resources and obligations persist through the transition. Avoid automatically inheriting personal friendships, private memories or unrestricted ownership along with a public role; legitimacy can remain locally contested. See [Crowns](#crowns-dynasties-and-courts) and INS-048 in [Public careers](#elections-parties-and-public-careers).
+Related entries: [INS-048](#elections-parties-and-public-careers).
 
-Gap: role transfer, contested legitimacy and continuity of obligations. Retained inspiration: [Final Fantasy VI](source-atlas.md#g83), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126).
+Seeds and references: [Final Fantasy VI](source-atlas.md#g83), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Crowns](#crowns-dynasties-and-courts), [Public careers](#elections-parties-and-public-careers).
 
 Selection: Contested leadership follows ordinary factions and substantial play.
 

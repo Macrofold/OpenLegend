@@ -29,7 +29,7 @@ These domains orient the expanded inventory. The ten retained patterns remain us
 
 A tradition asks households to keep one place available for an unexpected guest. Some followers offer food, others quiet shelter or tools. Players can participate without adopting the theology. The custom creates welcome and practical limits: hosts may be exhausted or poor. This welcoming tradition relies on human choices and practical support. A host may ask neighbors to share the work, and some followers may disagree about what the duty requires; neither response erases the value of the welcome.
 
-Seeds: [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
+Seeds and references: [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
 
 Selection: A specific hospitality custom is optional world texture.
 
@@ -39,7 +39,7 @@ Selection: A specific hospitality custom is optional world texture.
 
 Caretakers mark water heights beside prayers for safe crossings. Over generations, the marks become valuable flood data while rituals remain meaningful to believers. Players can repair the gauge, compare memories or help relocate the shrine. Do not resolve every religious practice into either fraud or secret engineering; practical knowledge and spiritual significance can coexist.
 
-Seeds: [Against the Storm](source-atlas.md#g45), [Ultima VII: The Black Gate](source-atlas.md#g128), [Dune](source-atlas.md#w09).
+Seeds and references: [Against the Storm](source-atlas.md#g45), [Ultima VII: The Black Gate](source-atlas.md#g128), [Dune](source-atlas.md#w09).
 
 Selection: An environmental historical clue adds exploration depth.
 
@@ -49,7 +49,7 @@ Selection: An environmental historical clue adds exploration depth.
 
 Once a season, people bring broken objects and tell why they kept them. Repairers teach, children decorate patches and some objects are respectfully retired. The event turns maintenance into a bounded social pleasure. No attendance streak is needed, and not every item must be saved; letting go can be as meaningful as restoring function.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Spirited Away](source-atlas.md#w25).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Spirited Away](source-atlas.md#w25).
 
 Selection: A maintenance celebration is optional, not a core milestone.
 
@@ -59,7 +59,7 @@ Selection: A maintenance celebration is optional, not a core milestone.
 
 Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help, but the exile may reject the terms or endanger someone the player loves. Shelter, expulsion and armed defense can remain consequential choices rather than converge on a guaranteed compromise. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
 
-Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Earthsea](source-atlas.md#w11).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Earthsea](source-atlas.md#w11).
 
 Selection: A consequential ethical conflict enriches established social play.
 
@@ -69,7 +69,7 @@ Selection: A consequential ethical conflict enriches established social play.
 
 Travelers visit wells, observatories or ancestral gardens, contributing a small service at each stop. The journey teaches geography and connects communities. Different people travel for devotion, curiosity or company. A particular pilgrimage may be contemplative or an ordeal through hostile territory. Once a route is familiar, summarize uneventful travel instead of adding repetitive encounters; state whether danger, devotion or discovery is the central promise.
 
-Seeds: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](source-atlas.md#g75), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](source-atlas.md#g75), [Middle-earth](source-atlas.md#w01).
 
 Selection: A purposeful journey offers destinations and attainable milestones.
 
@@ -79,7 +79,7 @@ Selection: A purposeful journey offers destinations and attainable milestones.
 
 An observatory keeps a quiet hour to listen for migrating animals or contemplate the sky. Sign language, writing and emergency speech remain available. Players can host a meaningful pause or investigate a strange sound. Silence should have a comprehensible purpose, and accessibility must not be treated as irreverence or punished as a hidden etiquette failure.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Detailed communication customs are optional texture.
 
@@ -89,7 +89,7 @@ Selection: Detailed communication customs are optional texture.
 
 A worn traveling cloak is revered because generations used it to shelter strangers. Its fabric now needs conservation, creating tension between public use and preservation. Players can commission a successor, document stories or design gentle display. Sacred value need not mean superior equipment stats, and theft should not automatically transfer community recognition to the thief.
 
-Seeds: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [A Song of Ice and Fire](source-atlas.md#w10).
+Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [A Song of Ice and Fire](source-atlas.md#w10).
 
 Selection: Conservation duties do not substitute for worthwhile treasure.
 
@@ -99,7 +99,7 @@ Selection: Conservation duties do not substitute for worthwhile treasure.
 
 A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
 
-Seeds: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen's social worlds](source-atlas.md#w23).
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: A particular conflicted affiliation enriches character life.
 
@@ -109,7 +109,7 @@ Selection: A particular conflicted affiliation enriches character life.
 
 A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. It might generously protect a village, exact an unjust offering, or aid one army against another; demonstrable power does not make its demands morally correct. Limited powers invite ingenuity. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
 
-Seeds: [Hades II](source-atlas.md#g01), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Narnia](source-atlas.md#w19).
+Seeds and references: [Hades II](source-atlas.md#g01), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Narnia](source-atlas.md#w19).
 
 Selection: A bounded deity adds selected fantasy depth, not platform authority.
 
@@ -119,7 +119,7 @@ Selection: A bounded deity adds selected fantasy depth, not platform authority.
 
 A settlement adjusts a harvest festival after climate or work patterns shift. Elders, newcomers and seasonal workers propose different dates and meanings. Players can preserve several observances or create a rotating arrangement. Tradition becomes something people maintain together. Make timing forgiving and visible, avoiding one missed date that permanently blocks a relationship or essential capability.
 
-Seeds: [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124), [Avatar: The Last Airbender](source-atlas.md#w13).
+Seeds and references: [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 Selection: Festival calendar negotiation is optional administration.
 

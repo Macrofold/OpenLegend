@@ -30,7 +30,7 @@ The original pattern research pointers below are retained as provenance of that 
 
 A broad-backed traveler carries a stretcher while a small companion opens tight gates; neither is reduced to a strength score. Design carts, slings and shared loads so different bodies participate. The interesting decision is coordinating space and attention. Avoid assigning one body type permanent servant work, and let equipment change which solutions are available.
 
-Seeds: [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
+Seeds and references: [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
 
 Selection: Body-specific cooperative transport exceeds basic inventory and carrying.
 
@@ -40,7 +40,7 @@ Selection: Body-specific cooperative transport exceeds basic inventory and carry
 
 A character reads patterned rails and vibrations to navigate a workshop, noticing loose machinery sighted visitors miss. They need real accessible routes rather than magical omniscience. Builders can author tactile signs and shared workspaces. Limit signals by contact and distance; perception differences should create particular expertise without withholding ordinary participation behind constant assistance requests.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
 
 Selection: An alternate sensory/body model needs a separately chosen scope.
 
@@ -50,7 +50,7 @@ Selection: An alternate sensory/body model needs a separately chosen scope.
 
 A species grows insulating plates during a cold season and sheds them before long migration. Clothing, work and festivals adapt, while individuals disagree about whether to travel. Players prepare socially and materially. Transitions need warning and manageable accommodation; they must not become involuntary class changes that invalidate a player's favorite activity for weeks.
 
-Seeds: [Spore](source-atlas.md#g16), [Wildermyth](source-atlas.md#g25), [Rain World](source-atlas.md#g123).
+Seeds and references: [Spore](source-atlas.md#g16), [Wildermyth](source-atlas.md#g25), [Rain World](source-atlas.md#g123).
 
 Selection: Seasonal body transitions are not prerequisites for ordinary actors.
 
@@ -60,7 +60,7 @@ Selection: Seasonal body transitions are not prerequisites for ordinary actors.
 
 A synthetic gardener swaps a heavy digging arm for a delicate grafting tool, borrowing the latter from a friend. Modules affect reach, power and maintenance, but identity and relationships persist. This makes equipment social and spatial. Ownership of a component is distinct from claims over the person; an exploitative faction may contest that distinction through fictional law or force. Inspectable compatibility avoids unexplained installation failure.
 
-Seeds: [Cyberpunk 2077](source-atlas.md#g68), [Mass Effect: Andromeda](source-atlas.md#g104), [Marvel](source-atlas.md#w05).
+Seeds and references: [Cyberpunk 2077](source-atlas.md#g68), [Mass Effect: Andromeda](source-atlas.md#g104), [Marvel](source-atlas.md#w05).
 
 Selection: Synthetic body modules belong to a science-fiction experience.
 
@@ -70,7 +70,7 @@ Selection: Synthetic body modules belong to a science-fiction experience.
 
 An alien visitor needs a different breathing mixture, so a shared market uses paired booths, translation windows and portable supplies. Architecture becomes hospitality. Start with two clearly specified atmospheres and simple buffers, not every possible gas chemistry. Access should be reliable once solved, avoiding endless consumable micromanagement or a narrative where difference means permanent isolation.
 
-Seeds: [Oxygen Not Included](source-atlas.md#g129), [Star Trek](source-atlas.md#w04), [The Expanse](source-atlas.md#w15).
+Seeds and references: [Oxygen Not Included](source-atlas.md#g129), [Star Trek](source-atlas.md#w04), [The Expanse](source-atlas.md#w15).
 
 Selection: Multiple atmospheres are specialist environmental simulation.
 
@@ -80,7 +80,7 @@ Selection: Multiple atmospheres are specialist environmental simulation.
 
 A voluntary wolf-form courier can cross rough terrain quickly but must arrange how to carry letters and enter a friend's tiny kitchen. Friends recognize behavior and voice under the world's chosen rules. This voluntary transformation does not automatically change morality. Other proposals can include imposed curses or loss of control, but must separately define fictional imposition, timing, injury continuity and reversion through supported rules.
 
-Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
 
 Selection: A chosen transformation adds distinctive traversal and identity play.
 
@@ -90,7 +90,7 @@ Selection: A chosen transformation adds distinctive traversal and identity play.
 
 Long-lived residents remember an old river course but still need to meet today's repair deadline. Generational perspectives can enrich archives and arguments without granting perfect memory or wisdom. A young specialist may know the newer machine better. Avoid treating lifespan as a superior species ranking or requiring centuries of simulated backstory before a useful conversation.
 
-Seeds: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11).
+Seeds and references: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11).
 
 Selection: Lifespan-specific social history is optional texture.
 
@@ -100,7 +100,7 @@ Selection: Lifespan-specific social history is optional texture.
 
 A colony of small organisms speaks through a shared display while members can leave a task to tend their own chambers. Researchers can vary how consensus and information sharing work. Players might negotiate with the collective over use of a warm wall. Define who can consent and what is shared; membership cannot imply access to every private experience.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [The Culture](source-atlas.md#w17), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [The Culture](source-atlas.md#w17), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Collective identity and consensus are a separate research/world premise.
 
@@ -110,7 +110,7 @@ Selection: Collective identity and consensus are a separate research/world premi
 
 A luminous plant shelters an insectlike caretaker that pollinates nearby crops. A household can host both, one or neither, with consequences for light and gardening. Care becomes environmental design. Keep each organism's behavior understandable and allow substitutes; symbiosis should not be an inescapable dependency puzzle where one small absence destroys the whole settlement.
 
-Seeds: [Palworld](source-atlas.md#g41), [Rain World](source-atlas.md#g123), [Pokémon](source-atlas.md#w08).
+Seeds and references: [Palworld](source-atlas.md#g41), [Rain World](source-atlas.md#g123), [Pokémon](source-atlas.md#w08).
 
 Selection: Coupled alien needs are a specialist ecology system.
 
@@ -120,7 +120,7 @@ Selection: Coupled alien needs are a specialist ecology system.
 
 A one-handed potter and a many-fingered visitor collaborate on a foot-operated wheel that later becomes popular with everyone. The invention begins with a particular need and gains broader uses. Let the beneficiary direct the design. Accommodation is meaningful progress, not a lesser substitute for a mandatory cure, and fiction should respect actual supported capabilities.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Clair Obscur: Expedition 33](source-atlas.md#g77), [XCOM 2](source-atlas.md#g125).
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Clair Obscur: Expedition 33](source-atlas.md#g77), [XCOM 2](source-atlas.md#g125).
 
 Selection: Configurable in-world tools add creative depth; accessible controls remain Core.
 

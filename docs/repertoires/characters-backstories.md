@@ -434,111 +434,127 @@ These are wider-library premises, not additions to a seed world's initial supern
 
 ## The child of a successful compromise
 
-**Priority: 3 Depth.**
-
-
-CB-043 retains an adult mediator shaped by a settlement that genuinely improved life, with a tendency to overexpect agreement and a playful interest beyond work. A new conflict need not prove the earlier compromise false. Inherited anchors: [Dragon Age: Origins](source-atlas.md#g51), [Crusader Kings III](source-atlas.md#g126), [Austen](source-atlas.md#w23).
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored biography and present commitments.
 
 A character grew up in a town saved by an unpopular treaty and learned that adults can be both right and disliked. Now a mediator, they overvalue agreement and hesitate when refusal is necessary. Give them a playful hobby and someone who remembers the treaty differently. Their story offers diplomacy without requiring a secret royal bloodline or a murdered family.
+
+A new conflict does not prove the earlier success was false.
+
+Related entries: [CB-043](#families-friends-and-chosen-households).
+
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Crusader Kings III](source-atlas.md#g126), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: A specific biography enriches a useful character role.
 
 ## The late beginner
 
-**Priority: 4 Detail.**
-
-
-CB-024 preserves the retired warehouse clerk's useful prior competence, resources and impatience while learning music. The person can support a younger practitioner and still need real instruction. Inherited anchors: [G64](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [G114](source-atlas.md#g114).
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored career history and teachable goals.
 
 A retired warehouse clerk starts learning instrument making, bringing excellent inventory habits and terrible patience with mistakes. They may fund younger apprentices while struggling to ask them for help. Players can teach, collaborate or commission a flawed first instrument. Competence in one life should matter without granting instant mastery in another; age is not a uniform personality modifier.
+
+Related entries: [CB-024](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: A specialist domestic biography is optional texture.
 
 ## The person who stayed
 
-**Priority: 3 Depth.**
-
-
-CB-206 keeps the clinic worker whose local knowledge, pride and curiosity were formed through an active life in one changing place. Remaining is not failure to travel or begin a story. Inherited anchors: [Dragon Age II](source-atlas.md#g52), [G99](source-atlas.md#g99), [The Wire](source-atlas.md#w21).
+**ALL · Play · 3 Depth · Small/Compose.** Gap: remembered local changes and relationships.
 
 While friends left to seek fortune, one resident kept the clinic open, learned everyone's routes and quietly changed the neighborhood. They are proud, curious and sometimes resent being treated as provincial. Returning travelers need their knowledge. Avoid revealing that staying was merely failure; rootedness can be a chosen adventure with its own growth and influence.
+
+Related entries: [CB-206](#adaptation-loss-and-contested-pasts).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Assassin's Creed III](source-atlas.md#g99), [The Wire](source-atlas.md#w21).
 
 Selection: Local knowledge and attachments enrich an established destination.
 
 ## Two apprentices one accident
 
-**Priority: 4 Detail.**
-
-
-CB-052 keeps two adults responding differently to the same event through documentation and improvisation. Their lives include other relationships and pleasures; neither method is automatically the sole correct lesson. Inherited anchors: [Wildermyth](source-atlas.md#g25), [XCOM 2](source-atlas.md#g125), [The Broken Earth](source-atlas.md#w18).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: distinct witnessed histories and enduring but revisable interpretations.
 
 A workshop accident taught one apprentice to document everything and the other to improvise before machinery fails. Neither conclusion is entirely wrong. Years later, a shared repair tests both approaches. Keep their lives larger than the accident: friends, jokes, ambitions and ordinary successes. The same event should produce different people rather than one standardized trauma trait.
+
+Related entries: [CB-052](#families-friends-and-chosen-households).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [XCOM 2](source-atlas.md#g125), [The Broken Earth](source-atlas.md#w18).
 
 Selection: Detailed divergent interpretations follow basic character roles.
 
 ## Raised between calendars
 
-**Priority: 4 Detail.**
-
-
-CB-145 retains the adult interpreter formed between two trading cultures, with particular knowledge of feasts and punctuality rather than universal cultural fluency. Inherited anchors: [G61](source-atlas.md#g61), [G108](source-atlas.md#g108), [Avatar](source-atlas.md#w13).
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored overlapping traditions and contextual expectations.
 
 A child of two trading communities learned different feast days, greetings and assumptions about punctuality. As an adult they translate practical expectations, sometimes enjoying their freedom and sometimes exhausting themselves as everyone's mediator. Let them choose when to explain. Mixed heritage must not automatically confer perfect diplomacy or make the character an encyclopedia for the player.
+
+Related entries: [CB-145](#travelers-migrants-and-returns).
+
+Seeds and references: [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Octopath Traveler II](source-atlas.md#g108), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 Selection: Cultural scheduling biography is optional detail.
 
 ## The former beneficiary
 
-**Priority: 3 Depth.**
-
-
-CB-139 preserves the surveyor whose education and pension connect to an unfair water concession. Reform has real costs; the affected community does not owe instant absolution or protection from every consequence. Inherited anchors: [Pillars of Eternity II](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: material entanglements and choice-driven restitution.
 
 A surveyor discovers their comfortable education was funded by an unfair water concession. They want reform but still depend on the institution's pension and friendships. Players can help inspect records, improve service or organize negotiations. The interesting choice is what to change now, not a binary confession that instantly purifies them or makes them irredeemable.
+
+The affected community owes neither instant absolution nor insulation from consequences.
+
+Related entries: [CB-139](#public-service-politics-and-faith).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28).
 
 Selection: Material entanglements add a later social dilemma.
 
 ## An ordinary happy childhood
 
-**Priority: 3 Depth.**
-
-
-CB-001 preserves supportive upbringing as a real source of confidence, curiosity and useful skills. Happiness is not a secret deficiency requiring a later trauma reveal. Inherited anchors: [Animal Crossing](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Pokémon](source-atlas.md#w08).
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored sources of security and curiosity.
 
 A cook grew up with patient caregivers and expects conflicts to be discussable. That confidence helps strangers feel welcome but sometimes underestimates real hostility. They leave home because they want to taste unfamiliar food, not because home was destroyed. Stable love can generate courage, humor and obligations every bit as useful for stories as suffering.
+
+There is no obligatory trauma reveal or deficiency to uncover.
+
+Related entries: [CB-001](#ordinary-livelihoods-and-local-company).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Pokémon](source-atlas.md#w08).
 
 Selection: A positive biography adds tone without requiring simulated childhood.
 
 ## The competent understudy
 
-**Priority: 3 Depth.**
-
-
-CB-031 retains years of actual logistical achievement behind someone else's public credit. The next choice can involve leadership, negotiated conditions or ruthless ambition rather than a compulsory humble-helper identity. Inherited anchors: [G60](source-atlas.md#g60), [Final Fantasy VI](source-atlas.md#g83), [Mass Effect 2](source-atlas.md#g102).
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored expertise, recognition and succession pressures.
 
 An assistant has quietly run the expedition's logistics for years while its charismatic leader receives credit. When leadership becomes vacant, they must decide whether they want the public role at all. Players can recognize expertise without forcing promotion. Their competence should have visible evidence; ambition may mean better working conditions, rightful command or a ruthless bid to surpass the old leader.
+
+Related entries: [CB-031](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Final Fantasy VI](source-atlas.md#g83), [Mass Effect 2](source-atlas.md#g102).
 
 Selection: Succession and recognition deepen an existing expedition group.
 
 ## A return to a changed home
 
-**Priority: 3 Depth.**
-
-
-CB-152 preserves the returning traveler whose friend actually completed their old shared plan. The traveler returns as a guest with choices, not to an NPC whose life froze in their absence. Inherited anchors: [Dragon Age II](source-atlas.md#g52), [Final Fantasy VI](source-atlas.md#g83), [Narnia](source-atlas.md#w19).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: persistent places and independently changing relationships.
 
 A traveler returns with money and stories to find their old friend has built the life they once planned together. They can become a guest, contribute to new work or leave again. Nostalgia becomes a negotiable relationship with the present. The world must not freeze absent characters or punish them for growing beyond the player's remembered version.
+
+Related entries: [CB-152](#travelers-migrants-and-returns).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Final Fantasy VI](source-atlas.md#g83), [Narnia](source-atlas.md#w19).
 
 Selection: Persistent relationships add meaning to later return trips.
 
 ## The maker of an inconvenient truth
 
-**Priority: 3 Depth.**
-
-
-CB-027 keeps the restorer discovering older names under a painting, with commitments to both beauty and accuracy. The evidence can remain incomplete; no single reveal must settle the whole history. Inherited anchors: [Outer Wilds](source-atlas.md#g34), [Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: evidence-bearing discoveries and social consequences.
 
 A young restorer uncovers names beneath a celebrated mural and cannot tell whether they record an injustice or an old repair. Their first goal is accuracy; public pressure demands a verdict. Players investigate, preserve, explain or postpone. Give the character reasons to care about the mural's beauty too, and let incomplete evidence remain incomplete.
+
+Related entries: [CB-027](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
 
 Selection: A history investigation adds an optional substantive quest.
 

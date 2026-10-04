@@ -29,7 +29,7 @@ These domains broaden the catalogue base. The ten patterns below remain useful e
 
 A district develops a sound from workshop rhythms, river bells and a small evening band. Players can join, build instruments or simply choose a favorite listening spot. Repeated music becomes familiarity rather than content exhaustion. Avoid making every performance a buff station; some residents may prefer quiet, and alternate arrangements can preserve both pleasures.
 
-Seeds: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
+Seeds and references: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
 
 Selection: Music and atmosphere give an inhabited place immediate enjoyable character.
 
@@ -39,7 +39,7 @@ Selection: Music and atmosphere give an inhabited place immediate enjoyable char
 
 A player plants a garden for color, scent, shade and memories instead of maximum crop yield. Visitors might suggest a bench or bring a cutting without scoring the design. Builders get a legitimate nonindustrial goal. Offer forgiving upkeep and dormant beauty; a peaceful garden should not demand daily attendance or become worthless when it produces no sellable goods.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30).
 
 Selection: A substantial optional creative activity can be worthwhile without a buff.
 
@@ -49,7 +49,7 @@ Selection: A substantial optional creative activity can be worthwhile without a 
 
 Residents stage a comic version of a recent power failure, disagreeing about who gets to play the mayor. Players write, act, build sets or watch. Shared history becomes reinterpretation and laughter. Performance is not a new authoritative record of events. Distinguish stage action from actual injury, while allowing satire, a pointed casting choice or a broken promise to delight some spectators and genuinely offend others.
 
-Seeds: [Wildermyth](source-atlas.md#g25), [Garry's Mod](source-atlas.md#g35), [Macondo](source-atlas.md#w24).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Garry's Mod](source-atlas.md#g35), [Macondo](source-atlas.md#w24).
 
 Selection: Historical performance adds a later social activity.
 
@@ -59,7 +59,7 @@ Selection: Historical performance adds a later social activity.
 
 Children invent a game where a lantern must reach the square without touching the ground. Builders add ramps, carriers or team roles using ordinary objects. Simple rules produce expressive play. Make scoring inspectable and optional, with resettable props; avoid requiring a general scripting language or treating every improvisation as cheating against a hidden rulebook.
 
-Seeds: [Garry's Mod](source-atlas.md#g35), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
 
 Selection: A bounded playable challenge adds genuine activity variety.
 
@@ -69,7 +69,7 @@ Selection: A bounded playable challenge adds genuine activity variety.
 
 A traveler misses a home dish whose key herb does not grow locally. Friends can approximate it, grow an alternative or invent something new together. Success may be a good evening rather than an exact taste match. Do not reduce hospitality to finding the one highest-value gift; people can appreciate effort while honestly disliking a flavor.
 
-Seeds: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XV](source-atlas.md#g92).
+Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XV](source-atlas.md#g92).
 
 Selection: Personal taste deepens basic cooking and hospitality.
 
@@ -79,7 +79,7 @@ Selection: Personal taste deepens basic cooking and hospitality.
 
 A club charts moons, migrating lights or city birds from a rooftop. Better instruments reveal new questions rather than simply filling a collection grid. Players can contribute observations at their own pace. Keep phenomena repeatable and accessible; missing a rare real-time window should not permanently block discovery or require leaving the game running overnight.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [The Culture](source-atlas.md#w17).
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [The Culture](source-atlas.md#w17).
 
 Selection: A repeatable observation hobby adds exploration depth.
 
@@ -89,7 +89,7 @@ Selection: A repeatable observation hobby adds exploration depth.
 
 A coat gains patches from places visited and can be adapted for a formal dinner without losing its history. Tailors discuss taste, climate and local expectations. Clothing supports self-expression and conversation. Avoid a universal beauty score or gender locks. A club’s dress code or court’s display of wealth can create a specific social obstacle, met through suitable clothes, a patron, deception or confrontation; one exact collectible outfit should not stand in for the whole social situation.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Cyberpunk 2077](source-atlas.md#g68).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Cyberpunk 2077](source-atlas.md#g68).
 
 Selection: Contextual clothing expression follows functional equipment.
 
@@ -99,7 +99,7 @@ Selection: Contextual clothing expression follows functional equipment.
 
 Collectors of maps, unusual cups or seeds curate rotating exhibits and lend duplicates to beginners. A complete collection is optional; a good story about one object can be enough. Players create community around taste. Let loans and replicas satisfy ordinary display goals while originals retain meaningful provenance. A rare object can also provoke a purchase, expedition, rivalry or deliberate theft in a different story; completion need not force every collector into crime or daily chores.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Old School RuneScape](source-atlas.md#g49), [Persona 5 Royal](source-atlas.md#g124).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Old School RuneScape](source-atlas.md#g49), [Persona 5 Royal](source-atlas.md#g124).
 
 Selection: Social collection and loans expand ordinary treasure collecting.
 
@@ -109,7 +109,7 @@ Selection: Social collection and loans expand ordinary treasure collecting.
 
 When a long bridge repair finishes, residents take a day off to cross it for pleasure. A race, picnic or quiet walk marks the change. The world acknowledges accomplishment without immediately replacing the project with a larger emergency. Let players choose how to celebrate and allow contentment to last; completion itself can be a satisfying session ending.
 
-Seeds: [Hades I](source-atlas.md#g22), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XIV](source-atlas.md#g91).
+Seeds and references: [Hades I](source-atlas.md#g22), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XIV](source-atlas.md#g91).
 
 Selection: Acknowledging a finished objective makes success satisfying.
 
@@ -119,7 +119,7 @@ Selection: Acknowledging a finished objective makes success satisfying.
 
 Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
 
-Seeds: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
 
 Selection: Bounded playful pranks add variety after ordinary interactions work.
 

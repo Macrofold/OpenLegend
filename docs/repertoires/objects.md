@@ -22,131 +22,135 @@ An empty hand can be a deliberate equipment choice, not an unfinished loadout: c
 
 ## The mended kettle
 
-**Priority: 4 Detail.**
-
-
-A kettle becomes worth keeping through repairs, routines, and remembered owners without accumulating supernatural bonuses. ITEM-001 preserves this anchor; destruction may end its use without erasing its history.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored provenance and reactions; heating still needs its own mechanic.
 
 A kettle repaired with three visibly different handles passes between households. It can prepare a welcoming drink, mark a debt repaid or become the village meeting signal. Its history emerges from actual owners and repairs. Let players treasure it without outperforming all new kettles; destroying it does not erase the remembered kindness, though deliberate destruction may cause a lasting rupture.
 
-Seeds: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Spirited Away](source-atlas.md#w25).
+Related entries: [ITEM-001](#specific-inventory).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Spirited Away](source-atlas.md#w25).
 
 Selection: Sentimental provenance and repair are not the basic cooking capability.
 
 ## Surveyor's folding frame
 
-**Priority: 3 Depth.**
-
-
-ITEM-043 measures, braces, or displays something through the same joints and dimensions. Improvisation exposes fit and load rather than making an evocative name sufficient to do anything.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: explicit dimensions, alignment and supported attachments.
 
 A frame measures a doorway, braces a sapling or holds cloth as a wind signal. A carpenter and traveler see different opportunities in the same geometry. Show dimensions and load limits through inspection, including a rough reading when precision is unavailable. Avoid requiring pixel-perfect placement or reducing every improvised use to a crafting-menu entry.
 
-Seeds: [Garry's Mod](source-atlas.md#g35), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
+An evocative name alone cannot authorize another use.
+
+Related entries: [ITEM-043](#specific-inventory).
+
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
 Selection: A multipurpose instrument adds methods after basic tools exist.
 
 ## The honest empty box
 
-**Priority: 3 Depth.**
-
-
-ITEM-061 makes containment useful without pretending its contents exist. Storage can protect, organize, conceal, or transport actual things; labels and wish lists are not inventories.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: containment, visible capacity and credible concealment.
 
 A marked box can be a reserve store, stool, protected parcel or harmless decoy. Its emptiness matters: light enough to carry, insufficient cover against some threats. Players choose what to pack and what to leave available. Give containers searchable contents and sensible transfer controls; nesting boxes must not create unlimited capacity or hide ownership rules.
 
-Seeds: [Project Zomboid](source-atlas.md#g37), [Prey (2017)](source-atlas.md#g118), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
+Labels and wish lists are not inventory contents.
+
+Related entries: [ITEM-061](#specific-inventory).
+
+Seeds and references: [Project Zomboid](source-atlas.md#g37), [Prey (2017)](source-atlas.md#g118), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
 
 Selection: Multiuse, reserved and deceptive containers exceed basic storage.
 
 ## Festival cloth
 
-**Priority: 4 Detail.**
-
-
-ITEM-164 becomes an awning, banner, table covering, or costume, preserving material and occasion across uses. Changing a communal decoration need not settle ownership or what its history means.
+**MD MO FA · Play · 4 Detail · Moderate/Extend.** Gap: material state plus local symbolic interpretations.
 
 A town's long embroidered cloth becomes a table covering, an emergency sling and later an argument about cutting inherited work. Its physical strength and cultural meaning coexist. A repair can become the next commemorated panel. Avoid universal theft or sacredness flags: communities and individuals can disagree about an object's appropriate use.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Austen’s social worlds](source-atlas.md#w23).
+It can also serve as an awning, banner, table covering or costume when its properties allow; changing the decoration does not settle ownership or shared meaning.
+
+Related entries: [ITEM-164](#specific-inventory).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: Heirloom meaning and ceremonial reuse are optional texture.
 
 ## Witness lamp
 
-**Priority: 3 Depth.**
-
-
-ITEM-150 preserves a bounded exposure trace and its provenance, not an omniscient scene recording. Saturation, missing coverage, and alteration remain different questions.
+**MD SC FA · Play · 3 Depth · Moderate/Extend.** Gap: light exposure records limited to actual sensing.
 
 A lamp's treated ring changes after heat or a chosen fictional contaminant, helping explorers compare routes. It reports exposure, not the identity or motive of whoever passed by. Couriers might attach one to a medicine chest. A damaged or saturated ring should be recognizable; otherwise uncertainty becomes an invisible gotcha rather than evidence to investigate.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Dragon Age: Inquisition](source-atlas.md#g53), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
+Keep trace provenance, missing coverage, saturation and alteration distinguishable.
+
+Related entries: [ITEM-150](#specific-inventory).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Dragon Age: Inquisition](source-atlas.md#g53), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
 Selection: A specialized evidence tool enriches investigation.
 
 ## Borrower's tool roll
 
-**Priority: 4 Detail.**
-
-
-ITEM-044 keeps custody of specific tools distinct from expendable supplies. Returning a familiar repaired hammer can matter differently from replacing it with an identical-looking one.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: lending terms, item identity and substitutable consumables.
 
 A shared roll includes a named hammer, replaceable nails and a note about who knows the best repair. Borrowers may return equivalent nails but should discuss replacing the hammer. It connects tool access to people without demanding ownership of every profession's kit. This shared roll can use forgiving, renegotiable terms; another lender may be strict or exploitative, with those terms and their consequences visible. Tracking every nail's biography would add noise.
 
-Seeds: [Ultima Online](source-atlas.md#g19), [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Related entries: [ITEM-044](#specific-inventory).
+
+Seeds and references: [Ultima Online](source-atlas.md#g19), [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Loan terms and mixed custody add administration beyond equipment.
 
 ## A chair with a place
 
-**Priority: 4 Detail.**
-
-
-ITEM-006 anchors a routine and a relationship to a street. Furniture can move for welcome, access, work, or celebration without requiring a numerical social bonus.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: placement and authored social recognition; seating support verified separately.
 
 One chair belongs by the bakery door because a retired driver likes watching deliveries. Moving it creates room for a wheelchair or a music corner, and invites a conversation about habits. Decorators shape encounters without optimizing mood points. The occupant can choose another seat; furniture should influence opportunities, never mechanically dictate affection.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [The Sopranos](source-atlas.md#w22).
+Related entries: [ITEM-006](#specific-inventory).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [The Sopranos](source-atlas.md#w22).
 
 Selection: Furniture recognition is optional social detail.
 
 ## Map of unfinished things
 
-**Priority: 2 Complete.**
-
-
-ITEM-149 records selected work still worth doing. Marking an intention does not complete it; an owner can revise or abandon a project rather than acquire an endless compulsory checklist.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: player-kept annotations linked to evidence and evolving places.
 
 A map records “bridge almost repaired” and “orchard owner welcomes help,” rather than covering the world with compulsory markers. Friends can share selected notes, old notes can be contradicted, and authors can leave deliberate blanks. This gives returning players a direction. Do not reveal hidden quests or silently replace a personal interpretation with an omniscient answer.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [Dragon's Dogma 2](source-atlas.md#g127).
+Intention is not completed work; the author can revise or abandon the plan.
+
+Related entries: [ITEM-149](#specific-inventory).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [Dragon's Dogma 2](source-atlas.md#g127).
 
 Selection: Visible discoveries and useful return destinations support exploration.
 
 ## Companion vessel
 
-**Priority: 5 Specialist.**
-
-
-ITEM-197 is an inhabited, maintained possession with a bounded caretaker and usable interior. Its character does not eliminate fuel, cargo, promises, ownership questions, or the possibility of switching it off.
+**SC FA · Play · 5 Specialist · Large/New.** Gap: inhabitable object identity, interiors and bounded embodied agency.
 
 A small mobile greenhouse has a resident caretaker intelligence and room for passengers. It may agree to ask before relocating sleeping guests, or break that promise in an emergency or betrayal under the chosen fictional rules. Builders gain a home that participates in stories. Define its senses, entrances, capacity and shutdown conditions; do not give it invisible knowledge or a full second simulation for every decorative compartment.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [His Dark Materials](source-atlas.md#w20).
+A caretaker does not eliminate fuel requirements, cargo capacity or ownership questions.
+
+Related entries: [ITEM-197](#specific-inventory).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [His Dark Materials](source-atlas.md#w20).
 
 Selection: An inhabited mobile greenhouse and AI caretaker are another world promise.
 
 ## Celebration kit
 
-**Priority: 4 Detail.**
-
-
-ITEM-163 gathers supplies for a real occasion: food, light, music, games, and decoration selected by its hosts. A successful celebration can remain simply a good evening.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored activities and invitations; optional event scheduling extension.
 
 A portable box of cups, games, lantern covers and recipe cards lets players celebrate a repaired well or welcome a newcomer. The kit enables several low-stakes activities instead of adding another survival meter. Guests may contribute their own traditions. Reuse matters more than rare drops; no daily attendance streak or mandatory reward should turn hospitality into farming.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
+A good evening may simply remain a good evening, without a compulsory emergency afterward.
+
+Related entries: [ITEM-163](#specific-inventory).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
 
 Selection: A domestic prop collection does not establish the game's reward loop.
 

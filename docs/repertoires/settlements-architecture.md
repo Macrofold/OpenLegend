@@ -30,7 +30,7 @@ The following original pattern cards and source pointers are retained as provena
 
 The same courtyard hosts repairs in the morning, children after school and music at dusk. Benches, shade, storage and sightlines make these uses compatible or contentious. Builders shape encounters through layout. Avoid a room-score formula that rewards clutter; a simple well-placed chair may matter more than twelve decorative objects with numerical bonuses.
 
-Seeds: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Ultima VII: The Black Gate](source-atlas.md#g128), [Austen’s social worlds](source-atlas.md#w23).
+Seeds and references: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Ultima VII: The Black Gate](source-atlas.md#g128), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: Shared schedules and social layout deepen a functioning settlement.
 
@@ -40,7 +40,7 @@ Selection: Shared schedules and social layout deepen a functioning settlement.
 
 A lean-to can become a workshop wall, then one side of a communal hall. Early work remains meaningful as the settlement grows. Players choose whether to preserve an awkward beloved corner or rebuild it. Make each stage usable and understandable; construction should not require stockpiling every material for a finished palace before anyone can sleep indoors.
 
-Seeds: [Minecraft](source-atlas.md#g20), [Valheim](source-atlas.md#g31), [Core Keeper](source-atlas.md#g46).
+Seeds and references: [Minecraft](source-atlas.md#g20), [Valheim](source-atlas.md#g31), [Core Keeper](source-atlas.md#g46).
 
 Selection: Usable staged upgrades make homebuilding worth continuing.
 
@@ -50,7 +50,7 @@ Selection: Usable staged upgrades make homebuilding worth continuing.
 
 A kitchen connects growers, cooks, travelers and people who need help. Its menu can reflect what residents actually produce and remember. Players choose between free meals, member contributions or paid service, each with different pressures. Once stable, it should run with occasional meaningful decisions rather than demanding that the player personally stir every pot forever.
 
-Seeds: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed III](source-atlas.md#g99).
+Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed III](source-atlas.md#g99).
 
 Selection: Shared service governance follows cooking, storage and useful companions.
 
@@ -60,7 +60,7 @@ Selection: Shared service governance follows cooking, storage and useful compani
 
 A repaired crossing grows stalls, a shrine and a sheltered noticeboard. Its practical success creates congestion, identity and questions about tolls. Builders can preserve a public lane or create separate paths. Load and access changes must be legible; do not let decorative expansion secretly block emergency routes or require simulating every plank at all distances.
 
-Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Discworld](source-atlas.md#w12).
+Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Discworld](source-atlas.md#w12).
 
 Selection: Markets and rights layered onto a crossing are later settlement depth.
 
@@ -70,7 +70,7 @@ Selection: Markets and rights layered onto a crossing are later settlement depth
 
 A wagon or landed service pod brings tools to distant communities. Customers become recurring contacts, and the workshop changes with its route. Traveling is a choice about stops, supplies and company rather than piloting through empty space. Cargo capacity and arrival conditions should be clear; moving the workshop must not duplicate its contents or teleport through forbidden boundaries.
 
-Seeds: [Garry's Mod](source-atlas.md#g35), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Starsector](source-atlas.md#g120).
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Starsector](source-atlas.md#g120).
 
 Selection: A mobile livelihood adds a new mode after ordinary travel and craft.
 
@@ -80,7 +80,7 @@ Selection: A mobile livelihood adds a new mode after ordinary travel and craft.
 
 Residents post requests, performances, missing objects and offers to teach. Notices reveal several optional directions, with authors who may change their minds. A player can contribute or ignore them. Keep expired notices removable and distinguish rumor from confirmed work; the wall should not become an omniscient quest database or a compulsory checklist.
 
-Seeds: [Old School RuneScape](source-atlas.md#g49), [Ultima VII: The Black Gate](source-atlas.md#g128), [Discworld](source-atlas.md#w12).
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Ultima VII: The Black Gate](source-atlas.md#g128), [Discworld](source-atlas.md#w12).
 
 Selection: Authored, bounded invitations provide understandable playable goals.
 
@@ -90,7 +90,7 @@ Selection: Authored, bounded invitations provide understandable playable goals.
 
 A public building adds ramps, resting ledges, translation surfaces and a quiet waiting room. Different visitors can arrive independently while guards retain legitimate inspection procedures. Accessibility changes who participates in civic life. Avoid reducing accommodations to a single checkbox, or making special entrances humiliating back routes; ordinary routes should be interesting and usable too.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
 
 Selection: Body-specific access design is additional simulation scope, not optional UI accessibility.
 
@@ -100,7 +100,7 @@ Selection: Body-specific access design is additional simulation scope, not optio
 
 A service stair, friendly shop and rooftop garden create an alternate route through a district. Helping a caretaker may earn access without granting ownership. Explorers become knowledgeable locals. Shortcuts should remain understandable and spatially credible, with an ordinary public route available; moving barriers must not silently invalidate every standing plan in the city.
 
-Seeds: [Grand Theft Auto V](source-atlas.md#g67), [Elden Ring](source-atlas.md#g75), [Deus Ex (2000)](source-atlas.md#g117).
+Seeds and references: [Grand Theft Auto V](source-atlas.md#g67), [Elden Ring](source-atlas.md#g75), [Deus Ex (2000)](source-atlas.md#g117).
 
 Selection: Discoverable alternate routes reward exploration and local knowledge.
 
@@ -110,7 +110,7 @@ Selection: Discoverable alternate routes reward exploration and local knowledge.
 
 After solving water, food and housing, residents simply live well for a while. Players can visit, decorate, stage a play or pursue another region. Stability is an achievement. Resist spawning a disaster whenever metrics look healthy; offer invitations and self-chosen ambitions so the only interesting world is not one permanently on the brink of collapse.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Final Fantasy XIV](source-atlas.md#g91).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Final Fantasy XIV](source-atlas.md#g91).
 
 Selection: Stable autonomous civic life builds on solved player-facing foundations.
 
@@ -120,7 +120,7 @@ Selection: Stable autonomous civic life builds on solved player-facing foundatio
 
 An old fortress now contains mushroom farms, workshops and apartments. Archaeological discovery may conflict with someone's kitchen, creating choices about preservation and access. Explorers meet current lives inside history. A ruin is not automatically ownerless loot, and every inhabited layer should have a practical purpose rather than existing only to deliver ancient exposition.
 
-Seeds: [Fallout 4](source-atlas.md#g74), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Ultima VII: The Black Gate](source-atlas.md#g128), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [Fallout 4](source-atlas.md#g74), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Ultima VII: The Black Gate](source-atlas.md#g128), [Middle-earth](source-atlas.md#w01).
 
 Selection: Interesting occupied destinations create discovery, danger and access choices.
 

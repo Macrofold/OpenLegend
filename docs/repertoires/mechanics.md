@@ -18,113 +18,131 @@ The inventory contains **282 rows, MEC-001–MEC-282**. The ten retained pattern
 
 ## Borrowed purpose
 
-**Priority: 2 Complete.**
-
-
-A baker uses a cooling rack as a seed sieve, then a signal reflector. Spacing and finish, not a secret improvisation roll, determine whether the alternate use works. A failure identifies the insufficient property instead of making all objects interchangeable. See MEC-001–010. Retained inspiration: [Minecraft](source-atlas.md#g20), [Divinity: Original Sin](source-atlas.md#g56), [Prey](source-atlas.md#g118).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: compatible property queries and bounded cross-family effects.
 
 A baker uses a cooling rack as a seed sieve, then a signal reflector. Reward a demonstrably useful arrangement, not a secret recipe name: spacing filters grain while a polished surface redirects light. Makers get cleverness without needing new loot. A failed attempt should reveal which property was insufficient; avoid a universal “improvise” roll that makes every object equivalent.
+
+Related entries: [MEC-001–010](#handling-and-borrowed-purpose).
+
+Seeds and references: [Minecraft](source-atlas.md#g20), [Divinity: Original Sin](source-atlas.md#g56), [Prey (2017)](source-atlas.md#g118).
 
 Selection: A useful alternative for a real obstacle makes discovery and invention worth using; keep known methods valid and avoid a universal improvisation roll.
 
 ## Promises that occupy tomorrow
 
-**Priority: 4 Detail.**
-
-
-Promising roof repairs changes the timber available for a boat. Renegotiate, borrow, delegate or disappoint; the recipient can refuse a substitution. Agreed reservations and independent plans make the future concrete without an endless hidden guilt meter. See MEC-121–130. Retained inspiration: [RimWorld](source-atlas.md#g21), [Hades I](source-atlas.md#g22), [Mass Effect 2](source-atlas.md#g102), [Austen][r-austen].
+**ALL · Blend · 4 Detail · Moderate/Extend.** Gap: commitments linked to reservations, due events and independent plans.
 
 Promising to repair a neighbor's roof changes which timber you can spare for your own boat. Renegotiate, borrow, delegate or disappoint; the neighbor can refuse a substitution. The attraction is a future made concrete by relationships. Reserve only agreed resources, expose conflicting obligations, and let an apology open work rather than endlessly increase a hidden guilt meter.
 
-Seeds: [RimWorld](source-atlas.md#g21), [Hades I](source-atlas.md#g22), [Mass Effect 2](source-atlas.md#g102), [Austen’s social worlds](source-atlas.md#w23).
+Related entries: [MEC-121–130](#promises-reservations-and-future-claims).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Hades I](source-atlas.md#g22), [Mass Effect 2](source-atlas.md#g102), [Austen’s social worlds](source-atlas.md#w23), [Austen](../../archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md).
 
 Selection: Formal future commitments are not a first-loop requirement.
 
 ## Pressure becomes opportunity
 
-**Priority: 3 Depth.**
-
-
-A bakery's surplus heat can warm a nursery, spoil a store or be routed elsewhere. Show the causal connection, recovery and transfer loss; adding capacity is not always the answer, and a useful by-product need not become a compulsory punishment. See MEC-031–040. Retained inspiration: [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: threshold processes with observable spillover and recovery.
 
 A crowded bakery produces surplus heat just when a nursery needs warmth. Reroute it, store it, sell access or shorten production. The same variable can help one place and endanger another. Make the causal connection inspectable and introduce it through a recoverable first mistake. Explicit transfer losses prevent feedback from generating free energy.
+
+Adding capacity is not always the answer; a useful by-product need not become a compulsory punishment.
+
+Related entries: [MEC-031–040](#capacity-throughput-and-spillover).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Resource-process combinations deepen existing production.
 
 ## Leave a way back
 
-**Priority: 2 Complete.**
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: prepared return routes, interruption and recovery assets.
 
+Before a risky crossing, the party can lay a rope, hire a ferryman or leave a light. The return plan may later help someone who was absent during preparation. The payoff is foresight made social. A destroyed route changes the retreat options; ropes retain their physical reach and carrying limits.
 
-A rope, hired ferryman or visible light prepares a return that may later help someone absent from the original expedition. Reach, capacity and destruction remain real. Foresight creates another option rather than an automatic rescue. See MEC-017 and MEC-053. Retained inspiration: [Dota 2](source-atlas.md#g09), [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47).
+Foresight creates another option, not an automatic rescue.
 
-Before a risky crossing, the party can lay a rope, hire a ferryman or leave a light. The return plan later rescues someone who was absent during preparation. The payoff is foresight made social. A destroyed route changes the retreat options; ropes retain their physical reach and carrying limits.
+Related entries: [MEC-017](#preparation-and-commitment), [MEC-053](#access-distance-and-changing-topology).
+
+Seeds and references: [Dota 2](source-atlas.md#g09), [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47).
 
 Selection: A prepared escape route changes risk and expedition choices.
 
 ## Tools teach their users
 
-**Priority: 2 Complete.**
-
-
-An apprentice learns a knot through a borrowed harness and later uses it on an awning. Learned understanding, current equipment, bodily capacity and permission remain separate. Meaningful practice can suffice without repeated empty commands or deliberate injury. See MEC-141–150. Retained inspiration: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [KOTOR II](source-atlas.md#g110).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: separate practice, learned technique and currently equipped ability.
 
 An apprentice learns a knot from a borrowed climbing harness, then applies it to a market awning after returning the tool. A distinctive tool remains useful without permanently imprisoning learned competence. Separate understanding from bodily capacity and permission. Do not require repeated meaningless uses or self-inflicted harm to train; a few meaningful demonstrations can suffice.
+
+Related entries: [MEC-141–150](#learning-practice-and-transfer).
+
+Seeds and references: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
 
 Selection: Equipment discovery can grant lasting, useful competence.
 
 ## A useful refusal
 
-**Priority: 2 Complete.**
-
-
-A companion refusing medicine theft may offer negotiation, paid work or another supply route; they may also leave when the aims cannot coexist. Refusal follows actual commitments or evidence and need not conceal a persuasion puzzle with a guaranteed winning answer. See MEC-131–140. Retained inspiration: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age II](source-atlas.md#g52), [Fire Emblem: Three Houses](source-atlas.md#g64).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: scoped refusal reasons and alternative contributions.
 
 A companion refuses to steal medicine but offers to negotiate, work a shift or retrieve an abandoned shipment. Disagreement creates another approach while retaining agency on both sides. Ground the refusal in commitments or discovered facts. The companion may offer another method or, when aims cannot coexist, leave the alliance.
+
+There need not be a guaranteed winning persuasion answer.
+
+Related entries: [MEC-131–140](#refusal-boundaries-and-changed-allegiances).
+
+Seeds and references: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age II](source-atlas.md#g52), [Fire Emblem: Three Houses](source-atlas.md#g64).
 
 Selection: One independent companion can disagree and offer a usable alternative during worthwhile play; broader social simulation is not a prerequisite.
 
 ## Change the problem's topology
 
-**Priority: 3 Depth.**
-
-
-Moving a relay or opening a flooded passage changes which places connect, not just a numerical bonus. A bounded preview can show affected routes and occupants without revealing an unexplored destination. Ordinary alternatives may remain; a specialized challenge may genuinely need a particular capability. See MEC-051–060. Retained inspiration: [League of Legends](source-atlas.md#g08), [Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119).
+**MD SC FA · Play · 3 Depth · Large/New.** Gap: safely changing connections, supports or effect origins.
 
 Moving a relay lets a healer reach an inaccessible courtyard; turning a flooded cellar into a passage changes where conflict happens. Let players alter relationships among spaces rather than only damage numbers. Preview affected routes and occupants, bound edits to supported structures, and make required capabilities discoverable before commitment. Ordinary routes can offer alternatives; an explicitly specialized challenge may still demand a particular kind of capability.
+
+Previews must not reveal unexplored destinations.
+
+Related entries: [MEC-051–060](#access-distance-and-changing-topology).
+
+Seeds and references: [League of Legends](source-atlas.md#g08), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119).
 
 Selection: Changing terrain connections adds methods beyond basic traversal.
 
 ## Retire a successful solution
 
-**Priority: 2 Complete.**
-
-
-After a communal oven routine works, residents maintain it within an agreed budget. New play can concern recipes, neighbors or land rather than repeated ignition. Materially changed conditions can reopen the decision; cancellation remains possible. See MEC-181–190 and [Automation]. Retained inspiration: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: completion conditions and handoff from active play to dependable routine.
 
 Once a player demonstrates a working communal oven routine, residents can maintain it within an agreed budget. Play advances to new neighbors, recipes or land disputes instead of repeating ignition steps forever. Stopping automation remains possible. Interrupt only for a materially changed condition, and explain it once rather than repeatedly asking the same question.
+
+Related entries: [MEC-181–190](#completion-routines-and-earned-ease).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Automation](automation-creators.md).
 
 Selection: A solved production task should stop consuming repeated player attention.
 
 ## Failure leaves useful fragments
 
-**Priority: 2 Complete.**
-
-
-An expedition can return with a damaged pump, a witness and a debt. Preserve what was lost and what was learned; recovery is not an invisible reset, and deliberate failure should not become an unlimited resource source. See MEC-151–160. Retained inspiration: [Hades II](source-atlas.md#g01), [Kenshi](source-atlas.md#g36), [XCOM 2](source-atlas.md#g125).
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: partial outputs, salvage and persistent aftermath.
 
 A failed expedition returns with a damaged pump, a witness and a debt, any of which can seed a new project. Separate what was lost from what was learned; recovery is an available direction, not a disguised reset. The player should understand the original failure. Avoid making deliberate failure the fastest unlimited resource farm.
+
+Related entries: [MEC-151–160](#partial-loss-salvage-and-recovery).
+
+Seeds and references: [Hades II](source-atlas.md#g01), [Kenshi](source-atlas.md#g36), [XCOM 2](source-atlas.md#g125).
 
 Selection: Loss preserves useful progress or a clear next attempt.
 
 ## Rules as playable objects
 
-**Priority: 5 Specialist.**
-
-
-Festival competitors can alter one declared rule: a lantern attracts judges but occupies a hand. Finite targets, costs, triggers and outcomes let players compose challenges and understand evaluation order. A proposal is not installation or execution. See MEC-191–200. Retained inspiration: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
+**ALL · Play · 5 Specialist · Large/New.** Gap: finite typed rule composition with admission and causal inspection.
 
 A village festival invites competitors to alter one rule: carrying a lantern attracts judges but occupies a hand. Builders design challenges with a small vocabulary of targets, costs, triggers and outcomes. Players inspect the active rule before joining. Keep combinations finite and explain order; natural-language ambiguity cannot secretly install a different rule or executable script.
+
+A proposal is not installation or execution.
+
+Related entries: [MEC-191–200](#rules-as-playable-material).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
 
 Selection: A general creator rule grammar is not needed for the first complete game.
 

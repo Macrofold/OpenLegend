@@ -29,7 +29,7 @@ These domains orient the expanded inventory. The ten retained patterns illustrat
 
 A settlement keeps old river names, newer guild surnames and affectionate household nicknames. The layers imply movement and history without requiring a complete invented language. Players can ask who uses each name and choose their own. Keep pronunciation guides and aliases accessible; depth should not depend on memorizing dozens of near-identical apostrophe-heavy proper nouns.
 
-Seeds: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01), [The Elder Scrolls](source-atlas.md#w27).
+Seeds and references: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01), [The Elder Scrolls](source-atlas.md#w27).
 
 Selection: Naming history follows clear basic names and navigation.
 
@@ -39,7 +39,7 @@ Selection: Naming history follows clear basic names and navigation.
 
 A phrase translates literally as “leave a chair in the rain,” but locals use it for keeping a promise to an absent person. A translator can ask, observe or offer alternatives. Players learn culture through situations. A biased interpreter or a bad translation can matter in the fiction, with clues and ways to investigate. The interface should distinguish a speaker’s interpretation from confirmed meaning instead of presenting uncertain translation as authoritative mechanical fact.
 
-Seeds: [Disco Elysium](source-atlas.md#g66), [Octopath Traveler II](source-atlas.md#g108), [Star Trek](source-atlas.md#w04).
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Octopath Traveler II](source-atlas.md#g108), [Star Trek](source-atlas.md#w04).
 
 Selection: Partial cultural interpretation adds investigation depth.
 
@@ -49,7 +49,7 @@ Selection: Partial cultural interpretation adds investigation depth.
 
 A trader can bargain fluently but struggles with poetry or legal terms. A mechanic recognizes technical diagrams across languages. Characters contribute different forms of understanding without one universal fluency number. Let repeated useful interactions teach vocabulary, and offer interpreters or visual methods so language enriches play instead of locking whole populations behind a grind wall.
 
-Seeds: [Final Fantasy II](source-atlas.md#g79), [Octopath Traveler](source-atlas.md#g107), [The Expanse](source-atlas.md#w15).
+Seeds and references: [Final Fantasy II](source-atlas.md#g79), [Octopath Traveler](source-atlas.md#g107), [The Expanse](source-atlas.md#w15).
 
 Selection: Activity-specific fluency is an expansion, not a communication gate.
 
@@ -59,7 +59,7 @@ Selection: Activity-specific fluency is an expansion, not a communication gate.
 
 A traveler and builder who share few words draw a roof, mark wind direction and test a model. Misunderstanding becomes a practical design issue that can be corrected. Visual creators gain a meaningful communication medium. A sketch should communicate only what its maker knows; it cannot silently contain exact dimensions or hidden mechanisms never observed.
 
-Seeds: [Garry's Mod](source-atlas.md#g35), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Middle-earth](source-atlas.md#w01).
 
 Selection: Evidence-bearing diagram exchange expands communication methods.
 
@@ -69,7 +69,7 @@ Selection: Evidence-bearing diagram exchange expands communication methods.
 
 Students compare why two gardens grow differently, then propose a small trial. The teacher helps distinguish sunlight, soil and care rather than handing over a stat bonus. Players can teach, attend or supply materials. Keep experiments short and outcomes understandable; simulated results demonstrate the world's authored rules, not validated science about real gardens.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Fire Emblem: Three Houses](source-atlas.md#g64), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Fire Emblem: Three Houses](source-atlas.md#g64), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Extended practical education follows useful learning.
 
@@ -79,7 +79,7 @@ Selection: Extended practical education follows useful learning.
 
 A report of a closed bridge travels through a courier, tavern and noticeboard, changing slightly at each retelling. Players can verify, correct, deliberately distort or act cautiously. Information acquires geography, and a false warning might clear a valuable route while harming the liar’s reputation when discovered. Store meaningful versions and sources rather than all possible gossip, and never let an unobserved event become universally known merely because narration mentions it.
 
-Seeds: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
+Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
 Selection: Bounded rumor propagation deepens witnessed consequences.
 
@@ -89,7 +89,7 @@ Selection: Bounded rumor propagation deepens witnessed consequences.
 
 An elder declines to interpret a private song but recommends a public archive. A player can respect the boundary while still pursuing the broader history. Curiosity coexists with privacy and independent agency. Avoid making every person a lore vending machine: repeated demands need not produce disclosure. Investigation, deception or espionage can still uncover particular secrets through supported observations and evidence; they do not grant raw access to private cognition. Some stories can remain unshared.
 
-Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Specific disclosure scenes are optional; privacy constraints remain mandatory.
 
@@ -99,7 +99,7 @@ Selection: Specific disclosure scenes are optional; privacy constraints remain m
 
 A weaving pattern encodes seasonal winds through the orientation of stitches, useful to sailors who learn how to read it. The cloth is also beautiful and durable. Players can preserve, adapt or misunderstand the method. Give the encoding a small consistent grammar; don't make every decorative motif secretly an exhaustive technical manual.
 
-Seeds: [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Avatar: The Last Airbender](source-atlas.md#w13).
+Seeds and references: [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 Selection: Encoded cultural knowledge adds discovery and teaching depth.
 
@@ -109,7 +109,7 @@ Selection: Encoded cultural knowledge adds discovery and teaching depth.
 
 After a false accusation, an editor publishes evidence and seeks out people who received the original story. Repair requires effort beyond deleting a notice. Players can help while respecting the harmed person's preferences. Corrections should influence reachable audiences, not retroactively erase all memories, and the process should have a useful endpoint rather than infinite reputational debt.
 
-Seeds: [Among Us](source-atlas.md#g02), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+Seeds and references: [Among Us](source-atlas.md#g02), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
 
 Selection: Audience-specific correction follows basic reputation and communication.
 
@@ -119,7 +119,7 @@ Selection: Audience-specific correction follows basic reputation and communicati
 
 Makers share “how to test a roof for leaks,” “how to welcome a visitor with different air” or “how to defend a narrow gate,” including assumptions and failure signs. Another creator can adapt the method to a new setting. Reuse spreads competence. A stored plan is neither a guaranteed outcome nor permission to run it; missing capabilities and resources must be visible before use.
 
-Seeds: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Final Fantasy XII](source-atlas.md#g89).
+Seeds and references: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Final Fantasy XII](source-atlas.md#g89).
 
 Selection: Useful learned methods can be shared and adapted to another activity, with explicit prerequisites and no guarantee of another person’s participation.
 

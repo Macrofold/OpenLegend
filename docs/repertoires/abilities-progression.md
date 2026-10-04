@@ -475,7 +475,7 @@ These paths combine specific learned methods into a recognizable role. They need
 
 A maker connects a proximity sensor, a gentle push and a directional nozzle to build a fruit catcher; a battlemage composes an enemy-triggered blast with a costly area effect. Reversing the order or changing the target creates a different tool, not simply a stronger one. Experts compose while beginners start from a working example. Show the resulting operation and failure limits; incompatible clauses should remain explicit rather than silently disappear.
 
-Seeds: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fantasy VII](source-atlas.md#g84).
+Seeds and references: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fantasy VII](source-atlas.md#g84).
 
 Selection: Free trigger/effect composition follows basic equipment and upgrades.
 
@@ -485,7 +485,7 @@ Selection: Free trigger/effect composition follows basic equipment and upgrades.
 
 A former city guard becomes a gardener but retains spear technique, first aid and crowd-calming experience; they can take up arms again when danger returns. Their old badge no longer grants restricted access. Players can change lives without discarding history or retaining inappropriate authority. Meaningful training should transfer where applicable; avoid resetting all competence on a role change or allowing remembered procedure to stand in for current authorization.
 
-Seeds: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
+Seeds and references: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
 
 Selection: Learned competence persists beyond one role or item.
 
@@ -495,7 +495,7 @@ Selection: Learned competence persists beyond one role or item.
 
 A shield specialist's bracing technique holds a collapsing stall while neighbors escape; a climbing pull helps retrieve a trapped animal. Combat mastery becomes community competence. The physical or magical mechanism remains the same across contexts. Do not add a separate bespoke “rescue version” solely to recognize the player's intention, or guarantee success where capacity is insufficient.
 
-Seeds: [RuneScape: Dragonwilds](source-atlas.md#g50), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73), [Prey (2017)](source-atlas.md#g118).
+Seeds and references: [RuneScape: Dragonwilds](source-atlas.md#g50), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73), [Prey (2017)](source-atlas.md#g118).
 
 Selection: A useful technique adds combat and exploration methods.
 
@@ -505,7 +505,7 @@ Selection: A useful technique adds combat and exploration methods.
 
 One character can stabilize a device while another adjusts it, but either can perform a slower safe method alone. Cooperation feels valuable without making a fixed party mandatory. Experts can discover faster coordinated variants. Show who contributes what and permit withdrawal; a missing specialist should change cost or approach rather than arbitrarily make the entire world unplayable.
 
-Seeds: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas.md#g88), [Mass Effect 2](source-atlas.md#g102).
+Seeds and references: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas.md#g88), [Mass Effect 2](source-atlas.md#g102).
 
 Selection: Complementary roles support enjoyable cooperation with solo alternatives.
 
@@ -515,7 +515,7 @@ Selection: Complementary roles support enjoyable cooperation with solo alternati
 
 A talented interrogator refuses coercion and learns to investigate through records, witnesses and patient questions. A character's identity includes rejected means, not only unlocked powers. The player can make a similar commitment. Do not reward the restraint solely with a stronger replacement ability; let its value lie in relationships, self-expression and distinct consequences.
 
-Seeds: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59).
+Seeds and references: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59).
 
 Selection: Ethical method selection deepens existing capability choices.
 
@@ -525,7 +525,7 @@ Selection: Ethical method selection deepens existing capability choices.
 
 An apprentice learns measurement by fitting a ramp, heat control by repairing a bath and communication by explaining both to clients. Each lesson leaves something useful behind. Progress is competence shown in different contexts. Avoid repeating one action hundreds of times or forcing the student to damage things to create training opportunities; practice examples can be deliberately supplied.
 
-Seeds: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: An extended apprenticeship follows basic progression and rewards.
 
@@ -535,7 +535,7 @@ Selection: An extended apprenticeship follows basic progression and rewards.
 
 A veteran reallocates limited active techniques to try an aggressive duelist build or a quieter teaching role while retaining knowledge, friends and history. They may mentor others or return to fieldwork later. Configuration changes should be understandable and affordable. Do not require a fictional memory wipe or expensive punishment merely to try a new play style; irreversible changes belong to explicit chosen stories.
 
-Seeds: [Diablo IV](source-atlas.md#g12), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy XIV](source-atlas.md#g91).
+Seeds and references: [Diablo IV](source-atlas.md#g12), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy XIV](source-atlas.md#g91).
 
 Selection: Trying another viable build adds replayability without restarting identity.
 
@@ -545,7 +545,7 @@ Selection: Trying another viable build adds replayability without restarting ide
 
 A practiced brewer can batch a familiar recipe through a trusted routine while choosing to perform an experimental batch by hand. Expertise reduces friction without erasing expression. A novice can still understand the steps. Shortcuts must preserve inputs, time and meaningful risks; convenience cannot quietly duplicate output or change the world law to make an expert's narration true.
 
-Seeds: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Mastery removes solved repetition while preserving real costs.
 
@@ -555,7 +555,7 @@ Selection: Mastery removes solved repetition while preserving real costs.
 
 After a player calmly organizes a rescue, a teacher offers a course in expedition planning. The offer names the observed act and can be declined. Recognition makes past choices matter without secretly assigning a permanent class. Avoid profiling real players or inferring hidden personality; the invitation concerns witnessed fictional behavior and opens an option rather than defining who they are.
 
-Seeds: [Wildermyth](source-atlas.md#g25), [Fire Emblem: Three Houses](source-atlas.md#g64), [Assassin's Creed III](source-atlas.md#g99).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Fire Emblem: Three Houses](source-atlas.md#g64), [Assassin's Creed III](source-atlas.md#g99).
 
 Selection: Social recognition enriches learning after useful skills exist.
 
@@ -565,7 +565,7 @@ Selection: Social recognition enriches learning after useful skills exist.
 
 A hero can lift a heavy gate but needs stable footing and a clear area; a city can build anchor points that make the power useful in emergencies. Communities adapt around capability without becoming helpless admirers. Make the footprint inspectable and preserve ordinary alternatives. Greater strength should be perceptible in familiar tasks as well as useful against new challenges.
 
-Seeds: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Cyberpunk 2077](source-atlas.md#g68), [Marvel](source-atlas.md#w05), [DC Universe](source-atlas.md#w06).
+Seeds and references: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Cyberpunk 2077](source-atlas.md#g68), [Marvel](source-atlas.md#w05), [DC Universe](source-atlas.md#w06).
 
 Selection: Infrastructure-scale powers require a separately selected fantasy or science-fiction scope.
 

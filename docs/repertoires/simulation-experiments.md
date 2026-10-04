@@ -22,123 +22,125 @@ The inventory contains **272 rows, SIM-001–SIM-272**. The ten original pattern
 
 ## A rumor transmission laboratory
 
-**Priority: 5 Specialist.**
-
-
-Vary who hears a bridge warning, how sources are credited and when corrections arrive. Compare reach, delay and distortion under an explicit communication model. Preserve hidden-state separation and reproducible conditions; a few generated personalities are not a real population sample. See SIM-091–100. Retained inspiration: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Wire][r-wire].
+**ALL · Lab · 5 Specialist · Large/New.** Gap: reproducible message networks, interventions and observable outcomes.
 
 Vary who hears a bridge warning, how sources are credited and when corrections arrive. Compare reach, delay and distortion under a fixed authored communication model. This can teach causal reasoning about that model. Keep hidden-state access separate from participant knowledge, record random seeds and rules, and never infer real population behavior from a handful of generated personalities.
 
-Seeds: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Wire](source-atlas.md#w21).
+Related entries: [SIM-091–100](#signals-rumor-and-public-information).
+
+Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Wire](source-atlas.md#w21), [The Wire](../../archive/02-research/worldbuilding/worlds/21-the-wire.md).
 
 Selection: A reproducible research model is outside current game delivery.
 
 ## A household time study
 
-**Priority: 5 Specialist.**
-
-
-Compare kitchens, care arrangements and travel while retaining individual priorities and resources. Record free time, interruptions and whose labor supplies another person's convenience; do not optimize a universal happiness score. See SIM-001–010. Retained inspiration: [The Sims](source-atlas.md#g24), [Persona 5 Royal](source-atlas.md#g124), [Austen][r-austen].
+**MO SC · Lab · 5 Specialist · Large/New.** Gap: explicit activity durations, bounded schedules and measurement exports.
 
 Compare how shared kitchens, childcare and commute layouts change available free time. Individuals can have different priorities and resources. Builders explore the consequences of assumptions rather than optimizing a universal happiness score. Record what is excluded, including invisible labor and unmodeled constraints; the result is not evidence that real households should follow the simulated arrangement.
 
-Seeds: [The Sims](source-atlas.md#g24), [Persona 5 Royal](source-atlas.md#g124), [Austen’s social worlds](source-atlas.md#w23).
+Observe interruptions and whose labor supplies someone else’s convenience.
+
+Related entries: [SIM-001–010](#household-time-and-ordinary-life).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Persona 5 Royal](source-atlas.md#g124), [Austen’s social worlds](source-atlas.md#w23), [Austen](../../archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md).
 
 Selection: Household schedule experiments are a separate lab mode.
 
 ## The resilient food web
 
-**Priority: 5 Specialist.**
-
-
-Vary refuges, harvesting and seasons in a bounded ecosystem. Measure defined populations and recovery, keeping aggregate stocks distinct from named encounters. Numerical stability does not prove ecological realism or supply real conservation advice. See SIM-051–060. Retained inspiration: [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123), [Oxygen Not Included](source-atlas.md#g129).
+**ALL · Lab · 5 Specialist · Large/New.** Gap: explicit population equations, conservation, interventions and reproducible runs.
 
 A small island model varies habitat refuges, harvesting and seasonality, measuring collapse and recovery. Players can also use it as an optional teaching garden. Keep populations and individual encounters distinct. A stable numerical run validates neither ecological realism nor real conservation advice; disclose parameters, boundary conditions and whether outcomes are sensitive to small changes.
+
+Related entries: [SIM-051–060](#food-webs-habitats-and-living-systems).
+
+Seeds and references: [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Ecological model validation is not required for readable wildlife encounters.
 
 ## Energy cascades in miniature
 
-**Priority: 5 Specialist.**
-
-
-A workshop, greenhouse and clinic share selected heat and power services. Remove a connection or add storage, then compare unmet demand and recovery with explicit units and losses. A visually pleasing flow diagram is not external engineering validation. See SIM-061–070. Retained inspiration: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
+**MO SC · Lab · 5 Specialist · Large/New.** Gap: bounded network flows, failure propagation and instrumented accounting.
 
 Model a workshop, greenhouse and clinic sharing heat and power, then remove one connection or add storage. Compare recovery and unmet demand. The visible model can be an engaging puzzle, while lab use needs precise units and declared simplifications. Do not present fictional efficiency values as real engineering results or let numerical loops manufacture energy.
+
+Related entries: [SIM-061–070](#water-weather-and-energy-networks).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: An instrumented engineering model is a separate lab mode.
 
 ## Institutional handoff experiment
 
-**Priority: 5 Specialist.**
-
-
-Send a request through intake, review and delivery. Vary authority, deadlines, feedback, favoritism or deliberate obstruction, measuring the defined process rather than moral worth. Helpful people can produce a bad collective result; chosen malice is also a possible authored cause. See SIM-121–130. Retained inspiration: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [The Wire][r-wire].
+**MO SC · Lab · 5 Specialist · Large/New.** Gap: auditable workflows, limited actor information and controlled variations.
 
 A request passes through intake, review and delivery; vary deadlines, authority and feedback to see where work stalls. Different workers can be conscientious yet produce a bad collective outcome; another variation can explicitly model favoritism, career incentives or deliberate obstruction. Measure the defined process, not moral worth. Generated dialogue is illustrative, and a convenient outcome cannot establish that a real institution would behave the same way.
 
-Seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [The Wire](source-atlas.md#w21).
+Related entries: [SIM-121–130](#institutions-authority-and-service).
+
+Seeds and references: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [The Wire](source-atlas.md#w21), [The Wire](../../archive/02-research/worldbuilding/worlds/21-the-wire.md).
 
 Selection: Administrative model experiments do not establish game fundamentals.
 
 ## Plural motivations without mind reading
 
-**Priority: 5 Specialist.**
-
-
-Compare decisions under explicit competing needs, commitments and beliefs. Ordinary participants see actions and statements; an authorized lab view can inspect configured variables. Fluent explanations do not establish human psychological validity or necessarily report the true cause within an implemented model. See SIM-111–120. Retained inspiration: [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126), [The Sopranos][r-sopranos].
+**ALL · Lab · 5 Specialist · Large/New.** Gap: explicit bounded agent models and separation of internal state from observations.
 
 Compare decisions under competing needs, commitments and beliefs using a small transparent model. Participants can observe actions and statements while a lab operator inspects configured variables. This supports model comparison, not diagnosis. Report the authored decision rules and uncertainty; fluent explanations must not be treated as proof of true internal causes or human psychological validity.
 
-Seeds: [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22).
+Related entries: [SIM-111–120](#motives-relationships-and-chosen-boundaries).
+
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22), [The Sopranos](../../archive/02-research/worldbuilding/worlds/22-the-sopranos.md).
 
 Selection: Comparative agent-model research is separate from playable opponent behavior.
 
 ## A market with known assumptions
 
-**Priority: 5 Specialist.**
-
-
-Vary storage, delay and concentrated ownership in a three-town model. Compare shortages, profit and recovery, including conflict rather than assuming cooperative merchants. Conserve balances and disclose price formation; generated negotiations are not representative economic evidence. See SIM-031–040. Retained inspiration: [Ultima Online](source-atlas.md#g19), [Bannerlord](source-atlas.md#g115), [Starsector](source-atlas.md#g120).
+**ALL · Lab · 5 Specialist · Large/New.** Gap: controlled agents, price formation, conserved balances and reproducible shocks.
 
 Vary storage costs, transport delays and concentrated ownership in a three-town economy, then observe shortages, profit and recovery. Add a declared embargo or predatory pricing rule to explore conflict within the model rather than assuming every merchant pursues cooperative trade. The same model can power a trading puzzle. Distinguish model results from real forecasts, and check sensitivity before interpreting an apparent policy benefit. Generated merchants cannot stand in for representative human samples merely because their negotiations sound plausible.
+
+Conserve balances and disclose the model’s price formation.
+
+Related entries: [SIM-031–040](#markets-reserves-and-unequal-access).
+
+Seeds and references: [Ultima Online](source-atlas.md#g19), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Starsector](source-atlas.md#g120).
 
 Selection: Economic experiments are not prerequisites for simple useful trade.
 
 ## Memory and disagreement over time
 
-**Priority: 5 Specialist.**
-
-
-Give witnesses different views of one event and compare reminders, retention and retelling. Keep original observations, retrieval outputs and generated interpretations separate. This can diagnose an implemented memory system, not establish how human memory works. See SIM-101–110. Retained inspiration: [Hades I](source-atlas.md#g22), [Shadow of War](source-atlas.md#g116), [Macondo][r-macondo].
+**ALL · Lab · 5 Specialist · Large/New.** Gap: controlled retention and retrieval policies with provenance-aware observations.
 
 Give fictional witnesses different views of one event, then compare how reminders and retellings affect later accounts. The experiment can reveal weaknesses in an implemented memory system. Keep original observations, retrieval outputs and generated interpretations separate. It does not establish how human memory works, and privileged experiment logs must never leak into ordinary participant decisions.
 
-Seeds: [Hades I](source-atlas.md#g22), [Middle-earth: Shadow of War](source-atlas.md#g116), [Macondo](source-atlas.md#w24).
+Related entries: [SIM-101–110](#memory-records-and-interpretation).
+
+Seeds and references: [Hades I](source-atlas.md#g22), [Middle-earth: Shadow of War](source-atlas.md#g116), [Macondo](source-atlas.md#w24), [Macondo](../../archive/02-research/worldbuilding/worlds/24-macondo.md).
 
 Selection: Controlled memory research is distinct from required persistence correctness.
 
 ## Embodiment and accessible design
 
-**Priority: 5 Specialist.**
-
-
-Try a workshop with explicit reach, mobility and sensory profiles. Measure permitted tasks, assistance and route exclusions while retaining the model's limits. A simulated body does not reproduce a person's lived experience. See SIM-071–080. Retained inspiration: [Qud](source-atlas.md#g33), [Prey](source-atlas.md#g118), [Star Trek][r-startrek].
+**ALL · Blend · 5 Specialist · Large/New.** Gap: explicit body profiles, perception constraints and route/task instrumentation.
 
 Try a workshop with different reach, mobility and sensory profiles, measuring which tasks the model permits and where assistance is required. Designers can discover obvious layout exclusions. Real accessibility still requires affected people's evaluation and accurate task modeling. A simulated body should not be presented as reproducing a person's lived experience or validating a design on its own.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
+Related entries: [SIM-071–080](#bodies-access-and-different-capabilities).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04), [Star Trek](../../archive/02-research/worldbuilding/worlds/04-star-trek.md).
 
 Selection: A simulated accessibility laboratory does not replace accessible game controls or user evaluation.
 
 ## The compound-effect observatory
 
-**Priority: 5 Specialist.**
-
-
-Trace a delayed delivery through meals, attendance and a council deadline. Compare isolated and combined interventions to find interactions hidden by a simple story. Bound runs and retain counterfactual copies separately; visual plausibility is not external causal identification. See SIM-191–200. Retained inspiration: [RimWorld](source-atlas.md#g21), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
+**ALL · Lab · 5 Specialist · Large/New.** Gap: bounded dependency traces, counterfactual runs and sensitivity summaries.
 
 A delayed delivery changes meals, work attendance and a council deadline. Compare one-factor and combined interventions to find interactions the simple story missed. The appeal is seeing a causal chain unfold. Bound run length and event count, report approximations, and keep counterfactual copies separate; visual plausibility alone is not causal identification outside the configured model.
+
+Related entries: [SIM-191–200](#comparative-protocols-and-compound-worlds).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Counterfactual instrumentation is specialist research scope.
 

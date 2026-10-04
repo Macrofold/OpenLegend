@@ -489,7 +489,7 @@ These are proposed fictional operating laws, not descriptions of demonstrated re
 
 A network moves surplus workshop heat to baths and greenhouses through visible exchange stations. Operators negotiate priorities during cold weather. Builders get a machine that connects domestic comfort and industry. Start with a handful of nodes, bypasses and clear flow displays; detailed thermodynamics is optional, and one fault should not recursively simulate every household appliance.
 
-Seeds: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
+Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Urban heat-routing infrastructure is an alternate-world system.
 
@@ -497,11 +497,9 @@ Selection: Urban heat-routing infrastructure is an alternate-world system.
 
 **MO SC · Play · 5 Specialist · D.** Gap: bounded acoustic attenuation and per-sense observations.
 
-A woven panel dampens selected sound ranges, allowing a musician and night worker to share a building. The same panel can help conceal a raider's approach or mask a machine's warning noise, creating a useful tradeoff. Players configure particular acoustic effects, not universal stealth bubbles. Define what is attenuated, which warnings remain visible and how people inspect the effect; silence must not erase unrelated evidence.
-
-Seeds: [Deus Ex (2000)](source-atlas.md#g117), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
-
 A woven panel dampens selected sound ranges, allowing a musician and night worker to share a building. The same panel can help conceal a raider’s approach or mask a machine’s warning noise, creating a useful tradeoff. Players configure particular acoustic effects, not universal stealth bubbles. Define what is attenuated, which warnings remain visible and how people inspect the effect; silence must not erase unrelated evidence.
+
+Seeds and references: [Deus Ex (2000)](source-atlas.md#g117), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
 
 Selection: Technological acoustic panels require a separate equipment/world scope.
 
@@ -511,7 +509,7 @@ Selection: Technological acoustic panels require a separate equipment/world scop
 
 A settlement grows or assembles branching relays that carry messages through difficult terrain. A damaged node isolates one valley, prompting repair, courier work or a temporary bridge. An armed faction may seize it to charge for access, and rivals can contest that control. Players build, defend or disrupt consequential infrastructure. Messages retain senders and uncertainty; relay coverage cannot grant omniscient remote perception or access to information nobody chose to transmit.
 
-Seeds: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [The Expanse](source-atlas.md#w15).
+Seeds and references: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [The Expanse](source-atlas.md#w15).
 
 Selection: Science-fiction communication infrastructure is not the survival baseline.
 
@@ -521,7 +519,7 @@ Selection: Science-fiction communication infrastructure is not the survival base
 
 A service drone can survey, carry or illuminate, but its heavy cargo mount blocks a sensor. Players configure it for a particular job and can explain the tradeoff; a weapon or decoy mount can support an expedition while consuming capacity needed for salvage. Avoid dozens of interchangeable stat modules; each attachment should enable a different method. Behavior modes remain bounded standing plans, not unrestricted agents generating fresh instructions on every tick.
 
-Seeds: [Final Fantasy VII](source-atlas.md#g84), [Final Fantasy XII](source-atlas.md#g89), [Mass Effect: Andromeda](source-atlas.md#g104).
+Seeds and references: [Final Fantasy VII](source-atlas.md#g84), [Final Fantasy XII](source-atlas.md#g89), [Mass Effect: Andromeda](source-atlas.md#g104).
 
 Selection: A modular service drone belongs to a different equipment promise.
 
@@ -531,7 +529,7 @@ Selection: A modular service drone belongs to a different equipment promise.
 
 A machine changes the internal structure of a common mineral to make gate components, consuming power and a reusable catalyst that slowly degrades. The interesting scarcity is maintenance expertise and reliable energy. Creators can build industrial towns, lucrative monopolies or contested arsenals around it; an invented process may let a newcomer challenge the current owner. State the fictional law clearly and keep waste or loss explicit; “phase” is not permission for arbitrary matter creation.
 
-Seeds: [Noita](source-atlas.md#g32), [Mass Effect: Andromeda](source-atlas.md#g104), [Dune](source-atlas.md#w09).
+Seeds and references: [Noita](source-atlas.md#g32), [Mass Effect: Andromeda](source-atlas.md#g104), [Dune](source-atlas.md#w09).
 
 Selection: A fictional industrial transformation system is specialist scope.
 
@@ -541,7 +539,7 @@ Selection: A fictional industrial transformation system is specialist scope.
 
 An inhabited ship has a route room where crew compare destination conditions, passengers and supplies. Once prepared, travel advances through an abstract transition; play resumes aboard during a discrete incident or on the ground. The captain chooses commitments, not orbital maneuvers. Do not add a hidden flight simulator, navigable starfield, dogfighting or piloted approach controls.
 
-Seeds: [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Mass Effect 2](source-atlas.md#g102), [Starsector](source-atlas.md#g120).
+Seeds and references: [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Mass Effect 2](source-atlas.md#g102), [Starsector](source-atlas.md#g120).
 
 Selection: An inhabited spacecraft with abstract journeys is an alternate world.
 
@@ -551,7 +549,7 @@ Selection: An inhabited spacecraft with abstract journeys is an alternate world.
 
 During a discrete external encounter, crew operate shielding, communications, evacuation and weapon stations from inside the ship. A player can demand surrender, protect another vessel, pursue a contracted capture or disengage while coordinating finite people and power. Offensive actions need declared targets, costs and consequences just as defensive actions do. Each station has visible dependencies. Resolve encounters in discrete phases with finite targets; the ship never becomes a directly piloted combat vehicle.
 
-Seeds: [Lethal Company](source-atlas.md#g38), [Mass Effect 2](source-atlas.md#g102), [Mass Effect 3](source-atlas.md#g103).
+Seeds and references: [Lethal Company](source-atlas.md#g38), [Mass Effect 2](source-atlas.md#g102), [Mass Effect 3](source-atlas.md#g103).
 
 Selection: Ship-crew combat is not a dependency of ground combat.
 
@@ -561,7 +559,7 @@ Selection: Ship-crew combat is not a dependency of ground combat.
 
 A field fabricator makes repair brackets from local feedstock, but cannot print knowledge, living citizens or every complex component. Players scan a supported shape, choose material and inspect strength limits. It rewards preparation and adaptation. Output consumes conserved inputs and time; a convincing prompt cannot fabricate an absent execution capability or clone unique resources.
 
-Seeds: [Minecraft](source-atlas.md#g20), [Mass Effect: Andromeda](source-atlas.md#g104), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
+Seeds and references: [Minecraft](source-atlas.md#g20), [Mass Effect: Andromeda](source-atlas.md#g104), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
 Selection: Field fabrication is a science-fiction crafting mode.
 
@@ -571,7 +569,7 @@ Selection: Field fabrication is a science-fiction crafting mode.
 
 A resident records a guided account of an old workshop, choosing what to show and omit. Visitors can explore the testimony and compare it with present evidence. It is an authored artifact, not access to the person's mind or perfect past. Editing must retain provenance where relevant, and revoking access cannot undo knowledge a recipient already acquired.
 
-Seeds: [Final Fantasy XV](source-atlas.md#g92), [His Dark Materials](source-atlas.md#w20), [Macondo](source-atlas.md#w24).
+Seeds and references: [Final Fantasy XV](source-atlas.md#g92), [His Dark Materials](source-atlas.md#w20), [Macondo](source-atlas.md#w24).
 
 Selection: Explorable recordings require a separate technological capability.
 
@@ -581,7 +579,7 @@ Selection: Explorable recordings require a separate technological capability.
 
 Public pumps, lights and kiosks share a few understandable modules. A neighborhood team can improve reliability using ordinary tools and local spare stock. Power users design maintenance networks while casual players enjoy dependable services. Avoid one global control console that trivially disables everything; keep failure domains small and make repairs alter the lived environment visibly.
 
-Seeds: [Factorio](source-atlas.md#g27), [Fallout 4](source-atlas.md#g74), [Discworld](source-atlas.md#w12).
+Seeds and references: [Factorio](source-atlas.md#g27), [Fallout 4](source-atlas.md#g74), [Discworld](source-atlas.md#w12).
 
 Selection: Citywide modular maintenance is not early survival gameplay.
 

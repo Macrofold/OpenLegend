@@ -531,113 +531,119 @@ A useful role can bring people together without defining everything they value i
 
 ## The reliable disagreement
 
-**Priority: 2 Complete.**
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: issue-specific positions alongside durable trust.
 
+Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns.
 
-Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns. See RSH-003 in [Everyday friendship](#everyday-friendship).
+Related entries: [RSH-003](#everyday-friendship).
 
-Gap: issue-specific positions alongside durable trust. Seeds: [Dragon Age II](source-atlas.md#g52), [Baldur's Gate 3](source-atlas.md#g26), [Star Trek](source-atlas.md#w04).
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Baldur's Gate 3](source-atlas.md#g26), [Star Trek](source-atlas.md#w04), [Everyday friendship](#everyday-friendship).
 
 Selection: A concrete disagreement and continued useful friendship can make a small cast feel independent without household bureaucracy.
 
 ## An apprenticeship with an exit
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: teaching commitments, demonstrated learning and independent careers.
 
+A mentor lends tools and introduces clients; the apprentice eventually wants to specialize differently. Joint work creates memories and competence, then separation can be a success. Creators get evolving institutions through people. Avoid trapping expertise behind permanent loyalty or repeating a lesson for arbitrary experience; a former apprentice can remain a colleague or become a credible rival.
 
-A mentor lends tools and introduces clients; the apprentice eventually wants to specialize differently. Joint work creates memories and competence, then separation can be a success. Creators get evolving institutions through people. Avoid trapping expertise behind permanent loyalty or repeating a lesson for arbitrary experience; a former apprentice can remain a colleague or become a credible rival. See RSH-098 in [Mentors and working partners](#mentors-and-working-partners).
+Related entries: [RSH-098](#mentors-and-working-partners).
 
-Gap: teaching commitments, demonstrated learning and independent careers. Seeds: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [Mentors and working partners](#mentors-and-working-partners).
 
 Selection: A changing mentorship follows basic learning and progression.
 
 ## Household agreements
 
-**Priority: 4 Detail.**
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: shared-resource permissions and renegotiable routines.
 
+Housemates agree who cooks, which room is quiet and what savings are for. A new job disrupts the arrangement, prompting practical and emotional choices. Domestic life becomes design and negotiation rather than synchronized need bars. Provide manageable defaults, recognize unpaid work, and let residents renegotiate or leave without turning every disagreement into a crisis.
 
-Housemates agree who cooks, which room is quiet and what savings are for. A new job disrupts the arrangement, prompting practical and emotional choices. Domestic life becomes design and negotiation rather than synchronized need bars. Provide manageable defaults, recognize unpaid work, and let residents renegotiate or leave without turning every disagreement into a crisis. See [Households and chosen family](#households-and-chosen-family).
-
-Gap: shared-resource permissions and renegotiable routines. Seeds: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Austen's social worlds](source-atlas.md#w23).
+Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Austen’s social worlds](source-atlas.md#w23), [Households and chosen family](#households-and-chosen-family).
 
 Selection: Domestic permissions and routine negotiations are not early fun foundations.
 
 ## The debt no one can settle
 
-**Priority: 3 Depth.**
-
-
-Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. The two interpretations can lead to affection, frustration or manipulation. A claimed debt needs an actor's response and, if enforced, a concrete means of enforcement. See RSH-150 in [Comrades and divided allegiance](#comrades-and-divided-allegiance).
-
-Gap: asymmetric interpretations of help and bounded reminders. Seeds: [Kenshi](source-atlas.md#g36), [Red Dead Redemption](source-atlas.md#g69), [Earthsea](source-atlas.md#w11).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: asymmetric interpretations of help and bounded reminders.
 
 Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. The two interpretations can lead to affection, frustration or manipulation. A claimed debt needs an actor’s response and, if enforced, a concrete means of enforcement.
+
+Related entries: [RSH-150](#comrades-and-divided-allegiance).
+
+Seeds and references: [Kenshi](source-atlas.md#g36), [Red Dead Redemption](source-atlas.md#g69), [Earthsea](source-atlas.md#w11), [Comrades and divided allegiance](#comrades-and-divided-allegiance).
 
 Selection: Asymmetric interpretations deepen existing relationships.
 
 ## Rivals who need the same bridge
 
-**Priority: 2 Complete.**
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: overlapping interests and cooperative projects without forced alliance.
 
+Competing merchants both depend on a broken crossing. They can share repairs, build alternatives or bargain over tolls while continuing to compete. Players see cooperation emerge from concrete stakes. Preserve the difference between a temporary agreement and friendship; one profitable deal should not erase prior harm or permanently unite factions.
 
-Competing merchants both depend on a broken crossing. They can share repairs, build alternatives or bargain over tolls while continuing to compete. Players see cooperation emerge from concrete stakes. Preserve the difference between a temporary agreement and friendship; one profitable deal should not erase prior harm or permanently unite factions. See RSH-131 in [Rivalry and recognition](#rivalry-and-recognition); faction terms belong in [Diplomacy](diplomacy-conflict.md).
+Related entries: [RSH-131](#rivalry-and-recognition).
 
-Gap: overlapping interests and cooperative projects without forced alliance. Seeds: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28).
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28), [Rivalry and recognition](#rivalry-and-recognition), [Diplomacy](diplomacy-conflict.md).
 
 Selection: A bounded common obstacle makes cooperation or refusal consequential while each side keeps its own goal.
 
 ## A gift whose meaning changes
 
-**Priority: 4 Detail.**
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: provenance-aware appraisal rather than fixed gift tables.
 
+A cheap mug from a first expedition matters more than a luxury replacement, unless the recipient resents being reminded of that trip. Ask, listen or choose a shared activity instead. Gifts become expressions of understanding. Avoid secret exact-item puzzles and repeated affection farming; a gracious response need not imply a changed relationship.
 
-A cheap mug from a first expedition matters more than a luxury replacement, unless the recipient resents being reminded of that trip. Ask, listen or choose a shared activity instead. Gifts become expressions of understanding. Avoid secret exact-item puzzles and repeated affection farming; a gracious response need not imply a changed relationship. See RSH-231 in [Shared pleasures and futures](#shared-pleasures-and-futures).
+Related entries: [RSH-231](#shared-pleasures-and-futures).
 
-Gap: provenance-aware appraisal rather than fixed gift tables. Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Red Dead Redemption 2](source-atlas.md#g70).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Red Dead Redemption 2](source-atlas.md#g70), [Shared pleasures and futures](#shared-pleasures-and-futures).
 
 Selection: Provenance-sensitive gift appraisal is optional detail.
 
 ## An absent friend remains present
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: asynchronous correspondence and bounded callbacks.
 
+A traveling friend sends occasional drawings of unfamiliar roofs, inspiring a building project at home. Replies can alter the next visit or reveal a changed goal. The world feels connected without simulating every step of the journey. Messages should have plausible sources and timing; absence must not become a mandatory login schedule or a constant stream of generated filler.
 
-A traveling friend sends occasional drawings of unfamiliar roofs, inspiring a building project at home. Replies can alter the next visit or reveal a changed goal. The world feels connected without simulating every step of the journey. Messages should have plausible sources and timing; absence must not become a mandatory login schedule or a constant stream of generated filler. See RSH-194 in [Absence endings and reunion](#absence-endings-and-reunion).
+Related entries: [RSH-194](#absence-endings-and-reunion).
 
-Gap: asynchronous correspondence and bounded callbacks. Seeds: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Middle-earth](source-atlas.md#w01), [Absence endings and reunion](#absence-endings-and-reunion).
 
 Selection: Asynchronous correspondence enriches established companions.
 
 ## Found family with boundaries
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: voluntary shared commitments and differentiated responsibilities.
 
+An expedition crew becomes a household, but one member wants private income and another wants to invite a relative. Care and autonomy remain negotiable. Players can build a durable group without selecting a predefined family template. Avoid unanimous approval, compulsory romance or the idea that belonging cancels the right to refuse, travel or change one's role.
 
-An expedition crew becomes a household, but one member wants private income and another wants to invite a relative. Care and autonomy remain negotiable. Players can build a durable group without selecting a predefined family template. Avoid unanimous approval, compulsory romance or the idea that belonging cancels the right to refuse, travel or change one's role. See RSH-052 and RSH-057 in [Households and chosen family](#households-and-chosen-family).
+Related entries: [RSH-052](#households-and-chosen-family), [RSH-057](#households-and-chosen-family).
 
-Gap: voluntary shared commitments and differentiated responsibilities. Seeds: [Wildermyth](source-atlas.md#g25), [Mass Effect 2](source-atlas.md#g102), [One Piece](source-atlas.md#w14).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Mass Effect 2](source-atlas.md#g102), [One Piece](source-atlas.md#w14), [Households and chosen family](#households-and-chosen-family).
 
 Selection: Long-term household commitments follow useful group activities.
 
 ## Reputation has an address
 
-**Priority: 3 Depth.**
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: witnessed acts, transmission and local interpretation.
 
+A fisher trusts the player who repaired a pier; an inland official has never heard of it. A witness can introduce them, perhaps describing the event differently. Recognition becomes socially situated. Bound rumor propagation to meaningful channels, expose uncertainty, and avoid instant global reputation or an omniscient morality score that lets nobody misunderstand.
 
-A fisher trusts the player who repaired a pier; an inland official has never heard of it. A witness can introduce them, perhaps describing the event differently. Recognition becomes socially situated. Bound rumor propagation to meaningful channels, expose uncertainty, and avoid instant global reputation or an omniscient morality score that lets nobody misunderstand. See RSH-162 in [Confidence and betrayal](#confidence-and-betrayal).
+Related entries: [RSH-162](#confidence-and-betrayal).
 
-Gap: witnessed acts, transmission and local interpretation. Seeds: [Red Dead Redemption](source-atlas.md#g69), [Fallout: New Vegas](source-atlas.md#g112), [Ultima VII: The Black Gate](source-atlas.md#g128).
+Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Fallout: New Vegas](source-atlas.md#g112), [Ultima VII: The Black Gate](source-atlas.md#g128), [Confidence and betrayal](#confidence-and-betrayal).
 
 Selection: Local witnessed reputation adds consequences after the core reward loop.
 
 ## Repair without erasure
 
-**Priority: 3 Depth.**
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: acknowledged harm, concrete restitution and continuing choice.
 
+After misusing a borrowed boat, a player can repair damage, replace lost income and discuss why it happened. The owner may accept help while keeping stricter lending terms. A relationship can change without a reset. Do not force forgiveness after a payment or keep replaying the same grievance once the parties have established a workable arrangement.
 
-After misusing a borrowed boat, a player can repair damage, replace lost income and discuss why it happened. The owner may accept help while keeping stricter lending terms. A relationship can change without a reset. Do not force forgiveness after a payment or keep replaying the same grievance once the parties have established a workable arrangement. See RSH-163 and RSH-164 in [Confidence and betrayal](#confidence-and-betrayal).
+Related entries: [RSH-163](#confidence-and-betrayal), [RSH-164](#confidence-and-betrayal).
 
-Gap: acknowledged harm, concrete restitution and continuing choice. Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [A Song of Ice and Fire](source-atlas.md#w10).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [A Song of Ice and Fire](source-atlas.md#w10), [Confidence and betrayal](#confidence-and-betrayal).
 
 Selection: Restitution enriches social consequences without forcing forgiveness.
 

@@ -20,111 +20,125 @@ The inventory contains **272 rows, ACR-001–ACR-272**. The ten retained introdu
 
 ## The explainable household routine
 
-**Priority: 4 Detail.**
-
-
-Prepare supper only after reserving tomorrow's lunches. Show the counted ingredients, current owner and decisive stop condition. A resident can pause, propose a substitute or refuse an excessive workload. Known execution need not request a new model decision every tick. See ACR-001 and ACR-011. Retained inspiration: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: bounded standing plans with priorities, reserves and stop reasons.
 
 “Prepare supper if ingredients remain after tomorrow's lunches” is an inspectable routine. A resident can pause it, propose a substitute or refuse an excessive workload. Casual players gain dependable help; experts tune priorities. Show the decisive condition and current owner. Never use a fresh model call per tick or let routine execution silently change its purpose.
+
+Show which ingredients were counted and why the routine stops.
+
+Related entries: [ACR-001](#households-and-dependable-mornings), [ACR-011](#food-hospitality-and-pleasant-evenings).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
 
 Selection: Reserve-aware supper administration does not precede meaningful adventures.
 
 ## A creation with a first evening
 
-**Priority: 1 Core.**
-
-
-A harbor pack offers three people, a damaged landing, a salvage claim and a rival crew. Visitors can repair access, bargain or race for the prize, then return with a meaningful result. A vocabulary of parts is not a finished invitation to play. See ACR-101–110. Retained inspiration: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14).
+**ALL · Play · 1 Core · Small/Compose.** Gap: authored onboarding scenario; packaging capability reviewed separately.
 
 A shared harbor pack includes three people, one damaged landing, a valuable salvage claim and a rival crew. Visitors can repair access, bargain for cooperation or race the rival to the prize, then return with a reward or a changed relationship. Builders can expand a playable experience from that first evening. Evaluate whether another person enjoys the first evening, not how many generated entities exist. Avoid shipping only a vocabulary of parts and expecting every recipient to invent the missing experience.
+
+Related entries: [ACR-101–110](#scenarios-with-a-first-evening).
+
+Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14).
 
 Selection: An authored goal, rival, choice and reward deliver a playable first session.
 
 ## Blueprint plus reasons
 
-**Priority: 3 Depth.**
-
-
-A greenhouse plan explains its sun-facing wall and cart passage. Adapting it to a windy slope preserves understanding rather than copying brittle geometry. Placement still requires materials, rights and compatible capabilities; a blueprint does not clone inventory. See ACR-081–090. Retained inspiration: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Tears of the Kingdom](source-atlas.md#g111).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: parameterized plans with prerequisites, provenance and local adaptation.
 
 A greenhouse blueprint explains which wall catches sun and which passage admits carts. Another builder adapts it to a windy hillside instead of copying a brittle layout. Power users share understanding as well as shapes. Preview materials and changed assumptions; copying a plan does not guarantee fit, grant construction rights or clone the original inventory.
+
+Related entries: [ACR-081–090](#blueprints-layouts-and-construction).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
 Selection: Parameterized adaptive blueprints follow functional construction.
 
 ## The scenario dial with a promise
 
-**Priority: 3 Depth.**
-
-
-A host selects concrete hunger, loss, recovery and offscreen-change policies rather than relying only on cozy or severe labels. Changing the contract exposes consequences for existing characters and commitments. The creator chooses a transition rather than silently reinterpreting past commitments under new rules. See ACR-121–130. Retained inspiration: [Fortnite](source-atlas.md#g07), [Valheim](source-atlas.md#g31), [Project Zomboid](source-atlas.md#g37).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: world policies with understandable effects and save-safe transitions.
 
 A host selects cozy, adventurous or severe consequences, with concrete examples of hunger, loss and recovery. Players know what kind of evening they are joining. The labels are optional presets, not universal laws. Changing a policy must explain consequences for existing characters and commitments; a host should not silently turn a settled home into a lethal survival challenge.
+
+This includes offscreen changes: adjusting the dial is an explicit transition, not a retroactive reinterpretation of past commitments.
+
+Related entries: [ACR-121–130](#world-contracts-and-selected-modes).
+
+Seeds and references: [Fortnite](source-atlas.md#g07), [Valheim](source-atlas.md#g31), [Project Zomboid](source-atlas.md#g37).
 
 Selection: Multiple configurable consequence presets are an expansion; one clear rule set is Core.
 
 ## The bounded civic planner
 
-**Priority: 5 Specialist.**
-
-
-A creator models distant services through declared aggregates while retaining encountered people as individuals. Focus changes reconcile actual stocks and identities; they do not retroactively invent witnesses or private memories. See ACR-151–160. Retained inspiration: [Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
+**ALL · Blend · 5 Specialist · Large/New.** Gap: group-level scheduling with limited materialized participants.
 
 A creator describes a town's services and a few named residents, then models distant districts as aggregate supply and demand until interaction matters. This supports scale without pretending every citizen has continuous private cognition. Preserve identity for encountered people and reconcile stock flows. Explicitly show approximation boundaries; aggregate transitions cannot invent witnesses or personal memories retroactively.
+
+Related entries: [ACR-151–160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Population abstraction is not a prerequisite for a small playable game.
 
 ## A quiet world still runs
 
-**Priority: 2 Complete.**
-
-
-Ovens finish, agreed deliveries progress and people rest through supported routines. A novel decision can call for interpretation; routine execution cannot merely narrate work that never occurred. Model unavailability uses an admitted fallback or an honest pause. See ACR-151 and ACR-160. Retained inspiration: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
+**ALL · Blend · 2 Complete · Moderate/Extend.** Gap: due work, native routines and graceful model unavailability.
 
 Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
+
+Related entries: [ACR-151](#offscreen-life-and-bounded-scale), [ACR-160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
 
 Selection: Routine actions and recovery must remain reliable without constant model decisions.
 
 ## A remix with a family tree
 
-**Priority: 5 Specialist.**
-
-
-A festival game can become a rescue drill while preserving attribution and a readable change record. Recipients choose which version to adopt; a new version never silently rewrites active worlds or guarantees licensing and compatibility. See ACR-161–170. Retained inspiration: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
+**ALL · Play · 5 Specialist · Large/New.** Gap: definition versions, dependency disclosure and authorized adoption.
 
 A creator adapts a festival game into a rescue drill, retaining attribution and a readable account of changed rules. Other hosts can choose which version to adopt. Reuse becomes social craft. A new version should not silently rewrite active worlds, and copied presentation does not prove compatibility, licensing or permission to activate its mechanics.
+
+Related entries: [ACR-161–170](#sharing-remixing-and-compatible-reuse).
+
+Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
 
 Selection: Cross-world versioned distribution is a later creator-platform feature.
 
 ## The rehearsal room
 
-**Priority: 5 Specialist.**
-
-
-Rehearse a flood, spell combination, assault, betrayal or council dispute in isolated fictional state. Display rules, seed and limits; a local success supports only those conditions and cannot undo external charges or messages. See ACR-131–140 and [Simulation]. Retained inspiration: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35).
+**ALL · Blend · 5 Specialist · Large/New.** Gap: isolated scenario copies with explicit external-effect fencing.
 
 Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
+
+Related entries: [ACR-131–140](#rehearsal-inspection-and-debugging).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35), [Simulation](simulation-experiments.md).
 
 Selection: A general isolated creator simulator is distinct from required development verification.
 
 ## A creator's attention budget
 
-**Priority: 3 Depth.**
-
-
-Surface selected consequential changes while routine success stays quiet. An inspectable digest points to actual events; suppressing a notification does not suppress an inhabitant's rights or alter what happened. See ACR-141–150. Retained inspiration: [RimWorld](source-atlas.md#g21), [Factorio](source-atlas.md#g27), [Palworld](source-atlas.md#g41).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: bounded exception summaries and configurable intervention thresholds.
 
 A town builder chooses to hear about unmet essential needs, major disputes and failed projects, while routine success becomes a short digest. Players can zoom into a household or stay at district scale. The digest must cite real events and permit inspection. Suppression reduces notifications, not the inhabitants' rights or the truth of what happened.
+
+Related entries: [ACR-141–150](#attention-views-and-meaningful-interruptions).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Factorio](source-atlas.md#g27), [Palworld](source-atlas.md#g41).
 
 Selection: Management summaries deepen a world after meaningful events exist.
 
 ## A world that can be handed over
 
-**Priority: 5 Specialist.**
-
-
-Preserve active rules, dependencies, unresolved projects and ownership so another creator can continue the world. A prose summary is useful orientation, not a replacement for restorable state and authority. See ACR-171–180. Retained inspiration: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Worlds Adrift](source-atlas.md#g15).
+**ALL · Blend · 5 Specialist · Large/New.** Gap: explicit ownership transfer, dependencies and supported export/import.
 
 A host documents the town's active rules, unresolved projects and necessary services so another creator can continue it. Portability protects invested work and encourages smaller experiments. Keep expectations honest: an export is useful only if dependencies and authority can be restored. Do not promise universal pack compatibility or substitute a prose summary for executable world state.
+
+Related entries: [ACR-171–180](#long-projects-handover-and-retirement).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Worlds Adrift](source-atlas.md#g15).
 
 Selection: Ownership transfer and portable dependencies are later platform scope.
 

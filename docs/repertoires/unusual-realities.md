@@ -26,131 +26,133 @@ The ten original patterns remain below as concise introductions. The domain tabl
 
 ## The city that walks one street a year
 
-**Priority: 5 Specialist.**
-
-
-A public seasonal rule rearranges streets while addresses and relationships persist. Residents prepare markets, moving gardens, reunions or ambushes around the next shift. Start with one block and explicit connectors, not continuous megacity physics. This remains a wider-library premise rather than an assumed FA or SC capability. See UNR-031. Earlier inspiration: [Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [The Elder Scrolls][w27].
+**FA SC · Play · 5 Specialist · Large/New.** Gap: discrete topology changes with occupant safety and persistent addresses.
 
 A city's streets slowly rearrange according to a public seasonal rule. Neighbors plan market routes, moving gardens and reunions around the next shift. The pleasure is adapting to a place that changes predictably. Begin with one movable block and explicit connectors; no continuous megacity physics is needed. Addresses and relationships survive, and residents have time to prepare.
 
-Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [The Elder Scrolls](source-atlas.md#w27).
+Residents may also plan an ambush around the shift. This is a wider-library premise, not an assumed living-fantasy or planetary capability.
+
+Related entries: [UNR-031](#architecture-that-changes-the-map).
+
+Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [The Elder Scrolls](source-atlas.md#w27), [The Elder Scrolls](../../archive/02-research/worldbuilding/worlds/27-the-elder-scrolls.md).
 
 Selection: Moving-city topology is a separate world premise.
 
 ## A house that negotiates rooms
 
-**Priority: 5 Specialist.**
-
-
-A house proposes a music room because residents rehearse on its stairs. Residents can accept, revise or refuse, and the house has maintenance needs. Its cooperative version protects occupied supports; a predatory house is a distinct premise with intelligible threats and possible escape, not a surprise reinterpretation of consent. Neither reads unshared thoughts. See UNR-032 and UNR-038. Earlier inspiration: [The Sims](source-atlas.md#g24), [Qud][qud], [Spirited Away][w25].
+**FA SC · Play · 5 Specialist · Large/New.** Gap: bounded building agency and safe reconfiguration of supported spaces.
 
 A sentient house proposes turning a spare corridor into a music room because residents keep rehearsing on the stairs. Occupants can accept, revise or refuse, and the house has its own maintenance needs. Architecture becomes a relationship. In this cooperative household version, its agreement protects occupied supports and allows residents to refuse. A predatory or coercive house is a separate viable premise with readable threats, bounded reconfiguration and possible escape; neither version gets access to unshared thoughts.
 
-Seeds: [The Sims](source-atlas.md#g24), [Caves of Qud](source-atlas.md#g33), [Spirited Away](source-atlas.md#w25).
+A predatory version must not arrive as a surprise reinterpretation of the cooperative household’s agreement.
+
+Related entries: [UNR-032](#architecture-that-changes-the-map), [UNR-038](#architecture-that-changes-the-map).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Caves of Qud](source-atlas.md#g33), [Spirited Away](source-atlas.md#w25), [Qud](../../archive/02-research/game-inspiration/dossiers/caves-of-qud.md), [Spirited Away](../../archive/02-research/worldbuilding/worlds/25-spirited-away.md).
 
 Selection: Sentient spatial reconfiguration is specialist scope.
 
 ## The borrowed afternoon
 
-**Priority: 5 Specialist.**
-
-
-A garden grants extra interior time for conversation, rehearsal, mending or preparation. Boundary crossings, aging, messages and material throughput follow a declared rule; the garden is not an unlimited exporter of crops or energy. A chosen pocket of attention is valuable without becoming a productivity mandate. See UNR-001. Inspiration: [Outer Wilds][outer], [Narnia][w19]; earlier [Dishonored 2](source-atlas.md#g119) comparison retained.
+**FA SC · Play · 5 Specialist · Large/New.** Gap: explicit local-time scheduling with causal isolation and finite resource accounting.
 
 A garden grants one extra quiet afternoon inside while little time passes outside. Visitors use it to rehearse, talk, mend something or prepare for a dangerous confrontation, but cannot repeatedly export infinite crops or energy. The point is a chosen pocket of attention. Specify boundary crossings, aging, messages and material costs; fictional time never rewinds actual service charges, permissions or external events.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Dishonored 2](source-atlas.md#g119), [Narnia](source-atlas.md#w19).
+The extra time is not a productivity mandate.
+
+Related entries: [UNR-001](#clocks-and-daily-rhythms).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Dishonored 2](source-atlas.md#g119), [Narnia](source-atlas.md#w19), [Outer Wilds](../../archive/02-research/game-inspiration/dossiers/outer-wilds.md), [Narnia](../../archive/02-research/worldbuilding/worlds/19-narnia.md).
 
 Selection: Local-time causality requires a separately selected reality model.
 
 ## Dream architecture by invitation
 
-**Priority: 5 Specialist.**
-
-
-Friends contribute to a shared rehearsal or impossible festival, with entry, departure and disclosure separately chosen. A dream can inspire later action but cannot prove another person's hidden feelings or materialize its props outside. Hostile entry and possession require separately selected fictional capabilities. See UNR-091 and UNR-098. Earlier inspiration: [Dreams](source-atlas.md#g13), [AI Dungeon](source-atlas.md#g40), [His Dark Materials][w20].
+**FA SC · Play · 5 Specialist · Large/New.** Gap: consensual shared scene creation with separate fictional state and knowledge.
 
 Friends build a dream rehearsal of a difficult conversation or an impossible festival, each choosing what to contribute. The dream can inspire later action but proves nothing about another person's hidden feelings. Keep entry, exit and disclosure explicit. Dream objects do not materialize into ordinary inventory, and interpretation alone grants no access to private minds. Coercive dream entry, possession and other fictional mind effects require their own admitted world mechanics; none grants access to real private data or unprovided model context.
 
-Seeds: [Dreams](source-atlas.md#g13), [AI Dungeon](source-atlas.md#g40), [His Dark Materials](source-atlas.md#w20).
+Related entries: [UNR-091](#dreams-sleep-and-waking), [UNR-098](#dreams-sleep-and-waking).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [AI Dungeon](source-atlas.md#g40), [His Dark Materials](source-atlas.md#w20), [His Dark Materials](../../archive/02-research/worldbuilding/worlds/20-his-dark-materials.md).
 
 Selection: Shared dream-state creation is another product/world mode.
 
 ## A language that builds temporary paths
 
-**Priority: 3 Depth.**
-
-
-A finite sung grammar specifies anchors, direction and duration. Harmonies compose stepping stones; deliberate rests leave openings for another performer. Nonvocal expression can invoke the same rules. This is a wider magical constitution, not a feature of Borrowed Dawn's existing heat law. See UNR-071. Inspiration: [Noita][noita], [Middle-earth][w01], [Earthsea][w11]; earlier [Final Fantasy II](source-atlas.md#g79) comparison retained.
+**FA · Play · 3 Depth · Large/New.** Gap: finite compositional utterances mapped to admitted geometry effects.
 
 A small sung grammar names an anchor, direction and duration to raise stepping stones. Musicians can harmonize compatible phrases or leave deliberate rests for others to act. Players learn a few meaningful parts and compose. Accessible nonvocal controls remain available; free text cannot invent unsupported geometry, and mispronunciation should not secretly cause disproportionate harm.
 
-Seeds: [Noita](source-atlas.md#g32), [Final Fantasy II](source-atlas.md#g79), [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11).
+This wider magical constitution is not automatically part of The Borrowed Dawn’s selected heat law.
+
+Related entries: [UNR-071](#words-names-and-binding-expression).
+
+Seeds and references: [Noita](source-atlas.md#g32), [Final Fantasy II](source-atlas.md#g79), [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11), [Noita](../../archive/02-research/game-inspiration/dossiers/noita.md), [Middle-earth](../../archive/02-research/worldbuilding/worlds/01-middle-earth.md), [Earthsea](../../archive/02-research/worldbuilding/worlds/11-earthsea.md).
 
 Selection: A finite path-making spell grammar can add fantasy depth later.
 
 ## The weather archive
 
-**Priority: 5 Specialist.**
-
-
-A place preserves a beloved snowfall or a drought-breaking rain as a bounded sensory recording. Farmers compare conditions, artists compose and families remember. Recorded weather is neither omniscient history nor unlimited climate control; weaponized release would be a separate capability. See UNR-085. Inspiration: [Outer Wilds][outer], [Macondo][w24]; earlier [Oxygen Not Included](source-atlas.md#g129) comparison retained.
+**FA SC · Blend · 5 Specialist · Large/New.** Gap: bounded environmental recordings and controlled replay inside a chamber.
 
 A museum preserves a village's last snowstorm or the first rain after a drought as a small sensory exhibit. Farmers compare conditions, artists compose experiences and families remember. Recordings are scoped captures, not perfect past worlds. The museum’s replay consumes resources and remains contained. A world could separately admit a finite weaponized version with explicit reach, cost and counterplay; the word “archive” does not grant unlimited weather control or prove an unobserved event.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Oxygen Not Included](source-atlas.md#g129), [Macondo](source-atlas.md#w24).
+Related entries: [UNR-085](#memory-history-and-physical-evidence).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Oxygen Not Included](source-atlas.md#g129), [Macondo](source-atlas.md#w24), [Outer Wilds](../../archive/02-research/game-inspiration/dossiers/outer-wilds.md), [Macondo](../../archive/02-research/worldbuilding/worlds/24-macondo.md).
 
 Selection: Environmental recording and replay are specialist capabilities.
 
 ## A civilization in the cracks
 
-**Priority: 5 Specialist.**
-
-
-Tiny citizens inhabit warm workshop walls. A spilled cup becomes a flood; a repair can supply infrastructure; a raiding party can steal a valuable filament. Discrete scale layers, conserved transfers and usable communication make both sides participants rather than scenery. See UNR-041. Inspiration: [Qud][qud], [Pokémon][w08]; earlier [Spore](source-atlas.md#g16) comparison retained.
+**SC FA · Play · 5 Specialist · Large/New.** Gap: discrete scale layers, body-compatible interaction and conserved transfers.
 
 Tiny inhabitants build homes inside a workshop's warm walls. A spilled cup becomes a flood, while a human repair can become collaborative infrastructure. A tiny raiding party might steal a valuable filament, giving both scales choices beyond protection or helplessness. Players communicate across scales through platforms, signals and patient observation. Use bounded zones rather than simulating every dust particle. Small size should change access and risk without implying simple minds or making the community disposable decoration.
 
-Seeds: [Spore](source-atlas.md#g16), [Caves of Qud](source-atlas.md#g33), [Pokémon](source-atlas.md#w08).
+Use discrete scale layers and conserve transfers between them.
+
+Related entries: [UNR-041](#scale-weight-and-gravity).
+
+Seeds and references: [Spore](source-atlas.md#g16), [Caves of Qud](source-atlas.md#g33), [Pokémon](source-atlas.md#w08), [Qud](../../archive/02-research/game-inspiration/dossiers/caves-of-qud.md), [Pokémon](../../archive/02-research/worldbuilding/worlds/08-pokemon.md).
 
 Selection: Multiple scale layers require a different embodied-world scope.
 
 ## The traveling festival economy
 
-**Priority: 5 Specialist.**
-
-
-For one festival, participants exchange demonstrations and finite promises instead of ordinary money. A lesson can buy supper and a song; refusal remains possible. The event settles or explicitly carries its obligations when normal exchange resumes. This non-supernatural variant can fit ALL and proves no real economic doctrine. See UNR-141. Earlier inspiration: [Balatro](source-atlas.md#g42), [Final Fantasy VIII](source-atlas.md#g85), [The Culture][w17].
+**ALL · Play · 5 Specialist · Large/New.** Gap: event-bounded exchange rules and explicit settlement of obligations.
 
 For one festival, people trade skill demonstrations and useful promises instead of ordinary money. A carpenter might exchange a lesson for a meal and a song. The temporary constitution lets creators explore different values. Keep obligations finite and voluntary, return cleanly to normal rules afterward, and do not claim the fictional experiment proves a real economic system superior.
 
-Seeds: [Balatro](source-atlas.md#g42), [Final Fantasy VIII](source-atlas.md#g85), [The Culture](source-atlas.md#w17).
+Settle or explicitly carry obligations when ordinary exchange resumes. This non-supernatural variation can fit all four world families.
+
+Related entries: [UNR-141](#social-orders-with-physical-consequences).
+
+Seeds and references: [Balatro](source-atlas.md#g42), [Final Fantasy VIII](source-atlas.md#g85), [The Culture](source-atlas.md#w17), [The Culture](../../archive/02-research/worldbuilding/worlds/17-the-culture.md).
 
 Selection: Temporary exchange constitutions are a specialist economic experiment.
 
 ## A chorus with separate voices
 
-**Priority: 3 Depth.**
-
-
-A collective combines contributed capabilities into a concert, sensor or light bridge without deleting its members. Each can withdraw; interruption changes the result under a known rule. Shared observations do not become access to every member's unshared memories. See UNR-102. Earlier inspiration: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas.md#g88), [One Piece][w14].
+**FA SC · Blend · 3 Depth · Large/New.** Gap: voluntary pooled capabilities with member limits and knowledge boundaries.
 
 A group can combine a few weak powers into a bridge of light, a concert or a shared sensor, with each participant able to withdraw. Different arrangements alter the outcome. Cooperation becomes composition without erasing identity. Define interruption and safe collapse, prevent nested amplification, and share only the observations each member has actually contributed.
 
-Seeds: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas.md#g88), [One Piece](source-atlas.md#w14).
+Related entries: [UNR-102](#minds-identities-and-shared-selves).
+
+Seeds and references: [Fire Emblem Fates](source-atlas.md#g63), [Final Fantasy XI](source-atlas.md#g88), [One Piece](source-atlas.md#w14), [One Piece](../../archive/02-research/worldbuilding/worlds/14-one-piece.md).
 
 Selection: Pooled bounded powers add later cooperative fantasy depth.
 
 ## The world with a declared unreliable narrator
 
-**Priority: 5 Specialist.**
-
-
-An explicitly chosen storyteller embellishes public events while objects and witnesses support investigation. Comic or mysterious narration remains separate from actual execution, costs and errors. The world offers a reliable inspection route; a flourish never silently commits a new event. See UNR-159. Earlier inspiration: [AI Dungeon](source-atlas.md#g40), [Disco Elysium](source-atlas.md#g66), [Macondo][w24].
+**ALL · Play · 5 Specialist · Large/New.** Gap: separate presentation claims from authoritative state and reliable inspection routes.
 
 A storyteller embellishes public events while players investigate what really occurred through objects and witnesses. The mismatch can be comic or mysterious. This is an explicit chosen presentation mode, not permission for the engine to lie about action execution, costs or errors. Preserve an accessible way to inspect relevant facts, and never convert narration into uncommitted world effects.
 
-Seeds: [AI Dungeon](source-atlas.md#g40), [Disco Elysium](source-atlas.md#g66), [Macondo](source-atlas.md#w24).
+Related entries: [UNR-159](#art-performance-and-narration).
+
+Seeds and references: [AI Dungeon](source-atlas.md#g40), [Disco Elysium](source-atlas.md#g66), [Macondo](source-atlas.md#w24), [Macondo](../../archive/02-research/worldbuilding/worlds/24-macondo.md).
 
 Selection: An explicitly unreliable presentation mode is not the baseline interface.
 

@@ -459,7 +459,9 @@ The ten retained archetypes follow the tables: [return expedition](#the-return-e
 
 A first visit finds a flooded archive and an inaccessible balcony. Back home, players recruit a carpenter, build a float or ask a former caretaker. Returning with a new method makes the same place richer. Preserve useful discoveries and alternatives; do not reset every cleared obstacle or require the exact tool an author imagined.
 
-Seeds: [Valheim](source-atlas.md#g31), [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75).
+Related entries: [AD-063](#ruins-and-inhabited-dungeons), [AD-230](#homecomings-and-lasting-endings).
+
+Seeds and references: [Valheim](source-atlas.md#g31), [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75).
 
 Selection: New capability opens a previously inaccessible worthwhile destination.
 
@@ -469,7 +471,9 @@ Selection: New capability opens a previously inaccessible worthwhile destination
 
 A surveyor has left their assigned route to help a stranger, leaving understandable traces. Finding them opens negotiation over unfinished obligations rather than automatic escort duty. Players can investigate without reading hidden coordinates. The person may refuse to return, and a successful search need not grant permission to reveal their location to everyone who asks.
 
-Seeds: [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Deus Ex (2000)](source-atlas.md#g117), [Dragon's Dogma 2](source-atlas.md#g127).
+Related entries: [AD-077](#mysteries-and-investigations), [AD-231](#homecomings-and-lasting-endings).
+
+Seeds and references: [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Deus Ex (2000)](source-atlas.md#g117), [Dragon's Dogma 2](source-atlas.md#g127).
 
 Selection: A concrete search objective adds agency and an attainable outcome.
 
@@ -479,7 +483,9 @@ Selection: A concrete search objective adds agency and an attainable outcome.
 
 Explorers find a sheltered passage that makes two communities practical neighbors. Its value emerges through trade, friendship and rescue. Players can share, improve or restrict access, creating consequences beyond selling loot. Keep the route spatially and socially credible; discovery should not automatically transfer ownership of the places or people it connects.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
+Related entries: [AD-005](#roads-and-route-discoveries), [AD-109](#treasure-and-salvage).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
 Selection: Discovery changes access and creates useful future choices.
 
@@ -489,7 +495,9 @@ Selection: Discovery changes access and creates useful future choices.
 
 One traveler seeks a mineral sample, another an old friend, and a third wants to sketch unfamiliar trees. The party chooses detours and compromises without needing one world-saving quest. Diverse motivations make journeys personal. Limit simultaneous obligations and make deadlines forgiving; companionship should not produce a wall of time-sensitive errands every time someone joins.
 
-Seeds: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Final Fantasy XV](source-atlas.md#g92), [Mass Effect 2](source-atlas.md#g102).
+Related entries: [AD-138](#companions-intimacy-and-personal-journeys).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Final Fantasy XV](source-atlas.md#g92), [Mass Effect 2](source-atlas.md#g102).
 
 Selection: Multiple party agendas deepen an already worthwhile expedition.
 
@@ -499,7 +507,9 @@ Selection: Multiple party agendas deepen an already worthwhile expedition.
 
 Investigators wrongly suspect a pump's seal, but opening it reveals blocked intake stones and a useful map scratch. The error costs time while advancing understanding. Several tests can distinguish hypotheses. Avoid arbitrary red herrings and a single final guessing screen; partial correctness should produce observable progress without falsely confirming an unsupported theory.
 
-Seeds: [Outer Wilds](source-atlas.md#g34), [Disco Elysium](source-atlas.md#g66), [The Witcher 3: Wild Hunt](source-atlas.md#g72).
+Related entries: [AD-078](#mysteries-and-investigations), [AD-090](#mysteries-and-investigations).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Disco Elysium](source-atlas.md#g66), [The Witcher 3: Wild Hunt](source-atlas.md#g72).
 
 Selection: Investigation provides progress rather than an exact-answer dead end.
 
@@ -509,7 +519,9 @@ Selection: Investigation provides progress rather than an exact-answer dead end.
 
 Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. Their competitive spirit can make an eventual shared camp enjoyable as well as useful. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
 
-Seeds: [Battle Brothers](source-atlas.md#g121), [Dragon's Dogma 2](source-atlas.md#g127), [Middle-earth](source-atlas.md#w01).
+Related entries: [AD-125](#rivals-contests-and-recognition), [AD-132](#rivals-contests-and-recognition).
+
+Seeds and references: [Battle Brothers](source-atlas.md#g121), [Dragon's Dogma 2](source-atlas.md#g127), [Middle-earth](source-atlas.md#w01).
 
 Selection: Active competition adds an opponent and a contested reward.
 
@@ -519,7 +531,9 @@ Selection: Active competition adds an opponent and a contested reward.
 
 A vast dormant organism shelters a settlement in its shell folds. An illness changes paths and water flow, prompting diagnosis, relocation or negotiation with caretakers. Exploration concerns a living neighbor. Start with a few regions and explicit body processes; do not require full organism simulation or make every resident disposable scenery for a boss fight.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Elden Ring](source-atlas.md#g75), [Spirited Away](source-atlas.md#w25).
+Related entries: [AD-039](#field-expeditions-and-unfamiliar-life), [AD-059](#hunts-and-dangerous-quarries), [AD-074](#ruins-and-inhabited-dungeons).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Elden Ring](source-atlas.md#g75), [Spirited Away](source-atlas.md#w25).
 
 Selection: A living inhabited giant requires a distinct large-scale premise.
 
@@ -529,7 +543,9 @@ Selection: A living inhabited giant requires a distinct large-scale premise.
 
 An adventure can end when a ferry runs, a friend comes home or a workshop opens. Players may stay, hand responsibility over or begin another life elsewhere. Completion leaves a tangible change, recognition from the people involved and room to enjoy the result.
 
-Seeds: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy XIV](source-atlas.md#g91), [Battle Brothers](source-atlas.md#g121).
+Related entries: [AD-226](#homecomings-and-lasting-endings), [AD-229](#homecomings-and-lasting-endings).
+
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy XIV](source-atlas.md#g91), [Battle Brothers](source-atlas.md#g121).
 
 Selection: The first loop needs an attainable objective and actual payoff.
 
@@ -539,7 +555,9 @@ Selection: The first loop needs an attainable objective and actual payoff.
 
 A newcomer hires a knowledgeable guide while an expert asks only for landmarks. Both encounter meaningful decisions; the guide can admit uncertainty about recent changes. Authors provide approachable entry without removing exploration. Hints should reveal methods or relevant evidence incrementally, and an NPC guide must not secretly access the creator's hidden solution state.
 
-Seeds: [Elden Ring](source-atlas.md#g75), [Final Fantasy XVI](source-atlas.md#g93), [Dragon's Dogma 2](source-atlas.md#g127).
+Related entries: [AD-003](#roads-and-route-discoveries), [AD-012](#roads-and-route-discoveries).
+
+Seeds and references: [Elden Ring](source-atlas.md#g75), [Final Fantasy XVI](source-atlas.md#g93), [Dragon's Dogma 2](source-atlas.md#g127).
 
 Selection: Optional guidance makes goals discoverable without removing choice.
 
@@ -549,7 +567,9 @@ Selection: Optional guidance makes goals discoverable without removing choice.
 
 Explorers find a cave with beautiful acoustics. Musicians, builders and cautious neighbors may turn it into a venue, leave it quiet or arrange occasional visits. Discovery feeds ordinary life. The place need not produce a stat reward; its atmosphere, access and social possibilities can justify the expedition on their own.
 
-Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Outer Wilds](source-atlas.md#g34), [Final Fantasy XV](source-atlas.md#g92).
+Related entries: [AD-040](#field-expeditions-and-unfamiliar-life), [AD-160](#festivals-nightlife-and-delightful-detours).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Outer Wilds](source-atlas.md#g34), [Final Fantasy XV](source-atlas.md#g92).
 
 Selection: Reusing a discovery as a venue enriches an established world.
 

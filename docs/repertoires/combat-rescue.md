@@ -411,7 +411,9 @@ Retained archetypes: [everyone home](#win-by-getting-everyone-home), [nonlethal 
 
 A party caught near a collapsing bridge can fight, distract, negotiate or retreat with an injured companion. This encounter is won by getting the party home. Roles include route finder, carrier and rear guard. Make withdrawal a supported outcome with legible pursuit, and avoid awarding so much combat experience that rescue becomes the inferior choice.
 
-Seeds: [Kenshi](source-atlas.md#g36), [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60).
+Related entries: [CR-094](#formation-and-coordinated-tactics), [CR-181](#extraction-and-evacuation), [CR-195](#extraction-and-evacuation), [CR-212](#mounted-crewed-and-objective-driven-encounters).
+
+Seeds and references: [Kenshi](source-atlas.md#g36), [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60).
 
 Selection: Adds an evacuation objective once fighting and retreat work.
 
@@ -421,7 +423,9 @@ Selection: Adds an evacuation objective once fighting and retreat work.
 
 A guard can block a route, disarm or restrain rather than kill. A restrained person still needs safe transport and can be endangered by fire or water. Players must see consequences beyond the selected attack label. Nonlethal intent is not guaranteed harmlessness; provide readable checks and proportionate aftermath without demanding expert forensic knowledge for ordinary play.
 
-Seeds: [Red Dead Redemption](source-atlas.md#g69), [Deus Ex (2000)](source-atlas.md#g117), [Dishonored 2](source-atlas.md#g119).
+Related entries: [CR-039](#melee-attacks-and-contact-control), [CR-040](#melee-attacks-and-contact-control), [CR-151](#capture-surrender-and-bounded-violence), [CR-164](#capture-surrender-and-bounded-violence).
+
+Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Deus Ex (2000)](source-atlas.md#g117), [Dishonored 2](source-atlas.md#g119).
 
 Selection: Restraint and custody expand combat; they do not gate basic enemies.
 
@@ -431,7 +435,9 @@ Selection: Restraint and custody expand combat; they do not gate basic enemies.
 
 An opponent braces a spear or a machine starts charging, letting players reposition, interrupt, shield or retreat. Information creates tactical agency. Different bodies and tools can answer the same threat. Keep timing adjustable and give turn-like planning options where appropriate; reaction speed should not be the only route to using a character's tactical knowledge.
 
-Seeds: [Slay the Spire](source-atlas.md#g43), [Clair Obscur: Expedition 33](source-atlas.md#g77), [Final Fantasy XIII](source-atlas.md#g90).
+Related entries: [CR-078](#perception-stealth-and-morale), [CR-121](#enemy-roles-and-changing-threat-patterns).
+
+Seeds and references: [Slay the Spire](source-atlas.md#g43), [Clair Obscur: Expedition 33](source-atlas.md#g77), [Final Fantasy XIII](source-atlas.md#g90).
 
 Selection: Readable attacks and counterplay make the first opponent playable.
 
@@ -441,7 +447,9 @@ Selection: Readable attacks and counterplay make the first opponent playable.
 
 A workshop dispute turns dangerous around cranes, shutters and cooling basins. Players use tools and layout already familiar from peaceful work. Environmental tactics feel learned rather than authored as glowing combat props. Preserve material rules across modes, make collateral visible and prevent every fight from permanently destroying all equipment needed for a town's recovery.
 
-Seeds: [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57), [Prey (2017)](source-atlas.md#g118).
+Related entries: [CR-072](#space-movement-and-cover), [CR-136](#workplaces-hazards-and-destructive-interactions), [CR-150](#workplaces-hazards-and-destructive-interactions).
+
+Seeds and references: [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57), [Prey (2017)](source-atlas.md#g118).
 
 Selection: Environmental combat combinations deepen existing encounters.
 
@@ -451,7 +459,9 @@ Selection: Environmental combat combinations deepen existing encounters.
 
 A companion offers a rope pull or shielding position; the player chooses whether and when to accept. Mutual timing makes this cooperative move skillful. Hostile forced movement uses separate resistance and collision rules. The same mechanic can help in hiking or building. Show capacity, destination and interruption risks, and let a declined offer remain useful information rather than a relationship penalty.
 
-Seeds: [League of Legends](source-atlas.md#g08), [Dota 2](source-atlas.md#g09), [PEAK](source-atlas.md#g47).
+Related entries: [CR-058](#blocks-evasions-and-counterplay), [CR-105](#formation-and-coordinated-tactics), [CR-183](#extraction-and-evacuation).
+
+Seeds and references: [League of Legends](source-atlas.md#g08), [Dota 2](source-atlas.md#g09), [PEAK](source-atlas.md#g47).
 
 Selection: A useful active companion role, not task administration.
 
@@ -461,7 +471,9 @@ Selection: A useful active companion role, not task administration.
 
 A hazardous expedition can be approached with insulation, better shelter, a guide or a shorter route. Equipment changes method rather than only multiplying damage. Players can improvise with ordinary tools. Avoid one mandatory resistance item hidden behind a checklist, and separate knowing a technique from owning, equipping and having resources to use it now.
 
-Seeds: [Terraria](source-atlas.md#g29), [Elden Ring](source-atlas.md#g75), [Final Fantasy VII](source-atlas.md#g84).
+Related entries: [CR-028](#ammunition-and-firing-cycles), [CR-100](#formation-and-coordinated-tactics), [CR-120](#damage-protection-and-combat-conditions), [CR-177](#locating-and-reaching-people-in-danger).
+
+Seeds and references: [Terraria](source-atlas.md#g29), [Elden Ring](source-atlas.md#g75), [Final Fantasy VII](source-atlas.md#g84).
 
 Selection: Distinct viable loadouts create replayable choices; reuse inventory.
 
@@ -471,7 +483,9 @@ Selection: Distinct viable loadouts create replayable choices; reuse inventory.
 
 An injured scout becomes a map teacher while another member leads fieldwork. Recovery opens social and organizational choices without removing the character from the story. Recovery follows the chosen injury and mortality rules. Show prognosis and care needs, permit useful alternative roles, and avoid a loss spiral where reduced staffing makes all further recovery impossible.
 
-Seeds: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-atlas.md#g121), [XCOM 2](source-atlas.md#g125).
+Related entries: [CR-110](#damage-protection-and-combat-conditions), [CR-200](#care-recovery-and-continuing-lives), [CR-207](#care-recovery-and-continuing-lives), [CR-209](#care-recovery-and-continuing-lives).
+
+Seeds and references: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-atlas.md#g121), [XCOM 2](source-atlas.md#g125).
 
 Selection: Longer injury and staffing consequences follow basic healing.
 
@@ -481,7 +495,9 @@ Selection: Longer injury and staffing consequences follow basic healing.
 
 A defeated band can surrender tools, offer restitution or negotiate safe departure. Captors have objectives beyond killing, and promises may be credible or uncertain. Players can accept risk while retaining safeguards. Do not make surrender automatically betray the player every time, or turn captives into loot objects whose agency and basic needs disappear.
 
-Seeds: [Red Dead Redemption](source-atlas.md#g69), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121).
+Related entries: [CR-151](#capture-surrender-and-bounded-violence), [CR-165](#capture-surrender-and-bounded-violence), [CR-223](#mounted-crewed-and-objective-driven-encounters).
+
+Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121).
 
 Selection: Capture, ransom and custody are additional encounter branches.
 
@@ -491,7 +507,9 @@ Selection: Capture, ransom and custody are additional encounter branches.
 
 A rival saved from a fire later warns the player's caravan, while still competing for a contract. Scars, equipment and relationships change through actual events. Recurrence creates specificity without copying a franchise's named system. Keep a small cast and believable survival; endless resurrection or fabricated offscreen exploits would undermine the value of persistence.
 
-Seeds: [Middle-earth: Shadow of War](source-atlas.md#g116), [Wildermyth](source-atlas.md#g25), [Battle Brothers](source-atlas.md#g121).
+Related entries: [CR-089](#perception-stealth-and-morale), [CR-134](#enemy-roles-and-changing-threat-patterns), [CR-206](#care-recovery-and-continuing-lives).
+
+Seeds and references: [Middle-earth: Shadow of War](source-atlas.md#g116), [Wildermyth](source-atlas.md#g25), [Battle Brothers](source-atlas.md#g121).
 
 Selection: One observed encounter changes a recurring rival’s conduct and preserves its actual outcome; no omniscient build counter or exhaustive biography is needed.
 
@@ -501,7 +519,9 @@ Selection: One observed encounter changes a recurring rival’s conduct and pres
 
 After danger, companions discuss what worked, mend equipment and decide whether to go again. Someone may be proud, frightened, amused or ready for a different life. This gives consequences emotional space. Reactions should refer to witnessed events and distinct goals, not expose hidden thoughts or repeat a generated congratulatory speech after every minor encounter.
 
-Seeds: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Mass Effect 2](source-atlas.md#g102).
+Related entries: [CR-204](#care-recovery-and-continuing-lives), [CR-210](#care-recovery-and-continuing-lives).
+
+Seeds and references: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Mass Effect 2](source-atlas.md#g102).
 
 Selection: Optional reflective callbacks, not a replacement for the adventure.
 

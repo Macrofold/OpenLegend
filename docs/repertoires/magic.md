@@ -491,9 +491,9 @@ Returning a skill, moving a soul and restoring a person are different promises. 
 
 **FA · Play · 3 Depth · D.** Gap: bounded transfer effects with source, sink, range and conservation.
 
-A hearth-worker warms a frostbitten traveler by cooling a basin of water. The same technique preserves food, shapes fog or slows a kiln. Every benefit has a visible source and destination. Players invent methods through consistent transfers. Never permit recursive heat creation, and give controlled practice tools so understanding the rule does not require fatal experimentation. In battle the same transfer can chill a weapon hand or discharge stored heat against armor, with visible costs and counterplay. Warming does not itself repair frost injury.
+A hearth-worker warms a frostbitten traveler by cooling a basin of water. The same technique preserves food, shapes fog or slows a kiln. Every benefit has a visible source and destination. Players invent methods through consistent transfers. Never permit recursive heat creation, and give controlled practice tools so understanding the rule does not require fatal experimentation. In battle the same transfer can chill a weapon hand or discharge stored heat against armor, with visible costs and counterplay.
 
-Seeds: [Noita](source-atlas.md#g32), [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57).
+Seeds and references: [Noita](source-atlas.md#g32), [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57).
 
 Selection: A coherent transfer power adds later tactical and practical combinations.
 
@@ -503,7 +503,7 @@ Selection: A coherent transfer power adds later tactical and practical combinati
 
 Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible; the cord performs the accepted reminder and no additional binding.
 
-Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [A Song of Ice and Fire](source-atlas.md#w10).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [A Song of Ice and Fire](source-atlas.md#w10).
 
 Selection: Magical commitment reminders remain administration, not basic spell gameplay.
 
@@ -513,7 +513,7 @@ Selection: Magical commitment reminders remain administration, not basic spell g
 
 A carpenter restores the brief outline of a doorway or bridge from an observed trace. The echo lasts only while anchored to surviving material and bears a limited load. Explorers choose who crosses and what stays behind. Expiry needs warning and defined outcomes for occupants, including falling, escape or rescue; memory cannot conjure arbitrary structures from an omniscient historical database.
 
-Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [Middle-earth](source-atlas.md#w01).
 
 Selection: Temporary crossings add a distinctive exploration method.
 
@@ -523,7 +523,7 @@ Selection: Temporary crossings add a distinctive exploration method.
 
 Learning a river spirit's chosen name permits asking it for a service; the name is a relationship, not ownership. A stranger can still negotiate through gestures or an intermediary. Invocations can succeed, be misunderstood or be refused. This invitation tradition is distinct from the binding powers described above.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Earthsea](source-atlas.md#w11), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Earthsea](source-atlas.md#w11), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Spirit relationships add a later magical interaction system.
 
@@ -533,7 +533,7 @@ Selection: Spirit relationships add a later magical interaction system.
 
 Combine “when wet,” “this cloth” and “stiffen briefly” to make a rain shelter that folds when dry. Another maker uses the same operators for a rescue sling. Preview ordering, duration and resource use with a harmless demonstration. Restrict operators and effect budgets; new prose is a proposal for supported composition, not an executable expansion of the grammar.
 
-Seeds: [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fantasy VII](source-atlas.md#g84).
+Seeds and references: [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fantasy VII](source-atlas.md#g84).
 
 Selection: Compositional enchantment follows a few useful bounded powers.
 
@@ -543,7 +543,7 @@ Selection: Compositional enchantment follows a few useful bounded powers.
 
 A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. The voluntary transformation preserves identity while changing movement and equipment needs. Communities develop customs around it, and individuals use it differently.
 
-Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
 
 Selection: Voluntary transformation adds traversal and expression after ordinary play.
 
@@ -553,7 +553,7 @@ Selection: Voluntary transformation adds traversal and expression after ordinary
 
 A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The dragon has its own household, plans and reasons for accepting or refusing the arrangement. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
 
-Seeds: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: The Last Airbender](source-atlas.md#w13).
+Seeds and references: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 Selection: Weather bargaining is not a prerequisite for a formidable dragon encounter.
 
@@ -563,7 +563,7 @@ Selection: Weather bargaining is not a prerequisite for a formidable dragon enco
 
 A painted line chimes when a named category of object crosses, helping a nursery watch for stray embers or a library protect fragile books. It can be rubbed away, interrupted or deliberately bypassed through another route. Inspection reveals its actual rule. Categories must be supported and observable; “evil intentions” cannot become an unrestricted mind-reading selector.
 
-Seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Divinity: Original Sin II](source-atlas.md#g57), [Dishonored 2](source-atlas.md#g119).
+Seeds and references: [Dragon Age: Inquisition](source-atlas.md#g53), [Divinity: Original Sin II](source-atlas.md#g57), [Dishonored 2](source-atlas.md#g119).
 
 Selection: Inspectable wards add tactical and practical choices later.
 
@@ -573,7 +573,7 @@ Selection: Inspectable wards add tactical and practical choices later.
 
 A mender aligns broken pottery with a remembered or recorded pattern, but must supply clay and choose whether to preserve old patches. Restoration is interpretive and materially grounded. It can repair a home or falsify an artifact, creating social stakes. It does not restore erased history, duplicate unique objects or reverse external costs; uncertain details remain uncertain.
 
-Seeds: [Black Myth: Wukong](source-atlas.md#g76), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Spirited Away](source-atlas.md#w25).
+Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Spirited Away](source-atlas.md#w25).
 
 Selection: Magical repair is still optional maintenance detail.
 
@@ -583,7 +583,7 @@ Selection: Magical repair is still optional maintenance detail.
 
 A magical school teaches three dependable techniques through civic problems, controlled duels and hazardous fieldwork. Advancement adds understanding, combinations and responsibility before more powers. Players can change schools without losing all learned competence. Limits should be legible and generative, not arbitrary class gates that prevent a plausible ordinary solution or demand hours of prerequisite grinding.
 
-Seeds: [Slay the Spire](source-atlas.md#g43), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy IX](source-atlas.md#g86), [Earthsea](source-atlas.md#w11).
+Seeds and references: [Slay the Spire](source-atlas.md#g43), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy IX](source-atlas.md#g86), [Earthsea](source-atlas.md#w11).
 
 Selection: A magical curriculum follows choosing and delivering a small spell set.
 

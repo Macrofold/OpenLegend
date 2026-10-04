@@ -16,131 +16,129 @@ The inventory includes common food and water, timber, fibers, stone, metals, fue
 
 ## Warmstone
 
-**Priority: 4 Detail.**
-
-
-MAT-103 retains the dense ceramic that stores hearth heat for seedlings and travelers. Charging competes with other uses of the same finite heat. Capacity, carrying weight, cooling, and insulation matter; no transfer loop creates energy. Ordinary blankets remain useful.
+**MD FA · Play · 4 Detail · Moderate/Extend.** Gap: bounded heat storage, transfer and insulation.
 
 A dense ceramic stores hearth heat for seedlings or sleeping travelers but becomes heavy cargo. Choose whether to fire pots or charge tomorrow's stones when fuel is scarce. The same material serves home, trade and rescue. Capacity and cooling must be visible; thermal loops lose energy rather than multiplying it, and ordinary blankets remain useful.
 
-Seeds: [Noita](source-atlas.md#g32), [Oxygen Not Included](source-atlas.md#g129).
+Related entries: [MAT-103](#fuels-stored-energy-and-operating-supplies).
+
+Seeds and references: [Noita](source-atlas.md#g32), [Oxygen Not Included](source-atlas.md#g129).
 
 Selection: Detailed portable heat storage is optional, not basic shelter or recovery.
 
 ## Second-season seed
 
-**Priority: 3 Depth.**
-
-
-MAT-020 retains a hardy grain lineage with a modest yield and a useful growing window. Farmers can keep diversity and test small plots rather than inevitably discovering one universally superior seed.
+**MD MO FA · Blend · 3 Depth · Moderate/Extend.** Gap: seasonal growth traits and finite seed lineage.
 
 A hardy local grain tolerates poor soil but yields less flour; its value changes after a flood or arrival of new cooks. Farmers preserve diversity for reasons beyond a collection badge. Crosses can reveal tradeoffs through small plots. Keep genetics coarse unless the creator selects a lab model, and do not make one universal optimal seed inevitable.
 
-Seeds: [Stardew Valley](source-atlas.md#g30), [Against the Storm](source-atlas.md#g45), [Core Keeper](source-atlas.md#g46).
+The useful growing window matters alongside soil and expected yield.
+
+Related entries: [MAT-020](#food-harvests-and-kitchen-stocks).
+
+Seeds and references: [Stardew Valley](source-atlas.md#g30), [Against the Storm](source-atlas.md#g45), [Core Keeper](source-atlas.md#g46).
 
 Selection: Crop lineage and seasonal tradeoffs follow useful farming.
 
 ## Repairable scrap
 
-**Priority: 5 Specialist.**
-
-
-MAT-161 distinguishes a damaged display's surviving screen, broken casing, and compatible connector. Restoration, salvage, and donation are different choices. Preview likely yields and reserve planned parts so useful salvage does not require indiscriminate hoarding.
+**MO SC · Play · 5 Specialist · Moderate/Extend.** Gap: part condition, disassembly yield and compatibility.
 
 A broken transit display contains a readable screen, cracked casing and valuable connector. Choose restoration, salvage or donation to a community workshop. Its provenance can matter more than market value. Show likely yields before dismantling; avoid compulsory hoarding by allowing project reservations, local salvage purchasing and a clear “no planned use” view.
 
-Seeds: [Fallout 4](source-atlas.md#g74), [Mass Effect: Andromeda](source-atlas.md#g104), [Prey (2017)](source-atlas.md#g118).
+Related entries: [MAT-161](#components-salvage-and-reusable-remains).
+
+Seeds and references: [Fallout 4](source-atlas.md#g74), [Mass Effect: Andromeda](source-atlas.md#g104), [Prey (2017)](source-atlas.md#g118).
 
 Selection: The technological component-salvage example belongs to an alternate setting.
 
 ## Stormglass
 
-**Priority: 3 Depth.**
-
-
-MAT-115 retains an inspectably saturating mineral charged under one selected environmental law. Its fields can compete with other land uses. The name does not grant unrelated electrical, psychic, and temporal powers simultaneously.
+**SC FA · Play · 3 Depth · Large/New.** Gap: authored charge accumulation with bounded environmental coupling.
 
 A mineral records a storm's electrical or magical signature and powers a matching sensor. Charging fields occupy land that farmers also need. A storm forecast becomes an economic and social event. Saturation is dangerous but inspectable. Each world chooses one coherent charging law; the name does not authorize every imaginable electrical, temporal and psychic power.
 
-Seeds: [Noita](source-atlas.md#g32), [Oxygen Not Included](source-atlas.md#g129), [The Broken Earth](source-atlas.md#w18).
+Related entries: [MAT-115](#fuels-stored-energy-and-operating-supplies).
+
+Seeds and references: [Noita](source-atlas.md#g32), [Oxygen Not Included](source-atlas.md#g129), [The Broken Earth](source-atlas.md#w18).
 
 Selection: A bounded magical resource can add distinctive equipment choices later.
 
 ## Common water uncommon claims
 
-**Priority: 3 Depth.**
-
-
-MAT-021 distinguishes abundant water from access to its safe channel. Purchasing a supply need not purchase the source. [Economy](economy-logistics.md) owns distribution agreements; [Institutions](institutions-politics.md) owns the authority that recognizes or disputes them.
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: supply networks, access claims and depletion accounting.
 
 A spring is abundant overall but reaches the hill district only through a disputed channel. Repair, rationing and governance offer different solutions; purchasing water does not automatically purchase the source. Builders can stage cooperation around infrastructure. Separate drinking safety from fictional ownership and avoid requiring a detailed chemistry simulation to tell a basic neighborhood story.
 
-Seeds: [Caves of Qud](source-atlas.md#g33), [Against the Storm](source-atlas.md#g45), [Dune](source-atlas.md#w09).
+Distribution agreements belong in [Economy](economy-logistics.md); institutional authority belongs in [Institutions](institutions-politics.md).
+
+Related entries: [MAT-021](#water-soil-air-and-cultivation-conditions).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Against the Storm](source-atlas.md#g45), [Dune](source-atlas.md#w09).
 
 Selection: Water governance and supply networks are not basic drinking.
 
 ## Living sealant
 
-**Priority: 5 Specialist.**
-
-
-MAT-181 seals cracks through bounded growth but can obstruct a vent if overfed. Pruning, dormancy, compatible surfaces, and cultivation make it a material people work with, not a universal repair button.
+**SC FA · Blend · 5 Specialist · Large/New.** Gap: bounded material growth, environmental conditions and containment.
 
 A cultivated organism seals cracks but also closes ventilation if overfed. A maintenance worker can prune, redirect or trade cuttings; care creates skilled work rather than a repair button. Give it limited growth fronts and observable dormancy. It is a living material with authored needs, not proof of real biological safety or a universal miracle substance.
 
-Seeds: [Spore](source-atlas.md#g16), [Palworld](source-atlas.md#g41), [Pokémon](source-atlas.md#w08).
+Compatible surfaces and cultivation constrain where it can grow.
+
+Related entries: [MAT-181](#living-alien-and-cultivated-materials).
+
+Seeds and references: [Spore](source-atlas.md#g16), [Palworld](source-atlas.md#g41), [Pokémon](source-atlas.md#w08).
 
 Selection: Growing containment-aware repair material is a specialist system.
 
 ## Goodwill is not currency
 
-**Priority: 3 Depth.**
-
-
-Gratitude is neither transferable stock nor permission to override a person's refusal. MAT-238 describes an offered introduction, not ownership of the introducer's affection. A neighbor may lend a cart after receiving help and still decline to sell their garden. The relationship remains with [Relationships](relationships.md).
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: contextual favors without a universal transferable balance.
 
 A neighbor lends a cart because you repaired their fence, yet refuses to sell their garden. Repeated exchanges establish expectations and possibly resentment. Social players gain opportunities that money alone cannot purchase. Do not convert every kindness into identical points or allow bought gifts to override a person's boundaries; gratitude can be expressed without compliance.
 
-Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [Austen’s social worlds](source-atlas.md#w23).
+This is not transferable stock or ownership of affection; the particular bond belongs in [Relationships](relationships.md).
+
+Related entries: [MAT-238](#time-access-expertise-and-nonmaterial-requirements).
+
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: Contextual favors deepen relationships after ordinary exchange.
 
 ## Quiet hours
 
-**Priority: 5 Specialist.**
-
-
-MAT-226 preserves a scheduled quiet window shared by a studio, a night worker, and nearby households. Insulation or relocation can create alternatives. Established arrangements need not be renegotiated every day.
+**MO SC · Play · 5 Specialist · Moderate/Extend.** Gap: shared schedules and localized noise/exposure windows.
 
 A studio, night nurse and children's club all need the same quiet courtyard at different times. Time becomes a negotiable shared resource: insulation, relocation or an agreed performance night can help. Designers create interesting neighbors instead of generic resource shortages. Bound schedule detail to important conflicts and let established arrangements run without daily renegotiation.
 
-Seeds: [Persona 5 Royal](source-atlas.md#g124), [The Wire](source-atlas.md#w21), [Austen’s social worlds](source-atlas.md#w23).
+Related entries: [MAT-226](#time-access-expertise-and-nonmaterial-requirements).
+
+Seeds and references: [Persona 5 Royal](source-atlas.md#g124), [The Wire](source-atlas.md#w21), [Austen’s social worlds](source-atlas.md#w23).
 
 Selection: Urban shared-schedule negotiation is a different primary experience.
 
 ## Wayseed lattice
 
-**Priority: 5 Specialist.**
-
-
-MAT-197 is a grown component calibrated for a known ground-to-ground gate pair. Spare quantity cannot substitute for calibration knowledge. Passage remains an abstract transition; finite capacity and alternative routes prevent one exhausted lattice from ending all play.
+**SC · Play · 5 Specialist · Large/New.** Gap: route-link calibration and finite station capabilities; no flight model.
 
 A grown crystal stabilizes a ground-to-ground transit gate for a known destination pair. Mining more is less useful than learning how to repair and calibrate existing lattices. Settlements trade access, expertise and spares. Shipping uses abstract route transitions, while departure preparation happens in inhabited places. Capacity limits and recovery routes prevent one monopoly from ending all play.
 
-Seeds: [Mass Effect: Andromeda](source-atlas.md#g104), [Starsector](source-atlas.md#g120), [The Expanse](source-atlas.md#w15).
+Related entries: [MAT-197](#living-alien-and-cultivated-materials).
+
+Seeds and references: [Mass Effect: Andromeda](source-atlas.md#g104), [Starsector](source-atlas.md#g120), [The Expanse](source-atlas.md#w15).
 
 Selection: A science-fiction gate network is outside the current survival baseline.
 
 ## Materials with honest substitutes
 
-**Priority: 2 Complete.**
-
-
-Reed, canvas, reflective cloth, and rigid panels preserve different properties of an awning. Recipes should expose relevant requirements and acceptable tradeoffs, not pretend every substitute is equivalent or inferior. Unsupported combinations remain proposals rather than automatically successful inventions.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: typed performance ranges and previewable substitution consequences.
 
 An awning accepts reed, canvas or a rare reflective weave; each changes rain protection, noise, repair and price. Players choose an acceptable compromise instead of hunting one magical ingredient. Builders can publish a recipe's requirements rather than a closed shopping list. Keep a small number of meaningful properties visible and refuse substitutes whose crucial behavior is unsupported.
 
-Seeds: [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Rigid panels are another candidate substitute only when the required properties and supported construction permit them.
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Against the Storm](source-atlas.md#g45), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
 Selection: Practical substitutes keep useful crafting from becoming an exact-item grind.
 
