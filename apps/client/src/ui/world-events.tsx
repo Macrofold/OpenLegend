@@ -71,6 +71,7 @@ function ScopedWorldEvents({
   const generation = useRef(0);
   const controller = useRef<AbortController | null>(null);
   const loadedRevision = useRef(revision);
+  const loadedQuery = useRef<string | null>(null);
   const failedOlder = useRef(false);
   async function load(older = false) {
     controller.current?.abort();
@@ -97,6 +98,7 @@ function ScopedWorldEvents({
       });
       setCursor(page.nextCursor);
       setScanLimited(!!page.scanLimited);
+      loadedQuery.current = query;
       if (!older) {
         loadedRevision.current = atRevision;
         setNewEntries(false);
@@ -171,6 +173,8 @@ function ScopedWorldEvents({
           if (composing.current) return;
           if (draft.trim() === query) return;
           setEvents([]);
+          setCursor(undefined);
+          setError('');
           setQuery(draft.trim());
         }}
       >
@@ -188,6 +192,9 @@ function ScopedWorldEvents({
               composing.current = true;
             }}
             onCompositionEnd={() => {
+              composing.current = false;
+            }}
+            onBlur={() => {
               composing.current = false;
             }}
           />
@@ -213,17 +220,21 @@ function ScopedWorldEvents({
       <p className="ol-meta" role="status">
         {query && busy
           ? 'Searching…'
-          : query
-            ? `${events.length} ${events.length === 1 ? 'match' : 'matches'} for “${query}”${
-                scanLimited
-                  ? '. This search stopped at its record limit; older events remain to search.'
-                  : cursor
-                    ? '. Older events remain to search.'
-                    : '. End of the retained records.'
-              }`
-            : type === 'speech'
-              ? 'Speech you perceived across all conversations.'
-              : 'Events you perceived, in time order.'}
+          : error
+            ? 'Reading did not finish. Any entries already loaded are kept below.'
+            : query
+              ? loadedQuery.current !== query
+                ? 'Searching perceived events…'
+                : `${events.length} ${events.length === 1 ? 'match' : 'matches'} for “${query}”${
+                    scanLimited
+                      ? '. This search stopped at its record limit; older events remain to search.'
+                      : cursor
+                        ? '. Older events remain to search.'
+                        : '. End of the retained records.'
+                  }`
+              : type === 'speech'
+                ? 'Speech you perceived across all conversations.'
+                : 'Events you perceived, in time order.'}
       </p>
       {error && (
         <div className="ol-reading-error">
@@ -238,7 +249,7 @@ function ScopedWorldEvents({
           </Button>
         </div>
       )}
-      {!busy && !error && !events.length && (
+      {!busy && !error && loadedQuery.current === query && !events.length && (
         <p>
           {query
             ? `No matches in the perceived events searched.${cursor ? ' Search older events or change your words.' : ''}`

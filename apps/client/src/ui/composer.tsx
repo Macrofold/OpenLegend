@@ -61,7 +61,21 @@ export function Composer({
   const draftKey = composerDraftKey(scope, mode, npcId);
   const currentScope = useRef(scope);
   currentScope.current = scope;
-  const [sendIssue, setSendIssue] = useState<{ key: string; message: string } | null>(null);
+  const [sendIssues, setSendIssues] = useState<{
+    scope: string | null;
+    records: Record<string, string>;
+  }>({ scope, records: {} });
+  if (sendIssues.scope !== scope) setSendIssues({ scope, records: {} });
+  const sendIssue =
+    sendIssues.scope === scope && draftKey ? sendIssues.records[draftKey] : undefined;
+  function recordSendIssue(key: string, message?: string) {
+    setSendIssues((current) => {
+      const records = current.scope === scope ? { ...current.records } : {};
+      if (message) records[key] = message;
+      else delete records[key];
+      return { scope, records };
+    });
+  }
   const { draft, edit, clearSent } = useComposerDraft(scope, draftKey);
   const [sending, setSending] = useState(false);
   const sendLock = useRef(false);
@@ -233,7 +247,7 @@ export function Composer({
     const sent = { scope, key: draftKey, revision: draft.revision };
     sendLock.current = true;
     setSending(true);
-    setSendIssue(null);
+    recordSendIssue(sent.key);
     try {
       const result = nativeSpeech
         ? await post('/api/command', {
@@ -247,14 +261,13 @@ export function Composer({
             ...(mode === 'chat' ? { npcId: npc?.id, volume } : {}),
           });
       if (result.ok) clearSent(sent);
-      else if (currentScope.current === sent.scope)
-        setSendIssue({ key: sent.key, message: result.message });
+      else if (currentScope.current === sent.scope) recordSendIssue(sent.key, result.message);
     } catch (e) {
       if (currentScope.current === sent.scope)
-        setSendIssue({
-          key: sent.key,
-          message: `${String(e)} Sending was not confirmed. Check ${mode === 'chat' ? 'the conversation' : 'your recent invention work'} before sending again. Your draft is retained.`,
-        });
+        recordSendIssue(
+          sent.key,
+          `${String(e)} Sending was not confirmed. Check ${mode === 'chat' ? 'the conversation' : 'your recent invention work'} before sending again. Your draft is retained.`,
+        );
     } finally {
       sendLock.current = false;
       setSending(false);
@@ -415,9 +428,9 @@ export function Composer({
           </p>
         </div>
       )}
-      {sendIssue?.key === draftKey && (
+      {sendIssue && (
         <div className="ol-composer-send-issue">
-          <p role="alert">{sendIssue.message}</p>
+          <p role="alert">{sendIssue}</p>
           {mode === 'chat' && (
             <Button
               size="sm"

@@ -32,7 +32,7 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
           {signedOut ? (
             <>
               <h2>Enter your world</h2>
-              <p>Sign in with the account invited to this world.</p>
+              <p>Sign in with an account that has access to this world.</p>
             </>
           ) : forbidden ? (
             <>

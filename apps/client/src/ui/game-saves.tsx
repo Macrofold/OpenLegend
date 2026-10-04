@@ -65,6 +65,7 @@ export function GameSavesPanel({
     save: GameSaveSummary;
   }>();
   const confirmation = useRef<HTMLDivElement>(null);
+  const catalogControls = useRef<HTMLDivElement>(null);
   const confirmTrigger = useRef<HTMLElement | null>(null);
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
@@ -183,6 +184,12 @@ export function GameSavesPanel({
       setConfirm(null);
       setMessage(result.message ?? 'Done.');
       await refresh();
+      // A deleted row cannot receive focus back. Restore within this task only if its
+      // disappearing control left focus on the page, not after the user moved elsewhere.
+      requestAnimationFrame(() => {
+        if (visibleRef.current && document.activeElement === document.body)
+          catalogControls.current?.querySelector('button')?.focus();
+      });
     } catch (error) {
       setRowUncertain({ action, save });
       setMessage(
@@ -260,8 +267,8 @@ export function GameSavesPanel({
         </p>
         <p className="ol-setting-scope">Whole world · save permission required</p>
         <p className="ol-caption">
-          The HUD’s Saved status describes ordinary world persistence. A checkpoint is a separate
-          point you can deliberately load later.
+          “Saved” in the game’s status display reports the last ordinary save. A checkpoint is a
+          separate point you can deliberately load later.
         </p>
         {failure && (
           <div className="ol-notice" role="alert">
@@ -349,7 +356,7 @@ export function GameSavesPanel({
         )}
       </Section>
       <Section title="Choose a checkpoint" count={saves.length}>
-        <div className="ol-lifecycle-actions">
+        <div className="ol-lifecycle-actions" ref={catalogControls}>
           <Button
             size="sm"
             variant="quiet"

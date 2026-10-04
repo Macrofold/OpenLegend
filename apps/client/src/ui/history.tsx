@@ -219,7 +219,13 @@ function ScopedHistory({
           </>
         }
         empty={
-          !busy && !error && page ? <p>No story entries have been recorded yet.</p> : undefined
+          !busy && !error && page ? (
+            <p>
+              {conversation
+                ? 'No words have been recorded in this conversation yet.'
+                : 'No story entries have been recorded yet.'}
+            </p>
+          ) : undefined
         }
         items={items.map((item) => ({
           id: item.id,

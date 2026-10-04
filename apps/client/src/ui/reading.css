@@ -16,6 +16,14 @@
   flex-wrap: wrap;
 }
 
+.ol-journal-section > .ol-heading,
+.ol-promises > .ol-heading,
+.ol-journal .ol-journal-section > p,
+.ol-journal .ol-reading-view > p,
+.ol-journal .ol-promises > p {
+  margin-block: 0;
+}
+
 .ol-journal-section {
   min-height: 0;
   overflow: auto;

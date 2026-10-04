@@ -6,7 +6,7 @@ import './lifecycle.css';
 
 type PolicyDraft = {
   generation: string;
-  revision: number;
+  base: GameView['inventionPolicy'];
   playerLocked: boolean;
   agentLocked: boolean;
 };
@@ -28,7 +28,12 @@ export function InventionSettings({ view }: { view: GameView }) {
       >('/api/god/invention-policy', {});
       if (request !== latest.current) return;
       if (!result.ok) throw new Error(result.message || 'Could not read invention permissions.');
-      setEditing({ generation: result.generation, ...result.policy });
+      setEditing({
+        generation: result.generation,
+        base: result.policy,
+        playerLocked: result.policy.playerLocked,
+        agentLocked: result.policy.agentLocked,
+      });
     } catch (error) {
       if (request === latest.current) {
         setMessage(
@@ -48,11 +53,11 @@ export function InventionSettings({ view }: { view: GameView }) {
       latest.current++;
     };
   }, [load, view.godMode, view.worldId, view.saveTimeline]);
-  const stale = !!editing && editing.revision !== view.inventionPolicy.revision;
+  const stale = !!editing && editing.base.revision !== view.inventionPolicy.revision;
   const dirty =
     !!editing &&
-    (editing.playerLocked !== view.inventionPolicy.playerLocked ||
-      editing.agentLocked !== view.inventionPolicy.agentLocked);
+    (editing.playerLocked !== editing.base.playerLocked ||
+      editing.agentLocked !== editing.base.agentLocked);
   async function save() {
     if (!editing || busy || stale) return;
     setBusy(true);
@@ -61,7 +66,7 @@ export function InventionSettings({ view }: { view: GameView }) {
     try {
       const result = await post('/api/god/invention-policy/save', {
         expectedGeneration: editing.generation,
-        expectedRevision: editing.revision,
+        expectedRevision: editing.base.revision,
         playerLocked: editing.playerLocked,
         agentLocked: editing.agentLocked,
       });
@@ -117,8 +122,9 @@ export function InventionSettings({ view }: { view: GameView }) {
       {loading && <p role="status">Reading the current world permissions…</p>}
       {stale && (
         <p role="status">
-          The world permissions changed while this panel was open. Your draft is still shown. Reload
-          the current permissions before editing or saving.
+          The world permissions changed while this panel was open.{' '}
+          {dirty ? 'Your draft is still shown.' : 'The earlier values are still shown.'} Reload the
+          current permissions before editing or saving.
         </p>
       )}
       {view.godMode && (

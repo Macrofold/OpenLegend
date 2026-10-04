@@ -196,13 +196,21 @@ export function ConversationThread({
         id={id}
         ref={log}
         className="ol-thread"
+        // This reader restores prepended history itself; native anchoring would apply it twice.
+        style={{ overflowAnchor: 'none' }}
         role="log"
         aria-label={ariaLabel}
         aria-live={liveAnnouncements}
         onScroll={(event) => {
           const element = event.currentTarget;
+          previousHeight.current = element.scrollHeight;
           const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight <= 2;
           followingBottom.current = atBottom;
+          if (!atBottom && scrollFrame.current !== null) {
+            // A deliberate move into history cancels the pending follow-bottom frame.
+            cancelAnimationFrame(scrollFrame.current);
+            scrollFrame.current = null;
+          }
           if (atBottom && unread.current) {
             unread.current = false;
             setShowNewMessage(false);

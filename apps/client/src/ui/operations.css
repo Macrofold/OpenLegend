@@ -51,8 +51,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-4);
 }
-.ol-operations-summary h2,
-.ol-operations-summary p {
+.ol-operations .ol-operations-summary h2,
+.ol-operations .ol-operations-summary p {
   margin: 0 0 var(--space-2);
 }
 .ol-operations-summary-actions {
@@ -96,6 +96,10 @@
 .ol-operations-task-panel > .ol-sheet-section {
   max-inline-size: 800px;
 }
+.ol-operations .ol-sheet-section > p,
+.ol-operations-form > p {
+  margin-block: 0;
+}
 .ol-operations-form label {
   display: grid;
   min-inline-size: 0;
@@ -130,8 +134,8 @@
 .ol-operations-link-result > .ol-btn {
   justify-self: start;
 }
-.ol-operations-confirm p,
-.ol-operations-link-result p {
+.ol-operations .ol-operations-confirm p,
+.ol-operations .ol-operations-link-result p {
   margin: 0;
 }
 .ol-operations .ol-btn {

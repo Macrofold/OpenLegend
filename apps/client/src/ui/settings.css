@@ -1,0 +1,68 @@
+.ol-settings {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  gap: var(--space-4);
+}
+.ol-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.ol-settings-tabs [role='tab'] {
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+}
+.ol-settings-tabs [data-selected] {
+  color: var(--ink);
+  background: var(--surface-selected);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.ol-settings-tabs [data-focus-visible] {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ol-settings-page[data-inert] {
+  display: none;
+}
+.ol-settings-page label {
+  display: block;
+  margin-block: var(--space-3);
+}
+.ol-settings-page :is(select, .ol-segmented) {
+  margin-block-start: var(--space-2);
+}
+.ol-shortcut-list {
+  margin: 0;
+}
+.ol-shortcut-list > div {
+  display: grid;
+  grid-template-columns: minmax(64px, 0.4fr) 1fr;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--line);
+}
+.ol-shortcut-list dt {
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+.ol-shortcut-list dd {
+  margin: 0;
+}
+.ol-game-menu {
+  display: grid;
+  gap: var(--space-4);
+}
+.ol-game-menu .ol-section > .ol-btn {
+  inline-size: 100%;
+  justify-content: flex-start;
+  margin-block: var(--space-1);
+}
+.ol-game-menu a {
+  display: block;
+  padding-block: var(--space-3);
+}

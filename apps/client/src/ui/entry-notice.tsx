@@ -7,7 +7,7 @@ const MESSAGES: Record<string, { title: string; detail: string }> = {
   'invite-accepted': {
     title: 'Invitation accepted',
     detail:
-      'Your access is ready. An invitation with a character opens the game; other roles open World operations.',
+      'The invitation was accepted for this account. Your character or World operations opens according to your current access.',
   },
   'invite-unavailable': {
     title: 'This invitation is unavailable',

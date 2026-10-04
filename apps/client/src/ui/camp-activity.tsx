@@ -282,7 +282,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     status && status.revision >= view.revision ? status.value.status : view.player.activity;
   const stoppable =
     !!activity && ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(activity.status);
-  const working = stoppable || !!view.player.action;
+  const working = stoppable || view.player.hasWork;
 
   function selectionKey(key: string) {
     const field = descriptor?.fields[key];
@@ -766,7 +766,10 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
             </div>
           ) : (
-            <p>{view.player.action?.label ?? 'No current task.'}</p>
+            <p>
+              {view.player.action?.label ??
+                (working ? 'Work is queued or paused.' : 'No current task.')}
+            </p>
           )}
           {working && (
             <>

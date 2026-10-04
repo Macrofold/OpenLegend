@@ -88,8 +88,7 @@ export function MemoryHistory({
         baseline.current = atRevision;
         // The first Older press replaces the live window with two history pages.
         // Its newest row is unchanged, so the shared reader preserves the visible anchor.
-        if (filtered || !recent || loaded !== null)
-          setOpeningRevision((value) => value + 1);
+        if (filtered || !recent || loaded !== null) setOpeningRevision((value) => value + 1);
       }
     } catch (failure) {
       if (id === request.current)
@@ -138,6 +137,10 @@ export function MemoryHistory({
         onSubmit={(event) => {
           event.preventDefault();
           if (composing.current) return;
+          if (draft.trim() === query) return;
+          setLoaded(null);
+          setNext(null);
+          setError('');
           setQuery(draft.trim());
         }}
       >
@@ -155,6 +158,9 @@ export function MemoryHistory({
               composing.current = true;
             }}
             onCompositionEnd={() => {
+              composing.current = false;
+            }}
+            onBlur={() => {
               composing.current = false;
             }}
           />
@@ -187,19 +193,23 @@ export function MemoryHistory({
       <p className="ol-meta" role="status">
         {busy
           ? 'Loading memories…'
-          : filtered
-            ? `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
-                scanLimited
-                  ? '. This search stopped at its record limit; older memories remain to search.'
-                  : next
-                    ? '. Older memories remain to search.'
-                    : '. End of the retained records.'
-              }`
-            : loaded !== null && !next
-              ? 'Reached the oldest retained memory.'
-              : loaded !== null
-                ? 'Reading retained history, oldest first.'
-                : 'Recent retained memories, oldest first.'}
+          : error
+            ? 'Reading did not finish. Any entries already loaded are kept below.'
+            : filtered
+              ? loaded === null
+                ? 'Searching memories…'
+                : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
+                    scanLimited
+                      ? '. This search stopped at its record limit; older memories remain to search.'
+                      : next
+                        ? '. Older memories remain to search.'
+                        : '. End of the retained records.'
+                  }`
+              : loaded !== null && !next
+                ? 'Reached the oldest retained memory.'
+                : loaded !== null
+                  ? 'Reading retained history, oldest first.'
+                  : 'Recent retained memories, oldest first.'}
       </p>
       {error && (
         <div className="ol-reading-error">
@@ -214,31 +224,31 @@ export function MemoryHistory({
           </Button>
         </div>
       )}
-      {(staleRecent || loaded !== null) && (
-        <Button
-          size="sm"
-          isDisabled={busy}
-          onPress={() => {
-            cancel();
-            setError('');
-            if (!filtered && recent) {
-              setLoaded(null);
-              setNext(null);
-              setSnapshot(recent);
-              baseline.current = recentRevision;
-              setOpeningRevision((value) => value + 1);
-            } else void load(false);
-          }}
-        >
-          {staleRecent
-            ? filtered
-              ? 'Updated memories — search again'
-              : 'New memories — read latest'
-            : filtered
-              ? 'Search latest memories'
-              : 'Return to recent memories'}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        isDisabled={busy}
+        onPress={() => {
+          cancel();
+          setError('');
+          if (!filtered && recent) {
+            setLoaded(null);
+            setNext(null);
+            setSnapshot(recent);
+            baseline.current = recentRevision;
+            setOpeningRevision((value) => value + 1);
+          } else void load(false);
+        }}
+      >
+        {staleRecent
+          ? filtered
+            ? 'Updated memories — search again'
+            : 'New memories — read latest'
+          : filtered
+            ? 'Search latest memories'
+            : loaded !== null
+              ? 'Return to recent memories'
+              : 'Refresh memories'}
+      </Button>
       <ConversationThread
         conversationKey={`${actorId}:${owned}:${query}:${thoughts}`}
         visible={visible}
@@ -265,6 +275,7 @@ export function MemoryHistory({
         }))}
         empty={
           !busy &&
+          (!filtered || loaded !== null) &&
           !error && (
             <p className="ol-meta">
               {filtered

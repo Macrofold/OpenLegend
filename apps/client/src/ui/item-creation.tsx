@@ -20,15 +20,17 @@ export function ItemCreationModal({
   notify(text: string): void;
 }) {
   const [definitionId, setDefinitionId] = useState(initialDefinitionId ?? '');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('1');
+  const amount = Number(quantity);
+  const validAmount = !!quantity.trim() && Number.isSafeInteger(amount) && amount >= 1;
   const [saving, setSaving] = useState(false),
     [error, setError] = useState('');
   // An uncertain HTTP result can be retried without duplicating creation.
   const attempt = useRef<{ body: string; id: string } | null>(null);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (saving || !definitionId || !Number.isSafeInteger(quantity) || quantity < 1) return;
-    const body = JSON.stringify({ definitionId, quantity, destination: target });
+    if (saving || !definitionId || !validAmount) return;
+    const body = JSON.stringify({ definitionId, quantity: amount, destination: target });
     if (attempt.current?.body !== body) attempt.current = { body, id: crypto.randomUUID() };
     setSaving(true);
     setError('');
@@ -87,9 +89,10 @@ export function ItemCreationModal({
                   max={Number.MAX_SAFE_INTEGER}
                   step={1}
                   value={quantity}
-                  onChange={(event) => setQuantity(Number(event.target.value))}
+                  onChange={(event) => setQuantity(event.target.value)}
                 />
               </label>
+              {!validAmount && <p className="ol-caption">Enter a whole quantity of at least one.</p>}
               {error && (
                 <p role="alert" className="ol-form-error">
                   {error}
@@ -103,9 +106,9 @@ export function ItemCreationModal({
               <Button
                 type="submit"
                 busy={saving}
-                disabled={!definitionId || !Number.isSafeInteger(quantity) || quantity < 1}
+                disabled={!definitionId || !validAmount}
               >
-                Create {quantity} {quantity === 1 ? 'item' : 'items'}
+                {validAmount ? `Create ${amount} ${amount === 1 ? 'item' : 'items'}` : 'Create item'}
               </Button>
             </footer>
           </form>

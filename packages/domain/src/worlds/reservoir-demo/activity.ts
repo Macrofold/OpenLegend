@@ -8,6 +8,7 @@ import {
   RESERVOIR_CONSUMER_GUIDE,
 } from '../../world-modules.js';
 import { observerDescription } from '../base/knowledge.js';
+import { observeActor } from '../../kernel.js';
 
 /** A constructed body's finite recharge session composes the existing replenish operation.
  * No electrical model, free resource source, deadline budget or item stock is invented. */
@@ -24,7 +25,7 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
         id: 'reservoir-demo:recharge-session',
         label: 'Recharge from this supply',
         description:
-          'Approach this compatible supply and recharge for one native work session. The session ends when its work time finishes, your reservoir fills or the finite supply is exhausted. Stopping retains only the amount already transferred.',
+          'Approach this compatible supply and recharge for one session. The session ends when its work time finishes, your reservoir fills or the finite supply is exhausted. Stopping retains only the amount already transferred.',
         presentation: { kind: 'replenish-session', target: 'sourceId', workMode: 'mode' },
         fields: {
           sourceId: {
@@ -110,6 +111,28 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
       requestIds: [requestId],
       accessible: true,
       reason: `${definition.reservoir.workSeconds} seconds of game time, plus approach. ${RESERVOIR_CONSUMER_GUIDE.drain}`,
+    };
+  },
+  requestChoices(world, actorId, prepared) {
+    const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
+    if (!observed) return { choices: [], warnings: ['Your character is unavailable.'] };
+    // Match the existing bounded activity-context window; omitted is never unavailable.
+    const choices = observed.visibleEntities.slice(0, 32).flatMap((source) => {
+      const choice = RESERVOIR_ACTIVITY_HOST.requestChoice!(
+        world,
+        actorId,
+        'reservoir-demo:recharge-session',
+        'sourceId',
+        source.id,
+      );
+      return choice ? [choice] : [];
+    });
+    return {
+      choices,
+      warnings:
+        observed.visibleEntities.length > 32
+          ? ['Some visible task supplies are omitted. Select an object to inspect its task.']
+          : [],
     };
   },
   reviewRequest(world, _actorId, request) {

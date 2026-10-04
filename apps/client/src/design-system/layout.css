@@ -137,6 +137,73 @@ body,
 .ol-player-state {
   margin: 0 !important;
 }
+.ol-character-link.ol-btn {
+  padding: 0;
+  min-height: var(--control-md);
+  height: auto;
+  justify-content: space-between;
+  inline-size: 100%;
+  gap: var(--space-2);
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: start;
+}
+.ol-survival-name {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+}
+.ol-character-link.ol-btn > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  inline-size: 100%;
+}
+.ol-current-work {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-start: var(--space-3);
+  margin-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.ol-current-work strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ol-current-work .ol-btn {
+  justify-self: start;
+}
+.ol-save-failure {
+  color: var(--danger);
+}
+.ol-save-failure .ol-btn {
+  display: block;
+  margin-block-start: var(--space-2);
+}
+.ol-subject-picking {
+  position: absolute;
+  inset-block-start: var(--hud-inset);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  inline-size: min(420px, calc(100% - 2 * var(--hud-inset)));
+  padding: var(--space-4);
+  z-index: calc(var(--z-sheet) + 1);
+}
+.ol-subject-picking > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ol-hud[data-picking='true'] :is(.ol-clock-position, .ol-quick-position, .ol-rail, .ol-top-tools) {
+  visibility: hidden;
+}
+.ol-hud[data-picking='true'] .ol-survival {
+  visibility: hidden;
+}
 .ol-clock-position {
   position: absolute;
   top: var(--hud-inset);

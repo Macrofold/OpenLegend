@@ -716,10 +716,11 @@ export function advanceReservoirs(
 }
 export function validateWorldModules(world: WorldState): void {
   if (
-    !hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
-    Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim())
+    world.presentation !== undefined &&
+    (!hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
+      Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
   )
-    throw new Error('Missing or invalid current world presentation.');
+    throw new Error('Invalid world presentation.');
   const interval = world.nativeInterval;
   if (
     interval !== undefined &&

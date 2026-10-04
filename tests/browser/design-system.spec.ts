@@ -7,7 +7,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
   page,
 }, info) => {
   const game = await createGameServer({
-    config: readConfig({ AI_BUDGET_USD: '0' }),
+    config: readConfig({ OPEN_LEGEND_GOD_MODE: 'true', AI_BUDGET_USD: '0' }),
     store: await testRepository(),
     production: true,
     tick: false,
@@ -21,10 +21,10 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await expect.poll(() => game.service.paused).toBe(false);
     await page.getByRole('button', { name: 'Settings and help', exact: true }).click();
-    await page.getByLabel('World theme', { exact: true }).selectOption('fantasy');
+    await page.getByLabel('Interface theme', { exact: true }).selectOption('fantasy');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'fantasy');
     await page.screenshot({ path: info.outputPath('fantasy.png') });
-    await page.getByLabel('World theme', { exact: true }).selectOption('scifi');
+    await page.getByLabel('Interface theme', { exact: true }).selectOption('scifi');
     await page
       .locator('.ol-radio')
       .filter({ has: page.getByRole('radio', { name: '130%', exact: true }) })
@@ -32,8 +32,9 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
     await page.getByRole('checkbox', { name: 'Reduce motion', exact: true }).check();
     await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', 'true');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.getByRole('button', { name: 'World agent', exact: true }).click();
+    await page.locator('.ol-rail').getByRole('button', { name: 'Create', exact: true }).click();
     await page.getByRole('button', { name: 'New conversation', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
     await page.screenshot({ path: info.outputPath('scifi-scaled.png') });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: info.outputPath('mobile-scaled.png') });
@@ -48,7 +49,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
       expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
     }
-    for (const name of ['Inventory', 'Crafting', 'Character', 'Journal', 'World agent', 'In view'])
+    for (const name of ['Inventory', 'Crafting', 'Character', 'Journal', 'Create', 'In view'])
       await page
         .locator('.ol-rail')
         .getByRole('button', { name, exact: true })

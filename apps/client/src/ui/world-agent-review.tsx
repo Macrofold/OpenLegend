@@ -210,6 +210,12 @@ export function WorldAgentReview({
                 </Tag>
                 <h3>{review.draft.title ?? review.draft.intent}</h3>
                 <p>{review.plan.validation.semantics}</p>
+                {review.draft.title && (
+                  <details>
+                    <summary>Original purpose</summary>
+                    <p>{review.draft.intent}</p>
+                  </details>
+                )}
                 <WorldAgentPreparationDetails
                   preparation={review.plan.preparation ?? review.draft.preparation}
                   preparationRevision={review.plan.revision}

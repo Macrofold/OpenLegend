@@ -160,7 +160,7 @@ export function Inventions({
       });
       if (!result.ok && !result.jobId) throw new Error(result.message);
       // A late response may clear only the submitted draft, never a newly opened request.
-      if (formRef.current.requestId === submission.requestId)
+      if (formRef.current.requestId === submission.requestId) {
         setForm({
           ...formRef.current,
           text: '',
@@ -168,10 +168,11 @@ export function Inventions({
           continuation: undefined,
           requestId: crypto.randomUUID(),
         });
+        setView('history');
+      }
       if (submission.continuation) dismissed.current.add(submission.continuation.parentId);
       setChoiceId(undefined);
       setRefresh((value) => value + 1);
-      if (formRef.current.text === '') setView('history');
       if (!result.ok) setError(result.message);
     } catch (error) {
       setError(String(error));
@@ -236,10 +237,6 @@ export function Inventions({
   );
   return (
     <div className="ol-inventions ol-player-workshop">
-      <header className="ol-creator-context">
-        <h3>Your workshop</h3>
-        <p className="ol-caption">Develop an idea or use a technique this character has learned.</p>
-      </header>
       <nav className="ol-creator-views" aria-label="Your workshop views">
         <Button variant="quiet" aria-pressed={view === 'idea'} onPress={() => setView('idea')}>
           New idea
@@ -319,9 +316,39 @@ export function Inventions({
           Review in workshop before installing
         </label>
         <p className="ol-caption">
-          Workshop can inspect known recipes and supported systems, explain limitations and prepare
-          a saved draft. Apply is a separate action; existing objects never change automatically.
+          {form.mode === 'workshop'
+            ? 'Keep a saved proposal for review. Apply installs it when you choose.'
+            : 'A supported recipe may be learned from this request. Crafting comes later.'}
         </p>
+        <Button
+          variant="primary"
+          onPress={() => void submit()}
+          isDisabled={pending || !form.text.trim()}
+        >
+          {form.continuation
+            ? 'Send follow-up'
+            : form.mode === 'workshop'
+              ? 'Prepare workshop draft'
+              : 'Request invention'}
+        </Button>
+        {form.continuation && (
+          <Button
+            variant="quiet"
+            isDisabled={pending}
+            onPress={() =>
+              setForm({
+                ...form,
+                text: '',
+                candidateJson: undefined,
+                continuation: undefined,
+                requestId: crypto.randomUUID(),
+                conversationId: crypto.randomUUID(),
+              })
+            }
+          >
+            Start a separate invention
+          </Button>
+        )}
         <Button
           size="sm"
           variant="quiet"
@@ -386,31 +413,6 @@ export function Inventions({
             }
           />
         </details>
-        <Button onPress={() => void submit()} isDisabled={pending || !form.text.trim()}>
-          {form.continuation
-            ? 'Send follow-up'
-            : form.mode === 'workshop'
-              ? 'Prepare workshop draft'
-              : 'Request invention'}
-        </Button>
-        {form.continuation && (
-          <Button
-            variant="quiet"
-            isDisabled={pending}
-            onPress={() =>
-              setForm({
-                ...form,
-                text: '',
-                candidateJson: undefined,
-                continuation: undefined,
-                requestId: crypto.randomUUID(),
-                conversationId: crypto.randomUUID(),
-              })
-            }
-          >
-            Start a separate invention
-          </Button>
-        )}
       </section>
       <section
         hidden={view !== 'history'}

@@ -250,7 +250,7 @@ export function containerPage(
   const page = contentsQuery(world, containerId, scopeKey(scope), after);
   if (page.status !== 'complete')
     throw new Error('Contents are temporarily unavailable. Refresh before continuing.');
-  const items: InventoryItemView[] = [],
+  const items: ItemInstance[] = [],
     children = page.values;
   let scanned = 0,
     next: string | undefined;
@@ -279,7 +279,7 @@ export function containerPage(
         : !query ||
           world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query))
     )
-      items.push(inventoryItemView(service, scope, item));
+      items.push(item);
   }
   return {
     ok: true,
@@ -304,7 +304,7 @@ export function containerPage(
         ...observerName(world, scope.actorId, parent.id),
         revision: parent.inventoryRevision ?? 0,
       })),
-    items,
+    items: inventoryItemsView(service, scope, items),
     ...(next ? { next } : {}),
   };
 }
@@ -764,6 +764,37 @@ export function inventoryItemView(
   scope: RequestScope,
   item: ItemInstance,
 ): InventoryItemView {
+  return projectInventoryItem(service, scope, item, (command) =>
+    service.previewCommand(command, scope.actorId),
+  );
+}
+
+/** Split lots can offer the same native preparation. Reuse its admission result
+ * only within this synchronous batch, with the same world and controlling actor. */
+export function inventoryItemsView(
+  service: WorldService,
+  scope: RequestScope,
+  items: ItemInstance[],
+): InventoryItemView[] {
+  const previews = new Map<string, ReturnType<WorldService['previewCommand']>>();
+  const preview = (command: ActionOption['command']) => {
+    const key = JSON.stringify(command);
+    let result = previews.get(key);
+    if (!result) {
+      result = service.previewCommand(command, scope.actorId);
+      previews.set(key, result);
+    }
+    return result;
+  };
+  return items.map((item) => projectInventoryItem(service, scope, item, preview));
+}
+
+function projectInventoryItem(
+  service: WorldService,
+  scope: RequestScope,
+  item: ItemInstance,
+  preview: (command: ActionOption['command']) => ReturnType<WorldService['previewCommand']>,
+): InventoryItemView {
   const world = service.world,
     player = world.entities[scope.actorId]!,
     actor = player.actor!;
@@ -810,21 +841,23 @@ export function inventoryItemView(
     applicableConsumption(world, player)
   ) {
     const command = { type: 'eat' as const, itemId: item.id };
-    const preview = service.previewCommand(command, player.id);
+    const availability = preview(command);
     actions.push(
       action(
         `eat-${item.id}`,
         applicableConsumption(world, player)!.label,
         command,
-        preview.ok,
-        preview.ok ? undefined : preview.message,
+        availability.ok,
+        availability.ok ? undefined : availability.message,
       ),
     );
   }
   if (accessiblePossession(world, player.id, item.id))
     for (const option of nativeInventoryActions(world, item)) {
-      const preview = service.previewCommand(option.command, player.id);
-      actions.push(action(option.id, option.label, option.command, preview.ok, preview.message));
+      const availability = preview(option.command);
+      actions.push(
+        action(option.id, option.label, option.command, availability.ok, availability.message),
+      );
     }
   if (item.individuality === 'homogeneous' && item.quantity > 1)
     actions.push(

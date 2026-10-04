@@ -1,10 +1,10 @@
-import type { Command, ItemInstance, NativePreparation, WorldState } from '../../types.js';
+import type { ItemInstance, NativePreparation, WorldState } from '../../types.js';
 import { BASE_FAMILY_FACTS } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 
 /** Vocabulary belongs to the installed native capability, not to an inventory widget.
  * These adapters describe the bundled native families; they do not install effects. */
-export const BASE_WORLD_PRESENTATION: WorldState['presentation'] = {
+export const BASE_WORLD_PRESENTATION: NonNullable<WorldState['presentation']> = {
   worldName: 'The first clearing',
   locationName: 'The first clearing',
   timeLabel: 'Time in the wilderness',
@@ -36,7 +36,7 @@ export const BASE_ACTION_DESCRIPTIONS = {
     'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
 };
 
-const actionIcons: Partial<Record<Command['type'], string>> = {
+const actionIcons: Readonly<Partial<Record<string, string>>> = {
   move: 'action.walk',
   prepare: 'action.craft',
   harvest: 'action.gather',
@@ -56,7 +56,7 @@ const actionIcons: Partial<Record<Command['type'], string>> = {
   teach: 'action.talk',
 };
 export function nativeActionIcon(type: string): string {
-  return actionIcons[type as Command['type']] ?? `action.${type}`;
+  return (Object.hasOwn(actionIcons, type) ? actionIcons[type] : undefined) ?? `action.${type}`;
 }
 
 export function nativeGatherShortcut(world: WorldState, definitionId: string) {

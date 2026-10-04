@@ -67,12 +67,15 @@ export function WorldInspection({ actorId }: { actorId: string }) {
     void read<Inspection>('ol_inspect', ref, (value) => {
       setInspection(value);
       const resolved = value.node?.ref ?? value.ref;
-      if (resolved) setTrail((previous) => {
-        const entry = { ref: resolved, label: value.node?.label ?? resolved.id };
-        if (newPath) return [entry];
-        const existing = previous.findIndex((item) => item.ref.kind === resolved.kind && item.ref.id === resolved.id);
-        return existing < 0 ? [...previous, entry] : [...previous.slice(0, existing), entry];
-      });
+      if (resolved)
+        setTrail((previous) => {
+          const entry = { ref: resolved, label: value.node?.label ?? resolved.id };
+          if (newPath) return [entry];
+          const existing = previous.findIndex(
+            (item) => item.ref.kind === resolved.kind && item.ref.id === resolved.id,
+          );
+          return existing < 0 ? [...previous, entry] : [...previous.slice(0, existing), entry];
+        });
       setDirection(ref.kind === 'entity' || ref.kind === 'item' ? 'both' : 'out');
       setExtra(undefined);
       setTrace(undefined);
@@ -107,14 +110,17 @@ export function WorldInspection({ actorId }: { actorId: string }) {
   const [direction, setDirection] = useState<'out' | 'in' | 'both'>('out');
   const page = inspection?.relationships;
   return (
-    <section className="ol-inventions ol-creator-page" aria-label="World-owner relationship inspection">
+    <section
+      className="ol-inventions ol-creator-page"
+      aria-label="World-owner relationship inspection"
+    >
       <header className="ol-creator-context">
-      <Tag tone="highlight">God mode · Read-only inspection</Tag>
-      <h3>World relationships</h3>
-      <p>
-        This reads world records, not your character’s knowledge. Relationships are source-backed,
-        but not a complete interaction proof. Reading uses no creation allowance.
-      </p>
+        <Tag tone="highlight">God mode · Read-only inspection</Tag>
+        <h3>World relationships</h3>
+        <p>
+          This reads world records, not your character’s knowledge. Relationships are source-backed,
+          but not a complete interaction proof. Reading uses no creation allowance.
+        </p>
       </header>
       <form
         className="ol-inspection-search"
@@ -141,24 +147,54 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </label>
         <label>
           Name or ID{' '}
-          <input ref={queryInput} value={query} maxLength={200} onChange={(event) => setQuery(event.target.value)} />
+          <input
+            ref={queryInput}
+            value={query}
+            maxLength={200}
+            onChange={(event) => setQuery(event.target.value)}
+          />
         </label>
         <div className="ol-agent-tools">
-        <Button type="submit" size="sm" disabled={busy}>
-          Search
-        </Button>
-        {query && <Button type="button" variant="quiet" size="sm" disabled={busy} onPress={() => { setQuery(''); setNodes([]); setCursor(null); setSearched(false); queryInput.current?.focus(); }}>Clear search</Button>}
+          <Button type="submit" size="sm" disabled={busy}>
+            Search
+          </Button>
+          {query && (
+            <Button
+              type="button"
+              variant="quiet"
+              size="sm"
+              disabled={busy}
+              onPress={() => {
+                setQuery('');
+                setNodes([]);
+                setCursor(null);
+                setSearched(false);
+                queryInput.current?.focus();
+              }}
+            >
+              Clear search
+            </Button>
+          )}
         </div>
       </form>
       <div className="ol-agent-tools">
-        <Button size="sm" variant="quiet" disabled={busy} onPress={() => inspect({ kind: 'entity', id: actorId }, true)}>
+        <Button
+          size="sm"
+          variant="quiet"
+          disabled={busy}
+          onPress={() => inspect({ kind: 'entity', id: actorId }, true)}
+        >
           Inspect your character
         </Button>
         <Button
           size="sm"
           disabled={busy}
           variant="quiet"
-          onPress={() => void read('ol_activity', { actorId }, (value) => setExtra({ title: 'Your character’s current work', value }))}
+          onPress={() =>
+            void read('ol_activity', { actorId }, (value) =>
+              setExtra({ title: 'Your character’s current work', value }),
+            )
+          }
         >
           Current work
         </Button>
@@ -166,7 +202,11 @@ export function WorldInspection({ actorId }: { actorId: string }) {
           size="sm"
           disabled={busy}
           variant="quiet"
-          onPress={() => void read('ol_evidence', { actorId, limit: 10 }, (value) => setExtra({ title: 'Retained evidence for your character', value }))}
+          onPress={() =>
+            void read('ol_evidence', { actorId, limit: 10 }, (value) =>
+              setExtra({ title: 'Retained evidence for your character', value }),
+            )
+          }
         >
           Retained evidence
         </Button>
@@ -177,8 +217,14 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </p>
       )}
       {busy && <p role="status">Reading current records…</p>}
-      {searched && <p className="ol-caption">{submitted ? `Results for “${submitted}”` : 'Records in the selected search scope'}</p>}
-      {searched && !nodes.length && !busy && !error && <p role="status">No matching records on this search page. Try another name or ID.</p>}
+      {searched && (
+        <p className="ol-caption">
+          {submitted ? `Results for “${submitted}”` : 'Records in the selected search scope'}
+        </p>
+      )}
+      {searched && !nodes.length && !busy && !error && (
+        <p role="status">No matching records on this search page. Try another name or ID.</p>
+      )}
       <ul className="ol-inspection-list" aria-label="World search results">
         {nodes.map((node) => (
           <li key={key(node.ref)}>
@@ -205,16 +251,42 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       {root && page && (
         <>
           <nav className="ol-inspection-breadcrumbs" aria-label="Inspection path">
-            {trail.map((entry, index) => index === trail.length - 1
-              ? <span key={key(entry.ref)} aria-current="page">{entry.label}</span>
-              : <Button key={key(entry.ref)} size="sm" variant="quiet" disabled={busy} onPress={() => inspect(entry.ref)}>{entry.label}</Button>)}
-            {trail.length > 1 && <Button size="sm" variant="quiet" disabled={busy} onPress={() => { const prior = trail.at(-2); if (prior) inspect(prior.ref); }}>Back one source</Button>}
+            {trail.map((entry, index) =>
+              index === trail.length - 1 ? (
+                <span key={key(entry.ref)} aria-current="page">
+                  {entry.label}
+                </span>
+              ) : (
+                <Button
+                  key={key(entry.ref)}
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy}
+                  onPress={() => inspect(entry.ref)}
+                >
+                  {entry.label}
+                </Button>
+              ),
+            )}
+            {trail.length > 1 && (
+              <Button
+                size="sm"
+                variant="quiet"
+                disabled={busy}
+                onPress={() => {
+                  const prior = trail.at(-2);
+                  if (prior) inspect(prior.ref);
+                }}
+              >
+                Back one source
+              </Button>
+            )}
           </nav>
           <h3>{inspection.node?.label ?? root.id}</h3>
           <p className="ol-caption">
             {root.kind} · {root.id} · version {root.version.slice(0, 12)}
           </p>
-          <div className="ol-agent-tools">
+          <div className="ol-agent-tools ol-creator-views" role="group" aria-label="Source relationship controls">
             <Button
               size="sm"
               disabled={busy}
@@ -227,8 +299,8 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                 size="sm"
                 key={value}
                 disabled={busy}
-              variant="quiet"
-              aria-pressed={direction === value}
+                variant="quiet"
+                aria-pressed={direction === value}
                 onPress={() => {
                   setDirection(value);
                   relationships(value);
@@ -267,7 +339,12 @@ export function WorldInspection({ actorId }: { actorId: string }) {
               <li key={text}>{text}</li>
             ))}
           </ul>
-          {!page.edges.length && <p>No relationships are recorded in this projected page. This does not prove the subject has no other relationships.</p>}
+          {!page.edges.length && (
+            <p>
+              No relationships are recorded in this projected page. This does not prove the subject
+              has no other relationships.
+            </p>
+          )}
           <ul className="ol-inspection-list" aria-label="Relationships">
             {page.edges.map((edge) => {
               const target = key(edge.source) === key(root) ? edge.target : edge.source;
@@ -313,6 +390,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
           )}
           <details>
             <summary>Exact source record</summary>
+            <p className="ol-caption">Source revision: {root.version}</p>
             <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {JSON.stringify(inspection.data, null, 2)}
             </pre>

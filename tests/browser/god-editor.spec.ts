@@ -20,6 +20,7 @@ test('a discarded person draft can refresh immediately and stays readable at nar
     await page.goto(`http://127.0.0.1:${address.port}`);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 20_000 });
     await page.getByRole('button', { name: 'Character', exact: true }).click();
+    await page.getByText('God mode · Character controls', { exact: true }).click();
     await page.getByRole('button', { name: 'Edit Person', exact: true }).click();
     const editor = page.getByRole('dialog', { name: /^Edit / });
     await expect(editor).toBeVisible();

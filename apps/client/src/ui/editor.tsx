@@ -157,9 +157,7 @@ export function EditorPanel({
           )}
         </div>
         <div className="ol-creator-window-tools">
-          <Button size="sm" variant="quiet" icon="ui.recenter" onPress={center}>
-            Center window
-          </Button>
+          <IconButton icon="ui.recenter" label="Center window" onPress={center} />
           <IconButton
             icon="ui.close"
             label={`Close ${title}`}

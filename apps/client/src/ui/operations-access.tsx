@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Section, Tag } from '../design-system/components';
@@ -55,39 +55,67 @@ export function AccessSection({
   const [chosen, setChosen] = useState<AccessCapability[]>(['spectate']);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [link, setLink] = useState<string | null>(null);
+  const [link, setLink] = useState<{
+    url: string;
+    label: string;
+    role: Role;
+    character?: string;
+  }>();
   const [copyMessage, setCopyMessage] = useState('');
   const [removing, setRemoving] = useState<string | null>(null);
+  const removalConfirmation = useRef<HTMLDivElement>(null);
+  const removalRow = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (removing) removalConfirmation.current?.focus();
+  }, [removing]);
+  function keepAccess() {
+    setRemoving(null);
+    requestAnimationFrame(() => removalRow.current?.querySelector('button')?.focus());
+  }
   const characterAvailable = access.candidates.some((candidate) => candidate.actorId === actorId);
   const delegable = OPERATOR_OPTIONS.filter((capability) => view.capabilities.includes(capability));
   async function run(
     request: () => Promise<{ ok: boolean; message?: string; link?: string }>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     setBusy(true);
     setMessage('');
     try {
       const result = await request();
       setMessage(result.message ?? (result.ok ? 'Done.' : 'The request was not accepted.'));
-      if (result.ok && result.link) setLink(result.link);
+      return result.ok;
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : String(reason));
+      setMessage(
+        `The result was not confirmed. Review the refreshed lists before making another change. ${reason instanceof Error ? reason.message : String(reason)}`,
+      );
+      return false;
     } finally {
       setBusy(false);
       onChanged();
     }
   }
   const create = () =>
-    run(() => {
-      setLink(null);
+    run(async () => {
+      setLink(undefined);
       setCopyMessage('');
-      return post<{ ok: boolean; message?: string; link?: string }>('/api/invites/create', {
-        id: crypto.randomUUID(),
-        role,
-        label,
-        expiresInHours: hours,
-        ...(role === 'player' ? { actorId } : {}),
-        ...(role === 'operator' ? { capabilities: chosen } : {}),
-      });
+      const result = await post<{ ok: boolean; message?: string; link?: string }>(
+        '/api/invites/create',
+        {
+          id: crypto.randomUUID(),
+          role,
+          label,
+          expiresInHours: hours,
+          ...(role === 'player' ? { actorId } : {}),
+          ...(role === 'operator' ? { capabilities: chosen } : {}),
+        },
+      );
+      if (result.ok && result.link)
+        setLink({
+          url: result.link,
+          label,
+          role,
+          ...(role === 'player' ? { character: character.name } : {}),
+        });
+      return result;
     });
   const pending = access.invites.filter((invite) => invite.status === 'pending');
   return (
@@ -223,12 +251,16 @@ export function AccessSection({
         {link && (
           <div className="ol-operations-link-result">
             <strong>Invitation link created</strong>
+            <p>
+              For <strong>{link.label}</strong> · {ROLE_TEXT[link.role]}
+              {link.character ? ` · ${link.character}` : ''}
+            </p>
             <p className="ol-caption">
               Copy it now and share it with the intended person. The full link is only shown here;
               it cannot be recovered from the invitation list.
             </p>
             <code className="ol-operations-secret" aria-label="Invite link">
-              {link}
+              {link.url}
             </code>
             <Button
               size="sm"
@@ -238,7 +270,7 @@ export function AccessSection({
                   return;
                 }
                 void navigator.clipboard
-                  .writeText(link)
+                  .writeText(link.url)
                   .then(() => setCopyMessage('Invitation link copied.'))
                   .catch(() =>
                     setCopyMessage('Could not copy automatically. Select and copy the link above.'),
@@ -317,6 +349,15 @@ export function AccessSection({
                     className="ol-operations-confirm"
                     role="group"
                     aria-label={`Remove access for ${grant.label ?? grant.accountId}`}
+                    ref={removalConfirmation}
+                    tabIndex={-1}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape' && !busy) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        keepAccess();
+                      }
+                    }}
                   >
                     <p>
                       Remove world access for <strong>{grant.label ?? grant.accountId}</strong>?
@@ -327,19 +368,28 @@ export function AccessSection({
                         variant="danger"
                         disabled={busy}
                         onPress={() => {
-                          setRemoving(null);
                           void run(() =>
                             post('/api/access', {
                               accountId: grant.accountId,
                               expectedRevision: grant.revision,
                               capabilities: [],
                             }),
-                          );
+                          ).then((ok) => {
+                            if (!ok) return;
+                            setRemoving(null);
+                            requestAnimationFrame(() => {
+                              if (document.activeElement !== document.body) return;
+                              const row = removalRow.current;
+                              if (!row?.isConnected) return;
+                              row.tabIndex = -1;
+                              row.focus();
+                            });
+                          });
                         }}
                       >
                         Confirm removing access
                       </Button>
-                      <Button size="sm" variant="quiet" onPress={() => setRemoving(null)}>
+                      <Button size="sm" variant="quiet" disabled={busy} onPress={keepAccess}>
                         Keep access
                       </Button>
                     </div>
@@ -349,7 +399,10 @@ export function AccessSection({
                     size="sm"
                     variant="quiet"
                     disabled={busy}
-                    onPress={() => setRemoving(grant.accountId)}
+                    onPress={(event) => {
+                      removalRow.current = event.target.closest('li');
+                      setRemoving(grant.accountId);
+                    }}
                   >
                     Remove access
                   </Button>

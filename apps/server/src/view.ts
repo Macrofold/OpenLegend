@@ -3,7 +3,7 @@ import { recipeFamily, basePlaytestMilestones, BASE_FAMILY_POLICY } from '@open-
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
-import { canUseInventory, inventoryItemView, inventoryStorageHint } from './inventory-view.js';
+import { canUseInventory, inventoryItemsView, inventoryStorageHint } from './inventory-view.js';
 import {
   itemFor,
   itemsForOwner,
@@ -248,6 +248,9 @@ export async function projectView(
     'inventory',
     [
       observation.inventory,
+      // Native item actions also depend on other objects, such as a visible lit fire.
+      world.entities,
+      world.map,
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
@@ -264,7 +267,7 @@ export async function projectView(
       active,
       paused,
     ],
-    () => observation.inventory.slice(0, 60).map((item) => inventoryItemView(service, scope, item)),
+    () => inventoryItemsView(service, scope, observation.inventory.slice(0, 60)),
   );
   const entities: EntityView[] = observation.visibleEntities
     .filter((entity) => entity.id !== scope.actorId)
@@ -637,6 +640,11 @@ export async function projectView(
           ? 'degraded'
           : 'live'
         : 'unconfigured';
+  const hasWork =
+    !!actor.action ||
+    !!actor.agency.suspended ||
+    actor.agency.plan?.status === 'active' ||
+    actor.agency.plan?.status === 'blocked';
   const playerActions = [
     ...learnedActivityCandidates(service, player.id).map((option) => {
       const preview = service.previewCommand(option.command!, player.id);
@@ -647,16 +655,7 @@ export async function projectView(
       return action(option.id, option.label, option.command, preview.ok, preview.message);
     }),
     // Queued, waiting, stopped and paused work can be stopped too, not only a running action.
-    action(
-      'cancel',
-      'Stop all work',
-      { type: 'cancel' },
-      !!actor.action ||
-        !!actor.agency.suspended ||
-        actor.agency.plan?.status === 'active' ||
-        actor.agency.plan?.status === 'blocked',
-      'No work to stop.',
-    ),
+    action('cancel', 'Stop all work', { type: 'cancel' }, hasWork, 'No work to stop.'),
   ];
   if (canRecoverAtCamp(world, player))
     playerActions.push({
@@ -746,7 +745,12 @@ export async function projectView(
     ),
     revision,
     worldId: world.id,
-    presentation: world.presentation,
+    // An authored heading is optional content, not a prerequisite for a valid saved world.
+    presentation: world.presentation ?? {
+      worldName: 'World',
+      locationName: 'Current location',
+      timeLabel: 'World time',
+    },
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode && service.currentScope(scope, 'create'),
@@ -809,6 +813,7 @@ export async function projectView(
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
+      hasWork,
       statusEffects: projectStatusEffects(world, player, 'owner'),
       action: actor.action
         ? {

@@ -3,6 +3,7 @@ import type { GameView } from '@open-legend/protocol';
 import { SegmentedControl, Tag } from '../design-system/components';
 import { History } from './history';
 import { Promises } from './promises';
+import { captionScope } from '../speech-captions';
 import './reading.css';
 
 export function Journal({
@@ -32,7 +33,11 @@ export function Journal({
       />
       <div className="ol-journal-section" hidden={section !== 'promises'}>
         <h3 className="ol-heading">Your promises</h3>
-        <Promises visible={visible && section === 'promises'} revision={view.historyRevision} />
+        <Promises
+          key={captionScope(view)}
+          visible={visible && section === 'promises'}
+          revision={view.historyRevision}
+        />
       </div>
       <div className="ol-journal-section" hidden={section !== 'beginnings'}>
         <h3 className="ol-heading">Possible beginnings</h3>
@@ -52,6 +57,7 @@ export function Journal({
       <div className="ol-journal-section ol-journal-story" hidden={section !== 'story'}>
         <h3 className="ol-heading">Your story</h3>
         <History
+          key={captionScope(view)}
           visible={visible && section === 'story'}
           epoch={view.historyEpoch}
           revision={`${view.historyRevision}:${JSON.stringify(view.narrator)}`}

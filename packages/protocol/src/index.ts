@@ -550,6 +550,8 @@ export interface GameView {
     /** Configured applicable suggestions in authoritative presentation order. */
     suggestedActionIds: string[];
     alive: boolean;
+    /** Public work presence, including queued or paused work, independent of action availability. */
+    hasWork: boolean;
     action: {
       id: string;
       showStatus: boolean;

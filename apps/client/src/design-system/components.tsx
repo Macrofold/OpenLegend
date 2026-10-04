@@ -781,5 +781,8 @@ export function symbol(id: string): string {
     recover: 'meter.health',
     teach: 'action.talk',
   };
-  return native[id] ?? (id in icons ? id : `action.${id}`);
+  return (
+    (Object.hasOwn(native, id) ? native[id] : undefined) ??
+    (Object.hasOwn(icons, id) ? id : `action.${id}`)
+  );
 }

@@ -360,10 +360,6 @@ function OverviewMap({ overview }: { overview: WorldOverview }) {
       {overview.omitted > 0 && (
         <p className="ol-muted">{overview.omitted} further bodies are not drawn.</p>
       )}
-      <p className="ol-muted">
-        Spectators see public terrain and body positions only: no names, possessions, speech or
-        private knowledge.
-      </p>
     </>
   );
 }

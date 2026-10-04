@@ -31,6 +31,7 @@ export function ActionPicker({
   inspect,
   openContainer,
   openActivity,
+  describeAction,
   preference,
   revive,
   enableCognition,
@@ -47,6 +48,7 @@ export function ActionPicker({
   inspect(entity: EntityView): void;
   openContainer(entity: EntityView): void;
   openActivity(entry: ActivityEntry): void;
+  describeAction?(subject: EntityView | null): void;
   preference(profile: PlayerProfile): void;
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
@@ -71,6 +73,10 @@ export function ActionPicker({
     input = useRef<HTMLInputElement>(null),
     refreshRequest = useRef(0);
   const [position, setPosition] = useState(picker.point);
+  const targetMissing =
+    !!picker.entity &&
+    picker.entity.id !== view.player.id &&
+    !view.entities.some((entity) => entity.id === picker.entity?.id);
   const refresh = useCallback(async () => {
     const request = ++refreshRequest.current;
     setRefreshing(true);
@@ -98,7 +104,11 @@ export function ActionPicker({
   }, [refresh]);
   const matches = filterActions(
     actions.map((a) =>
-      connected ? a : { ...a, enabled: false, reason: 'Reconnect to the world.' },
+      !connected
+        ? { ...a, enabled: false, reason: 'Reconnect to the world.' }
+        : targetMissing
+          ? { ...a, enabled: false, reason: 'This subject is no longer in view.' }
+          : a,
     ),
     query,
     showUnavailable,
@@ -114,6 +124,7 @@ export function ActionPicker({
   const canInvent =
     !view.inventionPolicy.playerLocked &&
     connected &&
+    !targetMissing &&
     !error &&
     !!query.trim() &&
     !taskMatches &&
@@ -131,6 +142,11 @@ export function ActionPicker({
     !!picker.entity &&
     godCharacterAvailability(picker.entity).revive &&
     (!query || 'revive god mode'.includes(query.toLowerCase()));
+  const showCognition =
+    view.godMode &&
+    !!picker.entity &&
+    godCharacterAvailability(picker.entity).enableCognition &&
+    (!query || 'grant cognition speech'.includes(query.toLowerCase()));
   const creationPosition =
     picker.entity?.kind === 'item-pile' && picker.entity.supportSurfaceId
       ? { ...picker.entity.position, surfaceId: picker.entity.supportSurfaceId }
@@ -178,12 +194,14 @@ export function ActionPicker({
       id="contextMenu"
       className="ol-picker"
       role="dialog"
-      aria-label={`Actions for ${picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
+      aria-label={`Actions for ${picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
+        if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
         if (!e.currentTarget.contains(e.target as Node)) return;
         if (e.key === 'Escape') {
+          e.preventDefault();
           e.stopPropagation();
           close();
           return;
@@ -205,8 +223,8 @@ export function ActionPicker({
       }}
     >
       <div className="ol-picker-head">
-        <Icon name={symbol(picker.entity?.subtype ?? 'ui.inview')} />
-        <strong id="contextTitle">{picker.entity?.name ?? 'The clearing'}</strong>
+        <Icon name={picker.entity?.icon ?? 'ui.inview'} fallbackLabel={picker.entity?.name} />
+        <strong id="contextTitle">{picker.entity?.name ?? view.presentation.locationName}</strong>
         <IconButton
           icon="ui.refresh"
           label="Refresh actions"
@@ -253,7 +271,7 @@ export function ActionPicker({
           <AriaButton
             data-picker-row
             className="ol-item"
-            isDisabled={!connected}
+            isDisabled={!connected || targetMissing}
             onPress={() => {
               if (picker.entity) openContainer(picker.entity);
             }}
@@ -262,7 +280,7 @@ export function ActionPicker({
             <span>Open {picker.entity.name}</span>
           </AriaButton>
         )}
-        {picker.entity && (
+        {picker.entity && !targetMissing && (
           <ActivityEntries
             view={view}
             targetId={picker.entity.id}
@@ -273,67 +291,13 @@ export function ActionPicker({
             onMatchCount={setTaskMatches}
           />
         )}
-        {view.godMode &&
-          !!picker.entity &&
-          godCharacterAvailability(picker.entity).enableCognition &&
-          (!query || 'grant cognition speech'.includes(query.toLowerCase())) && (
-            <AriaButton
-              data-picker-row
-              className="ol-item ol-god-action"
-              onPress={() => enableCognition(picker.entity!)}
-            >
-              <Icon name="ui.star" />
-              <span>Grant cognition and speech</span>
-              <small>God mode</small>
-            </AriaButton>
-          )}
-        {showRevive && (
+        {showInspect && (
           <AriaButton
             data-picker-row
-            className="ol-item ol-god-action"
-            onPress={() => revive(picker.entity!)}
+            className="ol-item"
+            isDisabled={targetMissing}
+            onPress={() => inspect(picker.entity!)}
           >
-            <Icon name="ui.star" />
-            <span>Revive</span>
-            <small className="ol-item-hint">God mode</small>
-          </AriaButton>
-        )}
-        {showAdd && (
-          <PulloutPicker
-            label="Add something"
-            isOpen={openPullout === 'add'}
-            onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
-            icon="ui.plus"
-            badge="God mode"
-            placeholder="Search objects…"
-            options={[]}
-            groups={[
-              {
-                label: 'Items',
-                icon: 'ui.inventory',
-                options: (view.godTools?.itemOptions ?? []).map((option) => ({
-                  ...option,
-                  id: `item:${option.id}`,
-                  icon: symbol(option.id),
-                })),
-              },
-              ...(['Actors', 'Environment'] as const).map((category) => ({
-                label: category,
-                icon: category === 'Actors' ? 'ui.character' : 'ui.world',
-                options: (view.godTools?.spawnOptions ?? [])
-                  .filter((option) => option.category === category)
-                  .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
-              })),
-            ]}
-            onSelect={(type) => {
-              if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
-              else if (type === 'person') createPerson(creationPosition!);
-              else spawn(type, creationPosition!);
-            }}
-          />
-        )}
-        {showInspect && (
-          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(picker.entity!)}>
             <Icon name="ui.inview" />
             <span>Look closer</span>
             <small className="ol-item-hint">Inspect</small>
@@ -377,16 +341,17 @@ export function ActionPicker({
                 }}
               >
                 <Icon
-                  name={symbol(
-                    a.intent.kind === 'command'
-                      ? a.intent.command.type === 'gather'
-                        ? (view.entities.find((e) => e.id === a.targetId)?.subtype ??
-                          'resource.reed')
-                        : a.intent.command.type
-                      : a.intent.kind === 'compose'
-                        ? 'talk'
-                        : 'ui.lock',
-                  )}
+                  name={
+                    a.icon ??
+                    symbol(
+                      a.intent.kind === 'command'
+                        ? a.intent.command.type
+                        : a.intent.kind === 'compose'
+                          ? 'talk'
+                          : 'ui.lock',
+                    )
+                  }
+                  fallbackLabel={a.label}
                   badge={
                     a.intent.kind === 'command' && a.intent.command.type === 'gather'
                       ? 'action.gather'
@@ -401,6 +366,85 @@ export function ActionPicker({
               </AriaButton>
             </Explanation>
           ))}
+        {describeAction && !query && (
+          <AriaButton
+            data-picker-row
+            className="ol-item"
+            isDisabled={targetMissing}
+            onPress={() => describeAction(picker.entity)}
+          >
+            <Icon name="ui.character" />
+            <span>Describe an action</span>
+          </AriaButton>
+        )}
+        {(showRevive || showCognition || showAdd) && !targetMissing && (
+          <div className="ol-picker-creator" role="group" aria-label="God mode">
+            <p className="ol-eyebrow">God mode</p>
+            {showCognition && (
+              <AriaButton
+                data-picker-row
+                className="ol-item ol-god-action"
+                isDisabled={!connected}
+                onPress={() => enableCognition(picker.entity!)}
+              >
+                <Icon name="ui.star" />
+                <span>Grant cognition and speech</span>
+                <small>God mode</small>
+              </AriaButton>
+            )}
+            {showRevive && (
+              <AriaButton
+                data-picker-row
+                className="ol-item ol-god-action"
+                isDisabled={!connected}
+                onPress={() => revive(picker.entity!)}
+              >
+                <Icon name="ui.star" />
+                <span>Revive</span>
+                <small className="ol-item-hint">God mode</small>
+              </AriaButton>
+            )}
+            {showAdd && (
+              <PulloutPicker
+                label="Add something"
+                isOpen={openPullout === 'add'}
+                onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
+                icon="ui.plus"
+                badge="God mode"
+                placeholder="Search objects…"
+                options={[]}
+                groups={[
+                  {
+                    label: 'Items',
+                    icon: 'ui.inventory',
+                    options: (view.godTools?.itemOptions ?? []).map((option) => ({
+                      ...option,
+                      id: `item:${option.id}`,
+                      icon: symbol(option.id),
+                    })),
+                  },
+                  ...(['Actors', 'Environment'] as const).map((category) => ({
+                    label: category,
+                    icon: category === 'Actors' ? 'ui.character' : 'ui.world',
+                    options: (view.godTools?.spawnOptions ?? [])
+                      .filter((option) => option.category === category)
+                      .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
+                  })),
+                ]}
+                onSelect={(type) => {
+                  if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
+                  else if (type === 'person') createPerson(creationPosition!);
+                  else spawn(type, creationPosition!);
+                }}
+              />
+            )}
+          </div>
+        )}
+        {targetMissing && (
+          <p role="status">
+            {picker.entity?.name} is no longer in view. Choose the subject again before acting.
+          </p>
+        )}
         {error && (
           <p role="status" className="ol-meta">
             {error}

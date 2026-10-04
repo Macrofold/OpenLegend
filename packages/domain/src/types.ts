@@ -335,8 +335,8 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
-  /** World-owned public wording, saved with the existing world settings. */
-  presentation: { worldName: string; locationName: string; timeLabel: string };
+  /** Optional authored public wording; unnamed worlds use generic interface headings. */
+  presentation?: { worldName: string; locationName: string; timeLabel: string };
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };

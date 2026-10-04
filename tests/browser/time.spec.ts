@@ -37,7 +37,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     const settings = page.getByRole('button', { name: 'Time settings', exact: true });
     await settings.click();
     await expect(page.locator('.ol-time-settings .ol-caption')).toHaveText(
-      '1×: one real second is one game minute. Manual pause always wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.',
+      '1×: one real second is 60 game seconds. Manual pause always wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.',
     );
     await expect.poll(() => game.service.paused).toBe(false);
     await game.service.tick(1);
