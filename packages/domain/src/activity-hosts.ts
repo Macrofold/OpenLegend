@@ -8,7 +8,7 @@ import type { DefinitionPin } from './world-modules.js';
 
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
- * docs/projects/next-playable-week/camp-activities.md#predicates-deadlines-and-scheduling */
+ * docs/projects/parallel-batch-01-playable-week/camp-activities.md#predicates-deadlines-and-scheduling */
 export interface ActivityHostDescriptor {
   definition: {
     id: string;

@@ -180,7 +180,7 @@ Original recommendation: **Review**.
 
 **Former limit, now removed:** A world's cognition policy can name at most 16 kinds of events that should count as significant, such as death or being taught something.
 
-**Reason / tradeoff:** Removed the sixteen-event-type count ceiling. The creator submission schema and guide now match native validation: a 17-name typed submission and native admission pass, while an invalid name refuses. Cognition policy shape, event-name format, revision, permission and total request-byte checks remain. [Review evidence](../verification/next-playable-week-engineer-2.md#independent-implementation-review).
+**Reason / tradeoff:** Removed the sixteen-event-type count ceiling. The creator submission schema and guide now match native validation: a 17-name typed submission and native admission pass, while an invalid name refuses. Cognition policy shape, event-name format, revision, permission and total request-byte checks remain. [Review evidence](../verification/parallel-batch-01-playable-week-engineer-2.md#independent-implementation-review).
 
 [Native owner](../../packages/domain/src/cognition-policy.ts) · [Submission schema](../../apps/server/src/world-authoring-schemas.ts).
 

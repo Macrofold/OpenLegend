@@ -70,7 +70,7 @@ Original recommendation: **Expand**.
 
 **Removed — current foundation · Restrictiveness: — (removed).**
 
-The former 128 status-definition count ceiling is gone. Definitions still require supported contracts and aggregate native-work admission. The October 2 PW07 review also removes the surviving creator-schema cutoff and corrects its guide; a 130-additional-disabled-definition shape and native installation pass. Its oversized text submission still refuses under the unchanged request-byte limit. [Review evidence](../verification/next-playable-week-engineer-2.md#independent-implementation-review).
+The former 128 status-definition count ceiling is gone. Definitions still require supported contracts and aggregate native-work admission. The October 2 PW07 review also removes the surviving creator-schema cutoff and corrects its guide; a 130-additional-disabled-definition shape and native installation pass. Its oversized text submission still refuses under the unchanged request-byte limit. [Review evidence](../verification/parallel-batch-01-playable-week-engineer-2.md#independent-implementation-review).
 
 **Reason / tradeoff:** Definition count alone is a poor estimate of actual simulation cost.
 
@@ -292,7 +292,7 @@ An effect definition cannot be changed, disabled or removed while retained effec
 
 ## ST17 — Passive meters and configured body services
 
-**Current — PW07 domain/server, October 2 · Restrictiveness: Very safe.** [PW07](../maintainers/next-playable-week.md#pw07--world-configured-survival) installs the finite scalar `number-v1` host using existing attribute/schema bounds (LA124/LA126). It grants no automatic drain, replenishment or resource-transfer capability; ST02/ST03 remain distinct. One body-backed health representation remains, with raw finite health validated independently of whether its projection is installed. Removed native food/energy aliases and the former needs capability are incompatible current state.
+**Current — PW07 domain/server, October 2 · Restrictiveness: Very safe.** [PW07](../maintainers/parallel-batch-01-playable-week.md#pw07--world-configured-survival) installs the finite scalar `number-v1` host using existing attribute/schema bounds (LA124/LA126). It grants no automatic drain, replenishment or resource-transfer capability; ST02/ST03 remain distinct. One body-backed health representation remains, with raw finite health validated independently of whether its projection is installed. Removed native food/energy aliases and the former needs capability are incompatible current state.
 
 The exact-pinned body policy supports existing controller classes and die/incapacitate outcomes, the existing safe-return anchor, numeric recovery floors, creator maximum fills and nutrition applied to one configured meter. Optional services can be null. Missing optional meter values stay absent; editing never attaches them. Required attribute/status/item references, supported operations and bounded narration are validated. Live body-policy replacement is outside this slice.
 

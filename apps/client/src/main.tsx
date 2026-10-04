@@ -422,7 +422,7 @@ function App({
   }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, enter, resetApplication]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
-  // docs/projects/next-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
+  // docs/projects/parallel-batch-01-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
   const needsSheet = (nextWidth: number, nextHeight: number) =>
     nextWidth / scale < 720 || nextHeight / scale <= 600;
   const narrow = needsSheet(width, height);

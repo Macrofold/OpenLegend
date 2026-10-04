@@ -51,7 +51,7 @@ const roleFields = new Set([
 ]);
 /** One current binding check shared by the native chooser and prepared offers.
  * Seeing a basket does not disclose its contents or authorize fresh stock selection.
- * docs/projects/next-playable-week/camp-activities.md#actual-outputs-and-learning */
+ * docs/projects/parallel-batch-01-playable-week/camp-activities.md#actual-outputs-and-learning */
 export function activityRoleCompatible(
   world: WorldState,
   actorId: string,

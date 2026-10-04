@@ -9,7 +9,7 @@ import { isWalkable } from './spatial.js';
 import { bodyProfile } from './spatial-state.js';
 
 /** Finite installed body services. Policy chooses existing outcomes, never authority.
- * docs/projects/next-playable-week/survival.md#installed-body-policy */
+ * docs/projects/parallel-batch-01-playable-week/survival.md#installed-body-policy */
 export interface BodyPolicy {
   id: string;
   version: number;

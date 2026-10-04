@@ -53,7 +53,7 @@ function readDraft(key: string): Draft {
 
 /** The player chooses a world-authored request. Review has no effects and never
  * promises future success; Start uses the same public intention as other actions.
- * docs/projects/next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui */
+ * docs/projects/parallel-batch-01-playable-week/camp-activities.md#observation-memory-and-ordinary-ui */
 export function CampActivity({
   view,
   connected,

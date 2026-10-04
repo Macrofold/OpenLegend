@@ -32,7 +32,7 @@ export function providerRunEvent(raw: unknown, runId: string): ProviderRunEvent 
 
 /** Carry only a possible protected prefix. It belongs to this exact Run and never
  * enters diagnostics or the owner-visible projection. EOF discards the carry.
- * docs/projects/next-playable-week-tech-design.md#one-ordered-provider-event-consumer
+ * docs/projects/parallel-batch-01-playable-week-tech-design.md#one-ordered-provider-event-consumer
  */
 export function redactRunFragment(
   carry: string,

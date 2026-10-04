@@ -736,7 +736,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
 
 /** Current first-step feasibility. It reads authority and resources, and builds only a
  * temporary route/action description; no effects, randomness, receipts or drafts run here.
- * Later typed plan outputs remain future requirements. docs/projects/next-playable-week-tech-design.md#admission-before-execution
+ * Later typed plan outputs remain future requirements. docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
 export function nativeOperationAvailable(world: WorldState, command: Command): Outcome {
   const nested = inWorkGroup();
@@ -3570,7 +3570,7 @@ function* updateEncounters(
       if (removed.length || added.length) {
         // Compare immutable membership before obtaining the draft. Continuing bindings are
         // neither reconstructed nor reassigned. New identities retain exposed-array order.
-        // docs/projects/next-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
+        // docs/projects/parallel-batch-01-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
         const episodes = ((world.perceptionEpisodes ??= {})[actor.id] ??= {});
         for (const id of removed) delete episodes[id];
         for (const id of added)

@@ -1,6 +1,6 @@
-# PW11 — Inspect, revise and apply an invention without losing the conversation
+# Parallel batch 01 — PW11 — Inspect, revise and apply an invention without losing the conversation
 
-**Proposed implementation brief.** Engineer 4: **30 hours**, plus the shared PW06 integration allowance. The [feature specification](../next-playable-week-feature-spec.md) defines the expanded week; [PW11](../../maintainers/next-playable-week.md#pw11--inspectable-and-editable-invention-workspace) owns completion. This document is a concrete UI/server task, not authorization to implement it during the planning request.
+**Proposed implementation brief.** Engineer 4: **30 hours**, plus the shared PW06 integration allowance. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) defines the expanded week; [PW11](../../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace) owns completion. This document is a concrete UI/server task, not authorization to implement it during the planning request.
 
 ## Outcome and present gap
 
@@ -118,6 +118,6 @@ Use the umbrella browser matrix and suitable existing authoring/native HTTP chec
 
 ## Maintained records
 
-- Implementation: [PW11](../../maintainers/next-playable-week.md#pw11--inspectable-and-editable-invention-workspace), beneath INV-21 / WW / UIUX05.
+- Implementation: [PW11](../../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace), beneath INV-21 / WW / UIUX05.
 - Limits and constraints: [IW02](../../limits/interface.md#iw02--proposed-invention-workspace), existing [authoring limits](../../limits/inventions.md); no new retention ceiling.
-- Related design: [week technical design](../next-playable-week-tech-design.md), [chat/invention handbook](../../ui-ux/chat-and-invention.md), [exact Apply contract](../../invention-workshop-tools.md#5-explicit-apply-and-revision-continuity).
+- Related design: [week technical design](../parallel-batch-01-playable-week-tech-design.md), [chat/invention handbook](../../ui-ux/chat-and-invention.md), [exact Apply contract](../../invention-workshop-tools.md#5-explicit-apply-and-revision-continuity).

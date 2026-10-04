@@ -2,7 +2,7 @@
 
 This report records the October 2 PW07 domain/server work against the inherited planning base `8005f7c7`. Implementation uses `oct2-eng-2`; the reviewed performance-fixture builder from Engineer 1 (`fe85785b45d5eb3fbf95c795e92187c36bce91d3`) was consumed as `9ad34ce585741e9e47cbfbecf6ab83d216486fe9`. The domain/protocol contract implementation is `edd4d9ad6422074175f0f8de4c4770097c45660b`; the matching server consumer commit is `937c8c44fd8c71d82c66bcef9eec2f70ef9369c8`. Native, fixture and disposable-PostgreSQL checks are distinguished below from the subsequent focused browser checks. No provider calls were made: additional and cumulative paid cost for this survival scope are $0.
 
-[Approved stages](../projects/world-configured-survival.md) · [PW07 brief](../projects/next-playable-week/survival.md) · [Tracker](../maintainers/next-playable-week.md#pw07--world-configured-survival) · [Body and survival owner](../worlds/base/survival.md) · [Status runtime](../status-effects.md).
+[Approved stages](../projects/world-configured-survival.md) · [PW07 brief](../projects/parallel-batch-01-playable-week/survival.md) · [Tracker](../maintainers/parallel-batch-01-playable-week.md#pw07--world-configured-survival) · [Body and survival owner](../worlds/base/survival.md) · [Status runtime](../status-effects.md).
 
 ## Outcome comparison
 

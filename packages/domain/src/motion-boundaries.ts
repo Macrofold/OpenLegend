@@ -510,7 +510,7 @@ function crossingGeometryCurrent(world: WorldState, cache: CrossingCache): boole
  * certainty is separately rederived through flight/walker/flee owners, including route/wait,
  * support, speed, body sweep and locomotion restrictions. No entity or draft escapes here.
  * New dependencies in either exact predicate or movement owner must update this certificate.
- * docs/projects/next-playable-week/simulation-performance.md#4-retain-only-dependency-certified-certain-pairs--10-hours
+ * docs/projects/parallel-batch-01-playable-week/simulation-performance.md#4-retain-only-dependency-certified-certain-pairs--10-hours
  */
 function bodyCertificate(
   world: WorldState,

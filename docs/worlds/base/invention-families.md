@@ -39,8 +39,8 @@ Inventory comparisons use authored field names and units from the actual item de
 
 ## Maintained records
 
-- Implementation: [PW02](../../maintainers/next-playable-week.md#pw02--world-owned-invention-families-and-one-admission-path), [INV-3](../../maintainers/inventions-and-world-evolution.md#inv-3--expand-beyond-the-three-recipes-through-registered-families) and [EWF](../../maintainers/extensible-world-foundation.md).
+- Implementation: [PW02](../../maintainers/parallel-batch-01-playable-week.md#pw02--world-owned-invention-families-and-one-admission-path), [INV-3](../../maintainers/inventions-and-world-evolution.md#inv-3--expand-beyond-the-three-recipes-through-registered-families) and [EWF](../../maintainers/extensible-world-foundation.md).
 - Limits and constraints: [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).
-- Technical contract: [family definitions](../../projects/next-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches).
+- Technical contract: [family definitions](../../projects/parallel-batch-01-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches).
 
 Bundled playtest milestone wording and recipe/equipment completion rules are authored in `playtest.ts`. The server projects and records those rules instead of repeating sling/bow/arrow checks. This is a localized bundled-world presentation seam, not a general world-package progression loader.

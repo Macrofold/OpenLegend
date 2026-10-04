@@ -48,7 +48,7 @@ export function describePossession(
 /** Rechecking access precedes reading any contents or private packing facts. Movement
  * revisions fence even leaving and returning to the same point. Restore also clears the
  * actor's inspection under the server's timeline owner.
- * docs/projects/next-playable-week-tech-design.md#discovery-and-character-context */
+ * docs/projects/parallel-batch-01-playable-week-tech-design.md#discovery-and-character-context */
 export function inventoryInspectionScope(world: WorldState, actorId: string, containerId?: string) {
   const actor = world.entities[actorId];
   if (!actor?.actor) throw new Error('Actor unavailable.');

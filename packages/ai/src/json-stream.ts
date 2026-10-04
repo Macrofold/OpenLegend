@@ -3,7 +3,7 @@ import { InvalidData } from './validation.js';
 
 /** Only complete objects at a trusted caller's path are released. The library owns
  * JSON syntax; these guards reject ambiguous or unsafe values even after disclosure.
- * docs/projects/completed/next-priority-batch-tech-design.md#2-one-bounded-deterministic-json-decoder
+ * docs/projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#2-one-bounded-deterministic-json-decoder
  */
 export class JsonObjectStream {
   private parser: JSONParser;

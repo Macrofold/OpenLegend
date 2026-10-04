@@ -212,7 +212,7 @@ Original recommendation: **Review**.
 
 **Removed by NP01 on October 2, 2026 · Restrictiveness: — (removed).** Configuration already accepted $0–$100 per agent per UTC month with a $50 default, but the reservation owner still clamped admission to $50 on `c2e670b0`. The earlier audit's removal claim was inaccurate; the planning audit identified that mismatch. NP01 now removes the actual remaining clamp, with [synthetic $75 admission after $50, exact exhaustion, lowered/episode/background ceilings and concurrent reservation evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026).
 
-**Reason / tradeoff:** Honor the already accepted operator setting without changing the $50 default or $100 configuration maximum. Atomic admission, conservative uncertain exposure, separate episode/decision bounds and real account-owner spending authorization remain. This software allowance grants no engineering spending permission. [Reservation owner](../../apps/server/src/store.ts), [configuration](../../apps/server/src/config.ts), [NP01](../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending).
+**Reason / tradeoff:** Honor the already accepted operator setting without changing the $50 default or $100 configuration maximum. Atomic admission, conservative uncertain exposure, separate episode/decision bounds and real account-owner spending authorization remain. This software allowance grants no engineering spending permission. [Reservation owner](../../apps/server/src/store.ts), [configuration](../../apps/server/src/config.ts), [NP01](../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending).
 
 ## LA183
 

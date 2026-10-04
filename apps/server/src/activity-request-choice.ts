@@ -40,7 +40,7 @@ export interface NamedActivityDeadline {
 }
 // Choice permits 255 options; abstention occupies two. Eight rounds cover the full
 // safe integer range while bounding dependent judgments; this is not a paid retry.
-// docs/projects/next-playable-week/camp-activities.md#who-chooses-the-work
+// docs/projects/parallel-batch-01-playable-week/camp-activities.md#who-chooses-the-work
 const MAX_OPTIONS = 253;
 const MAX_ROUNDS = 8;
 const modes = {

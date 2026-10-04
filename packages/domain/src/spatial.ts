@@ -435,7 +435,7 @@ const entityMembershipKeys = new WeakMap<
  * fence live continuation. Clock/needs/fuel and distant movement do not invalidate it.
  * One cached region per index bounds retained metadata; row disclosure stays live.
  * Cold metadata is measured separately from page scanning.
- * docs/projects/completed/next-priority-batch-tech-design.md#discovery-contract */
+ * docs/projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#discovery-contract */
 export function spatialCandidateMembershipKey(
   world: WorldState,
   actor: Entity,

@@ -25,6 +25,12 @@ When choosing or reprioritizing the assignments, first apply [experience-led pri
 
 Rank by the project's priorities, impact, urgency, dependencies and risk of building on a weak foundation. Avoid low-value padding, obsolete fixes and duplicate ongoing work. Make a cohesive parallel allocation with concrete completion criteria and realistic shared dependencies. Use the existing [design workflow](../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) when feature/technical specifications need creating or strengthening; its canonical document and approval rules remain controlling.
 
+## Name and register the allocation
+
+For a new allocation, inspect the [parallel-batch register](../../../docs/projects/parallel-batches.md) and existing batch files, then use the next unused sequential number with a descriptive outcome name: `parallel-batch-<number>-<descriptive-name>`. Use at least two digits. Apply the same number/name to its project pair, prompts and focused allocation tracker, and add their links to the register. Avoid generic names such as “next tasks” that become ambiguous after another run.
+
+Keep the number when revising an existing allocation or preparing its prompts; preserve stable work-item IDs and completion evidence. Do not renumber unrelated product proposals or design groups as staffing batches. When explicitly renaming older allocations, preserve their order and useful content, repair repository-wide references (including prompts and code comments), and retain completed-project placement. A new number does not mean earlier work is complete or override its outstanding acceptance.
+
 ## Produce the handoff
 
 Read [standalone task prompts](references/task-prompts.md) when writing the copy/paste instructions. Default output is a prioritized allocation, linked task definitions/designs and one complete prompt per assignment. Honor narrower requested deliverables.

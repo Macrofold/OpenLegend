@@ -1,10 +1,10 @@
-# The next personal-game batch — five assignments
+# Parallel batch 03 — Personal game — feature specification
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five scoped assignments are defined; implementation, character qualification and the encounter design remain to be delivered. | 2026-10-03   |
+| In progress | PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open. | 2026-10-03 |
 
-[Technical definitions](personal-game-next-batch-tech-design.md) · [Assignment prompts](personal-game-next-batch-prompts.md) · [Tracking](../maintainers/personal-game-next-batch.md)
+[Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Assignment prompts](parallel-batch-03-personal-game-prompts.md) · [Tracking](../maintainers/parallel-batch-03-personal-game.md)
 
 ## Recommendation and source baseline
 
@@ -13,6 +13,8 @@ Select work that makes the existing personal game worth playing and watching: in
 This planning pass inspected local `main` at `dd21d1c7`, including the four newly merged branches. It changes documentation only, with zero production logic lines. The assignments are recommendations, not claims that their runtime scope has been approved or implemented. A copied implementation prompt supplies the recipient's requested task; this planning pass dispatches nobody.
 
 The [game-first sequence](five-product-feature-specs.md#game-first-delivery-sequence) and [first-playable agreement](../../archive/05-project/first-playable-mvp.md) are the product baseline. Current canonical contracts prevail over historical wording in that agreement: for example, tab departure and return follow today's multiplayer/lifecycle contracts, not the superseded background-play checkbox. NP01–NP05 are complete for their selected scope and are not restarted here.
+
+October 3 status refresh: family authoring is now merged at c4e18d91. Separate PG02/PG03/PG04 branches are in progress; no integrated acceptance is inferred. [Batch 04](parallel-batch-04-expeditions-and-exchange-feature-spec.md) proposes follow-on work without changing this batch’s scope. The source/exclusion notes below preserve the original planning evidence.
 
 ### Allocation in priority order
 
@@ -28,7 +30,7 @@ These ranges include relevant verification, documentation and integration adjust
 
 ### Alternatives considered
 
-- **Family creation and learned relations:** active uncommitted work was found in `/Users/mzw/.codex/worktrees/e878/OpenLegend`. Excluded. Its changes to family knowledge and creator-edit propagation must be preserved when integrating these assignments.
+- **Family creation and learned relations (original planning baseline):** active uncommitted work was found in `/Users/mzw/.codex/worktrees/e878/OpenLegend`. Excluded. Its changes to family knowledge and creator-edit propagation must be preserved when integrating these assignments.
 - **More fire maintenance, repair, packing and prescribed daily routines:** possible repertoire additions, but the current batch has stronger reasons to play. Do not manufacture scarcity to make those tasks necessary.
 - **Full continuing communities, crowds, generic stat checks and construction:** useful later proposals; not prerequisites for one interesting resident or one useful invention. PG02 does not implement unattended simulation.
 - **General save SQL batching or approximate vector search:** retain their measurement gates. Current evidence is stronger for action-preview cost than for adopting those techniques now. Do not lower history/population limits to make performance appear solved.
@@ -158,7 +160,7 @@ After integration, reuse PG01's invention journey with PG03's discovery surfaces
 
 ## Maintained records
 
-- Delivery and parent mapping: [PG01–PG05](../maintainers/personal-game-next-batch.md); [technical definitions](personal-game-next-batch-tech-design.md).
+- Delivery and parent mapping: [PG01–PG05](../maintainers/parallel-batch-03-personal-game.md); [technical definitions](parallel-batch-03-personal-game-tech-design.md).
 - Invention: [INV](../maintainers/inventions-and-world-evolution.md), [World Agent work](../maintainers/world-agent-writes.md), [invention limits](../limits/inventions.md).
 - Character: [CE](../maintainers/character-experience.md), [agency](../maintainers/agent-agency.md), [cognition](../maintainers/cognition-redesign.md), [cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md), [memory limits](../limits/memory.md), [AI execution limits](../limits/ai-execution.md).
 - Action usability and responsiveness: [AC](../maintainers/action-capabilities.md), [PF](../maintainers/performance.md), [UI/UX](../maintainers/ui-ux.md), [interface limits](../limits/interface.md), [action limits](../limits/action-experience.md).

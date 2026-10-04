@@ -54,7 +54,7 @@ const displayValue = (value: unknown, present: boolean) =>
   !present ? 'Not present' : typeof value === 'string' ? value : JSON.stringify(value, null, 2);
 
 /** Human inspection shares the session/draft owner. Local state never grants permission.
- * docs/projects/next-playable-week/invention-workspace.md#human-read-and-edit-contract
+ * docs/projects/parallel-batch-01-playable-week/invention-workspace.md#human-read-and-edit-contract
  */
 export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const { worldId, sessionId, accessScope, session, connected, visible, onRefresh, onOpenReview } =

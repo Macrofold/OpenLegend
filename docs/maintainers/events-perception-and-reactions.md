@@ -79,7 +79,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 ## EPR02 — Eliminate redundant full-world sensory scans
 
-Delivered [NP02](next-priority-batch.md#np02--sensory-work-follows-changed-objects) removes repeated all-source capture/comparison for complete warm phase changes. The [technical contract](../projects/completed/next-priority-batch-tech-design.md#np02--sensory-work-follows-changed-objects) and [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) cover incremental source preparation, old/new observer neighborhoods, conservative recovery and exact observation parity. This closes that child, while EPR02 dense-world, finer target-only and publication qualification stay open.
+Delivered [NP02](parallel-batch-02-foundations-and-usability.md#np02--sensory-work-follows-changed-objects) removes repeated all-source capture/comparison for complete warm phase changes. The [technical contract](../projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#np02--sensory-work-follows-changed-objects) and [October 3 evidence](../verification/perception-reaction-intake.md#np02-sensory-preparation--october-3-2026) cover incremental source preparation, old/new observer neighborhoods, conservative recovery and exact observation parity. This closes that child, while EPR02 dense-world, finer target-only and publication qualification stay open.
 
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
