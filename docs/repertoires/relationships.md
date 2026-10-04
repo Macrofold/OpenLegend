@@ -10,7 +10,7 @@
 
 ## Coverage of the playable foundation
 
-**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Criticality, Level, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
+**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Priority, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
 
 | Domain | IDs | Domain | IDs |
 | --- | --- | --- | --- |
@@ -35,10 +35,10 @@ An acquaintance can become dependable without becoming a romance, follower, or p
 
 | ID | Idea | Seed worlds | Use | Priority | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| RSH-005 | Unscheduled walking company | ALL | Play | 2 Complete | C | Two people overlap on a familiar walk and accompany each other only as far as their routes coincide; neither abandons their own destination. | Moderate: optional joint travel; Actions owns movement. | Original |
 | RSH-002 | Bread broken without a ledger | ALL | Play | 2 Complete | C | Two friends share whichever meal they have; a lean week need not become a debt or a test of affection. | Small: voluntary sharing; Economy owns supplies. | Synthesis · [Middle-earth](source-atlas.md#w01) |
+| RSH-003 | The reliable disagreement | ALL | Play | 2 Complete | C | Friends argue about a proposed road yet still answer each other's calls for help. Agreement on one issue does not buy agreement on another. | Moderate: issue positions separate from trust. | Synthesis · [Dragon Age II](source-atlas.md#g52) |
+| RSH-005 | Unscheduled walking company | ALL | Play | 2 Complete | C | Two people overlap on a familiar walk and accompany each other only as far as their routes coincide; neither abandons their own destination. | Moderate: optional joint travel; Actions owns movement. | Original |
 | RSH-001 | The friend who saves a seat | ALL | Play | 3 Depth | C | A regular leaves room at their table without demanding a conversation. Joining, declining, or sitting quietly can all sustain the friendship. | Small: invitations and remembered preferences. | Synthesis · [The Sims](source-atlas.md#g24) |
-| RSH-003 | The reliable disagreement | ALL | Play | 3 Depth | C | Friends argue about a proposed road yet still answer each other's calls for help. Agreement on one issue does not buy agreement on another. | Moderate: issue positions separate from trust. | Synthesis · [Dragon Age II](source-atlas.md#g52) |
 | RSH-004 | The friend who remembers the order | ALL | Play | 3 Depth | C | A companion brings the drink you usually choose, then notices when your taste changes. Being known can feel comforting rather than confining. | Small: disclosed preferences and revision. | Synthesis · [Austen](source-atlas.md#w23) |
 | RSH-006 | The practical favor friend | ALL | Play | 3 Depth | C | Someone awkward with consolation offers a repaired latch or a carried basket. The recipient can value that care without pretending it answers every emotional need. | Small: distinct offered and requested support. | Synthesis · [Middle-earth](source-atlas.md#w01) |
 | RSH-007 | A joke with a retirement date | ALL | Play | 3 Depth | C | An old joke delights both friends until one asks to stop. Respecting that change preserves a bond instead of treating shared history as perpetual permission. | Small: remembered boundaries and callbacks. | Synthesis · [Austen](source-atlas.md#w23) |
@@ -224,8 +224,8 @@ Money, office, celebrity and dependence change what the same invitation or refus
 
 | ID | Idea | Seed worlds | Use | Priority | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| RSH-270 | The patron who pays to be beaten | ALL | Play | 2 Complete | C | A wealthy competitor funds a talented rival because they crave a genuinely formidable opponent. Defeat can delight the patron while the beneficiary worries that gratitude will be mistaken for an obligation to throw the next contest. | Moderate: patronage separate from contest outcome; Arts owns the competition. | Synthesis · [The Culture](source-atlas.md#w17) |
 | RSH-114 | The patron who funds an unfashionable craft | ALL | Play | 2 Complete | C | A patron supports work they genuinely love even when it brings little prestige. The maker gains room to practice without a mandatory hidden price. | Moderate: finite support; Economy owns payment. | Synthesis · [The Culture](source-atlas.md#w17) |
+| RSH-270 | The patron who pays to be beaten | ALL | Play | 2 Complete | C | A wealthy competitor funds a talented rival because they crave a genuinely formidable opponent. Defeat can delight the patron while the beneficiary worries that gratitude will be mistaken for an obligation to throw the next contest. | Moderate: patronage separate from contest outcome; Arts owns the competition. | Synthesis · [The Culture](source-atlas.md#w17) |
 | RSH-113 | The employer who honors an ordinary boundary | ALL | Play | 3 Depth | C | An employer accepts that a worker's evening is their own. Reliability at work does not imply availability for personal favors or social performance. | Small: work scope and refusal. | Original |
 | RSH-116 | The wealthy friend who adjusts the outing | ALL | Play | 3 Depth | C | Friends choose an affordable activity rather than expecting the poorer person to disclose every hardship or accept a conspicuous subsidy. | Small: known means and negotiated plans. | Synthesis · [Austen](source-atlas.md#w23) |
 | RSH-117 | The sponsor who wants public gratitude | ALL | Play | 3 Depth | C | A benefactor pays for a project but expects ceremonial thanks and flattering company. The recipient can negotiate, comply, refuse, or seek another sponsor. | Moderate: explicit and inferred expectations separated. | Synthesis · [Austen](source-atlas.md#w23) |
@@ -252,13 +252,13 @@ Competition can be exhilarating, affectionate, vicious, or simply professional. 
 | ID | Idea | Seed worlds | Use | Priority | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | RSH-144 | The rival who wants your actual destruction | MD SC FA | Play | 1 Core | C | An enemy seeks to ruin your livelihood or kill you, not merely surpass you. Their competence, contacts and limits make evasion, retaliation or defeat concrete possibilities. | Moderate: persistent hostile goals; Combat owns violence. | Original |
-| RSH-140 | The rival you would not let die | MD SC FA | Play | 2 Complete | C | A competitor rescues an opponent to preserve a future contest, out of care, or both. The rescue does not settle who is better or obligate submission. | Moderate: motive and gratitude; Combat owns rescue. | Original |
 | RSH-129 | The fair contest rival | ALL | Play | 2 Complete | C | Two competitors want the same prize and honor the agreed rules. A clean loss can produce determination, respect or disappointment without forced friendship. | Small: results and independent appraisal; Arts owns contest. | Original |
 | RSH-130 | The training partner you want to beat | ALL | Play | 2 Complete | C | Rivals help each other improve because a strong opponent makes victory meaningful. They may withhold a new tactic while still providing honest practice. | Moderate: shared training and private plans. | Original |
-| RSH-137 | The understudy who wants the lead | ALL | Play | 2 Complete | C | An understudy admires the performer they may replace and prepares seriously. A successful substitution can create gratitude, envy or a new partnership. | Moderate: role availability and earned competence. | Original |
+| RSH-133 | The rival who wins with your advice | ALL | Play | 2 Complete | C | A competitor uses a tip you freely offered to beat you. You decide whether to celebrate their learning, resent your generosity, or change future sharing. | Small: knowledge provenance and appraisal. | Original |
 | RSH-136 | The friendly feud over an absurd distinction | ALL | Play | 2 Complete | C | Neighbors fiercely contest whose soup deserves a ridiculous title. Stakes remain small enough for theatrical outrage, elaborate boasts and genuine enjoyment. | Small: recurring contest and bounded stakes. | Original |
+| RSH-137 | The understudy who wants the lead | ALL | Play | 2 Complete | C | An understudy admires the performer they may replace and prepares seriously. A successful substitution can create gratitude, envy or a new partnership. | Moderate: role availability and earned competence. | Original |
+| RSH-140 | The rival you would not let die | MD SC FA | Play | 2 Complete | C | A competitor rescues an opponent to preserve a future contest, out of care, or both. The rescue does not settle who is better or obligate submission. | Moderate: motive and gratitude; Combat owns rescue. | Original |
 | RSH-132 | The rival whose praise is rare | ALL | Play | 3 Depth | C | A habitual competitor gives one specific sincere compliment after an exceptional performance. The moment matters because rivalry continues rather than disappearing. | Small: historical appraisal and expression. | Original |
-| RSH-133 | The rival who wins with your advice | ALL | Play | 3 Depth | C | A competitor uses a tip you freely offered to beat you. You decide whether to celebrate their learning, resent your generosity, or change future sharing. | Small: knowledge provenance and appraisal. | Original |
 | RSH-134 | Two artists competing for different audiences | ALL | Play | 3 Depth | C | Artists appear to compete for one title but care about different audiences. A public defeat may coexist with the recognition each actually wanted. | Moderate: audience-specific esteem. | Synthesis · [The Culture](source-atlas.md#w17) |
 | RSH-135 | The rival who refuses a rigged victory | ALL | Play | 3 Depth | C | A competitor exposes favoritism that would have benefited them. Their refusal can earn respect, anger supporters, or cost the prize without guaranteeing compensation. | Moderate: evidence and public response. | Original |
 | RSH-138 | The rival who remembers your worst failure | ALL | Play | 3 Depth | C | A competitor witnessed a humiliating mistake and chooses when to mention it. Silence, encouragement, mockery and blackmail are distinct acts with distinct consequences. | Moderate: remembered evidence and selective disclosure. | Synthesis · [Austen](source-atlas.md#w23) |
@@ -278,10 +278,10 @@ A shared danger can create trust, resentment, admiration or obligation. It does 
 
 | ID | Idea | Seed worlds | Use | Priority | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| RSH-145 | The companion who keeps the rendezvous | ALL | Play | 2 Complete | C | A partner honors an agreed meeting place and waits for the stated interval. Reliability is visible without granting them knowledge of why you are late. | Moderate: commitments and limited observations. | Original |
 | RSH-148 | The rear guard with their own needs | MD SC FA | Play | 2 Complete | C | Companions left behind need enough expertise and resources to succeed. Taking every favorite into the main party can leave trusted people unsupported. | Moderate: assignment and support; Combat owns resolution. | Synthesis · [Mass Effect 2](source-atlas.md#g102) |
 | RSH-152 | The former enemies on one rescue | MD SC FA | Play | 2 Complete | C | People who once fought cooperate to recover someone both value. They can complete the rescue and remain enemies afterward. | Moderate: limited shared objective and persistent history. | Original |
 | RSH-156 | The companion who leaves after the mission | ALL | Play | 2 Complete | C | A capable companion fulfills the agreed task and returns to their own life. Departure can be satisfying rather than a punishment for insufficient approval. | Small: bounded participation and future contact. | Synthesis · [Mass Effect 2](source-atlas.md#g102) |
-| RSH-145 | The companion who keeps the rendezvous | ALL | Play | 2 Complete | C | A partner honors an agreed meeting place and waits for the stated interval. Reliability is visible without granting them knowledge of why you are late. | Moderate: commitments and limited observations. | Original |
 | RSH-147 | The loyal person unsuited to command | MD SC FA | Play | 3 Depth | C | A deeply committed friend is poor at leading a team. Choosing another leader can protect the group while requiring an honest personal conversation. | Moderate: qualification separate from loyalty. | Synthesis · [Mass Effect 2](source-atlas.md#g102) |
 | RSH-149 | The comrade who stops an unsafe boast | ALL | Play | 3 Depth | C | A friend challenges a reckless promise before others rely on it. Public embarrassment can preserve lives without guaranteeing gratitude from the person corrected. | Small: witnessed commitments and intervention. | Original |
 | RSH-150 | The rescuer who wants ordinary friendship | ALL | Play | 3 Depth | C | A rescued companion insists on repaying every kindness; the rescuer wants company instead. An unnecessary risk can expose the mismatch before it becomes exploitation. | Moderate: asymmetric interpretations of obligation. | Original |
@@ -413,10 +413,10 @@ Not every bond needs a wound, a test, or a productivity loop. A good evening, an
 
 | ID | Idea | Seed worlds | Use | Priority | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| RSH-234 | The friend who joins your ridiculous quest | ALL | Play | 2 Complete | C | A companion helps find the perfect soup bowl, hilltop or joke because the search matters to you. The small goal can end successfully on its own terms. | Small: adopted limited goal; Adventure owns route. | Original |
 | RSH-227 | The festival dancing partners | ALL | Play | 2 Complete | C | Adults or age-appropriate peers practice a dance and perform for pleasure. Clumsiness, skill and different ambitions can be fun without implying romance. | Moderate: joint activity; Arts owns dance. | Original |
 | RSH-229 | The secret club of dreadful singers | ALL | Play | 2 Complete | C | Friends meet to sing badly on purpose, protecting delight from competitive standards. A talented newcomer must decide whether to join the joke or change the group's expectations. | Small: voluntary group norms; Arts owns singing. | Original |
 | RSH-233 | The band that values staying together | MO SC FA | Play | 2 Complete | C | Musicians choose a sustainable local schedule over maximum fame. Another member may still want a larger career, creating a real choice rather than an inevitable breakup. | Moderate: shared and individual ambitions; Arts owns performance. | Original |
+| RSH-234 | The friend who joins your ridiculous quest | ALL | Play | 2 Complete | C | A companion helps find the perfect soup bowl, hilltop or joke because the search matters to you. The small goal can end successfully on its own terms. | Small: adopted limited goal; Adventure owns route. | Original |
 | RSH-235 | The shared garden with different tastes | MD MO FA | Play | 2 Complete | C | Friends divide a garden between neat rows and exuberant growth, then enjoy the contrast. Cooperation need not produce aesthetic uniformity. | Small: shared space and contribution preferences. | Original |
 | RSH-298 | The conspiracy to throw the world's best party | ALL | Play | 2 Complete | C | Friends secretly recruit cooks, performers and extravagant hosts for a celebration of absurd ambition. Outsiders suspect a political plot; the conspirators really do want a magnificent party, and each has a different idea of what will make it unforgettable. | Moderate: shared ambition and divided tastes; Economy and Arts own production. | Original |
 | RSH-230 | The midnight snack accomplices | ALL | Play | 3 Depth | C | Two housemates share a quiet snack and private conversation after everyone else sleeps. It can remain a warm scene without a confession or plot twist. | Small: compatible schedules and bounded hearing. | Original |
@@ -531,14 +531,14 @@ A useful role can bring people together without defining everything they value i
 
 ## The reliable disagreement
 
-**Priority: 3 Depth.**
+**Priority: 2 Complete.**
 
 
 Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns. See RSH-003 in [Everyday friendship](#everyday-friendship).
 
 Gap: issue-specific positions alongside durable trust. Seeds: [Dragon Age II](source-atlas.md#g52), [Baldur's Gate 3](source-atlas.md#g26), [Star Trek](source-atlas.md#w04).
 
-Selection: Durable friendship across disagreements is later social depth.
+Selection: A concrete disagreement and continued useful friendship can make a small cast feel independent without household bureaucracy.
 
 ## An apprenticeship with an exit
 
@@ -577,14 +577,14 @@ Selection: Asymmetric interpretations deepen existing relationships.
 
 ## Rivals who need the same bridge
 
-**Priority: 3 Depth.**
+**Priority: 2 Complete.**
 
 
 Competing merchants both depend on a broken crossing. They can share repairs, build alternatives or bargain over tolls while continuing to compete. Players see cooperation emerge from concrete stakes. Preserve the difference between a temporary agreement and friendship; one profitable deal should not erase prior harm or permanently unite factions. See RSH-131 in [Rivalry and recognition](#rivalry-and-recognition); faction terms belong in [Diplomacy](diplomacy-conflict.md).
 
 Gap: overlapping interests and cooperative projects without forced alliance. Seeds: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28).
 
-Selection: Temporary cooperation adds depth beyond a simple contested location.
+Selection: A bounded common obstacle makes cooperation or refusal consequential while each side keeps its own goal.
 
 ## A gift whose meaning changes
 
@@ -835,6 +835,8 @@ No discovered game or world dossier remains unread. This completion concerns the
 The integration owner should update shared README counts/navigation and source-atlas routes for the final Group 4 inventory and newer D&D, survival and operational sources. Those shared files remain unchanged. Relationships depend on participant-specific memory, disclosure, commitments, schedules and permissions. Economy owns transfers and budgets; Institutions formal rights; Diplomacy faction bargains; Bodies, Technology and Settlements physical accommodation; Magic and Unusual realities exceptional identity, memory and time rules. Shared recovery and created-person bonds require finite reserves and independent agency in those owners. SC crew relationships concern inhabited places and abstract journeys, not player ship piloting. Missing constituents are named by owner rather than invented IDs.
 
 ## Selection guidance
+
+Reliable disagreement (RSH-003) and a rival winning with advice you gave them (RSH-133) are Complete. Shared history should change an activity while preserving separate preferences and aims; it need not wait for household administration, global reputation or lifelong social simulation.
 
 A rival who genuinely seeks the player's destruction (RSH-144) is Core as a representative source of opposition. Its old Advanced label must not put ordinary enemies behind housework. A simple hostile goal with known capabilities and limits is enough to begin; a complete personality model, life history or simulated contact network is not a prerequisite. Combat and Characters still own actual fighting and the chosen opponent.
 

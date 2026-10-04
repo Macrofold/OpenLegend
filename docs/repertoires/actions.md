@@ -258,10 +258,10 @@ When adding or promoting an example, retain its ID and capture: aliases; initiat
 
 | ID | Example intent | Seed worlds | Priority | Level | Related mechanics and entities | Distinction to preserve |
 | ------ | -------------------------------------------------- | ----------- | ----------- | ----- | ------------------------------------------- | ----------------------------------------------------------------- |
-| FOD-10 | Rest by the fire until I feel recovered. | MD FA | 1 Core | C | rest, body-feedback, exposure | Uses actual body feedback, not wall-clock model latency. |
 | FOD-01 | Eat one berry from my pack. | ALL | 1 Core | U | consumption, nutrition | Native execution needs no thought, goal, or invention. |
 | FOD-02 | Drink from this known safe supply. | ALL | 1 Core | U | consumption, hydration, water | Safe is evidence/policy-dependent, not a model certification. |
 | FOD-03 | Cook the raw food at the lit fire. | MD FA | 1 Core | U | cooking, heat, work | Bind actual output; no eating a future imaginary item. |
+| FOD-10 | Rest by the fire until I feel recovered. | MD FA | 1 Core | C | rest, body-feedback, exposure | Uses actual body feedback, not wall-clock model latency. |
 | FOD-05 | Prepare a meal using only plants. | ALL | 3 Depth | C | recipe-knowledge, ingredient-classification | Preserve ingredient restriction; unknown provenance may block. |
 | FOD-06 | Preserve the surplus with the technique I learned. | ALL | 3 Depth | U | preservation, spoilage, work | Method-specific costs and actual shelf-life effects. |
 | FOD-04 | Share the meal equally but save Ada's portion. | ALL | 4 Detail | C | portioning, reservation, transfer | Exact quantity and ownership/custody remain separate. |
@@ -362,10 +362,10 @@ These are fictional simulation interactions, not real-world medical instructions
 
 | ID | Example intent | Seed worlds | Priority | Level | Related mechanics and entities | Distinction to preserve |
 | ------ | ----------------------------------------------------- | ----------- | ----------- | ----- | --------------------------------------- | ---------------------------------------------------------------------- |
-| ECO-12 | Recover my belongings without taking anyone else's. | ALL | 2 Complete | C | ownership-evidence, selection, transfer | Unknown ownership cannot be silently classified. |
 | ECO-01 | Offer this tool in exchange for three meals. | MD FA | 2 Complete | U | barter, offers, valuation | Offer, acceptance and settlement are distinct. |
 | ECO-02 | Accept the exact trade Ada offered. | ALL | 2 Complete | U | trade-settlement, offer-version | Recheck both sides' items; no partial unilateral exchange by accident. |
 | ECO-05 | Deliver this sealed package without opening it. | ALL | 2 Complete | C | logistics, containment, privacy | Delivery does not require knowledge of contents. |
+| ECO-12 | Recover my belongings without taking anyone else's. | ALL | 2 Complete | C | ownership-evidence, selection, transfer | Unknown ownership cannot be silently classified. |
 | ECO-04 | Return the very same borrowed knife. | ALL | 3 Depth | U | instance-identity, transfer | Equivalent replacement is not silently accepted. |
 | ECO-06 | Restock the stall when inventory falls below five. | ALL | 3 Depth | C | monitoring, inventory, transport | Scoped recurring activity with finite supplies. |
 | ECO-08 | Hire a willing courier for this delivery. | ALL | 3 Depth | C | contracts, payment, agency | Hiring needs agreement and cannot seize another controller. |
@@ -420,6 +420,7 @@ These rows describe in-world fictional practices, not real-world political recom
 | CBT-05 | Block the incoming blow with this shield. | MD FA | 1 Core | U | defense, timing, equipment | Defense can fail; requires actual compatible timing rules. |
 | CBT-06 | Dodge into the open space to my right. | MD SC FA | 1 Core | U | evasive-motion, clearance | Invulnerability frames are a world rule, not implied. |
 | CBT-08 | Retreat while keeping the enemy in sight. | MD SC FA | 1 Core | C | orientation, movement, perception | May be impossible around a corner; do not drop the sight constraint. |
+| CBT-13 | Strike the nearby opponent with my equipped melee weapon. | ALL | 1 Core | U | melee-action, reach, commitment, damage; equipped weapon, target | Requires actual reach, a compatible weapon and supported timing; naming a hit does not guarantee damage or bypass defense. |
 | CBT-03 | Stop attacking when the opponent surrenders. | ALL | 2 Complete | C | combat, observed-signal, interrupt | Stop depends on perceived surrender and safe interruption. |
 | CBT-04 | Push the attacker away without striking them. | ALL | 2 Complete | U | contact-force, balance, collision | Push is not a renamed arbitrary health decrement. |
 | CBT-07 | Stay between the threat and my companion. | MD SC FA | 2 Complete | C | relative-position, body-blocking | Geometric interposition may not block every attack type. |
@@ -427,7 +428,6 @@ These rows describe in-world fictional practices, not real-world political recom
 | CBT-12 | Spar under our agreed nonlethal rules. | ALL | 2 Complete | C | joint-activity, combat-policy, consent | Rules require an admitted safe mode or honest risk disclosure. |
 | CBT-09 | Disarm rather than kill. | ALL | 3 Depth | U | disarming, grip, combat | Requires a supported method; nonlethality is not always guaranteeable. |
 | CBT-10 | Surrender and put my weapon down. | ALL | 3 Depth | C | speech, equipment, placement | Surrender does not force mercy. |
-| CBT-13 | Strike the nearby opponent with my equipped melee weapon. | ALL | 1 Core | U | melee-action, reach, commitment, damage; equipped weapon, target | Requires actual reach, a compatible weapon and supported timing; naming a hit does not guarantee damage or bypass defense. |
 
 ## VEH: Vehicles, mounts and transport
 
@@ -467,12 +467,12 @@ These rows describe in-world fictional practices, not real-world political recom
 
 | ID | Example intent | Seed worlds | Priority | Level | Related mechanics and entities | Distinction to preserve |
 | ------ | ----------------------------------------------------- | ----------- | ----------- | ----- | ---------------------------------- | --------------------------------------------------------------------- |
+| KNO-01 | Teach Ada the cord-making technique I know. | ALL | 1 Core | U | teaching, knowledge, communication | Learning follows its own rules; no hidden registry dump. |
 | KNO-04 | Ask how the unfamiliar tool works. | ALL | 1 Core | U | conversation, knowledge | A description is not automatically a usable technique grant. |
-| KNO-01 | Teach Ada the cord-making technique I know. | ALL | 2 Complete | U | teaching, knowledge, communication | Learning follows its own rules; no hidden registry dump. |
 | KNO-03 | Practice the known technique on spare material. | ALL | 2 Complete | U | practice, skill, resources | Skill gains require an installed learning mechanic. |
+| KNO-10 | Test whether this existing tool can serve as a lever. | ALL | 2 Complete | C | force, geometry, experimentation | Cross-use needs mechanics, not a registered finished-object name. |
 | KNO-02 | Demonstrate the technique slowly while Ada watches. | ALL | 3 Depth | C | work, observation, learning | A real demonstration consumes actual time/materials where applicable. |
 | KNO-09 | Compare my notes with Ada's volunteered observations. | ALL | 3 Depth | C | sharing, provenance, inference | Agreement does not prove truth; private notes stay private. |
-| KNO-10 | Test whether this existing tool can serve as a lever. | ALL | 3 Depth | C | force, geometry, experimentation | Cross-use needs mechanics, not a registered finished-object name. |
 | KNO-11 | Preserve an unknown sample for later study. | ALL | 3 Depth | C | containment, degradation, records | Unknown properties remain unknown during passive exposure. |
 | KNO-12 | Publish my own known procedure for others to learn. | ALL | 3 Depth | U | publication, knowledge, rights | Publication of knowledge is not installation of a new world rule. |
 | KNO-05 | Record the result of this experiment. | ALL | 4 Detail | U | records, evidence, writing | Preserve inconclusive or negative results. |
@@ -575,8 +575,8 @@ These requests may originate from an actor or an authorized creator, but they ar
 
 | ID | Example intent | Seed worlds | Priority | Level | Related mechanics and entities | Distinction to preserve |
 | ------ | --------------------------------------------------------------- | ----------- | ----------- | ----- | ----------------------------------------- | -------------------------------------------------------------------- |
-| DEF-01 | Propose a new tool using my own described mechanism. | ALL | 3 Depth | D | invention, materials, admission | Actor-authored method is validated, not replaced by a secret answer. |
-| DEF-02 | Define a reusable version of my successful technique. | ALL | 3 Depth | D | definition-lifecycle, knowledge | Reuse/publication and mechanical definition are separate choices. |
+| DEF-01 | Propose a new tool using my own described mechanism. | ALL | 1 Core | D | invention, materials, admission | Actor-authored method is validated, not replaced by a secret answer. |
+| DEF-02 | Define a reusable version of my successful technique. | ALL | 2 Complete | D | definition-lifecycle, knowledge | Reuse/publication and mechanical definition are separate choices. |
 | DEF-03 | Specialize the admitted trap template for this target class. | ALL | 3 Depth | D | typed-ports, selectors, effects | Template contract and aggregate bounds still apply. |
 | DEF-05 | Introduce a combustion rule for this new material. | ALL | 3 Depth | D | properties, passive-processes | Must specify effects under ordinary exposure, not just on use. |
 | DEF-06 | Author a new autonomous sorting mechanism. | ALL | 3 Depth | D | process-definitions, selectors, transfers | A machine-owned process is not a free actor routine. |
@@ -688,6 +688,8 @@ related_actions: [COM-08, ART-06]
 The catalogue should grow through new meanings, unusual counterexamples and useful combinations—not by treating every synonym as a new engine primitive.
 
 ## Selection guidance
+
+DEF-01 is Core: a useful actor-proposed mechanism is part of the first OpenLegend experience, not a general physics project. KNO-01 is a Core representative of passing useful knowledge to another person; it does not guarantee learning or loyalty. DEF-02 and KNO-10 are Complete: make a successful technique reusable and test another practical use for a supported object. Known actions remain dependable alternatives, and proposal, admission and use remain distinct.
 
 The exact intent matters. FLU-01's precise halfway fill is optional granularity; basic water collection, carrying and drinking remain foundational coverage. BLD-03's usable shelter is Core; BLD-07's specially dry bedding setup is Detail. MAK-02's useful weapon crafting is Core; MAK-04/05/06's handle repair, sharpening and patching are Detail with a small bounded scope once their prerequisites exist. Basic following and guarding can support enjoyable companionship; COOP-08's watch agreement and COOP-12's replacement administration do not precede that activity.
 

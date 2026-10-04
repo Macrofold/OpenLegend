@@ -1,5 +1,7 @@
 # MD proposal: Threewater March
 
+**Current-game selection: 2 Complete, as a source of coherent content.** Draw from dangerous expeditions, raiders, contested crossings, useful gear, loot, progression and functional homebuilding. The named setting, faction politics, hydrology, customs and maintenance are not adopted wholesale.
+
 [Library](../README.md) · [Labels](../README.md#reading-the-labels) · [Selection and scale](../selection-and-scale.md) · [Design foundation](../design-foundation.md)
 
 **Optional setting proposal, not canonical world history or implemented content.** Threewater March is a medieval survival and adventure world about **winning a place in a beautiful, dangerous borderland**. Build a home, hunt, learn a trade, explore abandoned works, fight for pay or conviction, acquire better equipment, and choose who gains power over the river crossings. Knights want land and renown, raiders want plunder, merchants want profitable control, households want another good winter, and these purposes can collide.
@@ -8,7 +10,7 @@ Home, work and expeditions feed one another. At home, cultivate a garden, make a
 
 The material palette takes a loose regional inspiration from medieval societies around 1000–1200: timber, stone, iron, sail, water power, swords, spears and bows. This is an invented region whose starting play omits firearms, not a claim that the entire historical world was then before gunpowder. Technology can advance through knowledge, resources and institutions. The starting period is an aesthetic and capability choice, not an immutable prohibition on invention.
 
-**Estimate:** Play/Blend, High. Lore, geography and biographies are **1/Compose** authoring candidates. A bounded home/work/expedition loop is provisionally **2/Extend** only where its constituent actions exist; differentiated combat, injury/capture, faction response and tactical opponents need a current capability audit and may be **3/New**. Detailed hydrology, structural failure, ecology and regional war are **3/New**, not prerequisites for the first slice. These are scope estimates, not evidence that the proposed game is implemented.
+**Estimate:** Play/Blend, High. Lore, geography and biographies are **Small/Compose** authoring candidates. A bounded home/work/expedition loop is provisionally **Moderate/Extend** only where its constituent actions exist; differentiated combat, injury/capture, faction response and tactical opponents need a current capability audit and may be **Large/New**. Detailed hydrology, structural failure, ecology and regional war are **Large/New**, not prerequisites for the first slice. These are scope estimates, not evidence that the proposed game is implemented.
 
 ## A place worth surviving in
 
@@ -16,11 +18,11 @@ Three rivers meet around a low wooded ridge. The upper river is cold and fast, t
 
 | Place or polity                                           | Proposed life and tension                                                                                                       | Build path                                           |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **Bellwold**, a market village around a public oven       | A manageable starting home with a landing, forge, orchard and room for newcomers; the oven's fuel competes with winter reserves | 2/Extend: shared work and stock reservations         |
-| **Ternmere**, downstream reed settlements                 | Boat-builders and fishers govern landing rights through assemblies; they resent upstream sediment and admire upstream tools     | 2/Extend: local rights and bounded trade             |
-| **The Cairnward Holds**, upland hamlets                   | Sheep, stone and ironworking support scattered households; some favor toll-taking patrols, others guide travelers freely        | 2/Extend: distinct memberships and route commitments |
-| **The Veyl Compact**, a neighboring league of three towns | Its road repairs and standardized measures are useful; its tax collectors want more authority than locals agreed to             | 2/Extend: limited services and negotiations          |
-| **The Old Reed Road**, partly abandoned                   | Raised causeways lead to ruined storehouses now used by beekeepers and seasonal herders; history overlaps current claims        | 2/Extend: routes, occupancy and evidence             |
+| **Bellwold**, a market village around a public oven       | A manageable starting home with a landing, forge, orchard and room for newcomers; the oven's fuel competes with winter reserves | Moderate/Extend: shared work and stock reservations         |
+| **Ternmere**, downstream reed settlements                 | Boat-builders and fishers govern landing rights through assemblies; they resent upstream sediment and admire upstream tools     | Moderate/Extend: local rights and bounded trade             |
+| **The Cairnward Holds**, upland hamlets                   | Sheep, stone and ironworking support scattered households; some favor toll-taking patrols, others guide travelers freely        | Moderate/Extend: distinct memberships and route commitments |
+| **The Veyl Compact**, a neighboring league of three towns | Its road repairs and standardized measures are useful; its tax collectors want more authority than locals agreed to             | Moderate/Extend: limited services and negotiations          |
+| **The Old Reed Road**, partly abandoned                   | Raised causeways lead to ruined storehouses now used by beekeepers and seasonal herders; history overlaps current claims        | Moderate/Extend: routes, occupancy and evidence             |
 
 These are political communities, not fixed ethnic temperaments. A Ternmere person can hate boats; a Cairnward family can be hospitable or exploitative for reasons particular to them. Migration, marriage, apprenticeship and trade cross the map.
 
@@ -36,7 +38,7 @@ These are political communities, not fixed ethnic temperaments. A Ternmere perso
 
 The harvest fair is an occasion to play as well as the backdrop to the convoy crisis. Sell a first well-made tool, compare Iven's fruit, enter an archery contest, hear Oren's new comic song, dance or arrange a private meeting. Mira's oven, Tavin's gardens and Nella's workshop support ongoing projects and relationships. These activities have their own pleasures and useful results; a player can pursue them, take up the convoy opportunity or move between the two.
 
-Alternative history: replace the war with a failed grand canal and a generation of debt. The same displaced households, disputed records and infrastructure questions remain, with a less martial tone. Both versions are **1/Compose** lore; the canal variant can still include greed, armed toll-taking and rival claimants. Modeled long-term demographic or military consequences would be separate **3/New** work.
+Alternative history: replace the war with a failed grand canal and a generation of debt. The same displaced households, disputed records and infrastructure questions remain, with a less martial tone. Both versions are **Small/Compose** lore; the canal variant can still include greed, armed toll-taking and rival claimants. Modeled long-term demographic or military consequences would be separate **Large/New** work.
 
 ## Powers with something to gain and lose
 
@@ -58,12 +60,12 @@ Power is local. A victory at the ford changes passage, income and reputation aro
 
 | Resource or technique                     | Several useful purposes                                                                                   | Broad gap                                       |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Iron, charcoal and replaceable fittings   | Tools, hinges, cart repairs and defensive equipment; fuel competes with heating and pottery               | 2/Extend: bounded production and substitution   |
-| Reeds, flax and willow                    | Rope, roofs, baskets, fishing gear and lightweight partitions; harvesting can shelter or disturb wildlife | 2/Extend: materials, growth and habitat effects |
-| Warmstone ceramics                        | Store hearth heat for beds, seedlings and expeditions; heavy enough to make transport matter              | 2/Extend: bounded heat storage and transfer     |
-| Local grain and orchard varieties         | Food, seed exchange, brewing and seasonal celebration; resilience can matter more than maximum yield      | 2/Extend: coarse seasonal crops and recipes     |
-| Waterwheel knowledge                      | Milling, pumps and workshop power; changing a channel affects other users                                 | 3/New: coarse water and power networks          |
-| Surveying, teaching and practical records | Safer bridges, dependable measures and apprentices who can carry methods elsewhere                        | 2/Extend: measurement evidence and learning     |
+| Iron, charcoal and replaceable fittings   | Tools, hinges, cart repairs and defensive equipment; fuel competes with heating and pottery               | Moderate/Extend: bounded production and substitution   |
+| Reeds, flax and willow                    | Rope, roofs, baskets, fishing gear and lightweight partitions; harvesting can shelter or disturb wildlife | Moderate/Extend: materials, growth and habitat effects |
+| Warmstone ceramics                        | Store hearth heat for beds, seedlings and expeditions; heavy enough to make transport matter              | Moderate/Extend: bounded heat storage and transfer     |
+| Local grain and orchard varieties         | Food, seed exchange, brewing and seasonal celebration; resilience can matter more than maximum yield      | Moderate/Extend: coarse seasonal crops and recipes     |
+| Waterwheel knowledge                      | Milling, pumps and workshop power; changing a channel affects other users                                 | Large/New: coarse water and power networks          |
+| Surveying, teaching and practical records | Safer bridges, dependable measures and apprentices who can carry methods elsewhere                        | Moderate/Extend: measurement evidence and learning     |
 
 Technology advances through projects: a better mill bearing, a foot-operated loom, a dependable kiln, a shared repair standard. A breakthrough should spread through teaching and demonstration rather than instantly granting every resident a new technology tier. Future firearms could be a separately selected development with material and social consequences; they are outside this starting proposal.
 
@@ -83,11 +85,11 @@ The **Keepers of the Open Table** understand hospitality as leaving room for a t
 
 Bellwold names favor short stress-first forms and practical compounds: **Nella, Oren, Tavin; Reed, Venn, Bellwold, Ashford**. Downriver names allow open syllables and flowing sequences: **Sela, Iven, Neris; Ternmere, Velin**. Upland place names tend toward compact consonants and descriptive endings: **Darn, Kel, Rusk; Cairnward, Stonefold**. These are invented sound palettes, not claims to reproduce a real language. Personal, household and occupational names can differ; speakers use aliases rather than forcing one official form.
 
-An old root **ter** can mean a bank or edge in one proposed local language, appearing in places now far from water. Newcomers might reinterpret it as a person's name. Retain a few meaningful patterns rather than constructing a dictionary before anyone can play. Language/lore is **1/Compose**; translation and recognition behavior would be **2/Extend**.
+An old root **ter** can mean a bank or edge in one proposed local language, appearing in places now far from water. Newcomers might reinterpret it as a person's name. Retain a few meaningful patterns rather than constructing a dictionary before anyone can play. Language/lore is **Small/Compose**; translation and recognition behavior would be **Moderate/Extend**.
 
 ## Eight people to meet
 
-The cast is **Play, High, 1/Compose** as authored biography. Each has an ordinary pleasure, a present aim and a relationship that can change. Behavioral follow-through—selective memory, work, refusal and commitments—is **2/Extend** and must be grounded in actual events. These are starting tendencies, not predetermined outcomes.
+The cast is **Play, High, Small/Compose** as authored biography. Each has an ordinary pleasure, a present aim and a relationship that can change. Behavioral follow-through—selective memory, work, refusal and commitments—is **Moderate/Extend** and must be grounded in actual events. These are starting tendencies, not predetermined outcomes.
 
 ### Nella Reed, 42 — the millwright who keeps the bad parts
 
@@ -139,7 +141,7 @@ Pell offers to buy recovered cargo quickly and pay the Ash Company before Bellwo
 
 ## Four people who mean to act
 
-These people bring active martial ambitions, threats and loyalties into the cast's existing relationships. **Play, High, 1/Compose** as authored people; combat, pursuit and faction consequences remain capability-dependent **2/Extend or 3/New** work. These are tendencies and opening commitments, not guaranteed scripts.
+These people bring active martial ambitions, threats and loyalties into the cast's existing relationships. **Play, High, Small/Compose** as authored people; combat, pursuit and faction consequences remain capability-dependent **Moderate/Extend or Large/New** work. These are tendencies and opening commitments, not guaranteed scripts.
 
 ### Ser Jessa Cairn, 29 — the knight who wants the banner to be hers
 
