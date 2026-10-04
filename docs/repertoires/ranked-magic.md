@@ -1,5 +1,66 @@
-# Ranked magic
+# Ranked magic with usable powers before household upkeep
 
-[Library](README.md) · [Expanded inventory](inventory-magic.md) · [Review index](expanded-inventories.md)
+[Library](README.md) · [All expanded inventories](expanded-inventories.md) · [Priority policy](gameplay-priorities.md) · [Full entry descriptions](inventory-magic.md)
 
-**Status: Pending.** The expanded source is preserved, but its individual entries have not yet received the current-game review. The old inline Criticality and introductory examples are not current individual rankings.
+**Status: Reviewed · October 3, 2026.** All **300 MG entries** are assigned below. Reviewed source blob: `6334a4d61c24c21954ef17f16c43ae3cc332c966`. Source descriptions, stable IDs, setting recommendations, research and provisional build estimates are preserved. The source snapshot’s old Criticality cells and F/U/C/D ordering are superseded, not combined with these judgments.
+
+Coverage: **MG-001–MG-300**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
+
+| Core | Complete | Depth | Detail | Specialist | Total |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 155 | 82 | 30 | 23 | 300 |
+
+## Selection decisions
+
+Core marks representative offense, defense, interruption, recovery, light, a recognizable undead opponent and finite casting resources **when a magical tradition is selected**. It does not require adding magic to a mundane opening or adopting every tradition. The existing Borrowed Dawn proposal's limited Art of Borrowing remains a separate optional setting choice. A few explicit spells can work before a general charm-construction language (MG-211, Depth).
+
+Blinking, climbing, opening routes, useful transformations, illusions, companions, witnessed enemy techniques and concrete counters are Complete. The finite soul-anchor vulnerability (MG-210) moves ahead of domestic upkeep despite its old Frontier label: a boss with discoverable anchors can be a comprehensible challenge. It does not require an entire universal afterlife system. Shield-to-attack conversion (MG-254), bounded modifier transfer (MG-257), and the quarry's borrowed trick (MG-272) make powers and rewards worth using. Large build estimates and Level D do not lower their gameplay importance.
+
+Household heating circuits (MG-002), mending (MG-061), cleaning (MG-063), laundry (MG-065), spill prevention (MG-067), housekeeping schedules (MG-075), treatment handoffs (MG-090), promise reminders (MG-136), inside-out pockets (MG-246) and a successor construct's task handoff (MG-295) are Detail as their full additions. They may be straightforward with existing prerequisites. Inventory, basic healing and companion actions must work without these elaborations; magic is not a reason to turn camp chores into the next milestone.
+
+Performance, creative expression and beautiful spaces retain genuine value. Elaborate shared memories, ecology and distinct embodiment can follow as Depth; independent dream residents, cross-time settlements and new universal cosmologies remain Specialist. Not every magical idea is Specialist merely because it is impossible in ordinary reality. Scores select fictional possibilities, not installed capabilities or real-world claims.
+
+Finite costs, actual destinations, sensible release and counterplay are mandatory for every selected effect. A summoned construct, a corpse, a recorded voice and an independent person remain different things. Coercion is not consent or friendship, private observations are not omniscience, and a source's magical exception cannot bypass trusted engine authority or the development save policy. These constraints govern implementation without making every related supporting feature urgent.
+
+## 1 Core
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Usable light, signs and finite casting resources make selected magic understandable. | MG-106, MG-212, MG-213 |
+| 2 | Concrete magical opponents and discoverable vulnerabilities create real danger. | MG-197 |
+| 3 | Attacks, defenses, recovery and active cooperation add playable tactical choices. | MG-004, MG-019, MG-032, MG-033, MG-076, MG-078 |
+
+## 2 Complete
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 1 | Usable light, signs and finite casting resources make selected magic understandable. | MG-107, MG-111 |
+| 2 | Concrete magical opponents and discoverable vulnerabilities create real danger. | MG-198, MG-207, MG-210, MG-274, MG-279 |
+| 3 | Attacks, defenses, recovery and active cooperation add playable tactical choices. | MG-006, MG-007, MG-008, MG-012, MG-015, MG-016, MG-018, MG-020, MG-021, MG-022, MG-023, MG-025, MG-026, MG-027, MG-030, MG-031, MG-034, MG-035, MG-036, MG-037, MG-038, MG-040, MG-042, MG-043, MG-045, MG-079, MG-080, MG-081, MG-083, MG-085, MG-093, MG-096, MG-119, MG-125, MG-153, MG-167, MG-169, MG-170, MG-174, MG-182, MG-183, MG-184, MG-196, MG-200, MG-205, MG-206, MG-223, MG-235, MG-245, MG-247, MG-251, MG-252, MG-253, MG-254, MG-255, MG-256, MG-258, MG-259, MG-261, MG-270, MG-275, MG-276, MG-277, MG-278 |
+| 4 | Movement, clues, transformations and bounded testimony open worthwhile exploration. | MG-046, MG-047, MG-048, MG-049, MG-050, MG-051, MG-052, MG-053, MG-054, MG-055, MG-056, MG-058, MG-059, MG-060, MG-062, MG-071, MG-091, MG-092, MG-094, MG-095, MG-099, MG-108, MG-109, MG-110, MG-112, MG-114, MG-115, MG-117, MG-121, MG-122, MG-123, MG-124, MG-132, MG-133, MG-137, MG-138, MG-152, MG-159, MG-160, MG-166, MG-168, MG-171, MG-181, MG-190, MG-191, MG-192, MG-199, MG-233, MG-241, MG-242, MG-248, MG-249, MG-262, MG-266, MG-271, MG-273, MG-293 |
+| 5 | Learned techniques and useful spell combinations make progression tangible. | MG-215, MG-216, MG-217, MG-218, MG-219, MG-220, MG-257, MG-268, MG-272, MG-291, MG-292 |
+| 6 | Selected powers support meaningful making and resource use. | MG-003, MG-011, MG-017, MG-029, MG-074, MG-151, MG-154, MG-163, MG-243 |
+| 7 | Scoped access makes magical protection usable for a home. | MG-041 |
+| 8 | Performance and beauty remain substantial enjoyable activities. | MG-126, MG-130, MG-156, MG-202, MG-286, MG-290 |
+
+## 3 Depth
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 9 | Distinctive motives, relationships and situational depth after the baseline works. | MG-001, MG-009, MG-010, MG-013, MG-014, MG-024, MG-028, MG-044, MG-057, MG-064, MG-066, MG-072, MG-077, MG-084, MG-088, MG-089, MG-097, MG-098, MG-100, MG-101, MG-102, MG-113, MG-116, MG-118, MG-127, MG-128, MG-129, MG-131, MG-134, MG-135, MG-139, MG-140, MG-141, MG-143, MG-144, MG-146, MG-147, MG-148, MG-155, MG-161, MG-162, MG-164, MG-172, MG-175, MG-176, MG-178, MG-185, MG-187, MG-188, MG-189, MG-193, MG-194, MG-201, MG-204, MG-208, MG-211, MG-222, MG-224, MG-226, MG-227, MG-228, MG-229, MG-232, MG-236, MG-238, MG-244, MG-250, MG-260, MG-263, MG-264, MG-267, MG-269, MG-280, MG-282, MG-284, MG-285, MG-287, MG-288, MG-289, MG-294, MG-296, MG-297 |
+
+## 4 Detail
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | MG-002, MG-005, MG-039, MG-061, MG-063, MG-065, MG-067, MG-068, MG-069, MG-070, MG-073, MG-075, MG-082, MG-086, MG-087, MG-090, MG-103, MG-136, MG-157, MG-158, MG-173, MG-186, MG-203, MG-214, MG-221, MG-225, MG-246, MG-281, MG-283, MG-295 |
+
+## 5 Specialist
+
+| Game order | Selection reason | Entry IDs |
+| ---: | --- | --- |
+| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | MG-104, MG-105, MG-120, MG-142, MG-145, MG-149, MG-150, MG-165, MG-177, MG-179, MG-180, MG-195, MG-209, MG-230, MG-231, MG-234, MG-237, MG-239, MG-240, MG-265, MG-298, MG-299, MG-300 |
+
+## Verification and limits
+
+Checked the complete reviewed ID set for exactly one assignment per entry, valid priorities and the stated ordering. No descriptions, IDs, research or applicability were deleted. This is a document review, not a new implementation audit or playtest. A low priority never weakens the correctness, privacy, authority, participation or save-integrity requirements of a selected feature.
