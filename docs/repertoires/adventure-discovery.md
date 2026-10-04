@@ -1,6 +1,6 @@
 # Discovery, expeditions and authored situations
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -12,7 +12,7 @@
 
 ## Coverage of the playable foundation
 
-Use the shared [seed-world labels](README.md#four-possible-world-families), [Criticality](README.md#criticality), [Level](README.md#level) and [build-scope definitions](README.md#existing-pattern-labels-and-build-scope). Level C describes composing a playable premise from its stated prerequisites; it does not claim those prerequisites already exist. A strange journey need not invent a new rule during play. “—” retains ideas outside the four proposals. FA recommendations beyond its opening explicitly depend on optional magical traditions; SC journeys never introduce playable spaceflight.
+Use the shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [build-scope definitions](README.md#existing-pattern-labels-and-build-scope). Level C describes composing a playable premise from its stated prerequisites; it does not claim those prerequisites already exist. A strange journey need not invent a new rule during play. “—” retains ideas outside the four proposals. FA recommendations beyond its opening explicitly depend on optional magical traditions; SC journeys never introduce playable spaceflight.
 
 The expansion makes room for institution-shaped expeditions, public discovery, body-specific rescue, performance, conspiracies, abundance, transformation and endings. A promising source pattern also has a limit: repeated preparation can become chores; an elaborate quest can have an opaque gate; a powerful companion can erase the player's decisions. Each selected premise needs an intelligible objective, credible opposition or uncertainty, and a payoff worth pursuing. Not every happy outing needs opposition. A specialist can contribute without joining permanently, a familiar workplace can become an expedition site, and an achieved victory can remain achieved.
 

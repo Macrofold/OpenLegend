@@ -1,6 +1,6 @@
 # Languages, knowledge, teaching and interpretation
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Specific inventory](#specific-inventory) · [Research coverage](#research-coverage)
 
@@ -25,7 +25,7 @@ These domains orient the expanded inventory. The ten retained patterns illustrat
 
 ## Names with sediment
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored naming rules, aliases and local histories.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored naming rules, aliases and local histories.
 
 A settlement keeps old river names, newer guild surnames and affectionate household nicknames. The layers imply movement and history without requiring a complete invented language. Players can ask who uses each name and choose their own. Keep pronunciation guides and aliases accessible; depth should not depend on memorizing dozens of near-identical apostrophe-heavy proper nouns.
 
@@ -35,7 +35,7 @@ Selection: Naming history follows clear basic names and navigation.
 
 ## Translation leaves a question
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: partial semantic mappings with visible uncertainty.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: partial semantic mappings with visible uncertainty.
 
 A phrase translates literally as “leave a chair in the rain,” but locals use it for keeping a promise to an absent person. A translator can ask, observe or offer alternatives. Players learn culture through situations. A biased interpreter or a bad translation can matter in the fiction, with clues and ways to investigate. The interface should distinguish a speaker’s interpretation from confirmed meaning instead of presenting uncertain translation as authoritative mechanical fact.
 
@@ -45,7 +45,7 @@ Selection: Partial cultural interpretation adds investigation depth.
 
 ## Practical multilingualism
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: language skills by activity and accessible teaching.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: language skills by activity and accessible teaching.
 
 A trader can bargain fluently but struggles with poetry or legal terms. A mechanic recognizes technical diagrams across languages. Characters contribute different forms of understanding without one universal fluency number. Let repeated useful interactions teach vocabulary, and offer interpreters or visual methods so language enriches play instead of locking whole populations behind a grind wall.
 
@@ -55,7 +55,7 @@ Selection: Activity-specific fluency is an expansion, not a communication gate.
 
 ## The shared sketch
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: authored diagrams linked to inspectable objects and evidence.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: authored diagrams linked to inspectable objects and evidence.
 
 A traveler and builder who share few words draw a roof, mark wind direction and test a model. Misunderstanding becomes a practical design issue that can be corrected. Visual creators gain a meaningful communication medium. A sketch should communicate only what its maker knows; it cannot silently contain exact dimensions or hidden mechanisms never observed.
 
@@ -65,7 +65,7 @@ Selection: Evidence-bearing diagram exchange expands communication methods.
 
 ## A school that teaches questions
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: demonstrations, evidence comparison and bounded learning goals.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: demonstrations, evidence comparison and bounded learning goals.
 
 Students compare why two gardens grow differently, then propose a small trial. The teacher helps distinguish sunlight, soil and care rather than handing over a stat bonus. Players can teach, attend or supply materials. Keep experiments short and outcomes understandable; simulated results demonstrate the world's authored rules, not validated science about real gardens.
 
@@ -75,7 +75,7 @@ Selection: Extended practical education follows useful learning.
 
 ## Rumor with a route
 
-**ALL · Blend · 3 Depth · 2/Extend.** Gap: attributed messages, limited propagation and correction.
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: attributed messages, limited propagation and correction.
 
 A report of a closed bridge travels through a courier, tavern and noticeboard, changing slightly at each retelling. Players can verify, correct, deliberately distort or act cautiously. Information acquires geography, and a false warning might clear a valuable route while harming the liar’s reputation when discovered. Store meaningful versions and sources rather than all possible gossip, and never let an unobserved event become universally known merely because narration mentions it.
 
@@ -85,7 +85,7 @@ Selection: Bounded rumor propagation deepens witnessed consequences.
 
 ## The right not to explain
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored disclosure preferences and alternative investigation paths.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored disclosure preferences and alternative investigation paths.
 
 An elder declines to interpret a private song but recommends a public archive. A player can respect the boundary while still pursuing the broader history. Curiosity coexists with privacy and independent agency. Avoid making every person a lore vending machine: repeated demands need not produce disclosure. Investigation, deception or espionage can still uncover particular secrets through supported observations and evidence; they do not grant raw access to private cognition. Some stories can remain unshared.
 
@@ -95,7 +95,7 @@ Selection: Specific disclosure scenes are optional; privacy constraints remain m
 
 ## Knowledge carried in a craft
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: inspectable techniques and embodied teaching.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: inspectable techniques and embodied teaching.
 
 A weaving pattern encodes seasonal winds through the orientation of stitches, useful to sailors who learn how to read it. The cloth is also beautiful and durable. Players can preserve, adapt or misunderstand the method. Give the encoding a small consistent grammar; don't make every decorative motif secretly an exhaustive technical manual.
 
@@ -105,7 +105,7 @@ Selection: Encoded cultural knowledge adds discovery and teaching depth.
 
 ## A public correction that travels
 
-**ALL · Blend · 3 Depth · 2/Extend.** Gap: linked corrections and audience-scoped record updates.
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: linked corrections and audience-scoped record updates.
 
 After a false accusation, an editor publishes evidence and seeks out people who received the original story. Repair requires effort beyond deleting a notice. Players can help while respecting the harmed person's preferences. Corrections should influence reachable audiences, not retroactively erase all memories, and the process should have a useful endpoint rather than infinite reputational debt.
 
@@ -115,7 +115,7 @@ Selection: Audience-specific correction follows basic reputation and communicati
 
 ## A library of methods not answers
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: reusable plans with prerequisites and truthful execution boundaries.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: reusable plans with prerequisites and truthful execution boundaries.
 
 Makers share “how to test a roof for leaks,” “how to welcome a visitor with different air” or “how to defend a narrow gate,” including assumptions and failure signs. Another creator can adapt the method to a new setting. Reuse spreads competence. A stored plan is neither a guaranteed outcome nor permission to run it; missing capabilities and resources must be visible before use.
 

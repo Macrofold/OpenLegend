@@ -1,6 +1,6 @@
 # Ecology, weather and environmental relationships
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -26,7 +26,7 @@ The following ten patterns and their original source pointers are preserved as p
 
 ## The orchard has neighbors
 
-**MD MO FA · Blend · 3 Depth · 2/Extend.** Gap: bounded pollination, shelter and harvest interactions.
+**MD MO FA · Blend · 3 Depth · Moderate/Extend.** Gap: bounded pollination, shelter and harvest interactions.
 
 A neglected hedge shelters pollinators and mice; clearing it helps one crop while harming another. Farmers can try mixed planting, owl perches or protective stores. Players discover relationships through visible seasonal outcomes. Use a few meaningful species and refuges so experiments produce visible tradeoffs and the garden can recover from ordinary mistakes.
 
@@ -36,7 +36,7 @@ Selection: Pollinators, pests and mixed habitats deepen basic farming.
 
 ## Weather makes appointments
 
-**ALL · Play · 2 Complete · 2/Extend.** Gap: region forecasts, uncertainty and scheduled exposure.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: region forecasts, uncertainty and scheduled exposure.
 
 A storm shifts a market indoors, delays a survey and creates a good moment to collect roof water. Preparation has several payoffs without making weather only punishment. Forecasts should communicate likelihood and useful time windows. Stable shelter and known routines reduce repetitive response. The world's declared time and persistence rules determine whether hazards continue during absence; do not hide that choice from participants.
 
@@ -46,7 +46,7 @@ Selection: Readable weather changes activities and routes without becoming only 
 
 ## The river remembers upstream
 
-**MD MO FA · Blend · 3 Depth · 3/New.** Gap: bounded catchment flow and visible upstream-downstream effects.
+**MD MO FA · Blend · 3 Depth · Large/New.** Gap: bounded catchment flow and visible upstream-downstream effects.
 
 A new mill helps one village and changes sediment at another's fishing bank. Players can inspect, negotiate operating hours or construct a bypass. The river links politics to material decisions. Use a small catchment graph with declared approximations; avoid pretending to simulate all fluid dynamics, and provide readable traces before downstream harm becomes irreversible.
 
@@ -56,7 +56,7 @@ Selection: Catchment consequences deepen resource and settlement decisions.
 
 ## Wildlife with an elsewhere
 
-**ALL · Blend · 3 Depth · 2/Extend.** Gap: ecological goals, refuges and bounded population transitions.
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: ecological goals, refuges and bounded population transitions.
 
 Predators visit a village because a route to their usual prey is blocked. Hunting the threatening animals, reopening habitat, protecting livestock or relocating stores are different responses with different costs. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
 
@@ -66,7 +66,7 @@ Selection: Population goals and refuges follow readable local predators.
 
 ## A useful weed
 
-**MD MO FA · Play · 3 Depth · 2/Extend.** Gap: multiple material affordances and contextual cultivation.
+**MD MO FA · Play · 3 Depth · Moderate/Extend.** Gap: multiple material affordances and contextual cultivation.
 
 A plant that crowds wheat also makes strong cord and feeds a useful insect. Players decide where to tolerate it, harvest it or trade it. The label “weed” belongs to a goal and a place. Limit growth cadence and provide settled garden policies; otherwise an appealing ecological tradeoff turns into endless clicking to remove unwanted plants.
 
@@ -76,7 +76,7 @@ Selection: Ecological multiple-use tradeoffs follow useful gathering and craftin
 
 ## Fire as a changing landscape
 
-**MD FA · Blend · 3 Depth · 3/New.** Gap: bounded fuel, spread, smoke, recovery and firebreaks.
+**MD FA · Blend · 3 Depth · Large/New.** Gap: bounded fuel, spread, smoke, recovery and firebreaks.
 
 A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal can be skilled management, dangerous improvisation or deliberate destruction: a raider may use the same fire to deny cover or burn a settlement. Use finite regions, clear containment tools and world-selected severity. Bound propagation work and provide usable evidence of danger.
 
@@ -86,7 +86,7 @@ Selection: Regional spread and recovery exceed a bounded camp or encounter fire.
 
 ## The migration festival
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: region-level arrival windows and local animal encounters.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: region-level arrival windows and local animal encounters.
 
 A migration brings food, visitors, songs and conservation disputes. Players can build observation hides, guide travelers or adjust harvesting rules. The spectacle matters even without collectible rewards. Predictable windows and repeat opportunities prevent missing one evening from locking content; most distant animals can remain population groups rather than individually thinking agents.
 
@@ -96,7 +96,7 @@ Selection: A seasonal ecological event adds variety after everyday activities wo
 
 ## An alien afternoon
 
-**SC · Play · 5 Specialist · 3/New.** Gap: one authored environmental cycle with body and tool responses.
+**SC · Play · 5 Specialist · Large/New.** Gap: one authored environmental cycle with body and tool responses.
 
 On a planet where suspended crystals fall as a harmless-to-locals abrasive haze, residents close cloth roofs while visitors learn to shield optics. The cycle changes routes, work and architecture. Start with one distinctive law and several consequences. Do not generate a new physics exception for every biome or make alien weather simply Earth weather with lethal colors.
 
@@ -106,7 +106,7 @@ Selection: An alien environmental constitution is an alternate-world feature.
 
 ## The town's waste becomes a garden
 
-**MO SC · Blend · 5 Specialist · 3/New.** Gap: coarse treatment processes with conserved inputs and explicit limits.
+**MO SC · Blend · 5 Specialist · Large/New.** Gap: coarse treatment processes with conserved inputs and explicit limits.
 
 Waste heat and treated organic matter support a neighborhood greenhouse, creating work and bargaining over responsibility. Players can compare central and household solutions. The output should have declared quality and maintenance needs; “recycled” is not automatically safe. A play model can remain coarse while a lab variant measures a specific balance without claiming real engineering validation.
 
@@ -116,7 +116,7 @@ Selection: Urban industrial treatment networks are outside the survival baseline
 
 ## Restoration with witnesses
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: visible place change and independent stakeholder appraisals.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: visible place change and independent stakeholder appraisals.
 
 Cleaning a polluted pond brings back an edible plant but removes a workshop's convenient disposal site. A former critic may help when the practical benefit becomes visible. Restoration becomes a shared story rather than a progress bar. Track a few observable milestones, preserve disagreement about costs, and avoid rewarding only catastrophic damage followed by heroic cleanup.
 

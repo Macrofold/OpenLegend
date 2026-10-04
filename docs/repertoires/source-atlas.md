@@ -1831,3 +1831,20 @@ These primary-author or estate-published sources were consulted on September 27,
 **Caution to carry forward:** Do not confuse unequal factions with morally equivalent choices, or freeze every settlement in rubble; rebuilding and political victory should be allowed to change ordinary life.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
+
+## Catalogue source revisions
+
+The 27 expanded catalogues were consolidated from these eight source revisions. Current descriptions and priorities are maintained in the [canonical catalogue map](README.md#catalogue-map); these pins identify research provenance, not alternative current editions. Later source-branch changes require comparison by stable ID and meaning, not automatic replacement. Existing source branches are unchanged.
+
+| Group | Source branch | Source revision | Supporting research ledger |
+| --- | --- | --- | --- |
+| 1 | `repertoires-v2-group-1` | [fcf810d634401f6457bf86e3fbc8283286ce6e6d](https://github.com/Macrofold/OpenLegend/tree/fcf810d634401f6457bf86e3fbc8283286ce6e6d/docs/repertoires) | Research references remain in the canonical catalogues |
+| 2 | `repertoires-v2-group-2` | [8866d5c422d2f414e80f3f136d9211ffcaaa3e1b](https://github.com/Macrofold/OpenLegend/tree/8866d5c422d2f414e80f3f136d9211ffcaaa3e1b/docs/repertoires) | Research references remain in the canonical catalogues |
+| 3 | `repertoires-v2-group-3` | [af8151355e4e9705aeb4708ef60db4568578760e](https://github.com/Macrofold/OpenLegend/tree/af8151355e4e9705aeb4708ef60db4568578760e/docs/repertoires) | [Group 3 reading progress](group-3-reading-progress.md) |
+| 4 | `repertoires-v2-group-4` | [c484604b9aa705d4009af19bc1036fead3bd7e86](https://github.com/Macrofold/OpenLegend/tree/c484604b9aa705d4009af19bc1036fead3bd7e86/docs/repertoires) | Research references remain in the canonical catalogues |
+| 5 | `repertoires-v2-group-5` | [68e68fb12a76ffebd8be56cf0b4e29895c2ea006](https://github.com/Macrofold/OpenLegend/tree/68e68fb12a76ffebd8be56cf0b4e29895c2ea006/docs/repertoires) | Research references remain in the canonical catalogues |
+| 6 | `repertoires-v2-group-6` | [6b857ff1e75547af0b5c159cdc8c24ad6a3c1e71](https://github.com/Macrofold/OpenLegend/tree/6b857ff1e75547af0b5c159cdc8c24ad6a3c1e71/docs/repertoires) | [Group 6 reading progress](group-6-reading-progress.md) |
+| 7 | `repertoires-v2-group-7` | [3d98786e7622d565b417ba5fa18a3f7986f6f095](https://github.com/Macrofold/OpenLegend/tree/3d98786e7622d565b417ba5fa18a3f7986f6f095/docs/repertoires) | [Group 7 research progress](group-7-research-progress.md) |
+| 8 | `repertoires-v2-group-8` | [90f0ba3d726a27c2cf372f9c5938f0467a6f5ccb](https://github.com/Macrofold/OpenLegend/tree/90f0ba3d726a27c2cf372f9c5938f0467a6f5ccb/docs/repertoires) | Research references remain in the canonical catalogues |
+
+Category source groups: [combat-rescue](combat-rescue.md) — 8; [objects](objects.md) — 2; [adventure-discovery](adventure-discovery.md) — 8; [abilities-progression](abilities-progression.md) — 7; [needs](needs.md) — 3; [materials-resources](materials-resources.md) — 2; [work-crafting](work-crafting.md) — 2; [settlements-architecture](settlements-architecture.md) — 5; [ecology-weather](ecology-weather.md) — 5; [bodies-species](bodies-species.md) — 5; [economy-logistics](economy-logistics.md) — 2; [relationships](relationships.md) — 4; [characters-backstories](characters-backstories.md) — 3; [mechanics](mechanics.md) — 1; [psychology-behavior](psychology-behavior.md) — 3; [traits](traits.md) — 3; [diplomacy-conflict](diplomacy-conflict.md) — 4; [institutions-politics](institutions-politics.md) — 4; [history-myth](history-myth.md) — 6; [languages-knowledge](languages-knowledge.md) — 6; [arts-leisure](arts-leisure.md) — 6; [faith-ritual](faith-ritual.md) — 6; [magic](magic.md) — 7; [technology](technology.md) — 7; [automation-creators](automation-creators.md) — 1; [unusual-realities](unusual-realities.md) — 1; [simulation-experiments](simulation-experiments.md) — 1.

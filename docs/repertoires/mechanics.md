@@ -1,6 +1,6 @@
 # Mechanics and interaction patterns
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -8,7 +8,7 @@
 
 **Scope:** Own the reusable relationship between actions and consequences here. [Combat] owns attack, defense, injury and rescue rules; [Work] owns making and repair processes; [Magic] owns supernatural effects; [Technology] owns technical systems; [Abilities] owns learned techniques; [Relationships] owns particular bonds. A row mentioning a concert and a rescue defines their transferable interaction pattern, not a second implementation of either activity. Concrete actor attempts remain in [Actions]. Follow [category ownership](README.md#category-ownership-and-cross-references).
 
-Use the README's [table conventions](README.md#catalogue-tables), [Criticality](README.md#criticality), [Level](README.md#level) and [build scope](README.md#existing-pattern-labels-and-build-scope). C assumes its constituent capabilities; D proposes a reusable rule and does not supply arbitrary executable code. Seed recommendations respect each proposal's boundaries. Inspiration links support a relationship or design question; **all new rows are creative synthesis**, not claims that their examples occur in the source.
+Use the README's [table conventions](README.md#catalogue-tables), [Priority](README.md#priority), [Level](README.md#level) and [build scope](README.md#existing-pattern-labels-and-build-scope). C assumes its constituent capabilities; D proposes a reusable rule and does not supply arbitrary executable code. Seed recommendations respect each proposal's boundaries. Inspiration links support a relationship or design question; **all new rows are creative synthesis**, not claims that their examples occur in the source.
 
 ## Coverage of the playable foundation
 

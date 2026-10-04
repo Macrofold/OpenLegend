@@ -1,6 +1,6 @@
 # Art, play, beauty and everyday pleasures
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Specific inventory](#specific-inventory) · [Research coverage](#research-coverage)
 
@@ -25,7 +25,7 @@ These domains broaden the catalogue base. The ten patterns below remain useful e
 
 ## The neighborhood sound
 
-**ALL · Play · 2 Complete · 1/Compose.** Gap: authored performances and ambient presentation.
+**ALL · Play · 2 Complete · Small/Compose.** Gap: authored performances and ambient presentation.
 
 A district develops a sound from workshop rhythms, river bells and a small evening band. Players can join, build instruments or simply choose a favorite listening spot. Repeated music becomes familiarity rather than content exhaustion. Avoid making every performance a buff station; some residents may prefer quiet, and alternate arrangements can preserve both pleasures.
 
@@ -35,7 +35,7 @@ Selection: Music and atmosphere give an inhabited place immediate enjoyable char
 
 ## A garden for looking at
 
-**ALL · Play · 2 Complete · 1/Compose.** Gap: authored decoration and growth presentation; ecology optional.
+**ALL · Play · 2 Complete · Small/Compose.** Gap: authored decoration and growth presentation; ecology optional.
 
 A player plants a garden for color, scent, shade and memories instead of maximum crop yield. Visitors might suggest a bench or bring a cutting without scoring the design. Builders get a legitimate nonindustrial goal. Offer forgiving upkeep and dormant beauty; a peaceful garden should not demand daily attendance or become worthless when it produces no sellable goods.
 
@@ -45,7 +45,7 @@ Selection: A substantial optional creative activity can be worthwhile without a 
 
 ## The play about last winter
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: authored scenes, voluntary casting and selected historical callbacks.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: authored scenes, voluntary casting and selected historical callbacks.
 
 Residents stage a comic version of a recent power failure, disagreeing about who gets to play the mayor. Players write, act, build sets or watch. Shared history becomes reinterpretation and laughter. Performance is not a new authoritative record of events. Distinguish stage action from actual injury, while allowing satire, a pointed casting choice or a broken promise to delight some spectators and genuinely offend others.
 
@@ -55,7 +55,7 @@ Selection: Historical performance adds a later social activity.
 
 ## A game made from a constraint
 
-**ALL · Play · 2 Complete · 2/Extend.** Gap: supported scoring, boundaries and participant consent.
+**ALL · Play · 2 Complete · Moderate/Extend.** Gap: supported scoring, boundaries and participant consent.
 
 Children invent a game where a lantern must reach the square without touching the ground. Builders add ramps, carriers or team roles using ordinary objects. Simple rules produce expressive play. Make scoring inspectable and optional, with resettable props; avoid requiring a general scripting language or treating every improvisation as cheating against a hidden rulebook.
 
@@ -65,7 +65,7 @@ Selection: A bounded playable challenge adds genuine activity variety.
 
 ## Cooking for a particular person
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: contextual preferences and ingredient substitutions.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: contextual preferences and ingredient substitutions.
 
 A traveler misses a home dish whose key herb does not grow locally. Friends can approximate it, grow an alternative or invent something new together. Success may be a good evening rather than an exact taste match. Do not reduce hospitality to finding the one highest-value gift; people can appreciate effort while honestly disliking a flavor.
 
@@ -75,7 +75,7 @@ Selection: Personal taste deepens basic cooking and hospitality.
 
 ## The amateur observatory
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: observable cycles, shared notes and optional instruments.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: observable cycles, shared notes and optional instruments.
 
 A club charts moons, migrating lights or city birds from a rooftop. Better instruments reveal new questions rather than simply filling a collection grid. Players can contribute observations at their own pace. Keep phenomena repeatable and accessible; missing a rare real-time window should not permanently block discovery or require leaving the game running overnight.
 
@@ -85,7 +85,7 @@ Selection: A repeatable observation hobby adds exploration depth.
 
 ## Fashion with a social itinerary
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: contextual dress interpretation separate from mechanical equipment.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: contextual dress interpretation separate from mechanical equipment.
 
 A coat gains patches from places visited and can be adapted for a formal dinner without losing its history. Tailors discuss taste, climate and local expectations. Clothing supports self-expression and conversation. Avoid a universal beauty score or gender locks. A club’s dress code or court’s display of wealth can create a specific social obstacle, met through suitable clothes, a patron, deception or confrontation; one exact collectible outfit should not stand in for the whole social situation.
 
@@ -95,7 +95,7 @@ Selection: Contextual clothing expression follows functional equipment.
 
 ## The collecting club that lends
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: collection provenance, loans and shared displays.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: collection provenance, loans and shared displays.
 
 Collectors of maps, unusual cups or seeds curate rotating exhibits and lend duplicates to beginners. A complete collection is optional; a good story about one object can be enough. Players create community around taste. Let loans and replicas satisfy ordinary display goals while originals retain meaningful provenance. A rare object can also provoke a purchase, expedition, rivalry or deliberate theft in a different story; completion need not force every collector into crime or daily chores.
 
@@ -105,7 +105,7 @@ Selection: Social collection and loans expand ordinary treasure collecting.
 
 ## A holiday after completion
 
-**ALL · Play · 2 Complete · 1/Compose.** Gap: authored celebration and optional invitations.
+**ALL · Play · 2 Complete · Small/Compose.** Gap: authored celebration and optional invitations.
 
 When a long bridge repair finishes, residents take a day off to cross it for pleasure. A race, picnic or quiet walk marks the change. The world acknowledges accomplishment without immediately replacing the project with a larger emergency. Let players choose how to celebrate and allow contentment to last; completion itself can be a satisfying session ending.
 
@@ -115,7 +115,7 @@ Selection: Acknowledging a finished objective makes success satisfying.
 
 ## Make a place for mischief
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: bounded pranks, reversible props and social interpretation.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: bounded pranks, reversible props and social interpretation.
 
 Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
 

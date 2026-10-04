@@ -8,9 +8,9 @@ The goal is not a menu containing every verb. It is a world in which an actor ca
 
 ## Reading and extending the catalogue
 
-There are **384 seed examples in 32 domains**. Rows are original OpenLegend design examples, not claims that the inspiration games implement those exact interactions. Most are not currently supported. Similar verbs sometimes have separate rows because their authority, participants, knowledge, persistence, or consequences differ.
+There are **385 seed examples in 32 domains**. Rows are original OpenLegend design examples, not claims that the inspiration games implement those exact interactions. Most are not currently supported. Similar verbs sometimes have separate rows because their authority, participants, knowledge, persistence, or consequences differ.
 
-The shared library defines [seed worlds](README.md#four-possible-world-families), [Criticality](README.md#criticality) and [Level](README.md#level). Each domain is sorted by **Priority, then whole-game workstream, then stable ID**. These are proposed roadmap priorities, not delivery commitments. The IDs and existing F/U/C/D classifications are preserved; their numerical order no longer determines display order.
+The shared library defines [seed worlds](README.md#four-possible-world-families), [Priority](README.md#priority) and [Level](README.md#level). Each domain is sorted by **Priority, then stable ID**. These are proposed roadmap priorities, not delivery commitments. The IDs and existing F/U/C/D classifications are preserved; their numerical order no longer determines display order.
 
 For an action, **Level classifies how the stated intent resolves once its prerequisites exist**. F/U/C generally use G0 action/plan semantics. D is classified by INV into its actual generation level. A reusable personal plan does not automatically become a world-definition change. Likewise, storing an accepted activity across saves is not invention. Foundational does not mean already implemented or cheap; an ordinary U action can depend on an ambitious subsystem.
 
@@ -427,6 +427,7 @@ These rows describe in-world fictional practices, not real-world political recom
 | CBT-12 | Spar under our agreed nonlethal rules. | ALL | 2 Complete | C | joint-activity, combat-policy, consent | Rules require an admitted safe mode or honest risk disclosure. |
 | CBT-09 | Disarm rather than kill. | ALL | 3 Depth | U | disarming, grip, combat | Requires a supported method; nonlethality is not always guaranteeable. |
 | CBT-10 | Surrender and put my weapon down. | ALL | 3 Depth | C | speech, equipment, placement | Surrender does not force mercy. |
+| CBT-13 | Strike the nearby opponent with my equipped melee weapon. | ALL | 1 Core | U | melee-action, reach, commitment, damage; equipped weapon, target | Requires actual reach, a compatible weapon and supported timing; naming a hit does not guarantee damage or bypass defense. |
 
 ## VEH: Vehicles, mounts and transport
 
@@ -690,6 +691,6 @@ The catalogue should grow through new meanings, unusual counterexamples and usef
 
 The exact intent matters. FLU-01's precise halfway fill is optional granularity; basic water collection, carrying and drinking remain foundational coverage. BLD-03's usable shelter is Core; BLD-07's specially dry bedding setup is Detail. MAK-02's useful weapon crafting is Core; MAK-04/05/06's handle repair, sharpening and patching are Detail with a small bounded scope once their prerequisites exist. Basic following and guarding can support enjoyable companionship; COOP-08's watch agreement and COOP-12's replacement administration do not precede that activity.
 
-Existing inventory, bags, equipment and consumables are the starting point for expedition supplies. No additional “prepare supplies” feature is implied by this ranking. Preservation is Depth, not a reason to delay enemies, rewards or simple water access. The source lacks a plain melee-strike example; that omission does **not** remove basic melee, enemy behavior, damage, loot, player feedback or progression from the Core coverage register.
+Existing inventory, bags, equipment and consumables are the starting point for expedition supplies. No additional “prepare supplies” feature is implied by this ranking. Preservation is Depth, not a reason to delay enemies, rewards or simple water access. CBT-13 supplies an ordinary melee-strike example. Its catalogue presence does not establish runtime support, a complete encounter or closed acceptance; use the action tracker and actual player-path evidence.
 
 Low priority never weakens privacy, authority, consent, resource accounting, safe interruption or persistence requirements when a feature is enabled. Alternate-world entries are not forbidden; Specialist means a different world or product commitment needs an explicit contextual rerank. These scores assert no new implementation or playtest evidence.

@@ -1,6 +1,6 @@
 # History, memory, heroes and contested myths
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md) · [Specific inventory](#specific-inventory) · [Research coverage](#research-coverage)
 
@@ -27,7 +27,7 @@ Research anchors: [Final Fantasy VI](source-atlas.md#g83), [Warcraft III](source
 
 ## The flood with three anniversaries
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored accounts and present-day consequences.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored accounts and present-day consequences.
 
 One district remembers a rescue, another a failed warning and a third the founding of its new home. Their festivals overlap awkwardly. Players can compare accounts, support distinct commemorations or create a shared project without forcing a single story. Give each memory material anchors and living witnesses; disagreement need not mean every account is equally accurate.
 
@@ -37,7 +37,7 @@ Selection: Competing commemorations are optional cultural detail.
 
 ## A hero's useful mistake
 
-**ALL · Play · 3 Depth · 1/Compose.** Gap: authored layered records and a recoverable present problem.
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored layered records and a recoverable present problem.
 
 A celebrated founder built a canal that saved harvests but trapped fish upstream. Repairing the mistake can honor their practical spirit while challenging the statue's inscription. Players inherit unfinished work instead of merely discovering that heroes were secretly evil. Separate documented consequences from later legend, and let admiration survive a more complete understanding.
 
@@ -47,7 +47,7 @@ Selection: A tangible inherited problem adds a later quest.
 
 ## An invention with several parents
 
-**ALL · Play · 4 Detail · 2/Extend.** Gap: provenance and independently evidenced contributions.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: provenance and independently evidenced contributions.
 
 A famous waterwheel combines a fisher's paddle, a migrant miller's gearing and a local mason's foundation. Different groups claim ownership. Restoring a prototype reveals the collaboration and opens a dispute over teaching rights. The story encourages remixing and credit. Do not invent a hidden single genius who conveniently makes all collective history irrelevant.
 
@@ -57,7 +57,7 @@ Selection: Attribution disputes follow useful inventions and projects.
 
 ## A ruin older than the explanation
 
-**SC FA · Play · 2 Complete · 2/Extend.** Gap: inspectable material clues with deliberately incomplete interpretation.
+**SC FA · Play · 2 Complete · Moderate/Extend.** Gap: inspectable material clues with deliberately incomplete interpretation.
 
 A structure fits modern tools but predates the people said to have built them. Players can test connections, compare inscriptions or leave the mystery open while using a safe part. Wonder survives practical discovery. Avoid endlessly adding a deeper ancient civilization whenever an answer is found, and never use mystery to excuse inconsistent mechanical behavior.
 
@@ -67,7 +67,7 @@ Selection: An inspectable mystery makes exploration rewarding.
 
 ## The road whose name traveled
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored place-name layers and local recognition.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored place-name layers and local recognition.
 
 An old name meaning “reed crossing” survives after the river moves and newcomers reinterpret it as a hero's name. Maps, songs and trades retain different versions. Explorers learn history through directions and misunderstandings. Names should help navigation as well as suggest depth; keep aliases discoverable and avoid making one exact spelling a mandatory password.
 
@@ -77,7 +77,7 @@ Selection: Layered place-name etymology is not required for basic navigation.
 
 ## The missing ordinary archive
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: recoverable records and attributed uncertainty.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: recoverable records and attributed uncertainty.
 
 Official records preserve battles but omit rents, recipes and children's games from a displaced neighborhood. Players gather household notebooks and oral accounts to rebuild a fuller picture. The discovery can affect land claims or a festival. Give contributors control over what they share; historical curiosity does not entitle the player to private letters or trauma.
 
@@ -87,7 +87,7 @@ Selection: Recovering evidence adds a substantive optional investigation.
 
 ## A prophecy as a social machine
 
-**FA · Blend · 3 Depth · 2/Extend.** Gap: public beliefs, incentives and competing interpretations.
+**FA · Blend · 3 Depth · Moderate/Extend.** Gap: public beliefs, incentives and competing interpretations.
 
 A prediction that “the third bell opens the road” motivates rival groups to build bells, reinterpret dates and claim authority. Whether magic is involved remains a world choice. Players can examine who benefits and create an unforeseen practical fulfillment. Avoid forcing all events toward one chosen savior or treating belief itself as proof that the prophecy is true.
 
@@ -97,7 +97,7 @@ Selection: Prophecy-driven incentives are later fantasy/social depth.
 
 ## History changes an object
 
-**ALL · Play · 4 Detail · 2/Extend.** Gap: event-linked provenance and local appraisal.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: event-linked provenance and local appraisal.
 
 An ordinary spade used in a rescue becomes a community emblem, then returns to useful work when someone argues it should not sit behind glass. Players choose display, use, copies or retirement. The object need not gain supernatural damage. Its meaning can differ among people, and a replacement can carry a new story without erasing the old one.
 
@@ -107,7 +107,7 @@ Selection: Sentimental object appraisal is separate from useful loot.
 
 ## A villain's ordinary constituency
 
-**ALL · Play · 3 Depth · 1/Compose.** Gap: authored motives and concrete institutional dependencies.
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored motives and concrete institutional dependencies.
 
 A coercive governor also stabilized food deliveries, so removing them risks the service residents rely on. Players can expose harm while preparing a successor system. Complexity does not excuse abuse or require making every accusation ambiguous. The interesting task is separating a useful function from destructive control, with affected people helping decide what replaces it.
 
@@ -117,7 +117,7 @@ Selection: Complex support for an antagonist follows an actual opponent.
 
 ## The future historian
 
-**ALL · Blend · 3 Depth · 2/Extend.** Gap: selective chronicles with sources and omission controls.
+**ALL · Blend · 3 Depth · Moderate/Extend.** Gap: selective chronicles with sources and omission controls.
 
 A chronicler periodically asks what a settlement wants remembered about its own recent changes. Residents disagree, and players can preserve several accounts. Builders see their actions become the next generation's starting material. Store selected consequential events rather than every animation; a chronicle must distinguish observed facts, testimony and interpretation instead of presenting generated prose as authoritative history.
 

@@ -1,6 +1,6 @@
 # Relationships, households and shared memory
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -10,7 +10,7 @@
 
 ## Coverage of the playable foundation
 
-**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Criticality](README.md#criticality), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Criticality, Level, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
+**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Criticality, Level, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
 
 | Domain | IDs | Domain | IDs |
 | --- | --- | --- | --- |

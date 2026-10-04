@@ -1,6 +1,6 @@
 # Conflict, tactics, rescue and aftermath
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -12,7 +12,7 @@
 
 ## Coverage of the playable foundation
 
-Use the shared [seed-world labels](README.md#four-possible-world-families), [Criticality](README.md#criticality), [Level](README.md#level) and [build-scope definitions](README.md#existing-pattern-labels-and-build-scope). U means invoking the described supported capability; C means coordinating existing capabilities. Neither asserts that the required engine support is already implemented. Magical, technical and bodily prerequisites remain with their owning catalogues. “—” retains other-world options. SC vehicle examples use ground travel, bounded interiors or abstract encounters, never playable spacecraft piloting. FA recommendations involving stock-bound spells, copying or other exceptional powers require a separately selected optional magical tradition; they are not additions to its opening canon.
+Use the shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [build-scope definitions](README.md#existing-pattern-labels-and-build-scope). U means invoking the described supported capability; C means coordinating existing capabilities. Neither asserts that the required engine support is already implemented. Magical, technical and bodily prerequisites remain with their owning catalogues. “—” retains other-world options. SC vehicle examples use ground travel, bounded interiors or abstract encounters, never playable spacecraft piloting. FA recommendations involving stock-bound spells, copying or other exceptional powers require a separately selected optional magical tradition; they are not additions to its opening canon.
 
 The expanded choices include coarse tactical resolution as well as spatial action, finite reactions, preparation that changes opportunities, independently motivated enemies and rescue beyond a health refill. A competent plan may earn decisive superiority. Interesting resistance does not require endlessly negating preparation, secretly changing an enemy's rules or destroying every achievement. Conversely, a promised resource, accepted order or sympathetic intention does not guarantee a successful effect.
 

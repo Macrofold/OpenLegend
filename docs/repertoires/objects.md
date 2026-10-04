@@ -1,6 +1,6 @@
 # Objects worth keeping and repurposing
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 A catalogue of finished possessions: useful, beautiful, dangerous, ridiculous, intimate, and occasionally impossible. These 310 selectable entries expand the original patterns. An object can be wanted for its taste, familiarity, style, or sheer fun; it need not conceal a quest, penalty, or moral lesson.
 

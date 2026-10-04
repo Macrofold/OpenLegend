@@ -1,6 +1,6 @@
 # Character formation and backstory seeds
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Shared classifications](README.md#reading-the-labels) · [Category ownership](README.md#category-ownership-and-cross-references) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 

@@ -1,6 +1,6 @@
 # Bodies, species and ways of inhabiting a world
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
@@ -26,7 +26,7 @@ The original pattern research pointers below are retained as provenance of that 
 
 ## Many ways to carry
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: body-specific carrying interfaces and assisted movement.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: body-specific carrying interfaces and assisted movement.
 
 A broad-backed traveler carries a stretcher while a small companion opens tight gates; neither is reduced to a strength score. Design carts, slings and shared loads so different bodies participate. The interesting decision is coordinating space and attention. Avoid assigning one body type permanent servant work, and let equipment change which solutions are available.
 
@@ -36,7 +36,7 @@ Selection: Body-specific cooperative transport exceeds basic inventory and carry
 
 ## Touch-mapped citizen
 
-**SC FA · Blend · 5 Specialist · 3/New.** Gap: tactile perception, reachable evidence and nonvisual navigation.
+**SC FA · Blend · 5 Specialist · Large/New.** Gap: tactile perception, reachable evidence and nonvisual navigation.
 
 A character reads patterned rails and vibrations to navigate a workshop, noticing loose machinery sighted visitors miss. They need real accessible routes rather than magical omniscience. Builders can author tactile signs and shared workspaces. Limit signals by contact and distance; perception differences should create particular expertise without withholding ordinary participation behind constant assistance requests.
 
@@ -46,7 +46,7 @@ Selection: An alternate sensory/body model needs a separately chosen scope.
 
 ## A seasonal body
 
-**SC FA · Blend · 5 Specialist · 3/New.** Gap: scheduled body-state transitions and continuity of identity.
+**SC FA · Blend · 5 Specialist · Large/New.** Gap: scheduled body-state transitions and continuity of identity.
 
 A species grows insulating plates during a cold season and sheds them before long migration. Clothing, work and festivals adapt, while individuals disagree about whether to travel. Players prepare socially and materially. Transitions need warning and manageable accommodation; they must not become involuntary class changes that invalidate a player's favorite activity for weeks.
 
@@ -56,7 +56,7 @@ Selection: Seasonal body transitions are not prerequisites for ordinary actors.
 
 ## The modular citizen
 
-**SC · Play · 5 Specialist · 3/New.** Gap: supported replaceable body components with rights and capability checks.
+**SC · Play · 5 Specialist · Large/New.** Gap: supported replaceable body components with rights and capability checks.
 
 A synthetic gardener swaps a heavy digging arm for a delicate grafting tool, borrowing the latter from a friend. Modules affect reach, power and maintenance, but identity and relationships persist. This makes equipment social and spatial. Ownership of a component is distinct from claims over the person; an exploitative faction may contest that distinction through fictional law or force. Inspectable compatibility avoids unexplained installation failure.
 
@@ -66,7 +66,7 @@ Selection: Synthetic body modules belong to a science-fiction experience.
 
 ## A guest with different air
 
-**SC · Blend · 5 Specialist · 3/New.** Gap: bounded environmental compatibility and safe transition spaces.
+**SC · Blend · 5 Specialist · Large/New.** Gap: bounded environmental compatibility and safe transition spaces.
 
 An alien visitor needs a different breathing mixture, so a shared market uses paired booths, translation windows and portable supplies. Architecture becomes hospitality. Start with two clearly specified atmospheres and simple buffers, not every possible gas chemistry. Access should be reliable once solved, avoiding endless consumable micromanagement or a narrative where difference means permanent isolation.
 
@@ -76,7 +76,7 @@ Selection: Multiple atmospheres are specialist environmental simulation.
 
 ## Two forms one social life
 
-**FA · Play · 3 Depth · 3/New.** Gap: identity-preserving transformation with equipment and capability rules.
+**FA · Play · 3 Depth · Large/New.** Gap: identity-preserving transformation with equipment and capability rules.
 
 A voluntary wolf-form courier can cross rough terrain quickly but must arrange how to carry letters and enter a friend's tiny kitchen. Friends recognize behavior and voice under the world's chosen rules. This voluntary transformation does not automatically change morality. Other proposals can include imposed curses or loss of control, but must separately define fictional imposition, timing, injury continuity and reversion through supported rules.
 
@@ -86,7 +86,7 @@ Selection: A chosen transformation adds distinctive traversal and identity play.
 
 ## Long lives short appointments
 
-**SC FA · Play · 4 Detail · 2/Extend.** Gap: differing life histories with ordinary bounded schedules.
+**SC FA · Play · 4 Detail · Moderate/Extend.** Gap: differing life histories with ordinary bounded schedules.
 
 Long-lived residents remember an old river course but still need to meet today's repair deadline. Generational perspectives can enrich archives and arguments without granting perfect memory or wisdom. A young specialist may know the newer machine better. Avoid treating lifespan as a superior species ranking or requiring centuries of simulated backstory before a useful conversation.
 
@@ -96,7 +96,7 @@ Selection: Lifespan-specific social history is optional texture.
 
 ## A collective with a front door
 
-**SC FA · Lab · 5 Specialist · 3/New.** Gap: explicit group identity, member agency and knowledge-sharing limits.
+**SC FA · Lab · 5 Specialist · Large/New.** Gap: explicit group identity, member agency and knowledge-sharing limits.
 
 A colony of small organisms speaks through a shared display while members can leave a task to tend their own chambers. Researchers can vary how consensus and information sharing work. Players might negotiate with the collective over use of a warm wall. Define who can consent and what is shared; membership cannot imply access to every private experience.
 
@@ -106,7 +106,7 @@ Selection: Collective identity and consensus are a separate research/world premi
 
 ## Symbiotic neighbors
 
-**SC FA · Blend · 5 Specialist · 3/New.** Gap: coupled but separable needs and reciprocal effects.
+**SC FA · Blend · 5 Specialist · Large/New.** Gap: coupled but separable needs and reciprocal effects.
 
 A luminous plant shelters an insectlike caretaker that pollinates nearby crops. A household can host both, one or neither, with consequences for light and gardening. Care becomes environmental design. Keep each organism's behavior understandable and allow substitutes; symbiosis should not be an inescapable dependency puzzle where one small absence destroys the whole settlement.
 
@@ -116,7 +116,7 @@ Selection: Coupled alien needs are a specialist ecology system.
 
 ## Accommodation as invention
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: configurable tools, controls and supported body affordances.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: configurable tools, controls and supported body affordances.
 
 A one-handed potter and a many-fingered visitor collaborate on a foot-operated wheel that later becomes popular with everyone. The invention begins with a particular need and gains broader uses. Let the beneficiary direct the design. Accommodation is meaningful progress, not a lesser substitute for a mandatory cure, and fiction should respect actual supported capabilities.
 

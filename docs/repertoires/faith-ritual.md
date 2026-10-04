@@ -1,6 +1,6 @@
 # Faith, ritual, sacred places and ordinary meaning
 
-**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then the selection policy’s workstream and stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
+**Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Specific inventory](#specific-inventory) · [Research coverage](#research-coverage)
 
@@ -25,7 +25,7 @@ These domains orient the expanded inventory. The ten retained patterns remain us
 
 ## Keepers of the open table
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored practices and voluntary participation; service routines optional.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored practices and voluntary participation; service routines optional.
 
 A tradition asks households to keep one place available for an unexpected guest. Some followers offer food, others quiet shelter or tools. Players can participate without adopting the theology. The custom creates welcome and practical limits: hosts may be exhausted or poor. This welcoming tradition relies on human choices and practical support. A host may ask neighbors to share the work, and some followers may disagree about what the duty requires; neither response erases the value of the welcome.
 
@@ -35,7 +35,7 @@ Selection: A specific hospitality custom is optional world texture.
 
 ## The shrine that measures the river
 
-**MD FA · Blend · 3 Depth · 2/Extend.** Gap: records, seasonal observances and flood evidence.
+**MD FA · Blend · 3 Depth · Moderate/Extend.** Gap: records, seasonal observances and flood evidence.
 
 Caretakers mark water heights beside prayers for safe crossings. Over generations, the marks become valuable flood data while rituals remain meaningful to believers. Players can repair the gauge, compare memories or help relocate the shrine. Do not resolve every religious practice into either fraud or secret engineering; practical knowledge and spiritual significance can coexist.
 
@@ -45,7 +45,7 @@ Selection: An environmental historical clue adds exploration depth.
 
 ## A festival of unfinished repairs
 
-**ALL · Play · 4 Detail · 1/Compose.** Gap: authored invitations and optional shared project scheduling.
+**ALL · Play · 4 Detail · Small/Compose.** Gap: authored invitations and optional shared project scheduling.
 
 Once a season, people bring broken objects and tell why they kept them. Repairers teach, children decorate patches and some objects are respectfully retired. The event turns maintenance into a bounded social pleasure. No attendance streak is needed, and not every item must be saved; letting go can be as meaningful as restoring function.
 
@@ -55,7 +55,7 @@ Selection: A maintenance celebration is optional, not a core milestone.
 
 ## Two readings of mercy
 
-**ALL · Play · 3 Depth · 2/Extend.** Gap: distinct ethical commitments and practical alternatives.
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: distinct ethical commitments and practical alternatives.
 
 Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help, but the exile may reject the terms or endanger someone the player loves. Shelter, expulsion and armed defense can remain consequential choices rather than converge on a guaranteed compromise. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
 
@@ -65,7 +65,7 @@ Selection: A consequential ethical conflict enriches established social play.
 
 ## Pilgrimage by useful stages
 
-**MD SC FA · Play · 2 Complete · 2/Extend.** Gap: route milestones, hospitality and optional return travel abstraction.
+**MD SC FA · Play · 2 Complete · Moderate/Extend.** Gap: route milestones, hospitality and optional return travel abstraction.
 
 Travelers visit wells, observatories or ancestral gardens, contributing a small service at each stop. The journey teaches geography and connects communities. Different people travel for devotion, curiosity or company. A particular pilgrimage may be contemplative or an ordeal through hostile territory. Once a route is familiar, summarize uneventful travel instead of adding repetitive encounters; state whether danger, devotion or discovery is the central promise.
 
@@ -75,7 +75,7 @@ Selection: A purposeful journey offers destinations and attainable milestones.
 
 ## A sacred silence with exceptions
 
-**ALL · Play · 4 Detail · 2/Extend.** Gap: local communication customs and accessible alternatives.
+**ALL · Play · 4 Detail · Moderate/Extend.** Gap: local communication customs and accessible alternatives.
 
 An observatory keeps a quiet hour to listen for migrating animals or contemplate the sky. Sign language, writing and emergency speech remain available. Players can host a meaningful pause or investigate a strange sound. Silence should have a comprehensible purpose, and accessibility must not be treated as irreverence or punished as a hidden etiquette failure.
 
@@ -85,7 +85,7 @@ Selection: Detailed communication customs are optional texture.
 
 ## Relics that need caretakers
 
-**MD FA · Play · 4 Detail · 2/Extend.** Gap: provenance, care commitments and competing access claims.
+**MD FA · Play · 4 Detail · Moderate/Extend.** Gap: provenance, care commitments and competing access claims.
 
 A worn traveling cloak is revered because generations used it to shelter strangers. Its fabric now needs conservation, creating tension between public use and preservation. Players can commission a successor, document stories or design gentle display. Sacred value need not mean superior equipment stats, and theft should not automatically transfer community recognition to the thief.
 
@@ -95,7 +95,7 @@ Selection: Conservation duties do not substitute for worthwhile treasure.
 
 ## The doubter who keeps the choir
 
-**ALL · Play · 3 Depth · 1/Compose.** Gap: authored belief differences and durable social participation.
+**ALL · Play · 3 Depth · Small/Compose.** Gap: authored belief differences and durable social participation.
 
 A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
 
@@ -105,7 +105,7 @@ Selection: A particular conflicted affiliation enriches character life.
 
 ## Divinity with a jurisdiction
 
-**FA · Play · 3 Depth · 3/New.** Gap: bounded fictional agents and powers with explicit knowledge limits.
+**FA · Play · 3 Depth · Large/New.** Gap: bounded fictional agents and powers with explicit knowledge limits.
 
 A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. It might generously protect a village, exact an unjust offering, or aid one army against another; demonstrable power does not make its demands morally correct. Limited powers invite ingenuity. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
 
@@ -115,7 +115,7 @@ Selection: A bounded deity adds selected fantasy depth, not platform authority.
 
 ## A calendar people can amend
 
-**ALL · Blend · 4 Detail · 2/Extend.** Gap: shared calendar changes and migration of existing commitments.
+**ALL · Blend · 4 Detail · Moderate/Extend.** Gap: shared calendar changes and migration of existing commitments.
 
 A settlement adjusts a harvest festival after climate or work patterns shift. Elders, newcomers and seasonal workers propose different dates and meanings. Players can preserve several observances or create a rotating arrangement. Tradition becomes something people maintain together. Make timing forgiving and visible, avoiding one missed date that permanently blocks a relationship or essential capability.
 

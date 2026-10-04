@@ -4,7 +4,7 @@
 
 **Current survival-adventure priorities · October 3, 2026.** Coverage tables describe broader families than the illustrative pattern cards. This register decomposes those families into the basic player capabilities and later elaborations they contain. It prevents a catalogue full of interesting refinements from hiding an absent weapon, enemy, objective or reward. It is selection policy, not a second delivery tracker, implementation audit or approval to adopt an optional world's lore.
 
-The scores are **1 Core, 2 Complete, 3 Depth, 4 Detail, 5 Specialist**, defined in [the policy](gameplay-priorities.md#criticality). Rank the smallest stated scope, not the whole domain by its most important member. A missing Core capability outranks another refinement to a working one. A representative weapon does not mean every weapon; a functional home does not mean a city simulator. Existing adequate capabilities need no reimplementation merely because they appear here.
+The scores are **1 Core, 2 Complete, 3 Depth, 4 Detail, 5 Specialist**, defined in [the policy](gameplay-priorities.md#priority). Rank the smallest stated scope, not the whole domain by its most important member. A missing Core capability outranks another refinement to a working one. A representative weapon does not mean every weapon; a functional home does not mean a city simulator. Existing adequate capabilities need no reimplementation merely because they appear here.
 
 ## 1 Core: close the playable loop
 
