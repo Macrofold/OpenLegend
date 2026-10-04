@@ -27,6 +27,7 @@ import {
   capabilityBlocked,
   custodian,
   objectAncestors,
+  targetApproachPoint,
   offerRecipientProblem,
   type ItemInstance,
 } from '@open-legend/domain';
@@ -38,6 +39,8 @@ import type {
   InventoryDestination,
   InventoryDestinationPage,
   InventoryDestinationRequest,
+  InventoryAccessView,
+  EntityView,
 } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
@@ -101,6 +104,88 @@ const cursorSchema = z
     after: z.string(),
   })
   .strict();
+
+/** Call only for an already perceived world root; never project private bag descendants. */
+export function inventoryStorageHint(
+  service: WorldService,
+  scope: RequestScope,
+  id: string,
+): EntityView['storage'] {
+  const target = service.world.entities[id];
+  if (!target || target.retirement || !(target.container || target.kind === 'item-pile')) return;
+  return {
+    containerId: id,
+    ...(canAccessContainer(service.world, scope.actorId, id)
+      ? { revision: target.inventoryRevision ?? 0 }
+      : {}),
+  };
+}
+
+/** Exact selected-target read: inspection never walks or exposes inaccessible contents. */
+export function inventoryAccess(
+  service: WorldService,
+  scope: RequestScope,
+  request: { containerId: string; approach?: boolean },
+): InventoryAccessView {
+  service.assertScope(scope);
+  const world = service.world,
+    actor = world.entities[scope.actorId],
+    target = world.entities[request.containerId];
+  const unavailable: InventoryAccessView = {
+    ok: false,
+    scope: scopeKey(scope),
+    status: 'unavailable',
+    message: 'This container is unavailable. Refresh after its location or access changes.',
+  };
+  if (
+    !actor ||
+    !target ||
+    target.retirement ||
+    !(target.id === actor.id || target.container || target.kind === 'item-pile')
+  )
+    return unavailable;
+  const root = objectAncestors(world, target.id).at(-1);
+  if (!root) return unavailable;
+  const accessible = canAccessContainer(world, actor.id, target.id);
+  const visibleExterior =
+    (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
+    (root.kind === 'item-pile' &&
+      target.placement?.mode === 'contained' &&
+      target.placement.parentEntityId === root.id &&
+      seesEntity(world, actor, root));
+  if (!accessible && !visibleExterior) return unavailable;
+  const container = {
+    id: target.id,
+    name: target.name,
+    location: containerLocation(service, scope, target.id),
+  };
+  if (accessible)
+    return {
+      ok: true,
+      scope: scopeKey(scope),
+      status: 'ready',
+      container: { ...container, revision: target.inventoryRevision ?? 0 },
+    };
+  if (canReachEntity(world, actor, root, world.itemHandling.reach))
+    return { ...unavailable, container, message: 'You cannot access this container.' };
+  // Native stance selection uses this world's handling reach and current geometry. It is
+  // requested only by Walk to and open, never for every visible object or view update.
+  const stance = request.approach
+    ? targetApproachPoint(world, actor, root, world.itemHandling.reach)
+    : null;
+  return {
+    ok: true,
+    scope: scopeKey(scope),
+    status: 'out-of-reach',
+    container,
+    ...(stance ? { stance } : {}),
+    message:
+      request.approach && !stance
+        ? 'No approach is currently available. Refresh the target before trying again.'
+        : 'Move within reach, then recheck access before opening.',
+  };
+}
+
 /** Live pages restart on any inventory/custody revision. Search scans at most 200
  * permitted children; a continuation is returned even when that window has no match.
  * With `mergeSourceId`, the same windows list only lots that source can merge into,

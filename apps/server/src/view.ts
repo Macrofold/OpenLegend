@@ -2,7 +2,7 @@ import { recipeFamily, basePlaytestMilestones } from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
-import { canUseInventory, inventoryItemView } from './inventory-view.js';
+import { canUseInventory, inventoryItemView, inventoryStorageHint } from './inventory-view.js';
 import {
   itemFor,
   itemsForOwner,
@@ -441,6 +441,7 @@ export async function projectView(
           return {
             id: entity.id,
             name: displayName,
+            storage: inventoryStorageHint(service, scope, entity.id),
             ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
             description: describeEntity({ ...entity, name: displayName }, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),

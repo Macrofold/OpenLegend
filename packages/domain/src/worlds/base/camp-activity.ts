@@ -61,6 +61,16 @@ const requests: ActivityRequestDescriptor[] = [
     label: 'Gather, return, pack and fuel',
     description:
       'Gather once from your selected source, return to this container’s current position, pack an exact quantity and add one fuel unit. Later steps can fail when yield, access or stock changes.',
+    presentation: {
+      kind: 'gather-store-use',
+      target: 'fireId',
+      source: 'sourceId',
+      destination: 'containerId',
+      material: 'definitionId',
+      reserve: 'minimumHeld',
+      quantity: 'quantity',
+      workMode: 'mode',
+    },
     fields: {
       sourceId: entity('Gathering source', 'spatial'),
       containerId: entity('Camp container', 'storage'),
@@ -73,6 +83,16 @@ const requests: ActivityRequestDescriptor[] = [
     label: 'Watch this fire for one session',
     description:
       'Stay here and attend to this burning fire until your stopping time. Use only your chosen supply. It does not gather, follow a moved cache, relight a fire, or teach a conditional method.',
+    presentation: {
+      kind: 'resource-care',
+      target: 'fireId',
+      supply: 'sourceId',
+      material: 'definitionId',
+      reserve: 'minimumHeld',
+      stop: 'deadline',
+      budget: 'maxUnits',
+      workMode: 'mode',
+    },
     fields: {
       sourceId: entity('Fuel supply', 'storage'),
       ...common,
@@ -85,11 +105,6 @@ const requests: ActivityRequestDescriptor[] = [
         required: true,
       },
       maxUnits: integer('Maximum fuel units', 1, BASE_CAMP_ACTIVITY_RULES.maximumFuelUnits),
-      maxAttempts: integer(
-        'Maximum fuel attempts',
-        1,
-        BASE_CAMP_ACTIVITY_RULES.maximumFuelAttempts,
-      ),
     },
   },
 ];
@@ -334,7 +349,8 @@ function compile(
       reachRoles: ['fire'],
       budget: {
         command: 'tend-fire',
-        maximumAttempts: Number(args.maxAttempts),
+        // The player chooses consumption and duration; retry work remains authored and bounded.
+        maximumAttempts: BASE_CAMP_ACTIVITY_RULES.maximumFuelAttempts,
         maximumSpent: Number(args.maxUnits),
       },
     },

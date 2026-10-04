@@ -72,7 +72,12 @@ import { WorldService, commandInputSchema, requestIdSchema } from './world-servi
 import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
-import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
+import {
+  containerPage,
+  inventoryAccess,
+  inventoryDestinationPage,
+  objectHistoryPage,
+} from './inventory-view.js';
 import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
 
 const clientId = z
@@ -1463,9 +1468,10 @@ async function initializeGameServer(
                 catalogue: actionCatalogue(service, context, scope),
               });
             }
-            case '/api/activity-requests':
-              z.object({}).strict().parse(body);
-              return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-requests': {
+              const value = z.object({ targetId: requestIdSchema.optional() }).strict().parse(body);
+              return send(response, 200, activityRequests(service, scope, value.targetId));
+            }
             case '/api/activity-choices': {
               const value = z
                 .object({
@@ -1514,6 +1520,13 @@ async function initializeGameServer(
                 .parse(body);
               return send(response, 200, containerPage(service, scope, value));
             }
+            case '/api/inventory/access': {
+              const value = z
+                .object({ containerId: requestIdSchema, approach: z.boolean().optional() })
+                .strict()
+                .parse(body);
+              return send(response, 200, inventoryAccess(service, scope, value));
+            }
             case '/api/inventory/destinations': {
               const value = z
                 .object({
@@ -1559,6 +1572,19 @@ async function initializeGameServer(
                     value.commandEpoch,
                     scope,
                   ),
+                ),
+              );
+            }
+            case '/api/command/receipt': {
+              const value = command.required({ commandEpoch: true }).parse(body);
+              return send(
+                response,
+                200,
+                await service.commandReceipt(
+                  value.commandId,
+                  value.command,
+                  value.commandEpoch,
+                  scope,
                 ),
               );
             }

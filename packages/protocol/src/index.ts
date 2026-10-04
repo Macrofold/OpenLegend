@@ -2,6 +2,7 @@
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
 import type { InventoryCharacteristic } from './inventory.js';
 export type {
+  InventoryAccessView,
   InventoryCharacteristic,
   InventoryTransferSource,
   InventoryDestinationRequest,
@@ -76,6 +77,8 @@ export interface CommandInput {
   attemptId?: string;
   quantity?: number;
   expectedRevision?: number;
+  /** A scoped Stop must not cancel work that replaced the selected action. */
+  expectedActionId?: string;
   placementRevision?: number;
   /** The reviewed contents of a container item, independent of its placement. */
   expectedContentsRevision?: number;
@@ -83,14 +86,33 @@ export interface CommandInput {
   preparation?: 'fiber' | 'cord';
 }
 
+/** Transport mirror of the installed world's trusted semantic presentation. */
+export type ActivityRequestPresentation = {
+  target: string;
+  material: string;
+  reserve: string;
+  workMode: string;
+} & (
+  | { kind: 'resource-care'; supply: string; stop: string; budget: string }
+  | { kind: 'gather-store-use'; source: string; destination: string; quantity: string }
+);
+export interface ActivityEntry {
+  familyId: string;
+  targetId: string;
+  label: string;
+  description: string;
+}
 export interface ActivityRequestsView {
   ok: boolean;
   scope: string;
   simTime: number;
+  /** Applicable tasks for the exact permitted target supplied to this read. */
+  entries: ActivityEntry[];
   requests: {
     id: string;
     label: string;
     description: string;
+    presentation?: ActivityRequestPresentation;
     fields: Record<
       string,
       {
@@ -115,6 +137,8 @@ export interface ActivityRequestsView {
     status: string;
     reason?: string;
     spent?: number;
+    maximumSpent?: number;
+    spendingUnit?: string;
     attempts?: number;
     interrupted?: boolean;
     deadline?: number;
@@ -227,6 +251,8 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView {
+  /** Native storage identity; its revision is disclosed only with current contents access. */
+  storage?: { containerId: string; revision?: number };
   contents?: Array<{
     id: string;
     definitionId: string;
@@ -586,7 +612,19 @@ export interface ApiResult {
   recipeId?: string;
   goalId?: string;
   planId?: string;
+  /** The exact native action admitted by this command, independently of request identity. */
+  actionId?: string;
 }
+
+/** Looking up a command never repeats it. An absent or expired receipt proves no outcome. */
+export type CommandReceiptResult =
+  | { ok: true; scope: string; status: 'resolved'; result: ApiResult }
+  | {
+      ok: false;
+      scope: string;
+      status: 'unknown' | 'expired' | 'unavailable';
+      message: string;
+    };
 
 export interface GodPersonFields {
   inventory?: Array<{ definitionId: string; quantity: number }>;

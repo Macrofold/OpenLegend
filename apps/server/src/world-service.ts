@@ -32,6 +32,7 @@ import { WorkBudgetError } from '@open-legend/domain';
 import { changeParticipation } from '@open-legend/domain';
 import {
   AuthorityError,
+  scopeKey,
   type RequestScope,
   type Capability,
   type LoginSession,
@@ -124,6 +125,7 @@ import {
 import type {
   ApiResult,
   CommandInput,
+  CommandReceiptResult,
   GodPersonEditorView,
   GodWorldEventsEditorView,
   MaintenanceWindowView,
@@ -230,6 +232,7 @@ export const commandInputSchema = z
       .strict()
       .optional(),
     expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+    expectedActionId: id.optional(),
     placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     expectedContentsRevision: z
       .number()
@@ -243,6 +246,14 @@ export const commandInputSchema = z
   })
   .strict();
 export const requestIdSchema = id;
+
+function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): string {
+  // A reconnect may read its committed result after taking control again. It cannot execute
+  // through this fingerprint, nor cross a login, grant, character or restored timeline.
+  // docs/projects/game-interaction-redesign-tech-design.md#direct-transfer-without-weaker-authority
+  const { connectionId: _connection, controlGeneration: _control, ...authority } = scope;
+  return digest({ input, scope: authority });
+}
 
 function actorMilestones(
   saved: SavedWorld,
@@ -2811,6 +2822,7 @@ export class WorldService {
       const receipt: GameplayReceipt = {
         id,
         fingerprint,
+        recoveryFingerprint: null,
         epoch: 0,
         expiresAt: Number.MAX_SAFE_INTEGER,
         result: result.outcome,
@@ -2977,6 +2989,7 @@ export class WorldService {
         {
           id,
           fingerprint,
+          recoveryFingerprint: null,
           epoch: this.epoch.generation,
           expiresAt: this.now() + COMMAND_RETRY_MS,
           result,
@@ -3646,8 +3659,49 @@ export class WorldService {
         id,
         epoch: this.epoch.generation,
         fingerprint,
+        recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
         expiresAt: this.now() + COMMAND_RETRY_MS,
       });
+    });
+  }
+
+  /** Resolve an original request without re-admitting it under changed control. */
+  async commandReceipt(
+    commandId: string,
+    input: CommandInput,
+    epoch: string,
+    scope: RequestScope,
+  ): Promise<CommandReceiptResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      this.assertScope(scope);
+      const audience = scopeKey(scope);
+      const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
+      const prior = await this.store.commands?.get(this.world.id, id);
+      this.assertScope(scope);
+      if (!prior)
+        return {
+          ok: false,
+          scope: audience,
+          status: epoch === this.commandEpoch ? 'unknown' : 'expired',
+          message:
+            'The original result is not available. This does not confirm whether it happened.',
+        };
+      if (prior.recoveryFingerprint !== commandRecoveryFingerprint(input, scope))
+        return {
+          ok: false,
+          scope: audience,
+          status: 'unavailable',
+          message: 'This result is unavailable for the current access and original request.',
+        };
+      if (this.now() >= prior.expiresAt)
+        return {
+          ok: false,
+          scope: audience,
+          status: 'expired',
+          message: 'The original result has expired. Its outcome remains unconfirmed.',
+        };
+      return { ok: true, scope: audience, status: 'resolved', result: prior.result };
     });
   }
 
@@ -3728,6 +3782,9 @@ export class WorldService {
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
+        break;
+      case 'cancel':
+        command = { ...envelope, type: 'cancel', expectedActionId: input.expectedActionId };
         break;
       case 'status-effect':
         if (!input.targetId || !input.definitionId || !input.effectOperation)

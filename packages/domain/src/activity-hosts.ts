@@ -89,10 +89,22 @@ export interface ActivityRequest {
   family: string;
   arguments: Record<string, string | number | boolean>;
 }
+/** Trusted task presentations bind world-authored roles, never arbitrary form schemas.
+ * docs/projects/game-interaction-redesign-tech-design.md#replace-generic-activity-forms-with-semantic-presentations */
+export type ActivityRequestPresentation = {
+  target: string;
+  material: string;
+  reserve: string;
+  workMode: string;
+} & (
+  | { kind: 'resource-care'; supply: string; stop: string; budget: string }
+  | { kind: 'gather-store-use'; source: string; destination: string; quantity: string }
+);
 export interface ActivityRequestDescriptor {
   id: string;
   label: string;
   description: string;
+  presentation?: ActivityRequestPresentation;
   fields: Record<
     string,
     {

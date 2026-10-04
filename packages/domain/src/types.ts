@@ -322,6 +322,8 @@ export interface Outcome {
   itemId?: string;
   goalId?: string;
   planId?: string;
+  /** Exact action started by this result; command identity is a separate receipt key. */
+  actionId?: string;
 }
 export interface CommandReceipt {
   digest: string;
@@ -517,7 +519,8 @@ export type Command = Envelope &
         expectedScope?: string;
       }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
-    | { type: 'cancel' | 'recover' }
+    | { type: 'cancel'; expectedActionId?: string }
+    | { type: 'recover' }
     | {
         type: 'say';
         text: string;
