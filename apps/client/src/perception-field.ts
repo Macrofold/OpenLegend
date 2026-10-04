@@ -13,6 +13,7 @@ import type { PerceptionOptions } from './world-renderer';
 /** Bounded, conservative surface guide, not an observation/recognition query.
  * docs/spatial-world.md#perception-range-guides owns sampling and elevation limits. */
 export const GUIDE_SAMPLING = { rays: 128, steps: 32, refinements: 8, intervalMs: 250 } as const;
+type SurfaceSample = { center: WorldPoint; support: WorldPoint | null };
 export interface GuideContour {
   sense: 'vision' | 'hearing';
   band: number;
@@ -150,10 +151,14 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
   }
   // Full triangle interiors are identical across bands; keep their support points
   // shared so native sight/transmission classification runs once per build.
-  const interiors: Array<{ center: WorldPoint; support: WorldPoint | null }> = [];
+  const interiors: SurfaceSample[] = [];
+  const midpoints = new Map<number, SurfaceSample>();
   return contours.map((contour) => {
     const { radius: _radius, ...display } = contour;
-    return { ...display, ...guideMesh(grid, interiors, footAt, (point) => passes(contour, point)) };
+    return {
+      ...display,
+      ...guideMesh(grid, interiors, midpoints, footAt, (point) => passes(contour, point)),
+    };
   });
 }
 
@@ -162,16 +167,21 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
  * docs/spatial-world.md#display-approximation-and-updates */
 function guideMesh(
   grid: WorldPoint[][],
-  interiors: Array<{ center: WorldPoint; support: WorldPoint | null }>,
+  interiors: SurfaceSample[],
+  midpoints: Map<number, SurfaceSample>,
   footAt: (x: number, z: number) => WorldPoint | null,
   passes: (point: WorldPoint) => boolean,
 ): Pick<GuideContour, 'vertices' | 'triangles' | 'segments'> {
   type Sample = { id: number; point: WorldPoint; inside: boolean };
   const vertices: WorldPoint[] = [],
     triangles: number[] = [];
-  const indices = new Map<Sample, number>();
-  const crossings = new Map<string, Sample>();
-  const boundary = new Map<string, [number, number]>();
+  const indices: number[] = [];
+  const crossings = new Map<number, Sample>();
+  const boundary = new Map<number, [number, number]>();
+  // Unordered integer pairs avoid allocating strings for every shared mesh edge.
+  const edgeKey = (a: number, b: number): number => ((a + b) * (a + b + 1)) / 2 + Math.min(a, b);
+  const originalPoints = grid.reduce((count, ring) => count + ring.length, 0);
+  const clippedMidpoints = new Map<number, SurfaceSample>();
   let nextId = 0;
   const sample = (point: WorldPoint): Sample => ({
     id: nextId++,
@@ -180,7 +190,7 @@ function guideMesh(
   });
   const samples = grid.map((ring) => ring.map(sample));
   const crossing = (a: Sample, b: Sample): Sample => {
-    const key = a.id < b.id ? `${a.id}:${b.id}` : `${b.id}:${a.id}`;
+    const key = edgeKey(a.id, b.id);
     const cached = crossings.get(key);
     if (cached) return cached;
     let inside = a.inside ? a.point : b.point;
@@ -196,17 +206,36 @@ function guideMesh(
     crossings.set(key, result);
     return result;
   };
+  const edgePasses = (a: Sample, b: Sample): boolean => {
+    const cache = a.id < originalPoints && b.id < originalPoints ? midpoints : clippedMidpoints;
+    const key = edgeKey(a.id, b.id);
+    let middle = cache.get(key);
+    if (!middle) {
+      const center = {
+        x: (a.point.x + b.point.x) / 2,
+        y: (a.point.y + b.point.y) / 2,
+        z: (a.point.z + b.point.z) / 2,
+      };
+      middle = { center, support: footAt(center.x, center.z) };
+      cache.set(key, middle);
+    }
+    return (
+      middle.support !== null &&
+      Math.abs(middle.support.y - middle.center.y) <= 0.05 &&
+      passes(middle.support)
+    );
+  };
   const index = (point: Sample): number => {
-    let id = indices.get(point);
+    let id = indices[point.id];
     if (id === undefined) {
       id = vertices.length;
-      indices.set(point, id);
+      indices[point.id] = id;
       vertices.push(point.point);
     }
     return id;
   };
   const edge = (a: number, b: number): void => {
-    const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+    const key = edgeKey(a, b);
     if (boundary.has(key)) boundary.delete(key);
     else boundary.set(key, [a, b]);
   };
@@ -247,6 +276,14 @@ function guideMesh(
       }
       const { center, support } = interior;
       if (!support || Math.abs(support.y - center.y) > 0.05 || !passes(support)) continue;
+      // A visible center alone can still bridge an unseen wall corner. Exclude
+      // that triangle instead of breaking its outline; the resulting hole closes.
+      if (
+        !edgePasses(polygon[0]!, polygon[i]!) ||
+        !edgePasses(polygon[i]!, polygon[i + 1]!) ||
+        !edgePasses(polygon[i + 1]!, polygon[0]!)
+      )
+        continue;
       triangles.push(first, a, b);
       edge(first, a);
       edge(a, b);

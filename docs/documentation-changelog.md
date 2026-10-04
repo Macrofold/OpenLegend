@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 3, 2026 — Connected perception areas
+
+At Mike's request, the range display now derives its outline from the same sampled surface mesh as a faint interior tint. This replaces deliberately missing contour joins and omitted map-edge lines with closed displayed patches, halves line widths, and shortens labels to sight/speech wording. Closed mapped-area edges are display bounds, not new sensory laws. Native clipping, public-geometry disclosure and camera-only caching remain; added filled-mesh cost is measured and tracked separately in SW09.4b. [Contract](spatial-world.md#perception-range-guides), [limits](limits/interface.md#rg01--perception-range-guide-display), [evidence](verification/perception-overlays.md#connected-outlines-and-faint-fills--october-3-2026).
+
 ## October 3, 2026 — Sole-tab entry and logout correction
 
 Mike corrected the earlier explicit-Resume decision: one game tab must enter/reload/return automatically. Only switching between open tabs shows the exact Game Paused / OpenLegend is open in another tab. / Resume Here / Log Out dialog. Stable reload identity and bounded open-tab discovery preserve deliberate transfers without exposing private game data or moving authorization into the browser. Shared game logout revokes server authority and clears all browser tabs, including paused ones; explicit loopback Sign in restores a fresh login. This does not resolve external provider logout (IDP03). [Contract](architecture.md#account-authority-and-participation), [MP09](limits/multiplayer.md#mp09), [MP18](maintainers/multiplayer.md#mp18--explicit-tab-resume). The earlier October 3 mandatory-Resume implementation and evidence below are superseded for normal entry, not erased.
