@@ -60,6 +60,18 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 **Observed controls.** The Armoury Chest has equipment-category icons with counts at both edges and a Head category above the item grid. The selected object opens commands including Equip, Item Comparison, Try On, Repair, Extract Materia, Cast Glamour, Search for Item, Link and Set to Hotbar. Repair and Extract Materia are dimmer; the image does not reveal their precise blockers. The publisher highlights Link.
 
+| Visible command | Meaning supported by the referenced guides |
+| --- | --- |
+| Equip | Put this equipment on the character; the selected item supplies the subject. |
+| Item Comparison | Compare with currently equipped gear, including while shopping. [Official comparison guide](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-compare/equipment_compare.html). |
+| Try On | Preview the equipment's appearance; the item-link guide also exposes this for shared equipment. |
+| Repair | Restore equipment condition through the game's repair system. Requirements are described in the [crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), but this capture's disabled reason is unknown. |
+| Extract Materia | Obtain materia from spiritbound equipment, a game-specific system corroborated by the [official achievement database](https://na.finalfantasyxiv.com/lodestone/playguide/db/achievement/fa69fb9ba9a/). Exact eligibility and consequences were not tested here. |
+| Cast Glamour | Apply another equipment appearance. [Official glamour guide](https://na.finalfantasyxiv.com/uiguide/fashion/equipment-glamours/glamours_how.html). |
+| Search for Item | Locate holdings across storage. The [2018 developer article](https://na.finalfantasyxiv.com/blog/002406.html) documents separate results and storage-data freshness; this is historical behavior, not a current cache guarantee. |
+| Link | Put an inspectable reference into chat; it does not hand over the item. |
+| Set to Hotbar | Assign quick access through the hotbar system described in the game-screen manual. |
+
 **Verified flow.** Right-click the specific item → choose Link → a reference appears in the composer → add ordinary text → send. The recipient can inspect that reference, and equipment links can expose Try On. [Official item-link guide](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_iteminfo.html). No manual transcription of an item's name or attributes is required.
 
 **Judgment.** Actions stay attached to the object they affect. Sharing an inspectable item connects social play with possessions. The long specialized menu is a warning: useful secondary commands should not bury the likely action, and dim text alone does not explain unavailability.

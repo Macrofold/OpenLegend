@@ -4,7 +4,7 @@
 
 ## Scope, evidence and version baseline
 
-Reviewed **2026-10-03**. This dossier contains **six distinct, locally saved and visually inspected game UI captures**. Four are Wube's November 2020 **1.1 development preview**, one is its January 2019 **0.17 development preview**, and one is a February 2021 official-wiki capture whose exact patch is unspecified. They are historical design evidence. The current official controls and quickbar documentation were also read to check the interaction vocabulary; this was not a hands-on test of a current executable. PC mouse/keyboard is the baseline; no console accessibility or controller behavior was tested.
+Research began **2026-10-03** and was finalized **2026-10-04**. This dossier contains **six distinct, locally saved and visually inspected game UI captures**. Four are Wube's November 2020 **1.1 development preview**, one is its January 2019 **0.17 development preview**, and one is a February 2021 official-wiki capture whose exact patch is unspecified. They are historical design evidence. The current official controls and quickbar documentation were also read to check the interaction vocabulary; this was not a hands-on test of a current executable. PC mouse/keyboard is the baseline; no console accessibility or controller behavior was tested.
 
 **Evidence labels:** **Observed** describes the saved image; **Documented** describes a cited developer or official-wiki explanation; **Assessment** is our design judgment; **Application** proposes how Open Legend can use the lesson. Game screenshots retain their original third-party rights, are reference-only, and are not assets licensed for Open Legend's game. The manifest records source and image URLs, dimensions, hashes, dates and inspection status.
 

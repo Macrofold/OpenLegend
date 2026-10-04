@@ -4,7 +4,7 @@
 
 ## Scope, evidence and version baseline
 
-Reviewed **2026-10-03**. The **five locally saved images were individually inspected** and traced to the original players' posts. They cover a 2021 inventory, a 2022 chest, and three April 2024 **1.6-era** screens. Exact patches and platforms are recorded where the authors supplied them; unspecified details remain unknown. Several captures accompany bug reports, which are identified explicitly. No current game executable or controller was tested.
+Research began **2026-10-03** and was finalized **2026-10-04**. The **five locally saved images were individually inspected** and traced to the original players' posts: **four digital screenshots and one photograph of the game display**. The photograph is supporting evidence and is excluded from digital-screenshot totals. They cover a 2021 inventory, a 2022 chest, and three April 2024 **1.6-era** screens. Exact patches and platforms are recorded where the authors supplied them; unspecified details remain unknown. Several captures accompany bug reports, which are identified explicitly. No current game executable or controller was tested.
 
 **Observed** means visible in the saved image. **Documented** means supported by a linked game guide or the original player's account. **Assessment** and **Application** are our design analysis and proposed Open Legend use. Third-party game imagery retains its original rights and is stored for reference only; it is not licensed Open Legend game art.
 

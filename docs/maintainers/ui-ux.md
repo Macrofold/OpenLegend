@@ -2,7 +2,7 @@
 
 [Handbook](../ui-ux/README.md) · [Essential rules](../../.agents/rules/ui-ux.md) · [Verification](../ui-ux/verification.md) · [Maintainer index](README.md)
 
-This tracker owns follow-through for the researched interaction-design handbook, updated October 1, 2026. It does not authorize runtime redesign or duplicate inventory, spatial, hearing, narration, invention or save/load trackers. Runtime evidence baseline: `0382be7`; the research ledger retains relevant handbook and external-source revisions.
+This tracker owns follow-through for the researched interaction-design handbook and the October 3 inventory/everyday-play redesign. Research and design are authorized; runtime implementation has not begun for UIUX08–UIUX11. It does not duplicate native inventory, spatial, hearing, narration, invention or save/load ownership. Original runtime evidence baseline: `0382be7`; the October 3 source audit uses `b50ec6c`, with research versions and source limits in the ledger.
 
 Concrete application: [PW04 inventory](next-playable-week.md#pw04--inventory-for-exact-camp-tasks), [PW05 streamed authoring](next-playable-week.md#pw05--streamed-world-agent-replies), [PW11 invention workspace](next-playable-week.md#pw11--inspectable-and-editable-invention-workspace) and PW07 generic meter/editor UI, with a shared [feature specification](../projects/next-playable-week-feature-spec.md) and [technical design](../projects/next-playable-week-tech-design.md), select a camp-supply task and owner-chat journey for the next engineering week. [Engineer 4's report](../verification/next-playable-week-engineer-4.md) distinguishes implemented client/native fixes, native/PostgreSQL checks and partial actual browser observations from the unfinished final matrix. UIUX02–UIUX05 stay open; Engineer 1 retains PW06 closure, and existing subsystem release gates remain separate.
 
@@ -10,7 +10,7 @@ Concrete application: [PW04 inventory](next-playable-week.md#pw04--inventory-for
 
 **Documentation delivered and merged; runtime conformance not asserted.** The handbook covers hierarchy/layout, controls/overlays, inventory/trading, world interaction, chat/invention, feedback, React and verification. Root/client guidance routes to a short core and matching sections only. Current aesthetics, authority, save compatibility and subsystem contracts remain unchanged.
 
-One [research ledger](../ui-ux/research.md) integrates all 47 source groups, including pinned Primer/Adobe code and Vercel's guideline repository. Findings live in the appropriate topic chapters, not separate research-round supplements. Source dates, IDs, pins, rejected advice and access qualifications are preserved. The [principle-to-evidence map](../ui-ux/research.md#principle-to-evidence-map) connects control semantics, disabled explanations, accessibility colors, child overlays, composition, adaptive continuity, persistence and calibrated agent feedback to their evidence.
+One [research ledger](../ui-ux/research.md) retains the original 47 source groups, including pinned Primer/Adobe code and Vercel's guideline repository, and indexes the new game screenshot dossiers. Findings live in the appropriate topic chapters, not separate research-round supplements. Source dates, IDs, pins, rejected advice and access qualifications are preserved. The [principle-to-evidence map](../ui-ux/research.md#principle-to-evidence-map) connects control semantics, disabled explanations, accessibility colors, child overlays, composition, adaptive continuity, persistence and calibrated agent feedback to their evidence.
 
 Completion means requested documentation/routes, not retroactive conformance of every screen. Tooling/native dispatch remain separately open. A company's pattern and a valid Markdown route are not proof of runtime accessibility or agent compliance.
 
@@ -63,3 +63,34 @@ PW05’s [bounded owner browser evidence](../verification/invention-foundation.m
 In a runnable checkout, run `pnpm guidance:check` and the pinned changed-file formatter without repository-wide churn. Probe a matching frontend task, backend-only negative case, new component and client-package working directory. Inspect actual context/reads: one short core plus relevant chapter sections, no compulsory research/corpus preload. Record agent versions and missing/irrelevant reads with the existing [agent-guidance tracker](agent-guidance.md). Fix concrete failures without weakening policy.
 
 Root/client entrypoints retain selective routing; no vendor skill or duplicate handbook is added. Keep findings integrated in the existing chapters and the single source ledger. Reassess loading size if evidence shows omission or excessive context; do not copy the handbook into root instructions. Static source/document review and consolidation do not close native dispatch or gameplay qualification.
+
+
+## UIUX07
+
+**In progress — screenshot research and redesign documentation.** October 3 request: deeply study game inventory, container, activity and chat interfaces; save more than 50 actual distinct UI screenshots with source/version provenance and per-image critique; explain the current implementation and propose a complete replacement interaction. The [game atlas](../ui-ux/games/README.md), [central ledger](../ui-ux/research.md#game-interface-screenshot-atlas) and [pinned audit](../ui-ux/current-interface-audit.md) own evidence. The [feature specification](../projects/game-interaction-redesign-feature-spec.md) and [technical design](../projects/game-interaction-redesign-tech-design.md) own the proposed project.
+
+Completion requires all images to be inspected and embedded in their dossiers, documented controls and player feedback distinguished from visual inference, known edition/WIP/add-on limits stated, counts/deduplication and local links checked, existing guidance reconciled and the full documentation diff reviewed. This closes research/design only; no source inspection or image review closes runtime acceptance.
+
+## UIUX08
+
+**Not started — object-opened inventory and direct handling.** Extends PW04 and UIUX04's player experience; PO/BW/AC retain native identity, containment, access, equipment and action ownership. Implement the complete reachable world-object → Open → paired collections → native transfer path. Replace the ordinary destination chooser/review, preserve source and target through amount changes, provide non-drag input and robust narrow layouts. First delivery uses supported native bags/containers; fixed chest content is not a prerequisite.
+
+Exit: [J01/J03–J09](../projects/game-interaction-redesign-feature-spec.md#end-to-end-acceptance-journeys), including exact receipt/uncertain-result behavior verified against the real transfer owner. Extend with J02/J04 for deliberate approach and equipment. UXL06/07/09/10 own display, later bulk and work-bound decisions. The design does not mark PW04's earlier browser, recipient, IME or assistive-device gaps complete.
+
+## UIUX09
+
+**Not started — contextual activities and crafting.** Extends PW10/PW06 and native AC/AG/BW activity consumers. Bind the selected object and controlled actor, expose meaningful remaining choices and remove the routine generic execution form/raw reference IDs. Keep stopping condition, supply budgets/reserves, important costs and replacing current work understandable. Trusted semantic presentations read world-owned roles/labels and execute through existing admission.
+
+Exit: J10–J12 plus the activity portion of J16. A proposed Change affordance must use a supported amendment or an explicit replacement; editing a draft does not restart work. Verify missing resources, cancellation, native outcomes, altered access and an already-supported different-world example. UXL08 owns the supported-presentation boundary; a new generic UI engine or arbitrary generated code is not required.
+
+## UIUX10
+
+**Not started — person/item conversation entry and clear draft scope.** Extends UIUX05 and existing hearing/narration/invention owners. Preserve current fixed header/input, vertical volume, dots-only reply indicator and reading behavior. Connect contextual Talk and permitted item/topic references. The audit finds one session draft record: implement and verify recipient/world/control draft transitions explicitly rather than describing per-NPC retention as delivered.
+
+Exit: J13–J14, including audience/hearing truth, offer consent, existing ordinary-player/creator separation, IME and fresh-access behavior. Broader provider, assistive-device and conversation lifecycle gates remain with current owners.
+
+## UIUX11
+
+**Not started — coherent everyday play acceptance.** UIUX08–UIUX10 supply the interactions; PW06 retains combined release authority. Complete J16 from the real world view: open storage, take supplies, equip, gather, fuel/craft, offer food, converse and put items away. The player should operate through objects, items and understandable ongoing work without filling a generic execution form. Measure hesitation, errors, backtracking and task completion without coaching; compare with the documented baseline where available.
+
+Record actual revision, content, input, viewport/text scale, native outcomes and recovery results. Test important concurrent/invalidated states through the true client/server path. Wireframes, component fixtures, compiler success and documentation completion do not satisfy this experience gate. No gameplay tests have been run for the research branch.

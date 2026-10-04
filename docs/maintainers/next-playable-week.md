@@ -61,13 +61,13 @@ No fixed building, encumbrance progression, preservation, locked cache, food res
 - [ ] Adaptive collection/detail layout preserves exact selection, scope, scroll position and drafts across width changes.
 - [ ] Display current capacity, relevant item characteristics and meaningful equipment comparison through permitted projections, with unknowns distinct from zero.
 - [ ] Complete carried and ground-pile/container navigation plus exact transfer with source/destination/quantity, reachable blockers and actual server receipts.
-- [x] Read transfer destinations only when the player opens Move, through bounded indexed/spatial discovery; remove the world-root scan from each ordinary contents page. All/Half set a quantity draft, never move items without confirmation.
+- [x] Historical delivery: read transfer destinations only when Move is opened through bounded indexed/spatial discovery, removing the ordinary contents-page world-root scan; All/Half fill a draft. The routine chooser/review interaction is superseded by [UIUX08](ui-ux.md#uiux08); direct moves still require intentional input and native admission.
 - [ ] Preserve current-container search/paging; qualify long and duplicate names, more than one page, stale scope, empty quantity, removed items and delayed responses.
 - [ ] Inspect and exercise desktop/short/narrow/enlarged layouts, keyboard/IME, focus, popup dismissal and world-input isolation. Repair reproduced clear-control defects only; retain unrun assistive-device qualification explicitly.
 
 **NP04 contribution:** ordinary camp searches now page permitted role results and shared storage, retain exact duplicate identities, and explicitly approach/inspect dropped bags. Its native-backed camp effects and scoped input/layout/privacy cases are [recorded separately](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026). This completes the selected camp connection; the remaining PW04 collection/detail, recipient, native IME, assistive-device and wider content matrix stays open.
 
-No blanket theme replacement, decorative grid mandate, bulk trading or unscoped search. Own shared UI primitives/CSS touched by PW05 so both surfaces use the same interaction rules.
+The original scope excluded a decorative grid mandate; Mike’s October 3 direction now explicitly selects grids and object-opened paired inventory as the target interaction. [UIUX08](ui-ux.md#uiux08) owns that replacement beneath the existing PO/BW/AC semantics. Earlier picker/review evidence remains historical delivery evidence, not the target player flow. No blanket theme replacement, bulk trading or unscoped search is implied. Own shared UI primitives/CSS touched by PW05 so both surfaces use the same interaction rules.
 
 ## PW05 — Streamed World Agent replies
 
@@ -268,3 +268,4 @@ No provider call, runtime test or benchmark was performed to produce this plan. 
 Mike authorized integrating Engineers 2 and 3 into local main after Engineer 1, preserving shared action admission/execution and saved simulation progress. Engineer 2 is integrated as `700ea7b1`; Engineer 3's source is `b3c69a8e`. [The local reconciliation plan](../projects/next-playable-week/local-branch-integration.md) records source tips and selected checks, with [camp integration evidence](../verification/camp-life.md#local-main-reconciliation). Earlier handoff tables and independent-branch consumption statements describe their original checkpoints; they do not supersede this integration. The full PW06 acceptance matrix and unmet capacity/browser/provider checks remain open.
 
 Engineer 4’s final independent [report](../verification/next-playable-week-engineer-4.md) additionally records current-after-wait Check, transactional approval rollback, reload-safe private draft recovery, saved-preparation labels and keyboard focus restoration. These additions are integrated into local main alongside its existing Conversation/Work parent and Engineer 3 camp activities; the report’s earlier integration-blocked statements describe its source-branch cutoff. Combined PW06 acceptance remains open.
+

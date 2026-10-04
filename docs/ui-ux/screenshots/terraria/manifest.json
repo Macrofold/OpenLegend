@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "game": "Terraria",
+  "research_date": "2026-10-03",
+  "last_reviewed": "2026-10-04",
+  "image_count": 8,
+  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier.",
+  "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license.",
+  "images": [
+    {
+      "id": "TR01",
+      "platform": "Desktop PC",
+      "version": "2021-era screenshot; exact build unknown",
+      "source_date": "2021-04-17; guide updated 2021-11-13",
+      "source_page": "https://steamcommunity.com/sharedfiles/filedetails/?id=2460463327",
+      "direct_image_url": "https://images.steamusercontent.com/ugc/1752439360284721763/A47A4936A5BBE19BBB6968B25C7284A6507934C1/",
+      "caption": "Metals chest below carried inventory with a full set of explicit bulk actions.",
+      "observed_controls": [
+        "Metals title",
+        "Carried grid and hotbar",
+        "Coin and ammunition columns",
+        "Loot All",
+        "Deposit All",
+        "Quick Stack",
+        "Restock",
+        "Sort Items",
+        "Rename"
+      ],
+      "strengths": [
+        "Named current storage and player inventory remain visible together.",
+        "Task-oriented bulk verbs reduce repeated manipulation."
+      ],
+      "weaknesses": [
+        "Small text over world scenery is difficult to read.",
+        "Color and position carry much of the pane distinction."
+      ],
+      "application": [
+        "Use named world-selected storage and stable carried inventory.",
+        "Provide scoped bulk actions with explicit source and destination labels."
+      ],
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/01-named-chest.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 406184,
+      "sha256": "88674ff134353f3f206b1a3fc49600c59556bd2831b34cfa3bc4c1de9452fbfe",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR02",
+      "platform": "Desktop PC",
+      "version": "Guide started in 2015; screenshot exact build unknown",
+      "source_date": "2015-07-02; guide updated 2021-01-06",
+      "source_page": "https://steamcommunity.com/sharedfiles/filedetails/?id=473657041",
+      "direct_image_url": "https://images.akamai.steamusercontent.com/ugc/447329487742438022/9A711BD7FA92B4F52EFA3A837CF4FCEA3A0C9DE5/",
+      "caption": "Optional Quick stack to nearby chests tooltip with a large physical storage room visible.",
+      "observed_controls": [
+        "Carried inventory",
+        "Quick stack to nearby chests tooltip",
+        "Small inventory utility icon",
+        "Equipment and minimap"
+      ],
+      "strengths": [
+        "One optional action handles established matching-item storage workflows.",
+        "The usual open-chest interaction remains a separate route."
+      ],
+      "weaknesses": [
+        "No visible range boundary or target set.",
+        "Small hover-only control is hard to discover."
+      ],
+      "application": [
+        "Ship direct chest interaction first.",
+        "Any nearby stash action should explain targets, exclusions and results without a mandatory destination picker."
+      ],
+      "dimensions": {
+        "width": 1680,
+        "height": 1050
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/02-quick-stack.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 336706,
+      "sha256": "0b9ec725b64daf5cdf561401b6de241eb014cad1e10208c2f0ec514aed0f7105",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR03",
+      "platform": "Desktop PC",
+      "version": "May 2017 screenshot; exact build unknown",
+      "source_date": "2017-05-30",
+      "source_page": "https://steamcommunity.com/sharedfiles/filedetails/?id=935942639",
+      "direct_image_url": "https://images.steamusercontent.com/ugc/768274293155075739/D29F2DCF940C66CF7471F687DD1CB8BCF0548AF6/",
+      "caption": "Guide recipe discovery using Platinum Crown with Required objects: Demon Altar.",
+      "observed_controls": [
+        "Showing recipes that use Platinum Crown",
+        "Required objects: Demon Altar",
+        "Recipe and ingredient icons",
+        "Carried inventory"
+      ],
+      "strengths": [
+        "An item is a concrete query for relevant crafting information.",
+        "The needed station is identified near the recipe."
+      ],
+      "weaknesses": [
+        "Station jargon and small icons require familiarity.",
+        "The original player caption disputes the contextual station naming."
+      ],
+      "application": [
+        "Offer item-specific recipe discovery through inspection or an informed NPC.",
+        "Explain missing stations plainly and respect knowledge boundaries."
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/03-guide-recipe.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 183116,
+      "sha256": "3c3ab3868c07119e50b81944ef91114730ab7310ea09bde57ab32a5a8c4c0ae6",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR04",
+      "platform": "Desktop PC",
+      "version": "2021-era screenshot; exact build unknown",
+      "source_date": "2021-04-17; guide updated 2021-11-13",
+      "source_page": "https://steamcommunity.com/sharedfiles/filedetails/?id=2460463327",
+      "direct_image_url": "https://images.steamusercontent.com/ugc/1752439360284717528/FAF2B89C2F60AAEFC240EE15A67011D5844B838C/",
+      "caption": "In-place chest naming with Potion Materials and Save/Cancel.",
+      "observed_controls": [
+        "Editable chest name",
+        "Save",
+        "Cancel",
+        "Other chest bulk actions",
+        "Inventory and chest panes"
+      ],
+      "strengths": [
+        "Text entry is limited to a real naming decision.",
+        "Object and item context remain visible."
+      ],
+      "weaknesses": [
+        "Editing state is subtle.",
+        "Screenshot does not prove gameplay-key suppression while typing."
+      ],
+      "application": [
+        "Allow optional names with explicit edit/save/cancel state.",
+        "Ensure text focus consumes gameplay shortcuts."
+      ],
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/04-rename-chest.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 356911,
+      "sha256": "fb47d27bac4e624868bc6ba5293538f163c6179f6c52b4fc15633e44a6b4cb2f",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR05",
+      "platform": "Desktop PC",
+      "version": "2021-era image; exact build unknown",
+      "source_date": "2021-04 (asset date)",
+      "source_page": "https://wiki.sportskeeda.com/terraria/how-to-obtain-minishark-terraria",
+      "direct_image_url": "https://staticg.sportskeeda.com/editor/2021/04/747cf-16177759548783-800.jpg",
+      "caption": "Shop inventory and Minishark tooltip combining use facts and a contextual buy price.",
+      "observed_controls": [
+        "Shop grid",
+        "Savings label",
+        "Minishark item tooltip",
+        "Damage, critical chance, speed and ammunition facts",
+        "Buy price",
+        "Carried inventory"
+      ],
+      "strengths": [
+        "Gameplay value and price are visible together.",
+        "Owned items remain nearby for comparison."
+      ],
+      "weaknesses": [
+        "Tooltip covers part of the shop.",
+        "Dense small text and absent explicit comparison burden scanning."
+      ],
+      "application": [
+        "Use a readable item inspector and clear purchase action.",
+        "Show actual unit and total costs in merchant context."
+      ],
+      "dimensions": {
+        "width": 800,
+        "height": 600
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/05-shop-tooltip.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 79267,
+      "sha256": "af06d19433707e30fb7c172e15b6890ef258b61ac76d1e78ec6155611e536bdf",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR06",
+      "platform": "Desktop PC",
+      "version": "Capture build and date unknown; historical player guide",
+      "source_date": null,
+      "source_page": "https://steamcommunity.com/sharedfiles/filedetails/?id=2284900730",
+      "direct_image_url": "https://steamuserimages-a.akamaihd.net/ugc/1662353234446687732/138A2B3A47236CD8DACDAC65357BF6576B0A907B/",
+      "caption": "Tavernkeep dialogue with Shop, Close, Eternia Crystal and Happiness choices; separate Merchant-arrival notification.",
+      "observed_controls": [
+        "Shop",
+        "Close",
+        "Eternia Crystal",
+        "Happiness",
+        "NPC dialogue",
+        "Separate system event text",
+        "World and hotbar"
+      ],
+      "strengths": [
+        "NPC speech and relevant services share a compact context.",
+        "The world remains visible during a bounded conversation."
+      ],
+      "weaknesses": [
+        "Speaker identity is weaker than explicit actor naming could provide.",
+        "System events compete with the current conversation."
+      ],
+      "application": [
+        "Clearly distinguish addressed NPC, nearby speech and system events.",
+        "Offer contextual services alongside appropriate free-text communication."
+      ],
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/06-npc-dialogue.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 250252,
+      "sha256": "f4b2e40c80b922ec938b0f228af220eb5241e37a706e645d0cb0ad7de47ddf28",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR07",
+      "platform": "Console/mobile developer experiment; controller glyphs visible",
+      "version": "Unreleased work in progress as presented 2024-05-30; not a current shipped-build claim",
+      "source_date": "2024-05-30",
+      "source_page": "https://store.steampowered.com/news/posts/?appids=105600&enddate=1717286400&feed=steam_community_announcements",
+      "direct_image_url": "https://clan.fastly.steamstatic.com/images/3949769/9b5c558339d4f4c837159217812a28ccbbc3f3a5.jpg",
+      "caption": "Developer WIP HUD groups inventory hints near hotbar and map/chat hints near minimap.",
+      "observed_controls": [
+        "Inventory and hotbar navigation hints at left",
+        "Map and Mini Map",
+        "Mini Chat",
+        "Lock On and Smart Cursor hints",
+        "General controls along bottom"
+      ],
+      "strengths": [
+        "Binding hints are closer to the part of the screen they affect.",
+        "Developer rationale explicitly targets time spent searching an all-bindings banner."
+      ],
+      "weaknesses": [
+        "Bottom control banner remains long in this WIP state.",
+        "Minimap and status area is dense."
+      ],
+      "application": [
+        "Place item, container and chat controls near the corresponding task.",
+        "Keep only a small stable set of general shortcuts globally."
+      ],
+      "dimensions": {
+        "width": 889,
+        "height": 500
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/07-contextual-controls-wip.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 76512,
+      "sha256": "80f259027ac1ef3a7e7f8f1693a7e6964facbde4352d05d2f09cf637aa040a41",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "TR08",
+      "platform": "Console/mobile developer experiment; original publisher crop",
+      "version": "Unreleased work in progress as presented 2024-05-30; not a current shipped-build claim",
+      "source_date": "2024-05-30",
+      "source_page": "https://store.steampowered.com/news/posts/?appids=105600&enddate=1717286400&feed=steam_community_announcements",
+      "direct_image_url": "https://clan.fastly.steamstatic.com/images/3949769/ca313ed2fbdd48dfb90ccbe5974dd4bc8714d757.jpg",
+      "caption": "Developer WIP inventory places Use, Pickup, Take One, Favorite and Close next to items; crafting has separate hints.",
+      "observed_controls": [
+        "Use",
+        "Pickup",
+        "Take One",
+        "Favorite",
+        "Close",
+        "Crafting hint below crafting section",
+        "Highlighted item cell"
+      ],
+      "strengths": [
+        "Local commands explain immediate item actions.",
+        "Taking one and protecting an item are visible next to ordinary manipulation."
+      ],
+      "weaknesses": [
+        "Small modifier glyphs still demand attention.",
+        "A still image cannot conclusively distinguish all focus/favorite visual states."
+      ],
+      "application": [
+        "Provide a local item action strip with accurate bindings.",
+        "Support protected items and deliberate quantity exceptions without mandatory whole-stack forms."
+      ],
+      "dimensions": {
+        "width": 374,
+        "height": 500
+      },
+      "game": "Terraria",
+      "local_path": "docs/ui-ux/screenshots/terraria/08-inventory-controls-wip.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 44266,
+      "sha256": "43f780b5a823a2417bd5a7f36438b48222716fda75c1d3a4c6e2f5bae4d29dab",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    }
+  ]
+}
