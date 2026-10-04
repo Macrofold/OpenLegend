@@ -1,6 +1,10 @@
 # Long-conversation continuity and compaction — technical design
 
-**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; NC18 tracks conditional future work; [runtime evidence and limits](../verification/conversation-compaction.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
+| Status    | Current progress                                                                                                   | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | NC14–NC17 and their review/integration checks are complete; NC12 and conditional NC18 retain their separate scope. | 2026-10-03   |
+
+**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../../maintainers/narration-and-conversations.md) record delivery; NC18 tracks conditional future work; [runtime evidence and limits](../../verification/conversation-compaction.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 
 ## 1. Architectural decision
 
@@ -92,7 +96,7 @@ Compress repetition, greetings, filler, duplicated explanation, clearly supersed
 
 These are summarization instructions, not separately writable engine records. Do not add QUD records, dialogue-act labels, a common-ground store, per-topic rows or grounding-status fields in v1.
 
-Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
+Research basis: [conversation state and grounding](../../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../../archive/02-research/long-conversation-memory-and-compaction.md).
 
 ### Research-to-runtime mapping
 
@@ -150,7 +154,7 @@ NPC response generation
 | Preserve active issues/focus and useful relational references                                  | **Prompt + qualification.**                                                                                           |
 | Prefer recall/continuity over elegant brevity                                                  | **Prompt/tuning policy + qualification.**                                                                             |
 
-A generated summary that passes structural validation is **not certified semantically correct**. V1 deliberately does not add a second paid LLM “summary verifier”: that would add another fallible inference step, cost and latency without turning semantic fidelity into a hard guarantee. Instead, raw history remains available, exact model-facing summaries are inspectable, and [NC17](../maintainers/narration-and-conversations.md) qualifies the model/prompt against adversarial and natural conversation scenarios.
+A generated summary that passes structural validation is **not certified semantically correct**. V1 deliberately does not add a second paid LLM “summary verifier”: that would add another fallible inference step, cost and latency without turning semantic fidelity into a hard guarantee. Instead, raw history remains available, exact model-facing summaries are inspectable, and [NC17](../../maintainers/narration-and-conversations.md) qualifies the model/prompt against adversarial and natural conversation scenarios.
 
 ## 6. Compaction algorithm
 
@@ -285,7 +289,7 @@ None requires cognition callers to know how compaction works.
 
 Prefer that order of escalation before introducing a general conversation graph. Extraction or retrieval is warranted only when measured scenarios cannot be solved cleanly by the rolling strategy.
 
-These are **future improvement candidates, not committed v1 implementation**. [NC18](../maintainers/narration-and-conversations.md) is the single conditional follow-up owner: it is activated only by measured NC17 failures and evaluates the smallest research-backed mechanism that addresses the observed failure. It explicitly includes source-backed rebuilds, topic segmentation, targeted retrieval, hierarchical/temporal memory and—only for demonstrated needs—richer dialogue structures such as QUD/commitment/grounding state or temporal graphs. Individual research ideas are not separate implementation tasks until evidence selects one.
+These are **future improvement candidates, not committed v1 implementation**. [NC18](../../maintainers/narration-and-conversations.md) is the single conditional follow-up owner: it is activated only by measured NC17 failures and evaluates the smallest research-backed mechanism that addresses the observed failure. It explicitly includes source-backed rebuilds, topic segmentation, targeted retrieval, hierarchical/temporal memory and—only for demonstrated needs—richer dialogue structures such as QUD/commitment/grounding state or temporal graphs. Individual research ideas are not separate implementation tasks until evidence selects one.
 
 ## 15. Implementation stages
 
@@ -328,7 +332,7 @@ The rolling summary can accumulate semantic drift across many generations. That 
 
 The summary rubric is intentionally broad rather than a fixed conversation ontology. Classic dialogue-state work motivates established context, active issues/focus and recent moves, while grounding/repair work motivates explicit handling of updates and uncertainty; none requires new authoritative dialogue records. This keeps v1 adaptable while relying on existing semantic owners for mechanically important obligations and corrections.
 
-**Implementation policy:** use the configured complex reasoning model at low effort; live qualification rejected nano cleanup after attribution/boundary drift and mini after it invented disagreement from distinct overheard participants. Attributed third-person prose plus an explicit memory-owner binding addresses speaker/listener confusion. [Evidence](../verification/conversation-compaction.md#conversation-compaction) records the trials; the initial byte allocation and cold-preparation ceiling are recorded in [LA236](../limits/narration.md#la236). These are tunable context policy, not conversational semantics. No blocking product decisions remain.
+**Implementation policy:** use the configured complex reasoning model at low effort; live qualification rejected nano cleanup after attribution/boundary drift and mini after it invented disagreement from distinct overheard participants. Attributed third-person prose plus an explicit memory-owner binding addresses speaker/listener confusion. [Evidence](../../verification/conversation-compaction.md#conversation-compaction) records the trials; the initial byte allocation and cold-preparation ceiling are recorded in [LA236](../../limits/narration.md#la236). These are tunable context policy, not conversational semantics. No blocking product decisions remain.
 
 ## Implementation plan — 2026-09-26
 
@@ -344,7 +348,7 @@ Completion means integrated NC14–NC16 behavior, all feasible NC17 scenarios ex
 
 ## Delivery — 2026-09-27
 
-NC14–NC17 are complete for this slice. One shared owner, atomic derived storage, lifecycle invalidation, admitted generation, exact-source bindings and authorized diagnostics are implemented. Both SQL adapters passed native lifecycle/failure scenarios; final live qualification exercised repeated compaction and game-path callbacks. Review fixes addressed publication-time cancellation, evidence binding, serialized input bounds and cold PostgreSQL query planning. [Verification](../verification/conversation-compaction.md#conversation-compaction) records measured results, provider accounting and the limits of constructed-case qualification; broader integrated acceptance stays with NC12.
+NC14–NC17 are complete for this slice. One shared owner, atomic derived storage, lifecycle invalidation, admitted generation, exact-source bindings and authorized diagnostics are implemented. Both SQL adapters passed native lifecycle/failure scenarios; final live qualification exercised repeated compaction and game-path callbacks. Review fixes addressed publication-time cancellation, evidence binding, serialized input bounds and cold PostgreSQL query planning. [Verification](../../verification/conversation-compaction.md#conversation-compaction) records measured results, provider accounting and the limits of constructed-case qualification; broader integrated acceptance stays with NC12.
 
 ## Requested implementation review — 2026-09-27
 
@@ -355,7 +359,7 @@ Review the complete NC14–NC17 implementation against the updated design, inclu
 3. Recheck native lifecycle/privacy failures through downstream callers on disposable stores, with zero-cost generation fixtures; run formatting, TypeScript and build checks for changed code. Use live calls only if a changed prompt/model requires requalification, within the existing shared task ceiling.
 4. Review the resulting full diff, update comments beside non-obvious invariants and reconcile the canonical owners, limits, tracker and evidence. Completion requires all actionable in-scope findings fixed and verified, with remaining broader acceptance stated accurately.
 
-Review completed: reproduced and fixed covered-speech reintroduction through recent-memory/duplicate grouping, concurrent awareness edits crossing a SQL validation read, and custom-store forgetting/edit checks. Shared metadata selection and snapshot fingerprints reduce repeated work without introducing another cache, queue or memory authority. Cache publication derives its actor/conversation key internally. Comments explain the read-publication fence, immutable-world reuse and independently protected evidence; the qualified v8 prompt/model policy is unchanged. [Review evidence](../verification/conversation-compaction.md#conversation-compaction-review) records matched measurements and remaining limits.
+Review completed: reproduced and fixed covered-speech reintroduction through recent-memory/duplicate grouping, concurrent awareness edits crossing a SQL validation read, and custom-store forgetting/edit checks. Shared metadata selection and snapshot fingerprints reduce repeated work without introducing another cache, queue or memory authority. Cache publication derives its actor/conversation key internally. Comments explain the read-publication fence, immutable-world reuse and independently protected evidence; the qualified v8 prompt/model policy is unchanged. [Review evidence](../../verification/conversation-compaction.md#conversation-compaction-review) records matched measurements and remaining limits.
 
 ## Main integration — 2026-09-27
 
@@ -363,12 +367,12 @@ Rebase the reviewed implementation onto the developer-selected `origin/main` at 
 
 Carry the existing heard-word predicate into SQL and resident conversation selection, preserve main's speech embedding text/revisions, and retain compaction's required-source distinction. Keep both sets of independent documentation and evidence. Review the resulting branch diff and run TypeScript, build, guidance/format/link checks plus fresh current-format native scenarios for short/long conversation, heard fragments versus no-word/visual cues, source revocation and actual cognition. Use zero-cost fixtures, not paid requalification or old-save migration. Completion requires a clean rebased branch and evidence of the combined behavior; broader PF14/NC12 work remains separately tracked.
 
-Integration completed with the existing hearing predicate preserved in both source paths and all independent guidance/history retained. [Rebase evidence](../verification/conversation-compaction.md#conversation-compaction-main-rebase) records current-format SQLite/PostgreSQL lifecycle, cognition/reflection and source-race checks. That rebase left PF14 preparation consolidation unimplemented; its subsequent implementation is tracked in the [PostgreSQL/preparation plan](postgresql-cognition-preparation.md). NC12 maintained automation and independent live qualification remain deferred under the existing test/spending policy. Earlier model-quality and performance measurements retain their original revision/workload scope.
+Integration completed with the existing hearing predicate preserved in both source paths and all independent guidance/history retained. [Rebase evidence](../../verification/conversation-compaction.md#conversation-compaction-main-rebase) records current-format SQLite/PostgreSQL lifecycle, cognition/reflection and source-race checks. That rebase left PF14 preparation consolidation unimplemented; its subsequent implementation is tracked in the [PostgreSQL/preparation plan](../postgresql-cognition-preparation.md). NC12 maintained automation and independent live qualification remain deferred under the existing test/spending policy. Earlier model-quality and performance measurements retain their original revision/workload scope.
 
 ## Maintained records
 
-- Implementation: [Narration and conversation tasks, NC14–NC18](../maintainers/narration-and-conversations.md).
-- Limits and constraints: [Narration and conversations inventory](../limits/narration.md).
+- Implementation: [Narration and conversation tasks, NC14–NC18](../../maintainers/narration-and-conversations.md).
+- Limits and constraints: [Narration and conversations inventory](../../limits/narration.md).
 - Related behavior: [Feature specification](conversation-compaction-feature-spec.md).
-- Current semantic owners: [Memory architecture](../memory-architecture.md) and [Narration, agent responses and conversations](../narration-and-conversations.md).
-- Research: [Conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) · [Long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
+- Current semantic owners: [Memory architecture](../../memory-architecture.md) and [Narration, agent responses and conversations](../../narration-and-conversations.md).
+- Research: [Conversation state and grounding](../../../archive/02-research/conversation-state-and-grounding.md) · [Long-conversation memory and compaction](../../../archive/02-research/long-conversation-memory-and-compaction.md).

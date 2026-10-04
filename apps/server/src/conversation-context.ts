@@ -17,7 +17,7 @@ import {
 } from './memory-repository.js';
 
 // Request policy, not fictional forgetting. Replace only behind this boundary.
-// docs/projects/conversation-compaction-tech-design.md#14-extension-seam
+// docs/projects/completed/conversation-compaction-tech-design.md#14-extension-seam
 // Byte/cold-work rationale: docs/limits/narration.md#la236
 const CONVERSATION_COMPACTOR_VERSION = 'conversation-prose-v8';
 const CONVERSATION_BYTES = 24000;
@@ -357,7 +357,7 @@ export async function buildConversationContext(input: {
       signal.throwIfAborted();
       // Shape, byte and identity-marker checks cannot certify faithful meaning.
       // Attribution and recall still depend on the prompt and model qualification:
-      // docs/projects/conversation-compaction-tech-design.md#5-enforcement-model-hard-invariants-versus-compaction-quality-requirements
+      // docs/projects/completed/conversation-compaction-tech-design.md#5-enforcement-model-hard-invariants-versus-compaction-quality-requirements
       const output = summarySchema.parse(
         await input.generate(
           {
