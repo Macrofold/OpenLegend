@@ -1,5 +1,9 @@
 # Maintainer TODO — cross-cutting work
 
+## Validation with a concrete purpose
+
+- [x] Remove rejection of usable provider decision scores, select the highest offered choice, audit production validation for demonstrated redundancy or harm, and add purpose-based coding guidance. The [completed scope](../projects/completed/validation-purpose-audit.md) and [audit evidence](../verification/validation-purpose.md) record removal of provider mathematical/metadata assertions, duplicate speech-preview parsing and trusted caption-clock checks. Permissions, current-format save integrity, actual world preconditions and spending remain protected. Existing broader qualification is unchanged.
+
 ## Entity-name presentation
 
 - [x] Complete the owner-requested article audit: canonical bare names, one English grammar helper, world-owned proper/count/plural/material forms, permitted public naming metadata, profile/menu/prose choices, native memory attribution, admitted-output integrity and actual browser verification. [Contract](../entity-names.md); [completed plan](../projects/completed/entity-name-articles-plan.md); [native/PostgreSQL/browser evidence](../verification/entity-names.md). The follow-up review strengthens shared preview/admission validation, replaces hidden-name grammar with permitted grammar, and preserves literal punctuation and words in personal names. This changes wording, not identity recognition or the separate targeted-event privacy TODO. Existing unrelated check failures remain below; 3D placement and broader CI are not qualified by these DOM checks.
