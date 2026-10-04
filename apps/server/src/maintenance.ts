@@ -228,7 +228,7 @@ export class MaintenanceRepository {
 /** MP03 creator maintenance through the existing clock and writer. A window is scheduled,
  * becomes active at its start (or immediately), and ends only when a creator marks the world
  * ready; the announced end is an estimate. Every transition persists first, then publishes
- * the hold and notice at one writer boundary. docs/projects/multiplayer-entry-maintenance.md */
+ * the hold and notice at one writer boundary. docs/projects/completed/multiplayer-entry-maintenance.md */
 export class MaintenanceSchedule {
   private windows: MaintenanceWindow[] = [];
   private timer?: ReturnType<typeof setTimeout>;
