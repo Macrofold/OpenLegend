@@ -1,8 +1,8 @@
 # Parallel batch 03 — Personal game — technical task definitions
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open. | 2026-10-03 |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open. | 2026-10-03   |
 
 [Feature scope and acceptance](parallel-batch-03-personal-game-feature-spec.md) · [Tracker](../maintainers/parallel-batch-03-personal-game.md) · [Copyable prompts](parallel-batch-03-personal-game-prompts.md)
 

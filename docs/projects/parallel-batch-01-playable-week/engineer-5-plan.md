@@ -12,7 +12,7 @@ Implement the complete [PW05 contract](../parallel-batch-01-playable-week-tech-d
 | ------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PW05    | INV-21.4/21.7; WW07/WW11/WW25–WW30; UIUX05; WS01; performance delivery/backpressure | One ordered question/output reader, durable bounded owner progress, stable client reading, final receipt/recovery. Local incremental acceptance does not close deployment cutover, general capacity or assistive-device gaps. |
 | PW09    | MH03; PF08; C17; C01/C20; MH01/MH02/MH04                                            | Shared Unicode words and explicit lexical serialization; scoped lexical/coverage cache epochs; complete exact retrieval measurements. No approximate query switch, forgetting policy or broad appraisal redesign.             |
-| PW06    | parallel-batch-01-playable-week tracker                                                          | Supply reviewed exact commits/contracts/evidence and perform authorized paid integration checks under remaining allocation. Engineer 1 owns integration and closure.                                                          |
+| PW06    | parallel-batch-01-playable-week tracker                                             | Supply reviewed exact commits/contracts/evidence and perform authorized paid integration checks under remaining allocation. Engineer 1 owns integration and closure.                                                          |
 
 ## Implementation sequence
 

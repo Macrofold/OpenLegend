@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — technical task definitions
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | Ownership, dependency gates and four delivery contracts are defined; the shelter assignment supplies its missing technical design. | 2026-10-03 |
+| Status      | Current progress                                                                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Ownership, dependency gates and four delivery contracts are defined; the shelter assignment supplies its missing technical design. | 2026-10-03   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -14,15 +14,15 @@ Use the current spatial contract and units from [Spatial world](../spatial-world
 
 Start on a branch containing the selected batch 03 results. PG03 owns the action presentation contract; PG04 owns shared preview/prerequisite evaluation. PX consumers supply descriptions, facts and native guards through those interfaces, and do not recreate command simulation for menu display. PX04 consumes PG02's decision/continuation integration rather than writing a rival cognitive loop. PX01 additionally requires the approved PG05 pair and merged/qualified embodied-feedback work where their scopes overlap. The owner provides these inputs; no worker-to-worker messaging is part of delivery.
 
-| Shared area | Producer/owner | Consumer boundary |
-| --- | --- | --- |
-| Authoritative action admission and preview | Existing command owner and PG04 | All runtime tasks extend their own operations through the common entrypoint; no preview side effects |
-| Action descriptions and UI | PG03 plus existing catalogue/descriptions | Each task adds its own choices and readable facts; no competing picker redesign |
-| Object identity, quantities, placement and claims | Existing persistent-object owner | PX02 requests an atomic two-sided custody change; PX05 designs construction consumption/return through the same owner |
-| Perceived evidence and remembered places | Existing perception/experience plus PX03's exposure extension | PX01/PX04 use existing actor-permitted destinations; neither depends on PX03's new place representation |
-| Social proposals | PX02 owns reciprocal item offers; PX04 owns trip invitations | Reuse proven receipt/identity/consent helpers where meaning agrees; do not force two different effects into a speculative negotiation framework |
-| Physical injury, targeting, escape and remains | Existing owners plus embodied-feedback delivery | PX01 adds an encounter/opponent consumer, not a second body or escape implementation |
-| Shelter geometry/material contract | PX05 design | No batch 04 runtime assignment consumes unfinished construction |
+| Shared area                                       | Producer/owner                                                | Consumer boundary                                                                                                                               |
+| ------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authoritative action admission and preview        | Existing command owner and PG04                               | All runtime tasks extend their own operations through the common entrypoint; no preview side effects                                            |
+| Action descriptions and UI                        | PG03 plus existing catalogue/descriptions                     | Each task adds its own choices and readable facts; no competing picker redesign                                                                 |
+| Object identity, quantities, placement and claims | Existing persistent-object owner                              | PX02 requests an atomic two-sided custody change; PX05 designs construction consumption/return through the same owner                           |
+| Perceived evidence and remembered places          | Existing perception/experience plus PX03's exposure extension | PX01/PX04 use existing actor-permitted destinations; neither depends on PX03's new place representation                                         |
+| Social proposals                                  | PX02 owns reciprocal item offers; PX04 owns trip invitations  | Reuse proven receipt/identity/consent helpers where meaning agrees; do not force two different effects into a speculative negotiation framework |
+| Physical injury, targeting, escape and remains    | Existing owners plus embodied-feedback delivery               | PX01 adds an encounter/opponent consumer, not a second body or escape implementation                                                            |
+| Shelter geometry/material contract                | PX05 design                                                   | No batch 04 runtime assignment consumes unfinished construction                                                                                 |
 
 Source paths below were checked at c4e18d91. Reconcile renamed/extracted owners on the actual starting revision. Shared edits in `types.ts`, protocol, catalogue, service and world composition should be additive for each named meaning; parent ownership is unchanged. Integration adjustments belong to the affected assignment, not an unassigned sixth engineer.
 
@@ -99,6 +99,8 @@ Source map: `packages/domain/src/story-selection.ts`, `events.ts`, perception/ex
 Introduce a saved trip invitation/participation record in the existing activity-request domain, with stable identity, revision, proposer/recipient, fixed known destination reference or permitted spatial point, optional stated purpose and status. Pending invitation, accepted trip and each person's actual activity progress are distinct. The record identifies social consent; the current action plan remains the sole owner of movement. Spoken promises/obligations are not repurposed as a locomotion controller.
 
 The proposer explicitly offers their own participation in that exact trip. The recipient's accept command authorizes only their participation. On acceptance, revalidate the proposer still offers that revision and both participants can start this activity under their normal action admission. Never interrupt either person's unrelated work implicitly: if a participant's work changed and starting now would replace it, lapse the offer with a permitted explanation and require a fresh explicit choice. Ordinary NPC selection applies current replacement/interruption policy as any other chosen action does; receiving an invitation cannot override it.
+
+Pending terms and trip-control projections belong only to the two participants. Other characters learn only what they actually perceive, such as spoken words or visible movement; an invitation cannot disclose a private destination or purpose to bystanders.
 
 Scope is a pair traveling to one fixed agreed destination. Either person can withdraw at any time. New terms require a fresh invitation; no silent retargeting. Joining an outing does not transfer possessions, reveal the other's goals, grant remote position tracking, impose a promise or enroll either person in combat/gathering. A future group or guided tour is a separate capability, not a reason to add generic party authority now.
 

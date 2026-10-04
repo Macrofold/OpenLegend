@@ -1,5 +1,7 @@
 # Agent agency implementation tracker
 
+Proposed follow-on: [PX04](parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) adds one voluntary shared outing through existing individual activity/agency owners after PG02. It covers only the named AG05/AG06/AG07/AG12 child acceptance; no broader agency or unattended-life task is closed.
+
 ## Spatial dependencies
 
 [SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap. Do not reset the operational goal/plan implementation or CR02 Jev-only work.

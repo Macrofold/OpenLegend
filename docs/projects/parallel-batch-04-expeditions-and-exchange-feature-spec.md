@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | Five follow-on assignments are defined; runtime delivery, the shelter design and the encounter prerequisites remain open. | 2026-10-03 |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Five follow-on assignments are defined; runtime delivery, the shelter design and the encounter prerequisites remain open. | 2026-10-03   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 
@@ -22,13 +22,13 @@ This planning pass changes zero production logic lines. It uses maintained resea
 
 ## Allocation and readiness
 
-| Assignment | Smallest worthwhile result | Mode and prerequisite | Estimate, including integration and evidence |
-| --- | --- | --- | --- |
-| PX01 | Meet a dangerous creature, read its warning, avoid or confront it, and understand the aftermath | Conditional implementation: approved PG05 encounter/recovery choices and overlapping embodied-feedback delivery must be available first | 4–8 engineering days; approximately 600–1,400 changed logic lines after those foundations |
-| PX02 | Offer something the other person wants for something useful, with genuine choice and an exact simultaneous exchange | Implementation against existing custody, handover and actor decisions; consume integrated PG03/PG04 surfaces | 4–7 days; approximately 700–1,300 logic lines |
-| PX03 | Discover a useful place or unusual object, understand why it matters and find the known place again | Implementation of missing encounter evidence and a modest known-place list; consume integrated PG03/PG04 | 3–6 days; approximately 500–1,000 logic lines |
-| PX04 | Invite someone on a voluntary outing; travel independently toward the agreed place and react to arrival or separation | Implementation after PG02's ordinary decision/continuation contract is available; uses existing destinations without depending on PX03 | 4–7 days; approximately 700–1,400 logic lines |
-| PX05 | Make an editable shelter ready to build without inventing its technical contract during implementation | Design only, using existing shelter product proposal; independent of the other four | 2–4 days; zero production logic lines |
+| Assignment | Smallest worthwhile result                                                                                            | Mode and prerequisite                                                                                                                   | Estimate, including integration and evidence                                              |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| PX01       | Meet a dangerous creature, read its warning, avoid or confront it, and understand the aftermath                       | Conditional implementation: approved PG05 encounter/recovery choices and overlapping embodied-feedback delivery must be available first | 4–8 engineering days; approximately 600–1,400 changed logic lines after those foundations |
+| PX02       | Offer something the other person wants for something useful, with genuine choice and an exact simultaneous exchange   | Implementation against existing custody, handover and actor decisions; consume integrated PG03/PG04 surfaces                            | 4–7 days; approximately 700–1,300 logic lines                                             |
+| PX03       | Discover a useful place or unusual object, understand why it matters and find the known place again                   | Implementation of missing encounter evidence and a modest known-place list; consume integrated PG03/PG04                                | 3–6 days; approximately 500–1,000 logic lines                                             |
+| PX04       | Invite someone on a voluntary outing; travel independently toward the agreed place and react to arrival or separation | Implementation after PG02's ordinary decision/continuation contract is available; uses existing destinations without depending on PX03  | 4–7 days; approximately 700–1,400 logic lines                                             |
+| PX05       | Make an editable shelter ready to build without inventing its technical contract during implementation                | Design only, using existing shelter product proposal; independent of the other four                                                     | 2–4 days; zero production logic lines                                                     |
 
 These are uncertain one-engineer estimates, not a five-day promise or an inherited 400-hour budget. Reassess when the ready starting revision is known. Four are delivery tasks; one intentionally resolves missing design. They are independently assignable **after their stated inputs exist**, not five unconditional start-now implementation prompts. The owner supplies the integrated starting branch; workers are not asked to talk to one another. Missing PG05 choices make PX01 not ready, rather than permission to invent recovery rules.
 

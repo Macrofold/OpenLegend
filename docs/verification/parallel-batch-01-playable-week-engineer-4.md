@@ -1,4 +1,4 @@
-# Playable-week Engineer 4 — UI and native boundary evidence
+# Parallel batch 01 — Playable-week Engineer 4 — UI and native boundary evidence
 
 October 2, 2026. Scope: [PW04 inventory](../maintainers/parallel-batch-01-playable-week.md#pw04--inventory-for-exact-camp-tasks), [PW11 invention workspace](../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace), the client contribution to [PW07 survival](../maintainers/parallel-batch-01-playable-week.md#pw07--world-configured-survival), and PW06 support. These are partial qualification results, not completed packages or a release claim.
 

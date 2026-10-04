@@ -1,5 +1,9 @@
 # Maintainer TODO — cross-cutting work
 
+## Existing documentation anchors needing reconciliation
+
+- [ ] The batch-numbering link audit on October 3 found five pre-existing references to absent headings: `limits/interface.md#iw03--creator-editor-layout` from `documentation-changelog.md`, `maintainers/extensible-world-foundation.md` and `maintainers/ui-ux.md`; and `maintainers/base-world.md#bw22--observer-safe-names-in-event-text` from the changelog and this tracker. Restore the intended inventory/anchor or retarget after checking its current owner; the numbered batch links themselves resolve. This is documentation repair, not reopened gameplay acceptance.
+
 ## Validation with a concrete purpose
 
 - [x] Remove rejection of usable provider decision scores, select the highest offered choice, audit production validation for demonstrated redundancy or harm, and add purpose-based coding guidance. The [completed scope](../projects/completed/validation-purpose-audit.md) and [audit evidence](../verification/validation-purpose.md) record removal of provider mathematical/metadata assertions, duplicate speech-preview parsing and trusted caption-clock checks. Permissions, current-format save integrity, actual world preconditions and spending remain protected. Existing broader qualification is unchanged.
