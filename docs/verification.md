@@ -70,6 +70,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Fixed character pixels
 
+[Character visibility and target feedback](verification/character-visibility.md) records scenery-only read-through, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
+
 [Mercenary integration evidence](verification/mercenary-default.md) covers the default additional NPC, fixed character resolution, depth compositing, actual animation/cloth, scoped projection, persistence, failure and resource ownership. The larger generated-art pipeline and crowd/low-end qualification remain open.
 
 ## Shadow quality

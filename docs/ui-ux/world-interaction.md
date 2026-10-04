@@ -47,6 +47,8 @@ Use stable entity identity and readable, viewer-permitted labels. Where several 
 
 The current [world-hover limit](../limits/interface.md#hv01) has a bounded pile preview with an explicit remaining count and a complete inspection route. Keep that distinction. Do not expand the hover card into an unscrollable inventory because more data is available.
 
+Protect character readability: ordinary objects do not show through people. Only scenery permits ordinary read-through; the currently perceived selected thing has the explicit foreground exception. Refuse selection of a remembered/unseen image with the controlled character's name and “can't see this,” without moving them. The [presentation owner](../world-presentation.md#selection-and-hover) owns that rendering/permission boundary and the delayed, fading hover silhouette. Hover emphasis is a pointer aid, never the only inspection route or an additional source of knowledge.
+
 ## Actions explain the commitment
 
 A contextual action should make clear **who acts, on what, with which relevant tool, at what known cost and with what important consequence**. Express conditions in player language. Distinguish known duration from an estimate and a supported attempt from guaranteed success. Avoid presenting an unknown chance as 0% or promising a result the world has not committed.

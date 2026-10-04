@@ -81,8 +81,9 @@ export class MercenaryActor {
   private cloth?: CapeCloth;
   private pixels?: PixelCharacter;
   private revealAmount = 0;
+  private selected = false;
   private readonly renderPixels = () =>
-    this.pixels?.update(this.parent.getPosition(), this.visible, this.revealAmount);
+    this.pixels?.update(this.parent.getPosition(), this.visible, this.revealAmount, this.selected);
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
@@ -163,7 +164,14 @@ export class MercenaryActor {
       ...this.cloth.patches.flatMap((p) => renders(p.node)),
     ];
     this.meshes = components.flatMap((r) => r.meshInstances);
-    this.pixels = new PixelCharacter(this.app, this.camera, this.presentation.layer, components);
+    this.pixels = new PixelCharacter(
+      this.app,
+      this.camera,
+      this.presentation.characterLayer,
+      this.presentation.foregroundLayer,
+      this.presentation.protectionLayer,
+      components,
+    );
     this.previousFoot.copy(this.parent.getPosition());
     this.state = 'ready';
     this.setVisible(false);
@@ -177,7 +185,15 @@ export class MercenaryActor {
     for (const mesh of this.meshes) mesh.castShadow = this.visible;
     this.pixels?.setVisible(this.visible);
   }
-  update(view: EntityView, dt: number, moving: boolean, paused: boolean, reveal: number): void {
+  update(
+    view: EntityView,
+    dt: number,
+    moving: boolean,
+    paused: boolean,
+    reveal: number,
+    selected: boolean,
+  ): void {
+    this.selected = selected;
     const node = this.node,
       anim = node?.anim;
     if (!node || !anim || !this.cloth || !this.wanted) return;
@@ -214,6 +230,9 @@ export class MercenaryActor {
   }
   get revealStrength(): number {
     return this.visible ? this.revealAmount : 0;
+  }
+  get outlineMeshes(): readonly pc.MeshInstance[] {
+    return this.pixels?.outlineMeshes ?? [];
   }
   hit(from: pc.Vec3, to: pc.Vec3): number | null {
     // Conservative per-mesh bounds for this one pilot, retaining world obstruction.
