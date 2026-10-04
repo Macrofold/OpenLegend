@@ -111,6 +111,8 @@ ND11's human opt-in, indirect harm, incapacitation, rescue and return, with the 
 
 #### DG08 — Finding a community and participating publicly
 
+**October 4 product proposal:** [Community entry and participation](../projects/community-entry-and-participation-feature-spec.md) specifies a curated adult offering, recipient-bound managed requests, continuing local characters, private home preference, contact controls, bounded evidence, human review and correction. [CP limits](../limits/community-participation.md) retain the proposed envelope; MP19 and PD08/PD10 retain technical, authority, privacy and public-release gates.
+
 ND02 and ND37: discovery, visits/settlement, newcomer character entry, reporting, participant controls, operator evidence and review of mistakes. Design the selected public journey and its actual operating boundaries together.
 
 **Start and parallel boundary:** Current invited multiplayer is the baseline. Adopted public entry consumes DG07's applicable protection decisions and a supported PS06 admission policy; later scale is not required for a small offering. Public operation needs these decisions, but not ND27's optional well-being program. **Existing owners:** MP, PD08/PD10, data/privacy owners, D68 and PS05–PS06.
@@ -404,6 +406,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 ### ND02 — Discover a community, settle there and enter as a character
 
+**Scoped product design:** [DG08](../projects/community-entry-and-participation-feature-spec.md) chooses curated discovery and account-bound managed entry, an existing eligible authored starter person, and a private home preference over the same continuing grant. Unselected D68 capabilities remain open.
+
 **Decision before design.** Sources: [worlds and belonging](../product-scalability/worlds-and-belonging.md), especially visiting, settlement and renewed participation; [D68 — world entry beyond invites](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites).
 
 **Existing coverage:** [multiplayer](multiplayer.md) already owns account/character control, invitations, characterless sessions and return. PS05–PS07 cover safe arrival, capacity and federation; [production data](production-data.md) owns infrastructure and discovery projections. None selects the player-facing matching or settlement policy. Open public sign-up was explicitly excluded from the earlier entry implementation.
@@ -655,6 +659,8 @@ If an offer includes additional character slots, define switching, unattended be
 **Needed before executing an experiment:** select the first audience and supported playable/creator loop, an actual budget and owner, review date, measures and stop/expand criteria. Design an honest repeatable demonstration of creation, refinement and reuse. Measure comprehension, first successful creation, return/renewal, costs and support. Do not make pack portability a prerequisite for a managed-hosting test when the business plan permits earlier learning. Outreach, publishing and ad spending require their own authorization.
 
 ### ND37 — Public-world reporting, participation controls and operator authority
+
+**Scoped product design:** The [DG08 feature proposal](../projects/community-entry-and-participation-feature-spec.md) now supplies the first managed-service journey, separating personal relief, world access and separately authorized evidence review. This is proposed behavior; no creator-private access or public-operation permission is granted.
 
 **Decision before scoped service design.** Sources: D21 in [open decisions](../../archive/05-project/open-decisions.md) and the [human-private content boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), which retains D48's separately authorized operational-inspection and abuse-handling policy.
 

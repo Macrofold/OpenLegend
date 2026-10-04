@@ -174,3 +174,13 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 ## Release admission follow-through
 
 The [immediate limits implementation](../projects/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.
+
+## MP19 — Managed community entry and participation
+
+The [DG08 product proposal](../projects/community-entry-and-participation-feature-spec.md) and [CP inventory](../limits/community-participation.md) are design inputs, not implemented public service. Preserve delivered MP01/MP03/MP04/MP18 and current invited entry.
+
+- [ ] Resolve the selected D68 offer, audience/continuity and PD01/PD10 operating decisions; complete the technical design for recipient-bound approval, eligible starter preparation, truthful listings/requests, continuing grants and capacity-aware arrival. Reuse current invite/account/control owners; no automatic signup, characterless promotion or federation is implied.
+- [ ] With PD08 and data/privacy owners, implement the selected mute/block surfaces, private case submission/status, separately scoped reviewer access, urgent containment and independent correction/appeal path. Existing broad access management is not a narrow volunteer role.
+- [ ] Qualify the full useful first visit and return, wrong-account link, existing/revoked grant, finite activity/reward, old-scope payload, block/settlement race, human-private evidence, overdue/failed submission, review conflict, containment, safe departure and capacity cases on the actual offered deployment.
+
+**Exit:** one enjoyable, sustainable managed public offering with honest limits, appropriate current authority and usable relief/review after world access ends. PD03/PD08/PD09/PD10 and PS05–PS06 retain their applicable release evidence; documentation alone closes none.

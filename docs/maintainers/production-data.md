@@ -96,3 +96,7 @@ DF02 remains open for integration of the other branches. This task inspected the
 ## Limits growth review inputs
 
 D2’s retention and explicit dependency-edit work should use [MH06/MH07](../limits/memory.md#mh06) and [C20/C21](limits-audit.md#c20): canonical history/vector/provenance has no aggregate retention quota, and exceptional owner edits can still load large affected dependency sets and all appraisals for affected actors. These source findings do not imply that ordinary startup loads all cold memories or that a new deletion policy is accepted. Existing D2/PF08/SL qualification gates remain unchanged.
+
+## Selected public-participation design input
+
+The [DG08 feature proposal](../projects/community-entry-and-participation-feature-spec.md) and [CP03–CP05](../limits/community-participation.md) specify narrow participant-submitted evidence, separately authorized review, correction/erasure, case retention and access after world suspension. These are unimplemented D5/PD08/PD10 inputs, not delivery of the broader D3 report/query service. Preserve current source/audience revision checks and privacy outside gameplay rewind; creator rights and optional diagnostic logs supply neither private evidence authority nor complete case history.

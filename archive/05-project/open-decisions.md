@@ -178,6 +178,8 @@ Mike authorized [invite enrollment and characterless sessions](../../docs/projec
 
 None of these blocks invited play or current operator work.
 
+**October 4 product recommendation, not adoption:** [DG08](../../docs/projects/community-entry-and-participation-feature-spec.md) proposes a curated public listing and managed recipient-bound approval that consumes existing eligible starter people and continuing grants. It does not select automatic open sign-up, characterless promotion, richer spectating or federation. The recipient check, preparation/arrival path and separate operational reporting authority are new MP19/PD08/PD10 work; public audience, evidence retention, staffing and continuity still need owner selection.
+
 ## D69 — Multidimensional character experience
 
 **Accepted product direction; concrete authored-world choices remain open.** A compelling resident has bodily and psychological experience, meaningful contact/belonging and enjoyment, distinct interests and independent choices. Context combines permitted outer circumstances with relevant inner experience; complete episodes must show effects on action, real consequences and later priorities. [Product specification](../../docs/projects/compelling-characters-feature-spec.md) and [CE01–CE05](../../docs/maintainers/character-experience.md) own delivery. This does not select a universal psychology or require numerical need meters.

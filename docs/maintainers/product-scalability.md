@@ -90,6 +90,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Exit:** publish only measured supported envelopes with a viable quality/cost balance, not a generic number of players per region.
 
+The [DG08 managed-community proposal](../projects/community-entry-and-participation-feature-spec.md#belonging-return-and-capacity) selects a small first offering with protected current control/reconnect, honest waits and staffed intake. [CP01/CP05](../limits/community-participation.md) are proposed qualification scopes, not a new measured capacity claim or completion of PS06.
+
 ## PS07 — Federation and forecast canonical campaigns
 
 **Owners:** access/domain rules, world relationships, campaign coordination, existing data/transfer owners. **Depends on:** PS05–PS06 for relevant travel, participation, and capacity.

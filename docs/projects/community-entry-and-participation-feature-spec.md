@@ -143,3 +143,96 @@ Each affected person receives a private notice identifying the rule, enough of t
 An appeal goes to a reviewer who did not make the contested decision and is not a subject of the complaint. It can dispute identity, evidence, context, scope or proportionality. A temporarily restricted user can still appeal; they need not regain game access first. Corrections remove unsupported restrictions and record the reason. Restore the same eligible grant/character through authorized access management, with fresh control and current capacity/safe-return checks; an old invite cannot restore a revoked grant.
 
 Do not rewind the world, fabricate an apology from an NPC, restore already consumed resources automatically or erase other participants' memories to compensate for a moderation error. Explain what the continuing world changed. Any concrete restitution needs its own authorized, nonduplicating game operation and visible record. Reversing a service sanction does not undo another person's voluntary block.
+
+## Evidence lifetime and service responsibility
+
+Case material is private operational data, with the separately adopted reporting basis and retention notice shown before submission. The proposed first policy keeps selected evidence until 90 real days after the final decision, including an appeal. Appeals may be requested for 30 real days after notice; new material showing a serious identity or authority error can still trigger staff correction later without promising that old evidence survives. The restriction's minimal account/scope/reason/date record remains while it must be enforced, separately from the more sensitive excerpt. These are proposed service choices in [CP04](../limits/community-participation.md#cp04--case-lifetime-and-review), not changes to general game-history or account retention.
+
+An open case receives an identified owner and a review date. At 30 days unresolved, escalate to the backup and tell the affected person what is missing. Continuing an evidence hold needs a specific reason and next date; the first offering allows no open-ended “investigation” archive. A case still unresolved at the proposed 90-day open-case boundary needs an explicit supported decision on the available evidence, or the applicable authorized exceptional retention process. That exception cannot be invented by a world creator or an automated job.
+
+A valid privacy correction or deletion request is handled by the existing privacy owner and adopted service policy. Show when evidence became unavailable or redacted and reassess conclusions that depended on it. Remove derived case summaries, search fragments and cached copies where required; do not leave a readable copy in generic logs. A case ledger can preserve that a correction happened without preserving the corrected private text forever. Current restrictions and privacy decisions survive gameplay restore.
+
+The first service performs human review. Listing reads, applying, redeeming, mute/block, case submission and reading a decision make no model calls. An optional later summarizer would need a permitted evidence scope, cited sources, human review and a full cost case; it cannot decide guilt or expand private access. Optional diagnostics may be incomplete and are not promised as a transcript of everything that occurred.
+
+Minecraft's reporting guide illustrates selecting conduct and supplying context. VRChat separates local rules and service enforcement, while Discord's warning system makes the scope of a decision and review path visible even to suspended users. We adopt those interaction lessons, not their complete policies or sanctions. A small retrospective moderator study identifies time and conflict within moderation teams as relevant burdens; it does not supply a staffing ratio for this game. [R7], [R8], [R9], [R10]
+
+## Sustainable operation and honest failure
+
+Count the complete cost of a successful newcomer: hosting during play and waits, account and character retention, asset delivery, any actually admitted resident cognition, host time, application review, incident response and appeals. Free admission is not free operation. The first pilot does not add currency, subscriptions or paid queue priority. If an existing charge applies, disclose it before acceptance; never sell relief from harassment or faster appeal review.
+
+Keep admission work outside simulation and use deliberately published directory information. A request must not wake residents, generate a world or run a compatibility conversation. Idle applications and case queues trigger no autonomous NPC work. Reading old cases must page permitted material instead of hydrating every person's complete history. Complete identity, About Me, relevant conversation and actual obligations remain intact whenever ordinary resident cognition does run; economy comes from fewer unnecessary tasks and an honest service envelope.
+
+The responsible operator publishes welcome and review availability. The proposed pilot expects the next ordinary case update within 24 real hours while intake is open; this is a staffed operating target, not continuous emergency supervision. A late update is visible and pauses new public intake until coverage is restored. Someone can still submit a report, block contact or leave. If required access enforcement itself fails, close the affected live offering through the existing maintenance owner rather than leave a misleading safety claim online.
+
+Pause intake reversibly when welcome slots, pending applications, review capacity, budget or qualified live capacity are exhausted. Preserve acknowledged requests and cases. Explain whether the person should wait for a published opportunity, change account, complete an answer, or contact support. An intake pause does not by itself cancel current access or evict active people. Discord's reversible invitation pause is a relevant containment precedent. [R11]
+
+The proposed request and evidence envelopes live in [CP02–CP04](../limits/community-participation.md). They are product starting points for qualification. No record-count bound by itself proves preparation is bounded: directory search, applicant restrictions, case context selection, actor/account relationships, archived evidence, attachment bytes and restored copies can grow separately. The technical stage must select and measure aggregate storage, query, rate and staff-work budgets before public use. A cap reached before submission is an explicit refusal with preserved local text and a smaller supported path, not a false receipt. Immediate personal controls never wait for case quota availability.
+
+## Required scenarios and experience gates
+
+| Scenario | Required outcome and reason |
+| --- | --- |
+| A visitor has 20 minutes and dislikes onboarding | They see the actual opportunity, make a short request, enter with a useful action and can skip the tour. No pledge or personality questionnaire stands between approval and play. |
+| The host is late or the special cache is empty | The listing/arrival state is corrected. An ordinary worthwhile alternative exists, or the host offers another visit. The unique spear is not refilled or privately duplicated. |
+| An approved invite is forwarded | The wrong account cannot enroll or consume the approved offer; the intended person can recover it through sign-in. |
+| A spectator decides to play, or an excluded player is reinstated | The service uses the specifically supported grant-management path or says operator work is needed. It never pretends a new invite supplies an unsupported promotion. |
+| Two people want the final slot | The current controller and applicable reconnect claim remain protected; acknowledged wait order and the actual reserved opportunity are honored. No alternate timeline is created. |
+| A muted person crosses the trail | The body and relevant action feedback remain understandable without replaying their speech. |
+| A trade settles at the moment of Block | There is one actual result: completed transfer or withdrawn pending exchange. Neither person's inventory is half changed. |
+| A participant reports the host and leaves | Independent authorized review and case access work outside the world, without exposing private evidence to the host. |
+| Several accounts report a disliked newcomer | Reports preserve their individual evidence, but volume alone produces no guilt or automatic exclusion. |
+| Staff restrict a dangerous action | New commands stop immediately; the selected containment cancels relevant unfinished work, preserves actual effects and ends participation through its declared lifecycle. |
+| A suspension was mistaken | The same rightful character and valid access are restored with current checks; prior blocks, spent materials and other people's subsequent actions remain real. |
+| Storage or staff coverage is unavailable | No false report receipt or welcome promise. Intake pauses, acknowledged work stays recoverable and personal relief remains usable. |
+
+The product passes only when newcomers can explain what they can enjoy here, complete a meaningful self-chosen action, understand who is human, leave easily and voluntarily choose whether to return. Record time lost to admission/arrival friction, unsupported listing promises, involuntary exposure to muted content, and actual staff minutes per accepted visitor and incident. Do not use time spent waiting, total messages, compliance with a tutorial or application counts as substitutes for fun.
+
+Qualify the selected hostile-client, privacy, reconnect, authority-revocation, duplicate-submission, old-link, capacity, accessible-input and service-outage cases under MP/PD/data owners. These are future acceptance criteria; this documentation pass does not claim those checks ran.
+
+## Delivery sequence and game-first critique
+
+1. **Make one supported outing worth inviting somebody to.** Reuse ordinary crafting/exploration and the optional DG07 encounter only where qualified. Test whether a finite, already visited world still has a truthful newcomer opportunity.
+2. **Qualify the complete invited adult journey.** Use the current account, starter-character and return foundation. Explain actual continuity and service coverage; finish relevant authentication and operator-role gaps.
+3. **Deliver personal controls, scoped reporting and correction.** Include independent review, containment and an outside-world support route. Rehearse a complaint about the host and a mistaken exclusion.
+4. **Open one curated listing and managed recipient-bound entry.** Add bounded requests and honest capacity; do not require a fleet, federation or automated community generation.
+5. **Expand only on observed demand and sustainable service.** A second community needs a distinct good activity and real staffing, not a directory growth target. Broader signup, automatic character creation and richer spectating remain D68 choices.
+
+The review rejects a large social platform as the first deliverable. There is no public reputation score, mandatory community role ladder, village judiciary for real reports, paid priority, automatic relocation or predictive matchmaking. The short application exists because strangers need an actual welcome and admission decision; remove unnecessary questions when they do not change the offer. The moderation machinery is justified by an actual public service promise, not by a wish to simulate governance.
+
+A safe but empty camp still fails. A warm welcome with no ability to stop harassment also fails. The preferred sequence earns public participation by delivering both a playable reason to visit and proportionate, functioning service controls. None of this requires the optional well-being proposals to become global game law.
+
+## Research and interpretation
+
+All sources were accessed on 4 October 2026. Official help pages describe available behavior; they do not demonstrate causal improvements in retention, safety or community health. The design choices above are Open Legend recommendations. The table records what was actually learned and what was deliberately not imported.
+
+| Source | Useful evidence | Application and limitation |
+| --- | --- | --- |
+| [R1] Discord, Clarifying Server Types | Community status and public discovery are distinct. | Separate listing from grant; do not copy every server tier. |
+| [R2] Discord, Server Member Applications, updated September 2025 | Pending applicants lack server access; applications can be withdrawn and reviewed. | Clear status and account-bound approval; no compulsory interview or privileged bypass in the public route. |
+| [R3] Discord, Community Onboarding FAQ | Useful defaults, few choices and newcomer preview are recommended. | A short useful orientation; Discord's channel minimum is irrelevant here. |
+| [R4] Square Enix, Community Finder | Activity, language and active-time filters lead to recruiter contact. | Advertise a real opportunity; host-written activity does not prove live availability. |
+| [R5] VRChat, Getting Started, updated August 2026 | Blocked users can still affect the shared world. | Define contact versus physical effects explicitly; do not copy invisible obstacles. |
+| [R6] Square Enix, blacklist privacy correction, July 2025 | Account-wide identifiers exposed relationships between characters. | Enforce account restrictions without publishing identity links. |
+| [R7] Mojang, Parental Controls in Minecraft, September 2023, Social Interactions section | Reports can select messages, category, comments and surrounding context. | Explicit evidence preview; this source does not select Open Legend's audience or private-evidence policy. |
+| [R8] VRChat, Community Guidelines, updated September 2025 | Local participation rules and platform enforcement have different scopes. | Explain authority and independent review; do not import its complete content rules. |
+| [R9] Discord Warning System, updated June 2026 | Notices explain restrictions and offer review, including during suspension. | Accessible private decisions and appeals; no copied strike count or automated punishment. |
+| [R10] Schöpke-Gonzalez et al., 2022 online/2024 issue | Survey of 71 former Facebook/Reddit moderators links leaving to limited time and team conflict. | Include staffing/coordination cost; the retrospective, self-selected non-game sample supplies no numeric staffing rule. |
+| [R11] Discord, raid-response guide | Invitations can be paused and reopened without deletion. | A reversible intake switch; its automated detection claims are not our qualification evidence. |
+
+[R1]: https://support.discord.com/hc/en-us/articles/14078261239831-Clarifying-Server-Types
+[R2]: https://support.discord.com/hc/en-us/articles/29729107418519-Server-Member-Applications
+[R3]: https://support.discord.com/hc/en-us/articles/11074987197975-Community-Onboarding-FAQ
+[R4]: https://na.finalfantasyxiv.com/lodestone/community_finder/
+[R5]: https://help.vrchat.com/hc/en-us/articles/28526267258515-Getting-Started-with-VRChat
+[R6]: https://na.finalfantasyxiv.com/lodestone/topics/detail/0ae5851c5f0bd0f19f9ae8b1be22bcf52d900702
+[R7]: https://www.minecraft.net/en-us/article/parental-controls
+[R8]: https://hello.vrchat.com/community-guidelines
+[R9]: https://support.discord.com/hc/en-us/articles/18210965981847-Discord-Warning-System
+[R10]: https://journals.sagepub.com/doi/10.1177/14614448221138529
+[R11]: https://support.discord.com/hc/en-us/articles/10989121220631-How-to-Protect-Your-Server-from-Raids-101
+
+## Maintained records
+
+- Implementation: [MP public participation work](../maintainers/multiplayer.md), [PD03/PD08/PD10](../maintainers/production-deployment.md), [D5 privacy/data](../maintainers/production-data.md), and applicable [PS05–PS06](../maintainers/product-scalability.md); [DG08](../maintainers/needs-design.md) remains a product proposal, not a runtime completion claim.
+- Limits and constraints: [Community participation inventory](../limits/community-participation.md); shared [account/control](../limits/multiplayer.md) and [deployment](../limits/production-deployment.md) limits retain their owners.
+- Related contracts: [existing invite entry](multiplayer-entry-maintenance.md), [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary), [worlds and belonging](../product-scalability/worlds-and-belonging.md), and [first-threat protection](first-threat-encounter-feature-spec.md). Technical design is intentionally deferred for this product-only assignment.
