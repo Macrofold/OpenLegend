@@ -18,6 +18,7 @@ jobs:
         run: |
           git fetch --depth=1 origin c4e18d91848b5b6d367dda1d7214a9f8222cf070
           python .repertoire-task/finish-text.py
+          python -c "from pathlib import Path; p=Path('docs/repertoires/ecology-weather.md'); t=p.read_text(); old='contract by catalogue inclusion.'; assert t.count(old)==1; p.write_text(t.replace(old,'contract through catalogue inclusion.'))"
       - name: Obtain the repository-pinned formatter outside the checkout
         run: |
           npm pack --pack-destination "$RUNNER_TEMP" prettier@3.6.2
