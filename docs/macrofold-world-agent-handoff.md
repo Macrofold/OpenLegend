@@ -4,7 +4,7 @@ This handoff is navigation to the canonical integration contracts, not a second 
 
 ## Conversation and remote-session mapping
 
-Each Open Legend creator tab is one independent conversation with its own durable application identity, ordered messages, pending operation and remote Macrofold session/workspace mapping. Persist the mapping from `(application, world, principal, conversationId)` to remote identities and configuration version on the server. The browser may cache drafts and presentation state but cannot choose arbitrary remote IDs or become the history authority.
+Each explicitly created World Agent conversation has its own durable application identity, ordered messages, pending operation and remote Macrofold session/workspace mapping. Browser tabs may reopen the same saved conversation; tab creation/reconnection does not create independent execution, a new allowance or a second turn writer. Persist the mapping from `(application, world, principal, conversationId)` to remote identities and configuration version on the server. The browser may cache drafts and presentation state but cannot choose arbitrary remote IDs or become the history authority.
 
 Serialize turns within one conversation and permit bounded concurrency between conversations. Separate conversations must not share unpublished drafts or private history. Reusing instructions or warm compute must not merge sessions. Prefer a private logical workspace per conversation with scoped reads of canonical world data; do not copy the mutable world into every workspace or require a permanently running Worker per tab.
 
@@ -38,7 +38,7 @@ Use the [MCP qualification sequence](world-agent-mcp.md#10-qualification-and-upg
 
 ## Qualified build and deployment boundary
 
-As checked October 1, 2026, [Macrofold PR #12](https://github.com/Macrofold/Macrofold/pull/12) remains open at `a8c2ced1e3e88bcfd5d3354af42c6a2d86a4ac0c`. Its [five code CI gates](https://github.com/Macrofold/Macrofold/actions/runs/36529766462) pass, as does the ordinary preview; the separate staging deployment still fails. Earlier deployment inspection identified a paused staging project. That is an operator deployment issue, not a waived release gate.
+PR metadata rechecked October 4, 2026: [Macrofold PR #12](https://github.com/Macrofold/Macrofold/pull/12) is still open at `a8c2ced1e3e88bcfd5d3354af42c6a2d86a4ac0c`. The October 1 inspection recorded passing [five code CI gates](https://github.com/Macrofold/Macrofold/actions/runs/36529766462) and ordinary preview, with the separate staging deployment failing; the earlier deployment inspection identified a paused staging project. The October 4 metadata check did not exercise the deployment or reconfirm its service availability. Staging remains an unqualified operator release gate, not a waived requirement or a freshly measured outage.
 
 The companion change supplies readable unique tool aliases, optional default-preserving `permissions.questions` and optional `limits.stop_on_model_error`. OpenLegend selects supported tools, opts into the error fence, uses medium effort and honors configured BYOK/provider connection selection. The qualified OpenCode question bridge captures and stops a Run; it does not call the native question-answer endpoint or resume the same Run. Other API consumers do not acquire mandatory new parameters. The [runtime contract](world-agent-runtime.md#structured-human-questions) owns lifecycle details.
 
