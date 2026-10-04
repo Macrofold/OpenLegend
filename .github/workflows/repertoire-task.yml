@@ -4,21 +4,34 @@ on:
     branches: [docs/canonical-repertoires-2026-10-03]
     paths: [.github/workflows/repertoire-task.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  formatter:
+  consolidate:
+    if: github.ref == 'refs/heads/docs/canonical-repertoires-2026-10-03'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Obtain repository-pinned formatter
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Consolidate descriptions and current rankings
+        run: python .repertoire-task/consolidate.py
+      - name: Commit only to the unchanged task branch
         shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/repertoire-tools"
-          npm pack --pack-destination "$RUNNER_TEMP/repertoire-tools" prettier@3.6.2
+          branch=docs/canonical-repertoires-2026-10-03
+          actual=$(git ls-remote origin "refs/heads/$branch" | cut -f1)
+          test "$actual" = "$EXPECTED_SHA"
+          git add -A -- docs README.md archive .agents
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: consolidate repertoire descriptions and current priorities (checkpoint)'
+          git push origin "HEAD:refs/heads/$branch"
+          git rev-parse HEAD
       - uses: actions/upload-artifact@v4
         with:
-          name: repertoire-tools
-          path: ${{ runner.temp }}/repertoire-tools
+          name: repertoire-consolidation-checkpoint
+          path: /tmp/repertoire-changed.json
           retention-days: 1
           if-no-files-found: error
