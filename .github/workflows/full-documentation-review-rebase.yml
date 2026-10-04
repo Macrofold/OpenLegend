@@ -122,6 +122,30 @@ jobs:
                   inventory.append(row)
               archive.writestr('_review_source_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
           PY
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: review-reconcile/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify guidance and format the reviewed action inventory
+        run: |
+          pnpm install --ignore-scripts --frozen-lockfile
+          pnpm exec prettier --write docs/maintainers/action-capabilities.md
+          python3 - <<'PYCODE'
+          import hashlib, pathlib
+          path = pathlib.Path('docs/maintainers/action-capabilities.md')
+          assert hashlib.sha256(path.read_bytes()).hexdigest() == 'a93f9ca9d56197aa7ce7a0199960799813804c342b0e12044f0a68bdd81b3e68', 'unexpected formatted action tracker'
+          PYCODE
+          pnpm guidance:check
+          pnpm exec prettier --check docs/maintainers/action-capabilities.md docs/limits/persistence.md docs/maintainers/save-and-load.md docs/architecture.md docs/maintainers/agent-guidance.md docs/maintainers/needs-design.md
+          git diff --check
+          if ! git diff --quiet -- docs/maintainers/action-capabilities.md; then
+            git add -- docs/maintainers/action-capabilities.md
+            git commit -m 'docs: format reconciled action-capability inventory'
+          fi
+          git rev-parse HEAD > "$RUNNER_TEMP/review-reconciliation/verified-after.txt"
+          git diff --binary --full-index "$NEW_BASE" HEAD > "$RUNNER_TEMP/review-reconciliation/verified-review.patch"
       - name: Publish only an explicitly reviewed replay with an exact lease
         env:
           GH_TOKEN: ${{ github.token }}
