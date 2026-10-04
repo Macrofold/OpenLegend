@@ -44,13 +44,13 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA173
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-04 · Restrictiveness: Safe.**
 
-The server tries to keep the latest 512 events in active world state and moves older unreferenced events to stored history in batches of at least 256, starting above 768 events.
+During ordinary save preparation, `retainHotEvents` keeps the latest 512 events plus every event still required by active awareness, memories, obligations or knowledge. It considers trimming above 768 events and only applies a trim that removes at least 256. Startup also selects the latest 512 hot events plus required dependencies through the canonical record owner. This is not a hard active-event count: required references can keep more events resident.
 
 **Reason / tradeoff:** Keep this storage-placement policy; moving an event out of active state must not delete its saved history or break a memory that still refers to it.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Runtime placement](../../apps/server/src/hot-events.ts) · [Startup selection](../../apps/server/src/world-records.ts).
 
 Original recommendation: **Keep**.
 
@@ -90,25 +90,25 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA177
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-04 · Restrictiveness: Safe.**
 
-Gameplay-command retry records use a 24-hour retry window and retain recent command-session boundaries before pruning older records.
+Scoped gameplay commands have a 24-hour retry window. The service durably advances the command epoch before pruning expired positive-epoch receipts older than the immediately preceding epoch. A prior receipt is checked for expiry and matching input; an unknown request from a closed epoch is refused before domain admission. This policy covers gameplay retries, not provider-attempt or financial-history retention.
 
 **Reason / tradeoff:** Keep duplicate-action prevention when cleaning old retry records, rejecting commands that belong to an expired session.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Receipt retention](../../apps/server/src/command-receipts.ts) · [Command admission](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Review**.
 
 ## LA237
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-04 · Restrictiveness: Medium.**
 
-Only one server process can own PostgreSQL world-writing access, and game mutations/database transactions run through serialized execution.
+One writer connection holds a PostgreSQL advisory lock per database; a competing writer is refused. The game service serializes authoritative mutations, while PostgreSQL maintains independent bounded write and read lanes. Read-only checkpoint/backup connections do not acquire the writer lock. One world per database remains the current operational contract; this is not a claim of distributed world ownership.
 
 **Reason / tradeoff:** Keep exclusive authoritative writing so simultaneous changes cannot overwrite each other or produce inconsistent saved state.
 
-[Implementation starting point](../../apps/server/src/ai-director.ts).
+[Writer lock and database lanes](../../apps/server/src/postgres.ts) · [Mutation coordination](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Keep**.
 
@@ -268,7 +268,7 @@ Loading pauses before reading and validating the large package. Reconstruction u
 
 **Reported · Restrictiveness: Safe.**
 
-Listing saves checks metadata and file size, so same-size corruption can remain listed. Retention verification checks checksums and byte/record framing/counts; it does **not** decode/migrate the full world or validate all restore invariants. A retained integrity-checked file is not a proven restorable world. Load performs the deeper reconstruction and validation. [Implementation](../../apps/server/src/save-files.ts) (`verify`), source inspected 2026-09-26.
+Listing saves checks metadata and file size, so same-size corruption can remain listed. Retention verification checks checksums and byte/record framing/counts; it does **not** decode the full current-format world or validate all restore invariants. A retained integrity-checked file is not a proven restorable world. Load performs the deeper reconstruction and validation. [Implementation](../../apps/server/src/save-files.ts) (`verify`), source inspected 2026-09-26.
 
 **Reason / tradeoff:** Keep ordinary catalog browsing fast; integrity verification is deferred to use/retention.
 
@@ -338,7 +338,7 @@ The save worker starts with the server and is not automatically restarted after 
 
 **Changed 2026-09-28 (SL09-B) · Restrictiveness: Safe.**
 
-**Retention and paging use a durable capture sequence.** Each capture receives the next per-world sequence from the database before it starts; the value survives restart. The first capture in each server process raises the counter to at least the highest sequence among the slots on disk, so a restored slot never outranks a new capture. Catalog order, pagination cursors and rotation sort by sequence, then wall-clock time and UUID only as tie-breakers; wall-clock time is display only. Slots without a sequence (captured before this change) sort as oldest. A capture whose sequence allocation rolls back with a failed restore transaction can share a number with a later capture; ties then fall back to time and UUID.
+**Retention and paging use a durable capture sequence.** Each gameplay capture receives the next per-world sequence from the database before it starts; the value survives restart. The first capture in each server process raises the counter to at least the highest sequence among the slots on disk, so a restored slot never outranks a new capture. Catalog order, pagination cursors and rotation sort by sequence, then wall-clock time and UUID only as tie-breakers; wall-clock time is display only. The read-only operational backup deliberately makes an unordered root capture without updating this counter; absence of a sequence is therefore not exclusively a legacy format. Catalog comparison also accepts unsequenced slot metadata and orders it last. That compatibility exposure remains subject to [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths), without removing the current read-only backup use. A capture whose sequence allocation rolls back with a failed restore transaction can share a number with a later capture; ties then fall back to time and UUID.
 
 **Reason / tradeoff:** A backwards clock can no longer make rotation delete the newest capture. [Implementation](../../apps/server/src/save-files.ts) (`compareSaves`).
 
