@@ -1041,7 +1041,7 @@ export * from './relationships.js';
 
 export * from './world-agent.js';
 
-/** Operational entry and maintenance DTOs; see docs/projects/multiplayer-entry-maintenance.md. */
+/** Operational entry and maintenance DTOs; see docs/projects/completed/multiplayer-entry-maintenance.md. */
 export type AccessCapability =
   | 'play'
   | 'spectate'
