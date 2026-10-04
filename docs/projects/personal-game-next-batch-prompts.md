@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five copyable prompts reference the prepared task definitions; no workers have been dispatched. | 2026-10-03   |
+| Not started | Five copyable prompts reference the prepared task definitions; no workers have been dispatched. | 2026-10-04   |
 
 [Prioritized scope](personal-game-next-batch-feature-spec.md) · [Technical definitions](personal-game-next-batch-tech-design.md) · [Status and parent mapping](../maintainers/personal-game-next-batch.md)
 
@@ -17,7 +17,7 @@ Read docs/projects/personal-game-next-batch-feature-spec.md: "Recommendation and
 
 Use the existing supported invention families and ordinary player surfaces. Carry genuine generation through admission, manufacture, equipment/use, finite harvesting, preparation/eating and current-format persistence. Include the supported non-weapon composition and paraphrase/reuse and failure cases specified in the design. Do not seed a finished requested recipe or claim live novelty from a supplied fixture. Reconcile the existing arrow-material assertion against meaningful mechanical rejection. No new invention family, provider deployment or historical accounting waiver is included.
 
-The current native action/preview contracts are already present; other assignments are not prerequisites. Do not communicate with other tasks. Preserve active family-authoring changes and keep UI redesign, character behavior and preview optimization with their defined owners.
+The current native action/preview contracts are already present; other assignments are not prerequisites. Do not communicate with other tasks. Preserve the delivered BW16/D63 family disclosure and provenance contract; do not wait for or replay its completed implementation. Keep UI redesign, character behavior and preview optimization with their defined owners.
 
 Update PG01 in docs/maintainers/personal-game-next-batch.md and the exact linked INV/WW/NP03/TODO subsets whose acceptance you demonstrate. Keep canonical behavior, limits and existing verification reports synchronized under the documentation policy. Unavailable live execution is an explicit qualification gap; do not mark wider deployment or historical-accounting gates complete. Deliver the entire scoped journey and report actual results and remaining limits.
 ```
@@ -31,7 +31,7 @@ Read docs/projects/personal-game-next-batch-feature-spec.md: "PG02 — One resid
 
 Trace the actual trigger, permitted context, offered choices, selection, admission, execution and next decision. Use the existing authored resident, complete accepted identity, body, appraisals, memory, goals and plan owners. Demonstrate the bodily, social and solitary contrasts plus quiet internal opportunity, stopping and interruption/resumption specified in PG02. Diagnose with controlled variations, generalize any successful hardcoded experiment, and simplify the resulting context. Do not prescribe a timetable, install a hunting goal, invent observed experience, add universal psychological meters or create constant paid introspection. Do not treat proximity or an activity name as automatic fulfillment.
 
-The existing native actions and current cognition scheduling are the dependencies; no other assignment must deliver an interface first. Do not communicate with other tasks. Family disclosure/authoring is separately active and excluded. Richer D69 psychological laws and unattended communities remain outside this slice.
+The existing native actions and current cognition scheduling are the dependencies; no other assignment must deliver an interface first. Do not communicate with other tasks. Family disclosure/authoring is delivered under BW16/D63 and remains outside this assignment; preserve its current behavior. Richer D69 psychological laws and unattended communities remain outside this slice.
 
 Update PG02 and only demonstrated CE01–CE05, AG06/AG07/AG12, CR12 and BW18 subsets using the exact document mapping in the technical definition. Reconcile current behavior, limits and existing evidence without closing broader whole-life acceptance. Report observed behavior, unsuccessful comparisons, total attributable provider cost and genuine remaining gaps.
 ```
