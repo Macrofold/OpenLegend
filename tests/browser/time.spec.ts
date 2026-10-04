@@ -90,13 +90,22 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect.poll(() => game.service.paused).toBe(false);
 
     // Both headless pages report focus. Replacement must still fence the old page.
+    const identity = await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'));
     const other = await page.context().newPage();
+    // Fixture for a duplicated tab's copied session storage; identity must split
+    // before it can send commands as the original page.
+    await other.addInitScript((id) => {
+      if (id) sessionStorage.setItem('open-legend:tab-id', id);
+    }, identity);
     try {
       await other.goto('http://127.0.0.1:' + address.port);
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await expect(
         other.getByText('OpenLegend is open in another tab.', { exact: true }),
       ).toBeVisible();
+      expect(await other.evaluate(() => sessionStorage.getItem('open-legend:tab-id'))).not.toBe(
+        identity,
+      );
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(other.getByRole('dialog')).toBeHidden();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
@@ -108,11 +117,42 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await page.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
-      await other.getByRole('button', { name: 'Log Out', exact: true }).click();
-      await expect(other.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
-      await page.getByRole('link', { name: 'Sign in', exact: true }).click();
-      await enterGame(page);
+      await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
+      await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
+      await other.close();
+      await focus(true);
+      await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
+      const logoutTab = await page.context().newPage();
+      try {
+        await logoutTab.goto('http://127.0.0.1:' + address.port);
+        let finishLogout!: () => void;
+        const heldLogout = new Promise<void>((resolve) => {
+          finishLogout = resolve;
+        });
+        await logoutTab.route('**/api/session/logout', async (route) => {
+          await heldLogout;
+          await route.continue();
+        });
+        try {
+          await logoutTab.getByRole('button', { name: 'Log Out', exact: true }).click();
+          await logoutTab.evaluate(() => {
+            window.dispatchEvent(new Event('blur'));
+            window.dispatchEvent(new Event('focus'));
+          });
+          await expect(
+            logoutTab.getByRole('button', { name: 'Resume Here', exact: true }),
+          ).toBeDisabled();
+        } finally {
+          finishLogout();
+        }
+
+        await expect(logoutTab.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+        await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+        await enterGame(page);
+      } finally {
+        await logoutTab.close();
+      }
     } finally {
       await other.close();
     }

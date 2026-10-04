@@ -375,7 +375,7 @@ export interface WorldStore {
         scope: RequestScope;
         request: ControlRequest;
         now: () => number;
-        inactive: boolean;
+        unattended: boolean;
       };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
@@ -902,7 +902,7 @@ export class SqlGameRepository implements GameRepository {
         scope: RequestScope;
         request: ControlRequest;
         now: () => number;
-        inactive: boolean;
+        unattended: boolean;
       };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       prepared?: PreparedCommit;
@@ -976,8 +976,8 @@ export class SqlGameRepository implements GameRepository {
           await this.authority.rebind(scope, request, now);
         }
         if (historyProjection?.controlChange) {
-          const { scope, request, now, inactive } = historyProjection.controlChange;
-          await this.authority.changeControl(scope, request, now, inactive);
+          const { scope, request, now, unattended } = historyProjection.controlChange;
+          await this.authority.changeControl(scope, request, now, unattended);
         }
         if (historyProjection?.participationChange) {
           const { actorId, attempt } = historyProjection.participationChange;

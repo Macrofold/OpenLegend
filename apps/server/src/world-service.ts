@@ -400,10 +400,42 @@ export class WorldService {
     );
   }
   controlsElsewhere(scope: RequestScope): boolean {
+    const controller = this.store.authority?.currentController(scope, this.now());
     return (
-      this.world.entities[scope.actorId]?.actor?.participation?.phase !== 'inactive' &&
-      !!this.store.authority?.controlsElsewhere(scope, this.now())
+      !!controller &&
+      controller.connectionId !== scope.connectionId &&
+      this.controllerPresent(scope)
     );
+  }
+  private controllerPresent(scope: RequestScope): boolean {
+    const controller = this.store.authority?.currentController(scope, this.now());
+    if (!controller) return false;
+    // The common foreground/handoff case is a direct lookup, not a per-view
+    // scan of all players. Only connected clients without a heartbeat need the
+    // existing bounded connection inventory.
+    const presence = this.presence.get(this.presenceKey(controller));
+    if (
+      presence &&
+      presence.at >= this.now() - 12_000 &&
+      this.currentScope(presence.scope, 'play', true)
+    )
+      return true;
+    const returning = this.presenceOrders.get(this.presenceKey(controller));
+    if (
+      returning?.controlGeneration === controller.controlGeneration &&
+      returning.at >= this.now() - 12_000
+    )
+      return true;
+    for (const connection of this.connections.values()) {
+      if (
+        connection.connectionId === controller.connectionId &&
+        connection.sessionId === controller.sessionId &&
+        this.currentScope(connection) &&
+        this.currentScope(this.refreshScope(connection), 'play', true)
+      )
+        return true;
+    }
+    return false;
   }
   refreshScope(scope: RequestScope): RequestScope {
     this.assertScope(scope);
@@ -1023,7 +1055,7 @@ export class WorldService {
         scope: RequestScope;
         request: ControlRequest;
         now: () => number;
-        inactive: boolean;
+        unattended: boolean;
       };
       participationChange?: { actorId: string; attempt: ExitAttempt | null };
       operationalChange?: () => Promise<void>;
@@ -2154,6 +2186,14 @@ export class WorldService {
         };
       const actor = this.world.entities[scope.actorId]?.actor;
       if (!actor || actor.controller !== 'player') throw new AuthorityError('forbidden');
+      if (request.operation !== 'release') {
+        this.present; // Prune expired pending returns using the existing owner.
+        if (
+          !this.presenceOrders.has(this.presenceKey(scope)) &&
+          this.presenceOrders.size >= this.config.capacity.presence
+        )
+          throw new Error('Presence capacity reached. Reconnect before continuing.');
+      }
       const attempt =
         request.operation === 'release'
           ? (this.exits.get(scope.actorId) ?? {
@@ -2183,7 +2223,8 @@ export class WorldService {
               scope,
               request,
               now: this.now,
-              inactive: actor.participation?.phase === 'inactive',
+              unattended:
+                actor.participation?.phase === 'inactive' || !this.controllerPresent(scope),
             },
             participationChange: { actorId: scope.actorId, attempt },
           },
@@ -2191,7 +2232,18 @@ export class WorldService {
       )
         return { ok: false, code: 'storage', message: this.storageError! };
       if (attempt) this.exits.set(scope.actorId, attempt);
-      else this.exits.delete(scope.actorId);
+      else {
+        this.exits.delete(scope.actorId);
+        // Reserve the first heartbeat's place before the stream opens. This
+        // closes the handoff gap without making control acquisition itself
+        // foreground presence or adding a second ownership record.
+        const returned = this.refreshScope(scope);
+        this.presenceOrders.set(this.presenceKey(returned), {
+          sequence: -1,
+          at: this.now(),
+          controlGeneration: returned.controlGeneration,
+        });
+      }
       return {
         ...result.outcome,
         message:

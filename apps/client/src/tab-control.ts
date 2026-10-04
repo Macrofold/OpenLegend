@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GameView } from '@open-legend/protocol';
-import { changeTabControl, clearAccess, getState, logOut } from './api';
+import { AccessError, changeTabControl, clearAccess, getState, logOut } from './api';
 import { forgetSelectedTab, onTabNotice, selectedTabElsewhere, selectThisTab } from './tab-session';
+
+function failureMessage(reason: unknown): string {
+  if (reason instanceof DOMException && reason.name === 'TimeoutError')
+    return 'The game server did not respond. Try again.';
+  if (reason instanceof TypeError) return 'Could not reach the game server. Try again.';
+  return reason instanceof Error ? reason.message : 'Could not connect. Try again.';
+}
 
 /** Browser attention controls presentation, never command authority or world law.
  * docs/projects/tab-resume-tech-design.md */
@@ -14,13 +21,18 @@ export function useTabControl() {
   const current = useRef<GameView | null>(null);
   const pausedRef = useRef(true);
   const resumingRef = useRef(false);
+  const manualRef = useRef<'resume' | 'logout' | null>(null);
   const intent = useRef(0);
   const pending = useRef<Promise<void>>(Promise.resolve());
   const pause = useCallback(() => {
+    // Logout must keep its intent/lock even if the player changes tabs while
+    // waiting. The dialog is already paused; refocus cannot reopen this login.
+    if (manualRef.current === 'logout') return;
     if (pausedRef.current && !resumingRef.current) return;
     intent.current++;
     pausedRef.current = true;
     resumingRef.current = false;
+    manualRef.current = null;
     setPaused(true);
     setResuming(false);
     // Capture now, not when the queue runs after a newer return.
@@ -49,13 +61,19 @@ export function useTabControl() {
     [pause],
   );
   const enter = useCallback((accept: (view: GameView) => void, explicit = false) => {
-    if (resumingRef.current || document.visibilityState !== 'visible' || !document.hasFocus())
+    if (
+      (resumingRef.current && manualRef.current) ||
+      document.visibilityState !== 'visible' ||
+      !document.hasFocus()
+    )
       return pending.current;
     const attempt = ++intent.current;
     resumingRef.current = true;
+    manualRef.current = explicit ? 'resume' : null;
     setResuming(true);
     setError('');
     pending.current = pending.current.then(async () => {
+      if (attempt !== intent.current) return;
       try {
         const before = await getState(AbortSignal.timeout(15000));
         if (attempt !== intent.current) return;
@@ -68,6 +86,7 @@ export function useTabControl() {
           return;
         }
         if (attempt !== intent.current) return;
+        if (!explicit) setBlocked(false);
         try {
           await changeTabControl(before, explicit ? 'replace' : 'acquire');
         } catch (reason) {
@@ -80,7 +99,16 @@ export function useTabControl() {
             setBlocked(true);
             return;
           }
-          throw reason;
+          if (
+            !explicit &&
+            fresh.access &&
+            fresh.access.controlGeneration !== before.access.controlGeneration
+          ) {
+            // The selected page can finish releasing while this foreground
+            // entry is in flight. Reconcile that one revision race without
+            // ever converting automatic entry into a replacement.
+            await changeTabControl(fresh, 'acquire');
+          } else throw reason;
         }
         const after = await getState(AbortSignal.timeout(15000));
         if (attempt !== intent.current) return;
@@ -93,12 +121,16 @@ export function useTabControl() {
         setPaused(false);
       } catch (reason) {
         if (attempt !== intent.current) return;
-        if (explicit)
-          setError(reason instanceof Error ? reason.message : 'Could not resume. Try again.');
+        if (explicit && reason instanceof AccessError) {
+          forgetSelectedTab();
+          clearAccess();
+          window.location.reload();
+        } else if (explicit) setError(failureMessage(reason));
         else throw reason; // EntryScreen owns connection/authentication failures.
       } finally {
         if (attempt === intent.current) {
           resumingRef.current = false;
+          manualRef.current = null;
           setResuming(false);
         }
       }
@@ -112,14 +144,16 @@ export function useTabControl() {
     if (resumingRef.current) return;
     intent.current++;
     resumingRef.current = true;
+    manualRef.current = 'logout';
     setResuming(true);
     setLoggingOut(true);
     setError('');
     try {
       await logOut();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not log out. Try again.');
+      setError(failureMessage(reason));
       resumingRef.current = false;
+      manualRef.current = null;
       setResuming(false);
       setLoggingOut(false);
     }

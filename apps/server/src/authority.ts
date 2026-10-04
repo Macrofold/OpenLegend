@@ -406,27 +406,19 @@ export class AuthorityRepository {
           control.connectionId === scope.connectionId))
     );
   }
-  /** Resume commits before the new stream opens. Derive the competing page from
-   * the committed lease, so the old page's dialog cannot miss that handoff. */
-  controlsElsewhere(scope: RequestScope, now: number): boolean {
+  /** Resolve the committed controller without exposing its identity in projections. */
+  currentController(scope: RequestScope, now: number): RequestScope | undefined {
     const control = this.controls.get(key(scope.worldId, scope.actorId));
-    if (!control || control.connectionId === scope.connectionId) return false;
-    const session = this.sessions.get(control.sessionId);
-    return (
-      !!session &&
-      this.current(
-        {
-          ...scope,
-          sessionId: session.id,
-          sessionRevision: session.revision,
-          controlGeneration: control.generation,
-          connectionId: control.connectionId,
-        },
-        'play',
-        true,
-        now,
-      )
-    );
+    const session = control && this.sessions.get(control.sessionId);
+    if (!control || !session) return undefined;
+    const controller = {
+      ...scope,
+      sessionId: session.id,
+      sessionRevision: session.revision,
+      controlGeneration: control.generation,
+      connectionId: control.connectionId,
+    };
+    return this.current(controller, 'play', true, now) ? controller : undefined;
   }
   /** Re-read in the world publication transaction, including session expiry after any await. */
   async assertFence(fence: AuthorityFence): Promise<void> {
@@ -475,7 +467,7 @@ export class AuthorityRepository {
     scope: RequestScope,
     request: ControlRequest,
     now: () => number,
-    inactive = false,
+    unattended = false,
   ): Promise<ControlLease> {
     return this.db.transaction(async () => {
       await this.assertFence({ scope, capability: 'play', controlling: false, now });
@@ -492,7 +484,7 @@ export class AuthorityRepository {
       if (
         request.operation === 'acquire' &&
         old.sessionId &&
-        !inactive &&
+        !unattended &&
         (old.sessionId !== scope.sessionId || old.connectionId !== scope.connectionId)
       ) {
         const live = await this.db
