@@ -1,6 +1,6 @@
 # Selecting ideas and paying for their complexity
 
-[Library and labels](README.md) · [Current priority policy](gameplay-priorities.md) · [Ranked coverage](ranked-coverage.md) · [Worked combinations](combinations.md) · [Source atlas](source-atlas.md) · [Design foundation](design-foundation.md)
+[Library and labels](README.md) · [Current priority policy](gameplay-priorities.md) · [Ranked coverage](coverage.md) · [Worked combinations](combinations.md) · [Source atlas](source-atlas.md) · [Design foundation](design-foundation.md)
 
 **Selection revision — October 3, 2026.** Build a complete, playable, enjoyable survival-adventure before elaborating its simulation. The library is a set of options, not a command to build whichever option is closest to the existing code. Choose desired rewards, meaningful resistance, usable player capabilities and an attainable outcome. [Category ownership](README.md#category-ownership-and-cross-references) locates the equipment, rules, skills and situations that deliver that experience. The [foundation](design-foundation.md) covers constructive and destructive possibilities; a world need not enable every category.
 
@@ -8,7 +8,7 @@ The [priority policy](gameplay-priorities.md) and its registers replace the form
 
 ## The strongest candidates to explore first
 
-**Find the highest-priority missing capability first.** These are the same twenty retained candidate experiences, now explicitly scored and ordered for the current game. A proof's advanced layers must not become prerequisites for its basic playable portion. Detailed source patterns retain their own scores in [ranked patterns](ranked-patterns.md); all 25 combined scenarios are scored in [ranked coverage](ranked-coverage.md#all-25-worked-situations-reranked).
+**Find the highest-priority missing capability first.** These are the same twenty retained candidate experiences, now explicitly scored and ordered for the current game. A proof's advanced layers must not become prerequisites for its basic playable portion. Detailed source patterns retain their own scores in [ranked patterns](README.md#catalogue-map); all 25 combined scenarios are scored in [ranked coverage](coverage.md).
 
 | Priority | Candidate | Player payoff and research tension | Smallest worthwhile proof |
 | --- | --- | --- | --- |

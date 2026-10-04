@@ -1,6 +1,6 @@
 # Playable game first
 
-**Priority decision: October 3, 2026.** This document owns selection policy for the current survival-adventure game. It is not a claim that the listed features are implemented, an implementation specification, or adoption of one optional world's lore. The [27 expanded inventories and their individual ranking registers](expanded-inventories.md), [ranked coverage](ranked-coverage.md), [ranked introductory patterns](ranked-patterns.md) and [ranked actions](ranked-actions.md) apply this policy. Existing specifications still own correctness and existing maintainer trackers still own delivery.
+**Priority decision: October 3, 2026.** This document owns selection policy for the current survival-adventure game. It is not a claim that the listed features are implemented, an implementation specification, or adoption of one optional world's lore. The [27 expanded inventories and their individual ranking registers](expanded-inventories.md), [ranked coverage](coverage.md), [ranked introductory patterns](README.md#catalogue-map) and [ranked actions](actions.md) apply this policy. Existing specifications still own correctness and existing maintainer trackers still own delivery.
 
 ## What changed, and why
 

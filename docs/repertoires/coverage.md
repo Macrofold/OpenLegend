@@ -1,6 +1,6 @@
 # Ranked coverage: the game before its embellishments
 
-[Library](README.md) · [Priority policy](gameplay-priorities.md) · [270 patterns](ranked-patterns.md) · [384 actions](ranked-actions.md) · [Worked situations](combinations.md)
+[Library](README.md) · [Priority policy](gameplay-priorities.md) · [270 patterns](README.md#catalogue-map) · [384 actions](actions.md) · [Worked situations](combinations.md)
 
 **Current survival-adventure priorities · October 3, 2026.** Coverage tables describe broader families than the illustrative pattern cards. This register decomposes those families into the basic player capabilities and later elaborations they contain. It prevents a catalogue full of interesting refinements from hiding an absent weapon, enemy, objective or reward. It is selection policy, not a second delivery tracker, implementation audit or approval to adopt an optional world's lore.
 
@@ -45,7 +45,7 @@ The action examples include aiming, shooting and shielding but omit a plain mele
 
 ## Category-wide priority assignments
 
-This matrix covers every one of the **27 pattern catalogues**. Each cell scores the explicitly scoped element, not an entire catalogue. An em dash means no first-loop requirement is assigned to that category's special content. The Actions catalogue is fully scored in [its register](ranked-actions.md). Specific ten-card patterns use [their register](ranked-patterns.md); a broad Core family does not promote its elaborate examples.
+This matrix covers every one of the **27 pattern catalogues**. Each cell scores the explicitly scoped element, not an entire catalogue. An em dash means no first-loop requirement is assigned to that category's special content. The Actions catalogue is fully scored in [its register](actions.md). Specific ten-card patterns use [their register](README.md#catalogue-map); a broad Core family does not promote its elaborate examples.
 
 | Catalogue | 1 Core | 2 Complete | 3 Depth | 4 Detail | 5 Specialist |
 | --- | --- | --- | --- | --- | --- |

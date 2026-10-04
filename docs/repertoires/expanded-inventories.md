@@ -1,6 +1,6 @@
 # Expanded repertoire inventories
 
-[Library](README.md) · [Priority policy](gameplay-priorities.md) · [Actions](ranked-actions.md) · [Introductory patterns](ranked-patterns.md)
+[Library](README.md) · [Priority policy](gameplay-priorities.md) · [Actions](actions.md) · [Introductory patterns](README.md#catalogue-map)
 
 **Completed individual-entry review · October 3, 2026.** All **7,871 entries across 27 expanded non-action inventories** now have current-game priorities in the linked registers. The eight newer repertoire branches each expanded a different group of categories. Their source documents are available together on the priorities branch as `inventory-*.md`; the original shorter category files retain introductory examples and existing links. An expanded inventory is the source of its individual entries; an introductory example is not a substitute for it.
 
@@ -14,36 +14,36 @@ Every linked register is **Reviewed**. Each stable ID has exactly one assignment
 
 | Expanded inventory | Entries | Source group | Current ranking |
 | --- | ---: | ---: | --- |
-| [Combat and rescue](inventory-combat-rescue.md) | 288 | 8 | [Combat register](ranked-combat-rescue.md) |
-| [Objects, weapons and equipment](inventory-objects.md) | 310 | 2 | [Objects register](ranked-objects.md) |
-| [Adventure and discovery](inventory-adventure-discovery.md) | 336 | 8 | [Adventure register](ranked-adventure-discovery.md) |
-| [Abilities and progression](inventory-abilities-progression.md) | 300 | 7 | [Progression register](ranked-abilities-progression.md) |
-| [Needs](inventory-needs.md) | 300 | 3 | [Needs register](ranked-needs.md) |
-| [Materials and resources](inventory-materials-resources.md) | 300 | 2 | [Materials register](ranked-materials-resources.md) |
-| [Work and crafting](inventory-work-crafting.md) | 296 | 2 | [Crafting register](ranked-work-crafting.md) |
-| [Settlements and architecture](inventory-settlements-architecture.md) | 252 | 5 | [Settlements register](ranked-settlements-architecture.md) |
-| [Ecology and weather](inventory-ecology-weather.md) | 244 | 5 | [Ecology register](ranked-ecology-weather.md) |
-| [Bodies and species](inventory-bodies-species.md) | 259 | 5 | [Bodies register](ranked-bodies-species.md) |
-| [Economy and logistics](inventory-economy-logistics.md) | 298 | 2 | [Economy register](ranked-economy-logistics.md) |
-| [Relationships](inventory-relationships.md) | 360 | 4 | [Relationships register](ranked-relationships.md) |
-| [Characters and backstories](inventory-characters-backstories.md) | 300 | 3 | [Characters register](ranked-characters-backstories.md) |
-| [Mechanics](inventory-mechanics.md) | 282 | 1 | [Mechanics register](ranked-mechanics.md) |
-| [Psychology and behavior](inventory-psychology-behavior.md) | 336 | 3 | [Psychology register](ranked-psychology-behavior.md) |
-| [Traits](inventory-traits.md) | 300 | 3 | [Traits register](ranked-traits.md) |
-| [Diplomacy and conflict](inventory-diplomacy-conflict.md) | 288 | 4 | [Diplomacy register](ranked-diplomacy-conflict.md) |
-| [Institutions and politics](inventory-institutions-politics.md) | 304 | 4 | [Institutions register](ranked-institutions-politics.md) |
-| [History and myth](inventory-history-myth.md) | 276 | 6 | [History register](ranked-history-myth.md) |
-| [Languages and knowledge](inventory-languages-knowledge.md) | 280 | 6 | [Knowledge register](ranked-languages-knowledge.md) |
-| [Arts and leisure](inventory-arts-leisure.md) | 296 | 6 | [Arts register](ranked-arts-leisure.md) |
-| [Faith and ritual](inventory-faith-ritual.md) | 272 | 6 | [Faith register](ranked-faith-ritual.md) |
-| [Magic](inventory-magic.md) | 300 | 7 | [Magic register](ranked-magic.md) |
-| [Technology](inventory-technology.md) | 300 | 7 | [Technology register](ranked-technology.md) |
-| [Automation and creators](inventory-automation-creators.md) | 272 | 1 | [Automation register](ranked-automation-creators.md) |
-| [Unusual realities](inventory-unusual-realities.md) | 250 | 1 | [Unusual-realities register](ranked-unusual-realities.md) |
-| [Simulation experiments](inventory-simulation-experiments.md) | 272 | 1 | [Experiments register](ranked-simulation-experiments.md) |
+| [Combat and rescue](combat-rescue.md) | 288 | 8 | [Combat register](combat-rescue.md) |
+| [Objects, weapons and equipment](objects.md) | 310 | 2 | [Objects register](objects.md) |
+| [Adventure and discovery](adventure-discovery.md) | 336 | 8 | [Adventure register](adventure-discovery.md) |
+| [Abilities and progression](abilities-progression.md) | 300 | 7 | [Progression register](abilities-progression.md) |
+| [Needs](needs.md) | 300 | 3 | [Needs register](needs.md) |
+| [Materials and resources](materials-resources.md) | 300 | 2 | [Materials register](materials-resources.md) |
+| [Work and crafting](work-crafting.md) | 296 | 2 | [Crafting register](work-crafting.md) |
+| [Settlements and architecture](settlements-architecture.md) | 252 | 5 | [Settlements register](settlements-architecture.md) |
+| [Ecology and weather](ecology-weather.md) | 244 | 5 | [Ecology register](ecology-weather.md) |
+| [Bodies and species](bodies-species.md) | 259 | 5 | [Bodies register](bodies-species.md) |
+| [Economy and logistics](economy-logistics.md) | 298 | 2 | [Economy register](economy-logistics.md) |
+| [Relationships](relationships.md) | 360 | 4 | [Relationships register](relationships.md) |
+| [Characters and backstories](characters-backstories.md) | 300 | 3 | [Characters register](characters-backstories.md) |
+| [Mechanics](mechanics.md) | 282 | 1 | [Mechanics register](mechanics.md) |
+| [Psychology and behavior](psychology-behavior.md) | 336 | 3 | [Psychology register](psychology-behavior.md) |
+| [Traits](traits.md) | 300 | 3 | [Traits register](traits.md) |
+| [Diplomacy and conflict](diplomacy-conflict.md) | 288 | 4 | [Diplomacy register](diplomacy-conflict.md) |
+| [Institutions and politics](institutions-politics.md) | 304 | 4 | [Institutions register](institutions-politics.md) |
+| [History and myth](history-myth.md) | 276 | 6 | [History register](history-myth.md) |
+| [Languages and knowledge](languages-knowledge.md) | 280 | 6 | [Knowledge register](languages-knowledge.md) |
+| [Arts and leisure](arts-leisure.md) | 296 | 6 | [Arts register](arts-leisure.md) |
+| [Faith and ritual](faith-ritual.md) | 272 | 6 | [Faith register](faith-ritual.md) |
+| [Magic](magic.md) | 300 | 7 | [Magic register](magic.md) |
+| [Technology](technology.md) | 300 | 7 | [Technology register](technology.md) |
+| [Automation and creators](automation-creators.md) | 272 | 1 | [Automation register](automation-creators.md) |
+| [Unusual realities](unusual-realities.md) | 250 | 1 | [Unusual-realities register](unusual-realities.md) |
+| [Simulation experiments](simulation-experiments.md) | 272 | 1 | [Experiments register](simulation-experiments.md) |
 | **Total** | **7,871** | | **27 reviewed registers** |
 
-[Actions](actions.md) remain their separate 384-entry inventory, with current priorities in [ranked actions](ranked-actions.md). [Ranked coverage](ranked-coverage.md) covers whole-game capabilities and combined situations. [Ranked patterns](ranked-patterns.md) covers the older introductory examples only. Neither replaces the 27 individual-entry reviews above.
+[Actions](actions.md) remain their separate 384-entry inventory, with current priorities in [ranked actions](actions.md). [Ranked coverage](coverage.md) covers whole-game capabilities and combined situations. [Ranked patterns](README.md#catalogue-map) covers the older introductory examples only. Neither replaces the 27 individual-entry reviews above.
 
 ## Pinned source revisions
 
