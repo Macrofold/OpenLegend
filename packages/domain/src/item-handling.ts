@@ -78,6 +78,24 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
   rootMembershipChanged(world, id);
   return pile;
 }
+/** Physical decay releases custody, preserving nested containers and declared ownership.
+ * Wait for support rather than deleting possessions in midair. */
+export function releaseBodyPossessions(world: WorldState, body: Entity): boolean {
+  const items = itemsForOwner(world, body.id);
+  if (!items.length) return true;
+  const surfaceId = worldSupport(body);
+  if (
+    !surfaceId ||
+    !canStand(spatialMap(world), { ...worldPosition(body), surfaceId }, BODY_PROFILES.object)
+  )
+    return false;
+  atomicObjects(world, (candidate) => {
+    const pile = pileAt(candidate, { ...worldPosition(body), surfaceId });
+    for (const item of items)
+      moveLot(candidate, item.id, pile.id, item.quantity, 'body-decay', false);
+  });
+  return true;
+}
 /** Compound physical work is planned in an isolated draft before its changed fields are
  * installed. Existing actor/action references stay attached to the caller's draft. */
 export function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) => T): T {

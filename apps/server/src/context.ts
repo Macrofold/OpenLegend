@@ -172,7 +172,7 @@ export function buildContext(
       position: worldPosition(entity),
       ...(entity.resource ? { resource: entity.resource } : {}),
       ...(entity.animal
-        ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.fleeSeconds > 0 } }
+        ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.danger > 0 } }
         : {}),
       ...(entity.actor
         ? { activity: entity.actor.action?.type ?? 'idle', alive: entity.actor.alive }

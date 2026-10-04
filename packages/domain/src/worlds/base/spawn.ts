@@ -117,8 +117,12 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
           ),
         ),
         animal: {
-          fleeFrom: null,
-          fleeSeconds: 0,
+          threatPosition: null,
+          threatId: null,
+          escapeHeading: null,
+          calmRate: 0,
+          reviewAt: 0,
+          danger: 0,
           wanderSeconds: draft.type === 'hare' ? 150 : 200,
         },
       };

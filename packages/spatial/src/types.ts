@@ -50,6 +50,17 @@ export interface SpatialLayout {
   surfaces: WalkableSurface[];
   blockers: SpatialBlocker[];
   levels: Array<{ id: string; name: string; focusY: number }>;
+  /** Public static artwork only. Native support/blockers remain the physical authority. */
+  scenery?: SceneryInstance[];
+}
+export interface SceneryInstance {
+  id: string;
+  appearance: string;
+  seed: number;
+  position: WorldPoint;
+  width: number;
+  height: number;
+  castShadows: boolean;
 }
 export interface SpatialMap {
   width: number;
@@ -153,6 +164,7 @@ export const SPATIAL_LIMITS = {
   maxExtent: 512,
   maxSurfaces: 32,
   maxBlockers: 128,
+  maxScenery: 4096,
   maxGraphNodes: 16384,
   maxPathPoints: 2048,
 } as const;

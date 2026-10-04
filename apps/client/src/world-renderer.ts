@@ -12,6 +12,7 @@ export interface ScreenRect extends ScreenPoint {
 export interface SceneCallbacks {
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
+  target(entity: EntityView): void;
   hover(entity: EntityView | null, at: ScreenPoint): void;
   selectionDenied(message: string): void;
   cameraChanged?(state: CameraState): void;
@@ -35,6 +36,7 @@ export interface PerceptionOptions {
   hearing: boolean;
 }
 export interface WorldRenderer {
+  setTargeting(active: boolean): void;
   setSuspended(suspended: boolean): void;
   sampleFrameRate(): number | null;
   setPerceptionOptions(options: PerceptionOptions): void;

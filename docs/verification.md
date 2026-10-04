@@ -35,6 +35,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [World Agent context and preparation](verification/world-agent-context.md): scoped context, native save-for-review, recovery and actual Macrofold journeys.
 
 - [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices.
+- [Fuller starting wilderness](verification/wilderness-expansion.md): expanded seeded terrain/population, procedural scenery and animals, native movement/gathering, PostgreSQL restoration and bounded browser setup/render costs.
+- [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory and bounded escape/guide costs.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers. [October 2 containers and chosen activities](verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) records current family/watch/inspection/aging and actual injected-director results, the corrected frozen-world stress diagnostic and historical mutable-fixture timeout, and separate browser/live/integration gaps.
 - [Actor agency and invention workflows](verification/actor-agency-and-inventions.md): identity, native attempts, plans and supported invention loops.

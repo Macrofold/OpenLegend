@@ -351,7 +351,7 @@ describe('bounded invented mechanisms', () => {
     expect(world.events.some((event) => event.type === 'shot' && event.data?.hit === false)).toBe(
       true,
     );
-    expect(world.entities['hare-1']!.animal!.fleeSeconds).toBeGreaterThan(0);
+    expect(world.entities['hare-1']!.animal!.danger).toBeGreaterThan(0);
     expect(world.entities['hare-1']!.actor!.health).toBe(18);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });

@@ -30,6 +30,18 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 - [x] **BW12 — Spoken name learning:** carry optional self-introduction meaning with generated speech and learn its stated label for permitted listeners through the existing observer-name mutation, including player listeners. Preserve speech on invalid metadata and retain visibility/recognition boundaries. Automated and broader language-quality qualification remain in TODO.
 
+## BW24 — Fuller starting wilderness
+
+Completed under [the plan](../projects/completed/wilderness-expansion-plan.md). Delivered about five times the default area, rolling supported ground, more resources and wildlife, and an uneven forest margin with original procedural wolf/bear/birch/conifer artwork. Public static scenery has independent current-format records and shared rendering assets/detail draws; elevated rocks use native ground heights. Finite extents, decorative trees and existing animal behavior remain. New content applies to newly created worlds without reseeding saves. [Contract](../worlds/base/landscape.md), [tuning](../limits/base-world.md#bw13--starting-wilderness), [native/PostgreSQL/browser evidence and bounded costs](../verification/wilderness-expansion.md). Wider-device/geometry and general population-capacity qualification remain with SW09.4b/SW17 and performance; this adds no predation or aggression mechanic.
+
+The [completed implementation review](../projects/completed/embodied-feedback-review-plan.md) corrected animals stopping at internal terrain seams; shared supported steering now crosses joined slopes for escape, wandering and motion prediction. [Native evidence](../verification/embodied-feedback.md#implementation-review--october-4-2026) covers seam/corner crossings and refusal of gaps, drops and blockers.
+
+## BW23 — Injury, aftermath and direct interaction
+
+Completed under [the plan](../projects/completed/embodied-feedback-plan.md). Delivered visible injury bars and permitted stat deltas, inventory right-click/keyboard eating, exact equipped-item T targeting, 0.3-second soft hover glow, quieter frame-following sight/hearing guides, remembered fire illumination, perceived-threat local escape, and three-day corpse rot/seven-day cleanup. The implementation preserves player collapse and identity/possessions/creator revival; these choices are recorded in [survival](../worlds/base/survival.md#death-and-remains). [Evidence](../verification/embodied-feedback.md) covers selected native checks, current-format restore/refusal, nested belongings, actual browser interaction and bounded movement costs. Cooperative guide calculation resolves the demonstrated long blocks; SW09.4b retains wider geometry/device qualification; BW14/BW15 protection/ghost targets remain distinct.
+
+The subsequent [review](../verification/embodied-feedback.md#implementation-review--october-4-2026) removed per-frame React content rendering, revoked stale meter feedback and corrected cancelled numeric notices and changed-definition baselines. These fixes are implemented and browser-checked. A [second review](../verification/embodied-feedback.md#second-requested-review--october-4-2026) also corrected retained images of explicitly removed controlled bodies and redundant health content renders on unchanged snapshots; the broader qualification above remains open.
+
 ## Accepted lifecycle and protection delivery
 
 BW13 is implemented and locally qualified through MP01/MP04; BW14/BW15 remain targets; [lifecycle and protection](../worlds/base/lifecycle-and-protection.md) owns policy. Preserve ACT identity/revival and native event ownership.

@@ -12,7 +12,13 @@ import type { PerceptionOptions } from './world-renderer';
 
 /** Bounded, conservative surface guide, not an observation/recognition query.
  * docs/spatial-world.md#perception-range-guides owns sampling and elevation limits. */
-export const GUIDE_SAMPLING = { rays: 128, steps: 32, refinements: 8, intervalMs: 250 } as const;
+export const GUIDE_SAMPLING = {
+  rays: 128,
+  steps: 32,
+  refinements: 8,
+  intervalMs: 100,
+  sliceMs: 4,
+} as const;
 type SurfaceSample = { center: WorldPoint; support: WorldPoint | null };
 export interface GuideContour {
   sense: 'vision' | 'hearing';
@@ -28,7 +34,11 @@ export const GUIDE_HINTS = {
     'Hearing range for normal speech. Words become harder to hear with distance; walls can muffle them.',
 } as const;
 
-export function perceptionFieldKey(view: GameView, options: PerceptionOptions): string {
+export function perceptionFieldKey(
+  view: GameView,
+  options: PerceptionOptions,
+  includePosition = true,
+): string {
   return JSON.stringify([
     view.worldId,
     view.saveTimeline,
@@ -38,7 +48,8 @@ export function perceptionFieldKey(view: GameView, options: PerceptionOptions): 
     view.map.width,
     view.map.height,
     view.map.spatial.revision,
-    view.player.position,
+    view.map.spatial.disclosure,
+    includePosition ? view.player.position : null,
     view.player.supportSurfaceId,
     view.vision,
     view.hearing,
@@ -47,6 +58,17 @@ export function perceptionFieldKey(view: GameView, options: PerceptionOptions): 
 }
 
 export function perceptionField(view: GameView, options: PerceptionOptions): GuideContour[] {
+  const steps = perceptionFieldSteps(view, options);
+  let result = steps.next();
+  while (!result.done) result = steps.next();
+  return result.value;
+}
+
+/** Same deterministic field for synchronous consumers and cooperative browser calculation. */
+export function* perceptionFieldSteps(
+  view: GameView,
+  options: PerceptionOptions,
+): Generator<void, GuideContour[]> {
   // This provider explicitly discloses starter geometry. Never infer undiscovered topology.
   if (view.map.spatial.disclosure !== 'public') return [];
   const contours: Array<GuideContour & { radius: number }> = [];
@@ -148,30 +170,33 @@ export function perceptionField(view: GameView, options: PerceptionOptions): Gui
         return footAt(x, z) ?? { x, y: origin.y, z };
       }),
     );
+    yield;
   }
   // Full triangle interiors are identical across bands; keep their support points
   // shared so native sight/transmission classification runs once per build.
   const interiors: SurfaceSample[] = [];
   const midpoints = new Map<number, SurfaceSample>();
-  return contours.map((contour) => {
+  const result: GuideContour[] = [];
+  for (const contour of contours) {
     const { radius: _radius, ...display } = contour;
-    return {
-      ...display,
-      ...guideMesh(grid, interiors, midpoints, footAt, (point) => passes(contour, point)),
-    };
-  });
+    const mesh = yield* guideMesh(grid, interiors, midpoints, footAt, (point) =>
+      passes(contour, point),
+    );
+    result.push({ ...display, ...mesh });
+  }
+  return result;
 }
 
 /** Fill and outline share topology. Rejected interiors become closed holes rather
  * than missing border fragments; no chord connects across an excluded patch.
  * docs/spatial-world.md#display-approximation-and-updates */
-function guideMesh(
+function* guideMesh(
   grid: WorldPoint[][],
   interiors: SurfaceSample[],
   midpoints: Map<number, SurfaceSample>,
   footAt: (x: number, z: number) => WorldPoint | null,
   passes: (point: WorldPoint) => boolean,
-): Pick<GuideContour, 'vertices' | 'triangles' | 'segments'> {
+): Generator<void, Pick<GuideContour, 'vertices' | 'triangles' | 'segments'>> {
   type Sample = { id: number; point: WorldPoint; inside: boolean };
   const vertices: WorldPoint[] = [],
     triangles: number[] = [];
@@ -188,7 +213,15 @@ function guideMesh(
     point,
     inside: footAt(point.x, point.z) !== null && passes(point),
   });
-  const samples = grid.map((ring) => ring.map(sample));
+  const samples: Sample[][] = [];
+  for (const ring of grid) {
+    const row: Sample[] = [];
+    for (let i = 0; i < ring.length; i++) {
+      row.push(sample(ring[i]!));
+      if ((i + 1) % 32 === 0) yield;
+    }
+    samples.push(row);
+  }
   const crossing = (a: Sample, b: Sample): Sample => {
     const key = edgeKey(a.id, b.id);
     const cached = crossings.get(key);
@@ -300,6 +333,7 @@ function guideMesh(
         triangle([inner[ray]!, outer[ray]!, outer[next]!]);
         triangle([inner[ray]!, outer[next]!, inner[next]!]);
       }
+      if ((ray + 1) % 8 === 0) yield;
     }
   }
   return {

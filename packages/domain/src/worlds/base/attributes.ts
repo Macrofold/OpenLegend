@@ -3,10 +3,10 @@ import type { AttributeDefinition } from '../../world-modules.js';
 export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   {
     id: 'wilderness:health',
-    version: 1,
+    version: 2,
     implementation: 'native-health-v1',
     name: 'Health',
-    disclosure: 'owner',
+    disclosure: 'public',
     presentation: { icon: 'meter.health', color: 'meter.health' },
     critical: { compare: { operator: 'lessThanOrEqual', value: 20, rounding: 'nearest-integer' } },
     editorCritical: { compare: { operator: 'lessThan', value: 40, rounding: 'none' } },

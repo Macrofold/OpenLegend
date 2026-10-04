@@ -141,6 +141,7 @@ function App({
   >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: true });
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
+    [targeting, setTargeting] = useState(false),
     [picker, setPicker] = useState<PickerContext | null>(null),
     [hover, setHover] = useState<{ entity: EntityView; point: { x: number; y: number } } | null>(
       null,
@@ -223,6 +224,7 @@ function App({
         _g?: { x: number; y: number; z: number; surfaceId: string },
       ) => {},
       move: (_p: { x: number; y: number; z: number; surfaceId: string }) => {},
+      target: (_entity: EntityView) => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
@@ -518,6 +520,7 @@ function App({
       };
     }
     setPicker(null);
+    setTargeting(false);
     try {
       const r = await post('/api/command', {
         commandId: crypto.randomUUID(),
@@ -565,6 +568,17 @@ function App({
     scene.current?.select(null);
   }
   handlers.current = {
+    target: (entity) => {
+      const action = latest.current?.entities.find(
+        (target) => target.id === entity.id,
+      )?.equippedAction;
+      if (!action) {
+        notify('Your equipped item has no available use on this target.');
+        return;
+      }
+      if (action.enabled) setTargeting(false);
+      void command(action);
+    },
     select: (entity, point, ground) => {
       if (point) {
         setPicker({
@@ -598,6 +612,7 @@ function App({
         scene.current = createWorldRenderer(canvas.current, {
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
+          target: (entity) => handlers.current.target(entity),
           hover: (entity, point) =>
             setHover((previous) =>
               previous?.entity === entity &&
@@ -632,6 +647,12 @@ function App({
   useEffect(() => {
     scene.current?.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
   }, [hasView, sceneError, visionGuide, hearingGuide]);
+  useEffect(() => {
+    scene.current?.setTargeting(targeting && connected && !tabPaused);
+  }, [targeting, connected, tabPaused, hasView, sceneError]);
+  useEffect(() => {
+    setTargeting(false);
+  }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
   useEffect(() => {
     scene.current?.setCaptionOptions({
       enabled: captionsEnabled,
@@ -686,11 +707,14 @@ function App({
   }, [timeSettings]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (isPaused() || document.querySelector('[aria-modal="true"]')) return;
+      if (e.defaultPrevented || isPaused() || document.querySelector('[aria-modal="true"]')) return;
       if (e.key === 'Escape') {
         if (picker) {
           setPicker(null);
           canvas.current?.focus();
+        } else if (targeting) {
+          setTargeting(false);
+          e.preventDefault();
         } else if (timeSettings) setTimeSettings(false);
         else if (selected && open.includes('nearby')) clearSelection();
         else if (open.length) hide(open.at(-1)!);
@@ -708,6 +732,16 @@ function App({
         e.altKey
       )
         return;
+      if (e.key.toLowerCase() === 't') {
+        if (!view || picker || !connected || e.repeat) return;
+        e.preventDefault();
+        if (!view.player.inventory.some((item) => item.equipped)) {
+          notify('Equip an item before targeting.');
+          return;
+        }
+        setTargeting((active) => !active);
+        return;
+      }
       if (
         e.key.toLowerCase() === 'p' ||
         (e.shiftKey && (e.code === 'BracketRight' || e.code === 'BracketLeft'))
@@ -897,6 +931,9 @@ function App({
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
+              contextMenu={(item, point) =>
+                setPicker({ context: { itemId: item.id }, point, entity: null, subject: item.name })
+              }
             />
             <CampActivity
               visible={
@@ -1530,6 +1567,15 @@ function App({
         <div id="toast" role="status" className="ol-toast" hidden={!notice}>
           {notice}
         </div>
+        {targeting && (
+          <div className="ol-targeting-hint" role="status">
+            Use {view?.player.inventory.find((item) => item.equipped)?.name}: click a highlighted
+            target.
+            <Button size="sm" onPress={() => setTargeting(false)}>
+              Cancel · Esc
+            </Button>
+          </div>
+        )}
         {view && (
           <CaptionGapNotice
             missed={missedCaptions.value}

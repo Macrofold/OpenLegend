@@ -122,6 +122,7 @@ export interface WorldModuleManifest {
   recipeFamilies: DefinitionPin[];
 }
 export interface AttributeView {
+  bodyHealth?: boolean;
   meaning?: string;
   condition?: string;
   id: string;
@@ -656,6 +657,7 @@ export function projectAttributes(
         name: d.name,
         display: d.schema.kind === 'number' ? 'meter' : 'category',
         presentation: d.presentation,
+        ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
         value: value ?? null,
         status: value === undefined ? 'unknown' : 'known',
         critical: attributeCritical(entity, d, value, d.critical),
@@ -806,6 +808,57 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Invalid authoritative body health.');
     if (e.actor?.body && !world.moduleManifest.bodyPolicy)
       throw new Error('Living bodies require an installed body policy.');
+    if (e.animal) {
+      const animal = e.animal;
+      if (
+        !Number.isFinite(animal.reviewAt) ||
+        animal.reviewAt < 0 ||
+        !Number.isFinite(animal.danger) ||
+        animal.danger < 0 ||
+        animal.danger > 1 ||
+        !Number.isFinite(animal.calmRate) ||
+        animal.calmRate < 0 ||
+        !Number.isFinite(animal.wanderSeconds) ||
+        (animal.escapeHeading !== null && !Number.isFinite(animal.escapeHeading)) ||
+        (animal.threatPosition !== null &&
+          ![animal.threatPosition?.x, animal.threatPosition?.y, animal.threatPosition?.z].every(
+            Number.isFinite,
+          )) ||
+        (animal.threatId !== null && (typeof animal.threatId !== 'string' || !animal.threatId)) ||
+        (animal.danger > 0 && animal.threatPosition === null)
+      )
+        throw new Error('Invalid saved animal threat memory.');
+    }
+    if (e.actor?.body && !e.actor.alive && !e.remains)
+      throw new Error('Dead bodies require saved remains.');
+    if (e.remains) {
+      const remains = e.remains;
+      if (
+        !e.actor?.body ||
+        e.actor.alive ||
+        remains.sourceId !== e.id ||
+        !Number.isFinite(remains.diedAt) ||
+        remains.diedAt < 0 ||
+        remains.diedAt > world.simTime ||
+        !['fresh', 'rotting', 'removed'].includes(remains.phase) ||
+        (remains.rotAt !== null &&
+          (!Number.isFinite(remains.rotAt) || remains.rotAt <= remains.diedAt)) ||
+        (remains.removeAt !== null &&
+          (remains.rotAt === null ||
+            !Number.isFinite(remains.removeAt) ||
+            remains.removeAt <= remains.rotAt)) ||
+        typeof remains.harvested !== 'boolean' ||
+        !Array.isArray(remains.yields) ||
+        remains.yields.some(
+          (yielded) =>
+            !world.itemDefinitions[yielded.definitionId] ||
+            !Number.isSafeInteger(yielded.quantity) ||
+            yielded.quantity < 1,
+        ) ||
+        (remains.phase !== 'fresh' && remains.yields.length)
+      )
+        throw new Error('Invalid saved remains lifecycle.');
+    }
     if (
       e.actor?.senses &&
       (new Set(e.actor.senses).size !== e.actor.senses.length ||

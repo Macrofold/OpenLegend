@@ -1,6 +1,74 @@
 import * as pc from 'playcanvas';
 import { surfaceHeight, type WalkableSurface } from '@open-legend/spatial';
 
+/** One ground receiver with continuous world UVs, using the authoritative supported heights. */
+export function groundMesh(
+  device: pc.GraphicsDevice,
+  surfaces: WalkableSurface[],
+  width: number,
+  depth: number,
+): pc.Mesh | null {
+  const positions: number[] = [],
+    normals: number[] = [],
+    uvs: number[] = [],
+    indices: number[] = [];
+  for (const surface of surfaces) {
+    if (surface.material !== 'ground') continue;
+    const first = positions.length / 3,
+      length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
+    for (const [x, z] of [
+      [surface.minX, surface.minZ],
+      [surface.minX, surface.maxZ],
+      [surface.maxX, surface.maxZ],
+      [surface.maxX, surface.minZ],
+    ]) {
+      positions.push(x!, surfaceHeight(surface, x!, z!), z!);
+      normals.push(-surface.slopeX / length, 1 / length, -surface.slopeZ / length);
+      uvs.push((x! + 0.5) / width, 1 - (z! + 0.5) / depth);
+    }
+    indices.push(first, first + 1, first + 2, first, first + 2, first + 3);
+  }
+  if (!positions.length) return null;
+  const mesh = new pc.Mesh(device);
+  mesh.setPositions(positions);
+  mesh.setNormals(normals);
+  mesh.setUvs(0, uvs);
+  mesh.setIndices(indices);
+  mesh.update();
+  return mesh;
+}
+
+/** Decorative soil continues the admitted border planes, without adding supported destinations. */
+export function surroundingGroundMesh(
+  device: pc.GraphicsDevice,
+  surfaces: WalkableSurface[],
+  width: number,
+  depth: number,
+): pc.Mesh | null {
+  const strips: WalkableSurface[] = [];
+  const margin = 13;
+  for (const surface of surfaces) {
+    if (surface.material !== 'ground') continue;
+    const { minX, maxX, minZ, maxZ } = surface;
+    const add = (x0: number, x1: number, z0: number, z1: number) =>
+      strips.push({
+        ...surface,
+        minX: x0,
+        maxX: x1,
+        minZ: z0,
+        maxZ: z1,
+        y: surfaceHeight(surface, x0, z0),
+      });
+    if (minX === 0) add(-margin, 0, minZ, maxZ);
+    if (maxX === width - 1) add(maxX, maxX + margin, minZ, maxZ);
+    const x0 = minX === 0 ? -margin : minX,
+      x1 = maxX === width - 1 ? maxX + margin : maxX;
+    if (minZ === 0) add(x0, x1, -margin, 0);
+    if (maxZ === depth - 1) add(x0, x1, maxZ, maxZ + margin);
+  }
+  return groundMesh(device, strips, width, depth);
+}
+
 /** Geometry is rendered from the same finite surface description used by navigation and senses.
  * The drawing owns no support/collision state. Unknown visual families cannot create mechanics. */
 export function surfaceMesh(device: pc.GraphicsDevice, surface: WalkableSurface): pc.Mesh {

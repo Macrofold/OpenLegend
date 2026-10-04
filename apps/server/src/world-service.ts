@@ -3951,6 +3951,14 @@ export class WorldService {
         };
         break;
       case 'gather':
+        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
+        command = {
+          ...envelope,
+          type: 'gather',
+          targetId: input.targetId,
+          ...(input.itemId ? { itemId: input.itemId } : {}),
+        };
+        break;
       case 'harvest':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
         command = { ...envelope, type: input.type, targetId: input.targetId };

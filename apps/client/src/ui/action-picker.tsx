@@ -19,6 +19,7 @@ export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
   entity: EntityView | null;
+  subject?: string;
 };
 export function ActionPicker({
   picker,
@@ -165,7 +166,7 @@ export function ActionPicker({
       id="contextMenu"
       className="ol-picker"
       role="dialog"
-      aria-label={`Actions for ${picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
+      aria-label={`Actions for ${picker.subject ?? (picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing')}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
@@ -193,7 +194,7 @@ export function ActionPicker({
     >
       <div className="ol-picker-head">
         <Icon name={symbol(picker.entity?.subtype ?? 'ui.inview')} />
-        <strong id="contextTitle">{picker.entity?.name ?? 'The clearing'}</strong>
+        <strong id="contextTitle">{picker.subject ?? picker.entity?.name ?? 'The clearing'}</strong>
         <IconButton
           icon="ui.refresh"
           label="Refresh actions"

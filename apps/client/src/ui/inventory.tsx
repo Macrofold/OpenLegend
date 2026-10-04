@@ -183,6 +183,7 @@ function MergeTargets({
 type InventoryProps = {
   view: GameView;
   addItem(): void;
+  contextMenu(item: InventoryItemView, point: { x: number; y: number }): void;
   command(action: ActionOption): Promise<ApiResult>;
   connected: boolean;
   visible: boolean;
@@ -218,6 +219,7 @@ export function Inventory(props: InventoryProps) {
 function InventoryWorkspace({
   view,
   addItem,
+  contextMenu,
   command,
   connected,
   visible,
@@ -697,6 +699,18 @@ function InventoryWorkspace({
           {page?.items.map((entry) => (
             <div
               key={entry.id}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                if (!loading && !pendingRef.current)
+                  contextMenu(entry, { x: event.clientX, y: event.clientY });
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
+                event.preventDefault();
+                if (loading || pendingRef.current) return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                contextMenu(entry, { x: rect.left, y: rect.bottom });
+              }}
               ref={(node) => {
                 if (node && selection?.item.id === entry.id)
                   selectedButton.current = node.querySelector('button');

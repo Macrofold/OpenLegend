@@ -1,5 +1,10 @@
 import { namePhrase } from '@open-legend/language';
-import { recipeFamily, basePlaytestMilestones, BASE_FAMILY_POLICY } from '@open-legend/domain';
+import {
+  recipeFamily,
+  basePlaytestMilestones,
+  BASE_FAMILY_POLICY,
+  equippedTargetAction,
+} from '@open-legend/domain';
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
@@ -384,7 +389,12 @@ export async function projectView(
               action(
                 `hunt-${entity.id}`,
                 'Hunt',
-                { type: 'hunt', targetId: entity.id },
+                {
+                  type: 'hunt',
+                  targetId: entity.id,
+                  itemId: equipment?.id,
+                  ammunitionId: ammunition?.id,
+                },
                 !!launcher && !!ammunition,
                 !launcher
                   ? 'Invent, craft and equip a launcher first.'
@@ -411,7 +421,7 @@ export async function projectView(
                 action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
               );
             }
-          if (entity.remains)
+          if (entity.remains?.phase === 'fresh' && entity.remains.yields.length)
             actions.push(
               action(
                 `harvest-${entity.id}`,
@@ -433,7 +443,7 @@ export async function projectView(
           const kind: EntityView['kind'] =
             entity.kind === 'item-pile'
               ? 'item-pile'
-              : entity.remains
+              : entity.remains && entity.animal
                 ? 'remains'
                 : entity.animal
                   ? 'animal'
@@ -467,7 +477,9 @@ export async function projectView(
             actionAnimation: actionAnimation(world, entity),
             status: entity.actor
               ? !entity.actor.alive
-                ? 'Dead'
+                ? ((entity.remains?.phase === 'rotting'
+                    ? bodyPolicy(world)?.remains?.rottingLabel
+                    : bodyPolicy(world)?.remains?.freshLabel) ?? '')
                 : projectStatusEffects(world, entity).length
                   ? projectStatusEffects(world, entity)
                       .map((d) => d.label)
@@ -489,14 +501,14 @@ export async function projectView(
                         craft: 'Crafting',
                       }[entity.actor.action.type] ?? 'Working')
                     : entity.animal
-                      ? entity.animal.fleeSeconds > 0
+                      ? entity.animal.danger > 0
                         ? 'Fleeing'
                         : 'Foraging'
                       : 'Watching the clearing'
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
-                  : entity.animal.fleeSeconds > 0
+                  : entity.animal.danger > 0
                     ? 'Fleeing'
                     : 'Foraging'
                 : entity.remains
@@ -518,10 +530,19 @@ export async function projectView(
                   attributes: projectAttributes(world, entity, 'public'),
                   health: entity.actor.health,
                   bodyRevision: entity.actor.body?.revision,
+                  ...(!entity.actor.alive
+                    ? {
+                        bodyState:
+                          entity.remains?.phase === 'rotting'
+                            ? ('rotting' as const)
+                            : ('dead' as const),
+                      }
+                    : {}),
                   species: entity.actor.species,
                 }
               : {}),
             actions,
+            equippedAction: equippedTargetAction(world, entity, equipment, actions),
           };
         },
       ),
@@ -791,6 +812,16 @@ export async function projectView(
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
+      ...(!actor.alive
+        ? {
+            bodyState:
+              player.remains?.phase === 'removed'
+                ? ('removed' as const)
+                : player.remains?.phase === 'rotting'
+                  ? ('rotting' as const)
+                  : ('dead' as const),
+          }
+        : {}),
       statusEffects: projectStatusEffects(world, player, 'owner'),
       action: actor.action
         ? {

@@ -197,7 +197,7 @@ export interface ActorComponent {
   initialGoals?: string[];
   agency: import('./agency.js').ActorAgency;
   controller: 'player' | 'npc' | 'native';
-  species?: 'human' | 'hare' | 'deer' | 'construct' | 'bird';
+  species?: (typeof import('./worlds/base/bodies.js').BASE_SPECIES)[number];
   body?: import('./living.js').LivingBody;
   capabilities?: {
     cognition: boolean;
@@ -216,12 +216,12 @@ export interface ActorComponent {
   planGeneration: number;
 }
 export interface AnimalComponent {
-  /** Legacy import fields only. Migration removes these; actor owns physical state. */
-  species?: 'hare' | 'deer';
-  health?: number;
-  alive?: boolean;
-  fleeFrom: Position | null;
-  fleeSeconds: number;
+  threatPosition: Position | null;
+  threatId: string | null;
+  danger: number;
+  escapeHeading: number | null;
+  calmRate: number;
+  reviewAt: number;
   wanderSeconds: number;
 }
 export interface ResourceComponent {
@@ -231,6 +231,10 @@ export interface ResourceComponent {
   workSeconds: number;
 }
 export interface RemainsComponent {
+  diedAt: number;
+  rotAt: number | null;
+  removeAt: number | null;
+  phase: 'fresh' | 'rotting' | 'removed';
   sourceId: string;
   yields: { definitionId: string; quantity: number }[];
   harvested: boolean;
@@ -253,7 +257,7 @@ export interface Entity extends Named {
   declaredOwner?: import('./objects.js').DeclaredOwner;
   retirement?: import('./objects.js').ObjectRetirement;
   /** Appearance is never a source of body dimensions or movement capability. */
-  appearance?: 'sprite' | 'crate-mesh' | 'mercenary-model';
+  appearance?: string;
   spatial: import('./spatial-state.js').EntitySpatial;
   actor?: ActorComponent;
   replenisher?: { attributeId: string; remaining: number; revision?: number };
@@ -465,7 +469,8 @@ export type Command = Envelope &
         onLost?: 'last-seen';
         until?: number;
       }
-    | { type: 'gather' | 'harvest'; targetId: string }
+    | { type: 'gather'; targetId: string; itemId?: string }
+    | { type: 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
     | { type: 'replenish'; targetId: string; attributeId: string }

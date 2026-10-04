@@ -44,6 +44,7 @@ export type SemanticChange =
       entityId: string;
       field:
         | 'body'
+        | 'behavior'
         | 'needs'
         | 'attribute'
         | 'resource'

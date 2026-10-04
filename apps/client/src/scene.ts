@@ -28,7 +28,9 @@ import {
   rayHits,
   spatialBlockers,
   surfaceById,
+  surfaceContains,
   surfaceHeight,
+  type SceneryInstance,
   type WorldPoint,
 } from '@open-legend/spatial';
 import {
@@ -48,7 +50,13 @@ import type {
   ShadowQuality,
   PerceptionOptions,
 } from './world-renderer';
-import { birdArt, surfaceMesh, surfaceSeamsMesh } from './spatial-art';
+import {
+  birdArt,
+  groundMesh,
+  surroundingGroundMesh,
+  surfaceMesh,
+  surfaceSeamsMesh,
+} from './spatial-art';
 import { playerEntity } from './entity-view';
 import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
@@ -62,9 +70,11 @@ import {
   fireArt,
   groundArt,
   personArt,
+  rottingArt,
   random,
   resourceArt,
-  treeArt,
+  sceneryArt,
+  predatorArt,
 } from './art';
 
 interface RenderedEntity {
@@ -120,6 +130,7 @@ export class WildernessScene implements WorldRenderer {
   private outline!: HoverOutline;
   private hoveredId: string | null = null;
   private hoverStarted = 0;
+  private targeting = false;
   private landscapeBuffers: pc.VertexBuffer[] = [];
   private shadowBatches!: SpriteShadowBatches;
   private reliefMeshes = new Map<pc.Texture, ReturnType<typeof createSpriteRelief>>();
@@ -291,10 +302,17 @@ export class WildernessScene implements WorldRenderer {
   }
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
-      this.presentation.lighting(this.view);
+      this.presentation.lighting(
+        this.view,
+        [...this.actors.values()].map((entry) => entry.view),
+      );
   }
   setPerceptionOptions(options: PerceptionOptions): void {
     this.perception.setOptions(options);
+  }
+  setTargeting(active: boolean): void {
+    this.targeting = active;
+    this.canvas.style.cursor = active ? 'crosshair' : '';
   }
   setView(view: GameView): void {
     this.view = view;
@@ -325,14 +343,20 @@ export class WildernessScene implements WorldRenderer {
       this.placeCamera();
       this.callbacks.cameraChanged?.(this.cameraState());
     }
+    const playerAbsent =
+      view.player.participation === 'inactive' || view.player.bodyState === 'removed';
     const entities = [
       ...view.entities.filter((entity) => entity.id !== view.player.id),
-      ...(view.player.participation === 'inactive' ? [] : [playerEntity(view)]),
+      ...(playerAbsent ? [] : [playerEntity(view)]),
     ];
     const visible = new Set(entities.map((entity) => entity.id));
     const departed = new Set(
       view.events
-        .filter((event) => event.type === 'departed' && !this.knownEvents.has(event.id))
+        .filter(
+          (event) =>
+            (event.type === 'departed' || event.type === 'body-removed') &&
+            !this.knownEvents.has(event.id),
+        )
         .map((event) => event.actorId),
     );
     this.knownEvents = new Set(view.events.map((event) => event.id));
@@ -342,7 +366,7 @@ export class WildernessScene implements WorldRenderer {
         // docs/worlds/base/items.md#ground-piles
         if (
           entry.view.kind === 'item-pile' ||
-          (entry.view.id === view.player.id && view.player.participation === 'inactive') ||
+          (entry.view.id === view.player.id && playerAbsent) ||
           (departed.has(id) && document.documentElement.dataset.reduceMotion === 'true')
         ) {
           this.releaseEntity(entry);
@@ -362,7 +386,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -406,7 +430,10 @@ export class WildernessScene implements WorldRenderer {
       this.actors.delete(id);
     }
     this.applyLevelFocus();
-    this.presentation.lighting(view);
+    this.presentation.lighting(
+      view,
+      [...this.actors.values()].map((entry) => entry.view),
+    );
     this.statuses.observe(view);
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
@@ -852,11 +879,13 @@ export class WildernessScene implements WorldRenderer {
     const root = new pc.Entity(view.name, this.app);
     this.app.root.addChild(root);
     root.setPosition(view.position.x, view.position.y, view.position.z);
-    const dead = view.kind === 'remains' || view.status === 'Dead';
+    const dead = !!view.bodyState;
     const equipped =
       view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
+      wolf = view.appearance === 'wolf-sprite',
+      bear = view.appearance === 'bear-sprite',
       crate = view.appearance === 'crate-mesh';
     // Identical procedural inputs produce identical artwork, regardless of identity.
     const resourceSeed = view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0);
@@ -869,9 +898,9 @@ export class WildernessScene implements WorldRenderer {
         : crate
           ? 'crate-mesh'
           : view.kind === 'actor'
-            ? `person:${view.id !== game.player.id}:${equipped}:${dead}`
+            ? `person:${view.id !== game.player.id}:${equipped}:${view.bodyState ?? ''}`
             : view.kind === 'animal' || view.kind === 'remains'
-              ? `animal:${view.subtype}:${dead}`
+              ? `animal:${view.subtype}:${view.appearance}:${view.bodyState ?? ''}`
               : view.kind === 'station'
                 ? 'fire'
                 : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
@@ -881,32 +910,46 @@ export class WildernessScene implements WorldRenderer {
         : crate
           ? 1
           : view.kind === 'actor'
-            ? 1.05
-            : deer
-              ? 2.3
-              : bird
-                ? 1.3
-                : view.kind === 'animal' || view.kind === 'remains'
-                  ? 1.25
-                  : view.kind === 'station'
-                    ? 1.5
-                    : 1.9;
+            ? dead
+              ? 2.1
+              : 1.05
+            : bear
+              ? 2.8
+              : wolf
+                ? 2.4
+                : deer
+                  ? 2.3
+                  : bird
+                    ? 1.3
+                    : view.kind === 'animal' || view.kind === 'remains'
+                      ? 1.25
+                      : view.kind === 'station'
+                        ? 1.5
+                        : 1.9;
     let height =
       view.kind === 'item-pile'
         ? 0.55
         : crate
           ? 0.8
           : view.kind === 'actor'
-            ? 2.1
-            : deer
+            ? dead
+              ? 0.55
+              : 2.1
+            : bear
               ? 1.9
-              : bird
-                ? 1
-                : view.kind === 'animal' || view.kind === 'remains'
-                  ? 1.05
-                  : view.kind === 'station'
-                    ? 1.65
-                    : 1.6;
+              : wolf
+                ? 1.4
+                : deer
+                  ? 1.9
+                  : bird
+                    ? 1
+                    : view.kind === 'animal' || view.kind === 'remains'
+                      ? 1.05
+                      : view.kind === 'station'
+                        ? 1.65
+                        : 1.6;
+    if (dead && (view.kind === 'animal' || view.kind === 'remains'))
+      height = Math.min(height, 0.45);
     let asset = this.appearanceAssets.get(key);
     if (!asset) {
       const images =
@@ -915,14 +958,16 @@ export class WildernessScene implements WorldRenderer {
           : crate
             ? []
             : view.kind === 'actor'
-              ? [0, 1, 2, 3, 4, 5].map((frame) =>
-                  personArt(view.id !== game.player.id, frame, equipped),
+              ? (dead ? [0] : [0, 1, 2, 3, 4, 5]).map((frame) =>
+                  personArt(view.id !== game.player.id, dead ? 0 : frame, equipped && !dead, dead),
                 )
               : view.kind === 'animal' || view.kind === 'remains'
-                ? [0, 1, 2].map((frame) =>
+                ? (dead ? [0] : [0, 1, 2]).map((frame) =>
                     bird
                       ? birdArt(frame, dead)
-                      : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
+                      : wolf || bear
+                        ? predatorArt(bear, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead)
+                        : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
                   )
                 : view.kind === 'station'
                   ? [0, 1, 2].map(fireArt)
@@ -930,6 +975,7 @@ export class WildernessScene implements WorldRenderer {
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => {
+            if (view.bodyState === 'rotting') source = rottingArt(source);
             const m = this.material('#ffffff', source, true, view.kind === 'station');
             configureBillboard(m);
             if (m.useLighting) lightSprite(m, this.app.graphicsDevice);
@@ -1003,7 +1049,8 @@ export class WildernessScene implements WorldRenderer {
         asset.padding,
       );
     return {
-      model: view.appearance === 'mercenary-model' ? this.mercenary?.create(root) : undefined,
+      model:
+        !dead && view.appearance === 'mercenary-model' ? this.mercenary?.create(root) : undefined,
       root,
       sprite,
       meshCasters: (root.findComponents('render') as pc.RenderComponent[])
@@ -1030,6 +1077,7 @@ export class WildernessScene implements WorldRenderer {
     };
   }
   private buildLandscape(map: GameView['map']): void {
+    const started = performance.now();
     this.landscape.destroy();
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
@@ -1090,31 +1138,39 @@ export class WildernessScene implements WorldRenderer {
         }
       }
     const ground = this.material('#ffffff', source);
-    this.primitive(
-      'Living ground',
-      'plane',
-      ground,
-      this.landscape,
-      (map.width - 1) / 2,
-      0,
-      (map.height - 1) / 2,
+    const mesh = groundMesh(this.app.graphicsDevice, map.spatial.surfaces, map.width, map.height);
+    if (mesh) {
+      this.geometryMeshes.push(mesh);
+      const receiver = new pc.Entity('Supported ground', this.app);
+      receiver.addComponent('render', {
+        meshInstances: [new pc.MeshInstance(mesh, ground)],
+        castShadows: true,
+        receiveShadows: true,
+      });
+      this.landscape.addChild(receiver);
+    }
+    // Matching repeated soil carries the view beyond finite support, without a dark rectangular plate.
+    const earth = this.material('#ffffff', grass);
+    earth.diffuseMap!.addressU = pc.ADDRESS_REPEAT;
+    earth.diffuseMap!.addressV = pc.ADDRESS_REPEAT;
+    earth.diffuseMapTiling.set(map.width / 16, map.height / 16);
+    earth.update();
+    const surroundMesh = surroundingGroundMesh(
+      this.app.graphicsDevice,
+      map.spatial.surfaces,
       map.width,
-      1,
       map.height,
     );
-    const earth = this.material('#596448', groundArt(map.seed + 1));
-    this.primitive(
-      'Forest floor beyond the clearing',
-      'plane',
-      earth,
-      this.landscape,
-      map.width / 2,
-      -0.06,
-      map.height / 2,
-      map.width + 26,
-      1,
-      map.height + 24,
-    );
+    if (surroundMesh) {
+      this.geometryMeshes.push(surroundMesh);
+      const surround = new pc.Entity('Surrounding forest floor', this.app);
+      surround.addComponent('render', {
+        meshInstances: [new pc.MeshInstance(surroundMesh, earth)],
+        castShadows: false,
+        receiveShadows: true,
+      });
+      this.landscape.addChild(surround);
+    }
     const stone = this.material('#7b8178'),
       timber = this.material('#715438');
     setVisibilityStencil(stone, sceneryStencil);
@@ -1166,64 +1222,72 @@ export class WildernessScene implements WorldRenderer {
         node.addChild(detail);
       }
     }
-    // Large woodland silhouettes remain outside the playable map; they imply no hidden collision.
-    const trees = [0, 1, 2, 3].map((i) =>
-      this.material('#ffffff', treeArt(map.seed + i * 19), true),
-    );
-    for (const material of trees) setVisibilityStencil(material, sceneryStencil);
-    for (let i = 0; i < 34; i++) {
-      const edge = i % 3;
-      let x: number, z: number;
-      if (edge === 0) {
-        x = 3 + rng() * map.width;
-        z = -2 - rng() * 5;
-      } else if (edge === 1) {
-        x = map.width + 1 + rng() * 5;
-        z = rng() * (map.height + 4);
-      } else {
-        x = 5 + rng() * map.width;
-        z = map.height + 2 + rng() * 5;
-      }
-      const h = 5.7 + rng() * 3;
-      this.billboard(
-        'Woodland canopy',
-        trees[i % trees.length]!,
-        this.landscape,
-        x,
-        0,
-        z,
-        h * 0.83,
-        h,
-        true,
-      );
+    // Authored static scenery has no picking or collision authority. Reuse art by finite input.
+    const groups = new Map<string, SceneryInstance[]>();
+    for (const instance of map.spatial.scenery ?? []) {
+      const key = `${instance.appearance}:${instance.seed}:${instance.castShadows}`;
+      const group = groups.get(key);
+      if (group) group.push(instance);
+      else groups.set(key, [instance]);
     }
-    // Ground-height texture detail is decorative and does not obstruct movement.
-    const grassImage = resourceArt('grass', map.seed);
-    const tuft = this.material('#ffffff', grassImage, true);
-    const grassTransforms: number[] = [];
-    for (let i = 0; i < 210; i++) {
-      const x = rng() * (map.width - 1),
-        z = rng() * (map.height - 1);
-      if (map.tiles[Math.round(z)]?.[Math.round(x)] !== 'grass') continue;
-      const h = 0.16 + rng() * 0.28;
-      const width = h * 1.5;
-      grassTransforms.push(width, 0, 0, 0, 0, width, 0, 0, 0, 0, h, 0, x, 0, z, 1);
-    }
-    if (grassTransforms.length) {
+    for (const instances of groups.values()) {
+      const first = instances[0]!;
+      const image = sceneryArt(first.appearance, first.seed);
+      if (!image) continue;
+      const material = this.material('#ffffff', image, true);
+      setVisibilityStencil(material, sceneryStencil);
       const padding = spritePadding([
-        grassImage.getContext('2d')!.getImageData(0, 0, grassImage.width, grassImage.height),
+        image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
       ]);
-      const batch = instanceBillboards(
-        this.app.graphicsDevice,
-        tuft,
-        new Float32Array(grassTransforms),
-        padding.bottom,
-      );
-      lightSprite(tuft, this.app.graphicsDevice);
-      this.landscapeBuffers.push(batch.buffer);
-      const node = new pc.Entity('Meadow grass', this.app);
-      node.addComponent('render', { meshInstances: [batch.instance], castShadows: false });
-      this.landscape.addChild(node);
+      const transforms: number[] = [];
+      for (const instance of instances) {
+        const { x, y, z } = instance.position;
+        if (instance.castShadows) {
+          this.billboard(
+            instance.id,
+            material,
+            this.landscape,
+            x,
+            y,
+            z,
+            instance.width,
+            instance.height,
+            true,
+          );
+        } else {
+          transforms.push(
+            instance.width,
+            0,
+            0,
+            0,
+            0,
+            instance.width,
+            0,
+            0,
+            0,
+            0,
+            instance.height,
+            0,
+            x,
+            y,
+            z,
+            1,
+          );
+        }
+      }
+      if (transforms.length) {
+        const batch = instanceBillboards(
+          this.app.graphicsDevice,
+          material,
+          new Float32Array(transforms),
+          padding.bottom,
+        );
+        lightSprite(material, this.app.graphicsDevice);
+        this.landscapeBuffers.push(batch.buffer);
+        const node = new pc.Entity(first.appearance, this.app);
+        node.addComponent('render', { meshInstances: [batch.instance], castShadows: false });
+        this.landscape.addChild(node);
+      }
     }
     const waterCanvas = document.createElement('canvas');
     waterCanvas.width = 32;
@@ -1238,21 +1302,28 @@ export class WildernessScene implements WorldRenderer {
       const x = rng() * map.width,
         z = rng() * map.height;
       if (map.tiles[Math.round(z)]?.[Math.round(x)] !== 'water') continue;
+      const support = map.spatial.surfaces.find(
+        (s) => s.material === 'ground' && surfaceContains(s, { x, z }),
+      );
+      if (!support) continue;
+      const y = surfaceHeight(support, x, z);
       const entity = this.primitive(
         'Stream glint',
         'plane',
         waterShine,
         this.landscape,
         x,
-        0.012,
+        y + 0.012,
         z,
         0.3 + rng() * 0.5,
         1,
         0.15,
       );
-      this.animations.push({ y: 0, entity, x, z, phase: rng() * Math.PI * 2 });
+      this.animations.push({ y, entity, x, z, phase: rng() * Math.PI * 2 });
     }
     this.landscapeMaterials = this.materials.slice(materialStart);
+    this.canvas.dataset.sceneryCount = String(map.spatial.scenery?.length ?? 0);
+    this.canvas.dataset.landscapeBuildMs = String(Math.round(performance.now() - started));
   }
   private placeCamera(): void {
     const pose = cameraPose(this.cameraSettings);
@@ -1435,6 +1506,7 @@ export class WildernessScene implements WorldRenderer {
     const player = this.view && this.actors.get(this.view.player.id);
     if (player && this.view) {
       const position = player.root.getPosition();
+      this.perception.moveOrigin(position);
       // Follow the interpolated sprite, not network snapshots; docs/spatial-world.md#picking-and-controls.
       if (this.cameraSettings.following) {
         const focus = this.cameraSettings.focus;
@@ -1491,11 +1563,15 @@ export class WildernessScene implements WorldRenderer {
     const hoverValid = !!hovered && this.identifiable(hovered) && !this.drag && !!this.hoverPoint;
     const age = (performance.now() - this.hoverStarted) / 1000;
     const fade =
-      !hoverValid || age <= 1
+      !hoverValid ||
+      (this.targeting && !hovered?.view.equippedAction) ||
+      (!this.targeting && age <= 0.3)
         ? 0
         : document.documentElement.dataset.reduceMotion === 'true'
           ? 1
-          : Math.min(1, (age - 1) / 0.25);
+          : this.targeting
+            ? 1
+            : Math.min(1, (age - 0.3) / 0.25);
     this.outline.update(
       fade > 0 && hovered
         ? hovered.model?.visible
@@ -1509,7 +1585,7 @@ export class WildernessScene implements WorldRenderer {
       if (!this.view?.clock.paused)
         wave.entity.setPosition(
           wave.x + Math.sin(this.elapsed * 0.7 + wave.phase) * 0.12,
-          0.012,
+          wave.y + 0.012,
           wave.z,
         );
   }
@@ -1535,7 +1611,7 @@ export class WildernessScene implements WorldRenderer {
     const supported =
       entry.observed &&
       entry.root.enabled &&
-      entry.view.status !== 'Dead' &&
+      !entry.view.bodyState &&
       !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
       !entry.view.actionAnimation;
     entry.model.setVisible(supported);
@@ -1818,6 +1894,10 @@ export class WildernessScene implements WorldRenderer {
       this.denySelection();
       return;
     }
+    if (this.targeting) {
+      if (entry) this.callbacks.target(entry.view);
+      return;
+    }
     if (entry) this.callbacks.select(entry.view);
     else {
       const position = this.groundPoint(local.x, local.y);
@@ -1872,7 +1952,7 @@ export class WildernessScene implements WorldRenderer {
   private cancelDrag(): void {
     const drag = this.drag;
     this.drag = null;
-    this.canvas.style.cursor = '';
+    this.canvas.style.cursor = this.targeting ? 'crosshair' : '';
     if (!drag) return;
     if (drag.button === 2) this.pointerContextHandled = true;
     this.saveCameraPreferences();

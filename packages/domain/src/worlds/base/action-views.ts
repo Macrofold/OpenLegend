@@ -1,4 +1,4 @@
-import type { Command, WorldState } from '../../types.js';
+import type { Command, Entity, WorldState } from '../../types.js';
 import type { ActivityView } from '../../action-experience.js';
 import { itemFor } from '../../objects.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
@@ -9,6 +9,29 @@ import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
+
+/** This world's supported equipped-item uses, selected from already permitted offers.
+ * The host retains the offer's admission/result metadata; it never invents an executor. */
+export function equippedTargetAction<T extends { command: { type: string; itemId?: string } }>(
+  world: WorldState,
+  target: Entity,
+  equipment: { id: string; definitionId: string } | undefined,
+  offers: readonly T[],
+): T | undefined {
+  if (!equipment) return;
+  const definition = world.itemDefinitions[equipment.definitionId];
+  const selected = offers.find(
+    (offer) =>
+      (offer.command.type === 'strike' && offer.command.itemId === equipment.id) ||
+      (offer.command.type === 'hunt' && !!definition?.launcher) ||
+      (offer.command.type === 'gather' &&
+        !!definition?.gatheringTool &&
+        definition.gatheringTool.resourceId === target.resource?.definitionId),
+  );
+  return selected
+    ? { ...selected, command: { ...selected.command, itemId: equipment.id } }
+    : undefined;
+}
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
  * No later observation may fill in a hidden historical target or effect. */
