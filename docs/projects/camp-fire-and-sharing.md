@@ -1,6 +1,10 @@
 # Camp fire care and consent-aware sharing
 
-Mike approved implementation in chat on 2026-09-28 for [starting-scene priorities](../maintainers/action-capabilities.md#starting-scene-action-priorities) 2 (“Keep camp usable”: fire care) and 3 (“Organize and share supplies”: consent-aware handover, reserving portions). Work starts from `origin/main` at `be68b1e0` on `claude/camp-fire-sharing-f084ba`. The estimated change is 750–950 logic lines, excluding documentation. It adds saved world state and a consent rule, and it crosses the domain, server, protocol, client and character-decision layers. Seven other agents work in parallel, so this durable plan also records every edit to files they own. An adversarial three-lens plan review (lifecycle, authority/privacy, scope/documentation) revised decisions 1, 4–8 and 10 before handover work began.
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Finite fire care and consent-aware handover are delivered; catalogued offer storage and named portion reservations remain open. | 2026-10-04   |
+
+The historical task was approved in chat on 2026-09-28 for [starting-scene priorities](../maintainers/action-capabilities.md#starting-scene-action-priorities) 2 (“Keep camp usable”: fire care) and 3 (“Organize and share supplies”: consent-aware handover, reserving portions). The original work started from `origin/main` at `be68b1e0` on `claude/camp-fire-sharing-f084ba`; those references are provenance, not an outstanding merge or instructions to restart the branch. The [current gameplay-first policy](../repertoires/gameplay-priorities.md) supersedes that starting-scene selection order. The estimated change is 750–950 logic lines, excluding documentation. It adds saved world state and a consent rule, and it crosses the domain, server, protocol, client and character-decision layers. Seven other agents work in parallel, so this durable plan also records every edit to files they own. An adversarial three-lens plan review (lifecycle, authority/privacy, scope/documentation) revised decisions 1, 4–8 and 10 before handover work began.
 
 ## Scenarios
 
@@ -14,7 +18,7 @@ Mike approved implementation in chat on 2026-09-28 for [starting-scene prioritie
 3. **Reserving a portion for a named person** was evaluated and deferred; see decision 7. Tracker BW21 records the seam with its actual blockers (state-contribution holds and native work).
 4. **Readable results** use the existing world-event text, action history, menus and inventory. No new panels.
 
-Out of scope: body care, repair, shelter, ongoing “tend until dawn” activities (these need AC06), changes to grounding, invention families, warmth, water or fluids, feeding someone, and joint physical work (COOP-01 to COOP-04 stay unsupported).
+The original family slice excluded body care, repair, shelter, ongoing tending, changes to grounding, invention families, warmth, water or fluids, feeding someone and joint physical work. A later [explicit one-session fire watch](../worlds/base/camp-routines.md) is now delivered under PW10, with its own remaining qualification; it is not an absent finite fire-care mechanism, general autonomous tending or a compulsory chore. COOP-01 to COOP-04 remain unsupported.
 
 ## Decisions
 
@@ -23,7 +27,7 @@ Out of scope: body care, repair, shelter, ongoing “tend until dawn” activiti
    - **Seam:** the AC02 descriptor (AC02.1/AC09.1).
    - **Trigger for migration:** when AC02 lands, both families move onto the shared descriptor. AC09.3 stays unchecked.
 
-   The AC02 descriptor and invention registry do not exist in code yet, and no second registry is built.
+   The full AC02 invocation catalogue remains open. Current world-owned recipe-family registration and installed activity-host metadata already exist, including the narrow PW03/PW10 consumers. Those are distinct from completing AC02’s common action/predicate/tool-service contract; do not rebuild them or introduce a second registry ([current scope](../maintainers/action-capabilities.md#ac02--consume-the-common-capability-descriptor)).
 
 2. **Ignition requirement.** A cold fire lights only if three things hold. It must already contain fuel. The actor must carry one tinder unit: a plain fiber material that is not a container, weapon, tool or food. The actor must also carry a drill: a rigid shaft, which is not consumed. The tinder is consumed when lighting finishes. In this version lighting always succeeds. There is no flame transfer from another fire and no flint item. Both are future content.
 3. **Fuel is conserved.** Adding fuel consumes one real unit of a `fuel`-property material from the actor's accessible possessions, either chosen or the first by ID. It adds 3,600 game seconds, capped at 172,800 (the banked fire's starting fuel). Materials are consumed and fuel credited together when the work finishes. Cancelling therefore costs nothing, and a fire can never gain fuel without losing wood. Adding fuel works on a cold fire too (“laying” fuel). Extinguishing keeps the unburnt fuel. It is refused while another actor is cooking on that fire, because that actor's meat was already spent when cooking started. The per-slice burn now charges only fires that were lit at the start of the slice. This fixes over-burning of a newly lit fire and under-burning of a just-extinguished one.
