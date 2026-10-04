@@ -76,7 +76,7 @@ Mike selected Auth0 as the world login service on October 1, 2026 ([D05](../../a
 
 ## Entry and maintenance execution notes — September 28, 2026
 
-Authorized by the [entry and maintenance plan](../projects/multiplayer-entry-maintenance.md); [verification](../verification/multiplayer-entry-maintenance.md) records the evidence.
+Authorized by the [entry and maintenance plan](../projects/completed/multiplayer-entry-maintenance.md); [verification](../verification/multiplayer-entry-maintenance.md) records the evidence.
 
 - `authority.ts` grants may omit a character (stored without changing the existing grant table). Such grants never include play, never acquire a control lease and never count toward exit or shared pause. A new `spectate` capability permits a public overview. `operations-routes.ts` owns an explicit characterless route allowlist; every character route rejects those sessions before dispatch.
 - `invites.ts` issues hashed, single-use, expiring, revocable invites; issuers delegate only capabilities they hold. The OIDC callback redeems a remembered invite after verified sign-in. A player invite binds an unowned living person in the same world commit as the invite and grant; the body departs until the invitee explicitly takes control. Removing an enrolled account uses the existing audited capability change.
