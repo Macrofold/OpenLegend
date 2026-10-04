@@ -1,0 +1,32 @@
+name: Repertoire task workspace
+on:
+  push:
+    branches: [docs/canonical-repertoires-2026-10-03]
+    paths: [.github/workflows/repertoire-task.yml, .repertoire-task/**]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export tracked source and credential-free Git objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/repertoire-source"
+          mkdir -p "$out"
+          git archive --format=tar HEAD | gzip > "$out/source.tar.gz"
+          tar -czf "$out/git-objects.tar.gz" .git/objects .git/shallow
+          git rev-parse HEAD > "$out/HEAD.txt"
+          git rev-parse HEAD^{tree} > "$out/TREE.txt"
+          git ls-files '*AGENTS.md'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repertoire-source
+          path: ${{ runner.temp }}/repertoire-source
+          retention-days: 1
+          if-no-files-found: error
