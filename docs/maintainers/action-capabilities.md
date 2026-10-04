@@ -19,7 +19,7 @@ Checked items below mark delivered implementation scope, not passing automated a
 
 ## Starting-scene action priorities
 
-**Product-priority revision — October 3, 2026.** Select the next missing player experience from [ranked whole-game coverage](../repertoires/ranked-coverage.md), then use this tracker for the necessary action integration and acceptance. The former camp-first sequence and its justification that food/fire reuse the most working mechanics are superseded. A coherent camp is supporting gameplay, not a substitute for actual enemies, usable weapons, worthwhile exploration, rewards and progression.
+**Product-priority revision — October 3, 2026.** Select the next missing player experience from [ranked whole-game coverage](../repertoires/coverage.md), then use this tracker for the necessary action integration and acceptance. The former camp-first sequence and its justification that food/fire reuse the most working mechanics are superseded. A coherent camp is supporting gameplay, not a substitute for actual enemies, usable weapons, worthwhile exploration, rewards and progression.
 
 The next milestone must prove a **playable adventure loop**: the player can understand a goal, use equipment, confront or evade a readable opponent, reach a worthwhile destination, obtain a reward, improve something useful and attempt another challenge. Basic food, recovery, crafting, storage and functional shelter support that loop. Check the current player path before declaring a gap: existing movement, melee/ranged attempts, inventory, bags and rest must not be rebuilt merely because they now appear near the top of the priority register.
 
@@ -29,7 +29,7 @@ Sharpening, handle repair, container patches, bedding, purpose-bound portion res
 
 ### Capability inventory, not a next-feature ordering
 
-The inventory below retains the existing support and qualification record. A row's presence or position does not confer priority on all of its proposed extensions. Use the [384-action ranking](../repertoires/ranked-actions.md) and [scoped coverage](../repertoires/ranked-coverage.md) to separate basic capabilities from optional elaborations.
+The inventory below retains the existing support and qualification record. A row's presence or position does not confer priority on all of its proposed extensions. Use the [385-action catalogue](../repertoires/actions.md) and [scoped coverage](../repertoires/coverage.md) to separate basic capabilities from optional elaborations.
 
 | Scene capability                     | Existing native support                                                                             | Missing work or proof                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

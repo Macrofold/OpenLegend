@@ -2,12 +2,12 @@
 
 **Group 7 catalogue expansion complete · September 28, 2026.** This is the branch-local reading and processing record requested by Mike. It closes the assigned inventory work, not the research library's separate packet-reconciliation or runtime implementation tasks. Shared research trackers and source manuscripts are unchanged.
 
-| Catalogue | Numbered entries | Retained patterns | Verified expansion commit |
-| --- | ---: | ---: | --- |
-| [Abilities and progression](abilities-progression.md) | 300 | 10 | `9c4f8d320f9ba93642b95679dd47b249acab2188` |
-| [Technology](technology.md) | 300 | 10 | `58a06604b39834e7d657bee713a60cad4728f6bd` |
-| [Magic](magic.md) | 300 | 10 | `8ef44cd284fd8f0f158f1383011684b17aa15129` |
-| **Total** | **900** | **30** | All on `repertoires-v2-group-7` |
+| Catalogue                                             | Numbered entries | Retained patterns | Verified expansion commit                  |
+| ----------------------------------------------------- | ---------------: | ----------------: | ------------------------------------------ |
+| [Abilities and progression](abilities-progression.md) |              300 |                10 | `9c4f8d320f9ba93642b95679dd47b249acab2188` |
+| [Technology](technology.md)                           |              300 |                10 | `58a06604b39834e7d657bee713a60cad4728f6bd` |
+| [Magic](magic.md)                                     |              300 |                10 | `8ef44cd284fd8f0f158f1383011684b17aa15129` |
+| **Total**                                             |          **900** |            **30** | All on `repertoires-v2-group-7`            |
 
 ## Checkpoint and evidence boundary
 
@@ -132,42 +132,42 @@ The research library's original-conversation-packet reconciliation is still a se
 
 The following are traceable applications or retained coverage, **not claims that the source contains the proposed OpenLegend entry**. They close the pending synthesis notes above. Stable IDs refer to the three linked catalogues; broader unrelated game systems were deliberately not imported.
 
-| Read subject | Committed processing outcome |
-| --- | --- |
-| G97 | AP-257 develops selectively spent expert attention; TE-083 retains plans as records rather than possessions. |
-| G98 | AP-230 turns learned songs into situated route knowledge; the retained Route room preserves abstract SC journeys. |
-| G99 | AP-251 preserves harvest quality through technique; AP-198 retains staged apprenticeship. |
-| G100 | MG-272 distinguishes a borrowed technique from permanent expertise; equipment and form remain separate in existing transformation entries. |
-| G101 | AP-249 conserves supplies through expertise; TE-270 separates licence from materials; TE-281 distinguishes lower-impact configuration from guaranteed harmlessness. |
-| G102 | AP-200/AP-203 retain competence through changed commitments; cooperative entries require actual qualification, not loyalty alone. |
-| G103 | AP-248/AP-284 and MG-253/MG-254 develop paired effects and spending protection offensively. |
-| G104 | AP-155/AP-159 and TE-115/TE-263 retain the distinction between design, manufacture, fitting and active capacity. |
-| G105 | AP-149 and TE-102 retain learned controls and accessible remapping; ambiguous input is not promoted into a new failure mechanic. |
-| G106 | AP-253 develops practiced stance transitions without silent target substitution. |
-| G107 | AP-249 and MG-252 develop expenditure and scope as distinct choices, rather than adding another generic damage upgrade. |
-| G108 | AP-236/AP-294 and MG-272 distinguish retained procedure, active style and temporarily borrowed action. |
-| G109 | AP-249 changes consumption without substituting supplies for qualification. |
-| G110 | AP-283 and the existing scoped sensory/bond entries retain selective sharing rather than universal transfer. |
-| G111 | MG-241/MG-242/MG-256/MG-261 distinguish trajectory, passage, targeting and restored capacity; TE-291 retains temporary construction support. |
-| G112 | AP-250 makes broader compatible salvage useful without making every material interchangeable. |
-| G113 | AP-276/AP-278 and MG-259/MG-260/MG-276 develop recovery cadence, prepared reserves and inseparable power costs. |
-| G114 | AP-198/AP-205 retain demonstrated learning and mastery shortcuts; no compulsory repetitive training chore was added. |
-| G115 | AP-209 retains chosen retirement; leadership remains tied to actual roles, and SC gains no piloting. |
-| G116 | MG-292/MG-296 distinguish constrained return, retained skill and the mere signs of life. |
-| G117 | AP-254, TE-255 and MG-277 distinguish familiar operation, sensing channels and a suppressor's actual commitment. |
-| G118 | AP-229, TE-256/TE-292 and MG-262/MG-295 develop observation, bounded probes, destructive analysis and limited continuation. |
-| G119 | AP-280 and MG-250 develop spatial references and changed routes without copying franchise lore. |
-| G120 | TE-263/TE-270/TE-283 distinguish capacity, transferred production access and vulnerable recovery. |
-| G121 | AP-252/AP-255 develop equipment-preserving goals and recovery after commitment. |
-| G122 | AP-226, TE-250/TE-287 and MG-246 distinguish references, unfinished work, implants and container access. |
-| G123 | AP-259 retains physically possible passage and body-specific technique rather than hidden universal mobility. |
-| G124 | AP-243 develops a practiced coordination cue; social and artistic entries retain enjoyment beyond reward optimization. |
-| G125 | AP-247 makes one trained emergency intervention partner-specific without granting free universal actions. |
-| G126 | AP-293 preserves a distributed teaching tradition rather than making one protagonist immortal. |
-| G127 | AP-027/AP-200 retain situated route knowledge and transferable expertise; a borrowed guide is not an omniscient map. |
-| G128 | AP-275 and MG-281/MG-291 connect material preparation, ordinary useful magic and bounded remembered work. |
-| G129 | AP-256 and TE-241/TE-245/TE-247 distinguish operating rhythm, startup, regeneration and emergency cooling. |
-| G130 | TE-254/TE-288 and MG-271 distinguish calibration, a temporary passage window and local detectable traces. |
+| Read subject | Committed processing outcome                                                                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G97          | AP-257 develops selectively spent expert attention; TE-083 retains plans as records rather than possessions.                                                        |
+| G98          | AP-230 turns learned songs into situated route knowledge; the retained Route room preserves abstract SC journeys.                                                   |
+| G99          | AP-251 preserves harvest quality through technique; AP-198 retains staged apprenticeship.                                                                           |
+| G100         | MG-272 distinguishes a borrowed technique from permanent expertise; equipment and form remain separate in existing transformation entries.                          |
+| G101         | AP-249 conserves supplies through expertise; TE-270 separates licence from materials; TE-281 distinguishes lower-impact configuration from guaranteed harmlessness. |
+| G102         | AP-200/AP-203 retain competence through changed commitments; cooperative entries require actual qualification, not loyalty alone.                                   |
+| G103         | AP-248/AP-284 and MG-253/MG-254 develop paired effects and spending protection offensively.                                                                         |
+| G104         | AP-155/AP-159 and TE-115/TE-263 retain the distinction between design, manufacture, fitting and active capacity.                                                    |
+| G105         | AP-149 and TE-102 retain learned controls and accessible remapping; ambiguous input is not promoted into a new failure mechanic.                                    |
+| G106         | AP-253 develops practiced stance transitions without silent target substitution.                                                                                    |
+| G107         | AP-249 and MG-252 develop expenditure and scope as distinct choices, rather than adding another generic damage upgrade.                                             |
+| G108         | AP-236/AP-294 and MG-272 distinguish retained procedure, active style and temporarily borrowed action.                                                              |
+| G109         | AP-249 changes consumption without substituting supplies for qualification.                                                                                         |
+| G110         | AP-283 and the existing scoped sensory/bond entries retain selective sharing rather than universal transfer.                                                        |
+| G111         | MG-241/MG-242/MG-256/MG-261 distinguish trajectory, passage, targeting and restored capacity; TE-291 retains temporary construction support.                        |
+| G112         | AP-250 makes broader compatible salvage useful without making every material interchangeable.                                                                       |
+| G113         | AP-276/AP-278 and MG-259/MG-260/MG-276 develop recovery cadence, prepared reserves and inseparable power costs.                                                     |
+| G114         | AP-198/AP-205 retain demonstrated learning and mastery shortcuts; no compulsory repetitive training chore was added.                                                |
+| G115         | AP-209 retains chosen retirement; leadership remains tied to actual roles, and SC gains no piloting.                                                                |
+| G116         | MG-292/MG-296 distinguish constrained return, retained skill and the mere signs of life.                                                                            |
+| G117         | AP-254, TE-255 and MG-277 distinguish familiar operation, sensing channels and a suppressor's actual commitment.                                                    |
+| G118         | AP-229, TE-256/TE-292 and MG-262/MG-295 develop observation, bounded probes, destructive analysis and limited continuation.                                         |
+| G119         | AP-280 and MG-250 develop spatial references and changed routes without copying franchise lore.                                                                     |
+| G120         | TE-263/TE-270/TE-283 distinguish capacity, transferred production access and vulnerable recovery.                                                                   |
+| G121         | AP-252/AP-255 develop equipment-preserving goals and recovery after commitment.                                                                                     |
+| G122         | AP-226, TE-250/TE-287 and MG-246 distinguish references, unfinished work, implants and container access.                                                            |
+| G123         | AP-259 retains physically possible passage and body-specific technique rather than hidden universal mobility.                                                       |
+| G124         | AP-243 develops a practiced coordination cue; social and artistic entries retain enjoyment beyond reward optimization.                                              |
+| G125         | AP-247 makes one trained emergency intervention partner-specific without granting free universal actions.                                                           |
+| G126         | AP-293 preserves a distributed teaching tradition rather than making one protagonist immortal.                                                                      |
+| G127         | AP-027/AP-200 retain situated route knowledge and transferable expertise; a borrowed guide is not an omniscient map.                                                |
+| G128         | AP-275 and MG-281/MG-291 connect material preparation, ordinary useful magic and bounded remembered work.                                                           |
+| G129         | AP-256 and TE-241/TE-245/TE-247 distinguish operating rhythm, startup, regeneration and emergency cooling.                                                          |
+| G130         | TE-254/TE-288 and MG-271 distinguish calibration, a temporary passage window and local detectable traces.                                                           |
 
 The earlier G01–G96 and G131–G148 reads also informed the original inventories and the later additions; their previously completed reading is carried forward, not replaced by this mapping of the final 34 dossiers. The world studies contribute ordinary life, sensation, humor, powerful institutions, coercion, grief, independent persons and the option to enjoy something without a mandatory drawback. Those contributions remain attributed in the catalogue rows.
 
@@ -179,6 +179,6 @@ A small local text check of the final sixty additions confirmed 60 unique sequen
 
 The six added Magic domains are motion/surfaces/geometry; paired casting; altered bodies and pleasures; predatory bargains; household performance; and death/continuity. All newly defined rules are marked D. FA recommendations remain optional traditions beyond the opening Borrowing arc; the wider-library `—` entries do not alter MD, MO or SC. All three catalogues retain ten introductory pattern cards.
 
-**Integration owner:** update shared library count/navigation summaries to reflect 300 entries per Group 7 catalogue, reconcile source-atlas pins with the recorded survival revisions, and add any appropriate central changelog entry. Coordinate Objects for enchanted possessions, Materials/Work for substances and production, Bodies/Combat for bodily and tactical consequences, and the remaining named domain dependencies. These shared files and other groups' catalogues were read-only for this assignment and remain unchanged.
+**Integration status:** all 300 entries in each Group 7 catalogue are incorporated with source provenance in the [atlas](source-atlas.md#catalogue-source-revisions). Objects still owns enchanted possessions; Materials and Work own substances and production; Bodies and Combat own bodily and tactical consequences. These and other named dependencies require their own implementation owners; the research integration does not close their delivery work.
 
 This final closeout changes only `magic.md` and this expressly requested branch-local progress record. It creates no pull request, merge, main-branch commit, runtime implementation, gameplay tests or live-provider experiment.

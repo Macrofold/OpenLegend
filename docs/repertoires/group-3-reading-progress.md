@@ -50,13 +50,13 @@ New repertoire examples are **creative synthesis**, not copied franchise events,
 
 ## Catalogue delivery
 
-| Catalogue | Starting entries | Final entries | Added entries and delivery |
-| --- | --- | --- | --- |
-| [Psychology and behavior](psychology-behavior.md) | 276 | 336 | PB-277–PB-336: [7df4443](https://github.com/Macrofold/OpenLegend/commit/7df4443241746d22ac43b567dc810faacfb6224f). Sixty additions; classification, Inspiration and coverage reconciliation. |
-| [Traits](traits.md) | 240 | 300 | TR-241–TR-300: [3cb0b25](https://github.com/Macrofold/OpenLegend/commit/3cb0b251894289f63303b2fe2551449c6285a610). Sixty additions; G99 title, category-owner, Inspiration and coverage corrections. |
-| [Needs](needs.md) | 240 | 300 | ND-241–ND-300: [90867e9](https://github.com/Macrofold/OpenLegend/commit/90867e97edaef849212d2952f0160870b6584715). Final corpus-coverage note: [2d2c59d](https://github.com/Macrofold/OpenLegend/commit/2d2c59d6ebbd9e31a98ce4e547af165cdfca7799). |
-| [Characters and backstories](characters-backstories.md) | 240 | 300 | CB-241–CB-300: [edc8fa2](https://github.com/Macrofold/OpenLegend/commit/edc8fa2ddea94441ba41afb23eb1311b209ce658). Final corpus-coverage note: [0316342](https://github.com/Macrofold/OpenLegend/commit/03163424841d13f5afee3dfd8f355cd985957011). |
-| **Total** | **996** | **1,236** | **240 additions across the recorded continuation checkpoints.** |
+| Catalogue                                               | Starting entries | Final entries | Added entries and delivery                                                                                                                                                                                                                         |
+| ------------------------------------------------------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Psychology and behavior](psychology-behavior.md)       | 276              | 336           | PB-277–PB-336: [7df4443](https://github.com/Macrofold/OpenLegend/commit/7df4443241746d22ac43b567dc810faacfb6224f). Sixty additions; classification, Inspiration and coverage reconciliation.                                                       |
+| [Traits](traits.md)                                     | 240              | 300           | TR-241–TR-300: [3cb0b25](https://github.com/Macrofold/OpenLegend/commit/3cb0b251894289f63303b2fe2551449c6285a610). Sixty additions; G99 title, category-owner, Inspiration and coverage corrections.                                               |
+| [Needs](needs.md)                                       | 240              | 300           | ND-241–ND-300: [90867e9](https://github.com/Macrofold/OpenLegend/commit/90867e97edaef849212d2952f0160870b6584715). Final corpus-coverage note: [2d2c59d](https://github.com/Macrofold/OpenLegend/commit/2d2c59d6ebbd9e31a98ce4e547af165cdfca7799). |
+| [Characters and backstories](characters-backstories.md) | 240              | 300           | CB-241–CB-300: [edc8fa2](https://github.com/Macrofold/OpenLegend/commit/edc8fa2ddea94441ba41afb23eb1311b209ce658). Final corpus-coverage note: [0316342](https://github.com/Macrofold/OpenLegend/commit/03163424841d13f5afee3dfd8f355cd985957011). |
+| **Total**                                               | **996**          | **1,236**     | **240 additions across the recorded continuation checkpoints.**                                                                                                                                                                                    |
 
 Inherited rows are not newly written work. Psychology retains its earlier 276 entries, including the prior Disco Elysium/Culture additions; the other catalogues retain their earlier 240 each. Each expansion adds six ten-entry domains while preserving existing IDs and linked pattern headings.
 
