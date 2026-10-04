@@ -1,5 +1,9 @@
 # Production deployment — technical design
 
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The hosting design is researched, but cloud packaging, deployment, Auth0 and production recovery remain unqualified. | 2026-10-04   |
+
 **Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
 ## 1. Decision
@@ -14,7 +18,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[Current runtime](../architecture.md), [DF03](../maintainers/production-data.md), root README and package manifests:** PostgreSQL-only; one database and data directory per world today. Do not copy older SQLite or shared multi-world database claims. No hosting fleet is demonstrated.
 
-**[MP01/MP04](../maintainers/multiplayer.md) and [authentication.ts](../../apps/server/src/authentication.ts):** Keep server-side OIDC, scoped grants, control generations and private projections. Recorded real-provider evidence used Keycloak, not Auth0. No published branch named multiplayer or indexed Auth0 reference was located during the initial review; Mike's Auth0 choice is authoritative, but its deployment remains to verify.
+**[MP01/MP04](../maintainers/multiplayer.md) and [authentication.ts](../../apps/server/src/authentication.ts):** Keep server-side OIDC, scoped grants, control generations and private projections. Recorded real-provider evidence used Keycloak, not Auth0. The delivered [entry and maintenance project](completed/multiplayer-entry-maintenance.md) already supplies characterless roles, one-use invitations and scheduled maintenance. [IDP01–IDP03](../maintainers/multiplayer.md#identity-provider--auth0) now explicitly own Auth0 setup, real-provider qualification and logout; the initial search limitation is not evidence that these plans are missing.
 
 **[Production delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md):** Preserve D5/D6, the selected shared-world workloads, transaction semantics and regional transfer design. Its historical SQLite introduction is superseded by DF03.
 
@@ -26,7 +30,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts) and [CI](../../.github/workflows/check.yml):** The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. CI uses PostgreSQL 16 while this design targets qualified PostgreSQL 18. The playbook makes these concrete PD02/PD04/PD09 prerequisites.
 
-The research branch is linked by immutable commit rather than copied or merged over newer code. On integration, promote these deployment-specific tasks under D5/D6; retain existing SC/SF/LT and subsystem task ownership.
+The research branch is linked by immutable commit rather than copied or merged over newer code. The deployment-specific PD tasks are now integrated under D5/D6; retain the separate historical scaling proposal and current subsystem task ownership. A named side-branch plan is not delivered runtime or a second active owner by implication.
 
 ## 3. Platform comparison
 
@@ -73,7 +77,7 @@ Initially keep the built client and dynamic endpoints on the existing same-origi
 
 Choose the first region from the launch cohort; `us-east-1` is a candidate, not a universal latency optimum. Start with measured task sizing, not a permanent machine specification. Fargate On-Demand is the default for the authoritative world; interruptible capacity is reserved for safely repeatable, non-authoritative work.
 
-The [playbook](production-deployment-playbook.md) specifies the future Dockerfile/infra/workflow artifacts, verified existing entrypoints, image-digest promotion, CDK ownership and concrete CLI examples. Those files and maintenance controls are not supplied by this documentation change. Start with native-only staging; never confuse an ECS task reaching RUNNING with a playable, recoverable world.
+The [playbook](production-deployment-playbook.md) specifies the future Dockerfile/infra/workflow artifacts, verified existing entrypoints, image-digest promotion, CDK ownership and concrete CLI examples. The cloud packaging and release coordinator remain unimplemented. Reuse the existing application maintenance owner rather than build a second pause/control mechanism; its delivered local workflow does not supply cloud ownership fencing or a release-phase record. Start with native-only staging; never confuse an ECS task reaching RUNNING with a playable, recoverable world.
 
 ### Ownership and shutdown
 
@@ -99,7 +103,7 @@ Add a native S3 checkpoint adapter later when operational evidence justifies rep
 
 Configure an Auth0 **Regular Web Application**, Universal Login and the existing server-side authorization-code + PKCE flow; exact HTTPS issuer/callback/logout origins, no wildcard trust. Retain `openid-client`, browser-bound one-use state/nonce and application sessions in secure HttpOnly cookies. Keep provider tokens/secrets out of browser state and world saves. Review CSRF/Origin checks, cookie policy, CSP and account recovery before external access. [10] [35]
 
-Keep `(issuer, subject) → internal account → world grants → actor/control` separate. Auth0 authenticates; the game authorizes. Implement audited invitation/signup provisioning, character admission, suspension/revocation, explicit account linking, deletion/export and operator MFA. Email/name equality never grants ownership. Bootstrap environment bindings are not a scalable account-management product. Keep grants, privacy restrictions and financial receipts outside gameplay rewind.
+Keep `(issuer, subject) → internal account → world grants → actor/control` separate. Auth0 authenticates; the game authorizes. Reuse existing operator-issued invitations, character admission and access revocation; qualify them through real Auth0 rather than recreate enrollment. Self-service signup, broader suspension/operator workflows, explicit account linking, deletion/export and operator MFA remain separately approved or qualified work; authentication success alone cannot enable any of them. Email/name equality never grants ownership. Bootstrap environment bindings are not a scalable account-management product. Keep grants, privacy restrictions and financial receipts outside gameplay rewind.
 
 **Verified scaling seam from the initial review:** `authentication.ts` retains up to 256 pending logins for five minutes in process memory. Before multiple authentication frontends, move one-use transaction state into a bounded shared TTL store through PostgreSQL initially; retain atomic consumption and browser binding. Do not rely on sticky routing to survive restarts. Current numeric settings remain in the [multiplayer inventory](../limits/multiplayer.md), not a new global login promise.
 
