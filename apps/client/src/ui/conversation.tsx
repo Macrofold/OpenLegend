@@ -82,7 +82,7 @@ export function ConversationThread({
   visible = true,
   contentRevision = '',
   liveAnnouncements = 'polite',
-  newMessageLabel = 'New Message',
+  newMessageLabel = 'New messages',
   preserveReading = false,
 }: {
   conversationKey: string;
@@ -257,12 +257,14 @@ export function ConversationComposer({
   submitLabel?: string;
   submitIcon?: string;
 }) {
+  const composing = useRef(false);
   return (
     <form
       id={formId}
       className="ol-composer"
       onSubmit={(event) => {
         event.preventDefault();
+        if (composing.current || disabled || inputDisabled) return;
         void onSubmit();
       }}
     >
@@ -280,11 +282,25 @@ export function ConversationComposer({
             maxLength={maxLength}
             value={value}
             disabled={inputDisabled}
+            onCompositionStart={() => {
+              composing.current = true;
+            }}
+            onCompositionEnd={() => {
+              composing.current = false;
+            }}
+            onBlur={() => {
+              composing.current = false;
+            }}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              if (
+                event.key === 'Enter' &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing &&
+                !composing.current
+              ) {
                 event.preventDefault();
-                void onSubmit();
+                if (!disabled && !inputDisabled) void onSubmit();
               }
             }}
           />

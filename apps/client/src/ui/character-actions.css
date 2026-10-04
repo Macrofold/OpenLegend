@@ -1,0 +1,181 @@
+.ol-character,
+.ol-character-actions,
+.ol-character-page,
+.ol-action-intention {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-character-identity,
+.ol-character-statuses,
+.ol-action-subject {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ol-character-identity > strong {
+  font: 600 20px/1.3 var(--font-display);
+}
+.ol-character-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--space-1);
+  border-block-end: 1px solid var(--line);
+  margin-block-end: var(--space-3);
+  padding-block-end: var(--space-1);
+}
+.ol-character-tabs [role='tab'] {
+  flex: 0 0 auto;
+  padding: var(--space-2);
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font: 500 13px/1.5 var(--font-ui);
+}
+.ol-character-tabs [data-selected] {
+  color: var(--ink);
+  background: var(--accent-quiet);
+  box-shadow: inset 0 -2px var(--accent);
+}
+.ol-character-tabs [data-focus-visible] {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.ol-character-page[data-inert],
+.ol-character-page[hidden],
+.ol-action-intention[hidden] {
+  display: none;
+}
+.ol-character-record-detail,
+.ol-character-work-details {
+  padding-block: var(--space-2);
+  border-block-start: 1px solid var(--line);
+}
+.ol-character-record-detail > summary,
+.ol-character-work-details > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+  margin-block-end: var(--space-2);
+}
+.ol-character-equipment {
+  display: flex;
+  align-items: start;
+  gap: var(--space-3);
+}
+.ol-character-equipment > div {
+  min-inline-size: 0;
+}
+.ol-character-equipment h3,
+.ol-character-equipment p,
+.ol-character-work-name {
+  margin: 0;
+}
+.ol-character-equipment h3 {
+  font-size: 16px;
+}
+.ol-action-intention {
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.ol-action-composer {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-action-composer textarea {
+  inline-size: 100%;
+  min-block-size: 88px;
+  resize: vertical;
+  box-sizing: border-box;
+  font: inherit;
+}
+.ol-action-scheduling {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.ol-action-scheduling legend {
+  margin-block-end: var(--space-2);
+}
+.ol-action-scheduling label {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+}
+.ol-action-scheduling input {
+  flex: none;
+  inline-size: auto;
+  margin-block-start: 4px;
+}
+.ol-action-result {
+  padding: var(--space-2);
+  border-inline-start: 2px solid var(--accent);
+}
+.ol-quick-position .ol-qa-section {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: center;
+}
+.ol-quick-position .ol-qa-heading {
+  color: var(--world-text);
+  font: 500 11px/1.4 var(--font-ui);
+  text-shadow: var(--world-text-shadow);
+}
+.ol-quick-position .ol-qa[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.ol-quick-position .ol-qa-wrap:focus-within .ol-hover-label {
+  opacity: 1;
+}
+.ol-shortcut-picker[role='dialog'] {
+  align-items: start;
+}
+.ol-quick-reason {
+  position: absolute;
+  inset-block-end: calc(100% + var(--space-3));
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: min(360px, calc(100vw / var(--ui-scale) - 32px));
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ol-quick-reason > p {
+  margin: 0;
+  min-inline-size: 0;
+}
+.ol-quick-source {
+  position: absolute;
+  inset-block-end: calc(100% + var(--space-3));
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: min(360px, calc(100vw / var(--ui-scale) - 32px));
+  max-block-size: calc(100vh / var(--ui-scale) - 160px);
+  overflow: auto;
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-quick-source p {
+  margin: 0;
+}
+@media (forced-colors: active) {
+  .ol-character-tabs [data-selected] {
+    border-block-end: 2px solid Highlight;
+  }
+  .ol-character-tabs [data-focus-visible] {
+    outline-color: Highlight;
+  }
+}

@@ -1,6 +1,7 @@
 import { canonicalJson, contentLabel } from './events.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
+import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { outcome } from './events.js';
 import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
@@ -93,12 +94,25 @@ export interface ActivityRequest {
  * docs/projects/game-interaction-redesign-tech-design.md#replace-generic-activity-forms-with-semantic-presentations */
 export type ActivityRequestPresentation = {
   target: string;
-  material: string;
-  reserve: string;
   workMode: string;
 } & (
-  | { kind: 'resource-care'; supply: string; stop: string; budget: string }
-  | { kind: 'gather-store-use'; source: string; destination: string; quantity: string }
+  | { kind: 'replenish-session' }
+  | {
+      kind: 'resource-care';
+      supply: string;
+      stop: string;
+      budget: string;
+      material: string;
+      reserve: string;
+    }
+  | {
+      kind: 'gather-store-use';
+      source: string;
+      destination: string;
+      quantity: string;
+      material: string;
+      reserve: string;
+    }
 );
 export interface ActivityRequestDescriptor {
   id: string;
@@ -140,7 +154,12 @@ export const STOCK_ACTIVITY_HOST: ActivityHostDescriptor = {
     },
   },
 };
-const trustedHosts = [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST];
+const trustedHosts = [
+  STOCK_ACTIVITY_HOST,
+  BASE_FIRE_ACTIVITY_HOST,
+  BASE_CAMP_ACTIVITY_HOST,
+  RESERVOIR_ACTIVITY_HOST,
+];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
   return world.moduleManifest.activityHosts.flatMap(
     (pin) => installedActivityHost(world, pin)?.definition.requests ?? [],
@@ -223,9 +242,6 @@ export function activityHostPin(host: ActivityHostDescriptor): DefinitionPin {
     version: host.definition.version,
     digest: contentLabel(canonicalJson(host.definition)),
   };
-}
-export function activityHostPins(): DefinitionPin[] {
-  return trustedHosts.map(activityHostPin);
 }
 export function validateActivityHostPins(pins: readonly DefinitionPin[]): void {
   if (!Array.isArray(pins) || pins.length > trustedHosts.length)

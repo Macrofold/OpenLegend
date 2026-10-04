@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
-import { AccessError, getOperations, post } from '../api';
+import { AccessError, SignInRequiredError, getOperations, post } from '../api';
+import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, Tag } from '../design-system/components';
 import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
@@ -35,18 +36,34 @@ export function OperationsConsole() {
   );
   const [view, setView] = useState<OperationsView | null>(null);
   const [error, setError] = useState('');
+  const [entry, setEntry] = useState<'signed-out' | 'forbidden' | 'failed'>();
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number>();
+  const [task, setTask] = useState('overview');
   const latest = useRef(0);
   const refresh = useCallback(async () => {
     const request = ++latest.current;
+    setRefreshing(true);
     try {
       const next = await getOperations();
       if (request !== latest.current) return;
       setView(next);
       setError('');
+      setEntry(undefined);
+      setUpdatedAt(Date.now());
     } catch (reason) {
       if (request !== latest.current) return;
       if (reason instanceof AccessError) setView(null);
+      setEntry(
+        reason instanceof SignInRequiredError
+          ? 'signed-out'
+          : reason instanceof AccessError
+            ? 'forbidden'
+            : 'failed',
+      );
       setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      if (request === latest.current) setRefreshing(false);
     }
   }, []);
   useEffect(() => {
@@ -54,9 +71,18 @@ export function OperationsConsole() {
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
     }, REFRESH_MS);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      latest.current++;
+    };
   }, [refresh]);
   const can = (capability: AccessCapability) => !!view?.capabilities.includes(capability);
+  const selectedTask =
+    (task === 'access' && !view?.access) ||
+    (task === 'maintenance' && !can('create')) ||
+    (task === 'checkpoints' && !can('save'))
+      ? 'overview'
+      : task;
   return (
     <div className="ol-root ol-operations" data-theme={theme}>
       <header className="ol-operations-head">
@@ -74,7 +100,7 @@ export function OperationsConsole() {
                   .catch((reason: unknown) => setError(String(reason)))
               }
             >
-              Sign out
+              Log Out
             </Button>
           )}
         </div>
@@ -86,14 +112,48 @@ export function OperationsConsole() {
         </div>
       )}
       {!view ? (
-        <div className="ol-card ol-operations-card">
-          <p role="status">{error || 'Loading world operations…'}</p>
-          {error && <a href="/auth/login">Sign in</a>}
-        </div>
+        <main className="ol-card ol-operations-card ol-operations-entry">
+          <h2 className="ol-heading">
+            {entry === 'signed-out'
+              ? 'Sign in to World operations'
+              : entry === 'forbidden'
+                ? 'No access to World operations'
+                : entry === 'failed'
+                  ? 'World operations could not connect'
+                  : 'Opening World operations…'}
+          </h2>
+          <p role={error ? 'alert' : 'status'}>
+            {error || 'Checking this account’s permitted world access.'}
+          </p>
+          {entry === 'forbidden' && (
+            <p>
+              Ask the world operator to check this account’s access, or sign in with another
+              account.
+            </p>
+          )}
+          <div className="ol-operations-row">
+            {entry === 'signed-out' ? (
+              <a className="ol-btn" data-variant="primary" href="/auth/login">
+                Sign in
+              </a>
+            ) : (
+              entry && (
+                <Button busy={refreshing} onPress={() => void refresh()}>
+                  {entry === 'forbidden' ? 'Check access again' : 'Retry connection'}
+                </Button>
+              )
+            )}
+            {entry === 'forbidden' && <a href="/auth/login?change-account=true">Change account</a>}
+          </div>
+        </main>
       ) : (
-        <main className="ol-operations-grid">
-          <section className="ol-card ol-operations-card" aria-label="World status">
-            <Section title="World">
+        <main className="ol-operations-workspace">
+          <section
+            className="ol-card ol-operations-card ol-operations-summary"
+            aria-label="World and account status"
+          >
+            <div>
+              <h2 className="ol-heading">World status</h2>
               <p className="ol-operations-clock">
                 Day {view.clock.day} · {String(Math.floor(view.clock.hour)).padStart(2, '0')}:
                 {String(Math.floor(view.clock.seconds / 60) % 60).padStart(2, '0')} ·{' '}
@@ -101,58 +161,136 @@ export function OperationsConsole() {
                   ? PAUSE_TEXT[view.clock.pauseReason ?? 'manual']
                   : `Running at ${view.clock.speed}×`}
               </p>
-              {error && <p role="status">{error}</p>}
-            </Section>
-            <Section title="Your access">
               <p className="ol-muted">
                 {view.actorId
-                  ? 'This account has a character in this world.'
-                  : 'This account has no character here; it cannot act in the world.'}
+                  ? 'This account has a character. Return to your character to play.'
+                  : 'This account has no character here. Viewing operations does not control a character or keep the world running.'}
               </p>
-              <ul className="ol-operations-tags" aria-label="Granted operations">
-                {view.capabilities.map((capability) => (
-                  <li key={capability}>
-                    <Tag>{CAPABILITY_TEXT[capability]}</Tag>
-                  </li>
-                ))}
-              </ul>
-            </Section>
+            </div>
+            <div className="ol-operations-summary-actions">
+              <Button size="sm" variant="quiet" busy={refreshing} onPress={() => void refresh()}>
+                Refresh world status
+              </Button>
+              {updatedAt && (
+                <span className="ol-caption">
+                  Updated {new Date(updatedAt).toLocaleTimeString()}
+                </span>
+              )}
+              <details>
+                <summary>World and account details</summary>
+                <p className="ol-caption">World: {view.worldId}</p>
+                <p className="ol-caption">Account: {view.accountId}</p>
+              </details>
+            </div>
+            {error && (
+              <p role="alert">
+                World status could not refresh. The previous view remains visible. {error}
+              </p>
+            )}
           </section>
-          {view.overview && (
-            <section className="ol-card ol-operations-card" aria-label="World overview">
-              <Section title="World overview">
-                <OverviewMap overview={view.overview} />
-              </Section>
-            </section>
-          )}
-          {can('create') && (
-            <section className="ol-card ol-operations-card" aria-label="Maintenance">
-              <MaintenanceSection
-                current={
-                  view.maintenance?.status === 'scheduled' || view.maintenance?.status === 'active'
-                    ? view.maintenance
-                    : undefined
-                }
-                history={view.maintenanceHistory ?? []}
-                onChanged={() => void refresh()}
-              />
-            </section>
-          )}
-          {view.access && (
-            <section className="ol-card ol-operations-card" aria-label="Access and invites">
-              <AccessSection
-                view={view}
-                access={view.access}
-                describe={(capability) => CAPABILITY_TEXT[capability]}
-                onChanged={() => void refresh()}
-              />
-            </section>
-          )}
-          {can('save') && (
-            <section className="ol-card ol-operations-card" aria-label="Saves">
-              <GameSavesPanel />
-            </section>
-          )}
+          <Tabs
+            key={`${view.worldId}:${view.accountId}`}
+            className="ol-operations-tabs"
+            selectedKey={selectedTask}
+            onSelectionChange={(key) => setTask(String(key))}
+          >
+            <TabList aria-label="World operations tasks" className="ol-operations-task-list">
+              <Tab id="overview" className="ol-operations-task">
+                Overview and access
+              </Tab>
+              {view.access && (
+                <Tab id="access" className="ol-operations-task">
+                  People and invitations
+                </Tab>
+              )}
+              {can('create') && (
+                <Tab id="maintenance" className="ol-operations-task">
+                  Maintenance
+                </Tab>
+              )}
+              {can('save') && (
+                <Tab id="checkpoints" className="ol-operations-task">
+                  Checkpoints
+                </Tab>
+              )}
+            </TabList>
+            <TabPanel id="overview" className="ol-operations-task-panel" shouldForceMount>
+              <div className="ol-operations-grid">
+                <section className="ol-card ol-operations-card">
+                  <Section title="Your permitted tasks">
+                    <p>
+                      These permissions belong to this account in this world. Opening a tab does not
+                      perform an operation.
+                    </p>
+                    <ul className="ol-operations-tags" aria-label="Granted operations">
+                      {view.capabilities.map((capability) => (
+                        <li key={capability}>
+                          <Tag>{CAPABILITY_TEXT[capability]}</Tag>
+                        </li>
+                      ))}
+                    </ul>
+                  </Section>
+                </section>
+                <section className="ol-card ol-operations-card" aria-label="Public world overview">
+                  <Section title="Public world overview">
+                    <p className="ol-caption">
+                      A read-only map of broad categories. It does not show private names,
+                      possessions, speech or character knowledge.
+                    </p>
+                    {view.overview ? (
+                      <OverviewMap overview={view.overview} />
+                    ) : (
+                      <p>
+                        This account does not have access to the public map. Its permitted world
+                        status is shown above.
+                      </p>
+                    )}
+                  </Section>
+                </section>
+              </div>
+            </TabPanel>
+            {view.access && (
+              <TabPanel
+                id="access"
+                className="ol-operations-task-panel ol-card ol-operations-card"
+                shouldForceMount
+              >
+                <AccessSection
+                  view={view}
+                  access={view.access}
+                  describe={(capability) => CAPABILITY_TEXT[capability]}
+                  onChanged={() => void refresh()}
+                />
+              </TabPanel>
+            )}
+            {can('create') && (
+              <TabPanel
+                id="maintenance"
+                className="ol-operations-task-panel ol-card ol-operations-card"
+                shouldForceMount
+              >
+                <MaintenanceSection
+                  current={
+                    view.maintenance?.status === 'scheduled' ||
+                    view.maintenance?.status === 'active'
+                      ? view.maintenance
+                      : undefined
+                  }
+                  history={view.maintenanceHistory ?? []}
+                  onChanged={() => void refresh()}
+                />
+              </TabPanel>
+            )}
+            {can('save') && (
+              <TabPanel
+                id="checkpoints"
+                className="ol-operations-task-panel ol-card ol-operations-card"
+                shouldForceMount
+              >
+                <GameSavesPanel visible={selectedTask === 'checkpoints'} timeDisplay="elapsed" />
+              </TabPanel>
+            )}
+          </Tabs>
         </main>
       )}
     </div>

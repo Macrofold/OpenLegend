@@ -173,9 +173,11 @@ export async function getOperations(): Promise<OperationsView> {
   const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
     message?: string;
   };
-  if (response.status === 401) throw new AccessError('Sign in to continue.');
-  if (!response.ok || !result.ok)
+  if (response.status === 401) throw new SignInRequiredError('Sign in to continue.');
+  if (response.status === 403)
     throw new AccessError(result.message ?? 'This account has no access to this world.');
+  if (!response.ok || !result.ok)
+    throw new Error(result.message ?? 'World operations could not be loaded. Try again.');
   const view = result as OperationsView;
   // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
   if (view.generation !== worldGeneration || view.scope !== viewScope) {

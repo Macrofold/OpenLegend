@@ -28,6 +28,10 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition extends Named {
+  /** Authored semantic key; clients resolve only their trusted icon catalogue. */
+  icon?: string;
+  /** The installed gathering capability's shortcut label, independent of its identity. */
+  gatherLabel?: string;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -240,6 +244,8 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity extends Named {
+  /** Authored appearance hint only; never evidence of capability or identity. */
+  icon?: string;
   statusEffects?: Record<string, import('./status-effects.js').StatusEffectInstance>;
   /** Sparse attributes for non-actor entities; actors retain their existing owner. */
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
@@ -329,6 +335,8 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  /** World-owned public wording, saved with the existing world settings. */
+  presentation: { worldName: string; locationName: string; timeLabel: string };
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };

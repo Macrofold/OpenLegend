@@ -24,7 +24,10 @@ import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { DEFAULT_COGNITION_POLICY } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
-import { activityHostPins } from '../../activity-hosts.js';
+import { activityHostPin, STOCK_ACTIVITY_HOST } from '../../activity-hosts.js';
+import { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';
+import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
+import { BASE_WORLD_PRESENTATION } from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
@@ -102,6 +105,7 @@ export function createWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
+    presentation: { ...BASE_WORLD_PRESENTATION },
     perceptionFeatures: {},
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),
@@ -118,7 +122,7 @@ export function createWorld(
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
-      activityHostPins(),
+      [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST].map(activityHostPin),
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
@@ -344,7 +348,21 @@ export function createWorld(
       animal: { fleeFrom: null, fleeSeconds: 0, wanderSeconds: 0 },
     },
   ];
-  for (const entity of entities) world.entities[entity.id] = entity;
+  for (const entity of entities) {
+    // These are authored base-world appearances; shared UI never recognizes these identities.
+    entity.icon = entity.resource
+      ? world.itemDefinitions[entity.resource.definitionId]?.icon
+      : entity.kind === 'campfire'
+        ? 'action.fire'
+        : entity.actor?.species === 'hare'
+          ? 'creature.hare'
+          : entity.actor?.species === 'deer'
+            ? 'creature.deer'
+            : entity.actor?.species === 'human'
+              ? 'person.wayfarer'
+              : undefined;
+    world.entities[entity.id] = entity;
+  }
   for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);

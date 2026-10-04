@@ -564,7 +564,7 @@ function InventoryWorkspace({
               .filter((entry) => entry.equipped)
               .map((entry) => (
                 <div key={entry.id}>
-                  <Icon name={symbol(entry.definitionId)} fallbackLabel={entry.name} />
+                  <Icon name={symbol(entry.icon ?? '')} fallbackLabel={entry.name} />
                   <span>{entry.name}</span>
                   {entry.actions
                     .filter((action) => action.command.type === 'unequip')

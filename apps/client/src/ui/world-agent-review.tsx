@@ -195,6 +195,11 @@ export function WorldAgentReview({
         >
           <div className="ol-agent-work-review-heading">
             <h2>Review exact change</h2>
+            {review && (
+              <p className="ol-caption">
+                Revision {review.draft.revision} · {review.plan.status}
+              </p>
+            )}
           </div>
           <div className="ol-agent-work-review-body">
             {!review && !error && <p role="status">Loading exact review…</p>}
@@ -203,7 +208,8 @@ export function WorldAgentReview({
                 <Tag>
                   {review.draft.kind} · revision {review.draft.revision} · {review.plan.status}
                 </Tag>
-                <p>{review.draft.intent}</p>
+                <h3>{review.draft.title ?? review.draft.intent}</h3>
+                <p>{review.plan.validation.semantics}</p>
                 <WorldAgentPreparationDetails
                   preparation={review.plan.preparation ?? review.draft.preparation}
                   preparationRevision={review.plan.revision}
@@ -244,6 +250,13 @@ export function WorldAgentReview({
             )}
           </div>
           <div className="ol-agent-work-review-footer">
+            {review && review.plan.status !== 'applied' && (
+              <p className="ol-caption ol-creator-save-status">
+                {review.plan.status === 'approved'
+                  ? 'Approved for this exact revision. Apply makes the change.'
+                  : 'Approval records your decision. Apply remains a separate action.'}
+              </p>
+            )}
             {mutationReason && <p role="status">{mutationReason}</p>}
             {!canApply && !mutationReason && (
               <p role="status">This session is currently read-only.</p>

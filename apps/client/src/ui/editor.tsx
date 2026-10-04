@@ -1,5 +1,7 @@
-import { useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Icon, IconButton, Tag } from '../design-system/components';
+import './creator-workspaces.css';
 
 let topLayer = 1200;
 
@@ -17,6 +19,8 @@ export function EditorPanel({
   saving,
   error,
   saveReason,
+  scope,
+  saveLabel = 'Save',
   onSave,
   onDiscard,
   onClose,
@@ -27,10 +31,13 @@ export function EditorPanel({
   saving: boolean;
   error?: string;
   saveReason?: string;
+  scope?: string;
+  saveLabel?: string;
   onSave(): Promise<boolean>;
   onDiscard?(): void;
   onClose(): void;
 }) {
+  const scopeId = useId();
   const [active, setActive] = useState(tabs[0]?.id ?? '');
   const [position, setPosition] = useState(() => ({
     x: Math.max(12, (innerWidth - Math.min(860, innerWidth - 24)) / 2),
@@ -70,6 +77,16 @@ export function EditorPanel({
   >(undefined);
   const selected = tabs.find((tab) => tab.id === active) ?? tabs[0];
   const bringForward = () => setLayer(++topLayer);
+  const center = () => {
+    const element = editor.current;
+    if (!element) return;
+    const bounds = element.getBoundingClientRect();
+    const scale = bounds.width / element.offsetWidth || 1;
+    setPosition({
+      x: position.x + (Math.max(8, (innerWidth - bounds.width) / 2) - bounds.left) / scale,
+      y: position.y + (Math.max(8, (innerHeight - bounds.height) / 2) - bounds.top) / scale,
+    });
+  };
   const requestClose = () => {
     if (!saving) dirty ? setConfirmClose(true) : onClose();
   };
@@ -119,6 +136,7 @@ export function EditorPanel({
       className="ol-root ol-editor"
       role="dialog"
       aria-label={title}
+      aria-describedby={scope ? scopeId : undefined}
       style={{ left: position.x, top: position.y, zIndex: layer }}
       onPointerDown={bringForward}
     >
@@ -132,8 +150,23 @@ export function EditorPanel({
         <div>
           <Tag tone="highlight">God mode</Tag>
           <h2 className="ol-heading">{title}</h2>
+          {scope && (
+            <p className="ol-creator-scope" id={scopeId}>
+              {scope}
+            </p>
+          )}
         </div>
-        <IconButton icon="ui.close" label={`Close ${title}`} onPress={requestClose} />
+        <div className="ol-creator-window-tools">
+          <Button size="sm" variant="quiet" icon="ui.recenter" onPress={center}>
+            Center window
+          </Button>
+          <IconButton
+            icon="ui.close"
+            label={`Close ${title}`}
+            disabled={saving}
+            onPress={requestClose}
+          />
+        </div>
       </header>
       <div className="ol-editor-layout">
         <nav className="ol-editor-tabs" aria-label={`${title} sections`}>
@@ -163,10 +196,12 @@ export function EditorPanel({
             <span role="alert">{error}</span>
           ) : saveReason ? (
             <span role="status">{saveReason}</span>
+          ) : saving ? (
+            'Saving changes…'
           ) : dirty ? (
             'Unsaved changes'
           ) : (
-            'All changes saved'
+            'No unsaved changes'
           )}
         </span>
         <div className="ol-editor-save-actions">
@@ -181,32 +216,56 @@ export function EditorPanel({
             disabled={!dirty || saving || !!saveReason}
             onPress={() => void onSave()}
           >
-            Save
+            {saveLabel}
           </Button>
         </div>
       </footer>
       {confirmClose && (
-        <div className="ol-editor-confirm" role="alertdialog" aria-label="Unsaved changes">
-          <div className="ol-card">
-            <h3 className="ol-heading">There are unsaved changes. What would you like to do?</h3>
-            <div>
-              <Button variant="quiet" onPress={() => setConfirmClose(false)}>
-                Keep editing
-              </Button>
-              <Button variant="secondary" disabled={saving} onPress={onClose}>
-                Discard and Close
-              </Button>
-              <Button
-                variant="primary"
-                busy={saving}
-                disabled={saving || !!saveReason}
-                onPress={() => void onSave().then((saved) => saved && onClose())}
-              >
-                Save and Close
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ModalOverlay
+          className="ol-root ol-modal-overlay"
+          style={{ zIndex: layer + 1 }}
+          isOpen
+          isDismissable={!saving}
+          isKeyboardDismissDisabled={saving}
+          onOpenChange={(open) => !open && setConfirmClose(false)}
+        >
+          <Modal className="ol-modal">
+            <Dialog
+              className="ol-person-dialog ol-creator-confirm"
+              role="alertdialog"
+              aria-label={`Unsaved changes in ${title}`}
+            >
+              <h3 className="ol-heading">Keep the changes to {title.replace(/^Edit /, '')}?</h3>
+              <p>
+                Your edits have not been saved. Keep editing, discard this draft, or save before
+                closing.
+              </p>
+              <div className="ol-creator-window-tools">
+                <Button variant="quiet" onPress={() => setConfirmClose(false)}>
+                  Keep editing
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={saving}
+                  onPress={() => {
+                    onDiscard?.();
+                    onClose();
+                  }}
+                >
+                  Discard and Close
+                </Button>
+                <Button
+                  variant="primary"
+                  busy={saving}
+                  disabled={saving || !!saveReason}
+                  onPress={() => void onSave().then((saved) => saved && onClose())}
+                >
+                  Save and Close
+                </Button>
+              </div>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
       )}
     </section>
   );

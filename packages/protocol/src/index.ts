@@ -90,12 +90,25 @@ export interface CommandInput {
 /** Transport mirror of the installed world's trusted semantic presentation. */
 export type ActivityRequestPresentation = {
   target: string;
-  material: string;
-  reserve: string;
   workMode: string;
 } & (
-  | { kind: 'resource-care'; supply: string; stop: string; budget: string }
-  | { kind: 'gather-store-use'; source: string; destination: string; quantity: string }
+  | { kind: 'replenish-session' }
+  | {
+      kind: 'resource-care';
+      supply: string;
+      stop: string;
+      budget: string;
+      material: string;
+      reserve: string;
+    }
+  | {
+      kind: 'gather-store-use';
+      source: string;
+      destination: string;
+      quantity: string;
+      material: string;
+      reserve: string;
+    }
 );
 export interface ActivityEntry {
   familyId: string;
@@ -185,6 +198,9 @@ export interface ActivityChoicePage {
 export interface ActionOption {
   id: string;
   label: string;
+  icon?: string;
+  /** Same supported action family across currently perceived targets. */
+  shortcut?: { id: string; label: string; icon?: string };
   command: CommandInput;
   enabled: boolean;
   reason?: string;
@@ -194,6 +210,7 @@ export interface ActionOption {
 export interface CatalogueAction {
   id: string;
   label: string;
+  icon?: string;
   category: string;
   /** Situation-aware plain text, projected by the server from permitted facts. */
   description: string;
@@ -252,6 +269,7 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView extends Named {
+  icon?: string;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
   contents?: Array<{
@@ -287,6 +305,7 @@ export interface EntityView extends Named {
 }
 
 export interface InventoryItemView extends Named {
+  icon?: string;
   revision: number;
   placementRevision: number;
   individual?: boolean;
@@ -483,6 +502,8 @@ export interface GameView {
   revision: number;
   worldId: string;
   profile: PlayerProfile;
+  /** Public authored location/clock wording; application control names stay in the client. */
+  presentation: { worldName: string; locationName: string; timeLabel: string };
   /** Native sight range/body anchors; presentation bands add no gameplay tier or range. */
   vision: { radius: number; enabled: boolean; eyeHeight: number; targetHeights: number[] };
   hearing: {

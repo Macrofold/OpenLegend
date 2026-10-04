@@ -3,16 +3,18 @@ import { GodCharacterActions, type GodCharacterControls } from './god-character-
 import { playerEntity } from '../entity-view';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MemoryHistory } from './memory-history';
+import { ActivityHistory } from './activity-history';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
-import { Button as AriaButton } from 'react-aria-components';
+import { Button as AriaButton, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
 import {
   Button,
   Condition,
   EmptyState,
   Explanation,
+  Icon,
   Section,
   Tag,
 } from '../design-system/components';
@@ -114,6 +116,9 @@ export function Crafting({
         )}
         {selected ? (
           <section className="ol-selected-recipe" aria-label={`Make ${selected.output.name}`}>
+            {!!search && !recipes.some((recipe) => recipe.id === selected.id) && (
+              <p className="ol-caption">Your selected output is outside this filter. Clear the search to see it in the list.</p>
+            )}
             <h3>{selected.output.name}</h3>
             <RecipeDetails recipe={selected} />
             <Actions actions={selected.actions} command={command} connected={connected} />
@@ -205,6 +210,14 @@ export function Character({
   view,
   command,
   connected,
+  actionSubject,
+  actionEntry,
+  conditionEntry,
+  workEntry,
+  chooseActionSubject,
+  clearActionSubject,
+  openInventory,
+  visible = true,
 }: {
   view: GameView;
   command(a: ActionOption): void;
@@ -212,43 +225,112 @@ export function Character({
   godControls?: GodCharacterControls;
   openMind?: () => void;
   openActivity?: () => void;
+  actionSubject?: EntityView | null;
+  actionEntry?: number;
+  conditionEntry?: number;
+  workEntry?: number;
+  chooseActionSubject?(): void;
+  clearActionSubject?(): void;
+  openInventory?(): void;
+  visible?: boolean;
 }) {
+  const [section, setSection] = useState('condition');
+  const equipped = view.player.inventory.find((item) => item.equipped);
+  useEffect(() => {
+    if (actionEntry) setSection('capabilities');
+  }, [actionEntry]);
+  useEffect(() => {
+    if (conditionEntry) setSection('condition');
+  }, [conditionEntry]);
+  useEffect(() => {
+    if (workEntry) setSection('capabilities');
+  }, [workEntry]);
   return (
-    <>
+    <div className="ol-character">
+      <header className="ol-character-identity">
+        <strong>{view.player.name}</strong>
+        {!view.player.alive && <Tag tone="danger">Cannot act</Tag>}
+        {view.player.participation === 'exiting' && <Tag>Leaving the world</Tag>}
+        {view.player.participation === 'inactive' && <Tag>Away</Tag>}
+      </header>
+      <Tabs selectedKey={section} onSelectionChange={(key) => setSection(String(key))} className="ol-character-sections">
+        <TabList aria-label="Character sections" className="ol-character-tabs">
+          <Tab id="condition">Condition</Tab>
+          <Tab id="capabilities">Capabilities</Tab>
+          <Tab id="equipment">Equipped</Tab>
+          <Tab id="record">Personal record</Tab>
+        </TabList>
+        <TabPanel id="condition" className="ol-character-page">
+          <Section title="Condition">
+            <Condition {...view.player} />
+            <div className="ol-character-statuses">
+              {view.player.statusEffects?.map((effect) => <Tag key={effect.id}>{effect.label}</Tag>)}
+            </div>
+            {!view.player.alive && <p>This character cannot act right now.</p>}
+          </Section>
+          <Section title="Available responses">
+            <Actions actions={view.player.actions.filter((action) => action.command.type !== 'cancel')} command={command} connected={connected} />
+            {!view.player.actions.some((action) => action.command.type !== 'cancel') && <p className="ol-caption">No direct response is offered in this condition.</p>}
+          </Section>
+          {openActivity && view.player.activity && <Button variant="quiet" onPress={openActivity}>Task · {view.player.activity.name} · {view.player.activity.status}</Button>}
+        </TabPanel>
+        <TabPanel id="capabilities" shouldForceMount className="ol-character-page">
+          <Section title="Actions available to you">
+            <Actions actions={view.player.actions.filter((action) => action.command.type !== 'cancel')} command={command} connected={connected} />
+            <p className="ol-caption">Select something in the world to see its actions. Belongings and known recipes keep their actions with the item or output.</p>
+          </Section>
+          <ActionAttempts
+            key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+            view={view}
+            connected={connected}
+            subject={actionSubject}
+            entry={actionEntry}
+            chooseSubject={chooseActionSubject}
+            clearSubject={clearActionSubject}
+            openActivity={openActivity}
+            visible={visible && section === 'capabilities'}
+          />
+          <details className="ol-character-record-detail">
+            <summary>Actions and learned activities</summary>
+            <ActivityHistory actorId={view.player.id} owned />
+          </details>
+        </TabPanel>
+        <TabPanel id="equipment" className="ol-character-page">
+          <Section title="Equipped item">
+            {equipped ? (
+              <div className="ol-character-equipment">
+                <Icon name={equipped.icon ?? 'ui.inventory'} fallbackLabel={equipped.name} size={32} />
+                <div><h3>{equipped.name}</h3><p>{equipped.description}</p></div>
+              </div>
+            ) : <p>No item is equipped.</p>}
+            <p className="ol-caption">Compare or change your equipped item in Inventory.</p>
+            {openInventory && <Button icon="ui.inventory" onPress={openInventory}>Open inventory</Button>}
+          </Section>
+        </TabPanel>
+        <TabPanel id="record" shouldForceMount className="ol-character-page">
+          {openMind && <Button variant="quiet" onPress={openMind}>My thoughts and relationships</Button>}
+          <Section title="Traits">
+            <Traits traits={view.player.traits} />
+            <p className="ol-caption">Starting dispositions, with no mechanical bonuses.</p>
+          </Section>
+          <Section title="Memories">
+            <MemoryHistory
+              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.player.id}`}
+              actorId={view.player.id}
+              owned
+              recent={view.player.memories}
+              visible={visible && section === 'record'}
+            />
+          </Section>
+        </TabPanel>
+      </Tabs>
       {godControls && (
-        <GodCharacterActions
-          entity={playerEntity(view)}
-          connected={connected}
-          controls={godControls}
-        />
+        <details className="ol-character-record-detail">
+          <summary>God mode · Character controls</summary>
+          <GodCharacterActions entity={playerEntity(view)} connected={connected} controls={godControls} />
+        </details>
       )}
-      {openMind && <Button onPress={openMind}>My thoughts and relationships</Button>}
-      {openActivity && view.player.activity && <Button onPress={openActivity}>Current task</Button>}
-      <ActionAttempts
-        key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
-        view={view}
-        connected={connected}
-      />
-      <Section title="Condition">
-        <Condition {...view.player} />
-        {view.player.statusEffects?.map((effect) => (
-          <Tag key={effect.id}>{effect.label}</Tag>
-        ))}
-        <Actions actions={view.player.actions} command={command} connected={connected} />
-      </Section>
-      <Section title="Traits">
-        <Traits traits={view.player.traits} />
-        <p className="ol-caption">Starting dispositions, with no mechanical bonuses.</p>
-      </Section>
-      <Section title="Memories">
-        <MemoryHistory
-          key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.player.id}`}
-          actorId={view.player.id}
-          owned
-          recent={view.player.memories}
-        />
-      </Section>
-    </>
+    </div>
   );
 }
 export function AiSettings({ view }: { view: GameView }) {

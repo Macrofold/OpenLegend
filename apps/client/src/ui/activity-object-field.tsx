@@ -221,7 +221,7 @@ export function ActivityObjectField({
           {selected.needsApproach && (
             <p className="ol-caption">
               Ordinary movement replaces current physical work and keeps completed effects. Arrival
-              does not inspect or start camp work. Recheck access after arrival.
+              does not inspect or start the task. Recheck access after arrival.
             </p>
           )}
           {page?.inspection && (

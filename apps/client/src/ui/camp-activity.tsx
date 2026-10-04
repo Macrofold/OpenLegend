@@ -265,12 +265,15 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   if (presentation && entry && descriptor) {
     values[presentation.target] = entry.targetId;
     values[presentation.workMode] = mode;
-    values[presentation.reserve] ??= String(descriptor.fields[presentation.reserve]?.minimum ?? '');
+    if (presentation.kind !== 'replenish-session')
+      values[presentation.reserve] ??= String(
+        descriptor.fields[presentation.reserve]?.minimum ?? '',
+      );
     if (presentation.kind === 'resource-care') {
       values[presentation.supply] ??= view.player.id;
       values[presentation.budget] ??= String(descriptor.fields[presentation.budget]?.minimum ?? '');
       values[`${presentation.stop}:when`] ??= 'duration';
-    } else
+    } else if (presentation.kind === 'gather-store-use')
       values[presentation.quantity] ??= String(
         descriptor.fields[presentation.quantity]?.minimum ?? '',
       );
@@ -594,7 +597,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     return selectedPage(key)?.selected?.label ?? 'Choose';
   }
   function amountSummary() {
-    if (!presentation) return null;
+    if (!presentation || presentation.kind === 'replenish-session') return null;
     const quantity =
       values[
         presentation.kind === 'resource-care' ? presentation.budget : presentation.quantity
@@ -765,23 +768,28 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           ) : (
             <p>{view.player.action?.label ?? 'No current task.'}</p>
           )}
-          {stoppable && (
-            <Button
-              disabled={disabled}
-              onPress={() =>
-                void perform(
-                  {
-                    id: 'stop-current-task',
-                    label: 'Stop current task',
-                    command: { type: 'cancel' },
-                    enabled: true,
-                  },
-                  'stop',
-                )
-              }
-            >
-              Stop current task
-            </Button>
+          {working && (
+            <>
+              <Button
+                disabled={disabled}
+                onPress={() =>
+                  void perform(
+                    {
+                      id: 'stop-current-task',
+                      label: 'Stop all work',
+                      command: { type: 'cancel' },
+                      enabled: true,
+                    },
+                    'stop',
+                  )
+                }
+              >
+                Stop all work
+              </Button>
+              <p className="ol-caption">
+                Also discards paused work. Completed effects and spent materials remain.
+              </p>
+            </>
           )}
           {scheduling}
         </Section>
@@ -805,149 +813,161 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       ) : (
         <Section title={descriptor.label}>
           <div className="ol-task-context">{objectChoice(presentation.target, true)}</div>
-          <div className="ol-task-overview">
-            <div className="ol-task-overview-row">
-              <p>
-                {
-                  descriptor.fields[
-                    presentation.kind === 'resource-care'
-                      ? presentation.supply
-                      : presentation.source
-                  ]!.label
-                }
-                :{' '}
-                <strong>
-                  {choiceLabel(
-                    presentation.kind === 'resource-care'
-                      ? presentation.supply
-                      : presentation.source,
-                  )}
-                </strong>
-                . {descriptor.fields[presentation.material]!.label}:{' '}
-                <strong>{choiceLabel(presentation.material)}</strong>.
-                {presentation.kind === 'gather-store-use' && (
-                  <>
-                    {' '}
-                    {descriptor.fields[presentation.destination]!.label}:{' '}
-                    <strong>{choiceLabel(presentation.destination)}</strong>.
-                  </>
-                )}
-              </p>
-              {editButton('supply', 'Change supply')}
+          {presentation.kind === 'replenish-session' ? (
+            <div className="ol-task-overview">
+              <p>{descriptor.description}</p>
             </div>
-            <div className="ol-task-overview-row">
-              <p>{amountSummary()}</p>
-              {editButton('amount', 'Change amount')}
-            </div>
-            {presentation.kind === 'resource-care' && (
-              <div className="ol-task-overview-row">
-                <p>
-                  {descriptor.fields[presentation.stop]!.label}:{' '}
-                  <strong>
-                    {values[`${presentation.stop}:when`] === 'duration'
-                      ? values[`${presentation.stop}:duration`]?.trim()
-                        ? `After ${values[`${presentation.stop}:duration`]} game minutes`
-                        : 'Choose a stopping time'
-                      : `Next ${values[`${presentation.stop}:when`]}`}
-                  </strong>
-                  .
-                  {currentReview && (
-                    <>
-                      {' '}
-                      <EventTime
-                        time={Number(currentReview.input.activityArguments?.[presentation.stop])}
-                      />
-                      .
-                    </>
-                  )}
-                </p>
-                {editButton('stop', 'Change stopping time')}
-              </div>
-            )}
-          </div>
-          <fieldset
-            id={`${fieldId}-editor-supply`}
-            className="ol-task-choices ol-task-editor"
-            disabled={disabled}
-            hidden={editing !== 'supply'}
-          >
-            <legend>Choose supplies</legend>
-            {objectChoice(
-              presentation.kind === 'resource-care' ? presentation.supply : presentation.source,
-            )}
-            {presentation.kind === 'gather-store-use' && objectChoice(presentation.destination)}
-            {objectChoice(presentation.material)}
-            <Button size="sm" variant="quiet" onPress={closeEditor}>
-              Done
-            </Button>
-          </fieldset>
-          <fieldset
-            id={`${fieldId}-editor-amount`}
-            className="ol-task-choices ol-task-editor"
-            disabled={disabled}
-            hidden={editing !== 'amount'}
-          >
-            <legend>Choose amounts</legend>
-            <div className="ol-task-limits">
-              {amountChoice(
-                presentation.kind === 'resource-care' ? presentation.budget : presentation.quantity,
-              )}
-              {amountChoice(presentation.reserve)}
-            </div>
-            <Button size="sm" variant="quiet" onPress={closeEditor}>
-              Done
-            </Button>
-          </fieldset>
-          {presentation.kind === 'resource-care' && (
-            <fieldset
-              id={`${fieldId}-editor-stop`}
-              className="ol-task-choices ol-task-editor"
-              disabled={disabled}
-              hidden={editing !== 'stop'}
-            >
-              <legend>Choose stopping time</legend>
-              <SelectField
-                label={descriptor.fields[presentation.stop]!.label}
-                placement="bottom start"
-                value={values[`${presentation.stop}:when`] ?? 'duration'}
-                options={[
-                  { id: 'duration', label: 'After a duration' },
-                  ...(choices.timeOptions?.namedDeadlines ?? [])
-                    .filter((time) => view.clock.namedTimes.includes(time.name))
-                    .map((time) => ({
-                      id: time.name,
-                      label: `Next ${time.name}`,
-                      description: `Day ${clockParts(time.at, view.clock.offsetHours).day} · ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
-                    })),
-                ]}
-                onChange={(when) => {
-                  if (!disabled) change(`${presentation.stop}:when`, when);
-                }}
-              />
-              {values[`${presentation.stop}:when`] === 'duration' && (
-                <label className="ol-task-amount">
-                  <span>Duration (game minutes)</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={values[`${presentation.stop}:duration`] ?? ''}
-                    disabled={disabled}
-                    aria-describedby={`${fieldId}-duration`}
-                    onChange={(event) =>
-                      change(`${presentation.stop}:duration`, event.target.value)
+          ) : (
+            <>
+              <div className="ol-task-overview">
+                <div className="ol-task-overview-row">
+                  <p>
+                    {
+                      descriptor.fields[
+                        presentation.kind === 'resource-care'
+                          ? presentation.supply
+                          : presentation.source
+                      ]!.label
                     }
+                    :{' '}
+                    <strong>
+                      {choiceLabel(
+                        presentation.kind === 'resource-care'
+                          ? presentation.supply
+                          : presentation.source,
+                      )}
+                    </strong>
+                    . {descriptor.fields[presentation.material]!.label}:{' '}
+                    <strong>{choiceLabel(presentation.material)}</strong>.
+                    {presentation.kind === 'gather-store-use' && (
+                      <>
+                        {' '}
+                        {descriptor.fields[presentation.destination]!.label}:{' '}
+                        <strong>{choiceLabel(presentation.destination)}</strong>.
+                      </>
+                    )}
+                  </p>
+                  {editButton('supply', 'Change supply')}
+                </div>
+                <div className="ol-task-overview-row">
+                  <p>{amountSummary()}</p>
+                  {editButton('amount', 'Change amount')}
+                </div>
+                {presentation.kind === 'resource-care' && (
+                  <div className="ol-task-overview-row">
+                    <p>
+                      {descriptor.fields[presentation.stop]!.label}:{' '}
+                      <strong>
+                        {values[`${presentation.stop}:when`] === 'duration'
+                          ? values[`${presentation.stop}:duration`]?.trim()
+                            ? `After ${values[`${presentation.stop}:duration`]} game minutes`
+                            : 'Choose a stopping time'
+                          : `Next ${values[`${presentation.stop}:when`]}`}
+                      </strong>
+                      .
+                      {currentReview && (
+                        <>
+                          {' '}
+                          <EventTime
+                            time={Number(
+                              currentReview.input.activityArguments?.[presentation.stop],
+                            )}
+                          />
+                          .
+                        </>
+                      )}
+                    </p>
+                    {editButton('stop', 'Change stopping time')}
+                  </div>
+                )}
+              </div>
+              <fieldset
+                id={`${fieldId}-editor-supply`}
+                className="ol-task-choices ol-task-editor"
+                disabled={disabled}
+                hidden={editing !== 'supply'}
+              >
+                <legend>Choose supplies</legend>
+                {objectChoice(
+                  presentation.kind === 'resource-care' ? presentation.supply : presentation.source,
+                )}
+                {presentation.kind === 'gather-store-use' && objectChoice(presentation.destination)}
+                {objectChoice(presentation.material)}
+                <Button size="sm" variant="quiet" onPress={closeEditor}>
+                  Done
+                </Button>
+              </fieldset>
+              <fieldset
+                id={`${fieldId}-editor-amount`}
+                className="ol-task-choices ol-task-editor"
+                disabled={disabled}
+                hidden={editing !== 'amount'}
+              >
+                <legend>Choose amounts</legend>
+                <div className="ol-task-limits">
+                  {amountChoice(
+                    presentation.kind === 'resource-care'
+                      ? presentation.budget
+                      : presentation.quantity,
+                  )}
+                  {amountChoice(presentation.reserve)}
+                </div>
+                <Button size="sm" variant="quiet" onPress={closeEditor}>
+                  Done
+                </Button>
+              </fieldset>
+              {presentation.kind === 'resource-care' && (
+                <fieldset
+                  id={`${fieldId}-editor-stop`}
+                  className="ol-task-choices ol-task-editor"
+                  disabled={disabled}
+                  hidden={editing !== 'stop'}
+                >
+                  <legend>Choose stopping time</legend>
+                  <SelectField
+                    label={descriptor.fields[presentation.stop]!.label}
+                    placement="bottom start"
+                    value={values[`${presentation.stop}:when`] ?? 'duration'}
+                    options={[
+                      { id: 'duration', label: 'After a duration' },
+                      ...(choices.timeOptions?.namedDeadlines ?? [])
+                        .filter((time) => view.clock.namedTimes.includes(time.name))
+                        .map((time) => ({
+                          id: time.name,
+                          label: `Next ${time.name}`,
+                          description: `Day ${clockParts(time.at, view.clock.offsetHours).day} · ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
+                        })),
+                    ]}
+                    onChange={(when) => {
+                      if (!disabled) change(`${presentation.stop}:when`, when);
+                    }}
                   />
-                  <span className="ol-caption" id={`${fieldId}-duration`}>
-                    Choose {(descriptor.fields[presentation.stop]!.minimumDuration ?? 0) / 60}–
-                    {(descriptor.fields[presentation.stop]!.maximumDuration ?? 0) / 60} game
-                    minutes.
-                  </span>
-                </label>
+                  {values[`${presentation.stop}:when`] === 'duration' && (
+                    <label className="ol-task-amount">
+                      <span>Duration (game minutes)</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={values[`${presentation.stop}:duration`] ?? ''}
+                        disabled={disabled}
+                        aria-describedby={`${fieldId}-duration`}
+                        onChange={(event) =>
+                          change(`${presentation.stop}:duration`, event.target.value)
+                        }
+                      />
+                      <span className="ol-caption" id={`${fieldId}-duration`}>
+                        Choose {(descriptor.fields[presentation.stop]!.minimumDuration ?? 0) / 60}–
+                        {(descriptor.fields[presentation.stop]!.maximumDuration ?? 0) / 60} game
+                        minutes.
+                      </span>
+                    </label>
+                  )}
+                  <Button size="sm" variant="quiet" onPress={closeEditor}>
+                    Done
+                  </Button>
+                </fieldset>
               )}
-              <Button size="sm" variant="quiet" onPress={closeEditor}>
-                Done
-              </Button>
-            </fieldset>
+            </>
           )}
           {mode === 'replace' && (
             <p>

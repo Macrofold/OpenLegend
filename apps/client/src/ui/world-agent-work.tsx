@@ -398,6 +398,9 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
       <div className="ol-agent-work-panes">
         <div ref={list} className="ol-agent-work-list" aria-label="Saved drafts">
           <h3>Saved work</h3>
+          <p className="ol-caption">
+            Choose a proposal to inspect its purpose, exact revision and next available step.
+          </p>
           {!rows.length && (
             <EmptyState title="No saved drafts yet">
               Completed proposals will appear here. Reading work never starts a model request.
@@ -426,7 +429,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   }
                   size={14}
                 />
-                {kindLabel[row.kind]} · revision {row.revision} · saved preparation:{' '}
+                {kindLabel[row.kind]} · revision {row.revision} ·{' '}
                 {(row.state ?? row.preparation?.next)?.replaceAll('_', ' ') ?? 'Saved proposal'}
                 {row.summary && ` — ${row.summary}`}
               </span>
@@ -438,7 +441,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
             </Button>
           )}
           <section aria-label="Saved exact reviews">
-            <h4>Exact reviews</h4>
+            <h4>Prepared changes and receipts</h4>
             {!session.plans.length && (
               <p className="ol-caption">No prepared changes on this page.</p>
             )}
@@ -498,9 +501,15 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     <summary>Original purpose</summary>
                     <p>{selectedExact.intent}</p>
                   </details>
-                  <p>
-                    <Tag>{kindLabel[selectedExact.kind]}</Tag> · revision {selectedExact.revision}
-                  </p>
+                  <Tag>{kindLabel[selectedExact.kind]}</Tag>
+                  <dl className="ol-creator-facts" aria-label="Selected work revision">
+                    <dt>Inspecting</dt>
+                    <dd>Revision {selectedExact.revision}</dd>
+                    <dt>Latest saved</dt>
+                    <dd>Revision {selectedExact.latestRevision}</dd>
+                    <dt>Your local changes</dt>
+                    <dd>{dirty ? 'Unsaved · this device' : 'No unsaved changes'}</dd>
+                  </dl>
                   {historical && (
                     <p role="status">
                       Historical revision. Its values and receipts remain readable. Edit the latest
@@ -528,7 +537,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                       disabled={busy}
                       onPress={() => void showHistory()}
                     >
-                      History
+                      Revision history
                     </Button>
                     {selectedExact.kind === 'recipe' && !historical && (
                       <Button

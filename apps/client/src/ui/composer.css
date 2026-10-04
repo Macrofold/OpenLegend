@@ -22,3 +22,17 @@
   flex-basis: 100%;
   margin: 0;
 }
+
+.ol-conversation-recipient > span {
+  display: block;
+}
+
+.ol-composer-send-issue {
+  flex-shrink: 0;
+  overflow-wrap: anywhere;
+  padding-block: var(--space-2);
+}
+
+.ol-composer-send-issue p {
+  margin: 0;
+}

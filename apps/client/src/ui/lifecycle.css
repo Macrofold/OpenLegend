@@ -1,0 +1,81 @@
+.ol-setting-group {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin-block: var(--space-3) var(--space-5);
+}
+.ol-setting-group h3,
+.ol-setting-group p {
+  margin: 0;
+}
+.ol-setting-scope {
+  color: var(--ink-muted);
+  font-size: var(--text-caption-size, 12px);
+  line-height: 1.5;
+}
+.ol-setting-details summary {
+  cursor: pointer;
+  padding-block: var(--space-3);
+  color: var(--ink);
+}
+.ol-lifecycle-actions,
+.ol-checkpoints .ol-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-checkpoints {
+  min-inline-size: 0;
+}
+.ol-checkpoints label,
+.ol-setting-group > label {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.ol-setting-group > label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+}
+.ol-checkpoint-create {
+  display: grid;
+  gap: var(--space-3);
+  margin-block: var(--space-4);
+}
+.ol-checkpoint-create > .ol-btn {
+  justify-self: start;
+}
+.ol-checkpoints .ol-save-row {
+  overflow-wrap: anywhere;
+}
+.ol-checkpoints .ol-save-row small {
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+.ol-checkpoint-confirm {
+  display: grid;
+  gap: var(--space-3);
+  border-inline-start: 2px solid var(--highlight);
+  padding: var(--space-3) var(--space-4);
+  background: var(--highlight-quiet);
+  scroll-margin-block: var(--space-4);
+}
+.ol-checkpoint-confirm p {
+  margin: 0;
+}
+.ol-checkpoint-confirm:focus-visible,
+.ol-setting-details summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ol-checkpoints .ol-btn {
+  white-space: normal;
+  block-size: auto;
+  min-block-size: var(--control-md);
+}
+.ol-checkpoints .ol-notice {
+  display: grid;
+  gap: var(--space-2);
+}

@@ -13,6 +13,7 @@ import { Inventions } from './inventions';
 import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
+import './creator-workspaces.css';
 
 type Props = {
   worldId: string;
@@ -61,8 +62,9 @@ function WorldAgentPanel(props: Props) {
   );
   const [sessions, setSessions] = useState<WorldAgentSessionSummary[]>([]);
   const [before, setBefore] = useState<WorldAgentSessionCursor | null>(null);
-  const [inspecting, setInspecting] = useState(false),
-    [shortcut, setShortcut] = useState(false);
+  const [workspace, setWorkspace] = useState<'authoring' | 'workshop' | 'relationships'>(
+    godMode ? 'authoring' : 'workshop',
+  );
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const alive = useRef(true),
@@ -121,7 +123,7 @@ function WorldAgentPanel(props: Props) {
       setActive(id);
       setSeedTarget(id);
       setInventionTarget(id);
-      setShortcut(!godMode);
+      setWorkspace(godMode ? 'authoring' : 'workshop');
     }
   }, [inventionSeed, godMode]);
   function create(invention = false) {
@@ -129,60 +131,96 @@ function WorldAgentPanel(props: Props) {
     setActive(id);
     setInventionTarget(invention ? id : undefined);
     setSeedTarget(undefined);
-    setShortcut(false);
+    setWorkspace('authoring');
   }
+  const activeTitle =
+    sessions.find((session) => session.sessionId === active)?.title ??
+    (inventionTarget === active ? 'New invention' : 'New conversation');
   return (
-    <div className="ol-agent">
+    <div className="ol-agent ol-creator-workspace">
+      {godMode && (
+        <nav className="ol-creator-views" aria-label="Creation workspaces">
+          <Button
+            variant="quiet"
+            aria-pressed={workspace === 'workshop'}
+            onPress={() => setWorkspace('workshop')}
+          >
+            Your workshop
+          </Button>
+          <Button
+            variant="quiet"
+            aria-pressed={workspace === 'authoring'}
+            onPress={() => setWorkspace('authoring')}
+          >
+            World authoring
+          </Button>
+          <Button
+            variant="quiet"
+            aria-pressed={workspace === 'relationships'}
+            onPress={() => setWorkspace('relationships')}
+          >
+            Inspect world
+          </Button>
+        </nav>
+      )}
       <UsageRemaining
         limit={budget.limitUsd}
         spent={budget.accounts?.[actorId]?.spentUsd ?? 0}
         reserved={budget.accounts?.[actorId]?.reservedUsd ?? 0}
         available={connected && !!budget.accounts}
       />
-      {godMode ? (
-        <>
+      {godMode && (
+        <div hidden={workspace !== 'authoring'} className="ol-creator-page">
+          <header className="ol-creator-context">
+            <Tag tone="highlight">God mode · World authoring</Tag>
+            <h3>{active ? activeTitle : 'Investigate and shape this world'}</h3>
+            <p className="ol-caption">
+              Discuss an idea in Conversation, inspect saved Work, then review an exact change
+              before applying it.
+            </p>
+          </header>
           <div className="ol-agent-tools">
-            <Tag>World-owner agent</Tag>
-            <Button size="sm" variant="quiet" onPress={() => setInspecting((v) => !v)}>
-              {inspecting ? 'Close inspection' : 'Inspect world relationships'}
-            </Button>
-          </div>
-          {inspecting && <WorldInspection actorId={actorId} />}
-          <div className="ol-agent-tools">
-            <label>
-              Conversation{' '}
-              <select
-                aria-label="World Agent conversation"
-                value={active}
-                onChange={(e) => setActive(e.target.value)}
-              >
-                {!active && <option value="">Choose a conversation</option>}
-                {active && !sessions.some((s) => s.sessionId === active) && (
-                  <option value={active}>New conversation</option>
-                )}
-                {sessions.map((s) => (
-                  <option key={s.sessionId} value={s.sessionId}>
-                    {s.title}
-                    {!s.available ? ' (history)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
             <Button size="sm" variant="quiet" onPress={() => create()}>
-              New
+              New conversation
             </Button>
             <Button size="sm" variant="quiet" onPress={() => create(true)}>
               New invention
             </Button>
-            <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
-              Refresh list
-            </Button>
-            {before && (
-              <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
-                Earlier conversations
-              </Button>
-            )}
           </div>
+          <details className="ol-creator-history">
+            <summary>Saved conversations and history</summary>
+            <p className="ol-caption">
+              Opening history only reads it. Ended conversations remain separate from new work.
+            </p>
+            <div className="ol-creator-records">
+              {sessions.map((session) => (
+                <Button
+                  key={session.sessionId}
+                  variant="quiet"
+                  aria-pressed={active === session.sessionId}
+                  onPress={() => setActive(session.sessionId)}
+                >
+                  <strong>{session.title}</strong>
+                  <span className="ol-caption">
+                    {session.available ? 'Available conversation' : 'History · read only'}
+                  </span>
+                </Button>
+              ))}
+            </div>
+            {!sessions.length && !busy && (
+              <p className="ol-caption">No saved conversations on this page.</p>
+            )}
+            <div className="ol-agent-tools">
+              <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
+                Refresh conversations
+              </Button>
+              {before && (
+                <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
+                  Earlier conversations
+                </Button>
+              )}
+            </div>
+          </details>
           {active ? (
             <WorldAgentSession
               key={`${worldId}:${saveTimeline}:${active}`}
@@ -190,7 +228,7 @@ function WorldAgentPanel(props: Props) {
               accessScope={accessScope}
               sessionId={active}
               connected={connected}
-              visible={visible}
+              visible={visible && workspace === 'authoring'}
               seed={seedTarget === active ? inventionSeed : null}
               purpose={inventionTarget === active ? 'invention' : undefined}
               onCreated={() => void list()}
@@ -201,26 +239,24 @@ function WorldAgentPanel(props: Props) {
             </EmptyState>
           )}
           {error && <p role="alert">{error}</p>}
-        </>
-      ) : (
-        <p>Describe what you want to make and explore how it could work.</p>
+        </div>
       )}
       {godMode && (
-        <Button size="sm" variant="quiet" onPress={() => setShortcut((v) => !v)}>
-          {shortcut ? 'Close recipe workshop' : 'Open recipe workshop'}
-        </Button>
+        <div hidden={workspace !== 'relationships'} className="ol-creator-page">
+          <WorldInspection actorId={actorId} />
+        </div>
       )}
-      {(!godMode || shortcut) && (
+      <div hidden={workspace !== 'workshop'} className="ol-creator-page">
         <Inventions
           worldId={worldId}
           accessScope={accessScope}
           seed={godMode ? null : inventionSeed}
-          visible={visible}
+          visible={visible && workspace === 'workshop'}
           recipes={recipes}
           command={command}
           connected={connected}
         />
-      )}
+      </div>
     </div>
   );
 }

@@ -9,6 +9,8 @@ import {
   itemsForOwner,
   namedClockTimes,
   typedRequestVocabulary,
+  nativeActionIcon,
+  nativeGatherShortcut,
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import {
@@ -223,6 +225,7 @@ export async function projectView(
   ): ActionOption => ({
     id,
     label,
+    icon: nativeActionIcon(command.type),
     command,
     enabled: active && possible,
     ...(!active
@@ -375,15 +378,16 @@ export async function projectView(
             }
           }
           if (entity.resource)
-            actions.push(
-              action(
+            actions.push({
+              ...action(
                 `gather-${entity.id}`,
                 'Gather',
                 { type: 'gather', targetId: entity.id },
                 entity.resource.quantity > 0,
                 'This source is depleted.',
               ),
-            );
+              shortcut: nativeGatherShortcut(world, entity.resource.definitionId),
+            });
           if (entity.animal && entity.actor?.alive)
             actions.push(
               action(
@@ -450,6 +454,9 @@ export async function projectView(
           return {
             id: entity.id,
             ...display,
+            icon: entity.resource
+              ? world.itemDefinitions[entity.resource.definitionId]?.icon
+              : entity.icon,
             storage: inventoryStorageHint(service, scope, entity.id),
             ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
             description: describeEntity({ ...entity, ...display }, world.itemDefinitions),
@@ -483,7 +490,9 @@ export async function projectView(
                         pickup: 'Picking up items',
                         move: 'Walking',
                         follow: 'Following',
-                        replenish: 'Replenishing',
+                        replenish:
+                          attributeDefinition(world, entity.actor.action.attributeId ?? '')
+                            ?.reservoir?.actionLabel ?? 'Working',
                         gather: 'Gathering',
                         'status-effect': 'Active state',
                         hunt: 'Hunting',
@@ -498,7 +507,7 @@ export async function projectView(
                       ? entity.animal.fleeSeconds > 0
                         ? 'Fleeing'
                         : 'Foraging'
-                      : 'Watching the clearing'
+                      : 'Watching the surroundings'
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -640,7 +649,7 @@ export async function projectView(
     // Queued, waiting, stopped and paused work can be stopped too, not only a running action.
     action(
       'cancel',
-      'Stop current work',
+      'Stop all work',
       { type: 'cancel' },
       !!actor.action ||
         !!actor.agency.suspended ||
@@ -682,7 +691,8 @@ export async function projectView(
   const workLabels: Record<string, string> = {
     move: 'Walking',
     follow: 'Following',
-    replenish: 'Replenishing',
+    replenish:
+      attributeDefinition(world, work?.attributeId ?? '')?.reservoir?.actionLabel ?? 'Working',
     'status-effect':
       world.statusEffectPolicy.definitions.find((d) => d.id === work?.definitionId)?.label ??
       'Active state',
@@ -736,6 +746,7 @@ export async function projectView(
     ),
     revision,
     worldId: world.id,
+    presentation: world.presentation,
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode && service.currentScope(scope, 'create'),
@@ -860,7 +871,7 @@ export async function projectView(
         ),
         [],
       ),
-      history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
+      history: `Your time in this world began on Day 1. You have been here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
       inventoryRevision: player.inventoryRevision ?? 0,
       canUseInventory: canUseInventory(service, scope),

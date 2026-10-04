@@ -497,7 +497,7 @@ export function WorldAgentSession({
       {session && (
         <>
           <div className="ol-agent-tools">
-            <Tag>World-owner agent</Tag>
+            <Tag>{session.available ? 'Current session' : 'History · read only'}</Tag>
             <UsageRemaining
               label="Conversation allowance"
               limit={session.budget.limitUsd}
@@ -505,22 +505,17 @@ export function WorldAgentSession({
               reserved={session.budget.reservedUsd}
               available={connected}
             />
-            <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
-              Refresh
-            </Button>
             {(!!session.activeTurn || !!session.question) && (
               <Button size="sm" disabled={busy} onPress={() => void cancel()}>
                 Stop this request
               </Button>
             )}
           </div>
-          {!session.closed && (
-            <Button size="sm" variant="quiet" disabled={busy} onPress={() => void closeSession()}>
-              End session (history retained)
-            </Button>
-          )}
           <details>
-            <summary>Owner spending details</summary>
+            <summary>Session details and owner spending</summary>
+            <p className="ol-caption">
+              Session {sessionId}. Closing the workspace keeps this conversation and its saved work.
+            </p>
             <p>
               ${session.budget.spentUsd.toFixed(3)} used · ${session.budget.reservedUsd.toFixed(3)}{' '}
               reserved · ${session.budget.limitUsd.toFixed(2)} Run cap. Shared Worker capacity is
@@ -529,6 +524,21 @@ export function WorldAgentSession({
             {session.budget.uncertainUsd > 0 && (
               <p>${session.budget.uncertainUsd.toFixed(3)} is unconfirmed and remains counted.</p>
             )}
+            <div className="ol-agent-tools">
+              <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                Refresh this session
+              </Button>
+              {!session.closed && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy}
+                  onPress={() => void closeSession()}
+                >
+                  End session · keep history
+                </Button>
+              )}
+            </div>
           </details>
           {!session.available && (
             <p role="status">
@@ -536,7 +546,7 @@ export function WorldAgentSession({
               history remains readable; start a new session to act.
             </p>
           )}
-          <div className="ol-agent-tools" role="group" aria-label="World Agent views">
+          <div className="ol-creator-views" role="group" aria-label="World Agent views">
             <Button
               size="sm"
               variant="quiet"
@@ -639,9 +649,16 @@ export function WorldAgentSession({
                 !text.trim()
               }
             />
-            <p className="ol-caption">
-              Approval and Apply use no model call. Native work and physics stay authoritative.
-              Image generation and general new physics are not enabled yet.
+            <p className="ol-caption" role="status">
+              {!connected
+                ? 'Reconnect to send a request. Your draft is kept.'
+                : !session.available
+                  ? 'This history is read only. Start a new conversation to make another request.'
+                  : session.question
+                    ? 'Answer the current question before sending a different request.'
+                    : session.budget.availableUsd <= 0
+                      ? 'This conversation has no remaining allowance for a new request.'
+                      : 'A proposed change stays in Work until you review and apply it.'}
             </p>
           </div>
           <WorldAgentWorkView
@@ -657,7 +674,7 @@ export function WorldAgentSession({
         </>
       )}
       {error && <p role="alert">{error}</p>}
-      {review && (
+      {review && visible && (
         <WorldAgentReview
           key={`${key}:${review}`}
           worldId={worldId}

@@ -154,7 +154,7 @@ export function InventoryCollection({
                 onDragStart={(event) => onDragStart(item, event)}
                 onDragEnd={onDragEnd}
               >
-                <Icon name={symbol(item.definitionId)} fallbackLabel={item.name} size={32} />
+                <Icon name={symbol(item.icon ?? '')} fallbackLabel={item.name} size={32} />
                 <span className="ol-inventory-cell-name">{item.name}</span>
                 <span className="ol-inventory-cell-quantity">× {item.quantity}</span>
                 {item.availableQuantity !== undefined &&

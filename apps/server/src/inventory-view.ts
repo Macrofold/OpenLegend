@@ -1,5 +1,6 @@
 import {
-  NATIVE_PREPARATIONS,
+  nativeInventoryActions,
+  nativeActionIcon,
   activityRequestHost,
   currentInventoryInspection,
   visionRadius,
@@ -776,6 +777,7 @@ export function inventoryItemView(
   ): ActionOption => ({
     id,
     label,
+    icon: nativeActionIcon(command.type),
     command,
     enabled: active && possible,
     ...(!active
@@ -819,19 +821,11 @@ export function inventoryItemView(
       ),
     );
   }
-  if (accessiblePossession(world, player.id, item.id) && item.definitionId === 'raw_meat')
-    actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
-  for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))
-    if (accessiblePossession(world, player.id, item.id) && recipe.input === item.definitionId)
-      actions.push(
-        action(
-          `prepare-${key}`,
-          key === 'fiber' ? 'Clean fibers' : 'Twist cord',
-          { type: 'prepare', preparation: key as 'fiber' | 'cord' },
-          item.quantity >= recipe.inputQuantity,
-          `Requires ${recipe.inputQuantity}.`,
-        ),
-      );
+  if (accessiblePossession(world, player.id, item.id))
+    for (const option of nativeInventoryActions(world, item)) {
+      const preview = service.previewCommand(option.command, player.id);
+      actions.push(action(option.id, option.label, option.command, preview.ok, preview.message));
+    }
   if (item.individuality === 'homogeneous' && item.quantity > 1)
     actions.push(
       action(
@@ -912,6 +906,7 @@ export function inventoryItemView(
         }
       : {}),
     definitionId: item.definitionId,
+    ...(definition.icon ? { icon: definition.icon } : {}),
     name: definition.name,
     nameForm: definition.nameForm,
     indefiniteArticle: definition.indefiniteArticle,

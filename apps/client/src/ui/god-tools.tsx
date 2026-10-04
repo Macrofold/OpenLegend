@@ -158,7 +158,7 @@ function TraitFields({
           );
         })}
         {creation && !selected.length && (
-          <span className="ol-caption">Leave empty to assign three random traits.</span>
+          <span className="ol-caption">Leave unselected for randomly assigned traits.</span>
         )}
       </div>
     </>
@@ -401,7 +401,8 @@ export function PersonCreationModal({
     <ModalOverlay
       className="ol-root ol-modal-overlay"
       isOpen
-      isDismissable
+      isDismissable={!saving}
+      isKeyboardDismissDisabled={saving}
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
@@ -412,20 +413,27 @@ export function PersonCreationModal({
                 <Tag tone="highlight">God mode</Tag>
                 <h2 className="ol-heading">Create a person</h2>
               </div>
-              <IconButton icon="ui.close" label="Close person creation" onPress={close} />
+              <IconButton
+                icon="ui.close"
+                label="Close person creation"
+                disabled={saving}
+                onPress={close}
+              />
             </header>
-            <PersonFields person={person} traits={traits} onChange={setPerson} autoFocus />
             <p className="ol-caption ol-person-position">
-              They will appear at {position.x.toFixed(1)}, {position.z.toFixed(1)} with basic food
-              and a cutting stone.
+              Create a new person on the selected ground at {position.x.toFixed(1)},{' '}
+              {position.z.toFixed(1)}. Their starting belongings follow this world’s creation rules.
             </p>
+            <div inert={saving || undefined}>
+              <PersonFields person={person} traits={traits} onChange={setPerson} autoFocus />
+            </div>
             {error && (
               <p className="ol-form-error ol-person-error" role="alert">
                 {error}
               </p>
             )}
             <footer className="ol-modal-actions">
-              <Button type="button" variant="quiet" onPress={close}>
+              <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel
               </Button>
               <Button type="submit" busy={saving} disabled={!person.name.trim()}>
@@ -783,6 +791,8 @@ export function PersonEditor({
   return (
     <EditorPanel
       title={`Edit ${loaded.person.name}`}
+      scope="Save commits changes across this person’s sections. The separate World Events editor saves world records independently."
+      saveLabel="Save person changes"
       dirty={dirty}
       saving={saving || loading}
       error={error}
@@ -843,6 +853,10 @@ export function PersonEditor({
           icon: 'ui.inventory',
           content: (
             <div className="ol-person-form">
+              <p className="ol-caption">
+                Edit this person’s belongings directly. Add and Remove stay in this draft until Save
+                person changes.
+              </p>
               {(person.inventory ?? []).map((item, index) => (
                 <div className="ol-god-inventory-row" key={index}>
                   <SelectField
@@ -944,12 +958,18 @@ export function PersonEditor({
           icon: 'ui.journal',
           content: (
             <div className="ol-editor-fixed-tab">
-              <RefreshHead refreshedAt={refreshedAt} refresh={refresh} />
-              {loaded?.before && (
-                <Button disabled={loading} onPress={() => void older()}>
-                  Older memories
-                </Button>
-              )}
+              <div>
+                <p className="ol-caption">
+                  Edit {loaded.person.name}’s retained memories. Removing a memory does not delete
+                  the event it describes.
+                </p>
+                <RefreshHead refreshedAt={refreshedAt} refresh={refresh} />
+                {loaded?.before && (
+                  <Button disabled={loading} onPress={() => void older()}>
+                    Older memories
+                  </Button>
+                )}
+              </div>
               <MemoryEditor
                 drafts={drafts.current}
                 entries={memories}
@@ -975,6 +995,10 @@ export function PersonEditor({
           icon: 'ui.inview',
           content: (
             <>
+              <p className="ol-caption">
+                What {loaded.person.name} noticed. Removing awareness changes this person’s memory,
+                not the world event.
+              </p>
               <RefreshHead refreshedAt={refreshedAt} refresh={refresh} />
               <Button variant="secondary" icon="ui.next" onPress={openWorldEvents}>
                 Open World Events editor · God mode
@@ -1051,7 +1075,11 @@ function StoryMechanismEditor() {
   }
   return (
     <section>
-      <p>Story selection changes future narration. Actor and object fields default to zero.</p>
+      <h3>Future narration</h3>
+      <p>
+        These settings have their own Save story mechanism action. They affect future narration;
+        they do not rewrite recorded events.
+      </p>
       <Button onPress={() => void load()} disabled={busy}>
         Load story mechanism
       </Button>
@@ -1225,6 +1253,8 @@ export function WorldEventsEditor({ close }: { close(): void }) {
   return (
     <EditorPanel
       title="World Events"
+      scope="Save event changes commits the record edits and deletions below. Future narration has its own separate save."
+      saveLabel="Save event changes"
       dirty={dirty}
       saving={saving || loading}
       error={error}
@@ -1241,28 +1271,30 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       onClose={close}
       tabs={[
         {
-          id: 'story',
-          label: 'Story mechanism',
-          icon: 'ui.inview',
-          content: <StoryMechanismEditor />,
-        },
-        {
           id: 'events',
           label: 'World Events',
           icon: 'ui.inview',
           content: (
             <div className="ol-editor-fixed-tab">
-              <RefreshHead
-                refreshedAt={refreshedAt}
-                refresh={() =>
-                  dirty ? setError('Save or discard your changes before refreshing.') : void load()
-                }
-              />
-              {loaded?.before !== undefined && (
-                <Button disabled={loading} onPress={() => void older()}>
-                  Older events
-                </Button>
-              )}
+              <div>
+                <p className="ol-caption">
+                  These are world records. Deletion is staged until Save event changes; broader
+                  dependency effects are not previewed here.
+                </p>
+                <RefreshHead
+                  refreshedAt={refreshedAt}
+                  refresh={() =>
+                    dirty
+                      ? setError('Save or discard your changes before refreshing.')
+                      : void load()
+                  }
+                />
+                {loaded?.before !== undefined && (
+                  <Button disabled={loading} onPress={() => void older()}>
+                    Older events
+                  </Button>
+                )}
+              </div>
               <div className="ol-entry-editor" data-detail={!!current || undefined}>
                 <div className="ol-entry-list">
                   {events.map((event) => (
@@ -1322,6 +1354,12 @@ export function WorldEventsEditor({ close }: { close(): void }) {
               </div>
             </div>
           ),
+        },
+        {
+          id: 'story',
+          label: 'Future narration',
+          icon: 'ui.inview',
+          content: <StoryMechanismEditor />,
         },
       ]}
     />

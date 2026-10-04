@@ -16,6 +16,14 @@ export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';
 export { nativeActivityView } from './worlds/base/action-views.js';
+export {
+  BASE_ACTION_DESCRIPTIONS,
+  BASE_COOKING_PRESENTATION,
+  nativeActionIcon,
+  nativeGatherShortcut,
+  nativePreparationOptions,
+  nativeInventoryActions,
+} from './worlds/base/presentation.js';
 export * from './item-handling.js';
 export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
 export {

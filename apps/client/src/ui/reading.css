@@ -1,0 +1,83 @@
+.ol-journal,
+.ol-reading-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  min-width: 0;
+}
+
+.ol-journal {
+  height: 100%;
+}
+
+.ol-journal > .ol-seg {
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.ol-journal-section {
+  min-height: 0;
+  overflow: auto;
+  padding-block-end: var(--space-2);
+}
+
+.ol-journal-section[hidden] {
+  display: none;
+}
+
+.ol-journal-story {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ol-journal-story > .ol-history,
+.ol-reading-view > .ol-thread-shell {
+  flex: 1;
+  min-height: 0;
+}
+
+.ol-journal-story .ol-thread {
+  max-height: none;
+  height: 100%;
+  min-height: 0;
+}
+
+.ol-panel-body:has(> .ol-journal) {
+  overflow: hidden;
+}
+
+.ol-reading-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.ol-story-entry,
+.ol-journal-beginning,
+.ol-reading-error {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ol-story-entry p {
+  white-space: pre-wrap;
+}
+
+.ol-journal-beginning {
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.ol-journal-beginning p,
+.ol-reading-error p {
+  margin-block: 0 var(--space-2);
+}
+
+.ol-memory-history .ol-thread-entry .ol-memory {
+  display: grid;
+  gap: var(--space-1);
+}

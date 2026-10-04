@@ -59,6 +59,9 @@ export function Composer({
   const [mode, setMode] = useState<ComposerMode>('chat');
   const scope = composerDraftScope(view);
   const draftKey = composerDraftKey(scope, mode, npcId);
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  const [sendIssue, setSendIssue] = useState<{ key: string; message: string } | null>(null);
   const { draft, edit, clearSent } = useComposerDraft(scope, draftKey);
   const [sending, setSending] = useState(false);
   const sendLock = useRef(false);
@@ -230,6 +233,7 @@ export function Composer({
     const sent = { scope, key: draftKey, revision: draft.revision };
     sendLock.current = true;
     setSending(true);
+    setSendIssue(null);
     try {
       const result = nativeSpeech
         ? await post('/api/command', {
@@ -243,9 +247,14 @@ export function Composer({
             ...(mode === 'chat' ? { npcId: npc?.id, volume } : {}),
           });
       if (result.ok) clearSent(sent);
-      else notify(result.message);
+      else if (currentScope.current === sent.scope)
+        setSendIssue({ key: sent.key, message: result.message });
     } catch (e) {
-      notify(`${String(e)} Check recent work before submitting again.`);
+      if (currentScope.current === sent.scope)
+        setSendIssue({
+          key: sent.key,
+          message: `${String(e)} Sending was not confirmed. Check ${mode === 'chat' ? 'the conversation' : 'your recent invention work'} before sending again. Your draft is retained.`,
+        });
     } finally {
       sendLock.current = false;
       setSending(false);
@@ -268,7 +277,12 @@ export function Composer({
         />
         {mode === 'chat' && (
           <p className="ol-meta ol-conversation-recipient">
-            {npc ? `With ${namePhrase(npc, 'definite')}` : 'Choose someone to talk to.'}
+            {npc
+              ? `To ${namePhrase(npc, 'definite')}`
+              : npcId
+                ? 'This person is no longer in view.'
+                : 'Choose someone to talk to.'}
+            {npc && <span className="ol-caption">Others within hearing may hear you.</span>}
           </p>
         )}
       </div>
@@ -399,6 +413,21 @@ export function Composer({
               ? 'Choose a person before writing your message.'
               : 'This name will begin your message.'}
           </p>
+        </div>
+      )}
+      {sendIssue?.key === draftKey && (
+        <div className="ol-composer-send-issue">
+          <p role="alert">{sendIssue.message}</p>
+          {mode === 'chat' && (
+            <Button
+              size="sm"
+              variant="quiet"
+              isDisabled={history.loading}
+              onPress={() => void history.refresh()}
+            >
+              Refresh conversation
+            </Button>
+          )}
         </div>
       )}
       <ConversationComposer

@@ -3,6 +3,8 @@ import type { MemoryEntryView, MemoryHistoryPage } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Icon, IconButton } from '../design-system/components';
 import { EventTime } from './event-time';
+import { ConversationThread } from './conversation';
+import './reading.css';
 
 type Result = MemoryHistoryPage | { ok: false; message?: string };
 
@@ -15,10 +17,12 @@ export function MemoryHistory({
   actorId,
   owned,
   recent,
+  visible = true,
 }: {
   actorId: string;
   owned: boolean;
   recent?: MemoryEntryView[];
+  visible?: boolean;
 }) {
   const [draft, setDraft] = useState('');
   const [query, setQuery] = useState('');
@@ -28,13 +32,14 @@ export function MemoryHistory({
   const [scanLimited, setScanLimited] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [staleRecent, setStaleRecent] = useState(false);
+  const [snapshot, setSnapshot] = useState(recent);
+  const [openingRevision, setOpeningRevision] = useState(0);
   const request = useRef(0);
+  const failedOlder = useRef(false);
+  const composing = useRef(false);
   const searchInput = useRef<HTMLInputElement>(null);
-  const baseline = useRef(recent);
-  // The newest snapshot, so a load that finishes after it arrived can offer a refresh.
-  const latest = useRef(recent);
-  latest.current = recent;
+  const recentRevision = JSON.stringify(recent);
+  const baseline = useRef(recentRevision);
   const filtered = !!query || thoughts;
   const path = owned ? '/api/memories' : '/api/god/memories';
 
@@ -57,13 +62,15 @@ export function MemoryHistory({
   }
   async function load(older: boolean) {
     const id = ++request.current;
+    const atRevision = recentRevision;
+    failedOlder.current = older;
     setBusy(true);
     setError('');
     try {
       let result = await page(older ? (next ?? undefined) : undefined);
+      if (id !== request.current) return;
       let entries = result.entries;
       if (!older && !filtered && recent) {
-        baseline.current = recent;
         if (result.next) {
           result = await page(result.next);
           entries = [...result.entries, ...entries];
@@ -77,8 +84,13 @@ export function MemoryHistory({
       });
       setNext(result.next);
       setScanLimited(result.scanLimited);
-      if (!filtered && baseline.current && latest.current !== baseline.current)
-        setStaleRecent(true);
+      if (!older) {
+        baseline.current = atRevision;
+        // The first Older press replaces the live window with two history pages.
+        // Its newest row is unchanged, so the shared reader preserves the visible anchor.
+        if (filtered || !recent || loaded !== null)
+          setOpeningRevision((value) => value + 1);
+      }
     } catch (failure) {
       if (id === request.current)
         setError(failure instanceof Error ? failure.message : String(failure));
@@ -92,16 +104,21 @@ export function MemoryHistory({
     setLoaded(null);
     setNext(null);
     setScanLimited(false);
-    setStaleRecent(false);
     setError('');
     if (filtered || !recent) void load(false);
-    else cancel();
+    else {
+      cancel();
+      setSnapshot(recent);
+      baseline.current = recentRevision;
+      setOpeningRevision((value) => value + 1);
+    }
+    return () => {
+      request.current++;
+    };
   }, [query, thoughts]);
-  useEffect(() => {
-    if (loaded !== null && !filtered && recent !== baseline.current) setStaleRecent(true);
-  }, [recent]);
 
-  const shown = loaded ?? (filtered ? [] : (recent ?? []));
+  const shown = loaded ?? (filtered ? [] : (snapshot ?? []));
+  const staleRecent = recentRevision !== baseline.current;
   const moreLabel = filtered
     ? scanLimited
       ? 'Search older memories'
@@ -109,11 +126,18 @@ export function MemoryHistory({
     : 'Older memories';
   return (
     <div className="ol-memory-history">
+      <p className="ol-caption">
+        {owned
+          ? 'Your character’s retained memories.'
+          : 'Permitted private records for this character.'}{' '}
+        Search matches the remembered text shown here.
+      </p>
       <form
         className="ol-memory-search"
         role="search"
         onSubmit={(event) => {
           event.preventDefault();
+          if (composing.current) return;
           setQuery(draft.trim());
         }}
       >
@@ -127,6 +151,12 @@ export function MemoryHistory({
             value={draft}
             maxLength={200}
             onChange={(event) => setDraft(event.target.value)}
+            onCompositionStart={() => {
+              composing.current = true;
+            }}
+            onCompositionEnd={() => {
+              composing.current = false;
+            }}
           />
           {draft && (
             <IconButton
@@ -159,49 +189,93 @@ export function MemoryHistory({
           ? 'Loading memories…'
           : filtered
             ? `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
-                scanLimited ? '. No more matches among the last 2,000 memories searched.' : ''
+                scanLimited
+                  ? '. This search stopped at its record limit; older memories remain to search.'
+                  : next
+                    ? '. Older memories remain to search.'
+                    : '. End of the retained records.'
               }`
             : loaded !== null && !next
               ? 'Reached the oldest retained memory.'
-              : ''}
+              : loaded !== null
+                ? 'Reading retained history, oldest first.'
+                : 'Recent retained memories, oldest first.'}
       </p>
-      {error && <p role="alert">{error}</p>}
-      {staleRecent && (
+      {error && (
+        <div className="ol-reading-error">
+          <p role="alert">{error}</p>
+          <Button
+            size="sm"
+            variant="quiet"
+            isDisabled={busy}
+            onPress={() => void load(failedOlder.current)}
+          >
+            Retry reading memories
+          </Button>
+        </div>
+      )}
+      {(staleRecent || loaded !== null) && (
         <Button
           size="sm"
+          isDisabled={busy}
           onPress={() => {
             cancel();
-            setLoaded(null);
-            setNext(null);
-            setStaleRecent(false);
-            baseline.current = recent;
+            setError('');
+            if (!filtered && recent) {
+              setLoaded(null);
+              setNext(null);
+              setSnapshot(recent);
+              baseline.current = recentRevision;
+              setOpeningRevision((value) => value + 1);
+            } else void load(false);
           }}
         >
-          New memories — refresh
+          {staleRecent
+            ? filtered
+              ? 'Updated memories — search again'
+              : 'New memories — read latest'
+            : filtered
+              ? 'Search latest memories'
+              : 'Return to recent memories'}
         </Button>
       )}
-      {(filtered ? !!next : loaded === null ? !!recent?.length : !!next) && (
-        <Button size="sm" isPending={busy} onPress={() => void load(loaded !== null)}>
-          {moreLabel}
-        </Button>
-      )}
-      {shown.length
-        ? shown.map((entry) => (
-            <div className="ol-memory" key={entry.id}>
+      <ConversationThread
+        conversationKey={`${actorId}:${owned}:${query}:${thoughts}`}
+        visible={visible}
+        preserveReading
+        openingRevision={openingRevision}
+        liveAnnouncements="off"
+        ariaLabel={owned ? 'Your retained memories' : 'Character memory records'}
+        newMessageLabel="New memories"
+        before={
+          (filtered ? !!next : loaded === null ? !!snapshot?.length : !!next) && (
+            <Button size="sm" isPending={busy} onPress={() => void load(loaded !== null)}>
+              {moreLabel}
+            </Button>
+          )
+        }
+        items={shown.map((entry) => ({
+          id: entry.id,
+          content: (
+            <article className="ol-memory">
               <EventTime time={entry.time} />
               <span>{entry.text}</span>
-            </div>
-          ))
-        : !busy &&
+            </article>
+          ),
+        }))}
+        empty={
+          !busy &&
           !error && (
             <p className="ol-meta">
               {filtered
-                ? 'No memories match.'
+                ? `No matches in the memories searched.${next ? ' Continue with older memories or change your search.' : ''}`
                 : owned
                   ? 'Your experiences will leave memories here.'
                   : 'This character has no retained memories yet.'}
             </p>
-          )}
+          )
+        }
+      />
     </div>
   );
 }

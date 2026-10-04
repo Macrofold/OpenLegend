@@ -7,12 +7,14 @@ export type ItemCreationTarget = { actorId: string } | { position: SurfacePoint 
 export function ItemCreationModal({
   options,
   target,
+  targetLabel,
   initialDefinitionId,
   close,
   notify,
 }: {
   options: Array<{ id: string; label: string; description: string }>;
   target: ItemCreationTarget;
+  targetLabel?: string;
   initialDefinitionId?: string;
   close(): void;
   notify(text: string): void;
@@ -50,12 +52,12 @@ export function ItemCreationModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog" aria-label="Add item">
+        <Dialog className="ol-person-dialog" aria-label="Create item">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">
               <div>
                 <Tag tone="highlight">God mode</Tag>
-                <h2 className="ol-heading">Add item</h2>
+                <h2 className="ol-heading">Create item</h2>
               </div>
               <IconButton
                 icon="ui.close"
@@ -65,6 +67,11 @@ export function ItemCreationModal({
               />
             </header>
             <fieldset className="ol-person-form" disabled={saving} style={{ border: 0, margin: 0 }}>
+              <p className="ol-caption">
+                {'actorId' in target
+                  ? `Create new belongings in ${targetLabel ? `${targetLabel}’s` : 'the selected character’s'} inventory.`
+                  : `Create on the selected ground at ${target.position.x.toFixed(1)}, ${target.position.z.toFixed(1)}.`}
+              </p>
               <SelectField
                 label="Item"
                 value={definitionId}
@@ -83,11 +90,6 @@ export function ItemCreationModal({
                   onChange={(event) => setQuantity(Number(event.target.value))}
                 />
               </label>
-              <p className="ol-caption">
-                {'actorId' in target
-                  ? 'Add to this character’s inventory.'
-                  : 'Place on the selected ground surface.'}
-              </p>
               {error && (
                 <p role="alert" className="ol-form-error">
                   {error}
@@ -103,7 +105,7 @@ export function ItemCreationModal({
                 busy={saving}
                 disabled={!definitionId || !Number.isSafeInteger(quantity) || quantity < 1}
               >
-                Add item
+                Create {quantity} {quantity === 1 ? 'item' : 'items'}
               </Button>
             </footer>
           </form>

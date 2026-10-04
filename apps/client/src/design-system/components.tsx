@@ -767,20 +767,6 @@ export function SegmentedControl({
 }
 export function symbol(id: string): string {
   const native: Record<string, string> = {
-    raw_fiber: 'resource.reed',
-    prepared_fiber: 'resource.fiber',
-    cord: 'resource.cord',
-    wood: 'resource.branch',
-    stone: 'resource.pebble',
-    stone_tool: 'resource.flint',
-    berries: 'resource.berry',
-    raw_meat: 'resource.meat',
-    cooked_meat: 'resource.meat',
-    hare: 'creature.hare',
-    deer: 'creature.deer',
-    player: 'person.wayfarer',
-    npc: 'person.wayfarer',
-    campfire: 'action.fire',
     move: 'action.walk',
     prepare: 'action.craft',
     harvest: 'action.gather',

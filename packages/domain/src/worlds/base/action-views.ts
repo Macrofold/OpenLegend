@@ -9,6 +9,7 @@ import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
+import { attributeDefinition } from '../../world-modules.js';
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
  * No later observation may fill in a hidden historical target or effect. */
@@ -54,7 +55,14 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
     say: 'Speak',
     teach: 'Teach',
   };
-  const view: ActivityView = { name: command.purpose ?? names[command.type] ?? 'Act', facts: [] };
+  const reservoir =
+    command.type === 'replenish'
+      ? attributeDefinition(world, command.attributeId)?.reservoir
+      : undefined;
+  const view: ActivityView = {
+    name: command.purpose ?? reservoir?.actionLabel ?? names[command.type] ?? 'Act',
+    facts: [],
+  };
   if (perceived) {
     view.target = observerDescription(world, command.actorId, target.id);
     const a = worldPosition(actor),
