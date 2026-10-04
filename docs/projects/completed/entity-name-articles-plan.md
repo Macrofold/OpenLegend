@@ -1,14 +1,14 @@
 # Entity names and articles
 
-| Status    | Current progress                                                                                                  | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Shared naming, world metadata, display audit, documentation and scoped native/browser verification are delivered. | 2026-10-03   |
+| Status    | Current progress                                                                                                | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Shared naming and requested review fixes are delivered with scoped native, PostgreSQL and browser verification. | 2026-10-03   |
 
 ## Scope and ownership
 
 Keep canonical entity and item names free of grammatical articles. Every display chooses a bare label, an indefinite description or a definite reference. Compact menus and lists generally use bare names; an inspected unfamiliar creature's profile uses an indefinite description; prose about a selected object uses a definite reference. Learned personal names remain personal names. Existing observer recognition and disclosure rules continue to decide which name may be used.
 
-Estimated impact: approximately 500–800 non-test logic lines across the shared grammar utility, domain observation and authored content, server projection/prose, and client display. The material risks are accidental identity disclosure, changing saved or admitted definitions, duplicated grammar, and interference with ongoing edits in this shared checkout. This side conversation stays on local `main` and performs no Git history operations.
+Estimated impact: approximately 500–800 non-test logic lines across the shared grammar utility, domain observation and authored content, server projection/prose, and client display. The material risks are accidental identity disclosure, changing saved or admitted definitions, duplicated grammar, and interference with ongoing edits in this shared checkout. Initial implementation stayed on local `main` without Git history operations. The subsequent requested review also uses the existing checkout, with task-scoped local commits under the updated root instructions; no branch switch, history rewrite, merge or push is needed.
 
 One small dependency-free language module owns English article selection and name formatting. It must be usable without importing simulation or server code into the browser. Source labels carry optional grammatical form: singular count noun (default), personal/proper name, plural noun or mass noun. World-owned content supplies exceptional forms, not an engine list of animal/item names. Indefinite selection accounts for common sound exceptions and supports an authored override. An article is presentation, never part of an identity key or learned name.
 
@@ -34,4 +34,12 @@ The [canonical contract](../../entity-names.md), [English presentation boundary]
 
 [Verification](../../verification/entity-names.md) records shared grammar/invalid-input probes, native attribution and quotation checks, normalized invented-output/current-definition integrity, disposable PostgreSQL save/load, actual desktop/narrow profile/menu/inventory/conversation inspection, and passing scoped static checks. The final four-file existing run passed 21/21 with ordinary deadlines. The unchanged arrow-message assertion and an unrelated object-menu fixture deadline remain tracked as CI follow-ups; their diagnostics do not establish a full-suite pass. WebGL was unavailable in the headless environment, so visual evidence used the game's supported In view fallback and does not qualify 3D placement.
 
-All authorized naming work is complete. The shared checkout stayed on local `main`; no branch switch, fetch, rebase, commit or push occurred, and the other task's edits and live server/save were preserved.
+Initial implementation completed without a branch switch, fetch, rebase, commit or push in this side conversation. It was subsequently included in the shared `0ae0eed8` commit. The other task's edits and live server/save were preserved.
+
+## Requested follow-up review
+
+The review traced the complete naming change through storage, permitted observation, invention preview/admission, events, memory, public projection and client presentation. The estimated correction scope was approximately 80–120 non-test logic lines, with local grammar/validation fixes and no change to mechanics or recognition. Completion required real native attribution and refusal checks, relevant existing cases, current-format PostgreSQL persistence, actual browser notice/profile/menu/inventory/conversation checks, static verification and updated maintained records.
+
+Delivered corrections replace hidden-name grammar when selecting an observer label; isolate literal personal names from quote and placeholder interpretation; align recipe preview and installation on valid canonical output names; recognize indefinite subjects in floating notices; handle single-letter articles; and remove duplicated name declarations/calculations. The accepted naming contract remains controlling, including authored pronunciation overrides and exact source proposals. No migration, provider call or speculative naming framework was added.
+
+[Review evidence](../../verification/entity-names.md#october-3-2026--requested-implementation-review) records 27 passing existing cases, adversarial native checks, actual browser interactions, and PostgreSQL round trips. Full CI and rendered 3D placement remain separately qualified. The review fixes were checkpointed locally in `c8911707`; final documentation is committed before handoff. All naming-review work is complete on local `main` in `/Users/mzw/Documents/ChatGPT/OpenLegend`, without changing checkout or branch, and unrelated concurrent work remains separate.
