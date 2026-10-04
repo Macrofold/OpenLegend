@@ -1,12 +1,16 @@
 # Dependency invalidation and aggregate work containment — technical design
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+| Status    | Current progress                                                                                                                                      | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The finite dependency, membership and work-budget foundation is delivered and locally qualified; broader performance and hosted capacity remain open. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Baseline and architectural decision
 
-At main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, [ActorWork](../../apps/server/src/actor-work.ts) stores input arrays, a dirty Boolean and separate wall/simulation deadlines. `refresh` scans cognitive actors and `inspected` clears the ticket; new generation-aware acknowledgment belongs in that existing class through EPR05. [view.ts](../../apps/server/src/view.ts) conservatively depends on whole immutable collections for visibility and inventory. [WorldChanges](../../apps/server/src/store.ts) describes persistence paths, not semantic query dependencies. None should be replaced by a second event bus, scheduler or reactive world store.
+At main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, [ActorWork](../../../apps/server/src/actor-work.ts) stores input arrays, a dirty Boolean and separate wall/simulation deadlines. `refresh` scans cognitive actors and `inspected` clears the ticket; new generation-aware acknowledgment belongs in that existing class through EPR05. [view.ts](../../../apps/server/src/view.ts) conservatively depends on whole immutable collections for visibility and inventory. [WorldChanges](../../../apps/server/src/store.ts) describes persistence paths, not semantic query dependencies. None should be replaced by a second event bus, scheduler or reactive world store.
 
 The hearing continuation's EPR tracker at `c4379246b8db98974de319e1f5315439ac8176bd` already specifies wake-during-processing preservation, actor-scoped intake and durable evidence before paid work. Reconcile it through DF02; do not implement a competing queue on this branch. The cadence branch has a distinct execution contract and must be reviewed before any phase/deadline integration; a dependency refactor does not authorize changing the clock.
 
@@ -145,7 +149,7 @@ SL00 saves authoritative episodes, latches, due state, relevant consumed/produce
 
 ## 11. Delivery and validation plan
 
-[DI01–DI08](../maintainers/dependency-invalidation.md) sequence the dependency coverage audit, typed changes, revision-safe installation, unlike query integrations, static/live aggregate budgets, EPR/lifecycle integration and qualification. P1–P3 can begin with conservative bounded dependencies; full P4 is not a circular prerequisite to creating their first native records. Their new contracts must expose the necessary changes from the start.
+[DI01–DI08](../../maintainers/dependency-invalidation.md) sequence the dependency coverage audit, typed changes, revision-safe installation, unlike query integrations, static/live aggregate budgets, EPR/lifecycle integration and qualification. P1–P3 can begin with conservative bounded dependencies; full P4 is not a circular prerequisite to creating their first native records. Their new contracts must expose the necessary changes from the start.
 
 Planning envelope: approximately 2,000–4,000 production logic lines across shared metadata, existing owner adapters and budget/lifecycle integration, excluding separately tracked new EPR sensory semantics and cadence changes. DI01 replaces this estimate with a current caller/change matrix before implementation.
 
@@ -165,5 +169,5 @@ Primary research reference, consulted September 26, 2026: [Adapton](https://adap
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/dependency-invalidation.md).
-- Limits and constraints: [Native work and invalidation inventory](../limits/native-work.md).
+- Implementation: [Feature tasks](../../maintainers/dependency-invalidation.md).
+- Limits and constraints: [Native work and invalidation inventory](../../limits/native-work.md).

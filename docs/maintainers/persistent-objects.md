@@ -1,8 +1,8 @@
 # Persistent objects — DF01 / BW07 subtracker
 
-**Status:** implemented and qualified for the approved object foundation scope; arbitrary construction and hosted capacity remain separate. This decomposes [DF01](production-data.md) and [BW07](base-world.md), coordinated with INV-6, P1 claims, P2 authority and SL00. It does not create a competing inventory or ownership roadmap. [Feature specification](../projects/persistent-objects-feature-spec.md) and [technical design](../projects/persistent-objects-tech-design.md) own the approved project.
+**Status:** implemented and qualified for the approved object foundation scope; arbitrary construction and hosted capacity remain separate. This decomposes [DF01](production-data.md) and [BW07](base-world.md), coordinated with INV-6, P1 claims, P2 authority and SL00. It does not create a competing inventory or ownership roadmap. [Feature specification](../projects/completed/persistent-objects-feature-spec.md) and [technical design](../projects/completed/persistent-objects-tech-design.md) own the approved project.
 
-Implementation was approved in chat on September 26, 2026; the [foundation plan](../projects/foundations-1-5.md#approved-implementation-plan) records scope, refreshed base and DF02 branch seams. Retain current receipts and semantic owners. Each new state owner must join SL00 in its introducing slice.
+Implementation was approved in chat on September 26, 2026; the [foundation plan](../projects/completed/foundations-1-5.md#approved-implementation-plan) records scope, refreshed base and DF02 branch seams. Retain current receipts and semantic owners. Each new state owner must join SL00 in its introducing slice.
 
 **Proposed construction consumer:** [Editable shelters](../projects/editable-shelters-feature-spec.md) uses these identity, custody, finite-resource and lineage foundations for reusable coverings, staged work and salvage. Delivery remains under INV-6.4 with SW/SC; the product proposal does not reopen completed PO foundation tasks or claim modular construction is delivered.
 

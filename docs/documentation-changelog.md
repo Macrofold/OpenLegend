@@ -162,7 +162,7 @@ The narration continuation files the completed compaction and explicit-failure p
 
 The persistence continuation files five completed local storage/preparation projects while preserving their broader recovery, cognition-durability and scale gates. The old dual-adapter and migration instructions remain historical, with residual compatibility removal still owned by DF04. The unapproved [save-batching proposal](projects/save-round-trip-batching-tech-design.md) now requires bounded admission that cannot await an unreachable flush, explicit conflict/visibility barriers and independent common-snapshot writes. Actual transport round trips, not logical SQL statements, receive injected delay; the acceptance target is not waived and no runtime optimization is claimed.
 
-The earlier camp-first “next milestone” directive is superseded by Mike’s explicit playable-game-first decision. The separate [priority branch’s canonical policy](https://github.com/Macrofold/OpenLegend/blob/docs/playable-game-first-priorities/docs/repertoires/gameplay-priorities.md) retains ranking ownership; this review does not claim those catalogue changes merged. The reusable review skill now distinguishes player value from engineering convenience while preserving approved scope and correctness constraints. Repository-wide reconciliation remains in progress, not a blanket completion or correctness assurance.
+The earlier camp-first “next milestone” directive is superseded by Mike’s explicit playable-game-first decision. Initially maintained on a separate branch, the [canonical selection policy](repertoires/gameplay-priorities.md) and expanded rankings are now integrated in the reviewed main; this review preserves that owner rather than merging unrelated catalogue work. The reusable review skill now distinguishes player value from engineering convenience while preserving approved scope and correctness constraints. The original five-foundation package and its remaining state, multiplayer, object and dependency pairs are now filed together as completed, with all incoming references repaired. Its 46-slice local qualification remains distinct from later Auth0, inventory, compatibility and scale work. Current resource documentation preserves whole-unit stock and fractional native charge instead of implying an unused generic fixed-point/carry framework. DF04 explicitly retains the actorless old-hold validation exception for removal; no runtime repair is claimed. Repository-wide reconciliation remains in progress, not a blanket completion or correctness assurance.
 
 ## 2026-10-03 — Complete the next priority batch
 
@@ -736,7 +736,7 @@ Reconciliation with integrated foundations preserves scoped manual save operatio
 
 ## 2026-09-26 — Foundation priorities 1–5 approved for implementation
 
-The developer authorized the complete [implementation plan](projects/foundations-1-5.md#approved-implementation-plan)
+The developer authorized the complete [implementation plan](projects/completed/foundations-1-5.md#approved-implementation-plan)
 with performance/stress qualification and migration seams for current spatial, invention,
 action and speech work. The foundation designs take precedence over prior branch assumptions.
 Accepted targets retain existing semantic owners, in-place identity-preserving conversion,
@@ -779,7 +779,7 @@ that cost and wider-load work; these results do not establish hosted capacity or
 
 ## 2026-09-26 — Complete design package for foundation priorities 1–5, Browser engine rationale and future client replacement
 
-Added five separate feature specifications and technical designs under [the foundation delivery map](projects/foundations-1-5.md): shared contributions/resources, multiplayer authority, persistent objects/containment, dependency invalidation/aggregate work and persistent appraisal/directional social continuity. Each design records inspected native/data/related-branch boundaries, typed operations, lifecycle, privacy, in-place migration, bounded work, concrete consumers, failure cases and qualification requirements.
+Added five separate feature specifications and technical designs under [the foundation delivery map](projects/completed/foundations-1-5.md): shared contributions/resources, multiplayer authority, persistent objects/containment, dependency invalidation/aggregate work and persistent appraisal/directional social continuity. Each design records inspected native/data/related-branch boundaries, typed operations, lifecycle, privacy, in-place migration, bounded work, concrete consumers, failure cases and qualification requirements.
 
 Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. At design delivery, all 46 implementation/qualification slices remained open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
 

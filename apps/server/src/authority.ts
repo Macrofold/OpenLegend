@@ -158,7 +158,7 @@ const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.
  * All mutations use the application's existing writer; SQL also checks publication fences.
- * docs/projects/multiplayer-authority-tech-design.md#2-identity-and-records
+ * docs/projects/completed/multiplayer-authority-tech-design.md#2-identity-and-records
  */
 export class AuthorityRepository {
   private sessions = new Map<string, LoginSession>();

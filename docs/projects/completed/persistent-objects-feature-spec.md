@@ -1,8 +1,12 @@
 # Persistent objects, custody, ownership and containment — feature specification
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
+| Status    | Current progress                                                                                                                                      | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Entity-backed items, nested containers and scoped handling are delivered and locally qualified; later inventory journeys retain their own acceptance. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Outcome
 
@@ -12,9 +16,9 @@ There is one physical placement per active object, one authoritative quantity pe
 
 ## 2. Existing behavior and inherited contracts
 
-At main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, [item-handling.ts](../../packages/domain/src/item-handling.ts) supports ordinary stacks, actor/pile custody, whole/partial transfers and equipment cleanup. Current merging compares definition identity; depleted stacks are removed. [Current records](../../apps/server/src/world-record-schema.ts) already persist `sim_items`, `sim_entities`, `sim_placements` and geometry separately. This project evolves those records rather than introducing a parallel inventory database.
+At main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, [item-handling.ts](../../../packages/domain/src/item-handling.ts) supports ordinary stacks, actor/pile custody, whole/partial transfers and equipment cleanup. Current merging compares definition identity; depleted stacks are removed. [Current records](../../../apps/server/src/world-record-schema.ts) already persist `sim_items`, `sim_entities`, `sim_placements` and geometry separately. This project evolves those records rather than introducing a parallel inventory database.
 
-[Base-world items](../worlds/base/items.md), [action capabilities](../action-capabilities.md#12-manipulation-transfer-and-process-use), [production possessions](../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction), [save/load](../save-and-load.md) and [declaration lifecycle](../../archive/07-technical-architecture/declarations-and-evolution.md) remain governing contracts. Current native pickup approach/reach, portability and final-state validation remain intact. Pick Up All continues to mean eligible contents at completion, not a stale list captured when a menu opened.
+[Base-world items](../../worlds/base/items.md), [action capabilities](../../action-capabilities.md#12-manipulation-transfer-and-process-use), [production possessions](../../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction), [save/load](../../save-and-load.md) and [declaration lifecycle](../../../archive/07-technical-architecture/declarations-and-evolution.md) remain governing contracts. Current native pickup approach/reach, portability and final-state validation remain intact. Pick Up All continues to mean eligible contents at completion, not a stale list captured when a menu opened.
 
 ## 3. Concrete journeys
 
@@ -68,7 +72,7 @@ Use existing pickup/drop/equip/crafting commands and the action catalogue, with 
 
 ## 5. Stages and non-goals
 
-**Stage 1 (delivered):** unified object/stack identity and placement ownership through the historical conversion recorded in the technical design. Future storage changes follow the [development save policy](../../AGENTS.md#development-save-policy). Keep public XYZ views working without giving contained objects a fake independent position.
+**Stage 1 (delivered):** unified object/stack identity and placement ownership through the historical conversion recorded in the technical design. Future storage changes follow the [development save policy](../../../AGENTS.md#development-save-policy). Keep public XYZ views working without giving contained objects a fake independent position.
 
 **Stage 2:** implement stable lot operations, lifecycle/lineage, resource claims and individual equipment selection. Preserve current pickup/drop semantics and successful native gathering.
 
@@ -92,14 +96,14 @@ Accepted defaults: quantity-one individual containers/equipped units, explicit m
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/persistent-objects.md).
-- Limits and constraints: [Objects, inventory and equipment inventory](../limits/objects.md).
+- Implementation: [Feature tasks](../../maintainers/persistent-objects.md).
+- Limits and constraints: [Objects, inventory and equipment inventory](../../limits/objects.md).
 
 ## Shared-container follow-through
 
 The immediate gameplay-limits implementation extends the delivered foundation with shared
-reachable world containers, explicit actor access lists, giving without recipient inspection,
+reachable world containers, explicit actor access lists, and giving by recipient-accepted offer without private inventory inspection,
 recursive own ingredient/tool discovery and dependency-aware inventory moves. The current
-contract is [Items](../worlds/base/items.md); [PO10](../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
+contract is [Items](../../worlds/base/items.md); [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
 records its delivered scope and verification. Existing identity, capacity, exact
 pins, reservations, privacy and atomic publication rules still apply.

@@ -1,6 +1,6 @@
 # Accounts, participation and transport: limits and constraints
 
-[Feature contract](../projects/multiplayer-authority-feature-spec.md) · [Implementation work](../maintainers/multiplayer.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
+[Feature contract](../projects/completed/multiplayer-authority-feature-spec.md) · [Implementation work](../maintainers/multiplayer.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 

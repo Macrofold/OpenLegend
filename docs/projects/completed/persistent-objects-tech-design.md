@@ -1,16 +1,20 @@
 # Persistent objects, custody, ownership and containment — technical design
 
-**Status:** approved and implemented for this project’s scope; [verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+| Status    | Current progress                                                                                                                                      | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Entity-backed items, nested containers and scoped handling are delivered and locally qualified; later inventory journeys retain their own acceptance. | 2026-10-04   |
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## 1. Concrete baseline and migration consequence
 
-Inspected main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`: [item-handling.ts](../../packages/domain/src/item-handling.ts) stores `ItemInstance { id, ownerId, definitionId, quantity }`, indexes immutable custody snapshots and merges by definition. Full unmerged movement preserves the ID; exhausted merged sources are deleted. `ownerId` is physical custody, not legal title. [world-record-schema.ts](../../apps/server/src/world-record-schema.ts) already has `sim_items` with indexed item/owner/definition/quantity, `sim_entities`, `sim_placements` and `sim_entity_geometry`. [WorldRecords](../../apps/server/src/world-records.ts) owns canonical record extraction and the world revision fence.
+Inspected main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`: [item-handling.ts](../../../packages/domain/src/item-handling.ts) stores `ItemInstance { id, ownerId, definitionId, quantity }`, indexes immutable custody snapshots and merges by definition. Full unmerged movement preserves the ID; exhausted merged sources are deleted. `ownerId` is physical custody, not legal title. [world-record-schema.ts](../../../apps/server/src/world-record-schema.ts) already has `sim_items` with indexed item/owner/definition/quantity, `sim_entities`, `sim_placements` and `sim_entity_geometry`. [WorldRecords](../../../apps/server/src/world-records.ts) owns canonical record extraction and the world revision fence.
 
 Important implementation fact: record IDs are storage-path identities, while entity/item IDs are domain identities. Current RecordNode parent FKs express owned storage subrecords. They must not become physical containment FKs with cascade deletion. A bag's contents are independent entities, not owned JSON children destroyed when the bag row is deleted.
 
-Use the [production possessions model](../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction) and [base-world items](../worlds/base/items.md). Use the [development save policy](../../AGENTS.md#development-save-policy) for storage changes; do not add a second inventory JSON list, spatial position or item registry. The new object model requires explicit adaptation of code that assumes every entity has an independent XYZ position.
+Use the [production possessions model](../../../archive/07-technical-architecture/production-data-model.md#6-possessions-inventory-resources-and-construction) and [base-world items](../../worlds/base/items.md). Use the [development save policy](../../../AGENTS.md#development-save-policy) for storage changes; do not add a second inventory JSON list, spatial position or item registry. The new object model requires explicit adaptation of code that assumes every entity has an independent XYZ position.
 
 ## 2. Identity and canonical representation
 
@@ -47,7 +51,7 @@ Active items keep positive safe-integer quantity. Retirement removes availabilit
 
 ## 3. Storage changes and indexes
 
-Current record ownership is as follows; future changes follow DF02 and the [development save policy](../../AGENTS.md#development-save-policy):
+Current record ownership is as follows; future changes follow DF02 and the [development save policy](../../../AGENTS.md#development-save-policy):
 
 | Existing/new logical record         | Required change and access path                                                                                                                                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -121,7 +125,7 @@ P2 inactive human participation suppresses the carried root's active bodily/worl
 
 ## 9. Identity-preserving migration and save/load
 
-The completed PO02 conversion quiesced the writer, checked source revisions and identity collisions, and promoted item IDs to entity identities while preserving definitions, quantities, custody, geometry, equipment, actions, holds, histories and receipts. Collision/unknown-reference checks protected the source. This is historical delivery context; future changes follow the [development save policy](../../AGENTS.md#development-save-policy).
+The completed PO02 conversion quiesced the writer, checked source revisions and identity collisions, and promoted item IDs to entity identities while preserving definitions, quantities, custody, geometry, equipment, actions, holds, histories and receipts. Collision/unknown-reference checks protected the source. This is historical delivery context; future changes follow the [development save policy](../../../AGENTS.md#development-save-policy).
 
 The conversion mapped custody and root XYZ/support to one placement representation, individualized equipped references, rebuilt schema/FKs/indexes and verified row/quantity/reference totals before atomic cutover. It removed writable `world.items` and duplicate location fields; an export/view projection is not a competing owner.
 
@@ -137,7 +141,7 @@ Use existing searchable menus and detail panels, with breadcrumbs and explicit c
 
 Complexity targets: direct child query proportional to returned page; cycle/ancestor validation proportional to bounded depth; root bag movement proportional to affected ancestor paths and explicit exposed attachments, not all descendants; active mutation proportional to selected lots/claims. Instrument pathological wide/deep containers, many equivalent stacks, mature retired history, contention and save/capture size. Budget exhaustion is an explicit failure, not proof that contents do not exist.
 
-[PO01–PO09](../maintainers/persistent-objects.md) supplies ordered work. Planning envelope: approximately 2,500–5,000 production logic lines across domain item/spatial adapters, canonical records/migrations, action/context and client views; PO01 must refine this with the actual direct-position and inventory caller audit.
+[PO01–PO09](../../maintainers/persistent-objects.md) supplies ordered work. Planning envelope: approximately 2,500–5,000 production logic lines across domain item/spatial adapters, canonical records/migrations, action/context and client views; PO01 must refine this with the actual direct-position and inventory caller audit.
 
 Required native/manual evidence includes all feature scenarios, both SQL adapters, failed multi-item transfer, opposing nested moves, ancestor capacity changes, reservation interference, dropped acknowledgements, current-format restore with active equipment, nonempty retirement, delayed old references and restore. Compare total quantities and pins before/after each committed operation. Record network privacy and real browser list behavior separately from native invariants. Follow default verification rules: no newly authored/run automated suites, no paid execution required, CI/deferred regression coverage remains open.
 
@@ -151,14 +155,14 @@ Consulted September 26, 2026: PostgreSQL [constraints](https://www.postgresql.or
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../maintainers/persistent-objects.md).
-- Limits and constraints: [Objects, inventory and equipment inventory](../limits/objects.md).
+- Implementation: [Feature tasks](../../maintainers/persistent-objects.md).
+- Limits and constraints: [Objects, inventory and equipment inventory](../../limits/objects.md).
 
 ## Shared-container follow-through
 
 The immediate gameplay-limits implementation extends the delivered foundation with shared
-reachable world containers, explicit actor access lists, giving without recipient inspection,
+reachable world containers, explicit actor access lists, and giving by recipient-accepted offer without private inventory inspection,
 recursive own ingredient/tool discovery and dependency-aware inventory moves. The current
-contract is [Items](../worlds/base/items.md); [PO10](../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
+contract is [Items](../../worlds/base/items.md); [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
 records its delivered scope and verification. Existing identity, capacity, exact
 pins, reservations, privacy and atomic publication rules still apply.

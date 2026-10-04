@@ -19,7 +19,7 @@ ACT01–ACT05 are implemented; acceptance gates remain open with automated cover
 
 ## Foundation execution notes — September 26, 2026
 
-P5 implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).
+P5 implementation is authorized by the [foundation execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan).
 The baseline audit found damage-only appraisals in `social.ts`, two cognition context
 projections, and positional fallback in canonical `mind_appraisals`. The implementation
 now uses `appraisals.ts` for stable actor-owned records and `knowledge.ts` for the sole

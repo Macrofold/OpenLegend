@@ -1,5 +1,17 @@
 # Foundation priorities 1–5 — implementation and design map
 
+| Status    | Current progress                                                                                                                                                | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | All five foundations and 46 agreed slices are delivered and locally qualified; current compatibility cleanup and broader release gates remain separately owned. | 2026-10-04   |
+
+## Current reading guide
+
+This package records the completed September 26 foundation and its follow-up review, not the present implementation backlog. The five original priorities describe that package’s scope and dependency order; [playable-game-first selection](../../repertoires/gameplay-priorities.md) controls current product priorities. Current feature contracts and focused trackers take precedence over the historical source pins, illustrative interfaces and execution instructions below.
+
+The [development compatibility policy](../../../AGENTS.md#development-save-policy) now forbids retaining old-format readers or converters; [DF04](../../maintainers/production-data.md#df04--retire-residual-compatibility-paths) tracks remaining code, including actorless reservation admission. Historical conversion tests remain evidence of their recorded runs, not current support or instructions to rebuild them. New verification follows the [current policy](../../../.agents/rules/verification.md), including PostgreSQL-only database checks and selectively permitted existing tests.
+
+Later body rules and elapsed integration belong to [world-configured survival](../../worlds/base/survival.md) and [simulation time](../../simulation-time.md); continuous native resources were not converted into a universal fixed-point model. Current giving requires recipient consent under [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling). Auth0 is selected, and sole-tab entry differs from the original manual-control flow: [IDP01–IDP03 and MP18](../../maintainers/multiplayer.md#identity-provider--auth0) own those later changes and remaining acceptance. None of these follow-throughs closes the outstanding mixed-workload CPU regression or hosted qualification.
+
 ## Approved implementation plan
 
 The developer authorized full implementation of priorities 1–5 in chat on September 26,
@@ -11,7 +23,7 @@ remain with their existing owners. Foundation contracts take precedence over
 older branch assumptions; repertoire examples inform extension seams without adding all
 catalogued mechanics to this project.
 
-Implementation branch: `codex/foundations-1-5`, based on refreshed `origin/main`
+Historical implementation branch: `codex/foundations-1-5`, based on refreshed `origin/main`
 `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`. The initial rebase was already current and had
 no conflicts. The worktree was clean. Estimated production logic affected: **10,000–20,000
 lines**, excluding tests, across the existing domain, server, protocol and client owners.
@@ -83,8 +95,9 @@ work accounts (approximately 200–250 logic lines plus caller verification). Th
 owner will derive live/retained totals by claimant, definition and invocation from its
 canonical records; no second writable allocation ledger is introduced. New holds must
 bind an actual action or admitted native process and its actor. Already saved holds retain
-their identities and quantities; legacy records without claimant evidence remain charged
-to world/host capacity, without inventing historical ownership. Admission combines these
+their identities and quantities. The original implementation also accepted actorless legacy
+records in world/host capacity without inventing ownership; that exception is now obsolete
+under the root policy and its removal is explicitly tracked in DF04. Admission combines these
 totals with native work, terminal release drops live occupancy while retained receipts
 remain accounted, and completion/cancellation/save-reload checks must prove conservation.
 Required verification includes aggregate refusal before publication, exact duplicate
@@ -151,7 +164,7 @@ responsiveness. Check complete outcomes, recipient ordering, RNG, quantities and
 alongside timing. Compare repeat measurements; a timeout is incomplete, and native
 headroom alone never qualifies PF/D5's hosted workload. Existing CI remains mandatory.
 
-**Current execution status:** all five foundations and all 46 agreed delivery slices are
+**September 26 completion status:** all five foundations and all 46 agreed delivery slices are
 implemented and qualified through the permitted native/manual workflow. Complete source
 review and acceptance reconciliation cover both SQL adapters, genuine two-human OIDC
 sessions, quantity/custody contention, private scope replacement, absence/return, coupled
@@ -164,17 +177,17 @@ matched CPU profiles, 10,000-lot/12-level SQL+HTTP pages and moves, 2,002 termin
 episodes, reservation admission at the actor memory ceiling, and real TCP backpressure and
 connection churn. The final matched mixed run costs approximately 24% more native CPU than
 the baseline; both miss its requested 3× rate before SQL/browser work. These measurements
-qualify the tested boundaries, not PF/D5 hosted capacity. [Verification](../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence)
+qualify the tested boundaries, not PF/D5 hosted capacity. [Verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence)
 owns the exact workload and evidence; SC/MP/PO/DI/ACT own the completed acceptance mapping.
-[PF](../maintainers/performance.md#foundations-15-measurements-and-remaining-cost) retains
+[PF](../../maintainers/performance.md#foundations-15-measurements-and-remaining-cost) retains
 the measured CPU and wider-load work. Inspected branches have migration contracts above;
 they were not merged or independently qualified by this implementation.
 
 ## Thorough implementation review
 
-The developer requested a full review and in-scope improvements after delivery. Refreshed
-`origin/main` remains `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`; the branch is already
-at that base and the complete uncommitted implementation is preserved. Review scope is the
+The developer requested a full review and in-scope improvements after delivery. At that
+review, refreshed `origin/main` was `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`; the branch
+was already at that base and its complete uncommitted implementation was preserved. Review scope is the
 entire foundation diff, including new files and existing callers. Initial repair estimate:
 200–800 production logic lines, refined from confirmed findings before larger changes.
 
@@ -227,7 +240,7 @@ The review repaired all confirmed findings above through their existing owners, 
 adding another authority or changing the foundation designs. Native success/failure journeys,
 real HTTP publication, both-adapter cold reload and visual browser control checks passed.
 Matched held-stock stress preserves the complete world digest and RNG. The
-[review evidence](../verification/foundations-1-5.md#foundation-follow-up-review) separates these checks
+[review evidence](../../verification/foundations-1-5.md#foundation-follow-up-review) separates these checks
 from the earlier mixed-workload CPU regression and existing required-CI fixture work.
 The full affected diff and repaired owners were reread. Typechecking, production build,
 configuration drift, changed-file formatting, documentation links and whitespace checks
@@ -240,17 +253,17 @@ The following records the earlier design-only task. The approved implementation 
 
 **Status at design delivery:** all five feature/technical pairs and their implementation decompositions are drafted. They are proposed designs for review, not runtime delivery or implementation approval. **Branch:** `docs/foundations-priorities-1-5`, created directly from main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` on September 26, 2026. Subsequent main `f015b2a9712ff87589dc04e72046c4e483dcab67` is integrated with its runtime changes preserved; see the late-main reconciliation below. Main and other active branch references were not modified by this task.
 
-**Scope of the earlier task:** comprehensive design and implementation planning for priorities 1–5 in [remaining foundational work](../maintainers/remaining-foundational-work.md). No runtime implementation, storage migration, permission change, paid execution or release-gate closure is part of this delivery. Existing cross-project contracts continue to own accepted behavior; focused trackers own all implementation status.
+**Scope of the earlier task:** comprehensive design and implementation planning for priorities 1–5 in [remaining foundational work](../../maintainers/remaining-foundational-work.md). No runtime implementation, storage migration, permission change, paid execution or release-gate closure is part of this delivery. Existing cross-project contracts continue to own accepted behavior; focused trackers own all implementation status.
 
 ## Five separately usable projects
 
-| Priority / project                  | Feature specification                                                                              | Technical design                                                                                              | Detailed work and parent ownership                                                                                                 |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — Shared state and contributions  | [Behavior and acceptance](shared-state-contributions-feature-spec.md)                              | [Owners, claims, phases and lifecycle](shared-state-contributions-tech-design.md)                             | [SC01–SC08](../maintainers/state-contributions.md), refining EWF02–03 / INV-6.3; SL00 integration                                  |
-| 2 — Multiplayer authority           | [Two-human and absence journeys](multiplayer-authority-feature-spec.md)                            | [Principals, control, private views and recovery](multiplayer-authority-tech-design.md)                       | [MP01.1–MP01.6 / MP04.1–MP04.4](../maintainers/multiplayer.md#priority-2-implementation-slices); BW13/BW14 and data/control owners |
-| 3 — Persistent objects              | [Tools, lots, bags and ownership](persistent-objects-feature-spec.md)                              | [Identity, placement, transactions and migration](persistent-objects-tech-design.md)                          | [PO01–PO09](../maintainers/persistent-objects.md), refining DF01/BW07; INV-6 / SL00                                                |
-| 4 — Dependencies and work budgets   | [Correct updates and bounded interactions](dependency-invalidation-feature-spec.md)                | [Membership, generations and aggregate accounting](dependency-invalidation-tech-design.md)                    | [DI01–DI08](../maintainers/dependency-invalidation.md), refining EWF08; EPR/SW actual query/scheduling owners and PF               |
-| 5 — Appraisal and social continuity | [Persistent feelings and directional notes](completed/appraisal-social-continuity-feature-spec.md) | [Causes, accepted publication, privacy and persistence](completed/appraisal-social-continuity-tech-design.md) | [ACT07.1–ACT07.7 / ACT08.1–ACT08.4](../maintainers/actor-model.md#priority-5-implementation-slices); CR, EPR04, EWF and SL00       |
+| Priority / project                  | Feature specification                                                                    | Technical design                                                                                    | Detailed work and parent ownership                                                                                                    |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Shared state and contributions  | [Behavior and acceptance](shared-state-contributions-feature-spec.md)                    | [Owners, claims, phases and lifecycle](shared-state-contributions-tech-design.md)                   | [SC01–SC08](../../maintainers/state-contributions.md), refining EWF02–03 / INV-6.3; SL00 integration                                  |
+| 2 — Multiplayer authority           | [Two-human and absence journeys](multiplayer-authority-feature-spec.md)                  | [Principals, control, private views and recovery](multiplayer-authority-tech-design.md)             | [MP01.1–MP01.6 / MP04.1–MP04.4](../../maintainers/multiplayer.md#priority-2-implementation-slices); BW13/BW14 and data/control owners |
+| 3 — Persistent objects              | [Tools, lots, bags and ownership](persistent-objects-feature-spec.md)                    | [Identity, placement, transactions and migration](persistent-objects-tech-design.md)                | [PO01–PO09](../../maintainers/persistent-objects.md), refining DF01/BW07; INV-6 / SL00                                                |
+| 4 — Dependencies and work budgets   | [Correct updates and bounded interactions](dependency-invalidation-feature-spec.md)      | [Membership, generations and aggregate accounting](dependency-invalidation-tech-design.md)          | [DI01–DI08](../../maintainers/dependency-invalidation.md), refining EWF08; EPR/SW actual query/scheduling owners and PF               |
+| 5 — Appraisal and social continuity | [Persistent feelings and directional notes](appraisal-social-continuity-feature-spec.md) | [Causes, accepted publication, privacy and persistence](appraisal-social-continuity-tech-design.md) | [ACT07.1–ACT07.7 / ACT08.1–ACT08.4](../../maintainers/actor-model.md#priority-5-implementation-slices); CR, EPR04, EWF and SL00       |
 
 The design decomposed **46** detailed implementation/qualification slices across these owners; all were open at design delivery and are now completed by the approved implementation above. Child IDs are scoped to their linked tracker. In particular, state-contributions/SC01–SC08 does not replace similarly prefixed research work on another branch. Parent EWF/INV/DF/BW/MP/ACT gates retain their additional scope and existing completion history.
 
@@ -276,11 +289,11 @@ Current code exposed concrete gaps that the plans address: single `local-player`
 
 Main advanced while the designs were being prepared. The integration preserves **all** runtime/configuration/verification changes from `f015b2a9712ff87589dc04e72046c4e483dcab67`. Only the maintainer index and changelog overlap with this design work, and both additions are retained. No uncertain gameplay conflict was identified; no feature branch was separately merged or force-updated. The initial code baselines in the individual specifications remain historical research pins, not instructions to restore their older code.
 
-The [Worker cutover owner](../maintainers/macrofold-worker-api.md) now controls native execution integration. Application/world compute owns the selected Worker; actors retain separate Worktrees/Sessions; cancellation affects only the relevant Run. MP control replacement, disconnect, restore and revoked-work cleanup must never destroy or pause shared compute. ACT07.4 extends the current Worker-based reflection caller and current output/publication contract, not a removed Sandbox route. Preserve uncertain request identity, existing accounting and the distinction between direct inference and native Worker execution. MW04's deployment, normal-CI and live qualification gaps remain open; this design task does not close them or authorize Worker creation/spend.
+The [Worker cutover owner](../../maintainers/macrofold-worker-api.md) now controls native execution integration. Application/world compute owns the selected Worker; actors retain separate Worktrees/Sessions; cancellation affects only the relevant Run. MP control replacement, disconnect, restore and revoked-work cleanup must never destroy or pause shared compute. ACT07.4 extends the current Worker-based reflection caller and current output/publication contract, not a removed Sandbox route. Preserve uncertain request identity, existing accounting and the distinction between direct inference and native Worker execution. MW04's deployment, normal-CI and live qualification gaps remain open; this design task does not close them or authorize Worker creation/spend.
 
-The [completed cold-history consumer review](completed/data-runtime-hardening.md#follow-up-consumer-review) adds exact eligible delayed-trigger reads, actor-scoped inspection freshness, legacy cold-awareness completeness and the live-obligation guard inside the publication mutation. P2/P4/P5 must extend those checks, not reimplement or weaken them. An unrelated actor change need not invalidate a permitted actor-specific inspection, but current source, timeline, privacy, control and grant changes still do. Reflection validates new appraisal/note changes alongside the already-current live-obligation guard. Cold sources remain available through scoped canonical queries without routine full-history materialization, and complete save capture remains mandatory.
+The [completed cold-history consumer review](data-runtime-hardening.md#follow-up-consumer-review) adds exact eligible delayed-trigger reads, actor-scoped inspection freshness, legacy cold-awareness completeness and the live-obligation guard inside the publication mutation. P2/P4/P5 must extend those checks, not reimplement or weaken them. An unrelated actor change need not invalidate a permitted actor-specific inspection, but current source, timeline, privacy, control and grant changes still do. Reflection validates new appraisal/note changes alongside the already-current live-obligation guard. Cold sources remain available through scoped canonical queries without routine full-history materialization, and complete save capture remains mandatory.
 
-Implementation should refresh from this integrated main and then reconcile relevant still-separate invention/action/hearing/cadence work through DF02. The design packet does not authorize discarding those branches' unique fixes or inferring their readiness from this merge.
+At design delivery, implementation was to refresh from that integrated main and reconcile the then-separate invention/action/hearing/cadence work through DF02. Those original integrations are now present; DF02 retains combined-owner qualification and newly introduced dependencies, not a requirement to merge those branches again. The historical design integration never qualified their gameplay or authorized discarding unique fixes.
 
 ## Cross-project implementation order
 
@@ -293,14 +306,14 @@ Implementation should refresh from this integrated main and then reconcile relev
 
 ## Explicit proposed engineering choices
 
-| Concern               | Proposed choice / boundary                                                                                                                                                                                                                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Shared effects        | Preserve current sequential native outcomes, then introduce explicit named compositional phases. Atomic resource groups by default; partial fulfillment only when advertised. Removing an effect never rolls back unrelated history.                                                                         |
-| Multiplayer           | External standards-based authentication adapter and server sessions; explicit control takeover; one active embodiment/account/world in the v1 application policy; current scope at admission, commit and publication. No distributed service prerequisite.                                                   |
-| Object model          | Entity-backed lots, one tagged placement, individual equipment/containers, exact merge compatibility and historical lineage without actionable redirects. First bag uses authored packing load, not a new global encumbrance/physics model.                                                                  |
-| Dependencies          | Mandatory query membership, old/new spatial coverage, revision-bound subscription/dirty acknowledgment and root-lineage aggregate budgets. Incomplete work is not absence; mandatory effects are never silently truncated.                                                                                   |
-| Mental/social state   | Extend the existing native appraisal owner; newly persistent state has no implicit decay. Relationship text remains directional subject knowledge. Typed optional reflection changes, not prose parsing, affect mechanical state.                                                                            |
-| Migration and privacy | Future state/storage changes follow the [development save policy](../../AGENTS.md#development-save-policy); the recorded conversions describe completed delivery. Current grants, control generations, forgetting and external accounting survive rewind; historical scope never becomes current permission. |
+| Concern               | Proposed choice / boundary                                                                                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared effects        | Preserve current sequential native outcomes, then introduce explicit named compositional phases. Atomic resource groups by default; partial fulfillment only when advertised. Removing an effect never rolls back unrelated history.                                                                            |
+| Multiplayer           | External standards-based authentication adapter and server sessions; explicit control takeover; one active embodiment/account/world in the v1 application policy; current scope at admission, commit and publication. No distributed service prerequisite.                                                      |
+| Object model          | Entity-backed lots, one tagged placement, individual equipment/containers, exact merge compatibility and historical lineage without actionable redirects. First bag uses authored packing load, not a new global encumbrance/physics model.                                                                     |
+| Dependencies          | Mandatory query membership, old/new spatial coverage, revision-bound subscription/dirty acknowledgment and root-lineage aggregate budgets. Incomplete work is not absence; mandatory effects are never silently truncated.                                                                                      |
+| Mental/social state   | Extend the existing native appraisal owner; newly persistent state has no implicit decay. Relationship text remains directional subject knowledge. Typed optional reflection changes, not prose parsing, affect mechanical state.                                                                               |
+| Migration and privacy | Future state/storage changes follow the [development save policy](../../../AGENTS.md#development-save-policy); the recorded conversions describe completed delivery. Current grants, control generations, forgetting and external accounting survive rewind; historical scope never becomes current permission. |
 
 These choices were proposed at design delivery, then accepted for the implementation above. Their rationale and alternatives remain in the relevant technical document. Current accepted behavior is reconciled in its proper owner, including the equipped-unit refinement in the base-world item contract; this historical package is not a second canonical policy store.
 
