@@ -99,6 +99,8 @@ ND09's immediate barter and ND10's first small recurring arrangement: offers, ac
 
 #### DG07 — Human participation and recoverable conflict
 
+[PG05](personal-game-next-batch.md#pg05--first-threat-encounter-design) selects a proposed small design assignment here: one optional wilderness threat, with avoidance, confrontation and recoverable aftermath. It produces explicit D07/PS-D01 proposals, not runtime combat or automatic resolution of those choices.
+
 ND11's human opt-in, indirect harm, incapacitation, rescue and return, with the matching PS05 protection and dangerous-logout decisions. One group owns the experience of entering danger and losing connection during it.
 
 **Start and parallel boundary:** Build on current protected departure and recoverable-human-death direction. Settle the relevant PS-D01 boundary before dependent shared risks are offered. This can proceed beside trade and creator design; NPC ghosts are DG33, and richer medical rules are DG21. **Existing owners:** BW14, MP, PS05/PS-D01 and lifecycle/time owners.

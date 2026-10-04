@@ -6,6 +6,8 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE01 — A coherent authored person in a supported world
 
+[PG02](personal-game-next-batch.md#pg02--coherent-attended-resident-behavior) proposes the next bounded attended-world integration: current concerns, actual outcomes, reconsideration and stopping through existing character owners. It excludes new psychological meters, family disclosure and unattended communities; the complete CE acceptance below remains open.
+
 **Owners:** [base-world character content](base-world.md), [actor identity and relationships](actor-model.md) and [accepted personal knowledge](cognition-redesign.md). Coordinate ND04's later personality development without making that whole program a prerequisite.
 
 - [ ] Define the initial resident through coherent background, values, interests, relationship history, practical knowledge and current circumstances. Give them plausible competing motives rather than unrelated adjectives, an exhaustive biography or a prewritten sequence of actions. Distinguish creator-authored starting information from later lived experience.
