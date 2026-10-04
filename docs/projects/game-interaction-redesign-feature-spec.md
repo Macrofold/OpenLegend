@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Screenshot research and the redesign are being completed; runtime implementation has not begun. | 2026-10-03 |
+| Not started | Research and design are complete; runtime implementation has not begun. | 2026-10-04 |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 

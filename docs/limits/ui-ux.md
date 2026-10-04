@@ -1,8 +1,8 @@
-# UI/UX design starting values
+# UI/UX design bounds and starting values
 
 [Handbook](../ui-ux/README.md) · [Foundations](../ui-ux/foundations.md) · [Follow-through](../maintainers/ui-ux.md) · [Tracking rules](README.md)
 
-These are **Proposed display-only starting values**, documented September 30–October 1, 2026 against runtime baseline `0382be7`. They are not implemented changes, universal optima, content/collection caps or an accessibility-conformance claim. Existing accepted values remain in the production guide and [interface inventory](interface.md). Evaluate these when changing a relevant surface; record adopted deviations with their owner and evidence rather than silently replacing current contracts.
+UXL01–UXL05 are **proposed display starting values**, documented September 30–October 1, 2026 against runtime baseline `0382be7`. UXL06–UXL10 record proposed scope, behavior and work bounds for the October 3–4 game-interaction redesign, whose current-source audit is pinned to `b50ec6c`. These entries are not implemented changes, universal optima, content/collection caps or an accessibility-conformance claim. Existing accepted values remain in the production guide and [interface inventory](interface.md); the accepted replacement interaction is stated in the [UI brief](../ui-design-brief.md#object-based-inventory-and-everyday-actions). Record adopted values and deviations with their owner and evidence rather than silently replacing current contracts.
 
 ## UXL01
 

@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The implementation design is being reconciled with current owners and screenshot research; runtime work has not begun. | 2026-10-03 |
+| Not started | Research and design are complete; runtime implementation has not begun. | 2026-10-04 |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
