@@ -32,6 +32,7 @@ import { WorkBudgetError } from '@open-legend/domain';
 import { changeParticipation } from '@open-legend/domain';
 import {
   AuthorityError,
+  commandRecoveryFields,
   scopeKey,
   type RequestScope,
   type Capability,
@@ -251,8 +252,7 @@ function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): s
   // A reconnect may read its committed result after taking control again. It cannot execute
   // through this fingerprint, nor cross a login, grant, character or restored timeline.
   // docs/projects/game-interaction-redesign-tech-design.md#direct-transfer-without-weaker-authority
-  const { connectionId: _connection, controlGeneration: _control, ...authority } = scope;
-  return digest({ input, scope: authority });
+  return digest({ input, scope: commandRecoveryFields(scope) });
 }
 
 function actorMilestones(

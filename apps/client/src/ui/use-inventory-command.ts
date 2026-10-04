@@ -129,7 +129,11 @@ export function useInventoryCommand({
     if (!request || !connected || pending.status !== 'unknown') return;
     setPending({ request, status: 'checking' });
     try {
-      const receipt = await post<CommandReceiptResult>('/api/command/receipt', request);
+      const receipt = await post<CommandReceiptResult>('/api/command/receipt', {
+        commandId: request.commandId,
+        commandEpoch: request.commandEpoch,
+        command: request.command,
+      });
       if (!alive.current) return;
       if (receipt.scope !== scope) {
         setMessage('Character access changed. Reconnect before checking the result.');

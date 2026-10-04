@@ -451,6 +451,8 @@ export interface GameView {
     scope: string;
     /** Native private-draft namespace; not a request token or permission. */
     privateDraftScope: string;
+    /** Retained command identity across reconnect/control changes; never request authority. */
+    commandRecoveryScope: string;
     accountId: string;
     actorId: string;
     controlGeneration: number;

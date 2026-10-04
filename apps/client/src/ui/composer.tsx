@@ -314,7 +314,7 @@ export function Composer({
                           </Button>
                         ))}
                       {!view.entities.some((person) => person.canTalk) && (
-                        <p className="ol-meta">No one is within hearing right now.</p>
+                        <p className="ol-meta">No one is available to talk right now.</p>
                       )}
                     </div>
                   ) : (
@@ -408,8 +408,8 @@ export function Composer({
         value={draft.text}
         onChange={(text) => edit({ text })}
         onSubmit={submit}
-        submitIcon={reason ? 'ui.settings' : 'ui.send'}
-        submitLabel={reason ? 'Set up AI' : 'Send'}
+        submitIcon={reason && !blocked ? 'ui.settings' : 'ui.send'}
+        submitLabel={reason && !blocked ? 'Set up AI' : 'Send'}
         disabled={sending || !!blocked || !!job || !!limitReason || (!reason && !draft.text.trim())}
         inputDisabled={!scope || !!actorBlocked}
         inputDisabledReason={!scope ? 'Take control of your character to speak.' : actorBlocked}

@@ -21,26 +21,28 @@ export function privateDraftScope(): string {
 }
 /** The signed-in account's grant has no character here; it uses World operations instead. */
 export class CharacterlessError extends AccessError {}
-function clearSessionDrafts(preservePendingInventory = false): void {
+function clearSessionDrafts(preservePendingCommands = false): void {
   try {
     for (const key of Object.keys(sessionStorage))
       if (
         key.startsWith('open-legend:composer-draft:') ||
         key.startsWith('open-legend:action-draft:') ||
-        (!preservePendingInventory && key.startsWith('open-legend:inventory-command:'))
+        (!preservePendingCommands &&
+          (key.startsWith('open-legend:inventory-command:') ||
+            key.startsWith('open-legend:activity-command:')))
       )
         sessionStorage.removeItem(key);
   } catch {
     /* Browser storage is optional. */
   }
 }
-export function clearAccess(options?: { preservePendingInventory?: boolean }): void {
+export function clearAccess(options?: { preservePendingCommands?: boolean }): void {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
   privateDraftNamespace = '';
   // Each store can be unavailable independently; local storage must not prevent session cleanup.
-  clearSessionDrafts(options?.preservePendingInventory);
+  clearSessionDrafts(options?.preservePendingCommands);
   try {
     for (const key of Object.keys(localStorage))
       if (
@@ -51,7 +53,7 @@ export function clearAccess(options?: { preservePendingInventory?: boolean }): v
         localStorage.removeItem(key);
     // The caller may retain unresolved receipts only after proving the same native private owner
     // and save timeline. Keep that owner marker so the next view does not erase those receipts.
-    if (!options?.preservePendingInventory) localStorage.removeItem('open-legend:private-owner');
+    if (!options?.preservePendingCommands) localStorage.removeItem('open-legend:private-owner');
   } catch {
     /* Browser storage is optional. */
   }

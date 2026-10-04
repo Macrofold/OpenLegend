@@ -127,6 +127,15 @@ function InventoryWorkspace({
   const [drag, setDrag] = useState<DragIntention>();
   const dragRef = useRef<DragIntention | undefined>(undefined);
   const ignoreClick = useRef(false);
+  const actionFocus = useRef<
+    { side: InventorySide; containerId: string; neighborId?: string } | undefined
+  >(undefined);
+  const [resolvedFocus, setResolvedFocus] = useState<{
+    side: InventorySide;
+    containerId: string;
+    neighborId?: string;
+    itemId?: string;
+  }>();
   const [ownerBusy, setOwnerBusy] = useState(false);
   const ownerGuard = useRef(false);
   const [holder, setHolder] = useState(view.player.id);
@@ -196,9 +205,11 @@ function InventoryWorkspace({
     epoch: view.commandEpoch,
     connected,
     command,
-    onResolved() {
+    onResolved(result) {
       left.refresh();
       right.refresh();
+      if (actionFocus.current) setResolvedFocus({ ...actionFocus.current, itemId: result.itemId });
+      actionFocus.current = undefined;
     },
   });
   const busy = !!operations.pending || ownerBusy;
@@ -222,6 +233,30 @@ function InventoryWorkspace({
         (!target ||
           target.id !== amountDraft.target?.id ||
           target.revision !== amountDraft.target?.revision)));
+
+  useEffect(() => {
+    if (!resolvedFocus) return;
+    const state = collection(resolvedFocus.side);
+    if (state.loading) return;
+    const region = workspace.current?.querySelector<HTMLElement>(
+      `[data-side="${resolvedFocus.side}"]`,
+    );
+    // Do not steal focus from a search, a reopened object or another panel while a receipt
+    // was in flight. The identity returned by a merge can differ from the source identity.
+    if (
+      region &&
+      region === document.activeElement &&
+      state.page?.container.id === resolvedFocus.containerId
+    ) {
+      const buttons = Array.from(region.querySelectorAll<HTMLButtonElement>('[data-item-id]'));
+      const button =
+        buttons.find((entry) => entry.dataset.itemId === resolvedFocus.neighborId) ??
+        buttons.find((entry) => entry.dataset.itemId === resolvedFocus.itemId) ??
+        buttons[0];
+      button?.focus();
+    }
+    setResolvedFocus(undefined);
+  }, [resolvedFocus, left.key, left.page, right.key, right.page]);
 
   function focusCollection(side: InventorySide) {
     window.requestAnimationFrame(() =>
@@ -299,9 +334,9 @@ function InventoryWorkspace({
       return;
     const current = source.items.find((entry) => entry.id === sourceItem.id);
     if (!current || !sameItem(current, sourceItem)) return;
-    if (current.availableQuantity === undefined || current.availableQuantity < current.quantity) {
+    if (current.availableQuantity === undefined || current.availableQuantity < 1) {
       operations.setMessage(
-        'The full stack is not available. Inspect it and choose an available amount.',
+        'No inspected quantity is available to move. Inspect the item for its current availability.',
       );
       return;
     }
@@ -310,12 +345,21 @@ function InventoryWorkspace({
       current,
       destination.id,
       destination.revision,
-      current.quantity,
-      `Move ${current.name} to ${destination.name}`,
+      current.availableQuantity,
+      `Move ${current.availableQuantity} ${current.name} to ${destination.name}`,
     );
   }
   function send(action: ActionOption, side: InventorySide) {
     if (!canAct || !action.enabled) return;
+    const source = collection(side).page;
+    if (source) {
+      const index = source.items.findIndex((entry) => entry.id === action.command.itemId);
+      actionFocus.current = {
+        side,
+        containerId: source.container.id,
+        neighborId: source.items[index + 1]?.id ?? source.items[index - 1]?.id,
+      };
+    }
     closeDetail(false);
     stopDrag();
     focusCollection(side);
@@ -659,11 +703,13 @@ function InventoryWorkspace({
                           disabled={
                             !canAct ||
                             item.availableQuantity === undefined ||
-                            item.availableQuantity < item.quantity
+                            item.availableQuantity < 1
                           }
                           onPress={() => quickMove(selection.side, item)}
                         >
-                          Move to {target.name}
+                          {item.availableQuantity !== item.quantity
+                            ? `Move ${item.availableQuantity ?? 'available'} available to ${target.name}`
+                            : `Move to ${target.name}`}
                         </Button>
                         {!item.individual && item.quantity > 1 && (
                           <Button
@@ -747,7 +793,7 @@ function InventoryWorkspace({
                     ))}
                   </div>
                   <details open={!selection.actions}>
-                    <summary>Known details and comparison</summary>
+                    <summary>Known details</summary>
                     <p>{item.description}</p>
                     <div className="ol-tags">
                       {item.tags.map((tag) => (
@@ -771,7 +817,10 @@ function InventoryWorkspace({
                         </div>
                       ))}
                     </dl>
-                    {item.comparison && (
+                  </details>
+                  {item.comparison && (
+                    <details>
+                      <summary>Compare with equipped {item.comparison.name}</summary>
                       <table className="ol-inventory-comparison">
                         <caption>Compared with equipped {item.comparison.name}</caption>
                         <thead>
@@ -800,32 +849,34 @@ function InventoryWorkspace({
                           })}
                         </tbody>
                       </table>
-                    )}
-                  </details>
-                  {!item.individual && !item.container && !item.equipped && (
-                    <details>
-                      <summary>Merge matching stacks</summary>
-                      <MergeTargets
-                        item={item}
-                        containerId={selectedContainer.id}
-                        pageKey={selectedCollection?.key ?? ''}
-                        canAct={canAct && item.availableQuantity === item.quantity}
-                        visible={visible && connected}
-                        onMerge={(match) =>
-                          send(
-                            arrange(
-                              'merge-item',
-                              item,
-                              match.id,
-                              match.revision,
-                              item.quantity,
-                              'Merge stacks',
-                            ),
-                            selection.side,
-                          )
-                        }
-                      />
+                      <p className="ol-caption">
+                        Only matching meanings and units are compared. Unknown facts stay unknown;
+                        there is no total equipment score.
+                      </p>
                     </details>
+                  )}
+                  {!item.individual && !item.container && !item.equipped && (
+                    <MergeTargets
+                      key={item.id}
+                      item={item}
+                      containerId={selectedContainer.id}
+                      pageKey={selectedCollection?.key ?? ''}
+                      canAct={canAct && item.availableQuantity === item.quantity}
+                      visible={visible && connected}
+                      onMerge={(match) =>
+                        send(
+                          arrange(
+                            'merge-item',
+                            item,
+                            match.id,
+                            match.revision,
+                            item.quantity,
+                            'Merge stacks',
+                          ),
+                          selection.side,
+                        )
+                      }
+                    />
                   )}
                   {view.godMode && (
                     <details>

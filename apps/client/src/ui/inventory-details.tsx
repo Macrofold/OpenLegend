@@ -73,21 +73,26 @@ export function InventoryHistory({
 
 /** Matching lots anywhere in this container, found by the server with the merge admission
  * rules rather than only among the displayed page (docs/limits/objects.md#qu05). */
-export function MergeTargets({
-  item,
-  containerId,
-  pageKey,
-  canAct,
-  visible,
-  onMerge,
-}: {
+type MergeTargetProps = {
   item: InventoryItemView;
   containerId: string;
   pageKey: string;
   canAct: boolean;
   visible: boolean;
   onMerge(target: InventoryItemView): void;
-}) {
+};
+
+export function MergeTargets(props: MergeTargetProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary>Merge matching stacks</summary>
+      {open && <MatchingLots {...props} />}
+    </details>
+  );
+}
+
+function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: MergeTargetProps) {
   const [cursor, setCursor] = useState<string>();
   const [targetId, setTargetId] = useState('');
   const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();

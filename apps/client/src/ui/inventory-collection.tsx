@@ -117,9 +117,14 @@ export function InventoryCollection({
                 className="ol-inventory-cell"
                 data-item-id={item.id}
                 data-selected={selectedId === item.id || undefined}
-                aria-label={`${item.name}, ${item.quantity}${item.equipped ? ', equipped' : ''}${item.container ? ', container' : ''}`}
+                aria-label={`${item.name}, ${item.quantity}${item.availableQuantity !== undefined && item.availableQuantity !== item.quantity ? `, ${item.availableQuantity} available; reserved remainder stays` : ''}${item.equipped ? ', equipped' : ''}${item.container ? ', container' : ''}`}
                 aria-haspopup="dialog"
-                draggable={canMove && !busy && item.availableQuantity !== undefined}
+                draggable={
+                  canMove &&
+                  !busy &&
+                  item.availableQuantity !== undefined &&
+                  item.availableQuantity > 0
+                }
                 onClick={(event) => {
                   if (busy) return;
                   if (event.shiftKey && canMove) onQuickMove(item);
@@ -146,6 +151,12 @@ export function InventoryCollection({
                 <Icon name={symbol(item.definitionId)} fallbackLabel={item.name} size={32} />
                 <span className="ol-inventory-cell-name">{item.name}</span>
                 <span className="ol-inventory-cell-quantity">× {item.quantity}</span>
+                {item.availableQuantity !== undefined &&
+                  item.availableQuantity !== item.quantity && (
+                    <span className="ol-inventory-cell-state">
+                      {item.availableQuantity} available; reserved remainder stays
+                    </span>
+                  )}
                 {item.equipped && <span className="ol-inventory-cell-state">Equipped</span>}
                 {item.container && <span className="ol-inventory-cell-state">Container</span>}
               </button>

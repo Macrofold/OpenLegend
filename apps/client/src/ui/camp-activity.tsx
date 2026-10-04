@@ -229,7 +229,8 @@ export function CampActivity(props: Props) {
 
 function ActivityTask({ view, connected, visible = true, entry, command }: Props) {
   const draftKey = `open-legend:action-draft:camp-task:${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}:${entry?.familyId}:${entry?.targetId}`;
-  const pendingKey = `open-legend:action-draft:task-command:${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
+  const recoveryScope = view.access?.commandRecoveryScope;
+  const pendingKey = `open-legend:activity-command:${recoveryScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
   const [draft, setDraft] = useState(() => readDraft(draftKey));
   const [mode, setMode] = useState<WorkMode>('enqueue');
   const [choices, setChoices] = useState<ActivityRequestsView>();
@@ -238,7 +239,9 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [operation, setOperation] = useState<'start' | 'stop' | 'native' | null>(null);
-  const [unresolved, setUnresolved] = useState(() => readPending(pendingKey));
+  const [unresolved, setUnresolved] = useState(() =>
+    recoveryScope ? readPending(pendingKey) : undefined,
+  );
   const [recovering, setRecovering] = useState(false);
   const [selections, setSelections] = useState<
     Record<string, { key: string; page: ActivityChoicePage }>
@@ -466,7 +469,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   }
   async function perform(action: ActionOption, kind: 'start' | 'stop' | 'native') {
     if (pending.current || unavailable || unresolved) return undefined;
-    if (!view.commandEpoch) {
+    if (!view.commandEpoch || !recoveryScope) {
       setError('Refresh your connection before starting work.');
       return undefined;
     }

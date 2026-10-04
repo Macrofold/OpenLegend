@@ -90,7 +90,7 @@ export function useContainerOpening(
   function blocked(value: Attempt, message: string) {
     if (current.current?.token !== value.token) return;
     read.current?.abort();
-    retain({ ...value, phase: 'blocked', message });
+    retain({ ...value, ...current.current, phase: 'blocked', message });
   }
   async function inspectAccess(value: Attempt, approach: boolean) {
     read.current?.abort();
@@ -110,7 +110,7 @@ export function useContainerOpening(
         },
         abort.signal,
       );
-      if (abort.signal.aborted || !active(value)) return;
+      if (abort.signal.aborted || !active(value) || current.current?.cancelRequested) return;
       if (access.scope !== value.scope || access.container?.id !== value.containerId) {
         blocked(value, access.message ?? 'This container is no longer available.');
         return;
@@ -252,9 +252,11 @@ export function useContainerOpening(
         if (receipt.result.ok && receipt.result.actionId)
           await followAdmitted(value, receipt.result.actionId);
         else blocked(value, receipt.result.message);
-      } else retain({ ...value, phase: 'unknown', message: receipt.message });
+      } else if (current.current)
+        retain({ ...current.current, phase: 'unknown', message: receipt.message });
     } catch (reason) {
-      if (sameScope(value)) retain({ ...value, phase: 'unknown', message: String(reason) });
+      if (sameScope(value) && current.current)
+        retain({ ...current.current, phase: 'unknown', message: String(reason) });
     }
   }
   function open(entity: EntityView) {
@@ -285,6 +287,7 @@ export function useContainerOpening(
   }
   async function stopMovement(value: Attempt) {
     if (!value.movement?.actionId || !sameScope(value)) return;
+    read.current?.abort();
     const cancelled: Attempt = {
       ...value,
       cancelRequested: true,
@@ -310,6 +313,8 @@ export function useContainerOpening(
   function cancel() {
     const value = current.current;
     if (!value?.movement) return stopFollowing();
+    if (value.cancelRequested && value.phase === 'checking') return;
+    read.current?.abort();
     const cancelled: Attempt = {
       ...value,
       cancelRequested: true,
@@ -327,6 +332,8 @@ export function useContainerOpening(
     if (
       !target ||
       target.storage?.containerId !== value.containerId ||
+      target.storage.placementRevision !== value.placementRevision ||
+      view.map.spatial.revision !== value.geometryRevision ||
       geometry(target) !== value.geometry
     ) {
       if (value.phase !== 'blocked')
@@ -351,7 +358,7 @@ export function useContainerOpening(
     retry,
     checkResult,
     walk: () => {
-      if (current.current) void inspectAccess(current.current, true);
+      if (current.current?.phase === 'out-of-reach') void inspectAccess(current.current, true);
     },
   };
 }

@@ -243,16 +243,16 @@ function App({
         (previous.access?.scope !== next.access?.scope ||
           previous.saveTimeline !== next.saveTimeline)
       ) {
-        // A connection/control remount may retain only an unresolved inventory receipt
+        // A connection/control remount may retain only unresolved command receipts
         // for this same private owner. It must never turn into a new command on remount.
         const samePrivateOwner =
-          !!previous.access?.privateDraftScope &&
-          previous.access.privateDraftScope === next.access?.privateDraftScope &&
+          !!previous.access?.commandRecoveryScope &&
+          previous.access.commandRecoveryScope === next.access?.commandRecoveryScope &&
           previous.worldId === next.worldId &&
           previous.access.actorId === next.access?.actorId &&
           previous.player.id === next.player.id &&
           previous.saveTimeline === next.saveTimeline;
-        clearAccess({ preservePendingInventory: samePrivateOwner });
+        clearAccess({ preservePendingCommands: samePrivateOwner });
         resetApplication();
         return;
       }
