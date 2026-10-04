@@ -1,6 +1,6 @@
 # Default mercenary character evidence
 
-September 28, 2026. Scope: the owner-selected mercenary study as a separate default NPC, live animation/cloth, fixed character pixels and actual-depth compositing. [Plan](../projects/mercenary-scene-pilot.md), [current presentation](../world-presentation.md#animated-character-pixels), [bounds](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot), and remaining [V3D01/V3D05/V3D11 work](../maintainers/3d-pixel-art.md). This does not qualify the general generated-art pipeline.
+September 28, 2026. Scope: the owner-selected mercenary study as a separate default NPC, live animation/cloth, fixed character pixels and actual-depth compositing. [Plan](../projects/completed/mercenary-scene-pilot.md), [current presentation](../world-presentation.md#animated-character-pixels), [bounds](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot), and remaining [V3D01/V3D05/V3D11 work](../maintainers/3d-pixel-art.md). This does not qualify the general generated-art pipeline.
 
 ## Environment and checks
 
