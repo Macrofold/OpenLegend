@@ -1,14 +1,14 @@
-# Inventory and everyday play: technical design
+# Open Legend: whole-interface technical design
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Runtime interactions and focused UI checks are recorded; full native gameplay qualification remains open. | 2026-10-04   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Whole-interface research/design correction in progress; additional runtime implementation is not part of this pass. | 2026-10-04   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
 ## Scope, risk and planning
 
-Research was completed first. The subsequent chat continuation authorizes the runtime implementation on the same branch. The implementation crosses world selection, inventory reads, native handling, activity presentation and conversation drafts, so this durable plan and integrated verification remain necessary. No provider calls are needed for the selected native checks.
+The original request covered the entire interface. The first implementation concentrated on inventory, contextual camp activities, crafting and conversation, leaving substantial existing player, creator and operator surfaces outside the redesign. The [58-group source/evidence map](../ui-ux/interface-coverage.md) now defines the complete coverage boundary. This pass changes research, product/technical design and original design illustrations only: **zero additional production logic lines and no new runtime tests**. The earlier authorized implementation and its acceptance remain recorded below; broader implementation needs its own concrete slice plan against this design.
 
 The primary risks are hidden-content disclosure, moving the wrong item or destination, duplicate/uncertain effects, input falling through into the world, and recreating the form problem through an overly generic replacement. The implementation reuses existing native owners; the refined estimate and completed visual correction below reflect the actual inventory and activity work. Code presence and focused checks do not close the integrated gameplay gates.
 
@@ -116,7 +116,7 @@ Native review/admission receives the complete typed intention even when most fie
 
 Immediate Add fuel retains the existing native one-unit action and labels that committed quantity; this presentation does not add arbitrary-quantity fueling or a client batch loop. Longer care retains supported supply/material, budget, reserve and stopping choices. Its default summary must name their current values, while **Supply**, **Amount** and **Stopping** each open only the relevant editor. Editing keeps native defaults and exact values and does not start or replace work. Start remains an explicit reachable action, with replacement consequences visible. Native role reads continue to supply evidence even when an editor is closed.
 
-Use a small initial set of meaningful activity presentations, not a universal form renderer with dozens of flags. Demonstrate the bundled fire/crafting capability and the accepted different-world interaction requirement. The earlier plan suggested an already-supported charge-source demo; the [current verification report](../verification/game-interaction-redesign.md) establishes that the constructor installs only the base world and provides no supported alternate-world activity fixture or parameterized registration path. That prerequisite and portability demonstration remain unmet; another seed or a renamed fire does not satisfy them. Do not invent a new electrical simulation solely to claim the gate passed. Chest/workbench imagery remains illustrative, so new fixed-chest or workbench mechanics are not a prerequisite to UI delivery. Unsupported roles produce a truthful unavailable explanation or a supported guided clarification path, not generated HTML/JavaScript or a field dump marketed as complete gameplay.
+Use a small initial set of meaningful activity presentations, not a universal form renderer with dozens of flags. Demonstrate the bundled fire/crafting capability and the accepted different-world interaction requirement. The earlier claim that the constructor installs only the base world was incorrect: `world-service.ts` selects the base, touch-demo or reservoir-demo preset. The reservoir demo already contains constructed characters with Charge/Integrity and native recharging. Those presets are useful for checking shared inventory, character and contextual interaction against different content, but their manifests do not install the newer longer-task activity hosts. The missing activity example concerns that specific host/presentation path, whose fixed trusted registrations and two presentation shapes are not evidence of arbitrary-world support. Do not invent a new electrical simulation or rename a fire merely to pass the gate. Chest/workbench imagery remains illustrative. Unsupported roles produce a truthful unavailable explanation or a supported guided clarification path, not generated HTML/JavaScript or a field dump marketed as complete gameplay. [Precise portability findings](../verification/game-interaction-redesign.md#world-portability-correction)
 
 ## Layout, input and accessibility
 

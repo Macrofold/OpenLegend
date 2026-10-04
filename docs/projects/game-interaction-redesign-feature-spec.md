@@ -1,14 +1,16 @@
-# Inventory and everyday play: interaction redesign
+# Open Legend: whole-interface redesign
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Runtime interactions and focused UI checks are recorded; full native gameplay qualification remains open. | 2026-10-04   |
+| Status      | Current progress                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Correcting the original scope to cover the whole interface; earlier inventory/task/chat implementation and its open acceptance remain separate. | 2026-10-04   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 
 ## Purpose and decision
 
-Make handling belongings, opening a chest, tending a fire and talking to a person feel like acting in the world. Mike's October 3 direction explicitly replaces the routine destination-selector and activity-form experience. The inventory shows recognizable objects in squares, and opening a supported container connects its contents to the player's own inventory. The subsequent chat continuation authorized implementation of this discussed plan. Research is complete and the runtime interactions now exist; the complete gameplay qualification remains open.
+Make the entire Open Legend interface understandable through the player's current place, character, object and purpose. Mike's original October 3 request covered every in-game menu and interaction; inventory was an example. The earlier research and implementation concentrated too heavily on inventory, contextual camp tasks, crafting and conversation. Calling that the completed UI research/redesign was inaccurate. The October 4 clarification corrects this document's scope; it is not a newly added requirement.
+
+The [whole-interface coverage map](../ui-ux/interface-coverage.md) inventories 58 existing surface groups across ordinary play, entry and settings, character and history, creator work, operations and shared interaction. This pass completes research and design for that scope. It makes no additional runtime changes. Earlier inventory/task/chat code and its recorded checks remain useful, but neither establish a redesigned whole interface nor close their own native gameplay acceptance.
 
 The user-approved direction is **world object → relevant interaction → visible result**. The behavior below is the accepted interaction contract. The implementation and recorded focused checks do not by themselves establish completion: the real-game journeys remain required, including the integrated camp session. [Runtime evidence and limits](../verification/game-interaction-redesign.md) distinguish observed results from remaining qualification.
 

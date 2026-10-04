@@ -1,6 +1,6 @@
-# Baldur's Gate 3: inventory, objects, actions, and conversation
+# Baldur's Gate 3: exploration, combat, character, inventory, journal and conversation
 
-This dossier studies **twelve distinct, saved UI screenshots** and the interactions around them. The strongest transferable pattern is that the player acts on an item, character, or world object first. That context supplies the subject and usually the destination of the operation. The game then asks for the remaining meaningful choice. BG3's inventory also has documented usability problems; its popularity is not evidence that every inventory decision is good.
+This dossier studies **sixteen distinct, saved UI screenshots** and the interactions around them. The strongest transferable pattern is that the player acts on an item, character, or world object first. That context supplies the subject and usually the destination of the operation. The game then asks for the remaining meaningful choice. BG3's inventory also has documented usability problems; its popularity is not evidence that every inventory decision is good.
 
 This is empirical research and design analysis. The enduring Open Legend decisions belong in [Inventory](../inventory.md), [World interaction](../world-interaction.md), [Controls](../controls.md), and [Chat and invention](../chat-and-invention.md). The wider evidence register is [Research](../research.md). Recommendations below are inputs to those documents, not a second UI specification.
 
@@ -303,3 +303,104 @@ Character Select is another documented dialogue utility, allowing control of a c
 | Talk                      | Named character, current speech, available history; BG3-12 | Preserve world context and conversation continuity; adapt to freeform chat.                         |
 
 The proposed Open Legend improvement is therefore not merely a different skin. It changes where an interaction begins, what context is retained, what the player must decide, and how the result returns to the world. The visual references support that direction while their failures warn against small state markers, uncontrolled panel density, invisible shortcuts, and compulsory bag administration.
+
+## Beyond inventory: the whole play loop
+
+The wider review adds **BG3-13–16**, spanning exploration, combat, progression and the journal. The original inventory work is one part of this loop, not the definition of the redesign. These references also establish boundaries: BG3's fixed party, D&D action economy and authored quests are not Open Legend's engine rules.
+
+### Exploration: choose something in the world before choosing its verb
+
+The Japanese publisher's [PS5 exploration guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide1/) documents Cross for default interaction, held Cross for Active Search, and Square for object actions. It distinguishes taking, opening, disarming, unlocking, moving, attacking and throwing. BG3-13 shows why an explicit nearby-object list can work: it is a deliberate selection aid over the scene, with the focused object highlighted in that scene. It is not a destination questionnaire appearing after the player already chose the object.
+
+**Open Legend application:** ordinary pointer hover/focus identifies a permitted object and its default verb; deliberate activation begins that interaction. A nearby list is an alternative for crowded or hard-to-point-at scenes. It should expose the same names and highlight the same physical targets. Search must not discover things the character cannot perceive. After selecting an action, show only its missing target or meaningful option. Reach, obstruction, ownership and unavailable tools need explanations beside the chosen thing.
+
+### Combat and action feedback: actor, intention, target, cost, result
+
+The publisher's [PS5 combat guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide2/) maps the numbered regions in BG3-14. It documents R1 for action selection, target examination, and Triangle to end a turn. The eight regions are:
+
+| Visible region                        | What it tells the player                         | Open Legend design inference                                                                                                             |
+| ------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1, portrait queue across top          | Acting order, with health reflected in portraits | If an authored mode has ordered turns, show the actual order; otherwise show current actions and their progress without inventing turns. |
+| 2, status below queue                 | Character under the cursor                       | Keep intended target identity separate from the character the player controls.                                                           |
+| 3, bottom-left portrait               | Controlled character, health and condition       | Make actor changes explicit; a pointer movement must not silently change the acting character.                                           |
+| 4, minimap                            | Nearby spatial relationships                     | Navigation is a supplement to the world, bounded by known/permitted information.                                                         |
+| 5, action and bonus-action indicators | Remaining action categories                      | Show the real costs and availability of the selected action, using the current world's resource model.                                   |
+| 6, movement gauge                     | Remaining movement                               | Show path/reach feedback where the player aims, including why a destination cannot be reached.                                           |
+| 7, spell-slot indicators              | Spell resource budget                            | Distinguish a recurring action cost from a limited reserve.                                                                              |
+| 8, class-resource indicators          | Another distinct ability resource                | Use names and explanations rather than requiring color memorization.                                                                     |
+
+**Application workflow:** choose an action, preview the eligible target/path/area and known cost, deliberately commit, then see what actually happened. Escape cancels the pending intention before closing the parent panel or changing world selection. A failed action should leave its subject intelligible and explain the cause. The persistent action strip should contain useful, stable shortcuts; a full catalogue belongs in an intentional secondary view. The screenshot does not prove execution latency, interrupt behavior or a numerical hit-chance policy.
+
+Larian's own [controller design explanation](https://blog.playstation.com/?p=383943&sf268739969=1) distinguishes a main tools radial from customizable action radials, and direct movement from Cursor Mode. Its lesson is input adaptation with maintained meaning. Open Legend should not require a controller to imitate a small mouse pointer, nor require a mouse user to traverse several wheels. Input methods still need the same ability to inspect, cancel, choose and understand consequences.
+
+### Character and progression: stable identity, explicit changes
+
+BG3-01/02/11 already establish equipped-state and comparison evidence. BG3-15 adds a different decision: a level-up with an unfinished feat choice. The screen shows the previous/new level, a health delta and a named pending decision before acceptance. This is a reasonable place for a structured decision because the player is deliberately changing a character build.
+
+**Open Legend application:** the character sheet should answer who this is, current condition, capabilities, equipment and the causes of important modifiers. Expand a particular capability to explain it. Where an authored world offers consequential progression, show what changes before confirmation and preserve unfinished choices. Do not copy a six-attribute or class-based level-up template into worlds that do not use it. Routine eating, opening, moving, talking and working should not borrow the ceremony of a build editor.
+
+### Journal and map: remember why, then find where
+
+Larian's [journal structure documentation](https://docs.baldursgate3.game/index.php?title=Journal_Structure_Overview) explains a left-hand category/quest/subquest hierarchy and right-hand objective history, newest first. It explicitly cautions that older objectives can be inactive because the player skipped or failed them, not necessarily because every instruction was performed. BG3-16 shows the retail game's refugee quest used as the documentation example; it is not an editor canvas or an invented mockup.
+
+The separate [official map-marker guidance](https://docs.baldursgate3.game/index.php?title=Journal:_Working_with_Map_Markers) distinguishes precise destinations from search areas and links marker behavior to the intended exploration task. It also describes entrance markers for destinations in other subregions. This is a better basis for map clarity than assuming every objective should become an exact pin.
+
+**Open Legend application:** organize remembered events by person/place/topic with recency and a readable trail of evidence. Keep the player's chosen goal separate from what has actually been observed or promised. “Show known place on map” should preserve the selected journal entry and its return route. Show a known location precisely; show an uncertain area as uncertain. Do not convert an NPC's uncertain statement into omniscient navigation. A map should distinguish looking, placing a personal note, setting a movement destination and any world-supported fast travel. The saved BG3 set contains a minimap and journal; it does **not** contain a full map screen, so full-map geometry and zoom usability remain unqualified by these images.
+
+### Dialogue, pause and entry are not exempt
+
+BG3-12 shows cinematic speech and conversation utilities. The wider lesson is to preserve identity, readable history and deliberate choice while the world remains understandable. Larian's controller article documents access to dialogue history during a conversation. That feature addresses a player's need to reread; it does not establish that all surrounding actors stop or that a cinematic is safely pausable.
+
+**Open Legend application:** expose whether simulation is running, paused or waiting on the player; distinguish closing a panel from stopping an action. Preserve readable speech and chat drafts across ordinary navigation. A cinematic conversation is an optional presentation reference, not a mandate to replace freeform conversation with scripted choices. For starting/resuming play, compare the concrete DOS2-10 entry evidence below rather than assuming an inventory redesign solves entry, reconnect or save selection.
+
+### First-person response to the wider interface
+
+These are individual observations, not survey findings or a claim that popularity validates a UI:
+
+| Source                                                                                                                                                                          | Specific praise or problem                                                                                                                                                                                                 | Design inference                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [“Gamepad is freaking Gamechanger!”, August 2023](https://www.reddit.com/r/BaldursGate3/comments/15hts2t/)                                                                      | The original player liked direct stick movement and the much quieter exploration UI. Replies also criticized fiddly radials and camera speed. Retrieved through indexed original discussion; direct page open was blocked. | Evaluate exploration and action selection separately; a comfortable movement scheme does not prove its menu scales.                                                                    |
+| [“Playing with controller — positively surprised”, May 2024](https://www.reddit.com/r/BaldursGate3/comments/1clfooy/)                                                           | Players praised the controller layout and movement; a reply singled out large consumable inventories as a radial-clutter problem. Indexed original discussion, not a hands-on reproduction.                                | Keep frequent actions stable and move growing collections into an intentional browser.                                                                                                 |
+| [RPG developers' firsthand impressions, PC Gamer, August 2023](https://www.pcgamer.com/a-triumph-brian-fargo-mike-laidlaw-and-other-rpg-architects-weigh-in-on-baldurs-gate-3/) | The collected player/developer accounts include praise for incorporating usable bonuses into dialogue checks and criticism of difficult-to-access single-player pausing.                                                   | Put relevant assistance at the decision; give simulation-time controls a clear, independently discoverable home. This is a dated experience report, not a claim about current patches. |
+
+## Additional screenshot atlas: exploration to reflection
+
+### BG3-13 — Active Search as a deliberate world-selection aid
+
+![BG3-13: PS5 active search list beside a highlighted wooden hatch](../screenshots/bg3/BG3-13-active-search.webp)
+
+**Provenance:** [Publisher exploration guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide1/) · [Original image](https://media.spike-chunsoft.co.jp/pages/baldursgate3/assets/images/guide/p1_img_01.webp). Japanese PS5 controller presentation; source publication/capture date and exact build unknown. Accessed 2026-10-04. Original 1600×900 image retained.
+
+**Visible controls/layout:** a translucent result list occupies the left; the focused wooden hatch has a matching outline in the world. A small adjacent card names it. Cross/Use, Square/Actions, R3/hints and Circle/Close are written in the footer. The minimap remains upper-right. Repeated ingredient names illustrate why a list still benefits from spatial highlighting.
+
+**Workflow and judgment:** the documented held-Cross search precedes choosing the object. This is a useful alternative to precise picking in a cluttered room; it would be poor design if forced after every direct click on an already identified chest. The panel obscures part of the scene, so the outline and closing route matter. **Apply:** retain the same object identity across pointer focus, nearby results and contextual verbs; never let a list disclose unperceived objects.
+
+### BG3-14 — Combat HUD separates turn, actor, target and budget
+
+![BG3-14: Publisher-annotated combat screen showing initiative, target, actor, minimap and resources](../screenshots/bg3/BG3-14-combat-resources.webp)
+
+**Provenance:** [Publisher combat guide](https://www.spike-chunsoft.co.jp/pages/baldursgate3/guide2/) · [Original image](https://media.spike-chunsoft.co.jp/pages/baldursgate3/assets/images/guide/p2_img_01.webp). Japanese PS5; exact capture date/build unknown. Accessed 2026-10-04. Numbered boxes are the publisher's annotations, preserved in the original 1600×900 bytes.
+
+**Visible controls/layout:** the queue and hovered-character status occupy the top centre, the controlled Gale portrait sits lower-left, and resource categories line the bottom. Triangle/End Turn is near the controlled character; Square/Context Menu, examination and R1/Actions prompts sit lower-right. A Cross/Move prompt accompanies the world cursor. The table above maps the numbered regions.
+
+**Workflow and judgment:** the scene remains the main workspace, with status around its edges. This makes a target-oriented action comprehensible without a form. Small bars and repeated condition icons can still be hard to decode; the explanatory annotations are not in-game accessibility. **Apply:** a stable controlled-person display, named target, local action preview, cost and actual outcome. The photo documents a selection state, not the accuracy of every trajectory or result.
+
+### BG3-15 — A consequential character choice deserves a change summary
+
+![BG3-15: Fighter level-up showing health increase and an outstanding feat choice](../screenshots/bg3/BG3-15-level-up.jpg)
+
+**Provenance:** [Lucas White's firsthand guide](https://www.shacknews.com/article/136852/how-to-level-up-baldurs-gate-3) · [Original image](https://shacknews-www.s3.amazonaws.com/assets/editorial/2023/08/baldurs-gate-3-how-to-level-up-3.jpg). Published 2023-08-30. The author identifies an AYANEO 2 PC handheld with resolution upscaling and controller use; exact input during capture/build unknown. Accessed 2026-10-04. The original 1920×1200 image preserves the source's soft rendering.
+
+**Visible controls/layout:** left navigation marks the remaining Feat decision with a red exclamation. The centre-left summary shows level 5→6 and health 44→52; the character and summary are on the right. “Choices Pending!” sits above Accept. Close is upper-right. Numerous adjacent capability icons have no expanded labels in this frame, so their precise meanings are not guessed.
+
+**Workflow and judgment:** the pending choice is named rather than expressed as a generic invalid form. The before/after health comparison is immediately useful; the large decorative/character area competes with choice space. **Apply:** deliberate progression decisions can have a summary and explicit commit, while ordinary world actions keep their lighter object/verb/target flow. Do not claim from one disabled-looking button alone that every cancellation or validation rule was tested.
+
+### BG3-16 — Quest history retains reasons behind the current objective
+
+![BG3-16: Official documentation screenshot of the Save the Refugees journal](../screenshots/bg3/BG3-16-quest-journal.png)
+
+**Provenance:** [Official journal documentation](https://docs.baldursgate3.game/index.php?title=Journal_Structure_Overview) · [File record](https://docs.baldursgate3.game/index.php?title=File:23a6e569-6075-40ca-bc22-07e5ebcdafbe.png) · [Original image](https://docs.baldursgate3.game/images/f/fb/23a6e569-6075-40ca-bc22-07e5ebcdafbe.png). Desktop presentation, uploaded 2024-10-15; actual capture date and patch unknown. Accessed 2026-10-04. Original 1915×1195 preserved.
+
+**Visible controls/layout:** chapter and companion headings organize the left list; indentation relates subquests to parent quests. The selected row has a highlight and pointer. The right pane contains current objective and older explanation, with a Hide Completed toggle below the list and Close upper-right. The top icon navigation is not fully text-labelled here; no unverified icon functions are assigned.
+
+**Workflow and judgment:** navigation stays visible while reading one quest's explanation. The recent objective does not erase how the situation developed. Dark/gold text and tiny navigation icons can be difficult at reduced scale, and an unlabelled selection marker must not be confused with tracking. **Apply:** preserve the route from journal item to relevant person/place and back; separate actual remembered events, current player intent, inactive leads and unresolved uncertainty.
