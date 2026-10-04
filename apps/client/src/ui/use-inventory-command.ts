@@ -72,6 +72,7 @@ export function useInventoryCommand({
   const [pending, setPending] = useState(() => (storageKey ? restore(storageKey) : undefined));
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
+  const activeCommandId = useRef(pending?.request?.commandId);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -80,11 +81,18 @@ export function useInventoryCommand({
     };
   }, []);
 
-  function finish(result: ApiResult) {
+  function finish(result: ApiResult, commandId: string) {
     if (!storageKey) return;
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
-    sessionStorage.removeItem(storageKey);
+    const saved = restore(storageKey);
+    if (saved && !saved.request)
+      throw new Error('The retained inventory request could not be read.');
+    // A response from a former component can arrive after reconnect recovered that
+    // command and the current component started another one. It cannot erase the latter.
+    if (saved?.request?.commandId === commandId) sessionStorage.removeItem(storageKey);
+    if (activeCommandId.current !== commandId) return;
+    activeCommandId.current = undefined;
     guard.current = false;
     if (alive.current) {
       setPending(undefined);
@@ -112,20 +120,23 @@ export function useInventoryCommand({
       return;
     }
     guard.current = true;
+    activeCommandId.current = request.commandId;
     setPending({ request, status: 'sending' });
     setMessage('');
     try {
       const result = await command(action, request);
       if (!['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
-        finish(result);
+        finish(result, request.commandId);
         return;
       }
-      if (alive.current) setMessage(result.message);
+      if (alive.current && activeCommandId.current === request.commandId)
+        setMessage(result.message);
     } catch (error: unknown) {
-      if (alive.current)
+      if (alive.current && activeCommandId.current === request.commandId)
         setMessage(error instanceof Error ? error.message : 'The outcome is unknown.');
     }
-    if (alive.current) setPending({ request, status: 'unknown' });
+    if (alive.current && activeCommandId.current === request.commandId)
+      setPending({ request, status: 'unknown' });
   }
 
   async function check() {
@@ -138,18 +149,19 @@ export function useInventoryCommand({
         commandEpoch: request.commandEpoch,
         command: request.command,
       });
-      if (!alive.current) return;
+      if (!alive.current || activeCommandId.current !== request.commandId) return;
       if (receipt.scope !== scope) {
         setMessage('Character access changed. Reconnect before checking the result.');
       } else if (receipt.status === 'resolved') {
-        finish(receipt.result);
+        finish(receipt.result, request.commandId);
         return;
       } else setMessage(receipt.message);
     } catch (error: unknown) {
-      if (alive.current)
+      if (alive.current && activeCommandId.current === request.commandId)
         setMessage(error instanceof Error ? error.message : 'The result is still unknown.');
     }
-    if (alive.current) setPending({ request, status: 'unknown' });
+    if (alive.current && activeCommandId.current === request.commandId)
+      setPending({ request, status: 'unknown' });
   }
 
   return { pending, message, dispatch, check, setMessage };

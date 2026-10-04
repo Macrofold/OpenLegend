@@ -248,7 +248,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   >({});
   const [review, setReview] = useState<{ key: string; result: ApiResult; input: CommandInput }>();
   const alive = useRef(true);
-  const pending = useRef(false);
+  const pending = useRef<string | undefined>(undefined);
   const statusTicket = useRef(0);
   const statusAbort = useRef<AbortController | undefined>(undefined);
   const fieldId = useId();
@@ -485,38 +485,42 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       return undefined;
     }
     setUnresolved(saved);
-    pending.current = true;
+    pending.current = request.commandId;
     setOperation(kind);
     setError('');
     setMessage('');
     try {
       const result = await command(action, request);
-      if (!alive.current) return result;
+      if (!alive.current || pending.current !== request.commandId) return result;
       if (result.code === 'unconfirmed')
         setError('Delivery is uncertain. Check this exact request before starting other work.');
-      else acceptReceipt(result);
+      else acceptReceipt(result, request.commandId);
       await refreshStatus();
-      setRefresh((value) => value + 1);
+      if (alive.current && pending.current === request.commandId) setRefresh((value) => value + 1);
       return result;
     } catch (reason) {
-      if (alive.current) {
+      if (alive.current && pending.current === request.commandId) {
         setError(
           `${reason instanceof Error ? reason.message : 'Delivery is uncertain.'} No action is repeated automatically.`,
         );
       }
       return undefined;
     } finally {
-      pending.current = false;
-      if (alive.current) setOperation(null);
+      if (pending.current === request.commandId) {
+        pending.current = undefined;
+        if (alive.current) setOperation(null);
+      }
     }
   }
-  function acceptReceipt(result: ApiResult) {
+  function acceptReceipt(result: ApiResult, commandId: string) {
+    if (!alive.current || pending.current !== commandId) return;
     try {
-      sessionStorage.removeItem(pendingKey);
+      if (readPending(pendingKey)?.request.commandId === commandId)
+        sessionStorage.removeItem(pendingKey);
     } catch {
       /* A retained receipt can be checked again. */
     }
-    setUnresolved(undefined);
+    setUnresolved((current) => (current?.request.commandId === commandId ? undefined : current));
     if (result.ok) {
       setError('');
       setMessage(result.message);
@@ -524,25 +528,30 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   }
   async function recover() {
     if (!unresolved || unavailable || recovering || pending.current) return;
+    const commandId = unresolved.request.commandId;
+    pending.current = commandId;
     setRecovering(true);
     try {
       const receipt = await post<CommandReceiptResult>('/api/command/receipt', {
         ...unresolved.request,
         command: unresolved.action.command,
       });
-      if (!alive.current) return;
+      if (!alive.current || pending.current !== commandId) return;
       if (receipt.scope !== view.access?.scope)
         throw new Error('Your access changed. Reopen this task.');
       if (receipt.status === 'resolved') {
-        acceptReceipt(receipt.result);
+        acceptReceipt(receipt.result, commandId);
         await refreshStatus();
-        setRefresh((value) => value + 1);
+        if (alive.current && pending.current === commandId) setRefresh((value) => value + 1);
       } else setError(receipt.message);
     } catch (reason) {
-      if (alive.current)
+      if (alive.current && pending.current === commandId)
         setError(reason instanceof Error ? reason.message : 'This request could not be checked.');
     } finally {
-      if (alive.current) setRecovering(false);
+      if (pending.current === commandId) {
+        pending.current = undefined;
+        if (alive.current) setRecovering(false);
+      }
     }
   }
   async function start() {
@@ -563,7 +572,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       'start',
     );
   }
-  const disabled = unavailable || !!operation || !!unresolved;
+  const disabled = unavailable || !!operation || !!unresolved || recovering;
   function objectChoice(key: string, readOnly = false) {
     const field = descriptor?.fields[key];
     if (!field?.discovery || !choices) return null;
@@ -581,7 +590,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         page={selectedPage(key)}
         visible={visible}
         connected={!unavailable}
-        busy={!!operation || !!unresolved}
+        busy={!!operation || !!unresolved || recovering}
         working={working}
         readOnly={readOnly}
         onRead={(keyValue, page) =>
