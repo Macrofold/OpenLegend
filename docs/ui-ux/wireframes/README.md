@@ -26,7 +26,7 @@ The chosen fire is already bound. Ordinary Add fuel is a short item/amount actio
 
 ![Proposed person entry and conversation with fixed composer and vertical speech volume](conversation.png)
 
-Talk starts from Ada and keeps that identity beside the transcript. History, volume and input have separate stable regions. The current growing composer, dots-only reply treatment and vertical volume direction are retained. Recipient/world/control draft transitions remain implementation work. Nothing in this picture proves a listener cannot overhear or that another character's thoughts are available. [Editable vector](conversation.svg)
+Talk starts from Ada and keeps that identity beside the transcript. History, volume and input have separate stable regions. The current growing composer, dots-only reply treatment and vertical volume direction are retained. Recipient/world/control draft transitions were implementation work when this proposal was drawn; the [current implementation evidence](../../verification/game-interaction-redesign.md#conversation-and-item-mention) records delivered scope and remaining gameplay qualification. Nothing in this picture proves a listener cannot overhear or that another character's thoughts are available. [Editable vector](conversation.svg)
 
 ## Review scope
 
