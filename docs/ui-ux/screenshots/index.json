@@ -104,10 +104,7 @@
       "source_image": "https://argothald.com/wp-content/uploads/2024/09/Just-Astarion-2048x1152.jpg",
       "sha256": "cc26589105bc517a2c73d256d813ea0d4263d2c497934effebef8803e17b0a80",
       "bytes": 515034,
-      "dimensions": [
-        2048,
-        1152
-      ],
+      "dimensions": [2048, 1152],
       "format": "JPEG"
     },
     {
@@ -122,10 +119,7 @@
       "source_image": "https://argothald.com/wp-content/uploads/2024/09/The-party-2048x1152.jpg",
       "sha256": "35da7c9728806a21fcac08467b299d48cb53b9c42b7aadd74f4d1a39d8789bcf",
       "bytes": 344575,
-      "dimensions": [
-        2048,
-        1152
-      ],
+      "dimensions": [2048, 1152],
       "format": "JPEG"
     },
     {
@@ -140,10 +134,7 @@
       "source_image": "https://argothald.com/wp-content/uploads/2024/09/PS5-Inventory-screen.jpeg",
       "sha256": "72bf607b480494f94ff361e797ee17e85e75079e277e120e344b63e228bfbddf",
       "bytes": 199224,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -158,10 +149,7 @@
       "source_image": "https://gaymingmag.com/wp-content/uploads/2023/08/dye-menu.jpg",
       "sha256": "a202810f2fd18821984beb1b04cb6db682695f1c964526f223ed63be9750bd9f",
       "bytes": 210851,
-      "dimensions": [
-        1366,
-        779
-      ],
+      "dimensions": [1366, 779],
       "format": "JPEG"
     },
     {
@@ -176,10 +164,7 @@
       "source_image": "https://res.cloudinary.com/ddbybfkod/image/upload/v1754587925/blogs/Nemanja/travellers-chest-in-baldurs-gate-3/img2_iyo7qm.png",
       "sha256": "9259c083275780e778e212730646f9470c6b8d7398bcf28abfc9f5581f10ba5f",
       "bytes": 457387,
-      "dimensions": [
-        976,
-        549
-      ],
+      "dimensions": [976, 549],
       "format": "PNG"
     },
     {
@@ -194,10 +179,7 @@
       "source_image": "https://argothald.com/wp-content/uploads/2024/09/Radial-display-2.jpeg",
       "sha256": "484feed69e65fc22c342fbe9d43bfb328dadda00fd75d58cb3bc7b488e658626",
       "bytes": 241676,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -212,10 +194,7 @@
       "source_image": "https://bg3.wiki/w/images/6/67/Alchemy_window.png",
       "sha256": "2de1fac55ee0652a73ebeea3c339f0c078dfd19dc7c1446ed198bfca4068a9d2",
       "bytes": 866002,
-      "dimensions": [
-        1278,
-        876
-      ],
+      "dimensions": [1278, 876],
       "format": "PNG"
     },
     {
@@ -230,10 +209,7 @@
       "source_image": "https://bg3.wiki/w/images/8/85/Throw_UI_Inventory_Menu.png",
       "sha256": "061f8680f910b6bed3c3253966086c7a62d81ae887e9a9c432a6e40a4133f4d6",
       "bytes": 557736,
-      "dimensions": [
-        1066,
-        306
-      ],
+      "dimensions": [1066, 306],
       "format": "PNG"
     },
     {
@@ -248,10 +224,7 @@
       "source_image": "https://gaymingmag.com/wp-content/uploads/2023/08/dye-combine.jpg",
       "sha256": "b320509f3ce9dc08a827de6ac48d1bb193ab045e54562df60b5da4e7fc143ca0",
       "bytes": 192692,
-      "dimensions": [
-        1320,
-        754
-      ],
+      "dimensions": [1320, 754],
       "format": "JPEG"
     },
     {
@@ -266,10 +239,7 @@
       "source_image": "https://gaymingmag.com/wp-content/uploads/2023/08/buying-dye.jpg",
       "sha256": "f047a5f99adabf9e95511d79bf2001f6ecc70f6ed12c6804a7491fd0011aabec",
       "bytes": 254520,
-      "dimensions": [
-        1889,
-        645
-      ],
+      "dimensions": [1889, 645],
       "format": "JPEG"
     },
     {
@@ -284,10 +254,7 @@
       "source_image": "https://www.gamerguides.com/assets/media/15/17482/image%20_6_-5c7fb507.png",
       "sha256": "a63fb601cafa22200f121816d256065abd51a01faa582b37ef42286717294491",
       "bytes": 4566104,
-      "dimensions": [
-        2560,
-        1440
-      ],
+      "dimensions": [2560, 1440],
       "format": "PNG"
     },
     {
@@ -302,10 +269,7 @@
       "source_image": "https://lh6.googleusercontent.com/a3-nHQ9SN8pxF0POP_1CGqoWxwdY7tWO2bHNeV6_N06XYVQXDTRhjenRtpivAvKBeKJxCK_Tz2b3zk6RwIF-05_I75_15AjpuRk1GRrWxpo4klQbXRhZ9DhRUn1oJvaatgY6LznVkPs9bNsqgCJI98E",
       "sha256": "ba1652342c062032b7b934bc1e6f8b5efd25b5371eec551501233b025096fbcf",
       "bytes": 1859559,
-      "dimensions": [
-        1600,
-        900
-      ],
+      "dimensions": [1600, 900],
       "format": "PNG"
     },
     {
@@ -320,10 +284,7 @@
       "source_image": "https://www.rpguides.de/images/dos2/location086.jpg",
       "sha256": "e295649f01e14c3c3e94ab63fee70b24526f105979bb6cd9c51a5fe25b70e9ca",
       "bytes": 270378,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -338,10 +299,7 @@
       "source_image": "https://cdn.staticneo.com/ew/e/e6/20171027151534_1.jpg",
       "sha256": "428b0c4396567960bb60998edecd5e5486efdc301745e9226424432dd1ece2dc",
       "bytes": 202109,
-      "dimensions": [
-        1600,
-        900
-      ],
+      "dimensions": [1600, 900],
       "format": "JPEG"
     },
     {
@@ -356,10 +314,7 @@
       "source_image": "https://static.wixstatic.com/media/03021d_2224bdfa37f94991b99e3fbcfffd220e~mv2.jpg/v1/fill/w_1920,h_1080,al_c,q_90/03021d_2224bdfa37f94991b99e3fbcfffd220e~mv2.jpg",
       "sha256": "a9b168bbb1fffcff868ecf797639f9d59313c69672444d04b13432fd25285e3e",
       "bytes": 534361,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -374,10 +329,7 @@
       "source_image": "https://static.wixstatic.com/media/03021d_a783efe8de294d1394a962335a85f4af~mv2.jpg/v1/fill/w_1920,h_1080,al_c,q_90/03021d_a783efe8de294d1394a962335a85f4af~mv2.jpg",
       "sha256": "5c5194198c8d10328be77a1b79d19df2c79fb7d859cabdd5b586ed8baf180028",
       "bytes": 421717,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -392,10 +344,7 @@
       "source_image": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_inventory.jpg",
       "sha256": "b23d00991bdf110a1bdcad789e1d1721e51ce10a56cb73d97da131c27da17517",
       "bytes": 207314,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -410,10 +359,7 @@
       "source_image": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_recipebook.jpg",
       "sha256": "0ac112883eaec8dbff1c7e20dcf9c6381d7173a0990d1ec3854fd249f5f37982",
       "bytes": 163688,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -428,10 +374,7 @@
       "source_image": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_tablerecipe.jpg",
       "sha256": "6a66e9a96b486b57f67687aebbd0964b4883434b66969282d854902f92e088fb",
       "bytes": 100693,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -446,10 +389,7 @@
       "source_image": "https://staticg.sportskeeda.com/editor/2024/04/b907d-17131387389662-1920.jpg?w=1200",
       "sha256": "33ce631ee306e2dfa2d429e7cafec66dafa1c1100d583fabcaf3aee3fe3e18ee",
       "bytes": 54968,
-      "dimensions": [
-        1200,
-        675
-      ],
+      "dimensions": [1200, 675],
       "format": "JPEG"
     },
     {
@@ -464,10 +404,7 @@
       "source_image": "https://images.sr.roku.com/idType/roku/context/trc/id/c323011bcc725dd8893dbbad74b28fb9/rokuFeed/assets/21bc31b353575d349a0a44959b42b06c.jpg",
       "sha256": "67c255b83666f6b1def2732e20ca695dc0053380059cabdbf0e94d9b6a59457e",
       "bytes": 57135,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -482,10 +419,7 @@
       "source_image": "https://staticg.sportskeeda.com/editor/2021/06/56efa-16250039289350-800.jpg",
       "sha256": "e5779edefa8836dce401147001f25fb37974e4bd813e3e0605daa059c29b9fd2",
       "bytes": 25272,
-      "dimensions": [
-        800,
-        400
-      ],
+      "dimensions": [800, 400],
       "format": "JPEG"
     },
     {
@@ -500,10 +434,7 @@
       "source_image": "https://cdn.mos.cms.futurecdn.net/uMZMECSguqnZKSZSbPn9rd.jpg",
       "sha256": "738349d0266f0c7bb904540f6b30d16ea593bea292f2a4ca445ceb545935f516",
       "bytes": 314927,
-      "dimensions": [
-        2048,
-        1152
-      ],
+      "dimensions": [2048, 1152],
       "format": "JPEG"
     },
     {
@@ -518,10 +449,7 @@
       "source_image": "https://cdn.gamever.io/content/ckeditor/2024/05/19/image-20240519113540-2.png",
       "sha256": "077a4e5dfc1bfe1fc3e6a643553517a9f341574703d4f30d3ceab66f4de1df20",
       "bytes": 658925,
-      "dimensions": [
-        692,
-        701
-      ],
+      "dimensions": [692, 701],
       "format": "PNG"
     },
     {
@@ -536,10 +464,7 @@
       "source_image": "https://cdn.mos.cms.futurecdn.net/XHMah5jGqqMxRPzBWt3NQi.jpg",
       "sha256": "356ac7b980d66c2e49b31674eef52f79be573cfe32967ead60dc3ec0f746cc62",
       "bytes": 1546485,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -554,10 +479,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/2466359105175663136/E4B2272EDA38658D123572EB6D124F0AAF61344A/",
       "sha256": "f83ad533f912c5ba0e409ec759d743d84f31cec0a7a2e6a551e3bee84bcdbec9",
       "bytes": 214818,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -572,10 +494,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/2466359105175672343/40B68F7A58B03063B5B56783B78D282EBA01B683/",
       "sha256": "29d82aa1dd35c5af7498be43cb80874b62399578e8375e56b35a9ad4540d211d",
       "bytes": 348278,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -590,10 +509,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/2026089936723039340/2918D2F1F4916ABD48EA5BE28F0B32E269D1F1CA/",
       "sha256": "7628b68b213f94058f09e324660a69ff96ff3c6133df808195f2a4cfb756f7d9",
       "bytes": 341426,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -608,10 +524,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/1736674373079077109/D4AD69D54D1A0B3C20CEE2FA70A934EDCC924635/",
       "sha256": "cbadfd2e3228f4007ccfee4219483d1fa588663d8cae9d1e3c5aaa64647f59b5",
       "bytes": 310396,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -626,10 +539,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/1752439360284721763/A47A4936A5BBE19BBB6968B25C7284A6507934C1/",
       "sha256": "88674ff134353f3f206b1a3fc49600c59556bd2831b34cfa3bc4c1de9452fbfe",
       "bytes": 406184,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -644,10 +554,7 @@
       "source_image": "https://images.akamai.steamusercontent.com/ugc/447329487742438022/9A711BD7FA92B4F52EFA3A837CF4FCEA3A0C9DE5/",
       "sha256": "0b9ec725b64daf5cdf561401b6de241eb014cad1e10208c2f0ec514aed0f7105",
       "bytes": 336706,
-      "dimensions": [
-        1680,
-        1050
-      ],
+      "dimensions": [1680, 1050],
       "format": "JPEG"
     },
     {
@@ -662,10 +569,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/768274293155075739/D29F2DCF940C66CF7471F687DD1CB8BCF0548AF6/",
       "sha256": "3c3ab3868c07119e50b81944ef91114730ab7310ea09bde57ab32a5a8c4c0ae6",
       "bytes": 183116,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -680,10 +584,7 @@
       "source_image": "https://images.steamusercontent.com/ugc/1752439360284717528/FAF2B89C2F60AAEFC240EE15A67011D5844B838C/",
       "sha256": "fb47d27bac4e624868bc6ba5293538f163c6179f6c52b4fc15633e44a6b4cb2f",
       "bytes": 356911,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -698,10 +599,7 @@
       "source_image": "https://staticg.sportskeeda.com/editor/2021/04/747cf-16177759548783-800.jpg",
       "sha256": "af06d19433707e30fb7c172e15b6890ef258b61ac76d1e78ec6155611e536bdf",
       "bytes": 79267,
-      "dimensions": [
-        800,
-        600
-      ],
+      "dimensions": [800, 600],
       "format": "JPEG"
     },
     {
@@ -716,10 +614,7 @@
       "source_image": "https://steamuserimages-a.akamaihd.net/ugc/1662353234446687732/138A2B3A47236CD8DACDAC65357BF6576B0A907B/",
       "sha256": "f4b2e40c80b922ec938b0f228af220eb5241e37a706e645d0cb0ad7de47ddf28",
       "bytes": 250252,
-      "dimensions": [
-        1600,
-        900
-      ],
+      "dimensions": [1600, 900],
       "format": "JPEG"
     },
     {
@@ -734,10 +629,7 @@
       "source_image": "https://clan.fastly.steamstatic.com/images/3949769/9b5c558339d4f4c837159217812a28ccbbc3f3a5.jpg",
       "sha256": "80f259027ac1ef3a7e7f8f1693a7e6964facbde4352d05d2f09cf637aa040a41",
       "bytes": 76512,
-      "dimensions": [
-        889,
-        500
-      ],
+      "dimensions": [889, 500],
       "format": "JPEG"
     },
     {
@@ -752,10 +644,7 @@
       "source_image": "https://clan.fastly.steamstatic.com/images/3949769/ca313ed2fbdd48dfb90ccbe5974dd4bc8714d757.jpg",
       "sha256": "43f780b5a823a2417bd5a7f36438b48222716fda75c1d3a4c6e2f5bae4d29dab",
       "bytes": 44266,
-      "dimensions": [
-        374,
-        500
-      ],
+      "dimensions": [374, 500],
       "format": "JPEG"
     },
     {
@@ -770,10 +659,7 @@
       "source_image": "https://cdn.factorio.com/assets/img/blog/fff-363-flat-character-gui.png",
       "sha256": "740f177a428fae7d77c4fb49f1889c84eb1a0d177e6f4f3d2b1914b87b1d7c64",
       "bytes": 1535768,
-      "dimensions": [
-        2640,
-        1100
-      ],
+      "dimensions": [2640, 1100],
       "format": "PNG"
     },
     {
@@ -788,10 +674,7 @@
       "source_image": "https://cdn.factorio.com/assets/img/blog/fff-363-inserter-gui.png",
       "sha256": "53f5573c7281c0bd58c0234a93a2445d1b06838595c980924adfa7be041e41e6",
       "bytes": 254670,
-      "dimensions": [
-        1768,
-        1150
-      ],
+      "dimensions": [1768, 1150],
       "format": "PNG"
     },
     {
@@ -806,10 +689,7 @@
       "source_image": "https://wiki.factorio.com/images/Storage_chest_gui.png",
       "sha256": "b59a2b27f0f4c8a6982f84c07963719f6e0539fa1ce1847fa0f96ce4fc820b9b",
       "bytes": 71546,
-      "dimensions": [
-        444,
-        576
-      ],
+      "dimensions": [444, 576],
       "format": "PNG"
     },
     {
@@ -824,10 +704,7 @@
       "source_image": "https://cdn.factorio.com/assets/img/blog/fff-278-action-bar-pages.png",
       "sha256": "84c1f4b2a1360fb5960604a489e918002358e0653a8f8a5ee1bc6cf79a16055b",
       "bytes": 168449,
-      "dimensions": [
-        468,
-        534
-      ],
+      "dimensions": [468, 534],
       "format": "PNG"
     },
     {
@@ -842,10 +719,7 @@
       "source_image": "https://cdn.factorio.com/assets/img/blog/fff-363-recipe-notifications.png",
       "sha256": "de3ed098675c4f9489e60c879527dbd6a686c8a081442ae4566644ddb5b0e259",
       "bytes": 143359,
-      "dimensions": [
-        892,
-        679
-      ],
+      "dimensions": [892, 679],
       "format": "PNG"
     },
     {
@@ -860,10 +734,7 @@
       "source_image": "https://cdn.factorio.com/assets/img/blog/fff-363-rich-text-selector.png",
       "sha256": "e40deb6d59ee832849e2d02af834b8aa22a9578490d04001a12591210ee67fed",
       "bytes": 369860,
-      "dimensions": [
-        891,
-        913
-      ],
+      "dimensions": [891, 913],
       "format": "PNG"
     },
     {
@@ -878,10 +749,7 @@
       "source_image": "https://forums.stardewvalley.net/attachments/1660262481741-jpeg.11350/",
       "sha256": "4bb14f00a75375731b3bc77d06f188384af06b952a4fcc8ddec32b931a33ab3c",
       "bytes": 90399,
-      "dimensions": [
-        1000,
-        563
-      ],
+      "dimensions": [1000, 563],
       "format": "JPEG"
     },
     {
@@ -896,10 +764,7 @@
       "source_image": "https://forums.stardewvalley.net/attachments/20240424143429_1-jpg.22610/",
       "sha256": "a2f6e411d9a2c1267aba6610cae1317098191b87cd88fdc7855c4fb07af3dcc0",
       "bytes": 162665,
-      "dimensions": [
-        1000,
-        563
-      ],
+      "dimensions": [1000, 563],
       "format": "JPEG"
     },
     {
@@ -914,10 +779,7 @@
       "source_image": "https://forums.stardewvalley.net/attachments/6984/",
       "sha256": "b132bd96cf5a416b45c1ff2673635a95f38279407bb49f08050e19140a81a750",
       "bytes": 104295,
-      "dimensions": [
-        1000,
-        563
-      ],
+      "dimensions": [1000, 563],
       "format": "JPEG"
     },
     {
@@ -932,10 +794,7 @@
       "source_image": "https://forums.stardewvalley.net/attachments/whatsapp-image-2024-04-16-at-13-16-26_b5b36f77-jpg.22007/",
       "sha256": "f4b237875511ef1f792724117d08765085c6e612cc7ba3331c765247b0a5a9f1",
       "bytes": 239116,
-      "dimensions": [
-        1000,
-        750
-      ],
+      "dimensions": [1000, 750],
       "format": "JPEG"
     },
     {
@@ -950,10 +809,7 @@
       "source_image": "https://forums.stardewvalley.net/attachments/20240427191002_1-jpg.22829/",
       "sha256": "00abfede5d036613467ad8bef3077cf30d9e71a423667c0c696d01ef50aceeac",
       "bytes": 114149,
-      "dimensions": [
-        1000,
-        563
-      ],
+      "dimensions": [1000, 563],
       "format": "JPEG"
     },
     {
@@ -968,10 +824,7 @@
       "source_image": "https://www.4netplayers.com/images/blog/project-zomboid-warum-spielen/2.webp",
       "sha256": "45ac747d93695d77288b9a344171897388b38e41e457a226feb431e0b7b75ed9",
       "bytes": 237440,
-      "dimensions": [
-        1366,
-        768
-      ],
+      "dimensions": [1366, 768],
       "format": "WEBP"
     },
     {
@@ -986,10 +839,7 @@
       "source_image": "https://projectzomboid.com/blog/content/uploads/2024/06/image-107-1024x824.png",
       "sha256": "513feab5d86afd09a41d0723ddcf76d77cda585306594c67e5e2e062e6fdeb71",
       "bytes": 470425,
-      "dimensions": [
-        1024,
-        824
-      ],
+      "dimensions": [1024, 824],
       "format": "PNG"
     },
     {
@@ -1004,10 +854,7 @@
       "source_image": "https://projectzomboid.com/blog/content/uploads/2026/07/pz-new-crafting.jpeg",
       "sha256": "15ebd1c90c3ad201678a7530a34d30aa5706e8f49e489e6450e72296bf0dbf8d",
       "bytes": 131477,
-      "dimensions": [
-        1024,
-        548
-      ],
+      "dimensions": [1024, 548],
       "format": "JPEG"
     },
     {
@@ -1022,10 +869,7 @@
       "source_image": "https://projectzomboid.com/blog/content/uploads/2026/07/pz-new-building.jpg",
       "sha256": "674cf2f1c2ad66ba315634c4c56e2dd8f49f6a8d32080b190ca7baa2772a1858",
       "bytes": 85936,
-      "dimensions": [
-        1024,
-        548
-      ],
+      "dimensions": [1024, 548],
       "format": "JPEG"
     },
     {
@@ -1040,10 +884,7 @@
       "source_image": "https://projectzomboid.com/blog/content/uploads/2022/07/fluids_b.png",
       "sha256": "97fe3549d02a9ccc791823b17cffab7726e9f8816512004d605e05e0bf523b69",
       "bytes": 73679,
-      "dimensions": [
-        612,
-        238
-      ],
+      "dimensions": [612, 238],
       "format": "PNG"
     },
     {
@@ -1058,10 +899,7 @@
       "source_image": "https://projectzomboid.com/blog/content/uploads/2022/07/fluids_c.png",
       "sha256": "c1065ccdc1a119331d13c2a2b2a8239a3cf0aa3c816016369bfc98d1f7e64b0c",
       "bytes": 218076,
-      "dimensions": [
-        728,
-        401
-      ],
+      "dimensions": [728, 401],
       "format": "PNG"
     },
     {
@@ -1076,10 +914,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/uiguide/na/01/e35134bd1b1d8b00f5917a1eecd4d3f9f2eedc.jpg",
       "sha256": "36b931bbace5146f575556b468fc7b0690484edc162cf5ba95abfc36d98ae34a",
       "bytes": 1534606,
-      "dimensions": [
-        1856,
-        1040
-      ],
+      "dimensions": [1856, 1040],
       "format": "JPEG"
     },
     {
@@ -1094,10 +929,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/uiguide/na/68/efe1102a0a0fa8dc37a53034c14e76e8deef82.jpg",
       "sha256": "b0b496f1555d7446179ccad7d705bad421d15377bc0c3e00693b92f6c554ba3f",
       "bytes": 216159,
-      "dimensions": [
-        896,
-        592
-      ],
+      "dimensions": [896, 592],
       "format": "JPEG"
     },
     {
@@ -1112,10 +944,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/uiguide/na/11/ce57c8c1bb7dc06c95f6574c4cae6206ea8e9b.jpg",
       "sha256": "3c87f1e2841f1b33414994a7ee52d6a0cf7d7fc390c1d40b8dc7f3ff6017ce04",
       "bytes": 129584,
-      "dimensions": [
-        896,
-        480
-      ],
+      "dimensions": [896, 480],
       "format": "JPEG"
     },
     {
@@ -1130,10 +959,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/uiguide/na/9c/2a11f2b497ab5c72dfcd35d66ca55b836c961d.jpg",
       "sha256": "94e2f233eaa7d9c9cdc900c59b215c6b33396ec240459545caa487bc88dd879a",
       "bytes": 375741,
-      "dimensions": [
-        896,
-        640
-      ],
+      "dimensions": [896, 640],
       "format": "JPEG"
     },
     {
@@ -1148,10 +974,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/promo/h/H/Q8OqEoLRGLkfi7Kw26as4FIvYk.jpg",
       "sha256": "01d6fb9a469364196b16359debf10bbcd7757d60bc637926bde6fcdf9622e4e0",
       "bytes": 32827,
-      "dimensions": [
-        400,
-        290
-      ],
+      "dimensions": [400, 290],
       "format": "JPEG"
     },
     {
@@ -1166,10 +989,7 @@
       "source_image": "https://lds-img.finalfantasyxiv.com/uiguide/na/52/6695a7de505860b47ac3019a2658875f215185.jpg",
       "sha256": "11d85c561bb3f0991d9718719d09934b55f1d97b9dfa22752749c37e86d38957",
       "bytes": 51379,
-      "dimensions": [
-        896,
-        160
-      ],
+      "dimensions": [896, 160],
       "format": "JPEG"
     },
     {
@@ -1184,10 +1004,7 @@
       "source_image": "https://loadinginfo.staticwars.com/uploads/2020/06/15/14-54-15-276-yourInventory-1.jpg",
       "sha256": "34df3a2e85b51c0cd96dd49e8c2de618e6586524258bdad96fdee69234393b98",
       "bytes": 35855,
-      "dimensions": [
-        480,
-        287
-      ],
+      "dimensions": [480, 287],
       "format": "JPEG"
     },
     {
@@ -1202,10 +1019,7 @@
       "source_image": "https://loadinginfo.staticwars.com/uploads/2020/06/15/14-54-15-278-yourInventory-2.jpg",
       "sha256": "1439a3addb88860c5436a07a28491215ead2c11f5d1c5c012d70d2dec61391ed",
       "bytes": 35064,
-      "dimensions": [
-        480,
-        287
-      ],
+      "dimensions": [480, 287],
       "format": "JPEG"
     },
     {
@@ -1220,10 +1034,7 @@
       "source_image": "https://help.guildwars2.com/hc/article_attachments/360003813008/wallet-full.png",
       "sha256": "00e93293b314493b1eef0f0eb5ff5849ca08e09b049b6f557c0bdd7751d877c5",
       "bytes": 392469,
-      "dimensions": [
-        522,
-        539
-      ],
+      "dimensions": [522, 539],
       "format": "PNG"
     },
     {
@@ -1238,10 +1049,7 @@
       "source_image": "https://d2adlv7k7i388w.cloudfront.net/multimedia/gold-13.jpg",
       "sha256": "f42be5a7518d38ca0efc2502fad9dbea597a6b51f4617b50fb780cb3e3e1d34e",
       "bytes": 50665,
-      "dimensions": [
-        1000,
-        500
-      ],
+      "dimensions": [1000, 500],
       "format": "JPEG"
     },
     {
@@ -1256,10 +1064,7 @@
       "source_image": "https://images.squarespace-cdn.com/content/v1/64836a0c15ddb80f438384ce/03775550-c15b-4df0-882e-1037761aaebe/Capture.PNG",
       "sha256": "e5f63d3ce21880b7bd32f018bb87cddfe192592b897d6b4784cfd261f663250b",
       "bytes": 1183580,
-      "dimensions": [
-        896,
-        658
-      ],
+      "dimensions": [896, 658],
       "format": "PNG"
     },
     {
@@ -1274,10 +1079,7 @@
       "source_image": "https://bnetcmsus-a.akamaihd.net/cms/content_entry_media/PYG43MQVYV1J1661984687465.png",
       "sha256": "6b5c60ad84266905cdfbbdf1b107a0b0ec7b6b665508932c5774fece5f95ca83",
       "bytes": 718036,
-      "dimensions": [
-        1200,
-        1200
-      ],
+      "dimensions": [1200, 1200],
       "format": "JPEG"
     },
     {
@@ -1292,10 +1094,7 @@
       "source_image": "https://bnetcmsus-a.akamaihd.net/cms/content_entry_media/6DUPN4PA67DI1661981630654.png",
       "sha256": "aa89ec9fc24a9963be7d1b9745e58e1311e3d5287d95e7b5ef5e5419397e7585",
       "bytes": 605313,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "JPEG"
     },
     {
@@ -1310,10 +1109,7 @@
       "source_image": "https://bnetcmsus-a.akamaihd.net/cms/content_entry_media/XV5DEVJ8WA491661981630618.png",
       "sha256": "bdecc33a1c0b03bac6a6734828de1a7f9d4b69111c55c4c709462ba9157613db",
       "bytes": 1693295,
-      "dimensions": [
-        1280,
-        720
-      ],
+      "dimensions": [1280, 720],
       "format": "PNG"
     },
     {
@@ -1328,10 +1124,7 @@
       "source_image": "https://res.cloudinary.com/disco-elysium/images/f_auto,q_auto/v1607595497/disco-elysium-morale/disco-elysium-morale.jpg?_i=AA",
       "sha256": "451833db45668dbd2bfa91dee3386c506ab88c072566c35be26f2340da8791c5",
       "bytes": 198436,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     },
     {
@@ -1346,10 +1139,7 @@
       "source_image": "https://res.cloudinary.com/disco-elysium/images/w_2560,h_1440,c_scale/f_auto,q_auto/v1607629588/ss_dec29c440fab2f7817d68c1380c019290eb1755e/ss_dec29c440fab2f7817d68c1380c019290eb1755e.jpg?_i=AA",
       "sha256": "1178eb298302fbf8d062f53d1e8fe781909e0434b8bdeb7464771f17f762df3e",
       "bytes": 408313,
-      "dimensions": [
-        2560,
-        1440
-      ],
+      "dimensions": [2560, 1440],
       "format": "JPEG"
     },
     {
@@ -1364,10 +1154,7 @@
       "source_image": "https://caniplaythat.com/wp-content/uploads/2021/03/Disco-Elysium_20210331053904.jpg",
       "sha256": "c33f7f84bdf58313d52f30743155651d8a0b9f07abc11c023d2974a7004cf306",
       "bytes": 811499,
-      "dimensions": [
-        3840,
-        2160
-      ],
+      "dimensions": [3840, 2160],
       "format": "JPEG"
     },
     {
@@ -1382,10 +1169,7 @@
       "source_image": "https://planita13.github.io/Final-Project/assets/img/disco_inventory.jpg",
       "sha256": "ad8cf61fcc1e0fb541e28610cf386fd7ffba17d0f7b706160a950821ff127ee1",
       "bytes": 401952,
-      "dimensions": [
-        1920,
-        1080
-      ],
+      "dimensions": [1920, 1080],
       "format": "JPEG"
     }
   ],

@@ -154,9 +154,7 @@
         "Controller mapping diagram",
         "World Use prompt"
       ],
-      "strengths": [
-        "A reachable map ties actions to physical controls."
-      ],
+      "strengths": ["A reachable map ties actions to physical controls."],
       "weaknesses": [
         "Conflicting glyph families undermine instruction.",
         "Dense alternate bindings are hard to consult during play."
@@ -285,9 +283,7 @@
         "Minimap and status indicators",
         "Physical storage signs"
       ],
-      "strengths": [
-        "Object location and naming support spatial memory before opening storage."
-      ],
+      "strengths": ["Object location and naming support spatial memory before opening storage."],
       "weaknesses": [
         "Dense signs are hard to read and can become stale.",
         "This frame does not strongly distinguish one selected chest."

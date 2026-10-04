@@ -64,7 +64,6 @@ In a runnable checkout, run `pnpm guidance:check` and the pinned changed-file fo
 
 Root/client entrypoints retain selective routing; no vendor skill or duplicate handbook is added. Keep findings integrated in the existing chapters and the single source ledger. Reassess loading size if evidence shows omission or excessive context; do not copy the handbook into root instructions. Static source/document review and consolidation do not close native dispatch or gameplay qualification.
 
-
 ## UIUX07
 
 **Completed — research/design documentation, October 4, 2026.** The October 3 request is delivered: 71 distinct digital UI screenshots across 12 games, one explicitly excluded display photograph, per-image source/version provenance and critique, a pinned current-code diagnosis, four original layout proposals and a paired replacement design for inventory, activities and conversation. The [game atlas](../ui-ux/games/README.md), [central ledger](../ui-ux/research.md#game-interface-screenshot-atlas) and [pinned audit](../ui-ux/current-interface-audit.md) own evidence. The [feature specification](../projects/game-interaction-redesign-feature-spec.md) and [technical design](../projects/game-interaction-redesign-tech-design.md) own the proposed project.

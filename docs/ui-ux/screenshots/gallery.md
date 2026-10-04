@@ -483,4 +483,3 @@ Original game imagery remains third-party reference material. Historical version
 ![DISCO-04: 04 equipment inventory](disco/04-equipment-inventory.jpg)
 
 [Source page](https://planita13.github.io/Final-Project/disco.html) · [Detailed analysis](../games/disco-elysium.md) · [Image provenance](disco/manifest.json)
-

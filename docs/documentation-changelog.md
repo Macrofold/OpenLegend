@@ -1067,4 +1067,3 @@ Added native kind-backed operational draft/review sessions, a thin writable MCP 
 ## Unified conversation delivery
 
 Connected the native owner session/turn/review APIs to the World Agent panel, replacing tool-less Discuss as its privileged conversation path. Retained the finite native recipe shortcut and read-only earlier local transcripts. Updated implementation status and exact approval/recovery guidance; wider physical/social/art capabilities remain independently tracked. Added MW06/MW07 rather than claiming manual native observations replace automated or browser/live qualification.
-

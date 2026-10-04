@@ -36,11 +36,11 @@ The [default bindings reference](https://bg3.wiki/wiki/Options) documents `I` fo
 
 The relevant transfer controls need their context stated explicitly:
 
-| Control | Documented function | Context and limit |
-| --- | --- | --- |
-| `Space` with a container interface active | Take All Items from Container | A bulk collection command. The same key also has Skip and End Turn functions in other contexts; it is not a global transfer command. |
-| Hold `Shift` | Split-item-stack modifier | This is the documented split modifier, not evidence of a universal Shift-click transfer shortcut. The focused Split Item menu route is described below. |
-| Right-click an item | Open its context menu | Reveals applicable commands, including named recipients where available. Opening the menu does not itself move the item. |
+| Control                                   | Documented function           | Context and limit                                                                                                                                       |
+| ----------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Space` with a container interface active | Take All Items from Container | A bulk collection command. The same key also has Skip and End Turn functions in other contexts; it is not a global transfer command.                    |
+| Hold `Shift`                              | Split-item-stack modifier     | This is the documented split modifier, not evidence of a universal Shift-click transfer shortcut. The focused Split Item menu route is described below. |
+| Right-click an item                       | Open its context menu         | Reveals applicable commands, including named recipients where available. Opening the menu does not itself move the item.                                |
 
 The sources inspected here do not establish a universal default quick-deposit modifier. Individual drag transfers are documented separately below. Open Legend's proposed non-drag transfer command should therefore be identified as our design decision, rather than attributed to an unverified BG3 shortcut.
 
@@ -64,12 +64,12 @@ The [alchemy reference](https://bg3.wiki/wiki/Alchemy) explains that recipes can
 
 These are individual accounts, not a representative survey or an overall approval score.
 
-| Source and context | What the person liked or disliked | What it supports for Open Legend |
-| --- | --- | --- |
-| [OvenFearless, launch-period controller discussion](https://www.reddit.com/r/BaldursGate3/comments/15hbahl/controller_support_is_amazing/) | Praised the adapted menus and direct character movement. Other participants found radial navigation comfortable; others found it cumbersome or could not locate inventory. | Offer an interface appropriate to the input device, but test discoverability of major destinations and action targeting. Positive controller sentiment is not evidence that every wheel is clear. |
-| [Ash Parrish, firsthand PS5 technical review, 13 September 2023](https://www.theverge.com/23861883/baldurs-gate-3-ps5-technical-review) | Reported difficulty reading the inventory at TV distance and accidentally selling equipped clothing because its equipped marker was easy to miss. | Make equipped and protected states readable before a destructive or transactional command. Evaluate at actual viewing distance. |
-| [Bill, Mac/PS5 comparison, 9 September 2024](https://argothald.com/2024/09/09/bg3-on-the-mac/) | Criticized inventory burden and the growing controller radial interface. | Treat late-game item and action counts as a design condition rather than reviewing only an almost empty inventory. |
-| [Larian forum discussion, 9–10 September 2023](https://forums.larian.com/ubbthreads.php?Number=895204&ubb=showflat) | Several participants objected to repeated sorting, inconsistent categorization, and bag management. Another valued personally assigning supplies and argued that automatic handling could obscure material purpose. | Remove repetitive transfer chores while keeping ownership, preparation, and resource consequences visible. “Automatic” is not automatically more understandable. |
+| Source and context                                                                                                                         | What the person liked or disliked                                                                                                                                                                                   | What it supports for Open Legend                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [OvenFearless, launch-period controller discussion](https://www.reddit.com/r/BaldursGate3/comments/15hbahl/controller_support_is_amazing/) | Praised the adapted menus and direct character movement. Other participants found radial navigation comfortable; others found it cumbersome or could not locate inventory.                                          | Offer an interface appropriate to the input device, but test discoverability of major destinations and action targeting. Positive controller sentiment is not evidence that every wheel is clear. |
+| [Ash Parrish, firsthand PS5 technical review, 13 September 2023](https://www.theverge.com/23861883/baldurs-gate-3-ps5-technical-review)    | Reported difficulty reading the inventory at TV distance and accidentally selling equipped clothing because its equipped marker was easy to miss.                                                                   | Make equipped and protected states readable before a destructive or transactional command. Evaluate at actual viewing distance.                                                                   |
+| [Bill, Mac/PS5 comparison, 9 September 2024](https://argothald.com/2024/09/09/bg3-on-the-mac/)                                             | Criticized inventory burden and the growing controller radial interface.                                                                                                                                            | Treat late-game item and action counts as a design condition rather than reviewing only an almost empty inventory.                                                                                |
+| [Larian forum discussion, 9–10 September 2023](https://forums.larian.com/ubbthreads.php?Number=895204&ubb=showflat)                        | Several participants objected to repeated sorting, inconsistent categorization, and bag management. Another valued personally assigning supplies and argued that automatic handling could obscure material purpose. | Remove repetitive transfer chores while keeping ownership, preparation, and resource consequences visible. “Automatic” is not automatically more understandable.                                  |
 
 The positive evidence is specific: controller adaptation and direct interaction are valued by some players. There is no defensible basis here for calling BG3's entire inventory universally praised. The critical evidence is equally specific and informs what **not** to carry over.
 
@@ -87,11 +87,11 @@ All screenshots are third-party reference material for criticism and design rese
 
 **Workflow and button meaning.** The [interface guide](https://www.gamepressure.com/baldurs-gate-iii/interface/zad9f7) identifies the three top tools; the [default bindings reference](https://bg3.wiki/wiki/Options) supplies their keyboard shortcuts:
 
-| Top icon, left to right | Function | Default keyboard shortcut |
-| --- | --- | --- |
-| Helmet, selected in this screenshot | Inventory and equipment: carried items and worn gear | `I` |
-| Open book | Spellbook: inspect and manage the character's spells | `K` |
-| Flask | Alchemy: browse and craft alchemical recipes | `H` |
+| Top icon, left to right             | Function                                             | Default keyboard shortcut |
+| ----------------------------------- | ---------------------------------------------------- | ------------------------- |
+| Helmet, selected in this screenshot | Inventory and equipment: carried items and worn gear | `I`                       |
+| Open book                           | Spellbook: inspect and manage the character's spells | `K`                       |
+| Flask                               | Alchemy: browse and craft alchemical recipes         | `H`                       |
 
 The magnifying-glass field searches items; the nearby list-and-arrow control sorts them. The grid supplies items for inspection or context actions. The exact open dropdown choices are not visible here, so no unseen options are inferred.
 
@@ -271,12 +271,12 @@ The magnifying-glass field searches items; the nearby list-and-arrow control sor
 
 **Documented interaction and exact icon map.** Larian's update describes conversation history, the initiating character's role, and multiplayer participation with visibility exceptions. The visible utility row maps as follows:
 
-| Position, left to right | Visible symbol | Function and consequence |
-| --- | --- | --- |
-| 1 | Horizontal menu lines | Open the game menu. This is a system-menu control, not a dialogue response. |
-| 2 | Hand with coins | Open trade with the current NPC when available. It does not immediately buy or sell anything. |
-| 3 | Crossed weapons | Initiate an attack against the character being addressed; this is a gameplay action with consequences. |
-| 4 | Scroll/document | Open the current dialogue's history to reread the conversation. |
+| Position, left to right | Visible symbol        | Function and consequence                                                                               |
+| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1                       | Horizontal menu lines | Open the game menu. This is a system-menu control, not a dialogue response.                            |
+| 2                       | Hand with coins       | Open trade with the current NPC when available. It does not immediately buy or sell anything.          |
+| 3                       | Crossed weapons       | Initiate an attack against the character being addressed; this is a gameplay action with consequences. |
+| 4                       | Scroll/document       | Open the current dialogue's history to reread the conversation.                                        |
 
 **Verification.** Menu and History were visually matched to the [original interface illustration](https://eip.gg/wp-content/uploads/2023/08/Baldurs-Gate-3-Tips-Tricks-Dialogue-Buttons.jpg) and descriptions in [EIP's gameplay UI guide](https://eip.gg/bg3/guides/tips-tricks/). The [firsthand PC Gamer report](https://www.pcgamer.com/psa-you-can-trade-with-lots-of-baldurs-gate-3-npcs-who-arent-traders/) documents trading and attacking from this utility row. Its trade function depends on availability; the current frame alone cannot establish whether a click is enabled during this exact spoken line.
 
@@ -290,16 +290,16 @@ Character Select is another documented dialogue utility, allowing control of a c
 
 ## Control and layout findings to carry into review
 
-| Player intention | Useful reference pattern | Decision for Open Legend review |
-| --- | --- | --- |
-| Open a chest | World object leads to a named contents grid; BG3-05 | The object establishes the destination. Reach/access failures belong to that object and open panel. |
-| Move an item | Source and destination coexist; BG3-02/05 | Direct transfer plus a non-drag command; no compulsory container re-selection. |
-| Move part of a stack | Item context opens a quantity decision; split guide | Default ordinary transfers sensibly; expose split quantity only when requested. |
-| Equip or compare | Worn slots and named comparison target; BG3-01/11 | Make equipment state conspicuous and comparison contextual. |
-| Perform an action | Verb narrows the next candidates; BG3-08 | Ask only for the missing object or world target; maintain cancellation and clear input ownership. |
-| Craft a known result | Recipe, concrete requirements, quantity, commit; BG3-07 | Remove repeated setup while preserving material choices and costs. |
-| Experiment with two items | Initiating item carries into a small operation; BG3-09 | A specific second-object choice is legitimate; a universal form is not the default. |
-| Trade | Named counterparty and inventories; BG3-10 | Separate browsing, offer/cost, and commitment from simple storage transfers. |
-| Talk | Named character, current speech, available history; BG3-12 | Preserve world context and conversation continuity; adapt to freeform chat. |
+| Player intention          | Useful reference pattern                                   | Decision for Open Legend review                                                                     |
+| ------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Open a chest              | World object leads to a named contents grid; BG3-05        | The object establishes the destination. Reach/access failures belong to that object and open panel. |
+| Move an item              | Source and destination coexist; BG3-02/05                  | Direct transfer plus a non-drag command; no compulsory container re-selection.                      |
+| Move part of a stack      | Item context opens a quantity decision; split guide        | Default ordinary transfers sensibly; expose split quantity only when requested.                     |
+| Equip or compare          | Worn slots and named comparison target; BG3-01/11          | Make equipment state conspicuous and comparison contextual.                                         |
+| Perform an action         | Verb narrows the next candidates; BG3-08                   | Ask only for the missing object or world target; maintain cancellation and clear input ownership.   |
+| Craft a known result      | Recipe, concrete requirements, quantity, commit; BG3-07    | Remove repeated setup while preserving material choices and costs.                                  |
+| Experiment with two items | Initiating item carries into a small operation; BG3-09     | A specific second-object choice is legitimate; a universal form is not the default.                 |
+| Trade                     | Named counterparty and inventories; BG3-10                 | Separate browsing, offer/cost, and commitment from simple storage transfers.                        |
+| Talk                      | Named character, current speech, available history; BG3-12 | Preserve world context and conversation continuity; adapt to freeform chat.                         |
 
 The proposed Open Legend improvement is therefore not merely a different skin. It changes where an interaction begins, what context is retained, what the player must decide, and how the result returns to the world. The visual references support that direction while their failures warn against small state markers, uncontrolled panel density, invisible shortcuts, and compulsory bag administration.

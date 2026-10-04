@@ -12,14 +12,14 @@ Terraria is especially useful because it contains both the straightforward chest
 
 On desktop, the inventory and an opened chest appear at the same time. The chest offers commands scoped to that storage: **Loot All** moves goods into carried inventory; **Deposit All** moves eligible carried goods into storage; **Quick Stack** adds matching items; **Restock** replenishes matching carried stacks from storage. The inventory's separate nearby quick-stack action can address multiple eligible chests. Favorites protect items from several bulk operations, and hotbar exclusions also matter. These details are documented by the community wiki and explained with practical storage layouts in an original player guide. They are not all apparent from a still image. [T1][T2]
 
-| Intention | UI entry and choice | Useful lesson |
-| --- | --- | --- |
-| Move goods into one chest | Open that physical chest; manipulate the two inventories or use its scoped bulk commands | The object supplies destination context |
-| Refill existing supplies | Use **Restock** in the opened chest | A meaningful bulk verb can replace repetitive stack manipulation |
-| Tidy a known storage room | Use the optional nearby quick-stack control | Batch action is convenient, but affected targets and exclusions need explanation |
-| Learn what an item can make | Give the Guide an ingredient as a recipe query; inspect recipes and required station | Ask a small question about an item instead of completing a generic activity form |
-| Buy something | Enter the NPC's Shop; inspect goods, use facts and price | Keep actor, offer and inventory in the same task context |
-| Rename a chest | Choose Rename, edit the short label, save or cancel | Text entry is appropriate for a real naming decision |
+| Intention                   | UI entry and choice                                                                      | Useful lesson                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Move goods into one chest   | Open that physical chest; manipulate the two inventories or use its scoped bulk commands | The object supplies destination context                                          |
+| Refill existing supplies    | Use **Restock** in the opened chest                                                      | A meaningful bulk verb can replace repetitive stack manipulation                 |
+| Tidy a known storage room   | Use the optional nearby quick-stack control                                              | Batch action is convenient, but affected targets and exclusions need explanation |
+| Learn what an item can make | Give the Guide an ingredient as a recipe query; inspect recipes and required station     | Ask a small question about an item instead of completing a generic activity form |
+| Buy something               | Enter the NPC's Shop; inspect goods, use facts and price                                 | Keep actor, offer and inventory in the same task context                         |
+| Rename a chest              | Choose Rename, edit the short label, save or cancel                                      | Text entry is appropriate for a real naming decision                             |
 
 The UI does not make every interaction frictionless. Item ownership, favorites, protection, quantities and target identity are still meaningful state. Its strong contribution is a vocabulary of actions that matches what the player is trying to accomplish.
 
@@ -123,13 +123,13 @@ The UI does not make every interaction frictionless. Item ownership, favorites, 
 
 ## What players liked and where they struggled
 
-| Original evidence | What it tells us | Limits |
-| --- | --- | --- |
-| J's original Quick Stack guide enthusiastically describes the convenience and gives practical storage layouts. [T2] | A one-action storage routine can be a feature players actively value. | A guide author advocating a specific workflow, not a review sample of all players. |
-| Textual Deviant's chest-organization guide and original comments discuss readable names, organization and range considerations. [T3] | Naming and stable organization support later retrieval; range still needs explanation. | An experienced storage workflow, not proof beginners discover it unaided. |
-| A June 2023 original Reddit suggestion says the author likes quick-stack but wants to protect particular chest contents from it. [T8] | The same automation that saves effort can violate the player's intended organization. | Indexed excerpt only; the full discussion was unavailable, and no unseen responses were analyzed. |
-| A May 2020 indexed discussion includes players unfamiliar with sorting and favorites despite using chest commands. [T9] | Having a useful command is different from teaching it successfully. | Anecdotal, indexed excerpts, historical UI. |
-| Re-Logic/DR Studios' May 2024 update reports complaints about control banners and explains its WIP redesign. [T7] | There is primary developer evidence for reducing visual search and localizing binding hints. | A development rationale and experiment, not published usability-test results or proof of final release behavior. |
+| Original evidence                                                                                                                     | What it tells us                                                                             | Limits                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| J's original Quick Stack guide enthusiastically describes the convenience and gives practical storage layouts. [T2]                   | A one-action storage routine can be a feature players actively value.                        | A guide author advocating a specific workflow, not a review sample of all players.                               |
+| Textual Deviant's chest-organization guide and original comments discuss readable names, organization and range considerations. [T3]  | Naming and stable organization support later retrieval; range still needs explanation.       | An experienced storage workflow, not proof beginners discover it unaided.                                        |
+| A June 2023 original Reddit suggestion says the author likes quick-stack but wants to protect particular chest contents from it. [T8] | The same automation that saves effort can violate the player's intended organization.        | Indexed excerpt only; the full discussion was unavailable, and no unseen responses were analyzed.                |
+| A May 2020 indexed discussion includes players unfamiliar with sorting and favorites despite using chest commands. [T9]               | Having a useful command is different from teaching it successfully.                          | Anecdotal, indexed excerpts, historical UI.                                                                      |
+| Re-Logic/DR Studios' May 2024 update reports complaints about control banners and explains its WIP redesign. [T7]                     | There is primary developer evidence for reducing visual search and localizing binding hints. | A development rationale and experiment, not published usability-test results or proof of final release behavior. |
 
 ## Recommendations for Open Legend
 

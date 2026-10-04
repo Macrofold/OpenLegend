@@ -4,10 +4,7 @@
     "filename": "BG3-01-single-inventory.jpg",
     "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
     "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/Just-Astarion-2048x1152.jpg",
-    "dimensions": [
-      2048,
-      1152
-    ],
+    "dimensions": [2048, 1152],
     "bytes": 515034,
     "sha256": "cc26589105bc517a2c73d256d813ea0d4263d2c497934effebef8803e17b0a80",
     "accessed_at": "2026-10-04",
@@ -29,12 +26,8 @@
       "Item grid"
     ],
     "workflow": "Inspect the selected character, then act on a carried item or equipment slot.",
-    "strengths": [
-      "Separates carried items from worn equipment."
-    ],
-    "weaknesses": [
-      "Paper doll and statistics compete with usable grid space."
-    ],
+    "strengths": ["Separates carried items from worn equipment."],
+    "weaknesses": ["Paper doll and statistics compete with usable grid space."],
     "open_legend_application": "Give the player one readable bag, explicit worn slots, and optional detail.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes.",
@@ -48,10 +41,7 @@
     "filename": "BG3-02-party-inventory.jpg",
     "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
     "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/The-party-2048x1152.jpg",
-    "dimensions": [
-      2048,
-      1152
-    ],
+    "dimensions": [2048, 1152],
     "bytes": 344575,
     "sha256": "35da7c9728806a21fcac08467b299d48cb53b9c42b7aadd74f4d1a39d8789bcf",
     "accessed_at": "2026-10-04",
@@ -70,12 +60,8 @@
       "T Inspect tooltip prompt"
     ],
     "workflow": "Compare character ownership and move an item to a visible recipient.",
-    "strengths": [
-      "Simultaneous source and recipient reduce destination recall."
-    ],
-    "weaknesses": [
-      "Repeated paper dolls compress inventories and create tooltip overlap."
-    ],
+    "strengths": ["Simultaneous source and recipient reduce destination recall."],
+    "weaknesses": ["Repeated paper dolls compress inventories and create tooltip overlap."],
     "open_legend_application": "Show the current player and the intentionally opened destination together; preserve ownership and permission boundaries.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -85,10 +71,7 @@
     "filename": "BG3-03-controller-inventory.jpeg",
     "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
     "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/PS5-Inventory-screen.jpeg",
-    "dimensions": [
-      1280,
-      720
-    ],
+    "dimensions": [1280, 720],
     "bytes": 199224,
     "sha256": "72bf607b480494f94ff361e797ee17e85e75079e277e120e344b63e228bfbddf",
     "accessed_at": "2026-10-04",
@@ -109,12 +92,8 @@
       "Circle Close"
     ],
     "workflow": "Choose a character or inventory section with controller focus, then inspect and act on an item.",
-    "strengths": [
-      "Persistent button prompts explain current mode."
-    ],
-    "weaknesses": [
-      "Equipped state relies on small badges in a dense grid."
-    ],
+    "strengths": ["Persistent button prompts explain current mode."],
+    "weaknesses": ["Equipped state relies on small badges in a dense grid."],
     "open_legend_application": "Use conspicuous equipped/protected labels and visible focus; do not put sale or drop behind ambiguous highlighting.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -124,10 +103,7 @@
     "filename": "BG3-04-context-menu.jpg",
     "source_page_url": "https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/",
     "direct_image_url": "https://gaymingmag.com/wp-content/uploads/2023/08/dye-menu.jpg",
-    "dimensions": [
-      1366,
-      779
-    ],
+    "dimensions": [1366, 779],
     "bytes": 210851,
     "sha256": "a202810f2fd18821984beb1b04cb6db682695f1c964526f223ed63be9750bd9f",
     "accessed_at": "2026-10-04",
@@ -151,9 +127,7 @@
       "Examine"
     ],
     "workflow": "Open a menu on the specific item; choose its applicable verb.",
-    "strengths": [
-      "The item supplies context before a verb is chosen."
-    ],
+    "strengths": ["The item supplies context before a verb is chosen."],
     "weaknesses": [
       "Long menu mixes organization, destructive actions, and equipment-specific actions."
     ],
@@ -166,10 +140,7 @@
     "filename": "BG3-05-open-chest.png",
     "source_page_url": "https://scalacube.com/blog/baldurs-gate-3/travellers-chest-in-baldurs-gate-3",
     "direct_image_url": "https://res.cloudinary.com/ddbybfkod/image/upload/v1754587925/blogs/Nemanja/travellers-chest-in-baldurs-gate-3/img2_iyo7qm.png",
-    "dimensions": [
-      976,
-      549
-    ],
+    "dimensions": [976, 549],
     "bytes": 457387,
     "sha256": "9259c083275780e778e212730646f9470c6b8d7398bcf28abfc9f5581f10ba5f",
     "accessed_at": "2026-10-04",
@@ -190,12 +161,8 @@
       "Scrollbars"
     ],
     "workflow": "Open the actual chest, inspect its contents, and transfer between the two visible inventories.",
-    "strengths": [
-      "Destination has a persistent name and spatial location."
-    ],
-    "weaknesses": [
-      "Large empty grid and small source text reduce information density."
-    ],
+    "strengths": ["Destination has a persistent name and spatial location."],
+    "weaknesses": ["Large empty grid and small source text reduce information density."],
     "open_legend_application": "World chest activation opens a named paired view; communicate reach and permission beside that object.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -205,10 +172,7 @@
     "filename": "BG3-06-radial-actions.jpeg",
     "source_page_url": "https://argothald.com/2024/09/09/bg3-on-the-mac/",
     "direct_image_url": "https://argothald.com/wp-content/uploads/2024/09/Radial-display-2.jpeg",
-    "dimensions": [
-      1280,
-      720
-    ],
+    "dimensions": [1280, 720],
     "bytes": 241676,
     "sha256": "484feed69e65fc22c342fbe9d43bfb328dadda00fd75d58cb3bc7b488e658626",
     "accessed_at": "2026-10-04",
@@ -230,12 +194,8 @@
       "Action and movement resource counters"
     ],
     "workflow": "Select a contextual ability, then supply the specific next choice or world target.",
-    "strengths": [
-      "Action resources and cancel remain visible."
-    ],
-    "weaknesses": [
-      "Multiple icon wheels can become a memorization task."
-    ],
+    "strengths": ["Action resources and cancel remain visible."],
+    "weaknesses": ["Multiple icon wheels can become a memorization task."],
     "open_legend_application": "Keep a compact stable set of frequent verbs; expand to specific choices only when needed.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -245,10 +205,7 @@
     "filename": "BG3-07-alchemy.png",
     "source_page_url": "https://bg3.wiki/wiki/File:Alchemy_window.png",
     "direct_image_url": "https://bg3.wiki/w/images/6/67/Alchemy_window.png",
-    "dimensions": [
-      1278,
-      876
-    ],
+    "dimensions": [1278, 876],
     "bytes": 866002,
     "sha256": "2de1fac55ee0652a73ebeea3c339f0c078dfd19dc7c1446ed198bfca4068a9d2",
     "accessed_at": "2026-10-04",
@@ -270,9 +227,7 @@
       "Extract All Ingredients"
     ],
     "workflow": "Choose a recipe outcome; inspect available materials and quantity; commit crafting.",
-    "strengths": [
-      "Specific output and requirements are legible together."
-    ],
+    "strengths": ["Specific output and requirements are legible together."],
     "weaknesses": [
       "Generic ingredient requirements can obscure which valuable material will be used."
     ],
@@ -285,10 +240,7 @@
     "filename": "BG3-08-throw-target-selection.png",
     "source_page_url": "https://bg3.wiki/wiki/File:Throw_UI_Inventory_Menu.png",
     "direct_image_url": "https://bg3.wiki/w/images/8/85/Throw_UI_Inventory_Menu.png",
-    "dimensions": [
-      1066,
-      306
-    ],
+    "dimensions": [1066, 306],
     "bytes": 557736,
     "sha256": "061f8680f910b6bed3c3253966086c7a62d81ae887e9a9c432a6e40a4133f4d6",
     "accessed_at": "2026-10-04",
@@ -308,12 +260,8 @@
       "Hotbar lock and row controls"
     ],
     "workflow": "After choosing Throw, select the item to throw; a world target is a later step not shown.",
-    "strengths": [
-      "Only the current task's item candidates occupy the selector."
-    ],
-    "weaknesses": [
-      "Icon-only candidates need names and a clear current-step prompt."
-    ],
+    "strengths": ["Only the current task's item candidates occupy the selector."],
+    "weaknesses": ["Icon-only candidates need names and a clear current-step prompt."],
     "open_legend_application": "Use a concise Choose an item prompt, then target the world; allow cancellation at each step.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -323,10 +271,7 @@
     "filename": "BG3-09-combine.jpg",
     "source_page_url": "https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/",
     "direct_image_url": "https://gaymingmag.com/wp-content/uploads/2023/08/dye-combine.jpg",
-    "dimensions": [
-      1320,
-      754
-    ],
+    "dimensions": [1320, 754],
     "bytes": 192692,
     "sha256": "b320509f3ce9dc08a827de6ac48d1bb193ab045e54562df60b5da4e7fc143ca0",
     "accessed_at": "2026-10-04",
@@ -338,16 +283,9 @@
     "capture_date": null,
     "source_published_at": "2023-08-10",
     "inspection_method": "Opened and visually reviewed the saved original image with view_image.",
-    "visible_controls": [
-      "Two ingredient slots",
-      "Result slot",
-      "Combine",
-      "Close"
-    ],
+    "visible_controls": ["Two ingredient slots", "Result slot", "Combine", "Close"],
     "workflow": "The dye context action supplies dye; drag armour to the other slot; Combine commits.",
-    "strengths": [
-      "A small operation-specific choice replaces a universal parameter form."
-    ],
+    "strengths": ["A small operation-specific choice replaces a universal parameter form."],
     "weaknesses": [
       "Generic Combine wording and absent visible appearance preview conceal the result."
     ],
@@ -360,10 +298,7 @@
     "filename": "BG3-10-trading.jpg",
     "source_page_url": "https://gaymingmag.com/2023/08/how-to-dye-clothes-and-armor-in-baldurs-gate-3/",
     "direct_image_url": "https://gaymingmag.com/wp-content/uploads/2023/08/buying-dye.jpg",
-    "dimensions": [
-      1889,
-      645
-    ],
+    "dimensions": [1889, 645],
     "bytes": 254520,
     "sha256": "f047a5f99adabf9e95511d79bf2001f6ecc70f6ed12c6804a7491fd0011aabec",
     "accessed_at": "2026-10-04",
@@ -383,9 +318,7 @@
       "Two stock grids"
     ],
     "workflow": "Meet a merchant, enter trade, and compare player stock with the named merchant's stock.",
-    "strengths": [
-      "The two inventories and counterpart are visible together."
-    ],
+    "strengths": ["The two inventories and counterpart are visible together."],
     "weaknesses": [
       "Source crop omits the footer; this image cannot establish final sale controls."
     ],
@@ -398,10 +331,7 @@
     "filename": "BG3-11-equipment-comparison.png",
     "source_page_url": "https://www.gamerguides.com/baldurs-gate-3/database/weapons/longbow",
     "direct_image_url": "https://www.gamerguides.com/assets/media/15/17482/image%20_6_-5c7fb507.png",
-    "dimensions": [
-      2560,
-      1440
-    ],
+    "dimensions": [2560, 1440],
     "bytes": 4566104,
     "sha256": "a63fb601cafa22200f121816d256065abd51a01faa582b37ef42286717294491",
     "accessed_at": "2026-10-04",
@@ -422,12 +352,8 @@
       "Will encumber warning"
     ],
     "workflow": "Hover or inspect a loot candidate to compare its properties against the selected character's equipped item.",
-    "strengths": [
-      "Names the comparison owner and exposes consequences beyond damage."
-    ],
-    "weaknesses": [
-      "Tall text cards obscure the loot pane and world."
-    ],
+    "strengths": ["Names the comparison owner and exposes consequences beyond damage."],
+    "weaknesses": ["Tall text cards obscure the loot pane and world."],
     "open_legend_application": "Use an explicit comparison target, readable properties, and contextual weight warnings without an invented overall gear score.",
     "analysis_document": "../../games/baldurs-gate-3.md",
     "preservation": "Original downloaded source bytes; no cropping, compositing, redraw, or resampling performed. Some originals are source-supplied UI crops or CDN sizes."
@@ -437,10 +363,7 @@
     "filename": "BG3-12-dialogue.png",
     "source_page_url": "https://baldursgate3.game/news/community-update-22-wield-the-power-of-a-mind-flayer_75",
     "direct_image_url": "https://lh6.googleusercontent.com/a3-nHQ9SN8pxF0POP_1CGqoWxwdY7tWO2bHNeV6_N06XYVQXDTRhjenRtpivAvKBeKJxCK_Tz2b3zk6RwIF-05_I75_15AjpuRk1GRrWxpo4klQbXRhZ9DhRUn1oJvaatgY6LznVkPs9bNsqgCJI98E",
-    "dimensions": [
-      1600,
-      900
-    ],
+    "dimensions": [1600, 900],
     "bytes": 1859559,
     "sha256": "ba1652342c062032b7b934bc1e6f8b5efd25b5371eec551501233b025096fbcf",
     "accessed_at": "2026-10-04",
@@ -461,9 +384,7 @@
       "No response choices visible in this frame"
     ],
     "workflow": "Interact with an NPC to enter a conversation; current speech appears with the speaker identified.",
-    "strengths": [
-      "Character and scene carry the conversation rather than a generic task form."
-    ],
+    "strengths": ["Character and scene carry the conversation rather than a generic task form."],
     "weaknesses": [
       "Unlabelled utilities are easy to miss; this frame does not show response selection."
     ],

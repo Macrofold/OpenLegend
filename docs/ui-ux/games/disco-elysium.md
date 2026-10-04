@@ -18,7 +18,7 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ![Disco Elysium dialogue beside the visible room, with named speakers and a morale-loss message](../screenshots/disco/01-dialogue-morale.jpg)
 
-*Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build and capture date unspecified.*
+_Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build and capture date unspecified._
 
 **Observed regions and controls.** The room and the people remain visible across roughly the left two-thirds. A tall dark transcript occupies the right. Named speakers distinguish the player, the other character and internal faculties; faculty names use color as well as text. The active portrait straddles the world and transcript. Three numbered reply choices follow the latest passage, and a scrollbar permits reading earlier text. A large message identifies morale loss as −1; tint and a symbol reinforce it. The frame does not contain a separate activity picker or a recipient form.
 
@@ -32,7 +32,7 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ![Disco Elysium forensic world overlay with named observations, numbered actions, dice and a textual success result](../screenshots/disco/02-check-world-overlay.jpg)
 
-*Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build unspecified.*
+_Source: [ZA/UM media gallery](https://discoelysium.com/media), © ZA/UM. Full publisher screenshot; build unspecified._
 
 **Observed layout.** The world contains colored trajectories, impact marks and small labels showing a reconstruction. The right column includes named observations from perception, interfacing and visual calculus. Seven numbered choices identify specific parts of this scene; the final one explicitly leaves. A highlighted choice differs from the others. A pair of dice and a green success label report resolution. The scrollbar and active faculty portrait use the same arrangement as the conversation screen.
 
@@ -46,7 +46,7 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ![Disco Elysium PS5 Thought Cabinet with character summary, slotted thoughts, sortable list and selected thought detail](../screenshots/disco/03-thought-cabinet-ps5.jpg)
 
-*Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/), game imagery © ZA/UM. Full PS5 screenshot; patch unspecified.*
+_Source: [Coty Craven / Can I Play That, March 31, 2021](https://caniplaythat.com/2021/03/31/disco-elysium-the-final-cut-can-i-play-that-accessibility-review/), game imagery © ZA/UM. Full PS5 screenshot; patch unspecified._
 
 **Observed regions and controls.** The left gives the four abbreviated attributes, health, morale and aggregate thought bonuses. The middle contains illustrated slotted thoughts and empty outlines over the world. A scrollable list to its right has visible research percentages and many dim names. Status, Date and A–Z are shown as sort choices beneath a triangle-button cue. The far-right detail shows the selected thought's art, title, temporary research bonus, 3h45m research time and Problem/Solution views. Experience and skill points sit above the Internalize command with an `X` cue. Bottom navigation uses skill, inventory, journal and thought icons, with L2/R2 cues. There is no conventional close button visible in this frame.
 
@@ -60,7 +60,7 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ![Disco Elysium inventory with equipped clothing around the character, aggregate effects and a selected glove detail](../screenshots/disco/04-equipment-inventory.jpg)
 
-*Source: [Riker Santivong's game review page](https://planita13.github.io/Final-Project/disco.html), game imagery © ZA/UM. Full PC-style screenshot reproduced by a third party; original capture build and date are unverified.*
+_Source: [Riker Santivong's game review page](https://planita13.github.io/Final-Project/disco.html), game imagery © ZA/UM. Full PC-style screenshot reproduced by a third party; original capture build and date are unverified._
 
 **Observed regions and controls.** The left summary combines attributes, health, morale and item-derived bonuses. In the center, the character is surrounded by labeled equipment places: clothing and accessories, left and right held items, plus keys and bullets. Occupied and empty slots are distinct, and Equipped is explicit above the figure. On the right, the selected gloves have large art, a readable name, a skill modifier and a separate description. Tools, Clothes, Items and Interact sit above the stored-item cells, with Clothes selected. An orange marker sits at Items, while another appears at the journal icon in the bottom navigation. Their appearance suggests pending information, but this source does not establish their clearing behavior. The stored-clothing grid is empty in this image and has a vertical scrollbar. Bottom navigation contains skill, inventory, journal and thought symbols with an inventory abbreviation.
 
@@ -72,14 +72,14 @@ The [developer's 2016 interface article](https://discoelysium.com/devblog/2016/1
 
 ## What to adopt, and where the analogy ends
 
-| Pattern | Open Legend adaptation | Specific risk to avoid |
-| --- | --- | --- |
-| Contextual numbered choices | A few actions attached to the selected person or object. | A giant list of generic activities that asks for the context again. |
-| World and transcript together | Keep the situation visible beside conversation and inspection. | A window so large that the player loses the object they opened. |
-| Explicit outcome near an action | Show what changed and preserve it in readable history. | Only a transient color flash, or a result detached from its target. |
-| Named equipment slots and item detail | Show the possession, location, effect and direct action. | Unexplained icon art or a layout chosen purely to fit the data model. |
-| Distinct ongoing thought/project state | Expose duration, commitment and progress for activities where those matter. | Importing an elaborate specialty menu into routine actions. |
-| Deliberate visual identity | Let typography and surfaces belong to Open Legend's world. | Copying tape graphics, obscure abbreviations or uncertain focus states. |
+| Pattern                                | Open Legend adaptation                                                      | Specific risk to avoid                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Contextual numbered choices            | A few actions attached to the selected person or object.                    | A giant list of generic activities that asks for the context again.     |
+| World and transcript together          | Keep the situation visible beside conversation and inspection.              | A window so large that the player loses the object they opened.         |
+| Explicit outcome near an action        | Show what changed and preserve it in readable history.                      | Only a transient color flash, or a result detached from its target.     |
+| Named equipment slots and item detail  | Show the possession, location, effect and direct action.                    | Unexplained icon art or a layout chosen purely to fit the data model.   |
+| Distinct ongoing thought/project state | Expose duration, commitment and progress for activities where those matter. | Importing an elaborate specialty menu into routine actions.             |
+| Deliberate visual identity             | Let typography and surfaces belong to Open Legend's world.                  | Copying tape graphics, obscure abbreviations or uncertain focus states. |
 
 Disco Elysium's prose-first choices are a strong reference for authored conversation, inspection and meaningful decisions. Multiplayer free text still needs audience, delivery and interruption rules. Physical containers still need two visible collections, clear reach and ownership; this game does not supply that evidence. Accepted Open Legend behavior remains in the linked handbook chapters.
 

@@ -6,12 +6,12 @@
 
 Research began **2026-10-03** and was finalized **2026-10-04**. All **six locally saved screenshots were visually inspected**, including enlarged inspection of the small controls in the two 2026 captures. The collection intentionally separates versions:
 
-| Evidence | Baseline and limitation |
-| --- | --- |
-| PZ-01, ordinary looting and health | Published 2025-04-28; exact capture build, platform and mod status unknown. |
-| PZ-02, surface crafting | Developer **Build 42 work in progress**, June 2024; a proposal at that date. |
+| Evidence                           | Baseline and limitation                                                                                                                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PZ-01, ordinary looting and health | Published 2025-04-28; exact capture build, platform and mod status unknown.                                                                                                                                                 |
+| PZ-02, surface crafting            | Developer **Build 42 work in progress**, June 2024; a proposal at that date.                                                                                                                                                |
 | PZ-03 and PZ-04, crafting/building | Developer's **Build 42.20 feature overview**, with image assets dated July 2026. Some small diagnostic-looking text and a **Force Action** control are visible; this does not establish those controls as normal player UI. |
-| PZ-05 and PZ-06, fluid transfer | Developer **Build 42 prototype**, 2022-07-21; not evidence that the present release preserves this exact layout. |
+| PZ-05 and PZ-06, fluid transfer    | Developer **Build 42 prototype**, 2022-07-21; not evidence that the present release preserves this exact layout.                                                                                                            |
 
 The [inventory wiki](https://pzwiki.net/wiki/Inventory) identifies a 41.78.16 revision baseline while warning that parts have been updated for Build 42. Its broad interaction descriptions are useful; it is not a clean specification for every 42.20 detail. No game executable, live multiplayer session or controller was tested. A changing version number in the website header must not be assigned retroactively to a historical screenshot.
 

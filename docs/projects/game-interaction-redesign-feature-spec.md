@@ -1,8 +1,8 @@
 # Inventory and everyday play: interaction redesign
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04 |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 
@@ -43,16 +43,16 @@ Grid cells organize the display. They do not introduce physical slot capacity, T
 
 The recommended desktop grammar is:
 
-| Player action | Result |
-| --- | --- |
-| Click an item | Select and inspect it; keep its location visible. |
-| Drag to the other open collection | Move the chosen item or stack through native handling admission. |
-| Shift-click an item | Quick-move the stack to the other open collection; show the binding in help and the relevant item action. |
-| Choose **Move to Camp chest** or **Take into backpack** | Accessible non-drag equivalent with the destination already named. |
-| Right-click an item / invoke its keyboard context menu | Short list of relevant actions on this item. |
-| Choose **Split stack…** | Open a small quantity control beside the item; retain both collections and the target. |
-| Open a carried bag | Navigate that side into the bag, retaining a breadcrumb and the opposite side. |
-| Escape | Cancel the active drag or close the top child layer, then the workspace on a subsequent press. |
+| Player action                                           | Result                                                                                                    |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Click an item                                           | Select and inspect it; keep its location visible.                                                         |
+| Drag to the other open collection                       | Move the chosen item or stack through native handling admission.                                          |
+| Shift-click an item                                     | Quick-move the stack to the other open collection; show the binding in help and the relevant item action. |
+| Choose **Move to Camp chest** or **Take into backpack** | Accessible non-drag equivalent with the destination already named.                                        |
+| Right-click an item / invoke its keyboard context menu  | Short list of relevant actions on this item.                                                              |
+| Choose **Split stack…**                                 | Open a small quantity control beside the item; retain both collections and the target.                    |
+| Open a carried bag                                      | Navigate that side into the bag, retaining a breadcrumb and the opposite side.                            |
+| Escape                                                  | Cancel the active drag or close the top child layer, then the workspace on a subsequent press.            |
 
 Bindings are proposed and must be checked against existing application shortcuts before adoption. No hidden modifier is the only route. A second click must not accidentally repeat a consequential action. Clicking outside an ordinary item drop zone cancels the drag; dropping into the world requires the explicit supported Drop route, not an accidental release over scenery.
 
@@ -92,39 +92,39 @@ The audit finds one current session draft record, not independently retained dra
 
 Offer a small number of meaningful dialogue/topic suggestions where supported while retaining natural-language speech. Item references can be inserted as named chips from permitted objects; they do not expose hidden item facts. Disco Elysium's attribution and transcript continuity are references for legibility, not permission to reveal other characters' thoughts. World Agent authoring stays a distinct role with its existing spending, review and installation boundaries.
 
-| Menu family | Entry and primary task | Required presentation |
-| --- | --- | --- |
-| Belongings and containers | Own inventory or **Open** on an object | Grid; paired collections during transfer; local item actions. |
-| Equipment | Selected item or character equipment | Readable slots and candidate/current comparison. |
-| Crafting and cooking | Station, known recipe, or carried crafting capability | Output first, usable recipes and ingredient evidence; substitutions only when meaningful. |
-| Ongoing activities | Target or current character task | Relevant choices, understandable stopping condition, visible Stop/Change. |
-| NPC conversation | Person or conversation | Speaker, audience, transcript and composer; no provider/workflow machinery. |
-| Trade and handover | Person and an offered item/set | Offer contents, consent and actual outcome; inspection does not transfer custody. |
-| Journal/map/history | Explicit navigation | Known information, readable return path, scope and preserved reading position. |
-| Creator work and settings | Explicit authoring/settings entry | Appropriate structured editing and consequential review; these are separate from routine play. |
+| Menu family               | Entry and primary task                                | Required presentation                                                                          |
+| ------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Belongings and containers | Own inventory or **Open** on an object                | Grid; paired collections during transfer; local item actions.                                  |
+| Equipment                 | Selected item or character equipment                  | Readable slots and candidate/current comparison.                                               |
+| Crafting and cooking      | Station, known recipe, or carried crafting capability | Output first, usable recipes and ingredient evidence; substitutions only when meaningful.      |
+| Ongoing activities        | Target or current character task                      | Relevant choices, understandable stopping condition, visible Stop/Change.                      |
+| NPC conversation          | Person or conversation                                | Speaker, audience, transcript and composer; no provider/workflow machinery.                    |
+| Trade and handover        | Person and an offered item/set                        | Offer contents, consent and actual outcome; inspection does not transfer custody.              |
+| Journal/map/history       | Explicit navigation                                   | Known information, readable return path, scope and preserved reading position.                 |
+| Creator work and settings | Explicit authoring/settings entry                     | Appropriate structured editing and consequential review; these are separate from routine play. |
 
 ## End-to-end acceptance journeys
 
 These are future implementation gates, not claims of tests run for this documentation. Each journey must be exercised from the real world view through actual native results. Compare observed hesitation, errors, backtracking and completion with the baseline; a prettier static screen is insufficient.
 
-| ID | Trigger and knowledge | Player interaction and visible result | Failure/recovery to demonstrate |
-| --- | --- | --- | --- |
-| J01 | Reachable, permitted chest in view | Open from object; see chest and belongings together; transfer one item each way without choosing a destination again. | Full chest leaves custody unchanged and explains capacity. |
-| J02 | Visible chest beyond handling reach | Inspect without movement; deliberately Walk to and open; contents appear only after valid arrival. | No route, cancellation, moving target, obstruction and revoked access stop opening. |
-| J03 | Carried stack and open chest | Quick-move whole stack; split a specific amount without losing either side. | Blank amount and stale quantity never become zero or a different stack. |
-| J04 | Two same-named items, one damaged or equipped | Distinguish by visible identity/state; compare and equip intentionally. | Missing comparison fact is unknown; equipped item is conspicuous. |
-| J05 | Nested carried bags and an external chest | Open bag on one side, move to chest, navigate back with stable focus. | Self-containment and moving a parent into a descendant are refused. |
-| J06 | Two players handling the same contents | Each sees actual authoritative changes; a competing move produces an exact outcome. | A timeout or double activation cannot duplicate, lose or retransfer an item. |
-| J07 | Remote/hidden/other-person storage | Inspect only permitted exterior facts; no fabricated interior or globally searchable contents. | Lost authority removes private content and disables mutation promptly. |
-| J08 | Open task during movement/disconnect | Preserve meaningful selection but show inaccessible or reconnecting state truthfully. | Return to valid access refreshes permitted contents; no stale drag commits. |
-| J09 | Keyboard-only, large text, narrow/short viewport | Open, inspect, move, split, cancel and return without drag or hover; both endpoints remain clear. | Popup Escape, IME, wheel and pointer release do not move the world. |
-| J10 | Fire with eligible carried fuel | Select the fire, choose Add fuel, choose meaningful material/amount and see actual fire change. | No fuel or inaccessible supply is explained in the same context. |
-| J11 | Longer care task and an existing activity | Choose scope/stopping condition, see current task, replace deliberately if needed, stop it. | No indefinite hidden loop, fabricated progress or unintended restart on reopening. |
-| J12 | Workbench with known and unavailable recipes | Select useful output, inspect native ingredients/substitutions, craft and receive output. | Missing station/resource condition is explained; ordinary crafting exposes no authoring schema. |
-| J13 | Nearby person and speech draft | Talk from person; retain draft/older reading through replies and hide/reopen; switch recipient/world/control without silently carrying text into another destination. | IME cannot send accidentally; out-of-range/technical failure retains useful recovery. |
-| J14 | Item offered to a person | Select item and recipient in context; see offer and consent outcome. | Decline, expiration and changed access do not silently change custody. |
-| J15 | Invented object without finished art | Identify it by readable name/fallback, inspect and perform a supported action. | Unsupported presentation/action is honest; no blank usable cell or generated executable UI. |
-| J16 | One integrated camp session | Open chest, take supplies, equip tool, gather, fuel/cook, offer food, talk, return remaining items. | Every transition preserves object identity, real effects and conversation context; no generic execution form appears. |
+| ID  | Trigger and knowledge                            | Player interaction and visible result                                                                                                                                 | Failure/recovery to demonstrate                                                                                       |
+| --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| J01 | Reachable, permitted chest in view               | Open from object; see chest and belongings together; transfer one item each way without choosing a destination again.                                                 | Full chest leaves custody unchanged and explains capacity.                                                            |
+| J02 | Visible chest beyond handling reach              | Inspect without movement; deliberately Walk to and open; contents appear only after valid arrival.                                                                    | No route, cancellation, moving target, obstruction and revoked access stop opening.                                   |
+| J03 | Carried stack and open chest                     | Quick-move whole stack; split a specific amount without losing either side.                                                                                           | Blank amount and stale quantity never become zero or a different stack.                                               |
+| J04 | Two same-named items, one damaged or equipped    | Distinguish by visible identity/state; compare and equip intentionally.                                                                                               | Missing comparison fact is unknown; equipped item is conspicuous.                                                     |
+| J05 | Nested carried bags and an external chest        | Open bag on one side, move to chest, navigate back with stable focus.                                                                                                 | Self-containment and moving a parent into a descendant are refused.                                                   |
+| J06 | Two players handling the same contents           | Each sees actual authoritative changes; a competing move produces an exact outcome.                                                                                   | A timeout or double activation cannot duplicate, lose or retransfer an item.                                          |
+| J07 | Remote/hidden/other-person storage               | Inspect only permitted exterior facts; no fabricated interior or globally searchable contents.                                                                        | Lost authority removes private content and disables mutation promptly.                                                |
+| J08 | Open task during movement/disconnect             | Preserve meaningful selection but show inaccessible or reconnecting state truthfully.                                                                                 | Return to valid access refreshes permitted contents; no stale drag commits.                                           |
+| J09 | Keyboard-only, large text, narrow/short viewport | Open, inspect, move, split, cancel and return without drag or hover; both endpoints remain clear.                                                                     | Popup Escape, IME, wheel and pointer release do not move the world.                                                   |
+| J10 | Fire with eligible carried fuel                  | Select the fire, choose Add fuel, choose meaningful material/amount and see actual fire change.                                                                       | No fuel or inaccessible supply is explained in the same context.                                                      |
+| J11 | Longer care task and an existing activity        | Choose scope/stopping condition, see current task, replace deliberately if needed, stop it.                                                                           | No indefinite hidden loop, fabricated progress or unintended restart on reopening.                                    |
+| J12 | Workbench with known and unavailable recipes     | Select useful output, inspect native ingredients/substitutions, craft and receive output.                                                                             | Missing station/resource condition is explained; ordinary crafting exposes no authoring schema.                       |
+| J13 | Nearby person and speech draft                   | Talk from person; retain draft/older reading through replies and hide/reopen; switch recipient/world/control without silently carrying text into another destination. | IME cannot send accidentally; out-of-range/technical failure retains useful recovery.                                 |
+| J14 | Item offered to a person                         | Select item and recipient in context; see offer and consent outcome.                                                                                                  | Decline, expiration and changed access do not silently change custody.                                                |
+| J15 | Invented object without finished art             | Identify it by readable name/fallback, inspect and perform a supported action.                                                                                        | Unsupported presentation/action is honest; no blank usable cell or generated executable UI.                           |
+| J16 | One integrated camp session                      | Open chest, take supplies, equip tool, gather, fuel/cook, offer food, talk, return remaining items.                                                                   | Every transition preserves object identity, real effects and conversation context; no generic execution form appears. |
 
 ## Delivery order and completion
 

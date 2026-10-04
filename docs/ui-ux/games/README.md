@@ -6,21 +6,21 @@
 
 ## Coverage
 
-| Game and detailed dossier | Digital screenshots | What to inspect |
-| --- | ---: | --- |
-| [Baldur's Gate 3](baldurs-gate-3.md) | 12 | Individual/party/controller inventory, chest, context menu, compare, Throw, alchemy, dye, trade, dialogue. |
-| [Divinity: Original Sin 2](divinity-original-sin-2.md) | 4 | Chest, trade staging, controller equipment and optional organization bags. |
-| [Minecraft](minecraft.md) | 6 | Carried items versus catalog, recipes, large chest, furnace and trading. |
-| [Valheim](valheim.md) | 7 | World station, repair, cart storage, building and controller focus/bindings. |
-| [Terraria](terraria.md) | 8 | Named chest, scoped bulk verbs, quick-stack, recipe query, NPC talk and contextual prompts. |
-| [Factorio](factorio.md) | 6 | Consistent player/object sides, quickbar, machine state, recipe search and optional icon naming. |
-| [Stardew Valley](stardew-valley.md) | 4 | Chest transfer, matching stacks, equipment and recipe reference; one extra display photo excluded. |
-| [Project Zomboid](project-zomboid.md) | 6 | Looting a physical target, timed actions, station crafting, building and fluid operations. |
-| [Final Fantasy XIV](final-fantasy-xiv.md) | 6 | Controller HUD, inventory layout variants, item menus, crafting and chat audience versus filters. |
-| [Guild Wars 2](guild-wars-2.md) | 5 | Inventory, bank transfer, wallet, crafting discovery and trade. |
-| [World of Warcraft](world-of-warcraft.md) | 3 | Combined bags and configurable HUD; publisher comparison counts once. |
-| [Disco Elysium](disco-elysium.md) | 4 | Dialogue, checks, consequences, equipment and Thought Cabinet. |
-| **Total** | **71** | **72 original reference images including the excluded photograph.** |
+| Game and detailed dossier                              | Digital screenshots | What to inspect                                                                                            |
+| ------------------------------------------------------ | ------------------: | ---------------------------------------------------------------------------------------------------------- |
+| [Baldur's Gate 3](baldurs-gate-3.md)                   |                  12 | Individual/party/controller inventory, chest, context menu, compare, Throw, alchemy, dye, trade, dialogue. |
+| [Divinity: Original Sin 2](divinity-original-sin-2.md) |                   4 | Chest, trade staging, controller equipment and optional organization bags.                                 |
+| [Minecraft](minecraft.md)                              |                   6 | Carried items versus catalog, recipes, large chest, furnace and trading.                                   |
+| [Valheim](valheim.md)                                  |                   7 | World station, repair, cart storage, building and controller focus/bindings.                               |
+| [Terraria](terraria.md)                                |                   8 | Named chest, scoped bulk verbs, quick-stack, recipe query, NPC talk and contextual prompts.                |
+| [Factorio](factorio.md)                                |                   6 | Consistent player/object sides, quickbar, machine state, recipe search and optional icon naming.           |
+| [Stardew Valley](stardew-valley.md)                    |                   4 | Chest transfer, matching stacks, equipment and recipe reference; one extra display photo excluded.         |
+| [Project Zomboid](project-zomboid.md)                  |                   6 | Looting a physical target, timed actions, station crafting, building and fluid operations.                 |
+| [Final Fantasy XIV](final-fantasy-xiv.md)              |                   6 | Controller HUD, inventory layout variants, item menus, crafting and chat audience versus filters.          |
+| [Guild Wars 2](guild-wars-2.md)                        |                   5 | Inventory, bank transfer, wallet, crafting discovery and trade.                                            |
+| [World of Warcraft](world-of-warcraft.md)              |                   3 | Combined bags and configurable HUD; publisher comparison counts once.                                      |
+| [Disco Elysium](disco-elysium.md)                      |                   4 | Dialogue, checks, consequences, equipment and Thought Cabinet.                                             |
+| **Total**                                              |              **71** | **72 original reference images including the excluded photograph.**                                        |
 
 The counts are checked against the [aggregate index](../screenshots/index.json) and the source-owned per-game manifests. Each unique image counts once, including publisher-made comparisons. Some originals are precise UI crops or developer-published previews rather than full-screen retail captures; their context is explicit. There are no AI-generated game screenshots. The four Open Legend diagrams are separate, clearly labeled proposals and excluded.
 

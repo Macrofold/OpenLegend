@@ -156,7 +156,7 @@ export function inventoryAccess(
   if (!accessible && !visibleExterior) return unavailable;
   const container = {
     id: target.id,
-    name: target.name,
+    name: observerDescription(world, scope.actorId, target.id),
     location: containerLocation(service, scope, target.id),
   };
   if (accessible)

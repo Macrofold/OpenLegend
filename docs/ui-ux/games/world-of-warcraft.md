@@ -14,7 +14,7 @@ WoW makes a useful distinction between physical bag capacity and how possessions
 
 ![WoW separated bag windows compared with a combined backpack](../screenshots/wow/01-separated-combined-bags.png)
 
-*Source: Blizzard, [Dragonflight HUD and UI Revamp](https://worldofwarcraft.blizzard.com/en-us/news/23841481), 2022-09-01. © Blizzard Entertainment. Publisher-composed comparison, counted once.*
+_Source: Blizzard, [Dragonflight HUD and UI Revamp](https://worldofwarcraft.blizzard.com/en-us/news/23841481), 2022-09-01. © Blizzard Entertainment. Publisher-composed comparison, counted once._
 
 **Observed layout.** On the left, several narrow bag windows stack around the lower-right edge. Each has its own title/close control and slot grid. On the right, a single Combined Backpack exposes the carried slots together. It has a header and close button, a search field, a small sorting utility, occupied/empty slots, numerical stack counts, and currency totals along the bottom. The equipped bag icons remain outside the large window. The minimap and objective header remain visible above. The bottom system-icon strip is peripheral navigation; this image does not establish the function of every unlabeled symbol.
 
@@ -30,7 +30,7 @@ WoW makes a useful distinction between physical bag capacity and how possessions
 
 ![WoW HUD edit mode with layout selector, alignment grid, selectable elements and Save](../screenshots/wow/02-hud-edit-layout.png)
 
-*Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot.*
+_Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot._
 
 **Observed controls.** A centered HUD Edit Mode window includes a named layout selector, Show Grid, grid-spacing slider, and checkboxes for target/focus, party, stance, pet, possess, buff, debuff, cast, encounter and extra-ability frames. Revert All Changes and Save appear at the bottom. The world is covered by a placement grid, while movable regions have visible outlines. Party frames, target/player frames, hotbar groups and minimap are recognizable in their current positions. This is explicitly a layout-edit state, not an ordinary combat state.
 
@@ -44,7 +44,7 @@ WoW makes a useful distinction between physical bag capacity and how possessions
 
 ![WoW debuff frame editor with orientation, wrapping, icon size and padding controls](../screenshots/wow/03-frame-edit-preview.png)
 
-*Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot.*
+_Source: [Blizzard's 2022 UI preview](https://worldofwarcraft.blizzard.com/en-us/news/23841481), © Blizzard Entertainment. Full game screenshot._
 
 **Observed controls.** The Debuff Frame window contains Orientation, Icon Wrap and Icon Direction selectors; Icon Size, Icon Padding and Icon Limit sliders; a Show Full checkbox; Revert Changes; and a close control. The selected debuff region is highlighted beside it. A second nearby status region allows the player to see spacing and potential collision. Sample status icons include remaining-duration labels.
 
@@ -58,12 +58,12 @@ WoW makes a useful distinction between physical bag capacity and how possessions
 
 ## Workflows supported by the evidence
 
-| Player task | Verified or observed sequence | Design lesson |
-| --- | --- | --- |
-| See carried possessions together | Open all bags → enable the combined presentation → inspect the shared grid. The setting route is documented by Blizzard. | Separate physical bag structure from presentation fragmentation. |
-| Find an item | A search field sits directly above the combined collection. Exact matching/filter rules were not tested. | Scope search to the collection being read; do not make search the sole path for ordinary small inventories. |
-| Adjust the HUD | Open Edit Mode → select/reposition a frame → inspect the actual layout → save or revert. Documented by the release article and illustrated by two distinct captures. | Preference forms work when their purpose is explicit and effects are visible. |
-| Move an item without an obstructed destination | Historical player reports describe sidebar overlap during movement. | Qualify real pointer paths and stacking; a beautiful static screen is insufficient. |
+| Player task                                    | Verified or observed sequence                                                                                                                                        | Design lesson                                                                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| See carried possessions together               | Open all bags → enable the combined presentation → inspect the shared grid. The setting route is documented by Blizzard.                                             | Separate physical bag structure from presentation fragmentation.                                            |
+| Find an item                                   | A search field sits directly above the combined collection. Exact matching/filter rules were not tested.                                                             | Scope search to the collection being read; do not make search the sole path for ordinary small inventories. |
+| Adjust the HUD                                 | Open Edit Mode → select/reposition a frame → inspect the actual layout → save or revert. Documented by the release article and illustrated by two distinct captures. | Preference forms work when their purpose is explicit and effects are visible.                               |
+| Move an item without an obstructed destination | Historical player reports describe sidebar overlap during movement.                                                                                                  | Qualify real pointer paths and stacking; a beautiful static screen is insufficient.                         |
 
 ## Conclusions for Open Legend
 

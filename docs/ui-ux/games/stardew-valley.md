@@ -12,15 +12,15 @@ Stardew is relevant to Open Legend's ordinary life: players repeatedly bring thi
 
 ## What the player actually does
 
-| Intention | Documented interaction | What establishes context |
-| --- | --- | --- |
-| Put items away | Approach a placed chest and interact with it; the chest's grid opens above the backpack grid. Move items between these visible collections. | The particular chest in the world is already the destination. |
-| Restock an existing chest | Use **Add to Existing Stacks** to deposit backpack items that match existing chest stacks. | The open chest bounds the bulk action. |
-| Organize | Use the separate **Organize** button. | Sorting and transferring are different intentions. |
-| Take a partial stack | Right-click selects one; Shift-right-click selects half. | The selected stack supplies the item and source. |
-| Make a craftable item | Open Crafting, inspect a recipe's requirements, click the recipe when ingredients are available, then place the result in inventory. | The recipe names the desired result. |
-| Craft from storage | Interact with a workbench, which can use ingredients in adjacent ordinary/big chests. | The workstation establishes the resource scope. |
-| Cook | Interact with the stove; the cooking interface can use the backpack and linked refrigerator/mini-fridge ingredients. | The kitchen establishes eligible storage without a separate container-selection form. |
+| Intention                 | Documented interaction                                                                                                                      | What establishes context                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Put items away            | Approach a placed chest and interact with it; the chest's grid opens above the backpack grid. Move items between these visible collections. | The particular chest in the world is already the destination.                         |
+| Restock an existing chest | Use **Add to Existing Stacks** to deposit backpack items that match existing chest stacks.                                                  | The open chest bounds the bulk action.                                                |
+| Organize                  | Use the separate **Organize** button.                                                                                                       | Sorting and transferring are different intentions.                                    |
+| Take a partial stack      | Right-click selects one; Shift-right-click selects half.                                                                                    | The selected stack supplies the item and source.                                      |
+| Make a craftable item     | Open Crafting, inspect a recipe's requirements, click the recipe when ingredients are available, then place the result in inventory.        | The recipe names the desired result.                                                  |
+| Craft from storage        | Interact with a workbench, which can use ingredients in adjacent ordinary/big chests.                                                       | The workstation establishes the resource scope.                                       |
+| Cook                      | Interact with the stove; the cooking interface can use the backpack and linked refrigerator/mini-fridge ingredients.                        | The kitchen establishes eligible storage without a separate container-selection form. |
 
 Sources: [Inventory](https://wiki.stardewvalley.net/Inventory), [Chest](https://wiki.stardewvalley.net/Chest), [Controls](https://wiki.stardewvalley.net/Controls), [Crafting](https://wiki.stardewvalley.net/Crafting), [Workbench](https://wiki.stardewvalley.net/Workbench), [Cooking](https://wiki.stardewvalley.net/Cooking). The visual placement of the two chest grids is also directly observable in SDV-01 and SDV-02.
 
@@ -32,11 +32,11 @@ The [workbench guide](https://wiki.stardewvalley.net/Workbench) specifies access
 
 ## Original player feedback about specific UI features
 
-| Source and date | Specific feedback | Design implication |
-| --- | --- | --- |
-| Raptorbuddha, [workbench request](https://forums.stardewvalley.net/threads/add-an-add-to-existing-stacks-button-to-workbench.20352/), 2023-05-22 | Praised the chest's matching-stack button for fast organization and clearing inventory, then asked for the same convenience across workbench-connected chests. | A successful action can still expose repetitive work at the next scale. This is one player's preference, not evidence for unrestricted remote storage. |
-| TwoFistTony, [shortcut request](https://forums.stardewvalley.net/threads/add-to-existing-stacks-assigned-key-button.5235/), 2021-02-04 | Liked the matching-stack action but wanted a direct key for repeated use. | A visible action and a learned accelerator can support different experience levels. |
-| TrickyFox and MogBeoulve, [Switch discussion](https://forums.stardewvalley.net/threads/add-to-stacks-organize-buttons-moved-to-left-on-console.33946/), 2024-11-19 to 2024-11-24 | The first player described repeatedly crossing the grid to the buttons; another explained the bumper shortcut, which the first had not known. | Control travel and discoverability must be tested on each input method. The mere presence of a shortcut does not make it discoverable. |
+| Source and date                                                                                                                                                                  | Specific feedback                                                                                                                                              | Design implication                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Raptorbuddha, [workbench request](https://forums.stardewvalley.net/threads/add-an-add-to-existing-stacks-button-to-workbench.20352/), 2023-05-22                                 | Praised the chest's matching-stack button for fast organization and clearing inventory, then asked for the same convenience across workbench-connected chests. | A successful action can still expose repetitive work at the next scale. This is one player's preference, not evidence for unrestricted remote storage. |
+| TwoFistTony, [shortcut request](https://forums.stardewvalley.net/threads/add-to-existing-stacks-assigned-key-button.5235/), 2021-02-04                                           | Liked the matching-stack action but wanted a direct key for repeated use.                                                                                      | A visible action and a learned accelerator can support different experience levels.                                                                    |
+| TrickyFox and MogBeoulve, [Switch discussion](https://forums.stardewvalley.net/threads/add-to-stacks-organize-buttons-moved-to-left-on-console.33946/), 2024-11-19 to 2024-11-24 | The first player described repeatedly crossing the grid to the buttons; another explained the bumper shortcut, which the first had not known.                  | Control travel and discoverability must be tested on each input method. The mere presence of a shortcut does not make it discoverable.                 |
 
 These are primary, feature-specific player accounts. They support the selected lessons; they do not imply that Stardew's complete inventory has universal approval.
 

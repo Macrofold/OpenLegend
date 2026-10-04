@@ -12,12 +12,12 @@ Minecraft is useful because its chest interaction closely matches the user's sta
 
 The official general controls guide identifies right-click as the desktop use/interact control, `E` as inventory, and number keys as hotbar selection. The Java hotkeys guide documents `Shift` + left-click as a stack transfer between inventory and an open container. That shortcut is contextual: the already-open container supplies the destination. These are documented desktop bindings, not promises about the Nintendo-style frames below. [M1][M2]
 
-| Player intention | Interface sequence | What the player has to decide |
-| --- | --- | --- |
-| Put something in a chest | Approach and interact with that chest; see chest cells and carried cells; transfer the stack | Which item and, when relevant, how many |
-| Craft a known item | Open personal crafting or a crafting table; choose the recipe or arrange ingredients; take the output | Recipe and any meaningful ingredient choice |
-| Smelt something | Interact with the furnace; place input and fuel; collect output | Input and fuel, represented by slots in the process |
-| Trade | Interact with the merchant; inspect its offers; supply payment and take the result | Which offer and quantity |
+| Player intention         | Interface sequence                                                                                    | What the player has to decide                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Put something in a chest | Approach and interact with that chest; see chest cells and carried cells; transfer the stack          | Which item and, when relevant, how many             |
+| Craft a known item       | Open personal crafting or a crafting table; choose the recipe or arrange ingredients; take the output | Recipe and any meaningful ingredient choice         |
+| Smelt something          | Interact with the furnace; place input and fuel; collect output                                       | Input and fuel, represented by slots in the process |
+| Trade                    | Interact with the merchant; inspect its offers; supply payment and take the result                    | Which offer and quantity                            |
 
 The recipe book provides categories and search, can fill the crafting grid from a selected recipe, and marks unavailable recipes. Personal crafting has a smaller grid than a crafting table. These are task-specific constraints made visible where crafting happens. They do not require the player to first choose a generic “craft” activity and then supply every backend argument. [M3]
 
@@ -101,11 +101,11 @@ The historical trading design provides a useful qualification. In a developer in
 
 These are individual observations selected for specific interaction evidence, not a representative survey or a claim that players unanimously like Minecraft's inventory.
 
-| Evidence | What it supports | Limits |
-| --- | --- | --- |
-| A May 2025 Minecraft Feedback request praises Java's hover-plus-hotbar-number swapping as fast and intuitive and asks for equivalent Bedrock behavior. [M8] | Players can value direct, low-effort manipulation once its binding is learned. | One feature request; it does not establish current Bedrock parity or overall satisfaction. |
-| A beginner-focused November 2020 feedback request says new players miss the recipe book and proposes stronger onboarding. [M9] | A useful feature can still fail if its entry point is obscure. | One suggestion, not usability-test results. |
-| An indexed June 2020 Reddit post complains that updated inventory controls became clumsy for a returning player. [M10] | Familiarity and muscle memory are part of inventory quality; changing gestures has costs. | Search-index excerpt only: the full discussion was unavailable during this pass. No unseen comments were analyzed. |
+| Evidence                                                                                                                                                    | What it supports                                                                          | Limits                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| A May 2025 Minecraft Feedback request praises Java's hover-plus-hotbar-number swapping as fast and intuitive and asks for equivalent Bedrock behavior. [M8] | Players can value direct, low-effort manipulation once its binding is learned.            | One feature request; it does not establish current Bedrock parity or overall satisfaction.                         |
+| A beginner-focused November 2020 feedback request says new players miss the recipe book and proposes stronger onboarding. [M9]                              | A useful feature can still fail if its entry point is obscure.                            | One suggestion, not usability-test results.                                                                        |
+| An indexed June 2020 Reddit post complains that updated inventory controls became clumsy for a returning player. [M10]                                      | Familiarity and muscle memory are part of inventory quality; changing gestures has costs. | Search-index excerpt only: the full discussion was unavailable during this pass. No unseen comments were analyzed. |
 
 ## Decisions this evidence supports for Open Legend
 

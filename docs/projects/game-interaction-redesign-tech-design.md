@@ -1,8 +1,8 @@
 # Inventory and everyday play: technical design
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04 |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Research is complete; the approved inventory, contextual activity and conversation redesign is being implemented and verified. | 2026-10-04   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
@@ -18,13 +18,13 @@ The chat continuation on October 3 in America/New_York moves this discussed plan
 
 **Estimate and risk:** approximately 2,200–3,200 changed production TypeScript/TSX logic lines, excluding tests, documentation and roughly 300–450 CSS lines. Inventory accounts for 850–1,200, activities 650–950, conversation 230–330, and world entry/shared command/projection work the remainder. This is a substantial coordinated change with custody, privacy, uncertain command outcomes, input ownership and installed-world compatibility risks. The estimate will be refined if actual owners require more work.
 
-| Work | Owner and dependencies | Completion evidence |
-| --- | --- | --- |
-| Paired inventory | Existing inventory projections and transfer/equipment/handover owners; two independently scoped collection components | J01/J03–J09 and J15; real transfers, nested bags, equipment, refusal, narrow/keyboard handling and correct survivor identity after native stack merging. |
-| World opening | Main application, object action menu/details, minimal permitted storage projection and native approach goal | J01/J02/J08; explicit opening/approach, arrival recheck, movement cancellation and no distant/hidden contents. |
-| Activity interaction | Current camp compiler plus world-authored presentation roles; selected-target task panel | J10–J12; immediate native fuel action, visible supply/budget/reserve/stop choices, explicit replacement, existing recipe execution and a different installed-world example. |
-| Conversation | Existing composer/history, native private draft namespace and access cleanup | J13/J14; recipient-scoped drafts, send revision fence, preserved older reading, explicit named item mention and existing offer consent. |
-| Integrated review | Real native server/client and existing focused checks, followed by independent affected-diff review | J16 and meaningful changed-condition cases; record actual coverage and remaining device/model/human-study limits. |
+| Work                 | Owner and dependencies                                                                                                | Completion evidence                                                                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Paired inventory     | Existing inventory projections and transfer/equipment/handover owners; two independently scoped collection components | J01/J03–J09 and J15; real transfers, nested bags, equipment, refusal, narrow/keyboard handling and correct survivor identity after native stack merging.                    |
+| World opening        | Main application, object action menu/details, minimal permitted storage projection and native approach goal           | J01/J02/J08; explicit opening/approach, arrival recheck, movement cancellation and no distant/hidden contents.                                                              |
+| Activity interaction | Current camp compiler plus world-authored presentation roles; selected-target task panel                              | J10–J12; immediate native fuel action, visible supply/budget/reserve/stop choices, explicit replacement, existing recipe execution and a different installed-world example. |
+| Conversation         | Existing composer/history, native private draft namespace and access cleanup                                          | J13/J14; recipient-scoped drafts, send revision fence, preserved older reading, explicit named item mention and existing offer consent.                                     |
+| Integrated review    | Real native server/client and existing focused checks, followed by independent affected-diff review                   | J16 and meaningful changed-condition cases; record actual coverage and remaining device/model/human-study limits.                                                           |
 
 **Resolved implementation choices:** quick-move uses the exact inspected available quantity with current native revisions. There is one external collection; each side retains a finite page/window instead of accumulating every page. Equipment uses the installed world's projected actions and comparisons, without new universal slot or favorite rules. Bulk transfer, fixed-chest/workbench construction, new trade economics, multiwindow logistics and an item-art pipeline remain outside the required ordinary-play scope.
 
@@ -43,16 +43,16 @@ Activity presentation metadata belongs in the installed world definition and use
 
 ## Reuse the current ownership chain
 
-| Concern | Existing owner to extend | Proposed responsibility |
-| --- | --- | --- |
-| World selection, inspected subject, panel placement | Client world interaction and `main.tsx` composition | Open an inventory interaction for an exact selected object, rather than discarding that context. |
-| Collections, selected item, quantities, item controls | Client `inventory.tsx`, `inventory-controls.tsx`, inventory styles | Own two independently scoped collections and shared item interaction grammar. |
-| Reachable/visible storage discovery | Existing destination and storage-selection service | Retain bounded permitted discovery for explicit storage search and activity exceptions; remove it as the routine transfer step. |
-| Contents, item facts, comparison, visibility | Server inventory projections | Return only currently permitted direct contents and native fact meanings; keep continuation and stale/unavailable states. |
-| Object movement, stack identity, equipment, custody | Existing native item-handling/action owners | Validate and commit every transfer through one authority, retaining exact receipts and dependent updates. |
-| Reach and obstruction | Installed world handling policy and spatial queries | Establish eligibility and intelligible reasons; never duplicate the 1.6m bundled rule in the client. |
-| Learned and camp activities | Current capability descriptors, native review/admission and execution | Provide semantic roles and permitted contextual choices, then execute through the same native owner. |
-| Speech, history and previews | Current conversation, hearing and narration owners | Preserve permitted audience/history, draft identity, provisional reply lifecycle and dots-only pending presentation. |
+| Concern                                               | Existing owner to extend                                              | Proposed responsibility                                                                                                         |
+| ----------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| World selection, inspected subject, panel placement   | Client world interaction and `main.tsx` composition                   | Open an inventory interaction for an exact selected object, rather than discarding that context.                                |
+| Collections, selected item, quantities, item controls | Client `inventory.tsx`, `inventory-controls.tsx`, inventory styles    | Own two independently scoped collections and shared item interaction grammar.                                                   |
+| Reachable/visible storage discovery                   | Existing destination and storage-selection service                    | Retain bounded permitted discovery for explicit storage search and activity exceptions; remove it as the routine transfer step. |
+| Contents, item facts, comparison, visibility          | Server inventory projections                                          | Return only currently permitted direct contents and native fact meanings; keep continuation and stale/unavailable states.       |
+| Object movement, stack identity, equipment, custody   | Existing native item-handling/action owners                           | Validate and commit every transfer through one authority, retaining exact receipts and dependent updates.                       |
+| Reach and obstruction                                 | Installed world handling policy and spatial queries                   | Establish eligibility and intelligible reasons; never duplicate the 1.6m bundled rule in the client.                            |
+| Learned and camp activities                           | Current capability descriptors, native review/admission and execution | Provide semantic roles and permitted contextual choices, then execute through the same native owner.                            |
+| Speech, history and previews                          | Current conversation, hearing and narration owners                    | Preserve permitted audience/history, draft identity, provisional reply lifecycle and dots-only pending presentation.            |
 
 The audit distinguishes current file behavior from architectural inference. Final implementation should inspect only affected owners and callers, reuse current context and avoid unrelated subsystem rewrites.
 

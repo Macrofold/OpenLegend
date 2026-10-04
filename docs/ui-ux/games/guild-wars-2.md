@@ -16,7 +16,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ![Guild Wars 2 inventory showing shared slots, starter backpack, search, bag rail and capacity](../screenshots/gw2/01-inventory-guide.jpg)
 
-*Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 guide crop; asset path dates to 2020, exact build unspecified.*
+_Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 guide crop; asset path dates to 2020, exact build unspecified._
 
 **Observed regions and controls.** The title includes the `I` shortcut and capacity reads 3/20. Close and settings occupy the upper right. Search sits directly above the contents. A narrow left rail contains bag slots, while the main region distinguishes Shared Inventory Slots from Starter Backpack with named, collapsible headers. Item art sits in uniform cells. The source crops the lower window and does not show a transfer being performed.
 
@@ -30,7 +30,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ![Guild Wars 2 Trading Post home with buying, selling, transactions and category filters](../screenshots/gw2/02-trading-post.jpg)
 
-*Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 crop. Although its source filename says inventory, the inspected image is the Trading Post.*
+_Source: [ArenaNet new-player guide](https://www.guildwars2.com/en/new-player-guide/), © ArenaNet / NCSOFT. Original 480 × 287 crop. Although its source filename says inventory, the inspected image is the Trading Post._
 
 **Observed regions.** The header names Black Lion Trading Company and Trading Post, shows the `O` shortcut and close control. Currency and Get More Gold sit at the top. Home, Buy Items, Sell Items and My Transactions form the primary navigation. Search and item categories run down the left. Central shortcuts lead to selling possessions, buying armor or buying weapons; recent-item sections sit below. The screenshot shows no chosen item, price-entry form or purchase confirmation.
 
@@ -42,7 +42,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ![Guild Wars 2 wallet with named currency rows, amounts, currency filter and bag toggle](../screenshots/gw2/03-currency-wallet.png)
 
-*Source: [ArenaNet currency-wallet FAQ](https://help.guildwars2.com/hc/en-us/articles/230429967-FAQ-In-Game-Currency-Wallet), © ArenaNet / NCSOFT. Official support capture; exact date and build unspecified.*
+_Source: [ArenaNet currency-wallet FAQ](https://help.guildwars2.com/hc/en-us/articles/230429967-FAQ-In-Game-Currency-Wallet), © ArenaNet / NCSOFT. Official support capture; exact date and build unspecified._
 
 **Observed controls.** Inventory and its close button remain in the title bar. The bag-slot rail stays at left. An All Currencies filter sits over a scrollable list with currency names, amounts and recognizable symbols. Gems, coins, karma and several other named currencies appear as rows. A bag-shaped toggle and compact totals sit at the bottom, along with the resize grip. The locked bag slot is visible, but its unlock cost is not.
 
@@ -56,7 +56,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ![Guild Wars 2 weaponsmith discovery with eligible ingredients, four combination slots and discipline progress](../screenshots/gw2/04-crafting-discovery.jpg)
 
-*Source: [Weaponsmith guide by raphael, September 3, 2019](https://mmoauctions.com/news/guild-wars-2-weaponsmith-guide-make-your-own-swords-and-axes), game imagery © ArenaNet / NCSOFT. Third-party screenshot provenance only; the commercial site's services and economic advice are not recommendations.*
+_Source: [Weaponsmith guide by raphael, September 3, 2019](https://mmoauctions.com/news/guild-wars-2-weaponsmith-guide-make-your-own-swords-and-axes), game imagery © ArenaNet / NCSOFT. Third-party screenshot provenance only; the commercial site's services and economic advice are not recommendations._
 
 **Observed layout.** Weaponsmithing Station and Discovery establish the place and mode. Discipline progress is 426/500. The left contains a vertical mode rail and a grid of ingredient objects, many dimmed. Three selected ingredients occupy a four-cell combination area over forge artwork; one cell is empty. Close is at the upper right. The crop omits the lower action area. In particular, it does not show a clickable Craft button. The rail's two craft-related symbols and storage symbols are visible, but exact mode identity is not established by their shapes alone.
 
@@ -70,7 +70,7 @@ Guild Wars 2 is a useful comparison for persistent characters, many item types, 
 
 ![Guild Wars 2 Account Vault with carried bags at left and bank grids at right, each independently searchable and scrollable](../screenshots/gw2/05-bank-account-vault.png)
 
-*Source: [Embry / Projekt Dyad inventory guide](https://projektdyad.com/guides-list/guild-wars-2-inventory-management), game imagery © ArenaNet / NCSOFT. Original 896 × 658 capture; source says June 30 without a verified year. Capture build unspecified.*
+_Source: [Embry / Projekt Dyad inventory guide](https://projektdyad.com/guides-list/guild-wars-2-inventory-management), game imagery © ArenaNet / NCSOFT. Original 896 × 658 capture; source says June 30 without a verified year. Capture build unspecified._
 
 **Observed regions and controls.** Account Vault and the current Bank mode name the surface. Close is at the far upper right. The left column contains carried items grouped by named bags, with its own search and scrollbar. The larger right side contains bank cells, a separate search and scrollbar, and collapsible storage sections. Stack quantities overlay item art and border colors distinguish items. Empty cells remain visible. Currency is along the partly cropped bottom. The far-left rail changes vault sections. Neither repeated Search placeholder explicitly names its scope; the column placement is doing that work.
 
@@ -90,13 +90,13 @@ Briseadh's firsthand guide describes Enter focusing the composer, `/s` for local
 
 ## Decisions this evidence supports
 
-| Question | Recommendation for Open Legend | Boundary |
-| --- | --- | --- |
-| How does a chest open? | Select the world object and Open; show contents beside carried items. | Account-bank services have different world rules from individual chests. |
-| Should several carried bags require several windows? | Offer one coherent view with optional meaningful bag grouping. | Protected or inaccessible items must retain visible status. |
-| Should collection cleanup be one command? | Use a clearly named command for a predictable, limited operation. | Deposit All Materials is not precedent for sending arbitrary items to a silently selected nearby container. |
-| Should crafting ask for ingredients? | Ask when the choice is an experiment or meaningful substitution. | Known routine recipes already establish most requirements. |
-| How should the player address someone? | Carry the selected speaker into conversation and show the destination. | Map, party and local speech are different audiences; none should change invisibly. |
+| Question                                             | Recommendation for Open Legend                                         | Boundary                                                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| How does a chest open?                               | Select the world object and Open; show contents beside carried items.  | Account-bank services have different world rules from individual chests.                                    |
+| Should several carried bags require several windows? | Offer one coherent view with optional meaningful bag grouping.         | Protected or inaccessible items must retain visible status.                                                 |
+| Should collection cleanup be one command?            | Use a clearly named command for a predictable, limited operation.      | Deposit All Materials is not precedent for sending arbitrary items to a silently selected nearby container. |
+| Should crafting ask for ingredients?                 | Ask when the choice is an experiment or meaningful substitution.       | Known routine recipes already establish most requirements.                                                  |
+| How should the player address someone?               | Carry the selected speaker into conversation and show the destination. | Map, party and local speech are different audiences; none should change invisibly.                          |
 
 These are research recommendations. The linked Open Legend handbook chapters own accepted behavior and implementation status.
 

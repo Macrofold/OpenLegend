@@ -14,7 +14,7 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV gamepad HUD with world at center, chat lower left, cross hotbar below and objectives at right](../screenshots/ffxiv/01-hud-gamepad.jpg)
 
-*Source: [Square Enix UI Guide](https://na.finalfantasyxiv.com/uiguide/), © Square Enix. Full screenshot; client platform and build unspecified.*
+_Source: [Square Enix UI Guide](https://na.finalfantasyxiv.com/uiguide/), © Square Enix. Full screenshot; client platform and build unspecified._
 
 **Observed layout.** The character and counter occupy the center. The lower-left log contains a named speaker, several lines of dialogue, a `Say` audience label, an empty composer and General/Battle/Event tabs. The plus and gear sit after those tabs. The bottom-center cross hotbar shows LT/RT group cues, action icons, empty slots, a lock and a set-switch cue; health, magic and experience sit directly below. The right edge contains the minimap with zoom controls and coordinates, followed by named quest objectives and completion marks. Currency and a compact inventory-status array occupy the lower-right corner. The screenshot does not explain every inventory-array color or standalone top icon; those meanings must not be guessed from pixels.
 
@@ -28,7 +28,7 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV normal, expanded and open-all inventory layouts](../screenshots/ffxiv/02-inventory-layouts.jpg)
 
-*Source: [How can I view more inventory items at once?](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-bag/setting_itemsort.html), © Square Enix. Official comparison of three UI captures, counted as one image.*
+_Source: [How can I view more inventory items at once?](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-bag/setting_itemsort.html), © Square Enix. Official comparison of three UI captures, counted as one image._
 
 **Observed layout.** Each window has a title, close control, a grid of equal-size item slots, occupied/total capacity and currency. Normal presentation has numbered pages. Expanded presentation places more slots together. Open All uses a taller unified collection and leaves separate item/key-item/crystal navigation. The example inventories are empty, so it does not demonstrate recognition of real item art, selected-item feedback or transfers.
 
@@ -42,7 +42,7 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV chat audience menu attached to the chat composer](../screenshots/ffxiv/03-chat-audience.jpg)
 
-*Source: [Using Chat](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_how_to.html), © Square Enix. Publisher-cropped screenshot with its own callout.*
+_Source: [Using Chat](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_how_to.html), © Square Enix. Publisher-cropped screenshot with its own callout._
 
 **Observed controls.** A speech-bubble button immediately beside the composer opens Tell, Say, Party, Alliance, Yell, Shout and Free Company. A check marks Say. The transcript remains behind the menu. General/Battle/Event are below the composer; plus, settings and hide controls sit at the end. The different placement is meaningful: audience choice is beside text entry, while transcript views are below it.
 
@@ -56,21 +56,21 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV armoury item context menu with Equip, comparison, preview and Link](../screenshots/ffxiv/04-item-context-menu.jpg)
 
-*Source: [Can I share item information via chat?](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_iteminfo.html), © Square Enix. Publisher-cropped screenshot; lower menu content is cut off in the source.*
+_Source: [Can I share item information via chat?](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_iteminfo.html), © Square Enix. Publisher-cropped screenshot; lower menu content is cut off in the source._
 
 **Observed controls.** The Armoury Chest has equipment-category icons with counts at both edges and a Head category above the item grid. The selected object opens commands including Equip, Item Comparison, Try On, Repair, Extract Materia, Cast Glamour, Search for Item, Link and Set to Hotbar. Repair and Extract Materia are dimmer; the image does not reveal their precise blockers. The publisher highlights Link.
 
-| Visible command | Meaning supported by the referenced guides |
-| --- | --- |
-| Equip | Put this equipment on the character; the selected item supplies the subject. |
-| Item Comparison | Compare with currently equipped gear, including while shopping. [Official comparison guide](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-compare/equipment_compare.html). |
-| Try On | Preview the equipment's appearance; the item-link guide also exposes this for shared equipment. |
-| Repair | Restore equipment condition through the game's repair system. Requirements are described in the [crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), but this capture's disabled reason is unknown. |
+| Visible command | Meaning supported by the referenced guides                                                                                                                                                                                                                      |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Equip           | Put this equipment on the character; the selected item supplies the subject.                                                                                                                                                                                    |
+| Item Comparison | Compare with currently equipped gear, including while shopping. [Official comparison guide](https://na.finalfantasyxiv.com/uiguide/equipment/equipment-compare/equipment_compare.html).                                                                         |
+| Try On          | Preview the equipment's appearance; the item-link guide also exposes this for shared equipment.                                                                                                                                                                 |
+| Repair          | Restore equipment condition through the game's repair system. Requirements are described in the [crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), but this capture's disabled reason is unknown.                            |
 | Extract Materia | Obtain materia from spiritbound equipment, a game-specific system corroborated by the [official achievement database](https://na.finalfantasyxiv.com/lodestone/playguide/db/achievement/fa69fb9ba9a/). Exact eligibility and consequences were not tested here. |
-| Cast Glamour | Apply another equipment appearance. [Official glamour guide](https://na.finalfantasyxiv.com/uiguide/fashion/equipment-glamours/glamours_how.html). |
-| Search for Item | Locate holdings across storage. The [2018 developer article](https://na.finalfantasyxiv.com/blog/002406.html) documents separate results and storage-data freshness; this is historical behavior, not a current cache guarantee. |
-| Link | Put an inspectable reference into chat; it does not hand over the item. |
-| Set to Hotbar | Assign quick access through the hotbar system described in the game-screen manual. |
+| Cast Glamour    | Apply another equipment appearance. [Official glamour guide](https://na.finalfantasyxiv.com/uiguide/fashion/equipment-glamours/glamours_how.html).                                                                                                              |
+| Search for Item | Locate holdings across storage. The [2018 developer article](https://na.finalfantasyxiv.com/blog/002406.html) documents separate results and storage-data freshness; this is historical behavior, not a current cache guarantee.                                |
+| Link            | Put an inspectable reference into chat; it does not hand over the item.                                                                                                                                                                                         |
+| Set to Hotbar   | Assign quick access through the hotbar system described in the game-screen manual.                                                                                                                                                                              |
 
 **Verified flow.** Right-click the specific item → choose Link → a reference appears in the composer → add ordinary text → send. The recipient can inspect that reference, and equipment links can expose Try On. [Official item-link guide](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_iteminfo.html). No manual transcription of an item's name or attributes is required.
 
@@ -82,7 +82,7 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV crafting log showing recipe list, selected Book of Silver, ingredients and Synthesize](../screenshots/ffxiv/05-crafting-log.jpg)
 
-*Source: [Official Alchemist crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), © Square Enix. Original 400 × 290 guide crop, retained without invented detail.*
+_Source: [Official Alchemist crafting guide](https://na.finalfantasyxiv.com/crafting_gathering_guide/alchemist/), © Square Enix. Original 400 × 290 guide crop, retained without invented detail._
 
 **Observed regions.** Discipline icons run across the top. Search, favourites and recipe-level navigation occupy the left. The middle shows learned recipes with a selected Book of Silver and page navigation. The right names the result, then shows difficulty, durability, quality, crystals and ingredient rows with quality/count columns. Quick Synthesis and Synthesize sit at the bottom. A small leftmost footer icon is too indistinct here to identify confidently. The tiny original is evidence for overall arrangement, not for fine typography.
 
@@ -96,7 +96,7 @@ FFXIV is useful for persistent social chat, equipment context and a large catalo
 
 ![FFXIV custom fourth log tab alongside General, Battle and Event](../screenshots/ffxiv/06-custom-log-tab.jpg)
 
-*Source: [Creating Your Own Custom Chat Log Tabs](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_owntab.html), © Square Enix. Cropped UI capture.*
+_Source: [Creating Your Own Custom Chat Log Tabs](https://na.finalfantasyxiv.com/uiguide/communication/communication-chat/chat_owntab.html), © Square Enix. Cropped UI capture._
 
 **Observed controls.** Say and the composer remain above General, Battle, Event and Log #4. The plus is dimmed in this four-tab example; the guide, not its color, establishes the available tab model. Settings, an additional small symbol and a hide control follow. The extra symbol is not identified in this guide and should not be assigned a function by resemblance.
 
