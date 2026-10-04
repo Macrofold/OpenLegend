@@ -61,18 +61,22 @@ jobs:
               inputs.add(old_name)
               before = source.read_bytes() if source.exists() else None
               actual = hashlib.sha256(before).hexdigest() if before is not None else None
-              assert actual == item['before_sha256'], ('changed base', old_name)
+              if 'before_git_sha' in item:
+                  assert item.get('reference_only') and before is not None, name
+                  actual_git = hashlib.sha1(f'blob {len(before)}\0'.encode() + before).hexdigest()
+                  assert actual_git == item['before_git_sha'], ('changed base', old_name)
+              else:
+                  assert actual == item['before_sha256'], ('changed base', old_name)
               if old_name != name:
                   assert before is not None and not path.exists(), ('invalid destination', name)
               original = before.decode('utf-8') if before is not None else ''
               text, end = original, 0
-              for start, stop, replacement in item['edits']:
+              for start, stop, replacement in item.get('edits', []):
                   assert type(start) is int and type(stop) is int and 0 <= end <= start <= stop <= len(original), ('invalid offsets', name)
                   assert isinstance(replacement, str)
                   end = stop
-              for start, stop, replacement in reversed(item['edits']):
+              for start, stop, replacement in reversed(item.get('edits', [])):
                   text = text[:start] + replacement + text[stop:]
-              assert hashlib.sha256(text.encode()).hexdigest() == item['after_sha256'], ('unexpected patch', name)
               if item.get('reference_only'):
                   assert before is not None and old_name == name, ('invalid reference-only file', name)
                   expected = original
@@ -82,10 +86,16 @@ jobs:
                       substitutions[posixpath.relpath(old, posixpath.dirname(name))] = posixpath.relpath(new, posixpath.dirname(name))
                   for old in sorted(substitutions, key=len, reverse=True):
                       expected = expected.replace(old, substitutions[old])
-                  assert text == expected, ('non-reference edit', name)
+                  if 'edits' not in item:
+                      text = expected
+                  assert text == expected and text != original, ('non-reference or empty edit', name)
               else:
                   assert path.suffix == '.md' and not name.startswith('archive/'), ('non-documentation edit', name)
                   formatting.append(name)
+              if 'after_sha256' in item:
+                  assert hashlib.sha256(text.encode()).hexdigest() == item['after_sha256'], ('unexpected patch', name)
+              else:
+                  assert item.get('reference_only') and 'before_git_sha' in item, name
               planned.append((source, path, text, item))
           assert not (set(moves) & outputs), 'overlapping moves'
           subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
