@@ -162,19 +162,24 @@ export function ActivityObjectField({
       if (alive.current) setActing(false);
     }
   }
+  if (readOnly)
+    return (
+      <p className="ol-task-bound-target">
+        {field.label}: <strong>{selected?.label ?? 'Selected object'}</strong>
+        {selected?.location && <> · {selected.location}</>}
+        {value && !page && <> · Rechecking…</>}
+        {value && page && !selected && <> · {page.message ?? 'No longer available.'}</>}
+      </p>
+    );
   return (
     <div className="ol-camp-object">
       <span>{field.label}</span>
       <div ref={trigger}>
-        {readOnly ? (
-          <strong>{selected?.label ?? 'Selected object'}</strong>
-        ) : (
-          <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
-            {selected
-              ? `Change ${field.label.toLowerCase()}: ${selected.label}`
-              : `Choose ${field.label.toLowerCase()}…`}
-          </Button>
-        )}
+        <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
+          {selected
+            ? `Change ${field.label.toLowerCase()}: ${selected.label}`
+            : `Choose ${field.label.toLowerCase()}…`}
+        </Button>
       </div>
       {value && !page && (
         <p role="status" className="ol-caption">
@@ -191,22 +196,28 @@ export function ActivityObjectField({
         <>
           <p className="ol-caption">{selected.location}</p>
           {selected.reason && <p className="ol-caption">{selected.reason}</p>}
-          <div className="ol-actions">
-            {selected.needsApproach && (
-              <Button
-                size="sm"
-                disabled={busy || acting || !connected}
-                onPress={() => void act(true)}
-              >
-                {working ? 'Replace current action and approach' : 'Approach'}
-              </Button>
-            )}
-            {selected.canInspect && (
-              <Button size="sm" disabled={busy || acting || !connected} onPress={() => void act()}>
-                Inspect contents
-              </Button>
-            )}
-          </div>
+          {(selected.needsApproach || selected.canInspect) && (
+            <div className="ol-actions">
+              {selected.needsApproach && (
+                <Button
+                  size="sm"
+                  disabled={busy || acting || !connected}
+                  onPress={() => void act(true)}
+                >
+                  {working ? 'Replace current action and approach' : 'Approach'}
+                </Button>
+              )}
+              {selected.canInspect && (
+                <Button
+                  size="sm"
+                  disabled={busy || acting || !connected}
+                  onPress={() => void act()}
+                >
+                  Inspect contents
+                </Button>
+              )}
+            </div>
+          )}
           {selected.needsApproach && (
             <p className="ol-caption">
               Ordinary movement replaces current physical work and keeps completed effects. Arrival

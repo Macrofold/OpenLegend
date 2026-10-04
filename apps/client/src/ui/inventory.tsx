@@ -96,16 +96,19 @@ function transferSource(
   };
 }
 
-/** Character authority remounts private reads. Unresolved command identities have a separate,
- * stable authorized-session lifetime so a reconnect cannot silently repeat a move. */
+/** Private ownership owns editable work; connection/control scope owns permitted reads.
+ * Regaining control refreshes the pages without discarding an unsubmitted amount. */
 export function Inventory(props: InventoryProps) {
-  const scope = JSON.stringify([
+  const access = props.view.access;
+  if (!access?.scope || !access.privateDraftScope)
+    return <p role="status">Refresh character access before opening belongings.</p>;
+  const privateOwner = JSON.stringify([
     props.view.worldId,
     props.view.player.id,
-    props.view.access?.scope,
+    access.privateDraftScope,
     props.view.saveTimeline,
   ]);
-  return <InventoryWorkspace key={scope} {...props} scope={scope} />;
+  return <InventoryWorkspace key={privateOwner} {...props} scope={access.scope} />;
 }
 
 function InventoryWorkspace({
@@ -121,6 +124,7 @@ function InventoryWorkspace({
   const workspace = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
   const [selection, setSelection] = useState<Selection>();
+  const [detailOpen, setDetailOpen] = useState(false);
   const [amountDraft, setAmountDraft] = useState<AmountDraft>();
   const [quantityError, setQuantityError] = useState('');
   const [rightName, setRightName] = useState(openContainer?.name ?? 'Container');
@@ -306,6 +310,7 @@ function InventoryWorkspace({
     );
   }
   function closeDetail(restoreFocus = true) {
+    setDetailOpen(false);
     setSelection(undefined);
     setAmountDraft(undefined);
     setQuantityError('');
@@ -340,6 +345,7 @@ function InventoryWorkspace({
   }, []);
   useEffect(() => {
     if (!visible || !connected) stopDrag();
+    else if (selection && amountDraft) setDetailOpen(true);
   }, [visible, connected]);
 
   function navigate(side: InventorySide, id: string) {
@@ -361,9 +367,13 @@ function InventoryWorkspace({
   ) {
     if (ignoreClick.current || busy) return;
     anchor.current = button;
+    setDetailOpen(true);
+    const retained = selection?.side === side && selection.itemId === selected.id;
     setSelection({ side, itemId: selected.id, actions });
-    setAmountDraft(undefined);
-    setQuantityError('');
+    if (!retained) {
+      setAmountDraft(undefined);
+      setQuantityError('');
+    }
   }
   function moveIntention(
     side: InventorySide,
@@ -600,6 +610,9 @@ function InventoryWorkspace({
                 title={side === 'belongings' ? 'My belongings' : rightName}
                 state={state}
                 selectedId={selection?.side === side ? selection.itemId : undefined}
+                onSelectedAnchor={(button) => {
+                  if (button) anchor.current = button;
+                }}
                 busy={busy}
                 canMove={
                   canAct && !!state.page && !!other.page && state.location.id !== other.location.id
@@ -634,9 +647,9 @@ function InventoryWorkspace({
       </div>
       <Popover
         triggerRef={anchor}
-        isOpen={!!selection && visible && connected}
+        isOpen={detailOpen && !!selection && !!item && visible && connected}
         onOpenChange={(open) => {
-          if (!open) closeDetail();
+          setDetailOpen(open);
         }}
         isNonModal
         className="ol-root ol-inventory-popover"

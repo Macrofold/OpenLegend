@@ -115,3 +115,42 @@
   margin-block-start: var(--space-1);
   overflow-wrap: anywhere;
 }
+.ol-camp-activities p {
+  margin-block: 0;
+}
+.ol-task-overview {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-task-overview-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+.ol-task-overview-row p {
+  flex: 1 1 15rem;
+}
+.ol-task-overview-row .ol-btn {
+  flex: 0 1 auto;
+}
+.ol-task-editor {
+  border: 1px solid var(--line);
+  border-radius: var(--control-radius);
+  padding: var(--space-2);
+}
+.ol-task-editor legend {
+  padding-inline: var(--space-1);
+  font-weight: 600;
+}
+.ol-task-context,
+.ol-task-summary {
+  padding-block: var(--space-2);
+}
+.ol-task-status {
+  display: grid;
+  gap: var(--space-1);
+}
+.ol-task-about {
+  color: var(--ink-muted);
+}

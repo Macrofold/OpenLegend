@@ -1,7 +1,7 @@
 # Inventory and everyday play: interaction redesign
 
-| Status      | Current progress                                                                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Runtime interactions are present; final inventory/activity UI corrections and full native gameplay qualification remain open. | 2026-10-04   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
@@ -44,16 +44,16 @@ Grid cells organize the display. They do not introduce physical slot capacity, T
 
 The implemented desktop controls follow this grammar; their complete input and layout qualification remains part of J09:
 
-| Player action                                           | Result                                                                                                    |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Click an item                                           | Select and inspect it; keep its location visible.                                                         |
-| Drag to the other open collection                       | Move the chosen item or stack through native handling admission.                                          |
-| Shift-click or Shift+Enter on an item                    | Quick-move its exact inspected available quantity to the other open collection.                          |
-| Choose **Move to Camp chest** or **Take into backpack** | Accessible non-drag equivalent with the destination already named.                                        |
-| Right-click an item / invoke its keyboard context menu  | Short list of relevant actions on this item.                                                              |
-| Choose **Split stack…**                                 | Open a small quantity control beside the item; retain both collections and the target.                    |
-| Open a carried bag                                      | Navigate that side into the bag, retaining a breadcrumb and the opposite side.                            |
-| Escape                                                  | Cancel the active drag or close the top child layer, then the workspace on a subsequent press.            |
+| Player action                                           | Result                                                                                         |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Click an item                                           | Select and inspect it; keep its location visible.                                              |
+| Drag to the other open collection                       | Move the chosen item or stack through native handling admission.                               |
+| Shift-click or Shift+Enter on an item                   | Quick-move its exact inspected available quantity to the other open collection.                |
+| Choose **Move to Camp chest** or **Take into backpack** | Accessible non-drag equivalent with the destination already named.                             |
+| Right-click an item / invoke its keyboard context menu  | Short list of relevant actions on this item.                                                   |
+| Choose **Split stack…**                                 | Open a small quantity control beside the item; retain both collections and the target.         |
+| Open a carried bag                                      | Navigate that side into the bag, retaining a breadcrumb and the opposite side.                 |
+| Escape                                                  | Cancel the active drag or close the top child layer, then the workspace on a subsequent press. |
 
 Quick-move, drag and the explicit Move action share native handling and keep the destination named. Show the quick-move binding in help and the relevant item action; no hidden modifier is the only route. A second click must not accidentally repeat a consequential action. Clicking outside an ordinary item drop zone cancels the drag; dropping into the world requires the explicit supported Drop route, not an accidental release over scenery. Existing application shortcuts and input ownership remain controlling.
 
@@ -118,7 +118,7 @@ These remain required completion gates for the implemented interactions. The ful
 | --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | J01 | Reachable, permitted chest in view               | Open from object; see chest and belongings together; transfer one item each way without choosing a destination again.                                                 | Full chest leaves custody unchanged and explains capacity.                                                            |
 | J02 | Visible chest beyond handling reach              | Inspect without movement; deliberately Walk to and open; contents appear only after valid arrival.                                                                    | No route, cancellation, moving target, obstruction and revoked access stop opening.                                   |
-| J03 | Carried stack and open chest                     | Quick-move the exact inspected available quantity; split a specific amount without losing either side.                                                              | Blank amount and stale quantity never become zero or a different stack.                                               |
+| J03 | Carried stack and open chest                     | Quick-move the exact inspected available quantity; split a specific amount without losing either side.                                                                | Blank amount and stale quantity never become zero or a different stack.                                               |
 | J04 | Two same-named items, one damaged or equipped    | Distinguish by visible identity/state; compare and equip intentionally.                                                                                               | Missing comparison fact is unknown; equipped item is conspicuous.                                                     |
 | J05 | Nested carried bags and an external chest        | Open bag on one side, move to chest, navigate back with stable focus.                                                                                                 | Self-containment and moving a parent into a descendant are refused.                                                   |
 | J06 | Two players handling the same contents           | Each sees actual authoritative changes; a competing move produces an exact outcome.                                                                                   | A timeout or double activation cannot duplicate, lose or retransfer an item.                                          |

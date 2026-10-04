@@ -58,7 +58,7 @@ The native command and receipt owners remain the single mutation path. Creator o
 
 ## Actual component interaction and visual checks
 
-These scenarios loaded the production React components, shared controls and API helpers in an actual browser. The scope column is essential: controlled HTTP-shaped responses or a native-domain-backed fixture do not provide live session authority, durable database commits, real SSE delivery or autonomous character behavior.
+These scenarios loaded the production React components, shared controls and API helpers in an actual browser. The stated fixture scope is essential: controlled HTTP-shaped responses or a native-domain-backed fixture do not provide live session authority, durable database commits, real SSE delivery or autonomous character behavior.
 
 ### Opening an object
 

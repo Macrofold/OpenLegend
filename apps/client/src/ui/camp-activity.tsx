@@ -233,6 +233,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const pendingKey = `open-legend:activity-command:${recoveryScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
   const [draft, setDraft] = useState(() => readDraft(draftKey));
   const [mode, setMode] = useState<WorkMode>('enqueue');
+  const [editing, setEditing] = useState<'supply' | 'amount' | 'stop' | null>(null);
   const [choices, setChoices] = useState<ActivityRequestsView>();
   const [status, setStatus] = useState<{ value: StatusView; revision: number }>();
   const [refresh, setRefresh] = useState(0);
@@ -573,6 +574,40 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     );
   }
   const disabled = unavailable || !!operation || !!unresolved || recovering;
+  function edit(kind: NonNullable<typeof editing>) {
+    setEditing(kind);
+    requestAnimationFrame(() => {
+      const editor = document.getElementById(`${fieldId}-editor-${kind}`);
+      const duration =
+        kind === 'stop'
+          ? editor?.querySelector<HTMLElement>('input:not([role="combobox"])')
+          : undefined;
+      (duration ?? editor?.querySelector<HTMLElement>('input,button'))?.focus();
+    });
+  }
+  function closeEditor() {
+    const previous = editing;
+    setEditing(null);
+    requestAnimationFrame(() => document.getElementById(`${fieldId}-change-${previous}`)?.focus());
+  }
+  function choiceLabel(key: string) {
+    return selectedPage(key)?.selected?.label ?? 'Choose';
+  }
+  function editButton(kind: NonNullable<typeof editing>, label: string) {
+    return (
+      <Button
+        id={`${fieldId}-change-${kind}`}
+        size="sm"
+        variant="quiet"
+        disabled={disabled}
+        aria-expanded={editing === kind}
+        aria-controls={`${fieldId}-editor-${kind}`}
+        onPress={() => edit(kind)}
+      >
+        {label}
+      </Button>
+    );
+  }
   function objectChoice(key: string, readOnly = false) {
     const field = descriptor?.fields[key];
     if (!field?.discovery || !choices) return null;
@@ -629,56 +664,68 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   return (
     <div
       className="ol-camp-activities"
-      onKeyDown={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        // Portaled pickers close their own layer before the task editor handles Escape.
+        if (!event.currentTarget.contains(event.target as Node)) return;
+        if (event.defaultPrevented) return;
+        if (event.key === 'Escape' && !event.nativeEvent.isComposing) {
+          if (!editing) return;
+          event.preventDefault();
+          closeEditor();
+        }
+        event.stopPropagation();
+      }}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <Section title="Current work">
-        {activity ? (
-          <div className="ol-task-status" aria-live="polite">
-            <p>
-              <Tag>{activity.status}</Tag> <strong>{activity.name}</strong>
-            </p>
-            {activity.reason && <p>{activity.reason}</p>}
-            {activity.spent !== undefined && (
+      {(!entry || activity || working) && (
+        <Section title="Current work">
+          {activity ? (
+            <div className="ol-task-status" aria-live="polite">
               <p>
-                Used {activity.spent}
-                {activity.maximumSpent !== undefined
-                  ? ` of at most ${activity.maximumSpent}`
-                  : ''}{' '}
-                {activity.spendingUnit ?? 'selected units'}.
+                <Tag>{activity.status}</Tag> <strong>{activity.name}</strong>
               </p>
-            )}
-            {activity.deadline !== undefined && (
-              <p>
-                Stops at <EventTime time={activity.deadline} />.
-              </p>
-            )}
-            {activity.interrupted && (
-              <p>This work was interrupted; attendance was not continuous.</p>
-            )}
-          </div>
-        ) : (
-          <p>{view.player.action?.label ?? 'No current task.'}</p>
-        )}
-        {stoppable && (
-          <Button
-            disabled={disabled}
-            onPress={() =>
-              void perform(
-                {
-                  id: 'stop-current-task',
-                  label: 'Stop current task',
-                  command: { type: 'cancel' },
-                  enabled: true,
-                },
-                'stop',
-              )
-            }
-          >
-            Stop current task
-          </Button>
-        )}
-      </Section>
+              {activity.reason && <p>{activity.reason}</p>}
+              {activity.spent !== undefined && (
+                <p>
+                  Used {activity.spent}
+                  {activity.maximumSpent !== undefined
+                    ? ` of at most ${activity.maximumSpent}`
+                    : ''}{' '}
+                  {activity.spendingUnit ?? 'selected units'}.
+                </p>
+              )}
+              {activity.deadline !== undefined && (
+                <p>
+                  Stops at <EventTime time={activity.deadline} />.
+                </p>
+              )}
+              {activity.interrupted && (
+                <p>This work was interrupted; attendance was not continuous.</p>
+              )}
+            </div>
+          ) : (
+            <p>{view.player.action?.label ?? 'No current task.'}</p>
+          )}
+          {stoppable && (
+            <Button
+              disabled={disabled}
+              onPress={() =>
+                void perform(
+                  {
+                    id: 'stop-current-task',
+                    label: 'Stop current task',
+                    command: { type: 'cancel' },
+                    enabled: true,
+                  },
+                  'stop',
+                )
+              }
+            >
+              Stop current task
+            </Button>
+          )}
+        </Section>
+      )}
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
       {unavailable ? (
@@ -698,67 +745,168 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       ) : (
         <Section title={descriptor.label}>
           <div className="ol-task-context">{objectChoice(presentation.target, true)}</div>
-          <p>{descriptor.description}</p>
-          <fieldset className="ol-task-choices" disabled={disabled}>
-            {presentation.kind === 'resource-care' ? (
-              <>
-                {objectChoice(presentation.supply)}
-                {objectChoice(presentation.material)}
-                <div className="ol-task-limits">
-                  {amountChoice(presentation.budget)}
-                  {amountChoice(presentation.reserve)}
-                </div>
-                <SelectField
-                  label={descriptor.fields[presentation.stop]!.label}
-                  placement="bottom start"
-                  value={values[`${presentation.stop}:when`] ?? 'duration'}
-                  options={[
-                    { id: 'duration', label: 'After a duration' },
-                    ...(choices.timeOptions?.namedDeadlines ?? [])
-                      .filter((time) => view.clock.namedTimes.includes(time.name))
-                      .map((time) => ({
-                        id: time.name,
-                        label: `Next ${time.name}`,
-                        description: `Day ${clockParts(time.at, view.clock.offsetHours).day} · ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
-                      })),
-                  ]}
-                  onChange={(when) => {
-                    if (!disabled) change(`${presentation.stop}:when`, when);
-                  }}
-                />
-                {values[`${presentation.stop}:when`] === 'duration' && (
-                  <label className="ol-task-amount">
-                    <span>Duration (game minutes)</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={values[`${presentation.stop}:duration`] ?? ''}
-                      disabled={disabled}
-                      aria-describedby={`${fieldId}-duration`}
-                      onChange={(event) =>
-                        change(`${presentation.stop}:duration`, event.target.value)
-                      }
-                    />
-                    <span className="ol-caption" id={`${fieldId}-duration`}>
-                      Choose {(descriptor.fields[presentation.stop]!.minimumDuration ?? 0) / 60}–
-                      {(descriptor.fields[presentation.stop]!.maximumDuration ?? 0) / 60} game
-                      minutes.
-                    </span>
-                  </label>
+          <div className="ol-task-overview">
+            <div className="ol-task-overview-row">
+              <p>
+                {
+                  descriptor.fields[
+                    presentation.kind === 'resource-care'
+                      ? presentation.supply
+                      : presentation.source
+                  ]!.label
+                }
+                :{' '}
+                <strong>
+                  {choiceLabel(
+                    presentation.kind === 'resource-care'
+                      ? presentation.supply
+                      : presentation.source,
+                  )}
+                </strong>
+                . {descriptor.fields[presentation.material]!.label}:{' '}
+                <strong>{choiceLabel(presentation.material)}</strong>.
+                {presentation.kind === 'gather-store-use' && (
+                  <>
+                    {' '}
+                    {descriptor.fields[presentation.destination]!.label}:{' '}
+                    <strong>{choiceLabel(presentation.destination)}</strong>.
+                  </>
                 )}
-              </>
-            ) : (
-              <>
-                {objectChoice(presentation.source)}
-                {objectChoice(presentation.destination)}
-                {objectChoice(presentation.material)}
-                <div className="ol-task-limits">
-                  {amountChoice(presentation.quantity)}
-                  {amountChoice(presentation.reserve)}
-                </div>
-              </>
+              </p>
+              {editButton('supply', 'Change supply')}
+            </div>
+            <div className="ol-task-overview-row">
+              <p>
+                {
+                  descriptor.fields[
+                    presentation.kind === 'resource-care'
+                      ? presentation.budget
+                      : presentation.quantity
+                  ]!.label
+                }
+                :{' '}
+                <strong>
+                  {values[
+                    presentation.kind === 'resource-care'
+                      ? presentation.budget
+                      : presentation.quantity
+                  ] || 'Choose'}
+                </strong>
+                . {descriptor.fields[presentation.reserve]!.label}:{' '}
+                <strong>{values[presentation.reserve] || 'Choose'}</strong>.
+              </p>
+              {editButton('amount', 'Change amount')}
+            </div>
+            {presentation.kind === 'resource-care' && (
+              <div className="ol-task-overview-row">
+                <p>
+                  {descriptor.fields[presentation.stop]!.label}:{' '}
+                  <strong>
+                    {values[`${presentation.stop}:when`] === 'duration'
+                      ? values[`${presentation.stop}:duration`]?.trim()
+                        ? `After ${values[`${presentation.stop}:duration`]} game minutes`
+                        : 'Choose a stopping time'
+                      : `Next ${values[`${presentation.stop}:when`]}`}
+                  </strong>
+                  .
+                  {currentReview && (
+                    <>
+                      {' '}
+                      <EventTime
+                        time={Number(currentReview.input.activityArguments?.[presentation.stop])}
+                      />
+                      .
+                    </>
+                  )}
+                </p>
+                {editButton('stop', 'Change stopping time')}
+              </div>
             )}
+          </div>
+          <fieldset
+            id={`${fieldId}-editor-supply`}
+            className="ol-task-choices ol-task-editor"
+            disabled={disabled}
+            hidden={editing !== 'supply'}
+          >
+            <legend>Choose supplies</legend>
+            {objectChoice(
+              presentation.kind === 'resource-care' ? presentation.supply : presentation.source,
+            )}
+            {presentation.kind === 'gather-store-use' && objectChoice(presentation.destination)}
+            {objectChoice(presentation.material)}
+            <Button size="sm" variant="quiet" onPress={closeEditor}>
+              Done
+            </Button>
           </fieldset>
+          <fieldset
+            id={`${fieldId}-editor-amount`}
+            className="ol-task-choices ol-task-editor"
+            disabled={disabled}
+            hidden={editing !== 'amount'}
+          >
+            <legend>Choose amounts</legend>
+            <div className="ol-task-limits">
+              {amountChoice(
+                presentation.kind === 'resource-care' ? presentation.budget : presentation.quantity,
+              )}
+              {amountChoice(presentation.reserve)}
+            </div>
+            <Button size="sm" variant="quiet" onPress={closeEditor}>
+              Done
+            </Button>
+          </fieldset>
+          {presentation.kind === 'resource-care' && (
+            <fieldset
+              id={`${fieldId}-editor-stop`}
+              className="ol-task-choices ol-task-editor"
+              disabled={disabled}
+              hidden={editing !== 'stop'}
+            >
+              <legend>Choose stopping time</legend>
+              <SelectField
+                label={descriptor.fields[presentation.stop]!.label}
+                placement="bottom start"
+                value={values[`${presentation.stop}:when`] ?? 'duration'}
+                options={[
+                  { id: 'duration', label: 'After a duration' },
+                  ...(choices.timeOptions?.namedDeadlines ?? [])
+                    .filter((time) => view.clock.namedTimes.includes(time.name))
+                    .map((time) => ({
+                      id: time.name,
+                      label: `Next ${time.name}`,
+                      description: `Day ${clockParts(time.at, view.clock.offsetHours).day} · ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
+                    })),
+                ]}
+                onChange={(when) => {
+                  if (!disabled) change(`${presentation.stop}:when`, when);
+                }}
+              />
+              {values[`${presentation.stop}:when`] === 'duration' && (
+                <label className="ol-task-amount">
+                  <span>Duration (game minutes)</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={values[`${presentation.stop}:duration`] ?? ''}
+                    disabled={disabled}
+                    aria-describedby={`${fieldId}-duration`}
+                    onChange={(event) =>
+                      change(`${presentation.stop}:duration`, event.target.value)
+                    }
+                  />
+                  <span className="ol-caption" id={`${fieldId}-duration`}>
+                    Choose {(descriptor.fields[presentation.stop]!.minimumDuration ?? 0) / 60}–
+                    {(descriptor.fields[presentation.stop]!.maximumDuration ?? 0) / 60} game
+                    minutes.
+                  </span>
+                </label>
+              )}
+              <Button size="sm" variant="quiet" onPress={closeEditor}>
+                Done
+              </Button>
+            </fieldset>
+          )}
           {working && (
             <div className="ol-task-replacement">
               <p>Preparing this task leaves current work unchanged.</p>
@@ -801,20 +949,17 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           )}
           <div className="ol-task-summary" aria-live="polite">
             {currentReview ? (
-              <>
-                {presentation.kind === 'resource-care' && (
-                  <p>
-                    Stopping time:{' '}
-                    <EventTime
-                      time={Number(currentReview.input.activityArguments?.[presentation.stop])}
-                    />
-                    . Waiting does not extend it.
-                  </p>
-                )}
-                <p role={currentReview.result.ok ? 'status' : 'alert'}>
-                  {currentReview.result.message}
-                </p>
-              </>
+              currentReview.result.ok ? (
+                <details>
+                  <summary>Supplies and conditions checked</summary>
+                  <p>{currentReview.result.message}</p>
+                  {presentation.kind === 'resource-care' && (
+                    <p>Waiting does not extend the checked stopping time.</p>
+                  )}
+                </details>
+              ) : (
+                <p role="alert">{currentReview.result.message}</p>
+              )
             ) : ready ? (
               <p>Checking current supplies and conditions…</p>
             ) : (
@@ -850,10 +995,14 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               Refresh conditions
             </Button>
           </div>
-          <p className="ol-caption">
-            Starting rechecks current conditions. Later work can stop if supplies, access or the
-            target change.
-          </p>
+          <details className="ol-task-about">
+            <summary>About this task</summary>
+            <p>{descriptor.description}</p>
+            <p>
+              Starting rechecks current conditions. Later work can stop if supplies, access or the
+              target change.
+            </p>
+          </details>
         </Section>
       )}
       {unresolved && (

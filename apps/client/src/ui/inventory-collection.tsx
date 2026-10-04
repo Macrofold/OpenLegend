@@ -12,6 +12,7 @@ export function InventoryCollection({
   title,
   state,
   selectedId,
+  onSelectedAnchor,
   busy,
   canMove,
   dropActive,
@@ -26,6 +27,7 @@ export function InventoryCollection({
   title: string;
   state: InventoryCollectionState;
   selectedId?: string;
+  onSelectedAnchor(button: HTMLButtonElement | null): void;
   busy: boolean;
   canMove: boolean;
   dropActive: boolean;
@@ -117,6 +119,7 @@ export function InventoryCollection({
             <li key={item.id}>
               <button
                 type="button"
+                ref={selectedId === item.id ? onSelectedAnchor : undefined}
                 className="ol-inventory-cell"
                 data-item-id={item.id}
                 data-selected={selectedId === item.id || undefined}

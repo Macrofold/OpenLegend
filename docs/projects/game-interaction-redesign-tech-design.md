@@ -1,7 +1,7 @@
 # Inventory and everyday play: technical design
 
-| Status      | Current progress                                                                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Runtime interactions are present; final inventory/activity UI corrections and full native gameplay qualification remain open. | 2026-10-04   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
