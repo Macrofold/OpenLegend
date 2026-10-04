@@ -1,8 +1,8 @@
 # Production deployment — technical design
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The hosting design is researched, but cloud packaging, deployment, Auth0 and production recovery remain unqualified. | 2026-10-04   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The hosting design is researched, but cloud packaging, deployment, hosted Auth0 and production recovery remain unqualified. | 2026-10-04   |
 
 **Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
@@ -18,7 +18,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[Current runtime](../architecture.md), [DF03](../maintainers/production-data.md), root README and package manifests:** PostgreSQL-only; one database and data directory per world today. Do not copy older SQLite or shared multi-world database claims. No hosting fleet is demonstrated.
 
-**[MP01/MP04](../maintainers/multiplayer.md) and [authentication.ts](../../apps/server/src/authentication.ts):** Keep server-side OIDC, scoped grants, control generations and private projections. Recorded real-provider evidence used Keycloak, not Auth0. The delivered [entry and maintenance project](completed/multiplayer-entry-maintenance.md) already supplies characterless roles, one-use invitations and scheduled maintenance. [IDP01–IDP03](../maintainers/multiplayer.md#identity-provider--auth0) now explicitly own Auth0 setup, real-provider qualification and logout; the initial search limitation is not evidence that these plans are missing.
+**[MP01/MP04](../maintainers/multiplayer.md) and [authentication.ts](../../apps/server/src/authentication.ts):** Keep server-side OIDC, scoped grants, control generations and private projections. The original entry/maintenance evidence used Keycloak. [October 3 local completion](auth0-sign-in.md#authorized-local-integration-continuation--october-3-2026) subsequently demonstrated real Auth0 sign-in/control and scoped local AI operation; it does not qualify the remaining two-account invitation/access-removal matrix or hosted deployment. The delivered [entry and maintenance project](completed/multiplayer-entry-maintenance.md) already supplies characterless roles, one-use invitations and scheduled maintenance. [IDP01–IDP03](../maintainers/multiplayer.md#identity-provider--auth0) own the remaining local two-account checks, hosted Auth0 configuration and provider logout; the initial search limitation is not evidence that these plans are missing.
 
 **[Production delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md):** Preserve D5/D6, the selected shared-world workloads, transaction semantics and regional transfer design. Its historical SQLite introduction is superseded by DF03.
 
