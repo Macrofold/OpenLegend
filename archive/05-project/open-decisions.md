@@ -163,7 +163,7 @@ World-policy owners choose fictional risk and world rules; the product owner res
 
 ## D68 — World entry beyond invites
 
-Mike authorized [invite enrollment and characterless sessions](../../docs/projects/multiplayer-entry-maintenance.md) on September 28, 2026 and explicitly excluded open public sign-up. Current behavior: every world grant comes from startup bindings or an operator-issued, expiring, single-use invite ([MP05](../../docs/limits/multiplayer.md#mp05), [MP15](../../docs/limits/multiplayer.md#mp15)). Residual owner choices:
+Mike authorized [invite enrollment and characterless sessions](../../docs/projects/completed/multiplayer-entry-maintenance.md) on September 28, 2026 and explicitly excluded open public sign-up. Current behavior: every world grant comes from startup bindings or an operator-issued, expiring, single-use invite ([MP05](../../docs/limits/multiplayer.md#mp05), [MP15](../../docs/limits/multiplayer.md#mp15)). Residual owner choices:
 
 - Whether any world offers open sign-up, and if so its default grant (spectator or player), abuse and rate controls, and whether it needs hosted-security review (D05).
 - Whether a player invite may create a new character from authored base-world starting content instead of binding an existing unowned person.
