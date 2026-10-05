@@ -262,5 +262,5 @@ The proposal should be postponed if the ordinary game cannot yet deliver the out
 - Implementation and unfulfilled operation gates: [Well-being evidence tasks](../maintainers/wellbeing-evidence.md), WBE01–WBE06.
 - Limits and constraints: [Well-being evidence inventory](../limits/wellbeing-evidence.md), WE01–WE10.
 - Current shared owners: [Production data](../maintainers/production-data.md), [production deployment](../maintainers/production-deployment.md), [save/load](../save-and-load.md), and the private-data contract linked above.
-- Scope and sequence: [DG11/ND29](../maintainers/needs-design.md), [five-group overview](product-design-groups-11-15.md).
+- Scope and sequence: [DG11/ND29](../maintainers/needs-design.md), [five-group overview](completed/product-design-groups-11-15.md).
 - Technical design is intentionally not produced in this product-only assignment. No runtime study capability or empirical benefit is claimed.

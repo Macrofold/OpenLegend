@@ -569,7 +569,7 @@ The earlier SH-R01–SH-R16 evidence remains above. The sources below were check
 ## Maintained records
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
-- October 5 batch and review: [DG11–DG15](product-design-groups-11-15.md).
+- October 5 batch and review: [DG11–DG15](completed/product-design-groups-11-15.md).
 - Initial authored materials, arrangements and tuning: [base-world light canopies](../worlds/base/editable-shelters.md).
 - Design/delivery: [ND07 and ND08](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes), [INV-6.4](../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), with [spatial](../maintainers/spatial-world.md), [persistent objects](../maintainers/persistent-objects.md) and [state contributions](../maintainers/state-contributions.md) retaining their consumers.
 - Proposed scope and tuning: [editable-shelter limits](../limits/editable-shelters.md). Existing [object](../limits/objects.md), [spatial](../limits/spatial.md), [state-effect](../limits/state-effects.md) and [invention](../limits/inventions.md) inventories retain shared limits.

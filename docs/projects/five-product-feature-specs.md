@@ -1,12 +1,12 @@
 # Five product and behavior specifications
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Existing product proposals are being deepened through DG12–DG14; technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG12–DG14 product expansions and reviews are complete; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Technical design and runtime implementation remain open.**
 
-The [groups 11–15 assignment](product-design-groups-11-15.md) preserves this package and extends its existing creation, shelter and competence specifications in place. DG12 now adds the complete invention-library round trip and useful opening continuation. DG13 adds concrete canopy materials/layouts, direct build/use/edit/reclaim behavior, construction permissions and a positive first home-use scene. DG14 selects a short sling-handling improvement, independent inert-target practice and a willing coached episode, preserving the existing roof/dice example as optional. This follow-up does not rewrite the original source baseline below or claim technical/runtime completion.
+The [groups 11–15 assignment](completed/product-design-groups-11-15.md) preserves this package and extends its existing creation, shelter and competence specifications in place. DG12 now adds the complete invention-library round trip and useful opening continuation. DG13 adds concrete canopy materials/layouts, direct build/use/edit/reclaim behavior, construction permissions and a positive first home-use scene. DG14 selects a short sling-handling improvement, independent inert-target practice and a willing coached episode, preserving the existing roof/dice example as optional. This follow-up does not rewrite the original source baseline below or claim technical/runtime completion.
 
 ## Purpose and scope
 

@@ -6,7 +6,7 @@
 
 **Status: proposed detailed behavior, October 3, 2026.** This develops the accepted ND01 creator experience. It specifies a product journey and its consequences, not a universal world generator or a new implementation. Technical design remains deferred. Existing invention, constitution, funding, world-host and participation owners remain authoritative.
 
-The 5 October DG12 expansion in section 15 connects that opening to a retained invention, destination compatibility and free reuse under actual grants. It preserves the original proposal and its game-first critique; the writing sequence and current baseline are recorded in the [five-group overview](product-design-groups-11-15.md).
+The 5 October DG12 expansion in section 15 connects that opening to a retained invention, destination compatibility and free reuse under actual grants. It preserves the original proposal and its game-first critique; the writing sequence and current baseline are recorded in the [five-group overview](completed/product-design-groups-11-15.md).
 
 ## 1. The promise
 

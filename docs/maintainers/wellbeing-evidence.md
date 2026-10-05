@@ -24,4 +24,4 @@ This tracker owns only the proposed human-outcome study. Existing performance pr
 - Limits: [Well-being evidence inventory](../limits/wellbeing-evidence.md).
 - Empirical question: R25 in [research backlog](../../archive/05-project/research-backlog.md).
 - Shared owners: [production deployment](production-deployment.md), [production data](production-data.md), [cognition and memory](cognition-redesign.md), and [save/load](../save-and-load.md).
-- Sequence: [five-group design overview](../projects/product-design-groups-11-15.md). Queue order is writing order, not a requirement that research ship before creation, shelters or competence.
+- Sequence: [five-group design overview](../projects/completed/product-design-groups-11-15.md). Queue order is writing order, not a requirement that research ship before creation, shelters or competence.

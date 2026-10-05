@@ -655,7 +655,7 @@ These are product proposals to qualify, not proven fun or current runtime behavi
 ## Maintained records
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
-- October 5 continuation: [DG11–DG15](product-design-groups-11-15.md); [base-world sling practice](../worlds/base/practical-competence.md) owns the selected authored law.
+- October 5 continuation: [DG11–DG15](completed/product-design-groups-11-15.md); [base-world sling practice](../worlds/base/practical-competence.md) owns the selected authored law.
 - Design needs: [ND03](../maintainers/needs-design.md#nd03--world-authored-stats-checks-and-their-effects) and [ND04's practical slice](../maintainers/needs-design.md#nd04--experience-shaped-personality-and-practical-skill-growth). [Practical competence](../maintainers/practical-competence.md) owns this new consumer's work; broader progression and personality remain separate.
 - Existing delivery owners: [EWF02/EWF04](../maintainers/extensible-world-foundation.md), [INV](../maintainers/inventions-and-world-evolution.md), [AC08–AC10](../maintainers/action-capabilities.md) and [state contributions](../maintainers/state-contributions.md). No existing delivered checkbox is reopened or counted as completion of this consumer.
 - Proposed scope and tuning: [authored-stat limits](../limits/authored-stats.md), alongside shared [state-effect](../limits/state-effects.md), [invention](../limits/inventions.md), [action-experience](../limits/action-experience.md) and [product-scalability](../limits/product-scalability.md) inventories.
