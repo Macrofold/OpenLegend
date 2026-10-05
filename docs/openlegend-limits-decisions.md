@@ -38,6 +38,8 @@ Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L0
 
 Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L13](limits/authored-stats.md) preserve the optional reference curve and add the selected finite sling-handling, practice/target/coaching, evidence and disclosure proposals. DG14/ND03/ND04 practical scope uses [PC](maintainers/practical-competence.md) and shared EWF/INV/action/state owners. No runtime effect, universal XP, social control or personality change is delivered.
 
+Proposed [After you left story perspective](projects/story-perspectives-feature-spec.md): [SP01–SP08](limits/narration.md#sp01--selected-external-perspective) inventory the selected private-world source family, voluntary candidate/request bounds, publication priority, presentation and retention. [NC20](maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective) consumes existing NC execution/privacy/history; current cutaways and private-thought modes remain disabled.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

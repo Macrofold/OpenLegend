@@ -163,7 +163,9 @@ ND03 and ND04's practical-skill slice: one worthwhile action affected by capabil
 
 Conditional ND36: one desired cutaway, distant-event or private-thought presentation, with its audience, spoilers, preferences and the distinction between what the human sees and what the character knows.
 
-**Start and parallel boundary:** Start after ordinary narration is useful and a specific mode is wanted. Existing disclosure authority must support the proposed sources. This is independent of ordinary encounter narration in DG01, voice and deeper memory machinery. **Existing owners:** NC, narration/privacy owners and D57.
+**Start and parallel boundary:** Start after ordinary narration is useful and a specific mode is wanted. The source and recipient policy must be expressly selected and its authority qualified before enabling the mode. This is independent of ordinary encounter narration in DG01, voice and deeper memory machinery. **Existing owners:** NC, narration/privacy owners and D57.
+
+**October 5 selected product proposal:** [After you left](../projects/story-perspectives-feature-spec.md) chooses one private-world, external familiar-craft continuation with explicit new disclosure, voluntary reading, bounded candidate retention, historical human-only information and full stop/correction behavior. [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) routes delivery through NC07–NC12. The proposal explicitly tests whether this small scene is worth adding; no private thoughts, multiplayer expansion, extra resident work or runtime permission is implied.
 
 #### DG16 — A useful personal journal extension
 
@@ -612,11 +614,13 @@ These refinements should be completed in the existing PS project and decision ow
 
 ### ND36 — Optional narrative perspectives and distant-event cutaways
 
-**Decision before design; optional narration mode.** Sources: [D57](../../archive/05-project/open-decisions.md#d57--narration-composed-responses-and-durable-conversations), [external events and awareness](../narration-and-conversations.md#5-external-world-events-and-awareness), and [Narrator context assembly](../narration-and-conversations.md#8-the-narrator-and-context-assembly).
+**Selected external product proposal; optional narration mode.** Sources: [D57](../../archive/05-project/open-decisions.md#d57--narration-composed-responses-and-durable-conversations), [external events and awareness](../narration-and-conversations.md#5-external-world-events-and-awareness), and [Narrator context assembly](../narration-and-conversations.md#8-the-narrator-and-context-assembly).
 
 **Existing coverage:** [NC07–NC12](narration-and-conversations.md) already own private Narrator storage, scoped generation, journal delivery and qualification. The [current delivery boundary](narration-and-conversations.md#remaining-delivery-within-nc01nc12) explicitly leaves cutaways and private-NPC-thought modes disabled. Ordinary actor-perspective stories and ND18 encounter extensions do not require these modes.
 
 **Needed before enabling a mode:** select the useful perspective, who may receive distant events or an NPC's private thoughts, and which source details may be disclosed. Define spoilers, cross-player fairness, preferences, revocation/retention, and bounded triggering/cost. Keep what a human sees in a story separate from what their character actually knows; retention or narrative importance alone grants no disclosure. Deliver the selected mode through existing NC execution and permission owners.
+
+**October 5 DG15 scope:** the [researched product specification](../projects/story-perspectives-feature-spec.md) now selects that permission for one external familiar activity in a single-human private world, with [SP01–SP08](../limits/narration.md#sp01--selected-external-perspective) and [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective). The source policy is a new proposed consumer, not inherited omniscience. Private internal stimuli, other-human information and broader cutaways still require separate selection; implementation and qualification remain open.
 
 ## Commercial service, creator ecosystem and launch learning
 

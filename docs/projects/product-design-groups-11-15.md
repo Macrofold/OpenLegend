@@ -1,8 +1,8 @@
 # Product designs for groups 11–15
 
-| Status      | Current progress                                                                                                                       | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Research and product design are underway for five groups; no runtime implementation or study operation is authorized by this document. | 2026-10-05   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five researched product proposals are prepared; final cross-review and documentation verification are in progress. | 2026-10-05   |
 
 ## Scope and working baseline
 
@@ -20,7 +20,7 @@ The [gameplay priorities](../repertoires/gameplay-priorities.md), [engine/world 
 | DG12 — Create a world and reuse an invention        | [Existing world creation specification](world-creation-feature-spec.md) | Creation and complete reuse journey researched and reviewed; technical/runtime work remains open                   |
 | DG13 — Editable shelter and useful places           | [Existing shelter specification](editable-shelters-feature-spec.md)     | Concrete canopy/use/reclaim proposal researched and reviewed; technical/runtime work remains open                  |
 | DG14 — Useful competence and practice               | [Existing authored stats specification](authored-stats-feature-spec.md) | Useful sling competence, finite practice and coaching researched and reviewed; technical/runtime work remains open |
-| DG15 — An optional story perspective                | Story perspective specification to follow                               | Pending                                                                                                            |
+| DG15 — An optional story perspective                | [After you left specification](story-perspectives-feature-spec.md)      | Private historical perspective researched and reviewed; NC20 technical/runtime work remains open                   |
 
 The three existing feature specifications remain their behavior owners. This overview does not create competing versions or replace their unresolved implementation work. Each design records primary-source research, what the evidence actually supports, what remains an inference, concrete player journeys, graceful failure, finite work and retention choices, and criteria for deciding whether the feature deserves expansion.
 
