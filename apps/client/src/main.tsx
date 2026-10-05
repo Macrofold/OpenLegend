@@ -511,12 +511,12 @@ function App({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
-  const hasView = view !== null;
+  const worldVisible = view !== null && (!tabPaused || tab.blocked);
   useEffect(() => {
-    if (!hasView || !survival.current || !hud.current || !canvas.current) return;
+    if (!worldVisible || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
   }, [
-    hasView,
+    worldVisible,
     width,
     height,
     scale,
@@ -793,6 +793,10 @@ function App({
   };
   useEffect(() => {
     if (!view || !canvas.current || sceneError) return;
+    // Connecting already has a permitted snapshot, but acquiring control replaces
+    // its access scope. Build graphics when the world is shown, once. Existing
+    // scenes still receive suspended updates and all private-scope resets.
+    if (!scene.current && !worldVisible) return;
     try {
       if (!scene.current)
         scene.current = createWorldRenderer(canvas.current, {
@@ -832,16 +836,16 @@ function App({
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError, shadowQuality, tabPaused]);
+  }, [view, sceneError, shadowQuality, tabPaused, worldVisible]);
   useEffect(() => {
     scene.current?.setPerceptionOptions({
       vision: visionGuide,
       hearing: hearingGuide,
     });
-  }, [hasView, sceneError, visionGuide, hearingGuide]);
+  }, [worldVisible, sceneError, visionGuide, hearingGuide]);
   useEffect(() => {
     scene.current?.setTargeting(targeting && connected && !tabPaused && !choosingActionSubject);
-  }, [targeting, connected, tabPaused, hasView, sceneError, choosingActionSubject]);
+  }, [targeting, connected, tabPaused, worldVisible, sceneError, choosingActionSubject]);
   useEffect(() => {
     setTargeting(false);
   }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
@@ -856,7 +860,7 @@ function App({
       occlusions: captionOcclusions,
     });
   }, [
-    hasView,
+    worldVisible,
     sceneError,
     captionsEnabled,
     captionsPaused,

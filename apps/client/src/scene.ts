@@ -317,7 +317,9 @@ export class WildernessScene implements WorldRenderer {
   setView(view: GameView): void {
     this.view = view;
     this.perception.setView(view);
-    const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
+    // The public landscape survives a control transfer, while a restored timeline
+    // can replace geometry without changing its saved spatial revision.
+    const key = `${view.worldId}:${view.saveTimeline}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
     const worldKey = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}`;
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
@@ -326,7 +328,6 @@ export class WildernessScene implements WorldRenderer {
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
-      this.mapKey = '';
       this.cutawayKey = '';
     }
     if (this.mapKey !== key) {
