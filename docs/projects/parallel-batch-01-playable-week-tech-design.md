@@ -54,8 +54,8 @@ Focused checks/documentation are included in package allocations; shared qualifi
 
 The detailed PW01–PW05 contracts below remain controlling, with their missing shapes/admission cases resolved in this expansion. The added packages have full supporting definitions:
 
-| Package | Supporting brief                                                                    | Main risks                                                                                  |
-| ------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Package | Supporting brief                                                                                 | Main risks                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | PW07    | [World-configured survival](parallel-batch-01-playable-week/survival.md)                         | Health units, generic meters, death/restore, absent meters and UI/cognition consumers       |
 | PW08    | [Proportional simulation work](parallel-batch-01-playable-week/simulation-performance.md)        | Reuse certificates must preserve fleeting sight, identity, event order and randomness       |
 | PW09    | [Correct/scoped memory retrieval](completed/parallel-batch-01-playable-week/memory-retrieval.md) | Locale-independent lexical indexing, transaction visibility, privacy and cache invalidation |
