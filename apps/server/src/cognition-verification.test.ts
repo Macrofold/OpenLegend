@@ -984,8 +984,7 @@ describe(
       h.state.policy = {
         route: 'level1',
         reflection: 'no',
-        rate: (description) =>
-          description.startsWith('Twist prepared fibers into binding cord.') ? 0.9 : 0.1,
+        rate: (description) => (description.startsWith('Prepare 1 Fiber cord') ? 0.9 : 0.1),
       };
       const cordStep = expect.objectContaining({
         command: expect.objectContaining({ type: 'prepare', preparation: 'cord' }),
@@ -1005,10 +1004,7 @@ describe(
             ratings: Level1Rating[];
           }
         ).ratings.find((rating) => rating.handle === selectedHandle(act)),
-      ).toMatchObject({
-        rating: 0.9,
-        description: expect.stringMatching(/^Twist prepared fibers into binding cord\./),
-      });
+      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Prepare 1 Fiber cord/) });
       // The selected binding was admitted natively and now drives Ada's plan.
       const actReceipt = h.service.world.responseReceipts?.[act.id];
       expect(Object.values(actReceipt?.components ?? {}).length).toBeGreaterThan(0);

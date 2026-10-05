@@ -155,7 +155,8 @@ export function birdArt(frame: number, dead = false): HTMLCanvasElement {
   const image = document.createElement('canvas');
   image.width = 72;
   image.height = 64;
-  const c = image.getContext('2d')!;
+  // Alpha and relief are read before uploading this source to the 3D renderer.
+  const c = image.getContext('2d', { willReadFrequently: true })!;
   const wing = dead ? 42 : frame === 1 ? 12 : frame === 2 ? 39 : 28;
   c.fillStyle = '#394a57';
   c.beginPath();

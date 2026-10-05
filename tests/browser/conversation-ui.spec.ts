@@ -97,7 +97,8 @@ test('owner conversation grows from one line and shows message-local pending and
     await refresh.click();
     await expect(page.getByText('The clearing feels ready for change.')).toBeVisible();
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeHidden();
-    await expect(page.getByText(/completed/i)).toHaveCount(0);
+    // Hidden retained Work can describe completed proposals; visible completion text is forbidden.
+    await expect(page.getByText(/completed/i).filter({ visible: true })).toHaveCount(0);
 
     response = { ok: false, code: 'failed', message: 'Technical failure details.' };
     delete gate.release;

@@ -13,7 +13,9 @@ function canvas(width: number, height: number): [HTMLCanvasElement, CanvasRender
   const image = document.createElement('canvas');
   image.width = width;
   image.height = height;
-  const ctx = image.getContext('2d');
+  // The scene reads these pixels for alpha masks and relief. Prefer readback
+  // storage so a new appearance does not wait on the busy 3D renderer.
+  const ctx = image.getContext('2d', { willReadFrequently: true });
   if (!ctx) throw new Error('Canvas artwork is unavailable.');
   ctx.imageSmoothingEnabled = false;
   return [image, ctx];

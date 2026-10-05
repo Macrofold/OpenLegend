@@ -1329,6 +1329,7 @@ describe(
           };
         });
         expect(target.aboutMe()).toBe(text);
+        const before = await target.store.usage(target.config.budgetUsd, NPC_ID);
         const job = await target.chat(`quota-${world}-${count}`, 'Hello, Ada.');
         const dispatched = target.jobCalls(job.id);
         expect(dispatched.generations.length).toBeLessThanOrEqual(1);
@@ -1357,6 +1358,8 @@ describe(
         const accounting = requests.length
           ? (await target.accounting(job.id, generation ? 2 : undefined)).summary
           : null;
+        const after = await target.store.usage(target.config.budgetUsd, NPC_ID);
+        const nativeReceipt = target.service.world.responseReceipts?.[job.id];
         return {
           world,
           files: count,
@@ -1366,6 +1369,25 @@ describe(
           message: job.message,
           failure,
           requestsSent: requests.length,
+          judgmentsSent: dispatched.judges.length,
+          generationsSent: dispatched.generations.length,
+          accountingStages: stage('Decision accounting').length,
+          usageChange: {
+            spentUsd: after.budget.spentUsd - before.budget.spentUsd,
+            reservedUsd: after.budget.reservedUsd - before.budget.reservedUsd,
+            jevCalls: after.usage.jevCalls - before.usage.jevCalls,
+            llmCalls: after.usage.llmCalls - before.usage.llmCalls,
+          },
+          hasNativeReceipt: nativeReceipt !== undefined,
+          nativeReplyAccepted: nativeReceipt?.components['reply']?.ok ?? null,
+          nativeSpeech: target.service.world.events
+            .filter(
+              (event) =>
+                event.type === 'speech' &&
+                event.actorId === NPC_ID &&
+                event.data?.['responseId'] === job.id,
+            )
+            .map((event) => event.data?.['text']),
           routeHasCompleteSnapshot:
             typeof route?.state === 'string' ? route.state.includes(text) : null,
           generationInputBytes: generation
@@ -1389,17 +1411,53 @@ describe(
       // confounds the result.
       const fresh = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
+      // The native preflight with no retained greetings already needs 106,533 bytes for
+      // eight files against a 100,000-byte limit; six files need 90,591. These lower-history
+      // measurements select the control, while this fresh real orchestration verifies it.
+      const control = await harness({ script: { route: { level2: 0.9 } }, reply });
+      const positive = await probe(control, 'fresh-control', 6, files.slice(0, 6));
       report('inner-world-quota', {
         ...quota,
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes,
+        probes: [...probes, positive],
       });
-      // Not vacuous: at least the eight-file snapshot (about 64 KB) reaches a generation.
-      expect(probes.find((entry) => entry['files'] === 8)).toMatchObject({
+      const exceeded =
+        'Complete accepted inner world and required context exceed the input budget.';
+      for (const oversized of probes)
+        expect(oversized).toMatchObject({
+          status: 'failed',
+          disposition: 'context-exceeded',
+          message: exceeded,
+          failure: [exceeded],
+          requestsSent: 0,
+          judgmentsSent: 0,
+          generationsSent: 0,
+          accountingStages: 0,
+          usageChange: { spentUsd: 0, reservedUsd: 0, jevCalls: 0, llmCalls: 0 },
+          hasNativeReceipt: false,
+          nativeReplyAccepted: null,
+          nativeSpeech: [],
+          routeHasCompleteSnapshot: null,
+          generationInputBytes: null,
+          accounting: null,
+        });
+      // Preserve positive full-snapshot, request-limit and accounting coverage, including
+      // the actual native reply; an arbitrary refusal cannot satisfy this control.
+      expect(positive).toMatchObject({
+        files: 6,
         status: 'completed',
+        disposition: 'responded',
+        failure: [],
+        generationsSent: 1,
+        accountingStages: 1,
+        hasNativeReceipt: true,
+        nativeReplyAccepted: true,
+        nativeSpeech: ['Hello.'],
         routeHasCompleteSnapshot: true,
+        generationInputBytes: expect.any(Number),
+        accounting: expect.any(Object),
       });
     }, 300_000);
   },
