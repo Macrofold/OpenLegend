@@ -149,6 +149,8 @@ ND07's useful light construction, interior/access and home-use decisions with th
 
 **Start and parallel boundary:** Start from existing material, work and geometry contracts. Coordinate each later structural family within this same construction owner when selected. Heat/spread is DG20, medical effects DG21, institutions DG32, and additional hearing propagation DG26; none is a universal prerequisite for useful cover. **Existing owners:** INV-6, SW, PO, BW and shared-state owners.
 
+**October 5 product expansion:** [The existing shelter owner](../projects/editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) now selects one flat canopy and an adjacent two-bay awning, finite real materials, reversible ties, actual rest/storage/visitor use, explicit construction permissions and complete reclaim/interruption outcomes. [Base-world proposals](../worlds/base/editable-shelters.md) own the material/layout/work/moisture tuning. Product critique preserves a useful first place without penalties or household machinery. PX05 still owes the technical counterpart; INV-6.4 and related runtime acceptance remain open.
+
 #### DG14 — Useful competence and practice
 
 ND03 and ND04's practical-skill slice: one worthwhile action affected by capability, with explicit evidence for practice/teaching and the resulting change. Reuse the stats proposal; predictable competence can suffice and its roof/dice example remains optional.
@@ -465,6 +467,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [BW19 campfire care](base-world.md#bw19--camp-fire-care) and [state contributions](state-contributions.md) are delivered foundations; INV-6 retains broader materials, thermal behavior and inactive anticipated influences. The detailed thermal exploration is explicitly not a first-release checklist.
 
 **Needed before an implementation project:** choose a coarse useful model for moisture, exposure, heating, ignition, fuel, local spread and damage. Preserve the source's comparison: the same brief ignition source can ignite a selected dry twig without igniting a substantial wooden wall section; wet/dry conditions are an additional variation. Specify extinguishing, geometry changes, shared material/state ownership, bounded neighborhoods, time integration and dormant dependencies without recursively generating every possible weather system. Coordinate the first shelter consumer with ND07 and applicable background-resolution rules.
+
+**October 5 DG13 refinement:** the existing shelter proposal now includes concrete first materials/layouts, positive use, local exposure/drying proposals and complete failure/reclaim behavior; [SH-L01–SH-L10](../limits/editable-shelters.md) inventory the choices. These inputs do not close the remaining structural, thermal or runtime work.
 
 **Narrow October 3 proposal, revised after game-first critique:** the [shelter specification](../projects/editable-shelters-feature-spec.md) develops vertical rain, persistent moisture and ambient drying. A later authored wet-tinder challenge requires dependable recovery and evidence that it improves play. It is not required for the first useful shelter or the accepted creative MVP. Broader heat, ignition, spread, wind, runoff and damage design remain open; current campfire behavior is unchanged.
 

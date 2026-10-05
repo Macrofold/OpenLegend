@@ -14,13 +14,13 @@ The [gameplay priorities](../repertoires/gameplay-priorities.md), [engine/world 
 
 ## Five deliverables
 
-| Queue group                                         | Product behavior owner                                                  | Design state                                                                                     |
-| --------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| DG11 — Evidence for a selected well-being objective | [Optional connection study](wellbeing-evidence-feature-spec.md)         | Product proposal and critical review prepared; operation remains open                            |
-| DG12 — Create a world and reuse an invention        | [Existing world creation specification](world-creation-feature-spec.md) | Creation and complete reuse journey researched and reviewed; technical/runtime work remains open |
-| DG13 — Editable shelter and useful places           | [Existing shelter specification](editable-shelters-feature-spec.md)     | Current proposal to be read and deepened                                                         |
-| DG14 — Useful competence and practice               | [Existing authored stats specification](authored-stats-feature-spec.md) | Current proposal to be read and deepened                                                         |
-| DG15 — An optional story perspective                | Story perspective specification to follow                               | Pending                                                                                          |
+| Queue group                                         | Product behavior owner                                                  | Design state                                                                                      |
+| --------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| DG11 — Evidence for a selected well-being objective | [Optional connection study](wellbeing-evidence-feature-spec.md)         | Product proposal and critical review prepared; operation remains open                             |
+| DG12 — Create a world and reuse an invention        | [Existing world creation specification](world-creation-feature-spec.md) | Creation and complete reuse journey researched and reviewed; technical/runtime work remains open  |
+| DG13 — Editable shelter and useful places           | [Existing shelter specification](editable-shelters-feature-spec.md)     | Concrete canopy/use/reclaim proposal researched and reviewed; technical/runtime work remains open |
+| DG14 — Useful competence and practice               | [Existing authored stats specification](authored-stats-feature-spec.md) | Current proposal to be read and deepened                                                          |
+| DG15 — An optional story perspective                | Story perspective specification to follow                               | Pending                                                                                           |
 
 The three existing feature specifications remain their behavior owners. This overview does not create competing versions or replace their unresolved implementation work. Each design records primary-source research, what the evidence actually supports, what remains an inference, concrete player journeys, graceful failure, finite work and retention choices, and criteria for deciding whether the feature deserves expansion.
 

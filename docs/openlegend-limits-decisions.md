@@ -34,7 +34,7 @@ Product-scalability targets: [PS-L01–PS-L22](limits/product-scalability.md) re
 
 Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC-L05](limits/world-creation.md) inventory the local starting scope, unqualified reference population, supported families and preparation boundaries. ND01, INV-4.10 and EWF12 retain delivery routing; shared invention and participation limits remain controlling.
 
-Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L06](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, work growth and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
+Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L10](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, concrete canopy/material/work proposals, local growth, construction permission and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
 
 Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
 

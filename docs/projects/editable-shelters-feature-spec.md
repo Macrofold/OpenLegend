@@ -1,8 +1,8 @@
 # Editable shelters, rain and home use — product and behavior specification
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG13's concrete build, use, edit and reclaim journey is designed; review, technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | DG13's concrete build, use, edit and reclaim journey is designed; product review is complete; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: proposed detailed behavior, October 3, 2026, expanded for DG13 on October 5.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. It does not claim current modular buildings, weather, moisture, drying or household behavior is implemented. Technical design remains deferred; the existing object, spatial, state, work and world-policy owners retain authority.
 
@@ -461,7 +461,9 @@ Moving an entire occupied assembly is not supplied by the first family. The play
 
 ### 14.7 A home name is not a permission system
 
-The first construction scene explicitly authorizes one builder for its site and assembly, and limits construction inputs to that builder's eligible carried material. A different person's cloak reaches that builder through a real accepted offer or a later qualified material grant. The product does not assume that current declared ownership already prevents every use of a shared pile.
+The first construction scene supplies a new proposed permission for one builder at its site/assembly. Existing creator and container controls do not already implement that construction grant. The material picker requires both carrying and permission for the selected use: the designated kit or qualifying material the builder legitimately produces from eligible inputs. Another person's contribution requires a transfer that permits this use or an explicitly supported material grant. Until that additional grant is implemented, the first profile declines the input. Ordinary accepted handover currently changes custody; it does not prove this additional grant or necessarily change declared title.
+
+Picking another person's identified cloak up from an unrestricted pile cannot bypass the rule. Installed parts retain their alteration/reclaim restrictions through ordinary pickup and inventory routes as well as the construction menu. The product does not assume that either current carrying or declared ownership alone establishes these permissions.
 
 This distinction is necessary because current [world-pile/container access](../worlds/base/items.md#shared-containers-and-active-work) is shared by default unless actual restrictions apply. A future collaborative build may use accessible shared materials under an explicit construction grant, but standing nearby, saying “our home,” having editor status somewhere else or being invited to rest is not that grant.
 
@@ -493,7 +495,7 @@ The next useful extension adds light side panels and one ordinary door only afte
 
 A proposed first door opens from both sides without a lock. A reachable actor requests Open or Close; the action uses actual clearance and the door's supported movement. A person, reclining body or object in that movement area blocks the change rather than being displaced. A doorway must remain a valid entry and exit for the supported body and activity. If closing the only exit would make an occupied enclosure inoperable under the admitted rules, the action is refused before the enclosure becomes a trap.
 
-The action surface remains available from an accessible part of the actual door/frame when the usual point is visually obscured. It never reaches through a solid barrier. A wall can limit movement or sight only after those consumers are supported; it does not make speech private. These are deliberate product requirements for later qualification, informed by repeated door, route and survivor corrections in Enshrouded. [SH-R11](#12-research-and-lessons), [SH-R26](#sh-r26)
+The action surface remains available from an accessible part of the actual door/frame when the usual point is visually obscured. It never reaches through a solid barrier. A wall can limit movement or sight only after those consumers are supported; it does not make speech private. These are deliberate product requirements for later qualification, informed by repeated door, route and survivor corrections in Enshrouded. [SH-R11](#12-research-and-the-resulting-choices), [SH-R26](#sh-r26)
 
 A closed-looking room that nobody can enter or use is not a home milestone. Do not make furnishing count or decorative trophies compensate for broken ordinary access. Enshrouded's April 2026 comfort changes are an example of a separate reward economy, not evidence that a comfort score is required here. [SH-R26](#sh-r26)
 

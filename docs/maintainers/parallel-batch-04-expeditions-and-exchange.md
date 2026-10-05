@@ -42,6 +42,8 @@ Parents: [agency](agent-agency.md), [character experience](character-experience.
 - [ ] Resolve or explicitly gate structural, custody, support, permission and lifecycle choices; produce an actionable build/use/edit/reclaim delivery breakdown with contrasting arrangements and relevant failure traces.
 - [ ] Reconcile DG13/ND07/shelter-only ND08, INV-6.4, SW/PO/BW and shelter limits. Mark only this design task complete when adequate; runtime construction remains unimplemented.
 
+**October 5 product input:** DG13 extends the existing feature specification in place with one flat cloak canopy and an adjacent two-bay awning, actual finite parts, reversible binding, ordinary use and explicit permission/reclaim behavior. [The base-world owner](../worlds/base/editable-shelters.md) selects proposed dimensions/work/moisture values. A sloped lean-to follows qualified shape/clearance rather than preceding the open canopy. This supplies product decisions only; all PX05 checkboxes remain open for its technical counterpart, delivery breakdown and complete reconciliation.
+
 Parents: [shelter proposal](../projects/editable-shelters-feature-spec.md), [INV-6](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), [DG13](needs-design.md#dg13--editable-shelter-and-useful-places). Independent design assignment; no construction or paid experiment is implied.
 
 ## Completion and reconciliation
