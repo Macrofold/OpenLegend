@@ -12,7 +12,7 @@ The expanded [PW07 execution brief](parallel-batch-01-playable-week/survival.md)
 
 ## Starting point
 
-The execution assignments and problem inventories below describe the historical October 1–2 baseline, not missing mechanisms in current main. The delivered stages are integrated; [current evidence](../verification/world-configured-survival.md) includes subsequent focused browser checks. [PW07](../maintainers/next-playable-week.md#pw07--world-configured-survival) retains the full paired UI acceptance, not another branch-merge prerequisite.
+The execution assignments and problem inventories below describe the historical October 1–2 baseline, not missing mechanisms in current main. The delivered stages are integrated; [current evidence](../verification/world-configured-survival.md) includes subsequent focused browser checks. [PW07](../maintainers/parallel-batch-01-playable-week.md#pw07--world-configured-survival) retains the full paired UI acceptance, not another branch-merge prerequisite.
 
 - **Executed base:** Engineer 2 uses the assigned worktree's inherited planning commit `8005f7c7` on `oct2-eng-2`, as explicitly requested on October 2. The branch change was detached `8005f7c7` → `oct2-eng-2`. This supersedes the earlier suggested local-main refresh; the historical prototype baseline is not a replacement starting base.
 - **Current execution:** the domain/server implementation and requested [run-on-demand comparison](../../scripts/compare-world-survival.ts) now exist. [October 2 verification](../verification/world-configured-survival.md) records actual results and limits. The earlier prototypes behind [historical evidence](#evidence-so-far) remain historical and are not reused as proof.
