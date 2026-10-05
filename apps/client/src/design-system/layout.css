@@ -871,6 +871,11 @@ body,
   transform: translateX(-50%);
   z-index: var(--z-panel);
 }
+.ol-quick-position:has(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
+  /* Lift the owner of these nonportaled controls above an expanded task sheet;
+   * raising a child alone cannot escape this transformed stacking context. */
+  z-index: calc(var(--z-sheet) + 1);
+}
 .ol-fps-counter {
   position: absolute;
   left: var(--space-3);

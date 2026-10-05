@@ -1,0 +1,182 @@
+{
+  "reviewed": "2026-10-05",
+  "scope": "Requested Open Legend implementation screenshots. Separate from external game references and design proposals. See README for revisions, controlled transport and actual evidence.",
+  "images": [
+    {
+      "id": "01-hud",
+      "file": "01-hud.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 914029,
+      "sha256": "855b11017dcf6b011647bd64b70e32f15e19ad9eedffe5b2cd02507a911d1ef1",
+      "captureScope": "app"
+    },
+    {
+      "id": "02-subject-selection",
+      "file": "02-subject-selection.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 895680,
+      "sha256": "52a26eb9f133e7961651f721c4604b858f180247b70dd20b931648c8877d4999",
+      "captureScope": "app"
+    },
+    {
+      "id": "03-action-intention",
+      "file": "03-action-intention.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 859568,
+      "sha256": "367649553e8d4c0933b80834d400bcc184b6aa042632bebb2a83b30f10fc2f0c",
+      "captureScope": "app"
+    },
+    {
+      "id": "04-item-context",
+      "file": "04-item-context.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 663528,
+      "sha256": "2b87b1b481afaeb8f1df56118052346fc81b9384e50d9b6a9138fe69a2316ec4",
+      "captureScope": "app"
+    },
+    {
+      "id": "05-shortcut-editor",
+      "file": "05-shortcut-editor.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 667252,
+      "sha256": "bf1945199fc5e27c47362697cd0f94dc612c1e5b31b650c6bfcefa008fff97f3",
+      "captureScope": "app"
+    },
+    {
+      "id": "06-journal",
+      "file": "06-journal.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 838761,
+      "sha256": "8601fecb009eb6b8603e8de56982650a0462bca87c5d546c96f18bff9b17a456",
+      "captureScope": "app"
+    },
+    {
+      "id": "07-settings-narrow",
+      "file": "07-settings-narrow.png",
+      "width": 320,
+      "height": 740,
+      "bytes": 199774,
+      "sha256": "2dee37b62cab06891e0d11262651ccc1d2496b94ac3aad85880e8adedda2e69b",
+      "captureScope": "app"
+    },
+    {
+      "id": "08-settings-short",
+      "file": "08-settings-short.png",
+      "width": 1180,
+      "height": 420,
+      "bytes": 204865,
+      "sha256": "0fa51521e2c2f55e91026ed83c541e3475710062b1d423cc8db2aa6c031c9531",
+      "captureScope": "app"
+    },
+    {
+      "id": "09-alternate-world",
+      "file": "09-alternate-world.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 560766,
+      "sha256": "a54b462e24cacd2ddb5dfa9449e2869b8feed6664974984dacc4088ef64f6ec5",
+      "captureScope": "app"
+    },
+    {
+      "id": "10-conversation",
+      "file": "10-conversation.png",
+      "width": 1160,
+      "height": 880,
+      "bytes": 133915,
+      "sha256": "81ff756b5de2bc91aa3ecc8a3a898928550ee6da764f44b1c873c7cb99e527d0",
+      "captureScope": "component"
+    },
+    {
+      "id": "11-checkpoints",
+      "file": "11-checkpoints.png",
+      "width": 1180,
+      "height": 900,
+      "bytes": 226123,
+      "sha256": "31313614df0a0983877ef0cf8ed93d8581f5e06610d9e0c0f7940621917efd42",
+      "captureScope": "component"
+    },
+    {
+      "id": "12-world-operations",
+      "file": "12-world-operations.png",
+      "width": 1180,
+      "height": 900,
+      "bytes": 65070,
+      "sha256": "9a69cdbc091ab23d60ea1e547326ce57c87d90d103236a3b5c547cecf7d4d5ff",
+      "captureScope": "component"
+    },
+    {
+      "id": "13-maintenance",
+      "file": "13-maintenance.png",
+      "width": 1180,
+      "height": 900,
+      "bytes": 96686,
+      "sha256": "e6e6b9ae48d83c99836dd411710dacab74ed1a3095bc8711fde9941c90aa48ed",
+      "captureScope": "component"
+    },
+    {
+      "id": "14-workshop",
+      "file": "14-workshop.png",
+      "width": 1366,
+      "height": 900,
+      "bytes": 160612,
+      "sha256": "f0d7d8a400dbe7423113f177597cbbfc74dbcdbb02617c509f7a52806a9dac45",
+      "captureScope": "component"
+    },
+    {
+      "id": "15-exact-review",
+      "file": "15-exact-review.png",
+      "width": 1366,
+      "height": 900,
+      "bytes": 210623,
+      "sha256": "48e9d5998ee659fd1d1c91479c36cd3f70fbd5b46c15841cd8cb4bf78c1b2353",
+      "captureScope": "component"
+    },
+    {
+      "id": "16-private-notes",
+      "file": "16-private-notes.png",
+      "width": 1366,
+      "height": 900,
+      "bytes": 152465,
+      "sha256": "593b5735a79f8b2ca9c9583ee87a4862d141e547728ca303e5637602c7b9c3ea",
+      "captureScope": "component"
+    },
+    {
+      "id": "17-diagnostics",
+      "file": "17-diagnostics.png",
+      "width": 1366,
+      "height": 900,
+      "bytes": 113239,
+      "sha256": "0c30023871f4c093ce4d37210f474f10dba0309940db9282310b5af1697d9224",
+      "captureScope": "component"
+    },
+    {
+      "id": "18-work-unavailable",
+      "file": "18-work-unavailable.png",
+      "width": 470,
+      "height": 311,
+      "bytes": 102612,
+      "sha256": "e3c096007f81371cbab46628c0eeed9b88c2d52e745d8a48124d2f9f34f27a03",
+      "captureScope": "native-projection-component"
+    },
+    {
+      "id": "19-entry",
+      "file": "19-entry.png",
+      "width": 320,
+      "height": 568,
+      "bytes": 36950,
+      "sha256": "f8fb539807ca86be00c74f582bebec2e0a74e27b20535a7e41e46ba2d01711de",
+      "captureScope": "component"
+    }
+  ],
+  "appSource": {
+    "baseCommit": "ba33c1c510ccb99276535e1b2276a64b459488c4",
+    "additionalChange": "Conditional shortcut overlay owner in apps/client/src/design-system/layout.css",
+    "layoutSha256": "fb0f00ebc87420b12480f842bc0f7adbe111ca7fb617e111c2f62b3017ad1704"
+  }
+}

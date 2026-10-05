@@ -14,6 +14,8 @@ The [feature specification](../projects/game-interaction-redesign-feature-spec.m
 
 The [verification report](../verification/game-interaction-redesign.md) records bounded interaction with production React components and the assembled App/PlayCanvas using controlled transport, plus selected native domain/projection checks. It preserves earlier revisions, failed or insufficient checks and their limits. Those results support the specific tasks exercised; they do not finish the full J01–J48 acceptance scope. Authenticated native client/server and PostgreSQL journeys, real operating-system IME (input method editor) composition, assistive-device use, broader text/viewport combinations and uncoached player observation remain open in [UIUX08–UIUX18](../maintainers/ui-ux.md#uiux08). The implemented alternate-world task example also remains distinct from arbitrary-world qualification.
 
+The [implementation gallery](runtime/README.md) adds 19 annotated captures of the actual App and focused production components. It identifies controlled data, revisions, viewport/scale and limits for each view. These images are separate from the external game atlas and original design proposals.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
