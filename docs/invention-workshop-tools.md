@@ -1,6 +1,6 @@
 # World-agent invention tools
 
-**Status: accepted target application contract.** The existing finite native workshop and separate [world-authorized read-only bootstrap](architecture.md#repertoire-relationship-and-mcp-foundation) are delivered subsets; this document defines the shared service that both the UI and [MCP transport](world-agent-mcp.md) must use. [World Agent runtime](world-agent-runtime.md) owns unified conversation/session execution, [composition](invention-composition.md) owns kind integration, and the existing INV tracker owns delivery.
+**Status: accepted application contract with finite shared reads, reviewed writes and native Macrofold execution implemented.** The [world-authorized reader](architecture.md#repertoire-relationship-and-mcp-foundation), seven-kind authoring service, unified conversation and exact human workspace are delivered subsets; general composition, impact jobs, art and deployable-build qualification remain separate. Both local HTTP/UI and [MCP transport](world-agent-mcp.md) use these existing owners. [World Agent runtime](world-agent-runtime.md) owns unified conversation/session execution, [composition](invention-composition.md) owns kind integration, and the existing INV tracker owns delivery.
 
 ## 1. The boundary
 
@@ -20,7 +20,7 @@ When world-level evidence is not authorized for the human recipient, use a privi
 
 ## 3. Initial tools and scope
 
-Existing `catalogue`, `materials`, `recipes`, `inspect_recipe`, `inspect_modules` and `validate` operations remain the narrow implemented adapter. Their actor-bound behavior is a current limitation, not the target World Agent permission model. Keep their implementation evidence in Architecture; the following catalogue is the target service surface, enabled one real adapter at a time.
+The earlier `catalogue`, `materials`, `recipes`, `inspect_recipe`, `inspect_modules` and `validate` operations remain a separately actor-scoped profile; they no longer describe the whole implemented service. The world-level reader supplies eleven actual read/preview operations, and the session-bound authoring dispatcher supplies nine operations across seven supported kinds. Current names and payloads come from those shared descriptors, not this broader target catalogue. [INV-21](maintainers/inventions-and-world-evolution.md#inv-21--reviewed-mcp-authoring-and-unified-native-execution) and [WW](maintainers/world-agent-writes.md) distinguish their delivered scope from remaining work.
 
 Use semantic verbs and a bounded set of tools—not a tool per invented object. Fields shown below are an intended v1 contract; generate strict schemas from the actual service schemas during implementation. All calls carry a server-issued `contextHandle`; writes also carry an `operationId` and appropriate expected revision. Neither value grants broader authority than its verified binding.
 
@@ -55,7 +55,7 @@ Read catalogues should not expose nonexistent mutation tools. A discovery entry 
 
 ## 4. One optional bounded investigation
 
-Unified conversation can perform deep investigation without forcing it on a simple request. Deterministic reuse or a complete supplied candidate stays on the short path. A capable Macrofold harness chooses successive tools, explains important tradeoffs, revises candidates and asks consequential questions. The old structured-inference loop remains a clearly labeled transitional execution adapter, not the target full harness.
+Unified conversation can perform deep investigation without forcing it on a simple request. Deterministic reuse or a complete supplied candidate stays on the short path. A capable Macrofold harness chooses successive tools, explains important tradeoffs, revises candidates and asks consequential questions. Native Macrofold authoring is already delivered for the finite session-bound tool set. Separately scoped structured inference and supplied-candidate entrypoints retain their actual purposes; they are not a transparent fallback for native authoring or proof of native tool interoperability.
 
 Use actual tool results and exact refs. A model can request another page, inspect an interface, review a failed scenario, or retain an alternative. A final assistant message can be ordinary prose; it does not need to hide a whole candidate in a strict final-response envelope. Durable draft tools and receipts carry state. A `done` statement without an installation receipt is not installation.
 
@@ -116,7 +116,7 @@ A large result returns a compact summary and pageable refs, not an unannounced t
 
 Lead with what the player is trying to accomplish. Explain what was reused, important costs/materials, changed behavior, limitations, and the next meaningful decision. Offer Details and Graph drill-down rather than require schemas or terminology. Separate preparing, validated, awaiting approval, installed, and crafted. Native summaries take precedence over model claims.
 
-Questions are for conflicting requirements, meaningful design tradeoffs, changed rights/cost/scope, and irreversible consequences. Ordinary field names, pagination and routine codec choices are implementation details. Progress reflects real job states, not invented percentage estimates. Show the shared $5 allowance and purpose breakdown without a compulsory separate image budget.
+Questions are for conflicting requirements, meaningful design tradeoffs, changed rights/cost/scope, and irreversible consequences. Ordinary field names, pagination and routine codec choices are implementation details. Progress reflects real job states, not invented percentage estimates. Use the accepted abstract usage-remaining presentation; underlying money and purpose accounting belongs in owner spending details, not the creation flow. The default workshop-session cap and separately billed shared Worker capacity remain in [the runtime funding contract](world-agent-runtime.md#1-product-decisions). Future image work must join attributable session accounting before enablement, without a compulsory separate image budget.
 
 ## 9. Cost and performance constraints
 
@@ -128,7 +128,7 @@ Perform queries and heavy preparation outside the world writer. Use immutable re
 
 The real harness must demonstrate tool discovery, meaningful multi-turn investigation, exact draft/approval/apply, and coherent restart/cancellation under the actual Macrofold deployment before calling this integration live-ready. Inspector success and an injected model response are distinct evidence. The [scenario packet](invention-scenarios.md) and [MCP research](../archive/02-research/mcp-tooling-and-integration.md) guide the rollout.
 
-The service can first register only implemented kinds while reporting the rest as unsupported. Do not ship empty generic interfaces and mark general mechanics authoring complete. The current owner-authoring exception remains unresolved; until decided, existing player-lock and god-only new-stat policies continue to apply.
+The service can first register only implemented kinds while reporting the rest as unsupported. Do not ship empty generic interfaces and mark general mechanics authoring complete. The creator/special-player authority target is already accepted but still awaits INV-1.7/MP02 admission and persistence. [The constitution](world-constitution.md#41-who-can-control-what) distinguishes that target from current enforcement; no documentation target creates a lock bypass, an NPC owner-tool grant or permission to inspect another human's private evidence.
 
 ## 11. Minimal implementation shape
 
@@ -148,4 +148,4 @@ The shared service must consume [AC invocation/activity contracts](action-capabi
 
 `WorldToolService` is shared by the local owner inspector and read-only MCP endpoint. It exposes context, lexical definition lookup, exact definition/live/evidence inspection, one-hop graph navigation, current native item instances, retained actor evidence, current activity and unpaid finite recipe validation. Its descriptors generate both transports' discovery/input schemas. Existing actor-bound tools retain their earlier restricted profile; this new grant never becomes an NPC knowledge source automatically.
 
-This profile is an interim subset of the unified service contract, not another world registry or permission engine. The [architecture](architecture.md#repertoire-relationship-and-mcp-foundation) owns exact current coverage and caps. Full draft/approval/action/art/funding adapters, real Macrofold execution and general traversal/impact work remain in INV-15/16/18/20. `ol_inspect` accepts actual exact-source refs; reference-only nodes may require a future authorized archive reader. A cursor/source failure must not be described as a nonexistent mechanic.
+This profile is an interim subset of the unified service contract, not another world registry or permission engine. The [architecture](architecture.md#repertoire-relationship-and-mcp-foundation) owns exact current coverage and caps. The finite draft/review/Apply/native-command and session-funding adapters are delivered under INV-21, with real local Macrofold journeys; bounded definition tracing and entity discovery are delivered under WW12/WW13. General impact closure, advanced art and broader kind composition remain INV-15/17/20 work, while WW07/WW11 retain deployed and sustained qualification. `ol_inspect` accepts actual exact-source refs; reference-only nodes may require a future authorized archive reader. A cursor/source failure must not be described as a nonexistent mechanic. WW11 also retains the source-identified private-subject authorization gap after awaited storage reads; checking only the reader's current grant does not establish current permission to disclose the inspected actor's evidence.
