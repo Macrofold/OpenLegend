@@ -1,4 +1,5 @@
 import { nextItemOfferDeadline } from './handover.js';
+import { nextRemainsDeadline } from './remains.js';
 import { nextActivityBoundary } from './activity-execution.js';
 import { isDraft, original } from 'immer';
 import { distance3D } from '@open-legend/spatial';
@@ -62,6 +63,11 @@ export function nativeInterval(
     deadline = Math.min(deadline, time);
     bound = Math.min(bound, time - world.simTime);
   };
+  at(nextRemainsDeadline(world, ambientIds));
+  for (const id of ambientIds) {
+    const animal = world.entities[id]?.animal;
+    if (animal && animal.danger > 0) at(animal.reviewAt);
+  }
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
   // Only replenishment transfers and health regeneration against damage remain here.
   let serialClamps = false;

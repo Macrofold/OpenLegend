@@ -45,6 +45,6 @@ Future preservation needs item age and actual transformation; future fixed stora
 
 ## Maintained records
 
-- Implementation: [PW03](../../maintainers/next-playable-week.md#pw03--craftable-containers-and-camp-supplies), beneath INV/PO/BW/AC ownership.
+- Implementation: [PW03](../../maintainers/parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), beneath INV/PO/BW/AC ownership.
 - Limits and constraints: [CC01](../../limits/objects.md#cc01--proposed-invented-camp-containers), [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).
-- Related design: [technical design](../../projects/next-playable-week-tech-design.md#pw03--authored-container-and-ordinary-use), [items](items.md).
+- Related design: [technical design](../../projects/parallel-batch-01-playable-week-tech-design.md#pw03--authored-container-and-ordinary-use), [items](items.md).

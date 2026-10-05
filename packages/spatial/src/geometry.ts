@@ -265,18 +265,32 @@ function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
   if (cached?.revision === map.spatial.revision) return cached;
   const blockers: SpatialBlocker[] = [...map.spatial.blockers];
+  const ground = map.spatial.surfaces.filter((surface) => surface.material === 'ground');
   // Rock geometry derives from the canonical terrain cells, not a second writable rock store.
   for (let z = 0; z < map.height; z++)
     for (let x = 0; x < map.width; x++) {
-      if (map.tiles[z]?.[x] === 'rock')
+      if (map.tiles[z]?.[x] === 'rock') {
+        // Terrain rocks remain attached to raised ground, including a slope junction.
+        const heights = [-0.5, 0.5].flatMap((dx) =>
+          [-0.5, 0.5].map((dz) => {
+            const px = Math.max(0, Math.min(map.width - 1, x + dx));
+            const pz = Math.max(0, Math.min(map.height - 1, z + dz));
+            const surface = ground.find((s) => surfaceContains(s, { x: px, z: pz }));
+            return surface ? surfaceHeight(surface, px, pz) : 0;
+          }),
+        );
         blockers.push({
           id: `terrain-rock:${x}:${z}`,
-          bounds: { min: { x: x - 0.5, y: 0, z: z - 0.5 }, max: { x: x + 0.5, y: 2, z: z + 0.5 } },
+          bounds: {
+            min: { x: x - 0.5, y: Math.min(...heights), z: z - 0.5 },
+            max: { x: x + 0.5, y: Math.max(...heights) + 2, z: z + 0.5 },
+          },
           movement: true,
           sight: true,
           acousticTransmission: 0.15,
           material: 'stone',
         });
+      }
     }
   if (
     blockers.length > SPATIAL_LIMITS.maxBlockers ||

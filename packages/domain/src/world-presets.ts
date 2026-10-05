@@ -82,6 +82,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
       incapacitateNarration: '{subject.name:definite} stopped moving.',
       deathNarration: '{subject.name:definite} broke down.',
     },
+    remains: null,
     recovery: null,
     revival: { fillToMaximum: ['clockwork:charge'] },
     consumption: null,

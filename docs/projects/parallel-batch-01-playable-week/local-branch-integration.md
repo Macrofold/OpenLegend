@@ -1,8 +1,8 @@
-# Local playable-week branch integration
+# Parallel batch 01 — Local playable-week branch integration
 
 Mike authorized merging local engineer branches into local `main`, including adapting Engineer 2's changes to preserve main's shared action admission and execution. This is a reconciliation plan, not additional feature scope or completion of the full PW06 acceptance matrix.
 
-[Week tracker](../../maintainers/next-playable-week.md) · [Technical design](../next-playable-week-tech-design.md) · [Save contract](../../save-and-load.md)
+[Week tracker](../../maintainers/parallel-batch-01-playable-week.md) · [Technical design](../parallel-batch-01-playable-week-tech-design.md) · [Save contract](../../save-and-load.md)
 
 ## Scope and starting points
 
@@ -27,6 +27,6 @@ Engineer 3 adds material overlap in selected stock transfers, fire-care receipts
 
 Each merge must preserve the intended behavior of both inputs, have no conflict markers or unstaged tracked edits, and record its source tip and checks. A merge does not close unresolved capacity, model-quality, browser or full-week qualification. Native checks dispatch no provider work; additional and cumulative provider cost for this integration remain $0.
 
-Engineer 2 reconciliation is verified and committed as `700ea7b1`: 71 focused existing checks pass across native kernel/boundaries and server selection/accounting/storage. Nine current JSON continuation comparisons match uninterrupted execution; nine invalid-remainder examples refuse. The wilderness cases retain sampling progress; reservoir/contact cases reach native boundaries without a saved remainder. The survival scenario runner completes 27 current scenarios with zero unexpected outcomes, without a baseline comparison. Configuration, formatting, guidance, TypeScript and production build pass. [Integration evidence](../../verification/next-playable-week-engineer-2.md#local-main-reconciliation) records scope and limits.
+Engineer 2 reconciliation is verified and committed as `700ea7b1`: 71 focused existing checks pass across native kernel/boundaries and server selection/accounting/storage. Nine current JSON continuation comparisons match uninterrupted execution; nine invalid-remainder examples refuse. The wilderness cases retain sampling progress; reservoir/contact cases reach native boundaries without a saved remainder. The survival scenario runner completes 27 current scenarios with zero unexpected outcomes, without a baseline comparison. Configuration, formatting, guidance, TypeScript and production build pass. [Integration evidence](../../verification/parallel-batch-01-playable-week-engineer-2.md#local-main-reconciliation) records scope and limits.
 
 Engineer 3 reconciliation is verified. The same read-only stock preparation serves feasibility and atomic execution. Combined packing requirements are checked through the existing object admission owner; preview makes no custody changes. Native checks confirm actual container crafting, exact movement, atomic packing/shortage refusals, rejection of unsupported stock-spending budgets, one-unit fire spending and exact current-save watch continuation. Browser interaction verifies review/start/stop and draft retention at three viewport sizes. [Integration evidence](../../verification/camp-life.md#local-main-reconciliation) records the selected checks and qualification limits. Existing PW06 capacity, live-model and complete player-journey requirements remain open.

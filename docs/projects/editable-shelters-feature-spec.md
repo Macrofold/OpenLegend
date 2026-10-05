@@ -6,6 +6,8 @@
 
 **Status: proposed detailed behavior, October 3, 2026.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. It does not claim current modular buildings, weather, moisture, drying or household behavior is implemented. Technical design remains deferred; the existing object, spatial, state, work and world-policy owners retain authority.
 
+[PX05 in batch 04](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) assigns the missing technical counterpart and delivery breakdown. Its design completion will not establish construction runtime acceptance.
+
 ## 1. The experience and its purpose
 
 A player stretches a cloak over supports, gains a real dry patch beneath it, extends the shelter, replaces a damaged section and eventually makes a place people use as home. The cloak remains that particular cloak. When taken down, it retains its wear and moisture and can be carried or worn again. A person sheltered by it is protected by the actual arrangement, not by the word house in its name.

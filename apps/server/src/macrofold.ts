@@ -467,7 +467,7 @@ export class MacrofoldBackend implements AiClient {
   }
   /** One ordered reader retains questions and sanitized snapshots before its cursor.
    * Replaying after a crash between these writes is idempotent at the turn owner.
-   * docs/projects/next-playable-week-tech-design.md#durable-progress-and-ordering
+   * docs/projects/parallel-batch-01-playable-week-tech-design.md#durable-progress-and-ordering
    */
   private async runEvents(
     id: string,

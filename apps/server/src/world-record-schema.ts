@@ -71,6 +71,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           surfaces: list('sim_surfaces', 'id'),
           blockers: list('sim_blockers', 'id'),
           levels: list('sim_levels', 'id'),
+          scenery: list('sim_scenery', 'id'),
         }),
       }),
       entities: map('sim_entities', {

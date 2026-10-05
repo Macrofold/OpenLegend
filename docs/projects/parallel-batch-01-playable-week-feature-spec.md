@@ -1,4 +1,4 @@
-# Next playable week — feature specification
+# Parallel batch 01 — Playable week — feature specification
 
 | Status      | Current progress                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
@@ -6,7 +6,7 @@
 
 Implementation was authorized in chat. The original proposal was prepared on October 2, 2026 against local `main` / refreshed `origin/main` at `6664144a`; assigned implementation worktrees inherit planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`. Branch evidence and combined acceptance remain separate in the delivery tracker. The expanded allocation is **five AI-assisted engineers × 80 hours = 400 engineer-hours** over the requested week: 312 hours of scoped delivery, including focused checks, and 88 hours of shared integration, review and qualification. This supersedes the original 200-hour allocation. Estimates assume repository familiarity; no fixed AI speed multiplier or guaranteed completion time is asserted.
 
-[Technical design](next-playable-week-tech-design.md) · [Assignments and completion tracking](../maintainers/next-playable-week.md)
+[Technical design](parallel-batch-01-playable-week-tech-design.md) · [Assignments and completion tracking](../maintainers/parallel-batch-01-playable-week.md)
 
 ## Recommendation
 
@@ -31,7 +31,7 @@ Source checkpoints: [recipe contract](../../packages/domain/src/invention-famili
 
 ## Priority, capacity and sequencing
 
-PW numbers identify **work packages, not engineers**. There are five engineers. PW06 is shared integration; the other ten packages are assigned below. Implementation detail lives in the linked technical/task briefs and exact completion state in the [tracker](../maintainers/next-playable-week.md).
+PW numbers identify **work packages, not engineers**. There are five engineers. PW06 is shared integration; the other ten packages are assigned below. Implementation detail lives in the linked technical/task briefs and exact completion state in the [tracker](../maintainers/parallel-batch-01-playable-week.md).
 
 | Engineer | First wave                                         | Second wave / shared handoff                                           | Integration/review                       | Total |
 | -------- | -------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------- | ----- |
@@ -41,19 +41,19 @@ PW numbers identify **work packages, not engineers**. There are five engineers. 
 | 4        | PW04: inventory task workspace — 24 h              | PW11: invention workspace — 30 h; PW07: generic meter/editor UI — 10 h | 16 h                                     | 80 h  |
 | 5        | PW05: incremental World Agent replies — 34 h       | PW09: correct and scoped memory retrieval — 30 h                       | 16 h                                     | 80 h  |
 
-The first four working hours establish the shared contracts and current baseline. Parallel work then proceeds in small mergeable slices; the second wave can start when its actual prerequisites land rather than waiting for every first-wave feature. Integration and review run throughout the week, with the final protected block reserved for the combined product. The [delivery schedule](../maintainers/next-playable-week.md#parallel-delivery-plan) specifies dependency gates and shared files.
+The first four working hours establish the shared contracts and current baseline. Parallel work then proceeds in small mergeable slices; the second wave can start when its actual prerequisites land rather than waiting for every first-wave feature. Integration and review run throughout the week, with the final protected block reserved for the combined product. The [delivery schedule](../maintainers/parallel-batch-01-playable-week.md#parallel-delivery-plan) specifies dependency gates and shared files.
 
 Priority remains correctness first, then foundation, then fuller gameplay and presentation. Existing historical fixes are not rebuilt. A useful limit bounds operation work and explains overflow; an arbitrary retained-memory cap, omitted witness or canned success is not evidence that the engine scales.
 
 ### Second-wave outcomes
 
-| Package | What will actually change                                                                                                                                                                                                                         | Complete task definition                                               |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| PW07    | The bundled world authors hunger, energy, damage, recovery and revival; a world without food/energy meters works through the same engine and UI. Both stages of the approved survival project are in scope.                                       | [Survival](next-playable-week/survival.md)                             |
-| PW08    | Continuing sightings keep their identities; membership updates touch actual changes, and cached brief-sighting calculations survive unrelated work when their dependencies prove reuse safe.                                                      | [Simulation performance](next-playable-week/simulation-performance.md) |
-| PW09    | Character word recall handles Unicode consistently, and one character's unrelated memories/vectors no longer invalidate another's unchanged cached reads. Current growing-history workloads are measured.                                         | [Memory retrieval](next-playable-week/memory-retrieval.md)             |
-| PW10    | A character can choose a finite gather/store/fuel activity, learn supported realized steps for later reuse, or deliberately watch a fire until a deadline. Conditional fire watching is a one-session activity, not falsely described as learned. | [Camp activities](next-playable-week/camp-activities.md)               |
-| PW11    | Conversation and saved work stay accessible together; exact revisions can be compared, recipe parameters edited without a model call, checked and deliberately applied under existing authority.                                                  | [Invention workspace](next-playable-week/invention-workspace.md)       |
+| Package | What will actually change                                                                                                                                                                                                                         | Complete task definition                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| PW07    | The bundled world authors hunger, energy, damage, recovery and revival; a world without food/energy meters works through the same engine and UI. Both stages of the approved survival project are in scope.                                       | [Survival](parallel-batch-01-playable-week/survival.md)                             |
+| PW08    | Continuing sightings keep their identities; membership updates touch actual changes, and cached brief-sighting calculations survive unrelated work when their dependencies prove reuse safe.                                                      | [Simulation performance](parallel-batch-01-playable-week/simulation-performance.md) |
+| PW09    | Character word recall handles Unicode consistently, and one character's unrelated memories/vectors no longer invalidate another's unchanged cached reads. Current growing-history workloads are measured.                                         | [Memory retrieval](parallel-batch-01-playable-week/memory-retrieval.md)             |
+| PW10    | A character can choose a finite gather/store/fuel activity, learn supported realized steps for later reuse, or deliberately watch a fire until a deadline. Conditional fire watching is a one-session activity, not falsely described as learned. | [Camp activities](parallel-batch-01-playable-week/camp-activities.md)               |
+| PW11    | Conversation and saved work stay accessible together; exact revisions can be compared, recipe parameters edited without a model call, checked and deliberately applied under existing authority.                                                  | [Invention workspace](parallel-batch-01-playable-week/invention-workspace.md)       |
 
 ### Important work deliberately outside this allocation
 
@@ -143,7 +143,7 @@ Source provenance and qualifications remain in the [game research](../repertoire
 
 ## Acceptance and evidence
 
-The [delivery tracker](../maintainers/next-playable-week.md) owns task status and completion criteria. A week demo is not acceptance by itself. Required evidence includes the ordinary journey, negative authority/staleness cases, current-format restart, actual browser interactions and the shared engineering gates. A native supplied proposal proves mechanics; it does not prove that a model can invent or choose the behavior. If live generation or voluntary NPC selection is not demonstrated, leave that acceptance open rather than adding a forced script.
+The [delivery tracker](../maintainers/parallel-batch-01-playable-week.md) owns task status and completion criteria. A week demo is not acceptance by itself. Required evidence includes the ordinary journey, negative authority/staleness cases, current-format restart, actual browser interactions and the shared engineering gates. A native supplied proposal proves mechanics; it does not prove that a model can invent or choose the behavior. If live generation or voluntary NPC selection is not demonstrated, leave that acceptance open rather than adding a forced script.
 
 Collect matched browser/task timings and work/byte/query counts. This week can demonstrate that these changed paths avoid repeated whole-world scans and per-token inference; it cannot establish million-memory or dense-population capacity. No acceptance criterion may be satisfied by dropping history, shrinking the scene or lowering stored memories without disclosing the changed workload.
 
@@ -151,6 +151,6 @@ The proposal makes explicit implementation choices for each assigned package. Th
 
 ## Maintained records
 
-- Implementation: [PW01–PW11](../maintainers/next-playable-week.md), beneath the linked INV/EWF/PO/AC/CR/UIUX/WW owners. Parent projects remain open beyond this slice.
+- Implementation: [PW01–PW11](../maintainers/parallel-batch-01-playable-week.md), beneath the linked INV/EWF/PO/AC/CR/UIUX/WW owners. Parent projects remain open beyond this slice.
 - Limits and constraints: [inventions](../limits/inventions.md), [objects](../limits/objects.md), [interface](../limits/interface.md), [AI execution](../limits/ai-execution.md); existing [limits audit](../maintainers/limits-audit.md) retains scaling priorities.
-- Related design: [technical design](next-playable-week-tech-design.md); proposed world content: [camp containers](../worlds/base/camp-containers.md).
+- Related design: [technical design](parallel-batch-01-playable-week-tech-design.md); proposed world content: [camp containers](../worlds/base/camp-containers.md).

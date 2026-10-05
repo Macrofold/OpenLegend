@@ -12,7 +12,7 @@ const awake: StatusCondition = {
 };
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 1,
+  version: 2,
   zeroHealth: {
     player: 'incapacitate',
     npc: 'die',
@@ -41,6 +41,14 @@ export const BASE_BODY_POLICY: BodyPolicy = {
     refusalText: 'Camp recovery is available when health or food is critically low.',
   },
   revival: { fillToMaximum: ['wilderness:fullness', 'wilderness:energy'] },
+  remains: {
+    rotAfterSeconds: 3 * 86400,
+    removeAfterSeconds: 7 * 86400,
+    freshLabel: 'Dead',
+    rottingLabel: 'Rotting',
+    rotNarration: '{subject.name:definite} began to rot.',
+    removalNarration: 'The remains of {subject.name:definite} decomposed.',
+  },
   consumption: {
     attributeId: 'wilderness:fullness',
     quantityProperty: 'nutrition',

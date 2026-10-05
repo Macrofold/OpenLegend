@@ -11,6 +11,7 @@ import {
   SPATIAL_LIMITS,
   type SightObstacle,
   supportBelow,
+  walkSurfaceLine,
   type WorldPoint,
 } from '@open-legend/spatial';
 import {
@@ -27,11 +28,12 @@ import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
 import { sensesFor, SIGHT_BODY_FRACTIONS } from './perception.js';
-import { sameSurfacePoint, spatialCandidates } from './spatial.js';
+import { spatialCandidates } from './spatial.js';
 import {
   bodyProfile,
   hasWorldPlacement,
   spatialMap,
+  supportedPosition,
   worldPosition,
   worldSupport,
 } from './spatial-state.js';
@@ -40,6 +42,7 @@ import { TIME_EPSILON } from './simulation-time.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
+import { escapeDuration } from './worlds/base/animal-behavior.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
@@ -62,7 +65,7 @@ function motionReach(world: WorldState, entity: Entity, seconds: number): number
   if (entity.spatial.flight)
     return world.flightRoutes[entity.spatial.flight.routeId]!.speed * seconds;
   return entity.animal
-    ? entity.animal.fleeSeconds > 0 && entity.animal.fleeFrom
+    ? entity.animal.danger > 0 && entity.animal.threatPosition
       ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * seconds + 0.4
       : 0.4
     : 0;
@@ -138,7 +141,7 @@ export function nativeMotionInterval(
       !entity ||
       (entity.spatial.fallVelocity === undefined &&
         !entity.spatial.flight &&
-        !(entity.animal && (entity.animal.fleeSeconds > 0 || travelFor(id) < 0.4))) ||
+        !(entity.animal && (entity.animal.danger > 0 || travelFor(id) < 0.4))) ||
       capabilityBlocked(world, entity, 'locomotion')
     )
       continue;
@@ -183,8 +186,8 @@ export function nativeMotionInterval(
     } else if (entity.animal) {
       const travel = travelFor(id);
       const animal = entity.animal;
-      if (animal.fleeSeconds > 0 && animal.fleeFrom)
-        bound = Math.min(bound, animal.fleeSeconds, travel / nativeMovementSpeed(entity, true));
+      if (animal.danger > 0 && animal.threatPosition)
+        bound = Math.min(bound, escapeDuration(entity), travel / nativeMovementSpeed(entity, true));
       else if (travel < 0.4 && animal.wanderSeconds > TIME_EPSILON)
         bound = Math.min(bound, animal.wanderSeconds);
     }
@@ -227,33 +230,32 @@ function walkerTracks(entity: Entity, seconds: number): MotionTrack[] | 'sampled
     { at: [0, seconds], pose: [start, start] },
   ];
 }
-/** A flee step takes the first walkable of three directions; each and staying put are outcomes.
- * A shorter actual slice can make a direction walkable whose full step leaves the surface, so
- * every direction is predicted along its planar support. */
+/** Steering is chosen at the start boundary. Predict that saved heading and refusal,
+ * keeping sight crossings consistent with actual movement. */
 function fleeTracks(world: WorldState, entity: Entity, seconds: number): MotionTrack[] | undefined {
   const animal = entity.animal;
-  if (!animal || !(animal.fleeSeconds > 0) || !animal.fleeFrom) return;
-  const surface = surfaceById(spatialMap(world), worldSupport(entity) ?? '');
-  const start = { ...worldPosition(entity) };
-  let dx = start.x - animal.fleeFrom.x,
-    dz = start.z - animal.fleeFrom.z;
-  const length = Math.hypot(dx, dz) || 1;
-  dx /= length;
-  dz /= length;
-  const step = nativeMovementSpeed(entity, true) * seconds;
+  if (!animal || !(animal.danger > 0) || !animal.threatPosition) return;
+  const start = supportedPosition(entity);
+  if (!start) return;
   const outcomes: MotionTrack[] = [{ at: [0, seconds], pose: [start, start] }];
-  if (!surface) return outcomes;
-  for (const [x, z] of [
-    [dx, dz],
-    [-dz, dx],
-    [dz, -dx],
-  ] as const) {
-    const end = { x: start.x + x * step, z: start.z + z * step };
+  if (animal.escapeHeading === null) return outcomes;
+  const step = nativeMovementSpeed(entity, true) * seconds;
+  const end = {
+    x: start.x + Math.cos(animal.escapeHeading) * step,
+    z: start.z + Math.sin(animal.escapeHeading) * step,
+  };
+  const path = walkSurfaceLine(spatialMap(world), start, end.x, end.z, bodyProfile(entity));
+  // A refused full horizon can still admit a shorter slice before the obstruction.
+  // Leave it under the existing sampled travel bound rather than certify staying put.
+  if (!path) return;
+  if (step > 0)
     outcomes.push({
-      at: [0, seconds],
-      pose: [start, { ...end, y: surfaceHeight(surface, end.x, end.z) }],
+      at: [
+        0,
+        ...path.map((point) => (Math.hypot(point.x - start.x, point.z - start.z) / step) * seconds),
+      ],
+      pose: [start, ...path],
     });
-  }
   return outcomes;
 }
 
@@ -510,7 +512,7 @@ function crossingGeometryCurrent(world: WorldState, cache: CrossingCache): boole
  * certainty is separately rederived through flight/walker/flee owners, including route/wait,
  * support, speed, body sweep and locomotion restrictions. No entity or draft escapes here.
  * New dependencies in either exact predicate or movement owner must update this certificate.
- * docs/projects/next-playable-week/simulation-performance.md#4-retain-only-dependency-certified-certain-pairs--10-hours
+ * docs/projects/parallel-batch-01-playable-week/simulation-performance.md#4-retain-only-dependency-certified-certain-pairs--10-hours
  */
 function bodyCertificate(
   world: WorldState,
@@ -634,7 +636,7 @@ function freshCertainTrack(
       const track = walkerCertainTrack(world, entity, horizon);
       return track ? { at: now, until: now + horizon, track, body } : undefined;
     }
-    if ((entity.animal?.fleeSeconds ?? 0) > 0) return;
+    if ((entity.animal?.danger ?? 0) > 0) return;
   }
   const wait = entity.spatial.flight?.waitSeconds;
   const wander = !entity.spatial.flight ? entity.animal?.wanderSeconds : undefined;
@@ -823,7 +825,7 @@ export function sensoryCrossingBound(
       !(
         entity.spatial.flight ||
         entity.actor?.action?.stage === 'approaching' ||
-        (entity.animal?.fleeSeconds ?? 0) > 0
+        (entity.animal?.danger ?? 0) > 0
       )
     )
       continue;

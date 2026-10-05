@@ -1,10 +1,10 @@
-# Next priority batch — technical design
+# Parallel batch 02 — Foundations and usability — technical task definitions
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
 
-Originally prepared as a documentation-only proposal. Read the [feature specification](next-priority-batch-feature-spec.md) for priorities, scenarios and exclusions. Source baseline is local `main` at `c2e670b0`; `origin/main` was refreshed to `1253415b` and was already an ancestor, 21 commits behind. No branch/history change was made. Revalidate changed owners against the worker's actual starting source rather than treating these line locations as immutable.
+Originally prepared as a documentation-only proposal. Read the [feature specification](parallel-batch-02-foundations-and-usability-feature-spec.md) for priorities, scenarios and exclusions. Source baseline is local `main` at `c2e670b0`; `origin/main` was refreshed to `1253415b` and was already an ancestor, 21 commits behind. No branch/history change was made. Revalidate changed owners against the worker's actual starting source rather than treating these line locations as immutable.
 
 ## Parallel boundaries
 
@@ -27,13 +27,13 @@ The task sections specify the behavior to demonstrate and source paths to shorte
 
 ## Maintained records
 
-- Implementation: [NP01–NP05 tracker](../../maintainers/next-priority-batch.md), with parent ownership and unresolved acceptance.
+- Implementation: [NP01–NP05 tracker](../../maintainers/parallel-batch-02-foundations-and-usability.md), with parent ownership and unresolved acceptance.
 - Limits: [AI execution](../../limits/ai-execution.md), [cognition](../../limits/cognition.md), [native work](../../limits/native-work.md), [inventions](../../limits/inventions.md), [base world](../../limits/base-world.md), [interface](../../limits/interface.md), [objects](../../limits/objects.md) and [narration/conversation](../../limits/narration.md). Individual sections resolve the relevant limits and preserve broader gaps.
-- Intended behavior and selection rationale: [feature specification](next-priority-batch-feature-spec.md). Standalone handoffs: [task prompts](next-priority-batch-prompts.md).
+- Intended behavior and selection rationale: [feature specification](parallel-batch-02-foundations-and-usability-feature-spec.md). Standalone handoffs: [task prompts](parallel-batch-02-foundations-and-usability-prompts.md).
 
 ## NP01 — Reliable AI outcomes and spending
 
-**Status: Completed October 3, 2026 (NP01 scoped acceptance).** [Evidence](../../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) records checks and their limits. [Feature behavior](next-priority-batch-feature-spec.md#np01--reliable-ai-outcomes-and-spending) defines the user-visible target. The design repairs existing contracts in place. It introduces no provider retry, new spending policy or parallel result schema.
+**Status: Completed October 3, 2026 (NP01 scoped acceptance).** [Evidence](../../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026) records checks and their limits. [Feature behavior](parallel-batch-02-foundations-and-usability-feature-spec.md#np01--reliable-ai-outcomes-and-spending) defines the user-visible target. The design repairs existing contracts in place. It introduces no provider retry, new spending policy or parallel result schema.
 
 ### Authorized NP01 implementation plan — October 2, 2026
 
@@ -144,15 +144,15 @@ Demonstrate the following through the actual affected callers using verification
 
 ### Documentation mapping
 
-Update [NP01](../../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending) and reconcile [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures), the [level-1 TODO entries](../../maintainers/TODO.md#level-1-decisions-follow-up), [CR12](../../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence), [LA182](../../limits/ai-execution.md#la182) and [CG09](../../limits/cognition.md#cg09) against actual delivery. Preserve MW05's separately requested request-body coverage if it remains unmet; do not close [WAF02](../../maintainers/TODO.md#workshop-transport-and-funding-regression-coverage), [IER04](../../maintainers/TODO.md#invention-extensibility-review-regression-todos), [WW07/WW11](../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) or broader CR12 merely from this bounded repair. Where evidence satisfies an existing subrequirement, mark/link that exact requirement rather than duplicating another complete task.
+Update [NP01](../../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending) and reconcile [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures), the [level-1 TODO entries](../../maintainers/TODO.md#level-1-decisions-follow-up), [CR12](../../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence), [LA182](../../limits/ai-execution.md#la182) and [CG09](../../limits/cognition.md#cg09) against actual delivery. Preserve MW05's separately requested request-body coverage if it remains unmet; do not close [WAF02](../../maintainers/TODO.md#workshop-transport-and-funding-regression-coverage), [IER04](../../maintainers/TODO.md#invention-extensibility-review-regression-todos), [WW07/WW11](../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) or broader CR12 merely from this bounded repair. Where evidence satisfies an existing subrequirement, mark/link that exact requirement rather than duplicating another complete task.
 
 Canonical behavior belongs in [AI providers](../../ai-providers.md#receipts-outcomes-and-accounting) and the affected Architecture spending/decision descriptions. Record concise evidence in the existing relevant provider/level-1 verification report and link its exact section. LA182 must state when the last hidden clamp actually became absent; CG09 must retain the unresolved identity-size/product tradeoff while removing only the generic-error defect. The existing [AI execution](../../limits/ai-execution.md) and [cognition](../../limits/cognition.md) inventories remain the limits owners. No new discretionary cap is proposed; safe representation is required integrity. Record consequential corrections in the existing documentation changelog without presenting historical failed behavior as current.
 
 ### Maintained records
 
-- Implementation: [NP01](../../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending), [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures), and the exact overlapping records mapped above.
+- Implementation: [NP01](../../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending), [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures), and the exact overlapping records mapped above.
 - Limits: [AI execution](../../limits/ai-execution.md), [CG08](../../limits/cognition.md#cg08), [CG09](../../limits/cognition.md#cg09).
-- Related behavior: [feature specification](next-priority-batch-feature-spec.md#np01--reliable-ai-outcomes-and-spending), [AI contract](../../ai-providers.md#receipts-outcomes-and-accounting).
+- Related behavior: [feature specification](parallel-batch-02-foundations-and-usability-feature-spec.md#np01--reliable-ai-outcomes-and-spending), [AI contract](../../ai-providers.md#receipts-outcomes-and-accounting).
 
 ## NP02 — Sensory work follows changed objects
 
@@ -399,7 +399,7 @@ Requested follow-up review, October 3: a focused server scenario confirmed that 
 
 ### Documentation reconciliation
 
-Update [camp routines](../../worlds/base/camp-routines.md), [camp activity design](../next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [inventory contract](../../ui-ux/inventory.md#search-sorting-and-filtering-at-scale), [IW01](../../limits/interface.md#iw01--inventory-task-workspace), [CR01](../../limits/base-world.md#cr01--proposed-finite-camp-activities) and the relevant [object query limits](../../limits/objects.md). Reconcile this scoped child against [PW03/PW04/PW10](../../maintainers/next-playable-week.md), [AC07/AC11](../../maintainers/action-capabilities.md), [BW19](../../maintainers/base-world.md#bw19--camp-fire-care) and [UIUX04](../../maintainers/ui-ux.md#uiux04). Keep wider learning, shared controls and performance claims open unless separately demonstrated. No new numerical policy is proposed; extend the existing envelopes with complete continuation.
+Update [camp routines](../../worlds/base/camp-routines.md), [camp activity design](../parallel-batch-01-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [inventory contract](../../ui-ux/inventory.md#search-sorting-and-filtering-at-scale), [IW01](../../limits/interface.md#iw01--inventory-task-workspace), [CR01](../../limits/base-world.md#cr01--proposed-finite-camp-activities) and the relevant [object query limits](../../limits/objects.md). Reconcile this scoped child against [PW03/PW04/PW10](../../maintainers/parallel-batch-01-playable-week.md), [AC07/AC11](../../maintainers/action-capabilities.md), [BW19](../../maintainers/base-world.md#bw19--camp-fire-care) and [UIUX04](../../maintainers/ui-ux.md#uiux04). Keep wider learning, shared controls and performance claims open unless separately demonstrated. No new numerical policy is proposed; extend the existing envelopes with complete continuation.
 
 ## NP05 — Read NPC replies before generation finishes
 
@@ -431,7 +431,7 @@ This affects approximately 190 existing parser logic lines plus a substantially 
 
 1. Pin the runtime dependency in `packages/ai` and the existing workspace lockfile. Replace the handwritten lexer, token buffers, path tracking and captured JSON reparsing with the library's incremental parser and selected complete-object callback. Keep only byte/depth/key bounds, decoded duplicate-key and root-field rejection, finite numbers and well-formed Unicode checks. Update the one caller directly; retain no former constructor overload or alternative parser.
 2. Exercise the replacement through the real preview owner and existing injected provider/native scenario, covering split Unicode/escapes, private and wrong-recipient speech, late malformed/duplicate output, withdrawal and actual final history. Use no external provider calls, reuse unchanged browser evidence, and run focused existing AI checks plus type/build/format/link checks. Release parser references when decoding finishes or fails.
-3. Review the complete replacement and caller diff, reconcile the provider/decoder owner, limits, NP05/NC19 tracking and verification report, and remove superseded code and temporary preservation state. Completion means one installed parser implementation, unchanged safe disclosure/final admission, passing selected checks and accurate remaining qualification; the replacement does not verify native IME behavior. Mike subsequently deferred that check with other-language support; see the [current NP05 acceptance scope](../../maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes).
+3. Review the complete replacement and caller diff, reconcile the provider/decoder owner, limits, NP05/NC19 tracking and verification report, and remove superseded code and temporary preservation state. Completion means one installed parser implementation, unchanged safe disclosure/final admission, passing selected checks and accurate remaining qualification; the replacement does not verify native IME behavior. Mike subsequently deferred that check with other-language support; see the [current NP05 acceptance scope](../../maintainers/parallel-batch-02-foundations-and-usability.md#np05--read-npc-replies-before-generation-finishes).
 
 **Authorized implementation definition.** The feature section defines the restricted direct-conversation experience. [NC19](../../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies) remains its parent. Follow current `AGENTS.md` for implementation workflow and verification; the scenarios here define required outcomes, not a separate test-authoring policy.
 

@@ -1,4 +1,4 @@
-# Chosen camp activities and reusable finite methods
+# Parallel batch 01 — Chosen camp activities and reusable finite methods
 
 | Status      | Current progress                                                                                                      | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
@@ -6,7 +6,7 @@
 
 Originally prepared as a proposed design; current delivery and remaining acceptance are recorded in the linked PW10 tracker. Historical baseline: local `main` at `6664144a`, inspected October 2, 2026. This brief expands engineer 3's assignment within the five-engineer, 400-hour proposal: 24 hours for invented containers, 40 hours for the activities below, and 16 hours for combined integration. It depends on the container and shared-family contracts; it is not another action executor.
 
-[Feature specification](../next-playable-week-feature-spec.md) · [Technical design](../next-playable-week-tech-design.md) · [PW10 assignment](../../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) · [Authored rules and wording](../../worlds/base/camp-routines.md)
+[Feature specification](../parallel-batch-01-playable-week-feature-spec.md) · [Technical design](../parallel-batch-01-playable-week-tech-design.md) · [PW10 assignment](../../maintainers/parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods) · [Authored rules and wording](../../worlds/base/camp-routines.md)
 
 ## Two complete results, with different kinds of reuse
 
@@ -199,7 +199,7 @@ Not delivered by PW10: learning/publishing arbitrary conditional control; genera
 
 ## Maintained records
 
-- Implementation: [PW10](../../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods), beneath AC06/AC08/AC09, AE06/AE08/AE09, AG03/AG06/AG09, BW19 and the object/claims owners.
+- Implementation: [PW10](../../maintainers/parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods), beneath AC06/AC08/AC09, AE06/AE08/AE09, AG03/AG06/AG09, BW19 and the object/claims owners.
 - Limits: [AEL09 semantic stock binding/reuse](../../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse) and [CR01 camp choices](../../limits/base-world.md#cr01--proposed-finite-camp-activities); existing AEL01/AEL06 and [BW21/R01](../../maintainers/base-world.md#bw21--reserve-a-portion-for-a-named-person) retain their wider meaning.
 - World policy: [camp routines](../../worlds/base/camp-routines.md), with [containers](../../worlds/base/camp-containers.md) and current [fire care](../../worlds/base/survival.md#tending-the-campfire).
 

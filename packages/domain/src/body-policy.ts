@@ -9,7 +9,7 @@ import { isWalkable } from './spatial.js';
 import { bodyProfile } from './spatial-state.js';
 
 /** Finite installed body services. Policy chooses existing outcomes, never authority.
- * docs/projects/next-playable-week/survival.md#installed-body-policy */
+ * docs/projects/parallel-batch-01-playable-week/survival.md#installed-body-policy */
 export interface BodyPolicy {
   id: string;
   version: number;
@@ -31,6 +31,14 @@ export interface BodyPolicy {
     refusalText: string;
   };
   revival: { fillToMaximum: string[] };
+  remains: null | {
+    rotAfterSeconds: number;
+    removeAfterSeconds: number;
+    freshLabel: string;
+    rottingLabel: string;
+    rotNarration: string;
+    removalNarration: string;
+  };
   consumption: null | {
     attributeId: string;
     quantityProperty: 'nutrition';
@@ -82,6 +90,7 @@ export function validateBodyPolicy(
     'zeroHealth',
     'recovery',
     'revival',
+    'remains',
     'consumption',
     'carryingConcern',
     'backgroundThinking',
@@ -159,6 +168,28 @@ export function validateBodyPolicy(
   )
     throw new Error('Invalid revival meters.');
   policy.revival.fillToMaximum.forEach(numeric);
+  if (policy.remains !== null) {
+    const remains = policy.remains;
+    fields(remains, [
+      'rotAfterSeconds',
+      'removeAfterSeconds',
+      'freshLabel',
+      'rottingLabel',
+      'rotNarration',
+      'removalNarration',
+    ]);
+    if (
+      !Number.isFinite(remains.rotAfterSeconds) ||
+      remains.rotAfterSeconds <= 0 ||
+      !Number.isFinite(remains.removeAfterSeconds) ||
+      remains.removeAfterSeconds <= remains.rotAfterSeconds
+    )
+      throw new Error('Invalid remains lifecycle deadlines.');
+    text(remains.freshLabel);
+    text(remains.rottingLabel);
+    text(remains.rotNarration, true);
+    text(remains.removalNarration, true);
+  }
   if (policy.consumption !== null) {
     const consumption = policy.consumption;
     fields(consumption, [

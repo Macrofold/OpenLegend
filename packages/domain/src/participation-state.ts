@@ -12,6 +12,7 @@ export function activelyParticipates(entity: Entity | undefined): boolean {
   return (
     !!entity &&
     !entity.retirement &&
+    entity.remains?.phase !== 'removed' &&
     entity.placement?.mode === 'world' &&
     entity.actor?.participation?.phase !== 'inactive'
   );

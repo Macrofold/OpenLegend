@@ -81,6 +81,8 @@ import {
 } from './objects.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
+import { advanceRemains } from './remains.js';
+import { advanceAnimal, rememberAttack } from './worlds/base/animal-behavior.js';
 import { actionTargetsCurrent } from './action-targets.js';
 import { observerDescription, observerName } from './worlds/base/knowledge.js';
 import { setBodyHealth } from './body-state.js';
@@ -736,7 +738,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
 
 /** Current first-step feasibility. It reads authority and resources, and builds only a
  * temporary route/action description; no effects, randomness, receipts or drafts run here.
- * Later typed plan outputs remain future requirements. docs/projects/next-playable-week-tech-design.md#admission-before-execution
+ * Later typed plan outputs remain future requirements. docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
 export function nativeOperationAvailable(world: WorldState, command: Command): Outcome {
   const nested = inWorkGroup();
@@ -914,8 +916,20 @@ function prepareNativeOperation(
         return reject('depleted', 'There is nothing left to gather here.');
       if (!visible(world, actor, target))
         return reject('not-visible', 'Move close enough to see that resource.');
+      if (command.itemId) {
+        const tool = itemFor(world, command.itemId);
+        if (
+          component.equippedItemId !== command.itemId ||
+          !accessiblePossession(world, actor.id, command.itemId) ||
+          !tool ||
+          world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
+            target.resource.definitionId
+        )
+          return reject('tool-unavailable', 'Equip that exact compatible gathering tool first.');
+      }
       action = temporary('gather', target.resource.workSeconds);
       action.targetId = target.id;
+      action.itemId = command.itemId;
       break;
     }
     case 'prepare': {
@@ -992,7 +1006,12 @@ function prepareNativeOperation(
     }
     case 'harvest': {
       const target = getOwn(world.entities, command.targetId);
-      if (!target?.remains || target.remains.harvested)
+      if (
+        !target?.remains ||
+        target.remains.phase !== 'fresh' ||
+        target.remains.harvested ||
+        !target.remains.yields.length
+      )
         return reject('not-harvestable', 'There are no unharvested remains there.');
       if (!visible(world, actor, target))
         return reject('not-visible', 'Move within sight of the remains.');
@@ -2034,10 +2053,13 @@ function completeAction(
         failAction(world, actor, events, 'the resource is depleted.');
         return;
       }
-      // Carried compatible tools select one bounded yield; they never multiply finite supply.
+      // Direct tool targeting binds one equipped lot; ordinary gathering uses carried tools.
+      // Neither path multiplies finite supply.
       // docs/architecture.md#shared-invention-workflow
       const toolYield = gatheringYield(
-        inventoryFor(world, actor.id).map((item) => world.itemDefinitions[item.definitionId]),
+        (action.itemId ? [itemFor(world, action.itemId)!] : inventoryFor(world, actor.id)).map(
+          (item) => world.itemDefinitions[item.definitionId],
+        ),
         target.resource.definitionId,
       );
       const source = {
@@ -2154,8 +2176,7 @@ function completeAction(
       );
       const damage = before - target.actor.health;
       if (target.animal && target.actor.alive) {
-        target.animal.fleeFrom = { ...worldPosition(actor) };
-        target.animal.fleeSeconds = 110;
+        rememberAttack(world, target, actor);
       }
       emit(
         world,
@@ -2195,13 +2216,12 @@ function completeAction(
         failAction(world, actor, events, 'compatible ammunition is no longer available.');
         return;
       }
-      const accuracy = launcher.accuracy * (target.animal.fleeSeconds > 0 ? 0.85 : 1);
+      const accuracy = launcher.accuracy * (target.animal.danger > 0 ? 0.85 : 1);
       const hit = nextRandom(world) < accuracy;
       action.strikeOutcome = hit ? 'hit' : 'miss';
       const damage = hit ? launcher.damage + bonus : 0;
       const actualDamage = Math.min(target.actor!.health, damage);
-      target.animal.fleeFrom = { ...worldPosition(actor) };
-      target.animal.fleeSeconds = 110;
+      rememberAttack(world, target, actor);
       emit(
         world,
         events,
@@ -2229,7 +2249,13 @@ function completeAction(
     }
     case 'harvest': {
       const target = world.entities[action.targetId ?? ''];
-      if (!target?.remains || target.remains.harvested || !canCut(world, actor.id)) {
+      if (
+        !target?.remains ||
+        target.remains.phase !== 'fresh' ||
+        target.remains.harvested ||
+        !target.remains.yields.length ||
+        !canCut(world, actor.id)
+      ) {
         failAction(
           world,
           actor,
@@ -2411,6 +2437,19 @@ function advanceAction(
       'the weapon, capability or perceived target is no longer available.',
     );
     return;
+  }
+  if (action.type === 'gather' && action.itemId) {
+    const tool = itemFor(world, action.itemId);
+    if (
+      actor.actor!.equippedItemId !== action.itemId ||
+      !accessiblePossession(world, actor.id, action.itemId) ||
+      !tool ||
+      world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
+        world.entities[action.targetId!]?.resource?.definitionId
+    ) {
+      failAction(world, actor, events, 'the equipped gathering tool is no longer available.');
+      return;
+    }
   }
   if (action.type === 'follow') {
     if (action.follow?.until !== undefined && world.simTime >= action.follow.until) {
@@ -2632,8 +2671,7 @@ function advanceAction(
       );
     const damage = before - target.actor!.health;
     if (target.animal && target.actor!.alive) {
-      target.animal.fleeFrom = { ...worldPosition(actor) };
-      target.animal.fleeSeconds = 110;
+      rememberAttack(world, target, actor);
     }
     action.strikeOutcome = hit ? 'hit' : 'miss';
     action.strikePhase = 'recovery';
@@ -2664,61 +2702,6 @@ function advanceAction(
   }
   if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
 }
-function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void {
-  const animal = entity.animal;
-  if (
-    !animal ||
-    !entity.actor?.alive ||
-    entity.actor.incapacitated ||
-    entity.actor.action ||
-    entity.spatial.flight ||
-    entity.spatial.fallVelocity !== undefined
-  )
-    return;
-  if (animal.fleeSeconds > 0 && animal.fleeFrom) {
-    animal.fleeSeconds = Math.max(0, animal.fleeSeconds - seconds);
-    let dx = worldPosition(entity).x - animal.fleeFrom.x;
-    let dz = worldPosition(entity).z - animal.fleeFrom.z;
-    const length = Math.hypot(dx, dz) || 1;
-    dx /= length;
-    dz /= length;
-    for (const vector of [
-      { y: 0, x: dx, z: dz },
-      { y: 0, x: -dz, z: dx },
-      { y: 0, x: dz, z: -dx },
-    ]) {
-      const destination = {
-        y: 0,
-        x: worldPosition(entity).x + vector.x * nativeMovementSpeed(entity, true) * seconds,
-        z: worldPosition(entity).z + vector.z * nativeMovementSpeed(entity, true) * seconds,
-      };
-      const point = sameSurfacePoint(world, entity, destination.x, destination.z),
-        start = supportedPosition(entity);
-      if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity))) {
-        setSpatialPosition(world, entity, point, point.surfaceId);
-        break;
-      }
-    }
-  } else {
-    animal.wanderSeconds -= seconds;
-    // A deadline within TIME_EPSILON is due now, whatever residue slicing left on the timer.
-    if (animal.wanderSeconds <= TIME_EPSILON) {
-      const angle = nextRandom(world) * Math.PI * 2;
-      const destination = {
-        y: 0,
-        x: worldPosition(entity).x + Math.cos(angle) * 0.4,
-        z: worldPosition(entity).z + Math.sin(angle) * 0.4,
-      };
-      const point = sameSurfacePoint(world, entity, destination.x, destination.z),
-        start = supportedPosition(entity);
-      if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity)))
-        setSpatialPosition(world, entity, point, point.surfaceId);
-      // Retain overshoot. The base horizon is shorter than this minimum wait.
-      animal.wanderSeconds += 120 + Math.floor(nextRandom(world) * 120);
-    }
-  }
-}
-
 /** An installed reservoir can opt into its existing native replenishment controller. */
 
 function nativeReservoirResponse(world: WorldState, actor: Entity): void {
@@ -2936,6 +2919,7 @@ function* advanceWorldNative(
   const mechanicalRevision = (world: WorldState) =>
     stateChangeRevision(world, 'contribution') +
     stateChangeRevision(world, 'body') +
+    stateChangeRevision(world, 'behavior') +
     stateChangeRevision(world, 'participation') +
     stateChangeRevision(world, 'attribute') +
     world.moduleManifest.revision;
@@ -3008,6 +2992,8 @@ function* advanceWorldNative(
     let statusIds = participants.statuses;
     if (!mechanics) {
       reconcileResourceReservations(world);
+      if (advanceRemains(world, participants.ambient, events))
+        participants = nativeParticipants(world);
       reconcileItemOffers(world, events);
       advanceAppraisals(world, events);
       for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
@@ -3301,7 +3287,7 @@ function* advanceWorldNative(
           !e.actor.action &&
           !e.spatial.flight &&
           e.spatial.fallVelocity === undefined &&
-          !(e.animal.fleeSeconds > 0 && e.animal.fleeFrom) &&
+          !(e.animal.danger > 0 && e.animal.threatPosition) &&
           !movementRestricted.has(id)
         );
       })
@@ -3320,12 +3306,12 @@ function* advanceWorldNative(
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
         const flightOwned = !!entity.spatial.flight || entity.spatial.fallVelocity !== undefined;
-        const fleeing = !!entity.animal?.fleeSeconds;
+        const fleeing = !!entity.animal?.danger;
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
         // Landing grants future animal movement, never the flight interval just consumed.
         if (!flightOwned && !wandered.has(id)) advanceAnimal(world, entity, seconds);
         // A flee end silently changes activeWork, so its captured energy rate ends here.
-        fleeEnded ||= fleeing && !entity.animal?.fleeSeconds;
+        fleeEnded ||= fleeing && !entity.animal?.danger;
       }
       trackOccupancy(entity);
     }
@@ -3390,6 +3376,8 @@ function* advanceWorldNative(
     reconcileResourceReservations(world);
     reconcileItemOffers(world, events);
     advanceAppraisals(world, events);
+    if (advanceRemains(world, participants.ambient, events))
+      participants = nativeParticipants(world);
     const sharedBoundary =
       mechanics.remainingSeconds === 0 ||
       movementEffects ||
@@ -3576,7 +3564,7 @@ function* updateEncounters(
       if (removed.length || added.length) {
         // Compare immutable membership before obtaining the draft. Continuing bindings are
         // neither reconstructed nor reassigned. New identities retain exposed-array order.
-        // docs/projects/next-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
+        // docs/projects/parallel-batch-01-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
         const episodes = ((world.perceptionEpisodes ??= {})[actor.id] ??= {});
         for (const id of removed) delete episodes[id];
         for (const id of added)

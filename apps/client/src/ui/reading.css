@@ -54,7 +54,19 @@
 }
 
 .ol-panel-body:has(> .ol-journal) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
+}
+
+.ol-panel-body:has(> .ol-journal) > button {
+  flex-shrink: 0;
+}
+
+.ol-panel-body > .ol-journal {
+  flex: 1;
+  height: auto;
 }
 
 .ol-reading-controls {

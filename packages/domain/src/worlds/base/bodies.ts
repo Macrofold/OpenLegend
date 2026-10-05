@@ -1,13 +1,29 @@
 import { initializeAttributes } from '../../world-modules.js';
+import { namePhrase } from '@open-legend/language';
 import type { AttributeDefinition } from '../../world-modules.js';
 import { seedAgency } from '../../agency.js';
 import type { ActorComponent } from '../../types.js';
+import type { Entity, ItemDefinition } from '../../types.js';
 import type { LivingBody } from '../../living.js';
 
 // Authored starting anatomy and animal capabilities; lifecycle integrity remains generic.
 // docs/worlds/base/survival.md
 /** The bundled world's species; typed requests and bodies read this one list. */
-export const BASE_SPECIES = ['human', 'deer', 'hare', 'construct', 'bird'] as const;
+export const BASE_SPECIES = ['human', 'deer', 'hare', 'construct', 'bird', 'wolf', 'bear'] as const;
+export function describeBodyRemains(
+  entity: Entity,
+  definitions: Record<string, ItemDefinition>,
+): string | undefined {
+  const remains = entity.remains;
+  if (!remains) return;
+  const subject = namePhrase(entity, 'definite');
+  if (remains.phase === 'rotting')
+    return `The remains of ${subject} are rotting.${entity.actor?.body?.harvestYield.length ? ' Fresh materials can no longer be harvested.' : ''}`;
+  if (remains.phase === 'removed') return `The body of ${subject} has decomposed.`;
+  if (remains.harvested) return `The remains of ${subject} have been harvested.`;
+  if (!remains.yields.length) return `The body of ${subject} lies here.`;
+  return `The remains of ${subject} can be harvested for ${remains.yields.map((y) => `${y.quantity} ${definitions[y.definitionId]?.name ?? 'materials'}`).join(', ')}.`;
+}
 export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
   return {
     plan:
@@ -16,7 +32,14 @@ export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
         : species === 'bird'
           ? 'avian'
           : 'quadruped',
-    maxHealth: species === 'human' || species === 'construct' ? 100 : species === 'deer' ? 36 : 18,
+    maxHealth:
+      species === 'human' || species === 'construct'
+        ? 100
+        : species === 'bear'
+          ? 72
+          : species === 'deer' || species === 'wolf'
+            ? 36
+            : 18,
     revision: 0,
     conditions: { injury: 0, wetness: 0, burning: 0 },
     susceptibility: { injury: 1, wetness: 1, burning: 1, healing: 1 },
@@ -24,19 +47,26 @@ export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
       species === 'human' || species === 'construct'
         ? []
         : [
-            { definitionId: 'raw_meat', quantity: species === 'deer' ? 4 : 2 },
-            { definitionId: 'bone', quantity: species === 'deer' ? 3 : 2 },
+            {
+              definitionId: 'raw_meat',
+              quantity: species === 'bear' ? 6 : species === 'deer' || species === 'wolf' ? 4 : 2,
+            },
+            {
+              definitionId: 'bone',
+              quantity: species === 'bear' ? 4 : species === 'deer' || species === 'wolf' ? 3 : 2,
+            },
           ],
   };
 }
 export function nativeActor(
-  species: 'hare' | 'deer' | 'bird',
+  species: 'hare' | 'deer' | 'bird' | 'wolf' | 'bear',
   bornAt: number,
   bindings: readonly AttributeDefinition[],
 ): ActorComponent {
+  const body = livingBody(species);
   const actor: ActorComponent = {
     species,
-    body: livingBody(species),
+    body,
     controller: 'native',
     capabilities: {
       cognition: false,
@@ -44,7 +74,7 @@ export function nativeActor(
       innerWorld: false,
       speech: false,
     },
-    health: species === 'deer' ? 36 : 18,
+    health: body.maxHealth,
     alive: true,
     incapacitated: false,
     bornAt,

@@ -247,7 +247,7 @@ export const RESPONSE_RECEIPT_LIMIT = 300;
 
 /** Only the next selected action must be possible now. Later steps may depend on
  * earlier equipment or typed outputs; their native owner rechecks when they start.
- * docs/projects/next-playable-week-tech-design.md#admission-before-execution
+ * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
 function admitPlan(...args: Parameters<typeof arrangePlan>): Outcome {
   const [world, , , commands] = args;

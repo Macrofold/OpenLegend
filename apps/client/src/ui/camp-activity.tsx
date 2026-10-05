@@ -93,7 +93,8 @@ function readPending(key: string): PendingTask | undefined {
   }
 }
 
-/** Exact-target discovery uses authored role predicates; opening a task is only a read. */
+/** Exact-target discovery uses authored role predicates; opening a task is only a read.
+ * docs/projects/parallel-batch-01-playable-week/camp-activities.md#observation-memory-and-ordinary-ui */
 export function ActivityEntries({
   view,
   targetId,
@@ -283,6 +284,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const stoppable =
     !!activity && ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(activity.status);
   const working = stoppable || view.player.hasWork;
+  const stopAction = view.player.actions.find((action) => action.command.type === 'cancel');
 
   function selectionKey(key: string) {
     const field = descriptor?.fields[key];
@@ -774,24 +776,20 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           {working && (
             <>
               <Button
-                disabled={disabled}
-                onPress={() =>
-                  void perform(
-                    {
-                      id: 'stop-current-task',
-                      label: 'Stop all work',
-                      command: { type: 'cancel' },
-                      enabled: true,
-                    },
-                    'stop',
-                  )
-                }
+                disabled={disabled || !stopAction?.enabled}
+                onPress={() => {
+                  if (stopAction?.enabled)
+                    void perform({ ...stopAction, id: 'stop-current-task' }, 'stop');
+                }}
               >
                 Stop all work
               </Button>
               <p className="ol-caption">
                 Also discards paused work. Completed effects and spent materials remain.
               </p>
+              {!stopAction?.enabled && stopAction?.reason && (
+                <p className="ol-caption">{stopAction.reason}</p>
+              )}
             </>
           )}
           {scheduling}

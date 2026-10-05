@@ -17,13 +17,19 @@ Follow [AGENTS.md](../../../AGENTS.md) and [documentation ownership](../../rules
 - Honor a specified task, feature, category, priority, excluded area or existing branch. “Focus on” weights selection toward that subject; “only” restricts the scope. Explain any necessary enabling work outside the focus rather than quietly broadening it.
 - Use a supplied time horizon, engineering capacity and constraints. Otherwise give reasoned effort ranges and assumptions; do not invent a workweek, hours per engineer, AI productivity multiplier or spending allocation.
 - For an existing plan, audit and extend the relevant definitions rather than restart selection or duplicate documents. For a prompts-only request, reuse adequate designs; identify or fill missing task information within the authorized scope.
-- Clarify only missing information that materially prevents a sound assignment. Use current project evidence and reversible judgment for routine choices.
+- Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work): complete independent investigation and task definitions, then ask for the answers needed to finish the remaining allocation. Do not design dependent contracts, finalize blocked prompts or substitute a design-only assignment to avoid resolving those questions. Preserve an explicitly requested design-only scope; routine choices follow root guidance.
 
 ## Select and define the work
 
 When choosing or reprioritizing the assignments, first apply [experience-led prioritization](../openlegend-prioritize/SKILL.md). Do not restart selection for a prompts-only handoff of an unchanged agreed plan. When selecting, expanding or specifying the assignments, read [planning and task definitions](references/planning.md). Inspect current TODOs, accepted plans, relevant code and active work before deciding what remains. The four areas to consider are established-system bugs, engine/world foundations, world-specific gameplay and presentation. **They are search lenses, not quotas:** any number of assignments, including all of them, may come from one area.
 
 Rank by the project's priorities, impact, urgency, dependencies and risk of building on a weak foundation. Avoid low-value padding, obsolete fixes and duplicate ongoing work. Make a cohesive parallel allocation with concrete completion criteria and realistic shared dependencies. Use the existing [design workflow](../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) when feature/technical specifications need creating or strengthening; its canonical document and approval rules remain controlling.
+
+## Name and register the allocation
+
+For a new allocation, inspect the [parallel-batch register](../../../docs/projects/parallel-batches.md) and existing batch files, then use the next unused sequential number with a descriptive outcome name: `parallel-batch-<number>-<descriptive-name>`. Use at least two digits. Apply the same number/name to its project pair, prompts and focused allocation tracker, and add their links to the register. Avoid generic names such as “next tasks” that become ambiguous after another run.
+
+Keep the number when revising an existing allocation or preparing its prompts; preserve stable work-item IDs and completion evidence. Do not renumber unrelated product proposals or design groups as staffing batches. When explicitly renaming older allocations, preserve their order and useful content, repair repository-wide references (including prompts and code comments), and retain completed-project placement. A new number does not mean earlier work is complete or override its outstanding acceptance.
 
 ## Produce the handoff
 

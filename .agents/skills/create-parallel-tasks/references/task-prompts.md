@@ -4,7 +4,7 @@ Use this reference when turning selected work into instructions the owner can co
 
 ## Prepare each prompt
 
-Read the selected task definition and the design sections it depends on. Check that the definitions cover the complete requested work, including user-facing behavior, relevant failure cases and integration. Bolster missing detail in the appropriate design within the user's authorized scope; do not use a confident prompt to conceal an incomplete specification.
+Read the selected task definition and the design sections it depends on. Check that the definitions cover the complete requested work, including user-facing behavior, relevant failure cases and integration. Bolster missing detail in the appropriate design within the user's authorized scope. For questions requiring developer input, follow [the root question rule](../../../../AGENTS.md#resolve-developer-questions-before-dependent-work): finish independent preparation, then ask before completing dependent designs or prompts. Do not use a confident prompt or a design-only assignment to conceal the unanswered prerequisite.
 
 Include the following, tailoring length to the actual task:
 

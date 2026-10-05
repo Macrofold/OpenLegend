@@ -1,4 +1,4 @@
-import type { SpatialLayout } from '@open-legend/spatial';
+import type { SpatialLayout, WalkableSurface } from '@open-legend/spatial';
 import type { FlightRoute } from '../../spatial-state.js';
 
 export function starterSpatialLayout(width: number, depth: number): SpatialLayout {
@@ -11,22 +11,7 @@ export function starterSpatialLayout(width: number, depth: number): SpatialLayou
       { id: 'lookout', name: 'Lookout deck', focusY: 3 },
     ],
     surfaces: [
-      {
-        id: 'terrain',
-        name: 'Clearing ground',
-        levelId: 'ground',
-        minX: 0,
-        maxX: width - 1,
-        minZ: 0,
-        maxZ: depth - 1,
-        y: 0,
-        slopeX: 0,
-        slopeZ: 0,
-        thickness: 1,
-        solidBase: -16,
-        acousticTransmission: 0,
-        material: 'ground',
-      },
+      ...starterGroundSurfaces(width, depth),
       {
         id: 'lookout-deck',
         name: 'Lookout deck',
@@ -103,4 +88,51 @@ export function starterFlightRoutes(): Record<string, FlightRoute> {
       ],
     },
   };
+}
+
+/** Continuous, low authored rises built from the existing planar support family.
+ * Adjacent heights agree exactly; no visual-only hill can conceal a flat physical floor. */
+function starterGroundSurfaces(width: number, depth: number): WalkableSurface[] {
+  const xs = [0, 32, 40, 48, 56, width - 1].filter(
+    (n, i, a) => n <= width - 1 && a.indexOf(n) === i,
+  );
+  const zs = [0, 26, 34, 42, 48, depth - 1].filter(
+    (n, i, a) => n <= depth - 1 && a.indexOf(n) === i,
+  );
+  const rise = (p: number, points: number[], heights: number[]) => {
+    for (let i = 1; i < points.length; i++)
+      if (p <= points[i]!)
+        return (
+          heights[i - 1]! +
+          ((heights[i]! - heights[i - 1]!) * (p - points[i - 1]!)) / (points[i]! - points[i - 1]!)
+        );
+    return heights.at(-1)!;
+  };
+  const xHeight = (x: number) => rise(x, [0, 32, 40, 48, 56], [0, 0, 1.4, 1.4, 0.1]);
+  const zHeight = (z: number) => rise(z, [0, 26, 34, 42, 48], [0, 0, 0.6, 0.6, 0]);
+  const result: WalkableSurface[] = [];
+  for (let zi = 1; zi < zs.length; zi++)
+    for (let xi = 1; xi < xs.length; xi++) {
+      const x = xs[xi - 1]!,
+        z = zs[zi - 1]!,
+        x1 = xs[xi]!,
+        z1 = zs[zi]!;
+      result.push({
+        id: xi === 1 && zi === 1 ? 'terrain' : `terrain-${xi}-${zi}`,
+        name: 'Woodland ground',
+        levelId: 'ground',
+        minX: x,
+        maxX: x1,
+        minZ: z,
+        maxZ: z1,
+        y: xHeight(x) + zHeight(z),
+        slopeX: (xHeight(x1) - xHeight(x)) / (x1 - x),
+        slopeZ: (zHeight(z1) - zHeight(z)) / (z1 - z),
+        thickness: 1,
+        solidBase: -16,
+        acousticTransmission: 0,
+        material: 'ground',
+      });
+    }
+  return result;
 }

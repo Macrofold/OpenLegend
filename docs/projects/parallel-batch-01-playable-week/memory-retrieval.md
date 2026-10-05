@@ -1,6 +1,6 @@
-# PW09 — Correct word recall and avoid unrelated memory recounts
+# Parallel batch 01 — PW09 — Correct word recall and avoid unrelated memory recounts
 
-**Proposed implementation brief.** Engineer 5: **30 hours**, following 34 hours of World Agent streaming work. The engineer's separate 16-hour integration allowance covers both packages; it is not another memory implementation budget. The [feature specification](../next-playable-week-feature-spec.md) and [technical design](../next-playable-week-tech-design.md) own the expanded week; [PW09](../../maintainers/next-playable-week.md#pw09--correct-and-efficient-memory-retrieval) owns completion. Creating this document does not authorize runtime implementation.
+**Proposed implementation brief.** Engineer 5: **30 hours**, following 34 hours of World Agent streaming work. The engineer's separate 16-hour integration allowance covers both packages; it is not another memory implementation budget. The [feature specification](../parallel-batch-01-playable-week-feature-spec.md) and [technical design](../parallel-batch-01-playable-week-tech-design.md) own the expanded week; [PW09](../../maintainers/parallel-batch-01-playable-week.md#pw09--correct-and-efficient-memory-retrieval) owns completion. Creating this document does not authorize runtime implementation.
 
 ## Outcome and current gaps
 
@@ -106,7 +106,7 @@ Cannot be promised now: a fixed latency at 100,000 or one million sources; cheap
 
 ## Maintained records
 
-- Implementation: [PW09](../../maintainers/next-playable-week.md#pw09--correct-and-efficient-memory-retrieval), contributing to [PF08/performance work](../../maintainers/performance.md) and [C17](../../maintainers/limits-audit.md#c17). Preserve C01/C20 and the larger cognition/retention acceptance; this slice does not claim them.
+- Implementation: [PW09](../../maintainers/parallel-batch-01-playable-week.md#pw09--correct-and-efficient-memory-retrieval), contributing to [PF08/performance work](../../maintainers/performance.md) and [C17](../../maintainers/limits-audit.md#c17). Preserve C01/C20 and the larger cognition/retention acceptance; this slice does not claim them.
 - Limits and constraints: [MH01](../../limits/memory.md#mh01), [MH02](../../limits/memory.md#mh02), [MH03](../../limits/memory.md#mh03) and unchanged [MH04](../../limits/memory.md#mh04). Existing cache/preparation bounds are not memory-retention limits; this slice adds no history cap.
-- Contracts and design: [memory architecture](../../memory-architecture.md), [save/load](../../save-and-load.md), [week feature specification](../next-playable-week-feature-spec.md) and [week technical design](../next-playable-week-tech-design.md).
+- Contracts and design: [memory architecture](../../memory-architecture.md), [save/load](../../save-and-load.md), [week feature specification](../parallel-batch-01-playable-week-feature-spec.md) and [week technical design](../parallel-batch-01-playable-week-tech-design.md).
 - Evidence: [data foundation](../../verification/data-foundation.md), [immediate gameplay limits](../../verification/immediate-gameplay-limits.md) and [PostgreSQL cognition preparation](../../verification/postgresql-cognition-preparation.md). Preserve each historical revision, workload and measurement limit when adding new evidence.

@@ -1,11 +1,87 @@
-import { canStand, canWalkSegment, distance3D } from './geometry.js';
+import {
+  canStand,
+  canWalkSegment,
+  distance3D,
+  surfaceById,
+  surfaceContains,
+  surfaceHeight,
+  surfacesInBounds,
+} from './geometry.js';
 import {
   BODY_PROFILES,
+  SPATIAL_LIMITS,
   type BodyProfile,
   type RoutePlan,
   type SpatialMap,
   type SurfacePoint,
+  type WalkableSurface,
 } from './types.js';
+
+/** A short straight walk follows support through coincident patch edges. Every segment and
+ * support change uses ordinary body admission; it cannot jump a gap or choose another floor.
+ * This is local steering geometry, not a detour search or a navigation-worker request. */
+export function walkSurfaceLine(
+  map: SpatialMap,
+  from: SurfacePoint,
+  x: number,
+  z: number,
+  body: BodyProfile,
+): SurfacePoint[] | null {
+  const initial = surfaceById(map, from.surfaceId);
+  if (!initial) return null;
+  let surface: WalkableSurface = initial;
+  const dx = x - from.x,
+    dz = z - from.z;
+  const exitAt = (s: WalkableSurface) =>
+    Math.min(
+      1,
+      dx > 0 ? (s.maxX - from.x) / dx : dx < 0 ? (s.minX - from.x) / dx : Infinity,
+      dz > 0 ? (s.maxZ - from.z) / dz : dz < 0 ? (s.minZ - from.z) / dz : Infinity,
+    );
+  const path: SurfacePoint[] = [];
+  let start = from,
+    fraction = 0;
+  // Rectangular patches cannot be re-entered along a straight line. Bound work by admitted
+  // geometry, and query only the supports touching each seam through the existing index.
+  for (let i = 0; i < map.spatial.surfaces.length; i++) {
+    const exit = Math.max(fraction, exitAt(surface));
+    const px = from.x + dx * exit,
+      pz = from.z + dz * exit;
+    const end: SurfacePoint = {
+      x: px,
+      y: surfaceHeight(surface, px, pz),
+      z: pz,
+      surfaceId: surface.id,
+    };
+    if (!canWalkSegment(map, start, end, body)) return null;
+    path.push(end);
+    if (exit === 1) return path;
+    const tolerance = SPATIAL_LIMITS.supportTolerance;
+    const next = surfacesInBounds(map, {
+      min: { x: px, y: end.y - tolerance, z: pz },
+      max: { x: px, y: end.y + tolerance, z: pz },
+    }).find((candidate) => {
+      if (
+        candidate.id === surface.id ||
+        !surfaceContains(candidate, end) ||
+        exitAt(candidate) <= exit
+      )
+        return false;
+      return canWalkSegment(
+        map,
+        end,
+        { ...end, y: surfaceHeight(candidate, px, pz), surfaceId: candidate.id },
+        body,
+      );
+    });
+    if (!next) return null;
+    surface = next;
+    fraction = exit;
+    start = { ...end, y: surfaceHeight(next, px, pz), surfaceId: next.id };
+    path.push(start);
+  }
+  return null;
+}
 
 /** Navigation is required data, not synchronous graph construction inside a world mutation.
  * Direct segments need no worker. Detours enter one bounded Recast queue only after a native

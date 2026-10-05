@@ -15,7 +15,7 @@ import { definitionPin, type DefinitionPin } from './world-modules.js';
 import type { ItemInstance, WorldState } from './types.js';
 
 /** Native admission work, independent of world-authored delivery quantities.
- * docs/projects/next-playable-week/camp-activities.md#fresh-stock-binding-at-the-existing-custody-owner
+ * docs/projects/parallel-batch-01-playable-week/camp-activities.md#fresh-stock-binding-at-the-existing-custody-owner
  */
 export const STOCK_TRANSFER_LIMITS = Object.freeze({ examined: 200, movedLots: 16 });
 

@@ -98,7 +98,7 @@ Each assignment must provide or precisely reference:
 8. **Documentation mapping:** canonical specifications, world rules, limits and every overlapping maintainer requirement that must be reconciled as the change is delivered.
 9. **Estimate and risks:** likely effort/logic affected, uncertainties, consequences of a dependency failing and what evidence would require revisiting the plan.
 
-Walk a concrete scenario through inputs, decisions, execution, visible effects and persistence where relevant. An engineer should know what must happen, who owns it, what may fail and how completion is established without the originating chat. If a major unanswered decision prevents that, surface it rather than hiding it in a vague task.
+Walk a concrete scenario through inputs, decisions, execution, visible effects and persistence where relevant. An engineer should know what must happen, who owns it, what may fail and how completion is established without the originating chat. If an unanswered question requires developer input, complete the independent definitions and then ask under [the root question rule](../../../../AGENTS.md#resolve-developer-questions-before-dependent-work) before finishing dependent designs or assignments. Labeling the assignment design-only does not resolve its prerequisite.
 
 ## Keep every affected record truthful
 

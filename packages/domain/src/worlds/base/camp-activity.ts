@@ -403,7 +403,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
       ];
     // Preview admission already validated every reference and field. Never inspect
     // another page/cache to turn partial knowledge into a complete supply count.
-    // docs/projects/next-playable-week/camp-activities.md#finite-gather-pack-and-fuel-method
+    // docs/projects/parallel-batch-01-playable-week/camp-activities.md#finite-gather-pack-and-fuel-method
     if (!finite && !ownSupply) {
       const selected = inspectedContainer(world, actorId);
       const listed =

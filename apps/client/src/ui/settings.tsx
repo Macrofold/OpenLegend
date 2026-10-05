@@ -178,7 +178,7 @@ export function Settings({
               ['C', 'Crafting'],
               ['K', 'Character'],
               ['J', 'Journal'],
-              ['T', 'Conversation'],
+              ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
               ['W', 'Create'],
               ['1–3', 'Pinned shortcuts'],

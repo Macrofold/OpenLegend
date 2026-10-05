@@ -1,12 +1,12 @@
-# Next priority batch — feature specification
+# Parallel batch 02 — Foundations and usability — feature specification
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
 
-The [merged review](../../maintainers/next-priority-batch.md#merged-review--october-3-2026) records completion boundaries and remaining checks. The whole agreed batch, including its combined scenarios, is complete; these shared documents are archived together.
+The [merged review](../../maintainers/parallel-batch-02-foundations-and-usability.md#merged-review--october-3-2026) records completion boundaries and remaining checks. The whole agreed batch, including its combined scenarios, is complete; these shared documents are archived together.
 
-The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](next-priority-batch-tech-design.md) defines the implementation boundaries; the [tracker](../../maintainers/next-priority-batch.md) owns status and the [five prompts](next-priority-batch-prompts.md) are standalone handoffs.
+The original selection was documentation, not runtime implementation approval. Originally proposed on October 2, 2026 from local `main` at `c2e670b0`. This is a fresh selection after the earlier PW delivery, not another estimate for its original five-person week. The [technical design](parallel-batch-02-foundations-and-usability-tech-design.md) defines the implementation boundaries; the [tracker](../../maintainers/parallel-batch-02-foundations-and-usability.md) owns status and the [five prompts](parallel-batch-02-foundations-and-usability-prompts.md) are standalone handoffs.
 
 ## Purpose and priority
 
@@ -20,7 +20,7 @@ Make existing foundations trustworthy and existing gameplay easier to use before
 | 4     | NP04 — Find and choose camp supplies               | Implemented activities are hidden by arbitrary candidate prefixes and incomplete inspection UI.         | Players can find, approach, inspect and choose permitted supplies and finish existing camp work.                                            |
 | 5     | NP05 — Read NPC replies before generation finishes | An explicitly requested conversation improvement remains absent despite owner-chat streaming.           | Safe, unfinished NPC reply previews reach the intended player before complete response validation, then reconcile with actual speech.       |
 
-Priority is not a required serial schedule. Four implementation assignments have existing prerequisites on the inspected main; NP05 can independently begin its provider/latency feasibility gate under the [shared boundaries](next-priority-batch-tech-design.md#parallel-boundaries). NP01 and NP05 touch different responsibilities in provider files. NP03 uses the existing container family; NP04 works with current materials and does not wait for NP03. No worker needs messages or decisions from another worker.
+Priority is not a required serial schedule. Four implementation assignments have existing prerequisites on the inspected main; NP05 can independently begin its provider/latency feasibility gate under the [shared boundaries](parallel-batch-02-foundations-and-usability-tech-design.md#parallel-boundaries). NP01 and NP05 touch different responsibilities in provider files. NP03 uses the existing container family; NP04 works with current materials and does not wait for NP03. No worker needs messages or decisions from another worker.
 
 ## Scope, effort and readiness
 
@@ -51,9 +51,9 @@ All implementation prompts refer to these documents and current repository guida
 
 ## Maintained records
 
-- Implementation and dependencies: [NP01–NP05](../../maintainers/next-priority-batch.md), indexing narrower children of the existing MW/CR, EPR/PF, INV/EWF, PW/AC/PO/BW/UIUX and NC owners. Planning closes none of their runtime criteria.
+- Implementation and dependencies: [NP01–NP05](../../maintainers/parallel-batch-02-foundations-and-usability.md), indexing narrower children of the existing MW/CR, EPR/PF, INV/EWF, PW/AC/PO/BW/UIUX and NC owners. Planning closes none of their runtime criteria.
 - Limits and constraints: [AI execution](../../limits/ai-execution.md), [cognition](../../limits/cognition.md), [native work](../../limits/native-work.md), [inventions](../../limits/inventions.md), [base-world choices](../../limits/base-world.md), [inventory interface](../../limits/interface.md), [object queries](../../limits/objects.md) and [conversation delivery](../../limits/narration.md). Each task links its particular entries; there is no competing batch-wide limits catalogue.
-- Mechanism and source map: [technical design](next-priority-batch-tech-design.md). Existing cross-project specifications remain canonical; new choices here are proposed targets until authorized.
+- Mechanism and source map: [technical design](parallel-batch-02-foundations-and-usability-tech-design.md). Existing cross-project specifications remain canonical; new choices here are proposed targets until authorized.
 
 ## NP01 — Reliable AI outcomes and spending
 
@@ -104,10 +104,10 @@ First settle the shared failure/cost classification, then apply it to each exist
 
 ### Maintained records
 
-- Implementation: [NP01](../../maintainers/next-priority-batch.md#np01--reliable-ai-outcomes-and-spending); existing [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures) owns provider outcome repairs. Preserve its request-body requirement rather than declaring the entire item done from an outcome-only change.
+- Implementation: [NP01](../../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending); existing [MW05](../../maintainers/macrofold-worker-api.md#mw05--outcome-classification-and-request-body-fixtures) owns provider outcome repairs. Preserve its request-body requirement rather than declaring the entire item done from an outcome-only change.
 - Related task records: [CR12](../../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence), the [level-1 follow-ups](../../maintainers/TODO.md#level-1-decisions-follow-up), [WAF02](../../maintainers/TODO.md#workshop-transport-and-funding-regression-coverage), [IER04](../../maintainers/TODO.md#invention-extensibility-review-regression-todos), and the scoped accounting/recovery parts of [WW07/WW11](../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification). Mark only demonstrated requirements complete; retain any specifically tracked automation or broader qualification not delivered.
 - Limits: [AI execution](../../limits/ai-execution.md), especially [LA182](../../limits/ai-execution.md#la182), and [CG08/CG09](../../limits/cognition.md#cg08). No new discretionary workload cap is proposed. Exact finite/safe-integer cost checks protect arithmetic integrity, not a new spending allowance.
-- Current contract: [AI receipts, outcomes and accounting](../../ai-providers.md#receipts-outcomes-and-accounting); [technical design](next-priority-batch-tech-design.md#np01--reliable-ai-outcomes-and-spending).
+- Current contract: [AI receipts, outcomes and accounting](../../ai-providers.md#receipts-outcomes-and-accounting); [technical design](parallel-batch-02-foundations-and-usability-tech-design.md#np01--reliable-ai-outcomes-and-spending).
 
 ## NP02 — Sensory work follows changed objects
 
@@ -187,7 +187,7 @@ Reconcile the exact composition child under [INV-3/INV-6](../../maintainers/inve
 
 Make the already implemented camp activities usable when a scene or inventory contains many objects. **Implemented October 3, 2026; scoped acceptance is recorded in [camp-life evidence](../../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).** At the planning baseline, the camp form examined the first 32 visible objects before checking whether they can serve its requested role, examined a possession prefix, and presented a static select. An eligible fire or fuel source could disappear behind unrelated objects. A ground cache was offered only after the character had explicitly inspected it; opening the browser inventory alone does not perform that character action. The warning to inspect or narrow the search had no complete route in that form.
 
-This is a completion of the existing gather/pack/fuel and finite fire-watch journeys, not a new survival activity. See [camp activities](../next-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [camp rules](../../worlds/base/camp-routines.md) and [inventory UX](../../ui-ux/inventory.md).
+This is a completion of the existing gather/pack/fuel and finite fire-watch journeys, not a new survival activity. See [camp activities](../parallel-batch-01-playable-week/camp-activities.md#observation-memory-and-ordinary-ui), [camp rules](../../worlds/base/camp-routines.md) and [inventory UX](../../ui-ux/inventory.md).
 
 ### Intended player journey
 

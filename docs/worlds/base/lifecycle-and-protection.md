@@ -2,6 +2,8 @@
 
 Accepted target for the OpenLegend main/bundled world, September 25, 2026. These policies are not universal engine laws and are not yet fully implemented. Current actor identity/revival remains in [Architecture](../../architecture.md#actor-means-any-living-being); delivery is BW13–BW15 and MP01/MP04.
 
+Current physical aftermath is now implemented: every actual death leaves a body, with authored rotting and removal deadlines, preserved identity and ground custody for belongings. [Survival](survival.md#death-and-remains) owns this behavior. The player still collapses at zero health; the broader human-death/ghost/protection targets below remain unchanged.
+
 ## Product-scalability integration target
 
 The accepted [product direction](../../product-scalability/participation-and-protection.md) extends the design of the bounded pre-exit interaction phase: a supported already-engaged conflict can continue coarsely, with permitted-evidence warnings and an honest return to its actual aftermath. It must not become either instant logout immunity or indefinite retention by repeated attackers. This is unimplemented integration work in [PS05](../../maintainers/product-scalability.md), coordinated with BW13 and MP04; [PS-D01](../../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns remaining episode and fairness decisions. The existing exit/protection contract below remains controlling until that work is delivered.

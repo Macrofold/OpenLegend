@@ -1,5 +1,7 @@
 # OpenLegend limits and decisions
 
+Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md). These scope bounds are not current runtime policy.
+
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
 ## Feature inventories

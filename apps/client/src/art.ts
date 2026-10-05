@@ -73,7 +73,12 @@ export function earthArt(seed: number): HTMLCanvasElement {
     );
   return image;
 }
-export function personArt(npc: boolean, frame = 0, equipment = false): HTMLCanvasElement {
+export function personArt(
+  npc: boolean,
+  frame = 0,
+  equipment = false,
+  dead = false,
+): HTMLCanvasElement {
   const [image, ctx] = canvas(48, 96);
   const cloth = npc ? '#8c7054' : '#6c7e7c',
     light = npc ? '#b2966e' : '#93a3a0',
@@ -184,14 +189,53 @@ export function personArt(npc: boolean, frame = 0, equipment = false): HTMLCanva
     box(ctx, skin, fistX - 2, fistY - 3, 5, 5);
     box(ctx, skinLight, fistX - 2, fistY - 3, 4, 2);
   }
+  if (dead) {
+    const [fallen, target] = canvas(96, 48);
+    target.translate(96, 0);
+    target.rotate(Math.PI / 2);
+    target.drawImage(image, 0, 0);
+    return fallen;
+  }
   return image;
 }
-export function treeArt(seed: number): HTMLCanvasElement {
+export function rottingArt(source: HTMLCanvasElement): HTMLCanvasElement {
+  const [image, ctx] = canvas(source.width, source.height);
+  ctx.drawImage(source, 0, 0);
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = 'rgba(68, 82, 43, 0.5)';
+  ctx.fillRect(0, 0, source.width, source.height);
+  return image;
+}
+export function treeArt(
+  seed: number,
+  shape: 'broadleaf' | 'birch' | 'conifer' = 'broadleaf',
+): HTMLCanvasElement {
   const [image, ctx] = canvas(144, 184);
   const rng = random(seed);
+  if (shape === 'conifer') {
+    box(ctx, '#4f4936', 67, 85, 10, 95);
+    box(ctx, '#8b7650', 70, 104, 3, 72);
+    for (let tier = 5; tier >= 0; tier--) {
+      const y = 10 + tier * 20,
+        w = 14 + tier * 9;
+      poly(ctx, '#294c3b', [72, y, 72 - w, y + 45, 72 + w, y + 45]);
+      poly(ctx, '#496a43', [72, y, 72 - w, y + 42, 72, y + 31]);
+      for (let i = 0; i < 90; i++) {
+        const dy = rng() * 40,
+          dx = ((rng() - 0.5) * w * dy) / 20;
+        box(ctx, ['#617d4b', '#385e40', '#78945a'][i % 3]!, 72 + dx, y + dy, 3 + rng() * 4, 2);
+      }
+    }
+    return image;
+  }
   poly(ctx, '#3d4232', [68, 64, 77, 64, 81, 172, 91, 179, 59, 180, 67, 170]);
   poly(ctx, '#6e6748', [71, 78, 75, 75, 76, 169, 82, 176, 67, 176, 70, 166]);
   box(ctx, '#9b8b5d', 71, 107, 2, 54);
+  if (shape === 'birch') {
+    poly(ctx, '#b8b5a1', [70, 58, 76, 59, 78, 172, 84, 178, 65, 178, 69, 170]);
+    box(ctx, '#d5d2b9', 71, 73, 3, 98);
+    for (let y = 86; y < 170; y += 17) box(ctx, '#4d5143', 70, y, 6, 2);
+  }
   poly(ctx, '#4c4d37', [71, 105, 38, 79, 35, 69, 76, 94]);
   poly(ctx, '#514f37', [75, 88, 103, 51, 106, 55, 80, 109]);
   const clusters = [
@@ -202,7 +246,8 @@ export function treeArt(seed: number): HTMLCanvasElement {
     [110, 85, 26],
     [35, 95, 28],
   ];
-  for (const [cx = 0, cy = 0, radius = 0] of clusters) {
+  for (const [cx = 0, cy = 0, size = 0] of clusters) {
+    const radius = size * (shape === 'birch' ? 0.76 : 1);
     ctx.fillStyle = '#354c36';
     ctx.beginPath();
     ctx.ellipse(cx, cy, radius, radius * 0.65, 0, 0, Math.PI * 2);
@@ -219,6 +264,61 @@ export function treeArt(seed: number): HTMLCanvasElement {
       box(ctx, palette[Math.floor(rng() * palette.length)]!, x, y, 3 + rng() * 7, 2 + rng() * 4);
       if (rng() > 0.65) box(ctx, '#b0b679', x, y, 2, 1);
     }
+  }
+  return image;
+}
+/** Finite trusted artwork factory. Unknown keys never become executable content or URLs. */
+export function sceneryArt(appearance: string, seed: number): HTMLCanvasElement | undefined {
+  if (appearance === 'tree-conifer') return treeArt(seed, 'conifer');
+  if (appearance === 'tree-birch') return treeArt(seed, 'birch');
+  if (appearance === 'tree-broadleaf') return treeArt(seed);
+  if (appearance === 'meadow-grass') return resourceArt('grass', seed);
+  if (appearance === 'woodland-shrub') return resourceArt('bush', seed);
+  return undefined;
+}
+/** Original Canvas animals, sharing the existing discrete walking frames. */
+export function predatorArt(bear: boolean, step = 0, dead = false): HTMLCanvasElement {
+  const [image, ctx] = canvas(112, 84);
+  const dark = bear ? '#3e3026' : '#424947',
+    mid = bear ? '#70523b' : '#78817c',
+    light = bear ? '#947052' : '#a6ada0';
+  const ground = dead ? 77 : 72;
+  if (!dead) {
+    for (const [x, shift] of [
+      [28, step],
+      [40, -step],
+      [72, -step],
+      [85, step],
+    ]) {
+      poly(ctx, dark, [x!, 48, x! + 9, 48, x! + 8 + shift!, ground, x! - 2 + shift!, ground]);
+      box(ctx, mid, x! + 1, 50, 4, 13);
+      box(ctx, dark, x! - 2 + shift!, ground - 2, 13, 4);
+    }
+  }
+  if (bear) {
+    poly(ctx, dark, [14, 48, 20, 31, 35, 23, 58, 21, 82, 28, 97, 42, 92, 59, 29, 62]);
+    poly(ctx, mid, [18, 43, 28, 31, 50, 26, 74, 29, 89, 43, 83, 53, 30, 54]);
+    poly(ctx, light, [27, 33, 48, 27, 67, 28, 55, 36, 29, 42]);
+    box(ctx, dark, 83, 29, 13, 14);
+    box(ctx, mid, 87, 30, 10, 13);
+    poly(ctx, mid, [88, 35, 100, 38, 106, 47, 102, 55, 90, 54, 84, 44]);
+    box(ctx, light, 97, 44, 9, 7);
+    box(ctx, dark, 103, 45, 5, 5);
+    box(ctx, '#211f1c', 95, 39, 3, 3);
+  } else {
+    poly(ctx, dark, [24, 45, 10, 37, 2, 39, 17, 56, 29, 55]);
+    poly(ctx, mid, [24, 40, 42, 33, 73, 36, 86, 29, 95, 40, 89, 55, 34, 54]);
+    poly(ctx, light, [31, 39, 48, 35, 73, 39, 69, 44, 40, 44]);
+    poly(ctx, dark, [82, 34, 83, 17, 91, 27, 95, 19, 99, 34]);
+    poly(ctx, mid, [84, 30, 94, 29, 103, 36, 110, 41, 105, 47, 90, 46]);
+    poly(ctx, light, [90, 40, 104, 42, 103, 48, 88, 49]);
+    box(ctx, '#242b2a', 107, 39, 4, 4);
+    box(ctx, '#dcc789', 96, 34, 3, 2);
+  }
+  if (dead) {
+    const [fallen, f] = canvas(112, 84);
+    f.drawImage(image, 0, 16);
+    return fallen;
   }
   return image;
 }

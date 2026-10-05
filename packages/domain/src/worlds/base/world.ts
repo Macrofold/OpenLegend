@@ -1,3 +1,9 @@
+import {
+  STARTER_EXTENT,
+  starterTiles,
+  starterScenery,
+  populateOuterWilderness,
+} from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
 import { ADA_IDENTITY } from './characters.js';
 import { worldPlacement } from '../../spatial-state.js';
@@ -134,7 +140,12 @@ export function createWorld(
     simTime: 0,
     paused: false,
     profile: { id: 'grounded-wilderness', version: 1 },
-    map: { width: 28, height: 24, tiles: [], spatial: starterSpatialLayout(28, 24) },
+    map: {
+      width: STARTER_EXTENT.width,
+      height: STARTER_EXTENT.depth,
+      tiles: [],
+      spatial: starterSpatialLayout(STARTER_EXTENT.width, STARTER_EXTENT.depth),
+    },
     flightRoutes: starterFlightRoutes(),
     entities: {},
     objectState: { revision: 0 },
@@ -147,26 +158,14 @@ export function createWorld(
     declarationReceipts: {},
     nextId: 1,
   };
-  for (let z = 0; z < world.map.height; z++) {
-    const row: ('grass' | 'sand' | 'water' | 'rock')[] = [];
-    for (let x = 0; x < world.map.width; x++) {
-      const water = x < 3 && !(z >= 11 && z <= 12);
-      row.push(water ? 'water' : x < 4 ? 'sand' : 'grass');
-    }
-    world.map.tiles.push(row);
-  }
-  for (const [x, z] of [
-    [17, 6],
-    [17, 7],
-    [17, 8],
-    [18, 8],
-    [7, 18],
-    [8, 18],
-    [21, 17],
-    [22, 17],
-  ]) {
-    world.map.tiles[z!]![x!] = 'rock';
-  }
+  world.map.tiles = starterTiles(normalizedSeed, world.map.width, world.map.height);
+  world.map.spatial!.scenery = starterScenery(
+    normalizedSeed,
+    world.map.width,
+    world.map.height,
+    world.map.tiles,
+    world.map.spatial!,
+  );
   const entities: Entity[] = [
     {
       spatial: { bodyProfileId: 'person', heading: 0 },
@@ -276,8 +275,12 @@ export function createWorld(
       ),
       placement: worldPlacement({ y: 0, x: 16, z: 13 }, 'terrain'),
       animal: {
-        fleeFrom: null,
-        fleeSeconds: 0,
+        threatPosition: null,
+        threatId: null,
+        escapeHeading: null,
+        calmRate: 0,
+        reviewAt: 0,
+        danger: 0,
         wanderSeconds: 150,
       },
     },
@@ -295,8 +298,12 @@ export function createWorld(
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 11 }, 'terrain'),
       animal: {
-        fleeFrom: null,
-        fleeSeconds: 0,
+        threatPosition: null,
+        threatId: null,
+        escapeHeading: null,
+        calmRate: 0,
+        reviewAt: 0,
+        danger: 0,
         wanderSeconds: 100,
       },
     },
@@ -314,8 +321,12 @@ export function createWorld(
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 19 }, 'terrain'),
       animal: {
-        fleeFrom: null,
-        fleeSeconds: 0,
+        threatPosition: null,
+        threatId: null,
+        escapeHeading: null,
+        calmRate: 0,
+        reviewAt: 0,
+        danger: 0,
         wanderSeconds: 200,
       },
     },
@@ -345,7 +356,15 @@ export function createWorld(
           (definition) => definition.id === 'wilderness:energy',
         ),
       ),
-      animal: { fleeFrom: null, fleeSeconds: 0, wanderSeconds: 0 },
+      animal: {
+        threatPosition: null,
+        threatId: null,
+        escapeHeading: null,
+        calmRate: 0,
+        reviewAt: 0,
+        danger: 0,
+        wanderSeconds: 0,
+      },
     },
   ];
   for (const entity of entities) {
@@ -382,6 +401,7 @@ export function createWorld(
     entityIds: ['campfire'],
     importance: 8,
   });
+  populateOuterWilderness(world);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

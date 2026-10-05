@@ -1,5 +1,7 @@
 # Agent agency implementation tracker
 
+Proposed follow-on: [PX04](parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) adds one voluntary shared outing through existing individual activity/agency owners after PG02. It covers only the named AG05/AG06/AG07/AG12 child acceptance; no broader agency or unattended-life task is closed.
+
 ## Spatial dependencies
 
 [SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap. Do not reset the operational goal/plan implementation or CR02 Jev-only work.
@@ -81,7 +83,7 @@ PW10 is a concrete AG03 consumer: selected finite gather/pack/fuel work and a se
 - [x] Replace broad staleness checks where necessary with relevant goal/plan/action revisions. Preserve current actor lifecycle, target scope, policy, cancellation and load-epoch checks. Unrelated world ticks must not invalidate a whole decision.
 - [x] Close replay protection beyond the 300-entry hot response-receipt window through existing durable admission, not an assumption that old callbacks never arrive.
 
-PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters compile to a normal composition, while fresh stock/receipts commit atomically through the object owner. The actual injected director path passed strict parsing, opaque-reference resolution, native admission and decline/refusal/stale-access handling with unique metered parameter-round identities. This does not repair PW01's separate selected-transfer dispatch or complete every child-identity case ([PW03](next-playable-week.md#pw03--craftable-containers-and-camp-supplies), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
+PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters compile to a normal composition, while fresh stock/receipts commit atomically through the object owner. The actual injected director path passed strict parsing, opaque-reference resolution, native admission and decline/refusal/stale-access handling with unique metered parameter-round identities. This does not repair PW01's separate selected-transfer dispatch or complete every child-identity case ([PW03](parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), [evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).
 
 **Exit evidence:** storage failure commits no partial envelope; duplicate completion, late completion, partial component rejection and mixed-body retry have deterministic outcomes. Crash/recovery at admission-versus-dispatch boundaries does not double-spend materials or start a second paid operation. All-optional empty decisions finish cleanly.
 
@@ -176,7 +178,7 @@ PW03/PW10 contribute current-format PostgreSQL inspection/restart, native family
 - [ ] Ensure ordinary clients/other actors do not receive private goals, unspoken inventions, drafts or mental notes. God inspection is an explicit capability, not a broader actor observation.
 - [ ] Keep embodiment/capability restrictions on speech and expressions. General non-speech audio is integrated with NC/perception event ownership, not implemented by creating fake speech messages.
 
-PW03/PW10's AG10 consumer keeps ordinary review/Stop/plain own-request results separate from God-only detail and private NPC learning evidence. No-provider review/director fixtures retained selected parameters and honest terminal counters, without substituting completed narration. Scripted ordinary projection and read-only review passed; actual voluntary choice/retention/reuse remain unqualified; installing a request schema does not establish those behaviors ([PW10](next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
+PW03/PW10's AG10 consumer keeps ordinary review/Stop/plain own-request results separate from God-only detail and private NPC learning evidence. No-provider review/director fixtures retained selected parameters and honest terminal counters, without substituting completed narration. Scripted ordinary projection and read-only review passed; actual voluntary choice/retention/reuse remain unqualified; installing a request schema does not establish those behaviors ([PW10](parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
 
 **Exit evidence:** player versus god projections differ correctly; a clap is not a conversation turn; accepted queue entries have no fake completion narration. Refresh/reconnect does not replay an invention. Private goal changes do not appear in nearby actors' prompts or public event feeds.
 

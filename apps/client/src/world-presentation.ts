@@ -387,7 +387,7 @@ export class WorldPresentation {
         }
       }
   }
-  lighting(view: GameView): void {
+  lighting(view: GameView, remembered: GameView['entities'] = view.entities): void {
     const { daylight, toSun } = sunlightAtHour(view.clock.hour);
     this.sunDirection.set(toSun.x, toSun.y, toSun.z);
     // PlayCanvas directional rays follow local −Y. Use world orientation so camera
@@ -401,11 +401,12 @@ export class WorldPresentation {
     this.sun.light!.intensity = 1.2 * daylight;
     this.sun.enabled = daylight > 0.001;
     const p = view.player.position;
-    // Only authorized, currently observed fire locations reach the renderer. No ghost lights.
+    // Retain illumination from last-permitted fire images when their sources leave sight.
+    // This is presentation memory, never current hidden source data.
     const distance = (e: GameView['entities'][number]) =>
       Math.hypot(e.position.x - p.x, e.position.y - p.y, e.position.z - p.z) -
       (this.selectedLights.has(e.id) ? 1 : 0);
-    const sources = view.entities
+    const sources = remembered
       .filter((e) => e.kind === 'station' && e.status.startsWith('Lit'))
       .sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id))
       .slice(0, this.shadowQuality === 'economy' ? 2 : 8);

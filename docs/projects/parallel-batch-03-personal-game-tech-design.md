@@ -1,10 +1,10 @@
-# The next personal-game batch — technical task definitions
+# Parallel batch 03 — Personal game — technical task definitions
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Responsibilities, existing interfaces and completion boundaries are defined for four delivery tasks and one design task. | 2026-10-03   |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open. | 2026-10-03   |
 
-[Feature scope and acceptance](personal-game-next-batch-feature-spec.md) · [Tracker](../maintainers/personal-game-next-batch.md) · [Copyable prompts](personal-game-next-batch-prompts.md)
+[Feature scope and acceptance](parallel-batch-03-personal-game-feature-spec.md) · [Tracker](../maintainers/parallel-batch-03-personal-game.md) · [Copyable prompts](parallel-batch-03-personal-game-prompts.md)
 
 ## Shared implementation boundary
 
@@ -29,7 +29,7 @@ Shared edits to `world-service.ts`, `view.ts`, `context.ts` or `main.tsx` are ac
 ### Read and trace
 
 1. [First-playable agreement](../../archive/05-project/first-playable-mvp.md), especially the creative and persistence outcomes; apply current canonical lifecycle where the historical document differs.
-2. [Invention handoff](../invention-handoff.md), current supported families in [invention foundation](../invention-foundation.md), and [NP03's completed contract](completed/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material).
+2. [Invention handoff](../invention-handoff.md), current supported families in [invention foundation](../invention-foundation.md), and [NP03's completed contract](completed/parallel-batch-02-foundations-and-usability-tech-design.md#np03--craft-with-an-invented-material).
 3. `apps/server/src/invention-service.ts`, `invention-context.ts`, `invention-tools.ts`, `invention-workshop.ts` and `actor-invention.ts` for the ordinary invention route; inspect `world-authoring.ts` and `world-agent-runner.ts` only for a path actually used by the journey.
 4. `packages/domain/src/declarations.ts`, native `kernel.ts`, `packages/domain/src/worlds/base/` recipe/material owners, and `apps/client/src/ui/inventory.tsx` for real manufacture/use. `tests/fixtures/` identifies existing disposable setup; historical `/tmp` probes are not required inputs.
 
@@ -47,7 +47,7 @@ Close the arrow-material assertion mismatch from the actual validator result: ve
 
 ### Evidence and reconciliation
 
-Use the complete [PG01 acceptance](personal-game-next-batch-feature-spec.md#pg01--make-an-invention-matter-in-play). Report stage latency and complete attributable provider usage, plus actual consumed resources, resulting item/recipe references and persistence evidence. Keep synthetic admission evidence distinct from live novelty. No default sample count or new spending permission is imposed by this design.
+Use the complete [PG01 acceptance](parallel-batch-03-personal-game-feature-spec.md#pg01--make-an-invention-matter-in-play). Report stage latency and complete attributable provider usage, plus actual consumed resources, resulting item/recipe references and persistence evidence. Keep synthetic admission evidence distinct from live novelty. No default sample count or new spending permission is imposed by this design.
 
 Update the scoped INV-3/INV-14/INV-19 acceptance, NP03's separately open live-generation child if demonstrated, relevant WW07/WW11 subsets only when their specific criteria are met, and the existing arrow-material TODO. Preserve external deployment, historical accounting and broader qualification gaps. Evidence belongs in existing `docs/verification/invention-foundation.md`, `actor-agency-and-inventions.md` or `camp-life.md` according to the exercised route.
 
@@ -79,7 +79,7 @@ The hypothesis to test is missing relevance, missing outcome or stale intention,
 
 ### Completion and exclusions
 
-Apply [PG02 acceptance](personal-game-next-batch-feature-spec.md#pg02--one-resident-with-reasons-to-act-and-reasons-to-stop). D69's richer psychological quantities/laws, broad personality transformation, compulsory thoughts, background communities and family disclosure are excluded. A useful existing movement/observation/conversation action may satisfy an episode; prose-only enjoyment is not a claim of a new mechanical resource.
+Apply [PG02 acceptance](parallel-batch-03-personal-game-feature-spec.md#pg02--one-resident-with-reasons-to-act-and-reasons-to-stop). D69's richer psychological quantities/laws, broad personality transformation, compulsory thoughts, background communities and family disclosure are excluded. A useful existing movement/observation/conversation action may satisfy an episode; prose-only enjoyment is not a claim of a new mechanical resource.
 
 Reconcile CE01–CE05 only for demonstrated subsets, AG06/AG07/AG12, CR12 and applicable BW18 content/context rows. Preserve full CE-F01/CE-F07–CE-F09 and any unfinished parent acceptance rather than checking the entire character project. Keep `docs/memory-architecture.md`, `agent-agency.md`, base-world character documentation and the relevant existing verification reports consistent. Use the existing cognition/feeling/memory inventories for any chosen limits. Major new psychological policy choices return to D69 explicitly.
 
@@ -103,7 +103,7 @@ For repeated refreshes, bind results to the selected object/item and current aut
 
 ### Completion and reconciliation
 
-Apply [PG03 acceptance](personal-game-next-batch-feature-spec.md#pg03--discover-actions-and-understand-their-consequences), including actual downstream command effects and important failure states. The existing context-menu service fixture and UI surfaces are reusable evidence entrypoints; test policy remains in AGENTS.md. No new UI theme, full inventory rewrite or shader work is included.
+Apply [PG03 acceptance](parallel-batch-03-personal-game-feature-spec.md#pg03--discover-actions-and-understand-their-consequences), including actual downstream command effects and important failure states. The existing context-menu service fixture and UI surfaces are reusable evidence entrypoints; test policy remains in AGENTS.md. No new UI theme, full inventory rewrite or shader work is included.
 
 Update AC11 and UIUX03/UIUX04 only where their actual requirements are met, the scoped DG01/ND13/ND18 delivery note, current world-interaction/action-experience presentation and relevant interface/action-experience limits. Keep larger remapping/first-encounter narration and accessibility programs open. Existing family creator controls and PG02's model context are not owned here.
 
@@ -127,7 +127,7 @@ Preserve the `previewCommand` return contract and existing callers, including re
 
 Profile before choosing families; prioritize actual repeated cost. Compare selected availability/refusal results and real transitions against the existing execution owner, including malformed/unsupported input, stale targets, unavailable resources and navigation failure. Compare seed/randomness and emitted events for commands whose previous preview performed a disposable transition. Actual mutation remains singular and authoritative.
 
-Apply [PG04 acceptance](personal-game-next-batch-feature-spec.md#pg04--make-action-previews-cheap-without-changing-admission). Report separate isolated and whole-path results. Stop widening the optimization once the selected cause is addressed; broader scheduler/save/database work stays in PF. If the source hypothesis is disproved, record the no-go and retain parent performance gaps honestly.
+Apply [PG04 acceptance](parallel-batch-03-personal-game-feature-spec.md#pg04--make-action-previews-cheap-without-changing-admission). Report separate isolated and whole-path results. Stop widening the optimization once the selected cause is addressed; broader scheduler/save/database work stays in PF. If the source hypothesis is disproved, record the no-go and retain parent performance gaps honestly.
 
 Update PF05, AC11, the existing command/frame plan and report, and only affected runtime/interface limits. Preserve SW18 physical-device and full load qualification. No new workload cap, smaller visible catalogue or reduced sensory meaning is permitted as a substitute for cheaper work.
 
@@ -145,7 +145,7 @@ Present explicit decisions for human incapacitation/recovery and possession pres
 
 Describe player feedback with a small proposed layout/wording example: warning source, current target/range, active action, interrupted/escaped/defeated result and next possible action. Include keyboard and compact-screen implications under the handbook. Choose placeholder art only if it honestly communicates the intended threat; presentation cannot imply implemented attack animations or invisible mechanics.
 
-Completion is the full [PG05 definition](personal-game-next-batch-feature-spec.md#pg05--design-the-first-dangerous-encounter), with a decision list the owner can answer, preferred choices and their consequences, explicit implementation stages and owner-linked acceptance. Runtime delivery waits for the unresolved consequential choices and implementation authorization; the design task itself is immediately runnable.
+Completion is the full [PG05 definition](parallel-batch-03-personal-game-feature-spec.md#pg05--design-the-first-dangerous-encounter), with a decision list the owner can answer, preferred choices and their consequences, explicit implementation stages and owner-linked acceptance. Runtime delivery waits for the unresolved consequential choices and implementation authorization; the design task itself is immediately runnable.
 
 ## Verification and document reconciliation
 
@@ -155,4 +155,4 @@ Each task updates its scoped PG row and the exact linked parent requirements whe
 
 ## Maintained records
 
-[PG tracker and parent map](../maintainers/personal-game-next-batch.md) owns assignment status. [Feature scope](personal-game-next-batch-feature-spec.md#maintained-records) links the canonical behavior owners and existing limits inventories. This technical allocation adds no game limit or alternative policy owner. PG05's future policy proposals must enter the base-world inventory as proposals; measured PG04 constraints and PG02 context choices remain with their established owners.
+[PG tracker and parent map](../maintainers/parallel-batch-03-personal-game.md) owns assignment status. [Feature scope](parallel-batch-03-personal-game-feature-spec.md#maintained-records) links the canonical behavior owners and existing limits inventories. This technical allocation adds no game limit or alternative policy owner. PG05's future policy proposals must enter the base-world inventory as proposals; measured PG04 constraints and PG02 context choices remain with their established owners.

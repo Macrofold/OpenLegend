@@ -20,6 +20,8 @@ export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
   entity: EntityView | null;
+  subject?: string;
+  returnFocus?: HTMLButtonElement;
 };
 export function ActionPicker({
   picker,
@@ -194,7 +196,7 @@ export function ActionPicker({
       id="contextMenu"
       className="ol-picker"
       role="dialog"
-      aria-label={`Actions for ${picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName}`}
+      aria-label={`Actions for ${picker.subject ?? (picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName)}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
         if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
@@ -224,7 +226,9 @@ export function ActionPicker({
     >
       <div className="ol-picker-head">
         <Icon name={picker.entity?.icon ?? 'ui.inview'} fallbackLabel={picker.entity?.name} />
-        <strong id="contextTitle">{picker.entity?.name ?? view.presentation.locationName}</strong>
+        <strong id="contextTitle">
+          {picker.subject ?? picker.entity?.name ?? view.presentation.locationName}
+        </strong>
         <IconButton
           icon="ui.refresh"
           label="Refresh actions"
@@ -366,7 +370,7 @@ export function ActionPicker({
               </AriaButton>
             </Explanation>
           ))}
-        {describeAction && !query && (
+        {describeAction && !picker.context.itemId && !query && (
           <AriaButton
             data-picker-row
             className="ol-item"

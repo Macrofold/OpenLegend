@@ -18,6 +18,7 @@ export function InventoryCollection({
   dropActive,
   onNavigate,
   onSelect,
+  onContextMenu,
   onQuickMove,
   onDragStart,
   onDragEnd,
@@ -33,6 +34,11 @@ export function InventoryCollection({
   dropActive: boolean;
   onNavigate(id: string): void;
   onSelect(item: InventoryItemView, anchor: HTMLButtonElement, actions: boolean): void;
+  onContextMenu(
+    item: InventoryItemView,
+    anchor: HTMLButtonElement,
+    point: { x: number; y: number },
+  ): void;
   onQuickMove(item: InventoryItemView): void;
   onDragStart(item: InventoryItemView, event: DragEvent<HTMLButtonElement>): void;
   onDragEnd(): void;
@@ -139,13 +145,25 @@ export function InventoryCollection({
                 onContextMenu={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  if (!busy) onSelect(item, event.currentTarget, true);
+                  if (!busy)
+                    onContextMenu(item, event.currentTarget, {
+                      x: event.clientX,
+                      y: event.clientY,
+                    });
                 }}
                 onKeyDown={(event) => {
-                  if (event.nativeEvent.isComposing) return;
+                  if (event.defaultPrevented || event.nativeEvent.isComposing || event.repeat)
+                    return;
                   if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
                     event.preventDefault();
-                    if (!busy) onSelect(item, event.currentTarget, true);
+                    event.stopPropagation();
+                    if (!busy) {
+                      const bounds = event.currentTarget.getBoundingClientRect();
+                      onContextMenu(item, event.currentTarget, {
+                        x: bounds.left,
+                        y: bounds.bottom,
+                      });
+                    }
                   } else if (event.key === 'Enter' && event.shiftKey && canMove) {
                     event.preventDefault();
                     if (!busy) onQuickMove(item);

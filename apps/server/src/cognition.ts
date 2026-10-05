@@ -156,6 +156,12 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         ...(input.distance !== undefined ? { distance: input.distance } : {}),
       };
     case 'gather':
+      return {
+        ...base,
+        type: 'gather',
+        targetId: input.targetId!,
+        ...(input.itemId ? { itemId: input.itemId } : {}),
+      };
     case 'harvest':
       return { ...base, type: input.type, targetId: input.targetId! };
     case 'cancel':

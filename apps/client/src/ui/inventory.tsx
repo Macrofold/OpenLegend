@@ -22,6 +22,11 @@ import './inventory.css';
 type InventoryProps = {
   view: GameView;
   addItem(): void;
+  contextMenu(
+    item: InventoryItemView,
+    point: { x: number; y: number },
+    opener: HTMLButtonElement,
+  ): void;
   command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
@@ -114,6 +119,7 @@ export function Inventory(props: InventoryProps) {
 function InventoryWorkspace({
   view,
   addItem,
+  contextMenu,
   command,
   connected,
   visible,
@@ -374,6 +380,37 @@ function InventoryWorkspace({
       setAmountDraft(undefined);
       setQuantityError('');
     }
+  }
+  function openItemContext(
+    side: InventorySide,
+    selected: InventoryItemView,
+    button: HTMLButtonElement,
+    point: { x: number; y: number },
+  ) {
+    const state = collection(side);
+    const source = state.page;
+    if (
+      ignoreClick.current ||
+      busy ||
+      ownerGuard.current ||
+      !visible ||
+      !connected ||
+      !view.access?.controlling ||
+      view.access.scope !== scope ||
+      !state.available ||
+      state.loading ||
+      !source ||
+      source.container.id !== state.location.id
+    )
+      return;
+    const current = source.items.find((entry) => entry.id === selected.id);
+    if (!current || !sameItem(current, selected)) return;
+    choose(side, current, button, true);
+    // The native item catalogue accepts possessions, including carried bags.
+    // World-container contents keep their exact local transfer/details route.
+    if (!source.breadcrumbs.some((entry) => entry.id === view.player.id)) return;
+    setDetailOpen(false);
+    contextMenu(current, point, button);
   }
   function moveIntention(
     side: InventorySide,
@@ -645,6 +682,9 @@ function InventoryWorkspace({
                 }
                 onNavigate={(id) => navigate(side, id)}
                 onSelect={(selected, button, actions) => choose(side, selected, button, actions)}
+                onContextMenu={(selected, button, point) =>
+                  openItemContext(side, selected, button, point)
+                }
                 onQuickMove={(selected) => quickMove(side, selected)}
                 onDragStart={(selected, event) => beginDrag(side, selected, event)}
                 onDragEnd={stopDrag}

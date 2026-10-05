@@ -48,6 +48,30 @@ export function validateSpatialMap(map: SpatialMap): void {
   )
     throw new Error('Unsupported spatial layout.');
   const ids = new Set<string>();
+  if (layout.scenery !== undefined) {
+    if (!Array.isArray(layout.scenery) || layout.scenery.length > SPATIAL_LIMITS.maxScenery)
+      throw new Error('Too much static scenery.');
+    const sceneryIds = new Set<string>();
+    for (const instance of layout.scenery) {
+      if (
+        !instance ||
+        !safeId(instance.id) ||
+        sceneryIds.has(instance.id) ||
+        !safeId(instance.appearance) ||
+        !Number.isSafeInteger(instance.seed) ||
+        !finitePoint(instance.position) ||
+        !Number.isFinite(instance.width) ||
+        !Number.isFinite(instance.height) ||
+        instance.width <= 0 ||
+        instance.height <= 0 ||
+        instance.width > SPATIAL_LIMITS.maxExtent ||
+        instance.height > SPATIAL_LIMITS.maxExtent ||
+        typeof instance.castShadows !== 'boolean'
+      )
+        throw new Error('Invalid static scenery.');
+      sceneryIds.add(instance.id);
+    }
+  }
   const levels = new Set<string>();
   for (const level of layout.levels) {
     if (

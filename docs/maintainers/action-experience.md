@@ -97,7 +97,7 @@ PW10 adds narrowly supported finite stock-method normalization: retain demonstra
 - [x] Coalesce/resume pending work; handle no downtime, cancellation, stale evidence, missing credentials, malformed response and uncertain spend without blocking immediate cognition or automatic paid retry.
 - [x] Select AEL05/AEL07 pending-work, queue-byte/count, concurrency, coalescing and retained-evidence admission bounds before enablement. Verify no-idle accumulation and capacity exhaustion preserve durable cursors/support while leaving immediate actions available.
 
-The current automatic learning route remains NPC-only for PW10. Execution supplies eligible finite evidence; the existing Jev-only judgment may retain, decline or remain uncertain, and no successful method is preloaded. The October 2 native fixtures do not demonstrate any live retention preference; separately capped retention/reuse qualification remains in [PW10](next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods).
+The current automatic learning route remains NPC-only for PW10. Execution supplies eligible finite evidence; the existing Jev-only judgment may retain, decline or remain uncertain, and no successful method is preloaded. The October 2 native fixtures do not demonstrate any live retention preference; separately capped retention/reuse qualification remains in [PW10](parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods).
 
 **Exit:** AXE08 native scheduling/accounting fixtures with recorded AEL05/AEL07 overflow evidence and separately capped live qualification. Record exact total costs and generation sentinels. Frequency policy is documented and never defines semantic sequence boundaries.
 

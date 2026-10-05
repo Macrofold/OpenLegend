@@ -8,6 +8,7 @@ export function playerEntity(view: GameView): EntityView {
     nameForm: view.player.nameForm,
     indefiniteArticle: view.player.indefiniteArticle,
     kind: 'actor',
+    bodyState: view.player.bodyState === 'removed' ? undefined : view.player.bodyState,
     statusEffects: view.player.statusEffects,
     subtype: 'player',
     position: view.player.position,

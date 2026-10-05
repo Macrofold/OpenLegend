@@ -72,3 +72,13 @@ Implemented the owner's exact people/objects/actions wording rule in root AGENTS
 The owner’s **Make references unambiguous** paragraph now names generic terms that need a clear referent and permits shorthand after identifying the subject. This changes wording guidance only; the protected development-save block remains unchanged and CG05 behavioral qualification remains open.
 
 [Verification report ownership](../../.agents/rules/documentation.md#verification-reports) now sends detailed evidence to focused reports under `docs/verification/`, with a short index and direct evidence links from affected owners. Reports are loaded by relevance; no adapter or global preload was added. Static guidance/link checks qualify the documentation routes only; CG05 retains native-agent behavioral qualification.
+
+## Sequential parallel-assignment names
+
+The owner's October 3 instruction is implemented in [create-parallel-tasks](../../.agents/skills/create-parallel-tasks/SKILL.md#name-and-register-the-allocation): new allocations take the next unused number and a descriptive name; revisions retain their number and existing work IDs. [The batch register](../projects/parallel-batches.md) locates the numbered plans. This changes output naming and reference maintenance only, not skill routing, runtime authority, worker communication, verification or task approval. Existing behavioral-dispatch qualification remains open.
+
+## Developer questions before dependent work
+
+The October 4 owner instruction is recorded in [AGENTS.md](../../AGENTS.md#resolve-developer-questions-before-dependent-work), with explicit reminders in prioritization, parallel-task preparation and design. Complete independent authorized work before asking; hold dependent design, implementation and other task work until the developer answers. A design-only assignment or delegated decision does not bypass that requirement. Existing answers, routine choices and mandatory all-work stops retain their meanings. No skill-loading routes or adapters changed.
+
+Static content/link and guidance checks verify the edited instructions, not future agent compliance. CG05 remains open: representative behavioral qualification should cover a mixed independent/dependent task, a design request with an unresolved owner choice, a parallel allocation that must ask instead of inventing a design-only substitute, and a routine choice or already answered question that should proceed without asking again.

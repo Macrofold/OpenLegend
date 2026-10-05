@@ -33,9 +33,14 @@ export class HoverOutline extends pc.OutlineRenderer {
         varying vec2 vUv0;
         uniform sampler2D source;
         uniform float hoverFade;
+        uniform vec2 hoverTexel;
         void main(void) {
-          float edge = texture2D(source, vUv0).a;
-          gl_FragColor = vec4(1.8, 1.45, 0.65, edge * hoverFade);
+          float edge = texture2D(source, vUv0).a * 0.4;
+          edge += texture2D(source, vUv0 + hoverTexel * vec2(1.5, 0.0)).a * 0.15;
+          edge += texture2D(source, vUv0 - hoverTexel * vec2(1.5, 0.0)).a * 0.15;
+          edge += texture2D(source, vUv0 + hoverTexel * vec2(0.0, 1.5)).a * 0.15;
+          edge += texture2D(source, vUv0 - hoverTexel * vec2(0.0, 1.5)).a * 0.15;
+          gl_FragColor = vec4(1.2, 1.1, 0.8, edge * hoverFade * 0.42);
         }`,
     });
     this.quadRenderer = new pc.QuadRender(this.shaderBlend);
@@ -95,6 +100,7 @@ export class HoverOutline extends pc.OutlineRenderer {
     const device = this.app.graphicsDevice;
     device.scope.resolve('source').setValue(this.rt.colorBuffer);
     device.scope.resolve('hoverFade').setValue(this.amount);
+    device.scope.resolve('hoverTexel').setValue([1 / this.rt.width, 1 / this.rt.height]);
     const stencil = this.protectPeople ? outsidePeopleStencil : undefined;
     device.setDrawStates(this.blendState, undefined, undefined, undefined, stencil, stencil);
     this.quadRenderer.render();

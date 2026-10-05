@@ -26,8 +26,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [NPC reply previews](verification/npc-reply-preview.md): corrected configured-route gate, actual early browser speech, private decoding/native-history/recovery checks, exact estimated/reserved spending and remaining NP05 qualification.
 
 - [World-configured survival](verification/world-configured-survival.md): matched native outcomes, body/meter/alternate-world checks, current cost measurements and combined UI acceptance status.
-- [Playable-week Engineer 2](verification/next-playable-week-engineer-2.md): versioned recipe families, ordinary and creator admission, current-format refusals and reviewed engineering handoffs.
-- [Playable-week Engineer 4](verification/next-playable-week-engineer-4.md): exact inventory/saved-work native authority and receipt checks, partial actual layout/draft/alternate-world meter observations, and remaining current-server/browser/stream integration gates.
+- [Playable-week Engineer 2](verification/parallel-batch-01-playable-week-engineer-2.md): versioned recipe families, ordinary and creator admission, current-format refusals and reviewed engineering handoffs.
+- [Playable-week Engineer 4](verification/parallel-batch-01-playable-week-engineer-4.md): exact inventory/saved-work native authority and receipt checks, partial actual layout/draft/alternate-world meter observations, and remaining current-server/browser/stream integration gates.
 
 - [Invention question implementation](verification/invention-questions.md): completed finite native/browser/live acceptance, request-size measurements, historical recovery failures and retained accounting/deployment limits.
 
@@ -35,6 +35,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [World Agent context and preparation](verification/world-agent-context.md): scoped context, native save-for-review, recovery and actual Macrofold journeys.
 
 - [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices.
+- [Fuller starting wilderness](verification/wilderness-expansion.md): expanded seeded terrain/population, procedural scenery and animals, native movement/gathering, PostgreSQL restoration and bounded browser setup/render costs.
+- [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory and bounded escape/guide costs.
 - [Inventory, task and conversation redesign](verification/game-interaction-redesign.md): paired inventory and object-opening contracts, native and actual component checks, upstream integration, successful spatial CI, remaining full-check failures and unrun integrated gameplay acceptance.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers. [October 2 containers and chosen activities](verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) records current family/watch/inspection/aging and actual injected-director results, the corrected frozen-world stress diagnostic and historical mutable-fixture timeout, and separate browser/live/integration gaps.

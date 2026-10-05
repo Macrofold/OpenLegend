@@ -76,15 +76,22 @@ export function reconcileBody(
     else {
       actor.alive = false;
       if (entity.animal) {
-        entity.animal.fleeSeconds = 0;
-        entity.animal.fleeFrom = null;
+        entity.animal.danger = 0;
+        entity.animal.threatPosition = null;
+        entity.animal.threatId = null;
+        entity.animal.escapeHeading = null;
+        entity.animal.calmRate = 0;
       }
-      if (body.harvestYield.length && !entity.remains)
-        entity.remains = {
-          sourceId: entity.id,
-          harvested: false,
-          yields: body.harvestYield.map((y) => ({ ...y })),
-        };
+      const decay = bodyPolicy(world)?.remains;
+      entity.remains = {
+        diedAt: world.simTime,
+        rotAt: decay ? world.simTime + decay.rotAfterSeconds : null,
+        removeAt: decay ? world.simTime + decay.removeAfterSeconds : null,
+        phase: 'fresh',
+        sourceId: entity.id,
+        harvested: false,
+        yields: body.harvestYield.map((y) => ({ ...y })),
+      };
     }
     if (!actor.alive) {
       // Death ends live sensory continuity, not retained knowledge or historical evidence.

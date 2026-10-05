@@ -206,8 +206,7 @@ function prepareCondition(condition: StatusCondition): {
         : name === 'grounded'
           ? (e: Entity) => worldSupport(e) !== null
           : name === 'activeWork'
-            ? (e: Entity) =>
-                !!e.actor?.action || worldSupport(e) === null || !!e.animal?.fleeSeconds
+            ? (e: Entity) => !!e.actor?.action || worldSupport(e) === null || !!e.animal?.danger
             : (e: Entity) => e.actor?.[name];
     matches = (_world, bindings) => {
       const entity = resolve(target, bindings);

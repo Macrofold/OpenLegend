@@ -1,6 +1,6 @@
 # Chosen camp supplies and fire watches
 
-**Native contracts implemented; full playable qualification remains open.** Mike authorized Engineer 3's PW10 implementation, including ordinary player controls, in chat on October 2, 2026. This document owns the bundled world's material choices, tuning and language for [PW10's camp activities](../../projects/next-playable-week/camp-activities.md). The native request builders use existing [fire care](survival.md#tending-the-campfire), [items](items.md), [learning](../../action-experience.md) and agency owners. Native/static and current-format restart evidence does not close ordinary UI, live voluntary choice/retention/reuse or combined integration qualification. The accepted God-only detailed work display remains separate from ordinary request/review controls.
+**Native contracts implemented; full playable qualification remains open.** Mike authorized Engineer 3's PW10 implementation, including ordinary player controls, in chat on October 2, 2026. This document owns the bundled world's material choices, tuning and language for [PW10's camp activities](../../projects/parallel-batch-01-playable-week/camp-activities.md). The native request builders use existing [fire care](survival.md#tending-the-campfire), [items](items.md), [learning](../../action-experience.md) and agency owners. Native/static and current-format restart evidence does not close ordinary UI, live voluntary choice/retention/reuse or combined integration qualification. The accepted God-only detailed work display remains separate from ordinary request/review controls.
 
 ## What a person can choose
 
@@ -46,7 +46,7 @@ The first watch begins beside the selected observed burning fire, using the pers
 
 Suspension keeps the original deadline and receipt-based counters and records that attendance was interrupted. Restarting native fuel work is a new attempt. A completion that discovers fuel is no longer low spends nothing, while its admitted attempt still counts. Stop or an expired deadline after taking a cache unit leaves that committed unit in the person's possessions; it is not returned or burned by a fictional cleanup. Current-format restart retains these facts and never repeats completed transfers or charges a receipt twice.
 
-Generic stock-selection work is bounded by [the action/containment design](../../projects/next-playable-week/camp-activities.md#fresh-stock-binding-at-the-existing-custody-owner) and [AEL09](../../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse). Those host work limits do not cap saved belongings; incomplete selection requires permitted inspection or a narrower selected container. This world's quantity choices never grant extra host work.
+Generic stock-selection work is bounded by [the action/containment design](../../projects/parallel-batch-01-playable-week/camp-activities.md#fresh-stock-binding-at-the-existing-custody-owner) and [AEL09](../../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse). Those host work limits do not cap saved belongings; incomplete selection requires permitted inspection or a narrower selected container. This world's quantity choices never grant extra host work.
 
 ## Meaning of keeping a personal portion
 
@@ -79,6 +79,6 @@ No new fire warmth, weather, spreading, food preservation, carrying-weight rule,
 
 ## Maintained records
 
-- Implementation: [PW10](../../maintainers/next-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods), beneath AC/AE/AG/BW19; BW21 remains separate.
-- Mechanism and acceptance: [camp activities](../../projects/next-playable-week/camp-activities.md).
+- Implementation: [PW10](../../maintainers/parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods), beneath AC/AE/AG/BW19; BW21 remains separate.
+- Mechanism and acceptance: [camp activities](../../projects/parallel-batch-01-playable-week/camp-activities.md).
 - Limits: [CR01 camp choices](../../limits/base-world.md#cr01--proposed-finite-camp-activities) and [AEL09 semantic binding/reuse](../../limits/action-experience.md#ael09--fresh-stock-binding-and-finite-reuse).

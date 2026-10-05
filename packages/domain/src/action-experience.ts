@@ -677,7 +677,7 @@ const invocationFields: Partial<
   // Requested activities may end a follow at an absolute deadline; learning refuses to
   // generalize one (activity-learning.ts), since a past deadline is not reusable.
   follow: { required: ['targetId'], optional: ['distance', 'relation', 'onLost', 'until'] },
-  gather: { required: ['targetId'] },
+  gather: { required: ['targetId'], optional: ['itemId'] },
   harvest: { required: ['targetId'] },
   prepare: { required: ['preparation'] },
   craft: { required: ['recipeId'] },

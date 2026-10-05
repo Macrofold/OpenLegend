@@ -4,7 +4,7 @@
 
 ## Maintained records
 
-- Implementation: [INV](maintainers/inventions-and-world-evolution.md), [EWF](maintainers/extensible-world-foundation.md) and the delivered [NP03 child](maintainers/next-priority-batch.md#np03--craft-with-an-invented-material).
+- Implementation: [INV](maintainers/inventions-and-world-evolution.md), [EWF](maintainers/extensible-world-foundation.md) and the delivered [NP03 child](maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material).
 - Limits and constraints: [Recipe-family scope](limits/inventions.md#rf01--world-owned-recipe-families) and [object/capacity limits](limits/objects.md).
 - Related contract: [World-module runtime](../archive/07-technical-architecture/world-module-runtime.md) and [authored materials](worlds/base/items.md#cordage-manufacture-and-reuse).
 
@@ -45,7 +45,7 @@ Each invocation owns its progress and effects. Sharing a definition does not sha
 
 Previously invented inputs require positive consumer checks for structure, resource identity, roles, capacities, supported interfaces, rights and recursive bounds. Do not merely remove the current native-input restriction. Prove one reusable intermediate material/tool input before claiming arbitrary recursive crafting.
 
-The delivered [NP03 implementation](projects/completed/next-priority-batch-tech-design.md#np03--craft-with-an-invented-material) proves one such edge: trusted cordage output into the woven-container binding role. The [authored world contracts](worlds/base/items.md#cordage-manufacture-and-reuse) own material rules and costs. Role-specific origin/interface policy replaces the former family-wide native restriction. Certification requires the exact admitted producer/output link, current trusted family/interface/unit, recompilable safe output and complete typed item/recipe/family/policy dependencies. A copied material component or inherited tag is not proof. A visiting set rejects circular inspection; the producer's native-only input role bounds this slice without recursive crafting.
+The delivered [NP03 implementation](projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#np03--craft-with-an-invented-material) proves one such edge: trusted cordage output into the woven-container binding role. The [authored world contracts](worlds/base/items.md#cordage-manufacture-and-reuse) own material rules and costs. Role-specific origin/interface policy replaces the former family-wide native restriction. Certification requires the exact admitted producer/output link, current trusted family/interface/unit, recompilable safe output and complete typed item/recipe/family/policy dependencies. A copied material component or inherited tag is not proof. A visiting set rejects circular inspection; the producer's native-only input role bounds this slice without recursive crafting.
 
 Crafting separately rechecks actual custody, availability and quantities, debits through the existing resource owner, and creates one output at completion. Active work pins the admitted recipe's mechanical identity, including exact compiled dependencies, while excluding attribution, knowledge and timestamps. Start, completion and current-format load share the installed-recipe integrity validator. Missing or changed meaning refuses admission/publication/activation; spent inputs retain existing interruption semantics. Referenced ancestors remain required; replacement, retirement and migration are not introduced.
 

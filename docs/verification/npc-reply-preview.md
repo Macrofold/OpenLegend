@@ -40,7 +40,7 @@ Each decision admission returned HTTP 200, but the director's player conversatio
 
 The game sends Jev decisions as native `{state, questions}` and expects an `answers` map (`MacrofoldBackend.judge`). Its configured decision model is instead Muse Spark. Local Macrofold's `decisionProtocol` selects OpenRouter Decisions only for `typesafe/jev-1.13`; the configured Muse identity selects OpenRouter chat. That is a source-confirmed protocol mismatch and the explanation supported by inspection for the observed preparation failures. It is not a measured failure of the mini/complex models' streaming capability.
 
-Changing the decision binding or substituting a direct generator would violate NP05's unchanged-model/route condition. The probe therefore did not repair the shared `.env`, bypass Jev, fabricate answers, force extra operations or replay failed requests. The latency prerequisite remains unresolved. Preview/UI implementation stops at this boundary, as required by [NP05's gate](../projects/completed/next-priority-batch-feature-spec.md#feasibility-gate-before-implementation).
+Changing the decision binding or substituting a direct generator would violate NP05's unchanged-model/route condition. The probe therefore did not repair the shared `.env`, bypass Jev, fabricate answers, force extra operations or replay failed requests. The latency prerequisite remains unresolved. Preview/UI implementation stops at this boundary, as required by [NP05's gate](../projects/completed/parallel-batch-02-foundations-and-usability-feature-spec.md#feasibility-gate-before-implementation).
 
 Owner options are to retain final-only replies; separately authorize correcting the decision-model configuration and then rerun representative direct-conversation feasibility; or, if a functioning route later shows no useful closed-operation opportunity, separately design a server-bound public reply channel. The latter changes the response contract and is not authorized or implemented by this investigation. Correcting configuration alone does not pass the gate.
 
@@ -54,9 +54,9 @@ The full documentation diff was reviewed against the source and observed probe r
 
 ### Maintained records
 
-- Implementation/blocker/remaining acceptance: [NP05](../maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes), [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), scoped NC02/NC10 and [CR02/CR12](../maintainers/cognition-redesign.md).
+- Implementation/blocker/remaining acceptance: [NP05](../maintainers/parallel-batch-02-foundations-and-usability.md#np05--read-npc-replies-before-generation-finishes), [NC19](../maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies), scoped NC02/NC10 and [CR02/CR12](../maintainers/cognition-redesign.md).
 - Delivery constraint: [NPV01](../limits/interface.md#npv01--private-npc-reply-preview); all preview restrictions remain targets, not shipped protections.
-- Conditional plan and source inventory: [NP05 technical design](../projects/completed/next-priority-batch-tech-design.md#np05--read-npc-replies-before-generation-finishes).
+- Conditional plan and source inventory: [NP05 technical design](../projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#np05--read-npc-replies-before-generation-finishes).
 
 ## Corrected configured-route gate — October 3, 2026
 
@@ -144,7 +144,7 @@ Additional Jev/provider cost for replacement qualification was **$0**. Cumulativ
 
 ### Multilingual verification deferral — October 3, 2026
 
-Mike deferred other-language support. The unrun real OS IME composition/confirmation check therefore no longer blocks NP05 scoped completion; preserve existing input safeguards and revisit verification when multilingual support is prioritized. No new runtime check was performed and no multilingual pass is claimed. [Current task status](../maintainers/next-priority-batch.md#np05--read-npc-replies-before-generation-finishes) distinguishes this scope change from the remaining batch-level combined scenarios.
+Mike deferred other-language support. The unrun real OS IME composition/confirmation check therefore no longer blocks NP05 scoped completion; preserve existing input safeguards and revisit verification when multilingual support is prioritized. No new runtime check was performed and no multilingual pass is claimed. [Current task status](../maintainers/parallel-batch-02-foundations-and-usability.md#np05--read-npc-replies-before-generation-finishes) distinguishes this scope change from the remaining batch-level combined scenarios.
 
 ## Combined streaming and accounting — October 3, 2026
 

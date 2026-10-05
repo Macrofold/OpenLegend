@@ -1,0 +1,150 @@
+# Parallel batch 04 — Expeditions and exchange — technical task definitions
+
+| Status      | Current progress                                                                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Ownership, dependency gates and four delivery contracts are defined; the shelter assignment supplies its missing technical design. | 2026-10-03   |
+
+[Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
+
+## Shared boundaries and delivery order
+
+All new behavior uses current authoritative commands, object transitions, resource claims, action execution, event/perception/experience, save/load and scoped views. Clients submit intentions, not effects. Language/model output can select or propose supported operations, never grant consent, custody, knowledge or damage by itself. Engine code owns reusable mechanics and integrity; base-world content, names, invitation/trade phrasing, threat policy and tuning belong in the authored world package. Do not scatter demo strings or actor IDs through server, protocol or client code.
+
+Use the current spatial contract and units from [Spatial world](../spatial-world.md); do not infer geometry from art or introduce a separate coordinate system. Exact internal references/revisions protect identity. Ordinary player/model text uses clear names with distinguishing permitted details, not raw IDs or serialized implementation records.
+
+Start on a branch containing the selected batch 03 results. PG03 owns the action presentation contract; PG04 owns shared preview/prerequisite evaluation. PX consumers supply descriptions, facts and native guards through those interfaces, and do not recreate command simulation for menu display. PX04 consumes PG02's decision/continuation integration rather than writing a rival cognitive loop. PX01 additionally requires the approved PG05 pair and merged/qualified embodied-feedback work where their scopes overlap. The owner provides these inputs; no worker-to-worker messaging is part of delivery.
+
+| Shared area                                       | Producer/owner                                                | Consumer boundary                                                                                                                               |
+| ------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authoritative action admission and preview        | Existing command owner and PG04                               | All runtime tasks extend their own operations through the common entrypoint; no preview side effects                                            |
+| Action descriptions and UI                        | PG03 plus existing catalogue/descriptions                     | Each task adds its own choices and readable facts; no competing picker redesign                                                                 |
+| Object identity, quantities, placement and claims | Existing persistent-object owner                              | PX02 requests an atomic two-sided custody change; PX05 designs construction consumption/return through the same owner                           |
+| Perceived evidence and remembered places          | Existing perception/experience plus PX03's exposure extension | PX01/PX04 use existing actor-permitted destinations; neither depends on PX03's new place representation                                         |
+| Social proposals                                  | PX02 owns reciprocal item offers; PX04 owns trip invitations  | Reuse proven receipt/identity/consent helpers where meaning agrees; do not force two different effects into a speculative negotiation framework |
+| Physical injury, targeting, escape and remains    | Existing owners plus embodied-feedback delivery               | PX01 adds an encounter/opponent consumer, not a second body or escape implementation                                                            |
+| Shelter geometry/material contract                | PX05 design                                                   | No batch 04 runtime assignment consumes unfinished construction                                                                                 |
+
+Source paths below were checked at c4e18d91. Reconcile renamed/extracted owners on the actual starting revision. Shared edits in `types.ts`, protocol, catalogue, service and world composition should be additive for each named meaning; parent ownership is unchanged. Integration adjustments belong to the affected assignment, not an unassigned sixth engineer.
+
+## PX01 — Encounter implementation contract
+
+**Start gate:** PG05's `docs/projects/first-threat-encounter-feature-spec.md` and `docs/projects/first-threat-encounter-tech-design.md` must exist, carry the owner-approved choices applicable to the encounter, and resolve its relevant D07/PS-D01 questions. These are expected future artifacts, not links to files present at this planning baseline. The [PG05 task](../maintainers/parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design) owns them. Inspect incorporated embodied-feedback scope before estimating the missing runtime work. Missing decisions are an incomplete dependency, not permission to weaken human protection.
+
+1. Map the approved creature's warnings, escalation, target eligibility, pursuit termination, reward and aftermath to existing capabilities. Put the configured behavior in `packages/domain/src/worlds/base/`; reuse the actor/perception, native attack, motion and activity owners in `packages/domain/src/kernel.ts`, `agency.ts`, `living.ts`, `participation-state.ts` and `activity-execution.ts`. New trusted computation belongs behind the existing world-module seam, not a species-name branch in the engine.
+2. Derive decisions from current allowed observations, last-known evidence and authored motivation. Update at relevant perception, damage, action completion, deadline or target-loss boundaries. Native navigation/attack recovery handles execution. Do not use per-render-frame cognition, a provider call per step or an all-actors scan to find a victim.
+3. Revalidate exact target, current participation, reach, equipment, ammunition and recovery at effect time through the combat owner. An intended strike, threat display and actual hit have distinct outcomes. Commit authoritative changes/events together; interrupted/duplicate work cannot double damage or reward.
+4. Project warning, visible condition, escape/blocked reason and encounter result through `apps/server/src/view.ts`, action descriptions and existing client feedback. No separate combat HUD is assumed; the approved encounter decides any necessary presentation addition. Another player's hidden condition/position remains private.
+5. Preserve current-format persistence for opponent intent, installed definitions and pending native work. Restore cannot reissue a completed hit, revive a removed creature or replay a model request. Death/remains behavior stays with its existing owner; aftermath must not silently delete possessions.
+
+**Definition of done:** all [PX01 experience acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and the approved PG05 acceptance, including human protection, meaningful avoidance and changed terrain. Report actual native versus live-decision evidence and any policy gaps without calling a blocked encounter complete.
+
+**Reconcile:** PG05's eventual pair; [base lifecycle](../worlds/base/lifecycle-and-protection.md); [BW14](../maintainers/base-world.md), [MP04](../maintainers/multiplayer.md), relevant [PS05](../maintainers/product-scalability.md); combat/action/actor owners and their [base-world](../limits/base-world.md), [actions](../limits/action-experience.md) and [spatial](../limits/spatial.md) limits. Broad multiplayer, hostile humans and NPC ghost continuity remain outside this slice.
+
+## PX02 — Reciprocal offer contract
+
+### Current owner and intended model
+
+`packages/domain/src/handover.ts` currently owns proposal, recipient reply, lapse and one-way custody. Extend that semantic owner, extracting local pure checks where useful. Update all current callers together; do not add compatibility readers for the old one-item offer format. Existing gifts become an offered side with no requested side, retaining their accepted behavior and visible text.
+
+A pending reciprocal offer carries stable offer identity, revision, proposer, recipient, exact give/receive lot and quantity, definition/contents pins needed by current item semantics, and game-clock creation/expiry. The proposer’s explicit submission is consent to that revision. The named recipient's **Accept** command consents to the same revision. A counteroffer replaces the terms with a higher revision and makes its author the proposer; prior acceptance is invalid. Mutation requests carry expected offer revision plus the normal authenticated command/receipt identity. The proposer cannot accept their own offer for the other person.
+
+Terms come from actor-permitted references. No response or choice catalogue may enumerate another person's private inventory. It is valid to know that somebody has a knife without knowing its present availability; failure says the terms are no longer available, not where they moved it. Candidate selection is restricted to previously disclosed exact lots; acquiring knowledge follows existing perception/inspection. Display no inferred price or relationship score.
+
+### Commit, lifecycle and observations
+
+- Offer creation moves/reserves nothing. Reuse applicable existing handover expiry/admission policies from the world; the proposed added cardinality is in the [batch constraints](../limits/parallel-batch-04-expeditions-and-exchange.md). References on both sides participate in conflict/lapse checks; no live proposal can promise the same lot twice through a gift/barter loophole.
+- Before acceptance, validate both actors' authority/participation/reach, exact terms, accessible custody, free units, current work, whole-object rules and container contents/access. Evaluate the **final joint placement**, including both sides' capacity if applicable. A valid reciprocal swap must not fail just because a hypothetical one-sided intermediate inventory would be full.
+- Perform both moves in one draft/transition through `objects.ts`/resource-claim helpers. Failure discards the whole draft. Avoid self/ancestor container cycles and overlapping offered/requested subtrees. Native exceptions or storage failure must not publish half an exchange. Effects and the command receipt commit together through current service persistence.
+- Acceptance closes the offer and emits the actual exchange. Decline/withdraw/expiry/lapse are distinct no-transfer endings. Ordinary perception supplies witnesses; only the two participants receive private terms. Memory stores what was actually experienced; speech claiming a deal is not evidence of transfer.
+- A pending offer survives valid same-version saves with its revision/deadline; normal current-world revalidation can lapse it. Existing receipt semantics settle reconnect/retry; do not retain completed proposals as a second transaction ledger or prune financial/accounting evidence unrelated to this feature.
+
+### Source map and integration
+
+Domain: `handover.ts`, `objects.ts`, `object-access.ts`, `resource-claims.ts`, `types.ts`, `worlds/base/handover.ts` and the kernel command route. Server: `handover-actions.ts`, `action-catalogue.ts`, `action-descriptions.ts`, current `world-service.ts` command dispatch and `decision-context.ts`. Protocol and client: current catalogue/item-offer projections and `apps/client/src/ui/inventory.tsx`/person actions. Locate all handover callers when changing the current offer shape.
+
+Build the native exact transfer first, then scoped projection/candidate descriptions, then the existing inventory/person panel interaction. The terms surface is read-only until explicit submission. Unknown/requested details remain unknown. Stale server replies preserve the draft but refresh authoritative terms before another acceptance. Reuse [inventory trade guidance](../ui-ux/inventory.md#future-trading-inspect-agree-commit), [controls](../ui-ux/controls.md) and existing design-system components.
+
+**Definition of done:** [PX02 acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) through player and resident routes, including changed terms, joint atomicity, privacy, replay and restart. Compare a stacked consumable with an individual invented tool; neither depends on a canned meat/cord recipe. Existing one-way handover remains correct.
+
+**Reconcile:** [social world contract](../worlds/base/social.md), [items](../worlds/base/items.md), [persistent objects](../maintainers/persistent-objects.md), BW20 and the immediate-exchange subset of DG06/ND09 in [design needs](../maintainers/needs-design.md). INV-20's broader repertoire stays open; BW21 standing reservation, BW17 promise management, credit/currency and institutions are not delivered. Update [objects](../limits/objects.md), [base-world limits](../limits/base-world.md) and affected [action constraints](../limits/action-experience.md).
+
+## PX03 — Encounter evidence and known places
+
+### Exposure contract
+
+Use `packages/domain/src/story-selection.ts` and existing event/perception/experience ownership to extend grounded encounter support. `apps/server/src/narrator.ts` consumes committed evidence; it must not become the source of discovery. Separate **a new thing the character legitimately noticed**, **selection for presentation**, and **optional wording generation**. A provider outage cannot prevent learning an actually observed place or item, and reading prose cannot create knowledge beyond the source evidence.
+
+Introduce a narrow world-authored place definition: stable definition identity/revision, readable label and observable description, existing physical reference/footprint and an explicit exposure condition supported by current sensing. No arbitrary executable condition or renderer-only trigger. Use current spatial surfaces/regions/units; if a stable named-area record is missing, add a serializable reference over existing geometry rather than a parallel navigation graph. Start with static authored places; moving vehicles/interiors and procedurally generated regions remain unsupported.
+
+Per-character place knowledge is a projection of recorded observations and their current forgetting/correction visibility. Retain the observed label, location, source/time and definition reference needed to disambiguate it. Do not add another writable memory database or join unseen current-world facts into last-known descriptions. A changed/removed place can be outdated knowledge until the character learns otherwise; server navigation still revalidates its request. Known does not mean currently visible or safe.
+
+For an item, **inspected inventory visibility**, not possession alone, supplies exposure. Identify the exact lot/individual and admitted definition; accessible outer bags do not reveal all nested contents. Reuse existing knowledge granularity for familiar definitions while allowing an unfamiliar instance's observable distinction to matter. Same-name knives stay distinct. Deduplication keys include viewer and source identity under current introduction semantics; a repaint, reconnect or new window is not a new encounter. Do not automatically narrate every definition revision.
+
+### Read and UI path
+
+Collect newly exposed candidates only at the relevant movement/perception/inspection change. Reuse bounded query/candidate machinery; filter before loading narration bodies. The introduction priority, maximum prose and scheduling remain under the existing story policy rather than a second cooldown framework. A scheduled narration result is discarded if its source is no longer permitted; a delayed description cannot overwrite newer known facts.
+
+Use the existing Journal/history panel family for **Known places**: learned label, a concise distinguishing observation, last-known location/status, then Focus/Inspect and a separate Move action when supported. A compact searchable list is sufficient; do not require a full minimap. Search reads only the actor's permitted knowledge with stable paging rather than capping stored memories. Do not embed an exact omniscient live distance if the destination location is only approximate. Focus is a presentation operation. Movement uses the current command route with the selected known location and current path validation.
+
+Source map: `packages/domain/src/story-selection.ts`, `events.ts`, perception/experience owners, `spatial-state.ts`; `apps/server/src/narrator.ts`, `entity-description.ts`, `inventory-view.ts`, `history.ts` and current narration admission; protocol, `apps/client/src/ui/history.tsx` and `memory-history.tsx`. Reuse [narration](../narration-and-conversations.md#replaceable-story-selection), [world navigation guidance](../ui-ux/world-interaction.md#navigation-and-world-search) and [memory architecture](../memory-architecture.md).
+
+**Definition of done:** [PX03 acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects), including two observers, repeated exposure, private contents, unsupported or stale movement and save/reload. One useful site and an invented object establish the distinct consumers; generated words alone do not qualify discovery.
+
+**Reconcile:** NC09–NC12's place/item exposure subset in [narration tracking](../maintainers/narration-and-conversations.md), DG01/ND18, relevant [SW](../maintainers/spatial-world.md) and memory ownership. PG03 action clarity is a prerequisite, not duplicated completion. Update [narration limits](../limits/narration.md), [spatial limits](../limits/spatial.md) and relevant cognition constraints; do not close whole narration or map programs.
+
+## PX04 — Consenting travel companions
+
+### Exact invitation, separate agency
+
+Introduce a saved trip invitation/participation record in the existing activity-request domain, with stable identity, revision, proposer/recipient, fixed known destination reference or permitted spatial point, optional stated purpose and status. Pending invitation, accepted trip and each person's actual activity progress are distinct. The record identifies social consent; the current action plan remains the sole owner of movement. Spoken promises/obligations are not repurposed as a locomotion controller.
+
+The proposer explicitly offers their own participation in that exact trip. The recipient's accept command authorizes only their participation. On acceptance, revalidate the proposer still offers that revision and both participants can start this activity under their normal action admission. Never interrupt either person's unrelated work implicitly: if a participant's work changed and starting now would replace it, lapse the offer with a permitted explanation and require a fresh explicit choice. Ordinary NPC selection applies current replacement/interruption policy as any other chosen action does; receiving an invitation cannot override it.
+
+Pending terms and trip-control projections belong only to the two participants. Other characters learn only what they actually perceive, such as spoken words or visible movement; an invitation cannot disclose a private destination or purpose to bystanders.
+
+Scope is a pair traveling to one fixed agreed destination. Either person can withdraw at any time. New terms require a fresh invitation; no silent retargeting. Joining an outing does not transfer possessions, reveal the other's goals, grant remote position tracking, impose a promise or enroll either person in combat/gathering. A future group or guided tour is a separate capability, not a reason to add generic party authority now.
+
+### Execution and interruptions
+
+Each participant receives their own existing bounded movement activity only after consent and admission. Preserve actual remaining steps and results using [action experience](../action-experience.md); do not report “sequence complete” without the trip and result. Completion evidence identifies **who arrived where**. The trip ends when both arrived, a participant withdraws, or a current refusal makes the agreed trip unavailable. Arrival by one actor is not evidence of arrival by the other.
+
+Use movement completion, perceived separation/threat, destination invalidation, withdrawal, incapacity and participation changes to wake reconsideration. Use existing motion deadlines and action dependencies; no fresh AI question every tick and no repeated identical offer. At loss of company, a participant may continue to the known agreed destination, wait under an explicit bounded activity, or stop through their normal choice. Those options do not expose the unseen person's actual location. Do not invent a constant all-knowing tether to keep the pair visually together. A long-lived blocked route becomes a truthful stopped/blocked result under existing navigation policy.
+
+Owner-initiated withdrawal stops only work owned by that trip, not unrelated actions chosen later. No automatic resume after logout/return, protection removal or restoring a terminal trip. Active restored work uses current participation/navigation revalidation and the existing receipt identity, not replayed invitation/acceptance. Use game-clock deadlines; initial pending expiry reuses the authored social-offer lifetime, while completed trips remain ordinary event/memory evidence.
+
+### Integration and player surface
+
+Compose through `packages/domain/src/activity-execution.ts`, `activity-hosts.ts`, `agency.ts`, existing motion and participation owners. Server entrypoints: `apps/server/src/activity-requests.ts`, `activity-request-choice.ts`, `activity-context.ts`, `decision-context.ts`, catalogue and command dispatch. Extend current typed contracts rather than bypassing admission from a chat string. World-authored labels, permissible invitation family and tuning live under `worlds/base/`. Keep `commitments.ts` a separate evidence owner.
+
+The nearby-person menu offers **Invite to travel** with an explicit known destination and distance when known. Show pending/accepted/traveling/arrived/ended plainly, with one reachable **Leave outing** action. The recipient's ordinary context contains the terms and relevant current priorities, with accept/decline options. Avoid a blocking modal for a routine invitation; preserve current work/input. A brief status belongs alongside current activity, not a permanent party dashboard. The destination picker may use current known entities/points; it must not depend on PX03's new list or expose undiscovered destinations.
+
+**Definition of done:** [PX04 acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together), including independently chosen arrival behavior, refusal/withdrawal, hidden companion position, changed work, interruption and replay. Demonstrate a useful destination and a contrasting ordinary social visit using the same invitation/travel contract. A fake acceptance or scripted walk does not establish voluntary NPC behavior.
+
+**Reconcile:** [agent agency](../agent-agency.md), [action experience](../action-experience.md), [social world rules](../worlds/base/social.md), AG05/AG06/AG07/AG12 in [agency tracking](../maintainers/agent-agency.md), DG06/ND10's scoped cooperation and relevant [CE](../maintainers/character-experience.md). Do not close whole psychological needs, promise management or institutions. Use [action limits](../limits/action-experience.md), [base-world limits](../limits/base-world.md), existing [cognition limits](../limits/cognition.md) and the proposed scope inventory.
+
+## PX05 — Shelter technical-design assignment
+
+Update [the existing feature specification](editable-shelters-feature-spec.md) and create its counterpart at `docs/projects/editable-shelters-tech-design.md`. Add focused delivery tasks under existing INV-6.4/SW/PO/BW ownership, with one canonical construction tracker if the breakdown warrants it. Do not create a second shelter product proposal or implement a prototype disguised as design verification.
+
+The design must answer these concrete engineering questions:
+
+1. **Parts and location:** what stores an assembly, its independent parts, exact source lots/items, joints/supports, orientation, footprint and geometry? Define units and identity using current spatial/objects contracts. Work through a cloak lean-to and a wider two-bay variant; do not grant arbitrary towers, bridges or collapse physics.
+2. **Admission and work:** from ordinary language or a direct layout control, how is a supported arrangement proposed, previewed, costed and committed? Which exact quantities are reserved/consumed when? What remains after cancellation, missing support, another actor moving a part or material exhaustion? A proposed layout is not already a building.
+3. **Editing and integrity:** show add/replace/remove/relocate, support loss and reclaiming surviving materials. Maintain one truth for material condition and placed identity. Define what happens to occupants and possessions before an edit can remove their support or passage. No hidden teleport, deleted inventory or silent creator cascade.
+4. **Useful space:** define derived coverage and navigable opening geometry, not a Boolean “indoors” assigned by a name. Show what physically fits, where an activity can occur, how changed geometry invalidates routes/perception, and how incremental recalculation stays local. A more restrictive structure is an explicit supported-family choice.
+5. **World rules and authoring:** locate timber/fabric requirements, work time, coverage, rain/moisture and dry/use semantics in the bundled world. Explain how another authored material set uses the same mechanism. Preserve the current proposal's staged drying/combustion boundaries without making general weather or fire simulation a hidden dependency.
+6. **Permissions and cognition:** separate custody, declaration of ownership and permission to alter/use. Ordinary characters know visible/inspected structure and materials, not the creator's entire graph. Offer useful permitted actions with distances, time, materials and decisive blockers. Do not add an automatic home goal or chore schedule.
+7. **Persistence and budgets:** describe current-format validation, active-work restoration, definition pinning/removal and recoverable failure. Enumerate graph growth, spatial invalidation, part/query bounds and why each is necessary; no low arbitrary cap as proof of structural scale. No compatibility migration.
+8. **UX and delivery:** describe placement preview, orientation/size choice, part selection, contextual alteration, clear invalid geometry, undo only where real, compact/narrow layout and keyboard alternatives. Stage one useful shelter end to end before adding variations. Name exact existing code entrypoints and accepted interface changes in the resulting design.
+
+Read [persistent objects](../maintainers/persistent-objects.md), [state contributions](../maintainers/state-contributions.md), [INV-6](../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), [spatial runtime](../../archive/07-technical-architecture/spatial-world-runtime.md) and relevant source owners. Reuse proposal diagrams/data as design evidence only; no live game/provider verification is required to finish this design assignment.
+
+**Definition of done:** the product/technical pair and sequenced tasks support an engineer implementing the ordinary build/use/edit/reclaim journey and relevant failures without choosing an unstated structural or authority policy. Record any consequential owner decisions explicitly; unresolved decisions mean the affected implementation stage is not ready. Do not check runtime tasks or claim shelter playability from paper traces.
+
+**Reconcile:** DG13/ND07 and the shelter-only ND08 subset, INV-6.4, relevant SW/PO/BW; [editable-shelter limits](../limits/editable-shelters.md). Design completion does not close construction, thermal simulation or home psychology.
+
+## Maintained records
+
+- Work and actual acceptance: [PX tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md).
+- Limits and scope proposals: [batch inventory](../limits/parallel-batch-04-expeditions-and-exchange.md), with subsystem inventory links above.
+- Intended experience: [feature specification](parallel-batch-04-expeditions-and-exchange-feature-spec.md). No current canonical runtime contract is changed by planning alone.

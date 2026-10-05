@@ -272,6 +272,8 @@ export interface EntityView extends Named {
   icon?: string;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
+  /** Exact action offered for the controlled character's currently equipped item. */
+  equippedAction?: ActionOption;
   contents?: Array<{
     id: string;
     definitionId: string;
@@ -288,7 +290,8 @@ export interface EntityView extends Named {
   position: Position;
   supportSurfaceId: string | null;
   heading: number;
-  appearance: 'sprite' | 'crate-mesh' | 'mercenary-model';
+  /** Presentation key resolved by trusted client artwork; it grants no physical capability. */
+  appearance: string;
   radius: number;
   status: string;
   description?: string;
@@ -299,7 +302,8 @@ export interface EntityView extends Named {
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
-  species?: 'human' | 'hare' | 'deer' | 'construct' | 'bird';
+  bodyState?: 'dead' | 'rotting';
+  species?: string;
   quantity?: number;
   actions: ActionOption[];
 }
@@ -537,6 +541,7 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    bodyState?: 'dead' | 'rotting' | 'removed';
     appearance?: EntityView['appearance'];
     participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
@@ -944,6 +949,8 @@ export interface GameSaveCatalog {
 
 /** Bounded attribute presentation projected by the server. */
 export interface AttributeView {
+  /** Identifies the installed body's health meter independently of its authored name. */
+  bodyHealth?: boolean;
   id: string;
   version: number;
   name: string;
