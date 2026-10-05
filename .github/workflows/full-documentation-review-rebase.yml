@@ -136,7 +136,7 @@ jobs:
                           diagnostic.with_suffix('.diff').write_text(''.join(difflib.unified_diff(values[1].splitlines(keepends=True), merged.splitlines(keepends=True), fromfile='current/' + name, tofile='merged/' + name)))
                           pathlib.Path(name).write_text(merged)
                       (output / 'mechanical.json').write_text(json.dumps(mechanical, sort_keys=True, indent=2))
-                      subprocess.run(['git', 'add', '--', *names], check=True)
+                      subprocess.run(['git', 'add', '--all', '--', *names], check=True)
                       result = subprocess.run(['git', 'rebase', '--continue'], env=environment)
                       continue
               if resolution is None or set(names) != {item['path'] for item in resolution['files']}:
@@ -158,10 +158,19 @@ jobs:
               for item in resolution['files']:
                   path = pathlib.Path(item['path'])
                   assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
-                  text = path.read_text()
-                  assert hashlib.sha256(text.encode()).hexdigest() == item['before_sha256'], ('changed conflict', str(path))
-                  for stage, expected in item['stages'].items():
-                      assert hashlib.sha256(git('show', f':{stage}:{path}')).hexdigest() == expected
+                  data = path.read_bytes() if path.exists() else None
+                  digest = hashlib.sha256(data).hexdigest() if data is not None else None
+                  assert digest == item['before_sha256'], ('changed conflict', str(path))
+                  for stage in (1, 2, 3):
+                      actual = subprocess.run(['git', 'show', f':{stage}:{path}'], capture_output=True)
+                      expected = item['stages'].get(str(stage))
+                      assert (hashlib.sha256(actual.stdout).hexdigest() if actual.returncode == 0 else None) == expected, ('changed stage', str(path), stage)
+                  if item.get('delete') is True:
+                      assert path.suffix == '.md' and str(path).startswith('docs/projects/'), ('invalid conflict deletion', str(path))
+                      path.unlink(missing_ok=True)
+                      continue
+                  assert data is not None
+                  text = data.decode('utf-8')
                   end = 0
                   for start, stop, replacement in item['edits']:
                       assert type(start) is int and type(stop) is int and 0 <= end <= start <= stop <= len(text)
@@ -171,7 +180,7 @@ jobs:
                       text = text[:start] + replacement + text[stop:]
                   assert hashlib.sha256(text.encode()).hexdigest() == item['after_sha256']
                   path.write_text(text)
-              subprocess.run(['git', 'add', '--', *names], check=True)
+              subprocess.run(['git', 'add', '--all', '--', *names], check=True)
               result = subprocess.run(['git', 'rebase', '--continue'], env=environment)
           subprocess.run(['git', 'diff', '--check', new, 'HEAD'], check=True)
           (output / 'range-diff.txt').write_bytes(git('range-diff', '--no-color', f'{old}..{before}', f'{new}..HEAD'))
