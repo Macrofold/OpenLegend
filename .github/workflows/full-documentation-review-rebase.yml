@@ -74,6 +74,20 @@ jobs:
               candidate = json.loads(config_path.read_text())
               if candidate.get('old_base') == old and candidate.get('new_base') == new:
                   configuration = candidate
+          inherited = configuration
+          merged_resolutions = dict(configuration.get('resolutions', {}))
+          seen = set()
+          while inherited.get('inherit_ref'):
+              ref = inherited['inherit_ref']
+              assert re.fullmatch(r'[0-9a-f]{40}', ref) and ref not in seen and len(seen) < 16, 'invalid inheritance'
+              seen.add(ref)
+              subprocess.run(['git', 'merge-base', '--is-ancestor', ref, before], check=True)
+              inherited = json.loads(git('show', f'{ref}:.github/full-documentation-review-resolutions.json'))
+              assert inherited.get('old_base') == old and inherited.get('new_base') == new, 'different inherited base'
+              for commit, value in inherited.get('resolutions', {}).items():
+                  assert commit not in merged_resolutions or merged_resolutions[commit] == value, 'conflicting inherited resolution'
+                  merged_resolutions[commit] = value
+          configuration['resolutions'] = merged_resolutions
           (output / 'resolutions.json').write_text(json.dumps(configuration, indent=2))
           subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
