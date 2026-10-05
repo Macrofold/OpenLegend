@@ -390,11 +390,13 @@ describe('bounded invented mechanisms', () => {
     expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
+    const world = createWorld();
     const candidate = arrow();
+    expect(validateDeclaration(world, candidate)).toEqual([]);
     candidate.inputs[0]!.definitionId = 'stone';
-    expect(
-      validateDeclaration(createWorld(), candidate).some((error) => error.includes('shaft')),
-    ).toBe(true);
+    expect(validateDeclaration(world, candidate)).toEqual([
+      'This material cannot fill the selected role.',
+    ]);
   });
   it('approaches close enough to fire a short-range tool at an already fleeing animal', () => {
     const draft = sling();

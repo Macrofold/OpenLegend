@@ -565,7 +565,7 @@ describe(
       ).toEqual([`${job.id}:attempt:0:route`]);
       const stimulus = (route.state as { decisionContext: { stimulus: string } }).decisionContext
         .stimulus;
-      expect(stimulus).toContain('a deer died');
+      expect(stimulus).toContain('A deer died.');
 
       // The decision finished on its own (continuing existing behavior) without waiting for reflection.
       expect(job).toMatchObject({
@@ -973,7 +973,7 @@ describe(
       const nativeStimulus = (
         routeRequest(h, native.id)!.state as { decisionContext: { stimulus: string } }
       ).decisionContext.stimulus;
-      expect(nativeStimulus).toContain('a deer died');
+      expect(nativeStimulus).toContain('A deer died.');
       const eventQueued = (await h.store.getIntegration(h.reflectionKey)) as
         | { origin: string; reason: string }
         | undefined;
@@ -984,7 +984,8 @@ describe(
       h.state.policy = {
         route: 'level1',
         reflection: 'no',
-        rate: (description) => (description.startsWith('Prepare 1 Fiber cord') ? 0.9 : 0.1),
+        rate: (description) =>
+          description.startsWith('Twist prepared fibers into binding cord.') ? 0.9 : 0.1,
       };
       const cordStep = expect.objectContaining({
         command: expect.objectContaining({ type: 'prepare', preparation: 'cord' }),
@@ -1004,7 +1005,10 @@ describe(
             ratings: Level1Rating[];
           }
         ).ratings.find((rating) => rating.handle === selectedHandle(act)),
-      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Prepare 1 Fiber cord/) });
+      ).toMatchObject({
+        rating: 0.9,
+        description: expect.stringMatching(/^Twist prepared fibers into binding cord\./),
+      });
       // The selected binding was admitted natively and now drives Ada's plan.
       const actReceipt = h.service.world.responseReceipts?.[act.id];
       expect(Object.values(actReceipt?.components ?? {}).length).toBeGreaterThan(0);

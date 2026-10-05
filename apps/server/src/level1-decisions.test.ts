@@ -140,7 +140,8 @@ function distribution(keys: string[], weights: Record<string, number>): Judgment
   return { type: 'choice', choice, probabilities, confidence: probabilities[choice]! };
 }
 
-const isEat = (description: string) => description.startsWith('Eat one Wild berries');
+const isEat = (description: string) =>
+  description.startsWith('Eat one. Selected item: the wild berries.');
 const isContinue = (description: string) =>
   description.startsWith('Continue the') || description.startsWith('Remain in place');
 const noul = (rating: number): JudgmentAnswer => ({ type: 'noul', noul: rating });
@@ -416,7 +417,10 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(input.ratings.map((entry) => entry.handle)).toEqual(keys.filter(handleKey));
     expect(input.ratings.every((entry) => entry.status === 'rated')).toBe(true);
     expect(input.ratings.filter((entry) => (entry.rating ?? 0) >= LEVEL1_POLICY.selectAt)).toEqual([
-      expect.objectContaining({ rating: 0.9, description: expect.stringMatching(/^Eat one Wild/) }),
+      expect.objectContaining({
+        rating: 0.9,
+        description: expect.stringMatching(/^Eat one\. Selected item: the wild berries\./),
+      }),
     ]);
     const eat = input.ratings.find((entry) => isEat(entry.description ?? ''))!;
     expect(output.outcome).toEqual({
@@ -565,7 +569,9 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       task: 'npc_response',
     });
     // Generation reuses the ratings at the 0.5 relevance line instead of buying another request.
-    expect(String(generation!.context)).toContain('Eat one Wild berries. Restores up to 18');
+    expect(String(generation!.context)).toContain(
+      'Eat one. Selected item: the wild berries. Restores up to 18',
+    );
     expect(String(generation!.context)).not.toContain('Drop 2 Wild berries on the ground.');
     const { root, input, output } = await level1Stage(h, job.id);
     expect(root.route).toBe('level1→level2');

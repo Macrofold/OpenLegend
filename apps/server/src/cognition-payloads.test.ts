@@ -100,7 +100,8 @@ function distribution(keys: string[], weights: Record<string, number>): Judgment
 }
 const noul = (rating: number): JudgmentAnswer => ({ type: 'noul', noul: rating });
 const handleKey = (key: string) => /^a\d+$/.test(key);
-const isEat = (description: string) => description.startsWith('Eat one Wild berries');
+const isEat = (description: string) =>
+  description.startsWith('Eat one. Selected item: the wild berries.');
 const isContinue = (description: string) =>
   description.startsWith('Continue the') || description.startsWith('Remain in place');
 
@@ -242,6 +243,8 @@ const KNOWN_HEADINGS = new Set([
   'Private intent controls',
   'Private intentions and native work',
   'Native navigation',
+  'Optional installed activity requests',
+  'Container I chose to inspect',
   'Current time',
   'Actions I chose to inspect',
   'Activities I chose to inspect',
@@ -953,7 +956,7 @@ describe(
       expect(section(parts, 'Inventory').body).toContain('Wild berries');
       expect(section(parts, 'Me').body).not.toContain('I have no food.');
       // Ratings from the routing request are reused at the relevance line: eating is offered.
-      expect(section(parts, 'Actions').body).toContain('Eat one Wild berries');
+      expect(section(parts, 'Actions').body).toContain('Eat one. Selected item: the wild berries.');
       const route = dispatched.judges[0]!;
       expect(
         (route.state as { decisionContext: Record<string, unknown> }).decisionContext[
@@ -961,7 +964,9 @@ describe(
         ],
       ).toBeUndefined();
       // The listed eat option's handle is one the generation schema permits.
-      const eat = /^- (a\d+): Eat one Wild berries/m.exec(section(parts, 'Actions').body)?.[1];
+      const eat = /^- (a\d+): Eat one\. Selected item: the wild berries\./m.exec(
+        section(parts, 'Actions').body,
+      )?.[1];
       expect(eat).toBeDefined();
       expect(actionHandles(generation!.schema)).toContain(eat);
       report('resource-task:level2', {
@@ -1384,17 +1389,17 @@ describe(
       // confounds the result.
       const fresh = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
-      // Not vacuous: at least the eight-file snapshot (about 64 KB) reaches a generation.
-      expect(probes.find((entry) => entry['files'] === 8)).toMatchObject({
-        status: 'completed',
-        routeHasCompleteSnapshot: true,
-      });
       report('inner-world-quota', {
         ...quota,
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
         probes,
+      });
+      // Not vacuous: at least the eight-file snapshot (about 64 KB) reaches a generation.
+      expect(probes.find((entry) => entry['files'] === 8)).toMatchObject({
+        status: 'completed',
+        routeHasCompleteSnapshot: true,
       });
     }, 300_000);
   },
